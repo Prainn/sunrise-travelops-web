@@ -1,7 +1,10 @@
 <template>
   <div class="layout-navbar">
     <div class="flex-y-center">
-      <Hamburger :is-active="sidebarState.opened" @toggle-click="sidebarState.toggle" />
+      <Hamburger
+        :is-active="sidebarState.opened"
+        @toggle-click="sidebarState.toggle"
+      />
       <Breadcrumb />
     </div>
 

@@ -1,39 +1,83 @@
 <template>
   <div class="page-container">
-    <el-card ref="tableWrapperRef" class="page-search" shadow="never">
-      <el-form ref="queryFormRef" :model="params" :inline="true">
-        <el-form-item label="关键字" prop="keywords">
+    <el-card
+      ref="tableWrapperRef"
+      class="page-search"
+      shadow="never"
+    >
+      <el-form
+        ref="queryFormRef"
+        :model="params"
+        :inline="true"
+      >
+        <el-form-item
+          :label="$t('common.keywords')"
+          prop="keywords"
+        >
           <el-input
             v-model="params.keywords"
-            placeholder="字典标签/字典值"
+            :placeholder="$t('dictionary.optionSearchPlaceholder')"
             clearable
             @keyup.enter="handleQuery"
           />
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" @click="handleQuery">搜索</el-button>
-          <el-button @click="handleResetQuery">重置</el-button>
+          <el-button
+            type="primary"
+            @click="handleQuery"
+          >
+            {{ $t("common.search") }}
+          </el-button>
+          <el-button @click="handleResetQuery">
+            {{ $t("common.reset") }}
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
-    <el-card class="page-content" shadow="never">
+    <el-card
+      class="page-content"
+      shadow="never"
+    >
       <div class="page-toolbar">
         <div class="page-toolbar__left">
-          <el-button type="primary" @click="handleCreateClick()">新增</el-button>
-          <el-button type="danger" :disabled="!hasSelection" @click="handleBatchDelete()">
-            删除
+          <el-button
+            v-has-perm="'sys:dict-item:create'"
+            type="primary"
+            @click="handleCreateClick()"
+          >
+            {{ $t("common.create") }}
+          </el-button>
+          <el-button
+            v-has-perm="'sys:dict-item:delete'"
+            type="danger"
+            :disabled="!hasSelection"
+            @click="handleBatchDelete()"
+          >
+            {{ $t("common.delete") }}
           </el-button>
         </div>
         <div class="page-toolbar__right">
-          <el-tooltip content="刷新" placement="top">
-            <el-button class="page-icon-btn" @click="fetchData">
+          <el-tooltip
+            :content="$t('common.refresh')"
+            placement="top"
+          >
+            <el-button
+              class="page-icon-btn"
+              @click="fetchData"
+            >
               <el-icon><Refresh /></el-icon>
             </el-button>
           </el-tooltip>
-          <el-tooltip content="全屏" placement="top">
-            <el-button class="page-icon-btn" @click="toggleFullscreen">
+          <el-tooltip
+            :content="$t('common.fullscreen')"
+            placement="top"
+          >
+            <el-button
+              class="page-icon-btn"
+              @click="toggleFullscreen"
+            >
               <el-icon><FullScreen /></el-icon>
             </el-button>
           </el-tooltip>
@@ -50,30 +94,59 @@
           height="100%"
           @selection-change="handleSelectionChange"
         >
-          <el-table-column type="selection" width="55" align="center" />
-          <el-table-column label="字典项标签" prop="label" />
-          <el-table-column label="字典项值" prop="value" />
-          <el-table-column label="排序" prop="sort" />
-          <el-table-column label="状态">
+          <el-table-column
+            type="selection"
+            width="55"
+            align="center"
+          />
+          <el-table-column
+            :label="$t('dictionary.optionName')"
+            prop="label"
+          />
+          <el-table-column
+            :label="$t('dictionary.optionValue')"
+            prop="value"
+          />
+          <el-table-column
+            :label="$t('common.sort')"
+            prop="sort"
+          />
+          <el-table-column :label="$t('common.status')">
             <template #default="scope">
               <el-tag :type="scope.row.status === CommonStatus.ENABLED ? 'success' : 'info'">
-                {{ scope.row.status === CommonStatus.ENABLED ? "启用" : "禁用" }}
+                {{
+                  scope.row.status === CommonStatus.ENABLED
+                    ? $t("common.enabled")
+                    : $t("common.disabled")
+                }}
               </el-tag>
             </template>
           </el-table-column>
 
-          <el-table-column fixed="right" label="操作" align="center" width="220">
+          <el-table-column
+            fixed="right"
+            :label="$t('common.actions')"
+            align="center"
+            width="220"
+          >
             <template #default="scope">
               <el-button
+                v-has-perm="'sys:dict-item:update'"
                 type="primary"
                 link
                 size="small"
                 @click.stop="handleEditClick(scope.row as DictItem)"
               >
-                编辑
+                {{ $t("common.edit") }}
               </el-button>
-              <el-button type="danger" link size="small" @click.stop="handleDelete(scope.row.id)">
-                删除
+              <el-button
+                v-has-perm="'sys:dict-item:delete'"
+                type="danger"
+                link
+                size="small"
+                @click.stop="handleDelete(scope.row.id)"
+              >
+                {{ $t("common.delete") }}
               </el-button>
             </template>
           </el-table-column>
@@ -91,32 +164,58 @@
 
     <el-dialog
       v-model="dialogState.visible"
-      :title="dialogState.title"
+      :title="t(dialogState.titleKey)"
       width="600px"
       @close="closeDialog"
     >
-      <el-form ref="dictItemFormRef" :model="formData" :rules="rules" label-width="100px">
-        <el-form-item label="字典项标签" prop="label">
-          <el-input v-model="formData.label" placeholder="请输入字典标签" />
+      <el-form
+        ref="dictItemFormRef"
+        :model="formData"
+        :rules="rules"
+        label-width="100px"
+      >
+        <el-form-item
+          :label="$t('dictionary.optionName')"
+          prop="label"
+        >
+          <el-input
+            v-model="formData.label"
+            :placeholder="$t('dictionary.optionNamePlaceholder')"
+          />
         </el-form-item>
-        <el-form-item label="字典项值" prop="value">
-          <el-input v-model="formData.value" placeholder="请输入字典值" />
+        <el-form-item
+          :label="$t('dictionary.optionValue')"
+          prop="value"
+        >
+          <el-input
+            v-model="formData.value"
+            :placeholder="$t('dictionary.optionValuePlaceholder')"
+          />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item :label="$t('common.status')">
           <el-radio-group v-model="formData.status">
-            <el-radio :value="CommonStatus.ENABLED">启用</el-radio>
-            <el-radio :value="CommonStatus.DISABLED">禁用</el-radio>
+            <el-radio :value="CommonStatus.ENABLED">
+              {{ $t("common.enabled") }}
+            </el-radio>
+            <el-radio :value="CommonStatus.DISABLED">
+              {{ $t("common.disabled") }}
+            </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="排序">
-          <el-input-number v-model="formData.sort" controls-position="right" />
+        <el-form-item :label="$t('common.sort')">
+          <el-input-number
+            v-model="formData.sort"
+            controls-position="right"
+          />
         </el-form-item>
         <el-form-item>
           <template #label>
             <div class="flex-y-center">
-              标签类型
+              {{ $t("dictionary.displayStyle") }}
               <el-tooltip>
-                <template #content>回显样式，为空时则显示 '文本'</template>
+                <template #content>
+                  {{ $t("dictionary.displayStyleTip") }}
+                </template>
                 <el-icon class="ml-1 cursor-pointer">
                   <QuestionFilled />
                 </el-icon>
@@ -125,18 +224,31 @@
           </template>
           <el-select
             v-model="formData.tagType"
-            placeholder="请选择标签类型"
+            :placeholder="$t('dictionary.tagTypePlaceholder')"
             clearable
             @clear="formData.tagType = ''"
           >
             <template #label="{ value }">
-              <el-tag v-if="value" :type="value">
-                {{ formData.label ? formData.label : "字典标签" }}
+              <el-tag
+                v-if="value"
+                :type="value"
+              >
+                {{ formData.label ? formData.label : $t("dictionary.optionName") }}
               </el-tag>
             </template>
-            <el-option v-for="type in tagTypeOptions" :key="type" :label="type" :value="type">
-              <div flex-y-center gap-10px>
-                <el-tag :type="type as any">{{ formData.label ?? "字典标签" }}</el-tag>
+            <el-option
+              v-for="type in tagTypeOptions"
+              :key="type"
+              :label="type"
+              :value="type"
+            >
+              <div
+                flex-y-center
+                gap-10px
+              >
+                <el-tag :type="type as any">
+                  {{ formData.label ?? $t("dictionary.optionName") }}
+                </el-tag>
                 <span>{{ type }}</span>
               </div>
             </el-option>
@@ -146,8 +258,15 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="handleSubmit">确 定</el-button>
-          <el-button @click="closeDialog">取 消</el-button>
+          <el-button
+            type="primary"
+            @click="handleSubmit"
+          >
+            {{ $t("common.confirm") }}
+          </el-button>
+          <el-button @click="closeDialog">
+            {{ $t("common.cancel") }}
+          </el-button>
         </div>
       </template>
     </el-dialog>
@@ -158,10 +277,11 @@
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 import { FullScreen, QuestionFilled, Refresh } from "@element-plus/icons-vue";
 
-import DictAPI from "@/api/system/dict";
-import type { DictItem, DictItemForm, DictItemQueryParams } from "@/api/system/dict";
 import { usePageTable, useTableSelection } from "@/composables";
 import { CommonStatus } from "@/enums";
+import { dictionaryService } from "@/services";
+import { useDictStore } from "@/stores";
+import type { DictItem, DictItemForm, DictItemQueryParams } from "@/types/dictionary";
 
 defineOptions({
   name: "DictItem",
@@ -178,6 +298,8 @@ const { toggle: toggleFullscreen } = useFullscreen(tableWrapperRef);
 
 const queryFormRef = ref<FormInstance>();
 const dictItemFormRef = ref<FormInstance>();
+const dictStore = useDictStore();
+const { t } = useI18n();
 
 // 标签类型可选项。
 const tagTypeOptions: NonNullable<DictItemForm["tagType"]>[] = [
@@ -199,14 +321,14 @@ const { loading, list, total, params, fetchData, handleQuery, handleResetQuery }
     dictCode: dictCode.value,
     keywords: "",
   },
-  request: (query) => DictAPI.getDictItemPage(dictCode.value, query),
+  request: (query) => dictionaryService.getDictItemPage(dictCode.value, query),
   onBeforeReset: () => queryFormRef.value?.resetFields(),
 });
 
 const { selectedIds, hasSelection, handleSelectionChange } = useTableSelection<DictItem>();
 
 const dialogState = reactive({
-  title: "",
+  titleKey: "dictionary.createOptionTitle",
   visible: false,
 });
 
@@ -219,10 +341,10 @@ const initialFormData: DictItemForm = {
 
 const formData = reactive<DictItemForm>({ ...initialFormData });
 
-const rules: FormRules<DictItemForm> = {
-  value: [{ required: true, message: "请输入字典值", trigger: "blur" }],
-  label: [{ required: true, message: "请输入字典标签", trigger: "blur" }],
-};
+const rules = computed<FormRules<DictItemForm>>(() => ({
+  value: [{ required: true, message: t("dictionary.optionValuePlaceholder"), trigger: "blur" }],
+  label: [{ required: true, message: t("dictionary.optionNamePlaceholder"), trigger: "blur" }],
+}));
 
 /**
  * 重置表单数据和验证状态
@@ -255,7 +377,7 @@ function closeDialog(): void {
  * 打开新增字典项弹窗
  */
 function handleCreateClick(): void {
-  dialogState.title = "新增字典项";
+  dialogState.titleKey = "dictionary.createOptionTitle";
   openDialog();
 }
 
@@ -266,8 +388,8 @@ function handleCreateClick(): void {
  */
 async function handleEditClick(row: DictItem): Promise<void> {
   if (!row.id) return;
-  dialogState.title = "编辑字典值";
-  const data = await DictAPI.getDictItemFormData(dictCode.value, row.id);
+  dialogState.titleKey = "dictionary.editOptionTitle";
+  const data = await dictionaryService.getDictItemFormData(dictCode.value, row.id);
   Object.assign(formData, data);
   openDialog();
 }
@@ -288,14 +410,17 @@ async function handleSubmit(): Promise<void> {
   loading.value = true;
   try {
     if (id) {
-      await DictAPI.updateDictItem(dictCode.value, id, formData);
-      ElMessage.success("修改成功");
+      await dictionaryService.updateDictItem(dictCode.value, id, formData);
+      ElMessage.success(t("common.updateSuccess"));
     } else {
-      await DictAPI.createDictItem(dictCode.value, formData);
-      ElMessage.success("新增成功");
+      await dictionaryService.createDictItem(dictCode.value, formData);
+      ElMessage.success(t("common.createSuccess"));
     }
+    dictStore.removeDictItem(dictCode.value);
     closeDialog();
     handleQuery();
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("common.saveFailed"));
   } finally {
     loading.value = false;
   }
@@ -309,25 +434,26 @@ async function handleSubmit(): Promise<void> {
 async function handleDelete(id?: string): Promise<void> {
   const itemIds = id ?? selectedIds.value.join(",");
   if (!itemIds) {
-    ElMessage.warning("请勾选删除项");
+    ElMessage.warning(t("common.selectDeleteItem"));
     return;
   }
 
   try {
-    await ElMessageBox.confirm("确认删除已选中的数据项?", "警告", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
+    await ElMessageBox.confirm(t("common.deleteSelectedConfirm"), t("common.warning"), {
+      confirmButtonText: t("common.confirm"),
+      cancelButtonText: t("common.cancel"),
       type: "warning",
     });
   } catch {
-    ElMessage.info("已取消删除");
+    ElMessage.info(t("common.deleteCancelled"));
     return;
   }
 
   loading.value = true;
   try {
-    await DictAPI.deleteDictItems(dictCode.value, itemIds);
-    ElMessage.success("删除成功");
+    await dictionaryService.deleteDictItems(dictCode.value, itemIds);
+    dictStore.removeDictItem(dictCode.value);
+    ElMessage.success(t("common.deleteSuccess"));
     handleResetQuery();
   } finally {
     loading.value = false;

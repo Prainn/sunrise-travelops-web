@@ -32,7 +32,7 @@ export const themePalettePresets = [
   {
     id: "arco",
     name: "ArcoD",
-    description: "蓝橙对比清晰，适合现代中后台",
+    description: "High-contrast blue and orange palette",
     colors: {
       primary: "#165DFF",
       success: "#00B42A",
@@ -44,7 +44,7 @@ export const themePalettePresets = [
   {
     id: "ant-design",
     name: "AntD",
-    description: "规范稳重，适合标准业务系统",
+    description: "Stable palette for standard business systems",
     colors: {
       primary: "#1677FF",
       success: "#52C41A",
@@ -56,7 +56,7 @@ export const themePalettePresets = [
   {
     id: "element-plus",
     name: "ElementD",
-    description: "贴近组件默认色识别",
+    description: "Palette close to the component defaults",
     colors: {
       primary: "#409EFF",
       success: "#67C23A",

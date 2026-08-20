@@ -1,8 +1,14 @@
 <template>
-  <el-icon v-if="isElementIcon" class="layout-menu-icon layout-menu-icon--element menu-icon">
+  <el-icon
+    v-if="isElementIcon"
+    class="layout-menu-icon layout-menu-icon--element menu-icon"
+  >
     <component :is="elementIconName" />
   </el-icon>
-  <div v-else :class="['layout-menu-icon', 'layout-menu-icon--svg', 'menu-icon', svgIconClass]" />
+  <div
+    v-else
+    :class="['layout-menu-icon', 'layout-menu-icon--svg', 'menu-icon', svgIconClass]"
+  />
 </template>
 
 <script setup lang="ts">

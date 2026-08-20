@@ -1,7 +1,14 @@
 <template>
   <!-- 布局大小 -->
-  <el-tooltip :content="t('sizeSelect.tooltip')" effect="dark" placement="bottom">
-    <el-dropdown trigger="click" @command="handleSizeChange">
+  <el-tooltip
+    :content="t('sizeSelect.tooltip')"
+    effect="dark"
+    placement="bottom"
+  >
+    <el-dropdown
+      trigger="click"
+      @command="handleSizeChange"
+    >
       <div class="size-trigger">
         <div class="i-svg:size" />
       </div>

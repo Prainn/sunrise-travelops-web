@@ -2,7 +2,7 @@
   <el-select
     v-if="type === 'select'"
     v-model="selectedValue"
-    :placeholder="placeholder"
+    :placeholder="resolvedPlaceholder"
     :disabled="disabled"
     clearable
     :style="style"
@@ -23,7 +23,11 @@
     :style="style"
     @change="handleChange"
   >
-    <el-radio v-for="option in options" :key="option.value" :value="option.value">
+    <el-radio
+      v-for="option in options"
+      :key="option.value"
+      :value="option.value"
+    >
       {{ option.label }}
     </el-radio>
   </el-radio-group>
@@ -35,7 +39,11 @@
     :style="style"
     @change="handleChange"
   >
-    <el-checkbox v-for="option in options" :key="option.value" :value="option.value">
+    <el-checkbox
+      v-for="option in options"
+      :key="option.value"
+      :value="option.value"
+    >
       {{ option.label }}
     </el-checkbox>
   </el-checkbox-group>
@@ -62,7 +70,7 @@ const props = defineProps({
   },
   placeholder: {
     type: String,
-    default: "请选择",
+    default: "",
   },
   disabled: {
     type: Boolean,
@@ -79,6 +87,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["update:modelValue"]);
+const { t } = useI18n();
+const resolvedPlaceholder = computed(() => props.placeholder || t("common.selectPlaceholder"));
 
 const options = ref<Array<{ label: string; value: string | number }>>([]);
 

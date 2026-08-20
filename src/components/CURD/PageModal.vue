@@ -7,19 +7,39 @@
         v-bind="{ destroyOnClose: true, ...modalConfig.drawer }"
         @close="handleClose"
       >
-        <el-form ref="formRef" v-bind="modalConfig.form" :model="formData" :rules="formRules">
+        <el-form
+          ref="formRef"
+          v-bind="modalConfig.form"
+          :model="formData"
+          :rules="formRules"
+        >
           <el-row :gutter="20">
-            <template v-for="item in formItems" :key="item.prop">
-              <el-col v-show="!item.hidden" v-bind="item.col">
-                <el-form-item :label="item.label" :prop="item.prop">
+            <template
+              v-for="item in formItems"
+              :key="item.prop"
+            >
+              <el-col
+                v-show="!item.hidden"
+                v-bind="item.col"
+              >
+                <el-form-item
+                  :label="item.label"
+                  :prop="item.prop"
+                >
                   <!-- Label -->
                   <template #label>
                     <span>
                       {{ item?.label || "" }}
-                      <el-tooltip v-if="item?.tips" v-bind="getTooltipProps(item.tips)">
+                      <el-tooltip
+                        v-if="item?.tips"
+                        v-bind="getTooltipProps(item.tips)"
+                      >
                         <QuestionFilled class="w-4 h-4 mx-1" />
                       </el-tooltip>
-                      <span v-if="modalConfig.colon" class="ml-0.5">:</span>
+                      <span
+                        v-if="modalConfig.colon"
+                        class="ml-0.5"
+                      >:</span>
                     </span>
                   </template>
 
@@ -48,7 +68,10 @@
                       ></component>
                     </template>
 
-                    <template v-if="item?.slotName && $slots[item.slotName]" #[item.slotName]>
+                    <template
+                      v-if="item?.slotName && $slots[item.slotName]"
+                      #[item.slotName]
+                    >
                       <slot :name="item.slotName" />
                     </template>
                   </component>
@@ -59,8 +82,16 @@
         </el-form>
 
         <template #footer>
-          <el-button v-if="!formDisable" type="primary" @click="handleSubmit">确定</el-button>
-          <el-button @click="handleClose">关闭</el-button>
+          <el-button
+            v-if="!formDisable"
+            type="primary"
+            @click="handleSubmit"
+          >
+            {{ t("common.confirm") }}
+          </el-button>
+          <el-button @click="handleClose">
+            {{ t("common.close") }}
+          </el-button>
         </template>
       </el-drawer>
     </template>
@@ -71,19 +102,42 @@
         v-bind="{ destroyOnClose: true, alignCenter: true, ...modalConfig.dialog }"
         @close="handleClose"
       >
-        <el-form ref="formRef" v-bind="modalConfig.form" :model="formData" :rules="formRules">
-          <el-scrollbar max-height="70vh" :view-style="{ overflowX: 'hidden' }">
+        <el-form
+          ref="formRef"
+          v-bind="modalConfig.form"
+          :model="formData"
+          :rules="formRules"
+        >
+          <el-scrollbar
+            max-height="70vh"
+            :view-style="{ overflowX: 'hidden' }"
+          >
             <el-row :gutter="20">
-              <template v-for="item in formItems" :key="item.prop">
-                <el-col v-show="!item.hidden" v-bind="item.col">
-                  <el-form-item :label="item.label" :prop="item.prop">
+              <template
+                v-for="item in formItems"
+                :key="item.prop"
+              >
+                <el-col
+                  v-show="!item.hidden"
+                  v-bind="item.col"
+                >
+                  <el-form-item
+                    :label="item.label"
+                    :prop="item.prop"
+                  >
                     <template #label>
                       <span>
                         {{ item?.label || "" }}
-                        <el-tooltip v-if="item?.tips" v-bind="getTooltipProps(item.tips)">
+                        <el-tooltip
+                          v-if="item?.tips"
+                          v-bind="getTooltipProps(item.tips)"
+                        >
                           <QuestionFilled class="w-4 h-4 mx-1" />
                         </el-tooltip>
-                        <span v-if="modalConfig.colon" class="ml-0.5">:</span>
+                        <span
+                          v-if="modalConfig.colon"
+                          class="ml-0.5"
+                        >:</span>
                       </span>
                     </template>
 
@@ -111,7 +165,10 @@
                         ></component>
                       </template>
 
-                      <template v-if="item?.slotName && $slots[item.slotName]" #[item.slotName]>
+                      <template
+                        v-if="item?.slotName && $slots[item.slotName]"
+                        #[item.slotName]
+                      >
                         <slot :name="item.slotName" />
                       </template>
                     </component>
@@ -119,13 +176,24 @@
                 </el-col>
               </template>
             </el-row>
-            <slot name="bottom" :form-data="formData"></slot>
+            <slot
+              name="bottom"
+              :form-data="formData"
+            ></slot>
           </el-scrollbar>
         </el-form>
 
         <template #footer>
-          <el-button v-if="!formDisable" type="primary" @click="handleSubmit">确定</el-button>
-          <el-button @click="handleClose">关闭</el-button>
+          <el-button
+            v-if="!formDisable"
+            type="primary"
+            @click="handleSubmit"
+          >
+            {{ t("common.confirm") }}
+          </el-button>
+          <el-button @click="handleClose">
+            {{ t("common.close") }}
+          </el-button>
         </template>
       </el-dialog>
     </template>
@@ -143,6 +211,7 @@ import IconSelect from "@/components/IconSelect/index.vue";
 defineSlots<{ [key: string]: (_args: any) => any }>();
 // 定义接收的属性
 const props = defineProps<{ modalConfig: IModalConfig }>();
+const { t } = useI18n();
 // 自定义事件
 const emit = defineEmits<{ submitClick: []; customSubmit: [queryParams: IObject] }>();
 // 组件映射
@@ -215,9 +284,13 @@ const handleSubmit = useThrottleFn(() => {
     }
     props.modalConfig.formAction(formData).then(() => {
       if (props.modalConfig.component === "drawer") {
-        ElMessage.success(`${props.modalConfig.drawer?.title}成功`);
+        ElMessage.success(
+          t("common.operationSuccess", { operation: props.modalConfig.drawer?.title ?? "" })
+        );
       } else {
-        ElMessage.success(`${props.modalConfig.dialog?.title}成功`);
+        ElMessage.success(
+          t("common.operationSuccess", { operation: props.modalConfig.dialog?.title ?? "" })
+        );
       }
       emit("submitClick");
       handleClose();

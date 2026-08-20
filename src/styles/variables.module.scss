@@ -1,4 +1,3 @@
-/* stylelint-disable property-no-unknown */
 // SCSS 变量导出给 JS/TS
 
 @use "./variables" as *;
@@ -10,5 +9,3 @@
   menu-text: $menu-text;
   menu-active-text: $menu-active-text;
 }
-
-/* stylelint-enable property-no-unknown */

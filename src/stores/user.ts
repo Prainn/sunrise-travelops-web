@@ -1,15 +1,14 @@
-import { store } from "@/stores";
+import { store } from "./store";
 
-import AuthAPI from "@/api/auth";
-import UserAPI from "@/api/system/user";
-import type { LoginRequest } from "@/api/auth";
 import type { UserInfo } from "@/api/system/user";
+import { authService, userService } from "@/services";
+import type { LoginRequest } from "@/types/auth";
 
 import { AuthStorage } from "@/utils/auth";
 import { usePermissionStoreHook } from "@/stores/permission";
 import { useDictStoreHook } from "@/stores/dict";
-import { useTagsViewStore } from "@/stores";
-import { cleanupSseServices } from "@/composables";
+import { useTagsViewStore } from "./tags-view";
+import { translate } from "@/lang/utils";
 
 export const useUserStore = defineStore("user", () => {
   // 用户信息
@@ -21,17 +20,9 @@ export const useUserStore = defineStore("user", () => {
    * 登录
    */
   async function login(loginRequest: LoginRequest): Promise<void> {
-    const { accessToken, refreshToken } = await AuthAPI.login(loginRequest);
+    const { accessToken, refreshToken } = await authService.login(loginRequest);
     rememberMe.value = loginRequest.rememberMe ?? false;
     AuthStorage.setTokens(accessToken, refreshToken, rememberMe.value);
-  }
-
-  /**
-   * 扫码登录：用票据换取会话令牌
-   */
-  async function loginByQrCode(ticket: string): Promise<void> {
-    const { accessToken, refreshToken } = await AuthAPI.qrLogin(ticket);
-    AuthStorage.setTokens(accessToken, refreshToken, false);
   }
 
   let refreshPromise: Promise<void> | null = null;
@@ -55,7 +46,7 @@ export const useUserStore = defineStore("user", () => {
    * 获取用户信息
    */
   async function getUserInfo(): Promise<UserInfo> {
-    const data = await UserAPI.getInfo();
+    const data = await userService.getCurrentUser(AuthStorage.getAccessToken());
     if (!data) {
       throw new Error("Verification failed, please Login again.");
     }
@@ -67,7 +58,7 @@ export const useUserStore = defineStore("user", () => {
    * 登出
    */
   async function logout(): Promise<void> {
-    await AuthAPI.logout();
+    await authService.logout();
     resetAllState();
   }
 
@@ -84,9 +75,6 @@ export const useUserStore = defineStore("user", () => {
     usePermissionStoreHook().resetRouter();
     useDictStoreHook().clearDictCache();
     useTagsViewStore().delAllViews();
-
-    // 3. 清理 SSE 连接
-    cleanupSseServices();
   }
 
   /**
@@ -106,11 +94,11 @@ export const useUserStore = defineStore("user", () => {
     const currentRefreshToken = AuthStorage.getRefreshToken();
 
     if (!currentRefreshToken) {
-      throw new Error("没有有效的刷新令牌");
+      throw new Error(translate("service.auth.missingRefreshToken"));
     }
 
     const { accessToken, refreshToken: newRefreshToken } =
-      await AuthAPI.refreshToken(currentRefreshToken);
+      await authService.refreshToken(currentRefreshToken);
     AuthStorage.setTokens(accessToken, newRefreshToken, AuthStorage.getRememberMe());
   }
 
@@ -119,7 +107,6 @@ export const useUserStore = defineStore("user", () => {
     rememberMe,
     isLoggedIn: () => !!AuthStorage.getAccessToken(),
     login,
-    loginByQrCode,
     logout,
     getUserInfo,
     resetAllState,

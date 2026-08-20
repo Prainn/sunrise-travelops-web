@@ -2,16 +2,27 @@
   <section class="error-page">
     <div class="error-page__inner">
       <div class="error-page__content">
-        <div class="error-page__label">{{ label }}</div>
-        <h1 class="error-page__code">{{ statusCode }}</h1>
-        <h2 class="error-page__title">{{ title }}</h2>
-        <p class="error-page__description">{{ description }}</p>
+        <div class="error-page__label">
+          {{ label }}
+        </div>
+        <h1 class="error-page__code">
+          {{ statusCode }}
+        </h1>
+        <h2 class="error-page__title">
+          {{ title }}
+        </h2>
+        <p class="error-page__description">
+          {{ description }}
+        </p>
         <div class="error-page__actions">
           <slot name="actions" />
         </div>
       </div>
 
-      <div class="error-page__visual" aria-hidden="true">
+      <div
+        class="error-page__visual"
+        aria-hidden="true"
+      >
         <div class="error-visual">
           <div class="error-visual__header">
             <span />
@@ -27,15 +38,39 @@
                 </el-icon>
               </div>
               <div>
-                <div class="error-visual__status">{{ statusCode }}</div>
-                <div class="error-visual__name">{{ visualName }}</div>
+                <div class="error-visual__status">
+                  {{ statusCode }}
+                </div>
+                <div class="error-visual__name">
+                  {{ visualName }}
+                </div>
               </div>
             </div>
 
-            <svg class="error-visual__route" viewBox="0 0 360 136">
-              <path class="error-visual__route-line" d="M56 48 H148 C174 48 174 88 200 88 H302" />
-              <rect class="error-visual__node" x="24" y="30" width="64" height="36" rx="6" />
-              <rect class="error-visual__node" x="136" y="30" width="64" height="36" rx="6" />
+            <svg
+              class="error-visual__route"
+              viewBox="0 0 360 136"
+            >
+              <path
+                class="error-visual__route-line"
+                d="M56 48 H148 C174 48 174 88 200 88 H302"
+              />
+              <rect
+                class="error-visual__node"
+                x="24"
+                y="30"
+                width="64"
+                height="36"
+                rx="6"
+              />
+              <rect
+                class="error-visual__node"
+                x="136"
+                y="30"
+                width="64"
+                height="36"
+                rx="6"
+              />
               <rect
                 class="error-visual__node error-visual__node--muted"
                 x="272"
@@ -44,7 +79,10 @@
                 height="36"
                 rx="6"
               />
-              <path class="error-visual__break" d="M224 76 L246 98 M246 76 L224 98" />
+              <path
+                class="error-visual__break"
+                d="M224 76 L246 98 M246 76 L224 98"
+              />
             </svg>
 
             <div class="error-visual__meta">
@@ -71,12 +109,13 @@ interface ErrorPageProps {
 }
 
 const props = defineProps<ErrorPageProps>();
+const { t } = useI18n();
 
 // 使用系统色生成异常页视觉，避免固定插画破坏主题一致性
 const visualIcon = computed<Component>(() => (props.variant === "locked" ? Lock : Search));
 const visualName = computed(() => (props.variant === "locked" ? "ACCESS CONTROL" : "ROUTE TRACE"));
 const visualMeta = computed(() =>
-  props.variant === "locked" ? "权限校验未通过" : "目标路由未匹配"
+  props.variant === "locked" ? t("error.unauthorized.signal") : t("error.notFound.signal")
 );
 </script>
 

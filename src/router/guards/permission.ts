@@ -1,5 +1,6 @@
 import NProgress from "@/plugins/nprogress";
 import router from "@/router";
+import { hasRouteAccess } from "@/router/access";
 import { usePermissionStore, useUserStore } from "@/stores";
 
 /**
@@ -39,6 +40,13 @@ export function setupPermissionGuard() {
 
       if (!permissionStore.isRouteGenerated) {
         await permissionStore.generateRoutes();
+      }
+
+      const canAccessRoute = to.matched.every((record) =>
+        hasRouteAccess(record.meta, userStore.userInfo)
+      );
+      if (!canAccessRoute) {
+        return { path: "/401", replace: true };
       }
 
       // 路由 404 检查

@@ -3,7 +3,6 @@ import globals from "globals";
 import * as typescriptEslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
 import vueParser from "vue-eslint-parser";
-import configPrettier from "eslint-config-prettier";
 import fs from "node:fs";
 
 let autoImportGlobals: Record<string, "readonly"> = {};
@@ -98,20 +97,9 @@ export default [
           order: ["template", "script", "style"],
         },
       ],
-      "vue/html-self-closing": [
-        "error",
-        {
-          html: {
-            void: "always",
-            normal: "never",
-            component: "always",
-          },
-          svg: "always",
-          math: "always",
-        },
-      ],
+      "vue/html-self-closing": "off",
       "vue/component-name-in-template-casing": ["error", "PascalCase"],
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "off",
     },
   },
 
@@ -127,7 +115,7 @@ export default [
       },
     },
     rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-empty-function": "off",
       "@typescript-eslint/no-empty-object-type": "off",
       "@typescript-eslint/ban-ts-comment": "off",
@@ -169,11 +157,4 @@ export default [
     },
   },
 
-  {
-    rules: {
-      ...configPrettier.rules,
-      "arrow-body-style": "off",
-      "prefer-arrow-callback": "off",
-    },
-  },
 ];

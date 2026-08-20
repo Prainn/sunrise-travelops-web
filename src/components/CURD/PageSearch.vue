@@ -1,8 +1,16 @@
 <template>
   <div v-show="visible">
     <el-card v-bind="cardAttrs">
-      <el-form ref="queryFormRef" :model="queryParams" v-bind="formAttrs" :class="isGrid">
-        <template v-for="(item, index) in formItems" :key="item.prop">
+      <el-form
+        ref="queryFormRef"
+        :model="queryParams"
+        v-bind="formAttrs"
+        :class="isGrid"
+      >
+        <template
+          v-for="(item, index) in formItems"
+          :key="item.prop"
+        >
           <el-form-item
             v-show="isExpand ? true : index < showNumber"
             :label="item?.label"
@@ -12,10 +20,16 @@
             <template #label>
               <span class="flex-y-center">
                 {{ item?.label || "" }}
-                <el-tooltip v-if="item?.tips" v-bind="getTooltipProps(item.tips)">
+                <el-tooltip
+                  v-if="item?.tips"
+                  v-bind="getTooltipProps(item.tips)"
+                >
                   <QuestionFilled class="w-4 h-4 mx-1" />
                 </el-tooltip>
-                <span v-if="searchConfig.colon" class="ml-0.5">:</span>
+                <span
+                  v-if="searchConfig.colon"
+                  class="ml-0.5"
+                >:</span>
               </span>
             </template>
 
@@ -41,8 +55,14 @@
               v-on="item.events || {}"
             >
               <template v-if="item.type === 'select'">
-                <template v-for="opt in item.options" :key="opt.value">
-                  <el-option :label="opt.label" :value="opt.value" />
+                <template
+                  v-for="opt in item.options"
+                  :key="opt.value"
+                >
+                  <el-option
+                    :label="opt.label"
+                    :value="opt.value"
+                  />
                 </template>
               </template>
             </component>
@@ -50,13 +70,32 @@
         </template>
 
         <el-form-item :class="{ 'col-[auto/-1] justify-self-end': searchConfig?.grid === 'right' }">
-          <el-button icon="search" type="primary" @click="handleQuery">搜索</el-button>
-          <el-button icon="refresh" @click="handleReset">重置</el-button>
+          <el-button
+            icon="search"
+            type="primary"
+            @click="handleQuery"
+          >
+            {{ t("common.search") }}
+          </el-button>
+          <el-button
+            icon="refresh"
+            @click="handleReset"
+          >
+            {{ t("common.reset") }}
+          </el-button>
           <!-- 展开/收起 -->
           <template v-if="isExpandable && formItems.length > showNumber">
-            <el-link class="ml-3" type="primary" underline="never" @click="isExpand = !isExpand">
-              {{ isExpand ? "收起" : "展开" }}
-              <component :is="isExpand ? ArrowUp : ArrowDown" class="w-4 h-4 ml-2" />
+            <el-link
+              class="ml-3"
+              type="primary"
+              underline="never"
+              @click="isExpand = !isExpand"
+            >
+              {{ isExpand ? t("common.collapse") : t("common.expand") }}
+              <component
+                :is="isExpand ? ArrowUp : ArrowDown"
+                class="w-4 h-4 ml-2"
+              />
             </el-link>
           </template>
         </el-form-item>
@@ -73,6 +112,7 @@ import InputTag from "@/components/InputTag/index.vue";
 
 // 定义接收的属性
 const props = defineProps<{ searchConfig: ISearchConfig }>();
+const { t } = useI18n();
 // 自定义事件
 const emit = defineEmits<{
   queryClick: [queryParams: IObject];

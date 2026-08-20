@@ -1,14 +1,25 @@
 <template>
   <ErrorPage
     status-code="404"
-    label="页面未找到"
-    title="抱歉，访问的页面不存在"
-    description="页面地址可能已变更、被移除，或者当前账号尚未加载对应路由"
+    :label="$t('error.notFound.label')"
+    :title="$t('error.notFound.title')"
+    :description="$t('error.notFound.description')"
     variant="missing"
   >
     <template #actions>
-      <el-button type="primary" :icon="House" @click="goHome">返回首页</el-button>
-      <el-button :icon="Refresh" @click="reload">重新加载</el-button>
+      <el-button
+        type="primary"
+        :icon="House"
+        @click="goHome"
+      >
+        {{ $t("common.backHome") }}
+      </el-button>
+      <el-button
+        :icon="Refresh"
+        @click="reload"
+      >
+        {{ $t("common.reload") }}
+      </el-button>
     </template>
   </ErrorPage>
 </template>

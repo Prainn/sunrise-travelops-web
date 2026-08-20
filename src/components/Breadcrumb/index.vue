@@ -1,6 +1,9 @@
 <template>
   <el-breadcrumb class="flex-y-center">
-    <el-breadcrumb-item v-for="(item, index) in breadcrumbs" :key="item.path">
+    <el-breadcrumb-item
+      v-for="(item, index) in breadcrumbs"
+      :key="item.path"
+    >
       <!-- 末级或不可跳转的节点显示为纯文本，其余可点击 -->
       <span
         v-if="item.redirect === 'noredirect' || index === breadcrumbs.length - 1"
@@ -8,7 +11,10 @@
       >
         {{ translateRouteTitle(item.meta.title ?? "") }}
       </span>
-      <a v-else @click.prevent="handleLink(item)">
+      <a
+        v-else
+        @click.prevent="handleLink(item)"
+      >
         {{ translateRouteTitle(item.meta.title ?? "") }}
       </a>
     </el-breadcrumb-item>

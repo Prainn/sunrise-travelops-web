@@ -1,6 +1,12 @@
 <template>
-  <el-dropdown trigger="click" @command="handleLanguageChange">
-    <div class="i-svg:language" :class="size" />
+  <el-dropdown
+    trigger="click"
+    @command="handleLanguageChange"
+  >
+    <div
+      class="i-svg:language"
+      :class="size"
+    />
     <template #dropdown>
       <el-dropdown-menu>
         <el-dropdown-item
@@ -27,13 +33,12 @@ defineProps({
   },
 });
 
-const langOptions = [
-  { label: "中文", value: LanguageEnum.ZH_CN },
-  { label: "English", value: LanguageEnum.EN },
-];
-
 const appStore = useAppStore();
 const { locale, t } = useI18n();
+const langOptions = computed(() => [
+  { label: t("language.chinese"), value: LanguageEnum.ZH_CN },
+  { label: t("language.english"), value: LanguageEnum.EN },
+]);
 
 /**
  * 处理语言切换

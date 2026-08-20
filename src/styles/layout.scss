@@ -1,6 +1,5 @@
 @use "./variables" as *;
 
-/* stylelint-disable no-descending-specificity */
 .layout-root,
 .el-menu--popup {
   .el-menu-item,
@@ -161,4 +160,3 @@ html.sidebar-color-blue .layout-root.layout--mix .layout-sidebar .el-menu {
     background-color: var(--menu-active-bg) !important;
   }
 }
-/* stylelint-enable no-descending-specificity */

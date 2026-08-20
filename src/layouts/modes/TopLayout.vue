@@ -1,12 +1,22 @@
 <template>
   <BaseLayout>
-    <div v-show="!appStore.contentFullscreen" class="layout-header">
+    <div
+      v-show="!appStore.contentFullscreen"
+      class="layout-header"
+    >
       <div class="layout-header__left">
-        <div v-if="showLogo" class="layout-header__logo">
+        <div
+          v-if="showLogo"
+          class="layout-header__logo"
+        >
           <LayoutLogo :collapse="isLogoCollapsed" />
         </div>
         <div class="layout-header__menu">
-          <LayoutSidebar :data="topMenuItems" menu-mode="horizontal" base-path="" />
+          <LayoutSidebar
+            :data="topMenuItems"
+            menu-mode="horizontal"
+            base-path=""
+          />
         </div>
       </div>
       <div class="layout-header__right">

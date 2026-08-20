@@ -1,6 +1,9 @@
 <template>
   <el-scrollbar>
-    <div :class="{ 'is-hidden': hidden }" class="pagination-container">
+    <div
+      :class="{ 'is-hidden': hidden }"
+      class="pagination-container"
+    >
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"

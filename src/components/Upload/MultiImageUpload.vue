@@ -15,7 +15,10 @@
     <el-icon><Plus /></el-icon>
     <template #file="{ file }">
       <div style="width: 100%">
-        <img class="el-upload-list__item-thumbnail" :src="file.url" />
+        <img
+          class="el-upload-list__item-thumbnail"
+          :src="file.url"
+        />
         <span class="el-upload-list__item-actions">
           <!-- 预览 -->
           <span @click="handlePreviewImage(file.url!)">
@@ -87,6 +90,7 @@ const previewVisible = ref(false); // 是否显示预览
 const previewImageIndex = ref(0); // 预览图片的索引
 
 const modelValue = defineModel<string[]>({ default: () => [] });
+const { t } = useI18n();
 
 const fileList = ref<UploadUserFile[]>([]);
 
@@ -126,13 +130,13 @@ function handleBeforeUpload(file: UploadRawFile) {
   });
 
   if (!isValidType) {
-    ElMessage.warning("上传文件的格式不正确，仅支持 " + props.accept);
+    ElMessage.warning(t("upload.invalidFormat", { types: props.accept }));
     return false;
   }
 
   // 限制文件大小
   if (file.size > props.maxFileSize * 1024 * 1024) {
-    ElMessage.warning("上传图片不能大于" + props.maxFileSize + "M");
+    ElMessage.warning(t("upload.imageTooLarge", { size: props.maxFileSize }));
     return false;
   }
   return true;
@@ -168,14 +172,14 @@ function handleUpload(options: UploadRequestOptions) {
  * 上传文件超出限制
  */
 function handleExceed() {
-  ElMessage.warning("最多只能上传 " + props.limit + " 张图片");
+  ElMessage.warning(t("upload.maxImages", { count: props.limit }));
 }
 
 /**
  * 上传成功回调
  */
 const handleSuccess = (fileInfo: FileInfo, uploadFile: UploadUserFile) => {
-  ElMessage.success("上传成功");
+  ElMessage.success(t("upload.success"));
   const index = fileList.value.findIndex((file) => file.uid === uploadFile.uid);
   if (index !== -1) {
     fileList.value[index].url = fileInfo.url;
@@ -191,7 +195,7 @@ const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
 const handleError = (error: unknown) => {
-  ElMessage.error("上传失败: " + getErrorMessage(error));
+  ElMessage.error(t("upload.failedWithReason", { reason: getErrorMessage(error) }));
 };
 
 /**

@@ -19,7 +19,11 @@
         @keyup.enter.stop.prevent="handleInputConfirm"
         @blur.stop.prevent="handleInputConfirm"
       />
-      <el-button v-else v-bind="config.buttonAttrs" @click="showInput">
+      <el-button
+        v-else
+        v-bind="config.buttonAttrs"
+        @click="showInput"
+      >
         {{ config.buttonAttrs.btnText ? config.buttonAttrs.btnText : "+ New Tag" }}
       </el-button>
     </div>

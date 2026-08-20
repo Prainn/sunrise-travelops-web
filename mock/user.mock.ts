@@ -2,69 +2,6 @@ import { defineMock } from "./base";
 
 export default defineMock([
   {
-    url: "users/me",
-    method: ["GET"],
-    body: {
-      code: "00000",
-      data: {
-        userId: "2",
-        username: "admin",
-        nickname: "系统管理员",
-        avatar: "https://foruda.gitee.com/images/1723603502796844527/03cdca2a_716974.gif",
-        roles: ["ADMIN"],
-        perms: [
-          "sys:user:list",
-          "sys:user:create",
-          "sys:user:update",
-          "sys:user:delete",
-          "sys:user:import",
-          "sys:user:export",
-          "sys:user:reset-password",
-
-          "sys:role:list",
-          "sys:role:create",
-          "sys:role:update",
-          "sys:role:delete",
-
-          "sys:dept:list",
-          "sys:dept:create",
-          "sys:dept:update",
-          "sys:dept:delete",
-
-          "sys:menu:list",
-          "sys:menu:create",
-          "sys:menu:update",
-          "sys:menu:delete",
-
-          "sys:dict:list",
-          "sys:dict:create",
-          "sys:dict:update",
-          "sys:dict:delete",
-
-          "sys:dict-item:list",
-          "sys:dict-item:create",
-          "sys:dict-item:update",
-          "sys:dict-item:delete",
-
-          "sys:notice:list",
-          "sys:notice:create",
-          "sys:notice:update",
-          "sys:notice:delete",
-          "sys:notice:revoke",
-          "sys:notice:publish",
-
-          "sys:config:list",
-          "sys:config:create",
-          "sys:config:update",
-          "sys:config:delete",
-          "sys:config:refresh",
-        ],
-      },
-      msg: "一切ok",
-    },
-  },
-
-  {
     url: "users",
     method: ["GET"],
     body: {

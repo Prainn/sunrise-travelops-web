@@ -20,10 +20,17 @@
           @contextmenu.prevent="openContextMenu(tag, $event)"
         >
           <template v-if="tag.icon">
-            <el-icon v-if="isEpIcon(tag.icon)" :size="14">
+            <el-icon
+              v-if="isEpIcon(tag.icon)"
+              :size="14"
+            >
               <component :is="toEpIconName(tag.icon)" />
             </el-icon>
-            <span v-else class="layout-tabs__item-icon" :class="`i-svg:${tag.icon}`" />
+            <span
+              v-else
+              class="layout-tabs__item-icon"
+              :class="`i-svg:${tag.icon}`"
+            />
           </template>
           <span class="layout-tabs__item-text">
             {{ translateRouteTitle(tag.title) }}
@@ -43,51 +50,83 @@
       <button
         type="button"
         class="layout-tabs__action"
-        aria-label="刷新当前"
-        title="刷新当前"
+        :aria-label="$t('tags.refreshCurrent')"
+        :title="$t('tags.refreshCurrent')"
         @click="refreshSelectedTag(currentTag)"
       >
-        <el-icon :size="16"><Refresh /></el-icon>
+        <el-icon :size="16">
+          <Refresh />
+        </el-icon>
       </button>
       <button
         type="button"
         class="layout-tabs__action"
-        aria-label="内容全屏"
-        title="内容全屏"
+        :aria-label="$t('tags.contentFullscreen')"
+        :title="$t('tags.contentFullscreen')"
         @click="appStore.toggleContentFullscreen()"
       >
-        <div v-if="!appStore.contentFullscreen" class="i-svg:fullscreen icon-16" />
-        <div v-else class="i-svg:fullscreen-exit icon-16" />
+        <div
+          v-if="!appStore.contentFullscreen"
+          class="i-svg:fullscreen icon-16"
+        />
+        <div
+          v-else
+          class="i-svg:fullscreen-exit icon-16"
+        />
       </button>
-      <el-dropdown trigger="click" @command="handleActionCommand">
-        <button type="button" class="layout-tabs__action" aria-label="页签操作" title="页签操作">
-          <el-icon :size="16"><ArrowDown /></el-icon>
+      <el-dropdown
+        trigger="click"
+        @command="handleActionCommand"
+      >
+        <button
+          type="button"
+          class="layout-tabs__action"
+          :aria-label="$t('tags.actions')"
+          :title="$t('tags.actions')"
+        >
+          <el-icon :size="16">
+            <ArrowDown />
+          </el-icon>
         </button>
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="refresh">
-              <el-icon :size="14" class="icon-14"><Refresh /></el-icon>
-              <span>刷新当前</span>
+              <el-icon
+                :size="14"
+                class="icon-14"
+              >
+                <Refresh />
+              </el-icon>
+              <span>{{ $t("tags.refreshCurrent") }}</span>
             </el-dropdown-item>
-            <el-dropdown-item v-if="currentTag && !currentTag.affix" command="closeCurrent">
+            <el-dropdown-item
+              v-if="currentTag && !currentTag.affix"
+              command="closeCurrent"
+            >
               <div class="i-svg:close icon-14" />
-              <span>关闭当前</span>
+              <span>{{ $t("tags.closeCurrent") }}</span>
             </el-dropdown-item>
-            <el-dropdown-item divided command="closeOtherTags">
+            <el-dropdown-item
+              divided
+              command="closeOtherTags"
+            >
               <div class="i-svg:close_other icon-14" />
-              <span>关闭其它</span>
+              <span>{{ $t("tags.closeOthers") }}</span>
             </el-dropdown-item>
             <el-dropdown-item command="closeLeftTags">
               <div class="i-svg:close_left icon-14" />
-              <span>关闭左侧</span>
+              <span>{{ $t("tags.closeLeft") }}</span>
             </el-dropdown-item>
             <el-dropdown-item command="closeRightTags">
               <div class="i-svg:close_right icon-14" />
-              <span>关闭右侧</span>
+              <span>{{ $t("tags.closeRight") }}</span>
             </el-dropdown-item>
-            <el-dropdown-item divided command="closeAllTags">
+            <el-dropdown-item
+              divided
+              command="closeAllTags"
+            >
               <div class="i-svg:close_all icon-14" />
-              <span>关闭所有</span>
+              <span>{{ $t("tags.closeAll") }}</span>
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -95,10 +134,19 @@
     </div>
 
     <Teleport to="body">
-      <ul v-show="contextMenu.visible" class="layout-tabs-menu" :style="contextMenuStyle">
+      <ul
+        v-show="contextMenu.visible"
+        class="layout-tabs-menu"
+        :style="contextMenuStyle"
+      >
         <li @click="refreshSelectedTag(selectedTag)">
-          <el-icon :size="16" class="layout-tabs-menu__icon"><Refresh /></el-icon>
-          <span>刷新</span>
+          <el-icon
+            :size="16"
+            class="layout-tabs-menu__icon"
+          >
+            <Refresh />
+          </el-icon>
+          <span>{{ $t("common.refresh") }}</span>
         </li>
         <li
           v-if="!selectedTag?.affix"
@@ -106,25 +154,31 @@
           @click="closeSelectedTag(selectedTag)"
         >
           <div class="i-svg:close layout-tabs-menu__icon" />
-          <span>关闭</span>
+          <span>{{ $t("common.close") }}</span>
         </li>
         <li class="layout-tabs-menu__divider" />
         <li @click="closeOtherTags">
           <div class="i-svg:close_other layout-tabs-menu__icon" />
-          <span>关闭其它</span>
+          <span>{{ $t("tags.closeOthers") }}</span>
         </li>
-        <li v-if="!isFirstView" @click="closeLeftTags">
+        <li
+          v-if="!isFirstView"
+          @click="closeLeftTags"
+        >
           <div class="i-svg:close_left layout-tabs-menu__icon" />
-          <span>关闭左侧</span>
+          <span>{{ $t("tags.closeLeft") }}</span>
         </li>
-        <li v-if="!isLastView" @click="closeRightTags">
+        <li
+          v-if="!isLastView"
+          @click="closeRightTags"
+        >
           <div class="i-svg:close_right layout-tabs-menu__icon" />
-          <span>关闭右侧</span>
+          <span>{{ $t("tags.closeRight") }}</span>
         </li>
         <li class="layout-tabs-menu__divider" />
         <li @click="closeAllTags(selectedTag)">
           <div class="i-svg:close_all layout-tabs-menu__icon" />
-          <span>关闭所有</span>
+          <span>{{ $t("tags.closeAll") }}</span>
         </li>
       </ul>
     </Teleport>

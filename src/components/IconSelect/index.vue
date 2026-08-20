@@ -1,10 +1,22 @@
 <template>
-  <div ref="iconSelectRef" :style="{ width: props.width }">
-    <el-popover :visible="popoverVisible" :width="props.width" placement="bottom-end">
+  <div
+    ref="iconSelectRef"
+    :style="{ width: props.width }"
+  >
+    <el-popover
+      :visible="popoverVisible"
+      :width="props.width"
+      placement="bottom-end"
+    >
       <template #reference>
         <div @click="popoverVisible = !popoverVisible">
           <slot>
-            <el-input v-model="selectedIcon" readonly placeholder="点击选择图标" class="reference">
+            <el-input
+              v-model="selectedIcon"
+              readonly
+              :placeholder="t('iconSelect.choose')"
+              class="reference"
+            >
               <template #prepend>
                 <!-- 根据图标类型展示 -->
                 <el-icon v-if="isElementIcon">
@@ -40,9 +52,20 @@
 
       <!-- 图标选择弹窗 -->
       <div ref="popoverContentRef">
-        <el-input v-model="filterText" placeholder="搜索图标" clearable @input="filterIcons" />
-        <el-tabs v-model="activeTab" @tab-click="handleTabClick">
-          <el-tab-pane label="SVG 图标" name="svg">
+        <el-input
+          v-model="filterText"
+          :placeholder="t('iconSelect.search')"
+          clearable
+          @input="filterIcons"
+        />
+        <el-tabs
+          v-model="activeTab"
+          @tab-click="handleTabClick"
+        >
+          <el-tab-pane
+            :label="t('iconSelect.svgIcons')"
+            name="svg"
+          >
             <el-scrollbar height="300px">
               <ul class="icon-grid">
                 <li
@@ -51,14 +74,21 @@
                   class="icon-grid-item"
                   @click="selectIcon(icon)"
                 >
-                  <el-tooltip :content="icon" placement="bottom" effect="light">
+                  <el-tooltip
+                    :content="icon"
+                    placement="bottom"
+                    effect="light"
+                  >
                     <div :class="`i-svg:${icon}`" />
                   </el-tooltip>
                 </li>
               </ul>
             </el-scrollbar>
           </el-tab-pane>
-          <el-tab-pane label="Element 图标" name="element">
+          <el-tab-pane
+            :label="t('iconSelect.elementIcons')"
+            name="element"
+          >
             <el-scrollbar height="300px">
               <ul class="icon-grid">
                 <li
@@ -95,6 +125,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["update:modelValue"]);
+const { t } = useI18n();
 
 const iconSelectRef = ref();
 const popoverContentRef = ref();

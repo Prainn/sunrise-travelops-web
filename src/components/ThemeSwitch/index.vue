@@ -1,5 +1,8 @@
 <template>
-  <el-dropdown trigger="click" @command="handleDarkChange">
+  <el-dropdown
+    trigger="click"
+    @command="handleDarkChange"
+  >
     <el-icon :size="20">
       <component :is="currentThemeIcon" />
     </el-icon>

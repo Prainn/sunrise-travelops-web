@@ -1,6 +1,7 @@
 import vue from "@vitejs/plugin-vue";
 import type { PluginOption } from "vite";
 import { type ConfigEnv, type UserConfig, loadEnv, defineConfig } from "vite";
+import VueDevTools from "vite-plugin-vue-devtools";
 
 import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
@@ -53,6 +54,14 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     },
     plugins: [
       vue(),
+      ...(mode === "development"
+        ? [
+            VueDevTools({
+              componentInspector: true,
+              launchEditor: "code",
+            }),
+          ]
+        : []),
       ...(env.VITE_MOCK_DEV_SERVER === "true" ? [mockDevServerPlugin()] : []),
       UnoCSS(),
       // API 自动导入
@@ -95,7 +104,6 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         "pinia",
         "axios",
         "@vueuse/core",
-        "codemirror-editor-vue3",
         "exceljs",
         "path-to-regexp",
         "echarts/core",
@@ -104,9 +112,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         "echarts/components",
         "vue-i18n",
         "nprogress",
-        "sortablejs",
         "qs",
-        "vxe-table",
         "path-browserify",
         "lodash-es",
         "@element-plus/icons-vue",

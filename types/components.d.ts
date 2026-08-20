@@ -8,7 +8,6 @@
 
 export {};
 
-/* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
     AppLink: typeof import('./../src/components/AppLink/index.vue')['default']

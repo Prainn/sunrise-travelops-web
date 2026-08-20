@@ -17,5 +17,7 @@ declare module "vue-router" {
     params?: Record<string, unknown>;
     externalUrl?: string;
     roles?: string[];
+    perms?: string[];
+    resourceType?: "supplier" | "hotel" | "restaurant" | "attraction" | "transport" | "guide";
   }
 }

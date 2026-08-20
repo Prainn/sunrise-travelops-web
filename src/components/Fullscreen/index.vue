@@ -1,5 +1,8 @@
 <template>
-  <div class="fullscreen-trigger" @click="toggle">
+  <div
+    class="fullscreen-trigger"
+    @click="toggle"
+  >
     <div :class="`i-svg:` + (isFullscreen ? 'fullscreen-exit' : 'fullscreen')" />
   </div>
 </template>

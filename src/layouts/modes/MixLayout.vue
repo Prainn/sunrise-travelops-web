@@ -1,8 +1,14 @@
 <template>
   <BaseLayout :show-overlay="false">
-    <div v-show="!appStore.contentFullscreen" class="layout-header">
+    <div
+      v-show="!appStore.contentFullscreen"
+      class="layout-header"
+    >
       <div class="layout-header__content">
-        <div v-if="showLogo" class="layout-header__logo">
+        <div
+          v-if="showLogo"
+          class="layout-header__logo"
+        >
           <LayoutLogo :collapse="isLogoCollapsed" />
         </div>
 
@@ -15,10 +21,17 @@
             :active-text-color="useMenuColors ? variables['menu-active-text'] : undefined"
             @select="handleTopMenuSelect"
           >
-            <el-menu-item v-for="item in topMenuItems" :key="item.path" :index="item.path">
+            <el-menu-item
+              v-for="item in topMenuItems"
+              :key="item.path"
+              :index="item.path"
+            >
               <template v-if="item.meta">
                 <LayoutMenuIcon :icon="item.meta.icon" />
-                <span v-if="item.meta.title" class="ml-1">
+                <span
+                  v-if="item.meta.title"
+                  class="ml-1"
+                >
                   {{ translateRouteTitle(item.meta.title) }}
                 </span>
               </template>
@@ -56,7 +69,10 @@
             />
           </el-menu>
         </el-scrollbar>
-        <div class="layout-sidebar__toggle" @click="toggleSidebar">
+        <div
+          class="layout-sidebar__toggle"
+          @click="toggleSidebar"
+        >
           <div class="i-svg:arrow-left-right layout-sidebar__toggle-icon" />
         </div>
       </div>

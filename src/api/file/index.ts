@@ -1,4 +1,5 @@
 import request from "@/utils/request";
+import { translate } from "@/lang/utils";
 import type { FileInfo } from "./types";
 
 const FileAPI = {
@@ -50,7 +51,7 @@ const FileAPI = {
       const a = document.createElement("a");
       const urlObject = window.URL.createObjectURL(blob);
       a.href = urlObject;
-      a.download = fileName || "下载文件";
+      a.download = fileName || translate("download.defaultFileName");
       a.click();
       window.URL.revokeObjectURL(urlObject);
     });

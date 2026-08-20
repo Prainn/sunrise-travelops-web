@@ -41,7 +41,7 @@ export interface UserItem {
   /** 用户头像地址 */
   avatar?: string;
   /** 创建时间 */
-  createTime?: Date;
+  createTime?: string;
   /** 部门名称 */
   deptName?: string;
   /** 用户邮箱 */

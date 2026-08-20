@@ -22,7 +22,10 @@
       <el-dropdown trigger="click">
         <div class="layout-user">
           <div class="layout-user__avatar">
-            <img :src="userStore.userInfo.avatar" class="layout-user__avatar-img" />
+            <img
+              :src="userStore.userInfo.avatar"
+              class="layout-user__avatar-img"
+            />
           </div>
           <span class="layout-user__name">{{ userStore.userInfo.username }}</span>
         </div>
@@ -31,7 +34,10 @@
             <el-dropdown-item @click="handleProfileClick">
               {{ t("navbar.profile") }}
             </el-dropdown-item>
-            <el-dropdown-item divided @click="logout">
+            <el-dropdown-item
+              divided
+              @click="logout"
+            >
               {{ t("navbar.logout") }}
             </el-dropdown-item>
           </el-dropdown-menu>
@@ -39,7 +45,11 @@
       </el-dropdown>
     </div>
 
-    <div v-if="defaults.showSettings" class="layout-toolbar__item" @click="handleSettingsClick">
+    <div
+      v-if="defaults.showSettings"
+      class="layout-toolbar__item"
+      @click="handleSettingsClick"
+    >
       <div class="i-svg:setting" />
     </div>
   </div>
@@ -93,9 +103,9 @@ const toolbarToneClass = computed(() => {
  * 退出登录
  */
 function logout() {
-  ElMessageBox.confirm("确定注销并退出系统吗？", "提示", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
+  ElMessageBox.confirm(t("navbar.logoutConfirm"), t("common.tip"), {
+    confirmButtonText: t("common.confirm"),
+    cancelButtonText: t("common.cancel"),
     type: "warning",
     lockScroll: false,
   }).then(() => {

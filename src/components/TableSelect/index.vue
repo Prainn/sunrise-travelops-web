@@ -1,5 +1,8 @@
 <template>
-  <div ref="tableSelectRef" :style="'width:' + width">
+  <div
+    ref="tableSelectRef"
+    :style="'width:' + width"
+  >
     <el-popover
       :visible="popoverVisible"
       :width="popoverWidth"
@@ -33,9 +36,19 @@
       <!-- 弹出框内 -->
       <div ref="popoverContentRef">
         <!-- 表单 -->
-        <el-form ref="formRef" :model="queryParams" :inline="true">
-          <template v-for="item in selectConfig.formItems" :key="item.prop">
-            <el-form-item :label="item.label" :prop="item.prop">
+        <el-form
+          ref="formRef"
+          :model="queryParams"
+          :inline="true"
+        >
+          <template
+            v-for="item in selectConfig.formItems"
+            :key="item.prop"
+          >
+            <el-form-item
+              :label="item.label"
+              :prop="item.prop"
+            >
               <!-- Input 输入 -->
               <template v-if="item.type === 'input'">
                 <template v-if="item.attrs?.type === 'number'">
@@ -55,19 +68,34 @@
               </template>
               <!-- Select 选择 -->
               <template v-else-if="item.type === 'select'">
-                <el-select v-model="queryParams[item.prop]" v-bind="item.attrs">
-                  <template v-for="option in item.options" :key="option.value">
-                    <el-option :label="option.label" :value="option.value" />
+                <el-select
+                  v-model="queryParams[item.prop]"
+                  v-bind="item.attrs"
+                >
+                  <template
+                    v-for="option in item.options"
+                    :key="option.value"
+                  >
+                    <el-option
+                      :label="option.label"
+                      :value="option.value"
+                    />
                   </template>
                 </el-select>
               </template>
               <!-- TreeSelect 树形选择 -->
               <template v-else-if="item.type === 'tree-select'">
-                <el-tree-select v-model="queryParams[item.prop]" v-bind="item.attrs" />
+                <el-tree-select
+                  v-model="queryParams[item.prop]"
+                  v-bind="item.attrs"
+                />
               </template>
               <!-- DatePicker 日期选择 -->
               <template v-else-if="item.type === 'date-picker'">
-                <el-date-picker v-model="queryParams[item.prop]" v-bind="item.attrs" />
+                <el-date-picker
+                  v-model="queryParams[item.prop]"
+                  v-bind="item.attrs"
+                />
               </template>
               <!-- Input 输入 -->
               <template v-else>
@@ -89,8 +117,19 @@
             </el-form-item>
           </template>
           <el-form-item>
-            <el-button type="primary" icon="search" @click="handleQuery">搜索</el-button>
-            <el-button icon="refresh" @click="handleReset">重置</el-button>
+            <el-button
+              type="primary"
+              icon="search"
+              @click="handleQuery"
+            >
+              {{ t("common.search") }}
+            </el-button>
+            <el-button
+              icon="refresh"
+              @click="handleReset"
+            >
+              {{ t("common.reset") }}
+            </el-button>
           </el-form-item>
         </el-form>
         <!-- 列表 -->
@@ -106,12 +145,19 @@
           @select="handleSelect"
           @select-all="handleSelectAll"
         >
-          <template v-for="col in selectConfig.tableColumns" :key="col.prop">
+          <template
+            v-for="col in selectConfig.tableColumns"
+            :key="col.prop"
+          >
             <!-- 自定义 -->
             <template v-if="col.templet === 'custom'">
               <el-table-column v-bind="col">
                 <template #default="scope">
-                  <slot :name="col.slotName ?? col.prop" :prop="col.prop" v-bind="scope" />
+                  <slot
+                    :name="col.slotName ?? col.prop"
+                    :prop="col.prop"
+                    v-bind="scope"
+                  />
                 </template>
               </el-table-column>
             </template>
@@ -130,11 +176,25 @@
           @pagination="handlePagination"
         />
         <div class="feedback">
-          <el-button type="primary" size="small" @click="handleConfirm">
+          <el-button
+            type="primary"
+            size="small"
+            @click="handleConfirm"
+          >
             {{ confirmText }}
           </el-button>
-          <el-button size="small" @click="handleClear">清空</el-button>
-          <el-button size="small" @click="handleClose">关闭</el-button>
+          <el-button
+            size="small"
+            @click="handleClear"
+          >
+            {{ t("common.clear") }}
+          </el-button>
+          <el-button
+            size="small"
+            @click="handleClose"
+          >
+            {{ t("common.close") }}
+          </el-button>
         </div>
       </div>
     </el-popover>
@@ -200,6 +260,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   confirmClick: [selection: any[]];
 }>();
+const { t } = useI18n();
 
 // 主键
 const pk = props.selectConfig.pk ?? "id";
@@ -208,7 +269,9 @@ const isMultiple = props.selectConfig.multiple === true;
 // 宽度
 const width = props.selectConfig.width ?? "100%";
 // 占位符
-const placeholder = props.selectConfig.placeholder ?? "请选择";
+const placeholder = computed(
+  () => props.selectConfig.placeholder || t("common.selectPlaceholder")
+);
 // 是否显示弹出框
 const popoverVisible = ref(false);
 // 加载状态
@@ -282,7 +345,9 @@ for (const item of props.selectConfig.tableColumns) {
 // 选择
 const selectedItems = ref<IObject[]>([]);
 const confirmText = computed(() => {
-  return selectedItems.value.length > 0 ? `已选${selectedItems.value.length}条` : "请选择";
+  return selectedItems.value.length > 0
+    ? t("tableSelect.selectedCount", { count: selectedItems.value.length })
+    : t("tableSelect.select");
 });
 function handleSelect(selection: any[]) {
   if (isMultiple || selection.length === 0) {
@@ -318,7 +383,7 @@ function handleShow() {
 // 确定
 function handleConfirm() {
   if (selectedItems.value.length === 0) {
-    ElMessage.error("请选择数据");
+    ElMessage.error(t("tableSelect.selectData"));
     return;
   }
   popoverVisible.value = false;

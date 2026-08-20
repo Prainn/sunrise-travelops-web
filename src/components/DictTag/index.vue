@@ -1,6 +1,11 @@
 <template>
   <template v-if="tagType">
-    <el-tag :type="tagType" :size="tagSize">{{ label }}</el-tag>
+    <el-tag
+      :type="tagType"
+      :size="tagSize"
+    >
+      {{ label }}
+    </el-tag>
   </template>
   <template v-else>
     <span>{{ label }}</span>

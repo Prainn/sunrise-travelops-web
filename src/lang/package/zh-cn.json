@@ -1,132 +1,269 @@
 {
   "route": {
     "dashboard": "首页",
-    "document": "项目文档"
+    "profile": "个人中心",
+    "systemManagement": "系统管理",
+    "systemDictionary": "系统分类",
+    "dictionaryOptions": "分类选项",
+    "userList": "用户管理",
+    "tourismResources": "旅游资源库",
+    "suppliers": "供应商",
+    "hotelsAndRoomTypes": "酒店与房型",
+    "restaurants": "餐厅",
+    "attractions": "景点",
+    "vehiclesAndDrivers": "车辆与司机",
+    "guides": "导游"
+  },
+  "common": {
+    "actions": "操作", "all": "全部", "backHome": "返回首页", "bind": "绑定",
+    "cancel": "取消", "change": "更换", "clear": "清空", "close": "关闭",
+    "collapse": "收起", "confirm": "确定", "create": "新增", "createSuccess": "新增成功",
+    "createdAt": "创建时间", "delete": "删除", "deleteCancelled": "已取消删除",
+    "deleteConfirm": "确认删除？", "deleteSelectedConfirm": "确定删除选中的数据吗？",
+    "deleteSuccess": "删除成功", "disabled": "禁用", "edit": "编辑", "enabled": "启用",
+    "endDate": "结束日期", "expand": "展开", "export": "导出", "fullscreen": "全屏",
+    "goBack": "返回上一页", "import": "导入", "keywords": "关键字",
+    "navigationFailed": "页面跳转失败", "no": "否", "normal": "正常",
+    "notSet": "未设置", "operationSuccess": "{operation}成功", "refresh": "刷新",
+    "reload": "重新加载", "remark": "备注", "remarkPlaceholder": "请输入备注",
+    "reset": "重置", "routeNotRegistered": "目标页面未注册", "saveFailed": "保存失败",
+    "search": "搜索", "select": "选择", "selectDeleteItem": "请勾选要删除的数据",
+    "selectPlaceholder": "请选择", "sort": "排序", "startDate": "开始日期",
+    "status": "状态", "tip": "提示", "unbind": "解绑", "updateSuccess": "更新成功",
+    "view": "查看", "warning": "警告", "yes": "是"
   },
   "login": {
-    "themeToggle": "主题切换",
-    "languageToggle": "语言切换",
-    "dark": "暗黑",
-    "light": "明亮",
-    "auto": "跟随系统",
-    "username": "用户名",
-    "password": "密码",
-    "login": "登 录",
-    "captchaCode": "验证码",
-    "capsLock": "大写锁定已打开",
-    "rememberMe": "记住我",
-    "forgetPassword": "忘记密码？",
+    "authenticationTip": "请使用账号密码完成身份验证", "auto": "跟随系统",
+    "capsLock": "大写锁定已打开", "dark": "暗黑", "efficient": "高效",
+    "failed": "登录失败，请稍后重试", "flexible": "灵活",
+    "heroDescription": "面向旅行社的行程与报价协作平台", "heroTitle": "Sunrise Travel Ops",
+    "light": "明亮", "login": "登录",
     "message": {
-      "username": {
-        "required": "请输入用户名"
-      },
-      "password": {
-        "required": "请输入密码",
-        "min": "密码不能少于6位",
-        "confirm": "请再次确认密码",
-        "inconformity": "两次密码输入不一致"
-      },
-      "captchaCode": {
-        "required": "请输入验证码"
-      }
+      "password": { "min": "密码不能少于 6 位", "required": "请输入密码" },
+      "username": { "required": "请输入用户名" }
     },
-    "otherLoginMethods": "其他",
-    "resetPassword": "重置密码",
-    "thinkOfPasswd": "想起密码？",
-    "register": "注册账号",
-    "agree": "我已同意并阅读",
-    "userAgreement": "用户协议",
-    "haveAccount": "已有账号？",
-    "noAccount": "您没有账号？",
-    "quickFill": "快速填写",
-    "reg": "注 册"
+    "password": "密码", "rememberMe": "记住我", "secure": "安全",
+    "username": "用户名", "welcomeBack": "欢迎回来"
   },
   "navbar": {
-    "dashboard": "首页",
-    "logout": "退出登录",
-    "document": "项目文档",
-    "gitee": "项目地址",
-    "profile": "个人中心"
+    "collapseMenu": "收起菜单", "expandMenu": "展开菜单", "logout": "退出登录",
+    "logoutConfirm": "确定退出当前账号吗？", "profile": "个人中心"
   },
   "sizeSelect": {
-    "tooltip": "布局大小",
-    "default": "默认",
-    "large": "大型",
-    "small": "小型",
-    "message": {
-      "success": "切换布局大小成功！"
-    }
+    "default": "默认", "large": "大型", "message": { "success": "界面尺寸切换成功" },
+    "small": "小型", "tooltip": "界面尺寸"
   },
-  "langSelect": {
-    "message": {
-      "success": "切换语言成功！"
-    }
-  },
+  "langSelect": { "message": { "success": "语言切换成功" } },
+  "language": { "chinese": "中文", "english": "English" },
   "settings": {
-    "project": "项目配置",
-    "theme": "主题设置",
-    "interface": "界面设置",
-    "navigation": "导航设置",
-    "assist": "辅助设置",
-    "themePalette": "配色体系",
-    "customColors": "自定义颜色",
-    "customPalette": "自定义",
-    "customPaletteTip": "已自定义颜色",
+    "assist": "辅助设置", "classicBlue": "经典蓝", "colorWeak": "色弱模式",
+    "confirmReset": "确定将所有设置恢复为默认值吗？", "copyConfig": "复制配置",
+    "copyFailed": "复制配置失败", "copySuccess": "配置已复制到剪贴板",
+    "copying": "正在复制配置...", "customColors": "自定义颜色",
+    "customPalette": "自定义", "doubleLayout": "双列模式", "fade": "淡入淡出",
+    "fade-scale": "缩放切换", "fade-slide": "平滑切换", "grayMode": "灰色模式",
+    "interface": "界面设置", "leftLayout": "左侧模式", "minimalWhite": "极简白",
+    "mixLayout": "混合模式", "navigation": "导航设置", "none": "无动画",
+    "pageSwitchingAnimation": "页面切换动画", "project": "项目配置",
+    "resetConfig": "恢复默认", "resetSuccess": "已恢复默认配置",
+    "resetting": "正在恢复默认配置...", "showAppLogo": "显示 Logo",
+    "showTagsView": "显示页签", "showWatermark": "显示水印",
+    "sidebarColorScheme": "侧边栏配色", "tagsViewStyle": "页签风格",
+    "tagsViewStyles": { "card": "卡片", "line": "线性" }, "theme": "主题设置",
     "themeColorNames": {
-      "primary": "主色",
-      "success": "成功",
-      "warning": "警告",
-      "danger": "危险",
-      "info": "信息"
+      "danger": "危险", "info": "信息", "primary": "主色", "success": "成功", "warning": "警告"
     },
+    "themePalette": "配色体系",
     "themePalettes": {
-      "arco": {
-        "name": "ArcoD",
-        "description": "蓝橙清晰，默认推荐"
-      },
-      "antDesign": {
-        "name": "AntD",
-        "description": "规范稳重，后台友好"
-      },
-      "elementPlus": {
-        "name": "ElementD",
-        "description": "贴近组件默认识别"
-      }
+      "antDesign": { "description": "规范稳重，适合业务系统", "name": "AntD" },
+      "arco": { "description": "蓝橙对比清晰，默认推荐", "name": "ArcoD" },
+      "elementPlus": { "description": "贴近组件默认配色", "name": "ElementD" }
     },
-    "darkMode": "暗黑模式",
-    "layoutSetting": "布局设置",
-    "sidebarColorScheme": "侧边栏配色",
-    "showTagsView": "显示页签",
-    "tagsViewStyle": "页签风格",
-    "tagsViewStyles": {
-      "line": "线性",
-      "card": "卡片"
+    "topLayout": "顶部模式"
+  },
+  "tags": {
+    "actions": "页签操作", "closeAll": "关闭全部", "closeCurrent": "关闭当前",
+    "closeLeft": "关闭左侧", "closeOthers": "关闭其他", "closeRight": "关闭右侧",
+    "contentFullscreen": "内容区全屏", "refreshCurrent": "刷新当前页"
+  },
+  "commandPalette": {
+    "navigate": "导航", "noHistory": "暂无最近访问记录",
+    "open": "打开菜单搜索", "searchMenu": "搜索菜单"
+  },
+  "dashboard": {
+    "activities": {
+      "adminLogin": "管理员登录系统", "backupCompleted": "系统备份已完成",
+      "certificateRenewed": "安全证书已更新", "loginPolicyUpdated": "登录策略已更新",
+      "permissionsUpdated": "用户权限已更新", "userCreated": "创建了新用户"
     },
-    "showAppLogo": "显示Logo",
-    "showWatermark": "显示水印",
-    "pageSwitchingAnimation": "页面切换动画",
-    "grayMode": "灰色模式",
-    "colorWeak": "色弱模式",
-    "none": "无动画",
-    "fade": "淡入淡出",
-    "fade-slide": "平滑切换",
-    "fade-scale": "缩放切换",
-    "classicBlue": "经典蓝",
-    "minimalWhite": "极简白",
-    "copyConfig": "复制配置",
-    "resetConfig": "重置默认",
-    "copySuccess": "配置已复制到剪贴板",
-    "resetSuccess": "已重置为默认配置",
-    "copyDescription": "复制配置会生成当前 defaults 片段，重置会恢复默认设置",
-    "confirmReset": "确定要重置所有设置为默认值吗？此操作不可恢复。",
-    "applyToFile": "应用到文件",
-    "onlyCopy": "仅复制",
-    "leftLayout": "左侧模式",
-    "topLayout": "顶部模式",
-    "mixLayout": "混合模式",
-    "doubleLayout": "双列模式",
-    "configManagement": "配置管理",
-    "copyConfigDescription": "生成当前 defaults 片段并复制到剪贴板",
-    "resetConfigDescription": "恢复所有设置为系统默认值"
+    "documentation": "项目文档",
+    "greeting": {
+      "afternoon": "下午好", "early": "夜深了", "evening": "晚上好",
+      "late": "夜深了", "morning": "早上好"
+    },
+    "itemCount": "{count} 项", "lastDays": "最近 {days} 天",
+    "pendingCount": "{count} 项待处理",
+    "summary": { "completedToday": "今日已完成", "createdToday": "今日新增", "dueSoon": "即将到期" },
+    "systemActivity": "系统动态", "systemUsers": "系统用户",
+    "time": {
+      "hoursAgo": "{count} 小时前", "minutesAgo": "{count} 分钟前",
+      "yesterdayAt": "昨天 {time}"
+    },
+    "todayViews": "今日浏览量", "todayVisitors": "今日访客", "todoItems": "待办事项",
+    "todoOverview": "待办概览",
+    "todoTypes": {
+      "approval": "审批", "configuration": "配置", "notice": "通知",
+      "review": "审核", "ticket": "工单"
+    },
+    "todos": {
+      "leaveRequest": "处理请假申请", "processTicket": "跟进客户工单",
+      "publishNotice": "发布系统通知", "updatePermissions": "更新角色权限",
+      "verifyUser": "审核新用户资料"
+    },
+    "video": "视频教程", "views": "浏览量", "visitTrend": "访问趋势", "visitors": "访客数"
+  },
+  "profile": {
+    "accountOverview": "账号概览", "accountPassword": "账号密码", "accountStatus": "账号状态",
+    "avatarUpdatedSuccess": "头像更新成功", "bindEmail": "绑定邮箱", "bindMobile": "绑定手机",
+    "bound": "已绑定", "boundItems": "已绑定项", "boundValue": "已绑定：{value}",
+    "changeAvatar": "更换头像", "changeEmail": "更换邮箱", "changeMobile": "更换手机",
+    "changePassword": "修改密码", "codePlaceholder": "请输入验证码",
+    "codeSentSuccess": "验证码已发送", "completion": "资料完整度", "configured": "已设置",
+    "confirmPassword": "确认新密码", "confirmPasswordPlaceholder": "请再次输入新密码",
+    "countUnit": "项", "currentPassword": "当前密码",
+    "currentPasswordPlaceholder": "请输入当前密码", "defaultRole": "普通用户",
+    "department": "所属部门", "editProfile": "编辑资料", "emailBoundSuccess": "邮箱绑定成功",
+    "emailChangedSuccess": "邮箱更换成功", "emailUnboundSuccess": "邮箱已解绑",
+    "emailUnboundTip": "绑定邮箱后可用于安全验证", "emailVerification": "邮箱验证",
+    "joinedAt": "加入时间：{date}", "lastLogin": "最后登录：{date}",
+    "locations": { "hangzhou": "浙江杭州", "shanghai": "上海", "shenzhen": "广东深圳" },
+    "loginAccount": "登录账号", "mobileBoundSuccess": "手机号绑定成功",
+    "mobileChangedSuccess": "手机号更换成功", "mobileNumber": "手机号码",
+    "mobilePlaceholder": "请输入手机号码", "mobileUnboundSuccess": "手机号已解绑",
+    "mobileUnboundTip": "绑定手机号后可用于安全验证", "mobileVerification": "手机验证",
+    "nicknamePlaceholder": "请输入昵称", "noRoles": "暂无角色", "notAvailable": "暂无",
+    "oldPassword": "原密码", "oldPasswordPlaceholder": "请输入原密码",
+    "passwordChangedRelogin": "密码修改成功，请重新登录",
+    "passwordDescription": "建议定期更换密码以保护账号安全",
+    "passwordMismatch": "两次输入的密码不一致", "permissionCount": "{count} 个权限",
+    "permissionIdentifiers": "权限标识", "personalInfo": "个人信息",
+    "profileCompletion": "资料完整度", "recentCount": "最近 {count} 次",
+    "recentLogins": "最近登录", "resendAfter": "{seconds} 秒后重发",
+    "roleCount": "角色数量", "rolesAndPermissions": "角色与权限", "scoreUnit": "分",
+    "securityDescription": "管理密码与账号验证方式", "securityLevel": "安全等级",
+    "securityLevels": { "high": "高", "low": "低", "medium": "中" },
+    "securityScore": "安全评分", "securitySettings": "安全设置",
+    "sendCode": "发送验证码", "unassignedDepartment": "未分配部门",
+    "unbindEmail": "确定解绑当前邮箱吗？",
+    "unbindEmailPrompt": "解绑后将无法通过邮箱进行安全验证。",
+    "unbindMobile": "确定解绑当前手机号吗？",
+    "unbindMobilePrompt": "解绑后将无法通过手机号进行安全验证。",
+    "unbound": "未绑定", "unnamedUser": "未命名用户",
+    "updateSuccess": "个人资料更新成功", "verificationCode": "验证码"
+  },
+  "dictionary": {
+    "code": "分类编码", "codePlaceholder": "请输入分类编码",
+    "createOptionTitle": "新增分类选项", "createTitle": "新增系统分类",
+    "displayStyle": "展示样式", "displayStyleTip": "用于标签展示的颜色样式",
+    "editOptionTitle": "编辑分类选项", "editTitle": "编辑系统分类",
+    "manageOptions": "管理选项", "name": "分类名称", "namePlaceholder": "请输入分类名称",
+    "optionName": "选项名称", "optionNamePlaceholder": "请输入选项名称",
+    "optionSearchPlaceholder": "搜索选项名称或值", "optionValue": "选项值",
+    "optionValuePlaceholder": "请输入选项值", "searchPlaceholder": "搜索分类名称或编码",
+    "seed": {
+      "commonStatus": { "name": "启用状态", "remark": "系统数据通用的启用与禁用状态" },
+      "gender": {
+        "female": "女", "male": "男", "name": "用户性别",
+        "remark": "用户资料中的性别选项", "unset": "未设置"
+      },
+      "yesNo": { "name": "是否选项", "remark": "系统表单通用的是与否选项" }
+    },
+    "tagTypePlaceholder": "请选择标签样式"
+  },
+  "user": {
+    "cannotDeleteCurrent": "不能删除当前登录用户", "createSuccess": "用户创建成功",
+    "createTitle": "新增用户", "deleteConfirm": "确定删除选中的用户吗？",
+    "editTitle": "编辑用户", "email": "邮箱", "emailInvalid": "请输入正确的邮箱地址",
+    "emailPlaceholder": "请输入邮箱", "female": "女", "gender": "性别", "male": "男",
+    "mobile": "手机号", "mobileInvalid": "请输入正确的手机号码",
+    "mobilePlaceholder": "请输入手机号", "newPassword": "新密码",
+    "newPasswordPlaceholder": "请输入新密码", "nickname": "昵称",
+    "nicknamePlaceholder": "请输入昵称", "passwordResetSuccess": "密码重置成功",
+    "resetPassword": "重置密码", "rolePlaceholder": "请选择角色",
+    "roles": {
+      "custom": "自定义角色", "departmentManager": "部门负责人",
+      "departmentMember": "部门成员", "employee": "员工", "guest": "访问游客",
+      "systemAdministrator": "系统管理员"
+    },
+    "rolesLabel": "角色", "searchPlaceholder": "搜索用户名、昵称或手机号",
+    "seed": { "admin": "系统管理员", "demo": "演示用户" },
+    "updateSuccess": "用户更新成功", "userLabel": "用户",
+    "username": "用户名", "usernamePlaceholder": "请输入用户名"
+  },
+  "resource": {
+    "city": "城市", "code": "资源编号", "codeAutoGenerated": "保存时由系统自动生成",
+    "contact": "联系人", "createTitle": "新增资源",
+    "editTitle": "编辑资源", "name": "资源名称", "nameRequired": "请输入资源名称",
+    "phone": "联系电话", "searchPlaceholder": "搜索编号、名称或城市"
+  },
+  "error": {
+    "notFound": {
+      "description": "访问的页面不存在或已被移除。", "label": "页面不存在",
+      "signal": "资源未找到", "title": "找不到页面"
+    },
+    "unauthorized": {
+      "description": "当前账号没有访问该页面的权限。", "label": "访问受限",
+      "signal": "权限不足", "title": "无法访问"
+    }
+  },
+  "service": {
+    "auth": {
+      "invalidCredentials": "用户名或密码错误", "missingRefreshToken": "没有有效的刷新令牌",
+      "sessionExpired": "登录状态已失效，请重新登录"
+    },
+    "dictionary": {
+      "codeExists": "分类编码已存在", "notFound": "未找到该系统分类",
+      "optionNotFound": "未找到该分类选项", "optionRequiredFields": "选项名称和选项值不能为空",
+      "requiredFields": "分类名称和分类编码不能为空", "valueExists": "该选项值已存在"
+    },
+    "user": {
+      "nicknameRequired": "昵称不能为空", "notFound": "未找到该用户",
+      "passwordMin": "密码不能少于 6 位", "requiredIdentity": "用户名和昵称不能为空",
+      "usernameExists": "用户名已存在"
+    }
+  },
+  "upload": {
+    "failed": "上传失败", "failedWithReason": "上传失败：{reason}",
+    "fileTooLarge": "上传文件不能大于 {size} MB", "imageTooLarge": "上传图片不能大于 {size} MB",
+    "invalidFormat": "文件格式不正确，仅支持 {types}", "maxFiles": "最多只能上传 {count} 个文件",
+    "maxImages": "最多只能上传 {count} 张图片", "success": "上传成功", "uploadFile": "上传文件"
+  },
+  "tableSelect": { "select": "请选择", "selectData": "请选择数据", "selectedCount": "已选 {count} 条" },
+  "iconSelect": {
+    "choose": "点击选择图标", "elementIcons": "Element 图标",
+    "search": "搜索图标", "svgIcons": "SVG 图标"
+  },
+  "tenant": { "switchFailed": "切换租户后无法获取租户信息", "switchTenant": "切换租户" },
+  "crud": {
+    "allData": "全量数据（所有分页数据）", "batchExport": "批量导出",
+    "batchImport": "批量导入", "clickUpload": "点击上传",
+    "currentData": "当前数据（当前页数据）", "dataSource": "数据来源",
+    "downloadTemplate": "下载模板", "dropOrUpload": "将文件拖到此处，或点击上传",
+    "exportData": "导出数据", "fields": "字段", "file": "文件", "fileName": "文件名",
+    "filterColumns": "筛选列", "importData": "导入数据", "importSuccess": "导入数据成功",
+    "missingAction": "未配置 {action}", "noParsedData": "未解析到数据",
+    "readFileFailed": "读取文件失败", "selectDataSource": "请选择数据来源",
+    "selectFields": "请选择字段", "selectFile": "请选择文件",
+    "selectedData": "选中数据（所有已选数据）", "sheetName": "工作表名"
+  },
+  "request": {
+    "failed": "请求失败", "networkError": "网络连接失败", "permissionDenied": "权限不足",
+    "relogin": "请重新登录", "sessionExpired": "登录已过期，请重新登录", "systemError": "系统出错"
+  },
+  "download": { "defaultFileName": "下载文件" },
+  "validation": {
+    "email": "请输入正确的邮箱地址", "integer": "请输入整数",
+    "mobile": "请输入正确的手机号码", "number": "请输入数字",
+    "url": "请输入正确的 URL 地址"
   }
 }

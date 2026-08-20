@@ -9,7 +9,10 @@
       }"
     >
       <div class="layout-double__primary">
-        <LayoutLogo v-if="showLogo" :collapse="true" />
+        <LayoutLogo
+          v-if="showLogo"
+          :collapse="true"
+        />
 
         <el-scrollbar class="layout-double__primary-scroll">
           <button
@@ -28,7 +31,7 @@
 
         <button
           class="layout-double__primary-toggle"
-          :title="isSidebarOpen ? '收起菜单' : '展开菜单'"
+          :title="isSidebarOpen ? $t('navbar.collapseMenu') : $t('navbar.expandMenu')"
           type="button"
           @click="toggleSidebar"
         >
@@ -36,8 +39,14 @@
         </button>
       </div>
 
-      <div class="layout-double__secondary" :class="{ 'is-collapsed': !secondaryExpanded }">
-        <div v-if="showLogo" class="layout-double__title">
+      <div
+        class="layout-double__secondary"
+        :class="{ 'is-collapsed': !secondaryExpanded }"
+      >
+        <div
+          v-if="showLogo"
+          class="layout-double__title"
+        >
           {{ appConfig.title }}
         </div>
 
@@ -59,7 +68,10 @@
         'is-fullscreen': appStore.contentFullscreen,
       }"
     >
-      <LayoutNavbar v-show="!appStore.contentFullscreen" toggle-target="secondary" />
+      <LayoutNavbar
+        v-show="!appStore.contentFullscreen"
+        toggle-target="secondary"
+      />
       <LayoutTagsView v-if="showTagsView" />
       <LayoutMain />
     </main>

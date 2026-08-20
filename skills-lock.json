@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "vue-admin": {
+      "source": "youlaitech/youlai-skills",
+      "sourceType": "github",
+      "skillPath": "skills/vue-admin/SKILL.md",
+      "computedHash": "b8b0b7645b45e287a7c57da205aa9a016122004f4a84e82720b271658b971874"
+    }
+  }
+}

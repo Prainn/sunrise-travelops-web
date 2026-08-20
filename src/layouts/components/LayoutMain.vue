@@ -1,10 +1,19 @@
 <template>
-  <section class="layout-content" :style="{ height: appMainHeight }">
+  <section
+    class="layout-content"
+    :style="{ height: appMainHeight }"
+  >
     <router-view>
       <template #default="{ Component, route }">
-        <transition :name="transitionName" mode="out-in">
+        <transition
+          :name="transitionName"
+          mode="out-in"
+        >
           <keep-alive :include="cachedViews">
-            <component :is="currentComponent(Component, route)" :key="route.fullPath" />
+            <component
+              :is="currentComponent(Component, route)"
+              :key="route.fullPath"
+            />
           </keep-alive>
         </transition>
       </template>

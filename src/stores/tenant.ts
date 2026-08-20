@@ -1,9 +1,10 @@
-import { store } from "@/stores";
+import { store } from "./store";
 import TenantAPI from "@/api/system/tenant";
 import type { TenantInfo } from "@/api/system/tenant";
 import { STORAGE_KEYS } from "@/constants";
 import AuthAPI from "@/api/auth";
 import { AuthStorage } from "@/utils/auth";
+import { translate } from "@/lang/utils";
 
 /**
  * 租户 Store
@@ -142,7 +143,7 @@ export const useTenantStore = defineStore("tenant", () => {
       return;
     }
 
-    throw new Error("切换租户后无法获取租户信息");
+    throw new Error(translate("tenant.switchFailed"));
   }
 
   /**

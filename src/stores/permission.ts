@@ -1,6 +1,7 @@
 import type { RouteRecordRaw } from "vue-router";
 import { constantRoutes } from "@/router";
-import { store } from "@/stores";
+import { filterRoutesByAccess } from "@/router/access";
+import { store } from "./store";
 import { useUserStoreHook } from "@/stores/user";
 
 export const usePermissionStore = defineStore("permission", () => {
@@ -8,11 +9,12 @@ export const usePermissionStore = defineStore("permission", () => {
   const mixLayoutSideMenus = ref<RouteRecordRaw[]>([]);
   const isRouteGenerated = ref(false);
 
-  /** 使用前端静态路由生成菜单。 */
+  /** 根据当前用户权限过滤前端静态路由并生成菜单。 */
   async function generateRoutes(): Promise<RouteRecordRaw[]> {
-    routes.value = [...constantRoutes];
+    const { roles, perms } = useUserStoreHook().userInfo;
+    routes.value = filterRoutesByAccess(constantRoutes, { roles, perms });
     isRouteGenerated.value = true;
-    return [];
+    return routes.value;
   }
 
   const setMixLayoutSideMenus = (parentPath: string) => {

@@ -1,7 +1,7 @@
-import { store } from "@/stores";
-import DictAPI from "@/api/system/dict";
-import type { DictItemOption } from "@/api/system/dict";
+import { store } from "./store";
 import { STORAGE_KEYS } from "@/constants";
+import { dictionaryService } from "@/services";
+import type { DictItemOption } from "@/types/dictionary";
 
 export const useDictStore = defineStore("dict", () => {
   // 字典数据缓存
@@ -27,7 +27,8 @@ export const useDictStore = defineStore("dict", () => {
     if (dictCache.value[dictCode]) return;
     // 防止重复请求
     if (!requestQueue[dictCode]) {
-      requestQueue[dictCode] = DictAPI.getDictItems(dictCode)
+      requestQueue[dictCode] = dictionaryService
+        .getDictItems(dictCode)
         .then((data) => {
           cacheDictItems(dictCode, data);
           Reflect.deleteProperty(requestQueue, dictCode);

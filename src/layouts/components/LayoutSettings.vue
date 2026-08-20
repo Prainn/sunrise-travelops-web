@@ -8,7 +8,9 @@
   >
     <div class="layout-settings__content">
       <section class="layout-settings__section">
-        <div class="layout-settings__section-title">{{ t("settings.theme") }}</div>
+        <div class="layout-settings__section-title">
+          {{ t("settings.theme") }}
+        </div>
 
         <div class="theme-mode">
           <el-radio-group v-model="themeMode">
@@ -65,14 +67,21 @@
         </div>
 
         <el-collapse-transition>
-          <div v-show="isCustomColorsOpen" class="custom-colors-panel">
+          <div
+            v-show="isCustomColorsOpen"
+            class="custom-colors-panel"
+          >
             <div class="custom-colors-panel__header">
               <span>{{ t("settings.customColors") }}</span>
               <span>{{ activePaletteName }}</span>
             </div>
 
             <div class="custom-color-list">
-              <div v-for="item in colorOptions" :key="item.name" class="custom-color-row">
+              <div
+                v-for="item in colorOptions"
+                :key="item.name"
+                class="custom-color-row"
+              >
                 <span class="custom-color-row__label">{{ getColorLabel(item.name) }}</span>
                 <span class="custom-color-row__value">
                   {{ settingsStore.themeColors[item.name] }}
@@ -90,7 +99,9 @@
       </section>
 
       <section class="layout-settings__section">
-        <div class="layout-settings__section-title">{{ t("settings.navigation") }}</div>
+        <div class="layout-settings__section-title">
+          {{ t("settings.navigation") }}
+        </div>
 
         <div class="settings-layout-select">
           <div class="settings-layout-select__grid">
@@ -129,7 +140,9 @@
                   ></div>
                   <div class="settings-layout-preview__main"></div>
                 </div>
-                <div class="settings-layout-select__name">{{ item.label }}</div>
+                <div class="settings-layout-select__name">
+                  {{ item.label }}
+                </div>
                 <div
                   v-if="settingsStore.layout === item.value"
                   class="settings-layout-select__check"
@@ -164,7 +177,9 @@
       </section>
 
       <section class="layout-settings__section">
-        <div class="layout-settings__section-title">{{ t("settings.interface") }}</div>
+        <div class="layout-settings__section-title">
+          {{ t("settings.interface") }}
+        </div>
 
         <div class="layout-settings__item flex-x-between">
           <span class="text-xs">{{ t("settings.showTagsView") }}</span>
@@ -212,7 +227,10 @@
 
         <div class="layout-settings__item flex-x-between">
           <span class="text-xs">{{ t("settings.pageSwitchingAnimation") }}</span>
-          <el-select v-model="settingsStore.pageSwitchingAnimation" style="width: 150px">
+          <el-select
+            v-model="settingsStore.pageSwitchingAnimation"
+            style="width: 150px"
+          >
             <el-option
               v-for="(item, key) in pageSwitchingAnimationOptions"
               :key
@@ -224,7 +242,9 @@
       </section>
 
       <section class="layout-settings__section">
-        <div class="layout-settings__section-title">{{ t("settings.assist") }}</div>
+        <div class="layout-settings__section-title">
+          {{ t("settings.assist") }}
+        </div>
 
         <div class="layout-settings__item flex-x-between">
           <span class="text-xs">{{ t("settings.showWatermark") }}</span>
@@ -251,7 +271,7 @@
           :loading="copyLoading"
           @click="copyCurrentSettings"
         >
-          {{ copyLoading ? "复制中..." : t("settings.copyConfig") }}
+          {{ copyLoading ? t("settings.copying") : t("settings.copyConfig") }}
         </el-button>
         <el-button
           type="default"
@@ -259,7 +279,7 @@
           :loading="resetLoading"
           @click="resetSettingsToDefault"
         >
-          {{ resetLoading ? "重置中..." : t("settings.resetConfig") }}
+          {{ resetLoading ? t("settings.resetting") : t("settings.resetConfig") }}
         </el-button>
       </div>
     </template>
@@ -304,17 +324,17 @@ interface ColorOption {
   name: ThemeColorName;
 }
 
-const layoutOptions: LayoutOption[] = [
+const layoutOptions = computed<LayoutOption[]>(() => [
   { value: LayoutMode.LEFT, label: t("settings.leftLayout"), className: "left" },
   { value: LayoutMode.TOP, label: t("settings.topLayout"), className: "top" },
   { value: LayoutMode.MIX, label: t("settings.mixLayout"), className: "mix" },
   { value: LayoutMode.DOUBLE, label: t("settings.doubleLayout"), className: "double" },
-];
+]);
 
-const tagsViewStyleOptions: TagsViewStyleOption[] = [
+const tagsViewStyleOptions = computed<TagsViewStyleOption[]>(() => [
   { value: TagsViewStyle.CARD, label: t("settings.tagsViewStyles.card") },
   { value: TagsViewStyle.LINE, label: t("settings.tagsViewStyles.line") },
-];
+]);
 
 const colorOptions: ColorOption[] = themeColorNames.map((name) => ({ name }));
 
@@ -421,7 +441,7 @@ async function copyCurrentSettings(): Promise<void> {
       duration: 3000,
     });
   } catch {
-    ElMessage.error("复制配置失败");
+    ElMessage.error(t("settings.copyFailed"));
   } finally {
     copyLoading.value = false;
   }
@@ -433,8 +453,8 @@ async function copyCurrentSettings(): Promise<void> {
 async function resetSettingsToDefault(): Promise<void> {
   try {
     await ElMessageBox.confirm(t("settings.confirmReset"), t("settings.resetConfig"), {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
+      confirmButtonText: t("common.confirm"),
+      cancelButtonText: t("common.cancel"),
       type: "warning",
     });
 

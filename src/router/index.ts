@@ -37,7 +37,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "Dashboard",
         meta: {
           title: "dashboard",
-          icon: "homepage",
+          icon: "el-icon-House",
           affix: true,
           keepAlive: true,
         },
@@ -56,7 +56,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         path: "profile",
         name: "Profile",
         component: () => import("@/views/profile/index.vue"),
-        meta: { title: "个人中心", icon: "user", hidden: true },
+        meta: { title: "profile", icon: "el-icon-User", hidden: true },
       },
     ],
   },
@@ -66,8 +66,8 @@ export const constantRoutes: RouteRecordRaw[] = [
     component: Layout,
     redirect: "/system/dict",
     meta: {
-      title: "系统管理",
-      icon: "system",
+      title: "systemManagement",
+      icon: "el-icon-Setting",
       alwaysShow: true,
     },
     children: [
@@ -76,9 +76,10 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "Dict",
         component: () => import("@/views/system/dict/index.vue"),
         meta: {
-          title: "字典管理",
-          icon: "dict",
+          title: "systemDictionary",
+          icon: "el-icon-Collection",
           keepAlive: true,
+          perms: ["sys:dict:list"],
         },
       },
       {
@@ -86,9 +87,10 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "DictItem",
         component: () => import("@/views/system/dict/dict-item.vue"),
         meta: {
-          title: "字典项",
+          title: "dictionaryOptions",
           hidden: true,
           keepAlive: true,
+          perms: ["sys:dict-item:list"],
         },
       },
       {
@@ -96,10 +98,60 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "User",
         component: () => import("@/views/system/user/index.vue"),
         meta: {
-          title: "用户管理",
-          icon: "user",
+          title: "userList",
+          icon: "el-icon-User",
           keepAlive: true,
+          perms: ["sys:user:list"],
         },
+      },
+    ],
+  },
+  {
+    path: "/resources",
+    name: "TourismResources",
+    component: Layout,
+    redirect: "/resources/supplier",
+    meta: {
+      title: "tourismResources",
+      icon: "el-icon-Briefcase",
+      alwaysShow: true,
+    },
+    children: [
+      {
+        path: "supplier",
+        name: "Supplier",
+        component: () => import("@/views/resources/index.vue"),
+        meta: { title: "suppliers", icon: "el-icon-OfficeBuilding", keepAlive: true, perms: ["resource:supplier:list"], resourceType: "supplier" },
+      },
+      {
+        path: "hotel",
+        name: "Hotel",
+        component: () => import("@/views/resources/index.vue"),
+        meta: { title: "hotelsAndRoomTypes", icon: "el-icon-House", keepAlive: true, perms: ["resource:hotel:list"], resourceType: "hotel" },
+      },
+      {
+        path: "restaurant",
+        name: "Restaurant",
+        component: () => import("@/views/resources/index.vue"),
+        meta: { title: "restaurants", icon: "el-icon-Food", keepAlive: true, perms: ["resource:restaurant:list"], resourceType: "restaurant" },
+      },
+      {
+        path: "attraction",
+        name: "Attraction",
+        component: () => import("@/views/resources/index.vue"),
+        meta: { title: "attractions", icon: "el-icon-Place", keepAlive: true, perms: ["resource:attraction:list"], resourceType: "attraction" },
+      },
+      {
+        path: "transport",
+        name: "TransportResource",
+        component: () => import("@/views/resources/index.vue"),
+        meta: { title: "vehiclesAndDrivers", icon: "el-icon-Van", keepAlive: true, perms: ["resource:transport:list"], resourceType: "transport" },
+      },
+      {
+        path: "guide",
+        name: "Guide",
+        component: () => import("@/views/resources/index.vue"),
+        meta: { title: "guides", icon: "el-icon-UserFilled", keepAlive: true, perms: ["resource:guide:list"], resourceType: "guide" },
       },
     ],
   },

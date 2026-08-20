@@ -4,14 +4,14 @@
       class="command-palette-trigger"
       role="button"
       tabindex="0"
-      aria-label="打开搜索面板"
+      :aria-label="$t('commandPalette.open')"
       @click="open"
       @keydown.enter.prevent="open"
       @keydown.space.prevent="open"
     >
       <div class="command-palette-trigger__left">
         <div class="i-svg:search" />
-        <span class="command-palette-trigger__text">搜索菜单</span>
+        <span class="command-palette-trigger__text">{{ $t("commandPalette.searchMenu") }}</span>
       </div>
       <kbd class="command-palette-trigger__kbd">Ctrl K</kbd>
     </div>
@@ -28,7 +28,7 @@
           ref="inputRef"
           v-model="keyword"
           class="command-palette-input"
-          placeholder="搜索菜单"
+          :placeholder="$t('commandPalette.searchMenu')"
           @input="onSearch"
           @keydown="handleInputKeydown"
         >
@@ -41,7 +41,7 @@
                 class="i-svg:close"
                 role="button"
                 tabindex="0"
-                aria-label="关闭"
+                :aria-label="$t('common.close')"
                 @click="close"
               />
             </div>
@@ -49,9 +49,17 @@
         </el-input>
 
         <div class="command-palette-results">
-          <div v-if="displayList.length === 0" class="command-palette-empty">没有搜索历史</div>
+          <div
+            v-if="displayList.length === 0"
+            class="command-palette-empty"
+          >
+            {{ $t("commandPalette.noHistory") }}
+          </div>
 
-          <ul v-else class="command-palette-list">
+          <ul
+            v-else
+            class="command-palette-list"
+          >
             <li
               v-for="(item, idx) in displayList"
               :key="item.path + idx"
@@ -59,25 +67,37 @@
               @mouseenter="activeIndex = idx"
               @click="onGo(item)"
             >
-              <div class="command-palette-item__title">{{ item.title }}</div>
-              <div class="command-palette-item__path">{{ item.path }}</div>
+              <div class="command-palette-item__title">
+                {{ item.title }}
+              </div>
+              <div class="command-palette-item__path">
+                {{ item.path }}
+              </div>
             </li>
           </ul>
         </div>
 
         <div class="command-palette-hints">
           <div class="command-palette-hint">
-            <div class="command-palette-hint__key"><div class="i-svg:up" /></div>
-            <div class="command-palette-hint__key"><div class="i-svg:down" /></div>
-            <span class="command-palette-hint__text">切换</span>
+            <div class="command-palette-hint__key">
+              <div class="i-svg:up" />
+            </div>
+            <div class="command-palette-hint__key">
+              <div class="i-svg:down" />
+            </div>
+            <span class="command-palette-hint__text">{{ $t("commandPalette.navigate") }}</span>
           </div>
           <div class="command-palette-hint">
-            <div class="command-palette-hint__key"><div class="i-svg:enter" /></div>
-            <span class="command-palette-hint__text">选择</span>
+            <div class="command-palette-hint__key">
+              <div class="i-svg:enter" />
+            </div>
+            <span class="command-palette-hint__text">{{ $t("common.select") }}</span>
           </div>
           <div class="command-palette-hint">
-            <div class="command-palette-hint__key"><div class="i-svg:esc" /></div>
-            <span class="command-palette-hint__text">关闭</span>
+            <div class="command-palette-hint__key">
+              <div class="i-svg:esc" />
+            </div>
+            <span class="command-palette-hint__text">{{ $t("common.close") }}</span>
           </div>
         </div>
       </div>

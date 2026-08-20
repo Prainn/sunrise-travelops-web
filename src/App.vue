@@ -1,5 +1,8 @@
 <template>
-  <el-config-provider :locale="locale" :size="size">
+  <el-config-provider
+    :locale="locale"
+    :size="size"
+  >
     <el-watermark
       :font="{ color: fontColor }"
       :content="showWatermark ? watermarkContent : ''"

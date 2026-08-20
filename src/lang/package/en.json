@@ -1,130 +1,285 @@
 {
   "route": {
     "dashboard": "Dashboard",
-    "document": "Document"
+    "profile": "Profile",
+    "systemManagement": "System",
+    "systemDictionary": "System Categories",
+    "dictionaryOptions": "Category Options",
+    "userList": "Users",
+    "tourismResources": "Tourism Resources",
+    "suppliers": "Suppliers",
+    "hotelsAndRoomTypes": "Hotels & Room Types",
+    "restaurants": "Restaurants",
+    "attractions": "Attractions",
+    "vehiclesAndDrivers": "Vehicles & Drivers",
+    "guides": "Guides"
+  },
+  "common": {
+    "actions": "Actions", "all": "All", "backHome": "Back to Home", "bind": "Bind",
+    "cancel": "Cancel", "change": "Change", "clear": "Clear", "close": "Close",
+    "collapse": "Collapse", "confirm": "Confirm", "create": "Create",
+    "createSuccess": "Created successfully", "createdAt": "Created At", "delete": "Delete",
+    "deleteCancelled": "Deletion cancelled", "deleteConfirm": "Confirm deletion?",
+    "deleteSelectedConfirm": "Delete the selected records?", "deleteSuccess": "Deleted successfully",
+    "disabled": "Disabled", "edit": "Edit", "enabled": "Enabled", "endDate": "End Date",
+    "expand": "Expand", "export": "Export", "fullscreen": "Fullscreen",
+    "goBack": "Go Back", "import": "Import", "keywords": "Keywords",
+    "navigationFailed": "Navigation failed", "no": "No", "normal": "Normal",
+    "notSet": "Not set", "operationSuccess": "{operation} succeeded", "refresh": "Refresh",
+    "reload": "Reload", "remark": "Remark", "remarkPlaceholder": "Enter a remark",
+    "reset": "Reset", "routeNotRegistered": "The destination page is not registered",
+    "saveFailed": "Save failed", "search": "Search", "select": "Select",
+    "selectDeleteItem": "Select records to delete", "selectPlaceholder": "Please select",
+    "sort": "Sort", "startDate": "Start Date", "status": "Status", "tip": "Notice",
+    "unbind": "Unbind", "updateSuccess": "Updated successfully", "view": "View",
+    "warning": "Warning", "yes": "Yes"
   },
   "login": {
-    "themeToggle": "Theme Switch",
-    "languageToggle": "Language Switch",
-    "dark": "Dark",
-    "light": "Light",
-    "auto": "Follow System",
-    "username": "Username",
-    "password": "Password",
-    "login": "Login",
-    "captchaCode": "Verify Code",
-    "capsLock": "Caps Lock is On",
-    "rememberMe": "Remember Me",
-    "forgetPassword": "Forget Password?",
+    "authenticationTip": "Use your account and password to continue", "auto": "System",
+    "capsLock": "Caps Lock is on", "dark": "Dark", "efficient": "Efficient",
+    "failed": "Login failed. Please try again later.", "flexible": "Flexible",
+    "heroDescription": "Itinerary and quotation collaboration for travel agencies",
+    "heroTitle": "Sunrise Travel Ops", "light": "Light", "login": "Login",
     "message": {
-      "username": {
-        "required": "Please enter Username"
-      },
-      "password": {
-        "required": "Please enter Password",
-        "min": "The password can not be less than 6 digits",
-        "confirm": "Please confirm the password again",
-        "inconformity": "The two password entries are inconsistent"
-      },
-      "captchaCode": {
-        "required": "Please enter Verify Code"
-      }
+      "password": { "min": "Password must contain at least 6 characters", "required": "Enter your password" },
+      "username": { "required": "Enter your username" }
     },
-    "otherLoginMethods": "Other",
-    "resetPassword": "Reset password",
-    "thinkOfPasswd": "Remember your password?",
-    "register": "Register account",
-    "agree": "I have read and agree to the",
-    "userAgreement": "User Agreement",
-    "haveAccount": "Already have an account?",
-    "noAccount": "Don't have an account?",
-    "quickFill": "Quick fill",
-    "reg": "Register"
+    "password": "Password", "rememberMe": "Remember me", "secure": "Secure",
+    "username": "Username", "welcomeBack": "Welcome back"
   },
   "navbar": {
-    "dashboard": "Dashboard",
-    "logout": "Logout",
-    "document": "Document",
-    "gitee": "Gitee",
-    "profile": "User Profile"
+    "collapseMenu": "Collapse menu", "expandMenu": "Expand menu", "logout": "Log out",
+    "logoutConfirm": "Log out of the current account?", "profile": "Profile"
   },
   "sizeSelect": {
-    "tooltip": "Layout Size",
-    "default": "Default",
-    "large": "Large",
-    "small": "Small",
-    "message": {
-      "success": "Switch Layout Size Successful!"
-    }
+    "default": "Default", "large": "Large", "message": { "success": "Interface size changed" },
+    "small": "Small", "tooltip": "Interface size"
   },
-  "langSelect": {
-    "message": {
-      "success": "Switch Language Successful!"
-    }
-  },
+  "langSelect": { "message": { "success": "Language changed" } },
+  "language": { "chinese": "中文", "english": "English" },
   "settings": {
-    "project": "Project Settings",
-    "theme": "Theme",
-    "interface": "Interface",
-    "navigation": "Navigation",
-    "assist": "Assist",
-    "themePalette": "Color System",
-    "customColors": "Custom Colors",
-    "customPalette": "Custom",
-    "customPaletteTip": "Custom colors applied",
+    "assist": "Accessibility", "classicBlue": "Classic Blue", "colorWeak": "Color Weakness",
+    "confirmReset": "Reset all settings to their defaults?", "copyConfig": "Copy Config",
+    "copyFailed": "Failed to copy configuration", "copySuccess": "Configuration copied",
+    "copying": "Copying configuration...", "customColors": "Custom Colors",
+    "customPalette": "Custom", "doubleLayout": "Double-column", "fade": "Fade",
+    "fade-scale": "Fade and Scale", "fade-slide": "Fade and Slide", "grayMode": "Grayscale",
+    "interface": "Interface", "leftLayout": "Left Sidebar", "minimalWhite": "Minimal White",
+    "mixLayout": "Mixed", "navigation": "Navigation", "none": "None",
+    "pageSwitchingAnimation": "Page Transition", "project": "Project Settings",
+    "resetConfig": "Reset Defaults", "resetSuccess": "Default configuration restored",
+    "resetting": "Restoring defaults...", "showAppLogo": "Show Logo",
+    "showTagsView": "Show Tabs", "showWatermark": "Show Watermark",
+    "sidebarColorScheme": "Sidebar Colors", "tagsViewStyle": "Tab Style",
+    "tagsViewStyles": { "card": "Card", "line": "Line" }, "theme": "Theme",
     "themeColorNames": {
-      "primary": "Primary",
-      "success": "Success",
-      "warning": "Warning",
-      "danger": "Danger",
-      "info": "Info"
+      "danger": "Danger", "info": "Info", "primary": "Primary",
+      "success": "Success", "warning": "Warning"
     },
+    "themePalette": "Color Palette",
     "themePalettes": {
-      "arco": {
-        "name": "ArcoD",
-        "description": "Clear blue-orange balance"
-      },
-      "antDesign": {
-        "name": "AntD",
-        "description": "Stable and structured"
-      },
-      "elementPlus": {
-        "name": "ElementD",
-        "description": "Close to component defaults"
-      }
+      "antDesign": { "description": "Stable colors for business systems", "name": "AntD" },
+      "arco": { "description": "Clear blue-orange contrast", "name": "ArcoD" },
+      "elementPlus": { "description": "Close to the component defaults", "name": "ElementD" }
     },
-    "showTagsView": "Show Tags View",
-    "tagsViewStyle": "Tags View Style",
-    "tagsViewStyles": {
-      "line": "Line",
-      "card": "Card"
+    "topLayout": "Top Navigation"
+  },
+  "tags": {
+    "actions": "Tab actions", "closeAll": "Close All", "closeCurrent": "Close Current",
+    "closeLeft": "Close Left", "closeOthers": "Close Others", "closeRight": "Close Right",
+    "contentFullscreen": "Content Fullscreen", "refreshCurrent": "Refresh Current"
+  },
+  "commandPalette": {
+    "navigate": "Navigate", "noHistory": "No recent pages",
+    "open": "Open menu search", "searchMenu": "Search menus"
+  },
+  "dashboard": {
+    "activities": {
+      "adminLogin": "Administrator signed in", "backupCompleted": "System backup completed",
+      "certificateRenewed": "Security certificate renewed", "loginPolicyUpdated": "Login policy updated",
+      "permissionsUpdated": "User permissions updated", "userCreated": "New user created"
     },
-    "showAppLogo": "Show App Logo",
-    "sidebarColorScheme": "Sidebar Color Scheme",
-    "showWatermark": "Show Watermark",
-    "pageSwitchingAnimation": "Page Switching Animation",
-    "grayMode": "Gray Mode",
-    "colorWeak": "Color Weak",
-    "none": "None",
-    "fade": "Fade",
-    "fade-slide": "Fade Slide",
-    "fade-scale": "Fade Scale",
-    "classicBlue": "Classic Blue",
-    "minimalWhite": "Minimal White",
-    "copyConfig": "Copy Config",
-    "resetConfig": "Reset Default",
-    "copySuccess": "Configuration copied to clipboard",
-    "resetSuccess": "Reset to default configuration",
-    "copyDescription": "Copy config generates the current defaults fragment; reset restores defaults",
-    "confirmReset": "Are you sure to reset all settings to default? This operation cannot be undone.",
-    "applyToFile": "Apply to File",
-    "onlyCopy": "Only Copy",
-    "leftLayout": "Left Mode",
-    "topLayout": "Top Mode",
-    "mixLayout": "Mix Mode",
-    "doubleLayout": "Double Mode",
-    "configManagement": "Config Management",
-    "copyConfigDescription": "Generate the current defaults fragment and copy it to clipboard",
-    "resetConfigDescription": "Restore all settings to system default values"
+    "documentation": "Documentation",
+    "greeting": {
+      "afternoon": "Good afternoon", "early": "Working late", "evening": "Good evening",
+      "late": "Working late", "morning": "Good morning"
+    },
+    "itemCount": "{count} items", "lastDays": "Last {days} days",
+    "pendingCount": "{count} pending",
+    "summary": {
+      "completedToday": "Completed Today", "createdToday": "Created Today", "dueSoon": "Due Soon"
+    },
+    "systemActivity": "System Activity", "systemUsers": "System Users",
+    "time": {
+      "hoursAgo": "{count} hours ago", "minutesAgo": "{count} minutes ago",
+      "yesterdayAt": "Yesterday at {time}"
+    },
+    "todayViews": "Views Today", "todayVisitors": "Visitors Today", "todoItems": "To-do Items",
+    "todoOverview": "To-do Overview",
+    "todoTypes": {
+      "approval": "Approval", "configuration": "Configuration", "notice": "Notice",
+      "review": "Review", "ticket": "Ticket"
+    },
+    "todos": {
+      "leaveRequest": "Process leave request", "processTicket": "Follow up customer ticket",
+      "publishNotice": "Publish system notice", "updatePermissions": "Update role permissions",
+      "verifyUser": "Review new user profile"
+    },
+    "video": "Video Guide", "views": "Views", "visitTrend": "Visit Trend", "visitors": "Visitors"
+  },
+  "profile": {
+    "accountOverview": "Account Overview", "accountPassword": "Account Password",
+    "accountStatus": "Account Status", "avatarUpdatedSuccess": "Avatar updated",
+    "bindEmail": "Bind Email", "bindMobile": "Bind Mobile", "bound": "Bound",
+    "boundItems": "Bound Items", "boundValue": "Bound: {value}", "changeAvatar": "Change Avatar",
+    "changeEmail": "Change Email", "changeMobile": "Change Mobile",
+    "changePassword": "Change Password", "codePlaceholder": "Enter the verification code",
+    "codeSentSuccess": "Verification code sent", "completion": "Profile Completion",
+    "configured": "Configured", "confirmPassword": "Confirm New Password",
+    "confirmPasswordPlaceholder": "Enter the new password again", "countUnit": "items",
+    "currentPassword": "Current Password", "currentPasswordPlaceholder": "Enter current password",
+    "defaultRole": "User", "department": "Department", "editProfile": "Edit Profile",
+    "emailBoundSuccess": "Email bound", "emailChangedSuccess": "Email changed",
+    "emailUnboundSuccess": "Email unbound",
+    "emailUnboundTip": "Bind an email for account verification", "emailVerification": "Email Verification",
+    "joinedAt": "Joined: {date}", "lastLogin": "Last login: {date}",
+    "locations": { "hangzhou": "Hangzhou, Zhejiang", "shanghai": "Shanghai", "shenzhen": "Shenzhen, Guangdong" },
+    "loginAccount": "Login Account", "mobileBoundSuccess": "Mobile number bound",
+    "mobileChangedSuccess": "Mobile number changed", "mobileNumber": "Mobile Number",
+    "mobilePlaceholder": "Enter a mobile number", "mobileUnboundSuccess": "Mobile number unbound",
+    "mobileUnboundTip": "Bind a mobile number for account verification",
+    "mobileVerification": "Mobile Verification", "nicknamePlaceholder": "Enter a nickname",
+    "noRoles": "No roles", "notAvailable": "N/A", "oldPassword": "Old Password",
+    "oldPasswordPlaceholder": "Enter the old password",
+    "passwordChangedRelogin": "Password changed. Please sign in again.",
+    "passwordDescription": "Change your password regularly to protect your account",
+    "passwordMismatch": "The passwords do not match", "permissionCount": "{count} permissions",
+    "permissionIdentifiers": "Permission Identifiers", "personalInfo": "Personal Information",
+    "profileCompletion": "Profile Completion", "recentCount": "Last {count}",
+    "recentLogins": "Recent Logins", "resendAfter": "Resend in {seconds}s",
+    "roleCount": "Role Count", "rolesAndPermissions": "Roles and Permissions",
+    "scoreUnit": "points", "securityDescription": "Manage password and verification methods",
+    "securityLevel": "Security Level",
+    "securityLevels": { "high": "High", "low": "Low", "medium": "Medium" },
+    "securityScore": "Security Score", "securitySettings": "Security Settings",
+    "sendCode": "Send Code", "unassignedDepartment": "No department",
+    "unbindEmail": "Unbind the current email?",
+    "unbindEmailPrompt": "Email verification will no longer be available.",
+    "unbindMobile": "Unbind the current mobile number?",
+    "unbindMobilePrompt": "Mobile verification will no longer be available.",
+    "unbound": "Unbound", "unnamedUser": "Unnamed User",
+    "updateSuccess": "Profile updated", "verificationCode": "Verification Code"
+  },
+  "dictionary": {
+    "code": "Category Code", "codePlaceholder": "Enter a category code",
+    "createOptionTitle": "Create Category Option", "createTitle": "Create System Category",
+    "displayStyle": "Display Style", "displayStyleTip": "Color style used for tags",
+    "editOptionTitle": "Edit Category Option", "editTitle": "Edit System Category",
+    "manageOptions": "Manage Options", "name": "Category Name",
+    "namePlaceholder": "Enter a category name", "optionName": "Option Name",
+    "optionNamePlaceholder": "Enter an option name",
+    "optionSearchPlaceholder": "Search option name or value", "optionValue": "Option Value",
+    "optionValuePlaceholder": "Enter an option value",
+    "searchPlaceholder": "Search category name or code",
+    "seed": {
+      "commonStatus": { "name": "Enabled Status", "remark": "Shared enabled and disabled states" },
+      "gender": {
+        "female": "Female", "male": "Male", "name": "User Gender",
+        "remark": "Gender options used in user profiles", "unset": "Not set"
+      },
+      "yesNo": { "name": "Yes or No", "remark": "Shared yes and no options for forms" }
+    },
+    "tagTypePlaceholder": "Select a tag style"
+  },
+  "user": {
+    "cannotDeleteCurrent": "The current user cannot be deleted", "createSuccess": "User created",
+    "createTitle": "Create User", "deleteConfirm": "Delete the selected users?",
+    "editTitle": "Edit User", "email": "Email", "emailInvalid": "Enter a valid email address",
+    "emailPlaceholder": "Enter an email address", "female": "Female", "gender": "Gender",
+    "male": "Male", "mobile": "Mobile", "mobileInvalid": "Enter a valid mobile number",
+    "mobilePlaceholder": "Enter a mobile number", "newPassword": "New Password",
+    "newPasswordPlaceholder": "Enter a new password", "nickname": "Nickname",
+    "nicknamePlaceholder": "Enter a nickname", "passwordResetSuccess": "Password reset",
+    "resetPassword": "Reset Password", "rolePlaceholder": "Select roles",
+    "roles": {
+      "custom": "Custom Role", "departmentManager": "Department Manager",
+      "departmentMember": "Department Member", "employee": "Employee", "guest": "Guest",
+      "systemAdministrator": "System Administrator"
+    },
+    "rolesLabel": "Roles", "searchPlaceholder": "Search username, nickname, or mobile",
+    "seed": { "admin": "System Administrator", "demo": "Demo User" },
+    "updateSuccess": "User updated", "userLabel": "User", "username": "Username",
+    "usernamePlaceholder": "Enter a username"
+  },
+  "resource": {
+    "city": "City", "code": "Resource Code", "codeAutoGenerated": "Generated automatically when saved",
+    "contact": "Contact", "createTitle": "Create Resource",
+    "editTitle": "Edit Resource", "name": "Resource Name", "nameRequired": "Enter a resource name",
+    "phone": "Phone", "searchPlaceholder": "Search code, name, or city"
+  },
+  "error": {
+    "notFound": {
+      "description": "The page does not exist or has been removed.", "label": "Page Not Found",
+      "signal": "Resource not found", "title": "Page Not Found"
+    },
+    "unauthorized": {
+      "description": "Your account does not have permission to access this page.",
+      "label": "Restricted Access", "signal": "Permission denied", "title": "Access Denied"
+    }
+  },
+  "service": {
+    "auth": {
+      "invalidCredentials": "Incorrect username or password",
+      "missingRefreshToken": "No valid refresh token", "sessionExpired": "Your session has expired"
+    },
+    "dictionary": {
+      "codeExists": "Category code already exists", "notFound": "System category not found",
+      "optionNotFound": "Category option not found",
+      "optionRequiredFields": "Option name and value are required",
+      "requiredFields": "Category name and code are required", "valueExists": "Option value already exists"
+    },
+    "user": {
+      "nicknameRequired": "Nickname is required", "notFound": "User not found",
+      "passwordMin": "Password must contain at least 6 characters",
+      "requiredIdentity": "Username and nickname are required", "usernameExists": "Username already exists"
+    }
+  },
+  "upload": {
+    "failed": "Upload failed", "failedWithReason": "Upload failed: {reason}",
+    "fileTooLarge": "File cannot exceed {size} MB", "imageTooLarge": "Image cannot exceed {size} MB",
+    "invalidFormat": "Invalid file format. Supported: {types}", "maxFiles": "Up to {count} files",
+    "maxImages": "Up to {count} images", "success": "Uploaded successfully", "uploadFile": "Upload File"
+  },
+  "tableSelect": {
+    "select": "Please select", "selectData": "Select data", "selectedCount": "{count} selected"
+  },
+  "iconSelect": {
+    "choose": "Click to select an icon", "elementIcons": "Element Icons",
+    "search": "Search icons", "svgIcons": "SVG Icons"
+  },
+  "tenant": { "switchFailed": "Unable to load the tenant after switching", "switchTenant": "Switch Tenant" },
+  "crud": {
+    "allData": "All data (all pages)", "batchExport": "Batch Export",
+    "batchImport": "Batch Import", "clickUpload": "click to upload",
+    "currentData": "Current data (current page)", "dataSource": "Data Source",
+    "downloadTemplate": "Download Template", "dropOrUpload": "Drop a file here, or click to upload",
+    "exportData": "Export Data", "fields": "Fields", "file": "File", "fileName": "File Name",
+    "filterColumns": "Filter Columns", "importData": "Import Data",
+    "importSuccess": "Data imported", "missingAction": "{action} is not configured",
+    "noParsedData": "No data could be parsed", "readFileFailed": "Failed to read file",
+    "selectDataSource": "Select a data source", "selectFields": "Select fields",
+    "selectFile": "Select a file", "selectedData": "Selected data (all selected records)",
+    "sheetName": "Sheet Name"
+  },
+  "request": {
+    "failed": "Request failed", "networkError": "Network connection failed",
+    "permissionDenied": "Permission denied", "relogin": "Please sign in again",
+    "sessionExpired": "Your session has expired. Please sign in again.", "systemError": "System error"
+  },
+  "download": { "defaultFileName": "download" },
+  "validation": {
+    "email": "Enter a valid email address", "integer": "Enter an integer",
+    "mobile": "Enter a valid mobile number", "number": "Enter a number",
+    "url": "Enter a valid URL"
   }
 }

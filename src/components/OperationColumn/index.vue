@@ -1,7 +1,17 @@
 <template>
-  <el-table-column :prop :label :fixed :align :show-overflow-tooltip :width="finalWidth">
+  <el-table-column
+    :prop
+    :label="props.label || t('common.actions')"
+    :fixed
+    :align
+    :show-overflow-tooltip
+    :width="finalWidth"
+  >
     <template #default="{ row }">
-      <div v-auto class="operation-button">
+      <div
+        v-auto
+        class="operation-button"
+      >
         <slot :row="row" />
       </div>
     </template>
@@ -28,10 +38,11 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  label: "操作",
+  label: "",
   fixed: "right",
   align: "center",
 });
+const { t } = useI18n();
 
 const count = ref(0);
 const maxWidth = ref(80);

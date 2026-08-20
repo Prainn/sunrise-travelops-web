@@ -3,7 +3,10 @@
     <section class="profile-hero">
       <div class="profile-hero__body">
         <div class="profile-avatar">
-          <el-avatar :src="displayAvatar" :size="72">
+          <el-avatar
+            :src="displayAvatar"
+            :size="72"
+          >
             <el-icon><UserFilled /></el-icon>
           </el-avatar>
           <el-button
@@ -12,7 +15,7 @@
             circle
             :icon="Camera"
             size="small"
-            title="更换头像"
+            :title="$t('profile.changeAvatar')"
             @click="triggerFileUpload"
           />
           <input
@@ -26,29 +29,47 @@
 
         <div class="profile-hero__info">
           <div class="profile-hero__title">
-            <h2 class="profile-hero__name">{{ displayName }}</h2>
-            <el-tag type="primary" effect="light" round>{{ primaryRole }}</el-tag>
+            <h2 class="profile-hero__name">
+              {{ displayName }}
+            </h2>
+            <el-tag
+              type="primary"
+              effect="light"
+              round
+            >
+              {{ primaryRole }}
+            </el-tag>
           </div>
           <p class="profile-hero__desc">
-            {{ userProfile.username || "-" }} / {{ userProfile.deptName || "未分配部门" }}
+            {{ userProfile.username || "-" }} /
+            {{ userProfile.deptName || $t("profile.unassignedDepartment") }}
           </p>
           <div class="profile-hero__meta">
             <span class="profile-hero__meta-item">
               <el-icon><Calendar /></el-icon>
-              加入 {{ formatValue(userProfile.createTime) }}
+              {{ $t("profile.joinedAt", { time: formatValue(userProfile.createTime) }) }}
             </span>
             <span class="profile-hero__meta-item">
               <el-icon><Location /></el-icon>
-              最近登录 {{ recentLoginRecords[0]?.time }}
+              {{ $t("profile.lastLogin", { time: recentLoginRecords[0]?.time }) }}
             </span>
           </div>
         </div>
       </div>
 
       <div class="profile-hero__actions">
-        <el-button :icon="Edit" @click="handleOpenDialog(DialogType.ACCOUNT)">编辑资料</el-button>
-        <el-button type="primary" :icon="Lock" @click="handleOpenDialog(DialogType.PASSWORD)">
-          修改密码
+        <el-button
+          :icon="Edit"
+          @click="handleOpenDialog(DialogType.ACCOUNT)"
+        >
+          {{ $t("profile.editProfile") }}
+        </el-button>
+        <el-button
+          type="primary"
+          :icon="Lock"
+          @click="handleOpenDialog(DialogType.PASSWORD)"
+        >
+          {{ $t("profile.changePassword") }}
         </el-button>
       </div>
     </section>
@@ -57,17 +78,31 @@
       <aside class="profile-page__side">
         <section class="profile-card">
           <header class="profile-card__header">
-            <h3 class="profile-card__title">个人资料</h3>
-            <el-tag size="small" effect="plain">{{ genderText }}</el-tag>
+            <h3 class="profile-card__title">
+              {{ $t("profile.personalInfo") }}
+            </h3>
+            <el-tag
+              size="small"
+              effect="plain"
+            >
+              {{ genderText }}
+            </el-tag>
           </header>
 
           <dl class="profile-info">
-            <div v-for="item in profileInfoItems" :key="item.label" class="profile-info__item">
+            <div
+              v-for="item in profileInfoItems"
+              :key="item.label"
+              class="profile-info__item"
+            >
               <dt class="profile-info__label">
                 <el-icon><component :is="item.icon" /></el-icon>
                 {{ item.label }}
               </dt>
-              <dd class="profile-info__value" :class="{ 'is-muted': item.muted }">
+              <dd
+                class="profile-info__value"
+                :class="{ 'is-muted': item.muted }"
+              >
                 {{ item.value }}
               </dd>
             </div>
@@ -76,11 +111,17 @@
 
         <section class="profile-card">
           <header class="profile-card__header">
-            <h3 class="profile-card__title">账号概览</h3>
+            <h3 class="profile-card__title">
+              {{ $t("profile.accountOverview") }}
+            </h3>
           </header>
 
           <div class="profile-stats">
-            <div v-for="item in profileStats" :key="item.label" class="profile-stats__item">
+            <div
+              v-for="item in profileStats"
+              :key="item.label"
+              class="profile-stats__item"
+            >
               <span :class="['profile-icon', 'profile-icon--' + item.tone]">
                 <el-icon><component :is="item.icon" /></el-icon>
               </span>
@@ -97,15 +138,28 @@
 
         <section class="profile-card">
           <header class="profile-card__header">
-            <h3 class="profile-card__title">角色权限</h3>
-            <span class="profile-card__extra">{{ permissionCount }} 个权限</span>
+            <h3 class="profile-card__title">
+              {{ $t("profile.rolesAndPermissions") }}
+            </h3>
+            <span class="profile-card__extra">
+              {{ $t("profile.permissionCount", { count: permissionCount }) }}
+            </span>
           </header>
 
           <div class="profile-tags">
-            <el-tag v-for="role in roleList" :key="role" class="m-0" size="small" effect="light">
+            <el-tag
+              v-for="role in roleList"
+              :key="role"
+              class="m-0"
+              size="small"
+              effect="light"
+            >
               {{ role }}
             </el-tag>
-            <span v-if="!roleList.length" class="profile-empty">暂无角色</span>
+            <span
+              v-if="!roleList.length"
+              class="profile-empty"
+            >{{ $t("profile.noRoles") }}</span>
           </div>
         </section>
       </aside>
@@ -114,27 +168,44 @@
         <section class="profile-card">
           <header class="profile-card__header">
             <div>
-              <h3 class="profile-card__title">安全设置</h3>
-              <p class="profile-card__desc">维护账号登录凭证与身份验证方式</p>
+              <h3 class="profile-card__title">
+                {{ $t("profile.securitySettings") }}
+              </h3>
+              <p class="profile-card__desc">
+                {{ $t("profile.securityDescription") }}
+              </p>
             </div>
-            <el-tag :type="securityLevel.type" effect="light">
-              安全等级 {{ securityLevel.label }}
+            <el-tag
+              :type="securityLevel.type"
+              effect="light"
+            >
+              {{ $t("profile.securityLevel", { level: securityLevel.label }) }}
             </el-tag>
           </header>
 
           <div class="profile-security">
-            <div v-for="item in securityItems" :key="item.key" class="profile-security__item">
+            <div
+              v-for="item in securityItems"
+              :key="item.key"
+              class="profile-security__item"
+            >
               <span :class="['profile-icon', 'profile-icon--large', 'profile-icon--' + item.tone]">
                 <el-icon><component :is="item.icon" /></el-icon>
               </span>
               <div class="profile-security__body">
                 <div class="profile-security__title">
                   <span>{{ item.title }}</span>
-                  <el-tag size="small" :type="item.statusType" effect="plain">
+                  <el-tag
+                    size="small"
+                    :type="item.statusType"
+                    effect="plain"
+                  >
                     {{ item.status }}
                   </el-tag>
                 </div>
-                <p class="profile-security__desc">{{ item.description }}</p>
+                <p class="profile-security__desc">
+                  {{ item.description }}
+                </p>
               </div>
               <div class="profile-security__actions">
                 <el-button
@@ -154,8 +225,12 @@
         <div class="profile-page__grid">
           <section class="profile-card">
             <header class="profile-card__header">
-              <h3 class="profile-card__title">近期登录</h3>
-              <span class="profile-card__extra">最近 3 条</span>
+              <h3 class="profile-card__title">
+                {{ $t("profile.recentLogins") }}
+              </h3>
+              <span class="profile-card__extra">
+                {{ $t("profile.recentCount", { count: 3 }) }}
+              </span>
             </header>
 
             <div class="profile-login">
@@ -178,8 +253,12 @@
 
           <section class="profile-card">
             <header class="profile-card__header">
-              <h3 class="profile-card__title">账号状态</h3>
-              <span class="profile-card__extra">完善度 {{ profileCompletion }}%</span>
+              <h3 class="profile-card__title">
+                {{ $t("profile.accountStatus") }}
+              </h3>
+              <span class="profile-card__extra">
+                {{ $t("profile.completion", { value: profileCompletion }) }}
+              </span>
             </header>
 
             <div class="profile-status">
@@ -204,7 +283,11 @@
       </main>
     </div>
 
-    <el-dialog v-model="dialogState.visible" :title="dialogState.title" width="520px">
+    <el-dialog
+      v-model="dialogState.visible"
+      :title="t(dialogState.titleKey)"
+      width="520px"
+    >
       <el-form
         v-if="dialogState.type === DialogType.ACCOUNT"
         ref="userProfileFormRef"
@@ -213,11 +296,20 @@
         label-width="88px"
         class="pr-10px"
       >
-        <el-form-item label="昵称" prop="nickname">
-          <el-input v-model="userProfileForm.nickname" placeholder="请输入昵称" />
+        <el-form-item
+          :label="$t('user.nickname')"
+          prop="nickname"
+        >
+          <el-input
+            v-model="userProfileForm.nickname"
+            :placeholder="$t('profile.nicknamePlaceholder')"
+          />
         </el-form-item>
-        <el-form-item label="性别">
-          <DictSelect v-model="userProfileForm.gender" code="gender" />
+        <el-form-item :label="$t('user.gender')">
+          <DictSelect
+            v-model="userProfileForm.gender"
+            code="gender"
+          />
         </el-form-item>
       </el-form>
 
@@ -229,14 +321,35 @@
         label-width="88px"
         class="pr-10px"
       >
-        <el-form-item label="原密码" prop="oldPassword">
-          <el-input v-model="passwordChangeForm.oldPassword" type="password" show-password />
+        <el-form-item
+          :label="$t('profile.oldPassword')"
+          prop="oldPassword"
+        >
+          <el-input
+            v-model="passwordChangeForm.oldPassword"
+            type="password"
+            show-password
+          />
         </el-form-item>
-        <el-form-item label="新密码" prop="newPassword">
-          <el-input v-model="passwordChangeForm.newPassword" type="password" show-password />
+        <el-form-item
+          :label="$t('user.newPassword')"
+          prop="newPassword"
+        >
+          <el-input
+            v-model="passwordChangeForm.newPassword"
+            type="password"
+            show-password
+          />
         </el-form-item>
-        <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input v-model="passwordChangeForm.confirmPassword" type="password" show-password />
+        <el-form-item
+          :label="$t('profile.confirmPassword')"
+          prop="confirmPassword"
+        >
+          <el-input
+            v-model="passwordChangeForm.confirmPassword"
+            type="password"
+            show-password
+          />
         </el-form-item>
       </el-form>
 
@@ -248,20 +361,40 @@
         label-width="88px"
         class="pr-10px"
       >
-        <el-form-item label="手机号码" prop="mobile">
+        <el-form-item
+          :label="$t('user.mobile')"
+          prop="mobile"
+        >
           <el-input v-model="mobileUpdateForm.mobile" />
         </el-form-item>
-        <el-form-item label="验证码" prop="code">
+        <el-form-item
+          :label="$t('profile.verificationCode')"
+          prop="code"
+        >
           <el-input v-model="mobileUpdateForm.code">
             <template #append>
-              <el-button :disabled="mobileCountdown > 0" @click="handleSendMobileCode">
-                {{ mobileCountdown > 0 ? mobileCountdown + "s后重新发送" : "发送验证码" }}
+              <el-button
+                :disabled="mobileCountdown > 0"
+                @click="handleSendMobileCode"
+              >
+                {{
+                  mobileCountdown > 0
+                    ? $t("profile.resendAfter", { seconds: mobileCountdown })
+                    : $t("profile.sendCode")
+                }}
               </el-button>
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item label="当前密码" prop="password">
-          <el-input v-model="mobileUpdateForm.password" type="password" show-password />
+        <el-form-item
+          :label="$t('profile.currentPassword')"
+          prop="password"
+        >
+          <el-input
+            v-model="mobileUpdateForm.password"
+            type="password"
+            show-password
+          />
         </el-form-item>
       </el-form>
 
@@ -273,27 +406,50 @@
         label-width="88px"
         class="pr-10px"
       >
-        <el-form-item label="邮箱" prop="email">
+        <el-form-item
+          :label="$t('user.email')"
+          prop="email"
+        >
           <el-input v-model="emailUpdateForm.email" />
         </el-form-item>
-        <el-form-item label="验证码" prop="code">
+        <el-form-item
+          :label="$t('profile.verificationCode')"
+          prop="code"
+        >
           <el-input v-model="emailUpdateForm.code">
             <template #append>
-              <el-button :disabled="emailCountdown > 0" @click="handleSendEmailCode">
-                {{ emailCountdown > 0 ? emailCountdown + "s后重新发送" : "发送验证码" }}
+              <el-button
+                :disabled="emailCountdown > 0"
+                @click="handleSendEmailCode"
+              >
+                {{
+                  emailCountdown > 0
+                    ? $t("profile.resendAfter", { seconds: emailCountdown })
+                    : $t("profile.sendCode")
+                }}
               </el-button>
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item label="当前密码" prop="password">
-          <el-input v-model="emailUpdateForm.password" type="password" show-password />
+        <el-form-item
+          :label="$t('profile.currentPassword')"
+          prop="password"
+        >
+          <el-input
+            v-model="emailUpdateForm.password"
+            type="password"
+            show-password
+          />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <span class="inline-flex gap-2">
-          <el-button @click="handleCancel">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
+          <el-button @click="handleCancel">{{ $t("common.cancel") }}</el-button>
+          <el-button
+            type="primary"
+            @click="handleSubmit"
+          >{{ $t("common.confirm") }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -362,6 +518,7 @@ interface SecurityItem {
 }
 
 const userStore = useUserStoreHook();
+const { t } = useI18n();
 
 const userProfile = ref<UserProfileDetail>({});
 
@@ -374,7 +531,7 @@ const enum DialogType {
 
 const dialogState = reactive({
   visible: false,
-  title: "",
+  titleKey: "profile.editProfile",
   type: "" as DialogType,
 });
 
@@ -394,40 +551,40 @@ const mobileTimer = ref();
 const emailCountdown = ref(0);
 const emailTimer = ref();
 
-const recentLoginRecords = [
+const recentLoginRecords = computed(() => [
   {
     device: "Chrome / Windows",
-    location: "上海",
+    location: t("profile.locations.shanghai"),
     ip: "192.168.1.26",
     time: "2026-06-20 09:32",
   },
   {
     device: "Edge / Windows",
-    location: "杭州",
+    location: t("profile.locations.hangzhou"),
     ip: "192.168.1.18",
     time: "2026-06-19 18:46",
   },
   {
     device: "Safari / iOS",
-    location: "深圳",
+    location: t("profile.locations.shenzhen"),
     ip: "192.168.1.12",
     time: "2026-06-18 14:08",
   },
-];
+]);
 
-const userProfileRules = {
-  nickname: [{ required: true, message: "请输入昵称", trigger: "blur" }],
-};
+const userProfileRules = computed(() => ({
+  nickname: [{ required: true, message: t("profile.nicknamePlaceholder"), trigger: "blur" }],
+}));
 
-const passwordChangeRules = {
-  oldPassword: [{ required: true, message: "请输入原密码", trigger: "blur" }],
-  newPassword: [{ required: true, message: "请输入新密码", trigger: "blur" }],
+const passwordChangeRules = computed(() => ({
+  oldPassword: [{ required: true, message: t("profile.oldPasswordPlaceholder"), trigger: "blur" }],
+  newPassword: [{ required: true, message: t("user.newPasswordPlaceholder"), trigger: "blur" }],
   confirmPassword: [
-    { required: true, message: "请再次输入新密码", trigger: "blur" },
+    { required: true, message: t("profile.confirmPasswordPlaceholder"), trigger: "blur" },
     {
       validator: (_rule: unknown, value: string, callback: (error?: Error) => void) => {
         if (value !== passwordChangeForm.newPassword) {
-          callback(new Error("两次输入的密码不一致"));
+          callback(new Error(t("profile.passwordMismatch")));
           return;
         }
         callback();
@@ -435,35 +592,35 @@ const passwordChangeRules = {
       trigger: "blur",
     },
   ],
-};
+}));
 
 // 手机号校验规则
-const mobileBindingRules = {
+const mobileBindingRules = computed(() => ({
   mobile: [
-    { required: true, message: "请输入手机号", trigger: "blur" },
+    { required: true, message: t("profile.mobilePlaceholder"), trigger: "blur" },
     {
       pattern: /^1[3|4|5|6|7|8|9][0-9]\d{8}$/,
-      message: "请输入正确的手机号码",
+      message: t("user.mobileInvalid"),
       trigger: "blur",
     },
   ],
-  code: [{ required: true, message: "请输入验证码", trigger: "blur" }],
-  password: [{ required: true, message: "请输入当前密码", trigger: "blur" }],
-};
+  code: [{ required: true, message: t("profile.codePlaceholder"), trigger: "blur" }],
+  password: [{ required: true, message: t("profile.currentPasswordPlaceholder"), trigger: "blur" }],
+}));
 
 // 邮箱校验规则
-const emailBindingRules = {
+const emailBindingRules = computed(() => ({
   email: [
-    { required: true, message: "请输入邮箱", trigger: "blur" },
+    { required: true, message: t("user.emailPlaceholder"), trigger: "blur" },
     {
       pattern: /\w[-\w.+]*@([A-Za-z0-9][-A-Za-z0-9]+\.)+[A-Za-z]{2,14}/,
-      message: "请输入正确的邮箱地址",
+      message: t("user.emailInvalid"),
       trigger: "blur",
     },
   ],
-  code: [{ required: true, message: "请输入验证码", trigger: "blur" }],
-  password: [{ required: true, message: "请输入当前密码", trigger: "blur" }],
-};
+  code: [{ required: true, message: t("profile.codePlaceholder"), trigger: "blur" }],
+  password: [{ required: true, message: t("profile.currentPasswordPlaceholder"), trigger: "blur" }],
+}));
 
 const displayAvatar = computed(() => userProfile.value.avatar || userStore.userInfo.avatar || "");
 
@@ -473,7 +630,7 @@ const displayName = computed(() => {
     userStore.userInfo.nickname ||
     userProfile.value.username ||
     userStore.userInfo.username ||
-    "未命名用户"
+    t("profile.unnamedUser")
   );
 });
 
@@ -484,14 +641,14 @@ const roleList = computed(() => {
     .filter(Boolean);
 });
 
-const primaryRole = computed(() => roleList.value[0] || "普通用户");
+const primaryRole = computed(() => roleList.value[0] || t("profile.defaultRole"));
 
 const permissionCount = computed(() => userStore.userInfo.perms?.length || 0);
 
 const genderText = computed(() => {
-  if (userProfile.value.gender === 1) return "男";
-  if (userProfile.value.gender === 2) return "女";
-  return "未设置";
+  if (userProfile.value.gender === 1) return t("user.male");
+  if (userProfile.value.gender === 2) return t("user.female");
+  return t("common.notSet");
 });
 
 const boundCount = computed(() => {
@@ -515,40 +672,40 @@ const profileCompletion = computed(() => {
 const securityLevel = computed(() => {
   const score = 60 + boundCount.value * 20;
   if (score >= 100) {
-    return { score, label: "高", type: "success" as const };
+    return { score, label: t("profile.securityLevels.high"), type: "success" as const };
   }
   if (score >= 80) {
-    return { score, label: "中", type: "warning" as const };
+    return { score, label: t("profile.securityLevels.medium"), type: "warning" as const };
   }
-  return { score, label: "低", type: "info" as const };
+  return { score, label: t("profile.securityLevels.low"), type: "info" as const };
 });
 
 const profileInfoItems = computed<ProfileInfoItem[]>(() => [
   {
-    label: "用户名",
+    label: t("user.username"),
     value: userProfile.value.username || "-",
     icon: userProfile.value.gender === 2 ? Female : userProfile.value.gender === 1 ? Male : User,
   },
   {
-    label: "手机号码",
-    value: userProfile.value.mobile || "未绑定",
+    label: t("user.mobile"),
+    value: userProfile.value.mobile || t("profile.unbound"),
     icon: Iphone,
     muted: !userProfile.value.mobile,
   },
   {
-    label: "邮箱",
-    value: userProfile.value.email || "未绑定",
+    label: t("user.email"),
+    value: userProfile.value.email || t("profile.unbound"),
     icon: Message,
     muted: !userProfile.value.email,
   },
   {
-    label: "部门",
+    label: t("profile.department"),
     value: userProfile.value.deptName || "-",
     icon: OfficeBuilding,
     muted: !userProfile.value.deptName,
   },
   {
-    label: "创建时间",
+    label: t("common.createdAt"),
     value: formatValue(userProfile.value.createTime),
     icon: Timer,
     muted: !userProfile.value.createTime,
@@ -557,30 +714,30 @@ const profileInfoItems = computed<ProfileInfoItem[]>(() => [
 
 const profileStats = computed(() => [
   {
-    label: "安全评分",
+    label: t("profile.securityScore"),
     value: securityLevel.value.score,
-    suffix: "分",
+    suffix: t("profile.scoreUnit"),
     icon: Key,
     tone: "primary",
   },
   {
-    label: "绑定项目",
+    label: t("profile.boundItems"),
     value: boundCount.value,
     suffix: "/2",
     icon: CircleCheck,
     tone: "success",
   },
   {
-    label: "角色数量",
+    label: t("profile.roleCount"),
     value: roleList.value.length,
-    suffix: "个",
+    suffix: t("profile.countUnit"),
     icon: UserFilled,
     tone: "warning",
   },
   {
-    label: "权限标识",
+    label: t("profile.permissionIdentifiers"),
     value: permissionCount.value,
-    suffix: "个",
+    suffix: t("profile.countUnit"),
     icon: DataLine,
     tone: "info",
   },
@@ -588,22 +745,22 @@ const profileStats = computed(() => [
 
 const accountStatusItems = computed(() => [
   {
-    label: "登录账号",
-    value: userProfile.value.username || "未获取",
+    label: t("profile.loginAccount"),
+    value: userProfile.value.username || t("profile.notAvailable"),
     done: !!userProfile.value.username,
   },
   {
-    label: "手机号验证",
-    value: userProfile.value.mobile ? "已绑定" : "未绑定",
+    label: t("profile.mobileVerification"),
+    value: userProfile.value.mobile ? t("profile.bound") : t("profile.unbound"),
     done: !!userProfile.value.mobile,
   },
   {
-    label: "邮箱验证",
-    value: userProfile.value.email ? "已绑定" : "未绑定",
+    label: t("profile.emailVerification"),
+    value: userProfile.value.email ? t("profile.bound") : t("profile.unbound"),
     done: !!userProfile.value.email,
   },
   {
-    label: "资料完善",
+    label: t("profile.profileCompletion"),
     value: `${profileCompletion.value}%`,
     done: profileCompletion.value >= 80,
   },
@@ -612,15 +769,15 @@ const accountStatusItems = computed(() => [
 const securityItems = computed<SecurityItem[]>(() => [
   {
     key: "password",
-    title: "账户密码",
-    description: "定期修改密码有助于保护账户安全",
-    status: "已设置",
+    title: t("profile.accountPassword"),
+    description: t("profile.passwordDescription"),
+    status: t("profile.configured"),
     statusType: "success",
     icon: Lock,
     tone: "primary",
     actions: [
       {
-        label: "修改",
+        label: t("common.edit"),
         type: "primary",
         onClick: () => handleOpenDialog(DialogType.PASSWORD),
       },
@@ -628,28 +785,28 @@ const securityItems = computed<SecurityItem[]>(() => [
   },
   {
     key: "mobile",
-    title: "手机号",
+    title: t("profile.mobileNumber"),
     description: mobileSecurityDesc.value,
-    status: userProfile.value.mobile ? "已绑定" : "未绑定",
+    status: userProfile.value.mobile ? t("profile.bound") : t("profile.unbound"),
     statusType: userProfile.value.mobile ? "success" : "warning",
     icon: Iphone,
     tone: "success",
     actions: userProfile.value.mobile
       ? [
           {
-            label: "更换",
+            label: t("common.change"),
             type: "primary",
             onClick: () => handleOpenDialog(DialogType.MOBILE),
           },
           {
-            label: "解绑",
+            label: t("common.unbind"),
             type: "danger",
             onClick: handleUnbindMobile,
           },
         ]
       : [
           {
-            label: "绑定",
+            label: t("common.bind"),
             type: "primary",
             onClick: () => handleOpenDialog(DialogType.MOBILE),
           },
@@ -657,28 +814,28 @@ const securityItems = computed<SecurityItem[]>(() => [
   },
   {
     key: "email",
-    title: "邮箱",
+    title: t("user.email"),
     description: emailSecurityDesc.value,
-    status: userProfile.value.email ? "已绑定" : "未绑定",
+    status: userProfile.value.email ? t("profile.bound") : t("profile.unbound"),
     statusType: userProfile.value.email ? "success" : "warning",
     icon: Message,
     tone: "warning",
     actions: userProfile.value.email
       ? [
           {
-            label: "更换",
+            label: t("common.change"),
             type: "primary",
             onClick: () => handleOpenDialog(DialogType.EMAIL),
           },
           {
-            label: "解绑",
+            label: t("common.unbind"),
             type: "danger",
             onClick: handleUnbindEmail,
           },
         ]
       : [
           {
-            label: "绑定",
+            label: t("common.bind"),
             type: "primary",
             onClick: () => handleOpenDialog(DialogType.EMAIL),
           },
@@ -712,14 +869,14 @@ function maskEmail(email?: string) {
 
 const mobileSecurityDesc = computed(() => {
   return userProfile.value.mobile
-    ? `已绑定：${maskMobile(userProfile.value.mobile)}`
-    : "未绑定手机号，建议立即绑定";
+    ? t("profile.boundValue", { value: maskMobile(userProfile.value.mobile) })
+    : t("profile.mobileUnboundTip");
 });
 
 const emailSecurityDesc = computed(() => {
   return userProfile.value.email
-    ? `已绑定：${maskEmail(userProfile.value.email)}`
-    : "未绑定邮箱，建议立即绑定";
+    ? t("profile.boundValue", { value: maskEmail(userProfile.value.email) })
+    : t("profile.emailUnboundTip");
 });
 
 const handleOpenDialog = (type: DialogType) => {
@@ -727,22 +884,24 @@ const handleOpenDialog = (type: DialogType) => {
   dialogState.visible = true;
   switch (type) {
     case DialogType.ACCOUNT:
-      dialogState.title = "编辑资料";
+      dialogState.titleKey = "profile.editProfile";
       userProfileForm.nickname = userProfile.value.nickname;
       userProfileForm.avatar = userProfile.value.avatar;
       userProfileForm.gender = userProfile.value.gender;
       break;
     case DialogType.PASSWORD:
-      dialogState.title = "修改密码";
+      dialogState.titleKey = "profile.changePassword";
       break;
     case DialogType.MOBILE:
-      dialogState.title = userProfile.value.mobile ? "更换手机号" : "绑定手机号";
+      dialogState.titleKey = userProfile.value.mobile
+        ? "profile.changeMobile"
+        : "profile.bindMobile";
       mobileUpdateForm.mobile = "";
       mobileUpdateForm.code = "";
       mobileUpdateForm.password = "";
       break;
     case DialogType.EMAIL:
-      dialogState.title = userProfile.value.email ? "更换邮箱" : "绑定邮箱";
+      dialogState.titleKey = userProfile.value.email ? "profile.changeEmail" : "profile.bindEmail";
       emailUpdateForm.email = "";
       emailUpdateForm.code = "";
       emailUpdateForm.password = "";
@@ -753,17 +912,21 @@ const handleOpenDialog = (type: DialogType) => {
 async function handleUnbindMobile() {
   if (!userProfile.value.mobile) return;
   try {
-    const result = await ElMessageBox.prompt("请输入当前密码以解绑手机号", "解绑手机号", {
+    const result = await ElMessageBox.prompt(
+      t("profile.unbindMobilePrompt"),
+      t("profile.unbindMobile"),
+      {
       type: "warning",
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
+      confirmButtonText: t("common.confirm"),
+      cancelButtonText: t("common.cancel"),
       inputType: "password",
-      inputPlaceholder: "当前密码",
-      inputValidator: (val) => !!val || "请输入当前密码",
-    });
+      inputPlaceholder: t("profile.currentPassword"),
+      inputValidator: (val) => !!val || t("profile.currentPasswordPlaceholder"),
+      }
+    );
     const value = getPromptValue(result);
     await UserAPI.unbindMobile({ password: value });
-    ElMessage.success("手机号解绑成功");
+    ElMessage.success(t("profile.mobileUnboundSuccess"));
     await loadUserProfile();
   } catch {
     // ignore
@@ -773,17 +936,17 @@ async function handleUnbindMobile() {
 async function handleUnbindEmail() {
   if (!userProfile.value.email) return;
   try {
-    const result = await ElMessageBox.prompt("请输入当前密码以解绑邮箱", "解绑邮箱", {
+    const result = await ElMessageBox.prompt(t("profile.unbindEmailPrompt"), t("profile.unbindEmail"), {
       type: "warning",
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
+      confirmButtonText: t("common.confirm"),
+      cancelButtonText: t("common.cancel"),
       inputType: "password",
-      inputPlaceholder: "当前密码",
-      inputValidator: (val) => !!val || "请输入当前密码",
+      inputPlaceholder: t("profile.currentPassword"),
+      inputValidator: (val) => !!val || t("profile.currentPasswordPlaceholder"),
     });
     const value = getPromptValue(result);
     await UserAPI.unbindEmail({ password: value });
-    ElMessage.success("邮箱解绑成功");
+    ElMessage.success(t("profile.emailUnboundSuccess"));
     await loadUserProfile();
   } catch {
     // ignore
@@ -792,16 +955,16 @@ async function handleUnbindEmail() {
 
 function handleSendMobileCode() {
   if (!mobileUpdateForm.mobile) {
-    ElMessage.error("请输入手机号");
+    ElMessage.error(t("profile.mobilePlaceholder"));
     return;
   }
   const reg = /^1[3-9]\d{9}$/;
   if (!reg.test(mobileUpdateForm.mobile)) {
-    ElMessage.error("手机号格式不正确");
+    ElMessage.error(t("user.mobileInvalid"));
     return;
   }
   UserAPI.sendMobileCode(mobileUpdateForm.mobile).then(() => {
-    ElMessage.success("验证码发送成功");
+    ElMessage.success(t("profile.codeSentSuccess"));
     mobileCountdown.value = 60;
     mobileTimer.value = setInterval(() => {
       if (mobileCountdown.value > 0) {
@@ -815,17 +978,17 @@ function handleSendMobileCode() {
 
 function handleSendEmailCode() {
   if (!emailUpdateForm.email) {
-    ElMessage.error("请输入邮箱");
+    ElMessage.error(t("user.emailPlaceholder"));
     return;
   }
   const reg = /\w[-\w.+]*@([A-Za-z0-9][-A-Za-z0-9]+\.)+[A-Za-z]{2,14}/;
   if (!reg.test(emailUpdateForm.email)) {
-    ElMessage.error("邮箱格式不正确");
+    ElMessage.error(t("user.emailInvalid"));
     return;
   }
 
   UserAPI.sendEmailCode(emailUpdateForm.email).then(() => {
-    ElMessage.success("验证码发送成功");
+    ElMessage.success(t("profile.codeSentSuccess"));
     emailCountdown.value = 60;
     emailTimer.value = setInterval(() => {
       if (emailCountdown.value > 0) {
@@ -844,7 +1007,7 @@ const handleSubmit = async () => {
       if (!valid) return;
 
       await UserAPI.updateProfile(userProfileForm);
-      ElMessage.success("账号资料修改成功");
+      ElMessage.success(t("profile.updateSuccess"));
       dialogState.visible = false;
       if (userProfileForm.nickname) {
         userStore.userInfo.nickname = userProfileForm.nickname;
@@ -856,13 +1019,17 @@ const handleSubmit = async () => {
 
       await UserAPI.changePassword(passwordChangeForm);
       dialogState.visible = false;
-      await redirectToLogin("密码已修改，请重新登录");
+      await redirectToLogin(t("profile.passwordChangedRelogin"));
     } else if (dialogState.type === DialogType.MOBILE) {
       const valid = await mobileBindingFormRef.value?.validate();
       if (!valid) return;
 
       await UserAPI.bindOrChangeMobile(mobileUpdateForm);
-      ElMessage.success(userProfile.value.mobile ? "手机号更换成功" : "手机号绑定成功");
+      ElMessage.success(
+        userProfile.value.mobile
+          ? t("profile.mobileChangedSuccess")
+          : t("profile.mobileBoundSuccess")
+      );
       dialogState.visible = false;
       await loadUserProfile();
     } else if (dialogState.type === DialogType.EMAIL) {
@@ -870,7 +1037,9 @@ const handleSubmit = async () => {
       if (!valid) return;
 
       await UserAPI.bindOrChangeEmail(emailUpdateForm);
-      ElMessage.success(userProfile.value.email ? "邮箱更换成功" : "邮箱绑定成功");
+      ElMessage.success(
+        userProfile.value.email ? t("profile.emailChangedSuccess") : t("profile.emailBoundSuccess")
+      );
       dialogState.visible = false;
       await loadUserProfile();
     }
@@ -908,7 +1077,7 @@ const handleFileChange = async (event: Event) => {
     });
     userProfile.value.avatar = data.url;
     userStore.userInfo.avatar = data.url;
-    ElMessage.success("头像更新成功");
+    ElMessage.success(t("profile.avatarUpdatedSuccess"));
   }
   target.value = "";
 };

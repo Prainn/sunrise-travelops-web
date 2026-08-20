@@ -3,6 +3,7 @@
  */
 
 import type { FormItemRule } from "element-plus";
+import { translate } from "@/lang/utils";
 
 /**
  * 判断是否是外部链接
@@ -70,37 +71,47 @@ export const VALIDATORS = {
   },
 
   /** 邮箱验证 */
-  email: {
-    type: "email",
-    message: "请输入正确的邮箱地址",
-    trigger: "blur",
-  } as FormItemRule,
+  get email(): FormItemRule {
+    return {
+      type: "email",
+      message: translate("validation.email"),
+      trigger: "blur",
+    } as FormItemRule;
+  },
 
   /** 手机号验证 */
-  mobile: {
-    pattern: /^1[3-9]\d{9}$/,
-    message: "请输入正确的手机号码",
-    trigger: "blur",
-  } as FormItemRule,
+  get mobile(): FormItemRule {
+    return {
+      pattern: /^1[3-9]\d{9}$/,
+      message: translate("validation.mobile"),
+      trigger: "blur",
+    } as FormItemRule;
+  },
 
   /** URL 验证 */
-  url: {
-    type: "url",
-    message: "请输入正确的URL地址",
-    trigger: "blur",
-  } as FormItemRule,
+  get url(): FormItemRule {
+    return {
+      type: "url",
+      message: translate("validation.url"),
+      trigger: "blur",
+    } as FormItemRule;
+  },
 
   /** 数字验证 */
-  number: {
-    type: "number",
-    message: "请输入数字",
-    trigger: "blur",
-  } as FormItemRule,
+  get number(): FormItemRule {
+    return {
+      type: "number",
+      message: translate("validation.number"),
+      trigger: "blur",
+    } as FormItemRule;
+  },
 
   /** 整数验证 */
-  integer: {
-    type: "integer",
-    message: "请输入整数",
-    trigger: "blur",
-  } as FormItemRule,
+  get integer(): FormItemRule {
+    return {
+      type: "integer",
+      message: translate("validation.integer"),
+      trigger: "blur",
+    } as FormItemRule;
+  },
 };

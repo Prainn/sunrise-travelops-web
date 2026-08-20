@@ -156,7 +156,7 @@ npx skills add https://github.com/youlaitech/youlai-skills --skill vue-admin
 | Official Documentation | [https://www.youlai.tech/docs/web/](https://www.youlai.tech/docs/web/) |
 | Deployment Guide | [https://www.youlai.tech/docs/web/deployment/deploy.html](https://www.youlai.tech/docs/web/deployment/deploy.html) |
 | FAQ | [https://www.youlai.tech/docs/faq/](https://www.youlai.tech/docs/faq/) |
-| Code Standards | [ESLint V9 + Prettier + Stylelint + EditorConfig for Standardized and Unified Frontend Code Style](https://youlai.blog.csdn.net/article/details/145608723) |
+| Code Standards | ESLint + EditorConfig |
 | Commit Standards | [Husky + Lint-staged + Commitlint + Commitizen + cz-git for Git Commit Standards](https://youlai.blog.csdn.net/article/details/145615236) |
 | API Documentation | [https://www.apifox.cn](https://www.apifox.cn/apidoc/shared-195e783f-4d85-4235-a038-eec696de4ea5) |
 

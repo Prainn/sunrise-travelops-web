@@ -2,6 +2,7 @@ import { Storage } from "./storage";
 import { STORAGE_KEYS, ROLE_ROOT } from "@/constants";
 import { useUserStoreHook } from "@/stores/user";
 import router from "@/router";
+import { translate } from "@/lang/utils";
 
 // 负责本地凭证与偏好的读写
 export const AuthStorage = {
@@ -71,7 +72,7 @@ let redirectingToLogin = false;
  * 重定向到登录页面
  */
 export async function redirectToLogin(
-  message: string = "请重新登录",
+  message: string = translate("request.relogin"),
   notify: boolean = true
 ): Promise<void> {
   if (redirectingToLogin) return;
@@ -79,7 +80,7 @@ export async function redirectToLogin(
 
   if (notify) {
     ElNotification({
-      title: "提示",
+      title: translate("common.tip"),
       message,
       type: "warning",
       duration: 3000,

@@ -14,20 +14,29 @@
       multiple
     >
       <!-- 上传文件按钮 -->
-      <el-button type="primary" :disabled="fileList.length >= props.limit">
-        {{ props.uploadBtnText }}
+      <el-button
+        type="primary"
+        :disabled="fileList.length >= props.limit"
+      >
+        {{ props.uploadBtnText || t("upload.uploadFile") }}
       </el-button>
 
       <!-- 文件列表 -->
       <template #file="{ file }">
         <template v-if="file.status === 'success'">
           <div class="el-upload-list__item-info">
-            <a class="el-upload-list__item-name" @click="handleDownload(file)">
+            <a
+              class="el-upload-list__item-name"
+              @click="handleDownload(file)"
+            >
               <el-icon>
                 <Document />
               </el-icon>
               <span class="el-upload-list__item-file-name">{{ file.name }}</span>
-              <span class="el-icon--close" @click.stop="handleRemove(file.url!)">
+              <span
+                class="el-icon--close"
+                @click.stop="handleRemove(file.url!)"
+              >
                 <el-icon>
                   <Close />
                 </el-icon>
@@ -37,7 +46,10 @@
         </template>
         <template v-else>
           <div class="el-upload-list__item-info">
-            <el-progress style="display: inline-flex" :percentage="file.percentage" />
+            <el-progress
+              style="display: inline-flex"
+              :percentage="file.percentage"
+            />
           </div>
         </template>
       </template>
@@ -99,7 +111,7 @@ const props = defineProps({
    */
   uploadBtnText: {
     type: String,
-    default: "上传文件",
+    default: "",
   },
 
   /**
@@ -115,6 +127,7 @@ const props = defineProps({
   },
 });
 const modelValue = defineModel<FileInfo[]>({ required: true, default: () => [] });
+const { t } = useI18n();
 
 const fileList = ref([] as UploadFile[]);
 
@@ -143,7 +156,7 @@ watch(
 function handleBeforeUpload(file: UploadRawFile) {
   // 限制文件大小
   if (file.size > props.maxFileSize * 1024 * 1024) {
-    ElMessage.warning("上传文件不能大于" + props.maxFileSize + "M");
+    ElMessage.warning(t("upload.fileTooLarge", { size: props.maxFileSize }));
     return false;
   }
   return true;
@@ -183,14 +196,14 @@ function handleUpload(options: UploadRequestOptions) {
  * 上传文件超出限制
  */
 function handleExceed() {
-  ElMessage.warning("最多只能上传 " + props.limit + " 个文件");
+  ElMessage.warning(t("upload.maxFiles", { count: props.limit }));
 }
 
 /**
  * 上传成功
  */
 const handleSuccess = (response: any, uploadFile: UploadFile, files: UploadFiles) => {
-  ElMessage.success("上传成功");
+  ElMessage.success(t("upload.success"));
   // 只有当状态为 success 或者 fail，代表文件上传全部完成了，失败也算完成
   if (
     files.every((file: UploadFile) => {
@@ -224,7 +237,7 @@ const handleSuccess = (response: any, uploadFile: UploadFile, files: UploadFiles
  */
 const handleError = (_error: any) => {
   console.error(_error);
-  ElMessage.error("上传失败");
+  ElMessage.error(t("upload.failed"));
 };
 
 /**

@@ -4,12 +4,25 @@
       <div class="card dash-header__card">
         <div class="dash-header__start">
           <div class="dash-avatar">
-            <img v-if="userStore.userInfo.avatar" :src="userStore.userInfo.avatar" alt="" />
-            <el-icon v-else :size="22"><User /></el-icon>
+            <img
+              v-if="userStore.userInfo.avatar"
+              :src="userStore.userInfo.avatar"
+              alt=""
+            />
+            <el-icon
+              v-else
+              :size="22"
+            >
+              <User />
+            </el-icon>
           </div>
           <div class="dash-header__text">
-            <h1 class="dash-header__greeting">{{ greetings }}</h1>
-            <p class="dash-header__date">{{ currentDateStr }}</p>
+            <h1 class="dash-header__greeting">
+              {{ greetings }}
+            </h1>
+            <p class="dash-header__date">
+              {{ currentDateStr }}
+            </p>
           </div>
         </div>
         <div class="dash-header__end">
@@ -43,20 +56,20 @@
           <a
             href="https://juejin.cn/post/7228990409909108793"
             target="_blank"
-            title="文档"
+            :title="$t('dashboard.documentation')"
             class="quick-link"
           >
             <el-icon><Document /></el-icon>
-            <span>文档</span>
+            <span>{{ $t("dashboard.documentation") }}</span>
           </a>
           <a
             href="https://www.bilibili.com/video/BV1eFUuYyEFj"
             target="_blank"
-            title="视频"
+            :title="$t('dashboard.video')"
             class="quick-link"
           >
             <el-icon><VideoPlay /></el-icon>
-            <span>视频</span>
+            <span>{{ $t("dashboard.video") }}</span>
           </a>
         </div>
       </div>
@@ -64,29 +77,13 @@
 
     <section class="dash-stats">
       <div class="stat-card">
-        <div class="stat-card__icon stat-card__icon--online">
-          <el-icon :size="18"><Connection /></el-icon>
-        </div>
-        <div class="stat-card__body">
-          <span class="stat-card__label">在线用户</span>
-          <span class="stat-card__num">{{ onlineUserCount }}</span>
-        </div>
-        <span
-          :class="[
-            'stat-card__badge',
-            isConnected ? 'stat-card__badge--on' : 'stat-card__badge--off',
-          ]"
-        >
-          {{ isConnected ? "实时" : "离线" }}
-        </span>
-      </div>
-
-      <div class="stat-card">
         <div class="stat-card__icon stat-card__icon--visitor">
-          <el-icon :size="18"><User /></el-icon>
+          <el-icon :size="18">
+            <User />
+          </el-icon>
         </div>
         <div class="stat-card__body">
-          <span class="stat-card__label">今日访客</span>
+          <span class="stat-card__label">{{ $t("dashboard.todayVisitors") }}</span>
           <span class="stat-card__num">{{ displayTransitionUvCount }}</span>
         </div>
         <span
@@ -103,10 +100,12 @@
 
       <div class="stat-card">
         <div class="stat-card__icon stat-card__icon--view">
-          <el-icon :size="18"><View /></el-icon>
+          <el-icon :size="18">
+            <View />
+          </el-icon>
         </div>
         <div class="stat-card__body">
-          <span class="stat-card__label">今日浏览量</span>
+          <span class="stat-card__label">{{ $t("dashboard.todayViews") }}</span>
           <span class="stat-card__num">{{ displayTransitionPvCount }}</span>
         </div>
         <span
@@ -126,7 +125,7 @@
           <span class="stat-card__svg i-svg:group" />
         </div>
         <div class="stat-card__body">
-          <span class="stat-card__label">系统用户</span>
+          <span class="stat-card__label">{{ $t("dashboard.systemUsers") }}</span>
           <span class="stat-card__num">6</span>
         </div>
         <span :class="['stat-card__trend', `stat-card__trend--${systemTrendTone}`]">
@@ -139,25 +138,51 @@
     <section class="dash-chart">
       <div class="card dash-chart__trend">
         <div class="card__head">
-          <h3 class="card__title">访问趋势</h3>
-          <el-radio-group v-model="visitTrendDateRange" size="small">
-            <el-radio-button label="近7天" :value="7" />
-            <el-radio-button label="近30天" :value="30" />
+          <h3 class="card__title">
+            {{ $t("dashboard.visitTrend") }}
+          </h3>
+          <el-radio-group
+            v-model="visitTrendDateRange"
+            size="small"
+          >
+            <el-radio-button
+              :label="$t('dashboard.lastDays', { count: 7 })"
+              :value="7"
+            />
+            <el-radio-button
+              :label="$t('dashboard.lastDays', { count: 30 })"
+              :value="30"
+            />
           </el-radio-group>
         </div>
         <div class="card__body card__body--chart">
-          <ECharts :options="visitTrendChartOptions" height="260px" />
+          <ECharts
+            :options="visitTrendChartOptions"
+            height="260px"
+          />
         </div>
       </div>
 
       <div class="card dash-chart__overview">
         <div class="card__head">
-          <h3 class="card__title">待办概览</h3>
-          <el-tag type="primary" size="small" effect="plain">5 项待处理</el-tag>
+          <h3 class="card__title">
+            {{ $t("dashboard.todoOverview") }}
+          </h3>
+          <el-tag
+            type="primary"
+            size="small"
+            effect="plain"
+          >
+            {{ $t("dashboard.pendingCount", { count: 5 }) }}
+          </el-tag>
         </div>
         <div class="card__body overview-card">
           <div class="overview-summary">
-            <div v-for="item in todoSummaryItems" :key="item.label" class="overview-summary__item">
+            <div
+              v-for="item in todoSummaryItems"
+              :key="item.label"
+              class="overview-summary__item"
+            >
               <span class="overview-summary__label">{{ item.label }}</span>
               <strong class="overview-summary__value">{{ item.value }}</strong>
             </div>
@@ -176,7 +201,9 @@
                   <span class="overview-bars__dot" />
                   {{ item.label }}
                 </span>
-                <span class="overview-bars__value">{{ item.value }} 项</span>
+                <span class="overview-bars__value">
+                  {{ $t("dashboard.itemCount", { count: item.value }) }}
+                </span>
               </div>
               <span class="overview-bars__track">
                 <span class="overview-bars__bar" />
@@ -190,8 +217,15 @@
     <section class="dash-bottom">
       <div class="card">
         <div class="card__head">
-          <h3 class="card__title">待办事项</h3>
-          <el-tag size="small" round>5 项</el-tag>
+          <h3 class="card__title">
+            {{ $t("dashboard.todoItems") }}
+          </h3>
+          <el-tag
+            size="small"
+            round
+          >
+            {{ $t("dashboard.itemCount", { count: 5 }) }}
+          </el-tag>
         </div>
         <div class="card__body">
           <div
@@ -209,7 +243,7 @@
             </el-icon>
             <span class="todo-row__title">{{ todo.title }}</span>
             <el-tag
-              :type="todo.done ? 'success' : todo.tag === '工单' ? 'warning' : 'info'"
+              :type="todo.done ? 'success' : todo.tone"
               size="small"
               effect="plain"
               class="todo-row__tag"
@@ -223,11 +257,17 @@
 
       <div class="card">
         <div class="card__head">
-          <h3 class="card__title">系统动态</h3>
+          <h3 class="card__title">
+            {{ $t("dashboard.systemActivity") }}
+          </h3>
         </div>
         <div class="card__body card__body--scroll">
           <div class="feed">
-            <div v-for="item in activities" :key="item.id" class="feed__item">
+            <div
+              v-for="item in activities"
+              :key="item.id"
+              class="feed__item"
+            >
               <span class="feed__dot" />
               <span class="feed__text">{{ item.content }}</span>
               <span class="feed__time">{{ item.time }}</span>
@@ -252,7 +292,6 @@ import { formatGrowthRate } from "@/utils";
 import { useTransition } from "@vueuse/core";
 import {
   User,
-  Connection,
   View,
   ArrowUp,
   ArrowDown,
@@ -261,26 +300,25 @@ import {
   Document,
   VideoPlay,
 } from "@element-plus/icons-vue";
-import { useOnlineUsers } from "@/composables";
 
 const userStore = useUserStore();
 const settingsStore = useSettingsStore();
-const { onlineUserCount, isConnected } = useOnlineUsers();
+const { t, locale } = useI18n();
 
 const hours = new Date().getHours();
 const greetings = computed(() => {
   const n = userStore.userInfo.nickname;
-  if (hours >= 6 && hours < 8) return `早安，${n}`;
-  if (hours >= 8 && hours < 12) return `上午好，${n}`;
-  if (hours >= 12 && hours < 18) return `下午好，${n}`;
-  if (hours >= 18 && hours < 24) return `晚上好，${n}`;
-  return `夜深了，${n}`;
+  if (hours >= 6 && hours < 8) return t("dashboard.greeting.early", { name: n });
+  if (hours >= 8 && hours < 12) return t("dashboard.greeting.morning", { name: n });
+  if (hours >= 12 && hours < 18) return t("dashboard.greeting.afternoon", { name: n });
+  if (hours >= 18 && hours < 24) return t("dashboard.greeting.evening", { name: n });
+  return t("dashboard.greeting.late", { name: n });
 });
 
 const currentDateStr = computed(() => {
-  const d = new Date();
-  const w = ["日", "一", "二", "三", "四", "五", "六"];
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 星期${w[d.getDay()]}`;
+  return new Intl.DateTimeFormat(locale.value === "en" ? "en-US" : "zh-CN", {
+    dateStyle: "full",
+  }).format(new Date());
 });
 
 interface TodoItem {
@@ -289,45 +327,51 @@ interface TodoItem {
   tag: string;
   time: string;
   done: boolean;
+  tone: "warning" | "info";
 }
 
-const todoItems: TodoItem[] = [
+const todoItems = computed<TodoItem[]>(() => [
   {
     id: 1,
-    title: "审批：张三提交的请假申请",
-    tag: "审批",
-    time: "10分钟前",
+    title: t("dashboard.todos.leaveRequest"),
+    tag: t("dashboard.todoTypes.approval"),
+    time: t("dashboard.time.minutesAgo", { count: 10 }),
     done: false,
+    tone: "info",
   },
   {
     id: 2,
-    title: "审核：新用户注册信息核实",
-    tag: "审核",
-    time: "30分钟前",
+    title: t("dashboard.todos.verifyUser"),
+    tag: t("dashboard.todoTypes.review"),
+    time: t("dashboard.time.minutesAgo", { count: 30 }),
     done: false,
+    tone: "info",
   },
   {
     id: 3,
-    title: "发布：系统维护通知公告",
-    tag: "通知",
-    time: "1小时前",
+    title: t("dashboard.todos.publishNotice"),
+    tag: t("dashboard.todoTypes.notice"),
+    time: t("dashboard.time.hoursAgo", { count: 1 }),
     done: false,
+    tone: "info",
   },
   {
     id: 4,
-    title: "处理：工单 #TSK-20240509",
-    tag: "工单",
-    time: "2小时前",
+    title: t("dashboard.todos.processTicket"),
+    tag: t("dashboard.todoTypes.ticket"),
+    time: t("dashboard.time.hoursAgo", { count: 2 }),
     done: false,
+    tone: "warning",
   },
   {
     id: 5,
-    title: "更新：用户角色权限配置",
-    tag: "配置",
-    time: "昨天 15:30",
+    title: t("dashboard.todos.updatePermissions"),
+    tag: t("dashboard.todoTypes.configuration"),
+    time: t("dashboard.time.yesterdayAt", { time: "15:30" }),
     done: true,
+    tone: "info",
   },
-];
+]);
 
 interface Activity {
   id: number;
@@ -335,27 +379,51 @@ interface Activity {
   time: string;
 }
 
-const activities: Activity[] = [
-  { id: 1, content: "管理员 admin 登录系统", time: "3分钟前" },
-  { id: 2, content: "新增用户李四，角色为普通用户", time: "25分钟前" },
-  { id: 3, content: "系统配置项「登录策略」已更新", time: "1小时前" },
-  { id: 4, content: "数据库自动备份任务执行完成", time: "3小时前" },
-  { id: 5, content: "角色权限批量修改：运营组新增导出权限", time: "昨天 16:42" },
-  { id: 6, content: "SSL 证书已自动续期", time: "昨天 09:15" },
-];
+const activities = computed<Activity[]>(() => [
+  {
+    id: 1,
+    content: t("dashboard.activities.adminLogin"),
+    time: t("dashboard.time.minutesAgo", { count: 3 }),
+  },
+  {
+    id: 2,
+    content: t("dashboard.activities.userCreated"),
+    time: t("dashboard.time.minutesAgo", { count: 25 }),
+  },
+  {
+    id: 3,
+    content: t("dashboard.activities.loginPolicyUpdated"),
+    time: t("dashboard.time.hoursAgo", { count: 1 }),
+  },
+  {
+    id: 4,
+    content: t("dashboard.activities.backupCompleted"),
+    time: t("dashboard.time.hoursAgo", { count: 3 }),
+  },
+  {
+    id: 5,
+    content: t("dashboard.activities.permissionsUpdated"),
+    time: t("dashboard.time.yesterdayAt", { time: "16:42" }),
+  },
+  {
+    id: 6,
+    content: t("dashboard.activities.certificateRenewed"),
+    time: t("dashboard.time.yesterdayAt", { time: "09:15" }),
+  },
+]);
 
-const todoOverviewItems = [
-  { label: "审批", value: "2", percent: 40, tone: "primary" },
-  { label: "审核", value: "1", percent: 20, tone: "primary" },
-  { label: "通知", value: "1", percent: 20, tone: "primary" },
-  { label: "工单", value: "1", percent: 20, tone: "primary" },
-];
+const todoOverviewItems = computed(() => [
+  { label: t("dashboard.todoTypes.approval"), value: "2", percent: 40, tone: "primary" },
+  { label: t("dashboard.todoTypes.review"), value: "1", percent: 20, tone: "primary" },
+  { label: t("dashboard.todoTypes.notice"), value: "1", percent: 20, tone: "primary" },
+  { label: t("dashboard.todoTypes.ticket"), value: "1", percent: 20, tone: "primary" },
+]);
 
-const todoSummaryItems = [
-  { label: "今日新增", value: "3", tone: "primary" },
-  { label: "即将超时", value: "1", tone: "primary" },
-  { label: "今日完成", value: "1", tone: "success" },
-];
+const todoSummaryItems = computed(() => [
+  { label: t("dashboard.summary.createdToday"), value: "3", tone: "primary" },
+  { label: t("dashboard.summary.dueSoon"), value: "1", tone: "primary" },
+  { label: t("dashboard.summary.completedToday"), value: "1", tone: "success" },
+]);
 
 const visitOverviewData = ref<VisitOverviewDetail>({
   todayUvCount: 0,
@@ -465,7 +533,7 @@ function updateVisitTrendChartOptions(d: VisitTrendDetail) {
       extraCssText: "box-shadow: var(--el-box-shadow-light); border-radius: 6px;",
     },
     legend: {
-      data: ["浏览量", "访客量"],
+      data: [t("dashboard.views"), t("dashboard.visitors")],
       bottom: 0,
       textStyle: { fontSize: 12, color: textSecondary },
       itemWidth: 10,
@@ -490,7 +558,7 @@ function updateVisitTrendChartOptions(d: VisitTrendDetail) {
     },
     series: [
       {
-        name: "浏览量",
+        name: t("dashboard.views"),
         type: "line",
         data: d.pvList,
         smooth: true,
@@ -516,7 +584,7 @@ function updateVisitTrendChartOptions(d: VisitTrendDetail) {
         },
       },
       {
-        name: "访客量",
+        name: t("dashboard.visitors"),
         type: "line",
         data: d.uvList,
         smooth: true,
@@ -549,7 +617,7 @@ watch(
   { immediate: true }
 );
 watch(
-  () => [settingsStore.resolvedTheme, settingsStore.themeColors],
+  () => [settingsStore.resolvedTheme, settingsStore.themeColors, locale.value],
   () => {
     if (!visitTrendData.value) return;
 
@@ -691,7 +759,7 @@ $pad: 10px;
 // Stat cards
 .dash-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: $gap;
 }
 
@@ -712,10 +780,6 @@ $pad: 10px;
     height: 44px;
     border-radius: 10px;
 
-    &--online {
-      color: var(--el-color-primary);
-      background: color-mix(in srgb, var(--el-color-primary) 10%, var(--el-bg-color-overlay));
-    }
     &--visitor {
       color: var(--el-color-primary);
       background: color-mix(in srgb, var(--el-color-primary) 8%, var(--el-bg-color-overlay));
@@ -755,19 +819,6 @@ $pad: 10px;
     margin-bottom: 3px;
     font-size: 13px;
     color: var(--el-text-color-secondary);
-  }
-
-  &__badge {
-    flex-shrink: 0;
-    font-size: 11px;
-    font-weight: 500;
-
-    &--on {
-      color: var(--el-color-success);
-    }
-    &--off {
-      color: var(--el-text-color-secondary);
-    }
   }
 
   &__trend {

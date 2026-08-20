@@ -1,6 +1,5 @@
 import request from "@/utils/request";
 import type {
-  UserInfo,
   UserForm,
   UserQueryParams,
   UserItem,
@@ -16,18 +15,6 @@ import type { ExcelResult, OptionItem, PageResult } from "@/api/common";
 const USER_BASE_URL = "/api/v1/users";
 
 const UserAPI = {
-  /**
-   * 获取当前登录用户信息
-   *
-   * @returns 登录用户昵称、头像信息，包括角色和权限
-   */
-  getInfo() {
-    return request<unknown, UserInfo>({
-      url: `${USER_BASE_URL}/me`,
-      method: "get",
-    });
-  },
-
   /**
    * 获取用户分页列表
    *

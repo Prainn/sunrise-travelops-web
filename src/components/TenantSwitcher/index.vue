@@ -8,7 +8,9 @@
   >
     <div class="tenant-switcher__trigger">
       <span class="tenant-switcher__label">{{ currentTenantName }}</span>
-      <el-icon class="tenant-switcher__icon"><ArrowDown /></el-icon>
+      <el-icon class="tenant-switcher__icon">
+        <ArrowDown />
+      </el-icon>
     </div>
     <template #dropdown>
       <el-dropdown-menu class="tenant-switcher__menu">
@@ -35,6 +37,7 @@ const emit = defineEmits<{
 }>();
 
 const tenantStore = useTenantStoreHook();
+const { t } = useI18n();
 
 const tenantList = computed(() => tenantStore.tenantList);
 
@@ -48,7 +51,7 @@ const currentTenantId = computed<number | null>({
 const currentTenantName = computed(() => {
   const currentId = currentTenantId.value;
   const fromList = tenantList.value.find((t) => t.id === currentId)?.name;
-  return fromList || tenantStore.currentTenant?.name || "切换租户";
+  return fromList || tenantStore.currentTenant?.name || t("tenant.switchTenant");
 });
 
 function onCommand(tenantId: number) {

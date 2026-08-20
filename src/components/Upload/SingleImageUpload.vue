@@ -18,7 +18,10 @@
           :preview-src-list="[modelValue]"
           @click.stop
         />
-        <el-icon class="single-upload__delete-btn" @click.stop="handleDelete">
+        <el-icon
+          class="single-upload__delete-btn"
+          @click.stop="handleDelete"
+        >
           <CircleCloseFilled />
         </el-icon>
       </template>
@@ -84,6 +87,7 @@ const props = defineProps({
 });
 
 const modelValue = defineModel<string>({ default: "" });
+const { t } = useI18n();
 
 /**
  * 限制用户上传文件的格式和大小
@@ -107,13 +111,13 @@ function handleBeforeUpload(file: UploadRawFile) {
   });
 
   if (!isValidType) {
-    ElMessage.warning("上传文件的格式不正确，仅支持 " + props.accept);
+    ElMessage.warning(t("upload.invalidFormat", { types: props.accept }));
     return false;
   }
 
   // 限制文件大小
   if (file.size > props.maxFileSize * 1024 * 1024) {
-    ElMessage.warning("上传图片不能大于" + props.maxFileSize + "M");
+    ElMessage.warning(t("upload.imageTooLarge", { size: props.maxFileSize }));
     return false;
   }
   return true;
@@ -158,7 +162,7 @@ function handleDelete() {
  * @param fileInfo 上传成功后的文件信息
  */
 const onSuccess = (fileInfo: FileInfo) => {
-  ElMessage.success("上传成功");
+  ElMessage.success(t("upload.success"));
   modelValue.value = fileInfo.url;
 };
 
@@ -169,7 +173,7 @@ const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
 const onError = (error: unknown) => {
-  ElMessage.error("上传失败: " + getErrorMessage(error));
+  ElMessage.error(t("upload.failedWithReason", { reason: getErrorMessage(error) }));
 };
 </script>
 

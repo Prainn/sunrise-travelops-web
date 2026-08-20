@@ -29,12 +29,22 @@
         :style="scrollStyle"
       >
         <!-- 滚动内容，复制两份以实现无缝滚动 -->
-        <div class="scroll-item" v-html="sanitizedContent" />
-        <div class="scroll-item" v-html="sanitizedContent" />
+        <div
+          class="scroll-item"
+          v-html="sanitizedContent"
+        />
+        <div
+          class="scroll-item"
+          v-html="sanitizedContent"
+        />
       </div>
     </div>
     <!-- 可选的关闭按钮 -->
-    <div v-if="showClose" class="right-icon" @click="handleRightIconClick">
+    <div
+      v-if="showClose"
+      class="right-icon"
+      @click="handleRightIconClick"
+    >
       <el-icon><Close /></el-icon>
     </div>
   </div>
