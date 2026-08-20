@@ -16,14 +16,6 @@
       <div class="layout-toolbar__item">
         <LangSelect />
       </div>
-
-      <div class="layout-toolbar__item">
-        <NoticeDropdown />
-      </div>
-
-      <div v-if="showTenantSwitcher" class="layout-toolbar__item">
-        <TenantSwitcher @change="handleTenantChange" />
-      </div>
     </template>
 
     <div class="layout-toolbar__item layout-toolbar__item--profile">
@@ -64,42 +56,16 @@ import CommandPalette from "@/components/CommandPalette/index.vue";
 import Fullscreen from "@/components/Fullscreen/index.vue";
 import SizeSelect from "@/components/SizeSelect/index.vue";
 import LangSelect from "@/components/LangSelect/index.vue";
-import NoticeDropdown from "@/components/NoticeDropdown/index.vue";
-import TenantSwitcher from "@/components/TenantSwitcher/index.vue";
-import { useTenantStoreHook } from "@/stores/tenant";
 
 const { t } = useI18n();
 const appStore = useAppStore();
 const settingStore = useSettingsStore();
 const userStore = useUserStore();
-const tenantStore = useTenantStoreHook();
 
 const route = useRoute();
 const router = useRouter();
 
 const isDesktop = computed(() => appStore.device === DeviceEnum.DESKTOP);
-
-const canSwitchTenant = computed(() => userStore.userInfo?.canSwitchTenant === true);
-
-const showTenantSwitcher = computed(() => {
-  if (!canSwitchTenant.value) {
-    return false;
-  }
-  return tenantStore.tenantList.length > 1;
-});
-
-function handleTenantChange(tenantId: number) {
-  tenantStore.switchTenant(tenantId).then(
-    () => {
-      ElMessage.success("切换租户成功");
-      window.location.href = "/";
-    },
-    (error: unknown) => {
-      const message = error instanceof Error ? error.message : "切换租户失败";
-      ElMessage.error(message);
-    }
-  );
-}
 
 /**
  * 打开个人中心页面

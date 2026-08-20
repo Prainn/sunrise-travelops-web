@@ -58,19 +58,55 @@ export const constantRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/profile/index.vue"),
         meta: { title: "个人中心", icon: "user", hidden: true },
       },
+    ],
+  },
+  {
+    path: "/system",
+    name: "System",
+    component: Layout,
+    redirect: "/system/dict",
+    meta: {
+      title: "系统管理",
+      icon: "system",
+      alwaysShow: true,
+    },
+    children: [
       {
-        path: "profile/notice",
-        name: "MyNotice",
-        component: () => import("@/views/profile/notice/index.vue"),
-        meta: { title: "我的通知", icon: "user", hidden: true },
+        path: "dict",
+        name: "Dict",
+        component: () => import("@/views/system/dict/index.vue"),
+        meta: {
+          title: "字典管理",
+          icon: "dict",
+          keepAlive: true,
+        },
       },
       {
-        path: "/detail/:id(\\d+)",
-        name: "DemoDetail",
-        component: () => import("@/views/demo/detail.vue"),
-        meta: { title: "详情页缓存", icon: "user", hidden: true, keepAlive: true },
+        path: "dict-item",
+        name: "DictItem",
+        component: () => import("@/views/system/dict/dict-item.vue"),
+        meta: {
+          title: "字典项",
+          hidden: true,
+          keepAlive: true,
+        },
+      },
+      {
+        path: "user",
+        name: "User",
+        component: () => import("@/views/system/user/index.vue"),
+        meta: {
+          title: "用户管理",
+          icon: "user",
+          keepAlive: true,
+        },
       },
     ],
+  },
+  {
+    path: "/:pathMatch(.*)*",
+    redirect: "/404",
+    meta: { hidden: true },
   },
 ];
 

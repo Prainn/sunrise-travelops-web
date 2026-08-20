@@ -1,14 +1,11 @@
-import type { RouteRecordRaw } from "vue-router";
 import NProgress from "@/plugins/nprogress";
 import router from "@/router";
 import { usePermissionStore, useUserStore } from "@/stores";
-import { useTenantStoreHook } from "@/stores/tenant";
-import { isTenantEnabled } from "@/utils/tenant";
 
 /**
  * 路由权限守卫
  *
- * 处理登录验证、动态路由生成、404检测等
+ * 处理登录验证、静态菜单初始化、404 检测等
  */
 export function setupPermissionGuard() {
   const whiteList = ["/login"];
@@ -36,21 +33,12 @@ export function setupPermissionGuard() {
       const permissionStore = usePermissionStore();
       const userStore = useUserStore();
 
-      // 动态路由生成
+      if (!userStore.userInfo?.roles?.length) {
+        await userStore.getUserInfo();
+      }
+
       if (!permissionStore.isRouteGenerated) {
-        if (!userStore.userInfo?.roles?.length) {
-          await userStore.getUserInfo();
-        }
-
-        // 加载用户租户列表（VITE_APP_TENANT_ENABLED=true 时生效）
-        await initTenantContext();
-
-        const dynamicRoutes = await permissionStore.generateRoutes();
-        dynamicRoutes.forEach((route: RouteRecordRaw) => {
-          router.addRoute(route);
-        });
-
-        return { ...to, replace: true };
+        await permissionStore.generateRoutes();
       }
 
       // 路由 404 检查
@@ -78,15 +66,4 @@ export function setupPermissionGuard() {
   router.afterEach(() => {
     NProgress.done();
   });
-}
-
-/** 初始化多租户上下文，未启用或失败时静默跳过 */
-async function initTenantContext(): Promise<void> {
-  if (!isTenantEnabled()) return;
-
-  try {
-    await useTenantStoreHook().loadTenant();
-  } catch {
-    // 静默失败，不影响主流程
-  }
 }

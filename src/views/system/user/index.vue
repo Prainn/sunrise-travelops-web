@@ -1,18 +1,6 @@
 <!-- 用户管理 -->
 <template>
-  <div class="page-container page-container--split user-page">
-    <aside class="page-aside" :class="{ 'is-collapsed': sidebarCollapsed }">
-      <div class="page-aside__inner">
-        <UserDeptTree v-model="params.deptId" @node-click="handleQuery" />
-      </div>
-      <button class="page-aside__toggle" @click="sidebarCollapsed = !sidebarCollapsed">
-        <el-icon :size="14">
-          <ArrowLeft v-if="!sidebarCollapsed" />
-          <ArrowRight v-else />
-        </el-icon>
-      </button>
-    </aside>
-
+  <div class="page-container user-page">
     <div class="page-main">
       <el-card class="page-search" shadow="never">
         <el-form ref="queryFormRef" :model="params" :inline="true" label-width="auto">
@@ -69,20 +57,6 @@
             </el-button>
           </div>
           <div class="page-toolbar__right">
-            <el-tooltip content="导入" placement="top">
-              <el-button
-                v-hasPerm="'sys:user:import'"
-                class="page-icon-btn"
-                @click="openImportDialog"
-              >
-                <el-icon><Upload /></el-icon>
-              </el-button>
-            </el-tooltip>
-            <el-tooltip content="导出" placement="top">
-              <el-button v-hasPerm="'sys:user:export'" class="page-icon-btn" @click="handleExport">
-                <el-icon><Download /></el-icon>
-              </el-button>
-            </el-tooltip>
             <el-tooltip content="刷新" placement="top">
               <el-button class="page-icon-btn" @click="fetchData">
                 <el-icon><Refresh /></el-icon>
@@ -148,7 +122,6 @@
                 <span v-else>-</span>
               </template>
             </el-table-column>
-            <el-table-column label="部门" min-width="140" prop="deptName" show-overflow-tooltip />
             <el-table-column label="角色" prop="roleNames" min-width="160" show-overflow-tooltip />
             <el-table-column label="手机号码" prop="mobile" width="130" />
             <el-table-column label="邮箱" prop="email" min-width="180" show-overflow-tooltip />
@@ -219,17 +192,6 @@
 
         <el-form-item label="用户昵称" prop="nickname">
           <el-input v-model="formData.nickname" placeholder="请输入用户昵称" />
-        </el-form-item>
-
-        <el-form-item label="所属部门" prop="deptId">
-          <el-tree-select
-            v-model="formData.deptId"
-            placeholder="请选择所属部门"
-            :data="deptOptions"
-            filterable
-            check-strictly
-            :render-after-expand="false"
-          />
         </el-form-item>
 
         <el-form-item label="性别" prop="gender">
@@ -321,9 +283,6 @@
         </div>
       </template>
     </el-dialog>
-
-    <!-- 用户导入 -->
-    <UserImportDialog v-model="importDialogVisible" @import-success="handleQuery()" />
   </div>
 </template>
 
@@ -331,17 +290,12 @@
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 
 import UserAPI from "@/api/system/user";
-import DeptAPI from "@/api/system/dept";
 import RoleAPI from "@/api/system/role";
 import type { UserForm, UserItem, UserQueryParams } from "@/api/system/user";
 import type { OptionItem } from "@/api/common";
 import { useAppStore, useUserStore } from "@/stores";
 import { usePageTable, useTableSelection } from "@/composables";
 import { CommonStatus, DeviceEnum, DialogMode, UserGender } from "@/enums";
-import { downloadFile } from "@/utils";
-
-import UserDeptTree from "./components/UserDeptTree.vue";
-import UserImportDialog from "./components/UserImportDialog.vue";
 
 defineOptions({
   name: "User",
@@ -357,7 +311,6 @@ const { toggle: toggleFullscreen } = useFullscreen(tableWrapperRef);
 const queryFormRef = ref<FormInstance>();
 const userFormRef = ref<FormInstance>();
 const resetPasswordFormRef = ref<FormInstance>();
-const sidebarCollapsed = ref(false);
 
 /** 分页表格数据管理 */
 const { loading, list, total, params, fetchData, handleQuery, handleResetQuery } = usePageTable<
@@ -380,7 +333,6 @@ const dialogState = reactive({
   mode: DialogMode.CREATE,
 });
 
-const importDialogVisible = ref(false);
 const resetPasswordSubmitting = ref(false);
 
 const initialFormData: UserForm = {
@@ -404,7 +356,6 @@ const resetPasswordForm = reactive<ResetPasswordForm>({
   password: "",
 });
 
-const deptOptions = ref<OptionItem[]>([]);
 const roleOptions = ref<OptionItem[]>([]);
 
 const drawerSize = computed(() => (appStore.device === DeviceEnum.DESKTOP ? "600px" : "90%"));
@@ -416,7 +367,6 @@ const resetPasswordDialogWidth = computed(() =>
 const rules: FormRules<UserForm> = {
   username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
   nickname: [{ required: true, message: "请输入用户昵称", trigger: "blur" }],
-  deptId: [{ required: true, message: "请选择所属部门", trigger: "change" }],
   roleIds: [{ required: true, message: "请选择用户角色", trigger: "change" }],
   email: [{ type: "email", message: "请输入正确的邮箱地址", trigger: "blur" }],
   mobile: [{ pattern: /^1[3-9]\d{9}$/, message: "请输入正确的手机号码", trigger: "blur" }],
@@ -440,13 +390,10 @@ function getAvatarText(row: UserItem): string {
 }
 
 /**
- * 加载表单所需的下拉选项（角色 + 部门），并行请求。
+ * 加载用户角色选项。
  */
 async function loadFormOptions(): Promise<void> {
-  [roleOptions.value, deptOptions.value] = await Promise.all([
-    RoleAPI.getOptions(),
-    DeptAPI.getOptions(),
-  ]);
+  roleOptions.value = await RoleAPI.getOptions();
 }
 
 /**
@@ -569,22 +516,6 @@ async function handleDelete(id?: string): Promise<void> {
   } finally {
     loading.value = false;
   }
-}
-
-/**
- * 导出当前查询条件下的用户列表。
- */
-async function handleExport(): Promise<void> {
-  const response = await UserAPI.export(params);
-  downloadFile(response);
-  ElMessage.success("导出成功");
-}
-
-/**
- * 打开用户导入弹窗。
- */
-function openImportDialog(): void {
-  importDialogVisible.value = true;
 }
 
 /**

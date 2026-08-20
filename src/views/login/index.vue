@@ -52,14 +52,7 @@
       <div class="login-card">
         <div class="login-card__inner">
           <transition name="fade-slide" mode="out-in">
-            <QrCodeLogin
-              v-if="component === 'qrcode'"
-              key="qrcode"
-              class="login-card__form"
-              @switch="component = 'login'"
-            />
-
-            <div v-else-if="component === 'login'" key="login" class="login-card__form">
+            <div v-if="true" key="login" class="login-card__form">
               <h2 class="login-card__title">欢迎回来</h2>
               <p class="login-card__desc">请完成身份验证后进入系统</p>
 
@@ -116,7 +109,6 @@
 
                 <div class="login-options">
                   <el-checkbox v-model="loginFormData.rememberMe">记住我</el-checkbox>
-                  <a class="login-options__link" @click="showForm('resetPwd')">忘记密码？</a>
                 </div>
 
                 <el-button
@@ -129,28 +121,7 @@
                   登录
                 </el-button>
               </el-form>
-
-              <div class="login-alt">
-                <div class="login-alt__divider">其他登录方式</div>
-                <div class="login-alt__buttons">
-                  <button class="login-alt__btn" @click="component = 'qrcode'">
-                    <span class="login-alt__icon i-svg:qr-code" />
-                    扫码登录
-                  </button>
-                  <button class="login-alt__btn">
-                    <span class="login-alt__icon i-svg:security" />
-                    统一认证
-                  </button>
-                </div>
-              </div>
             </div>
-
-            <ResetPwd
-              v-else
-              key="resetPwd"
-              class="login-card__form"
-              @update:model-value="component = $event"
-            />
           </transition>
         </div>
 
@@ -172,13 +143,10 @@ import { useUserStore } from "@/stores";
 import { AuthStorage } from "@/utils/auth";
 import { appConfig } from "@/settings";
 import ThemeSwitch from "@/components/ThemeSwitch/index.vue";
-import ResetPwd from "./components/ResetPwd.vue";
-import QrCodeLogin from "./components/QrCodeLogin.vue";
 import logo from "@/assets/images/logo.png";
 
 const userStore = useUserStore();
 const route = useRoute();
-const component = ref<"login" | "resetPwd" | "qrcode">("login");
 
 const loginFormRef = ref<FormInstance>();
 const loading = ref(false);
@@ -241,10 +209,6 @@ function checkCapsLock(event: KeyboardEvent) {
   if (event instanceof KeyboardEvent) {
     isCapsLock.value = event.getModifierState("CapsLock");
   }
-}
-
-function showForm(type: "resetPwd") {
-  component.value = type;
 }
 
 onMounted(() => getCaptcha());
