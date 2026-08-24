@@ -287,6 +287,7 @@
       v-model="dialogState.visible"
       :title="t(dialogState.titleKey)"
       width="520px"
+      destroy-on-close
     >
       <el-form
         v-if="dialogState.type === DialogType.ACCOUNT"

@@ -296,6 +296,7 @@
       :title="t(dialogState.titleKey)"
       append-to-body
       :size="drawerSize"
+      destroy-on-close
       @close="closeDialog"
     >
       <el-form
@@ -411,6 +412,7 @@
       :title="$t('user.resetPassword')"
       :width="resetPasswordDialogWidth"
       append-to-body
+      destroy-on-close
       @closed="resetResetPasswordForm"
     >
       <div class="mb-16px">

@@ -245,6 +245,7 @@
       :title="t('crud.exportData')"
       width="600px"
       style="padding-right: 0"
+      destroy-on-close
       @close="handleCloseExportsModal"
     >
       <!-- 滚动 -->
@@ -336,6 +337,7 @@
       :title="t('crud.importData')"
       width="600px"
       style="padding-right: 0"
+      destroy-on-close
       @close="handleCloseImportModal"
     >
       <!-- 滚动 -->

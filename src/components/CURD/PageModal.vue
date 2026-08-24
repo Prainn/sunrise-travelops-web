@@ -4,7 +4,7 @@
     <template v-if="modalConfig.component === 'drawer'">
       <el-drawer
         v-model="modalVisible"
-        v-bind="{ destroyOnClose: true, ...modalConfig.drawer }"
+        v-bind="{ ...modalConfig.drawer, destroyOnClose: true }"
         @close="handleClose"
       >
         <el-form
@@ -99,7 +99,7 @@
     <template v-else>
       <el-dialog
         v-model="modalVisible"
-        v-bind="{ destroyOnClose: true, alignCenter: true, ...modalConfig.dialog }"
+        v-bind="{ alignCenter: true, ...modalConfig.dialog, destroyOnClose: true }"
         @close="handleClose"
       >
         <el-form

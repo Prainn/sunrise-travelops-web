@@ -174,6 +174,7 @@
       v-model="dialogState.visible"
       :title="t(dialogState.titleKey)"
       width="500px"
+      destroy-on-close
       @close="closeDialog"
     >
       <el-form
