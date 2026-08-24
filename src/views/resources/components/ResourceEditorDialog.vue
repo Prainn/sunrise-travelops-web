@@ -10,7 +10,7 @@
       ref="formRef"
       :model="form"
       :rules="rules"
-      label-width="110px"
+      label-width="auto"
     >
       <el-form-item :label="$t('resource.code')">
         <el-input

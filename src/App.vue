@@ -2,6 +2,7 @@
   <el-config-provider
     :locale="locale"
     :size="size"
+    :table="tableConfig"
   >
     <el-watermark
       :font="{ color: fontColor }"
@@ -26,6 +27,7 @@ const locale = computed(() => appStore.locale);
 const size = computed(() => appStore.size as ComponentSize);
 const showWatermark = computed(() => settingsStore.showWatermark);
 const watermarkContent = appConfig.name;
+const tableConfig = { showOverflowTooltip: true };
 
 // 明亮/暗黑主题水印字体颜色适配
 const fontColor = computed(() => {

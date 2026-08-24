@@ -9,6 +9,7 @@
           <el-input
             v-model.trim="keywords"
             :placeholder="$t('hotel.searchPlaceholder')"
+            class="page-search__keywords"
             clearable
           />
         </el-form-item>
@@ -120,6 +121,21 @@
                     align="center"
                   />
                   <el-table-column
+                    :label="$t('resource.priceSource')"
+                    min-width="160"
+                  >
+                    <template #default="priceScope">
+                      <el-tag
+                        v-if="priceScope.row.isGroundOperatorProvided"
+                        type="warning"
+                        effect="plain"
+                      >
+                        {{ getGroundOperatorName(priceScope.row.groundOperatorId) }}
+                      </el-tag>
+                      <span v-else>{{ $t("resource.directPrice") }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column
                     :label="$t('common.actions')"
                     width="120"
                     align="center"
@@ -148,7 +164,7 @@
           <el-table-column
             prop="code"
             :label="$t('resource.code')"
-            width="110"
+            width="120"
           />
           <el-table-column
             prop="name"
@@ -232,7 +248,7 @@
         ref="hotelFormRef"
         :model="hotelForm"
         :rules="hotelRules"
-        label-width="110px"
+        label-width="auto"
       >
         <el-form-item :label="$t('resource.code')">
           <el-input
@@ -322,7 +338,7 @@
         ref="priceFormRef"
         :model="priceForm"
         :rules="priceRules"
-        label-width="120px"
+        label-width="auto"
       >
         <el-form-item
           :label="$t('hotel.roomType')"
@@ -373,6 +389,26 @@
             :min="1"
           />
         </el-form-item>
+        <el-form-item :label="$t('resource.isGroundOperatorProvided')">
+          <el-switch
+            v-model="priceForm.isGroundOperatorProvided"
+            @change="changePriceProvider"
+          />
+        </el-form-item>
+        <el-form-item
+          v-if="priceForm.isGroundOperatorProvided"
+          :label="$t('resource.supplierName')"
+          prop="groundOperatorId"
+        >
+          <el-select v-model="priceForm.groundOperatorId">
+            <el-option
+              v-for="option in groundOperatorOptions"
+              :key="option.id"
+              :label="option.name"
+              :value="option.id"
+            />
+          </el-select>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="isPriceDialogVisible = false">
@@ -397,6 +433,7 @@ import { useI18n } from "vue-i18n";
 import { YUNNAN_TOURISM_REGION_OPTIONS } from "@/constants/yunnan-tourism-regions";
 import {
   hotels,
+  tourismResources,
   type HotelPricePlanRecord,
   type HotelRecord,
 } from "@/data/data";
@@ -429,6 +466,7 @@ const priceForm = reactive(createEmptyPriceForm());
 const isEditing = computed(() => Boolean(editingId.value));
 const isEditingPrice = computed(() => Boolean(editingRoomId.value && editingPricePlanId.value));
 const cityOptions = computed(() => [...new Set(hotelStore.map((hotel) => hotel.city))]);
+const groundOperatorOptions = computed(() => tourismResources.supplier.filter((item) => item.status === "enabled"));
 const filteredHotels = computed(() => hotelStore.filter((hotel) =>
   (!city.value || hotel.city === city.value)
   && (!keywords.value || [hotel.code, hotel.name, hotel.address].some((field) => field.toLowerCase().includes(keywords.value.toLowerCase())))
@@ -437,17 +475,18 @@ const hotelRules: FormRules = {
   name: [{ required: true, message: t("hotel.nameRequired"), trigger: "blur" }],
   cityPath: [{ required: true, message: t("hotel.cityRequired"), trigger: "change" }],
 };
-const priceRules: FormRules = {
+const priceRules = computed<FormRules>(() => ({
   roomType: [{ required: true, message: t("hotel.roomTypeRequired"), trigger: "blur" }],
   periodName: [{ required: true, message: t("hotel.periodRequired"), trigger: "blur" }],
   dates: [{ required: true, message: t("hotel.datesRequired"), trigger: "change" }],
-};
+  groundOperatorId: [{ required: priceForm.isGroundOperatorProvided, message: t("resource.groundOperatorRequired"), trigger: "change" }],
+}));
 
 function createEmptyHotel(): HotelForm {
   return { id: "", code: "", name: "", province: "", city: "", cityPath: [], rating: "", facilities: "", breakfast: "", address: "", phone: "", nearby: "", status: "enabled", roomTypes: [] };
 }
 function createEmptyPriceForm() {
-  return { roomType: "", rackRate: 0, periodName: "常规期", dates: [] as string[], individualPrice: 0, groupPrice: 0, minimumRooms: 5 };
+  return { roomType: "", rackRate: 0, periodName: "常规期", dates: [] as string[], individualPrice: 0, groupPrice: 0, minimumRooms: 5, isGroundOperatorProvided: false, groundOperatorId: "" };
 }
 function resetQuery() { keywords.value = ""; city.value = ""; }
 function generateHotelCode() {
@@ -475,10 +514,18 @@ function openEditPriceDialog(hotel: HotelRecord, row: RoomPriceRow) {
     individualPrice: row.individualPrice,
     groupPrice: row.groupPrice,
     minimumRooms: row.minimumRooms,
+    isGroundOperatorProvided: row.isGroundOperatorProvided,
+    groundOperatorId: row.groundOperatorId,
   });
   isPriceDialogVisible.value = true;
 }
 function toggleStatus(hotel: HotelRecord) { hotel.status = hotel.status === "enabled" ? "disabled" : "enabled"; ElMessage.success(t("common.updateSuccess")); }
+function changePriceProvider(value: string | number | boolean) {
+  if (!value) priceForm.groundOperatorId = "";
+}
+function getGroundOperatorName(id: string) {
+  return groundOperatorOptions.value.find((item) => item.id === id)?.name ?? t("resource.groundOperatorProvidedTag");
+}
 function flattenPricePlans(hotel: HotelRecord) {
   return hotel.roomTypes.flatMap((room) => room.pricePlans.map((plan): RoomPriceRow => ({ ...plan, roomId: room.id, pricePlanId: plan.id, roomType: room.name, rackRate: room.rackRate, effectivePeriod: plan.startDate && plan.endDate ? `${plan.startDate} — ${plan.endDate}` : t("common.notSet") })));
 }
@@ -518,7 +565,7 @@ async function savePricePlan() {
   ElMessage.success(t("common.createSuccess"));
 }
 function createPricePlanValue(id: string): HotelPricePlanRecord {
-  return { id, periodName: priceForm.periodName, startDate: priceForm.dates[0], endDate: priceForm.dates[1], individualPrice: priceForm.individualPrice, groupPrice: priceForm.groupPrice, minimumRooms: priceForm.minimumRooms };
+  return { id, periodName: priceForm.periodName, startDate: priceForm.dates[0], endDate: priceForm.dates[1], individualPrice: priceForm.individualPrice, groupPrice: priceForm.groupPrice, minimumRooms: priceForm.minimumRooms, isGroundOperatorProvided: priceForm.isGroundOperatorProvided, groundOperatorId: priceForm.groundOperatorId };
 }
 async function deletePricePlan(hotel: HotelRecord, row: RoomPriceRow) {
   try {

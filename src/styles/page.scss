@@ -104,6 +104,9 @@
 }
 
 .page-search {
+  --page-search-control-width: 168px;
+  --page-search-keywords-width: clamp(360px, 36vw, 480px);
+
   flex-shrink: 0;
 
   .el-card__body {
@@ -112,6 +115,21 @@
 
   .el-form-item {
     margin-bottom: 0;
+  }
+
+  .el-input {
+    min-width: var(--page-search-control-width);
+  }
+
+  .el-select,
+  .el-cascader {
+    width: var(--page-search-control-width);
+    min-width: var(--page-search-control-width);
+  }
+
+  .page-search__keywords {
+    width: var(--page-search-keywords-width);
+    min-width: var(--page-search-keywords-width);
   }
 }
 

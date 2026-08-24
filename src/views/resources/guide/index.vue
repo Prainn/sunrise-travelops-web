@@ -1,85 +1,71 @@
 <template>
   <div class="resource-page">
-    <ResourceTable
-      :rows="rows"
-      :columns="columns"
-      :search-fields="['code', 'name', 'city']"
+    <GuideTable
+      :rows="guideStore"
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
     />
-    <ResourceEditorDialog
+    <GuideEditorDialog
       v-model="isDialogVisible"
-      :record="record"
-      :fields="fields"
-      :title-key="isEditing ? 'resource.editTitle' : 'resource.createTitle'"
-      @submit="saveRecord"
+      :record="guideForm"
+      :is-editing="Boolean(editingGuideId)"
+      @submit="saveGuide"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import ResourceEditorDialog from "../components/ResourceEditorDialog.vue";
-import ResourceTable from "../components/ResourceTable.vue";
-import type { ResourceColumn, ResourceFormField } from "../types";
-import { useResourceMaintenance } from "../useResourceMaintenance";
+import { reactive, ref } from "vue";
+import { ElMessage } from "element-plus";
+import { useI18n } from "vue-i18n";
+import { guides, type GuideRecord } from "@/data/data";
+import GuideEditorDialog from "./components/GuideEditorDialog.vue";
+import GuideTable from "./components/GuideTable.vue";
 
 defineOptions({ name: "Guide" });
 
-const columns: ResourceColumn[] = [
-  {
-    "prop": "code",
-    "labelKey": "resource.code"
-  },
-  {
-    "prop": "name",
-    "labelKey": "resource.guideName",
-    "minWidth": 160
-  },
-  {
-    "prop": "city",
-    "labelKey": "resource.city"
-  },
-  {
-    "prop": "languages",
-    "labelKey": "resource.languages"
-  },
-  {
-    "prop": "certificateNo",
-    "labelKey": "resource.certificateNo"
-  },
-  {
-    "prop": "phone",
-    "labelKey": "resource.phone"
-  }
-];
-const fields: ResourceFormField[] = [
-  {
-    "prop": "name",
-    "labelKey": "resource.guideName",
-    "required": true
-  },
-  {
-    "prop": "city",
-    "labelKey": "resource.city"
-  },
-  {
-    "prop": "languages",
-    "labelKey": "resource.languages"
-  },
-  {
-    "prop": "certificateNo",
-    "labelKey": "resource.certificateNo"
-  },
-  {
-    "prop": "phone",
-    "labelKey": "resource.phone"
-  },
-  {
-    "prop": "remark",
-    "labelKey": "common.remark",
-    "type": "textarea"
-  }
-];
-const { rows, record, isDialogVisible, isEditing, openCreateDialog, openEditDialog, toggleStatus, saveRecord } = useResourceMaintenance("guide", "GDE");
+const { t } = useI18n();
+const guideStore = reactive(guides);
+const isDialogVisible = ref(false);
+const editingGuideId = ref("");
+const guideForm = ref<GuideRecord>(createEmptyGuide());
+
+function createEmptyGuide(): GuideRecord {
+  return {
+    id: "", code: "", certificateNo: "", name: "", gender: "male", age: 18, languages: [],
+    employmentType: "full-time", identityNumber: "", phone: "", hasLaborContract: false,
+    isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "", status: "enabled",
+  };
+}
+
+function generateGuideCode() {
+  const max = guideStore.reduce((value, record) => Math.max(value, Number(record.code.match(/^GDE-(\d+)$/)?.[1] ?? 0)), 0);
+  return `GDE-${String(max + 1).padStart(3, "0")}`;
+}
+
+function openCreateDialog() {
+  editingGuideId.value = "";
+  guideForm.value = { ...createEmptyGuide(), code: generateGuideCode() };
+  isDialogVisible.value = true;
+}
+
+function openEditDialog(record: GuideRecord) {
+  editingGuideId.value = record.id;
+  guideForm.value = { ...record, languages: [...record.languages] };
+  isDialogVisible.value = true;
+}
+
+function saveGuide(record: GuideRecord) {
+  const current = guideStore.find((item) => item.id === editingGuideId.value);
+  if (current) Object.assign(current, record, { languages: [...record.languages] });
+  else guideStore.push({ ...record, id: `guide-${Date.now()}`, languages: [...record.languages] });
+  isDialogVisible.value = false;
+  ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
+}
+
+function toggleStatus(record: GuideRecord) {
+  record.status = record.status === "enabled" ? "disabled" : "enabled";
+  ElMessage.success(t("common.updateSuccess"));
+}
 </script>

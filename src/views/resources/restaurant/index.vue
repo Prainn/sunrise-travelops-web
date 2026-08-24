@@ -1,89 +1,126 @@
 <template>
   <div class="resource-page">
-    <ResourceTable
-      :rows="rows"
-      :columns="columns"
-      :search-fields="['code', 'name', 'city']"
+    <RestaurantTable
+      :rows="restaurantStore"
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
+      @create-price="openCreatePriceDialog"
+      @edit-price="openEditPriceDialog"
+      @delete-price="deletePrice"
     />
-    <ResourceEditorDialog
-      v-model="isDialogVisible"
-      :record="record"
-      :fields="fields"
-      :title-key="isEditing ? 'resource.editTitle' : 'resource.createTitle'"
-      @submit="saveRecord"
+    <RestaurantEditorDialog
+      v-model="isRestaurantDialogVisible"
+      :record="restaurantForm"
+      :is-editing="Boolean(editingRestaurantId)"
+      @submit="saveRestaurant"
+    />
+    <RestaurantPriceDialog
+      v-model="isPriceDialogVisible"
+      :record="priceForm"
+      :is-editing="Boolean(editingPriceId)"
+      @submit="savePrice"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import ResourceEditorDialog from "../components/ResourceEditorDialog.vue";
-import ResourceTable from "../components/ResourceTable.vue";
-import type { ResourceColumn, ResourceFormField } from "../types";
-import { useResourceMaintenance } from "../useResourceMaintenance";
+import { reactive, ref } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { useI18n } from "vue-i18n";
+import { restaurants, type RestaurantPriceRecord, type RestaurantRecord } from "@/data/data";
+import RestaurantEditorDialog from "./components/RestaurantEditorDialog.vue";
+import RestaurantPriceDialog from "./components/RestaurantPriceDialog.vue";
+import RestaurantTable from "./components/RestaurantTable.vue";
 
 defineOptions({ name: "Restaurant" });
 
-const columns: ResourceColumn[] = [
-  {
-    "prop": "code",
-    "labelKey": "resource.code"
-  },
-  {
-    "prop": "name",
-    "labelKey": "resource.restaurantName",
-    "minWidth": 180
-  },
-  {
-    "prop": "city",
-    "labelKey": "resource.city"
-  },
-  {
-    "prop": "cuisine",
-    "labelKey": "resource.cuisine"
-  },
-  {
-    "prop": "mealStandard",
-    "labelKey": "resource.mealStandard"
-  },
-  {
-    "prop": "contact",
-    "labelKey": "resource.contact"
+const { t } = useI18n();
+const restaurantStore = reactive(restaurants);
+const isRestaurantDialogVisible = ref(false);
+const isPriceDialogVisible = ref(false);
+const editingRestaurantId = ref("");
+const editingPriceId = ref("");
+const selectedRestaurant = ref<RestaurantRecord>();
+const restaurantForm = ref<RestaurantRecord>(createEmptyRestaurant());
+const priceForm = ref<RestaurantPriceRecord>(createEmptyPrice());
+
+function createEmptyRestaurant(): RestaurantRecord {
+  return {
+    id: "", code: "", name: "", city: "", cuisine: "", contact: "", phone: "", address: "",
+    remark: "", status: "enabled", prices: [],
+  };
+}
+
+function createEmptyPrice(): RestaurantPriceRecord {
+  return {
+    id: "", menuName: "", dishDetails: "", unit: "per-person", price: 0, dinerCount: 10, remark: "",
+    isGroundOperatorProvided: false, groundOperatorId: "",
+  };
+}
+
+function generateRestaurantCode() {
+  const max = restaurantStore.reduce((value, record) => Math.max(value, Number(record.code.match(/^RES-(\d+)$/)?.[1] ?? 0)), 0);
+  return `RES-${String(max + 1).padStart(3, "0")}`;
+}
+
+function openCreateDialog() {
+  editingRestaurantId.value = "";
+  restaurantForm.value = { ...createEmptyRestaurant(), code: generateRestaurantCode() };
+  isRestaurantDialogVisible.value = true;
+}
+
+function openEditDialog(record: RestaurantRecord) {
+  editingRestaurantId.value = record.id;
+  restaurantForm.value = { ...record, prices: record.prices };
+  isRestaurantDialogVisible.value = true;
+}
+
+function saveRestaurant(record: RestaurantRecord) {
+  const current = restaurantStore.find((item) => item.id === editingRestaurantId.value);
+  if (current) Object.assign(current, record, { prices: current.prices });
+  else restaurantStore.push({ ...record, id: `restaurant-${Date.now()}`, prices: [] });
+  isRestaurantDialogVisible.value = false;
+  ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
+}
+
+function toggleStatus(record: RestaurantRecord) {
+  record.status = record.status === "enabled" ? "disabled" : "enabled";
+  ElMessage.success(t("common.updateSuccess"));
+}
+
+function openCreatePriceDialog(record: RestaurantRecord) {
+  selectedRestaurant.value = record;
+  editingPriceId.value = "";
+  priceForm.value = createEmptyPrice();
+  isPriceDialogVisible.value = true;
+}
+
+function openEditPriceDialog(record: RestaurantRecord, price: RestaurantPriceRecord) {
+  selectedRestaurant.value = record;
+  editingPriceId.value = price.id;
+  priceForm.value = { ...price };
+  isPriceDialogVisible.value = true;
+}
+
+function savePrice(price: RestaurantPriceRecord) {
+  if (!selectedRestaurant.value) return;
+  const current = selectedRestaurant.value.prices.find((item) => item.id === editingPriceId.value);
+  if (current) Object.assign(current, price);
+  else selectedRestaurant.value.prices.push({ ...price, id: `restaurant-price-${Date.now()}` });
+  isPriceDialogVisible.value = false;
+  ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
+}
+
+async function deletePrice(record: RestaurantRecord, price: RestaurantPriceRecord) {
+  try {
+    await ElMessageBox.confirm(t("restaurant.deletePriceConfirm"), t("common.tip"), { type: "warning" });
+  } catch {
+    return;
   }
-];
-const fields: ResourceFormField[] = [
-  {
-    "prop": "name",
-    "labelKey": "resource.restaurantName",
-    "required": true
-  },
-  {
-    "prop": "city",
-    "labelKey": "resource.city"
-  },
-  {
-    "prop": "cuisine",
-    "labelKey": "resource.cuisine"
-  },
-  {
-    "prop": "mealStandard",
-    "labelKey": "resource.mealStandard"
-  },
-  {
-    "prop": "contact",
-    "labelKey": "resource.contact"
-  },
-  {
-    "prop": "phone",
-    "labelKey": "resource.phone"
-  },
-  {
-    "prop": "remark",
-    "labelKey": "common.remark",
-    "type": "textarea"
-  }
-];
-const { rows, record, isDialogVisible, isEditing, openCreateDialog, openEditDialog, toggleStatus, saveRecord } = useResourceMaintenance("restaurant", "RES");
+  const index = record.prices.findIndex((item) => item.id === price.id);
+  if (index < 0) return;
+  record.prices.splice(index, 1);
+  ElMessage.success(t("common.deleteSuccess"));
+}
 </script>

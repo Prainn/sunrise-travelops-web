@@ -24,3 +24,27 @@ export const YUNNAN_TOURISM_REGION_OPTIONS: TourismRegionOption[] = [
     ],
   },
 ];
+
+/** 业务覆盖的云南旅游目的地区域，与行政区划解耦。 */
+export const YUNNAN_TOURISM_AREA_OPTIONS = [
+  "昆明",
+  "楚雄",
+  "大理",
+  "丽江",
+  "泸沽湖",
+  "香格里拉",
+  "瑞丽",
+  "西双版纳",
+  "普洱",
+  "芒市",
+  "腾冲",
+  "抚仙湖",
+  "弥勒",
+  "蒙自",
+  "建水",
+  "元阳",
+  "罗平",
+  "普者黑",
+  "石林",
+  "轿子雪山",
+] as const;

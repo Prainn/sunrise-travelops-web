@@ -17,6 +17,7 @@
           <el-input
             v-model="params.keywords"
             :placeholder="$t('dictionary.optionSearchPlaceholder')"
+            class="page-search__keywords"
             clearable
             @keyup.enter="handleQuery"
           />

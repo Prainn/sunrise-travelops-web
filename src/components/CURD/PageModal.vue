@@ -9,7 +9,7 @@
       >
         <el-form
           ref="formRef"
-          v-bind="modalConfig.form"
+          v-bind="{ labelWidth: 'auto', ...modalConfig.form }"
           :model="formData"
           :rules="formRules"
         >
@@ -104,7 +104,7 @@
       >
         <el-form
           ref="formRef"
-          v-bind="modalConfig.form"
+          v-bind="{ labelWidth: 'auto', ...modalConfig.form }"
           :model="formData"
           :rules="formRules"
         >

@@ -9,6 +9,7 @@
           <el-input
             v-model.trim="keywords"
             :placeholder="$t('resource.searchPlaceholder')"
+            class="page-search__keywords"
             clearable
           />
         </el-form-item>

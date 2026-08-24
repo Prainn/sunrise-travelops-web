@@ -97,6 +97,26 @@
   color: var(--el-text-color-regular);
 }
 
+.el-form:not(.el-form--inline) .el-form-item > .el-form-item__label {
+  align-self: flex-start;
+  height: auto;
+  min-height: var(--el-component-size);
+  max-width: 40%;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.el-form:not(.el-form--inline) .el-form-item__label-wrap .el-form-item__label {
+  height: var(--el-component-size);
+  max-width: none;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: var(--el-component-size);
+  white-space: nowrap;
+}
+
 .el-button {
   --el-button-border-radius: 6px;
 
@@ -168,8 +188,14 @@
     border-bottom: 1px solid var(--el-table-border-color);
   }
 
-  .cell {
+  .el-table__header th.el-table__cell > .cell,
+  .el-table__body td.el-table__cell > .cell {
+    overflow: hidden;
+    padding-right: 8px;
+    padding-left: 8px;
     line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .el-table__fixed-right {
