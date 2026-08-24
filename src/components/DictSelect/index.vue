@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { useDictStore } from "@/stores";
+import { useDictStore } from "@/stores/dict";
 
 const dictStore = useDictStore();
 

@@ -1,7 +1,19 @@
-import type { PageResult } from "@/api/common";
-import type { UserForm, UserInfo, UserItem, UserQueryParams } from "@/api/system/user";
-import { users } from "@/data/data";
+import type { OptionItem, PageResult } from "@/types/common";
+import { roleDefinitions, users } from "@/data/data";
 import { translate } from "@/lang/utils";
+import type {
+  EmailUpdateForm,
+  MobileUpdateForm,
+  PasswordChangeForm,
+  PasswordVerifyForm,
+  UserForm,
+  UserInfo,
+  UserItem,
+  UserProfileDetail,
+  UserProfileForm,
+  UserQueryParams,
+} from "@/types/user";
+import { AuthStorage } from "@/utils/auth";
 import { authService } from "./auth.service";
 
 function createId(): string {
@@ -11,6 +23,19 @@ function createId(): string {
 function requireUser(userId: string) {
   const user = users.find((item) => item.id === userId);
   if (!user) throw new Error(translate("service.user.notFound"));
+  return user;
+}
+
+function requireCurrentUser() {
+  const userId = authService.getUserId(AuthStorage.getAccessToken());
+  return requireUser(userId ?? "");
+}
+
+function verifyPassword(data: PasswordVerifyForm) {
+  const user = requireCurrentUser();
+  if (user.password !== data.password) {
+    throw new Error(translate("service.auth.invalidCredentials"));
+  }
   return user;
 }
 
@@ -44,16 +69,11 @@ function toUserForm(user: (typeof users)[number]): UserForm {
 }
 
 function getRoleNames(roleIds: number[]): string {
-  const roleNameMap: Record<number, string> = {
-    2: translate("user.roles.systemAdministrator"),
-    3: translate("user.roles.guest"),
-    4: translate("user.roles.departmentManager"),
-    5: translate("user.roles.departmentMember"),
-    6: translate("user.roles.employee"),
-    7: translate("user.roles.custom"),
-  };
+  const roleNameMap = new Map<number, string>(
+    roleDefinitions.map((role) => [role.value, translate(role.labelKey)] as const)
+  );
   return roleIds
-    .map((id) => roleNameMap[id])
+    .map((id) => roleNameMap.get(id))
     .filter(Boolean)
     .join(",");
 }
@@ -113,6 +133,7 @@ export const userService = {
       email: data.email?.trim() ?? "",
       roleIds,
       roleNames: getRoleNames(roleIds),
+      deptName: "",
       createTime: new Date().toISOString().slice(0, 19).replace("T", " "),
       roles: roleIds.includes(2) ? ["ADMIN"] : ["USER"],
       perms: [],
@@ -170,5 +191,65 @@ export const userService = {
       roles: [...user.roles],
       perms: [...user.perms],
     };
+  },
+
+  async getRoleOptions(): Promise<OptionItem[]> {
+    return roleDefinitions.map((role) => ({
+      value: role.value,
+      label: translate(role.labelKey),
+    }));
+  },
+
+  async getProfile(): Promise<UserProfileDetail> {
+    const user = requireCurrentUser();
+    return {
+      id: user.id,
+      username: user.username,
+      nickname: user.nicknameKey ? translate(user.nicknameKey) : user.nickname,
+      avatar: user.avatar,
+      gender: user.gender,
+      mobile: user.mobile,
+      email: user.email,
+      deptName: user.deptName,
+      roleNames: getRoleNames(user.roleIds),
+      createTime: user.createTime,
+    };
+  },
+
+  async updateProfile(data: UserProfileForm): Promise<void> {
+    const user = requireCurrentUser();
+    if (data.nickname !== undefined) {
+      user.nickname = data.nickname.trim();
+      delete user.nicknameKey;
+    }
+    if (data.avatar !== undefined) user.avatar = data.avatar;
+    if (data.gender !== undefined) user.gender = data.gender;
+  },
+
+  async changePassword(data: PasswordChangeForm): Promise<void> {
+    const user = verifyPassword({ password: data.oldPassword });
+    user.password = data.newPassword ?? user.password;
+  },
+
+  async sendMobileCode(_mobile: string): Promise<void> {},
+
+  async bindOrChangeMobile(data: MobileUpdateForm): Promise<void> {
+    const user = verifyPassword(data);
+    user.mobile = data.mobile ?? "";
+  },
+
+  async unbindMobile(data: PasswordVerifyForm): Promise<void> {
+    verifyPassword(data).mobile = "";
+  },
+
+  async sendEmailCode(_email: string): Promise<void> {},
+
+  async bindOrChangeEmail(data: EmailUpdateForm): Promise<void> {
+    const user = verifyPassword(data);
+    user.email = data.email ?? "";
+  },
+
+  async unbindEmail(data: PasswordVerifyForm): Promise<void> {
+    verifyPassword(data).email = "";
   },
 };

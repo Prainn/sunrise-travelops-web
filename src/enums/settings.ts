@@ -4,7 +4,7 @@
  * @description
  * 包含主题、布局、语言、设备等应用设置的枚举定义
  */
-import type { OptionItem } from "@/api/common";
+import type { OptionItem } from "@/types/common";
 
 /**
  * 主题模式枚举

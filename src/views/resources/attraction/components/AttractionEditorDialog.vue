@@ -45,7 +45,7 @@
       >
         <el-select v-model="form.category">
           <el-option
-            v-for="option in categoryOptions"
+            v-for="option in attractionCategoryOptions"
             :key="option.value"
             :label="$t(option.labelKey)"
             :value="option.value"
@@ -96,7 +96,8 @@ import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { YUNNAN_TOURISM_AREA_OPTIONS } from "@/constants/yunnan-tourism-regions";
-import type { AttractionCategory, AttractionRecord } from "@/data/data";
+import type { AttractionRecord } from "@/data/data";
+import { attractionCategoryOptions } from "../options";
 
 const props = defineProps<{
   modelValue: boolean;
@@ -113,13 +114,6 @@ const { t } = useI18n();
 const formRef = ref<FormInstance>();
 const form = reactive<AttractionRecord>({ ...props.record });
 const isVisible = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) });
-const categoryOptions: Array<{ value: AttractionCategory; labelKey: string }> = [
-  { value: "scenic", labelKey: "attraction.categoryScenic" },
-  { value: "performance", labelKey: "attraction.categoryPerformance" },
-  { value: "experience", labelKey: "attraction.categoryExperience" },
-  { value: "transport", labelKey: "attraction.categoryTransport" },
-  { value: "package", labelKey: "attraction.categoryPackage" },
-];
 const rules = computed<FormRules>(() => ({
   name: [{ required: true, message: t("attraction.nameRequired"), trigger: "blur" }],
   area: [{ required: true, message: t("attraction.areaRequired"), trigger: "change" }],

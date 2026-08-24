@@ -1,4 +1,4 @@
-import type { OptionItem, PageResult } from "@/api/common";
+import type { OptionItem, PageResult } from "@/types/common";
 import { systemDictionaryItems, systemDictionaryTypes } from "@/data/data";
 import { translate } from "@/lang/utils";
 import type {

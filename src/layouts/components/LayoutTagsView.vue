@@ -190,9 +190,13 @@ import { useRoute, useRouter, type RouteRecordRaw } from "vue-router";
 import { resolve } from "path-browserify";
 import { TagsViewStyle } from "@/enums";
 import { translateRouteTitle } from "@/lang/utils";
-import { useAppStore, usePermissionStore, useSettingsStore, useTagsViewStore } from "@/stores";
+import { useAppStore } from "@/stores/app";
+import { usePermissionStore } from "@/stores/permission";
+import { useSettingsStore } from "@/stores/settings";
+import { useTagsViewStore } from "@/stores/tags-view";
 import { isExternal } from "@/utils";
 import type { TagView } from "@/stores/tags-view";
+import { ArrowDown, Refresh } from "@element-plus/icons-vue";
 
 interface ContextMenu {
   visible: boolean;

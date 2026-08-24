@@ -60,7 +60,9 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { defaults } from "@/settings";
 import { DeviceEnum, SidebarColor, ThemeMode, LayoutMode } from "@/enums/settings";
-import { useAppStore, useSettingsStore, useUserStore } from "@/stores";
+import { useAppStore } from "@/stores/app";
+import { useSettingsStore } from "@/stores/settings";
+import { useUserStore } from "@/stores/user";
 
 import CommandPalette from "@/components/CommandPalette/index.vue";
 import Fullscreen from "@/components/Fullscreen/index.vue";
@@ -261,20 +263,6 @@ function handleSettingsClick() {
     color: currentColor;
   }
 
-  ::v-deep(.tenant-switcher__trigger) {
-    color: currentColor;
-    background: transparent;
-  }
-  ::v-deep(.tenant-switcher__trigger .tenant-switcher__icon) {
-    color: currentColor;
-  }
-  ::v-deep(.tenant-switcher__trigger:hover) {
-    color: var(--layout-toolbar-hover-color);
-    background: var(--layout-toolbar-hover-bg);
-  }
-  ::v-deep(.tenant-switcher__trigger:hover .tenant-switcher__icon) {
-    color: currentColor;
-  }
 }
 
 .layout-toolbar--dark {
@@ -286,20 +274,6 @@ function handleSettingsClick() {
     color: var(--el-text-color-regular);
   }
 
-  ::v-deep(.tenant-switcher__trigger) {
-    color: var(--el-text-color-regular);
-    background: transparent;
-  }
-  ::v-deep(.tenant-switcher__trigger .tenant-switcher__icon) {
-    color: currentColor;
-  }
-  ::v-deep(.tenant-switcher__trigger:hover) {
-    color: var(--layout-toolbar-hover-color);
-    background: var(--layout-toolbar-hover-bg);
-  }
-  ::v-deep(.tenant-switcher__trigger:hover .tenant-switcher__icon) {
-    color: currentColor;
-  }
 }
 
 ::v-deep(.el-dropdown-menu) {

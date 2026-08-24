@@ -282,9 +282,9 @@
 
         <pagination
           v-if="total > 0"
-          v-model:total="total"
           v-model:page="params.pageNum"
           v-model:limit="params.pageSize"
+          :total="total"
           class="page-pagination"
           @pagination="fetchData"
         />
@@ -467,13 +467,14 @@
 <script setup lang="ts">
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 
-import RoleAPI from "@/api/system/role";
-import type { UserForm, UserItem, UserQueryParams } from "@/api/system/user";
-import type { OptionItem } from "@/api/common";
+import type { UserForm, UserItem, UserQueryParams } from "@/types/user";
+import type { OptionItem } from "@/types/common";
 import { userService } from "@/services";
-import { useAppStore, useUserStore } from "@/stores";
+import { useAppStore } from "@/stores/app";
+import { useUserStore } from "@/stores/user";
 import { usePageTable, useTableSelection } from "@/composables";
 import { CommonStatus, DeviceEnum, DialogMode, UserGender } from "@/enums";
+import { Female, FullScreen, Male, Refresh } from "@element-plus/icons-vue";
 
 defineOptions({
   name: "User",
@@ -572,7 +573,7 @@ function getAvatarText(row: UserItem): string {
  * 加载用户角色选项。
  */
 async function loadFormOptions(): Promise<void> {
-  roleOptions.value = await RoleAPI.getOptions();
+  roleOptions.value = await userService.getRoleOptions();
 }
 
 /**

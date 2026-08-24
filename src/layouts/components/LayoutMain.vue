@@ -27,7 +27,8 @@
 
 <script setup lang="ts">
 import { type RouteLocationNormalized } from "vue-router";
-import { useSettingsStore, useTagsViewStore } from "@/stores";
+import { useSettingsStore } from "@/stores/settings";
+import { useTagsViewStore } from "@/stores/tags-view";
 import variables from "@/styles/variables.module.scss";
 import Error404 from "@/views/error/404.vue";
 

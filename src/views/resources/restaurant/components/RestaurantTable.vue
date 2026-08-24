@@ -221,9 +221,9 @@
       </div>
       <pagination
         v-if="filteredRows.length"
-        v-model:total="total"
         v-model:page="pageNum"
         v-model:limit="pageSize"
+        :total="total"
       />
     </el-card>
   </div>
@@ -260,7 +260,7 @@ const filteredRows = computed(() => props.rows.filter((record) => (
   && (!keywords.value || [record.code, record.name, record.city, record.cuisine]
     .some((field) => field.toLowerCase().includes(keywords.value.toLowerCase())))
 )));
-const total = computed({ get: () => filteredRows.value.length, set: () => undefined });
+const total = computed(() => filteredRows.value.length);
 const pagedRows = computed(() => filteredRows.value.slice((pageNum.value - 1) * pageSize.value, pageNum.value * pageSize.value));
 
 function resetQuery() {

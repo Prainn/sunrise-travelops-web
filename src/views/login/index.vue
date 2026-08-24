@@ -144,7 +144,7 @@ defineOptions({ name: "LoginPage", inheritAttrs: false });
 import { Clock, Lock, User } from "@element-plus/icons-vue";
 import type { FormInstance } from "element-plus";
 import router from "@/router";
-import { useUserStore } from "@/stores";
+import { useUserStore } from "@/stores/user";
 import type { LoginRequest } from "@/types/auth";
 import { AuthStorage } from "@/utils/auth";
 import { appConfig } from "@/settings";

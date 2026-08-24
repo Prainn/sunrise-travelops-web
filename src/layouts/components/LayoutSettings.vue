@@ -295,7 +295,7 @@ import {
   TagsViewStyle,
   ThemeMode,
 } from "@/enums";
-import { useSettingsStore } from "@/stores";
+import { useSettingsStore } from "@/stores/settings";
 import { themeColorNames, themePalettePresets } from "@/settings";
 import type { ThemeColorMap, ThemeColorName, ThemePalettePreset } from "@/settings";
 

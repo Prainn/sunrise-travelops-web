@@ -7,8 +7,6 @@ import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
 import { ElementPlusResolver } from "unplugin-vue-components/resolvers";
 
-import { mockDevServerPlugin } from "vite-plugin-mock-dev-server";
-
 import UnoCSS from "unocss/vite";
 import { resolve } from "path";
 import { name, version } from "./package.json" with { type: "json" };
@@ -62,7 +60,6 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
             }),
           ]
         : []),
-      ...(env.VITE_MOCK_DEV_SERVER === "true" ? [mockDevServerPlugin()] : []),
       UnoCSS(),
       // API 自动导入
       AutoImport({
@@ -73,14 +70,12 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           ElementPlusResolver({ importStyle: "sass" }),
         ],
         eslintrc: {
-          enabled: false,
+          enabled: true,
           filepath: "./.eslintrc-auto-import.json",
           globalsPropValue: true,
         },
         vueTemplate: true,
-        // 导入函数类型声明文件路径 (false:关闭自动生成)
-        dts: false,
-        // dts: "types/auto-imports.d.ts",
+        dts: "types/auto-imports.d.ts",
       }),
       // 组件自动导入
       Components({
@@ -90,9 +85,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         ],
         // 指定自定义组件位置(默认:src/components)
         dirs: ["src/components", "src/**/components"],
-        // 导入组件类型声明文件路径 (false:关闭自动生成)
-        dts: false,
-        //dts: "types/components.d.ts",
+        dts: "types/components.d.ts",
       }),
     ] as PluginOption[],
     // 预加载项目必需的依赖
@@ -102,9 +95,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         "vue-router",
         "element-plus",
         "pinia",
-        "axios",
         "@vueuse/core",
-        "exceljs",
         "path-to-regexp",
         "echarts/core",
         "echarts/renderers",
@@ -112,9 +103,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         "echarts/components",
         "vue-i18n",
         "nprogress",
-        "qs",
         "path-browserify",
-        "lodash-es",
         "@element-plus/icons-vue",
         "element-plus/es",
         "element-plus/es/locale/lang/en",

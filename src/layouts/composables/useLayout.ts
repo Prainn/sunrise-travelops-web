@@ -1,5 +1,7 @@
 import { useRoute } from "vue-router";
-import { useAppStore, usePermissionStore, useSettingsStore } from "@/stores";
+import { useAppStore } from "@/stores/app";
+import { usePermissionStore } from "@/stores/permission";
+import { useSettingsStore } from "@/stores/settings";
 import { DeviceEnum } from "@/enums/settings";
 import { defaults } from "@/settings";
 

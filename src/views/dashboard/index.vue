@@ -282,10 +282,9 @@
 <script setup lang="ts">
 defineOptions({ name: "Dashboard", inheritAttrs: false });
 
-import { dayjs } from "element-plus";
 import { ref } from "vue";
-import LogAPI from "@/api/system/log";
-import type { VisitOverviewDetail, VisitTrendDetail } from "@/api/system/log";
+import { dashboardService } from "@/services";
+import type { VisitOverviewDetail, VisitTrendDetail } from "@/types/dashboard";
 import { useUserStore } from "@/stores/user";
 import { useSettingsStore } from "@/stores/settings";
 import { formatGrowthRate } from "@/utils";
@@ -500,19 +499,13 @@ function colorWithAlpha(color: string, alpha: number) {
 }
 
 function fetchVisitOverviewData() {
-  LogAPI.getVisitOverview().then((d) => {
+  dashboardService.getVisitOverview().then((d) => {
     visitOverviewData.value = d;
   });
 }
 
 function fetchVisitTrendData() {
-  const s = dayjs()
-    .subtract(visitTrendDateRange.value - 1, "day")
-    .toDate();
-  LogAPI.getVisitTrend({
-    startDate: dayjs(s).format("YYYY-MM-DD"),
-    endDate: dayjs(new Date()).format("YYYY-MM-DD"),
-  }).then((d) => {
+  dashboardService.getVisitTrend().then((d) => {
     visitTrendData.value = d;
     updateVisitTrendChartOptions(d);
   });

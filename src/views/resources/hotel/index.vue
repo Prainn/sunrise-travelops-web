@@ -29,9 +29,6 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary">
-            {{ $t("common.search") }}
-          </el-button>
           <el-button @click="resetQuery">
             {{ $t("common.reset") }}
           </el-button>
@@ -39,204 +36,16 @@
       </el-form>
     </el-card>
 
-    <el-card
-      class="page-content"
-      shadow="never"
-    >
-      <div class="page-toolbar">
-        <div class="page-toolbar__left">
-          <el-button
-            type="primary"
-            @click="openCreateDialog"
-          >
-            {{ $t("hotel.createHotel") }}
-          </el-button>
-        </div>
-      </div>
-      <div class="page-table-wrapper">
-        <el-table
-          :data="filteredHotels"
-          border
-          height="100%"
-          row-key="id"
-        >
-          <el-table-column
-            type="expand"
-            width="48"
-          >
-            <template #default="scope">
-              <div class="hotel-page__prices">
-                <div class="hotel-page__price-header">
-                  <strong>{{ $t("hotel.roomPriceTitle") }}</strong>
-                  <el-button
-                    type="primary"
-                    link
-                    @click="openPriceDialog(scope.row as HotelRecord)"
-                  >
-                    {{ $t("hotel.addRoomPrice") }}
-                  </el-button>
-                </div>
-                <el-table
-                  :data="flattenPricePlans(scope.row as HotelRecord)"
-                  size="small"
-                  border
-                >
-                  <el-table-column
-                    prop="roomType"
-                    :label="$t('hotel.roomType')"
-                    min-width="170"
-                  />
-                  <el-table-column
-                    prop="rackRate"
-                    :label="$t('hotel.rackRate')"
-                    width="100"
-                    align="right"
-                  />
-                  <el-table-column
-                    prop="periodName"
-                    :label="$t('hotel.pricePeriod')"
-                    width="100"
-                  />
-                  <el-table-column
-                    prop="effectivePeriod"
-                    :label="$t('hotel.effectivePeriod')"
-                    min-width="190"
-                  />
-                  <el-table-column
-                    prop="individualPrice"
-                    :label="$t('hotel.individualPrice')"
-                    width="100"
-                    align="right"
-                  />
-                  <el-table-column
-                    prop="groupPrice"
-                    :label="$t('hotel.groupPrice')"
-                    width="100"
-                    align="right"
-                  />
-                  <el-table-column
-                    prop="minimumRooms"
-                    :label="$t('hotel.minimumRooms')"
-                    width="100"
-                    align="center"
-                  />
-                  <el-table-column
-                    :label="$t('resource.priceSource')"
-                    min-width="160"
-                  >
-                    <template #default="priceScope">
-                      <el-tag
-                        v-if="priceScope.row.isGroundOperatorProvided"
-                        type="warning"
-                        effect="plain"
-                      >
-                        {{ getGroundOperatorName(priceScope.row.groundOperatorId) }}
-                      </el-tag>
-                      <span v-else>{{ $t("resource.directPrice") }}</span>
-                    </template>
-                  </el-table-column>
-                  <el-table-column
-                    :label="$t('common.actions')"
-                    width="120"
-                    align="center"
-                  >
-                    <template #default="priceScope">
-                      <el-button
-                        type="primary"
-                        link
-                        @click="openEditPriceDialog(scope.row as HotelRecord, priceScope.row as RoomPriceRow)"
-                      >
-                        {{ $t("common.edit") }}
-                      </el-button>
-                      <el-button
-                        type="danger"
-                        link
-                        @click="deletePricePlan(scope.row as HotelRecord, priceScope.row as RoomPriceRow)"
-                      >
-                        {{ $t("common.delete") }}
-                      </el-button>
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </div>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="code"
-            :label="$t('resource.code')"
-            width="120"
-          />
-          <el-table-column
-            prop="name"
-            :label="$t('resource.hotelName')"
-            min-width="190"
-          />
-          <el-table-column
-            prop="city"
-            :label="$t('resource.city')"
-            width="100"
-          />
-          <el-table-column
-            prop="rating"
-            :label="$t('resource.starRating')"
-            width="90"
-          />
-          <el-table-column
-            :label="$t('hotel.roomTypeCount')"
-            width="100"
-            align="center"
-          >
-            <template #default="scope">
-              {{ scope.row.roomTypes.length }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="address"
-            :label="$t('hotel.address')"
-            min-width="220"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            prop="phone"
-            :label="$t('resource.phone')"
-            width="150"
-          />
-          <el-table-column
-            :label="$t('common.status')"
-            width="90"
-            align="center"
-          >
-            <template #default="scope">
-              <el-tag :type="scope.row.status === 'enabled' ? 'success' : 'info'">
-                {{ $t(`common.${scope.row.status}`) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            :label="$t('common.actions')"
-            width="180"
-            fixed="right"
-          >
-            <template #default="scope">
-              <el-button
-                type="primary"
-                link
-                @click="openEditDialog(scope.row as HotelRecord)"
-              >
-                {{ $t("common.edit") }}
-              </el-button>
-              <el-button
-                type="warning"
-                link
-                @click="toggleStatus(scope.row as HotelRecord)"
-              >
-                {{ $t(scope.row.status === "enabled" ? "common.disabled" : "common.enabled") }}
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-    </el-card>
+    <HotelTable
+      :rows="filteredHotels"
+      :ground-operator-options="groundOperatorOptions"
+      @create="openCreateDialog"
+      @edit="openEditDialog"
+      @toggle-status="toggleStatus"
+      @create-price="openPriceDialog"
+      @edit-price="openEditPriceDialog"
+      @delete-price="deletePricePlan"
+    />
 
     <el-dialog
       v-model="isHotelDialogVisible"
@@ -437,15 +246,10 @@ import {
   type HotelPricePlanRecord,
   type HotelRecord,
 } from "@/data/data";
+import HotelTable from "./components/HotelTable.vue";
+import type { RoomPriceRow } from "./types";
 
 type HotelForm = HotelRecord & { cityPath: string[] };
-type RoomPriceRow = HotelPricePlanRecord & {
-  roomId: string;
-  pricePlanId: string;
-  roomType: string;
-  rackRate: number;
-  effectivePeriod: string;
-};
 
 defineOptions({ name: "Hotel" });
 
@@ -466,11 +270,21 @@ const priceForm = reactive(createEmptyPriceForm());
 const isEditing = computed(() => Boolean(editingId.value));
 const isEditingPrice = computed(() => Boolean(editingRoomId.value && editingPricePlanId.value));
 const cityOptions = computed(() => [...new Set(hotelStore.map((hotel) => hotel.city))]);
-const groundOperatorOptions = computed(() => tourismResources.supplier.filter((item) => item.status === "enabled"));
-const filteredHotels = computed(() => hotelStore.filter((hotel) =>
-  (!city.value || hotel.city === city.value)
-  && (!keywords.value || [hotel.code, hotel.name, hotel.address].some((field) => field.toLowerCase().includes(keywords.value.toLowerCase())))
-));
+const groundOperatorOptions = computed(() =>
+  tourismResources.supplier.filter((item) => item.status === "enabled")
+);
+const filteredHotels = computed(() => {
+  const query = keywords.value.toLowerCase();
+  return hotelStore.filter((hotel) => {
+    const matchesCity = !city.value || hotel.city === city.value;
+    const matchesKeywords =
+      !query ||
+      [hotel.code, hotel.name, hotel.address].some((field) =>
+        field.toLowerCase().includes(query)
+      );
+    return matchesCity && matchesKeywords;
+  });
+});
 const hotelRules: FormRules = {
   name: [{ required: true, message: t("hotel.nameRequired"), trigger: "blur" }],
   cityPath: [{ required: true, message: t("hotel.cityRequired"), trigger: "change" }],
@@ -479,22 +293,68 @@ const priceRules = computed<FormRules>(() => ({
   roomType: [{ required: true, message: t("hotel.roomTypeRequired"), trigger: "blur" }],
   periodName: [{ required: true, message: t("hotel.periodRequired"), trigger: "blur" }],
   dates: [{ required: true, message: t("hotel.datesRequired"), trigger: "change" }],
-  groundOperatorId: [{ required: priceForm.isGroundOperatorProvided, message: t("resource.groundOperatorRequired"), trigger: "change" }],
+  groundOperatorId: [
+    {
+      required: priceForm.isGroundOperatorProvided,
+      message: t("resource.groundOperatorRequired"),
+      trigger: "change",
+    },
+  ],
 }));
 
 function createEmptyHotel(): HotelForm {
-  return { id: "", code: "", name: "", province: "", city: "", cityPath: [], rating: "", facilities: "", breakfast: "", address: "", phone: "", nearby: "", status: "enabled", roomTypes: [] };
+  return {
+    id: "",
+    code: "",
+    name: "",
+    province: "",
+    city: "",
+    cityPath: [],
+    rating: "",
+    facilities: "",
+    breakfast: "",
+    address: "",
+    phone: "",
+    nearby: "",
+    status: "enabled",
+    roomTypes: [],
+  };
 }
 function createEmptyPriceForm() {
-  return { roomType: "", rackRate: 0, periodName: "常规期", dates: [] as string[], individualPrice: 0, groupPrice: 0, minimumRooms: 5, isGroundOperatorProvided: false, groundOperatorId: "" };
+  return {
+    roomType: "",
+    rackRate: 0,
+    periodName: "常规期",
+    dates: [] as string[],
+    individualPrice: 0,
+    groupPrice: 0,
+    minimumRooms: 5,
+    isGroundOperatorProvided: false,
+    groundOperatorId: "",
+  };
 }
-function resetQuery() { keywords.value = ""; city.value = ""; }
+function resetQuery() {
+  keywords.value = "";
+  city.value = "";
+}
 function generateHotelCode() {
-  const max = hotelStore.reduce((value, hotel) => Math.max(value, Number(hotel.code.match(/^HTL-(\d+)$/)?.[1] ?? 0)), 0);
+  const max = hotelStore.reduce(
+    (value, hotel) =>
+      Math.max(value, Number(hotel.code.match(/^HTL-(\d+)$/)?.[1] ?? 0)),
+    0
+  );
   return `HTL-${String(max + 1).padStart(3, "0")}`;
 }
-function openCreateDialog() { editingId.value = ""; Object.assign(hotelForm, createEmptyHotel(), { code: generateHotelCode() }); isHotelDialogVisible.value = true; }
-function openEditDialog(hotel: HotelRecord) { editingId.value = hotel.id; Object.assign(hotelForm, hotel, { cityPath: [hotel.province, hotel.city] }); isHotelDialogVisible.value = true; }
+function openCreateDialog() {
+  editingId.value = "";
+  Object.assign(hotelForm, createEmptyHotel(), { code: generateHotelCode() });
+  isHotelDialogVisible.value = true;
+}
+function openEditDialog(hotel: HotelRecord) {
+  editingId.value = hotel.id;
+  Object.assign(hotelForm, hotel, { cityPath: [hotel.province, hotel.city] });
+  isHotelDialogVisible.value = true;
+}
 function openPriceDialog(hotel: HotelRecord) {
   selectedHotel.value = hotel;
   editingRoomId.value = "";
@@ -519,15 +379,12 @@ function openEditPriceDialog(hotel: HotelRecord, row: RoomPriceRow) {
   });
   isPriceDialogVisible.value = true;
 }
-function toggleStatus(hotel: HotelRecord) { hotel.status = hotel.status === "enabled" ? "disabled" : "enabled"; ElMessage.success(t("common.updateSuccess")); }
+function toggleStatus(hotel: HotelRecord) {
+  hotel.status = hotel.status === "enabled" ? "disabled" : "enabled";
+  ElMessage.success(t("common.updateSuccess"));
+}
 function changePriceProvider(value: string | number | boolean) {
   if (!value) priceForm.groundOperatorId = "";
-}
-function getGroundOperatorName(id: string) {
-  return groundOperatorOptions.value.find((item) => item.id === id)?.name ?? t("resource.groundOperatorProvidedTag");
-}
-function flattenPricePlans(hotel: HotelRecord) {
-  return hotel.roomTypes.flatMap((room) => room.pricePlans.map((plan): RoomPriceRow => ({ ...plan, roomId: room.id, pricePlanId: plan.id, roomType: room.name, rackRate: room.rackRate, effectivePeriod: plan.startDate && plan.endDate ? `${plan.startDate} — ${plan.endDate}` : t("common.notSet") })));
 }
 async function saveHotel() {
   if (!(await hotelFormRef.value?.validate().catch(() => false))) return;
@@ -557,7 +414,12 @@ async function savePricePlan() {
 
   let room = selectedHotel.value.roomTypes.find((item) => item.name === priceForm.roomType);
   if (!room) {
-    room = { id: `room-${Date.now()}`, name: priceForm.roomType, rackRate: priceForm.rackRate, pricePlans: [] };
+    room = {
+      id: `room-${Date.now()}`,
+      name: priceForm.roomType,
+      rackRate: priceForm.rackRate,
+      pricePlans: [],
+    };
     selectedHotel.value.roomTypes.push(room);
   }
   room.pricePlans.push(createPricePlanValue(`price-${Date.now()}`));
@@ -565,7 +427,17 @@ async function savePricePlan() {
   ElMessage.success(t("common.createSuccess"));
 }
 function createPricePlanValue(id: string): HotelPricePlanRecord {
-  return { id, periodName: priceForm.periodName, startDate: priceForm.dates[0], endDate: priceForm.dates[1], individualPrice: priceForm.individualPrice, groupPrice: priceForm.groupPrice, minimumRooms: priceForm.minimumRooms, isGroundOperatorProvided: priceForm.isGroundOperatorProvided, groundOperatorId: priceForm.groundOperatorId };
+  return {
+    id,
+    periodName: priceForm.periodName,
+    startDate: priceForm.dates[0],
+    endDate: priceForm.dates[1],
+    individualPrice: priceForm.individualPrice,
+    groupPrice: priceForm.groupPrice,
+    minimumRooms: priceForm.minimumRooms,
+    isGroundOperatorProvided: priceForm.isGroundOperatorProvided,
+    groundOperatorId: priceForm.groundOperatorId,
+  };
 }
 async function deletePricePlan(hotel: HotelRecord, row: RoomPriceRow) {
   try {
@@ -591,7 +463,5 @@ async function deletePricePlan(hotel: HotelRecord, row: RoomPriceRow) {
 <style scoped lang="scss">
 .hotel-page {
   &__city-select { width: 150px; }
-  &__prices { padding: 16px 48px; background: var(--el-fill-color-lighter); }
-  &__price-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 }
 </style>

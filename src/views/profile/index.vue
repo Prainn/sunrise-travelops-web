@@ -458,19 +458,19 @@
 </template>
 
 <script lang="ts" setup>
-import UserAPI from "@/api/system/user";
 import type {
   UserProfileDetail,
   PasswordChangeForm,
   MobileUpdateForm,
   EmailUpdateForm,
   UserProfileForm,
-} from "@/api/system/user";
+} from "@/types/user";
 
 import type { Component } from "vue";
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
-import FileAPI from "@/api/file";
-import { useUserStoreHook } from "@/stores";
+import { userService } from "@/services";
+import { useUserStoreHook } from "@/stores/user";
+import { readFileAsDataUrl } from "@/utils";
 import { redirectToLogin } from "@/utils/auth";
 
 import {
@@ -926,11 +926,11 @@ async function handleUnbindMobile() {
       }
     );
     const value = getPromptValue(result);
-    await UserAPI.unbindMobile({ password: value });
+    await userService.unbindMobile({ password: value });
     ElMessage.success(t("profile.mobileUnboundSuccess"));
     await loadUserProfile();
-  } catch {
-    // ignore
+  } catch (action) {
+    if (action !== "cancel" && action !== "close") throw action;
   }
 }
 
@@ -946,11 +946,11 @@ async function handleUnbindEmail() {
       inputValidator: (val) => !!val || t("profile.currentPasswordPlaceholder"),
     });
     const value = getPromptValue(result);
-    await UserAPI.unbindEmail({ password: value });
+    await userService.unbindEmail({ password: value });
     ElMessage.success(t("profile.emailUnboundSuccess"));
     await loadUserProfile();
-  } catch {
-    // ignore
+  } catch (action) {
+    if (action !== "cancel" && action !== "close") throw action;
   }
 }
 
@@ -964,7 +964,7 @@ function handleSendMobileCode() {
     ElMessage.error(t("user.mobileInvalid"));
     return;
   }
-  UserAPI.sendMobileCode(mobileUpdateForm.mobile).then(() => {
+  userService.sendMobileCode(mobileUpdateForm.mobile).then(() => {
     ElMessage.success(t("profile.codeSentSuccess"));
     mobileCountdown.value = 60;
     mobileTimer.value = setInterval(() => {
@@ -988,7 +988,7 @@ function handleSendEmailCode() {
     return;
   }
 
-  UserAPI.sendEmailCode(emailUpdateForm.email).then(() => {
+  userService.sendEmailCode(emailUpdateForm.email).then(() => {
     ElMessage.success(t("profile.codeSentSuccess"));
     emailCountdown.value = 60;
     emailTimer.value = setInterval(() => {
@@ -1002,51 +1002,33 @@ function handleSendEmailCode() {
 }
 
 const handleSubmit = async () => {
-  try {
-    if (dialogState.type === DialogType.ACCOUNT) {
-      const valid = await userProfileFormRef.value?.validate();
-      if (!valid) return;
-
-      await UserAPI.updateProfile(userProfileForm);
-      ElMessage.success(t("profile.updateSuccess"));
-      dialogState.visible = false;
-      if (userProfileForm.nickname) {
-        userStore.userInfo.nickname = userProfileForm.nickname;
-      }
-      await loadUserProfile();
-    } else if (dialogState.type === DialogType.PASSWORD) {
-      const valid = await passwordChangeFormRef.value?.validate();
-      if (!valid) return;
-
-      await UserAPI.changePassword(passwordChangeForm);
-      dialogState.visible = false;
-      await redirectToLogin(t("profile.passwordChangedRelogin"));
-    } else if (dialogState.type === DialogType.MOBILE) {
-      const valid = await mobileBindingFormRef.value?.validate();
-      if (!valid) return;
-
-      await UserAPI.bindOrChangeMobile(mobileUpdateForm);
-      ElMessage.success(
-        userProfile.value.mobile
-          ? t("profile.mobileChangedSuccess")
-          : t("profile.mobileBoundSuccess")
-      );
-      dialogState.visible = false;
-      await loadUserProfile();
-    } else if (dialogState.type === DialogType.EMAIL) {
-      const valid = await emailBindingFormRef.value?.validate();
-      if (!valid) return;
-
-      await UserAPI.bindOrChangeEmail(emailUpdateForm);
-      ElMessage.success(
-        userProfile.value.email ? t("profile.emailChangedSuccess") : t("profile.emailBoundSuccess")
-      );
-      dialogState.visible = false;
-      await loadUserProfile();
-    }
-  } catch {
-    // ignore
+  if (dialogState.type === DialogType.ACCOUNT) {
+    if (!(await userProfileFormRef.value?.validate())) return;
+    await userService.updateProfile(userProfileForm);
+    ElMessage.success(t("profile.updateSuccess"));
+    if (userProfileForm.nickname) userStore.userInfo.nickname = userProfileForm.nickname;
+  } else if (dialogState.type === DialogType.PASSWORD) {
+    if (!(await passwordChangeFormRef.value?.validate())) return;
+    await userService.changePassword(passwordChangeForm);
+    dialogState.visible = false;
+    await redirectToLogin(t("profile.passwordChangedRelogin"));
+    return;
+  } else if (dialogState.type === DialogType.MOBILE) {
+    if (!(await mobileBindingFormRef.value?.validate())) return;
+    const hadMobile = Boolean(userProfile.value.mobile);
+    await userService.bindOrChangeMobile(mobileUpdateForm);
+    ElMessage.success(
+      t(hadMobile ? "profile.mobileChangedSuccess" : "profile.mobileBoundSuccess")
+    );
+  } else if (dialogState.type === DialogType.EMAIL) {
+    if (!(await emailBindingFormRef.value?.validate())) return;
+    const hadEmail = Boolean(userProfile.value.email);
+    await userService.bindOrChangeEmail(emailUpdateForm);
+    ElMessage.success(t(hadEmail ? "profile.emailChangedSuccess" : "profile.emailBoundSuccess"));
   }
+
+  dialogState.visible = false;
+  await loadUserProfile();
 };
 
 const handleCancel = () => {
@@ -1072,31 +1054,21 @@ const handleFileChange = async (event: Event) => {
   const target = event.target as HTMLInputElement;
   const file = target.files ? target.files[0] : null;
   if (file) {
-    const data = await FileAPI.uploadFile(file);
-    await UserAPI.updateProfile({
-      avatar: data.url,
-    });
-    userProfile.value.avatar = data.url;
-    userStore.userInfo.avatar = data.url;
+    const avatar = await readFileAsDataUrl(file);
+    await userService.updateProfile({ avatar });
+    userProfile.value.avatar = avatar;
+    userStore.userInfo.avatar = avatar;
     ElMessage.success(t("profile.avatarUpdatedSuccess"));
   }
   target.value = "";
 };
 
 const loadUserProfile = async () => {
-  const data = await UserAPI.getProfile();
+  const data = await userService.getProfile();
   userProfile.value = data;
 };
 
-onMounted(async () => {
-  if (mobileTimer.value) {
-    clearInterval(mobileTimer.value);
-  }
-  if (emailTimer.value) {
-    clearInterval(emailTimer.value);
-  }
-  await loadUserProfile();
-});
+onMounted(loadUserProfile);
 
 onBeforeUnmount(() => {
   if (mobileTimer.value) {

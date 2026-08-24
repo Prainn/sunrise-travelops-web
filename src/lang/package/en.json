@@ -317,7 +317,6 @@
     "choose": "Click to select an icon", "elementIcons": "Element Icons",
     "search": "Search icons", "svgIcons": "SVG Icons"
   },
-  "tenant": { "switchFailed": "Unable to load the tenant after switching", "switchTenant": "Switch Tenant" },
   "crud": {
     "allData": "All data (all pages)", "batchExport": "Batch Export",
     "batchImport": "Batch Import", "clickUpload": "click to upload",

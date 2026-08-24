@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingsStore } from "@/stores";
+import { useSettingsStore } from "@/stores/settings";
 import { ThemeMode, SidebarColor, LayoutMode } from "@/enums/settings";
 
 defineProps({

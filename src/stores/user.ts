@@ -1,6 +1,6 @@
 import { store } from "./store";
 
-import type { UserInfo } from "@/api/system/user";
+import type { UserInfo } from "@/types/user";
 import { authService, userService } from "@/services";
 import type { LoginRequest } from "@/types/auth";
 

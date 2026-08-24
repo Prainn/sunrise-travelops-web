@@ -1,6 +1,7 @@
 import type { LocationQueryRaw, RouteRecordRaw } from "vue-router";
 import { useLayout } from "./useLayout";
-import { useAppStore, usePermissionStore } from "@/stores";
+import { useAppStore } from "@/stores/app";
+import { usePermissionStore } from "@/stores/permission";
 import { isExternal } from "@/utils/index";
 
 export function useMixMenu() {

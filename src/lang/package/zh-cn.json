@@ -303,7 +303,6 @@
     "choose": "点击选择图标", "elementIcons": "Element 图标",
     "search": "搜索图标", "svgIcons": "SVG 图标"
   },
-  "tenant": { "switchFailed": "切换租户后无法获取租户信息", "switchTenant": "切换租户" },
   "crud": {
     "allData": "全量数据（所有分页数据）", "batchExport": "批量导出",
     "batchImport": "批量导入", "clickUpload": "点击上传",

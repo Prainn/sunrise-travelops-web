@@ -54,7 +54,7 @@
                     width="100"
                   >
                     <template #default="priceScope">
-                      {{ $t(itemTypeLabelKeys[priceScope.row.itemType as AttractionPriceItemType]) }}
+                      {{ $t(attractionItemTypeLabelKeys[priceScope.row.itemType as AttractionPriceItemType]) }}
                     </template>
                   </el-table-column>
                   <el-table-column
@@ -165,7 +165,7 @@
             width="100"
           >
             <template #default="scope">
-              {{ $t(categoryLabelKeys[scope.row.category as AttractionCategory]) }}
+              {{ $t(attractionCategoryLabelKeys[scope.row.category as AttractionCategory]) }}
             </template>
           </el-table-column>
           <el-table-column
@@ -221,9 +221,9 @@
       </div>
       <pagination
         v-if="filteredRows.length"
-        v-model:total="total"
         v-model:page="pageNum"
         v-model:limit="pageSize"
+        :total="total"
       />
     </el-card>
   </div>
@@ -240,6 +240,7 @@ import type {
   AttractionRecord,
 } from "@/data/data";
 import AttractionSearchForm from "./AttractionSearchForm.vue";
+import { attractionCategoryLabelKeys, attractionItemTypeLabelKeys } from "../options";
 
 const props = defineProps<{ rows: AttractionRecord[] }>();
 const emit = defineEmits<{
@@ -257,28 +258,13 @@ const area = ref("");
 const category = ref<AttractionCategory | "">("");
 const pageNum = ref(1);
 const pageSize = ref(10);
-const categoryOptions: Array<{ value: AttractionCategory; labelKey: string }> = [
-  { value: "scenic", labelKey: "attraction.categoryScenic" },
-  { value: "performance", labelKey: "attraction.categoryPerformance" },
-  { value: "experience", labelKey: "attraction.categoryExperience" },
-  { value: "transport", labelKey: "attraction.categoryTransport" },
-  { value: "package", labelKey: "attraction.categoryPackage" },
-];
-const categoryLabelKeys = Object.fromEntries(categoryOptions.map((option) => [option.value, option.labelKey])) as Record<AttractionCategory, string>;
-const itemTypeLabelKeys: Record<AttractionPriceItemType, string> = {
-  ticket: "attraction.itemTicket",
-  transport: "attraction.itemTransport",
-  guide: "attraction.itemGuide",
-  activity: "attraction.itemActivity",
-  package: "attraction.itemPackage",
-};
 const groundOperatorOptions = computed(() => tourismResources.supplier.filter((item) => item.status === "enabled"));
 const filteredRows = computed(() => props.rows.filter((record) => (
   (!area.value || record.area === area.value)
   && (!category.value || record.category === category.value)
   && (!keywords.value || [record.code, record.name, record.remark].some((field) => field.toLowerCase().includes(keywords.value.toLowerCase())))
 )));
-const total = computed({ get: () => filteredRows.value.length, set: () => undefined });
+const total = computed(() => filteredRows.value.length);
 const pagedRows = computed(() => filteredRows.value.slice((pageNum.value - 1) * pageSize.value, pageNum.value * pageSize.value));
 
 function resetQuery() {

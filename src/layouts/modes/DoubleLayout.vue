@@ -81,7 +81,7 @@
 <script setup lang="ts">
 import { useLayout } from "../composables/useLayout";
 import { useMixMenu } from "../composables/useMixMenu";
-import { useAppStore } from "@/stores";
+import { useAppStore } from "@/stores/app";
 import { appConfig } from "@/settings";
 import { translateRouteTitle } from "@/lang/utils";
 import BaseLayout from "../BaseLayout.vue";

@@ -2,7 +2,7 @@ import { onBeforeUnmount, onMounted, ref, toRaw } from "vue";
 import type { LocationQueryRaw, RouteRecordRaw } from "vue-router";
 import router from "@/router";
 import { translateRouteTitle } from "@/lang/utils";
-import { usePermissionStore } from "@/stores";
+import { usePermissionStore } from "@/stores/permission";
 import { isExternal } from "@/utils";
 
 /** 命令面板中的可搜索菜单项。 */

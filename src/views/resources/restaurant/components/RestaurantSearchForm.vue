@@ -42,9 +42,6 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary">
-          {{ $t("common.search") }}
-        </el-button>
         <el-button @click="emit('reset')">
           {{ $t("common.reset") }}
         </el-button>
@@ -70,7 +67,16 @@ const emit = defineEmits<{
   reset: [];
 }>();
 
-const keywords = computed({ get: () => props.keywords, set: (value) => emit("update:keywords", value) });
-const city = computed({ get: () => props.city, set: (value) => emit("update:city", value) });
-const priceUnit = computed({ get: () => props.priceUnit, set: (value) => emit("update:priceUnit", value) });
+const keywords = computed({
+  get: () => props.keywords,
+  set: (value) => emit("update:keywords", value),
+});
+const city = computed({
+  get: () => props.city,
+  set: (value) => emit("update:city", value),
+});
+const priceUnit = computed({
+  get: () => props.priceUnit,
+  set: (value) => emit("update:priceUnit", value),
+});
 </script>

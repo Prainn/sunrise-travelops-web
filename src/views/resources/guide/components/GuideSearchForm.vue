@@ -56,9 +56,6 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary">
-          {{ $t("common.search") }}
-        </el-button>
         <el-button @click="emit('reset')">
           {{ $t("common.reset") }}
         </el-button>
@@ -86,8 +83,20 @@ const emit = defineEmits<{
 }>();
 
 const languageOptions = ["中文", "英文", "日文", "韩文", "泰文"];
-const keywords = computed({ get: () => props.keywords, set: (value) => emit("update:keywords", value) });
-const gender = computed({ get: () => props.gender, set: (value) => emit("update:gender", value) });
-const employmentType = computed({ get: () => props.employmentType, set: (value) => emit("update:employmentType", value) });
-const language = computed({ get: () => props.language, set: (value) => emit("update:language", value) });
+const keywords = computed({
+  get: () => props.keywords,
+  set: (value) => emit("update:keywords", value),
+});
+const gender = computed({
+  get: () => props.gender,
+  set: (value) => emit("update:gender", value),
+});
+const employmentType = computed({
+  get: () => props.employmentType,
+  set: (value) => emit("update:employmentType", value),
+});
+const language = computed({
+  get: () => props.language,
+  set: (value) => emit("update:language", value),
+});
 </script>

@@ -1,4 +1,4 @@
-import type { BaseQueryParams } from "@/api/common";
+import type { BaseQueryParams } from "@/types/common";
 
 export type DictionaryTagType = "success" | "warning" | "info" | "primary" | "danger" | "";
 

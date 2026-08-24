@@ -89,7 +89,8 @@
 import { useWindowSize } from "@vueuse/core";
 import { useLayout } from "../composables/useLayout";
 import { useMixMenu } from "../composables/useMixMenu";
-import { useAppStore, useSettingsStore } from "@/stores";
+import { useAppStore } from "@/stores/app";
+import { useSettingsStore } from "@/stores/settings";
 import { translateRouteTitle } from "@/lang/utils";
 import { SidebarColor, ThemeMode } from "@/enums/settings";
 import BaseLayout from "../BaseLayout.vue";

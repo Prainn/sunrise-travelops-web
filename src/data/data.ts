@@ -1,5 +1,6 @@
 import type { AuthUserRecord } from "@/types/auth";
 import type { DictItem, DictTypeItem } from "@/types/dictionary";
+import type { VisitOverviewDetail, VisitTrendDetail } from "@/types/dashboard";
 import { ROLE_ROOT } from "@/constants";
 
 export interface PrototypeUserRecord extends AuthUserRecord {
@@ -11,6 +12,7 @@ export interface PrototypeUserRecord extends AuthUserRecord {
   email: string;
   roleIds: number[];
   roleNames: string;
+  deptName: string;
   createTime: string;
   roles: string[];
   perms: string[];
@@ -64,6 +66,7 @@ export const users: PrototypeUserRecord[] = [
     email: "",
     roleIds: [2],
     roleNames: "",
+    deptName: "运营中心",
     createTime: "2026-08-19 09:00:00",
     roles: [ROLE_ROOT, "ADMIN"],
     perms: adminPermissions,
@@ -81,6 +84,7 @@ export const users: PrototypeUserRecord[] = [
     email: "demo@sunrise.local",
     roleIds: [3],
     roleNames: "",
+    deptName: "产品中心",
     createTime: "2026-08-19 09:10:00",
     roles: ["USER"],
     perms: ["sys:dict:list", "sys:dict-item:list"],
@@ -197,13 +201,7 @@ export const systemDictionaryItems: SystemDictionaryItem[] = [
   },
 ];
 
-export type TourismResourceType =
-  | "supplier"
-  | "hotel"
-  | "restaurant"
-  | "attraction"
-  | "transport"
-  | "guide";
+export type TourismResourceType = "supplier" | "transport";
 
 export interface TourismResourceRecord {
   [key: string]: string | number;
@@ -558,19 +556,31 @@ export const tourismResources: Record<TourismResourceType, TourismResourceRecord
   supplier: [
     { id: "supplier-1", code: "SUP-001", name: "云南云途地接社", city: "昆明", contact: "李经理", phone: "13800000001", status: "enabled", remark: "云南线路综合地接社" },
   ],
-  hotel: [
-    { id: "hotel-1", code: "HTL-001", name: "昆明翠湖酒店", city: "昆明", starRating: "五星", roomTypes: "豪华双床房、家庭房", contact: "王经理", phone: "13800000002", status: "enabled", remark: "市中心酒店" },
-  ],
-  restaurant: [
-    { id: "restaurant-1", code: "RES-001", name: "滇味人家", city: "昆明", cuisine: "云南菜", mealStandard: "10 人/桌", contact: "张经理", phone: "13800000003", status: "enabled", remark: "团队餐" },
-  ],
-  attraction: [
-    { id: "attraction-1", code: "ATT-001", name: "石林风景区", city: "昆明", ticketPrice: 130, visitDuration: "3 小时", openingHours: "08:00-18:00", contact: "票务中心", phone: "13800000004", status: "enabled", remark: "" },
-  ],
   transport: [
     { id: "transport-1", code: "VEH-001", name: "别克 GL8", city: "昆明", plateNumber: "云A00001", seats: 7, contact: "赵师傅", phone: "13800000005", status: "enabled", remark: "商务车" },
   ],
-  guide: [
-    { id: "guide-1", code: "GDE-001", name: "刘晓燕", city: "昆明", languages: "中文、英文", certificateNo: "YN-GDE-001", contact: "刘晓燕", phone: "13800000006", status: "enabled", remark: "云南线路" },
-  ],
+};
+
+export const roleDefinitions = [
+  { value: 2, labelKey: "user.roles.systemAdministrator" },
+  { value: 4, labelKey: "user.roles.departmentManager" },
+  { value: 5, labelKey: "user.roles.departmentMember" },
+  { value: 6, labelKey: "user.roles.employee" },
+  { value: 7, labelKey: "user.roles.custom" },
+  { value: 3, labelKey: "user.roles.guest" },
+] as const;
+
+export const visitOverview: VisitOverviewDetail = {
+  todayUvCount: 169,
+  totalUvCount: 19985,
+  uvGrowthRate: -0.57,
+  todayPvCount: 1629,
+  totalPvCount: 286086,
+  pvGrowthRate: -0.65,
+};
+
+export const visitTrend: VisitTrendDetail = {
+  dates: ["2024-06-30", "2024-07-01", "2024-07-02", "2024-07-03", "2024-07-04", "2024-07-05", "2024-07-06", "2024-07-07"],
+  pvList: [1751, 5168, 4882, 5301, 4721, 4885, 1901, 1003],
+  uvList: [207, 566, 565, 631, 579, 496, 222, 152],
 };

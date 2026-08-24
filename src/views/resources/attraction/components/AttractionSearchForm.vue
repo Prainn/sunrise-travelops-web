@@ -32,7 +32,7 @@
           clearable
         >
           <el-option
-            v-for="option in categoryOptions"
+            v-for="option in attractionCategoryOptions"
             :key="option.value"
             :label="$t(option.labelKey)"
             :value="option.value"
@@ -40,9 +40,6 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary">
-          {{ $t("common.search") }}
-        </el-button>
         <el-button @click="emit('reset')">
           {{ $t("common.reset") }}
         </el-button>
@@ -55,6 +52,7 @@
 import { computed } from "vue";
 import { YUNNAN_TOURISM_AREA_OPTIONS } from "@/constants/yunnan-tourism-regions";
 import type { AttractionCategory } from "@/data/data";
+import { attractionCategoryOptions } from "../options";
 
 const props = defineProps<{
   keywords: string;
@@ -69,14 +67,16 @@ const emit = defineEmits<{
   reset: [];
 }>();
 
-const keywords = computed({ get: () => props.keywords, set: (value) => emit("update:keywords", value) });
-const area = computed({ get: () => props.area, set: (value) => emit("update:area", value) });
-const category = computed({ get: () => props.category, set: (value) => emit("update:category", value) });
-const categoryOptions: Array<{ value: AttractionCategory; labelKey: string }> = [
-  { value: "scenic", labelKey: "attraction.categoryScenic" },
-  { value: "performance", labelKey: "attraction.categoryPerformance" },
-  { value: "experience", labelKey: "attraction.categoryExperience" },
-  { value: "transport", labelKey: "attraction.categoryTransport" },
-  { value: "package", labelKey: "attraction.categoryPackage" },
-];
+const keywords = computed({
+  get: () => props.keywords,
+  set: (value) => emit("update:keywords", value),
+});
+const area = computed({
+  get: () => props.area,
+  set: (value) => emit("update:area", value),
+});
+const category = computed({
+  get: () => props.category,
+  set: (value) => emit("update:category", value),
+});
 </script>

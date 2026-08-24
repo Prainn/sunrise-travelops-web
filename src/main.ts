@@ -10,7 +10,20 @@ import { setupDirective } from "@/directives";
 import { setupRouter } from "@/router";
 import { setupStore } from "@/stores/store";
 import { setupI18n } from "@/lang";
-import * as ElementPlusIcons from "@element-plus/icons-vue";
+import {
+  Briefcase,
+  ChatLineSquare,
+  Collection,
+  Document,
+  Food,
+  House,
+  OfficeBuilding,
+  Place,
+  Setting,
+  User,
+  UserFilled,
+  Van,
+} from "@element-plus/icons-vue";
 import { setupPermissionGuard } from "@/router/guards/permission";
 
 const app = createApp(App);
@@ -20,7 +33,22 @@ setupStore(app);
 setupI18n(app);
 setupRouter(app);
 
-Object.entries(ElementPlusIcons).forEach(([name, comp]) => app.component(name, comp));
+const routeIcons = {
+  Briefcase,
+  ChatLineSquare,
+  Collection,
+  Document,
+  Food,
+  House,
+  OfficeBuilding,
+  Place,
+  Setting,
+  User,
+  UserFilled,
+  Van,
+};
+
+Object.entries(routeIcons).forEach(([name, component]) => app.component(name, component));
 
 setupPermissionGuard();
 

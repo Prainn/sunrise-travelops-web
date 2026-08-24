@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import { useLayout } from "../composables/useLayout";
-import { useAppStore } from "@/stores";
+import { useAppStore } from "@/stores/app";
 import BaseLayout from "../BaseLayout.vue";
 import LayoutLogo from "../components/LayoutLogo.vue";
 import LayoutNavbar from "../components/LayoutNavbar.vue";

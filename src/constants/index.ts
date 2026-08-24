@@ -10,14 +10,6 @@ export const APP_PREFIX = "vea";
 export const ROLE_ROOT = "ROOT";
 
 /**
- * 平台租户ID
- *
- * @description
- * 用于前端识别平台租户（不参与套餐/菜单配置）
- */
-export const PLATFORM_TENANT_ID = 0;
-
-/**
  * 存储键名常量
  *
  * @description
@@ -29,10 +21,6 @@ export const STORAGE_KEYS = {
   ACCESS_TOKEN: `${APP_PREFIX}:auth:access_token`,
   REFRESH_TOKEN: `${APP_PREFIX}:auth:refresh_token`,
   REMEMBER_ME: `${APP_PREFIX}:auth:remember_me`,
-
-  // 租户
-  TENANT_ID: `${APP_PREFIX}:tenant:id`,
-  TENANT_INFO: `${APP_PREFIX}:tenant:info`,
 
   // 系统
   DICT_CACHE: `${APP_PREFIX}:system:dict_cache`,

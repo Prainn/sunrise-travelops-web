@@ -3,13 +3,11 @@
  */
 
 // 数据验证
-export { isExternal, isValidURL, isEmail, isMobile, VALIDATORS } from "./validate";
+export { isExternal } from "./validate";
 
 // 数据格式化
-export { formatGrowthRate, formatFileSize, formatNumber, formatCurrency } from "./format";
-
-// 文件下载
-export { downloadFile } from "./download";
+export { formatGrowthRate } from "./format";
+export { readFileAsDataUrl } from "./file";
 
 // 本地存储
 export { Storage } from "./storage";

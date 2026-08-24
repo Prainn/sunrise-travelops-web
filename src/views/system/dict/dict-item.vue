@@ -156,9 +156,9 @@
 
       <pagination
         v-if="total > 0"
-        v-model:total="total"
         v-model:page="params.pageNum"
         v-model:limit="params.pageSize"
+        :total="total"
         @pagination="fetchData"
       />
     </el-card>
@@ -282,7 +282,7 @@ import { FullScreen, QuestionFilled, Refresh } from "@element-plus/icons-vue";
 import { usePageTable, useTableSelection } from "@/composables";
 import { CommonStatus } from "@/enums";
 import { dictionaryService } from "@/services";
-import { useDictStore } from "@/stores";
+import { useDictStore } from "@/stores/dict";
 import type { DictItem, DictItemForm, DictItemQueryParams } from "@/types/dictionary";
 
 defineOptions({

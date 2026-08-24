@@ -164,9 +164,9 @@
 
       <pagination
         v-if="total > 0"
-        v-model:total="total"
         v-model:page="params.pageNum"
         v-model:limit="params.pageSize"
+        :total="total"
         @pagination="fetchData"
       />
     </el-card>
@@ -244,13 +244,13 @@
 <script setup lang="ts">
 import { useFullscreen } from "@vueuse/core";
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
-import { Refresh } from "@element-plus/icons-vue";
+import { FullScreen, Refresh } from "@element-plus/icons-vue";
 
 import router from "@/router";
 import { usePageTable, useTableSelection } from "@/composables";
 import { CommonStatus } from "@/enums";
 import { dictionaryService } from "@/services";
-import { useDictStore } from "@/stores";
+import { useDictStore } from "@/stores/dict";
 import type { DictTypeForm, DictTypeItem, DictTypeQueryParams } from "@/types/dictionary";
 
 defineOptions({
@@ -411,25 +411,13 @@ async function handleDelete(id?: string): Promise<void> {
 /**
  * 跳转到字典项管理页面
  *
- * 检查路由是否已注册后再跳转
- *
  * @param row 当前字典行
  */
 function openDictData(row: DictTypeItem): void {
-  try {
-    const route = router.resolve({
-      name: "DictItem",
-      query: { dictCode: row.dictCode },
-    });
-    if (route.matched.length === 0) {
-      ElMessage.error(t("common.routeNotRegistered"));
-      return;
-    }
-    router.push(route);
-  } catch (error) {
-    console.error("Route navigation failed:", error);
-    ElMessage.error(t("common.navigationFailed"));
-  }
+  void router.push({
+    name: "DictItem",
+    query: { dictCode: row.dictCode },
+  });
 }
 
 onMounted(() => {

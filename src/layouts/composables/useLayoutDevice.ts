@@ -1,5 +1,5 @@
 import { useWindowSize } from "@vueuse/core";
-import { useAppStore } from "@/stores";
+import { useAppStore } from "@/stores/app";
 import { DeviceEnum } from "@/enums/settings";
 
 const WIDE_BREAKPOINT = 992;

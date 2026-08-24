@@ -14,12 +14,6 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button
-            type="primary"
-            @click="pageNum = 1"
-          >
-            {{ $t("common.search") }}
-          </el-button>
           <el-button @click="resetQuery">
             {{ $t("common.reset") }}
           </el-button>
@@ -92,9 +86,9 @@
       </div>
       <pagination
         v-if="filteredRows.length"
-        v-model:total="total"
         v-model:page="pageNum"
         v-model:limit="pageSize"
+        :total="total"
       />
     </el-card>
   </div>
@@ -124,7 +118,7 @@ const filteredRows = computed(() => {
   if (!value) return props.rows;
   return props.rows.filter((row) => props.searchFields.some((field) => String(row[field] ?? "").toLowerCase().includes(value)));
 });
-const total = computed({ get: () => filteredRows.value.length, set: () => undefined });
+const total = computed(() => filteredRows.value.length);
 const pagedRows = computed(() => filteredRows.value.slice((pageNum.value - 1) * pageSize.value, pageNum.value * pageSize.value));
 
 function resetQuery() {

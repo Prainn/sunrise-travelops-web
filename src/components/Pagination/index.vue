@@ -33,7 +33,6 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  total: 0,
   pageSizes: () => [10, 20, 50, 100],
   layout: "total, sizes, prev, pager, next, jumper",
   background: true,
