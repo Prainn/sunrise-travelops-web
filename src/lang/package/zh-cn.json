@@ -17,8 +17,19 @@
     "guides": "导游"
   },
   "inquiry": {
-    "emptyDescription": "暂无询盘数据",
-    "pageDescription": "询盘列表与维护功能将在后续需求中完善"
+    "agencyCode": "旅行社编号", "agencyName": "旅行社名称", "agencyNameRequired": "请输入旅行社名称",
+    "archive": "归档", "archiveConfirm": "确定归档该询盘吗？归档后仍可查询历史记录。", "archiveSuccess": "归档成功",
+    "code": "询盘编号", "codeGenerated": "保存时自动生成", "contactName": "联系人", "contactNameRequired": "请输入联系人姓名",
+    "contactPosition": "联系人职位", "countryOrRegion": "国家或地区", "createInquiry": "新增询盘", "creator": "创建人",
+    "editInquiry": "编辑询盘", "email": "邮箱", "inquiryDetail": "询盘详情", "internalRemark": "内部备注",
+    "lostReason": "Lost 原因", "lostReasonRequired": "请输入 Lost 原因", "nextFollowUpAt": "下次跟进时间",
+    "nextFollowUpPlaceholder": "请选择下次跟进时间", "originalMessage": "客户原始消息", "originalMessageRequired": "请输入客户原始消息",
+    "owner": "收客计调", "ownerRequired": "请选择收客计调", "phone": "电话", "searchPlaceholder": "搜索询盘编号、旅行社、联系人或联系方式",
+    "sourceChannel": "来源渠道", "sourceChannelRequired": "请选择来源渠道", "whatsapp": "WhatsApp",
+    "statuses": {
+      "archived": "已归档", "lost": "已流失", "negotiating": "谈判中", "new": "新询盘",
+      "planning": "行程设计中", "qualified": "已确认意向", "quoted": "已报价"
+    }
   },
   "common": {
     "actions": "操作", "all": "全部", "backHome": "返回首页", "bind": "绑定",

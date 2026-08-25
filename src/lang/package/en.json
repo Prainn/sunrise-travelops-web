@@ -17,8 +17,19 @@
     "guides": "Guides"
   },
   "inquiry": {
-    "emptyDescription": "No inquiry data",
-    "pageDescription": "Inquiry listing and maintenance will be completed with the upcoming requirements"
+    "agencyCode": "Agency Code", "agencyName": "Travel Agency", "agencyNameRequired": "Enter a travel agency name",
+    "archive": "Archive", "archiveConfirm": "Archive this inquiry? It will remain available in history.", "archiveSuccess": "Archived successfully",
+    "code": "Inquiry No.", "codeGenerated": "Generated on save", "contactName": "Contact", "contactNameRequired": "Enter a contact name",
+    "contactPosition": "Position", "countryOrRegion": "Country/Region", "createInquiry": "Create Inquiry", "creator": "Created By",
+    "editInquiry": "Edit Inquiry", "email": "Email", "inquiryDetail": "Inquiry Details", "internalRemark": "Internal Notes",
+    "lostReason": "Lost Reason", "lostReasonRequired": "Enter a lost reason", "nextFollowUpAt": "Next Follow-up",
+    "nextFollowUpPlaceholder": "Select the next follow-up time", "originalMessage": "Original Message", "originalMessageRequired": "Enter the customer's original message",
+    "owner": "Inquiry Owner", "ownerRequired": "Select an inquiry owner", "phone": "Phone", "searchPlaceholder": "Search number, agency, contact, or contact details",
+    "sourceChannel": "Source", "sourceChannelRequired": "Select a source", "whatsapp": "WhatsApp",
+    "statuses": {
+      "archived": "Archived", "lost": "Lost", "negotiating": "Negotiating", "new": "New",
+      "planning": "Planning", "qualified": "Qualified", "quoted": "Quoted"
+    }
   },
   "common": {
     "actions": "Actions", "all": "All", "backHome": "Back to Home", "bind": "Bind",

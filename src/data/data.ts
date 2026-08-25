@@ -201,6 +201,64 @@ export const systemDictionaryItems: SystemDictionaryItem[] = [
   },
 ];
 
+export type InquiryStatus =
+  | "new"
+  | "qualified"
+  | "planning"
+  | "quoted"
+  | "negotiating"
+  | "lost"
+  | "archived";
+
+export interface InquiryRecord {
+  id: string;
+  code: string;
+  agencyCode: string;
+  agencyName: string;
+  contactName: string;
+  contactPosition: string;
+  email: string;
+  phone: string;
+  whatsapp: string;
+  countryOrRegion: string;
+  sourceChannel: string;
+  originalMessage: string;
+  internalRemark: string;
+  owner: string;
+  nextFollowUpAt: string;
+  lostReason: string;
+  status: InquiryStatus;
+  creator: string;
+  createdAt: string;
+}
+
+export const inquiries: InquiryRecord[] = [
+  {
+    id: "inquiry-1", code: "INQ-202608-001", agencyCode: "AGY-001", agencyName: "新加坡远景旅行社",
+    contactName: "Emily Tan", contactPosition: "Product Manager", email: "emily@example.com",
+    phone: "+65 6123 4567", whatsapp: "+65 9123 4567", countryOrRegion: "新加坡",
+    sourceChannel: "WhatsApp", originalMessage: "6 人计划 10 月到云南旅行 7 天，希望安排昆明、大理和丽江。",
+    internalRemark: "首次合作，关注舒适型酒店和英文导游。", owner: "王敏", nextFollowUpAt: "2026-08-26 10:00",
+    lostReason: "", status: "planning", creator: "admin", createdAt: "2026-08-21 09:30",
+  },
+  {
+    id: "inquiry-2", code: "INQ-202608-002", agencyCode: "AGY-002", agencyName: "Malaysia Star Holidays",
+    contactName: "Jason Lee", contactPosition: "Sales Director", email: "jason@example.com",
+    phone: "+60 3-1234 5678", whatsapp: "+60 12-345 6789", countryOrRegion: "马来西亚",
+    sourceChannel: "Email", originalMessage: "咨询 12 人云南摄影团，预计 11 月出发。",
+    internalRemark: "等待客户确认具体日期。", owner: "李娜", nextFollowUpAt: "2026-08-25 15:00",
+    lostReason: "", status: "qualified", creator: "admin", createdAt: "2026-08-22 14:10",
+  },
+  {
+    id: "inquiry-3", code: "INQ-202608-003", agencyCode: "AGY-003", agencyName: "Bangkok Discovery Travel",
+    contactName: "Narin Chai", contactPosition: "Tour Consultant", email: "narin@example.com",
+    phone: "+66 2-123-4567", whatsapp: "+66 81-234-5678", countryOrRegion: "泰国",
+    sourceChannel: "Website", originalMessage: "需要 4 人丽江和香格里拉 5 天游报价。",
+    internalRemark: "", owner: "王敏", nextFollowUpAt: "",
+    lostReason: "客户预算与旺季价格差距较大", status: "lost", creator: "admin", createdAt: "2026-08-18 11:20",
+  },
+];
+
 export type TourismResourceType = "supplier" | "transport";
 
 export interface TourismResourceRecord {
