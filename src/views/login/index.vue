@@ -144,6 +144,7 @@ defineOptions({ name: "LoginPage", inheritAttrs: false });
 import { Clock, Lock, User } from "@element-plus/icons-vue";
 import type { FormInstance } from "element-plus";
 import router from "@/router";
+import { hasRouteChainAccess } from "@/router/access";
 import { useUserStore } from "@/stores/user";
 import type { LoginRequest } from "@/types/auth";
 import { AuthStorage } from "@/utils/auth";
@@ -186,9 +187,16 @@ async function handleLoginSubmit() {
   loading.value = true;
   try {
     await userStore.login(loginFormData.value);
+    await userStore.getUserInfo();
     const redirectPath = (route.query.redirect as string) || "/";
-    await router.push(decodeURIComponent(redirectPath));
+    const targetRoute = router.resolve(decodeURIComponent(redirectPath));
+    const canAccessTarget = hasRouteChainAccess(
+      targetRoute.matched.map((record) => record.meta),
+      userStore.userInfo
+    );
+    await router.push(canAccessTarget ? targetRoute.fullPath : "/");
   } catch (error) {
+    userStore.resetAllState();
     ElMessage.error(error instanceof Error ? error.message : t("login.failed"));
   } finally {
     loading.value = false;

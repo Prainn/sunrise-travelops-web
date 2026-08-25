@@ -1,6 +1,6 @@
 import NProgress from "@/plugins/nprogress";
 import router from "@/router";
-import { hasRouteAccess } from "@/router/access";
+import { hasRouteChainAccess } from "@/router/access";
 import { usePermissionStore } from "@/stores/permission";
 import { useUserStore } from "@/stores/user";
 
@@ -43,8 +43,9 @@ export function setupPermissionGuard() {
         await permissionStore.generateRoutes();
       }
 
-      const canAccessRoute = to.matched.every((record) =>
-        hasRouteAccess(record.meta, userStore.userInfo)
+      const canAccessRoute = hasRouteChainAccess(
+        to.matched.map((record) => record.meta),
+        userStore.userInfo
       );
       if (!canAccessRoute) {
         return { path: "/401", replace: true };

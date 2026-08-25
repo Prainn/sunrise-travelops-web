@@ -19,6 +19,14 @@ export function hasRouteAccess(meta: RouteMeta, context: RouteAccessContext): bo
   return matchesRoles && matchesPerms;
 }
 
+/** 判断当前用户是否可以访问路由匹配链中的所有层级。 */
+export function hasRouteChainAccess(
+  routeMetas: RouteMeta[],
+  context: RouteAccessContext
+): boolean {
+  return routeMetas.every((meta) => hasRouteAccess(meta, context));
+}
+
 /** 递归生成当前用户可见的静态路由菜单。 */
 export function filterRoutesByAccess(
   routes: RouteRecordRaw[],

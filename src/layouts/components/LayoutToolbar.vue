@@ -57,7 +57,7 @@
 
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import { defaults } from "@/settings";
 import { DeviceEnum, SidebarColor, ThemeMode, LayoutMode } from "@/enums/settings";
 import { useAppStore } from "@/stores/app";
@@ -74,7 +74,6 @@ const appStore = useAppStore();
 const settingStore = useSettingsStore();
 const userStore = useUserStore();
 
-const route = useRoute();
 const router = useRouter();
 
 const isDesktop = computed(() => appStore.device === DeviceEnum.DESKTOP);
@@ -112,8 +111,7 @@ function logout() {
     lockScroll: false,
   }).then(() => {
     userStore.logout().then(() => {
-      const redirect = ["/404", "/401"].includes(route.path) ? "/" : route.fullPath;
-      router.push(`/login?redirect=${encodeURIComponent(redirect)}`);
+      router.push("/login");
     });
   });
 }
