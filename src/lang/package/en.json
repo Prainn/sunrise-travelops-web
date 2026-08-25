@@ -8,7 +8,9 @@
     "userList": "Users",
     "inquiries": "Inquiries",
     "inquiryList": "Inquiry List",
+    "itineraryManagement": "Itinerary Management",
     "tourismResources": "Tourism Resources",
+    "travelAgencies": "Travel Agencies",
     "suppliers": "Ground Operators",
     "hotelsAndRoomTypes": "Hotels & Room Types",
     "restaurants": "Restaurants",
@@ -17,19 +19,45 @@
     "guides": "Guides"
   },
   "inquiry": {
-    "agencyCode": "Agency Code", "agencyName": "Travel Agency", "agencyNameRequired": "Enter a travel agency name",
-    "archive": "Archive", "archiveConfirm": "Archive this inquiry? It will remain available in history.", "archiveSuccess": "Archived successfully",
+    "agencyCode": "Agency Code", "agencyName": "Travel Agency", "agencyRequired": "Select a travel agency",
+    "archive": "Archive", "archiveConfirm": "Archive this inquiry? The inquiry and its existing itineraries will become read-only.", "archiveSuccess": "Archived successfully",
     "code": "Inquiry No.", "codeGenerated": "Generated on save", "contactName": "Contact", "contactNameRequired": "Enter a contact name",
-    "contactPosition": "Position", "countryOrRegion": "Country/Region", "createInquiry": "Create Inquiry", "creator": "Created By",
+    "countryOrRegion": "Country/Region", "createInquiry": "Create Inquiry", "creator": "Created By",
     "editInquiry": "Edit Inquiry", "email": "Email", "inquiryDetail": "Inquiry Details", "internalRemark": "Internal Notes",
+    "itineraryManagement": "Itinerary Management",
     "lostReason": "Lost Reason", "lostReasonRequired": "Enter a lost reason", "nextFollowUpAt": "Next Follow-up",
     "nextFollowUpPlaceholder": "Select the next follow-up time", "originalMessage": "Original Message", "originalMessageRequired": "Enter the customer's original message",
-    "owner": "Inquiry Owner", "ownerRequired": "Select an inquiry owner", "phone": "Phone", "searchPlaceholder": "Search number, agency, contact, or contact details",
-    "sourceChannel": "Source", "sourceChannelRequired": "Select a source", "whatsapp": "WhatsApp",
+    "operationsCoordinator": "Operations Coordinator", "operationsCoordinatorRequired": "Select an operations coordinator", "owner": "Inquiry Owner", "ownerRequired": "Select an inquiry owner", "phone": "Phone", "plannedDays": "Planned Days", "plannedDaysRequired": "Enter the planned days", "searchPlaceholder": "Search number, agency, contact, or contact details",
+    "sourceChannel": "Source", "sourceChannelRequired": "Select a source",
     "statuses": {
-      "archived": "Archived", "lost": "Lost", "negotiating": "Negotiating", "new": "New",
-      "planning": "Planning", "qualified": "Qualified", "quoted": "Quoted"
+      "archived": "Archived", "lost": "Lost", "new": "New", "planning": "Itinerary Design", "quoted": "Quoted"
     }
+  },
+  "itinerary": {
+    "accommodationSummary": "Accommodation", "addDay": "Add Day", "addResource": "Select Resource", "adults": "Adults", "allCities": "All cities", "budget": "Budget (CNY)", "children": "Children",
+    "code": "Itinerary No.", "coordinatorRequired": "Select an operations coordinator", "createTitle": "Create Itinerary",
+    "createAndManage": "Create and Manage",
+    "confirmDownloadPdf": "Confirm and Download PDF", "copyAsDraft": "Copy as New Itinerary", "copyDay": "Copy Day", "copySuccess": "Copied as a new draft itinerary", "copySuffix": "Copy", "customerUnitPrice": "Price", "customerUnitPriceRequired": "Required", "dailyResources": "Daily Resources", "dayCountMismatch": "This inquiry is planned for {planned} days, but the itinerary currently has {actual} days. Generate the PDF anyway?",
+    "dailySchedule": "Daily Itinerary",
+    "dateRangeInvalid": "The end date cannot be earlier than the start date", "dateRangeRequired": "Select a complete travel date range",
+    "dayCost": "Day Cost", "dayCount": "{count} days", "dayDescription": "Daily itinerary details", "daySellingPrice": "Day Price", "dayTitle": "Day Theme",
+    "days": "Days", "deleteDayConfirm": "Delete this day and all of its resource items?", "departure": "Departure", "destination": "Arrival",
+    "editTitle": "Edit Itinerary", "endDateRequired": "Select an end date", "guestCount": "Guests",
+    "guideLanguage": "Guide Language", "guideRequired": "Guide Required", "hotelLevel": "Hotel Level",
+    "inquiryCoordinatorNotes": "Inquiry Coordinator Notes", "inquiryNotFound": "The inquiry was not found",
+    "generateDespiteMismatch": "Generate Anyway", "generatePdf": "Generate PDF", "margin": "Margin", "mealRequirements": "Meal Requirements", "mealSummary": "Meals", "missingCustomerPrices": "{count} prices are still missing", "noDailyResources": "No resources selected for this day", "noPlans": "No itinerary has been created for this inquiry", "operationsCoordinator": "Operations Coordinator", "pdfEmptyDays": "Cannot generate PDF: {days} has no itinerary details", "pdfGenerated": "PDF downloaded and itinerary locked as quoted", "pdfGenerationFailed": "PDF generation failed. Please try again", "pdfMissingPrices": "Cannot generate PDF. Prices are missing for: {items}", "pdfPreviewTitle": "PDF Preview",
+    "otherGuests": "Other Guests", "pace": "Pace", "roomPreference": "Room Preference",
+    "perGuestPrice": "Per Guest", "priceRemark": "Price Notes", "priceSummary": "Price Summary", "priceUnit": "Price Unit", "profit": "Estimated Profit", "provider": "Price Source", "quantity": "Quantity", "resource": "Resource / Price", "resourceAdded": "Resource added to the day", "resourceItemCount": "{count} resource items", "resourcePrice": "Resource Price", "resourcePricePlaceholder": "Search and select a specific resource price", "resourceRemark": "Resource Notes", "resourceType": "Resource Type",
+    "resourceTypes": { "attraction": "Attraction", "guide": "Guide", "hotel": "Hotel Room", "restaurant": "Restaurant", "vehicle": "Vehicle" },
+    "sections": { "basic": "Basic Information", "collaboration": "Internal Collaboration", "preferences": "Guests and Preferences" },
+    "specialRequirements": "Special Requirements", "startDateRequired": "Select a start date",
+    "statuses": {
+      "archived": "Archived", "draft": "Draft",
+      "quoted": "Quoted", "ready_for_costing": "Ready for Costing"
+    },
+    "title": "Itinerary Title", "titleRequired": "Enter an itinerary title", "totalCost": "Total Cost", "totalPrice": "Total Price", "transport": "Transport",
+    "transportPreference": "Transport Preference", "travelDates": "Travel Dates", "unitCost": "Unit Cost", "unitPrice": "Unit Price",
+    "units": { "guideDay": "guide/day", "person": "person", "roomNight": "room night", "table": "table", "vehicleDay": "vehicle/day" }
   },
   "common": {
     "actions": "Actions", "all": "All", "backHome": "Back to Home", "bind": "Bind",
@@ -211,6 +239,11 @@
   "user": {
     "cannotDeleteCurrent": "The current user cannot be deleted", "createSuccess": "User created",
     "createTitle": "Create User", "deleteConfirm": "Delete the selected users?",
+    "department": "Department", "departmentPlaceholder": "Select a department",
+    "departments": {
+      "coordination": "Coordination Department",
+      "resourceManagement": "Resource Management", "systemManagement": "System Management"
+    },
     "editTitle": "Edit User", "email": "Email", "emailInvalid": "Enter a valid email address",
     "emailPlaceholder": "Enter an email address", "female": "Female", "gender": "Gender",
     "male": "Male", "mobile": "Mobile", "mobileInvalid": "Enter a valid mobile number",
@@ -219,24 +252,26 @@
     "nicknamePlaceholder": "Enter a nickname", "passwordResetSuccess": "Password reset",
     "resetPassword": "Reset Password", "rolePlaceholder": "Select roles",
     "roles": {
-      "custom": "Custom Role", "departmentManager": "Department Manager",
-      "departmentMember": "Department Member", "employee": "Employee", "guest": "Guest",
-      "systemAdministrator": "System Administrator"
+      "inquiryCoordinator": "Inquiry Coordinator", "operationsCoordinator": "Operations Coordinator",
+      "resourceManager": "Resource Manager", "systemAdministrator": "System Administrator"
     },
     "rolesLabel": "Roles", "searchPlaceholder": "Search username, nickname, or mobile",
-    "seed": { "admin": "System Administrator", "demo": "Demo User" },
+    "seed": {
+      "admin": "System Administrator", "inquiry": "Inquiry Coordinator",
+      "operationsCoordinator": "Operations Coordinator", "resourceManager": "Resource Manager"
+    },
     "updateSuccess": "User updated", "userLabel": "User", "username": "Username",
     "usernamePlaceholder": "Enter a username"
   },
   "resource": {
-    "attractionName": "Attraction Name", "certificateNo": "Guide License No.", "city": "City",
+    "agencyName": "Travel Agency Name", "attractionName": "Attraction Name", "certificateNo": "Guide License No.", "city": "City",
     "code": "Resource Code", "codeAutoGenerated": "Generated automatically when saved", "cuisine": "Cuisine",
-    "contact": "Contact", "createSupplierTitle": "Create Ground Operator", "createTitle": "Create Resource",
-    "driver": "Driver", "editSupplierTitle": "Edit Ground Operator", "editTitle": "Edit Resource",
+    "contact": "Contact", "countryOrRegion": "Country/Region", "createAgencyTitle": "Create Travel Agency", "createSupplierTitle": "Create Ground Operator", "createTitle": "Create Resource",
+    "driver": "Driver", "editAgencyTitle": "Edit Travel Agency", "editSupplierTitle": "Edit Ground Operator", "editTitle": "Edit Resource", "email": "Email",
     "fieldRequired": "Enter {field}", "guideName": "Guide Name", "hotelName": "Hotel Name",
     "languages": "Languages", "mealStandard": "Meal Standard", "name": "Resource Name",
     "nameRequired": "Enter a resource name", "openingHours": "Opening Hours", "phone": "Phone",
-    "plateNumber": "Plate Number", "restaurantName": "Restaurant Name", "roomTypes": "Room Types",
+    "dailyPrice": "Daily Cost", "plateNumber": "Plate Number", "restaurantName": "Restaurant Name", "roomTypes": "Room Types",
     "searchPlaceholder": "Search code, name, or city", "seats": "Seats", "starRating": "Star Rating",
     "directPrice": "Direct Price", "directProvided": "Direct", "groundOperatorProvided": "Ground Operator", "groundOperatorProvidedTag": "Ground Operator Price", "groundOperatorRequired": "Select a ground operator",
     "isGroundOperatorProvided": "Provided by Ground Operator", "priceSource": "Price Source", "providerSource": "Resource Source",

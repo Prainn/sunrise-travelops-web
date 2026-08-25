@@ -1,6 +1,7 @@
 import type { AuthUserRecord } from "@/types/auth";
 import type { DictItem, DictTypeItem } from "@/types/dictionary";
 import type { VisitOverviewDetail, VisitTrendDetail } from "@/types/dashboard";
+import type { ItineraryRecord } from "@/types/itinerary";
 import { ROLE_ROOT } from "@/constants";
 
 export interface PrototypeUserRecord extends AuthUserRecord {
@@ -10,9 +11,9 @@ export interface PrototypeUserRecord extends AuthUserRecord {
   gender: number;
   mobile: string;
   email: string;
+  deptId: number;
   roleIds: number[];
   roleNames: string;
-  deptName: string;
   createTime: string;
   roles: string[];
   perms: string[];
@@ -38,6 +39,7 @@ const adminPermissions = [
   "sys:dict-item:create",
   "sys:dict-item:update",
   "sys:dict-item:delete",
+  "resource:agency:list",
   "resource:supplier:list",
   "resource:hotel:list",
   "resource:restaurant:list",
@@ -45,7 +47,49 @@ const adminPermissions = [
   "resource:transport:list",
   "resource:guide:list",
   "inquiry:list",
+  "inquiry:create",
+  "inquiry:update",
+  "inquiry:archive",
+  "itinerary:list",
+  "itinerary:create",
+  "itinerary:update",
+  "itinerary:price",
+  "itinerary:pdf",
 ];
+
+const resourcePermissions = [
+  "resource:agency:list",
+  "resource:supplier:list",
+  "resource:hotel:list",
+  "resource:restaurant:list",
+  "resource:attraction:list",
+  "resource:transport:list",
+  "resource:guide:list",
+];
+
+const inquiryPermissions = ["inquiry:list", "inquiry:create", "inquiry:update", "itinerary:list", "itinerary:price"];
+
+const operationsPermissions = [
+  "inquiry:list",
+  "inquiry:update",
+  "itinerary:list",
+  "itinerary:create",
+  "itinerary:update",
+  "itinerary:pdf",
+];
+
+export const departmentDefinitions = [
+  { value: 1, labelKey: "user.departments.systemManagement" },
+  { value: 2, labelKey: "user.departments.resourceManagement" },
+  { value: 3, labelKey: "user.departments.coordination" },
+] as const;
+
+export const roleDefinitions = [
+  { value: 2, labelKey: "user.roles.systemAdministrator", roles: [ROLE_ROOT, "ADMIN"], perms: adminPermissions },
+  { value: 4, labelKey: "user.roles.resourceManager", roles: ["RESOURCE_MANAGER"], perms: resourcePermissions },
+  { value: 5, labelKey: "user.roles.inquiryCoordinator", roles: ["INQUIRY_COORDINATOR"], perms: inquiryPermissions },
+  { value: 6, labelKey: "user.roles.operationsCoordinator", roles: ["OPERATIONS_COORDINATOR"], perms: operationsPermissions },
+] as const;
 
 /**
  * 本地原型账号。
@@ -64,30 +108,132 @@ export const users: PrototypeUserRecord[] = [
     gender: 1,
     mobile: "17621210366",
     email: "",
+    deptId: 1,
     roleIds: [2],
     roleNames: "",
-    deptName: "运营中心",
     createTime: "2026-08-19 09:00:00",
     roles: [ROLE_ROOT, "ADMIN"],
     perms: adminPermissions,
   },
   {
     id: "2",
-    username: "user",
+    username: "inquiry",
     password: "123456",
     status: "enabled",
-    nickname: "user",
-    nicknameKey: "user.seed.demo",
+    nickname: "王敏",
     avatar: "/favicon.ico",
     gender: 0,
     mobile: "",
-    email: "demo@sunrise.local",
-    roleIds: [3],
+    email: "inquiry@sunrise.local",
+    deptId: 3,
+    roleIds: [5],
     roleNames: "",
-    deptName: "产品中心",
     createTime: "2026-08-19 09:10:00",
-    roles: ["USER"],
-    perms: ["sys:dict:list", "sys:dict-item:list"],
+    roles: ["INQUIRY_COORDINATOR"],
+    perms: inquiryPermissions,
+  },
+  {
+    id: "3",
+    username: "resource",
+    password: "123456",
+    status: "enabled",
+    nickname: "resource",
+    nicknameKey: "user.seed.resourceManager",
+    avatar: "/favicon.ico",
+    gender: 0,
+    mobile: "",
+    email: "resource@sunrise.local",
+    deptId: 2,
+    roleIds: [4],
+    roleNames: "",
+    createTime: "2026-08-19 09:20:00",
+    roles: ["RESOURCE_MANAGER"],
+    perms: resourcePermissions,
+  },
+  {
+    id: "4",
+    username: "operations",
+    password: "123456",
+    status: "enabled",
+    nickname: "张伟",
+    avatar: "/favicon.ico",
+    gender: 0,
+    mobile: "",
+    email: "operations@sunrise.local",
+    deptId: 3,
+    roleIds: [6],
+    roleNames: "",
+    createTime: "2026-08-19 09:30:00",
+    roles: ["OPERATIONS_COORDINATOR"],
+    perms: operationsPermissions,
+  },
+  {
+    id: "5",
+    username: "inquiry_lina",
+    password: "123456",
+    status: "enabled",
+    nickname: "李娜",
+    avatar: "/favicon.ico",
+    gender: 0,
+    mobile: "",
+    email: "inquiry.lina@sunrise.local",
+    deptId: 3,
+    roleIds: [5],
+    roleNames: "",
+    createTime: "2026-08-19 09:40:00",
+    roles: ["INQUIRY_COORDINATOR"],
+    perms: inquiryPermissions,
+  },
+  {
+    id: "6",
+    username: "inquiry_zhouyue",
+    password: "123456",
+    status: "enabled",
+    nickname: "周悦",
+    avatar: "/favicon.ico",
+    gender: 0,
+    mobile: "",
+    email: "inquiry.zhouyue@sunrise.local",
+    deptId: 3,
+    roleIds: [5],
+    roleNames: "",
+    createTime: "2026-08-19 09:50:00",
+    roles: ["INQUIRY_COORDINATOR"],
+    perms: inquiryPermissions,
+  },
+  {
+    id: "7",
+    username: "operations_chenchen",
+    password: "123456",
+    status: "enabled",
+    nickname: "陈晨",
+    avatar: "/favicon.ico",
+    gender: 0,
+    mobile: "",
+    email: "operations.chenchen@sunrise.local",
+    deptId: 3,
+    roleIds: [6],
+    roleNames: "",
+    createTime: "2026-08-19 10:00:00",
+    roles: ["OPERATIONS_COORDINATOR"],
+    perms: operationsPermissions,
+  },
+  {
+    id: "8",
+    username: "operations_zhaolei",
+    password: "123456",
+    status: "enabled",
+    nickname: "赵磊",
+    avatar: "/favicon.ico",
+    gender: 0,
+    mobile: "",
+    email: "operations.zhaolei@sunrise.local",
+    deptId: 3,
+    roleIds: [6],
+    roleNames: "",
+    createTime: "2026-08-19 10:10:00",
+    roles: ["OPERATIONS_COORDINATOR"],
+    perms: operationsPermissions,
   },
 ];
 
@@ -203,29 +349,28 @@ export const systemDictionaryItems: SystemDictionaryItem[] = [
 
 export type InquiryStatus =
   | "new"
-  | "qualified"
   | "planning"
   | "quoted"
-  | "negotiating"
   | "lost"
   | "archived";
 
 export interface InquiryRecord {
   id: string;
   code: string;
+  agencyId: string;
   agencyCode: string;
   agencyName: string;
   contactName: string;
-  contactPosition: string;
   email: string;
   phone: string;
-  whatsapp: string;
   countryOrRegion: string;
   sourceChannel: string;
   originalMessage: string;
   internalRemark: string;
   owner: string;
+  operationsCoordinator: string;
   nextFollowUpAt: string;
+  plannedDays: number;
   lostReason: string;
   status: InquiryStatus;
   creator: string;
@@ -234,32 +379,82 @@ export interface InquiryRecord {
 
 export const inquiries: InquiryRecord[] = [
   {
-    id: "inquiry-1", code: "INQ-202608-001", agencyCode: "AGY-001", agencyName: "新加坡远景旅行社",
-    contactName: "Emily Tan", contactPosition: "Product Manager", email: "emily@example.com",
-    phone: "+65 6123 4567", whatsapp: "+65 9123 4567", countryOrRegion: "新加坡",
+    id: "inquiry-1", code: "INQ-202608-001", agencyId: "agency-1", agencyCode: "AGY-001", agencyName: "新加坡远景旅行社",
+    contactName: "Emily Tan", email: "emily@example.com", phone: "+65 6123 4567", countryOrRegion: "新加坡",
     sourceChannel: "WhatsApp", originalMessage: "6 人计划 10 月到云南旅行 7 天，希望安排昆明、大理和丽江。",
-    internalRemark: "首次合作，关注舒适型酒店和英文导游。", owner: "王敏", nextFollowUpAt: "2026-08-26 10:00",
+    internalRemark: "首次合作，关注舒适型酒店和英文导游。", owner: "王敏", operationsCoordinator: "张伟", nextFollowUpAt: "2026-08-26 10:00", plannedDays: 7,
     lostReason: "", status: "planning", creator: "admin", createdAt: "2026-08-21 09:30",
   },
   {
-    id: "inquiry-2", code: "INQ-202608-002", agencyCode: "AGY-002", agencyName: "Malaysia Star Holidays",
-    contactName: "Jason Lee", contactPosition: "Sales Director", email: "jason@example.com",
-    phone: "+60 3-1234 5678", whatsapp: "+60 12-345 6789", countryOrRegion: "马来西亚",
+    id: "inquiry-2", code: "INQ-202608-002", agencyId: "agency-2", agencyCode: "AGY-002", agencyName: "Malaysia Star Holidays",
+    contactName: "Jason Lee", email: "jason@example.com", phone: "+60 3-1234 5678", countryOrRegion: "马来西亚",
     sourceChannel: "Email", originalMessage: "咨询 12 人云南摄影团，预计 11 月出发。",
-    internalRemark: "等待客户确认具体日期。", owner: "李娜", nextFollowUpAt: "2026-08-25 15:00",
-    lostReason: "", status: "qualified", creator: "admin", createdAt: "2026-08-22 14:10",
+    internalRemark: "等待客户确认具体日期。", owner: "李娜", operationsCoordinator: "陈晨", nextFollowUpAt: "2026-08-25 15:00", plannedDays: 6,
+    lostReason: "", status: "new", creator: "admin", createdAt: "2026-08-22 14:10",
   },
   {
-    id: "inquiry-3", code: "INQ-202608-003", agencyCode: "AGY-003", agencyName: "Bangkok Discovery Travel",
-    contactName: "Narin Chai", contactPosition: "Tour Consultant", email: "narin@example.com",
-    phone: "+66 2-123-4567", whatsapp: "+66 81-234-5678", countryOrRegion: "泰国",
+    id: "inquiry-3", code: "INQ-202608-003", agencyId: "agency-3", agencyCode: "AGY-003", agencyName: "Bangkok Discovery Travel",
+    contactName: "Narin Chai", email: "narin@example.com", phone: "+66 2-123-4567", countryOrRegion: "泰国",
     sourceChannel: "Website", originalMessage: "需要 4 人丽江和香格里拉 5 天游报价。",
-    internalRemark: "", owner: "王敏", nextFollowUpAt: "",
+    internalRemark: "", owner: "王敏", operationsCoordinator: "赵磊", nextFollowUpAt: "", plannedDays: 5,
     lostReason: "客户预算与旺季价格差距较大", status: "lost", creator: "admin", createdAt: "2026-08-18 11:20",
   },
 ];
 
-export type TourismResourceType = "supplier" | "transport";
+export const itineraries: ItineraryRecord[] = [
+  {
+    id: "itinerary-1",
+    inquiryId: "inquiry-1",
+    code: "ITI-202608-001",
+    title: "云南经典 7 日方案",
+    destinations: "昆明、大理、丽江",
+    startDate: "2026-10-12",
+    endDate: "2026-10-18",
+    days: 7,
+    adults: 6,
+    childrenCount: 0,
+    otherGuests: 0,
+    hotelLevel: "舒适型",
+    roomPreference: "双床房",
+    transportPreference: "全程商务车",
+    guideRequired: true,
+    guideLanguage: "English",
+    pace: "适中",
+    mealRequirements: "含早，正餐以云南特色餐为主",
+    budget: 72000,
+    specialRequirements: "丽江安排一晚古城内住宿",
+    inquiryCoordinatorNotes: "首次合作，优先保证酒店位置和英文服务。",
+    operationsCoordinator: "张伟",
+    dailyPlans: [
+      {
+        id: "itinerary-1-day-1", dayNumber: 1, date: "2026-10-12", departure: "新加坡", destination: "昆明", transport: "飞机 / 商务车",
+        title: "抵达昆明", description: "接机后享用晚餐，随后送至酒店办理入住。", mealSummary: "晚餐", accommodationSummary: "昆明",
+        items: [
+          { id: "item-1", type: "vehicle", resourceId: "transport-1", resourcePriceId: "transport-1-daily", resourceName: "别克 GL8", priceName: "车辆日成本", providerName: "资源库直采", quantity: 1, unit: "vehicleDay", unitCost: 1200, unitPrice: null, totalCost: 1200, totalPrice: 0, remark: "接机及市内用车" },
+          { id: "item-2", type: "hotel", resourceId: "hotel-1", resourcePriceId: "price-1", resourceName: "盘龙温德姆花园", priceName: "城景大床/双床房 · 常规期", providerName: "资源库直采", quantity: 3, unit: "roomNight", unitCost: 400, unitPrice: null, totalCost: 1200, totalPrice: 0, remark: "3 间双床房" },
+        ],
+      },
+      {
+        id: "itinerary-1-day-2", dayNumber: 2, date: "2026-10-13", departure: "昆明", destination: "大理", transport: "商务车",
+        title: "昆明前往大理", description: "早餐后前往大理，游览崇圣寺三塔，晚餐后入住大理酒店。", mealSummary: "早、中、晚", accommodationSummary: "大理",
+        items: [
+          { id: "item-3", type: "attraction", resourceId: "attraction-2", resourcePriceId: "attraction-price-5", resourceName: "崇圣寺三塔", priceName: "景区门票 · 成人 · 常规期", providerName: "资源库直采", quantity: 6, unit: "person", unitCost: 60, unitPrice: null, totalCost: 360, totalPrice: 0, remark: "成人票" },
+          { id: "item-4", type: "restaurant", resourceId: "restaurant-5", resourcePriceId: "restaurant-price-20", resourceName: "大理六合云燕酒店", priceName: "中式合菜/清新养生宴", providerName: "资源库直采", quantity: 1, unit: "table", unitCost: 500, unitPrice: null, totalCost: 500, totalPrice: 0, remark: "晚餐" },
+        ],
+      },
+      { id: "itinerary-1-day-3", dayNumber: 3, date: "2026-10-14", departure: "大理", destination: "大理", transport: "商务车", title: "洱海人文体验", description: "龙龛码头、生态廊道 S 湾、文笔村。", mealSummary: "早、中、晚", accommodationSummary: "大理", items: [] },
+      { id: "itinerary-1-day-4", dayNumber: 4, date: "2026-10-15", departure: "大理", destination: "丽江", transport: "商务车", title: "大理前往丽江", description: "沿途观景，抵达丽江后游览丽江古城。", mealSummary: "早、中、晚", accommodationSummary: "丽江", items: [] },
+      { id: "itinerary-1-day-5", dayNumber: 5, date: "2026-10-16", departure: "丽江", destination: "丽江", transport: "商务车", title: "玉龙雪山", description: "玉龙雪山、蓝月谷及周边景区。", mealSummary: "早、中", accommodationSummary: "丽江", items: [] },
+      { id: "itinerary-1-day-6", dayNumber: 6, date: "2026-10-17", departure: "丽江", destination: "昆明", transport: "动车 / 商务车", title: "返回昆明", description: "上午自由活动，下午乘动车返回昆明。", mealSummary: "早餐", accommodationSummary: "昆明", items: [] },
+      { id: "itinerary-1-day-7", dayNumber: 7, date: "2026-10-18", departure: "昆明", destination: "新加坡", transport: "飞机 / 商务车", title: "昆明送机", description: "根据航班时间安排市区活动并送往机场。", mealSummary: "早餐", accommodationSummary: "无", items: [] },
+    ],
+    status: "draft",
+    creator: "operations",
+    createdAt: "2026-08-24 10:20",
+  },
+];
+
+export type TourismResourceType = "agency" | "supplier" | "transport";
 
 export interface TourismResourceRecord {
   [key: string]: string | number;
@@ -267,7 +462,9 @@ export interface TourismResourceRecord {
   code: string;
   name: string;
   city: string;
+  countryOrRegion: string;
   contact: string;
+  email: string;
   phone: string;
   status: "enabled" | "disabled";
   remark: string;
@@ -353,6 +550,7 @@ export interface GuideRecord {
   employmentType: GuideEmploymentType;
   identityNumber: string;
   phone: string;
+  dailyPrice: number;
   hasLaborContract: boolean;
   isGroundOperatorProvided: boolean;
   groundOperatorId: string;
@@ -524,22 +722,22 @@ export const guides: GuideRecord[] = [
   {
     id: "guide-1", code: "GDE-001", certificateNo: "ND04499G", name: "刘晓燕", gender: "male", age: 44,
     languages: ["中文"], employmentType: "full-time", identityNumber: "530103198206021515", phone: "13078771077",
-    hasLaborContract: true, isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "", status: "enabled",
+    dailyPrice: 600, hasLaborContract: true, isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "", status: "enabled",
   },
   {
     id: "guide-2", code: "GDE-002", certificateNo: "YH45374S", name: "陈其霞", gender: "female", age: 39,
     languages: ["英文"], employmentType: "full-time", identityNumber: "500225198610231926", phone: "13211601119",
-    hasLaborContract: true, isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "", status: "enabled",
+    dailyPrice: 800, hasLaborContract: true, isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "", status: "enabled",
   },
   {
     id: "guide-3", code: "GDE-003", certificateNo: "KOA2050L", name: "黄雪璇", gender: "male", age: 34,
     languages: ["中文"], employmentType: "full-time", identityNumber: "530102199201130016", phone: "18669119205",
-    hasLaborContract: true, isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "", status: "enabled",
+    dailyPrice: 600, hasLaborContract: true, isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "", status: "enabled",
   },
   {
     id: "guide-4", code: "GDE-004", certificateNo: "YJJ3539H", name: "郑淑君", gender: "female", age: 45,
     languages: ["中文"], employmentType: "full-time", identityNumber: "130702198107170621", phone: "13619699003",
-    hasLaborContract: false, isGroundOperatorProvided: true, groundOperatorId: "supplier-1", licensePhotoUrl: "", remark: "", status: "enabled",
+    dailyPrice: 650, hasLaborContract: false, isGroundOperatorProvided: true, groundOperatorId: "supplier-1", licensePhotoUrl: "", remark: "", status: "enabled",
   },
 ];
 
@@ -611,22 +809,18 @@ export const attractions: AttractionRecord[] = [
 
 /** 旅游资源前端原型数据，按业务实体分开维护。 */
 export const tourismResources: Record<TourismResourceType, TourismResourceRecord[]> = {
+  agency: [
+    { id: "agency-1", code: "AGY-001", name: "新加坡远景旅行社", city: "新加坡", countryOrRegion: "新加坡", contact: "Emily Tan", email: "emily@example.com", phone: "+65 6123 4567", status: "enabled", remark: "东南亚团队客户" },
+    { id: "agency-2", code: "AGY-002", name: "Malaysia Star Holidays", city: "吉隆坡", countryOrRegion: "马来西亚", contact: "Jason Lee", email: "jason@example.com", phone: "+60 3-1234 5678", status: "enabled", remark: "摄影团客户" },
+    { id: "agency-3", code: "AGY-003", name: "Bangkok Discovery Travel", city: "曼谷", countryOrRegion: "泰国", contact: "Narin Chai", email: "narin@example.com", phone: "+66 2-123-4567", status: "enabled", remark: "小团定制客户" },
+  ],
   supplier: [
-    { id: "supplier-1", code: "SUP-001", name: "云南云途地接社", city: "昆明", contact: "李经理", phone: "13800000001", status: "enabled", remark: "云南线路综合地接社" },
+    { id: "supplier-1", code: "SUP-001", name: "云南云途地接社", city: "昆明", countryOrRegion: "中国", contact: "李经理", email: "", phone: "13800000001", status: "enabled", remark: "云南线路综合地接社" },
   ],
   transport: [
-    { id: "transport-1", code: "VEH-001", name: "别克 GL8", city: "昆明", plateNumber: "云A00001", seats: 7, contact: "赵师傅", phone: "13800000005", status: "enabled", remark: "商务车" },
+    { id: "transport-1", code: "VEH-001", name: "别克 GL8", city: "昆明", countryOrRegion: "中国", plateNumber: "云A00001", seats: 7, dailyPrice: 1200, contact: "赵师傅", email: "", phone: "13800000005", status: "enabled", remark: "商务车" },
   ],
 };
-
-export const roleDefinitions = [
-  { value: 2, labelKey: "user.roles.systemAdministrator" },
-  { value: 4, labelKey: "user.roles.departmentManager" },
-  { value: 5, labelKey: "user.roles.departmentMember" },
-  { value: 6, labelKey: "user.roles.employee" },
-  { value: 7, labelKey: "user.roles.custom" },
-  { value: 3, labelKey: "user.roles.guest" },
-] as const;
 
 export const visitOverview: VisitOverviewDetail = {
   todayUvCount: 169,

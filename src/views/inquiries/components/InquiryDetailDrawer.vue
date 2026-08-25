@@ -25,20 +25,17 @@
         <el-descriptions-item :label="$t('inquiry.owner')">
           {{ record.owner }}
         </el-descriptions-item>
+        <el-descriptions-item :label="$t('inquiry.operationsCoordinator')">
+          {{ record.operationsCoordinator }}
+        </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.contactName')">
           {{ record.contactName }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="$t('inquiry.contactPosition')">
-          {{ valueOrDash(record.contactPosition) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.email')">
           {{ valueOrDash(record.email) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.phone')">
           {{ valueOrDash(record.phone) }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="$t('inquiry.whatsapp')">
-          {{ valueOrDash(record.whatsapp) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.countryOrRegion')">
           {{ valueOrDash(record.countryOrRegion) }}
@@ -48,6 +45,9 @@
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.nextFollowUpAt')">
           {{ valueOrDash(record.nextFollowUpAt) }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('inquiry.plannedDays')">
+          {{ record.plannedDays }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('common.createdAt')">
           {{ record.createdAt }}

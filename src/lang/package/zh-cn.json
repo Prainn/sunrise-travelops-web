@@ -8,7 +8,9 @@
     "userList": "用户管理",
     "inquiries": "询盘",
     "inquiryList": "询盘列表",
+    "itineraryManagement": "行程管理",
     "tourismResources": "旅游资源库",
+    "travelAgencies": "旅行社",
     "suppliers": "地接社",
     "hotelsAndRoomTypes": "酒店与房型",
     "restaurants": "餐厅",
@@ -17,19 +19,45 @@
     "guides": "导游"
   },
   "inquiry": {
-    "agencyCode": "旅行社编号", "agencyName": "旅行社名称", "agencyNameRequired": "请输入旅行社名称",
-    "archive": "归档", "archiveConfirm": "确定归档该询盘吗？归档后仍可查询历史记录。", "archiveSuccess": "归档成功",
+    "agencyCode": "旅行社编号", "agencyName": "旅行社名称", "agencyRequired": "请选择旅行社",
+    "archive": "归档", "archiveConfirm": "确定归档该询盘吗？归档后询盘和已有行程均只可查看。", "archiveSuccess": "归档成功",
     "code": "询盘编号", "codeGenerated": "保存时自动生成", "contactName": "联系人", "contactNameRequired": "请输入联系人姓名",
-    "contactPosition": "联系人职位", "countryOrRegion": "国家或地区", "createInquiry": "新增询盘", "creator": "创建人",
+    "countryOrRegion": "国家或地区", "createInquiry": "新增询盘", "creator": "创建人",
     "editInquiry": "编辑询盘", "email": "邮箱", "inquiryDetail": "询盘详情", "internalRemark": "内部备注",
-    "lostReason": "Lost 原因", "lostReasonRequired": "请输入 Lost 原因", "nextFollowUpAt": "下次跟进时间",
+    "itineraryManagement": "行程管理",
+    "lostReason": "流失原因", "lostReasonRequired": "请输入流失原因", "nextFollowUpAt": "下次跟进时间",
     "nextFollowUpPlaceholder": "请选择下次跟进时间", "originalMessage": "客户原始消息", "originalMessageRequired": "请输入客户原始消息",
-    "owner": "收客计调", "ownerRequired": "请选择收客计调", "phone": "电话", "searchPlaceholder": "搜索询盘编号、旅行社、联系人或联系方式",
-    "sourceChannel": "来源渠道", "sourceChannelRequired": "请选择来源渠道", "whatsapp": "WhatsApp",
+    "operationsCoordinator": "操作计调", "operationsCoordinatorRequired": "请选择操作计调", "owner": "收客计调", "ownerRequired": "请选择收客计调", "phone": "电话", "plannedDays": "计划天数", "plannedDaysRequired": "请输入计划天数", "searchPlaceholder": "搜索询盘编号、旅行社、联系人或联系方式",
+    "sourceChannel": "来源渠道", "sourceChannelRequired": "请选择来源渠道",
     "statuses": {
-      "archived": "已归档", "lost": "已流失", "negotiating": "谈判中", "new": "新询盘",
-      "planning": "行程设计中", "qualified": "已确认意向", "quoted": "已报价"
+      "archived": "已归档", "lost": "已流失", "new": "新询盘", "planning": "行程设计中", "quoted": "已报价"
     }
+  },
+  "itinerary": {
+    "accommodationSummary": "住宿摘要", "addDay": "新增一天", "addResource": "选择资源", "adults": "成人", "allCities": "全部城市", "budget": "人民币预算", "children": "儿童",
+    "code": "行程编号", "coordinatorRequired": "请选择操作计调", "createTitle": "新增行程",
+    "createAndManage": "创建并进入管理",
+    "confirmDownloadPdf": "确认并下载 PDF", "copyAsDraft": "复制为新行程", "copyDay": "复制当天", "copySuccess": "已复制为新的草稿行程", "copySuffix": "副本", "customerUnitPrice": "价格", "customerUnitPriceRequired": "必填", "dailyResources": "当日资源明细", "dayCountMismatch": "该询盘计划 {planned} 天，当前行程为 {actual} 天，天数不一致。是否仍生成 PDF？",
+    "dailySchedule": "逐日行程",
+    "dateRangeInvalid": "结束日期不能早于开始日期", "dateRangeRequired": "请选择完整的出行日期",
+    "dayCost": "当日成本", "dayCount": "共 {count} 天", "dayDescription": "当日详细行程内容", "daySellingPrice": "当日报价", "dayTitle": "当日主题",
+    "days": "天数", "deleteDayConfirm": "确定删除这一天及其全部资源明细吗？", "departure": "出发地", "destination": "到达地",
+    "editTitle": "编辑行程", "endDateRequired": "请选择结束日期", "guestCount": "总人数",
+    "guideLanguage": "导游语言", "guideRequired": "需要导游", "hotelLevel": "酒店等级",
+    "inquiryCoordinatorNotes": "收客计调备注", "inquiryNotFound": "未找到对应询盘",
+    "generateDespiteMismatch": "仍然生成", "generatePdf": "生成 PDF", "margin": "利润率", "mealRequirements": "餐饮要求", "mealSummary": "用餐摘要", "missingCustomerPrices": "还有 {count} 项价格未填写", "noDailyResources": "尚未选择当日资源", "noPlans": "该询盘尚未创建行程方案", "operationsCoordinator": "操作计调", "pdfEmptyDays": "无法生成 PDF：{days} 没有任何行程明细", "pdfGenerated": "PDF 已下载，行程已锁定为已报价", "pdfGenerationFailed": "PDF 生成失败，请重试", "pdfMissingPrices": "无法生成 PDF：以下项目未填写价格：{items}", "pdfPreviewTitle": "PDF 预览",
+    "otherGuests": "其他人数", "pace": "行程节奏", "roomPreference": "房型偏好",
+    "perGuestPrice": "人均报价", "priceRemark": "报价备注", "priceSummary": "行程报价汇总", "priceUnit": "计价单位", "profit": "预计利润", "provider": "报价来源", "quantity": "数量", "resource": "资源/报价项目", "resourceAdded": "资源已加入当天行程", "resourceItemCount": "{count} 条资源明细", "resourcePrice": "资源报价", "resourcePricePlaceholder": "搜索并选择资源库中的具体报价", "resourceRemark": "资源备注", "resourceType": "资源类型",
+    "resourceTypes": { "attraction": "景点", "guide": "导游", "hotel": "酒店房型", "restaurant": "餐厅", "vehicle": "车辆" },
+    "sections": { "basic": "基础信息", "collaboration": "内部协作", "preferences": "游客与偏好" },
+    "specialRequirements": "特殊要求", "startDateRequired": "请选择开始日期",
+    "statuses": {
+      "archived": "已归档", "draft": "草稿",
+      "quoted": "已报价", "ready_for_costing": "待核价"
+    },
+    "title": "行程标题", "titleRequired": "请输入行程标题", "totalCost": "总成本", "totalPrice": "总报价", "transport": "交通方式",
+    "transportPreference": "交通偏好", "travelDates": "出行日期", "unitCost": "单位成本", "unitPrice": "单位价格",
+    "units": { "guideDay": "导游/天", "person": "人", "roomNight": "间夜", "table": "桌", "vehicleDay": "车/天" }
   },
   "common": {
     "actions": "操作", "all": "全部", "backHome": "返回首页", "bind": "绑定",
@@ -200,6 +228,11 @@
   "user": {
     "cannotDeleteCurrent": "不能删除当前登录用户", "createSuccess": "用户创建成功",
     "createTitle": "新增用户", "deleteConfirm": "确定删除选中的用户吗？",
+    "department": "所属部门", "departmentPlaceholder": "请选择所属部门",
+    "departments": {
+      "coordination": "计调部",
+      "resourceManagement": "资源管理部", "systemManagement": "系统管理部"
+    },
     "editTitle": "编辑用户", "email": "邮箱", "emailInvalid": "请输入正确的邮箱地址",
     "emailPlaceholder": "请输入邮箱", "female": "女", "gender": "性别", "male": "男",
     "mobile": "手机号", "mobileInvalid": "请输入正确的手机号码",
@@ -208,24 +241,26 @@
     "nicknamePlaceholder": "请输入昵称", "passwordResetSuccess": "密码重置成功",
     "resetPassword": "重置密码", "rolePlaceholder": "请选择角色",
     "roles": {
-      "custom": "自定义角色", "departmentManager": "部门负责人",
-      "departmentMember": "部门成员", "employee": "员工", "guest": "访问游客",
-      "systemAdministrator": "系统管理员"
+      "inquiryCoordinator": "收客计调", "operationsCoordinator": "操作计调",
+      "resourceManager": "资源主管", "systemAdministrator": "系统管理员"
     },
     "rolesLabel": "角色", "searchPlaceholder": "搜索用户名、昵称或手机号",
-    "seed": { "admin": "系统管理员", "demo": "演示用户" },
+    "seed": {
+      "admin": "系统管理员", "inquiry": "收客计调", "operationsCoordinator": "操作计调",
+      "resourceManager": "资源主管"
+    },
     "updateSuccess": "用户更新成功", "userLabel": "用户",
     "username": "用户名", "usernamePlaceholder": "请输入用户名"
   },
   "resource": {
-    "attractionName": "景点名称", "certificateNo": "导游证号", "city": "城市",
+    "agencyName": "旅行社名称", "attractionName": "景点名称", "certificateNo": "导游证号", "city": "城市",
     "code": "资源编号", "codeAutoGenerated": "保存时由系统自动生成", "cuisine": "菜系",
-    "contact": "联系人", "createSupplierTitle": "新增地接社", "createTitle": "新增资源",
-    "driver": "司机", "editSupplierTitle": "编辑地接社", "editTitle": "编辑资源",
+    "contact": "联系人", "countryOrRegion": "国家或地区", "createAgencyTitle": "新增旅行社", "createSupplierTitle": "新增地接社", "createTitle": "新增资源",
+    "driver": "司机", "editAgencyTitle": "编辑旅行社", "editSupplierTitle": "编辑地接社", "editTitle": "编辑资源", "email": "邮箱",
     "fieldRequired": "请输入{field}", "guideName": "导游姓名", "hotelName": "酒店名称",
     "languages": "语言", "mealStandard": "餐标", "name": "资源名称",
     "nameRequired": "请输入资源名称", "openingHours": "开放时间", "phone": "联系电话",
-    "plateNumber": "车牌号", "restaurantName": "餐厅名称", "roomTypes": "房型",
+    "dailyPrice": "日成本", "plateNumber": "车牌号", "restaurantName": "餐厅名称", "roomTypes": "房型",
     "searchPlaceholder": "搜索编号、名称或城市", "seats": "座位数", "starRating": "星级",
     "directPrice": "直营报价", "directProvided": "直营", "groundOperatorProvided": "地接社提供", "groundOperatorProvidedTag": "地接社报价", "groundOperatorRequired": "请选择地接社",
     "isGroundOperatorProvided": "是否由地接社提供", "priceSource": "报价来源", "providerSource": "资源来源",

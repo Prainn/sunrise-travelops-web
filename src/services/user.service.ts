@@ -1,5 +1,5 @@
 import type { OptionItem, PageResult } from "@/types/common";
-import { roleDefinitions, users } from "@/data/data";
+import { departmentDefinitions, roleDefinitions, users } from "@/data/data";
 import { translate } from "@/lang/utils";
 import type {
   EmailUpdateForm,
@@ -48,6 +48,7 @@ function toUserItem(user: (typeof users)[number]): UserItem {
     gender: user.gender,
     mobile: user.mobile,
     email: user.email,
+    deptName: getDepartmentName(user.deptId),
     roleNames: getRoleNames(user.roleIds),
     status: user.status === "enabled" ? 1 : 0,
     createTime: user.createTime,
@@ -63,6 +64,7 @@ function toUserForm(user: (typeof users)[number]): UserForm {
     gender: user.gender,
     mobile: user.mobile,
     email: user.email,
+    deptId: user.deptId,
     roleIds: [...user.roleIds],
     status: user.status === "enabled" ? 1 : 0,
   };
@@ -76,6 +78,23 @@ function getRoleNames(roleIds: number[]): string {
     .map((id) => roleNameMap.get(id))
     .filter(Boolean)
     .join(",");
+}
+
+function getDepartmentName(deptId: number): string {
+  const department = departmentDefinitions.find((item) => item.value === deptId);
+  return department ? translate(department.labelKey) : "";
+}
+
+function getRoleAccess(roleIds: number[]) {
+  const roles = new Set<string>();
+  const perms = new Set<string>();
+  roleDefinitions
+    .filter((definition) => roleIds.includes(definition.value))
+    .forEach((definition) => {
+      definition.roles.forEach((role) => roles.add(role));
+      definition.perms.forEach((perm) => perms.add(perm));
+    });
+  return { roles: [...roles], perms: [...perms] };
 }
 
 export const userService = {
@@ -93,10 +112,13 @@ export const userService = {
         user.mobile.includes(keywords);
       const status = user.status === "enabled" ? 1 : 0;
       const matchesStatus = query.status === undefined || query.status === status;
+      const matchesDepartment = !query.deptId || user.deptId === query.deptId;
+      const matchesRole = !query.roleId || user.roleIds.includes(query.roleId);
       const date = user.createTime.slice(0, 10);
       const matchesStartDate = !startDate || date >= startDate;
       const matchesEndDate = !endDate || date <= endDate;
-      return matchesKeywords && matchesStatus && matchesStartDate && matchesEndDate;
+      return matchesKeywords && matchesStatus && matchesDepartment && matchesRole
+        && matchesStartDate && matchesEndDate;
     });
     const start = (query.pageNum - 1) * query.pageSize;
 
@@ -121,6 +143,7 @@ export const userService = {
     }
 
     const roleIds = (data.roleIds ?? []).map(Number);
+    const { roles, perms } = getRoleAccess(roleIds);
     users.push({
       id: createId(),
       username,
@@ -131,12 +154,12 @@ export const userService = {
       gender: data.gender ?? 0,
       mobile: data.mobile?.trim() ?? "",
       email: data.email?.trim() ?? "",
+      deptId: Number(data.deptId),
       roleIds,
       roleNames: getRoleNames(roleIds),
-      deptName: "",
       createTime: new Date().toISOString().slice(0, 19).replace("T", " "),
-      roles: roleIds.includes(2) ? ["ADMIN"] : ["USER"],
-      perms: [],
+      roles,
+      perms,
     });
   },
 
@@ -146,6 +169,7 @@ export const userService = {
     const nickname = data.nickname?.trim();
     if (!nickname) throw new Error(translate("service.user.nicknameRequired"));
     const roleIds = (data.roleIds ?? []).map(Number);
+    const { roles, perms } = getRoleAccess(roleIds);
 
     Object.assign(user, {
       nickname,
@@ -153,8 +177,11 @@ export const userService = {
       gender: data.gender ?? 0,
       mobile: data.mobile?.trim() ?? "",
       email: data.email?.trim() ?? "",
+      deptId: Number(data.deptId),
       roleIds,
       roleNames: getRoleNames(roleIds),
+      roles,
+      perms,
       status: data.status === 0 ? "disabled" : "enabled",
     });
     delete user.nicknameKey;
@@ -200,6 +227,13 @@ export const userService = {
     }));
   },
 
+  async getDepartmentOptions(): Promise<OptionItem[]> {
+    return departmentDefinitions.map((department) => ({
+      value: department.value,
+      label: translate(department.labelKey),
+    }));
+  },
+
   async getProfile(): Promise<UserProfileDetail> {
     const user = requireCurrentUser();
     return {
@@ -210,7 +244,7 @@ export const userService = {
       gender: user.gender,
       mobile: user.mobile,
       email: user.email,
-      deptName: user.deptName,
+      deptName: getDepartmentName(user.deptId),
       roleNames: getRoleNames(user.roleIds),
       createTime: user.createTime,
     };

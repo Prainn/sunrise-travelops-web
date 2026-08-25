@@ -104,6 +104,16 @@
             min-width="130"
           />
           <el-table-column
+            prop="dailyPrice"
+            :label="$t('resource.dailyPrice')"
+            width="110"
+            align="right"
+          >
+            <template #default="scope">
+              ¥{{ Number(scope.row.dailyPrice).toFixed(2) }}
+            </template>
+          </el-table-column>
+          <el-table-column
             :label="$t('resource.providerSource')"
             min-width="160"
           >

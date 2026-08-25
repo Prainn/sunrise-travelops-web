@@ -14,7 +14,9 @@ export function useResourceMaintenance(type: TourismResourceType, prefix: string
   const isEditing = computed(() => Boolean(editingId.value));
 
   function createEmptyRecord(): TourismResourceRecord {
-    return { id: "", code: "", name: "", city: "", contact: "", phone: "", status: "enabled", remark: "" };
+    return {
+      id: "", code: "", name: "", city: "", countryOrRegion: "", contact: "", email: "", phone: "", status: "enabled", remark: "",
+    };
   }
 
   function generateCode() {

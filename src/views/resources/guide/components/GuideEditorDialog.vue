@@ -104,6 +104,15 @@
             maxlength="20"
           />
         </el-form-item>
+        <el-form-item :label="$t('resource.dailyPrice')">
+          <el-input-number
+            v-model="form.dailyPrice"
+            :min="0"
+            :precision="2"
+            controls-position="right"
+            style="width: 100%"
+          />
+        </el-form-item>
         <el-form-item :label="$t('guide.hasLaborContract')">
           <el-switch v-model="form.hasLaborContract" />
         </el-form-item>

@@ -46,6 +46,10 @@ const columns: ResourceColumn[] = [
     "labelKey": "resource.seats"
   },
   {
+    "prop": "dailyPrice",
+    "labelKey": "resource.dailyPrice"
+  },
+  {
     "prop": "city",
     "labelKey": "resource.city"
   },
@@ -67,6 +71,11 @@ const fields: ResourceFormField[] = [
   {
     "prop": "seats",
     "labelKey": "resource.seats",
+    "type": "number"
+  },
+  {
+    "prop": "dailyPrice",
+    "labelKey": "resource.dailyPrice",
     "type": "number"
   },
   {

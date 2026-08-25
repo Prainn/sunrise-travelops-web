@@ -48,6 +48,42 @@
           </el-form-item>
 
           <el-form-item
+            :label="$t('user.department')"
+            prop="deptId"
+          >
+            <el-select
+              v-model="params.deptId"
+              :placeholder="$t('common.all')"
+              clearable
+            >
+              <el-option
+                v-for="item in departmentOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item
+            :label="$t('user.rolesLabel')"
+            prop="roleId"
+          >
+            <el-select
+              v-model="params.roleId"
+              :placeholder="$t('common.all')"
+              clearable
+            >
+              <el-option
+                v-for="item in roleOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item
             :label="$t('common.createdAt')"
             prop="createTime"
           >
@@ -218,6 +254,12 @@
               </template>
             </el-table-column>
             <el-table-column
+              :label="$t('user.department')"
+              prop="deptName"
+              min-width="140"
+              show-overflow-tooltip
+            />
+            <el-table-column
               :label="$t('user.rolesLabel')"
               prop="roleNames"
               min-width="160"
@@ -335,6 +377,23 @@
             v-model="formData.gender"
             code="gender"
           />
+        </el-form-item>
+
+        <el-form-item
+          :label="$t('user.department')"
+          prop="deptId"
+        >
+          <el-select
+            v-model="formData.deptId"
+            :placeholder="$t('user.departmentPlaceholder')"
+          >
+            <el-option
+              v-for="item in departmentOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
         </el-form-item>
 
         <el-form-item
@@ -537,6 +596,7 @@ const resetPasswordForm = reactive<ResetPasswordForm>({
 });
 
 const roleOptions = ref<OptionItem[]>([]);
+const departmentOptions = ref<OptionItem[]>([]);
 
 const drawerSize = computed(() => (appStore.device === DeviceEnum.DESKTOP ? "600px" : "90%"));
 
@@ -547,6 +607,7 @@ const resetPasswordDialogWidth = computed(() =>
 const rules = computed<FormRules<UserForm>>(() => ({
   username: [{ required: true, message: t("user.usernamePlaceholder"), trigger: "blur" }],
   nickname: [{ required: true, message: t("user.nicknamePlaceholder"), trigger: "blur" }],
+  deptId: [{ required: true, message: t("user.departmentPlaceholder"), trigger: "change" }],
   roleIds: [{ required: true, message: t("user.rolePlaceholder"), trigger: "change" }],
   email: [{ type: "email", message: t("user.emailInvalid"), trigger: "blur" }],
   mobile: [{ pattern: /^1[3-9]\d{9}$/, message: t("user.mobileInvalid"), trigger: "blur" }],
@@ -573,7 +634,10 @@ function getAvatarText(row: UserItem): string {
  * 加载用户角色选项。
  */
 async function loadFormOptions(): Promise<void> {
-  roleOptions.value = await userService.getRoleOptions();
+  [roleOptions.value, departmentOptions.value] = await Promise.all([
+    userService.getRoleOptions(),
+    userService.getDepartmentOptions(),
+  ]);
 }
 
 /**
@@ -754,6 +818,7 @@ const handleResetPasswordSubmit = useDebounceFn(async () => {
 }, 300);
 
 onMounted(() => {
+  loadFormOptions();
   handleQuery();
 });
 </script>

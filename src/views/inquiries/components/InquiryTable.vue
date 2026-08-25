@@ -6,6 +6,7 @@
     <div class="page-toolbar">
       <div class="page-toolbar__left">
         <el-button
+          v-hasPerm="'inquiry:create'"
           type="primary"
           @click="emit('create')"
         >
@@ -52,6 +53,17 @@
           width="100"
         />
         <el-table-column
+          prop="operationsCoordinator"
+          :label="$t('inquiry.operationsCoordinator')"
+          width="100"
+        />
+        <el-table-column
+          prop="plannedDays"
+          :label="$t('inquiry.plannedDays')"
+          width="90"
+          align="center"
+        />
+        <el-table-column
           :label="$t('inquiry.nextFollowUpAt')"
           width="165"
         >
@@ -92,6 +104,8 @@
               {{ $t("common.view") }}
             </el-button>
             <el-button
+              v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus)"
+              v-hasPerm="'inquiry:update'"
               type="primary"
               link
               @click="emit('edit', scope.row as InquiryRecord)"
@@ -99,12 +113,30 @@
               {{ $t("common.edit") }}
             </el-button>
             <el-button
-              v-if="scope.row.status !== 'archived'"
+              v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus)"
+              v-hasPerm="'inquiry:archive'"
               type="warning"
               link
               @click="emit('archive', scope.row as InquiryRecord)"
             >
               {{ $t("inquiry.archive") }}
+            </el-button>
+          </template>
+        </el-table-column>
+        <el-table-column
+          :label="$t('inquiry.itineraryManagement')"
+          width="125"
+          fixed="right"
+          align="center"
+        >
+          <template #default="scope">
+            <el-button
+              v-hasPerm="'itinerary:list'"
+              type="primary"
+              link
+              @click="emit('manage-itineraries', scope.row as InquiryRecord)"
+            >
+              {{ $t("inquiry.itineraryManagement") }}
             </el-button>
           </template>
         </el-table-column>
@@ -124,6 +156,7 @@
 <script setup lang="ts">
 import type { InquiryRecord, InquiryStatus } from "@/data/data";
 import { INQUIRY_STATUS_TAG_TYPES } from "../options";
+import { isInquiryReadOnly } from "../inquiry-workflow";
 
 defineProps<{ rows: InquiryRecord[]; total: number; pageNum: number; pageSize: number }>();
 const emit = defineEmits<{
@@ -131,6 +164,7 @@ const emit = defineEmits<{
   view: [record: InquiryRecord];
   edit: [record: InquiryRecord];
   archive: [record: InquiryRecord];
+  "manage-itineraries": [record: InquiryRecord];
   "update:pageNum": [value: number];
   "update:pageSize": [value: number];
 }>();

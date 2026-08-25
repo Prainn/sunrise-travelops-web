@@ -11,6 +11,8 @@ export interface UserInfo {
 
 export interface UserQueryParams extends BaseQueryParams {
   keywords?: string;
+  deptId?: number;
+  roleId?: number;
   status?: number;
   createTime?: [string, string];
 }
@@ -19,6 +21,7 @@ export interface UserItem {
   id: string;
   avatar?: string;
   createTime?: string;
+  deptName?: string;
   email?: string;
   gender?: number;
   mobile?: string;
@@ -31,6 +34,7 @@ export interface UserItem {
 export interface UserForm {
   id?: string;
   avatar?: string;
+  deptId?: number;
   email?: string;
   gender?: number;
   mobile?: string;
