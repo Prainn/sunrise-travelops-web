@@ -128,19 +128,40 @@ export const constantRoutes: RouteRecordRaw[] = [
           perms: ["inquiry:list"],
         },
       },
+      {
+        path: ":inquiryId/itineraries",
+        name: "InquiryItineraries",
+        component: () => import("@/views/inquiries/itineraries/index.vue"),
+        meta: {
+          title: "itineraryManagement",
+          hidden: true,
+          perms: ["itinerary:list"],
+        },
+      },
     ],
   },
   {
     path: "/resources",
     name: "TourismResources",
     component: Layout,
-    redirect: "/resources/supplier",
+    redirect: "/resources/agency",
     meta: {
       title: "tourismResources",
       icon: "el-icon-Briefcase",
       alwaysShow: true,
     },
     children: [
+      {
+        path: "agency",
+        name: "Agency",
+        component: () => import("@/views/resources/agency/index.vue"),
+        meta: {
+          title: "travelAgencies",
+          icon: "el-icon-Promotion",
+          keepAlive: true,
+          perms: ["resource:agency:list"],
+        },
+      },
       {
         path: "supplier",
         name: "Supplier",

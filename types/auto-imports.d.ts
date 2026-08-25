@@ -9,11 +9,9 @@
 export {}
 declare global {
   const EffectScope: typeof import('vue').EffectScope
-  const ElForm: (typeof import("element-plus/es"))["ElForm"]
   const ElMessage: typeof import('element-plus/es').ElMessage
   const ElMessageBox: typeof import('element-plus/es').ElMessageBox
   const ElNotification: typeof import('element-plus/es').ElNotification
-  const ElTree: (typeof import("element-plus/es"))["ElTree"]
   const acceptHMRUpdate: typeof import('pinia').acceptHMRUpdate
   const asyncComputed: typeof import('@vueuse/core').asyncComputed
   const autoResetRef: typeof import('@vueuse/core').autoResetRef
@@ -106,8 +104,6 @@ declare global {
   const refThrottled: typeof import('@vueuse/core').refThrottled
   const refWithControl: typeof import('@vueuse/core').refWithControl
   const resolveComponent: typeof import('vue').resolveComponent
-  const resolveRef: (typeof import("@vueuse/core"))["resolveRef"]
-  const resolveUnref: (typeof import("@vueuse/core"))["resolveUnref"]
   const setActivePinia: typeof import('pinia').setActivePinia
   const setMapStoreSuffix: typeof import('pinia').setMapStoreSuffix
   const shallowReactive: typeof import('vue').shallowReactive
