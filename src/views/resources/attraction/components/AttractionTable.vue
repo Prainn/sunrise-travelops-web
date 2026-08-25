@@ -196,7 +196,7 @@
           </el-table-column>
           <el-table-column
             :label="$t('common.actions')"
-            width="180"
+            width="220"
             fixed="right"
             align="center"
           >
@@ -214,6 +214,13 @@
                 @click="emit('toggle-status', scope.row as AttractionRecord)"
               >
                 {{ $t(scope.row.status === "enabled" ? "common.disabled" : "common.enabled") }}
+              </el-button>
+              <el-button
+                type="danger"
+                link
+                @click="emit('delete', scope.row as AttractionRecord)"
+              >
+                {{ $t("common.delete") }}
               </el-button>
             </template>
           </el-table-column>
@@ -246,6 +253,7 @@ const props = defineProps<{ rows: AttractionRecord[] }>();
 const emit = defineEmits<{
   create: [];
   edit: [record: AttractionRecord];
+  delete: [record: AttractionRecord];
   "toggle-status": [record: AttractionRecord];
   "create-price": [record: AttractionRecord];
   "edit-price": [record: AttractionRecord, price: AttractionPriceRecord];

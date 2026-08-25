@@ -7,6 +7,7 @@
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
+      @delete="deleteRecord"
     />
     <ResourceEditorDialog
       v-model="isDialogVisible"
@@ -74,5 +75,5 @@ const fields: ResourceFormField[] = [
     "type": "textarea"
   }
 ];
-const { rows, record, isDialogVisible, isEditing, openCreateDialog, openEditDialog, toggleStatus, saveRecord } = useResourceMaintenance("supplier", "SUP");
+const { rows, record, isDialogVisible, isEditing, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance("supplier", "SUP");
 </script>

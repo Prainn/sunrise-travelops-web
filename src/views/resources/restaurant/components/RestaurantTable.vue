@@ -196,7 +196,7 @@
           </el-table-column>
           <el-table-column
             :label="$t('common.actions')"
-            width="180"
+            width="220"
             fixed="right"
             align="center"
           >
@@ -214,6 +214,13 @@
                 @click="emit('toggle-status', scope.row as RestaurantRecord)"
               >
                 {{ $t(scope.row.status === "enabled" ? "common.disabled" : "common.enabled") }}
+              </el-button>
+              <el-button
+                type="danger"
+                link
+                @click="emit('delete', scope.row as RestaurantRecord)"
+              >
+                {{ $t("common.delete") }}
               </el-button>
             </template>
           </el-table-column>
@@ -240,6 +247,7 @@ const props = defineProps<{ rows: RestaurantRecord[] }>();
 const emit = defineEmits<{
   create: [];
   edit: [record: RestaurantRecord];
+  delete: [record: RestaurantRecord];
   "toggle-status": [record: RestaurantRecord];
   "create-price": [record: RestaurantRecord];
   "edit-price": [record: RestaurantRecord, price: RestaurantPriceRecord];

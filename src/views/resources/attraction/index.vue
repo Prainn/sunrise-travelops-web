@@ -5,6 +5,7 @@
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
+      @delete="deleteAttraction"
       @create-price="openCreatePriceDialog"
       @edit-price="openEditPriceDialog"
       @delete-price="deletePrice"
@@ -79,6 +80,17 @@ function saveAttraction(record: AttractionRecord) {
 function toggleStatus(record: AttractionRecord) {
   record.status = record.status === "enabled" ? "disabled" : "enabled";
   ElMessage.success(t("common.updateSuccess"));
+}
+async function deleteAttraction(record: AttractionRecord) {
+  try {
+    await ElMessageBox.confirm(t("common.deleteConfirm"), t("common.tip"), { type: "warning" });
+  } catch {
+    return;
+  }
+  const index = attractionStore.findIndex((item) => item.id === record.id);
+  if (index < 0) return;
+  attractionStore.splice(index, 1);
+  ElMessage.success(t("common.deleteSuccess"));
 }
 function openCreatePriceDialog(record: AttractionRecord) {
   selectedAttraction.value = record;

@@ -224,7 +224,7 @@
   "hotel": {
     "addRoomPrice": "新增房型报价", "address": "地址", "breakfast": "早餐配套",
     "cityPlaceholder": "请选择省份和城市", "cityRequired": "请选择城市", "createHotel": "新增酒店", "datesRequired": "请选择有效时间段",
-    "deleteRoomPriceConfirm": "确定删除该条房型及协议价格记录吗？", "editHotel": "编辑酒店", "editRoomPrice": "编辑房型报价", "effectivePeriod": "有效时间段", "facilities": "配套设施",
+    "deleteHotelConfirm": "确定删除该酒店及其全部房型报价吗？", "deleteRoomPriceConfirm": "确定删除该条房型及协议价格记录吗？", "deleteRoomType": "删除房型", "deleteRoomTypeConfirm": "确定删除该房型及其全部报价吗？", "editHotel": "编辑酒店", "editRoomPrice": "编辑房型报价", "effectivePeriod": "有效时间段", "facilities": "配套设施",
     "fiveStars": "五星", "fourStars": "四星", "groupPrice": "团队价", "individualPrice": "散客价", "minimumRooms": "成团房数",
     "nameRequired": "请输入酒店名称", "nearby": "周边配置", "periodRequired": "请输入价格时段名称",
     "pricePeriod": "价格时段", "rackRate": "水牌价", "roomPriceTitle": "房型与协议价格",

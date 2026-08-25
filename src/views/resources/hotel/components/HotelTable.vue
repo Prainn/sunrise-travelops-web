@@ -98,7 +98,7 @@
                 </el-table-column>
                 <el-table-column
                   :label="$t('common.actions')"
-                  width="120"
+                  width="210"
                   align="center"
                 >
                   <template #default="priceScope">
@@ -115,6 +115,13 @@
                       @click="emit('delete-price', scope.row as HotelRecord, priceScope.row as RoomPriceRow)"
                     >
                       {{ $t("common.delete") }}
+                    </el-button>
+                    <el-button
+                      type="danger"
+                      link
+                      @click="emit('delete-room', scope.row as HotelRecord, priceScope.row as RoomPriceRow)"
+                    >
+                      {{ $t("hotel.deleteRoomType") }}
                     </el-button>
                   </template>
                 </el-table-column>
@@ -175,7 +182,7 @@
         </el-table-column>
         <el-table-column
           :label="$t('common.actions')"
-          width="180"
+          width="220"
           fixed="right"
         >
           <template #default="scope">
@@ -192,6 +199,13 @@
               @click="emit('toggle-status', scope.row as HotelRecord)"
             >
               {{ $t(scope.row.status === "enabled" ? "common.disabled" : "common.enabled") }}
+            </el-button>
+            <el-button
+              type="danger"
+              link
+              @click="emit('delete', scope.row as HotelRecord)"
+            >
+              {{ $t("common.delete") }}
             </el-button>
           </template>
         </el-table-column>
@@ -212,10 +226,12 @@ const props = defineProps<{
 const emit = defineEmits<{
   create: [];
   edit: [hotel: HotelRecord];
+  delete: [hotel: HotelRecord];
   "toggle-status": [hotel: HotelRecord];
   "create-price": [hotel: HotelRecord];
   "edit-price": [hotel: HotelRecord, row: RoomPriceRow];
   "delete-price": [hotel: HotelRecord, row: RoomPriceRow];
+  "delete-room": [hotel: HotelRecord, row: RoomPriceRow];
 }>();
 
 const { t } = useI18n();

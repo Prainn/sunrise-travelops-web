@@ -1,5 +1,5 @@
 import { computed, reactive, ref } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { tourismResources, type TourismResourceRecord, type TourismResourceType } from "@/data/data";
 
@@ -53,5 +53,18 @@ export function useResourceMaintenance(type: TourismResourceType, prefix: string
     ElMessage.success(t(editingId.value ? "common.updateSuccess" : "common.createSuccess"));
   }
 
-  return { rows, record, isDialogVisible, isEditing, openCreateDialog, openEditDialog, toggleStatus, saveRecord };
+  async function deleteRecord(row: TourismResourceRecord) {
+    try {
+      await ElMessageBox.confirm(t("common.deleteConfirm"), t("common.tip"), { type: "warning" });
+    } catch {
+      return;
+    }
+
+    const index = rows.value.findIndex((item) => item.id === row.id);
+    if (index < 0) return;
+    rows.value.splice(index, 1);
+    ElMessage.success(t("common.deleteSuccess"));
+  }
+
+  return { rows, record, isDialogVisible, isEditing, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord };
 }

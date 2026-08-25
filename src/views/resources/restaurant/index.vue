@@ -5,6 +5,7 @@
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
+      @delete="deleteRestaurant"
       @create-price="openCreatePriceDialog"
       @edit-price="openEditPriceDialog"
       @delete-price="deletePrice"
@@ -87,6 +88,17 @@ function saveRestaurant(record: RestaurantRecord) {
 function toggleStatus(record: RestaurantRecord) {
   record.status = record.status === "enabled" ? "disabled" : "enabled";
   ElMessage.success(t("common.updateSuccess"));
+}
+async function deleteRestaurant(record: RestaurantRecord) {
+  try {
+    await ElMessageBox.confirm(t("common.deleteConfirm"), t("common.tip"), { type: "warning" });
+  } catch {
+    return;
+  }
+  const index = restaurantStore.findIndex((item) => item.id === record.id);
+  if (index < 0) return;
+  restaurantStore.splice(index, 1);
+  ElMessage.success(t("common.deleteSuccess"));
 }
 
 function openCreatePriceDialog(record: RestaurantRecord) {

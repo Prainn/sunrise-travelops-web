@@ -235,7 +235,7 @@
   "hotel": {
     "addRoomPrice": "Add Room Price", "address": "Address", "breakfast": "Breakfast",
     "cityPlaceholder": "Select province and city", "cityRequired": "Select a city", "createHotel": "Create Hotel", "datesRequired": "Select an effective period",
-    "deleteRoomPriceConfirm": "Delete this room type and contract price record?", "editHotel": "Edit Hotel", "editRoomPrice": "Edit Room Price", "effectivePeriod": "Effective Period", "facilities": "Facilities",
+    "deleteHotelConfirm": "Delete this hotel and all its room prices?", "deleteRoomPriceConfirm": "Delete this room type and contract price record?", "deleteRoomType": "Delete Room", "deleteRoomTypeConfirm": "Delete this room type and all its prices?", "editHotel": "Edit Hotel", "editRoomPrice": "Edit Room Price", "effectivePeriod": "Effective Period", "facilities": "Facilities",
     "fiveStars": "Five Stars", "fourStars": "Four Stars", "groupPrice": "Group Price", "individualPrice": "Individual Price", "minimumRooms": "Minimum Rooms",
     "nameRequired": "Enter a hotel name", "nearby": "Nearby", "periodRequired": "Enter a price period name",
     "pricePeriod": "Price Period", "rackRate": "Rack Rate", "roomPriceTitle": "Room Types and Contract Prices",

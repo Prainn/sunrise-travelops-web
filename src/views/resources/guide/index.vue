@@ -5,6 +5,7 @@
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
+      @delete="deleteGuide"
     />
     <GuideEditorDialog
       v-model="isDialogVisible"
@@ -17,7 +18,7 @@
 
 <script setup lang="ts">
 import { reactive, ref } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { guides, type GuideRecord } from "@/data/data";
 import GuideEditorDialog from "./components/GuideEditorDialog.vue";
@@ -67,5 +68,16 @@ function saveGuide(record: GuideRecord) {
 function toggleStatus(record: GuideRecord) {
   record.status = record.status === "enabled" ? "disabled" : "enabled";
   ElMessage.success(t("common.updateSuccess"));
+}
+async function deleteGuide(record: GuideRecord) {
+  try {
+    await ElMessageBox.confirm(t("common.deleteConfirm"), t("common.tip"), { type: "warning" });
+  } catch {
+    return;
+  }
+  const index = guideStore.findIndex((item) => item.id === record.id);
+  if (index < 0) return;
+  guideStore.splice(index, 1);
+  ElMessage.success(t("common.deleteSuccess"));
 }
 </script>

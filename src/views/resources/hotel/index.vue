@@ -42,9 +42,11 @@
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
+      @delete="deleteHotel"
       @create-price="openPriceDialog"
       @edit-price="openEditPriceDialog"
       @delete-price="deletePricePlan"
+      @delete-room="deleteRoomType"
     />
 
     <el-dialog
@@ -383,6 +385,13 @@ function toggleStatus(hotel: HotelRecord) {
   hotel.status = hotel.status === "enabled" ? "disabled" : "enabled";
   ElMessage.success(t("common.updateSuccess"));
 }
+async function deleteHotel(hotel: HotelRecord) {
+  if (!(await confirmDelete("hotel.deleteHotelConfirm"))) return;
+  const index = hotelStore.findIndex((item) => item.id === hotel.id);
+  if (index < 0) return;
+  hotelStore.splice(index, 1);
+  ElMessage.success(t("common.deleteSuccess"));
+}
 function changePriceProvider(value: string | number | boolean) {
   if (!value) priceForm.groundOperatorId = "";
 }
@@ -457,6 +466,21 @@ async function deletePricePlan(hotel: HotelRecord, row: RoomPriceRow) {
     hotel.roomTypes.splice(roomIndex, 1);
   }
   ElMessage.success(t("common.deleteSuccess"));
+}
+async function deleteRoomType(hotel: HotelRecord, row: RoomPriceRow) {
+  if (!(await confirmDelete("hotel.deleteRoomTypeConfirm"))) return;
+  const roomIndex = hotel.roomTypes.findIndex((item) => item.id === row.roomId);
+  if (roomIndex < 0) return;
+  hotel.roomTypes.splice(roomIndex, 1);
+  ElMessage.success(t("common.deleteSuccess"));
+}
+async function confirmDelete(messageKey: string) {
+  try {
+    await ElMessageBox.confirm(t(messageKey), t("common.tip"), { type: "warning" });
+    return true;
+  } catch {
+    return false;
+  }
 }
 </script>
 

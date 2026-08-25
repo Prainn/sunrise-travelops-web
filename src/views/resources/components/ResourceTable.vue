@@ -61,7 +61,7 @@
           </el-table-column>
           <el-table-column
             :label="$t('common.actions')"
-            width="180"
+            width="220"
             align="center"
             fixed="right"
           >
@@ -79,6 +79,13 @@
                 @click="toggleRowStatus(scope.row)"
               >
                 {{ $t(scope.row.status === "enabled" ? "common.disabled" : "common.enabled") }}
+              </el-button>
+              <el-button
+                type="danger"
+                link
+                @click="deleteRow(scope.row)"
+              >
+                {{ $t("common.delete") }}
               </el-button>
             </template>
           </el-table-column>
@@ -107,6 +114,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   create: [];
   edit: [row: ResourceRow];
+  delete: [row: ResourceRow];
   "toggle-status": [row: ResourceRow];
 }>();
 
@@ -132,5 +140,9 @@ function editRow(row: unknown) {
 
 function toggleRowStatus(row: unknown) {
   emit("toggle-status", row as ResourceRow);
+}
+
+function deleteRow(row: unknown) {
+  emit("delete", row as ResourceRow);
 }
 </script>
