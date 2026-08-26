@@ -110,7 +110,7 @@
             align="right"
           >
             <template #default="scope">
-              ¥{{ Number(scope.row.dailyPrice).toFixed(2) }}
+              ¥{{ formatMoney(Number(scope.row.dailyPrice)) }}
             </template>
           </el-table-column>
           <el-table-column
@@ -220,6 +220,7 @@ import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { tourismResources } from "@/data/data";
 import type { GuideEmploymentType, GuideGender, GuideRecord } from "@/data/data";
+import { formatMoney } from "@/utils";
 import GuideSearchForm from "./GuideSearchForm.vue";
 
 const props = defineProps<{ rows: GuideRecord[] }>();

@@ -121,6 +121,7 @@ import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { ItineraryRecord } from "@/types/itinerary";
+import { addDays } from "@/utils";
 
 const props = defineProps<{
   modelValue: boolean;
@@ -152,13 +153,7 @@ async function submitForm() {
 
 function syncEndDate() {
   form.days = props.plannedDays;
-  form.endDate = form.startDate ? addDate(form.startDate, props.plannedDays - 1) : "";
-}
-
-function addDate(date: string, offset: number) {
-  const value = new Date(`${date}T00:00:00`);
-  value.setDate(value.getDate() + offset);
-  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+  form.endDate = form.startDate ? addDays(form.startDate, props.plannedDays - 1) : "";
 }
 </script>
 

@@ -190,6 +190,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { ArrowDown, ArrowUp, Right } from "@element-plus/icons-vue";
 import type { ItineraryDayRecord } from "@/types/itinerary";
+import { formatMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
 import ItineraryDayForm from "./ItineraryDayForm.vue";
 
@@ -216,7 +217,6 @@ const dayPrice = computed(() => props.day.items.reduce((total, item) => total + 
 const { locale } = useI18n();
 
 function updateField(field: EditableDayField, value: string) { emit("update-field", field, value); }
-function formatMoney(value: number) { return value.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function resourceUnitName(code: string) { return getResourceUnitName(code, locale.value); }
 </script>
 

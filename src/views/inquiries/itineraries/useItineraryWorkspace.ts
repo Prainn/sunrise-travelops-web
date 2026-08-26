@@ -6,6 +6,7 @@ import { ROLE_ROOT } from "@/constants";
 import { inquiries, itineraries } from "@/data/data";
 import { useUserStore } from "@/stores/user";
 import type { ItineraryDayRecord, ItineraryRecord, ItineraryResourceItem } from "@/types/itinerary";
+import { addDays, formatDate, formatDateTime, generateNextCode } from "@/utils";
 import { getStatusAfterItineraryCreated, getStatusAfterQuoteGenerated, isInquiryReadOnly } from "../inquiry-workflow";
 import {
   downloadGeneratedItineraryPdf,
@@ -100,7 +101,7 @@ export function useItineraryWorkspace() {
 
   function createDailyPlans(startDate: string, dayCount: number): ItineraryDayRecord[] {
     return Array.from({ length: dayCount }, (_, index) => ({
-      id: `day-${Date.now()}-${index}`, dayNumber: index + 1, date: addDate(startDate, index), departure: "", destination: "",
+      id: `day-${Date.now()}-${index}`, dayNumber: index + 1, date: addDays(startDate, index), departure: "", destination: "",
       transport: "", title: "", description: "", mealSummary: "", accommodationSummary: "", items: [],
     }));
   }
@@ -241,7 +242,7 @@ export function useItineraryWorkspace() {
     const plan = selectedItinerary.value;
     if (!plan) return;
     plan.dailyPlans.push({
-      id: `day-${Date.now()}`, dayNumber: plan.dailyPlans.length + 1, date: addDate(plan.startDate, plan.dailyPlans.length),
+      id: `day-${Date.now()}`, dayNumber: plan.dailyPlans.length + 1, date: addDays(plan.startDate, plan.dailyPlans.length),
       departure: "", destination: "", transport: "", title: "", description: "", mealSummary: "", accommodationSummary: "", items: [],
     });
     syncPlanDates(plan);
@@ -282,9 +283,9 @@ export function useItineraryWorkspace() {
   }
 
   function syncPlanDates(plan: ItineraryRecord) {
-    plan.dailyPlans.forEach((day, index) => { day.dayNumber = index + 1; day.date = addDate(plan.startDate, index); });
+    plan.dailyPlans.forEach((day, index) => { day.dayNumber = index + 1; day.date = addDays(plan.startDate, index); });
     plan.days = plan.dailyPlans.length;
-    plan.endDate = plan.days ? addDate(plan.startDate, plan.days - 1) : plan.startDate;
+    plan.endDate = plan.days ? addDays(plan.startDate, plan.days - 1) : plan.startDate;
     plan.updatedAt = formatDateTime(new Date());
   }
 
@@ -294,8 +295,7 @@ export function useItineraryWorkspace() {
 
   function generateItineraryCode() {
     const month = formatDate(new Date()).slice(0, 7).replace("-", "");
-    const max = itineraryStore.reduce((value, record) => Math.max(value, Number(record.code.match(new RegExp(`^ITI-${month}-(\\d+)$`))?.[1] ?? 0)), 0);
-    return `ITI-${month}-${String(max + 1).padStart(3, "0")}`;
+    return generateNextCode(itineraryStore, `ITI-${month}`);
   }
 
   onBeforeUnmount(closePdfPreview);
@@ -309,7 +309,3 @@ export function useItineraryWorkspace() {
     updateDayField, updateItemPrice, updateItemQuantity,
   };
 }
-
-function addDate(date: string, offset: number) { const value = new Date(`${date}T00:00:00`); value.setDate(value.getDate() + offset); return formatDate(value); }
-function formatDate(value: Date) { return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`; }
-function formatDateTime(value: Date) { return `${formatDate(value)} ${String(value.getHours()).padStart(2, "0")}:${String(value.getMinutes()).padStart(2, "0")}`; }

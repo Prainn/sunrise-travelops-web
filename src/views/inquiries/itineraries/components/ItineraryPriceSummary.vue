@@ -40,6 +40,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { formatMoney } from "@/utils";
 
 const props = defineProps<{
   totalCost: number;
@@ -52,7 +53,6 @@ const props = defineProps<{
 const profit = computed(() => props.totalPrice - props.totalCost);
 const margin = computed(() => props.totalPrice ? profit.value / props.totalPrice * 100 : 0);
 const perGuestPrice = computed(() => props.guestCount ? props.totalPrice / props.guestCount : 0);
-function formatMoney(value: number) { return value.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 </script>
 
 <style scoped lang="scss">

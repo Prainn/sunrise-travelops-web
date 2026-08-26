@@ -2,6 +2,7 @@ import { computed, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { tourismResources, type TourismResourceRecord, type TourismResourceType } from "@/data/data";
+import { generateNextCode } from "@/utils";
 
 const resourceStore = reactive(tourismResources);
 
@@ -21,17 +22,9 @@ export function useResourceMaintenance(type: TourismResourceType, prefix: string
     return value;
   }
 
-  function generateCode() {
-    const maxSequence = rows.value.reduce((max, item) => {
-      const match = item.code.match(new RegExp(`^${prefix}-(\\d+)$`));
-      return match ? Math.max(max, Number(match[1])) : max;
-    }, 0);
-    return `${prefix}-${String(maxSequence + 1).padStart(3, "0")}`;
-  }
-
   function openCreateDialog() {
     editingId.value = "";
-    record.value = { ...createEmptyRecord(), code: generateCode() };
+    record.value = { ...createEmptyRecord(), code: generateNextCode(rows.value, prefix) };
     isDialogVisible.value = true;
   }
 

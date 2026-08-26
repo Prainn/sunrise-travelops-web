@@ -34,6 +34,7 @@ import {
   type AttractionPriceRecord,
   type AttractionRecord,
 } from "@/data/data";
+import { generateNextCode } from "@/utils";
 import AttractionEditorDialog from "./components/AttractionEditorDialog.vue";
 import AttractionPriceDialog from "./components/AttractionPriceDialog.vue";
 import AttractionTable from "./components/AttractionTable.vue";
@@ -56,13 +57,9 @@ function createEmptyAttraction(): AttractionRecord {
 function createEmptyPrice(): AttractionPriceRecord {
   return { id: "", itemType: "ticket", itemName: "景区门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 0, settlementPrice: 0, unit: "personVisit", isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" };
 }
-function generateAttractionCode() {
-  const max = attractionStore.reduce((value, record) => Math.max(value, Number(record.code.match(/^ATT-(\d+)$/)?.[1] ?? 0)), 0);
-  return `ATT-${String(max + 1).padStart(3, "0")}`;
-}
 function openCreateDialog() {
   editingAttractionId.value = "";
-  attractionForm.value = { ...createEmptyAttraction(), code: generateAttractionCode() };
+  attractionForm.value = { ...createEmptyAttraction(), code: generateNextCode(attractionStore, "ATT") };
   isAttractionDialogVisible.value = true;
 }
 function openEditDialog(record: AttractionRecord) {

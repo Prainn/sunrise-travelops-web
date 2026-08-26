@@ -21,6 +21,7 @@ import { reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { guides, type GuideRecord } from "@/data/data";
+import { generateNextCode } from "@/utils";
 import GuideEditorDialog from "./components/GuideEditorDialog.vue";
 import GuideTable from "./components/GuideTable.vue";
 
@@ -40,14 +41,9 @@ function createEmptyGuide(): GuideRecord {
   };
 }
 
-function generateGuideCode() {
-  const max = guideStore.reduce((value, record) => Math.max(value, Number(record.code.match(/^GDE-(\d+)$/)?.[1] ?? 0)), 0);
-  return `GDE-${String(max + 1).padStart(3, "0")}`;
-}
-
 function openCreateDialog() {
   editingGuideId.value = "";
-  guideForm.value = { ...createEmptyGuide(), code: generateGuideCode() };
+  guideForm.value = { ...createEmptyGuide(), code: generateNextCode(guideStore, "GDE") };
   isDialogVisible.value = true;
 }
 

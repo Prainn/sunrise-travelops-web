@@ -94,7 +94,7 @@
                     align="right"
                   >
                     <template #default="priceScope">
-                      ¥{{ Number(priceScope.row.price).toFixed(2) }}
+                      ¥{{ formatMoney(Number(priceScope.row.price)) }}
                     </template>
                   </el-table-column>
                   <el-table-column
@@ -241,6 +241,7 @@ import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { tourismResources } from "@/data/data";
 import type { RestaurantPriceRecord, RestaurantPriceUnit, RestaurantRecord } from "@/data/data";
+import { formatMoney } from "@/utils";
 import RestaurantSearchForm from "./RestaurantSearchForm.vue";
 
 const props = defineProps<{ rows: RestaurantRecord[] }>();

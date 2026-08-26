@@ -6,7 +6,8 @@
 export { isExternal } from "./validate";
 
 // 数据格式化
-export { formatGrowthRate } from "./format";
+export { addDays, formatDate, formatDateTime, formatGrowthRate, formatMoney, roundMoney } from "./format";
+export { generateNextCode } from "./generate-code";
 export { readFileAsDataUrl } from "./file";
 
 // 本地存储

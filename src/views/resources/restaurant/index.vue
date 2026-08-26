@@ -30,6 +30,7 @@ import { reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { restaurants, type RestaurantPriceRecord, type RestaurantRecord } from "@/data/data";
+import { generateNextCode } from "@/utils";
 import RestaurantEditorDialog from "./components/RestaurantEditorDialog.vue";
 import RestaurantPriceDialog from "./components/RestaurantPriceDialog.vue";
 import RestaurantTable from "./components/RestaurantTable.vue";
@@ -60,14 +61,9 @@ function createEmptyPrice(): RestaurantPriceRecord {
   };
 }
 
-function generateRestaurantCode() {
-  const max = restaurantStore.reduce((value, record) => Math.max(value, Number(record.code.match(/^RES-(\d+)$/)?.[1] ?? 0)), 0);
-  return `RES-${String(max + 1).padStart(3, "0")}`;
-}
-
 function openCreateDialog() {
   editingRestaurantId.value = "";
-  restaurantForm.value = { ...createEmptyRestaurant(), code: generateRestaurantCode() };
+  restaurantForm.value = { ...createEmptyRestaurant(), code: generateNextCode(restaurantStore, "RES") };
   isRestaurantDialogVisible.value = true;
 }
 

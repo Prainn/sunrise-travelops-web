@@ -274,6 +274,7 @@ import {
   type HotelPricePlanRecord,
   type HotelRecord,
 } from "@/data/data";
+import { generateNextCode } from "@/utils";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 import HotelTable from "./components/HotelTable.vue";
 import type { RoomPriceRow } from "./types";
@@ -371,17 +372,9 @@ function resetQuery() {
   keywords.value = "";
   city.value = "";
 }
-function generateHotelCode() {
-  const max = hotelStore.reduce(
-    (value, hotel) =>
-      Math.max(value, Number(hotel.code.match(/^HTL-(\d+)$/)?.[1] ?? 0)),
-    0
-  );
-  return `HTL-${String(max + 1).padStart(3, "0")}`;
-}
 function openCreateDialog() {
   editingId.value = "";
-  Object.assign(hotelForm, createEmptyHotel(), { code: generateHotelCode() });
+  Object.assign(hotelForm, createEmptyHotel(), { code: generateNextCode(hotelStore, "HTL") });
   isHotelDialogVisible.value = true;
 }
 function openEditDialog(hotel: HotelRecord) {

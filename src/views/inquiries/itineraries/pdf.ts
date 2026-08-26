@@ -2,6 +2,7 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import type { InquiryRecord } from "@/data/data";
 import type { ItineraryRecord } from "@/types/itinerary";
+import { formatMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
 import { getTransportMethodNames } from "@/utils/transport-method";
 
@@ -127,8 +128,4 @@ function escapeHtml(value: string) {
 
 function sanitizeFileName(value: string) {
   return value.replace(/[\\/:*?"<>|]/g, "-");
-}
-
-function formatMoney(value: number) {
-  return value.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }

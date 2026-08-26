@@ -1,5 +1,6 @@
 import { attractions, guides, hotels, restaurants, tourismResources } from "@/data/data";
 import type { ItineraryItemType, ItineraryPriceUnit, ItineraryResourceItem } from "@/types/itinerary";
+import { roundMoney } from "@/utils";
 
 export interface ResourcePriceOption {
   id: string;
@@ -215,17 +216,13 @@ export function calculateItem(option: ResourcePriceOption, quantity: number): It
     unit: option.unit,
     unitCost: option.unitCost,
     unitPrice: null,
-    totalCost: roundCurrency(option.unitCost * quantity),
+    totalCost: roundMoney(option.unitCost * quantity),
     totalPrice: 0,
     remark: "",
   };
 }
 
 export function recalculateItem(item: ItineraryResourceItem) {
-  item.totalCost = roundCurrency(item.unitCost * item.quantity);
-  item.totalPrice = item.unitPrice === null ? 0 : roundCurrency(item.unitPrice * item.quantity);
-}
-
-function roundCurrency(value: number) {
-  return Math.round(value * 100) / 100;
+  item.totalCost = roundMoney(item.unitCost * item.quantity);
+  item.totalPrice = item.unitPrice === null ? 0 : roundMoney(item.unitPrice * item.quantity);
 }

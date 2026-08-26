@@ -104,6 +104,7 @@
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { ItineraryItemType, ItineraryResourceItem } from "@/types/itinerary";
+import { formatMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
 import { calculateItem, resourcePriceOptions } from "../pricing";
 import type { ResourcePriceDetail } from "../pricing";
@@ -150,7 +151,6 @@ watch(() => props.modelValue, (visible) => {
 });
 
 function filterOptions(value: string) { keyword.value = value; }
-function formatMoney(value: number) { return value.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function resourceUnitName(code: string) { return getResourceUnitName(code, locale.value); }
 function formatDetail(detail: ResourcePriceDetail) {
   if (detail.format === "money") return `¥${formatMoney(Number(detail.value))}`;

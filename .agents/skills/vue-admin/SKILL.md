@@ -240,6 +240,26 @@ const index = list.findIndex(item => item.id === id); // 查找索引
 
 行内注释解释“为什么”而非“是什么”，靠近相关代码。
 
+## 简单与可读性
+
+**核心原则：先写清楚业务，再考虑复用。抽象必须减少真实重复或隔离稳定的通用规则。**
+
+- 优先使用直白的条件、循环、计算属性和小函数，避免为了缩短代码而堆叠三元表达式、链式调用或类型断言。
+- 同一段稳定逻辑在多个页面重复时，提取到 `src/utils`；典型场景包括日期、日期时间、金额、文件、连续编号等格式化或计算。
+- 页面只保留页面状态、交互流程和业务判断，不在页面内重复拼接日期、补零、金额精度等基础实现。
+- 仅使用一次且逻辑简单的代码直接内联；不要预先设计通用框架、复杂泛型、配置驱动层或多层包装。
+- 工具函数按用途拆分，名称直接表达结果；参数只保留当前真实需要的配置。
+- 重构以可读性和减少重复为目标，不借机改变业务规则、数据结构或交互行为。
+
+```typescript
+// ✅ 页面表达业务意图，格式细节集中复用
+const createdAt = formatDateTime(new Date());
+const nextCode = generateNextCode(records, "HTL");
+
+// ❌ 页面重复实现补零和日期拼接
+const date = `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+```
+
 ## 反模式速查
 
 | 反模式 | 正确做法 |
@@ -254,6 +274,9 @@ const index = list.findIndex(item => item.id === id); // 查找索引
 | `class UserAPI` 静态方法 | `const UserAPI = {}` 对象字面量 |
 | `stores/modules/` 子目录 | 扁平 `stores/` 结构 |
 | 单次调用过度抽取方法 | 直接内联 |
+| 页面重复日期、金额、编号格式化 | 提取到 `src/utils` 统一复用 |
+| 为潜在需求设计复杂泛型或配置层 | 只实现当前明确需求 |
+| 链式表达式过长、嵌套三元表达式 | 拆成有业务含义的中间变量或普通条件 |
 | 复述代码的注释 | 只写有信息量的注释 |
 | `handle` 用于单一动作 | handle 仅用于流程编排 |
 
@@ -269,4 +292,7 @@ const index = list.findIndex(item => item.id === id); // 查找索引
 - [ ] SFC 块顺序：template → script → style
 - [ ] Store 用 Setup Store + `useXxxStoreHook()`
 - [ ] 公共函数有 JSDoc，无复述性注释
+- [ ] 页面无重复的日期、金额、编号等基础格式化实现
+- [ ] 抽象来自真实重复，没有复杂泛型、配置驱动或多层包装
+- [ ] 业务流程可顺序阅读，长链式表达式和嵌套三元已拆开
 - [ ] 组件 ≤ 300 行，使用 `<script setup>`

@@ -45,6 +45,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { inquiries, tourismResources, users, type InquiryRecord, type InquiryStatus } from "@/data/data";
+import { formatDate, formatDateTime, generateNextCode } from "@/utils";
 import InquiryDetailDrawer from "./components/InquiryDetailDrawer.vue";
 import InquiryEditorDialog from "./components/InquiryEditorDialog.vue";
 import InquirySearchForm from "./components/InquirySearchForm.vue";
@@ -117,11 +118,7 @@ function changePageSize(value: number) {
 
 function generateInquiryCode() {
   const month = formatDate(new Date()).slice(0, 7).replace("-", "");
-  const max = inquiryStore.reduce((value, record) => {
-    const sequence = record.code.match(new RegExp(`^INQ-${month}-(\\d+)$`))?.[1];
-    return Math.max(value, Number(sequence ?? 0));
-  }, 0);
-  return `INQ-${month}-${String(max + 1).padStart(3, "0")}`;
+  return generateNextCode(inquiryStore, `INQ-${month}`);
 }
 
 function openCreateDialog() {
@@ -172,16 +169,4 @@ async function archiveInquiry(record: InquiryRecord) {
   ElMessage.success(t("inquiry.archiveSuccess"));
 }
 
-function formatDate(value: Date) {
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, "0");
-  const day = String(value.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function formatDateTime(value: Date) {
-  const hours = String(value.getHours()).padStart(2, "0");
-  const minutes = String(value.getMinutes()).padStart(2, "0");
-  return `${formatDate(value)} ${hours}:${minutes}`;
-}
 </script>

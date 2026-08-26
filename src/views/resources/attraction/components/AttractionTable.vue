@@ -246,6 +246,7 @@ import type {
   AttractionPriceRecord,
   AttractionRecord,
 } from "@/data/data";
+import { formatMoney } from "@/utils";
 import AttractionSearchForm from "./AttractionSearchForm.vue";
 import { attractionCategoryLabelKeys, attractionItemTypeLabelKeys } from "../options";
 
@@ -286,7 +287,7 @@ function formatPeriod(price: AttractionPriceRecord) {
 }
 function formatPrice(price: AttractionPriceRecord, field: "rackPrice" | "settlementPrice") {
   if (price.isFree) return "免费";
-  return price[field] ? price[field].toFixed(2) : "-";
+  return price[field] ? formatMoney(price[field]) : "-";
 }
 function getGroundOperatorName(id: string) {
   return groundOperatorOptions.value.find((item) => item.id === id)?.name ?? t("resource.groundOperatorProvidedTag");
