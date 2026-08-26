@@ -14,6 +14,7 @@
       :total="filteredInquiries.length"
       :page-num="pageNum"
       :page-size="pageSize"
+      @refresh="resetQuery"
       @update:page-num="pageNum = $event"
       @update:page-size="changePageSize"
       @create="openCreateDialog"

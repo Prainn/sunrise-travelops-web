@@ -3,16 +3,14 @@
     class="page-content"
     shadow="never"
   >
-    <div class="page-toolbar">
-      <div class="page-toolbar__left">
-        <el-button
-          type="primary"
-          @click="emit('create')"
-        >
-          {{ $t("hotel.createHotel") }}
-        </el-button>
-      </div>
-    </div>
+    <TableToolbar @refresh="emit('refresh')">
+      <el-button
+        type="primary"
+        @click="emit('create')"
+      >
+        {{ $t("hotel.createHotel") }}
+      </el-button>
+    </TableToolbar>
 
     <div class="page-table-wrapper">
       <el-table
@@ -216,6 +214,7 @@
 
 <script setup lang="ts">
 import type { HotelRecord, TourismResourceRecord } from "@/data/data";
+import TableToolbar from "@/components/TableToolbar/index.vue";
 import type { RoomPriceRow } from "../types";
 
 const props = defineProps<{
@@ -224,6 +223,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
+  refresh: [];
   create: [];
   edit: [hotel: HotelRecord];
   delete: [hotel: HotelRecord];

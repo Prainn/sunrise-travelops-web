@@ -25,16 +25,14 @@
       class="page-content"
       shadow="never"
     >
-      <div class="page-toolbar">
-        <div class="page-toolbar__left">
-          <el-button
-            type="primary"
-            @click="emit('create')"
-          >
-            {{ $t("common.create") }}
-          </el-button>
-        </div>
-      </div>
+      <TableToolbar @refresh="resetQuery">
+        <el-button
+          type="primary"
+          @click="emit('create')"
+        >
+          {{ $t("common.create") }}
+        </el-button>
+      </TableToolbar>
       <div class="page-table-wrapper">
         <el-table
           :data="pagedRows"
@@ -103,6 +101,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import TableToolbar from "@/components/TableToolbar/index.vue";
 import type { ResourceColumn, ResourceRow } from "../types";
 
 const props = defineProps<{

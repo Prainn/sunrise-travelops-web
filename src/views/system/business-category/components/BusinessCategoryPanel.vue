@@ -11,17 +11,15 @@
       class="page-content"
       shadow="never"
     >
-      <div class="page-toolbar">
-        <div class="page-toolbar__left">
-          <el-button
-            v-hasPerm="'sys:business-category:create'"
-            type="primary"
-            @click="openCreate"
-          >
-            {{ $t("common.create") }}
-          </el-button>
-        </div>
-      </div>
+      <TableToolbar @refresh="resetQuery">
+        <el-button
+          v-hasPerm="'sys:business-category:create'"
+          type="primary"
+          @click="openCreate"
+        >
+          {{ $t("common.create") }}
+        </el-button>
+      </TableToolbar>
       <div class="page-table-wrapper">
         <el-table
           :data="filteredRows"
@@ -199,6 +197,7 @@ import {
 import type { ItineraryItemType } from "@/types/itinerary";
 import { resourceUnitStore } from "@/utils/resource-unit";
 import { transportMethodStore } from "@/utils/transport-method";
+import TableToolbar from "@/components/TableToolbar/index.vue";
 import BusinessCategorySearch from "./BusinessCategorySearch.vue";
 
 interface CategoryItem extends BusinessCategoryOptionRecord {

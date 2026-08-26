@@ -1,7 +1,6 @@
 <template>
   <div class="page-container">
     <el-card
-      ref="tableWrapperRef"
       class="page-search"
       shadow="never"
     >
@@ -41,49 +40,23 @@
       class="page-content"
       shadow="never"
     >
-      <div class="page-toolbar">
-        <div class="page-toolbar__left">
-          <el-button
-            v-has-perm="'sys:dict-item:create'"
-            type="primary"
-            @click="handleCreateClick()"
-          >
-            {{ $t("common.create") }}
-          </el-button>
-          <el-button
-            v-has-perm="'sys:dict-item:delete'"
-            type="danger"
-            :disabled="!hasSelection"
-            @click="handleBatchDelete()"
-          >
-            {{ $t("common.delete") }}
-          </el-button>
-        </div>
-        <div class="page-toolbar__right">
-          <el-tooltip
-            :content="$t('common.refresh')"
-            placement="top"
-          >
-            <el-button
-              class="page-icon-btn"
-              @click="fetchData"
-            >
-              <el-icon><Refresh /></el-icon>
-            </el-button>
-          </el-tooltip>
-          <el-tooltip
-            :content="$t('common.fullscreen')"
-            placement="top"
-          >
-            <el-button
-              class="page-icon-btn"
-              @click="toggleFullscreen"
-            >
-              <el-icon><FullScreen /></el-icon>
-            </el-button>
-          </el-tooltip>
-        </div>
-      </div>
+      <TableToolbar @refresh="fetchData">
+        <el-button
+          v-has-perm="'sys:dict-item:create'"
+          type="primary"
+          @click="handleCreateClick()"
+        >
+          {{ $t("common.create") }}
+        </el-button>
+        <el-button
+          v-has-perm="'sys:dict-item:delete'"
+          type="danger"
+          :disabled="!hasSelection"
+          @click="handleBatchDelete()"
+        >
+          {{ $t("common.delete") }}
+        </el-button>
+      </TableToolbar>
 
       <div class="page-table-wrapper">
         <el-table
@@ -277,8 +250,9 @@
 
 <script setup lang="ts">
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
-import { FullScreen, QuestionFilled, Refresh } from "@element-plus/icons-vue";
+import { QuestionFilled } from "@element-plus/icons-vue";
 
+import TableToolbar from "@/components/TableToolbar/index.vue";
 import { usePageTable, useTableSelection } from "@/composables";
 import { CommonStatus } from "@/enums";
 import { dictionaryService } from "@/services";
@@ -294,9 +268,6 @@ const route = useRoute();
 
 // 当前字典编码，由路由 query 传入。
 const dictCode = ref(String(route.query.dictCode ?? ""));
-
-const tableWrapperRef = ref<HTMLElement | null>(null);
-const { toggle: toggleFullscreen } = useFullscreen(tableWrapperRef);
 
 const queryFormRef = ref<FormInstance>();
 const dictItemFormRef = ref<FormInstance>();

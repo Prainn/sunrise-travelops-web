@@ -11,16 +11,14 @@
       class="page-content"
       shadow="never"
     >
-      <div class="page-toolbar">
-        <div class="page-toolbar__left">
-          <el-button
-            type="primary"
-            @click="emit('create')"
-          >
-            {{ $t("restaurant.createRestaurant") }}
-          </el-button>
-        </div>
-      </div>
+      <TableToolbar @refresh="resetQuery">
+        <el-button
+          type="primary"
+          @click="emit('create')"
+        >
+          {{ $t("restaurant.createRestaurant") }}
+        </el-button>
+      </TableToolbar>
       <div class="page-table-wrapper">
         <el-table
           :data="pagedRows"
@@ -242,6 +240,7 @@ import { useI18n } from "vue-i18n";
 import { tourismResources } from "@/data/data";
 import type { RestaurantPriceRecord, RestaurantPriceUnit, RestaurantRecord } from "@/data/data";
 import { formatMoney } from "@/utils";
+import TableToolbar from "@/components/TableToolbar/index.vue";
 import RestaurantSearchForm from "./RestaurantSearchForm.vue";
 
 const props = defineProps<{ rows: RestaurantRecord[] }>();

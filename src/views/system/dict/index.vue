@@ -37,53 +37,26 @@
     </el-card>
 
     <el-card
-      ref="tableWrapperRef"
       class="page-content"
       shadow="never"
     >
-      <div class="page-toolbar">
-        <div class="page-toolbar__left">
-          <el-button
-            v-has-perm="'sys:dict:create'"
-            type="primary"
-            @click="handleCreateClick()"
-          >
-            {{ $t("common.create") }}
-          </el-button>
-          <el-button
-            v-has-perm="'sys:dict:delete'"
-            type="danger"
-            :disabled="!hasSelection"
-            @click="handleDelete()"
-          >
-            {{ $t("common.delete") }}
-          </el-button>
-        </div>
-        <div class="page-toolbar__right">
-          <el-tooltip
-            :content="$t('common.refresh')"
-            placement="top"
-          >
-            <el-button
-              class="page-icon-btn"
-              @click="fetchData"
-            >
-              <el-icon><Refresh /></el-icon>
-            </el-button>
-          </el-tooltip>
-          <el-tooltip
-            :content="$t('common.fullscreen')"
-            placement="top"
-          >
-            <el-button
-              class="page-icon-btn"
-              @click="toggleFullscreen"
-            >
-              <el-icon><FullScreen /></el-icon>
-            </el-button>
-          </el-tooltip>
-        </div>
-      </div>
+      <TableToolbar @refresh="fetchData">
+        <el-button
+          v-has-perm="'sys:dict:create'"
+          type="primary"
+          @click="handleCreateClick()"
+        >
+          {{ $t("common.create") }}
+        </el-button>
+        <el-button
+          v-has-perm="'sys:dict:delete'"
+          type="danger"
+          :disabled="!hasSelection"
+          @click="handleDelete()"
+        >
+          {{ $t("common.delete") }}
+        </el-button>
+      </TableToolbar>
 
       <div class="page-table-wrapper">
         <el-table
@@ -242,11 +215,10 @@
 </template>
 
 <script setup lang="ts">
-import { useFullscreen } from "@vueuse/core";
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
-import { FullScreen, Refresh } from "@element-plus/icons-vue";
 
 import router from "@/router";
+import TableToolbar from "@/components/TableToolbar/index.vue";
 import { usePageTable, useTableSelection } from "@/composables";
 import { CommonStatus } from "@/enums";
 import { dictionaryService } from "@/services";
@@ -257,9 +229,6 @@ defineOptions({
   name: "Dict",
   inheritAttrs: false,
 });
-
-const tableWrapperRef = ref<HTMLElement | null>(null);
-const { toggle: toggleFullscreen } = useFullscreen(tableWrapperRef);
 
 const queryFormRef = ref<FormInstance>();
 const dictFormRef = ref<FormInstance>();

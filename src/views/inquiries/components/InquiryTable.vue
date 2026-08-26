@@ -3,17 +3,15 @@
     class="page-content"
     shadow="never"
   >
-    <div class="page-toolbar">
-      <div class="page-toolbar__left">
-        <el-button
-          v-hasPerm="'inquiry:create'"
-          type="primary"
-          @click="emit('create')"
-        >
-          {{ $t("inquiry.createInquiry") }}
-        </el-button>
-      </div>
-    </div>
+    <TableToolbar @refresh="emit('refresh')">
+      <el-button
+        v-hasPerm="'inquiry:create'"
+        type="primary"
+        @click="emit('create')"
+      >
+        {{ $t("inquiry.createInquiry") }}
+      </el-button>
+    </TableToolbar>
     <div class="page-table-wrapper">
       <el-table
         :data="rows"
@@ -155,11 +153,13 @@
 
 <script setup lang="ts">
 import type { InquiryRecord, InquiryStatus } from "@/data/data";
+import TableToolbar from "@/components/TableToolbar/index.vue";
 import { INQUIRY_STATUS_TAG_TYPES } from "../options";
 import { isInquiryReadOnly } from "../inquiry-workflow";
 
 defineProps<{ rows: InquiryRecord[]; total: number; pageNum: number; pageSize: number }>();
 const emit = defineEmits<{
+  refresh: [];
   create: [];
   view: [record: InquiryRecord];
   edit: [record: InquiryRecord];

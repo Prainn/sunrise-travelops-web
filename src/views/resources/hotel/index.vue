@@ -39,6 +39,7 @@
     <HotelTable
       :rows="filteredHotels"
       :ground-operator-options="groundOperatorOptions"
+      @refresh="resetQuery"
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
