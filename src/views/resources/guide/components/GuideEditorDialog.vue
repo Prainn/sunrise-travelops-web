@@ -113,6 +113,19 @@
             style="width: 100%"
           />
         </el-form-item>
+        <el-form-item
+          :label="$t('resource.priceUnit')"
+          prop="unit"
+        >
+          <el-select v-model="form.unit">
+            <el-option
+              v-for="option in unitOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item :label="$t('guide.hasLaborContract')">
           <el-switch v-model="form.hasLaborContract" />
         </el-form-item>
@@ -205,6 +218,7 @@ import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules, type UploadFile } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { tourismResources, type GuideRecord } from "@/data/data";
+import { getResourceUnitOptions } from "@/utils/resource-unit";
 
 const props = defineProps<{ modelValue: boolean; record: GuideRecord; isEditing: boolean }>();
 const emit = defineEmits<{
@@ -212,12 +226,13 @@ const emit = defineEmits<{
   submit: [record: GuideRecord];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const formRef = ref<FormInstance>();
 const form = reactive<GuideRecord>({ ...props.record, languages: [...props.record.languages] });
 const isVisible = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) });
 const languageOptions = ["中文", "英文", "日文", "韩文", "泰文"];
 const groundOperatorOptions = computed(() => tourismResources.supplier.filter((item) => item.status === "enabled"));
+const unitOptions = computed(() => getResourceUnitOptions("guide", locale.value));
 const rules = computed<FormRules>(() => ({
   certificateNo: [{ required: true, message: t("guide.certificateNoRequired"), trigger: "blur" }],
   name: [{ required: true, message: t("guide.nameRequired"), trigger: "blur" }],
@@ -227,6 +242,7 @@ const rules = computed<FormRules>(() => ({
   employmentType: [{ required: true, message: t("guide.employmentTypeRequired"), trigger: "change" }],
   identityNumber: [{ required: true, message: t("guide.identityNumberRequired"), trigger: "blur" }],
   phone: [{ required: true, message: t("guide.phoneRequired"), trigger: "blur" }],
+  unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
   groundOperatorId: [{ required: form.isGroundOperatorProvided, message: t("resource.groundOperatorRequired"), trigger: "change" }],
 }));
 

@@ -20,12 +20,17 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+import { getResourceUnitOptions } from "@/utils/resource-unit";
 import ResourceEditorDialog from "../components/ResourceEditorDialog.vue";
 import ResourceTable from "../components/ResourceTable.vue";
 import type { ResourceColumn, ResourceFormField } from "../types";
 import { useResourceMaintenance } from "../useResourceMaintenance";
 
 defineOptions({ name: "TransportResource" });
+
+const { locale } = useI18n();
 
 const columns: ResourceColumn[] = [
   {
@@ -58,7 +63,7 @@ const columns: ResourceColumn[] = [
     "labelKey": "resource.driver"
   }
 ];
-const fields: ResourceFormField[] = [
+const fields = computed<ResourceFormField[]>(() => [
   {
     "prop": "name",
     "labelKey": "resource.vehicleModel",
@@ -79,6 +84,13 @@ const fields: ResourceFormField[] = [
     "type": "number"
   },
   {
+    "prop": "unit",
+    "labelKey": "resource.priceUnit",
+    "required": true,
+    "type": "select",
+    "options": getResourceUnitOptions("vehicle", locale.value)
+  },
+  {
     "prop": "city",
     "labelKey": "resource.city"
   },
@@ -95,6 +107,6 @@ const fields: ResourceFormField[] = [
     "labelKey": "common.remark",
     "type": "textarea"
   }
-];
+]);
 const { rows, record, isDialogVisible, isEditing, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance("transport", "VEH");
 </script>

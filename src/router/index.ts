@@ -94,6 +94,17 @@ export const constantRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: "business-category",
+        name: "BusinessCategory",
+        component: () => import("@/views/system/business-category/index.vue"),
+        meta: {
+          title: "businessCategories",
+          icon: "el-icon-Grid",
+          keepAlive: true,
+          perms: ["sys:business-category:list"],
+        },
+      },
+      {
         path: "user",
         name: "User",
         component: () => import("@/views/system/user/index.vue"),

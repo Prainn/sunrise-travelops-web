@@ -44,6 +44,19 @@
       <el-form-item :label="$t('resource.cuisine')">
         <el-input v-model.trim="form.cuisine" />
       </el-form-item>
+      <el-form-item
+        :label="$t('resource.priceUnit')"
+        prop="unit"
+      >
+        <el-select v-model="form.unit">
+          <el-option
+            v-for="option in unitOptions"
+            :key="option.value"
+            :label="option.label"
+            :value="option.value"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item :label="$t('resource.contact')">
         <el-input v-model.trim="form.contact" />
       </el-form-item>
@@ -91,6 +104,7 @@ import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { YUNNAN_TOURISM_AREA_OPTIONS } from "@/constants/yunnan-tourism-regions";
 import type { RestaurantRecord } from "@/data/data";
+import { getResourceUnitOptions } from "@/utils/resource-unit";
 
 const props = defineProps<{ modelValue: boolean; record: RestaurantRecord; isEditing: boolean }>();
 const emit = defineEmits<{
@@ -98,13 +112,15 @@ const emit = defineEmits<{
   submit: [record: RestaurantRecord];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const formRef = ref<FormInstance>();
 const form = reactive<RestaurantRecord>({ ...props.record });
 const isVisible = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) });
+const unitOptions = computed(() => getResourceUnitOptions("restaurant", locale.value));
 const rules = computed<FormRules>(() => ({
   name: [{ required: true, message: t("restaurant.nameRequired"), trigger: "blur" }],
   city: [{ required: true, message: t("restaurant.cityRequired"), trigger: "change" }],
+  unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
 }));
 
 watch(() => props.record, (record) => Object.assign(form, record), { deep: true });

@@ -81,10 +81,10 @@
                   >
                     <template #default="priceScope">
                       <el-tag
-                        :type="priceScope.row.unit === 'per-person' ? 'success' : 'primary'"
+                        :type="priceScope.row.unit === 'personMeal' ? 'success' : 'primary'"
                         effect="plain"
                       >
-                        {{ $t(priceScope.row.unit === "per-person" ? "restaurant.perPerson" : "restaurant.perTable") }}
+                        {{ $t(priceScope.row.unit === "personMeal" ? "restaurant.perPerson" : "restaurant.perTable") }}
                       </el-tag>
                     </template>
                   </el-table-column>
@@ -103,7 +103,7 @@
                     align="center"
                   >
                     <template #default="priceScope">
-                      {{ priceScope.row.unit === "per-person" ? "-" : priceScope.row.dinerCount }}
+                      {{ priceScope.row.unit === "personMeal" ? "-" : priceScope.row.dinerCount }}
                     </template>
                   </el-table-column>
                   <el-table-column

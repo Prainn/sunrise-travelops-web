@@ -72,6 +72,19 @@
           :precision="2"
         />
       </el-form-item>
+      <el-form-item
+        :label="$t('resource.priceUnit')"
+        prop="unit"
+      >
+        <el-select v-model="form.unit">
+          <el-option
+            v-for="option in unitOptions"
+            :key="option.value"
+            :label="option.label"
+            :value="option.value"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item :label="$t('resource.isGroundOperatorProvided')">
         <el-switch
           v-model="form.isGroundOperatorProvided"
@@ -119,6 +132,7 @@ import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { tourismResources, type AttractionPriceItemType, type AttractionPriceRecord } from "@/data/data";
+import { getResourceUnitOptions } from "@/utils/resource-unit";
 
 type AttractionPriceForm = AttractionPriceRecord & { dates: string[] };
 
@@ -133,7 +147,7 @@ const emit = defineEmits<{
   submit: [record: AttractionPriceRecord];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const formRef = ref<FormInstance>();
 const form = reactive<AttractionPriceForm>({ ...props.record, dates: [] });
 const isVisible = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) });
@@ -145,11 +159,13 @@ const itemTypeOptions: Array<{ value: AttractionPriceItemType; labelKey: string 
   { value: "package", labelKey: "attraction.itemPackage" },
 ];
 const groundOperatorOptions = computed(() => tourismResources.supplier.filter((item) => item.status === "enabled"));
+const unitOptions = computed(() => getResourceUnitOptions("attraction", locale.value));
 const rules = computed<FormRules>(() => ({
   itemType: [{ required: true, message: t("attraction.itemTypeRequired"), trigger: "change" }],
   itemName: [{ required: true, message: t("attraction.itemNameRequired"), trigger: "blur" }],
   audience: [{ required: true, message: t("attraction.audienceRequired"), trigger: "blur" }],
   periodName: [{ required: true, message: t("hotel.periodRequired"), trigger: "blur" }],
+  unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
   groundOperatorId: [{ required: form.isGroundOperatorProvided, message: t("resource.groundOperatorRequired"), trigger: "change" }],
 }));
 

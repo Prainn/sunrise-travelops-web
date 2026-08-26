@@ -14,9 +14,11 @@ export function useResourceMaintenance(type: TourismResourceType, prefix: string
   const isEditing = computed(() => Boolean(editingId.value));
 
   function createEmptyRecord(): TourismResourceRecord {
-    return {
+    const value: TourismResourceRecord = {
       id: "", code: "", name: "", city: "", countryOrRegion: "", contact: "", email: "", phone: "", status: "enabled", remark: "",
     };
+    if (type === "transport") value.unit = "vehicleDay";
+    return value;
   }
 
   function generateCode() {

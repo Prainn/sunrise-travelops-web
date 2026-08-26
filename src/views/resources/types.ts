@@ -8,7 +8,8 @@ export interface ResourceColumn {
 
 export interface ResourceFormField extends ResourceColumn {
   required?: boolean;
-  type?: "text" | "number" | "textarea";
+  type?: "text" | "number" | "textarea" | "select";
+  options?: Array<{ label: string; value: string }>;
 }
 
 export type ResourceRow = TourismResourceRecord;

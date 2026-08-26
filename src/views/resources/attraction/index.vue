@@ -51,10 +51,10 @@ const attractionForm = ref<AttractionRecord>(createEmptyAttraction());
 const priceForm = ref<AttractionPriceRecord>(createEmptyPrice());
 
 function createEmptyAttraction(): AttractionRecord {
-  return { id: "", code: "", name: "", area: "", category: "scenic", restroomLocation: "", remark: "", status: "enabled", prices: [] };
+  return { id: "", code: "", name: "", area: "", category: "scenic", restroomLocation: "", remark: "", unit: "personVisit", status: "enabled", prices: [] };
 }
 function createEmptyPrice(): AttractionPriceRecord {
-  return { id: "", itemType: "ticket", itemName: "景区门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 0, settlementPrice: 0, isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" };
+  return { id: "", itemType: "ticket", itemName: "景区门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 0, settlementPrice: 0, unit: "personVisit", isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" };
 }
 function generateAttractionCode() {
   const max = attractionStore.reduce((value, record) => Math.max(value, Number(record.code.match(/^ATT-(\d+)$/)?.[1] ?? 0)), 0);
@@ -72,7 +72,10 @@ function openEditDialog(record: AttractionRecord) {
 }
 function saveAttraction(record: AttractionRecord) {
   const current = attractionStore.find((item) => item.id === editingAttractionId.value);
-  if (current) Object.assign(current, record, { prices: current.prices });
+  if (current) {
+    Object.assign(current, record, { prices: current.prices });
+    current.prices.forEach((price) => { price.unit = current.unit; });
+  }
   else attractionStore.push({ ...record, id: `attraction-${Date.now()}`, prices: [] });
   isAttractionDialogVisible.value = false;
   ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
@@ -95,7 +98,7 @@ async function deleteAttraction(record: AttractionRecord) {
 function openCreatePriceDialog(record: AttractionRecord) {
   selectedAttraction.value = record;
   editingPriceId.value = "";
-  priceForm.value = createEmptyPrice();
+  priceForm.value = { ...createEmptyPrice(), unit: record.unit };
   isPriceDialogVisible.value = true;
 }
 function openEditPriceDialog(record: AttractionRecord, price: AttractionPriceRecord) {

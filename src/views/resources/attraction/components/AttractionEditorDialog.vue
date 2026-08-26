@@ -52,6 +52,19 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item
+        :label="$t('resource.priceUnit')"
+        prop="unit"
+      >
+        <el-select v-model="form.unit">
+          <el-option
+            v-for="option in unitOptions"
+            :key="option.value"
+            :label="option.label"
+            :value="option.value"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item :label="$t('attraction.restroomLocation')">
         <el-input
           v-model.trim="form.restroomLocation"
@@ -97,6 +110,7 @@ import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { YUNNAN_TOURISM_AREA_OPTIONS } from "@/constants/yunnan-tourism-regions";
 import type { AttractionRecord } from "@/data/data";
+import { getResourceUnitOptions } from "@/utils/resource-unit";
 import { attractionCategoryOptions } from "../options";
 
 const props = defineProps<{
@@ -110,14 +124,16 @@ const emit = defineEmits<{
   submit: [record: AttractionRecord];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const formRef = ref<FormInstance>();
 const form = reactive<AttractionRecord>({ ...props.record });
 const isVisible = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) });
+const unitOptions = computed(() => getResourceUnitOptions("attraction", locale.value));
 const rules = computed<FormRules>(() => ({
   name: [{ required: true, message: t("attraction.nameRequired"), trigger: "blur" }],
   area: [{ required: true, message: t("attraction.areaRequired"), trigger: "change" }],
   category: [{ required: true, message: t("attraction.categoryRequired"), trigger: "change" }],
+  unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
 }));
 
 watch(() => props.record, (record) => Object.assign(form, record), { deep: true });

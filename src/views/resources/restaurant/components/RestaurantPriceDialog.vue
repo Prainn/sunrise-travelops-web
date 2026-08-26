@@ -21,17 +21,17 @@
         :label="$t('restaurant.priceUnit')"
         prop="unit"
       >
-        <el-radio-group
+        <el-select
           v-model="form.unit"
           @change="changePriceUnit"
         >
-          <el-radio value="per-person">
-            {{ $t("restaurant.perPerson") }}
-          </el-radio>
-          <el-radio value="per-table">
-            {{ $t("restaurant.perTable") }}
-          </el-radio>
-        </el-radio-group>
+          <el-option
+            v-for="option in unitOptions"
+            :key="option.value"
+            :label="option.label"
+            :value="option.value"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item
         :label="$t('restaurant.dishDetails')"
@@ -56,7 +56,7 @@
         />
       </el-form-item>
       <el-form-item
-        v-if="form.unit === 'per-table'"
+        v-if="form.unit === 'table'"
         :label="$t('restaurant.dinerCount')"
       >
         <el-input-number
@@ -113,6 +113,7 @@ import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { tourismResources, type RestaurantPriceRecord } from "@/data/data";
+import { getResourceUnitOptions } from "@/utils/resource-unit";
 
 const props = defineProps<{ modelValue: boolean; record: RestaurantPriceRecord; isEditing: boolean }>();
 const emit = defineEmits<{
@@ -120,11 +121,12 @@ const emit = defineEmits<{
   submit: [record: RestaurantPriceRecord];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const formRef = ref<FormInstance>();
 const form = reactive<RestaurantPriceRecord>({ ...props.record });
 const isVisible = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) });
 const groundOperatorOptions = computed(() => tourismResources.supplier.filter((item) => item.status === "enabled"));
+const unitOptions = computed(() => getResourceUnitOptions("restaurant", locale.value));
 const rules = computed<FormRules>(() => ({
   menuName: [{ required: true, message: t("restaurant.menuNameRequired"), trigger: "blur" }],
   dishDetails: [{ required: true, message: t("restaurant.dishDetailsRequired"), trigger: "blur" }],
@@ -140,7 +142,7 @@ function changeProvider(value: string | number | boolean) {
 }
 
 function changePriceUnit(value: string | number | boolean | undefined) {
-  form.dinerCount = value === "per-table" ? 10 : 0;
+  form.dinerCount = value === "table" ? 10 : 0;
 }
 
 async function handleSubmit() {

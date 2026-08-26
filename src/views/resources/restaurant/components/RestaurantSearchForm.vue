@@ -32,12 +32,10 @@
           clearable
         >
           <el-option
-            :label="$t('restaurant.perPerson')"
-            value="per-person"
-          />
-          <el-option
-            :label="$t('restaurant.perTable')"
-            value="per-table"
+            v-for="option in unitOptions"
+            :key="option.value"
+            :label="option.label"
+            :value="option.value"
           />
         </el-select>
       </el-form-item>
@@ -52,7 +50,9 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import type { RestaurantPriceUnit } from "@/data/data";
+import { getResourceUnitOptions } from "@/utils/resource-unit";
 
 const props = defineProps<{
   keywords: string;
@@ -66,6 +66,8 @@ const emit = defineEmits<{
   "update:priceUnit": [value: RestaurantPriceUnit | ""];
   reset: [];
 }>();
+const { locale } = useI18n();
+const unitOptions = computed(() => getResourceUnitOptions("restaurant", locale.value));
 
 const keywords = computed({
   get: () => props.keywords,

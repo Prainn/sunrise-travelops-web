@@ -49,13 +49,13 @@ const priceForm = ref<RestaurantPriceRecord>(createEmptyPrice());
 function createEmptyRestaurant(): RestaurantRecord {
   return {
     id: "", code: "", name: "", city: "", cuisine: "", contact: "", phone: "", address: "",
-    remark: "", status: "enabled", prices: [],
+    remark: "", unit: "personMeal", status: "enabled", prices: [],
   };
 }
 
 function createEmptyPrice(): RestaurantPriceRecord {
   return {
-    id: "", menuName: "", dishDetails: "", unit: "per-person", price: 0, dinerCount: 10, remark: "",
+    id: "", menuName: "", dishDetails: "", unit: "personMeal", price: 0, dinerCount: 10, remark: "",
     isGroundOperatorProvided: false, groundOperatorId: "",
   };
 }
@@ -104,7 +104,7 @@ async function deleteRestaurant(record: RestaurantRecord) {
 function openCreatePriceDialog(record: RestaurantRecord) {
   selectedRestaurant.value = record;
   editingPriceId.value = "";
-  priceForm.value = createEmptyPrice();
+  priceForm.value = { ...createEmptyPrice(), unit: record.unit };
   isPriceDialogVisible.value = true;
 }
 

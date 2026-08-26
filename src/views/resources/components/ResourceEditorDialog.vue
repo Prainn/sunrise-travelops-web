@@ -32,6 +32,17 @@
           controls-position="right"
           @update:model-value="form[field.prop] = $event ?? 0"
         />
+        <el-select
+          v-else-if="field.type === 'select'"
+          v-model="form[field.prop]"
+        >
+          <el-option
+            v-for="option in field.options"
+            :key="option.value"
+            :label="option.label"
+            :value="option.value"
+          />
+        </el-select>
         <el-input
           v-else
           v-model.trim="form[field.prop]"
@@ -86,7 +97,11 @@ const { t } = useI18n();
 const formRef = ref<FormInstance>();
 const form = reactive<ResourceRow>({ ...props.record });
 const isVisible = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) });
-const rules = computed<FormRules>(() => Object.fromEntries(props.fields.filter((field) => field.required).map((field) => [field.prop, [{ required: true, message: t("resource.fieldRequired", { field: t(field.labelKey) }), trigger: "blur" }]])));
+const rules = computed<FormRules>(() => Object.fromEntries(props.fields.filter((field) => field.required).map((field) => [field.prop, [{
+  required: true,
+  message: t("resource.fieldRequired", { field: t(field.labelKey) }),
+  trigger: field.type === "select" ? "change" : "blur",
+}]])));
 
 watch(() => props.record, (record) => Object.assign(form, record), { deep: true });
 

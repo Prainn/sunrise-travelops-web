@@ -85,6 +85,19 @@
             filterable
           />
         </el-form-item>
+        <el-form-item
+          :label="$t('resource.priceUnit')"
+          prop="unit"
+        >
+          <el-select v-model="hotelForm.unit">
+            <el-option
+              v-for="option in hotelUnitOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item :label="$t('resource.starRating')">
           <el-radio-group v-model="hotelForm.rating">
             <el-radio value="三星">
@@ -194,6 +207,19 @@
             :precision="2"
           />
         </el-form-item>
+        <el-form-item
+          :label="$t('resource.priceUnit')"
+          prop="unit"
+        >
+          <el-select v-model="priceForm.unit">
+            <el-option
+              v-for="option in hotelUnitOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item :label="$t('hotel.minimumRooms')">
           <el-input-number
             v-model="priceForm.minimumRooms"
@@ -248,6 +274,7 @@ import {
   type HotelPricePlanRecord,
   type HotelRecord,
 } from "@/data/data";
+import { getResourceUnitOptions } from "@/utils/resource-unit";
 import HotelTable from "./components/HotelTable.vue";
 import type { RoomPriceRow } from "./types";
 
@@ -255,7 +282,7 @@ type HotelForm = HotelRecord & { cityPath: string[] };
 
 defineOptions({ name: "Hotel" });
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const hotelStore = reactive(hotels);
 const keywords = ref("");
 const city = ref("");
@@ -275,6 +302,7 @@ const cityOptions = computed(() => [...new Set(hotelStore.map((hotel) => hotel.c
 const groundOperatorOptions = computed(() =>
   tourismResources.supplier.filter((item) => item.status === "enabled")
 );
+const hotelUnitOptions = computed(() => getResourceUnitOptions("hotel", locale.value));
 const filteredHotels = computed(() => {
   const query = keywords.value.toLowerCase();
   return hotelStore.filter((hotel) => {
@@ -290,11 +318,13 @@ const filteredHotels = computed(() => {
 const hotelRules: FormRules = {
   name: [{ required: true, message: t("hotel.nameRequired"), trigger: "blur" }],
   cityPath: [{ required: true, message: t("hotel.cityRequired"), trigger: "change" }],
+  unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
 };
 const priceRules = computed<FormRules>(() => ({
   roomType: [{ required: true, message: t("hotel.roomTypeRequired"), trigger: "blur" }],
   periodName: [{ required: true, message: t("hotel.periodRequired"), trigger: "blur" }],
   dates: [{ required: true, message: t("hotel.datesRequired"), trigger: "change" }],
+  unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
   groundOperatorId: [
     {
       required: priceForm.isGroundOperatorProvided,
@@ -318,6 +348,7 @@ function createEmptyHotel(): HotelForm {
     address: "",
     phone: "",
     nearby: "",
+    unit: "roomNight",
     status: "enabled",
     roomTypes: [],
   };
@@ -330,6 +361,7 @@ function createEmptyPriceForm() {
     dates: [] as string[],
     individualPrice: 0,
     groupPrice: 0,
+    unit: "roomNight",
     minimumRooms: 5,
     isGroundOperatorProvided: false,
     groundOperatorId: "",
@@ -361,7 +393,7 @@ function openPriceDialog(hotel: HotelRecord) {
   selectedHotel.value = hotel;
   editingRoomId.value = "";
   editingPricePlanId.value = "";
-  Object.assign(priceForm, createEmptyPriceForm());
+  Object.assign(priceForm, createEmptyPriceForm(), { unit: hotel.unit });
   isPriceDialogVisible.value = true;
 }
 function openEditPriceDialog(hotel: HotelRecord, row: RoomPriceRow) {
@@ -375,6 +407,7 @@ function openEditPriceDialog(hotel: HotelRecord, row: RoomPriceRow) {
     dates: [row.startDate, row.endDate],
     individualPrice: row.individualPrice,
     groupPrice: row.groupPrice,
+    unit: row.unit,
     minimumRooms: row.minimumRooms,
     isGroundOperatorProvided: row.isGroundOperatorProvided,
     groundOperatorId: row.groundOperatorId,
@@ -401,7 +434,10 @@ async function saveHotel() {
   formValue.province = cityPath[0];
   formValue.city = cityPath[1];
   const current = hotelStore.find((hotel) => hotel.id === editingId.value);
-  if (current) Object.assign(current, formValue, { roomTypes: current.roomTypes });
+  if (current) {
+    Object.assign(current, formValue, { roomTypes: current.roomTypes });
+    current.roomTypes.forEach((room) => room.pricePlans.forEach((price) => { price.unit = current.unit; }));
+  }
   else hotelStore.push({ ...formValue, id: `hotel-${Date.now()}`, roomTypes: [] });
   isHotelDialogVisible.value = false;
   ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
@@ -443,6 +479,7 @@ function createPricePlanValue(id: string): HotelPricePlanRecord {
     endDate: priceForm.dates[1],
     individualPrice: priceForm.individualPrice,
     groupPrice: priceForm.groupPrice,
+    unit: priceForm.unit,
     minimumRooms: priceForm.minimumRooms,
     isGroundOperatorProvided: priceForm.isGroundOperatorProvided,
     groundOperatorId: priceForm.groundOperatorId,

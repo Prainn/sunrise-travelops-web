@@ -35,7 +35,7 @@ const guideForm = ref<GuideRecord>(createEmptyGuide());
 function createEmptyGuide(): GuideRecord {
   return {
     id: "", code: "", certificateNo: "", name: "", gender: "male", age: 18, languages: [],
-    employmentType: "full-time", identityNumber: "", phone: "", dailyPrice: 0, hasLaborContract: false,
+    employmentType: "full-time", identityNumber: "", phone: "", dailyPrice: 0, unit: "guideDay", hasLaborContract: false,
     isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "", status: "enabled",
   };
 }
