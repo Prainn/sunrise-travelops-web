@@ -1,15 +1,9 @@
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import type { InquiryRecord } from "@/data/data";
-import type { ItineraryPriceUnit, ItineraryRecord } from "@/types/itinerary";
-
-const UNIT_LABELS: Record<ItineraryPriceUnit, string> = {
-  roomNight: "间夜",
-  person: "人",
-  table: "桌",
-  vehicleDay: "车/天",
-  guideDay: "导游/天",
-};
+import type { ItineraryRecord } from "@/types/itinerary";
+import { getResourceUnitName } from "@/utils/resource-unit";
+import { getTransportMethodNames } from "@/utils/transport-method";
 
 const PAGE_MARGIN_MM = 10;
 const PAGE_CONTENT_WIDTH_MM = 190;
@@ -96,7 +90,7 @@ function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord) {
   const daySections = itinerary.dailyPlans.map((day) => `
     <article data-pdf-block style="padding:16px;border:1px solid #dcdfe6;border-radius:8px;box-sizing:border-box;">
       <h2 style="margin:0 0 8px;font-size:18px;">D${day.dayNumber} · ${escapeHtml(day.departure)} → ${escapeHtml(day.destination)}</h2>
-      <div style="color:#606266;font-size:13px;">${escapeHtml(day.date)} · ${escapeHtml(day.transport)}</div>
+      <div style="color:#606266;font-size:13px;">${escapeHtml(day.date)} · ${escapeHtml(getTransportMethodNames(day.transport))}</div>
       <h3 style="margin:12px 0 6px;font-size:15px;">${escapeHtml(day.title)}</h3>
       <p style="margin:0 0 12px;line-height:1.7;white-space:pre-wrap;">${escapeHtml(day.description)}</p>
       <div style="margin-bottom:12px;color:#606266;font-size:13px;">用餐：${escapeHtml(day.mealSummary)} · 住宿：${escapeHtml(day.accommodationSummary)}</div>
@@ -104,7 +98,7 @@ function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord) {
         <thead><tr><th style="${cellStyle()}">项目</th><th style="${cellStyle()}">数量</th><th style="${cellStyle()}">价格</th><th style="${cellStyle()}">小计</th></tr></thead>
         <tbody>${day.items.map((item) => `<tr>
           <td style="${cellStyle()}">${escapeHtml(item.resourceName)}<br><small>${escapeHtml(item.priceName)}</small></td>
-          <td style="${cellStyle()}">${item.quantity} ${UNIT_LABELS[item.unit]}</td>
+          <td style="${cellStyle()}">${item.quantity} ${escapeHtml(getResourceUnitName(item.unit))}</td>
           <td style="${cellStyle()}">¥${formatMoney(item.unitPrice ?? 0)}</td>
           <td style="${cellStyle()}">¥${formatMoney(item.totalPrice)}</td>
         </tr>`).join("")}</tbody>

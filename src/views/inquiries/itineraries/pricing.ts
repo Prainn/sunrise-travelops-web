@@ -19,7 +19,7 @@ export interface ResourcePriceOption {
 export interface ResourcePriceDetail {
   labelKey: string;
   value: string | number;
-  format?: "money" | "translation";
+  format?: "money" | "translation" | "unit";
 }
 
 const attractionCategoryLabelKeys = {
@@ -56,7 +56,7 @@ export const resourcePriceOptions: ResourcePriceOption[] = [
     priceName: `${roomType.name} · ${price.periodName}`,
     providerName: providerName(price.isGroundOperatorProvided, price.groundOperatorId),
     city: hotel.city,
-    unit: "roomNight" as const,
+    unit: price.unit,
     unitCost: price.groupPrice,
     details: [
       { labelKey: "resource.code", value: hotel.code },
@@ -75,7 +75,7 @@ export const resourcePriceOptions: ResourcePriceOption[] = [
       { labelKey: "hotel.individualPrice", value: price.individualPrice, format: "money" as const },
       { labelKey: "hotel.groupPrice", value: price.groupPrice, format: "money" as const },
       { labelKey: "hotel.minimumRooms", value: price.minimumRooms },
-      { labelKey: "itinerary.priceUnit", value: "itinerary.units.roomNight", format: "translation" as const },
+      { labelKey: "itinerary.priceUnit", value: price.unit, format: "unit" as const },
       { labelKey: "itinerary.provider", value: providerName(price.isGroundOperatorProvided, price.groundOperatorId) },
     ],
     searchText: `${hotel.name} ${hotel.city} ${roomType.name} ${price.periodName}`,
@@ -89,7 +89,7 @@ export const resourcePriceOptions: ResourcePriceOption[] = [
     priceName: `${price.itemName} · ${price.audience} · ${price.periodName}`,
     providerName: providerName(price.isGroundOperatorProvided, price.groundOperatorId),
     city: attraction.area,
-    unit: "person" as const,
+    unit: price.unit,
     unitCost: price.settlementPrice,
     details: [
       { labelKey: "resource.code", value: attraction.code },
@@ -107,7 +107,7 @@ export const resourcePriceOptions: ResourcePriceOption[] = [
       { labelKey: "attraction.settlementPrice", value: price.settlementPrice, format: "money" as const },
       { labelKey: "attraction.freeTicket", value: price.isFree ? "common.yes" : "common.no", format: "translation" as const },
       { labelKey: "attraction.priceNote", value: price.priceNote },
-      { labelKey: "itinerary.priceUnit", value: "itinerary.units.person", format: "translation" as const },
+      { labelKey: "itinerary.priceUnit", value: price.unit, format: "unit" as const },
       { labelKey: "itinerary.provider", value: providerName(price.isGroundOperatorProvided, price.groundOperatorId) },
     ],
     searchText: `${attraction.name} ${attraction.area} ${price.itemName} ${price.audience}`,
@@ -121,7 +121,7 @@ export const resourcePriceOptions: ResourcePriceOption[] = [
     priceName: price.menuName,
     providerName: providerName(price.isGroundOperatorProvided, price.groundOperatorId),
     city: restaurant.city,
-    unit: price.unit === "per-person" ? "person" as const : "table" as const,
+    unit: price.unit,
     unitCost: price.price,
     details: [
       { labelKey: "resource.code", value: restaurant.code },
@@ -134,7 +134,7 @@ export const resourcePriceOptions: ResourcePriceOption[] = [
       { labelKey: "itinerary.resourceRemark", value: restaurant.remark },
       { labelKey: "restaurant.menuName", value: price.menuName },
       { labelKey: "restaurant.dishDetails", value: price.dishDetails ?? "" },
-      { labelKey: "restaurant.priceUnit", value: price.unit === "per-person" ? "restaurant.perPerson" : "restaurant.perTable", format: "translation" as const },
+      { labelKey: "restaurant.priceUnit", value: price.unit, format: "unit" as const },
       { labelKey: "restaurant.dinerCount", value: price.dinerCount },
       { labelKey: "restaurant.price", value: price.price, format: "money" as const },
       { labelKey: "itinerary.priceRemark", value: price.remark },
@@ -151,7 +151,7 @@ export const resourcePriceOptions: ResourcePriceOption[] = [
     priceName: "车辆日成本",
     providerName: "资源库直采",
     city: resource.city,
-    unit: "vehicleDay" as const,
+    unit: String(resource.unit),
     unitCost: Number(resource.dailyPrice ?? 0),
     details: [
       { labelKey: "resource.code", value: resource.code },
@@ -165,7 +165,7 @@ export const resourcePriceOptions: ResourcePriceOption[] = [
       { labelKey: "resource.phone", value: resource.phone },
       { labelKey: "resource.email", value: resource.email },
       { labelKey: "common.remark", value: resource.remark },
-      { labelKey: "itinerary.priceUnit", value: "itinerary.units.vehicleDay", format: "translation" as const },
+      { labelKey: "itinerary.priceUnit", value: String(resource.unit), format: "unit" as const },
       { labelKey: "itinerary.provider", value: "资源库直采" },
     ],
     searchText: `${resource.name} ${resource.city} ${resource.plateNumber ?? ""}`,
@@ -179,7 +179,7 @@ export const resourcePriceOptions: ResourcePriceOption[] = [
     priceName: `${guide.languages.join("/")} · 导游日成本`,
     providerName: providerName(guide.isGroundOperatorProvided, guide.groundOperatorId),
     city: "",
-    unit: "guideDay" as const,
+    unit: guide.unit,
     unitCost: guide.dailyPrice,
     details: [
       { labelKey: "resource.code", value: guide.code },
@@ -195,7 +195,7 @@ export const resourcePriceOptions: ResourcePriceOption[] = [
       { labelKey: "guide.hasLaborContract", value: guide.hasLaborContract ? "common.yes" : "common.no", format: "translation" as const },
       { labelKey: "guide.licensePhoto", value: guide.licensePhotoUrl ? "common.yes" : "common.no", format: "translation" as const },
       { labelKey: "common.remark", value: guide.remark },
-      { labelKey: "itinerary.priceUnit", value: "itinerary.units.guideDay", format: "translation" as const },
+      { labelKey: "itinerary.priceUnit", value: guide.unit, format: "unit" as const },
       { labelKey: "itinerary.provider", value: providerName(guide.isGroundOperatorProvided, guide.groundOperatorId) },
     ],
     searchText: `${guide.name} ${guide.languages.join(" ")}`,

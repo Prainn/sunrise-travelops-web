@@ -51,54 +51,11 @@
       </div>
     </template>
 
-    <div class="day-card__fields">
-      <el-input
-        :model-value="day.departure"
-        :disabled="!contentEditable"
-        :placeholder="$t('itinerary.departure')"
-        @update:model-value="updateField('departure', $event)"
-      />
-      <el-input
-        :model-value="day.destination"
-        :disabled="!contentEditable"
-        :placeholder="$t('itinerary.destination')"
-        @update:model-value="updateField('destination', $event)"
-      />
-      <el-input
-        :model-value="day.transport"
-        :disabled="!contentEditable"
-        :placeholder="$t('itinerary.transport')"
-        @update:model-value="updateField('transport', $event)"
-      />
-      <el-input
-        class="day-card__title-input"
-        :model-value="day.title"
-        :disabled="!contentEditable"
-        :placeholder="$t('itinerary.dayTitle')"
-        @update:model-value="updateField('title', $event)"
-      />
-      <el-input
-        class="day-card__description"
-        :model-value="day.description"
-        :disabled="!contentEditable"
-        type="textarea"
-        :rows="2"
-        :placeholder="$t('itinerary.dayDescription')"
-        @update:model-value="updateField('description', $event)"
-      />
-      <el-input
-        :model-value="day.mealSummary"
-        :disabled="!contentEditable"
-        :placeholder="$t('itinerary.mealSummary')"
-        @update:model-value="updateField('mealSummary', $event)"
-      />
-      <el-input
-        :model-value="day.accommodationSummary"
-        :disabled="!contentEditable"
-        :placeholder="$t('itinerary.accommodationSummary')"
-        @update:model-value="updateField('accommodationSummary', $event)"
-      />
-    </div>
+    <ItineraryDayForm
+      :day="day"
+      :editable="contentEditable"
+      @update-field="updateField"
+    />
 
     <div class="day-card__resources-header">
       <strong>{{ $t("itinerary.dailyResources") }}</strong>
@@ -147,7 +104,7 @@
           <template v-else>
             {{ scope.row.quantity }}
           </template>
-          <small>{{ scope.row.unit ? $t(`itinerary.units.${scope.row.unit}`) : "-" }}</small>
+          <small>{{ resourceUnitName(scope.row.unit) }}</small>
         </template>
       </el-table-column>
       <el-table-column
@@ -230,8 +187,11 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { ArrowDown, ArrowUp, Right } from "@element-plus/icons-vue";
 import type { ItineraryDayRecord } from "@/types/itinerary";
+import { getResourceUnitName } from "@/utils/resource-unit";
+import ItineraryDayForm from "./ItineraryDayForm.vue";
 
 type EditableDayField = "departure" | "destination" | "transport" | "title" | "description" | "mealSummary" | "accommodationSummary";
 const props = defineProps<{
@@ -253,9 +213,11 @@ const emit = defineEmits<{
 }>();
 const dayCost = computed(() => props.day.items.reduce((total, item) => total + item.totalCost, 0));
 const dayPrice = computed(() => props.day.items.reduce((total, item) => total + item.totalPrice, 0));
+const { locale } = useI18n();
 
 function updateField(field: EditableDayField, value: string) { emit("update-field", field, value); }
 function formatMoney(value: number) { return value.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function resourceUnitName(code: string) { return getResourceUnitName(code, locale.value); }
 </script>
 
 <style scoped lang="scss">
@@ -271,12 +233,8 @@ function formatMoney(value: number) { return value.toLocaleString("zh-CN", { min
 .day-card__quantity { width: 72px; margin-right: 4px; }
 .day-card__customer-price { width: 116px; }
 .day-card__customer-price.is-missing :deep(.el-input__wrapper) { box-shadow: 0 0 0 1px var(--el-color-danger) inset; }
-.day-card__fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.day-card__title-input { grid-column: span 3; }
-.day-card__description { grid-column: span 3; }
 .day-card__resources-header { margin: 20px 0 10px; }
 .day-card__resource-name { font-weight: 500; }
 .day-card__subtotal { margin-top: 12px; color: var(--el-text-color-secondary); }
 .day-card__subtotal strong { color: var(--el-color-primary); }
-@media (width <= 900px) { .day-card__fields { grid-template-columns: 1fr; } .day-card__title-input, .day-card__description { grid-column: auto; } }
 </style>

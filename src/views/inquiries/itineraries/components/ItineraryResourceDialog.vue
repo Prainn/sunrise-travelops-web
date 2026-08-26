@@ -51,7 +51,7 @@
           >
             <div class="resource-option">
               <span>{{ option.resourceName }}｜{{ option.priceName }}</span>
-              <strong>¥{{ formatMoney(option.unitCost) }}/{{ option.unit ? $t(`itinerary.units.${option.unit}`) : "-" }}</strong>
+              <strong>¥{{ formatMoney(option.unitCost) }}/{{ resourceUnitName(option.unit) }}</strong>
             </div>
           </el-option>
         </el-select>
@@ -80,7 +80,7 @@
             :precision="0"
           />
           <span class="resource-dialog__unit">
-            {{ selectedOption.unit ? $t(`itinerary.units.${selectedOption.unit}`) : "-" }}
+            {{ resourceUnitName(selectedOption.unit) }}
           </span>
         </el-form-item>
       </template>
@@ -104,12 +104,13 @@
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { ItineraryItemType, ItineraryResourceItem } from "@/types/itinerary";
+import { getResourceUnitName } from "@/utils/resource-unit";
 import { calculateItem, resourcePriceOptions } from "../pricing";
 import type { ResourcePriceDetail } from "../pricing";
 
 const props = defineProps<{ modelValue: boolean; guestCount: number }>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [item: ItineraryResourceItem] }>();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const type = ref<ItineraryItemType>("hotel");
 const city = ref("");
 const selectedId = ref("");
@@ -150,9 +151,11 @@ watch(() => props.modelValue, (visible) => {
 
 function filterOptions(value: string) { keyword.value = value; }
 function formatMoney(value: number) { return value.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function resourceUnitName(code: string) { return getResourceUnitName(code, locale.value); }
 function formatDetail(detail: ResourcePriceDetail) {
   if (detail.format === "money") return `¥${formatMoney(Number(detail.value))}`;
   if (detail.format === "translation") return t(String(detail.value));
+  if (detail.format === "unit") return resourceUnitName(String(detail.value));
   return detail.value === "" ? "-" : String(detail.value);
 }
 function submit() {
