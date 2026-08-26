@@ -4,6 +4,7 @@
     "profile": "个人中心",
     "systemManagement": "系统管理",
     "systemDictionary": "系统分类",
+    "businessCategories": "业务分类",
     "dictionaryOptions": "分类选项",
     "userList": "用户管理",
     "inquiries": "询盘",
@@ -55,9 +56,25 @@
       "archived": "已归档", "draft": "草稿",
       "quoted": "已报价", "ready_for_costing": "待核价"
     },
-    "title": "行程标题", "titleRequired": "请输入行程标题", "totalCost": "总成本", "totalPrice": "总报价", "transport": "交通方式",
-    "transportPreference": "交通偏好", "travelDates": "出行日期", "unitCost": "单位成本", "unitPrice": "单位价格",
-    "units": { "guideDay": "导游/天", "person": "人", "roomNight": "间夜", "table": "桌", "vehicleDay": "车/天" }
+    "title": "行程标题", "titleRequired": "请输入行程标题", "totalCost": "总成本", "totalPrice": "总报价", "transport": "交通方式", "transportPlaceholder": "请选择交通方式",
+    "transportPreference": "交通偏好", "travelDates": "出行日期", "unitCost": "单位成本", "unitPrice": "单位价格"
+  },
+  "businessCategory": {
+    "applicableResources": "适用资源", "code": "单位编码", "codeDuplicate": "单位编码已存在", "codeLocked": "单位编码保存后不可修改",
+    "codeRequired": "请输入单位编码", "createTitle": "新增资源计价单位", "editTitle": "编辑资源计价单位", "englishName": "英文名称",
+    "englishNameRequired": "请输入英文名称", "name": "单位名称", "nameRequired": "请输入单位名称", "resourceTypesRequired": "请选择适用资源",
+    "createTransportTitle": "新增交通方式", "editTransportTitle": "编辑交通方式", "resourceUnits": "资源计价单位",
+    "saveSuccess": "保存成功", "searchPlaceholder": "搜索单位名称或编码", "transportInUse": "该交通方式已被行程使用，无法删除",
+    "transportMethods": "交通方式", "transportName": "交通方式名称", "transportCode": "交通方式编码",
+    "transportNameRequired": "请输入交通方式名称", "transportCodeRequired": "请输入交通方式编码", "transportCodeDuplicate": "交通方式编码已存在",
+    "transportSearchPlaceholder": "搜索交通方式名称或编码", "unitInUse": "该单位已被旅游资源使用，无法删除",
+    "createType": "新增分类类型", "createTypeTitle": "新增业务分类类型", "typeManagement": "业务分类类型",
+    "typeDescription": "新增分类类型后，可在左侧选择并维护分类选项。", "typeName": "分类名称", "typeEnglishName": "英文名称",
+    "typeCode": "分类编码", "typeNameRequired": "请输入分类名称", "typeEnglishNameRequired": "请输入英文名称",
+    "typeCodeRequired": "请输入分类编码", "typeCodeDuplicate": "分类编码已存在", "optionName": "选项名称",
+    "optionCode": "选项编码", "optionNameRequired": "请输入选项名称", "optionCodeRequired": "请输入选项编码",
+    "optionCodeDuplicate": "选项编码已存在", "optionSearchPlaceholder": "搜索分类选项名称或编码", "createOptionTitle": "新增分类选项",
+    "editOptionTitle": "编辑分类选项"
   },
   "common": {
     "actions": "操作", "all": "全部", "backHome": "返回首页", "bind": "绑定",
@@ -263,7 +280,7 @@
     "dailyPrice": "日成本", "plateNumber": "车牌号", "restaurantName": "餐厅名称", "roomTypes": "房型",
     "searchPlaceholder": "搜索编号、名称或城市", "seats": "座位数", "starRating": "星级",
     "directPrice": "直营报价", "directProvided": "直营", "groundOperatorProvided": "地接社提供", "groundOperatorProvidedTag": "地接社报价", "groundOperatorRequired": "请选择地接社",
-    "isGroundOperatorProvided": "是否由地接社提供", "priceSource": "报价来源", "providerSource": "资源来源",
+    "isGroundOperatorProvided": "是否由地接社提供", "priceSource": "报价来源", "priceUnit": "计价单位", "priceUnitRequired": "请选择计价单位", "providerSource": "资源来源",
     "supplierName": "地接社名称", "supplierNameRequired": "请输入地接社名称",
     "ticketPrice": "门票价格", "vehicleModel": "车型", "visitDuration": "建议游览时长"
   },

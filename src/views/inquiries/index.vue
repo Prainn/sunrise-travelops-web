@@ -143,7 +143,10 @@ function openDetailDrawer(record: InquiryRecord) {
 }
 
 function openItineraryManagement(record: InquiryRecord) {
-  router.push({ name: "InquiryItineraries", params: { inquiryId: record.id } });
+  router.push({
+    name: "InquiryItineraries",
+    params: { inquiryId: record.id },
+  });
 }
 
 function saveInquiry(record: InquiryRecord) {

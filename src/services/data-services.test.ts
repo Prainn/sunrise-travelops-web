@@ -5,7 +5,9 @@ vi.mock("@/utils/auth", () => ({
   AuthStorage: { getAccessToken: () => "" },
 }));
 
-import { inquiries, itineraries, tourismResources, users } from "@/data/data";
+import { attractions, businessCategoryTypes, guides, hotels, inquiries, itineraries, resourceUnits, restaurants, tourismResources, transportMethods, users } from "@/data/data";
+import { getResourceUnitName } from "@/utils/resource-unit";
+import { getTransportMethodNames } from "@/utils/transport-method";
 import { dictionaryService } from "./dictionary.service";
 import { userService } from "./user.service";
 
@@ -70,14 +72,50 @@ describe("local data services", () => {
   });
 
   it("keeps itinerary mock records linked to existing inquiries", () => {
-    expect(itineraries.every((itinerary) => itinerary.status === "draft")).toBe(true);
+    expect(itineraries.map((itinerary) => itinerary.status)).toEqual(["draft", "quoted"]);
     expect(itineraries.every((itinerary) => itinerary.days > 0)).toBe(true);
     expect(itineraries.every((itinerary) => itinerary.inquiryId === "inquiry-1")).toBe(true);
+    expect(itineraries.every((itinerary) => itinerary.updatedAt.length > 0)).toBe(true);
+    expect(itineraries.filter((itinerary) => itinerary.inquiryId === "inquiry-1")).toHaveLength(2);
     expect(inquiries.every((inquiry) => inquiry.plannedDays > 0)).toBe(true);
     expect(inquiries.every((inquiry) => inquiry.operationsCoordinator.length > 0)).toBe(true);
     expect(inquiries.every((inquiry) => tourismResources.agency.some((agency) => agency.id === inquiry.agencyId))).toBe(true);
     expect(inquiries.every((inquiry) => ["new", "planning", "quoted", "lost", "archived"].includes(inquiry.status))).toBe(true);
     expect(itineraries[0].days).toBe(inquiries.find((inquiry) => inquiry.id === itineraries[0].inquiryId)?.plannedDays);
+  });
+
+  it("keeps every tourism resource unit backed by business category mock data", () => {
+    const configuredCodes = new Set(resourceUnits.map((unit) => unit.code));
+    const usedCodes = [
+      ...hotels.map((hotel) => hotel.unit),
+      ...hotels.flatMap((hotel) => hotel.roomTypes.flatMap((room) => room.pricePlans.map((price) => price.unit))),
+      ...attractions.map((attraction) => attraction.unit),
+      ...attractions.flatMap((attraction) => attraction.prices.map((price) => price.unit)),
+      ...restaurants.map((restaurant) => restaurant.unit),
+      ...restaurants.flatMap((restaurant) => restaurant.prices.map((price) => price.unit)),
+      ...tourismResources.transport.map((resource) => String(resource.unit)),
+      ...guides.map((guide) => guide.unit),
+    ];
+
+    expect(usedCodes.every((code) => configuredCodes.has(code))).toBe(true);
+    expect(getResourceUnitName("vehicleDay", "zh-CN")).toBe("辆/天");
+    expect(getResourceUnitName("personVisit", "zh-CN")).toBe("人次");
+    expect(getResourceUnitName("personMeal", "zh-CN")).toBe("人/餐");
+    expect(getResourceUnitName("guideDay", "zh-CN")).toBe("人/天");
+    expect(getResourceUnitName("roomNight", "en")).toBe("Room night");
+  });
+
+  it("keeps itinerary transport methods backed by business category mock data", () => {
+    const configuredCodes = new Set(transportMethods.map((method) => method.code));
+    const usedCodes = itineraries.flatMap((itinerary) => itinerary.dailyPlans.flatMap((day) => day.transport.split(",").filter(Boolean)));
+
+    expect(usedCodes.every((code) => configuredCodes.has(code))).toBe(true);
+    expect(getTransportMethodNames("flight,businessCar", "zh-CN")).toBe("飞机 / 商务车");
+  });
+
+  it("provides built-in business category types for resource units and transport methods", () => {
+    expect(businessCategoryTypes.map((category) => category.code)).toEqual(["resource-unit", "transport-method"]);
+    expect(businessCategoryTypes.every((category) => category.builtIn)).toBe(true);
   });
 
   it("maps assigned P0 roles to the corresponding access codes", async () => {

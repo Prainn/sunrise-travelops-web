@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
@@ -13,7 +13,7 @@ import {
   type GeneratedItineraryPdf,
 } from "./pdf";
 import { recalculateItem } from "./pricing";
-import { getDayCountMismatch, validateItineraryForPdf } from "./workflow";
+import { getDayCountMismatch, getDefaultItineraryId, validateItineraryForPdf } from "./workflow";
 
 type EditableDayField = "departure" | "destination" | "transport" | "title" | "description" | "mealSummary" | "accommodationSummary";
 
@@ -33,8 +33,10 @@ export function useItineraryWorkspace() {
   const resourceTargetDayId = ref("");
   const inquiryId = computed(() => String(route.params.inquiryId ?? ""));
   const inquiry = computed(() => inquiryStore.find((item) => item.id === inquiryId.value));
-  const rows = computed(() => itineraryStore.filter((item) => item.inquiryId === inquiryId.value));
-  const selectedItineraryId = ref(rows.value[0]?.id ?? "");
+  const rows = computed(() => itineraryStore
+    .filter((item) => item.inquiryId === inquiryId.value)
+    .sort((left, right) => (right.updatedAt || right.createdAt).localeCompare(left.updatedAt || left.createdAt)));
+  const selectedItineraryId = ref(getInitialItineraryId());
   const selectedItinerary = computed(() => rows.value.find((item) => item.id === selectedItineraryId.value));
   const isRoot = computed(() => userStore.userInfo.roles?.includes(ROLE_ROOT));
   const isDraft = computed(() => selectedItinerary.value?.status === "draft");
@@ -57,9 +59,18 @@ export function useItineraryWorkspace() {
       id: "", inquiryId: inquiryId.value, code: "", title: "", destinations: "", startDate: "", endDate: "", days: 0,
       adults: 1, childrenCount: 0, otherGuests: 0, hotelLevel: "", roomPreference: "", transportPreference: "",
       guideRequired: false, guideLanguage: "", pace: "", mealRequirements: "", budget: 0, specialRequirements: "",
-      inquiryCoordinatorNotes: "", operationsCoordinator: inquiry.value?.operationsCoordinator ?? "", dailyPlans: [], status: "draft", creator: "", createdAt: "",
+      inquiryCoordinatorNotes: "", operationsCoordinator: inquiry.value?.operationsCoordinator ?? "", dailyPlans: [], status: "draft", creator: "", createdAt: "", updatedAt: "",
     };
   }
+
+  function getInitialItineraryId() {
+    const requestedId = String(route.query.itineraryId ?? "");
+    return getDefaultItineraryId(rows.value, requestedId);
+  }
+
+  watch([inquiryId, () => route.query.itineraryId], () => {
+    selectedItineraryId.value = getInitialItineraryId();
+  });
 
   function openCreateDialog() {
     if (!canCreateItinerary.value) return;
@@ -69,13 +80,15 @@ export function useItineraryWorkspace() {
 
   function createItinerary(record: ItineraryRecord) {
     if (!canCreateItinerary.value || !inquiry.value) return;
+    const timestamp = formatDateTime(new Date());
     const created = {
       ...record,
       id: `itinerary-${Date.now()}`,
       inquiryId: inquiryId.value,
       creator: userStore.userInfo.username ?? "",
       operationsCoordinator: inquiry.value.operationsCoordinator,
-      createdAt: formatDateTime(new Date()),
+      createdAt: timestamp,
+      updatedAt: timestamp,
       dailyPlans: createDailyPlans(record.startDate, record.days),
     };
     itineraryStore.unshift(created);
@@ -95,7 +108,10 @@ export function useItineraryWorkspace() {
   function updateDayField(index: number, field: EditableDayField, value: string) {
     if (!contentEditable.value) return;
     const day = selectedItinerary.value?.dailyPlans[index];
-    if (day) day[field] = value;
+    if (day) {
+      day[field] = value;
+      touchSelectedItinerary();
+    }
   }
 
   function openResourceDialog(dayId: string) {
@@ -109,12 +125,14 @@ export function useItineraryWorkspace() {
     const day = selectedItinerary.value?.dailyPlans.find((record) => record.id === resourceTargetDayId.value);
     if (!day) return;
     day.items.push(item);
+    touchSelectedItinerary();
     ElMessage.success(t("itinerary.resourceAdded"));
   }
 
   function removeItem(dayId: string, itemIndex: number) {
     if (!contentEditable.value) return;
     selectedItinerary.value?.dailyPlans.find((day) => day.id === dayId)?.items.splice(itemIndex, 1);
+    touchSelectedItinerary();
   }
 
   function updateItemQuantity(dayId: string, itemIndex: number, quantity: number) {
@@ -123,6 +141,7 @@ export function useItineraryWorkspace() {
     if (!item) return;
     item.quantity = quantity;
     recalculateItem(item);
+    touchSelectedItinerary();
   }
 
   function updateItemPrice(dayId: string, itemIndex: number, price: number | null) {
@@ -131,6 +150,7 @@ export function useItineraryWorkspace() {
     if (!item) return;
     item.unitPrice = price;
     recalculateItem(item);
+    touchSelectedItinerary();
   }
 
   async function handleGeneratePdf() {
@@ -174,6 +194,7 @@ export function useItineraryWorkspace() {
     if (!plan || !inquiry.value || !pdfPreviewFile.value) return;
     downloadGeneratedItineraryPdf(pdfPreviewFile.value);
     plan.status = "quoted";
+    plan.updatedAt = formatDateTime(new Date());
     inquiry.value.status = getStatusAfterQuoteGenerated(inquiry.value.status);
     closePdfPreview();
     ElMessage.success(t("itinerary.pdfGenerated"));
@@ -198,6 +219,7 @@ export function useItineraryWorkspace() {
       status: "draft",
       creator: userStore.userInfo.username ?? "",
       createdAt: formatDateTime(new Date()),
+      updatedAt: formatDateTime(new Date()),
       dailyPlans: source.dailyPlans.map((day, dayIndex) => ({
         ...day,
         id: `day-${timestamp}-${dayIndex}`,
@@ -263,6 +285,11 @@ export function useItineraryWorkspace() {
     plan.dailyPlans.forEach((day, index) => { day.dayNumber = index + 1; day.date = addDate(plan.startDate, index); });
     plan.days = plan.dailyPlans.length;
     plan.endDate = plan.days ? addDate(plan.startDate, plan.days - 1) : plan.startDate;
+    plan.updatedAt = formatDateTime(new Date());
+  }
+
+  function touchSelectedItinerary() {
+    if (selectedItinerary.value) selectedItinerary.value.updatedAt = formatDateTime(new Date());
   }
 
   function generateItineraryCode() {

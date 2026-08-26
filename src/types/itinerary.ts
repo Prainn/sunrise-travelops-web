@@ -1,7 +1,7 @@
 export type ItineraryStatus = "draft" | "ready_for_costing" | "quoted" | "archived";
 
 export type ItineraryItemType = "hotel" | "attraction" | "restaurant" | "vehicle" | "guide";
-export type ItineraryPriceUnit = "roomNight" | "person" | "table" | "vehicleDay" | "guideDay";
+export type ItineraryPriceUnit = string;
 
 export interface ItineraryResourceItem {
   id: string;
@@ -61,4 +61,5 @@ export interface ItineraryRecord {
   status: ItineraryStatus;
   creator: string;
   createdAt: string;
+  updatedAt: string;
 }

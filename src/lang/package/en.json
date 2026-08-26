@@ -4,6 +4,7 @@
     "profile": "Profile",
     "systemManagement": "System",
     "systemDictionary": "System Categories",
+    "businessCategories": "Business Categories",
     "dictionaryOptions": "Category Options",
     "userList": "Users",
     "inquiries": "Inquiries",
@@ -55,9 +56,25 @@
       "archived": "Archived", "draft": "Draft",
       "quoted": "Quoted", "ready_for_costing": "Ready for Costing"
     },
-    "title": "Itinerary Title", "titleRequired": "Enter an itinerary title", "totalCost": "Total Cost", "totalPrice": "Total Price", "transport": "Transport",
-    "transportPreference": "Transport Preference", "travelDates": "Travel Dates", "unitCost": "Unit Cost", "unitPrice": "Unit Price",
-    "units": { "guideDay": "guide/day", "person": "person", "roomNight": "room night", "table": "table", "vehicleDay": "vehicle/day" }
+    "title": "Itinerary Title", "titleRequired": "Enter an itinerary title", "totalCost": "Total Cost", "totalPrice": "Total Price", "transport": "Transport", "transportPlaceholder": "Select transport methods",
+    "transportPreference": "Transport Preference", "travelDates": "Travel Dates", "unitCost": "Unit Cost", "unitPrice": "Unit Price"
+  },
+  "businessCategory": {
+    "applicableResources": "Applicable Resources", "code": "Unit Code", "codeDuplicate": "The unit code already exists", "codeLocked": "The unit code cannot be changed after saving",
+    "codeRequired": "Enter a unit code", "createTitle": "Create Resource Unit", "editTitle": "Edit Resource Unit", "englishName": "English Name",
+    "englishNameRequired": "Enter an English name", "name": "Unit Name", "nameRequired": "Enter a unit name", "resourceTypesRequired": "Select applicable resources",
+    "createTransportTitle": "Create Transport Method", "editTransportTitle": "Edit Transport Method", "resourceUnits": "Resource Price Units",
+    "saveSuccess": "Saved successfully", "searchPlaceholder": "Search unit name or code", "transportInUse": "This transport method is in use and cannot be deleted",
+    "transportMethods": "Transport Methods", "transportName": "Transport Method Name", "transportCode": "Transport Method Code",
+    "transportNameRequired": "Enter a transport method name", "transportCodeRequired": "Enter a transport method code", "transportCodeDuplicate": "The transport method code already exists",
+    "transportSearchPlaceholder": "Search transport method name or code", "unitInUse": "This unit is in use and cannot be deleted",
+    "createType": "Add Category Type", "createTypeTitle": "Create Business Category Type", "typeManagement": "Business Category Types",
+    "typeDescription": "Add a category type, then select it on the left to maintain its options.", "typeName": "Category Name", "typeEnglishName": "English Name",
+    "typeCode": "Category Code", "typeNameRequired": "Enter a category name", "typeEnglishNameRequired": "Enter an English name",
+    "typeCodeRequired": "Enter a category code", "typeCodeDuplicate": "The category code already exists", "optionName": "Option Name",
+    "optionCode": "Option Code", "optionNameRequired": "Enter an option name", "optionCodeRequired": "Enter an option code",
+    "optionCodeDuplicate": "The option code already exists", "optionSearchPlaceholder": "Search option name or code", "createOptionTitle": "Create Category Option",
+    "editOptionTitle": "Edit Category Option"
   },
   "common": {
     "actions": "Actions", "all": "All", "backHome": "Back to Home", "bind": "Bind",
@@ -274,7 +291,7 @@
     "dailyPrice": "Daily Cost", "plateNumber": "Plate Number", "restaurantName": "Restaurant Name", "roomTypes": "Room Types",
     "searchPlaceholder": "Search code, name, or city", "seats": "Seats", "starRating": "Star Rating",
     "directPrice": "Direct Price", "directProvided": "Direct", "groundOperatorProvided": "Ground Operator", "groundOperatorProvidedTag": "Ground Operator Price", "groundOperatorRequired": "Select a ground operator",
-    "isGroundOperatorProvided": "Provided by Ground Operator", "priceSource": "Price Source", "providerSource": "Resource Source",
+    "isGroundOperatorProvided": "Provided by Ground Operator", "priceSource": "Price Source", "priceUnit": "Price Unit", "priceUnitRequired": "Select a price unit", "providerSource": "Resource Source",
     "supplierName": "Ground Operator Name", "supplierNameRequired": "Enter a ground operator name",
     "ticketPrice": "Ticket Price", "vehicleModel": "Vehicle Model", "visitDuration": "Visit Duration"
   },

@@ -1,7 +1,7 @@
 import type { AuthUserRecord } from "@/types/auth";
 import type { DictItem, DictTypeItem } from "@/types/dictionary";
 import type { VisitOverviewDetail, VisitTrendDetail } from "@/types/dashboard";
-import type { ItineraryRecord } from "@/types/itinerary";
+import type { ItineraryItemType, ItineraryPriceUnit, ItineraryRecord } from "@/types/itinerary";
 import { ROLE_ROOT } from "@/constants";
 
 export interface PrototypeUserRecord extends AuthUserRecord {
@@ -39,6 +39,10 @@ const adminPermissions = [
   "sys:dict-item:create",
   "sys:dict-item:update",
   "sys:dict-item:delete",
+  "sys:business-category:list",
+  "sys:business-category:create",
+  "sys:business-category:update",
+  "sys:business-category:delete",
   "resource:agency:list",
   "resource:supplier:list",
   "resource:hotel:list",
@@ -383,7 +387,7 @@ export const inquiries: InquiryRecord[] = [
     contactName: "Emily Tan", email: "emily@example.com", phone: "+65 6123 4567", countryOrRegion: "新加坡",
     sourceChannel: "WhatsApp", originalMessage: "6 人计划 10 月到云南旅行 7 天，希望安排昆明、大理和丽江。",
     internalRemark: "首次合作，关注舒适型酒店和英文导游。", owner: "王敏", operationsCoordinator: "张伟", nextFollowUpAt: "2026-08-26 10:00", plannedDays: 7,
-    lostReason: "", status: "planning", creator: "admin", createdAt: "2026-08-21 09:30",
+    lostReason: "", status: "quoted", creator: "admin", createdAt: "2026-08-21 09:30",
   },
   {
     id: "inquiry-2", code: "INQ-202608-002", agencyId: "agency-2", agencyCode: "AGY-002", agencyName: "Malaysia Star Holidays",
@@ -427,7 +431,7 @@ export const itineraries: ItineraryRecord[] = [
     operationsCoordinator: "张伟",
     dailyPlans: [
       {
-        id: "itinerary-1-day-1", dayNumber: 1, date: "2026-10-12", departure: "新加坡", destination: "昆明", transport: "飞机 / 商务车",
+        id: "itinerary-1-day-1", dayNumber: 1, date: "2026-10-12", departure: "新加坡", destination: "昆明", transport: "flight,businessCar",
         title: "抵达昆明", description: "接机后享用晚餐，随后送至酒店办理入住。", mealSummary: "晚餐", accommodationSummary: "昆明",
         items: [
           { id: "item-1", type: "vehicle", resourceId: "transport-1", resourcePriceId: "transport-1-daily", resourceName: "别克 GL8", priceName: "车辆日成本", providerName: "资源库直采", quantity: 1, unit: "vehicleDay", unitCost: 1200, unitPrice: null, totalCost: 1200, totalPrice: 0, remark: "接机及市内用车" },
@@ -435,26 +439,127 @@ export const itineraries: ItineraryRecord[] = [
         ],
       },
       {
-        id: "itinerary-1-day-2", dayNumber: 2, date: "2026-10-13", departure: "昆明", destination: "大理", transport: "商务车",
+        id: "itinerary-1-day-2", dayNumber: 2, date: "2026-10-13", departure: "昆明", destination: "大理", transport: "businessCar",
         title: "昆明前往大理", description: "早餐后前往大理，游览崇圣寺三塔，晚餐后入住大理酒店。", mealSummary: "早、中、晚", accommodationSummary: "大理",
         items: [
-          { id: "item-3", type: "attraction", resourceId: "attraction-2", resourcePriceId: "attraction-price-5", resourceName: "崇圣寺三塔", priceName: "景区门票 · 成人 · 常规期", providerName: "资源库直采", quantity: 6, unit: "person", unitCost: 60, unitPrice: null, totalCost: 360, totalPrice: 0, remark: "成人票" },
+          { id: "item-3", type: "attraction", resourceId: "attraction-2", resourcePriceId: "attraction-price-5", resourceName: "崇圣寺三塔", priceName: "景区门票 · 成人 · 常规期", providerName: "资源库直采", quantity: 6, unit: "personVisit", unitCost: 60, unitPrice: null, totalCost: 360, totalPrice: 0, remark: "成人票" },
           { id: "item-4", type: "restaurant", resourceId: "restaurant-5", resourcePriceId: "restaurant-price-20", resourceName: "大理六合云燕酒店", priceName: "中式合菜/清新养生宴", providerName: "资源库直采", quantity: 1, unit: "table", unitCost: 500, unitPrice: null, totalCost: 500, totalPrice: 0, remark: "晚餐" },
         ],
       },
-      { id: "itinerary-1-day-3", dayNumber: 3, date: "2026-10-14", departure: "大理", destination: "大理", transport: "商务车", title: "洱海人文体验", description: "龙龛码头、生态廊道 S 湾、文笔村。", mealSummary: "早、中、晚", accommodationSummary: "大理", items: [] },
-      { id: "itinerary-1-day-4", dayNumber: 4, date: "2026-10-15", departure: "大理", destination: "丽江", transport: "商务车", title: "大理前往丽江", description: "沿途观景，抵达丽江后游览丽江古城。", mealSummary: "早、中、晚", accommodationSummary: "丽江", items: [] },
-      { id: "itinerary-1-day-5", dayNumber: 5, date: "2026-10-16", departure: "丽江", destination: "丽江", transport: "商务车", title: "玉龙雪山", description: "玉龙雪山、蓝月谷及周边景区。", mealSummary: "早、中", accommodationSummary: "丽江", items: [] },
-      { id: "itinerary-1-day-6", dayNumber: 6, date: "2026-10-17", departure: "丽江", destination: "昆明", transport: "动车 / 商务车", title: "返回昆明", description: "上午自由活动，下午乘动车返回昆明。", mealSummary: "早餐", accommodationSummary: "昆明", items: [] },
-      { id: "itinerary-1-day-7", dayNumber: 7, date: "2026-10-18", departure: "昆明", destination: "新加坡", transport: "飞机 / 商务车", title: "昆明送机", description: "根据航班时间安排市区活动并送往机场。", mealSummary: "早餐", accommodationSummary: "无", items: [] },
+      { id: "itinerary-1-day-3", dayNumber: 3, date: "2026-10-14", departure: "大理", destination: "大理", transport: "businessCar", title: "洱海人文体验", description: "龙龛码头、生态廊道 S 湾、文笔村。", mealSummary: "早、中、晚", accommodationSummary: "大理", items: [] },
+      { id: "itinerary-1-day-4", dayNumber: 4, date: "2026-10-15", departure: "大理", destination: "丽江", transport: "businessCar", title: "大理前往丽江", description: "沿途观景，抵达丽江后游览丽江古城。", mealSummary: "早、中、晚", accommodationSummary: "丽江", items: [] },
+      { id: "itinerary-1-day-5", dayNumber: 5, date: "2026-10-16", departure: "丽江", destination: "丽江", transport: "businessCar", title: "玉龙雪山", description: "玉龙雪山、蓝月谷及周边景区。", mealSummary: "早、中", accommodationSummary: "丽江", items: [] },
+      { id: "itinerary-1-day-6", dayNumber: 6, date: "2026-10-17", departure: "丽江", destination: "昆明", transport: "highSpeedRail,businessCar", title: "返回昆明", description: "上午自由活动，下午乘动车返回昆明。", mealSummary: "早餐", accommodationSummary: "昆明", items: [] },
+      { id: "itinerary-1-day-7", dayNumber: 7, date: "2026-10-18", departure: "昆明", destination: "新加坡", transport: "flight,businessCar", title: "昆明送机", description: "根据航班时间安排市区活动并送往机场。", mealSummary: "早餐", accommodationSummary: "无", items: [] },
     ],
     status: "draft",
     creator: "operations",
     createdAt: "2026-08-24 10:20",
+    updatedAt: "2026-08-26 09:45",
+  },
+  {
+    id: "itinerary-2",
+    inquiryId: "inquiry-1",
+    code: "ITI-202608-002",
+    title: "云南经典 7 日舒适方案",
+    destinations: "昆明、大理、丽江",
+    startDate: "2026-10-12",
+    endDate: "2026-10-18",
+    days: 7,
+    adults: 6,
+    childrenCount: 0,
+    otherGuests: 0,
+    hotelLevel: "高档型",
+    roomPreference: "双床房",
+    transportPreference: "全程商务车",
+    guideRequired: true,
+    guideLanguage: "English",
+    pace: "舒缓",
+    mealRequirements: "含早，正餐安排云南特色餐",
+    budget: 78000,
+    specialRequirements: "升级核心城市住宿标准",
+    inquiryCoordinatorNotes: "已向客户提供的舒适版报价。",
+    operationsCoordinator: "张伟",
+    dailyPlans: [
+      { id: "itinerary-2-day-1", dayNumber: 1, date: "2026-10-12", departure: "新加坡", destination: "昆明", transport: "flight,businessCar", title: "抵达昆明", description: "接机后入住酒店。", mealSummary: "晚餐", accommodationSummary: "昆明", items: [] },
+      { id: "itinerary-2-day-2", dayNumber: 2, date: "2026-10-13", departure: "昆明", destination: "大理", transport: "businessCar", title: "昆明前往大理", description: "前往大理并游览崇圣寺三塔。", mealSummary: "早、中、晚", accommodationSummary: "大理", items: [] },
+      { id: "itinerary-2-day-3", dayNumber: 3, date: "2026-10-14", departure: "大理", destination: "大理", transport: "businessCar", title: "洱海慢游", description: "游览洱海生态廊道及周边村落。", mealSummary: "早、中、晚", accommodationSummary: "大理", items: [] },
+      { id: "itinerary-2-day-4", dayNumber: 4, date: "2026-10-15", departure: "大理", destination: "丽江", transport: "businessCar", title: "大理前往丽江", description: "抵达丽江后游览古城。", mealSummary: "早、中、晚", accommodationSummary: "丽江", items: [] },
+      { id: "itinerary-2-day-5", dayNumber: 5, date: "2026-10-16", departure: "丽江", destination: "丽江", transport: "businessCar", title: "玉龙雪山", description: "游览玉龙雪山和蓝月谷。", mealSummary: "早、中", accommodationSummary: "丽江", items: [] },
+      { id: "itinerary-2-day-6", dayNumber: 6, date: "2026-10-17", departure: "丽江", destination: "昆明", transport: "highSpeedRail,businessCar", title: "返回昆明", description: "动车返回昆明并自由活动。", mealSummary: "早餐", accommodationSummary: "昆明", items: [] },
+      { id: "itinerary-2-day-7", dayNumber: 7, date: "2026-10-18", departure: "昆明", destination: "新加坡", transport: "flight,businessCar", title: "昆明送机", description: "根据航班时间安排送机。", mealSummary: "早餐", accommodationSummary: "无", items: [] },
+    ],
+    status: "quoted",
+    creator: "operations",
+    createdAt: "2026-08-24 15:30",
+    updatedAt: "2026-08-25 17:40",
   },
 ];
 
 export type TourismResourceType = "agency" | "supplier" | "transport";
+
+export interface ResourceUnitRecord {
+  id: string;
+  code: ItineraryPriceUnit;
+  name: string;
+  englishName: string;
+  resourceTypes: ItineraryItemType[];
+  status: "enabled" | "disabled";
+  remark: string;
+}
+
+/** 业务分类中的资源计价单位；旅游资源和行程仅保存单位编码。 */
+export const resourceUnits: ResourceUnitRecord[] = [
+  { id: "resource-unit-room-night", code: "roomNight", name: "间夜", englishName: "Room night", resourceTypes: ["hotel"], status: "enabled", remark: "酒店房型按间夜计价" },
+  { id: "resource-unit-person-visit", code: "personVisit", name: "人次", englishName: "Person visit", resourceTypes: ["attraction"], status: "enabled", remark: "景点门票及景区项目按使用人次计价" },
+  { id: "resource-unit-person-meal", code: "personMeal", name: "人/餐", englishName: "Person/meal", resourceTypes: ["restaurant"], status: "enabled", remark: "餐厅按每人每餐计价" },
+  { id: "resource-unit-table", code: "table", name: "桌", englishName: "Table", resourceTypes: ["restaurant"], status: "enabled", remark: "餐厅整桌报价" },
+  { id: "resource-unit-vehicle-day", code: "vehicleDay", name: "辆/天", englishName: "Vehicle/day", resourceTypes: ["vehicle"], status: "enabled", remark: "车辆按每辆每天计价" },
+  { id: "resource-unit-guide-day", code: "guideDay", name: "人/天", englishName: "Person/day", resourceTypes: ["guide"], status: "enabled", remark: "导游按每人每天计价" },
+];
+
+export interface TransportMethodRecord {
+  id: string;
+  code: string;
+  name: string;
+  englishName: string;
+  status: "enabled" | "disabled";
+  remark: string;
+}
+
+/** 业务分类中的交通方式；每日行程仅保存交通方式编码。 */
+export const transportMethods: TransportMethodRecord[] = [
+  { id: "transport-method-flight", code: "flight", name: "飞机", englishName: "Flight", status: "enabled", remark: "航空交通" },
+  { id: "transport-method-business-car", code: "businessCar", name: "商务车", englishName: "Business car", status: "enabled", remark: "小型团队包车" },
+  { id: "transport-method-high-speed-rail", code: "highSpeedRail", name: "动车", englishName: "High-speed rail", status: "enabled", remark: "动车或高铁" },
+  { id: "transport-method-coach", code: "coach", name: "旅游大巴", englishName: "Coach", status: "enabled", remark: "大型团队包车" },
+  { id: "transport-method-ship", code: "ship", name: "船", englishName: "Ship", status: "enabled", remark: "水路交通" },
+  { id: "transport-method-walking", code: "walking", name: "步行", englishName: "Walking", status: "enabled", remark: "徒步或步行游览" },
+];
+
+export interface BusinessCategoryOptionRecord {
+  id: string;
+  code: string;
+  name: string;
+  englishName: string;
+  status: "enabled" | "disabled";
+  remark: string;
+}
+
+export interface BusinessCategoryTypeRecord {
+  id: string;
+  code: string;
+  name: string;
+  englishName: string;
+  builtIn: boolean;
+  items: BusinessCategoryOptionRecord[];
+}
+
+/** 业务分类类型；内置类型由专用面板维护，其余类型使用通用分类选项。 */
+export const businessCategoryTypes: BusinessCategoryTypeRecord[] = [
+  { id: "business-category-resource-unit", code: "resource-unit", name: "资源计价单位", englishName: "Resource Price Units", builtIn: true, items: [] },
+  { id: "business-category-transport-method", code: "transport-method", name: "交通方式", englishName: "Transport Methods", builtIn: true, items: [] },
+];
 
 export interface TourismResourceRecord {
   [key: string]: string | number;
@@ -477,6 +582,7 @@ export interface HotelPricePlanRecord {
   endDate: string;
   individualPrice: number;
   groupPrice: number;
+  unit: ItineraryPriceUnit;
   minimumRooms: number;
   isGroundOperatorProvided: boolean;
   groundOperatorId: string;
@@ -501,6 +607,7 @@ export interface HotelRecord {
   address: string;
   phone: string;
   nearby: string;
+  unit: ItineraryPriceUnit;
   status: "enabled" | "disabled";
   roomTypes: HotelRoomTypeRecord[];
 }
@@ -518,6 +625,7 @@ export interface AttractionPriceRecord {
   endDate: string;
   rackPrice: number;
   settlementPrice: number;
+  unit: ItineraryPriceUnit;
   isFree: boolean;
   priceNote: string;
   isGroundOperatorProvided: boolean;
@@ -532,6 +640,7 @@ export interface AttractionRecord {
   category: AttractionCategory;
   restroomLocation: string;
   remark: string;
+  unit: ItineraryPriceUnit;
   status: "enabled" | "disabled";
   prices: AttractionPriceRecord[];
 }
@@ -551,6 +660,7 @@ export interface GuideRecord {
   identityNumber: string;
   phone: string;
   dailyPrice: number;
+  unit: ItineraryPriceUnit;
   hasLaborContract: boolean;
   isGroundOperatorProvided: boolean;
   groundOperatorId: string;
@@ -559,7 +669,7 @@ export interface GuideRecord {
   status: "enabled" | "disabled";
 }
 
-export type RestaurantPriceUnit = "per-person" | "per-table";
+export type RestaurantPriceUnit = string;
 
 export interface RestaurantPriceRecord {
   id: string;
@@ -583,6 +693,7 @@ export interface RestaurantRecord {
   phone: string;
   address: string;
   remark: string;
+  unit: RestaurantPriceUnit;
   status: "enabled" | "disabled";
   prices: RestaurantPriceRecord[];
 }
@@ -591,84 +702,84 @@ export interface RestaurantRecord {
 export const restaurants: RestaurantRecord[] = [
   {
     id: "restaurant-1", code: "RES-001", name: "昆明云天水乡野菌园", city: "昆明", cuisine: "野生菌火锅",
-    contact: "", phone: "", address: "", remark: "", status: "enabled", prices: [
-      { id: "restaurant-price-1", menuName: "地道野生菌火锅 40", unit: "per-person", price: 40, dinerCount: 10, remark: "另有 8 人桌菜单", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-2", menuName: "地道野生菌火锅 50", unit: "per-person", price: 50, dinerCount: 10, remark: "另有 8 人桌菜单", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-3", menuName: "地道野生菌火锅 60", unit: "per-person", price: 60, dinerCount: 10, remark: "另有 8 人桌菜单", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-4", menuName: "地道野生菌火锅 70", unit: "per-person", price: 70, dinerCount: 10, remark: "另有 8 人桌菜单", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-5", menuName: "地道野生菌火锅 80", unit: "per-person", price: 80, dinerCount: 10, remark: "另有 8 人桌菜单", isGroundOperatorProvided: false, groundOperatorId: "" },
+    contact: "", phone: "", address: "", remark: "", unit: "personMeal", status: "enabled", prices: [
+      { id: "restaurant-price-1", menuName: "地道野生菌火锅 40", unit: "personMeal", price: 40, dinerCount: 10, remark: "另有 8 人桌菜单", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-2", menuName: "地道野生菌火锅 50", unit: "personMeal", price: 50, dinerCount: 10, remark: "另有 8 人桌菜单", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-3", menuName: "地道野生菌火锅 60", unit: "personMeal", price: 60, dinerCount: 10, remark: "另有 8 人桌菜单", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-4", menuName: "地道野生菌火锅 70", unit: "personMeal", price: 70, dinerCount: 10, remark: "另有 8 人桌菜单", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-5", menuName: "地道野生菌火锅 80", unit: "personMeal", price: 80, dinerCount: 10, remark: "另有 8 人桌菜单", isGroundOperatorProvided: false, groundOperatorId: "" },
     ],
   },
   {
     id: "restaurant-2", code: "RES-002", name: "云南人家", city: "昆明", cuisine: "云南特色风味宴",
-    contact: "", phone: "", address: "", remark: "", status: "enabled", prices: [
-      { id: "restaurant-price-6", menuName: "昆明特色风味宴", unit: "per-table", price: 400, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-7", menuName: "昆明特色风味宴", unit: "per-table", price: 500, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-8", menuName: "九歌寨风味宴", unit: "per-table", price: 650, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-9", menuName: "昆明特色风味宴", unit: "per-table", price: 800, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-10", menuName: "昆明特色风味宴", unit: "per-table", price: 1000, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+    contact: "", phone: "", address: "", remark: "", unit: "personMeal", status: "enabled", prices: [
+      { id: "restaurant-price-6", menuName: "昆明特色风味宴", unit: "table", price: 400, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-7", menuName: "昆明特色风味宴", unit: "table", price: 500, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-8", menuName: "九歌寨风味宴", unit: "table", price: 650, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-9", menuName: "昆明特色风味宴", unit: "table", price: 800, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-10", menuName: "昆明特色风味宴", unit: "table", price: 1000, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
     ],
   },
   {
     id: "restaurant-3", code: "RES-003", name: "昆明芳呈酒楼", city: "昆明", cuisine: "粤式风味合菜",
-    contact: "", phone: "", address: "", remark: "", status: "enabled", prices: [
-      { id: "restaurant-price-11", menuName: "粤式风味合菜", unit: "per-person", price: 50, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-12", menuName: "粤式风味合菜", unit: "per-table", price: 600, dinerCount: 12, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-13", menuName: "粤式风味合菜", unit: "per-table", price: 800, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-14", menuName: "粤式风味合菜", unit: "per-table", price: 1000, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+    contact: "", phone: "", address: "", remark: "", unit: "personMeal", status: "enabled", prices: [
+      { id: "restaurant-price-11", menuName: "粤式风味合菜", unit: "personMeal", price: 50, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-12", menuName: "粤式风味合菜", unit: "table", price: 600, dinerCount: 12, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-13", menuName: "粤式风味合菜", unit: "table", price: 800, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-14", menuName: "粤式风味合菜", unit: "table", price: 1000, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
     ],
   },
   {
     id: "restaurant-4", code: "RES-004", name: "昆明万兴建新园", city: "昆明", cuisine: "过桥米线、野生菌火锅",
-    contact: "", phone: "", address: "", remark: "", status: "enabled", prices: [
-      { id: "restaurant-price-15", menuName: "过桥米线", unit: "per-person", price: 40, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-16", menuName: "过桥米线+汽锅鸡", unit: "per-person", price: 50, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-17", menuName: "过桥米线（汽锅鸡）+野生菌火锅", unit: "per-person", price: 60, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-18", menuName: "野生菌火锅", unit: "per-table", price: 600, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+    contact: "", phone: "", address: "", remark: "", unit: "personMeal", status: "enabled", prices: [
+      { id: "restaurant-price-15", menuName: "过桥米线", unit: "personMeal", price: 40, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-16", menuName: "过桥米线+汽锅鸡", unit: "personMeal", price: 50, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-17", menuName: "过桥米线（汽锅鸡）+野生菌火锅", unit: "personMeal", price: 60, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-18", menuName: "野生菌火锅", unit: "table", price: 600, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
     ],
   },
   {
     id: "restaurant-5", code: "RES-005", name: "大理六合云燕酒店", city: "大理", cuisine: "中式合菜、白族风味",
-    contact: "", phone: "", address: "", remark: "", status: "enabled", prices: [
-      { id: "restaurant-price-19", menuName: "中式合菜", unit: "per-table", price: 400, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-20", menuName: "中式合菜/清新养生宴", unit: "per-table", price: 500, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-21", menuName: "中式合菜", unit: "per-table", price: 800, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+    contact: "", phone: "", address: "", remark: "", unit: "personMeal", status: "enabled", prices: [
+      { id: "restaurant-price-19", menuName: "中式合菜", unit: "table", price: 400, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-20", menuName: "中式合菜/清新养生宴", unit: "table", price: 500, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-21", menuName: "中式合菜", unit: "table", price: 800, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
     ],
   },
   {
     id: "restaurant-6", code: "RES-006", name: "四方宏源", city: "大理", cuisine: "白族砂锅鱼",
-    contact: "", phone: "", address: "", remark: "", status: "enabled", prices: [
-      { id: "restaurant-price-22", menuName: "白族风味合菜", unit: "per-person", price: 50, dinerCount: 10, remark: "另有 13 人桌菜单", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-23", menuName: "白族砂锅鱼风味", unit: "per-table", price: 400, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-24", menuName: "白族砂锅鱼风味", unit: "per-table", price: 500, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+    contact: "", phone: "", address: "", remark: "", unit: "personMeal", status: "enabled", prices: [
+      { id: "restaurant-price-22", menuName: "白族风味合菜", unit: "personMeal", price: 50, dinerCount: 10, remark: "另有 13 人桌菜单", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-23", menuName: "白族砂锅鱼风味", unit: "table", price: 400, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-24", menuName: "白族砂锅鱼风味", unit: "table", price: 500, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
     ],
   },
   {
     id: "restaurant-7", code: "RES-007", name: "丽江小南国", city: "丽江", cuisine: "中式精品合菜",
-    contact: "", phone: "", address: "", remark: "", status: "enabled", prices: [
-      { id: "restaurant-price-25", menuName: "精品合菜", unit: "per-table", price: 400, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-26", menuName: "精品合菜", unit: "per-table", price: 500, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-27", menuName: "精品合菜", unit: "per-table", price: 550, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-28", menuName: "精品合菜", unit: "per-table", price: 700, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-29", menuName: "精品合菜", unit: "per-table", price: 800, dinerCount: 10, remark: "4 桌可安排包间", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-30", menuName: "精品合菜", unit: "per-table", price: 950, dinerCount: 10, remark: "4 桌可安排包间", isGroundOperatorProvided: false, groundOperatorId: "" },
+    contact: "", phone: "", address: "", remark: "", unit: "personMeal", status: "enabled", prices: [
+      { id: "restaurant-price-25", menuName: "精品合菜", unit: "table", price: 400, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-26", menuName: "精品合菜", unit: "table", price: 500, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-27", menuName: "精品合菜", unit: "table", price: 550, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-28", menuName: "精品合菜", unit: "table", price: 700, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-29", menuName: "精品合菜", unit: "table", price: 800, dinerCount: 10, remark: "4 桌可安排包间", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-30", menuName: "精品合菜", unit: "table", price: 950, dinerCount: 10, remark: "4 桌可安排包间", isGroundOperatorProvided: false, groundOperatorId: "" },
     ],
   },
   {
     id: "restaurant-8", code: "RES-008", name: "桑堆藏宴", city: "香格里拉", cuisine: "土司宴、藏餐",
-    contact: "", phone: "", address: "", remark: "含歌舞表演", status: "enabled", prices: [
-      { id: "restaurant-price-31", menuName: "土司宴+歌舞表演", unit: "per-person", price: 50, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-32", menuName: "土司宴+歌舞表演", unit: "per-person", price: 60, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-33", menuName: "土司宴+歌舞表演", unit: "per-person", price: 80, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-34", menuName: "土司宴+歌舞表演", unit: "per-person", price: 100, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+    contact: "", phone: "", address: "", remark: "含歌舞表演", unit: "personMeal", status: "enabled", prices: [
+      { id: "restaurant-price-31", menuName: "土司宴+歌舞表演", unit: "personMeal", price: 50, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-32", menuName: "土司宴+歌舞表演", unit: "personMeal", price: 60, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-33", menuName: "土司宴+歌舞表演", unit: "personMeal", price: 80, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-34", menuName: "土司宴+歌舞表演", unit: "personMeal", price: 100, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
     ],
   },
   {
     id: "restaurant-9", code: "RES-009", name: "弥勒食府", city: "弥勒", cuisine: "本地农家菜、卤鸡风味",
-    contact: "", phone: "", address: "", remark: "", status: "enabled", prices: [
-      { id: "restaurant-price-35", menuName: "本地农家菜卤鸡风味", unit: "per-person", price: 60, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-36", menuName: "本地农家菜卤鸡风味", unit: "per-person", price: 80, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "restaurant-price-37", menuName: "本地农家菜卤鸡风味", unit: "per-table", price: 700, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+    contact: "", phone: "", address: "", remark: "", unit: "personMeal", status: "enabled", prices: [
+      { id: "restaurant-price-35", menuName: "本地农家菜卤鸡风味", unit: "personMeal", price: 60, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-36", menuName: "本地农家菜卤鸡风味", unit: "personMeal", price: 80, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-37", menuName: "本地农家菜卤鸡风味", unit: "table", price: 700, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
     ],
   },
 ];
@@ -722,51 +833,51 @@ export const guides: GuideRecord[] = [
   {
     id: "guide-1", code: "GDE-001", certificateNo: "ND04499G", name: "刘晓燕", gender: "male", age: 44,
     languages: ["中文"], employmentType: "full-time", identityNumber: "530103198206021515", phone: "13078771077",
-    dailyPrice: 600, hasLaborContract: true, isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "", status: "enabled",
+    dailyPrice: 600, unit: "guideDay", hasLaborContract: true, isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "", status: "enabled",
   },
   {
     id: "guide-2", code: "GDE-002", certificateNo: "YH45374S", name: "陈其霞", gender: "female", age: 39,
     languages: ["英文"], employmentType: "full-time", identityNumber: "500225198610231926", phone: "13211601119",
-    dailyPrice: 800, hasLaborContract: true, isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "", status: "enabled",
+    dailyPrice: 800, unit: "guideDay", hasLaborContract: true, isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "", status: "enabled",
   },
   {
     id: "guide-3", code: "GDE-003", certificateNo: "KOA2050L", name: "黄雪璇", gender: "male", age: 34,
     languages: ["中文"], employmentType: "full-time", identityNumber: "530102199201130016", phone: "18669119205",
-    dailyPrice: 600, hasLaborContract: true, isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "", status: "enabled",
+    dailyPrice: 600, unit: "guideDay", hasLaborContract: true, isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "", status: "enabled",
   },
   {
     id: "guide-4", code: "GDE-004", certificateNo: "YJJ3539H", name: "郑淑君", gender: "female", age: 45,
     languages: ["中文"], employmentType: "full-time", identityNumber: "130702198107170621", phone: "13619699003",
-    dailyPrice: 650, hasLaborContract: false, isGroundOperatorProvided: true, groundOperatorId: "supplier-1", licensePhotoUrl: "", remark: "", status: "enabled",
+    dailyPrice: 650, unit: "guideDay", hasLaborContract: false, isGroundOperatorProvided: true, groundOperatorId: "supplier-1", licensePhotoUrl: "", remark: "", status: "enabled",
   },
 ];
 
 /** 酒店价格表原型数据；早餐与设施属于酒店资料，不作为报价维度。 */
 export const hotels: HotelRecord[] = [
   {
-    id: "hotel-1", code: "HTL-001", name: "盘龙温德姆花园", province: "云南省", city: "昆明市", rating: "五星", status: "enabled",
+    id: "hotel-1", code: "HTL-001", name: "盘龙温德姆花园", province: "云南省", city: "昆明市", rating: "五星", unit: "roomNight", status: "enabled",
     facilities: "洗衣房、健身房、儿童游乐园（酒店 4 楼）", breakfast: "单标间双早，三人间三早", address: "云南省昆明市北京路1110号",
     phone: "0871-68057777", nearby: "欣都龙城、北辰财富中心、霖雨桥地铁站", roomTypes: [
       { id: "room-1", name: "城景大床/双床房", rackRate: 880, pricePlans: [
-        { id: "price-1", periodName: "常规期", startDate: "", endDate: "", individualPrice: 400, groupPrice: 400, minimumRooms: 5, isGroundOperatorProvided: false, groundOperatorId: "" },
-        { id: "price-1-ground-operator", periodName: "常规期", startDate: "", endDate: "", individualPrice: 380, groupPrice: 380, minimumRooms: 5, isGroundOperatorProvided: true, groundOperatorId: "supplier-1" },
+        { id: "price-1", periodName: "常规期", startDate: "", endDate: "", individualPrice: 400, groupPrice: 400, unit: "roomNight", minimumRooms: 5, isGroundOperatorProvided: false, groundOperatorId: "" },
+        { id: "price-1-ground-operator", periodName: "常规期", startDate: "", endDate: "", individualPrice: 380, groupPrice: 380, unit: "roomNight", minimumRooms: 5, isGroundOperatorProvided: true, groundOperatorId: "supplier-1" },
       ] },
-      { id: "room-2", name: "三人间", rackRate: 1080, pricePlans: [{ id: "price-2", periodName: "常规期", startDate: "", endDate: "", individualPrice: 600, groupPrice: 600, minimumRooms: 5, isGroundOperatorProvided: false, groundOperatorId: "" }] },
+      { id: "room-2", name: "三人间", rackRate: 1080, pricePlans: [{ id: "price-2", periodName: "常规期", startDate: "", endDate: "", individualPrice: 600, groupPrice: 600, unit: "roomNight", minimumRooms: 5, isGroundOperatorProvided: false, groundOperatorId: "" }] },
     ],
   },
   {
-    id: "hotel-2", code: "HTL-002", name: "华美达安可", province: "云南省", city: "昆明市", rating: "四星", status: "enabled",
+    id: "hotel-2", code: "HTL-002", name: "华美达安可", province: "云南省", city: "昆明市", rating: "四星", unit: "roomNight", status: "enabled",
     facilities: "酒店一楼洗衣房", breakfast: "中西式自助早餐", address: "昆明市五华区中铁云时代广场5幢",
     phone: "0871-68127333", nearby: "吾悦广场、宜家、耍街", roomTypes: [
-      { id: "room-3", name: "豪华大床/双床房", rackRate: 568, pricePlans: [{ id: "price-3", periodName: "常规期", startDate: "", endDate: "", individualPrice: 428, groupPrice: 200, minimumRooms: 5, isGroundOperatorProvided: false, groundOperatorId: "" }] },
-      { id: "room-4", name: "精英大床/双床房", rackRate: 668, pricePlans: [{ id: "price-4", periodName: "常规期", startDate: "", endDate: "", individualPrice: 488, groupPrice: 260, minimumRooms: 5, isGroundOperatorProvided: false, groundOperatorId: "" }] },
+      { id: "room-3", name: "豪华大床/双床房", rackRate: 568, pricePlans: [{ id: "price-3", periodName: "常规期", startDate: "", endDate: "", individualPrice: 428, groupPrice: 200, unit: "roomNight", minimumRooms: 5, isGroundOperatorProvided: false, groundOperatorId: "" }] },
+      { id: "room-4", name: "精英大床/双床房", rackRate: 668, pricePlans: [{ id: "price-4", periodName: "常规期", startDate: "", endDate: "", individualPrice: 488, groupPrice: 260, unit: "roomNight", minimumRooms: 5, isGroundOperatorProvided: false, groundOperatorId: "" }] },
     ],
   },
   {
-    id: "hotel-3", code: "HTL-003", name: "昆明香格里拉 JEN", province: "云南省", city: "昆明市", rating: "五星", status: "enabled",
+    id: "hotel-3", code: "HTL-003", name: "昆明香格里拉 JEN", province: "云南省", city: "昆明市", rating: "五星", unit: "roomNight", status: "enabled",
     facilities: "二楼水疗健身区、三楼宴会厅", breakfast: "一楼 OpenHouse", address: "云南省昆明市盘龙区东风东路88号",
     phone: "0871-63639999", nearby: "万象城、恒隆广场、钱王街", roomTypes: [
-      { id: "room-5", name: "高级大床/双床房", rackRate: 892, pricePlans: [{ id: "price-5", periodName: "常规期", startDate: "", endDate: "", individualPrice: 750, groupPrice: 600, minimumRooms: 5, isGroundOperatorProvided: false, groundOperatorId: "" }] },
+      { id: "room-5", name: "高级大床/双床房", rackRate: 892, pricePlans: [{ id: "price-5", periodName: "常规期", startDate: "", endDate: "", individualPrice: 750, groupPrice: 600, unit: "roomNight", minimumRooms: 5, isGroundOperatorProvided: false, groundOperatorId: "" }] },
     ],
   },
 ];
@@ -774,35 +885,35 @@ export const hotels: HotelRecord[] = [
 /** 景区门票原型数据；每条价格记录代表一个可售票价项目。 */
 export const attractions: AttractionRecord[] = [
   {
-    id: "attraction-1", code: "ATT-001", name: "云南民族村", area: "昆明", category: "scenic", status: "enabled",
+    id: "attraction-1", code: "ATT-001", name: "云南民族村", area: "昆明", category: "scenic", unit: "personVisit", status: "enabled",
     restroomLocation: "民族村广场右侧旁", remark: "70周岁以上老人、6周岁以下或1.2米以下儿童免票", prices: [
-      { id: "attraction-price-1", itemType: "ticket", itemName: "景区门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 80, settlementPrice: 60, isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "attraction-price-2", itemType: "ticket", itemName: "景区门票", audience: "老人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 45, settlementPrice: 45, isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "attraction-price-3", itemType: "ticket", itemName: "景区门票", audience: "儿童", periodName: "常规期", startDate: "", endDate: "", rackPrice: 45, settlementPrice: 45, isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "attraction-price-4", itemType: "transport", itemName: "观光火车", audience: "通用", periodName: "常规期", startDate: "", endDate: "", rackPrice: 0, settlementPrice: 30, isFree: false, priceNote: "原表仅提供结算价", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "attraction-price-1", itemType: "ticket", itemName: "景区门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 80, settlementPrice: 60, unit: "personVisit", isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "attraction-price-2", itemType: "ticket", itemName: "景区门票", audience: "老人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 45, settlementPrice: 45, unit: "personVisit", isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "attraction-price-3", itemType: "ticket", itemName: "景区门票", audience: "儿童", periodName: "常规期", startDate: "", endDate: "", rackPrice: 45, settlementPrice: 45, unit: "personVisit", isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "attraction-price-4", itemType: "transport", itemName: "观光火车", audience: "通用", periodName: "常规期", startDate: "", endDate: "", rackPrice: 0, settlementPrice: 30, unit: "personVisit", isFree: false, priceNote: "原表仅提供结算价", isGroundOperatorProvided: false, groundOperatorId: "" },
     ],
   },
   {
-    id: "attraction-2", code: "ATT-002", name: "崇圣寺三塔", area: "大理", category: "scenic", status: "enabled",
+    id: "attraction-2", code: "ATT-002", name: "崇圣寺三塔", area: "大理", category: "scenic", unit: "personVisit", status: "enabled",
     restroomLocation: "景区大门电瓶车乘车处、三塔博物馆旁、崇圣寺正门左侧", remark: "", prices: [
-      { id: "attraction-price-5", itemType: "ticket", itemName: "景区门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 75, settlementPrice: 60, isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "attraction-price-6", itemType: "transport", itemName: "电瓶车", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 35, settlementPrice: 20, isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "attraction-price-7", itemType: "ticket", itemName: "景区门票", audience: "老人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 0, settlementPrice: 0, isFree: true, priceNote: "70周岁以上免票", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "attraction-price-8", itemType: "ticket", itemName: "景区门票", audience: "儿童", periodName: "常规期", startDate: "", endDate: "", rackPrice: 0, settlementPrice: 0, isFree: true, priceNote: "1.2米以下免票", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "attraction-price-5", itemType: "ticket", itemName: "景区门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 75, settlementPrice: 60, unit: "personVisit", isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "attraction-price-6", itemType: "transport", itemName: "电瓶车", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 35, settlementPrice: 20, unit: "personVisit", isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "attraction-price-7", itemType: "ticket", itemName: "景区门票", audience: "老人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 0, settlementPrice: 0, unit: "personVisit", isFree: true, priceNote: "70周岁以上免票", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "attraction-price-8", itemType: "ticket", itemName: "景区门票", audience: "儿童", periodName: "常规期", startDate: "", endDate: "", rackPrice: 0, settlementPrice: 0, unit: "personVisit", isFree: true, priceNote: "1.2米以下免票", isGroundOperatorProvided: false, groundOperatorId: "" },
     ],
   },
   {
-    id: "attraction-3", code: "ATT-003", name: "洗马潭索道", area: "大理", category: "transport", status: "enabled",
+    id: "attraction-3", code: "ATT-003", name: "洗马潭索道", area: "大理", category: "transport", unit: "personVisit", status: "enabled",
     restroomLocation: "进站口、出站口及观景平台", remark: "原表淡旺季月份存在重叠，暂保留时段名称，待业务确认具体有效日期", prices: [
-      { id: "attraction-price-9", itemType: "transport", itemName: "洗马潭索道", audience: "成人", periodName: "旺季", startDate: "", endDate: "", rackPrice: 335, settlementPrice: 320, isFree: false, priceNote: "原表：1-2月、4-10月为旺季", isGroundOperatorProvided: true, groundOperatorId: "supplier-1" },
-      { id: "attraction-price-10", itemType: "transport", itemName: "洗马潭索道", audience: "成人", periodName: "淡季", startDate: "", endDate: "", rackPrice: 335, settlementPrice: 260, isFree: false, priceNote: "原表：3月、10月、12月为淡季", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "attraction-price-9", itemType: "transport", itemName: "洗马潭索道", audience: "成人", periodName: "旺季", startDate: "", endDate: "", rackPrice: 335, settlementPrice: 320, unit: "personVisit", isFree: false, priceNote: "原表：1-2月、4-10月为旺季", isGroundOperatorProvided: true, groundOperatorId: "supplier-1" },
+      { id: "attraction-price-10", itemType: "transport", itemName: "洗马潭索道", audience: "成人", periodName: "淡季", startDate: "", endDate: "", rackPrice: 335, settlementPrice: 260, unit: "personVisit", isFree: false, priceNote: "原表：3月、10月、12月为淡季", isGroundOperatorProvided: false, groundOperatorId: "" },
     ],
   },
   {
-    id: "attraction-4", code: "ATT-004", name: "石林风景区", area: "石林", category: "scenic", status: "enabled",
+    id: "attraction-4", code: "ATT-004", name: "石林风景区", area: "石林", category: "scenic", unit: "personVisit", status: "enabled",
     restroomLocation: "售票处", remark: "", prices: [
-      { id: "attraction-price-11", itemType: "ticket", itemName: "景区门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 130, settlementPrice: 130, isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
-      { id: "attraction-price-12", itemType: "transport", itemName: "观光车", audience: "通用", periodName: "常规期", startDate: "", endDate: "", rackPrice: 25, settlementPrice: 25, isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "attraction-price-11", itemType: "ticket", itemName: "景区门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 130, settlementPrice: 130, unit: "personVisit", isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "attraction-price-12", itemType: "transport", itemName: "观光车", audience: "通用", periodName: "常规期", startDate: "", endDate: "", rackPrice: 25, settlementPrice: 25, unit: "personVisit", isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
     ],
   },
 ];
@@ -818,7 +929,7 @@ export const tourismResources: Record<TourismResourceType, TourismResourceRecord
     { id: "supplier-1", code: "SUP-001", name: "云南云途地接社", city: "昆明", countryOrRegion: "中国", contact: "李经理", email: "", phone: "13800000001", status: "enabled", remark: "云南线路综合地接社" },
   ],
   transport: [
-    { id: "transport-1", code: "VEH-001", name: "别克 GL8", city: "昆明", countryOrRegion: "中国", plateNumber: "云A00001", seats: 7, dailyPrice: 1200, contact: "赵师傅", email: "", phone: "13800000005", status: "enabled", remark: "商务车" },
+    { id: "transport-1", code: "VEH-001", name: "别克 GL8", city: "昆明", countryOrRegion: "中国", plateNumber: "云A00001", seats: 7, dailyPrice: 1200, unit: "vehicleDay", contact: "赵师傅", email: "", phone: "13800000005", status: "enabled", remark: "商务车" },
   ],
 };
 

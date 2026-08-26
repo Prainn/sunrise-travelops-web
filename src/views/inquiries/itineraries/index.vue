@@ -41,7 +41,7 @@
               <el-option
                 v-for="row in rows"
                 :key="row.id"
-                :label="`${row.code}｜${row.title}`"
+                :label="`${row.title} · ${$t(`itinerary.statuses.${row.status}`)} · ${row.updatedAt || row.createdAt}`"
                 :value="row.id"
               />
             </el-select>
@@ -76,7 +76,7 @@
 
         <div class="itinerary-page__workspace">
           <main>
-            <div class="itinerary-page__daily-toolbar">
+            <div class="itinerary-page__daily-toolbar h-12">
               <div>
                 <h3>{{ $t("itinerary.dailySchedule") }}</h3>
               </div>
@@ -205,7 +205,7 @@ const {
 .itinerary-page__plan-main { gap: 18px; min-width: 0; }
 .itinerary-page__plan-main h2, .itinerary-page__daily-toolbar h3 { margin: 0; }
 .itinerary-page__plan-main p { margin: 5px 0 0; color: var(--el-text-color-secondary); }
-.itinerary-page__plan-select { width: 280px; }
+.itinerary-page__plan-select { width: 420px; }
 .itinerary-page__plan-controls { gap: 16px; }
 .itinerary-page__workspace { display: grid; grid-template-columns: minmax(0, 1fr) 280px; align-items: start; gap: 16px; }
 .itinerary-page__daily-toolbar { display: flex; justify-content: space-between; align-items: center; margin: 2px 0 14px; }
