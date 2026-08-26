@@ -40,11 +40,12 @@ const attractionItemTypeLabelKeys = {
 } as const;
 
 const supplierNames = new Map(tourismResources.supplier.map((item) => [item.id, item.name]));
+const DIRECT_PRICE_NAME = "直营报价";
 
 function providerName(isGroundOperatorProvided: boolean, groundOperatorId: string) {
   return isGroundOperatorProvided
-    ? supplierNames.get(groundOperatorId) ?? "地接社"
-    : "资源库直采";
+    ? supplierNames.get(groundOperatorId) ?? "地接社报价"
+    : DIRECT_PRICE_NAME;
 }
 
 export const resourcePriceOptions: ResourcePriceOption[] = [
@@ -150,7 +151,7 @@ export const resourcePriceOptions: ResourcePriceOption[] = [
     resourcePriceId: `${resource.id}-daily`,
     resourceName: resource.name,
     priceName: "车辆日成本",
-    providerName: "资源库直采",
+    providerName: DIRECT_PRICE_NAME,
     city: resource.city,
     unit: String(resource.unit),
     unitCost: Number(resource.dailyPrice ?? 0),
@@ -167,7 +168,7 @@ export const resourcePriceOptions: ResourcePriceOption[] = [
       { labelKey: "resource.email", value: resource.email },
       { labelKey: "common.remark", value: resource.remark },
       { labelKey: "itinerary.priceUnit", value: String(resource.unit), format: "unit" as const },
-      { labelKey: "itinerary.provider", value: "资源库直采" },
+      { labelKey: "itinerary.provider", value: DIRECT_PRICE_NAME },
     ],
     searchText: `${resource.name} ${resource.city} ${resource.plateNumber ?? ""}`,
   })),

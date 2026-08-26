@@ -279,8 +279,8 @@
     "nameRequired": "请输入资源名称", "openingHours": "开放时间", "phone": "联系电话",
     "dailyPrice": "日成本", "plateNumber": "车牌号", "restaurantName": "餐厅名称", "roomTypes": "房型",
     "searchPlaceholder": "搜索编号、名称或城市", "seats": "座位数", "starRating": "星级",
-    "directPrice": "直营报价", "directProvided": "直营", "groundOperatorProvided": "地接社提供", "groundOperatorProvidedTag": "地接社报价", "groundOperatorRequired": "请选择地接社",
-    "isGroundOperatorProvided": "是否由地接社提供", "priceSource": "报价来源", "priceUnit": "计价单位", "priceUnitRequired": "请选择计价单位", "providerSource": "资源来源",
+    "directPrice": "直营报价", "groundOperatorProvidedTag": "地接社报价", "groundOperatorRequired": "请选择地接社",
+    "isGroundOperatorProvided": "是否由地接社提供", "priceSource": "报价来源", "priceUnit": "计价单位", "priceUnitRequired": "请选择计价单位",
     "supplierName": "地接社名称", "supplierNameRequired": "请输入地接社名称",
     "ticketPrice": "门票价格", "vehicleModel": "车型", "visitDuration": "建议游览时长"
   },

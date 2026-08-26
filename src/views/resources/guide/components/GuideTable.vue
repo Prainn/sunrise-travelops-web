@@ -114,7 +114,7 @@
             </template>
           </el-table-column>
           <el-table-column
-            :label="$t('resource.providerSource')"
+            :label="$t('resource.priceSource')"
             min-width="160"
           >
             <template #default="scope">
@@ -125,7 +125,7 @@
               >
                 {{ getGroundOperatorName(scope.row.groundOperatorId) }}
               </el-tag>
-              <span v-else>{{ $t("resource.directProvided") }}</span>
+              <span v-else>{{ $t("resource.directPrice") }}</span>
             </template>
           </el-table-column>
           <el-table-column
@@ -258,7 +258,7 @@ function resetQuery() {
 }
 
 function getGroundOperatorName(id: string) {
-  return groundOperatorOptions.value.find((item) => item.id === id)?.name ?? t("resource.groundOperatorProvided");
+  return groundOperatorOptions.value.find((item) => item.id === id)?.name ?? t("resource.groundOperatorProvidedTag");
 }
 </script>
 

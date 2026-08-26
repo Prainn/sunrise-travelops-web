@@ -290,8 +290,8 @@
     "nameRequired": "Enter a resource name", "openingHours": "Opening Hours", "phone": "Phone",
     "dailyPrice": "Daily Cost", "plateNumber": "Plate Number", "restaurantName": "Restaurant Name", "roomTypes": "Room Types",
     "searchPlaceholder": "Search code, name, or city", "seats": "Seats", "starRating": "Star Rating",
-    "directPrice": "Direct Price", "directProvided": "Direct", "groundOperatorProvided": "Ground Operator", "groundOperatorProvidedTag": "Ground Operator Price", "groundOperatorRequired": "Select a ground operator",
-    "isGroundOperatorProvided": "Provided by Ground Operator", "priceSource": "Price Source", "priceUnit": "Price Unit", "priceUnitRequired": "Select a price unit", "providerSource": "Resource Source",
+    "directPrice": "Direct Quote", "groundOperatorProvidedTag": "Ground Operator Quote", "groundOperatorRequired": "Select a ground operator",
+    "isGroundOperatorProvided": "Provided by Ground Operator", "priceSource": "Quote Source", "priceUnit": "Price Unit", "priceUnitRequired": "Select a price unit",
     "supplierName": "Ground Operator Name", "supplierNameRequired": "Enter a ground operator name",
     "ticketPrice": "Ticket Price", "vehicleModel": "Vehicle Model", "visitDuration": "Visit Duration"
   },
