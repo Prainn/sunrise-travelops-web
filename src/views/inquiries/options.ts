@@ -1,5 +1,5 @@
 import type { TagProps } from "element-plus";
-import type { InquiryStatus } from "@/data/data";
+import type { InquiryStatus } from "@/types/inquiry";
 
 export const INQUIRY_STATUS_OPTIONS: Array<{ value: InquiryStatus; labelKey: string }> = [
   { value: "new", labelKey: "inquiry.statuses.new" },

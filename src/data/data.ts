@@ -1,23 +1,13 @@
-import type { AuthUserRecord } from "@/types/auth";
-import type { DictItem, DictTypeItem } from "@/types/dictionary";
+import type { PrototypeUserRecord } from "@/types/auth";
+import type { SystemDictionaryItem, SystemDictionaryType } from "@/types/dictionary";
 import type { VisitOverviewDetail, VisitTrendDetail } from "@/types/dashboard";
-import type { ItineraryItemType, ItineraryPriceUnit, ItineraryRecord } from "@/types/itinerary";
+import type { ItineraryRecord } from "@/types/itinerary";
+import type { InquiryRecord } from "@/types/inquiry";
+import type {
+  AttractionRecord, BusinessCategoryTypeRecord, GuideRecord, HotelRecord, ResourceUnitRecord,
+  RestaurantRecord, TourismResourceRecord, TourismResourceType, TransportMethodRecord,
+} from "@/types/resource";
 import { ROLE_ROOT } from "@/constants";
-
-export interface PrototypeUserRecord extends AuthUserRecord {
-  nickname: string;
-  nicknameKey?: string;
-  avatar: string;
-  gender: number;
-  mobile: string;
-  email: string;
-  deptId: number;
-  roleIds: number[];
-  roleNames: string;
-  createTime: string;
-  roles: string[];
-  perms: string[];
-}
 
 const adminPermissions = [
   "sys:user:list",
@@ -241,16 +231,6 @@ export const users: PrototypeUserRecord[] = [
   },
 ];
 
-/** 仅包含系统运行与界面展示所需的基础分类。 */
-export type SystemDictionaryType = DictTypeItem & {
-  nameKey?: string;
-  remarkKey?: string;
-};
-
-export type SystemDictionaryItem = DictItem & {
-  labelKey?: string;
-};
-
 export const systemDictionaryTypes: SystemDictionaryType[] = [
   {
     id: "1",
@@ -350,36 +330,6 @@ export const systemDictionaryItems: SystemDictionaryItem[] = [
     tagType: "info",
   },
 ];
-
-export type InquiryStatus =
-  | "new"
-  | "planning"
-  | "quoted"
-  | "lost"
-  | "archived";
-
-export interface InquiryRecord {
-  id: string;
-  code: string;
-  agencyId: string;
-  agencyCode: string;
-  agencyName: string;
-  contactName: string;
-  email: string;
-  phone: string;
-  countryOrRegion: string;
-  sourceChannel: string;
-  originalMessage: string;
-  internalRemark: string;
-  owner: string;
-  operationsCoordinator: string;
-  nextFollowUpAt: string;
-  plannedDays: number;
-  lostReason: string;
-  status: InquiryStatus;
-  creator: string;
-  createdAt: string;
-}
 
 export const inquiries: InquiryRecord[] = [
   {
@@ -579,18 +529,6 @@ export const itineraries: ItineraryRecord[] = [
   },
 ];
 
-export type TourismResourceType = "agency" | "supplier" | "transport";
-
-export interface ResourceUnitRecord {
-  id: string;
-  code: ItineraryPriceUnit;
-  name: string;
-  englishName: string;
-  resourceTypes: ItineraryItemType[];
-  status: "enabled" | "disabled";
-  remark: string;
-}
-
 /** 业务分类中的资源计价单位；旅游资源和行程仅保存单位编码。 */
 export const resourceUnits: ResourceUnitRecord[] = [
   { id: "resource-unit-room-night", code: "roomNight", name: "间夜", englishName: "Room night", resourceTypes: ["hotel"], status: "enabled", remark: "酒店房型按间夜计价" },
@@ -600,15 +538,6 @@ export const resourceUnits: ResourceUnitRecord[] = [
   { id: "resource-unit-vehicle-day", code: "vehicleDay", name: "辆/天", englishName: "Vehicle/day", resourceTypes: ["vehicle"], status: "enabled", remark: "车辆按每辆每天计价" },
   { id: "resource-unit-guide-day", code: "guideDay", name: "人/天", englishName: "Person/day", resourceTypes: ["guide"], status: "enabled", remark: "导游按每人每天计价" },
 ];
-
-export interface TransportMethodRecord {
-  id: string;
-  code: string;
-  name: string;
-  englishName: string;
-  status: "enabled" | "disabled";
-  remark: string;
-}
 
 /** 业务分类中的交通方式；每日行程仅保存交通方式编码。 */
 export const transportMethods: TransportMethodRecord[] = [
@@ -620,166 +549,11 @@ export const transportMethods: TransportMethodRecord[] = [
   { id: "transport-method-walking", code: "walking", name: "步行", englishName: "Walking", status: "enabled", remark: "徒步或步行游览" },
 ];
 
-export interface BusinessCategoryOptionRecord {
-  id: string;
-  code: string;
-  name: string;
-  englishName: string;
-  status: "enabled" | "disabled";
-  remark: string;
-}
-
-export interface BusinessCategoryTypeRecord {
-  id: string;
-  code: string;
-  name: string;
-  englishName: string;
-  builtIn: boolean;
-  items: BusinessCategoryOptionRecord[];
-}
-
 /** 业务分类类型；内置类型由专用面板维护，其余类型使用通用分类选项。 */
 export const businessCategoryTypes: BusinessCategoryTypeRecord[] = [
   { id: "business-category-resource-unit", code: "resource-unit", name: "资源计价单位", englishName: "Resource Price Units", builtIn: true, items: [] },
   { id: "business-category-transport-method", code: "transport-method", name: "交通方式", englishName: "Transport Methods", builtIn: true, items: [] },
 ];
-
-export interface TourismResourceRecord {
-  [key: string]: string | number;
-  id: string;
-  code: string;
-  name: string;
-  city: string;
-  countryOrRegion: string;
-  contact: string;
-  email: string;
-  phone: string;
-  status: "enabled" | "disabled";
-  remark: string;
-}
-
-export interface HotelPricePlanRecord {
-  id: string;
-  periodName: string;
-  startDate: string;
-  endDate: string;
-  individualPrice: number;
-  groupPrice: number;
-  unit: ItineraryPriceUnit;
-  minimumRooms: number;
-  isGroundOperatorProvided: boolean;
-  groundOperatorId: string;
-}
-
-export interface HotelRoomTypeRecord {
-  id: string;
-  name: string;
-  rackRate: number;
-  pricePlans: HotelPricePlanRecord[];
-}
-
-export interface HotelRecord {
-  id: string;
-  code: string;
-  name: string;
-  province: string;
-  city: string;
-  rating: string;
-  facilities: string;
-  breakfast: string;
-  address: string;
-  phone: string;
-  nearby: string;
-  unit: ItineraryPriceUnit;
-  status: "enabled" | "disabled";
-  roomTypes: HotelRoomTypeRecord[];
-}
-
-export type AttractionCategory = "scenic" | "performance" | "experience" | "transport" | "package";
-export type AttractionPriceItemType = "ticket" | "transport" | "guide" | "activity" | "package";
-
-export interface AttractionPriceRecord {
-  id: string;
-  itemType: AttractionPriceItemType;
-  itemName: string;
-  audience: string;
-  periodName: string;
-  startDate: string;
-  endDate: string;
-  rackPrice: number;
-  settlementPrice: number;
-  unit: ItineraryPriceUnit;
-  isFree: boolean;
-  priceNote: string;
-  isGroundOperatorProvided: boolean;
-  groundOperatorId: string;
-}
-
-export interface AttractionRecord {
-  id: string;
-  code: string;
-  name: string;
-  area: string;
-  category: AttractionCategory;
-  restroomLocation: string;
-  remark: string;
-  unit: ItineraryPriceUnit;
-  status: "enabled" | "disabled";
-  prices: AttractionPriceRecord[];
-}
-
-export type GuideGender = "male" | "female";
-export type GuideEmploymentType = "full-time" | "part-time";
-
-export interface GuideRecord {
-  id: string;
-  code: string;
-  certificateNo: string;
-  name: string;
-  gender: GuideGender;
-  age: number;
-  languages: string[];
-  employmentType: GuideEmploymentType;
-  identityNumber: string;
-  phone: string;
-  dailyPrice: number;
-  unit: ItineraryPriceUnit;
-  hasLaborContract: boolean;
-  isGroundOperatorProvided: boolean;
-  groundOperatorId: string;
-  licensePhotoUrl: string;
-  remark: string;
-  status: "enabled" | "disabled";
-}
-
-export type RestaurantPriceUnit = string;
-
-export interface RestaurantPriceRecord {
-  id: string;
-  menuName: string;
-  dishDetails?: string;
-  unit: RestaurantPriceUnit;
-  price: number;
-  dinerCount: number;
-  remark: string;
-  isGroundOperatorProvided: boolean;
-  groundOperatorId: string;
-}
-
-export interface RestaurantRecord {
-  id: string;
-  code: string;
-  name: string;
-  city: string;
-  cuisine: string;
-  contact: string;
-  phone: string;
-  address: string;
-  remark: string;
-  unit: RestaurantPriceUnit;
-  status: "enabled" | "disabled";
-  prices: RestaurantPriceRecord[];
-}
 
 /** 菜单汇总原型数据；100 元及以下按单人餐标，更高价格按整桌报价归类。 */
 export const restaurants: RestaurantRecord[] = [

@@ -109,7 +109,7 @@ import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { YUNNAN_TOURISM_AREA_OPTIONS } from "@/constants/yunnan-tourism-regions";
-import type { AttractionRecord } from "@/data/data";
+import type { AttractionRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 import { attractionCategoryOptions } from "../options";
 

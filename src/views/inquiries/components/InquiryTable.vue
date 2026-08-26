@@ -152,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import type { InquiryRecord, InquiryStatus } from "@/data/data";
+import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { INQUIRY_STATUS_TAG_TYPES } from "../options";
 import { isInquiryReadOnly } from "../inquiry-workflow";

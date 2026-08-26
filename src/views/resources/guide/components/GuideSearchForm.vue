@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import type { GuideEmploymentType, GuideGender } from "@/data/data";
+import type { GuideEmploymentType, GuideGender } from "@/types/resource";
 
 const props = defineProps<{
   keywords: string;

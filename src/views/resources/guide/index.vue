@@ -20,8 +20,9 @@
 import { reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { guides, type GuideRecord } from "@/data/data";
-import { generateNextCode } from "@/utils";
+import { guides } from "@/data/data";
+import type { GuideRecord } from "@/types/resource";
+import { createId, generateNextCode } from "@/utils";
 import GuideEditorDialog from "./components/GuideEditorDialog.vue";
 import GuideTable from "./components/GuideTable.vue";
 
@@ -56,7 +57,7 @@ function openEditDialog(record: GuideRecord) {
 function saveGuide(record: GuideRecord) {
   const current = guideStore.find((item) => item.id === editingGuideId.value);
   if (current) Object.assign(current, record, { languages: [...record.languages] });
-  else guideStore.push({ ...record, id: `guide-${Date.now()}`, languages: [...record.languages] });
+  else guideStore.push({ ...record, id: createId("guide"), languages: [...record.languages] });
   isDialogVisible.value = false;
   ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
 }

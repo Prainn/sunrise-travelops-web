@@ -1,8 +1,8 @@
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
-import type { InquiryRecord } from "@/data/data";
+import type { InquiryRecord } from "@/types/inquiry";
 import type { ItineraryRecord } from "@/types/itinerary";
-import { formatMoney } from "@/utils";
+import { formatMoney, sumMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
 import { getTransportMethodNames } from "@/utils/transport-method";
 
@@ -86,8 +86,7 @@ function addPdfPage(pdf: jsPDF) {
 }
 
 function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord) {
-  const totalPrice = itinerary.dailyPlans.flatMap((day) => day.items)
-    .reduce((total, item) => total + item.totalPrice, 0);
+  const totalPrice = sumMoney(itinerary.dailyPlans.flatMap((day) => day.items).map((item) => item.totalPrice));
   const daySections = itinerary.dailyPlans.map((day) => `
     <article data-pdf-block style="padding:16px;border:1px solid #dcdfe6;border-radius:8px;box-sizing:border-box;">
       <h2 style="margin:0 0 8px;font-size:18px;">D${day.dayNumber} · ${escapeHtml(day.departure)} → ${escapeHtml(day.destination)}</h2>

@@ -51,7 +51,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { YUNNAN_TOURISM_AREA_OPTIONS } from "@/constants/yunnan-tourism-regions";
-import type { AttractionCategory } from "@/data/data";
+import type { AttractionCategory } from "@/types/resource";
 import { attractionCategoryOptions } from "../options";
 
 const props = defineProps<{

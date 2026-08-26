@@ -238,7 +238,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { tourismResources } from "@/data/data";
-import type { RestaurantPriceRecord, RestaurantPriceUnit, RestaurantRecord } from "@/data/data";
+import type { RestaurantPriceRecord, RestaurantPriceUnit, RestaurantRecord } from "@/types/resource";
 import { formatMoney } from "@/utils";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import RestaurantSearchForm from "./RestaurantSearchForm.vue";

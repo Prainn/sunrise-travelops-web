@@ -190,7 +190,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { ArrowDown, ArrowUp, Right } from "@element-plus/icons-vue";
 import type { ItineraryDayRecord } from "@/types/itinerary";
-import { formatMoney } from "@/utils";
+import { formatMoney, sumMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
 import ItineraryDayForm from "./ItineraryDayForm.vue";
 
@@ -212,8 +212,8 @@ const emit = defineEmits<{
   remove: [];
   move: [offset: number];
 }>();
-const dayCost = computed(() => props.day.items.reduce((total, item) => total + item.totalCost, 0));
-const dayPrice = computed(() => props.day.items.reduce((total, item) => total + item.totalPrice, 0));
+const dayCost = computed(() => sumMoney(props.day.items.map((item) => item.totalCost)));
+const dayPrice = computed(() => sumMoney(props.day.items.map((item) => item.totalPrice)));
 const { locale } = useI18n();
 
 function updateField(field: EditableDayField, value: string) { emit("update-field", field, value); }

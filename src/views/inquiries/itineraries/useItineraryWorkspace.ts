@@ -1,118 +1,85 @@
-import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import { useI18n } from "vue-i18n";
-import { useRoute, useRouter } from "vue-router";
-import { ROLE_ROOT } from "@/constants";
-import { inquiries, itineraries } from "@/data/data";
+import { computed, ref } from "vue";
 import { useUserStore } from "@/stores/user";
-import type { ItineraryDayRecord, ItineraryRecord, ItineraryResourceItem } from "@/types/itinerary";
-import { addDays, formatDate, formatDateTime, generateNextCode } from "@/utils";
-import { getStatusAfterItineraryCreated, getStatusAfterQuoteGenerated, isInquiryReadOnly } from "../inquiry-workflow";
-import {
-  downloadGeneratedItineraryPdf,
-  generateItineraryPdf,
-  type GeneratedItineraryPdf,
-} from "./pdf";
-import { recalculateItem } from "./pricing";
-import { getDayCountMismatch, getDefaultItineraryId, validateItineraryForPdf } from "./workflow";
+import type { ItineraryRecord, ItineraryResourceItem } from "@/types/itinerary";
+import { hasUserPermission, sumMoney } from "@/utils";
+import { isInquiryReadOnly } from "../inquiry-workflow";
+import { canPerformItineraryOperation } from "./itinerary-workflow";
+import { useItineraryEditor } from "./useItineraryEditor";
+import { useItineraryPdf } from "./useItineraryPdf";
+import { useItinerarySelection } from "./useItinerarySelection";
 
-type EditableDayField = "departure" | "destination" | "transport" | "title" | "description" | "mealSummary" | "accommodationSummary";
+interface WorkspaceMessages {
+  confirm: (key: string, params?: Record<string, unknown>) => Promise<boolean>;
+  error: (key: string) => void;
+  success: (key: string) => void;
+  warning: (key: string, params: Record<string, unknown>) => void;
+  translate: (key: string) => string;
+}
 
-export function useItineraryWorkspace() {
-  const route = useRoute();
-  const router = useRouter();
+export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const userStore = useUserStore();
-  const { t } = useI18n();
-  const inquiryStore = reactive(inquiries);
-  const itineraryStore = reactive(itineraries);
+  const selection = useItinerarySelection();
+  const { inquiry, inquiryId, itineraryStore, selectedItinerary, selectedItineraryId } = selection;
   const isPlanDialogVisible = ref(false);
   const isResourceDialogVisible = ref(false);
-  const isPdfPreviewVisible = ref(false);
-  const isGeneratingPdf = ref(false);
-  const pdfPreviewFile = ref<GeneratedItineraryPdf>();
-  const pdfPreviewUrl = ref("");
   const resourceTargetDayId = ref("");
-  const inquiryId = computed(() => String(route.params.inquiryId ?? ""));
-  const inquiry = computed(() => inquiryStore.find((item) => item.id === inquiryId.value));
-  const rows = computed(() => itineraryStore
-    .filter((item) => item.inquiryId === inquiryId.value)
-    .sort((left, right) => (right.updatedAt || right.createdAt).localeCompare(left.updatedAt || left.createdAt)));
-  const selectedItineraryId = ref(getInitialItineraryId());
-  const selectedItinerary = computed(() => rows.value.find((item) => item.id === selectedItineraryId.value));
-  const isRoot = computed(() => userStore.userInfo.roles?.includes(ROLE_ROOT));
-  const isDraft = computed(() => selectedItinerary.value?.status === "draft");
   const inquiryReadOnly = computed(() => inquiry.value ? isInquiryReadOnly(inquiry.value.status) : true);
-  const canCreateItinerary = computed(() => !inquiryReadOnly.value && hasPermission("itinerary:create"));
-  const contentEditable = computed(() => !inquiryReadOnly.value && isDraft.value && hasPermission("itinerary:update"));
-  const priceEditable = computed(() => !inquiryReadOnly.value && isDraft.value && hasPermission("itinerary:price"));
-  const canGeneratePdf = computed(() => !inquiryReadOnly.value && hasPermission("itinerary:pdf"));
+  const isDraft = computed(() => selectedItinerary.value?.status === "draft");
+  const canCreateItinerary = computed(() => !inquiryReadOnly.value && hasUserPermission(userStore.userInfo, "itinerary:create"));
+  const contentEditable = computed(() => Boolean(
+    selectedItinerary.value
+    && !inquiryReadOnly.value
+    && canPerformItineraryOperation(selectedItinerary.value.status, "edit_content")
+    && hasUserPermission(userStore.userInfo, "itinerary:update")
+  ));
+  const priceEditable = computed(() => Boolean(
+    selectedItinerary.value
+    && !inquiryReadOnly.value
+    && canPerformItineraryOperation(selectedItinerary.value.status, "edit_price")
+    && hasUserPermission(userStore.userInfo, "itinerary:price")
+  ));
+  const canGeneratePdf = computed(() => Boolean(
+    selectedItinerary.value
+    && !inquiryReadOnly.value
+    && canPerformItineraryOperation(selectedItinerary.value.status, "generate_pdf")
+    && hasUserPermission(userStore.userInfo, "itinerary:pdf")
+  ));
   const guestCount = computed(() => selectedItinerary.value
     ? selectedItinerary.value.adults + selectedItinerary.value.childrenCount + selectedItinerary.value.otherGuests : 0);
   const allItems = computed(() => selectedItinerary.value?.dailyPlans.flatMap((day) => day.items) ?? []);
-  const totalCost = computed(() => allItems.value.reduce((total, item) => total + item.totalCost, 0));
-  const totalPrice = computed(() => allItems.value.reduce((total, item) => total + item.totalPrice, 0));
+  const totalCost = computed(() => sumMoney(allItems.value.map((item) => item.totalCost)));
+  const totalPrice = computed(() => sumMoney(allItems.value.map((item) => item.totalPrice)));
   const itemCount = computed(() => allItems.value.length);
   const missingPriceCount = computed(() => allItems.value.filter((item) => item.unitPrice === null).length);
-  const itineraryForm = ref<ItineraryRecord>(createEmptyItinerary());
 
-  function createEmptyItinerary(): ItineraryRecord {
-    return {
-      id: "", inquiryId: inquiryId.value, code: "", title: "", destinations: "", startDate: "", endDate: "", days: 0,
-      adults: 1, childrenCount: 0, otherGuests: 0, hotelLevel: "", roomPreference: "", transportPreference: "",
-      guideRequired: false, guideLanguage: "", pace: "", mealRequirements: "", budget: 0, specialRequirements: "",
-      inquiryCoordinatorNotes: "", operationsCoordinator: inquiry.value?.operationsCoordinator ?? "", dailyPlans: [], status: "draft", creator: "", createdAt: "", updatedAt: "",
-    };
-  }
-
-  function getInitialItineraryId() {
-    const requestedId = String(route.query.itineraryId ?? "");
-    return getDefaultItineraryId(rows.value, requestedId);
-  }
-
-  watch([inquiryId, () => route.query.itineraryId], () => {
-    selectedItineraryId.value = getInitialItineraryId();
+  const editor = useItineraryEditor({
+    inquiry,
+    inquiryId,
+    itineraryStore,
+    selectedItinerary,
+    selectedItineraryId,
+    canCreate: () => canCreateItinerary.value,
+    canEditContent: () => contentEditable.value,
+    canEditPrice: () => priceEditable.value,
+    getCreator: () => userStore.userInfo.username ?? "",
+  });
+  const itineraryForm = ref<ItineraryRecord>(editor.createEmptyItinerary());
+  const pdf = useItineraryPdf({
+    inquiry,
+    selectedItinerary,
+    canGenerate: () => canGeneratePdf.value,
   });
 
   function openCreateDialog() {
     if (!canCreateItinerary.value) return;
-    itineraryForm.value = { ...createEmptyItinerary(), code: generateItineraryCode() };
+    itineraryForm.value = { ...editor.createEmptyItinerary(), code: editor.generateItineraryCode() };
     isPlanDialogVisible.value = true;
   }
 
   function createItinerary(record: ItineraryRecord) {
-    if (!canCreateItinerary.value || !inquiry.value) return;
-    const timestamp = formatDateTime(new Date());
-    const created = {
-      ...record,
-      id: `itinerary-${Date.now()}`,
-      inquiryId: inquiryId.value,
-      creator: userStore.userInfo.username ?? "",
-      operationsCoordinator: inquiry.value.operationsCoordinator,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      dailyPlans: createDailyPlans(record.startDate, record.days),
-    };
-    itineraryStore.unshift(created);
-    inquiry.value.status = getStatusAfterItineraryCreated(inquiry.value.status);
-    selectedItineraryId.value = created.id;
+    if (!editor.createItinerary(record)) return;
     isPlanDialogVisible.value = false;
-    ElMessage.success(t("common.createSuccess"));
-  }
-
-  function createDailyPlans(startDate: string, dayCount: number): ItineraryDayRecord[] {
-    return Array.from({ length: dayCount }, (_, index) => ({
-      id: `day-${Date.now()}-${index}`, dayNumber: index + 1, date: addDays(startDate, index), departure: "", destination: "",
-      transport: "", title: "", description: "", mealSummary: "", accommodationSummary: "", items: [],
-    }));
-  }
-
-  function updateDayField(index: number, field: EditableDayField, value: string) {
-    if (!contentEditable.value) return;
-    const day = selectedItinerary.value?.dailyPlans[index];
-    if (day) {
-      day[field] = value;
-      touchSelectedItinerary();
-    }
+    messages.success("common.createSuccess");
   }
 
   function openResourceDialog(dayId: string) {
@@ -122,190 +89,85 @@ export function useItineraryWorkspace() {
   }
 
   function addResourceItem(item: ItineraryResourceItem) {
-    if (!contentEditable.value) return;
-    const day = selectedItinerary.value?.dailyPlans.find((record) => record.id === resourceTargetDayId.value);
-    if (!day) return;
-    day.items.push(item);
-    touchSelectedItinerary();
-    ElMessage.success(t("itinerary.resourceAdded"));
+    if (editor.addResourceItem(resourceTargetDayId.value, item)) messages.success("itinerary.resourceAdded");
   }
 
-  function removeItem(dayId: string, itemIndex: number) {
-    if (!contentEditable.value) return;
-    selectedItinerary.value?.dailyPlans.find((day) => day.id === dayId)?.items.splice(itemIndex, 1);
-    touchSelectedItinerary();
+  function copyItinerary() {
+    if (editor.copyItinerary(messages.translate("itinerary.copySuffix"))) messages.success("itinerary.copySuccess");
   }
 
-  function updateItemQuantity(dayId: string, itemIndex: number, quantity: number) {
-    if (!contentEditable.value) return;
-    const item = selectedItinerary.value?.dailyPlans.find((day) => day.id === dayId)?.items[itemIndex];
-    if (!item) return;
-    item.quantity = quantity;
-    recalculateItem(item);
-    touchSelectedItinerary();
-  }
-
-  function updateItemPrice(dayId: string, itemIndex: number, price: number | null) {
-    if (!priceEditable.value) return;
-    const item = selectedItinerary.value?.dailyPlans.find((day) => day.id === dayId)?.items[itemIndex];
-    if (!item) return;
-    item.unitPrice = price;
-    recalculateItem(item);
-    touchSelectedItinerary();
+  async function removeDay(index: number) {
+    if (!contentEditable.value || !await messages.confirm("itinerary.deleteDayConfirm")) return;
+    editor.removeDay(index);
   }
 
   async function handleGeneratePdf() {
-    const plan = selectedItinerary.value;
-    if (!plan || !inquiry.value || !isDraft.value || !canGeneratePdf.value) return;
-    const validation = validateItineraryForPdf(plan.dailyPlans);
+    const validation = pdf.validatePdf();
+    if (!validation) return;
     if (validation.emptyDayNumbers.length) {
-      ElMessage.warning(t("itinerary.pdfEmptyDays", { days: validation.emptyDayNumbers.map((day) => `D${day}`).join("、") }));
+      messages.warning("itinerary.pdfEmptyDays", { days: validation.emptyDayNumbers.map((day) => `D${day}`).join("、") });
       return;
     }
     if (validation.missingPriceItems.length) {
       const items = validation.missingPriceItems.map((item) => `D${item.dayNumber} ${item.resourceName}`).join("、");
-      ElMessage.warning(t("itinerary.pdfMissingPrices", { items }));
+      messages.warning("itinerary.pdfMissingPrices", { items });
       return;
     }
-    const actualDays = plan.dailyPlans.length;
-    if (getDayCountMismatch(actualDays, inquiry.value.plannedDays)) {
-      try {
-        await ElMessageBox.confirm(
-          t("itinerary.dayCountMismatch", { planned: inquiry.value.plannedDays, actual: actualDays }),
-          t("common.warning"),
-          { type: "warning", confirmButtonText: t("itinerary.generateDespiteMismatch"), cancelButtonText: t("common.cancel") }
-        );
-      } catch { return; }
+    if (validation.dayCountMismatch) {
+      const confirmed = await messages.confirm("itinerary.dayCountMismatch", {
+        planned: validation.plannedDays,
+        actual: validation.actualDays,
+      });
+      if (!confirmed) return;
     }
-    isGeneratingPdf.value = true;
     try {
-      closePdfPreview();
-      pdfPreviewFile.value = await generateItineraryPdf(plan, inquiry.value);
-      pdfPreviewUrl.value = URL.createObjectURL(pdfPreviewFile.value.blob);
-      isPdfPreviewVisible.value = true;
+      await pdf.generatePreview();
     } catch {
-      ElMessage.error(t("itinerary.pdfGenerationFailed"));
-    } finally {
-      isGeneratingPdf.value = false;
+      messages.error("itinerary.pdfGenerationFailed");
     }
   }
 
   function confirmPdfDownload() {
-    const plan = selectedItinerary.value;
-    if (!plan || !inquiry.value || !pdfPreviewFile.value) return;
-    downloadGeneratedItineraryPdf(pdfPreviewFile.value);
-    plan.status = "quoted";
-    plan.updatedAt = formatDateTime(new Date());
-    inquiry.value.status = getStatusAfterQuoteGenerated(inquiry.value.status);
-    closePdfPreview();
-    ElMessage.success(t("itinerary.pdfGenerated"));
+    if (pdf.confirmPdfDownload()) messages.success("itinerary.pdfGenerated");
   }
-
-  function closePdfPreview() {
-    isPdfPreviewVisible.value = false;
-    if (pdfPreviewUrl.value) URL.revokeObjectURL(pdfPreviewUrl.value);
-    pdfPreviewUrl.value = "";
-    pdfPreviewFile.value = undefined;
-  }
-
-  function copyItinerary() {
-    const source = selectedItinerary.value;
-    if (!source || !canCreateItinerary.value || !inquiry.value) return;
-    const timestamp = Date.now();
-    const copied: ItineraryRecord = {
-      ...source,
-      id: `itinerary-${timestamp}`,
-      code: generateItineraryCode(),
-      title: `${source.title} ${t("itinerary.copySuffix")}`,
-      status: "draft",
-      creator: userStore.userInfo.username ?? "",
-      createdAt: formatDateTime(new Date()),
-      updatedAt: formatDateTime(new Date()),
-      dailyPlans: source.dailyPlans.map((day, dayIndex) => ({
-        ...day,
-        id: `day-${timestamp}-${dayIndex}`,
-        items: day.items.map((item, itemIndex) => ({ ...item, id: `item-${timestamp}-${dayIndex}-${itemIndex}` })),
-      })),
-    };
-    itineraryStore.unshift(copied);
-    inquiry.value.status = getStatusAfterItineraryCreated(inquiry.value.status);
-    selectedItineraryId.value = copied.id;
-    ElMessage.success(t("itinerary.copySuccess"));
-  }
-
-  function hasPermission(permission: string) {
-    return Boolean(isRoot.value || userStore.userInfo.perms?.includes(permission));
-  }
-
-  function addDay() {
-    if (!contentEditable.value) return;
-    const plan = selectedItinerary.value;
-    if (!plan) return;
-    plan.dailyPlans.push({
-      id: `day-${Date.now()}`, dayNumber: plan.dailyPlans.length + 1, date: addDays(plan.startDate, plan.dailyPlans.length),
-      departure: "", destination: "", transport: "", title: "", description: "", mealSummary: "", accommodationSummary: "", items: [],
-    });
-    syncPlanDates(plan);
-  }
-
-  function duplicateDay(index: number) {
-    if (!contentEditable.value) return;
-    const plan = selectedItinerary.value;
-    const source = plan?.dailyPlans[index];
-    if (!plan || !source) return;
-    plan.dailyPlans.splice(index + 1, 0, {
-      ...source,
-      id: `day-${Date.now()}`,
-      items: source.items.map((item, itemIndex) => ({ ...item, id: `item-${Date.now()}-${itemIndex}` })),
-    });
-    syncPlanDates(plan);
-  }
-
-  async function removeDay(index: number) {
-    if (!contentEditable.value) return;
-    const plan = selectedItinerary.value;
-    if (!plan) return;
-    try {
-      await ElMessageBox.confirm(t("itinerary.deleteDayConfirm"), t("common.tip"), { type: "warning" });
-    } catch { return; }
-    plan.dailyPlans.splice(index, 1);
-    syncPlanDates(plan);
-  }
-
-  function moveDay(index: number, offset: number) {
-    if (!contentEditable.value) return;
-    const plan = selectedItinerary.value;
-    if (!plan) return;
-    const target = index + offset;
-    if (target < 0 || target >= plan.dailyPlans.length) return;
-    [plan.dailyPlans[index], plan.dailyPlans[target]] = [plan.dailyPlans[target], plan.dailyPlans[index]];
-    syncPlanDates(plan);
-  }
-
-  function syncPlanDates(plan: ItineraryRecord) {
-    plan.dailyPlans.forEach((day, index) => { day.dayNumber = index + 1; day.date = addDays(plan.startDate, index); });
-    plan.days = plan.dailyPlans.length;
-    plan.endDate = plan.days ? addDays(plan.startDate, plan.days - 1) : plan.startDate;
-    plan.updatedAt = formatDateTime(new Date());
-  }
-
-  function touchSelectedItinerary() {
-    if (selectedItinerary.value) selectedItinerary.value.updatedAt = formatDateTime(new Date());
-  }
-
-  function generateItineraryCode() {
-    const month = formatDate(new Date()).slice(0, 7).replace("-", "");
-    return generateNextCode(itineraryStore, `ITI-${month}`);
-  }
-
-  onBeforeUnmount(closePdfPreview);
 
   return {
-    addDay, addResourceItem, canCreateItinerary, canGeneratePdf, contentEditable, copyItinerary, createItinerary,
-    closePdfPreview, confirmPdfDownload, duplicateDay, guestCount, handleGeneratePdf, inquiry, isGeneratingPdf,
-    isPdfPreviewVisible, isPlanDialogVisible, isResourceDialogVisible,
-    isDraft, itemCount, itineraryForm, missingPriceCount, moveDay, openCreateDialog, openResourceDialog, priceEditable,
-    pdfPreviewUrl, removeDay, removeItem, router, rows, selectedItinerary, selectedItineraryId, totalCost, totalPrice,
-    updateDayField, updateItemPrice, updateItemQuantity,
+    addDay: editor.addDay,
+    addResourceItem,
+    canCreateItinerary,
+    canGeneratePdf,
+    closePdfPreview: pdf.closePdfPreview,
+    confirmPdfDownload,
+    contentEditable,
+    copyItinerary,
+    createItinerary,
+    duplicateDay: editor.duplicateDay,
+    guestCount,
+    handleGeneratePdf,
+    inquiry,
+    isDraft,
+    isGeneratingPdf: pdf.isGeneratingPdf,
+    isPdfPreviewVisible: pdf.isPdfPreviewVisible,
+    isPlanDialogVisible,
+    isResourceDialogVisible,
+    itemCount,
+    itineraryForm,
+    missingPriceCount,
+    moveDay: editor.moveDay,
+    openCreateDialog,
+    openResourceDialog,
+    pdfPreviewUrl: pdf.pdfPreviewUrl,
+    priceEditable,
+    removeDay,
+    removeItem: editor.removeItem,
+    router: selection.router,
+    rows: selection.rows,
+    selectedItinerary,
+    selectedItineraryId,
+    totalCost,
+    totalPrice,
+    updateDayField: editor.updateDayField,
+    updateItemPrice: editor.updateItemPrice,
+    updateItemQuantity: editor.updateItemQuantity,
   };
 }

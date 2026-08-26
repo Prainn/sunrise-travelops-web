@@ -29,8 +29,9 @@
 import { reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { restaurants, type RestaurantPriceRecord, type RestaurantRecord } from "@/data/data";
-import { generateNextCode } from "@/utils";
+import { restaurants } from "@/data/data";
+import type { RestaurantPriceRecord, RestaurantRecord } from "@/types/resource";
+import { createId, generateNextCode } from "@/utils";
 import RestaurantEditorDialog from "./components/RestaurantEditorDialog.vue";
 import RestaurantPriceDialog from "./components/RestaurantPriceDialog.vue";
 import RestaurantTable from "./components/RestaurantTable.vue";
@@ -76,7 +77,7 @@ function openEditDialog(record: RestaurantRecord) {
 function saveRestaurant(record: RestaurantRecord) {
   const current = restaurantStore.find((item) => item.id === editingRestaurantId.value);
   if (current) Object.assign(current, record, { prices: current.prices });
-  else restaurantStore.push({ ...record, id: `restaurant-${Date.now()}`, prices: [] });
+  else restaurantStore.push({ ...record, id: createId("restaurant"), prices: [] });
   isRestaurantDialogVisible.value = false;
   ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
 }
@@ -115,7 +116,7 @@ function savePrice(price: RestaurantPriceRecord) {
   if (!selectedRestaurant.value) return;
   const current = selectedRestaurant.value.prices.find((item) => item.id === editingPriceId.value);
   if (current) Object.assign(current, price);
-  else selectedRestaurant.value.prices.push({ ...price, id: `restaurant-price-${Date.now()}` });
+  else selectedRestaurant.value.prices.push({ ...price, id: createId("restaurant-price") });
   isPriceDialogVisible.value = false;
   ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
 }

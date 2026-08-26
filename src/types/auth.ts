@@ -20,3 +20,18 @@ export interface AuthUserRecord {
   password: string;
   status: "enabled" | "disabled";
 }
+
+export interface PrototypeUserRecord extends AuthUserRecord {
+  nickname: string;
+  nicknameKey?: string;
+  avatar: string;
+  gender: number;
+  mobile: string;
+  email: string;
+  deptId: number;
+  roleIds: number[];
+  roleNames: string;
+  createTime: string;
+  roles: string[];
+  perms: string[];
+}

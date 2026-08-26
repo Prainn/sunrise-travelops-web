@@ -45,13 +45,14 @@ import { computed, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import { inquiries, tourismResources, users, type InquiryRecord, type InquiryStatus } from "@/data/data";
-import { formatDate, formatDateTime, generateNextCode } from "@/utils";
+import { inquiries, tourismResources, users } from "@/data/data";
+import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";
+import { createId, formatDate, formatDateTime, generateNextCode } from "@/utils";
 import InquiryDetailDrawer from "./components/InquiryDetailDrawer.vue";
 import InquiryEditorDialog from "./components/InquiryEditorDialog.vue";
 import InquirySearchForm from "./components/InquirySearchForm.vue";
 import InquiryTable from "./components/InquiryTable.vue";
-import { isInquiryReadOnly } from "./inquiry-workflow";
+import { isInquiryReadOnly, transitionInquiry } from "./inquiry-workflow";
 
 defineOptions({ name: "InquiryList" });
 
@@ -151,9 +152,12 @@ function saveInquiry(record: InquiryRecord) {
   const current = inquiryStore.find((item) => item.id === editingId.value);
   if (current) {
     if (isInquiryReadOnly(current.status)) return;
-    Object.assign(current, record);
+    let nextStatus = current.status;
+    if (record.status === "lost" && current.status !== "lost") nextStatus = transitionInquiry(current.status, "mark_lost");
+    else if (record.status === "planning" && current.status === "quoted") nextStatus = transitionInquiry(current.status, "reopen_for_planning");
+    Object.assign(current, record, { status: nextStatus });
   } else {
-    inquiryStore.unshift({ ...record, id: `inquiry-${Date.now()}`, status: "new", createdAt: formatDateTime(new Date()) });
+    inquiryStore.unshift({ ...record, id: createId("inquiry"), status: "new", createdAt: formatDateTime(new Date()) });
   }
   isEditorVisible.value = false;
   ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
@@ -166,7 +170,7 @@ async function archiveInquiry(record: InquiryRecord) {
   } catch {
     return;
   }
-  record.status = "archived";
+  record.status = transitionInquiry(record.status, "archive");
   ElMessage.success(t("inquiry.archiveSuccess"));
 }
 

@@ -1,4 +1,4 @@
-import type { AttractionCategory, AttractionPriceItemType } from "@/data/data";
+import type { AttractionCategory, AttractionPriceItemType } from "@/types/resource";
 
 export const attractionCategoryOptions: Array<{
   value: AttractionCategory;

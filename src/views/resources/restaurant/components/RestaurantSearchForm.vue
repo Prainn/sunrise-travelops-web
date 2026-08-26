@@ -51,7 +51,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import type { RestaurantPriceUnit } from "@/data/data";
+import type { RestaurantPriceUnit } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 
 const props = defineProps<{

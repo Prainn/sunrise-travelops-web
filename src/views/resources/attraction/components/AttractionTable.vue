@@ -243,7 +243,7 @@ import type {
   AttractionPriceItemType,
   AttractionPriceRecord,
   AttractionRecord,
-} from "@/data/data";
+} from "@/types/resource";
 import { formatMoney } from "@/utils";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import AttractionSearchForm from "./AttractionSearchForm.vue";

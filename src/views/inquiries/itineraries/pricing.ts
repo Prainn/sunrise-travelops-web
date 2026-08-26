@@ -1,6 +1,6 @@
 import { attractions, guides, hotels, restaurants, tourismResources } from "@/data/data";
 import type { ItineraryItemType, ItineraryPriceUnit, ItineraryResourceItem } from "@/types/itinerary";
-import { roundMoney } from "@/utils";
+import { createId, multiplyMoney } from "@/utils";
 
 export interface ResourcePriceOption {
   id: string;
@@ -206,7 +206,7 @@ export const resourcePriceOptions: ResourcePriceOption[] = [
 
 export function calculateItem(option: ResourcePriceOption, quantity: number): ItineraryResourceItem {
   return {
-    id: `item-${Date.now()}`,
+    id: createId("item"),
     type: option.type,
     resourceId: option.resourceId,
     resourcePriceId: option.resourcePriceId,
@@ -217,13 +217,13 @@ export function calculateItem(option: ResourcePriceOption, quantity: number): It
     unit: option.unit,
     unitCost: option.unitCost,
     unitPrice: null,
-    totalCost: roundMoney(option.unitCost * quantity),
+    totalCost: multiplyMoney(option.unitCost, quantity),
     totalPrice: 0,
     remark: "",
   };
 }
 
 export function recalculateItem(item: ItineraryResourceItem) {
-  item.totalCost = roundMoney(item.unitCost * item.quantity);
-  item.totalPrice = item.unitPrice === null ? 0 : roundMoney(item.unitPrice * item.quantity);
+  item.totalCost = multiplyMoney(item.unitCost, item.quantity);
+  item.totalPrice = item.unitPrice === null ? 0 : multiplyMoney(item.unitPrice, item.quantity);
 }

@@ -173,6 +173,8 @@
 </template>
 
 <script setup lang="ts">
+import { ElMessage, ElMessageBox } from "element-plus";
+import { useI18n } from "vue-i18n";
 import ItineraryDayCard from "./components/ItineraryDayCard.vue";
 import ItineraryPdfPreviewDialog from "./components/ItineraryPdfPreviewDialog.vue";
 import ItineraryPlanDialog from "./components/ItineraryPlanDialog.vue";
@@ -182,6 +184,26 @@ import { ITINERARY_STATUS_TAG_TYPES } from "./options";
 import { useItineraryWorkspace } from "./useItineraryWorkspace";
 
 defineOptions({ name: "InquiryItineraries" });
+const { t } = useI18n();
+
+async function confirmAction(key: string, params: Record<string, unknown> = {}) {
+  try {
+    const isDayCountMismatch = key === "itinerary.dayCountMismatch";
+    await ElMessageBox.confirm(
+      t(key, params),
+      t(isDayCountMismatch ? "common.warning" : "common.tip"),
+      {
+        type: "warning",
+        confirmButtonText: isDayCountMismatch ? t("itinerary.generateDespiteMismatch") : t("common.confirm"),
+        cancelButtonText: t("common.cancel"),
+      }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const {
   addDay, addResourceItem, canCreateItinerary, canGeneratePdf, contentEditable, copyItinerary, createItinerary,
   closePdfPreview, confirmPdfDownload, duplicateDay, guestCount, handleGeneratePdf, inquiry, isGeneratingPdf,
@@ -189,7 +211,13 @@ const {
   isDraft, itemCount, itineraryForm, missingPriceCount, moveDay, openCreateDialog, openResourceDialog, priceEditable,
   pdfPreviewUrl, removeDay, removeItem, router, rows, selectedItinerary, selectedItineraryId, totalCost, totalPrice,
   updateDayField, updateItemPrice, updateItemQuantity,
-} = useItineraryWorkspace();
+} = useItineraryWorkspace({
+  confirm: confirmAction,
+  error: (key) => ElMessage.error(t(key)),
+  success: (key) => ElMessage.success(t(key)),
+  warning: (key, params) => ElMessage.warning(t(key, params)),
+  translate: t,
+});
 </script>
 
 <style scoped lang="scss">

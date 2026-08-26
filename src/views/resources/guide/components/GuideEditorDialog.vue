@@ -217,7 +217,8 @@
 import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules, type UploadFile } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { tourismResources, type GuideRecord } from "@/data/data";
+import { tourismResources } from "@/data/data";
+import type { GuideRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 
 const props = defineProps<{ modelValue: boolean; record: GuideRecord; isEditing: boolean }>();

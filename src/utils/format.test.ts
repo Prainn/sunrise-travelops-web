@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { addDays, formatDate, formatDateTime, formatMoney, roundMoney } from "./format";
+import { addDays, formatDate, formatDateTime, formatMoney } from "./format";
+import { roundMoney } from "./money";
 import { generateNextCode } from "./generate-code";
 
 describe("format utilities", () => {

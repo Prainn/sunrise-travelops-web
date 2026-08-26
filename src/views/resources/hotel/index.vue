@@ -269,13 +269,9 @@ import type { FormInstance, FormRules } from "element-plus";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { YUNNAN_TOURISM_REGION_OPTIONS } from "@/constants/yunnan-tourism-regions";
-import {
-  hotels,
-  tourismResources,
-  type HotelPricePlanRecord,
-  type HotelRecord,
-} from "@/data/data";
-import { generateNextCode } from "@/utils";
+import { hotels, tourismResources } from "@/data/data";
+import type { HotelPricePlanRecord, HotelRecord } from "@/types/resource";
+import { createId, generateNextCode } from "@/utils";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 import HotelTable from "./components/HotelTable.vue";
 import type { RoomPriceRow } from "./types";
@@ -432,7 +428,7 @@ async function saveHotel() {
     Object.assign(current, formValue, { roomTypes: current.roomTypes });
     current.roomTypes.forEach((room) => room.pricePlans.forEach((price) => { price.unit = current.unit; }));
   }
-  else hotelStore.push({ ...formValue, id: `hotel-${Date.now()}`, roomTypes: [] });
+  else hotelStore.push({ ...formValue, id: createId("hotel"), roomTypes: [] });
   isHotelDialogVisible.value = false;
   ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
 }
@@ -454,14 +450,14 @@ async function savePricePlan() {
   let room = selectedHotel.value.roomTypes.find((item) => item.name === priceForm.roomType);
   if (!room) {
     room = {
-      id: `room-${Date.now()}`,
+      id: createId("room"),
       name: priceForm.roomType,
       rackRate: priceForm.rackRate,
       pricePlans: [],
     };
     selectedHotel.value.roomTypes.push(room);
   }
-  room.pricePlans.push(createPricePlanValue(`price-${Date.now()}`));
+  room.pricePlans.push(createPricePlanValue(createId("price")));
   isPriceDialogVisible.value = false;
   ElMessage.success(t("common.createSuccess"));
 }

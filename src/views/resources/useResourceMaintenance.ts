@@ -1,8 +1,9 @@
 import { computed, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { tourismResources, type TourismResourceRecord, type TourismResourceType } from "@/data/data";
-import { generateNextCode } from "@/utils";
+import { tourismResources } from "@/data/data";
+import type { TourismResourceRecord, TourismResourceType } from "@/types/resource";
+import { createId, generateNextCode } from "@/utils";
 
 const resourceStore = reactive(tourismResources);
 
@@ -44,7 +45,7 @@ export function useResourceMaintenance(type: TourismResourceType, prefix: string
       const current = rows.value.find((item) => item.id === editingId.value);
       if (current) Object.assign(current, value);
     } else {
-      rows.value.push({ ...value, id: `${type}-${Date.now()}` });
+      rows.value.push({ ...value, id: createId(type) });
     }
     isDialogVisible.value = false;
     ElMessage.success(t(editingId.value ? "common.updateSuccess" : "common.createSuccess"));

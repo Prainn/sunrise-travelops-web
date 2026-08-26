@@ -37,8 +37,3 @@ export function formatMoney(value: number): string {
     maximumFractionDigits: 2,
   });
 }
-
-/** 将金额四舍五入到两位小数。 */
-export function roundMoney(value: number): number {
-  return Math.round(value * 100) / 100;
-}

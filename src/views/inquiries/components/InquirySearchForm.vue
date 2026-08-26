@@ -62,7 +62,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import type { InquiryStatus } from "@/data/data";
+import type { InquiryStatus } from "@/types/inquiry";
 import { INQUIRY_STATUS_OPTIONS } from "../options";
 
 const props = defineProps<{

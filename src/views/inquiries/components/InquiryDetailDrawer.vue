@@ -81,7 +81,7 @@
 
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
-import type { InquiryRecord } from "@/data/data";
+import type { InquiryRecord } from "@/types/inquiry";
 import { INQUIRY_STATUS_TAG_TYPES } from "../options";
 
 defineProps<{ modelValue: boolean; record?: InquiryRecord }>();

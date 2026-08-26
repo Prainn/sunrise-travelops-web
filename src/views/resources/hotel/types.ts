@@ -1,4 +1,4 @@
-import type { HotelPricePlanRecord } from "@/data/data";
+import type { HotelPricePlanRecord } from "@/types/resource";
 
 export type RoomPriceRow = HotelPricePlanRecord & {
   roomId: string;

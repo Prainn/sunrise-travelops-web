@@ -1,4 +1,4 @@
-import type { TourismResourceRecord } from "@/data/data";
+import type { TourismResourceRecord } from "@/types/resource";
 
 export interface ResourceColumn {
   prop: string;

@@ -112,7 +112,8 @@
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { tourismResources, type RestaurantPriceRecord } from "@/data/data";
+import { tourismResources } from "@/data/data";
+import type { RestaurantPriceRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 
 const props = defineProps<{ modelValue: boolean; record: RestaurantPriceRecord; isEditing: boolean }>();

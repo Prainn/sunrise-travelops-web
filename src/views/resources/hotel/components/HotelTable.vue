@@ -213,7 +213,7 @@
 </template>
 
 <script setup lang="ts">
-import type { HotelRecord, TourismResourceRecord } from "@/data/data";
+import type { HotelRecord, TourismResourceRecord } from "@/types/resource";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import type { RoomPriceRow } from "../types";
 

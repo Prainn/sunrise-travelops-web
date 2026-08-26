@@ -131,7 +131,8 @@
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { tourismResources, type AttractionPriceItemType, type AttractionPriceRecord } from "@/data/data";
+import { tourismResources } from "@/data/data";
+import type { AttractionPriceItemType, AttractionPriceRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 
 type AttractionPriceForm = AttractionPriceRecord & { dates: string[] };

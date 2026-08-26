@@ -229,7 +229,8 @@
 import { computed, reactive, ref } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import type { InquiryRecord, TourismResourceRecord } from "@/data/data";
+import type { InquiryRecord } from "@/types/inquiry";
+import type { TourismResourceRecord } from "@/types/resource";
 import { INQUIRY_STATUS_OPTIONS } from "../options";
 
 const props = defineProps<{

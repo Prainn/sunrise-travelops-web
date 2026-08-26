@@ -99,7 +99,8 @@
 import { computed, reactive, ref } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import type { BusinessCategoryTypeRecord } from "@/data/data";
+import type { BusinessCategoryTypeRecord } from "@/types/resource";
+import { createId } from "@/utils";
 import { businessCategoryTypeStore, getBusinessCategoryTypeName } from "@/utils/business-category";
 import BusinessCategoryPanel from "./components/BusinessCategoryPanel.vue";
 
@@ -141,7 +142,7 @@ async function createCategoryType() {
     return;
   }
   categoryTypes.push({
-    id: `business-category-${Date.now()}`,
+    id: createId("business-category"),
     code,
     name: typeForm.name.trim(),
     englishName: typeForm.englishName.trim(),

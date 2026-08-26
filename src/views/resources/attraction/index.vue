@@ -29,12 +29,9 @@
 import { reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import {
-  attractions,
-  type AttractionPriceRecord,
-  type AttractionRecord,
-} from "@/data/data";
-import { generateNextCode } from "@/utils";
+import { attractions } from "@/data/data";
+import type { AttractionPriceRecord, AttractionRecord } from "@/types/resource";
+import { createId, generateNextCode } from "@/utils";
 import AttractionEditorDialog from "./components/AttractionEditorDialog.vue";
 import AttractionPriceDialog from "./components/AttractionPriceDialog.vue";
 import AttractionTable from "./components/AttractionTable.vue";
@@ -73,7 +70,7 @@ function saveAttraction(record: AttractionRecord) {
     Object.assign(current, record, { prices: current.prices });
     current.prices.forEach((price) => { price.unit = current.unit; });
   }
-  else attractionStore.push({ ...record, id: `attraction-${Date.now()}`, prices: [] });
+  else attractionStore.push({ ...record, id: createId("attraction"), prices: [] });
   isAttractionDialogVisible.value = false;
   ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
 }
@@ -108,7 +105,7 @@ function savePrice(price: AttractionPriceRecord) {
   if (!selectedAttraction.value) return;
   const current = selectedAttraction.value.prices.find((item) => item.id === editingPriceId.value);
   if (current) Object.assign(current, price);
-  else selectedAttraction.value.prices.push({ ...price, id: `attraction-price-${Date.now()}` });
+  else selectedAttraction.value.prices.push({ ...price, id: createId("attraction-price") });
   isPriceDialogVisible.value = false;
   ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
 }

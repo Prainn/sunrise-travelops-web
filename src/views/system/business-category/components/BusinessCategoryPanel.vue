@@ -191,10 +191,12 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "elem
 import { useI18n } from "vue-i18n";
 import {
   attractions, guides, hotels, itineraries, restaurants, tourismResources,
-  type BusinessCategoryOptionRecord, type BusinessCategoryTypeRecord, type ResourceUnitRecord,
-  type TransportMethodRecord,
 } from "@/data/data";
 import type { ItineraryItemType } from "@/types/itinerary";
+import type {
+  BusinessCategoryOptionRecord, BusinessCategoryTypeRecord, ResourceUnitRecord, TransportMethodRecord,
+} from "@/types/resource";
+import { createId } from "@/utils";
 import { resourceUnitStore } from "@/utils/resource-unit";
 import { transportMethodStore } from "@/utils/transport-method";
 import TableToolbar from "@/components/TableToolbar/index.vue";
@@ -267,9 +269,9 @@ async function saveItem() {
   const value = { code: form.code.trim(), name: form.name.trim(), englishName: form.englishName.trim(), status: form.status, remark: form.remark };
   const existing = sourceItems.value.find((item) => item.id === editingId.value);
   if (existing) Object.assign(existing, value, isResourceUnit.value ? { resourceTypes: [...form.resourceTypes] } : {});
-  else if (isResourceUnit.value) resourceUnitStore.push({ ...value, id: `resource-unit-${Date.now()}`, resourceTypes: [...form.resourceTypes] });
-  else if (isTransportMethod.value) transportMethodStore.push({ ...value, id: `transport-method-${Date.now()}` });
-  else props.category.items.push({ ...value, id: `${props.category.code}-${Date.now()}` });
+  else if (isResourceUnit.value) resourceUnitStore.push({ ...value, id: createId("resource-unit"), resourceTypes: [...form.resourceTypes] });
+  else if (isTransportMethod.value) transportMethodStore.push({ ...value, id: createId("transport-method") });
+  else props.category.items.push({ ...value, id: createId(props.category.code) });
   dialogVisible.value = false;
   ElMessage.success(t("businessCategory.saveSuccess"));
 }

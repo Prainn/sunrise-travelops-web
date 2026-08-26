@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { formatMoney } from "@/utils";
+import { formatMoney, roundMoney } from "@/utils";
 
 const props = defineProps<{
   totalCost: number;
@@ -50,9 +50,9 @@ const props = defineProps<{
   dayCount: number;
   missingPriceCount: number;
 }>();
-const profit = computed(() => props.totalPrice - props.totalCost);
+const profit = computed(() => roundMoney(props.totalPrice - props.totalCost));
 const margin = computed(() => props.totalPrice ? profit.value / props.totalPrice * 100 : 0);
-const perGuestPrice = computed(() => props.guestCount ? props.totalPrice / props.guestCount : 0);
+const perGuestPrice = computed(() => props.guestCount ? roundMoney(props.totalPrice / props.guestCount) : 0);
 </script>
 
 <style scoped lang="scss">
