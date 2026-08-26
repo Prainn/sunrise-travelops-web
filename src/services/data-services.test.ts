@@ -72,9 +72,9 @@ describe("local data services", () => {
   });
 
   it("keeps itinerary mock records linked to existing inquiries", () => {
-    expect(itineraries.map((itinerary) => itinerary.status)).toEqual(["draft", "quoted"]);
+    expect(itineraries.map((itinerary) => itinerary.status)).toEqual(["draft", "quoted", "draft"]);
     expect(itineraries.every((itinerary) => itinerary.days > 0)).toBe(true);
-    expect(itineraries.every((itinerary) => itinerary.inquiryId === "inquiry-1")).toBe(true);
+    expect(itineraries.every((itinerary) => inquiries.some((inquiry) => inquiry.id === itinerary.inquiryId))).toBe(true);
     expect(itineraries.every((itinerary) => itinerary.updatedAt.length > 0)).toBe(true);
     expect(itineraries.filter((itinerary) => itinerary.inquiryId === "inquiry-1")).toHaveLength(2);
     expect(inquiries.every((inquiry) => inquiry.plannedDays > 0)).toBe(true);
@@ -82,6 +82,31 @@ describe("local data services", () => {
     expect(inquiries.every((inquiry) => tourismResources.agency.some((agency) => agency.id === inquiry.agencyId))).toBe(true);
     expect(inquiries.every((inquiry) => ["new", "planning", "quoted", "lost", "archived"].includes(inquiry.status))).toBe(true);
     expect(itineraries[0].days).toBe(inquiries.find((inquiry) => inquiry.id === itineraries[0].inquiryId)?.plannedDays);
+  });
+
+  it("provides enough mock records for list, filter, and pagination testing", () => {
+    expect(inquiries).toHaveLength(10);
+    expect(tourismResources.agency).toHaveLength(8);
+    expect(tourismResources.supplier).toHaveLength(3);
+    expect(tourismResources.transport).toHaveLength(5);
+    expect(hotels).toHaveLength(6);
+    expect(attractions).toHaveLength(8);
+    expect(restaurants).toHaveLength(12);
+    expect(guides).toHaveLength(7);
+  });
+
+  it("keeps ground operator references linked to supplier mock data", () => {
+    const supplierIds = new Set(tourismResources.supplier.map((supplier) => supplier.id));
+    const groundOperatorIds = [
+      ...hotels.flatMap((hotel) => hotel.roomTypes.flatMap((room) => room.pricePlans)),
+      ...attractions.flatMap((attraction) => attraction.prices),
+      ...restaurants.flatMap((restaurant) => restaurant.prices),
+      ...guides,
+    ]
+      .filter((record) => record.isGroundOperatorProvided)
+      .map((record) => record.groundOperatorId);
+
+    expect(groundOperatorIds.every((id) => supplierIds.has(id))).toBe(true);
   });
 
   it("keeps every tourism resource unit backed by business category mock data", () => {

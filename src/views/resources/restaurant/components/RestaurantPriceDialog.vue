@@ -129,7 +129,6 @@ const groundOperatorOptions = computed(() => tourismResources.supplier.filter((i
 const unitOptions = computed(() => getResourceUnitOptions("restaurant", locale.value));
 const rules = computed<FormRules>(() => ({
   menuName: [{ required: true, message: t("restaurant.menuNameRequired"), trigger: "blur" }],
-  dishDetails: [{ required: true, message: t("restaurant.dishDetailsRequired"), trigger: "blur" }],
   unit: [{ required: true, message: t("restaurant.priceUnitRequired"), trigger: "change" }],
   price: [{ required: true, message: t("restaurant.priceRequired"), trigger: "change" }],
   groundOperatorId: [{ required: form.isGroundOperatorProvided, message: t("resource.groundOperatorRequired"), trigger: "change" }],

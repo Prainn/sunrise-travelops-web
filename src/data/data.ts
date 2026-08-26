@@ -403,6 +403,55 @@ export const inquiries: InquiryRecord[] = [
     internalRemark: "", owner: "王敏", operationsCoordinator: "赵磊", nextFollowUpAt: "", plannedDays: 5,
     lostReason: "客户预算与旺季价格差距较大", status: "lost", creator: "admin", createdAt: "2026-08-18 11:20",
   },
+  {
+    id: "inquiry-4", code: "INQ-202608-004", agencyId: "agency-4", agencyCode: "AGY-004", agencyName: "Jakarta Nusantara Tours",
+    contactName: "Ayu Pratama", email: "ayu@example.com", phone: "+62 21 555 0104", countryOrRegion: "印度尼西亚",
+    sourceChannel: "WhatsApp", originalMessage: "8 人国庆后到云南，计划昆明、大理 4 天游，需要英文导游。",
+    internalRemark: "已确认出行日期，操作计调正在制作行程。", owner: "周悦", operationsCoordinator: "陈晨", nextFollowUpAt: "2026-08-28 14:00", plannedDays: 4,
+    lostReason: "", status: "planning", creator: "inquiry_zhouyue", createdAt: "2026-08-23 10:15",
+  },
+  {
+    id: "inquiry-5", code: "INQ-202608-005", agencyId: "agency-5", agencyCode: "AGY-005", agencyName: "Seoul Hanul Travel",
+    contactName: "Min-jun Park", email: "minjun@example.com", phone: "+82 2-555-0105", countryOrRegion: "韩国",
+    sourceChannel: "Email", originalMessage: "15 人冬季云南团队，希望安排昆明、建水和元阳摄影线路。",
+    internalRemark: "需要确认团队中是否有素食客人。", owner: "李娜", operationsCoordinator: "赵磊", nextFollowUpAt: "2026-08-29 11:00", plannedDays: 8,
+    lostReason: "", status: "new", creator: "inquiry_lina", createdAt: "2026-08-24 09:05",
+  },
+  {
+    id: "inquiry-6", code: "INQ-202608-006", agencyId: "agency-6", agencyCode: "AGY-006", agencyName: "Taipei Formosa Holidays",
+    contactName: "林怡君", email: "yijun@example.com", phone: "+886 2 5550 1060", countryOrRegion: "中国台湾",
+    sourceChannel: "Referral", originalMessage: "家庭团 6 人，春节期间走腾冲和芒市 6 天游。",
+    internalRemark: "客户暂缓出行，历史沟通保留。", owner: "王敏", operationsCoordinator: "张伟", nextFollowUpAt: "", plannedDays: 6,
+    lostReason: "", status: "archived", creator: "admin", createdAt: "2026-08-12 16:40",
+  },
+  {
+    id: "inquiry-7", code: "INQ-202608-007", agencyId: "agency-7", agencyCode: "AGY-007", agencyName: "Hong Kong Evergreen Travel",
+    contactName: "Kelly Wong", email: "kelly@example.com", phone: "+852 2555 0107", countryOrRegion: "中国香港",
+    sourceChannel: "WeChat", originalMessage: "10 人亲子团，想要大理、丽江和香格里拉 7 天游。",
+    internalRemark: "需要准备儿童友好酒店和轻松行程。", owner: "周悦", operationsCoordinator: "陈晨", nextFollowUpAt: "2026-08-27 16:30", plannedDays: 7,
+    lostReason: "", status: "new", creator: "inquiry_zhouyue", createdAt: "2026-08-25 13:20",
+  },
+  {
+    id: "inquiry-8", code: "INQ-202608-008", agencyId: "agency-8", agencyCode: "AGY-008", agencyName: "Manila Archipelago Travel",
+    contactName: "Maria Santos", email: "maria@example.com", phone: "+63 2 8555 0108", countryOrRegion: "菲律宾",
+    sourceChannel: "Website", originalMessage: "20 人公司奖励团，希望安排昆明和大理 5 天游。",
+    internalRemark: "客户要求压缩预算。", owner: "李娜", operationsCoordinator: "赵磊", nextFollowUpAt: "", plannedDays: 5,
+    lostReason: "客户选择了其他目的地", status: "lost", creator: "inquiry_lina", createdAt: "2026-08-20 17:10",
+  },
+  {
+    id: "inquiry-9", code: "INQ-202608-009", agencyId: "agency-1", agencyCode: "AGY-001", agencyName: "新加坡远景旅行社",
+    contactName: "Emily Tan", email: "emily@example.com", phone: "+65 6123 4567", countryOrRegion: "新加坡",
+    sourceChannel: "Email", originalMessage: "4 人高端小团，想体验腾冲温泉和高黎贡山 5 天游。",
+    internalRemark: "老客户新询盘，优先安排精品酒店。", owner: "王敏", operationsCoordinator: "张伟", nextFollowUpAt: "2026-08-30 10:00", plannedDays: 5,
+    lostReason: "", status: "new", creator: "inquiry", createdAt: "2026-08-26 09:10",
+  },
+  {
+    id: "inquiry-10", code: "INQ-202608-010", agencyId: "agency-2", agencyCode: "AGY-002", agencyName: "Malaysia Star Holidays",
+    contactName: "Jason Lee", email: "jason@example.com", phone: "+60 3-1234 5678", countryOrRegion: "马来西亚",
+    sourceChannel: "WhatsApp", originalMessage: "12 人普洱和西双版纳茶文化 6 天游。",
+    internalRemark: "重复询价已合并到客户档案，记录归档。", owner: "李娜", operationsCoordinator: "陈晨", nextFollowUpAt: "", plannedDays: 6,
+    lostReason: "", status: "archived", creator: "admin", createdAt: "2026-08-16 15:00",
+  },
 ];
 
 export const itineraries: ItineraryRecord[] = [
@@ -434,16 +483,16 @@ export const itineraries: ItineraryRecord[] = [
         id: "itinerary-1-day-1", dayNumber: 1, date: "2026-10-12", departure: "新加坡", destination: "昆明", transport: "flight,businessCar",
         title: "抵达昆明", description: "接机后享用晚餐，随后送至酒店办理入住。", mealSummary: "晚餐", accommodationSummary: "昆明",
         items: [
-          { id: "item-1", type: "vehicle", resourceId: "transport-1", resourcePriceId: "transport-1-daily", resourceName: "别克 GL8", priceName: "车辆日成本", providerName: "资源库直采", quantity: 1, unit: "vehicleDay", unitCost: 1200, unitPrice: null, totalCost: 1200, totalPrice: 0, remark: "接机及市内用车" },
-          { id: "item-2", type: "hotel", resourceId: "hotel-1", resourcePriceId: "price-1", resourceName: "盘龙温德姆花园", priceName: "城景大床/双床房 · 常规期", providerName: "资源库直采", quantity: 3, unit: "roomNight", unitCost: 400, unitPrice: null, totalCost: 1200, totalPrice: 0, remark: "3 间双床房" },
+          { id: "item-1", type: "vehicle", resourceId: "transport-1", resourcePriceId: "transport-1-daily", resourceName: "别克 GL8", priceName: "车辆日成本", providerName: "直营报价", quantity: 1, unit: "vehicleDay", unitCost: 1200, unitPrice: null, totalCost: 1200, totalPrice: 0, remark: "接机及市内用车" },
+          { id: "item-2", type: "hotel", resourceId: "hotel-1", resourcePriceId: "price-1", resourceName: "盘龙温德姆花园", priceName: "城景大床/双床房 · 常规期", providerName: "直营报价", quantity: 3, unit: "roomNight", unitCost: 400, unitPrice: null, totalCost: 1200, totalPrice: 0, remark: "3 间双床房" },
         ],
       },
       {
         id: "itinerary-1-day-2", dayNumber: 2, date: "2026-10-13", departure: "昆明", destination: "大理", transport: "businessCar",
         title: "昆明前往大理", description: "早餐后前往大理，游览崇圣寺三塔，晚餐后入住大理酒店。", mealSummary: "早、中、晚", accommodationSummary: "大理",
         items: [
-          { id: "item-3", type: "attraction", resourceId: "attraction-2", resourcePriceId: "attraction-price-5", resourceName: "崇圣寺三塔", priceName: "景区门票 · 成人 · 常规期", providerName: "资源库直采", quantity: 6, unit: "personVisit", unitCost: 60, unitPrice: null, totalCost: 360, totalPrice: 0, remark: "成人票" },
-          { id: "item-4", type: "restaurant", resourceId: "restaurant-5", resourcePriceId: "restaurant-price-20", resourceName: "大理六合云燕酒店", priceName: "中式合菜/清新养生宴", providerName: "资源库直采", quantity: 1, unit: "table", unitCost: 500, unitPrice: null, totalCost: 500, totalPrice: 0, remark: "晚餐" },
+          { id: "item-3", type: "attraction", resourceId: "attraction-2", resourcePriceId: "attraction-price-5", resourceName: "崇圣寺三塔", priceName: "景区门票 · 成人 · 常规期", providerName: "直营报价", quantity: 6, unit: "personVisit", unitCost: 60, unitPrice: null, totalCost: 360, totalPrice: 0, remark: "成人票" },
+          { id: "item-4", type: "restaurant", resourceId: "restaurant-5", resourcePriceId: "restaurant-price-20", resourceName: "大理六合云燕酒店", priceName: "中式合菜/清新养生宴", providerName: "直营报价", quantity: 1, unit: "table", unitCost: 500, unitPrice: null, totalCost: 500, totalPrice: 0, remark: "晚餐" },
         ],
       },
       { id: "itinerary-1-day-3", dayNumber: 3, date: "2026-10-14", departure: "大理", destination: "大理", transport: "businessCar", title: "洱海人文体验", description: "龙龛码头、生态廊道 S 湾、文笔村。", mealSummary: "早、中、晚", accommodationSummary: "大理", items: [] },
@@ -493,6 +542,40 @@ export const itineraries: ItineraryRecord[] = [
     creator: "operations",
     createdAt: "2026-08-24 15:30",
     updatedAt: "2026-08-25 17:40",
+  },
+  {
+    id: "itinerary-3",
+    inquiryId: "inquiry-4",
+    code: "ITI-202608-003",
+    title: "昆明大理轻松 4 日方案",
+    destinations: "昆明、大理",
+    startDate: "2026-10-09",
+    endDate: "2026-10-12",
+    days: 4,
+    adults: 8,
+    childrenCount: 0,
+    otherGuests: 0,
+    hotelLevel: "高档型",
+    roomPreference: "双床房",
+    transportPreference: "全程商务车",
+    guideRequired: true,
+    guideLanguage: "English",
+    pace: "舒缓",
+    mealRequirements: "不吃辣，安排一餐白族风味餐",
+    budget: 56000,
+    specialRequirements: "避免连续安排长距离步行",
+    inquiryCoordinatorNotes: "首次合作，报价需在本周内完成。",
+    operationsCoordinator: "陈晨",
+    dailyPlans: [
+      { id: "itinerary-3-day-1", dayNumber: 1, date: "2026-10-09", departure: "雅加达", destination: "昆明", transport: "flight,businessCar", title: "抵达昆明", description: "接机后入住酒店，自由活动。", mealSummary: "晚餐", accommodationSummary: "昆明", items: [] },
+      { id: "itinerary-3-day-2", dayNumber: 2, date: "2026-10-10", departure: "昆明", destination: "大理", transport: "highSpeedRail,businessCar", title: "昆明前往大理", description: "动车前往大理，下午游览大理古城。", mealSummary: "早、中、晚", accommodationSummary: "大理", items: [] },
+      { id: "itinerary-3-day-3", dayNumber: 3, date: "2026-10-11", departure: "大理", destination: "大理", transport: "businessCar", title: "洱海环线", description: "游览喜洲古镇和洱海生态廊道。", mealSummary: "早、中、晚", accommodationSummary: "大理", items: [] },
+      { id: "itinerary-3-day-4", dayNumber: 4, date: "2026-10-12", departure: "大理", destination: "雅加达", transport: "businessCar,flight", title: "返程", description: "根据航班时间安排送机。", mealSummary: "早餐", accommodationSummary: "无", items: [] },
+    ],
+    status: "draft",
+    creator: "operations_chenchen",
+    createdAt: "2026-08-25 10:30",
+    updatedAt: "2026-08-26 11:15",
   },
 ];
 
@@ -782,6 +865,26 @@ export const restaurants: RestaurantRecord[] = [
       { id: "restaurant-price-37", menuName: "本地农家菜卤鸡风味", unit: "table", price: 700, dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" },
     ],
   },
+  {
+    id: "restaurant-10", code: "RES-010", name: "丽江云雪丽餐厅", city: "丽江", cuisine: "纳西风味",
+    contact: "和经理", phone: "13800000110", address: "丽江市古城区香格里大道", remark: "团队用餐需提前一天确认", unit: "personMeal", status: "enabled", prices: [
+      { id: "restaurant-price-38", menuName: "纳西风味餐", unit: "personMeal", price: 80, dinerCount: 10, remark: "十人起订", isGroundOperatorProvided: true, groundOperatorId: "supplier-2" },
+      { id: "restaurant-price-39", menuName: "纳西精品合菜", unit: "table", price: 880, dinerCount: 10, remark: "含一份特色腊排骨", isGroundOperatorProvided: true, groundOperatorId: "supplier-2" },
+    ],
+  },
+  {
+    id: "restaurant-11", code: "RES-011", name: "腾冲和顺人家", city: "腾冲", cuisine: "腾冲土锅子",
+    contact: "寸经理", phone: "13800000111", address: "腾冲市和顺古镇", remark: "可安排素食菜单", unit: "personMeal", status: "enabled", prices: [
+      { id: "restaurant-price-40", menuName: "腾冲土锅子风味餐", unit: "table", price: 680, dinerCount: 10, remark: "标准十人桌", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "restaurant-price-41", menuName: "腾冲精品风味餐", unit: "table", price: 980, dinerCount: 10, remark: "含大救驾和铜瓢牛肉", isGroundOperatorProvided: false, groundOperatorId: "" },
+    ],
+  },
+  {
+    id: "restaurant-12", code: "RES-012", name: "版纳傣味园", city: "景洪", cuisine: "傣族风味",
+    contact: "玉经理", phone: "13800000112", address: "景洪市勐泐大道", remark: "户外区域雨天不开放", unit: "personMeal", status: "disabled", prices: [
+      { id: "restaurant-price-42", menuName: "傣味孔雀宴", unit: "table", price: 780, dinerCount: 10, remark: "含香茅草烤鱼", isGroundOperatorProvided: true, groundOperatorId: "supplier-3" },
+    ],
+  },
 ];
 
 const RESTAURANT_DISH_DETAILS: Record<string, string> = {
@@ -850,6 +953,21 @@ export const guides: GuideRecord[] = [
     languages: ["中文"], employmentType: "full-time", identityNumber: "130702198107170621", phone: "13619699003",
     dailyPrice: 650, unit: "guideDay", hasLaborContract: false, isGroundOperatorProvided: true, groundOperatorId: "supplier-1", licensePhotoUrl: "", remark: "", status: "enabled",
   },
+  {
+    id: "guide-5", code: "GDE-005", certificateNo: "YN202605", name: "杨晨", gender: "male", age: 31,
+    languages: ["中文", "英文"], employmentType: "part-time", identityNumber: "530100199500000005", phone: "13800000205",
+    dailyPrice: 900, unit: "guideDay", hasLaborContract: false, isGroundOperatorProvided: true, groundOperatorId: "supplier-2", licensePhotoUrl: "", remark: "擅长丽江、香格里拉线路", status: "enabled",
+  },
+  {
+    id: "guide-6", code: "GDE-006", certificateNo: "YN202606", name: "李思雨", gender: "female", age: 29,
+    languages: ["中文", "韩文"], employmentType: "full-time", identityNumber: "530100199700000006", phone: "13800000206",
+    dailyPrice: 1000, unit: "guideDay", hasLaborContract: true, isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "擅长摄影团和亲子团", status: "enabled",
+  },
+  {
+    id: "guide-7", code: "GDE-007", certificateNo: "YN202607", name: "赵文博", gender: "male", age: 38,
+    languages: ["中文"], employmentType: "part-time", identityNumber: "530100198800000007", phone: "13800000207",
+    dailyPrice: 700, unit: "guideDay", hasLaborContract: false, isGroundOperatorProvided: true, groundOperatorId: "supplier-3", licensePhotoUrl: "", remark: "暂时停止接团", status: "disabled",
+  },
 ];
 
 /** 酒店价格表原型数据；早餐与设施属于酒店资料，不作为报价维度。 */
@@ -878,6 +996,37 @@ export const hotels: HotelRecord[] = [
     facilities: "二楼水疗健身区、三楼宴会厅", breakfast: "一楼 OpenHouse", address: "云南省昆明市盘龙区东风东路88号",
     phone: "0871-63639999", nearby: "万象城、恒隆广场、钱王街", roomTypes: [
       { id: "room-5", name: "高级大床/双床房", rackRate: 892, pricePlans: [{ id: "price-5", periodName: "常规期", startDate: "", endDate: "", individualPrice: 750, groupPrice: 600, unit: "roomNight", minimumRooms: 5, isGroundOperatorProvided: false, groundOperatorId: "" }] },
+    ],
+  },
+  {
+    id: "hotel-4", code: "HTL-004", name: "大理洱海天域英迪格", province: "云南省", city: "大理市", rating: "五星", unit: "roomNight", status: "enabled",
+    facilities: "恒温泳池、健身房、湖景露台", breakfast: "双人自助早餐", address: "大理市下关滨海大道015号",
+    phone: "0872-2222222", nearby: "洱海公园、大理港", roomTypes: [
+      { id: "room-6", name: "洱海景观房", rackRate: 1288, pricePlans: [
+        { id: "price-6", periodName: "常规期", startDate: "2026-09-01", endDate: "2026-12-20", individualPrice: 880, groupPrice: 760, unit: "roomNight", minimumRooms: 5, isGroundOperatorProvided: false, groundOperatorId: "" },
+        { id: "price-7", periodName: "国庆旺季", startDate: "2026-10-01", endDate: "2026-10-07", individualPrice: 1280, groupPrice: 1180, unit: "roomNight", minimumRooms: 8, isGroundOperatorProvided: true, groundOperatorId: "supplier-1" },
+      ] },
+    ],
+  },
+  {
+    id: "hotel-5", code: "HTL-005", name: "丽江金茂璞修雪山酒店", province: "云南省", city: "丽江市", rating: "五星", unit: "roomNight", status: "enabled",
+    facilities: "雪山观景台、健身房、接驳车", breakfast: "双人早餐", address: "丽江市古城区香江路8号",
+    phone: "0888-5311234", nearby: "束河古镇、玉龙雪山景区", roomTypes: [
+      { id: "room-7", name: "豪华雪山房", rackRate: 1588, pricePlans: [
+        { id: "price-8", periodName: "秋季", startDate: "2026-09-01", endDate: "2026-11-30", individualPrice: 1180, groupPrice: 980, unit: "roomNight", minimumRooms: 5, isGroundOperatorProvided: true, groundOperatorId: "supplier-2" },
+      ] },
+      { id: "room-8", name: "庭院套房", rackRate: 2188, pricePlans: [
+        { id: "price-9", periodName: "秋季", startDate: "2026-09-01", endDate: "2026-11-30", individualPrice: 1680, groupPrice: 1480, unit: "roomNight", minimumRooms: 3, isGroundOperatorProvided: true, groundOperatorId: "supplier-2" },
+      ] },
+    ],
+  },
+  {
+    id: "hotel-6", code: "HTL-006", name: "腾冲和顺柏联酒店", province: "云南省", city: "腾冲市", rating: "精品", unit: "roomNight", status: "disabled",
+    facilities: "温泉、庭院、茶室", breakfast: "双人早餐", address: "腾冲市和顺镇张家坡",
+    phone: "0875-5155555", nearby: "和顺古镇、热海景区", roomTypes: [
+      { id: "room-9", name: "温泉庭院房", rackRate: 1888, pricePlans: [
+        { id: "price-10", periodName: "常规期", startDate: "", endDate: "", individualPrice: 1380, groupPrice: 1200, unit: "roomNight", minimumRooms: 3, isGroundOperatorProvided: false, groundOperatorId: "" },
+      ] },
     ],
   },
 ];
@@ -916,6 +1065,33 @@ export const attractions: AttractionRecord[] = [
       { id: "attraction-price-12", itemType: "transport", itemName: "观光车", audience: "通用", periodName: "常规期", startDate: "", endDate: "", rackPrice: 25, settlementPrice: 25, unit: "personVisit", isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
     ],
   },
+  {
+    id: "attraction-5", code: "ATT-005", name: "玉龙雪山景区", area: "丽江", category: "package", unit: "personVisit", status: "enabled",
+    restroomLocation: "游客中心、索道站及蓝月谷停车场", remark: "旺季需提前实名预约", prices: [
+      { id: "attraction-price-13", itemType: "package", itemName: "进山费及景区车", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 140, settlementPrice: 130, unit: "personVisit", isFree: false, priceNote: "不含索道", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "attraction-price-14", itemType: "transport", itemName: "冰川公园大索道", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 140, settlementPrice: 135, unit: "personVisit", isFree: false, priceNote: "实名预约", isGroundOperatorProvided: true, groundOperatorId: "supplier-2" },
+    ],
+  },
+  {
+    id: "attraction-6", code: "ATT-006", name: "普达措国家公园", area: "香格里拉", category: "scenic", unit: "personVisit", status: "enabled",
+    restroomLocation: "游客中心及各主要停靠站", remark: "高海拔地区，建议准备保暖衣物", prices: [
+      { id: "attraction-price-15", itemType: "package", itemName: "门票及观光车", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 168, settlementPrice: 150, unit: "personVisit", isFree: false, priceNote: "", isGroundOperatorProvided: true, groundOperatorId: "supplier-1" },
+      { id: "attraction-price-16", itemType: "ticket", itemName: "景区门票", audience: "儿童", periodName: "常规期", startDate: "", endDate: "", rackPrice: 84, settlementPrice: 84, unit: "personVisit", isFree: false, priceNote: "按景区当日政策执行", isGroundOperatorProvided: false, groundOperatorId: "" },
+    ],
+  },
+  {
+    id: "attraction-7", code: "ATT-007", name: "腾冲热海景区", area: "腾冲", category: "experience", unit: "personVisit", status: "enabled",
+    restroomLocation: "游客中心、大滚锅停车场", remark: "景区内台阶较多", prices: [
+      { id: "attraction-price-17", itemType: "ticket", itemName: "景区门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 50, settlementPrice: 45, unit: "personVisit", isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" },
+      { id: "attraction-price-18", itemType: "transport", itemName: "景区电瓶车", audience: "通用", periodName: "常规期", startDate: "", endDate: "", rackPrice: 15, settlementPrice: 15, unit: "personVisit", isFree: false, priceNote: "单程", isGroundOperatorProvided: false, groundOperatorId: "" },
+    ],
+  },
+  {
+    id: "attraction-8", code: "ATT-008", name: "西双版纳原始森林公园", area: "景洪", category: "scenic", unit: "personVisit", status: "disabled",
+    restroomLocation: "游客中心和孔雀放飞区", remark: "价格待重新确认", prices: [
+      { id: "attraction-price-19", itemType: "ticket", itemName: "景区门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 45, settlementPrice: 40, unit: "personVisit", isFree: false, priceNote: "暂停使用", isGroundOperatorProvided: true, groundOperatorId: "supplier-3" },
+    ],
+  },
 ];
 
 /** 旅游资源前端原型数据，按业务实体分开维护。 */
@@ -924,12 +1100,23 @@ export const tourismResources: Record<TourismResourceType, TourismResourceRecord
     { id: "agency-1", code: "AGY-001", name: "新加坡远景旅行社", city: "新加坡", countryOrRegion: "新加坡", contact: "Emily Tan", email: "emily@example.com", phone: "+65 6123 4567", status: "enabled", remark: "东南亚团队客户" },
     { id: "agency-2", code: "AGY-002", name: "Malaysia Star Holidays", city: "吉隆坡", countryOrRegion: "马来西亚", contact: "Jason Lee", email: "jason@example.com", phone: "+60 3-1234 5678", status: "enabled", remark: "摄影团客户" },
     { id: "agency-3", code: "AGY-003", name: "Bangkok Discovery Travel", city: "曼谷", countryOrRegion: "泰国", contact: "Narin Chai", email: "narin@example.com", phone: "+66 2-123-4567", status: "enabled", remark: "小团定制客户" },
+    { id: "agency-4", code: "AGY-004", name: "Jakarta Nusantara Tours", city: "雅加达", countryOrRegion: "印度尼西亚", contact: "Ayu Pratama", email: "ayu@example.com", phone: "+62 21 555 0104", status: "enabled", remark: "英文团队客户" },
+    { id: "agency-5", code: "AGY-005", name: "Seoul Hanul Travel", city: "首尔", countryOrRegion: "韩国", contact: "Min-jun Park", email: "minjun@example.com", phone: "+82 2-555-0105", status: "enabled", remark: "摄影和文化团队" },
+    { id: "agency-6", code: "AGY-006", name: "Taipei Formosa Holidays", city: "台北", countryOrRegion: "中国台湾", contact: "林怡君", email: "yijun@example.com", phone: "+886 2 5550 1060", status: "enabled", remark: "家庭定制团" },
+    { id: "agency-7", code: "AGY-007", name: "Hong Kong Evergreen Travel", city: "香港", countryOrRegion: "中国香港", contact: "Kelly Wong", email: "kelly@example.com", phone: "+852 2555 0107", status: "enabled", remark: "亲子和银发团队" },
+    { id: "agency-8", code: "AGY-008", name: "Manila Archipelago Travel", city: "马尼拉", countryOrRegion: "菲律宾", contact: "Maria Santos", email: "maria@example.com", phone: "+63 2 8555 0108", status: "disabled", remark: "暂停合作" },
   ],
   supplier: [
     { id: "supplier-1", code: "SUP-001", name: "云南云途地接社", city: "昆明", countryOrRegion: "中国", contact: "李经理", email: "", phone: "13800000001", status: "enabled", remark: "云南线路综合地接社" },
+    { id: "supplier-2", code: "SUP-002", name: "滇西北假日地接社", city: "丽江", countryOrRegion: "中国", contact: "和经理", email: "northwest@example.com", phone: "13800000002", status: "enabled", remark: "大理、丽江和香格里拉线路" },
+    { id: "supplier-3", code: "SUP-003", name: "版纳风情地接社", city: "景洪", countryOrRegion: "中国", contact: "玉经理", email: "banna@example.com", phone: "13800000003", status: "enabled", remark: "普洱和西双版纳线路" },
   ],
   transport: [
     { id: "transport-1", code: "VEH-001", name: "别克 GL8", city: "昆明", countryOrRegion: "中国", plateNumber: "云A00001", seats: 7, dailyPrice: 1200, unit: "vehicleDay", contact: "赵师傅", email: "", phone: "13800000005", status: "enabled", remark: "商务车" },
+    { id: "transport-2", code: "VEH-002", name: "奔驰威霆", city: "昆明", countryOrRegion: "中国", plateNumber: "云A00002", seats: 9, dailyPrice: 1500, unit: "vehicleDay", contact: "周师傅", email: "", phone: "13800000006", status: "enabled", remark: "高端小团用车" },
+    { id: "transport-3", code: "VEH-003", name: "丰田考斯特", city: "大理", countryOrRegion: "中国", plateNumber: "云L00003", seats: 19, dailyPrice: 2200, unit: "vehicleDay", contact: "杨师傅", email: "", phone: "13800000007", status: "enabled", remark: "中型团队用车" },
+    { id: "transport-4", code: "VEH-004", name: "金龙旅游大巴", city: "丽江", countryOrRegion: "中国", plateNumber: "云P00004", seats: 39, dailyPrice: 3200, unit: "vehicleDay", contact: "木师傅", email: "", phone: "13800000008", status: "enabled", remark: "大型团队用车" },
+    { id: "transport-5", code: "VEH-005", name: "江淮瑞风", city: "景洪", countryOrRegion: "中国", plateNumber: "云K00005", seats: 7, dailyPrice: 1000, unit: "vehicleDay", contact: "岩师傅", email: "", phone: "13800000009", status: "disabled", remark: "车辆维护中" },
   ],
 };
 
