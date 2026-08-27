@@ -9,6 +9,7 @@
     "userList": "Users",
     "inquiries": "Inquiries",
     "inquiryList": "Inquiry List",
+    "inquiryLogs": "Inquiry Logs",
     "itineraryManagement": "Itinerary Management",
     "tourismResources": "Tourism Resources",
     "travelAgencies": "Travel Agencies",
@@ -25,7 +26,15 @@
     "code": "Inquiry No.", "codeGenerated": "Generated on save", "contactName": "Contact", "contactNameRequired": "Enter a contact name",
     "countryOrRegion": "Country/Region", "createInquiry": "Create Inquiry", "creator": "Created By",
     "editInquiry": "Edit Inquiry", "email": "Email", "inquiryDetail": "Inquiry Details", "internalRemark": "Internal Notes",
-    "itineraryManagement": "Itinerary Management",
+    "itinerary": "Itinerary", "itineraryManagement": "Itinerary Management",
+    "log": {
+      "title": "Inquiry Logs", "empty": "No inquiry logs", "itineraryTarget": "Itinerary {code} · {title}",
+      "actions": {
+        "inquiry_created": "Inquiry Created", "inquiry_updated": "Inquiry Updated", "itinerary_created": "Itinerary Created",
+        "itinerary_saved": "Itinerary Updated", "itinerary_pdf_generated": "Itinerary PDF Generated",
+        "inquiry_archived": "Inquiry Archived", "inquiry_lost": "Inquiry Lost"
+      }
+    },
     "lostReason": "Lost Reason", "lostReasonRequired": "Enter a lost reason", "nextFollowUpAt": "Next Follow-up",
     "nextFollowUpPlaceholder": "Select the next follow-up time", "originalMessage": "Original Message", "originalMessageRequired": "Enter the customer's original message",
     "operationsCoordinator": "Operations Coordinator", "operationsCoordinatorRequired": "Select an operations coordinator", "owner": "Inquiry Owner", "ownerRequired": "Select an inquiry owner", "phone": "Phone", "plannedDays": "Planned Days", "plannedDaysRequired": "Enter the planned days", "searchPlaceholder": "Search number, agency, contact, or contact details",
@@ -46,7 +55,7 @@
     "editTitle": "Edit Itinerary", "endDateRequired": "Select an end date", "guestCount": "Guests",
     "guideLanguage": "Guide Language", "guideRequired": "Guide Required", "hotelLevel": "Hotel Level",
     "inquiryCoordinatorNotes": "Inquiry Coordinator Notes", "inquiryNotFound": "The inquiry was not found",
-    "generateDespiteMismatch": "Generate Anyway", "generatePdf": "Generate PDF", "margin": "Margin", "mealRequirements": "Meal Requirements", "mealSummary": "Meals", "missingCustomerPrices": "{count} prices are still missing", "noDailyResources": "No resources selected for this day", "noPlans": "No itinerary has been created for this inquiry", "operationsCoordinator": "Operations Coordinator", "pdfEmptyDays": "Cannot generate PDF: {days} has no itinerary details", "pdfGenerated": "PDF downloaded and itinerary locked as quoted", "pdfGenerationFailed": "PDF generation failed. Please try again", "pdfMissingPrices": "Cannot generate PDF. Prices are missing for: {items}", "pdfPreviewTitle": "PDF Preview",
+    "generateDespiteMismatch": "Generate Anyway", "generatePdf": "Generate PDF", "margin": "Margin", "mealRequirements": "Meal Requirements", "mealSummary": "Meals", "missingCustomerPrices": "{count} prices are still missing", "noDailyResources": "No resources selected for this day", "noPlans": "No itinerary has been created for this inquiry", "operationsCoordinator": "Operations Coordinator", "pdfEmptyDays": "Cannot generate PDF: {days} has no itinerary details", "pdfGenerated": "PDF downloaded and itinerary locked as quoted", "pdfGenerationFailed": "PDF generation failed. Please try again", "pdfMissingPrices": "Cannot generate PDF. Prices are missing for: {items}", "pdfPreviewTitle": "PDF Preview", "save": "Save", "saveSuccess": "Itinerary saved",
     "otherGuests": "Other Guests", "pace": "Pace", "roomPreference": "Room Preference",
     "perGuestPrice": "Per Guest", "priceRemark": "Price Notes", "priceSummary": "Price Summary", "priceUnit": "Price Unit", "profit": "Estimated Profit", "provider": "Price Source", "quantity": "Quantity", "resource": "Resource / Price", "resourceAdded": "Resource added to the day", "resourceItemCount": "{count} resource items", "resourcePrice": "Resource Price", "resourcePricePlaceholder": "Search and select a specific resource price", "resourceRemark": "Resource Notes", "resourceType": "Resource Type",
     "resourceTypes": { "attraction": "Attraction", "guide": "Guide", "hotel": "Hotel Room", "restaurant": "Restaurant", "vehicle": "Vehicle" },

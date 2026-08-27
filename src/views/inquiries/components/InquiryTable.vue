@@ -122,8 +122,8 @@
           </template>
         </el-table-column>
         <el-table-column
-          :label="$t('inquiry.itineraryManagement')"
-          width="125"
+          :label="$t('inquiry.itinerary')"
+          width="200"
           fixed="right"
           align="center"
         >
@@ -135,6 +135,13 @@
               @click="emit('manage-itineraries', scope.row as InquiryRecord)"
             >
               {{ $t("inquiry.itineraryManagement") }}
+            </el-button>
+            <el-button
+              type="primary"
+              link
+              @click="emit('view-logs', scope.row as InquiryRecord)"
+            >
+              {{ $t("inquiry.log.title") }}
             </el-button>
           </template>
         </el-table-column>
@@ -165,6 +172,7 @@ const emit = defineEmits<{
   edit: [record: InquiryRecord];
   archive: [record: InquiryRecord];
   "manage-itineraries": [record: InquiryRecord];
+  "view-logs": [record: InquiryRecord];
   "update:pageNum": [value: number];
   "update:pageSize": [value: number];
 }>();

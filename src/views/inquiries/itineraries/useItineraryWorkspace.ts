@@ -1,7 +1,8 @@
 import { computed, ref } from "vue";
+import { useInquiryLog } from "@/composables/useInquiryLog";
 import { useUserStore } from "@/stores/user";
 import type { ItineraryRecord, ItineraryResourceItem } from "@/types/itinerary";
-import { hasUserPermission, sumMoney } from "@/utils";
+import { formatDateTime, hasUserPermission, sumMoney } from "@/utils";
 import { isInquiryReadOnly } from "../inquiry-workflow";
 import { canPerformItineraryOperation } from "./itinerary-workflow";
 import { useItineraryEditor } from "./useItineraryEditor";
@@ -18,6 +19,7 @@ interface WorkspaceMessages {
 
 export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const userStore = useUserStore();
+  const { recordInquiryLog } = useInquiryLog();
   const selection = useItinerarySelection();
   const { inquiry, inquiryId, itineraryStore, selectedItinerary, selectedItineraryId } = selection;
   const isPlanDialogVisible = ref(false);
@@ -44,6 +46,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     && canPerformItineraryOperation(selectedItinerary.value.status, "generate_pdf")
     && hasUserPermission(userStore.userInfo, "itinerary:pdf")
   ));
+  const canSaveItinerary = computed(() => contentEditable.value || priceEditable.value);
   const guestCount = computed(() => selectedItinerary.value
     ? selectedItinerary.value.adults + selectedItinerary.value.childrenCount + selectedItinerary.value.otherGuests : 0);
   const allItems = computed(() => selectedItinerary.value?.dailyPlans.flatMap((day) => day.items) ?? []);
@@ -76,9 +79,19 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     isPlanDialogVisible.value = true;
   }
 
-  function createItinerary(record: ItineraryRecord) {
-    if (!editor.createItinerary(record)) return;
+  async function createItinerary(record: ItineraryRecord) {
+    const created = editor.createItinerary(record);
+    if (!created) return;
     isPlanDialogVisible.value = false;
+    await recordInquiryLog({
+      inquiryId: created.inquiryId,
+      action: "itinerary_created",
+      targetType: "itinerary",
+      targetId: created.id,
+      targetCode: created.code,
+      summary: created.title,
+      metadata: { creationMode: "new" },
+    });
     messages.success("common.createSuccess");
   }
 
@@ -92,8 +105,34 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     if (editor.addResourceItem(resourceTargetDayId.value, item)) messages.success("itinerary.resourceAdded");
   }
 
-  function copyItinerary() {
-    if (editor.copyItinerary(messages.translate("itinerary.copySuffix"))) messages.success("itinerary.copySuccess");
+  async function copyItinerary() {
+    const copied = editor.copyItinerary(messages.translate("itinerary.copySuffix"));
+    if (!copied) return;
+    await recordInquiryLog({
+      inquiryId: copied.inquiryId,
+      action: "itinerary_created",
+      targetType: "itinerary",
+      targetId: copied.id,
+      targetCode: copied.code,
+      summary: copied.title,
+      metadata: { creationMode: "copy" },
+    });
+    messages.success("itinerary.copySuccess");
+  }
+
+  async function saveItinerary() {
+    const plan = selectedItinerary.value;
+    if (!plan || !canSaveItinerary.value) return;
+    plan.updatedAt = formatDateTime(new Date());
+    await recordInquiryLog({
+      inquiryId: plan.inquiryId,
+      action: "itinerary_saved",
+      targetType: "itinerary",
+      targetId: plan.id,
+      targetCode: plan.code,
+      summary: plan.title,
+    });
+    messages.success("itinerary.saveSuccess");
   }
 
   async function removeDay(index: number) {
@@ -127,8 +166,18 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     }
   }
 
-  function confirmPdfDownload() {
-    if (pdf.confirmPdfDownload()) messages.success("itinerary.pdfGenerated");
+  async function confirmPdfDownload() {
+    const plan = selectedItinerary.value;
+    if (!plan || !pdf.confirmPdfDownload()) return;
+    await recordInquiryLog({
+      inquiryId: plan.inquiryId,
+      action: "itinerary_pdf_generated",
+      targetType: "itinerary",
+      targetId: plan.id,
+      targetCode: plan.code,
+      summary: plan.title,
+    });
+    messages.success("itinerary.pdfGenerated");
   }
 
   return {
@@ -136,6 +185,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     addResourceItem,
     canCreateItinerary,
     canGeneratePdf,
+    canSaveItinerary,
     closePdfPreview: pdf.closePdfPreview,
     confirmPdfDownload,
     contentEditable,
@@ -164,6 +214,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     rows: selection.rows,
     selectedItinerary,
     selectedItineraryId,
+    saveItinerary,
     totalCost,
     totalPrice,
     updateDayField: editor.updateDayField,

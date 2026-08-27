@@ -9,6 +9,7 @@
     "userList": "用户管理",
     "inquiries": "询盘",
     "inquiryList": "询盘列表",
+    "inquiryLogs": "询盘日志",
     "itineraryManagement": "行程管理",
     "tourismResources": "旅游资源库",
     "travelAgencies": "旅行社",
@@ -25,7 +26,15 @@
     "code": "询盘编号", "codeGenerated": "保存时自动生成", "contactName": "联系人", "contactNameRequired": "请输入联系人姓名",
     "countryOrRegion": "国家或地区", "createInquiry": "新增询盘", "creator": "创建人",
     "editInquiry": "编辑询盘", "email": "邮箱", "inquiryDetail": "询盘详情", "internalRemark": "内部备注",
-    "itineraryManagement": "行程管理",
+    "itinerary": "行程", "itineraryManagement": "行程管理",
+    "log": {
+      "title": "询盘日志", "empty": "暂无询盘日志", "itineraryTarget": "行程 {code} · {title}",
+      "actions": {
+        "inquiry_created": "创建询盘", "inquiry_updated": "编辑询盘", "itinerary_created": "创建行程",
+        "itinerary_saved": "编辑行程", "itinerary_pdf_generated": "行程生成 PDF",
+        "inquiry_archived": "归档询盘", "inquiry_lost": "流失询盘"
+      }
+    },
     "lostReason": "流失原因", "lostReasonRequired": "请输入流失原因", "nextFollowUpAt": "下次跟进时间",
     "nextFollowUpPlaceholder": "请选择下次跟进时间", "originalMessage": "客户原始消息", "originalMessageRequired": "请输入客户原始消息",
     "operationsCoordinator": "操作计调", "operationsCoordinatorRequired": "请选择操作计调", "owner": "收客计调", "ownerRequired": "请选择收客计调", "phone": "电话", "plannedDays": "计划天数", "plannedDaysRequired": "请输入计划天数", "searchPlaceholder": "搜索询盘编号、旅行社、联系人或联系方式",
@@ -46,7 +55,7 @@
     "editTitle": "编辑行程", "endDateRequired": "请选择结束日期", "guestCount": "总人数",
     "guideLanguage": "导游语言", "guideRequired": "需要导游", "hotelLevel": "酒店等级",
     "inquiryCoordinatorNotes": "收客计调备注", "inquiryNotFound": "未找到对应询盘",
-    "generateDespiteMismatch": "仍然生成", "generatePdf": "生成 PDF", "margin": "利润率", "mealRequirements": "餐饮要求", "mealSummary": "用餐摘要", "missingCustomerPrices": "还有 {count} 项价格未填写", "noDailyResources": "尚未选择当日资源", "noPlans": "该询盘尚未创建行程方案", "operationsCoordinator": "操作计调", "pdfEmptyDays": "无法生成 PDF：{days} 没有任何行程明细", "pdfGenerated": "PDF 已下载，行程已锁定为已报价", "pdfGenerationFailed": "PDF 生成失败，请重试", "pdfMissingPrices": "无法生成 PDF：以下项目未填写价格：{items}", "pdfPreviewTitle": "PDF 预览",
+    "generateDespiteMismatch": "仍然生成", "generatePdf": "生成 PDF", "margin": "利润率", "mealRequirements": "餐饮要求", "mealSummary": "用餐摘要", "missingCustomerPrices": "还有 {count} 项价格未填写", "noDailyResources": "尚未选择当日资源", "noPlans": "该询盘尚未创建行程方案", "operationsCoordinator": "操作计调", "pdfEmptyDays": "无法生成 PDF：{days} 没有任何行程明细", "pdfGenerated": "PDF 已下载，行程已锁定为已报价", "pdfGenerationFailed": "PDF 生成失败，请重试", "pdfMissingPrices": "无法生成 PDF：以下项目未填写价格：{items}", "pdfPreviewTitle": "PDF 预览", "save": "保存", "saveSuccess": "行程已保存",
     "otherGuests": "其他人数", "pace": "行程节奏", "roomPreference": "房型偏好",
     "perGuestPrice": "人均报价", "priceRemark": "报价备注", "priceSummary": "行程报价汇总", "priceUnit": "计价单位", "profit": "预计利润", "provider": "报价来源", "quantity": "数量", "resource": "资源/报价项目", "resourceAdded": "资源已加入当天行程", "resourceItemCount": "{count} 条资源明细", "resourcePrice": "资源报价", "resourcePricePlaceholder": "搜索并选择资源库中的具体报价", "resourceRemark": "资源备注", "resourceType": "资源类型",
     "resourceTypes": { "attraction": "景点", "guide": "导游", "hotel": "酒店房型", "restaurant": "餐厅", "vehicle": "车辆" },

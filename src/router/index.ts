@@ -149,6 +149,16 @@ export const constantRoutes: RouteRecordRaw[] = [
           perms: ["itinerary:list"],
         },
       },
+      {
+        path: ":inquiryId/logs",
+        name: "InquiryLogs",
+        component: () => import("@/views/inquiries/logs/index.vue"),
+        meta: {
+          title: "inquiryLogs",
+          hidden: true,
+          perms: ["inquiry:list"],
+        },
+      },
     ],
   },
   {

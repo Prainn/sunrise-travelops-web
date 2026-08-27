@@ -5,7 +5,7 @@ vi.mock("@/utils/auth", () => ({
   AuthStorage: { getAccessToken: () => "" },
 }));
 
-import { attractions, businessCategoryTypes, guides, hotels, inquiries, itineraries, resourceUnits, restaurants, tourismResources, transportMethods, users } from "@/data/data";
+import { attractions, businessCategoryTypes, guides, hotels, inquiries, inquiryLogs, itineraries, resourceUnits, restaurants, tourismResources, transportMethods, users } from "@/data/data";
 import { getResourceUnitName } from "@/utils/resource-unit";
 import { getTransportMethodNames } from "@/utils/transport-method";
 import { dictionaryService } from "./dictionary.service";
@@ -82,6 +82,8 @@ describe("local data services", () => {
     expect(inquiries.every((inquiry) => tourismResources.agency.some((agency) => agency.id === inquiry.agencyId))).toBe(true);
     expect(inquiries.every((inquiry) => ["new", "planning", "quoted", "lost", "archived"].includes(inquiry.status))).toBe(true);
     expect(itineraries[0].days).toBe(inquiries.find((inquiry) => inquiry.id === itineraries[0].inquiryId)?.plannedDays);
+    expect(inquiryLogs.every((log) => inquiries.some((inquiry) => inquiry.id === log.inquiryId))).toBe(true);
+    expect(inquiries.every((inquiry) => inquiryLogs.some((log) => log.inquiryId === inquiry.id))).toBe(true);
   });
 
   it("provides enough mock records for list, filter, and pagination testing", () => {

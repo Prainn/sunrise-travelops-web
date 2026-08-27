@@ -22,6 +22,7 @@
       @edit="openEditDialog"
       @archive="archiveInquiry"
       @manage-itineraries="openItineraryManagement"
+      @view-logs="openInquiryLogs"
     />
     <InquiryEditorDialog
       v-model="isEditorVisible"
@@ -45,6 +46,7 @@ import { computed, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
+import { useInquiryLog } from "@/composables/useInquiryLog";
 import { inquiries, tourismResources, users } from "@/data/data";
 import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";
 import { createId, formatDate, formatDateTime, generateNextCode } from "@/utils";
@@ -58,6 +60,7 @@ defineOptions({ name: "InquiryList" });
 
 const { t } = useI18n();
 const router = useRouter();
+const { recordInquiryLog } = useInquiryLog();
 const inquiryStore = reactive(inquiries);
 const keywords = ref("");
 const status = ref<InquiryStatus | "">("");
@@ -148,16 +151,49 @@ function openItineraryManagement(record: InquiryRecord) {
   });
 }
 
-function saveInquiry(record: InquiryRecord) {
+function openInquiryLogs(record: InquiryRecord) {
+  router.push({
+    name: "InquiryLogs",
+    params: { inquiryId: record.id },
+  });
+}
+
+async function saveInquiry(record: InquiryRecord) {
   const current = inquiryStore.find((item) => item.id === editingId.value);
   if (current) {
     if (isInquiryReadOnly(current.status)) return;
+    const isMarkingLost = record.status === "lost" && current.status !== "lost";
     let nextStatus = current.status;
-    if (record.status === "lost" && current.status !== "lost") nextStatus = transitionInquiry(current.status, "mark_lost");
+    if (isMarkingLost) nextStatus = transitionInquiry(current.status, "mark_lost");
     else if (record.status === "planning" && current.status === "quoted") nextStatus = transitionInquiry(current.status, "reopen_for_planning");
     Object.assign(current, record, { status: nextStatus });
+    await recordInquiryLog({
+      inquiryId: current.id,
+      action: "inquiry_updated",
+      targetType: "inquiry",
+      targetId: current.id,
+      targetCode: current.code,
+    });
+    if (isMarkingLost) {
+      await recordInquiryLog({
+        inquiryId: current.id,
+        action: "inquiry_lost",
+        targetType: "inquiry",
+        targetId: current.id,
+        targetCode: current.code,
+        metadata: { lostReason: current.lostReason },
+      });
+    }
   } else {
-    inquiryStore.unshift({ ...record, id: createId("inquiry"), status: "new", createdAt: formatDateTime(new Date()) });
+    const created = { ...record, id: createId("inquiry"), status: "new" as const, createdAt: formatDateTime(new Date()) };
+    inquiryStore.unshift(created);
+    await recordInquiryLog({
+      inquiryId: created.id,
+      action: "inquiry_created",
+      targetType: "inquiry",
+      targetId: created.id,
+      targetCode: created.code,
+    });
   }
   isEditorVisible.value = false;
   ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
@@ -171,6 +207,13 @@ async function archiveInquiry(record: InquiryRecord) {
     return;
   }
   record.status = transitionInquiry(record.status, "archive");
+  await recordInquiryLog({
+    inquiryId: record.id,
+    action: "inquiry_archived",
+    targetType: "inquiry",
+    targetId: record.id,
+    targetCode: record.code,
+  });
   ElMessage.success(t("inquiry.archiveSuccess"));
 }
 

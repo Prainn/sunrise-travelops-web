@@ -58,6 +58,12 @@
               {{ $t(`itinerary.statuses.${selectedItinerary.status}`) }}
             </el-tag>
             <el-button
+              v-if="canSaveItinerary"
+              @click="saveItinerary"
+            >
+              {{ $t("itinerary.save") }}
+            </el-button>
+            <el-button
               v-if="isDraft && canGeneratePdf"
               type="primary"
               :loading="isGeneratingPdf"
@@ -205,11 +211,11 @@ async function confirmAction(key: string, params: Record<string, unknown> = {}) 
 }
 
 const {
-  addDay, addResourceItem, canCreateItinerary, canGeneratePdf, contentEditable, copyItinerary, createItinerary,
+  addDay, addResourceItem, canCreateItinerary, canGeneratePdf, canSaveItinerary, contentEditable, copyItinerary, createItinerary,
   closePdfPreview, confirmPdfDownload, duplicateDay, guestCount, handleGeneratePdf, inquiry, isGeneratingPdf,
   isPdfPreviewVisible, isPlanDialogVisible, isResourceDialogVisible,
   isDraft, itemCount, itineraryForm, missingPriceCount, moveDay, openCreateDialog, openResourceDialog, priceEditable,
-  pdfPreviewUrl, removeDay, removeItem, router, rows, selectedItinerary, selectedItineraryId, totalCost, totalPrice,
+  pdfPreviewUrl, removeDay, removeItem, router, rows, saveItinerary, selectedItinerary, selectedItineraryId, totalCost, totalPrice,
   updateDayField, updateItemPrice, updateItemQuantity,
 } = useItineraryWorkspace({
   confirm: confirmAction,

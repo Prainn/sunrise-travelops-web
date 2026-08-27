@@ -1,6 +1,7 @@
 import type { PrototypeUserRecord } from "@/types/auth";
 import type { SystemDictionaryItem, SystemDictionaryType } from "@/types/dictionary";
 import type { VisitOverviewDetail, VisitTrendDetail } from "@/types/dashboard";
+import type { InquiryLogRecord } from "@/types/inquiry-log";
 import type { ItineraryRecord } from "@/types/itinerary";
 import type { InquiryRecord } from "@/types/inquiry";
 import type {
@@ -526,6 +527,84 @@ export const itineraries: ItineraryRecord[] = [
     creator: "operations_chenchen",
     createdAt: "2026-08-25 10:30",
     updatedAt: "2026-08-26 11:15",
+  },
+];
+
+function getSeedOperator(username: string) {
+  const user = users.find((record) => record.username === username);
+  return {
+    operatorId: user?.id ?? "",
+    operatorUsername: username,
+    operatorName: user?.nickname ?? username,
+  };
+}
+
+export const inquiryLogs: InquiryLogRecord[] = [
+  ...inquiries.map((inquiry) => ({
+    id: `inquiry-log-created-${inquiry.id}`,
+    inquiryId: inquiry.id,
+    action: "inquiry_created" as const,
+    occurredAt: inquiry.createdAt,
+    ...getSeedOperator(inquiry.creator),
+    targetType: "inquiry" as const,
+    targetId: inquiry.id,
+    targetCode: inquiry.code,
+  })),
+  ...itineraries.map((itinerary) => ({
+    id: `inquiry-log-created-${itinerary.id}`,
+    inquiryId: itinerary.inquiryId,
+    action: "itinerary_created" as const,
+    occurredAt: itinerary.createdAt,
+    ...getSeedOperator(itinerary.creator),
+    targetType: "itinerary" as const,
+    targetId: itinerary.id,
+    targetCode: itinerary.code,
+    summary: itinerary.title,
+    metadata: { creationMode: "new" },
+  })),
+  ...itineraries
+    .filter((itinerary) => itinerary.status === "draft" && itinerary.updatedAt !== itinerary.createdAt)
+    .map((itinerary) => ({
+      id: `inquiry-log-saved-${itinerary.id}`,
+      inquiryId: itinerary.inquiryId,
+      action: "itinerary_saved" as const,
+      occurredAt: itinerary.updatedAt,
+      ...getSeedOperator(itinerary.creator),
+      targetType: "itinerary" as const,
+      targetId: itinerary.id,
+      targetCode: itinerary.code,
+      summary: itinerary.title,
+    })),
+  ...itineraries
+    .filter((itinerary) => itinerary.status === "quoted")
+    .map((itinerary) => ({
+      id: `inquiry-log-pdf-${itinerary.id}`,
+      inquiryId: itinerary.inquiryId,
+      action: "itinerary_pdf_generated" as const,
+      occurredAt: itinerary.updatedAt,
+      ...getSeedOperator(itinerary.creator),
+      targetType: "itinerary" as const,
+      targetId: itinerary.id,
+      targetCode: itinerary.code,
+      summary: itinerary.title,
+    })),
+  {
+    id: "inquiry-log-lost-inquiry-3", inquiryId: "inquiry-3", action: "inquiry_lost", occurredAt: "2026-08-19 16:20",
+    ...getSeedOperator("inquiry"), targetType: "inquiry", targetId: "inquiry-3", targetCode: "INQ-202608-003",
+    metadata: { lostReason: "客户预算与旺季价格差距较大" },
+  },
+  {
+    id: "inquiry-log-lost-inquiry-8", inquiryId: "inquiry-8", action: "inquiry_lost", occurredAt: "2026-08-23 10:00",
+    ...getSeedOperator("inquiry_lina"), targetType: "inquiry", targetId: "inquiry-8", targetCode: "INQ-202608-008",
+    metadata: { lostReason: "客户选择了其他目的地" },
+  },
+  {
+    id: "inquiry-log-archived-inquiry-6", inquiryId: "inquiry-6", action: "inquiry_archived", occurredAt: "2026-08-18 12:00",
+    ...getSeedOperator("inquiry"), targetType: "inquiry", targetId: "inquiry-6", targetCode: "INQ-202608-006",
+  },
+  {
+    id: "inquiry-log-archived-inquiry-10", inquiryId: "inquiry-10", action: "inquiry_archived", occurredAt: "2026-08-17 09:00",
+    ...getSeedOperator("inquiry_lina"), targetType: "inquiry", targetId: "inquiry-10", targetCode: "INQ-202608-010",
   },
 ];
 
