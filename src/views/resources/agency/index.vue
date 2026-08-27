@@ -20,10 +20,12 @@
 </template>
 
 <script setup lang="ts">
+import { tourismResources } from "@/data/data";
+import type { TourismResourceRecord } from "@/types/resource";
 import ResourceEditorDialog from "../components/ResourceEditorDialog.vue";
 import ResourceTable from "../components/ResourceTable.vue";
 import type { ResourceColumn, ResourceFormField } from "../types";
-import { useResourceMaintenance } from "../useResourceMaintenance";
+import { createEmptyTourismResourceRecord, useResourceMaintenance } from "../useResourceMaintenance";
 
 defineOptions({ name: "Agency" });
 
@@ -43,5 +45,10 @@ const fields: ResourceFormField[] = [
   { prop: "phone", labelKey: "resource.phone" },
   { prop: "remark", labelKey: "common.remark", type: "textarea" },
 ];
-const { rows, record, isDialogVisible, isEditing, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance("agency", "AGY");
+const { rows, record, isDialogVisible, isEditing, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<TourismResourceRecord>({
+  records: tourismResources.agency,
+  idPrefix: "agency",
+  codePrefix: "AGY",
+  createEmpty: createEmptyTourismResourceRecord,
+});
 </script>

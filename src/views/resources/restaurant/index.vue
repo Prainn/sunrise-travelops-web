@@ -13,7 +13,7 @@
     <RestaurantEditorDialog
       v-model="isRestaurantDialogVisible"
       :record="restaurantForm"
-      :is-editing="Boolean(editingRestaurantId)"
+      :is-editing="isEditing"
       @submit="saveRestaurant"
     />
     <RestaurantPriceDialog
@@ -26,12 +26,13 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { restaurants } from "@/data/data";
 import type { RestaurantPriceRecord, RestaurantRecord } from "@/types/resource";
-import { createId, generateNextCode } from "@/utils";
+import { createId } from "@/utils";
+import { useResourceMaintenance } from "../useResourceMaintenance";
 import RestaurantEditorDialog from "./components/RestaurantEditorDialog.vue";
 import RestaurantPriceDialog from "./components/RestaurantPriceDialog.vue";
 import RestaurantTable from "./components/RestaurantTable.vue";
@@ -39,13 +40,9 @@ import RestaurantTable from "./components/RestaurantTable.vue";
 defineOptions({ name: "Restaurant" });
 
 const { t } = useI18n();
-const restaurantStore = reactive(restaurants);
-const isRestaurantDialogVisible = ref(false);
 const isPriceDialogVisible = ref(false);
-const editingRestaurantId = ref("");
 const editingPriceId = ref("");
 const selectedRestaurant = ref<RestaurantRecord>();
-const restaurantForm = ref<RestaurantRecord>(createEmptyRestaurant());
 const priceForm = ref<RestaurantPriceRecord>(createEmptyPrice());
 
 function createEmptyRestaurant(): RestaurantRecord {
@@ -62,41 +59,25 @@ function createEmptyPrice(): RestaurantPriceRecord {
   };
 }
 
-function openCreateDialog() {
-  editingRestaurantId.value = "";
-  restaurantForm.value = { ...createEmptyRestaurant(), code: generateNextCode(restaurantStore, "RES") };
-  isRestaurantDialogVisible.value = true;
-}
-
-function openEditDialog(record: RestaurantRecord) {
-  editingRestaurantId.value = record.id;
-  restaurantForm.value = { ...record, prices: record.prices };
-  isRestaurantDialogVisible.value = true;
-}
-
-function saveRestaurant(record: RestaurantRecord) {
-  const current = restaurantStore.find((item) => item.id === editingRestaurantId.value);
-  if (current) Object.assign(current, record, { prices: current.prices });
-  else restaurantStore.push({ ...record, id: createId("restaurant"), prices: [] });
-  isRestaurantDialogVisible.value = false;
-  ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
-}
-
-function toggleStatus(record: RestaurantRecord) {
-  record.status = record.status === "enabled" ? "disabled" : "enabled";
-  ElMessage.success(t("common.updateSuccess"));
-}
-async function deleteRestaurant(record: RestaurantRecord) {
-  try {
-    await ElMessageBox.confirm(t("common.deleteConfirm"), t("common.tip"), { type: "warning" });
-  } catch {
-    return;
-  }
-  const index = restaurantStore.findIndex((item) => item.id === record.id);
-  if (index < 0) return;
-  restaurantStore.splice(index, 1);
-  ElMessage.success(t("common.deleteSuccess"));
-}
+const {
+  rows: restaurantStore,
+  record: restaurantForm,
+  isDialogVisible: isRestaurantDialogVisible,
+  isEditing,
+  openCreateDialog,
+  openEditDialog,
+  toggleStatus,
+  saveRecord: saveRestaurant,
+  deleteRecord: deleteRestaurant,
+} = useResourceMaintenance<RestaurantRecord>({
+  records: restaurants,
+  idPrefix: "restaurant",
+  codePrefix: "RES",
+  createEmpty: createEmptyRestaurant,
+  cloneForEdit: (record) => ({ ...record, prices: record.prices }),
+  createRecord: (record, id) => ({ ...record, id, prices: [] }),
+  updateRecord: (current, record) => Object.assign(current, record, { prices: current.prices }),
+});
 
 function openCreatePriceDialog(record: RestaurantRecord) {
   selectedRestaurant.value = record;

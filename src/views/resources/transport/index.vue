@@ -22,11 +22,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { tourismResources } from "@/data/data";
+import type { TourismResourceRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 import ResourceEditorDialog from "../components/ResourceEditorDialog.vue";
 import ResourceTable from "../components/ResourceTable.vue";
 import type { ResourceColumn, ResourceFormField } from "../types";
-import { useResourceMaintenance } from "../useResourceMaintenance";
+import { createEmptyTourismResourceRecord, useResourceMaintenance } from "../useResourceMaintenance";
 
 defineOptions({ name: "TransportResource" });
 
@@ -108,5 +110,10 @@ const fields = computed<ResourceFormField[]>(() => [
     "type": "textarea"
   }
 ]);
-const { rows, record, isDialogVisible, isEditing, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance("transport", "VEH");
+const { rows, record, isDialogVisible, isEditing, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<TourismResourceRecord>({
+  records: tourismResources.transport,
+  idPrefix: "transport",
+  codePrefix: "VEH",
+  createEmpty: () => ({ ...createEmptyTourismResourceRecord(), unit: "vehicleDay" }),
+});
 </script>
