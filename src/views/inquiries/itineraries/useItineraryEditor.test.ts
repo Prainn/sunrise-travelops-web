@@ -59,4 +59,33 @@ describe("itinerary editor", () => {
     expect(copied?.dailyPlans[0].items[0].id).not.toBe("item-original");
     expect(selectedItinerary.value?.id).toBe(copied?.id);
   });
+
+  it("updates basic information while preserving daily plans and resource items", () => {
+    const { editor } = createEditor();
+    const record = { ...editor.createEmptyItinerary(), code: "ITI-001", title: "Original", startDate: "2026-10-01", days: 2 };
+    const created = editor.createItinerary(record);
+    expect(created).not.toBeNull();
+    created?.dailyPlans[0].items.push({
+      id: "item-original", type: "hotel", resourceId: "hotel-1", resourcePriceId: "price-1", resourceName: "Hotel",
+      priceName: "Room", providerName: "直营报价", quantity: 1, unit: "roomNight", unitCost: 100,
+      unitPrice: 120, totalCost: 100, totalPrice: 120, remark: "",
+    });
+    const originalDayIds = created?.dailyPlans.map((day) => day.id);
+
+    const updated = editor.updateItineraryBasics({
+      ...record,
+      title: "Updated",
+      startDate: "2026-11-10",
+      adults: 3,
+      childrenCount: 1,
+    });
+
+    expect(updated?.title).toBe("Updated");
+    expect(updated?.adults).toBe(3);
+    expect(updated?.childrenCount).toBe(1);
+    expect(updated?.dailyPlans.map((day) => day.id)).toEqual(originalDayIds);
+    expect(updated?.dailyPlans.map((day) => day.date)).toEqual(["2026-11-10", "2026-11-11"]);
+    expect(updated?.dailyPlans[0].items[0].id).toBe("item-original");
+    expect(updated?.endDate).toBe("2026-11-11");
+  });
 });

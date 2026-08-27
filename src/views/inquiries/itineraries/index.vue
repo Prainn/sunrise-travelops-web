@@ -64,6 +64,12 @@
               {{ $t("itinerary.save") }}
             </el-button>
             <el-button
+              v-if="canEditItineraryBasics"
+              @click="openEditDialog"
+            >
+              {{ $t("itinerary.editBasics") }}
+            </el-button>
+            <el-button
               v-if="isDraft && canGeneratePdf"
               type="primary"
               :loading="isGeneratingPdf"
@@ -146,7 +152,8 @@
         v-model="isPlanDialogVisible"
         :record="itineraryForm"
         :planned-days="inquiry.plannedDays"
-        @submit="createItinerary"
+        :is-editing="isEditingPlan"
+        @submit="submitItineraryPlan"
       />
       <ItineraryResourceDialog
         v-model="isResourceDialogVisible"
@@ -211,11 +218,12 @@ async function confirmAction(key: string, params: Record<string, unknown> = {}) 
 }
 
 const {
-  addDay, addResourceItem, canCreateItinerary, canGeneratePdf, canSaveItinerary, contentEditable, copyItinerary, createItinerary,
+  addDay, addResourceItem, canCreateItinerary, canEditItineraryBasics, canGeneratePdf, canSaveItinerary, contentEditable, copyItinerary,
   closePdfPreview, confirmPdfDownload, duplicateDay, guestCount, handleGeneratePdf, inquiry, isGeneratingPdf,
-  isPdfPreviewVisible, isPlanDialogVisible, isResourceDialogVisible,
+  isEditingPlan, isPdfPreviewVisible, isPlanDialogVisible, isResourceDialogVisible,
   isDraft, itemCount, itineraryForm, missingPriceCount, moveDay, openCreateDialog, openResourceDialog, priceEditable,
-  pdfPreviewUrl, removeDay, removeItem, router, rows, saveItinerary, selectedItinerary, selectedItineraryId, totalCost, totalPrice,
+  openEditDialog, pdfPreviewUrl, removeDay, removeItem, router, rows, saveItinerary, selectedItinerary, selectedItineraryId,
+  submitItineraryPlan, totalCost, totalPrice,
   updateDayField, updateItemPrice, updateItemQuantity,
 } = useItineraryWorkspace({
   confirm: confirmAction,

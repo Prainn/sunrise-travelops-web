@@ -48,6 +48,21 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     return created;
   }
 
+  function updateItineraryBasics(record: ItineraryRecord): ItineraryRecord | null {
+    if (!options.canEditContent()) return null;
+    const plan = options.selectedItinerary.value;
+    if (!plan) return null;
+    Object.assign(plan, {
+      title: record.title,
+      startDate: record.startDate,
+      adults: record.adults,
+      childrenCount: record.childrenCount,
+      otherGuests: record.otherGuests,
+    });
+    syncPlanDates(plan);
+    return plan;
+  }
+
   function createDailyPlans(startDate: string, dayCount: number): ItineraryDayRecord[] {
     return Array.from({ length: dayCount }, (_, index) => ({
       id: createId("day"), dayNumber: index + 1, date: addDays(startDate, index), departure: "", destination: "",
@@ -183,6 +198,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
 
   return {
     addDay, addResourceItem, copyItinerary, createEmptyItinerary, createItinerary, duplicateDay,
-    generateItineraryCode, moveDay, removeDay, removeItem, updateDayField, updateItemPrice, updateItemQuantity,
+    generateItineraryCode, moveDay, removeDay, removeItem, updateDayField, updateItineraryBasics,
+    updateItemPrice, updateItemQuantity,
   };
 }

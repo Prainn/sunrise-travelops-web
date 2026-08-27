@@ -57,7 +57,7 @@
     "dateRangeInvalid": "The end date cannot be earlier than the start date", "dateRangeRequired": "Select a complete travel date range",
     "dayCost": "Day Cost", "dayCount": "{count} days", "dayDescription": "Daily itinerary details", "daySellingPrice": "Day Price", "dayTitle": "Day Theme",
     "days": "Days", "deleteDayConfirm": "Delete this day and all of its resource items?", "departure": "Departure", "destination": "Arrival",
-    "editTitle": "Edit Itinerary", "endDateRequired": "Select an end date", "guestCount": "Guests",
+    "editBasics": "Edit Basic Information", "editTitle": "Edit Itinerary", "endDateRequired": "Select an end date", "guestCount": "Guests",
     "guideLanguage": "Guide Language", "guideRequired": "Guide Required", "hotelLevel": "Hotel Level",
     "inquiryCoordinatorNotes": "Inquiry Coordinator Notes", "inquiryNotFound": "The inquiry was not found",
     "generateDespiteMismatch": "Generate Anyway", "generatePdf": "Generate PDF", "margin": "Margin", "mealRequirements": "Meal Requirements", "mealSummary": "Meals", "missingCustomerPrices": "{count} prices are still missing", "noDailyResources": "No resources selected for this day", "noPlans": "No itinerary has been created for this inquiry", "operationsCoordinator": "Operations Coordinator", "pdfEmptyDays": "Cannot generate PDF: {days} has no itinerary details", "pdfGenerated": "PDF downloaded and itinerary locked as quoted", "pdfGenerationFailed": "PDF generation failed. Please try again", "pdfMissingPrices": "Cannot generate PDF. Prices are missing for: {items}", "pdfPreviewTitle": "PDF Preview", "save": "Save", "saveSuccess": "Itinerary saved",

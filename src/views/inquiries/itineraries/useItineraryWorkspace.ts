@@ -23,6 +23,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const selection = useItinerarySelection();
   const { inquiry, inquiryId, itineraryStore, selectedItinerary, selectedItineraryId } = selection;
   const isPlanDialogVisible = ref(false);
+  const isEditingPlan = ref(false);
   const isResourceDialogVisible = ref(false);
   const resourceTargetDayId = ref("");
   const inquiryReadOnly = computed(() => inquiry.value ? isInquiryReadOnly(inquiry.value.status) : true);
@@ -47,6 +48,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     && hasUserPermission(userStore.userInfo, "itinerary:pdf")
   ));
   const canSaveItinerary = computed(() => contentEditable.value || priceEditable.value);
+  const canEditItineraryBasics = computed(() => contentEditable.value);
   const guestCount = computed(() => selectedItinerary.value
     ? selectedItinerary.value.adults + selectedItinerary.value.childrenCount + selectedItinerary.value.otherGuests : 0);
   const allItems = computed(() => selectedItinerary.value?.dailyPlans.flatMap((day) => day.items) ?? []);
@@ -75,7 +77,16 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
 
   function openCreateDialog() {
     if (!canCreateItinerary.value) return;
+    isEditingPlan.value = false;
     itineraryForm.value = { ...editor.createEmptyItinerary(), code: editor.generateItineraryCode() };
+    isPlanDialogVisible.value = true;
+  }
+
+  function openEditDialog() {
+    const plan = selectedItinerary.value;
+    if (!plan || !canEditItineraryBasics.value) return;
+    isEditingPlan.value = true;
+    itineraryForm.value = { ...plan, dailyPlans: [...plan.dailyPlans] };
     isPlanDialogVisible.value = true;
   }
 
@@ -93,6 +104,26 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       metadata: { creationMode: "new" },
     });
     messages.success("common.createSuccess");
+  }
+
+  async function submitItineraryPlan(record: ItineraryRecord) {
+    if (!isEditingPlan.value) {
+      await createItinerary(record);
+      return;
+    }
+    const updated = editor.updateItineraryBasics(record);
+    if (!updated) return;
+    isPlanDialogVisible.value = false;
+    await recordInquiryLog({
+      inquiryId: updated.inquiryId,
+      action: "itinerary_saved",
+      targetType: "itinerary",
+      targetId: updated.id,
+      targetCode: updated.code,
+      summary: updated.title,
+      metadata: { editScope: "basic" },
+    });
+    messages.success("common.updateSuccess");
   }
 
   function openResourceDialog(dayId: string) {
@@ -184,6 +215,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     addDay: editor.addDay,
     addResourceItem,
     canCreateItinerary,
+    canEditItineraryBasics,
     canGeneratePdf,
     canSaveItinerary,
     closePdfPreview: pdf.closePdfPreview,
@@ -195,6 +227,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     guestCount,
     handleGeneratePdf,
     inquiry,
+    isEditingPlan,
     isDraft,
     isGeneratingPdf: pdf.isGeneratingPdf,
     isPdfPreviewVisible: pdf.isPdfPreviewVisible,
@@ -205,6 +238,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     missingPriceCount,
     moveDay: editor.moveDay,
     openCreateDialog,
+    openEditDialog,
     openResourceDialog,
     pdfPreviewUrl: pdf.pdfPreviewUrl,
     priceEditable,
@@ -215,6 +249,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     selectedItinerary,
     selectedItineraryId,
     saveItinerary,
+    submitItineraryPlan,
     totalCost,
     totalPrice,
     updateDayField: editor.updateDayField,

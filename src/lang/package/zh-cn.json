@@ -57,7 +57,7 @@
     "dateRangeInvalid": "结束日期不能早于开始日期", "dateRangeRequired": "请选择完整的出行日期",
     "dayCost": "当日成本", "dayCount": "共 {count} 天", "dayDescription": "当日详细行程内容", "daySellingPrice": "当日报价", "dayTitle": "当日主题",
     "days": "天数", "deleteDayConfirm": "确定删除这一天及其全部资源明细吗？", "departure": "出发地", "destination": "到达地",
-    "editTitle": "编辑行程", "endDateRequired": "请选择结束日期", "guestCount": "总人数",
+    "editBasics": "编辑行程", "editTitle": "编辑行程", "endDateRequired": "请选择结束日期", "guestCount": "总人数",
     "guideLanguage": "导游语言", "guideRequired": "需要导游", "hotelLevel": "酒店等级",
     "inquiryCoordinatorNotes": "收客计调备注", "inquiryNotFound": "未找到对应询盘",
     "generateDespiteMismatch": "仍然生成", "generatePdf": "生成 PDF", "margin": "利润率", "mealRequirements": "餐饮要求", "mealSummary": "用餐摘要", "missingCustomerPrices": "还有 {count} 项价格未填写", "noDailyResources": "尚未选择当日资源", "noPlans": "该询盘尚未创建行程方案", "operationsCoordinator": "操作计调", "pdfEmptyDays": "无法生成 PDF：{days} 没有任何行程明细", "pdfGenerated": "PDF 已下载，行程已锁定为已报价", "pdfGenerationFailed": "PDF 生成失败，请重试", "pdfMissingPrices": "无法生成 PDF：以下项目未填写价格：{items}", "pdfPreviewTitle": "PDF 预览", "save": "保存", "saveSuccess": "行程已保存",

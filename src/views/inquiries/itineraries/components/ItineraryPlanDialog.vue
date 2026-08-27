@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    :title="$t('itinerary.createTitle')"
+    :title="$t(isEditing ? 'itinerary.editTitle' : 'itinerary.createTitle')"
     width="680px"
     destroy-on-close
     @close="emit('update:modelValue', false)"
@@ -110,7 +110,7 @@
         type="primary"
         @click="submitForm"
       >
-        {{ $t("itinerary.createAndManage") }}
+        {{ $t(isEditing ? "common.confirm" : "itinerary.createAndManage") }}
       </el-button>
     </template>
   </el-dialog>
@@ -127,6 +127,7 @@ const props = defineProps<{
   modelValue: boolean;
   record: ItineraryRecord;
   plannedDays: number;
+  isEditing?: boolean;
 }>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [record: ItineraryRecord] }>();
 const { t } = useI18n();
@@ -138,22 +139,26 @@ const rules = computed<FormRules>(() => ({
   operationsCoordinator: [{ required: true, message: t("itinerary.coordinatorRequired"), trigger: "change" }],
 }));
 
+const formDayCount = computed(() => props.isEditing
+  ? props.record.dailyPlans.length || props.record.days
+  : props.plannedDays);
+
 watch(() => [props.modelValue, props.record] as const, ([visible, record]) => {
   if (!visible) return;
-  Object.assign(form, record, { days: props.plannedDays, dailyPlans: [] });
+  Object.assign(form, record, { days: formDayCount.value, dailyPlans: [] });
   syncEndDate();
 }, { deep: true });
 
-watch(() => [form.startDate, props.plannedDays], syncEndDate);
+watch(() => [form.startDate, formDayCount.value], syncEndDate);
 
 async function submitForm() {
   if (!await formRef.value?.validate().catch(() => false)) return;
-  emit("submit", { ...form, days: props.plannedDays, dailyPlans: [] });
+  emit("submit", { ...form, days: formDayCount.value, dailyPlans: [] });
 }
 
 function syncEndDate() {
-  form.days = props.plannedDays;
-  form.endDate = form.startDate ? addDays(form.startDate, props.plannedDays - 1) : "";
+  form.days = formDayCount.value;
+  form.endDate = form.startDate && formDayCount.value ? addDays(form.startDate, formDayCount.value - 1) : "";
 }
 </script>
 
