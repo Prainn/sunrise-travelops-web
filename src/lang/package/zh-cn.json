@@ -20,6 +20,11 @@
     "vehiclesAndDrivers": "车辆与司机",
     "guides": "导游"
   },
+  "appVersion": {
+    "title": "发现新版本",
+    "message": "网站已更新，刷新页面即可使用最新版本。",
+    "refresh": "立即刷新"
+  },
   "inquiry": {
     "agencyCode": "旅行社编号", "agencyName": "旅行社名称", "agencyRequired": "请选择旅行社",
     "archive": "归档", "archiveConfirm": "确定归档该询盘吗？归档后询盘和已有行程均只可查看。", "archiveSuccess": "归档成功",

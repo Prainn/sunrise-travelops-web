@@ -27,12 +27,11 @@ import {
   Van,
 } from "@element-plus/icons-vue";
 import { setupPermissionGuard } from "@/router/guards/permission";
+import { setupPageUnloadConfirmation } from "@/utils/page-lifecycle";
 
 const app = createApp(App);
 
-window.addEventListener("beforeunload", (event) => {
-  event.preventDefault();
-});
+setupPageUnloadConfirmation();
 
 setupDirective(app);
 setupStore(app);

@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AppLink: typeof import('./../src/components/AppLink/index.vue')['default']
+    AppVersionNotifier: typeof import('./../src/components/AppVersionNotifier.vue')['default']
     AttractionEditorDialog: typeof import('./../src/views/resources/attraction/components/AttractionEditorDialog.vue')['default']
     AttractionPriceDialog: typeof import('./../src/views/resources/attraction/components/AttractionPriceDialog.vue')['default']
     AttractionSearchForm: typeof import('./../src/views/resources/attraction/components/AttractionSearchForm.vue')['default']

@@ -20,6 +20,11 @@
     "vehiclesAndDrivers": "Vehicles & Drivers",
     "guides": "Guides"
   },
+  "appVersion": {
+    "title": "New Version Available",
+    "message": "The website has been updated. Refresh to use the latest version.",
+    "refresh": "Refresh Now"
+  },
   "inquiry": {
     "agencyCode": "Agency Code", "agencyName": "Travel Agency", "agencyRequired": "Select a travel agency",
     "archive": "Archive", "archiveConfirm": "Archive this inquiry? The inquiry and its existing itineraries will become read-only.", "archiveSuccess": "Archived successfully",

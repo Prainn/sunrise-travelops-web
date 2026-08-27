@@ -52,6 +52,17 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     },
     plugins: [
       vue(),
+      {
+        name: "app-version-meta",
+        transformIndexHtml: () => [{
+          tag: "meta",
+          attrs: {
+            name: "app-version",
+            content: String(__APP_INFO__.buildTimestamp),
+          },
+          injectTo: "head",
+        }],
+      },
       ...(mode === "development"
         ? [
             VueDevTools({

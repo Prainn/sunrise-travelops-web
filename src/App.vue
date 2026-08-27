@@ -4,6 +4,7 @@
     :size="size"
     :table="tableConfig"
   >
+    <AppVersionNotifier />
     <el-watermark
       :font="{ color: fontColor }"
       :content="showWatermark ? watermarkContent : ''"
@@ -16,6 +17,7 @@
 </template>
 
 <script setup lang="ts">
+import AppVersionNotifier from "@/components/AppVersionNotifier.vue";
 import { useAppStore } from "@/stores/app";
 import { useSettingsStore } from "@/stores/settings";
 import { appConfig } from "@/settings";
