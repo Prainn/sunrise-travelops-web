@@ -30,6 +30,10 @@ import { setupPermissionGuard } from "@/router/guards/permission";
 
 const app = createApp(App);
 
+window.addEventListener("beforeunload", (event) => {
+  event.preventDefault();
+});
+
 setupDirective(app);
 setupStore(app);
 setupI18n(app);
