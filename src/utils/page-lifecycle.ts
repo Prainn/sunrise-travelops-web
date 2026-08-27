@@ -5,7 +5,8 @@ export function shouldConfirmPageUnload(hash: string) {
   return routePath !== "/login";
 }
 
-export function setupPageUnloadConfirmation() {
+export function setupPageUnloadConfirmation(isProduction = import.meta.env.PROD) {
+  if (!isProduction) return;
   window.addEventListener("beforeunload", (event) => {
     if (!isUnloadConfirmationEnabled || !shouldConfirmPageUnload(window.location.hash)) return;
     event.preventDefault();
