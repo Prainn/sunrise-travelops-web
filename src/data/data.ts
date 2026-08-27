@@ -874,7 +874,7 @@ export const hotels: HotelRecord[] = [
     ],
   },
   {
-    id: "hotel-6", code: "HTL-006", name: "腾冲和顺柏联酒店", province: "云南省", city: "腾冲市", rating: "精品", unit: "roomNight", status: "disabled",
+    id: "hotel-6", code: "HTL-006", name: "腾冲和顺柏联酒店", province: "云南省", city: "腾冲市", rating: "三星", unit: "roomNight", status: "disabled",
     facilities: "温泉、庭院、茶室", breakfast: "双人早餐", address: "腾冲市和顺镇张家坡",
     phone: "0875-5155555", nearby: "和顺古镇、热海景区", roomTypes: [
       { id: "room-9", name: "温泉庭院房", rackRate: 1888, pricePlans: [
