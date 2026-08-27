@@ -11,6 +11,8 @@
           <el-image
             :src="logo"
             class="login-brand__logo"
+            fit="contain"
+            alt="Sunrise TravelOps"
           />
           <div class="login-brand__identity">
             <span class="login-brand__name">{{ appConfig.title }}</span>
@@ -150,7 +152,7 @@ import type { LoginRequest } from "@/types/auth";
 import { AuthStorage } from "@/utils/auth";
 import { appConfig } from "@/settings";
 import ThemeSwitch from "@/components/ThemeSwitch/index.vue";
-import logo from "@/assets/images/logo.png";
+import logo from "@/assets/images/logo.svg";
 
 const userStore = useUserStore();
 const route = useRoute();
@@ -270,7 +272,7 @@ $input-h: 44px;
   }
 
   &__logo {
-    width: 42px;
+    width: 64px;
     height: 42px;
   }
 

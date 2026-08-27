@@ -8,7 +8,8 @@
       >
         <img
           :src="logo"
-          class="w20px h20px"
+          class="layout-logo__image"
+          alt="Sunrise TravelOps"
         />
         <span
           v-if="!collapse"
@@ -23,7 +24,7 @@
 
 <script lang="ts" setup>
 import { appConfig } from "@/settings";
-import logo from "@/assets/images/logo.png";
+import logo from "@/assets/images/logo.svg";
 
 defineProps({
   collapse: {
@@ -38,6 +39,12 @@ defineProps({
   width: 100%;
   height: $navbar-height;
   background-color: $sidebar-logo-background;
+
+  &__image {
+    width: 30px;
+    height: 24px;
+    object-fit: contain;
+  }
 
   &__title {
     flex-shrink: 0;
