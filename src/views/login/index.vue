@@ -152,7 +152,7 @@ import type { LoginRequest } from "@/types/auth";
 import { AuthStorage } from "@/utils/auth";
 import { appConfig } from "@/settings";
 import ThemeSwitch from "@/components/ThemeSwitch/index.vue";
-import logo from "@/assets/images/logo.svg";
+import logo from "@/assets/images/logo.png";
 
 const userStore = useUserStore();
 const route = useRoute();
@@ -272,8 +272,8 @@ $input-h: 44px;
   }
 
   &__logo {
-    width: 64px;
-    height: 42px;
+    width: 82px;
+    height: 82px;
   }
 
   &__identity {

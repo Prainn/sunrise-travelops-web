@@ -24,7 +24,7 @@
 
 <script lang="ts" setup>
 import { appConfig } from "@/settings";
-import logo from "@/assets/images/logo.svg";
+import logo from "@/assets/images/logo-emblem.png";
 
 defineProps({
   collapse: {
@@ -41,8 +41,8 @@ defineProps({
   background-color: $sidebar-logo-background;
 
   &__image {
-    width: 30px;
-    height: 24px;
+    width: 38px;
+    height: 38px;
     object-fit: contain;
   }
 
