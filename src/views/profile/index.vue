@@ -112,33 +112,6 @@
         <section class="profile-card">
           <header class="profile-card__header">
             <h3 class="profile-card__title">
-              {{ $t("profile.accountOverview") }}
-            </h3>
-          </header>
-
-          <div class="profile-stats">
-            <div
-              v-for="item in profileStats"
-              :key="item.label"
-              class="profile-stats__item"
-            >
-              <span :class="['profile-icon', 'profile-icon--' + item.tone]">
-                <el-icon><component :is="item.icon" /></el-icon>
-              </span>
-              <div class="profile-stats__body">
-                <span class="profile-stats__label">{{ item.label }}</span>
-                <strong class="profile-stats__value">
-                  {{ item.value }}
-                  <em>{{ item.suffix }}</em>
-                </strong>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="profile-card">
-          <header class="profile-card__header">
-            <h3 class="profile-card__title">
               {{ $t("profile.rolesAndPermissions") }}
             </h3>
             <span class="profile-card__extra">
@@ -167,119 +140,31 @@
       <main class="profile-page__main">
         <section class="profile-card">
           <header class="profile-card__header">
-            <div>
-              <h3 class="profile-card__title">
-                {{ $t("profile.securitySettings") }}
-              </h3>
-              <p class="profile-card__desc">
-                {{ $t("profile.securityDescription") }}
-              </p>
-            </div>
-            <el-tag
-              :type="securityLevel.type"
-              effect="light"
-            >
-              {{ $t("profile.securityLevel", { level: securityLevel.label }) }}
-            </el-tag>
+            <h3 class="profile-card__title">
+              {{ $t("profile.recentLogins") }}
+            </h3>
+            <span class="profile-card__extra">
+              {{ $t("profile.recentCount", { count: 3 }) }}
+            </span>
           </header>
 
-          <div class="profile-security">
+          <div class="profile-login">
             <div
-              v-for="item in securityItems"
-              :key="item.key"
-              class="profile-security__item"
+              v-for="record in recentLoginRecords"
+              :key="record.time"
+              class="profile-login__item"
             >
-              <span :class="['profile-icon', 'profile-icon--large', 'profile-icon--' + item.tone]">
-                <el-icon><component :is="item.icon" /></el-icon>
+              <span class="profile-icon">
+                <el-icon><Monitor /></el-icon>
               </span>
-              <div class="profile-security__body">
-                <div class="profile-security__title">
-                  <span>{{ item.title }}</span>
-                  <el-tag
-                    size="small"
-                    :type="item.statusType"
-                    effect="plain"
-                  >
-                    {{ item.status }}
-                  </el-tag>
-                </div>
-                <p class="profile-security__desc">
-                  {{ item.description }}
-                </p>
+              <div class="profile-login__body">
+                <strong class="profile-login__device">{{ record.device }}</strong>
+                <span class="profile-login__meta">{{ record.location }} / {{ record.ip }}</span>
               </div>
-              <div class="profile-security__actions">
-                <el-button
-                  v-for="action in item.actions"
-                  :key="action.label"
-                  :type="action.type"
-                  link
-                  @click="action.onClick"
-                >
-                  {{ action.label }}
-                </el-button>
-              </div>
+              <time class="profile-login__time">{{ record.time }}</time>
             </div>
           </div>
         </section>
-
-        <div class="profile-page__grid">
-          <section class="profile-card">
-            <header class="profile-card__header">
-              <h3 class="profile-card__title">
-                {{ $t("profile.recentLogins") }}
-              </h3>
-              <span class="profile-card__extra">
-                {{ $t("profile.recentCount", { count: 3 }) }}
-              </span>
-            </header>
-
-            <div class="profile-login">
-              <div
-                v-for="record in recentLoginRecords"
-                :key="record.time"
-                class="profile-login__item"
-              >
-                <span class="profile-icon">
-                  <el-icon><Monitor /></el-icon>
-                </span>
-                <div class="profile-login__body">
-                  <strong class="profile-login__device">{{ record.device }}</strong>
-                  <span class="profile-login__meta">{{ record.location }} / {{ record.ip }}</span>
-                </div>
-                <time class="profile-login__time">{{ record.time }}</time>
-              </div>
-            </div>
-          </section>
-
-          <section class="profile-card">
-            <header class="profile-card__header">
-              <h3 class="profile-card__title">
-                {{ $t("profile.accountStatus") }}
-              </h3>
-              <span class="profile-card__extra">
-                {{ $t("profile.completion", { value: profileCompletion }) }}
-              </span>
-            </header>
-
-            <div class="profile-status">
-              <div
-                v-for="item in accountStatusItems"
-                :key="item.label"
-                class="profile-status__item"
-                :class="{ 'is-warning': !item.done }"
-              >
-                <el-icon class="profile-status__icon">
-                  <CircleCheck v-if="item.done" />
-                  <Warning v-else />
-                </el-icon>
-                <div class="profile-status__body">
-                  <strong class="profile-status__title">{{ item.label }}</strong>
-                  <span class="profile-status__desc">{{ item.value }}</span>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
       </main>
     </div>
 
@@ -354,96 +239,6 @@
         </el-form-item>
       </el-form>
 
-      <el-form
-        v-else-if="dialogState.type === DialogType.MOBILE"
-        ref="mobileBindingFormRef"
-        :model="mobileUpdateForm"
-        :rules="mobileBindingRules"
-        label-width="88px"
-        class="pr-10px"
-      >
-        <el-form-item
-          :label="$t('user.mobile')"
-          prop="mobile"
-        >
-          <el-input v-model="mobileUpdateForm.mobile" />
-        </el-form-item>
-        <el-form-item
-          :label="$t('profile.verificationCode')"
-          prop="code"
-        >
-          <el-input v-model="mobileUpdateForm.code">
-            <template #append>
-              <el-button
-                :disabled="mobileCountdown > 0"
-                @click="handleSendMobileCode"
-              >
-                {{
-                  mobileCountdown > 0
-                    ? $t("profile.resendAfter", { seconds: mobileCountdown })
-                    : $t("profile.sendCode")
-                }}
-              </el-button>
-            </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item
-          :label="$t('profile.currentPassword')"
-          prop="password"
-        >
-          <el-input
-            v-model="mobileUpdateForm.password"
-            type="password"
-            show-password
-          />
-        </el-form-item>
-      </el-form>
-
-      <el-form
-        v-else-if="dialogState.type === DialogType.EMAIL"
-        ref="emailBindingFormRef"
-        :model="emailUpdateForm"
-        :rules="emailBindingRules"
-        label-width="88px"
-        class="pr-10px"
-      >
-        <el-form-item
-          :label="$t('user.email')"
-          prop="email"
-        >
-          <el-input v-model="emailUpdateForm.email" />
-        </el-form-item>
-        <el-form-item
-          :label="$t('profile.verificationCode')"
-          prop="code"
-        >
-          <el-input v-model="emailUpdateForm.code">
-            <template #append>
-              <el-button
-                :disabled="emailCountdown > 0"
-                @click="handleSendEmailCode"
-              >
-                {{
-                  emailCountdown > 0
-                    ? $t("profile.resendAfter", { seconds: emailCountdown })
-                    : $t("profile.sendCode")
-                }}
-              </el-button>
-            </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item
-          :label="$t('profile.currentPassword')"
-          prop="password"
-        >
-          <el-input
-            v-model="emailUpdateForm.password"
-            type="password"
-            show-password
-          />
-        </el-form-item>
-      </el-form>
-
       <template #footer>
         <span class="inline-flex gap-2">
           <el-button @click="handleCancel">{{ $t("common.cancel") }}</el-button>
@@ -461,13 +256,11 @@
 import type {
   UserProfileDetail,
   PasswordChangeForm,
-  MobileUpdateForm,
-  EmailUpdateForm,
   UserProfileForm,
 } from "@/types/user";
 
 import type { Component } from "vue";
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { userService } from "@/services";
 import { useUserStoreHook } from "@/stores/user";
 import { readFileAsDataUrl } from "@/utils";
@@ -476,12 +269,9 @@ import { redirectToLogin } from "@/utils/auth";
 import {
   Calendar,
   Camera,
-  CircleCheck,
-  DataLine,
   Edit,
   Female,
   Iphone,
-  Key,
   Location,
   Lock,
   Male,
@@ -491,7 +281,6 @@ import {
   Timer,
   User,
   UserFilled,
-  Warning,
 } from "@element-plus/icons-vue";
 
 interface ProfileInfoItem {
@@ -499,23 +288,6 @@ interface ProfileInfoItem {
   value: string;
   icon: Component;
   muted?: boolean;
-}
-
-interface SecurityAction {
-  label: string;
-  type: "primary" | "danger";
-  onClick: () => void;
-}
-
-interface SecurityItem {
-  key: string;
-  title: string;
-  description: string;
-  status: string;
-  statusType: "success" | "warning" | "info";
-  icon: Component;
-  tone: "primary" | "success" | "warning";
-  actions: SecurityAction[];
 }
 
 const userStore = useUserStoreHook();
@@ -526,8 +298,6 @@ const userProfile = ref<UserProfileDetail>({});
 const enum DialogType {
   ACCOUNT = "account",
   PASSWORD = "password",
-  MOBILE = "mobile",
-  EMAIL = "email",
 }
 
 const dialogState = reactive({
@@ -538,19 +308,9 @@ const dialogState = reactive({
 
 const userProfileFormRef = ref();
 const passwordChangeFormRef = ref();
-const mobileBindingFormRef = ref();
-const emailBindingFormRef = ref();
 
 const userProfileForm = reactive<UserProfileForm>({});
 const passwordChangeForm = reactive<PasswordChangeForm>({});
-const mobileUpdateForm = reactive<MobileUpdateForm>({});
-const emailUpdateForm = reactive<EmailUpdateForm>({});
-
-const mobileCountdown = ref(0);
-const mobileTimer = ref();
-
-const emailCountdown = ref(0);
-const emailTimer = ref();
 
 const recentLoginRecords = computed(() => [
   {
@@ -595,34 +355,6 @@ const passwordChangeRules = computed(() => ({
   ],
 }));
 
-// 手机号校验规则
-const mobileBindingRules = computed(() => ({
-  mobile: [
-    { required: true, message: t("profile.mobilePlaceholder"), trigger: "blur" },
-    {
-      pattern: /^1[3|4|5|6|7|8|9][0-9]\d{8}$/,
-      message: t("user.mobileInvalid"),
-      trigger: "blur",
-    },
-  ],
-  code: [{ required: true, message: t("profile.codePlaceholder"), trigger: "blur" }],
-  password: [{ required: true, message: t("profile.currentPasswordPlaceholder"), trigger: "blur" }],
-}));
-
-// 邮箱校验规则
-const emailBindingRules = computed(() => ({
-  email: [
-    { required: true, message: t("user.emailPlaceholder"), trigger: "blur" },
-    {
-      pattern: /\w[-\w.+]*@([A-Za-z0-9][-A-Za-z0-9]+\.)+[A-Za-z]{2,14}/,
-      message: t("user.emailInvalid"),
-      trigger: "blur",
-    },
-  ],
-  code: [{ required: true, message: t("profile.codePlaceholder"), trigger: "blur" }],
-  password: [{ required: true, message: t("profile.currentPasswordPlaceholder"), trigger: "blur" }],
-}));
-
 const displayAvatar = computed(() => userProfile.value.avatar || userStore.userInfo.avatar || "");
 
 const displayName = computed(() => {
@@ -650,35 +382,6 @@ const genderText = computed(() => {
   if (userProfile.value.gender === 1) return t("user.male");
   if (userProfile.value.gender === 2) return t("user.female");
   return t("common.notSet");
-});
-
-const boundCount = computed(() => {
-  return [userProfile.value.mobile, userProfile.value.email].filter(Boolean).length;
-});
-
-const profileCompletion = computed(() => {
-  const fields = [
-    userProfile.value.username,
-    userProfile.value.nickname,
-    displayAvatar.value,
-    userProfile.value.mobile,
-    userProfile.value.email,
-    userProfile.value.deptName,
-    userProfile.value.roleNames,
-    userProfile.value.createTime,
-  ];
-  return Math.round((fields.filter(Boolean).length / fields.length) * 100);
-});
-
-const securityLevel = computed(() => {
-  const score = 60 + boundCount.value * 20;
-  if (score >= 100) {
-    return { score, label: t("profile.securityLevels.high"), type: "success" as const };
-  }
-  if (score >= 80) {
-    return { score, label: t("profile.securityLevels.medium"), type: "warning" as const };
-  }
-  return { score, label: t("profile.securityLevels.low"), type: "info" as const };
 });
 
 const profileInfoItems = computed<ProfileInfoItem[]>(() => [
@@ -713,172 +416,9 @@ const profileInfoItems = computed<ProfileInfoItem[]>(() => [
   },
 ]);
 
-const profileStats = computed(() => [
-  {
-    label: t("profile.securityScore"),
-    value: securityLevel.value.score,
-    suffix: t("profile.scoreUnit"),
-    icon: Key,
-    tone: "primary",
-  },
-  {
-    label: t("profile.boundItems"),
-    value: boundCount.value,
-    suffix: "/2",
-    icon: CircleCheck,
-    tone: "success",
-  },
-  {
-    label: t("profile.roleCount"),
-    value: roleList.value.length,
-    suffix: t("profile.countUnit"),
-    icon: UserFilled,
-    tone: "warning",
-  },
-  {
-    label: t("profile.permissionIdentifiers"),
-    value: permissionCount.value,
-    suffix: t("profile.countUnit"),
-    icon: DataLine,
-    tone: "info",
-  },
-]);
-
-const accountStatusItems = computed(() => [
-  {
-    label: t("profile.loginAccount"),
-    value: userProfile.value.username || t("profile.notAvailable"),
-    done: !!userProfile.value.username,
-  },
-  {
-    label: t("profile.mobileVerification"),
-    value: userProfile.value.mobile ? t("profile.bound") : t("profile.unbound"),
-    done: !!userProfile.value.mobile,
-  },
-  {
-    label: t("profile.emailVerification"),
-    value: userProfile.value.email ? t("profile.bound") : t("profile.unbound"),
-    done: !!userProfile.value.email,
-  },
-  {
-    label: t("profile.profileCompletion"),
-    value: `${profileCompletion.value}%`,
-    done: profileCompletion.value >= 80,
-  },
-]);
-
-const securityItems = computed<SecurityItem[]>(() => [
-  {
-    key: "password",
-    title: t("profile.accountPassword"),
-    description: t("profile.passwordDescription"),
-    status: t("profile.configured"),
-    statusType: "success",
-    icon: Lock,
-    tone: "primary",
-    actions: [
-      {
-        label: t("common.edit"),
-        type: "primary",
-        onClick: () => handleOpenDialog(DialogType.PASSWORD),
-      },
-    ],
-  },
-  {
-    key: "mobile",
-    title: t("profile.mobileNumber"),
-    description: mobileSecurityDesc.value,
-    status: userProfile.value.mobile ? t("profile.bound") : t("profile.unbound"),
-    statusType: userProfile.value.mobile ? "success" : "warning",
-    icon: Iphone,
-    tone: "success",
-    actions: userProfile.value.mobile
-      ? [
-          {
-            label: t("common.change"),
-            type: "primary",
-            onClick: () => handleOpenDialog(DialogType.MOBILE),
-          },
-          {
-            label: t("common.unbind"),
-            type: "danger",
-            onClick: handleUnbindMobile,
-          },
-        ]
-      : [
-          {
-            label: t("common.bind"),
-            type: "primary",
-            onClick: () => handleOpenDialog(DialogType.MOBILE),
-          },
-        ],
-  },
-  {
-    key: "email",
-    title: t("user.email"),
-    description: emailSecurityDesc.value,
-    status: userProfile.value.email ? t("profile.bound") : t("profile.unbound"),
-    statusType: userProfile.value.email ? "success" : "warning",
-    icon: Message,
-    tone: "warning",
-    actions: userProfile.value.email
-      ? [
-          {
-            label: t("common.change"),
-            type: "primary",
-            onClick: () => handleOpenDialog(DialogType.EMAIL),
-          },
-          {
-            label: t("common.unbind"),
-            type: "danger",
-            onClick: handleUnbindEmail,
-          },
-        ]
-      : [
-          {
-            label: t("common.bind"),
-            type: "primary",
-            onClick: () => handleOpenDialog(DialogType.EMAIL),
-          },
-        ],
-  },
-]);
-
 function formatValue(value?: Date | string) {
   return value ? String(value) : "-";
 }
-
-function getPromptValue(result: unknown) {
-  if (result && typeof result === "object" && "value" in result) {
-    return String(result.value || "");
-  }
-  return "";
-}
-
-function maskMobile(mobile?: string) {
-  if (!mobile) return "";
-  return mobile.replace(/^(\d{3})\d{4}(\d{4})$/, "$1****$2");
-}
-
-function maskEmail(email?: string) {
-  if (!email) return "";
-  const [name, domain] = email.split("@");
-  if (!domain) return email;
-  if (name.length <= 2) return `${name[0] || ""}***@${domain}`;
-  return `${name.slice(0, 2)}***@${domain}`;
-}
-
-const mobileSecurityDesc = computed(() => {
-  return userProfile.value.mobile
-    ? t("profile.boundValue", { value: maskMobile(userProfile.value.mobile) })
-    : t("profile.mobileUnboundTip");
-});
-
-const emailSecurityDesc = computed(() => {
-  return userProfile.value.email
-    ? t("profile.boundValue", { value: maskEmail(userProfile.value.email) })
-    : t("profile.emailUnboundTip");
-});
 
 const handleOpenDialog = (type: DialogType) => {
   dialogState.type = type;
@@ -893,113 +433,8 @@ const handleOpenDialog = (type: DialogType) => {
     case DialogType.PASSWORD:
       dialogState.titleKey = "profile.changePassword";
       break;
-    case DialogType.MOBILE:
-      dialogState.titleKey = userProfile.value.mobile
-        ? "profile.changeMobile"
-        : "profile.bindMobile";
-      mobileUpdateForm.mobile = "";
-      mobileUpdateForm.code = "";
-      mobileUpdateForm.password = "";
-      break;
-    case DialogType.EMAIL:
-      dialogState.titleKey = userProfile.value.email ? "profile.changeEmail" : "profile.bindEmail";
-      emailUpdateForm.email = "";
-      emailUpdateForm.code = "";
-      emailUpdateForm.password = "";
-      break;
   }
 };
-
-async function handleUnbindMobile() {
-  if (!userProfile.value.mobile) return;
-  try {
-    const result = await ElMessageBox.prompt(
-      t("profile.unbindMobilePrompt"),
-      t("profile.unbindMobile"),
-      {
-      type: "warning",
-      confirmButtonText: t("common.confirm"),
-      cancelButtonText: t("common.cancel"),
-      inputType: "password",
-      inputPlaceholder: t("profile.currentPassword"),
-      inputValidator: (val) => !!val || t("profile.currentPasswordPlaceholder"),
-      }
-    );
-    const value = getPromptValue(result);
-    await userService.unbindMobile({ password: value });
-    ElMessage.success(t("profile.mobileUnboundSuccess"));
-    await loadUserProfile();
-  } catch (action) {
-    if (action !== "cancel" && action !== "close") throw action;
-  }
-}
-
-async function handleUnbindEmail() {
-  if (!userProfile.value.email) return;
-  try {
-    const result = await ElMessageBox.prompt(t("profile.unbindEmailPrompt"), t("profile.unbindEmail"), {
-      type: "warning",
-      confirmButtonText: t("common.confirm"),
-      cancelButtonText: t("common.cancel"),
-      inputType: "password",
-      inputPlaceholder: t("profile.currentPassword"),
-      inputValidator: (val) => !!val || t("profile.currentPasswordPlaceholder"),
-    });
-    const value = getPromptValue(result);
-    await userService.unbindEmail({ password: value });
-    ElMessage.success(t("profile.emailUnboundSuccess"));
-    await loadUserProfile();
-  } catch (action) {
-    if (action !== "cancel" && action !== "close") throw action;
-  }
-}
-
-function handleSendMobileCode() {
-  if (!mobileUpdateForm.mobile) {
-    ElMessage.error(t("profile.mobilePlaceholder"));
-    return;
-  }
-  const reg = /^1[3-9]\d{9}$/;
-  if (!reg.test(mobileUpdateForm.mobile)) {
-    ElMessage.error(t("user.mobileInvalid"));
-    return;
-  }
-  userService.sendMobileCode(mobileUpdateForm.mobile).then(() => {
-    ElMessage.success(t("profile.codeSentSuccess"));
-    mobileCountdown.value = 60;
-    mobileTimer.value = setInterval(() => {
-      if (mobileCountdown.value > 0) {
-        mobileCountdown.value -= 1;
-      } else {
-        clearInterval(mobileTimer.value!);
-      }
-    }, 1000);
-  });
-}
-
-function handleSendEmailCode() {
-  if (!emailUpdateForm.email) {
-    ElMessage.error(t("user.emailPlaceholder"));
-    return;
-  }
-  const reg = /\w[-\w.+]*@([A-Za-z0-9][-A-Za-z0-9]+\.)+[A-Za-z]{2,14}/;
-  if (!reg.test(emailUpdateForm.email)) {
-    ElMessage.error(t("user.emailInvalid"));
-    return;
-  }
-
-  userService.sendEmailCode(emailUpdateForm.email).then(() => {
-    ElMessage.success(t("profile.codeSentSuccess"));
-    emailCountdown.value = 60;
-    emailTimer.value = setInterval(() => {
-      if (emailCountdown.value > 0) {
-        emailCountdown.value -= 1;
-      } else {
-        clearInterval(emailTimer.value!);
-      }
-    }, 1000);
-  });
-}
 
 const handleSubmit = async () => {
   if (dialogState.type === DialogType.ACCOUNT) {
@@ -1013,18 +448,6 @@ const handleSubmit = async () => {
     dialogState.visible = false;
     await redirectToLogin(t("profile.passwordChangedRelogin"));
     return;
-  } else if (dialogState.type === DialogType.MOBILE) {
-    if (!(await mobileBindingFormRef.value?.validate())) return;
-    const hadMobile = Boolean(userProfile.value.mobile);
-    await userService.bindOrChangeMobile(mobileUpdateForm);
-    ElMessage.success(
-      t(hadMobile ? "profile.mobileChangedSuccess" : "profile.mobileBoundSuccess")
-    );
-  } else if (dialogState.type === DialogType.EMAIL) {
-    if (!(await emailBindingFormRef.value?.validate())) return;
-    const hadEmail = Boolean(userProfile.value.email);
-    await userService.bindOrChangeEmail(emailUpdateForm);
-    ElMessage.success(t(hadEmail ? "profile.emailChangedSuccess" : "profile.emailBoundSuccess"));
   }
 
   dialogState.visible = false;
@@ -1037,10 +460,6 @@ const handleCancel = () => {
     userProfileFormRef.value?.resetFields();
   } else if (dialogState.type === DialogType.PASSWORD) {
     passwordChangeFormRef.value?.resetFields();
-  } else if (dialogState.type === DialogType.MOBILE) {
-    mobileBindingFormRef.value?.resetFields();
-  } else if (dialogState.type === DialogType.EMAIL) {
-    emailBindingFormRef.value?.resetFields();
   }
 };
 
@@ -1069,15 +488,6 @@ const loadUserProfile = async () => {
 };
 
 onMounted(loadUserProfile);
-
-onBeforeUnmount(() => {
-  if (mobileTimer.value) {
-    clearInterval(mobileTimer.value);
-  }
-  if (emailTimer.value) {
-    clearInterval(emailTimer.value);
-  }
-});
 </script>
 
 <style lang="scss" scoped>
@@ -1189,12 +599,6 @@ onBeforeUnmount(() => {
   min-width: 0;
 }
 
-.profile-page__grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
-  gap: 16px;
-}
-
 .profile-card {
   padding: 18px 20px;
 }
@@ -1213,12 +617,6 @@ onBeforeUnmount(() => {
   font-weight: 700;
   line-height: 22px;
   color: var(--el-text-color-primary);
-}
-
-.profile-card__desc {
-  margin: 3px 0 0;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
 }
 
 .profile-card__extra,
@@ -1266,53 +664,6 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
-.profile-stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.profile-stats__item {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  min-width: 0;
-  padding: 12px;
-  background: var(--el-fill-color-lighter);
-  border: 1px solid var(--el-border-color-extra-light);
-  border-radius: 8px;
-}
-
-.profile-stats__body {
-  min-width: 0;
-}
-
-.profile-stats__label,
-.profile-stats__value {
-  display: block;
-}
-
-.profile-stats__label {
-  margin-bottom: 2px;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-}
-
-.profile-stats__value {
-  font-size: 20px;
-  line-height: 24px;
-  color: var(--el-text-color-primary);
-}
-
-.profile-stats__value em {
-  display: inline;
-  margin-left: 2px;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  color: var(--el-text-color-secondary);
-}
-
 .profile-icon {
   display: flex;
   flex: 0 0 36px;
@@ -1326,31 +677,7 @@ onBeforeUnmount(() => {
   border-radius: 8px;
 }
 
-.profile-icon--large {
-  flex-basis: 40px;
-  width: 40px;
-  height: 40px;
-  font-size: 20px;
-}
-
-.profile-icon--success {
-  color: var(--el-color-success);
-  background: var(--el-color-success-light-9);
-}
-
-.profile-icon--warning {
-  color: var(--el-color-warning);
-  background: var(--el-color-warning-light-9);
-}
-
-.profile-icon--info {
-  color: var(--el-color-info);
-  background: var(--el-fill-color-light);
-}
-
-.profile-security,
-.profile-login,
-.profile-status {
+.profile-login {
   display: grid;
   gap: 12px;
 }
@@ -1361,49 +688,8 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 
-.profile-security__item {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-  padding: 12px 14px;
-  border: 1px solid var(--el-border-color-extra-light);
-  border-radius: 8px;
-}
-
-.profile-security__body,
-.profile-login__body,
-.profile-status__body {
+.profile-login__body {
   min-width: 0;
-}
-
-.profile-security__title {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-}
-
-.profile-security__desc {
-  margin: 4px 0 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  white-space: nowrap;
-}
-
-.profile-security__actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.profile-security__actions .el-button + .el-button {
-  margin-left: 0;
 }
 
 .profile-login__item {
@@ -1416,43 +702,22 @@ onBeforeUnmount(() => {
 
 .profile-login__device,
 .profile-login__meta,
-.profile-login__time,
-.profile-status__title,
-.profile-status__desc {
+.profile-login__time {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.profile-login__device,
-.profile-status__title {
+.profile-login__device {
   font-size: 13px;
   color: var(--el-text-color-primary);
 }
 
 .profile-login__meta,
-.profile-login__time,
-.profile-status__desc {
+.profile-login__time {
   font-size: 12px;
   color: var(--el-text-color-secondary);
-}
-
-.profile-status__item {
-  display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-  min-height: 38px;
-  color: var(--el-color-success);
-}
-
-.profile-status__item.is-warning {
-  color: var(--el-color-warning);
-}
-
-.profile-status__title {
-  margin-bottom: 2px;
 }
 
 .is-muted {
@@ -1460,8 +725,7 @@ onBeforeUnmount(() => {
 }
 
 @media (width <= 1200px) {
-  .profile-page__layout,
-  .profile-page__grid {
+  .profile-page__layout {
     grid-template-columns: 1fr;
   }
 }
@@ -1491,12 +755,10 @@ onBeforeUnmount(() => {
     margin-left: 0;
   }
 
-  .profile-security__item,
   .profile-login__item {
     grid-template-columns: 40px minmax(0, 1fr);
   }
 
-  .profile-security__actions,
   .profile-login__time {
     grid-column: 2;
     justify-self: start;
@@ -1504,7 +766,6 @@ onBeforeUnmount(() => {
 }
 
 @media (width <= 520px) {
-  .profile-stats,
   .profile-info__item {
     grid-template-columns: 1fr;
   }
