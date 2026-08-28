@@ -5,6 +5,7 @@ import type { ItineraryRecord, ItineraryResourceItem } from "@/types/itinerary";
 import { formatDateTime, hasUserPermission, sumMoney } from "@/utils";
 import { isInquiryReadOnly } from "../inquiry-workflow";
 import { canPerformItineraryOperation } from "./itinerary-workflow";
+import { calculateItineraryQuote } from "./quote-pricing";
 import { useItineraryEditor } from "./useItineraryEditor";
 import { useItineraryPdf } from "./useItineraryPdf";
 import { useItinerarySelection } from "./useItinerarySelection";
@@ -50,12 +51,14 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const canSaveItinerary = computed(() => contentEditable.value || priceEditable.value);
   const canEditItineraryBasics = computed(() => contentEditable.value);
   const guestCount = computed(() => selectedItinerary.value
-    ? selectedItinerary.value.adults + selectedItinerary.value.childrenCount + selectedItinerary.value.otherGuests : 0);
+    ? selectedItinerary.value.adults + selectedItinerary.value.childrenCount : 0);
   const allItems = computed(() => selectedItinerary.value?.dailyPlans.flatMap((day) => day.items) ?? []);
   const totalCost = computed(() => sumMoney(allItems.value.map((item) => item.totalCost)));
-  const totalPrice = computed(() => sumMoney(allItems.value.map((item) => item.totalPrice)));
   const itemCount = computed(() => allItems.value.length);
-  const missingPriceCount = computed(() => allItems.value.filter((item) => item.unitPrice === null).length);
+  const quoteCalculation = computed(() => selectedItinerary.value
+    ? calculateItineraryQuote(selectedItinerary.value, totalCost.value)
+    : null);
+  const hotelRoomCount = computed(() => quoteCalculation.value?.hotelRoomCount ?? 0);
 
   const editor = useItineraryEditor({
     inquiry,
@@ -178,11 +181,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       messages.warning("itinerary.pdfEmptyDays", { days: validation.emptyDayNumbers.map((day) => `D${day}`).join("、") });
       return;
     }
-    if (validation.missingPriceItems.length) {
-      const items = validation.missingPriceItems.map((item) => `D${item.dayNumber} ${item.resourceName}`).join("、");
-      messages.warning("itinerary.pdfMissingPrices", { items });
-      return;
-    }
     if (validation.dayCountMismatch) {
       const confirmed = await messages.confirm("itinerary.dayCountMismatch", {
         planned: validation.plannedDays,
@@ -225,6 +223,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     createItinerary,
     duplicateDay: editor.duplicateDay,
     guestCount,
+    hotelRoomCount,
     handleGeneratePdf,
     inquiry,
     isEditingPlan,
@@ -235,13 +234,13 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     isResourceDialogVisible,
     itemCount,
     itineraryForm,
-    missingPriceCount,
     moveDay: editor.moveDay,
     openCreateDialog,
     openEditDialog,
     openResourceDialog,
     pdfPreviewUrl: pdf.pdfPreviewUrl,
     priceEditable,
+    quoteCalculation,
     removeDay,
     removeItem: editor.removeItem,
     router: selection.router,
@@ -251,9 +250,8 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     saveItinerary,
     submitItineraryPlan,
     totalCost,
-    totalPrice,
     updateDayField: editor.updateDayField,
-    updateItemPrice: editor.updateItemPrice,
     updateItemQuantity: editor.updateItemQuantity,
+    updateQuote: editor.updateQuote,
   };
 }

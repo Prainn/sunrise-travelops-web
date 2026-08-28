@@ -93,7 +93,7 @@
       >
         <template #default="scope">
           <el-input-number
-            v-if="contentEditable"
+            v-if="contentEditable && scope.row.type !== 'hotel'"
             class="day-card__quantity"
             :model-value="scope.row.quantity"
             :min="1"
@@ -117,43 +117,12 @@
         </template>
       </el-table-column>
       <el-table-column
-        :label="$t('itinerary.customerUnitPrice')"
-        width="138"
-        align="right"
-      >
-        <template #default="scope">
-          <el-input-number
-            v-if="priceEditable"
-            class="day-card__customer-price"
-            :class="{ 'is-missing': scope.row.unitPrice === null }"
-            :model-value="scope.row.unitPrice"
-            :min="0"
-            :precision="2"
-            controls-position="right"
-            :placeholder="$t('itinerary.customerUnitPriceRequired')"
-            @update:model-value="emit('update-item-price', scope.$index, $event === undefined ? null : Number($event))"
-          />
-          <template v-else>
-            {{ scope.row.unitPrice === null ? "-" : `¥${formatMoney(scope.row.unitPrice)}` }}
-          </template>
-        </template>
-      </el-table-column>
-      <el-table-column
         :label="$t('itinerary.totalCost')"
         width="100"
         align="right"
       >
         <template #default="scope">
           ¥{{ formatMoney(scope.row.totalCost) }}
-        </template>
-      </el-table-column>
-      <el-table-column
-        :label="$t('itinerary.totalPrice')"
-        width="100"
-        align="right"
-      >
-        <template #default="scope">
-          <strong>¥{{ formatMoney(scope.row.totalPrice) }}</strong>
         </template>
       </el-table-column>
       <el-table-column
@@ -180,7 +149,6 @@
     />
     <div class="day-card__subtotal">
       <span>{{ $t("itinerary.dayCost") }} ¥{{ formatMoney(dayCost) }}</span>
-      <strong>{{ $t("itinerary.daySellingPrice") }} ¥{{ formatMoney(dayPrice) }}</strong>
     </div>
   </el-card>
 </template>
@@ -198,7 +166,6 @@ type EditableDayField = "departure" | "destination" | "transport" | "title" | "d
 const props = defineProps<{
   day: ItineraryDayRecord;
   contentEditable: boolean;
-  priceEditable: boolean;
   isFirst: boolean;
   isLast: boolean;
 }>();
@@ -207,13 +174,11 @@ const emit = defineEmits<{
   "add-item": [];
   "remove-item": [index: number];
   "update-item-quantity": [index: number, quantity: number];
-  "update-item-price": [index: number, price: number | null];
   duplicate: [];
   remove: [];
   move: [offset: number];
 }>();
 const dayCost = computed(() => sumMoney(props.day.items.map((item) => item.totalCost)));
-const dayPrice = computed(() => sumMoney(props.day.items.map((item) => item.totalPrice)));
 const { locale } = useI18n();
 
 function updateField(field: EditableDayField, value: string) { emit("update-field", field, value); }
@@ -231,8 +196,6 @@ function resourceUnitName(code: string) { return getResourceUnitName(code, local
 .day-card__date, small { color: var(--el-text-color-secondary); font-size: 12px; }
 .day-card__provider { display: block; margin-top: 2px; color: var(--el-color-warning); }
 .day-card__quantity { width: 72px; margin-right: 4px; }
-.day-card__customer-price { width: 116px; }
-.day-card__customer-price.is-missing :deep(.el-input__wrapper) { box-shadow: 0 0 0 1px var(--el-color-danger) inset; }
 .day-card__resources-header { margin: 20px 0 10px; }
 .day-card__resource-name { font-weight: 500; }
 .day-card__subtotal { margin-top: 12px; color: var(--el-text-color-secondary); }

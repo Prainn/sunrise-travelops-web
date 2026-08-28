@@ -73,7 +73,6 @@
         </el-table-column>
         <el-table-column
           :label="$t('common.status')"
-          width="110"
           align="center"
         >
           <template #default="scope">
@@ -123,7 +122,7 @@
         </el-table-column>
         <el-table-column
           :label="$t('inquiry.itinerary')"
-          width="200"
+          width="360"
           fixed="right"
           align="center"
         >

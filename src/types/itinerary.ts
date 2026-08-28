@@ -3,6 +3,33 @@ export type ItineraryStatus = "draft" | "ready_for_costing" | "quoted" | "archiv
 export type ItineraryItemType = "hotel" | "attraction" | "restaurant" | "vehicle" | "guide";
 export type ItineraryPriceUnit = string;
 
+export interface ItineraryQuoteSettings {
+  adultUnitPrice: number;
+}
+
+export type ItineraryQuoteLineType = "adult" | "child" | "single_supplement";
+
+export interface ItineraryQuoteLine {
+  type: ItineraryQuoteLineType;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface ItineraryQuoteCalculation {
+  hotelGuestCount: number;
+  hotelRoomCount: number;
+  baseGroupCost: number;
+  baseCostPerPerson: number;
+  childUnitPrice: number;
+  singleSupplementUnitCost: number;
+  singleSupplementTotal: number;
+  totalPrice: number;
+  profit: number;
+  actualMarginRate: number;
+  lines: ItineraryQuoteLine[];
+}
+
 export interface ItineraryResourceItem {
   id: string;
   type: ItineraryItemType;
@@ -14,9 +41,7 @@ export interface ItineraryResourceItem {
   quantity: number;
   unit: ItineraryPriceUnit;
   unitCost: number;
-  unitPrice: number | null;
   totalCost: number;
-  totalPrice: number;
   remark: string;
 }
 
@@ -45,7 +70,7 @@ export interface ItineraryRecord {
   days: number;
   adults: number;
   childrenCount: number;
-  otherGuests: number;
+  singleRoomCount: number;
   hotelLevel: string;
   roomPreference: string;
   transportPreference: string;
@@ -57,6 +82,7 @@ export interface ItineraryRecord {
   specialRequirements: string;
   inquiryCoordinatorNotes: string;
   operationsCoordinator: string;
+  quote: ItineraryQuoteSettings;
   dailyPlans: ItineraryDayRecord[];
   status: ItineraryStatus;
   creator: string;

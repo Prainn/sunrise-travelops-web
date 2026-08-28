@@ -1,9 +1,10 @@
 import type { ComputedRef, Ref } from "vue";
 import type { InquiryRecord } from "@/types/inquiry";
-import type { ItineraryDayRecord, ItineraryRecord, ItineraryResourceItem } from "@/types/itinerary";
+import type { ItineraryDayRecord, ItineraryQuoteSettings, ItineraryRecord, ItineraryResourceItem } from "@/types/itinerary";
 import { addDays, createId, formatDate, formatDateTime, generateNextCode } from "@/utils";
 import { transitionInquiry } from "../inquiry-workflow";
 import { recalculateItem } from "./pricing";
+import { calculateHotelRoomCount, createDefaultQuoteSettings } from "./quote-pricing";
 
 type EditableDayField = "departure" | "destination" | "transport" | "title" | "description" | "mealSummary" | "accommodationSummary";
 
@@ -23,9 +24,10 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   function createEmptyItinerary(): ItineraryRecord {
     return {
       id: "", inquiryId: options.inquiryId.value, code: "", title: "", destinations: "", startDate: "", endDate: "", days: 0,
-      adults: 1, childrenCount: 0, otherGuests: 0, hotelLevel: "", roomPreference: "", transportPreference: "",
+      adults: 1, childrenCount: 0, singleRoomCount: 0, hotelLevel: "", roomPreference: "", transportPreference: "",
       guideRequired: false, guideLanguage: "", pace: "", mealRequirements: "", budget: 0, specialRequirements: "",
-      inquiryCoordinatorNotes: "", operationsCoordinator: options.inquiry.value?.operationsCoordinator ?? "", dailyPlans: [], status: "draft", creator: "", createdAt: "", updatedAt: "",
+      inquiryCoordinatorNotes: "", operationsCoordinator: options.inquiry.value?.operationsCoordinator ?? "", quote: createDefaultQuoteSettings(),
+      dailyPlans: [], status: "draft", creator: "", createdAt: "", updatedAt: "",
     };
   }
 
@@ -57,9 +59,10 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       startDate: record.startDate,
       adults: record.adults,
       childrenCount: record.childrenCount,
-      otherGuests: record.otherGuests,
+      singleRoomCount: normalizeSingleRoomCount(record.singleRoomCount, record),
     });
-    syncPlanDates(plan);
+    resizeDailyPlans(plan, record.days);
+    syncHotelRoomQuantities(plan);
     return plan;
   }
 
@@ -80,8 +83,13 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
 
   function addResourceItem(dayId: string, item: ItineraryResourceItem): boolean {
     if (!options.canEditContent()) return false;
-    const day = options.selectedItinerary.value?.dailyPlans.find((record) => record.id === dayId);
-    if (!day) return false;
+    const plan = options.selectedItinerary.value;
+    const day = plan?.dailyPlans.find((record) => record.id === dayId);
+    if (!plan || !day) return false;
+    if (item.type === "hotel") {
+      item.quantity = calculateHotelRoomCount(plan);
+      recalculateItem(item);
+    }
     day.items.push(item);
     touchSelectedItinerary();
     return true;
@@ -96,18 +104,17 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   function updateItemQuantity(dayId: string, itemIndex: number, quantity: number) {
     if (!options.canEditContent()) return;
     const item = options.selectedItinerary.value?.dailyPlans.find((day) => day.id === dayId)?.items[itemIndex];
-    if (!item) return;
+    if (!item || item.type === "hotel") return;
     item.quantity = quantity;
     recalculateItem(item);
     touchSelectedItinerary();
   }
 
-  function updateItemPrice(dayId: string, itemIndex: number, price: number | null) {
+  function updateQuote(field: keyof ItineraryQuoteSettings, value: number) {
     if (!options.canEditPrice()) return;
-    const item = options.selectedItinerary.value?.dailyPlans.find((day) => day.id === dayId)?.items[itemIndex];
-    if (!item) return;
-    item.unitPrice = price;
-    recalculateItem(item);
+    const plan = options.selectedItinerary.value;
+    if (!plan) return;
+    plan.quote[field] = normalizeQuoteValue(value);
     touchSelectedItinerary();
   }
 
@@ -123,6 +130,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       creator: options.getCreator(),
       createdAt: formatDateTime(new Date()),
       updatedAt: formatDateTime(new Date()),
+      quote: { ...source.quote },
       dailyPlans: source.dailyPlans.map((day) => ({
         ...day,
         id: createId("day"),
@@ -177,6 +185,19 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     syncPlanDates(plan);
   }
 
+  function resizeDailyPlans(plan: ItineraryRecord, dayCount: number) {
+    const targetDayCount = Math.max(Math.round(dayCount), 1);
+    if (plan.dailyPlans.length > targetDayCount) plan.dailyPlans.splice(targetDayCount);
+    while (plan.dailyPlans.length < targetDayCount) {
+      const index = plan.dailyPlans.length;
+      plan.dailyPlans.push({
+        id: createId("day"), dayNumber: index + 1, date: addDays(plan.startDate, index), departure: "", destination: "",
+        transport: "", title: "", description: "", mealSummary: "", accommodationSummary: "", items: [],
+      });
+    }
+    syncPlanDates(plan);
+  }
+
   function syncPlanDates(plan: ItineraryRecord) {
     plan.dailyPlans.forEach((day, index) => {
       day.dayNumber = index + 1;
@@ -191,6 +212,24 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     if (options.selectedItinerary.value) options.selectedItinerary.value.updatedAt = formatDateTime(new Date());
   }
 
+  function syncHotelRoomQuantities(plan: ItineraryRecord) {
+    const hotelRoomCount = calculateHotelRoomCount(plan);
+    plan.dailyPlans.flatMap((day) => day.items).filter((item) => item.type === "hotel").forEach((item) => {
+      item.quantity = hotelRoomCount;
+      recalculateItem(item);
+    });
+  }
+
+  function normalizeQuoteValue(value: number) {
+    if (!Number.isFinite(value)) return 0;
+    return Math.max(value, 0);
+  }
+
+  function normalizeSingleRoomCount(value: number, plan: Pick<ItineraryRecord, "adults" | "childrenCount">) {
+    const hotelGuestCount = plan.adults + plan.childrenCount;
+    return Math.min(Math.max(Math.round(value), 0), hotelGuestCount);
+  }
+
   function generateItineraryCode() {
     const month = formatDate(new Date()).slice(0, 7).replace("-", "");
     return generateNextCode(options.itineraryStore, `ITI-${month}`);
@@ -199,6 +238,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   return {
     addDay, addResourceItem, copyItinerary, createEmptyItinerary, createItinerary, duplicateDay,
     generateItineraryCode, moveDay, removeDay, removeItem, updateDayField, updateItineraryBasics,
-    updateItemPrice, updateItemQuantity,
+    updateItemQuantity, updateQuote,
   };
 }

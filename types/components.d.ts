@@ -91,7 +91,7 @@ declare module 'vue' {
     ItineraryDayForm: typeof import('./../src/views/inquiries/itineraries/components/ItineraryDayForm.vue')['default']
     ItineraryPdfPreviewDialog: typeof import('./../src/views/inquiries/itineraries/components/ItineraryPdfPreviewDialog.vue')['default']
     ItineraryPlanDialog: typeof import('./../src/views/inquiries/itineraries/components/ItineraryPlanDialog.vue')['default']
-    ItineraryPriceSummary: typeof import('./../src/views/inquiries/itineraries/components/ItineraryPriceSummary.vue')['default']
+    ItineraryQuotePanel: typeof import('./../src/views/inquiries/itineraries/components/ItineraryQuotePanel.vue')['default']
     ItineraryResourceDialog: typeof import('./../src/views/inquiries/itineraries/components/ItineraryResourceDialog.vue')['default']
     LangSelect: typeof import('./../src/components/LangSelect/index.vue')['default']
     LayoutLogo: typeof import('./../src/layouts/components/LayoutLogo.vue')['default']
