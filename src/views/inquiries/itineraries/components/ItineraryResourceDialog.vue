@@ -78,6 +78,7 @@
             v-model="quantity"
             :min="1"
             :precision="0"
+            :disabled="type === 'hotel'"
           />
           <span class="resource-dialog__unit">
             {{ resourceUnitName(selectedOption.unit) }}
@@ -109,7 +110,7 @@ import { getResourceUnitName } from "@/utils/resource-unit";
 import { calculateItem, getResourcePriceOptions } from "../pricing";
 import type { ResourcePriceDetail, ResourcePriceOption } from "../pricing";
 
-const props = defineProps<{ modelValue: boolean; guestCount: number }>();
+const props = defineProps<{ modelValue: boolean; guestCount: number; hotelRoomCount: number }>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [item: ItineraryResourceItem] }>();
 const { t, locale } = useI18n();
 const type = ref<ItineraryItemType>("hotel");
@@ -136,7 +137,7 @@ watch(type, () => {
   city.value = "";
   selectedId.value = "";
   keyword.value = "";
-  quantity.value = type.value === "attraction" ? Math.max(props.guestCount, 1) : type.value === "hotel" ? Math.max(Math.ceil(props.guestCount / 2), 1) : 1;
+  quantity.value = type.value === "attraction" ? Math.max(props.guestCount, 1) : type.value === "hotel" ? Math.max(props.hotelRoomCount, 1) : 1;
 });
 watch(city, () => {
   selectedId.value = "";
@@ -149,7 +150,7 @@ watch(() => props.modelValue, (visible) => {
   city.value = "";
   selectedId.value = "";
   keyword.value = "";
-  quantity.value = Math.max(Math.ceil(props.guestCount / 2), 1);
+  quantity.value = Math.max(props.hotelRoomCount, 1);
 });
 
 function filterOptions(value: string) { keyword.value = value; }

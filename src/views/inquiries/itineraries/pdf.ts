@@ -5,6 +5,7 @@ import type { ItineraryRecord } from "@/types/itinerary";
 import { formatMoney, sumMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
 import { getTransportMethodNames } from "@/utils/transport-method";
+import { calculateItineraryQuote } from "./quote-pricing";
 
 const PAGE_MARGIN_MM = 10;
 const PAGE_CONTENT_WIDTH_MM = 190;
@@ -86,7 +87,8 @@ function addPdfPage(pdf: jsPDF) {
 }
 
 function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord) {
-  const totalPrice = sumMoney(itinerary.dailyPlans.flatMap((day) => day.items).map((item) => item.totalPrice));
+  const totalCost = sumMoney(itinerary.dailyPlans.flatMap((day) => day.items).map((item) => item.totalCost));
+  const quote = calculateItineraryQuote(itinerary, totalCost);
   const daySections = itinerary.dailyPlans.map((day) => `
     <article data-pdf-block style="padding:16px;border:1px solid #dcdfe6;border-radius:8px;box-sizing:border-box;">
       <h2 style="margin:0 0 8px;font-size:18px;">D${day.dayNumber} · ${escapeHtml(day.departure)} → ${escapeHtml(day.destination)}</h2>
@@ -95,12 +97,10 @@ function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord) {
       <p style="margin:0 0 12px;line-height:1.7;white-space:pre-wrap;">${escapeHtml(day.description)}</p>
       <div style="margin-bottom:12px;color:#606266;font-size:13px;">用餐：${escapeHtml(day.mealSummary)} · 住宿：${escapeHtml(day.accommodationSummary)}</div>
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
-        <thead><tr><th style="${cellStyle()}">项目</th><th style="${cellStyle()}">数量</th><th style="${cellStyle()}">价格</th><th style="${cellStyle()}">小计</th></tr></thead>
+        <thead><tr><th style="${cellStyle()}">项目</th><th style="${cellStyle()}">数量</th></tr></thead>
         <tbody>${day.items.map((item) => `<tr>
           <td style="${cellStyle()}">${escapeHtml(item.resourceName)}<br><small>${escapeHtml(item.priceName)}</small></td>
           <td style="${cellStyle()}">${item.quantity} ${escapeHtml(getResourceUnitName(item.unit))}</td>
-          <td style="${cellStyle()}">¥${formatMoney(item.unitPrice ?? 0)}</td>
-          <td style="${cellStyle()}">¥${formatMoney(item.totalPrice)}</td>
         </tr>`).join("")}</tbody>
       </table>
     </article>`).join("");
@@ -113,7 +113,7 @@ function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord) {
     </header>
     ${daySections}
     <footer data-pdf-block style="padding:18px;background:#ecf5ff;text-align:right;font-size:20px;font-weight:700;color:#2563eb;box-sizing:border-box;">
-      行程总价：¥${formatMoney(totalPrice)}
+      行程总价：¥${formatMoney(quote.totalPrice)}
     </footer>`;
 }
 

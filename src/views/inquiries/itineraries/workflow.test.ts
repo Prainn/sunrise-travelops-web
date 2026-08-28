@@ -21,14 +21,13 @@ describe("itinerary day-count workflow", () => {
     expect(getDefaultItineraryId(records, "quoted")).toBe("quoted");
   });
 
-  it("requires at least one item per day and a customer price for every item", () => {
+  it("requires at least one resource item per day", () => {
     const result = validateItineraryForPdf([
-      { dayNumber: 1, items: [{ resourceName: "酒店", unitPrice: 500 }] },
-      { dayNumber: 2, items: [{ resourceName: "门票", unitPrice: null }] },
+      { dayNumber: 1, items: [{ resourceName: "酒店" }] },
+      { dayNumber: 2, items: [{ resourceName: "门票" }] },
       { dayNumber: 3, items: [] },
     ]);
 
     expect(result.emptyDayNumbers).toEqual([3]);
-    expect(result.missingPriceItems).toEqual([{ dayNumber: 2, resourceName: "门票" }]);
   });
 });

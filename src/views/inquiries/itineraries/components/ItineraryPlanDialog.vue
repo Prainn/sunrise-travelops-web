@@ -11,7 +11,7 @@
       class="itinerary-plan-dialog__form"
       :model="form"
       :rules="rules"
-      label-width="84px"
+      label-position="top"
     >
       <el-form-item :label="$t('itinerary.code')">
         <el-input
@@ -26,15 +26,18 @@
         <el-input v-model.trim="form.title" />
       </el-form-item>
       <el-row :gutter="16">
-        <el-col :span="8">
-          <el-form-item :label="$t('itinerary.adults')">
+        <el-col :span="6">
+          <el-form-item
+            :label="$t('itinerary.adults')"
+            prop="adults"
+          >
             <el-input-number
               v-model="form.adults"
               :min="1"
             />
           </el-form-item>
         </el-col>
-        <el-col :span="8">
+        <el-col :span="6">
           <el-form-item :label="$t('itinerary.children')">
             <el-input-number
               v-model="form.childrenCount"
@@ -42,11 +45,13 @@
             />
           </el-form-item>
         </el-col>
-        <el-col :span="8">
-          <el-form-item :label="$t('itinerary.otherGuests')">
+        <el-col :span="6">
+          <el-form-item :label="$t('itinerary.singleRoomCount')">
             <el-input-number
-              v-model="form.otherGuests"
+              v-model="form.singleRoomCount"
               :min="0"
+              :max="hotelGuestCount"
+              controls-position="right"
             />
           </el-form-item>
         </el-col>
@@ -58,17 +63,12 @@
         <el-col :span="8">
           <el-form-item :label="$t('inquiry.plannedDays')">
             <el-input-number
-              :model-value="plannedDays"
-              disabled
+              v-model="form.days"
+              :min="1"
               controls-position="right"
             />
           </el-form-item>
         </el-col>
-      </el-row>
-      <el-row
-        class="itinerary-plan-dialog__date-row"
-        :gutter="16"
-      >
         <el-col :span="8">
           <el-form-item
             :label="$t('common.startDate')"
@@ -91,6 +91,14 @@
           </el-form-item>
         </el-col>
       </el-row>
+      <el-alert
+        v-if="hasDayCountMismatch"
+        class="itinerary-plan-dialog__day-hint"
+        :title="$t('itinerary.plannedDaysMismatchHint', { inquiryDays: plannedDays })"
+        type="warning"
+        show-icon
+        :closable="false"
+      />
       <el-form-item
         :label="$t('itinerary.operationsCoordinator')"
         prop="operationsCoordinator"
@@ -132,36 +140,46 @@ const props = defineProps<{
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [record: ItineraryRecord] }>();
 const { t } = useI18n();
 const formRef = ref<FormInstance>();
-const form = reactive<ItineraryRecord>({ ...props.record, dailyPlans: [] });
+const form = reactive<ItineraryRecord>({ ...props.record, quote: { ...props.record.quote }, dailyPlans: [] });
 const rules = computed<FormRules>(() => ({
   title: [{ required: true, message: t("itinerary.titleRequired"), trigger: "blur" }],
   startDate: [{ required: true, message: t("itinerary.startDateRequired"), trigger: "change" }],
+  adults: [{ required: true, message: t("itinerary.adultsRequired"), trigger: "blur" }],
   operationsCoordinator: [{ required: true, message: t("itinerary.coordinatorRequired"), trigger: "change" }],
 }));
 
-const formDayCount = computed(() => props.isEditing
-  ? props.record.dailyPlans.length || props.record.days
-  : props.plannedDays);
+const hotelGuestCount = computed(() => form.adults + form.childrenCount);
+const hasDayCountMismatch = computed(() => form.days !== props.plannedDays);
 
 watch(() => [props.modelValue, props.record] as const, ([visible, record]) => {
   if (!visible) return;
-  Object.assign(form, record, { days: formDayCount.value, dailyPlans: [] });
+  Object.assign(form, record, {
+    days: props.isEditing ? record.dailyPlans.length || record.days : props.plannedDays,
+    quote: { ...record.quote },
+    dailyPlans: [],
+  });
   syncEndDate();
 }, { deep: true });
 
-watch(() => [form.startDate, formDayCount.value], syncEndDate);
+watch(() => [form.startDate, form.days], syncEndDate);
+watch(hotelGuestCount, (count) => {
+  if (form.singleRoomCount > count) form.singleRoomCount = count;
+});
 
 async function submitForm() {
   if (!await formRef.value?.validate().catch(() => false)) return;
-  emit("submit", { ...form, days: formDayCount.value, dailyPlans: [] });
+  emit("submit", { ...form, quote: { ...form.quote }, dailyPlans: [] });
 }
 
 function syncEndDate() {
-  form.days = formDayCount.value;
-  form.endDate = form.startDate && formDayCount.value ? addDays(form.startDate, formDayCount.value - 1) : "";
+  form.endDate = form.startDate && form.days ? addDays(form.startDate, form.days - 1) : "";
 }
 </script>
 
 <style scoped lang="scss">
-.itinerary-plan-dialog__date-row :deep(.el-form-item__label) { white-space: nowrap; }
+.itinerary-plan-dialog__form :deep(.el-form-item__label) { white-space: nowrap; }
+
+.itinerary-plan-dialog__form :deep(.el-input-number) { width: 100%; }
+
+.itinerary-plan-dialog__day-hint { margin-bottom: 18px; }
 </style>

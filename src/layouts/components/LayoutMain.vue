@@ -18,10 +18,6 @@
         </transition>
       </template>
     </router-view>
-
-    <el-backtop target=".layout-content">
-      <div class="i-svg:backtop w-6 h-6" />
-    </el-backtop>
   </section>
 </template>
 

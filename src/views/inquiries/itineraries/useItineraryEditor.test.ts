@@ -49,7 +49,7 @@ describe("itinerary editor", () => {
     original?.dailyPlans[0].items.push({
       id: "item-original", type: "hotel", resourceId: "hotel-1", resourcePriceId: "price-1", resourceName: "Hotel",
       priceName: "Room", providerName: "直营报价", quantity: 1, unit: "roomNight", unitCost: 100,
-      unitPrice: 120, totalCost: 100, totalPrice: 120, remark: "",
+      totalCost: 100, remark: "",
     });
 
     const copied = editor.copyItinerary("副本");
@@ -68,7 +68,7 @@ describe("itinerary editor", () => {
     created?.dailyPlans[0].items.push({
       id: "item-original", type: "hotel", resourceId: "hotel-1", resourcePriceId: "price-1", resourceName: "Hotel",
       priceName: "Room", providerName: "直营报价", quantity: 1, unit: "roomNight", unitCost: 100,
-      unitPrice: 120, totalCost: 100, totalPrice: 120, remark: "",
+      totalCost: 100, remark: "",
     });
     const originalDayIds = created?.dailyPlans.map((day) => day.id);
 
@@ -87,5 +87,26 @@ describe("itinerary editor", () => {
     expect(updated?.dailyPlans.map((day) => day.date)).toEqual(["2026-11-10", "2026-11-11"]);
     expect(updated?.dailyPlans[0].items[0].id).toBe("item-original");
     expect(updated?.endDate).toBe("2026-11-11");
+  });
+
+  it("keeps hotel cost quantities in sync with single rooms and children", () => {
+    const { editor } = createEditor();
+    const record = { ...editor.createEmptyItinerary(), code: "ITI-001", startDate: "2026-10-01", days: 1, adults: 4 };
+    const created = editor.createItinerary(record);
+    expect(created).not.toBeNull();
+
+    editor.updateItineraryBasics({ ...created!, singleRoomCount: 2 });
+    editor.addResourceItem(created!.dailyPlans[0].id, {
+      id: "hotel", type: "hotel", resourceId: "hotel-1", resourcePriceId: "price-1", resourceName: "Hotel",
+      priceName: "Room", providerName: "直营报价", quantity: 1, unit: "roomNight", unitCost: 100, totalCost: 100, remark: "",
+    });
+
+    expect(created?.dailyPlans[0].items[0].quantity).toBe(3);
+    expect(created?.dailyPlans[0].items[0].totalCost).toBe(300);
+
+    editor.updateItineraryBasics({ ...created!, childrenCount: 1 });
+
+    expect(created?.dailyPlans[0].items[0].quantity).toBe(4);
+    expect(created?.dailyPlans[0].items[0].totalCost).toBe(400);
   });
 });

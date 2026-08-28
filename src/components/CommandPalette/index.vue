@@ -164,7 +164,7 @@ const handleInputKeydown: (evt: KeyboardEvent | Event) => void = (evt) => {
   gap: 8px;
   align-items: center;
   justify-content: space-between;
-  width: 150px;
+  width: 200px;
   height: 28px;
   padding: 0 8px 0 10px;
   user-select: none;

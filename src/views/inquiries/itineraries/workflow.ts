@@ -22,19 +22,15 @@ export function getDayCountMismatch(actualDays: number, plannedDays: number): Da
 
 export interface PdfValidationDay {
   dayNumber: number;
-  items: Array<{ resourceName: string; unitPrice: number | null }>;
+  items: unknown[];
 }
 
 export interface PdfValidationResult {
   emptyDayNumbers: number[];
-  missingPriceItems: Array<{ dayNumber: number; resourceName: string }>;
 }
 
 export function validateItineraryForPdf(days: PdfValidationDay[]): PdfValidationResult {
   return {
     emptyDayNumbers: days.filter((day) => day.items.length === 0).map((day) => day.dayNumber),
-    missingPriceItems: days.flatMap((day) => day.items
-      .filter((item) => item.unitPrice === null)
-      .map((item) => ({ dayNumber: day.dayNumber, resourceName: item.resourceName }))),
   };
 }

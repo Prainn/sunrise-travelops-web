@@ -218,14 +218,11 @@ export function calculateItem(option: ResourcePriceOption, quantity: number): It
     quantity,
     unit: option.unit,
     unitCost: option.unitCost,
-    unitPrice: null,
     totalCost: multiplyMoney(option.unitCost, quantity),
-    totalPrice: 0,
     remark: "",
   };
 }
 
 export function recalculateItem(item: ItineraryResourceItem) {
   item.totalCost = multiplyMoney(item.unitCost, item.quantity);
-  item.totalPrice = item.unitPrice === null ? 0 : multiplyMoney(item.unitPrice, item.quantity);
 }
