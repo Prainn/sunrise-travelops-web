@@ -18,9 +18,8 @@
         <strong>¥{{ formatMoney(calculation.baseCostPerPerson) }}</strong>
       </div>
       <div class="quote-panel__line">
-        <span>{{ $t("itinerary.quoteLineTypes.single_supplement") }} × {{ calculation.lines[2]?.quantity ?? 0 }}</span>
-        <span>¥{{ formatMoney(calculation.singleSupplementUnitCost) }}</span>
-        <strong>¥{{ formatMoney(calculation.singleSupplementTotal) }}</strong>
+        <span>{{ $t("itinerary.quoteLineTypes.single_supplement") }}</span>
+        <strong>¥{{ formatMoney(calculation.singleSupplementUnitCost) }}</strong>
       </div>
       <div class="quote-panel__summary-row quote-panel__summary-row--subtotal">
         <span>{{ $t("itinerary.totalCost") }}</span>
@@ -125,7 +124,7 @@ function updateQuote(field: QuoteField, value: number | undefined) {
 .quote-panel__price-editor { display: flex; align-items: center; gap: 8px; color: var(--el-text-color-regular); }
 .quote-panel__price-editor :deep(.el-input-number) { width: 100%; }
 .quote-panel__price-editor :deep(.el-input__inner) { font-weight: 600; }
-.quote-panel__line { display: grid; grid-template-columns: minmax(0, 1fr) 130px 130px; align-items: center; gap: 12px; min-height: 38px; padding: 6px 0; color: var(--el-text-color-regular); font-size: 13px; text-align: right; }
+.quote-panel__line { display: grid; grid-template-columns: minmax(0, 1fr) 130px; align-items: center; gap: 12px; min-height: 38px; padding: 6px 0; color: var(--el-text-color-regular); font-size: 13px; text-align: right; }
 .quote-panel__line span:first-child { overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
 .quote-panel__line strong { color: var(--el-text-color-primary); font-variant-numeric: tabular-nums; }
 .quote-panel__summary-row--total { min-height: 50px; margin-top: 10px; padding-top: 10px; border-top: 2px solid var(--el-border-color); font-size: 16px; }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { attractions, guides, hotels, itineraries, restaurants, tourismResources } from "@/data/data";
-import { getResourcePriceOptions } from "./pricing";
+import { calculateItem, getResourcePriceOptions } from "./pricing";
 
 describe("resource price source labels", () => {
   it("uses one label for every direct quote", () => {
@@ -38,5 +38,16 @@ describe("resource price source labels", () => {
     } finally {
       supplier.name = originalName;
     }
+  });
+
+  it("uses a manually entered vehicle fee instead of the reference resource cost", () => {
+    const option = getResourcePriceOptions().find((item) => item.type === "vehicle");
+    expect(option).toBeDefined();
+
+    const item = calculateItem(option!, 2, 1250.5);
+
+    expect(item.referenceUnitCost).toBe(option?.unitCost);
+    expect(item.unitCost).toBe(1250.5);
+    expect(item.totalCost).toBe(2501);
   });
 });

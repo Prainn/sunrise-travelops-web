@@ -26,7 +26,7 @@
         <el-input v-model.trim="form.title" />
       </el-form-item>
       <el-row :gutter="16">
-        <el-col :span="6">
+        <el-col :span="12">
           <el-form-item
             :label="$t('itinerary.adults')"
             prop="adults"
@@ -37,21 +37,11 @@
             />
           </el-form-item>
         </el-col>
-        <el-col :span="6">
+        <el-col :span="12">
           <el-form-item :label="$t('itinerary.children')">
             <el-input-number
               v-model="form.childrenCount"
               :min="0"
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="6">
-          <el-form-item :label="$t('itinerary.singleRoomCount')">
-            <el-input-number
-              v-model="form.singleRoomCount"
-              :min="0"
-              :max="hotelGuestCount"
-              controls-position="right"
             />
           </el-form-item>
         </el-col>
@@ -148,7 +138,6 @@ const rules = computed<FormRules>(() => ({
   operationsCoordinator: [{ required: true, message: t("itinerary.coordinatorRequired"), trigger: "change" }],
 }));
 
-const hotelGuestCount = computed(() => form.adults + form.childrenCount);
 const hasDayCountMismatch = computed(() => form.days !== props.plannedDays);
 
 watch(() => [props.modelValue, props.record] as const, ([visible, record]) => {
@@ -162,9 +151,6 @@ watch(() => [props.modelValue, props.record] as const, ([visible, record]) => {
 }, { deep: true });
 
 watch(() => [form.startDate, form.days], syncEndDate);
-watch(hotelGuestCount, (count) => {
-  if (form.singleRoomCount > count) form.singleRoomCount = count;
-});
 
 async function submitForm() {
   if (!await formRef.value?.validate().catch(() => false)) return;

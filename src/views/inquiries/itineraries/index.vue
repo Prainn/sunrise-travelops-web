@@ -50,8 +50,7 @@
               <h2>{{ selectedItinerary.title }}</h2>
               <p>
                 {{ selectedItinerary.startDate }} — {{ selectedItinerary.endDate }} ·
-                {{ $t("itinerary.guestCount") }} {{ guestCount }} ·
-                {{ $t("itinerary.singleRoomCount") }} {{ selectedItinerary.singleRoomCount }}
+                {{ $t("itinerary.guestCount") }} {{ guestCount }}
               </p>
             </div>
           </div>
@@ -101,6 +100,7 @@
             @add-item="openResourceDialog(day.id)"
             @remove-item="removeItem(day.id, $event)"
             @update-item-quantity="(itemIndex, quantity) => updateItemQuantity(day.id, itemIndex, quantity)"
+            @update-item-unit-cost="(itemIndex, unitCost) => updateItemUnitCost(day.id, itemIndex, unitCost)"
             @duplicate="duplicateDay(index)"
             @remove="removeDay(index)"
             @move="moveDay(index, $event)"
@@ -253,7 +253,7 @@ const {
   isDraft, itemCount, itineraryForm, moveDay, openCreateDialog, openResourceDialog, priceEditable, quoteCalculation,
   openEditDialog, pdfPreviewUrl, removeDay, removeItem, router, rows, saveItinerary, selectedItinerary, selectedItineraryId,
   submitItineraryPlan, totalCost,
-  updateDayField, updateItemQuantity, updateQuote,
+  updateDayField, updateItemQuantity, updateItemUnitCost, updateQuote,
 } = useItineraryWorkspace({
   confirm: confirmAction,
   error: (key) => ElMessage.error(t(key)),

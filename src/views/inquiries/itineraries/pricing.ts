@@ -206,7 +206,11 @@ export function getResourcePriceOptions(): ResourcePriceOption[] {
   ];
 }
 
-export function calculateItem(option: ResourcePriceOption, quantity: number): ItineraryResourceItem {
+export function calculateItem(
+  option: ResourcePriceOption,
+  quantity: number,
+  unitCost = option.unitCost
+): ItineraryResourceItem {
   return {
     id: createId("item"),
     type: option.type,
@@ -217,8 +221,9 @@ export function calculateItem(option: ResourcePriceOption, quantity: number): It
     providerName: option.providerName,
     quantity,
     unit: option.unit,
-    unitCost: option.unitCost,
-    totalCost: multiplyMoney(option.unitCost, quantity),
+    referenceUnitCost: option.type === "vehicle" ? option.unitCost : undefined,
+    unitCost,
+    totalCost: multiplyMoney(unitCost, quantity),
     remark: "",
   };
 }

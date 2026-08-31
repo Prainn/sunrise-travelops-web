@@ -185,8 +185,6 @@
       "collaboration": "Internal Collaboration",
       "preferences": "Guests and Preferences"
     },
-    "singleRoomCount": "Single Guests",
-    "singleSupplementTotal": "Single Supplement Cost",
     "specialRequirements": "Special Requirements",
     "startDateRequired": "Select a start date",
     "adultsRequired": "Enter the number of adults",
@@ -205,7 +203,9 @@
     "transportPreference": "Transport Preference",
     "travelDates": "Travel Dates",
     "unitCost": "Unit Cost",
-    "unitPrice": "Unit Price"
+    "unitPrice": "Unit Price",
+    "vehicleFee": "Vehicle Fee",
+    "vehicleReferenceCost": "Vehicle Cost"
   },
   "businessCategory": {
     "applicableResources": "Applicable Resources",

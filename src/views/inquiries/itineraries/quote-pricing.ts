@@ -12,24 +12,21 @@ export function createDefaultQuoteSettings(): ItineraryQuoteSettings {
   return { ...DEFAULT_QUOTE_SETTINGS };
 }
 
-export function calculateHotelRoomCount(itinerary: Pick<ItineraryRecord, "adults" | "childrenCount" | "singleRoomCount">) {
+export function calculateHotelRoomCount(itinerary: Pick<ItineraryRecord, "adults" | "childrenCount">) {
   const hotelGuestCount = itinerary.adults + itinerary.childrenCount;
-  const singleRoomCount = calculateSingleRoomCount(itinerary, hotelGuestCount);
-  return singleRoomCount + Math.ceil((hotelGuestCount - singleRoomCount) / 2);
+  return Math.ceil(hotelGuestCount / 2);
 }
 
 export function calculateItineraryQuote(
-  itinerary: Pick<ItineraryRecord, "adults" | "childrenCount" | "singleRoomCount" | "quote" | "dailyPlans">,
+  itinerary: Pick<ItineraryRecord, "adults" | "childrenCount" | "quote" | "dailyPlans">,
   totalCost: number
 ): ItineraryQuoteCalculation {
   const hotelGuestCount = itinerary.adults + itinerary.childrenCount;
-  const singleRoomCount = calculateSingleRoomCount(itinerary, hotelGuestCount);
   const singleSupplementUnitCost = calculateSingleSupplementUnitCost(itinerary);
-  const singleSupplementTotal = multiplyMoney(singleSupplementUnitCost, singleRoomCount);
-  const baseGroupCost = roundMoney(Math.max(totalCost - singleSupplementTotal, 0));
+  const baseGroupCost = roundMoney(totalCost);
   const adultEquivalentCount = itinerary.adults + itinerary.childrenCount * CHILD_RATE / 100;
   const baseCostPerPerson = adultEquivalentCount ? roundMoney(baseGroupCost / adultEquivalentCount) : 0;
-  const suggestedAdultUnitPrice = calculateSuggestedAdultUnitPrice(totalCost, singleSupplementTotal, adultEquivalentCount);
+  const suggestedAdultUnitPrice = calculateSuggestedAdultUnitPrice(totalCost, adultEquivalentCount);
   const adultUnitPrice = itinerary.quote.adultUnitPrice === null
     ? suggestedAdultUnitPrice
     : Math.max(roundMoney(itinerary.quote.adultUnitPrice), 0);
@@ -37,7 +34,6 @@ export function calculateItineraryQuote(
   const lines: ItineraryQuoteLine[] = [
     createQuoteLine("adult", itinerary.adults, adultUnitPrice),
     createQuoteLine("child", itinerary.childrenCount, childUnitPrice),
-    createQuoteLine("single_supplement", singleRoomCount, singleSupplementUnitCost),
   ];
   const totalPrice = sumMoney(lines.map((line) => line.totalPrice));
   const profit = roundMoney(totalPrice - totalCost);
@@ -50,7 +46,6 @@ export function calculateItineraryQuote(
     adultUnitPrice,
     childUnitPrice,
     singleSupplementUnitCost,
-    singleSupplementTotal,
     totalPrice,
     profit,
     actualMarginRate: totalPrice ? profit / totalPrice * 100 : 0,
@@ -60,12 +55,11 @@ export function calculateItineraryQuote(
 
 function calculateSuggestedAdultUnitPrice(
   totalCost: number,
-  singleSupplementTotal: number,
   adultEquivalentCount: number
 ) {
   if (!adultEquivalentCount) return 0;
   const targetTotalPrice = totalCost / (1 - DEFAULT_QUOTE_PROFIT_MARGIN_RATE / 100);
-  return Math.max(roundMoney((targetTotalPrice - singleSupplementTotal) / adultEquivalentCount), 0);
+  return Math.max(roundMoney(targetTotalPrice / adultEquivalentCount), 0);
 }
 
 export function calculateSingleSupplementUnitCost(
@@ -80,11 +74,4 @@ export function calculateSingleSupplementUnitCost(
 
 function createQuoteLine(type: ItineraryQuoteLine["type"], quantity: number, unitPrice: number): ItineraryQuoteLine {
   return { type, quantity, unitPrice, totalPrice: multiplyMoney(unitPrice, quantity) };
-}
-
-function calculateSingleRoomCount(
-  itinerary: Pick<ItineraryRecord, "singleRoomCount">,
-  hotelGuestCount: number
-) {
-  return Math.min(Math.max(Math.round(itinerary.singleRoomCount), 0), hotelGuestCount);
 }

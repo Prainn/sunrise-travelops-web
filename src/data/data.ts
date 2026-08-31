@@ -367,7 +367,6 @@ const completeItineraryTemplate: ItineraryRecord = {
     days: 7,
     adults: 10,
     childrenCount: 0,
-    singleRoomCount: 2,
     hotelLevel: "五星",
     roomPreference: "4 间双床房、2 间单人大床房，尽量安排同楼层",
     transportPreference: "城市间动车衔接，目的地使用 19 座旅游车",

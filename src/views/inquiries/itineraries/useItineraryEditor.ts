@@ -6,7 +6,7 @@ import { transitionInquiry } from "../inquiry-workflow";
 import { recalculateItem } from "./pricing";
 import { calculateHotelRoomCount, createDefaultQuoteSettings } from "./quote-pricing";
 
-type EditableDayField = "departure" | "destination" | "transport" | "title" | "description" | "mealSummary" | "accommodationSummary";
+type EditableDayField = "departure" | "destination" | "transport";
 
 interface ItineraryEditorOptions {
   inquiry: ComputedRef<InquiryRecord | undefined>;
@@ -24,7 +24,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   function createEmptyItinerary(): ItineraryRecord {
     return {
       id: "", inquiryId: options.inquiryId.value, code: "", title: "", destinations: "", startDate: "", endDate: "", days: 0,
-      adults: 1, childrenCount: 0, singleRoomCount: 0, hotelLevel: "", roomPreference: "", transportPreference: "",
+      adults: 1, childrenCount: 0, hotelLevel: "", roomPreference: "", transportPreference: "",
       guideRequired: false, guideLanguage: "", pace: "", mealRequirements: "", budget: 0, specialRequirements: "",
       inquiryCoordinatorNotes: "", operationsCoordinator: options.inquiry.value?.operationsCoordinator ?? "", quote: createDefaultQuoteSettings(),
       dailyPlans: [], status: "draft", quoteGeneratedAt: "", creator: "", createdAt: "", updatedAt: "",
@@ -59,7 +59,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       startDate: record.startDate,
       adults: record.adults,
       childrenCount: record.childrenCount,
-      singleRoomCount: normalizeSingleRoomCount(record.singleRoomCount, record),
     });
     resizeDailyPlans(plan, record.days);
     syncHotelRoomQuantities(plan);
@@ -69,7 +68,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   function createDailyPlans(startDate: string, dayCount: number): ItineraryDayRecord[] {
     return Array.from({ length: dayCount }, (_, index) => ({
       id: createId("day"), dayNumber: index + 1, date: addDays(startDate, index), departure: "", destination: "",
-      transport: "", title: "", description: "", mealSummary: "", accommodationSummary: "", items: [],
+      transport: "", items: [],
     }));
   }
 
@@ -106,6 +105,15 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     const item = options.selectedItinerary.value?.dailyPlans.find((day) => day.id === dayId)?.items[itemIndex];
     if (!item || item.type === "hotel") return;
     item.quantity = quantity;
+    recalculateItem(item);
+    touchSelectedItinerary();
+  }
+
+  function updateItemUnitCost(dayId: string, itemIndex: number, unitCost: number) {
+    if (!options.canEditContent()) return;
+    const item = options.selectedItinerary.value?.dailyPlans.find((day) => day.id === dayId)?.items[itemIndex];
+    if (!item || item.type !== "vehicle") return;
+    item.unitCost = normalizeQuoteValue(unitCost);
     recalculateItem(item);
     touchSelectedItinerary();
   }
@@ -150,7 +158,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     if (!plan) return;
     plan.dailyPlans.push({
       id: createId("day"), dayNumber: plan.dailyPlans.length + 1, date: addDays(plan.startDate, plan.dailyPlans.length),
-      departure: "", destination: "", transport: "", title: "", description: "", mealSummary: "", accommodationSummary: "", items: [],
+      departure: "", destination: "", transport: "", items: [],
     });
     syncPlanDates(plan);
   }
@@ -193,7 +201,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       const index = plan.dailyPlans.length;
       plan.dailyPlans.push({
         id: createId("day"), dayNumber: index + 1, date: addDays(plan.startDate, index), departure: "", destination: "",
-        transport: "", title: "", description: "", mealSummary: "", accommodationSummary: "", items: [],
+        transport: "", items: [],
       });
     }
     syncPlanDates(plan);
@@ -226,11 +234,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     return Math.max(value, 0);
   }
 
-  function normalizeSingleRoomCount(value: number, plan: Pick<ItineraryRecord, "adults" | "childrenCount">) {
-    const hotelGuestCount = plan.adults + plan.childrenCount;
-    return Math.min(Math.max(Math.round(value), 0), hotelGuestCount);
-  }
-
   function generateItineraryCode() {
     const month = formatDate(new Date()).slice(0, 7).replace("-", "");
     return generateNextCode(options.itineraryStore, `ITI-${month}`);
@@ -239,6 +242,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   return {
     addDay, addResourceItem, copyItinerary, createEmptyItinerary, createItinerary, duplicateDay,
     generateItineraryCode, moveDay, removeDay, removeItem, updateDayField, updateItineraryBasics,
-    updateItemQuantity, updateQuote,
+    updateItemQuantity, updateItemUnitCost, updateQuote,
   };
 }

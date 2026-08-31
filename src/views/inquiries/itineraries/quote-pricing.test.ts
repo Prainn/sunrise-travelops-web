@@ -6,7 +6,6 @@ function createPricingInput(overrides: Partial<ItineraryRecord> = {}) {
   return {
     adults: 4,
     childrenCount: 0,
-    singleRoomCount: 0,
     quote: createDefaultQuoteSettings(),
     dailyPlans: [],
     ...overrides,
@@ -26,10 +25,8 @@ function createHotelDay(id: string, unitCost: number, roomCount = 3): ItineraryD
 }
 
 describe("itinerary quote pricing", () => {
-  it("calculates three rooms for four guests when two guests stay alone", () => {
-    const itinerary = createPricingInput({ singleRoomCount: 2 });
-
-    expect(calculateHotelRoomCount(itinerary)).toBe(3);
+  it("calculates rooms using double occupancy without collecting a single guest count", () => {
+    expect(calculateHotelRoomCount(createPricingInput())).toBe(2);
   });
 
   it("includes children in room count", () => {
@@ -49,7 +46,6 @@ describe("itinerary quote pricing", () => {
     expect(result.lines).toEqual([
       { type: "adult", quantity: 4, unitPrice: 1000, totalPrice: 4000 },
       { type: "child", quantity: 1, unitPrice: 700, totalPrice: 700 },
-      { type: "single_supplement", quantity: 0, unitPrice: 0, totalPrice: 0 },
     ]);
     expect(result.totalPrice).toBe(4700);
   });
@@ -69,34 +65,31 @@ describe("itinerary quote pricing", () => {
     expect(calculateSingleSupplementUnitCost(itinerary)).toBe(2070);
   });
 
-  it("matches the 3678 base cost, 6864 quote, and two 2070 supplements scenario", () => {
+  it("shows the single supplement without adding it to the group quote", () => {
     const itinerary = createPricingInput({
-      singleRoomCount: 2,
       quote: { adultUnitPrice: 6864 },
       dailyPlans: [createHotelDay("lijiang", 1980), createHotelDay("shangrila-1", 1080), createHotelDay("shangrila-2", 1080)],
     });
 
     const result = calculateItineraryQuote(itinerary, 18_852);
 
-    expect(result.hotelRoomCount).toBe(3);
-    expect(result.baseGroupCost).toBe(14_712);
-    expect(result.baseCostPerPerson).toBe(3678);
+    expect(result.hotelRoomCount).toBe(2);
+    expect(result.baseGroupCost).toBe(18_852);
+    expect(result.baseCostPerPerson).toBe(4713);
     expect(result.singleSupplementUnitCost).toBe(2070);
-    expect(result.singleSupplementTotal).toBe(4140);
     expect(result.lines[0]).toEqual({ type: "adult", quantity: 4, unitPrice: 6864, totalPrice: 27_456 });
-    expect(result.lines[2]).toEqual({ type: "single_supplement", quantity: 2, unitPrice: 2070, totalPrice: 4140 });
-    expect(result.totalPrice).toBe(31_596);
+    expect(result.totalPrice).toBe(27_456);
   });
 
-  it("keeps the suggested total margin at 10 percent when single supplements exist", () => {
+  it("keeps the suggested total margin at 10 percent while exposing the single supplement separately", () => {
     const itinerary = createPricingInput({
-      singleRoomCount: 2,
       dailyPlans: [createHotelDay("lijiang", 1980), createHotelDay("shangrila-1", 1080), createHotelDay("shangrila-2", 1080)],
     });
 
     const result = calculateItineraryQuote(itinerary, 18_852);
 
-    expect(result.adultUnitPrice).toBe(4201.67);
+    expect(result.adultUnitPrice).toBe(5236.67);
+    expect(result.singleSupplementUnitCost).toBe(2070);
     expect(result.actualMarginRate).toBeCloseTo(10, 1);
   });
 });

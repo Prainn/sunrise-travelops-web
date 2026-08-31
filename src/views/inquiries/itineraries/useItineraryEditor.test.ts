@@ -89,24 +89,40 @@ describe("itinerary editor", () => {
     expect(updated?.endDate).toBe("2026-11-11");
   });
 
-  it("keeps hotel cost quantities in sync with single rooms and children", () => {
+  it("keeps hotel cost quantities in sync with the guest count", () => {
     const { editor } = createEditor();
     const record = { ...editor.createEmptyItinerary(), code: "ITI-001", startDate: "2026-10-01", days: 1, adults: 4 };
     const created = editor.createItinerary(record);
     expect(created).not.toBeNull();
 
-    editor.updateItineraryBasics({ ...created!, singleRoomCount: 2 });
     editor.addResourceItem(created!.dailyPlans[0].id, {
       id: "hotel", type: "hotel", resourceId: "hotel-1", resourcePriceId: "price-1", resourceName: "Hotel",
       priceName: "Room", providerName: "直营报价", quantity: 1, unit: "roomNight", unitCost: 100, totalCost: 100, remark: "",
     });
 
-    expect(created?.dailyPlans[0].items[0].quantity).toBe(3);
-    expect(created?.dailyPlans[0].items[0].totalCost).toBe(300);
+    expect(created?.dailyPlans[0].items[0].quantity).toBe(2);
+    expect(created?.dailyPlans[0].items[0].totalCost).toBe(200);
 
     editor.updateItineraryBasics({ ...created!, childrenCount: 1 });
 
-    expect(created?.dailyPlans[0].items[0].quantity).toBe(4);
-    expect(created?.dailyPlans[0].items[0].totalCost).toBe(400);
+    expect(created?.dailyPlans[0].items[0].quantity).toBe(3);
+    expect(created?.dailyPlans[0].items[0].totalCost).toBe(300);
+  });
+
+  it("allows a vehicle fee to override the selected resource cost", () => {
+    const { editor } = createEditor();
+    const record = { ...editor.createEmptyItinerary(), code: "ITI-001", startDate: "2026-10-01", days: 1 };
+    const created = editor.createItinerary(record);
+    expect(created).not.toBeNull();
+    editor.addResourceItem(created!.dailyPlans[0].id, {
+      id: "vehicle", type: "vehicle", resourceId: "vehicle-1", resourcePriceId: "vehicle-price-1", resourceName: "Coach",
+      priceName: "Daily Cost", providerName: "直营报价", quantity: 2, unit: "vehicleDay", unitCost: 100,
+      totalCost: 200, remark: "",
+    });
+
+    editor.updateItemUnitCost(created!.dailyPlans[0].id, 0, 125.5);
+
+    expect(created?.dailyPlans[0].items[0].unitCost).toBe(125.5);
+    expect(created?.dailyPlans[0].items[0].totalCost).toBe(251);
   });
 });

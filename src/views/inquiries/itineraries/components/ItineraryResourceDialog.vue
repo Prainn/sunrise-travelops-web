@@ -71,6 +71,28 @@
           </el-descriptions-item>
         </el-descriptions>
         <el-form-item
+          v-if="type === 'vehicle'"
+          class="resource-dialog__reference-cost"
+          :label="$t('itinerary.vehicleReferenceCost')"
+        >
+          <el-input
+            :model-value="`¥${formatMoney(selectedOption.unitCost)}`"
+            disabled
+          />
+        </el-form-item>
+        <el-form-item
+          v-if="type === 'vehicle'"
+          class="resource-dialog__vehicle-fee"
+          :label="$t('itinerary.vehicleFee')"
+        >
+          <el-input-number
+            v-model="vehicleFee"
+            :min="0"
+            :precision="2"
+            controls-position="right"
+          />
+        </el-form-item>
+        <el-form-item
           class="resource-dialog__quantity"
           :label="$t('itinerary.quantity')"
         >
@@ -118,6 +140,7 @@ const city = ref("");
 const selectedId = ref("");
 const keyword = ref("");
 const quantity = ref(1);
+const vehicleFee = ref(0);
 const resourcePriceOptions = ref<ResourcePriceOption[]>([]);
 const typeOptions = computed(() => (["hotel", "attraction", "restaurant", "vehicle", "guide"] as ItineraryItemType[])
   .map((value) => ({ label: t(`itinerary.resourceTypes.${value}`), value })));
@@ -143,6 +166,9 @@ watch(city, () => {
   selectedId.value = "";
   keyword.value = "";
 });
+watch(selectedOption, (option) => {
+  vehicleFee.value = option?.type === "vehicle" ? option.unitCost : 0;
+});
 watch(() => props.modelValue, (visible) => {
   if (!visible) return;
   resourcePriceOptions.value = getResourcePriceOptions();
@@ -151,6 +177,7 @@ watch(() => props.modelValue, (visible) => {
   selectedId.value = "";
   keyword.value = "";
   quantity.value = Math.max(props.hotelRoomCount, 1);
+  vehicleFee.value = 0;
 });
 
 function filterOptions(value: string) { keyword.value = value; }
@@ -163,7 +190,8 @@ function formatDetail(detail: ResourcePriceDetail) {
 }
 function submit() {
   if (!selectedOption.value) return;
-  emit("submit", calculateItem(selectedOption.value, quantity.value));
+  const unitCost = selectedOption.value.type === "vehicle" ? vehicleFee.value : selectedOption.value.unitCost;
+  emit("submit", calculateItem(selectedOption.value, quantity.value, unitCost));
   emit("update:modelValue", false);
 }
 </script>
@@ -175,6 +203,8 @@ function submit() {
 .resource-dialog__details { max-height: 320px; overflow-y: auto; }
 .resource-dialog__details :deep(.el-descriptions__label) { width: 140px; }
 .resource-dialog__details :deep(.el-descriptions__content) { white-space: normal; word-break: break-word; }
+.resource-dialog__reference-cost { margin-top: 18px; }
+.resource-dialog__vehicle-fee :deep(.el-input-number) { width: 100%; }
 .resource-dialog__quantity { margin-top: 18px; }
 .resource-dialog__unit { margin-left: 8px; color: var(--el-text-color-secondary); }
 </style>

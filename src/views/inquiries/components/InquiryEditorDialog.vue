@@ -128,7 +128,10 @@
             :label="$t('inquiry.owner')"
             prop="owner"
           >
-            <el-select v-model="form.owner">
+            <el-select
+              v-model="form.owner"
+              clearable
+            >
               <el-option
                 v-for="option in ownerOptions"
                 :key="option"
@@ -261,7 +264,7 @@ const rules = computed<FormRules>(() => ({
   agencyId: [{ required: true, message: t("inquiry.agencyRequired"), trigger: "change" }],
   contactName: [{ required: true, message: t("inquiry.contactNameRequired"), trigger: "blur" }],
   sourceChannel: [{ required: true, message: t("inquiry.sourceChannelRequired"), trigger: "change" }],
-  owner: [{ required: true, message: t("inquiry.ownerRequired"), trigger: "change" }],
+  owner: [{ required: props.isEditing, message: t("inquiry.ownerRequired"), trigger: "change" }],
   operationsCoordinator: [{ required: true, message: t("inquiry.operationsCoordinatorRequired"), trigger: "change" }],
   plannedDays: [{ required: true, message: t("inquiry.plannedDaysRequired"), trigger: "change" }],
   originalMessage: [{ required: true, message: t("inquiry.originalMessageRequired"), trigger: "blur" }],

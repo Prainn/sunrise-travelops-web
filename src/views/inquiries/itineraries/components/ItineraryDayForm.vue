@@ -38,46 +38,6 @@
         />
       </el-select>
     </el-form-item>
-    <el-form-item
-      class="day-form__full"
-      :label="$t('itinerary.dayTitle')"
-    >
-      <el-input
-        :model-value="day.title"
-        :disabled="!editable"
-        :placeholder="$t('itinerary.dayTitle')"
-        @update:model-value="updateField('title', $event)"
-      />
-    </el-form-item>
-    <el-form-item
-      class="day-form__full"
-      :label="$t('itinerary.dayDescription')"
-    >
-      <el-input
-        :model-value="day.description"
-        :disabled="!editable"
-        type="textarea"
-        :rows="3"
-        :placeholder="$t('itinerary.dayDescription')"
-        @update:model-value="updateField('description', $event)"
-      />
-    </el-form-item>
-    <el-form-item :label="$t('itinerary.mealSummary')">
-      <el-input
-        :model-value="day.mealSummary"
-        :disabled="!editable"
-        :placeholder="$t('itinerary.mealSummary')"
-        @update:model-value="updateField('mealSummary', $event)"
-      />
-    </el-form-item>
-    <el-form-item :label="$t('itinerary.accommodationSummary')">
-      <el-input
-        :model-value="day.accommodationSummary"
-        :disabled="!editable"
-        :placeholder="$t('itinerary.accommodationSummary')"
-        @update:model-value="updateField('accommodationSummary', $event)"
-      />
-    </el-form-item>
   </el-form>
 </template>
 
@@ -87,7 +47,7 @@ import { useI18n } from "vue-i18n";
 import type { ItineraryDayRecord } from "@/types/itinerary";
 import { getTransportMethodOptions } from "@/utils/transport-method";
 
-type EditableDayField = "departure" | "destination" | "transport" | "title" | "description" | "mealSummary" | "accommodationSummary";
+type EditableDayField = "departure" | "destination" | "transport";
 
 const props = defineProps<{ day: ItineraryDayRecord; editable: boolean }>();
 const emit = defineEmits<{ "update-field": [field: EditableDayField, value: string] }>();
@@ -116,13 +76,9 @@ function updateTransport(values: string[]) {
   :deep(.el-form-item) { margin-bottom: 0; }
   :deep(.el-form-item__label) { padding-bottom: 6px; color: var(--el-text-color-regular); font-weight: 500; line-height: 20px; }
   :deep(.el-select) { width: 100%; }
-  &__full { grid-column: 1 / -1; }
 }
 
 @media (width <= 900px) {
-  .day-form {
-    grid-template-columns: 1fr;
-    &__full { grid-column: auto; }
-  }
+  .day-form { grid-template-columns: 1fr; }
 }
 </style>

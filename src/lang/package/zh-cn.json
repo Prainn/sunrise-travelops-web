@@ -185,8 +185,6 @@
       "collaboration": "内部协作",
       "preferences": "游客与偏好"
     },
-    "singleRoomCount": "单住人数",
-    "singleSupplementTotal": "单房差成本合计",
     "specialRequirements": "特殊要求",
     "startDateRequired": "请选择开始日期",
     "adultsRequired": "请输入成人数量",
@@ -205,7 +203,9 @@
     "transportPreference": "交通偏好",
     "travelDates": "出行日期",
     "unitCost": "单位成本",
-    "unitPrice": "单位价格"
+    "unitPrice": "单位价格",
+    "vehicleFee": "车费",
+    "vehicleReferenceCost": "车辆成本价"
   },
   "businessCategory": {
     "applicableResources": "适用资源",

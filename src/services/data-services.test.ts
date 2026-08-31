@@ -114,9 +114,9 @@ describe("local data services", () => {
     expect(itineraries.every((itinerary) => itinerary.dailyPlans.length === 7)).toBe(true);
     expect(itineraries.every((itinerary) => itinerary.dailyPlans.map((day) => day.dayNumber).join(",") === "1,2,3,4,5,6,7")).toBe(true);
     expect(itineraries.every((itinerary) => itinerary.dailyPlans.every((day) => (
-      day.description.length > 0
-      && day.mealSummary.length > 0
-      && day.accommodationSummary.length > 0
+      Boolean(day.description?.length)
+      && Boolean(day.mealSummary?.length)
+      && Boolean(day.accommodationSummary?.length)
       && day.items.length > 0
     )))).toBe(true);
     expect(itineraries.every((itinerary) => itinerary.dailyPlans.flatMap((day) => day.items).every((item) =>

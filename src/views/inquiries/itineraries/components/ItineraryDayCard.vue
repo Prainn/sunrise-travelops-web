@@ -109,11 +109,25 @@
       </el-table-column>
       <el-table-column
         :label="$t('itinerary.unitCost')"
-        width="96"
+        width="190"
         align="right"
       >
         <template #default="scope">
-          ¥{{ formatMoney(scope.row.unitCost) }}
+          <div v-if="scope.row.type === 'vehicle'">
+            <el-input-number
+              v-if="contentEditable"
+              class="day-card__vehicle-fee"
+              :model-value="scope.row.unitCost"
+              :min="0"
+              :precision="2"
+              controls-position="right"
+              @change="emit('update-item-unit-cost', scope.$index, Number($event ?? 0))"
+            />
+            <span v-else>¥{{ formatMoney(scope.row.unitCost) }}</span>
+          </div>
+          <template v-else>
+            ¥{{ formatMoney(scope.row.unitCost) }}
+          </template>
         </template>
       </el-table-column>
       <el-table-column
@@ -162,7 +176,7 @@ import { formatMoney, sumMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
 import ItineraryDayForm from "./ItineraryDayForm.vue";
 
-type EditableDayField = "departure" | "destination" | "transport" | "title" | "description" | "mealSummary" | "accommodationSummary";
+type EditableDayField = "departure" | "destination" | "transport";
 const props = defineProps<{
   day: ItineraryDayRecord;
   contentEditable: boolean;
@@ -174,6 +188,7 @@ const emit = defineEmits<{
   "add-item": [];
   "remove-item": [index: number];
   "update-item-quantity": [index: number, quantity: number];
+  "update-item-unit-cost": [index: number, unitCost: number];
   duplicate: [];
   remove: [];
   move: [offset: number];
@@ -196,6 +211,8 @@ function resourceUnitName(code: string) { return getResourceUnitName(code, local
 .day-card__date, small { color: var(--el-text-color-secondary); font-size: 12px; }
 .day-card__provider { display: block; margin-top: 2px; color: var(--el-color-warning); }
 .day-card__quantity { width: 72px; margin-right: 4px; }
+.day-card__vehicle-fee { width: 118px; }
+.day-card__vehicle-reference { display: block; margin-bottom: 4px; white-space: nowrap; }
 .day-card__resources-header { margin: 20px 0 10px; }
 .day-card__resource-name { font-weight: 500; }
 .day-card__subtotal { margin-top: 12px; color: var(--el-text-color-secondary); }

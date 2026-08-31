@@ -252,6 +252,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     totalCost,
     updateDayField: editor.updateDayField,
     updateItemQuantity: editor.updateItemQuantity,
+    updateItemUnitCost: editor.updateItemUnitCost,
     updateQuote: editor.updateQuote,
   };
 }
