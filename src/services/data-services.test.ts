@@ -73,22 +73,24 @@ describe("local data services", () => {
   });
 
   it("keeps itinerary mock records linked to existing inquiries", () => {
-    expect(itineraries.map((itinerary) => itinerary.status)).toEqual(["draft", "quoted", "draft", "draft"]);
+    expect(inquiries).toHaveLength(5);
+    expect(inquiries.map((inquiry) => inquiry.status).sort()).toEqual(["archived", "lost", "new", "planning", "quoted"]);
+    expect(itineraries.map((itinerary) => itinerary.status)).toEqual(["draft", "draft", "quoted", "draft", "archived"]);
     expect(itineraries.every((itinerary) => itinerary.days > 0)).toBe(true);
     expect(itineraries.every((itinerary) => inquiries.some((inquiry) => inquiry.id === itinerary.inquiryId))).toBe(true);
     expect(itineraries.every((itinerary) => itinerary.updatedAt.length > 0)).toBe(true);
-    expect(itineraries.filter((itinerary) => itinerary.inquiryId === "inquiry-1")).toHaveLength(2);
+    expect(inquiries.every((inquiry) => itineraries.some((itinerary) => itinerary.inquiryId === inquiry.id))).toBe(true);
     expect(inquiries.every((inquiry) => inquiry.plannedDays > 0)).toBe(true);
     expect(inquiries.every((inquiry) => inquiry.operationsCoordinator.length > 0)).toBe(true);
     expect(inquiries.every((inquiry) => tourismResources.agency.some((agency) => agency.id === inquiry.agencyId))).toBe(true);
     expect(inquiries.every((inquiry) => ["new", "planning", "quoted", "lost", "archived"].includes(inquiry.status))).toBe(true);
-    expect(itineraries[0].days).toBe(inquiries.find((inquiry) => inquiry.id === itineraries[0].inquiryId)?.plannedDays);
+    expect(itineraries.every((itinerary) => itinerary.days === inquiries.find((inquiry) => inquiry.id === itinerary.inquiryId)?.plannedDays)).toBe(true);
     expect(inquiryLogs.every((log) => inquiries.some((inquiry) => inquiry.id === log.inquiryId))).toBe(true);
     expect(inquiries.every((inquiry) => inquiryLogs.some((log) => log.inquiryId === inquiry.id))).toBe(true);
   });
 
   it("provides enough mock records for list, filter, and pagination testing", () => {
-    expect(inquiries).toHaveLength(15);
+    expect(inquiries).toHaveLength(5);
     expect(tourismResources.agency).toHaveLength(8);
     expect(tourismResources.supplier).toHaveLength(3);
     expect(tourismResources.transport).toHaveLength(5);
@@ -98,24 +100,29 @@ describe("local data services", () => {
     expect(guides).toHaveLength(7);
   });
 
-  it("provides a complete seven-day itinerary for the new planning inquiry", () => {
-    const itinerary = itineraries.find((record) => record.inquiryId === "inquiry-11");
+  it("provides a complete seven-day itinerary for every inquiry", () => {
     const resourcePriceKeys = new Set(getResourcePriceOptions().map((option) =>
       `${option.type}:${option.resourceId}:${option.resourcePriceId}`));
+    const itineraryIds = itineraries.flatMap((itinerary) => [
+      itinerary.id,
+      ...itinerary.dailyPlans.flatMap((day) => [day.id, ...day.items.map((item) => item.id)]),
+    ]);
 
-    expect(itinerary?.days).toBe(7);
-    expect(itinerary?.dailyPlans).toHaveLength(7);
-    expect(itinerary?.dailyPlans.map((day) => day.dayNumber)).toEqual([1, 2, 3, 4, 5, 6, 7]);
-    expect(itinerary?.dailyPlans.every((day) => (
+    expect(itineraries).toHaveLength(5);
+    expect(new Set(itineraryIds).size).toBe(itineraryIds.length);
+    expect(itineraries.every((itinerary) => itinerary.days === 7)).toBe(true);
+    expect(itineraries.every((itinerary) => itinerary.dailyPlans.length === 7)).toBe(true);
+    expect(itineraries.every((itinerary) => itinerary.dailyPlans.map((day) => day.dayNumber).join(",") === "1,2,3,4,5,6,7")).toBe(true);
+    expect(itineraries.every((itinerary) => itinerary.dailyPlans.every((day) => (
       day.description.length > 0
       && day.mealSummary.length > 0
       && day.accommodationSummary.length > 0
       && day.items.length > 0
-    ))).toBe(true);
-    expect(itinerary?.dailyPlans.flatMap((day) => day.items).every((item) =>
-      resourcePriceKeys.has(`${item.type}:${item.resourceId}:${item.resourcePriceId}`))).toBe(true);
-    expect(itinerary?.dailyPlans.flatMap((day) => day.items).every((item) =>
-      item.totalCost === item.unitCost * item.quantity)).toBe(true);
+    )))).toBe(true);
+    expect(itineraries.every((itinerary) => itinerary.dailyPlans.flatMap((day) => day.items).every((item) =>
+      resourcePriceKeys.has(`${item.type}:${item.resourceId}:${item.resourcePriceId}`)))).toBe(true);
+    expect(itineraries.every((itinerary) => itinerary.dailyPlans.flatMap((day) => day.items).every((item) =>
+      item.totalCost === item.unitCost * item.quantity))).toBe(true);
   });
 
   it("keeps ground operator references linked to supplier mock data", () => {
