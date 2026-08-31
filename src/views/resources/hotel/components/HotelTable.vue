@@ -5,6 +5,7 @@
   >
     <TableToolbar @refresh="emit('refresh')">
       <el-button
+        v-has-perm="RESOURCE_PERMISSIONS.hotel.create"
         type="primary"
         @click="emit('create')"
       >
@@ -28,6 +29,7 @@
               <div class="hotel-table__price-header">
                 <strong>{{ $t("hotel.roomPriceTitle") }}</strong>
                 <el-button
+                  v-has-perm="RESOURCE_PERMISSIONS.hotel.update"
                   type="primary"
                   link
                   @click="emit('create-price', scope.row as HotelRecord)"
@@ -101,6 +103,7 @@
                 >
                   <template #default="priceScope">
                     <el-button
+                      v-has-perm="RESOURCE_PERMISSIONS.hotel.update"
                       type="primary"
                       link
                       @click="emit('edit-price', scope.row as HotelRecord, priceScope.row as RoomPriceRow)"
@@ -108,6 +111,7 @@
                       {{ $t("common.edit") }}
                     </el-button>
                     <el-button
+                      v-has-perm="RESOURCE_PERMISSIONS.hotel.delete"
                       type="danger"
                       link
                       @click="emit('delete-price', scope.row as HotelRecord, priceScope.row as RoomPriceRow)"
@@ -115,6 +119,7 @@
                       {{ $t("common.delete") }}
                     </el-button>
                     <el-button
+                      v-has-perm="RESOURCE_PERMISSIONS.hotel.delete"
                       type="danger"
                       link
                       @click="emit('delete-room', scope.row as HotelRecord, priceScope.row as RoomPriceRow)"
@@ -185,6 +190,7 @@
         >
           <template #default="scope">
             <el-button
+              v-has-perm="RESOURCE_PERMISSIONS.hotel.update"
               type="primary"
               link
               @click="emit('edit', scope.row as HotelRecord)"
@@ -192,6 +198,7 @@
               {{ $t("common.edit") }}
             </el-button>
             <el-button
+              v-has-perm="RESOURCE_PERMISSIONS.hotel.update"
               type="warning"
               link
               @click="emit('toggle-status', scope.row as HotelRecord)"
@@ -199,6 +206,7 @@
               {{ $t(scope.row.status === "enabled" ? "common.disabled" : "common.enabled") }}
             </el-button>
             <el-button
+              v-has-perm="RESOURCE_PERMISSIONS.hotel.delete"
               type="danger"
               link
               @click="emit('delete', scope.row as HotelRecord)"
@@ -213,6 +221,7 @@
 </template>
 
 <script setup lang="ts">
+import { RESOURCE_PERMISSIONS } from "@/constants";
 import type { HotelRecord, TourismResourceRecord } from "@/types/resource";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import type { RoomPriceRow } from "../types";

@@ -13,6 +13,7 @@
     >
       <TableToolbar @refresh="resetQuery">
         <el-button
+          v-has-perm="RESOURCE_PERMISSIONS.attraction.create"
           type="primary"
           @click="emit('create')"
         >
@@ -35,6 +36,7 @@
                 <div class="attraction-table__price-header">
                   <strong>{{ $t("attraction.priceItems") }}</strong>
                   <el-button
+                    v-has-perm="RESOURCE_PERMISSIONS.attraction.update"
                     type="primary"
                     link
                     @click="emit('create-price', scope.row as AttractionRecord)"
@@ -124,6 +126,7 @@
                   >
                     <template #default="priceScope">
                       <el-button
+                        v-has-perm="RESOURCE_PERMISSIONS.attraction.update"
                         type="primary"
                         link
                         @click="emit('edit-price', scope.row as AttractionRecord, priceScope.row as AttractionPriceRecord)"
@@ -131,6 +134,7 @@
                         {{ $t("common.edit") }}
                       </el-button>
                       <el-button
+                        v-has-perm="RESOURCE_PERMISSIONS.attraction.delete"
                         type="danger"
                         link
                         @click="emit('delete-price', scope.row as AttractionRecord, priceScope.row as AttractionPriceRecord)"
@@ -200,6 +204,7 @@
           >
             <template #default="scope">
               <el-button
+                v-has-perm="RESOURCE_PERMISSIONS.attraction.update"
                 type="primary"
                 link
                 @click="emit('edit', scope.row as AttractionRecord)"
@@ -207,6 +212,7 @@
                 {{ $t("common.edit") }}
               </el-button>
               <el-button
+                v-has-perm="RESOURCE_PERMISSIONS.attraction.update"
                 type="warning"
                 link
                 @click="emit('toggle-status', scope.row as AttractionRecord)"
@@ -214,6 +220,7 @@
                 {{ $t(scope.row.status === "enabled" ? "common.disabled" : "common.enabled") }}
               </el-button>
               <el-button
+                v-has-perm="RESOURCE_PERMISSIONS.attraction.delete"
                 type="danger"
                 link
                 @click="emit('delete', scope.row as AttractionRecord)"
@@ -237,7 +244,8 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { tourismResources } from "@/data/data";
+import { RESOURCE_PERMISSIONS } from "@/constants";
+import { resourceService } from "@/services/resource.service";
 import type {
   AttractionCategory,
   AttractionPriceItemType,
@@ -266,7 +274,7 @@ const area = ref("");
 const category = ref<AttractionCategory | "">("");
 const pageNum = ref(1);
 const pageSize = ref(10);
-const groundOperatorOptions = computed(() => tourismResources.supplier.filter((item) => item.status === "enabled"));
+const groundOperatorOptions = computed(() => resourceService.suppliers.filter((item) => item.status === "enabled"));
 const filteredRows = computed(() => props.rows.filter((record) => (
   (!area.value || record.area === area.value)
   && (!category.value || record.category === category.value)

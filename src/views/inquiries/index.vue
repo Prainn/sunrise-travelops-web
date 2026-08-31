@@ -47,7 +47,9 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useInquiryLog } from "@/composables/useInquiryLog";
-import { inquiries, tourismResources, users } from "@/data/data";
+import { inquiryService } from "@/services/inquiry.service";
+import { resourceService } from "@/services/resource.service";
+import { staffDirectoryService } from "@/services/staff-directory.service";
 import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";
 import { createId, formatDate, formatDateTime, generateNextCode } from "@/utils";
 import InquiryDetailDrawer from "./components/InquiryDetailDrawer.vue";
@@ -61,7 +63,7 @@ defineOptions({ name: "InquiryList" });
 const { t } = useI18n();
 const router = useRouter();
 const { recordInquiryLog } = useInquiryLog();
-const inquiryStore = reactive(inquiries);
+const inquiryStore = reactive(inquiryService.inquiries);
 const keywords = ref("");
 const status = ref<InquiryStatus | "">("");
 const owner = ref("");
@@ -73,7 +75,7 @@ const isDetailVisible = ref(false);
 const editingId = ref("");
 const selectedInquiry = ref<InquiryRecord>();
 const inquiryForm = ref<InquiryRecord>(createEmptyInquiry());
-const agencyOptions = computed(() => tourismResources.agency.filter((agency) => agency.status === "enabled"));
+const agencyOptions = computed(() => resourceService.agencies.filter((agency) => agency.status === "enabled"));
 const ownerOptions = computed(() => getEnabledCoordinatorNames("INQUIRY_COORDINATOR"));
 const operationsCoordinatorOptions = computed(() => getEnabledCoordinatorNames("OPERATIONS_COORDINATOR"));
 const sourceOptions = ["WhatsApp", "Email", "Website", "WeChat", "Referral"];
@@ -93,7 +95,7 @@ const pagedInquiries = computed(() => filteredInquiries.value.slice(
 ));
 
 function getEnabledCoordinatorNames(role: "INQUIRY_COORDINATOR" | "OPERATIONS_COORDINATOR") {
-  return users
+  return staffDirectoryService.users
     .filter((user) => user.status === "enabled" && user.roles.includes(role))
     .map((user) => user.nickname);
 }

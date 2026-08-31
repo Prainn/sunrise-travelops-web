@@ -8,10 +8,7 @@ import type {
   AttractionRecord, BusinessCategoryTypeRecord, GuideRecord, HotelRecord, ResourceUnitRecord,
   RestaurantRecord, TourismResourceRecord, TourismResourceType, TransportMethodRecord,
 } from "@/types/resource";
-import { DEFAULT_QUOTE_PROFIT_MARGIN_RATE, ROLE_ROOT } from "@/constants";
-import { roundMoney } from "@/utils";
-
-const DEFAULT_QUOTE_ADULT_UNIT_PRICE = roundMoney(3260 / 6 / (1 - DEFAULT_QUOTE_PROFIT_MARGIN_RATE / 100));
+import { ALL_RESOURCE_PERMISSIONS, ROLE_ROOT } from "@/constants";
 
 const adminPermissions = [
   "sys:user:list",
@@ -37,13 +34,7 @@ const adminPermissions = [
   "sys:business-category:create",
   "sys:business-category:update",
   "sys:business-category:delete",
-  "resource:agency:list",
-  "resource:supplier:list",
-  "resource:hotel:list",
-  "resource:restaurant:list",
-  "resource:attraction:list",
-  "resource:transport:list",
-  "resource:guide:list",
+  ...ALL_RESOURCE_PERMISSIONS,
   "inquiry:list",
   "inquiry:create",
   "inquiry:update",
@@ -55,15 +46,7 @@ const adminPermissions = [
   "itinerary:pdf",
 ];
 
-const resourcePermissions = [
-  "resource:agency:list",
-  "resource:supplier:list",
-  "resource:hotel:list",
-  "resource:restaurant:list",
-  "resource:attraction:list",
-  "resource:transport:list",
-  "resource:guide:list",
-];
+const resourcePermissions = [...ALL_RESOURCE_PERMISSIONS];
 
 const inquiryPermissions = ["inquiry:list", "inquiry:create", "inquiry:update", "itinerary:list", "itinerary:price"];
 
@@ -432,7 +415,7 @@ export const itineraries: ItineraryRecord[] = [
     specialRequirements: "丽江安排一晚古城内住宿",
     inquiryCoordinatorNotes: "首次合作，优先保证酒店位置和英文服务。",
     operationsCoordinator: "张伟",
-    quote: { adultUnitPrice: DEFAULT_QUOTE_ADULT_UNIT_PRICE },
+    quote: { adultUnitPrice: null },
     dailyPlans: [
       {
         id: "itinerary-1-day-1", dayNumber: 1, date: "2026-10-12", departure: "新加坡", destination: "昆明", transport: "flight,businessCar",
@@ -457,6 +440,7 @@ export const itineraries: ItineraryRecord[] = [
       { id: "itinerary-1-day-7", dayNumber: 7, date: "2026-10-18", departure: "昆明", destination: "新加坡", transport: "flight,businessCar", title: "昆明送机", description: "根据航班时间安排市区活动并送往机场。", mealSummary: "早餐", accommodationSummary: "无", items: [] },
     ],
     status: "draft",
+    quoteGeneratedAt: "",
     creator: "operations",
     createdAt: "2026-08-24 10:20",
     updatedAt: "2026-08-26 09:45",
@@ -484,7 +468,7 @@ export const itineraries: ItineraryRecord[] = [
     specialRequirements: "升级核心城市住宿标准",
     inquiryCoordinatorNotes: "已向客户提供的舒适版报价。",
     operationsCoordinator: "张伟",
-    quote: { adultUnitPrice: 0 },
+    quote: { adultUnitPrice: null },
     dailyPlans: [
       { id: "itinerary-2-day-1", dayNumber: 1, date: "2026-10-12", departure: "新加坡", destination: "昆明", transport: "flight,businessCar", title: "抵达昆明", description: "接机后入住酒店。", mealSummary: "晚餐", accommodationSummary: "昆明", items: [] },
       { id: "itinerary-2-day-2", dayNumber: 2, date: "2026-10-13", departure: "昆明", destination: "大理", transport: "businessCar", title: "昆明前往大理", description: "前往大理并游览崇圣寺三塔。", mealSummary: "早、中、晚", accommodationSummary: "大理", items: [] },
@@ -495,6 +479,7 @@ export const itineraries: ItineraryRecord[] = [
       { id: "itinerary-2-day-7", dayNumber: 7, date: "2026-10-18", departure: "昆明", destination: "新加坡", transport: "flight,businessCar", title: "昆明送机", description: "根据航班时间安排送机。", mealSummary: "早餐", accommodationSummary: "无", items: [] },
     ],
     status: "quoted",
+    quoteGeneratedAt: "2026-08-25 17:40",
     creator: "operations",
     createdAt: "2026-08-24 15:30",
     updatedAt: "2026-08-25 17:40",
@@ -522,7 +507,7 @@ export const itineraries: ItineraryRecord[] = [
     specialRequirements: "避免连续安排长距离步行",
     inquiryCoordinatorNotes: "首次合作，报价需在本周内完成。",
     operationsCoordinator: "陈晨",
-    quote: { adultUnitPrice: 0 },
+    quote: { adultUnitPrice: null },
     dailyPlans: [
       { id: "itinerary-3-day-1", dayNumber: 1, date: "2026-10-09", departure: "雅加达", destination: "昆明", transport: "flight,businessCar", title: "抵达昆明", description: "接机后入住酒店，自由活动。", mealSummary: "晚餐", accommodationSummary: "昆明", items: [] },
       { id: "itinerary-3-day-2", dayNumber: 2, date: "2026-10-10", departure: "昆明", destination: "大理", transport: "highSpeedRail,businessCar", title: "昆明前往大理", description: "动车前往大理，下午游览大理古城。", mealSummary: "早、中、晚", accommodationSummary: "大理", items: [] },
@@ -530,6 +515,7 @@ export const itineraries: ItineraryRecord[] = [
       { id: "itinerary-3-day-4", dayNumber: 4, date: "2026-10-12", departure: "大理", destination: "雅加达", transport: "businessCar,flight", title: "返程", description: "根据航班时间安排送机。", mealSummary: "早餐", accommodationSummary: "无", items: [] },
     ],
     status: "draft",
+    quoteGeneratedAt: "",
     creator: "operations_chenchen",
     createdAt: "2026-08-25 10:30",
     updatedAt: "2026-08-26 11:15",

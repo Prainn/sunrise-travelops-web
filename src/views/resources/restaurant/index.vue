@@ -29,7 +29,7 @@
 import { ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { restaurants } from "@/data/data";
+import { resourceService } from "@/services/resource.service";
 import type { RestaurantPriceRecord, RestaurantRecord } from "@/types/resource";
 import { createId } from "@/utils";
 import { useResourceMaintenance } from "../useResourceMaintenance";
@@ -70,7 +70,7 @@ const {
   saveRecord: saveRestaurant,
   deleteRecord: deleteRestaurant,
 } = useResourceMaintenance<RestaurantRecord>({
-  records: restaurants,
+  records: resourceService.restaurants,
   idPrefix: "restaurant",
   codePrefix: "RES",
   createEmpty: createEmptyRestaurant,

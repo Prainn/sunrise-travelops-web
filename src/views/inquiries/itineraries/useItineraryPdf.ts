@@ -54,6 +54,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     if (!plan || !inquiry || !pdfPreviewFile.value) return false;
     downloadGeneratedItineraryPdf(pdfPreviewFile.value);
     plan.status = transitionItinerary(plan.status, "generate_quote");
+    plan.quoteGeneratedAt = pdfPreviewFile.value.generatedAt;
     plan.updatedAt = formatDateTime(new Date());
     inquiry.status = transitionInquiry(inquiry.status, "quote_generated");
     closePdfPreview();

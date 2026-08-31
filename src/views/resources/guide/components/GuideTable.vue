@@ -13,6 +13,7 @@
     >
       <TableToolbar @refresh="resetQuery">
         <el-button
+          v-has-perm="RESOURCE_PERMISSIONS.guide.create"
           type="primary"
           @click="emit('create')"
         >
@@ -179,6 +180,7 @@
           >
             <template #default="scope">
               <el-button
+                v-has-perm="RESOURCE_PERMISSIONS.guide.update"
                 type="primary"
                 link
                 @click="emit('edit', scope.row as GuideRecord)"
@@ -186,6 +188,7 @@
                 {{ $t("common.edit") }}
               </el-button>
               <el-button
+                v-has-perm="RESOURCE_PERMISSIONS.guide.update"
                 type="warning"
                 link
                 @click="emit('toggle-status', scope.row as GuideRecord)"
@@ -193,6 +196,7 @@
                 {{ $t(scope.row.status === "enabled" ? "common.disabled" : "common.enabled") }}
               </el-button>
               <el-button
+                v-has-perm="RESOURCE_PERMISSIONS.guide.delete"
                 type="danger"
                 link
                 @click="emit('delete', scope.row as GuideRecord)"
@@ -216,7 +220,8 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { tourismResources } from "@/data/data";
+import { RESOURCE_PERMISSIONS } from "@/constants";
+import { resourceService } from "@/services/resource.service";
 import type { GuideEmploymentType, GuideGender, GuideRecord } from "@/types/resource";
 import { formatMoney } from "@/utils";
 import TableToolbar from "@/components/TableToolbar/index.vue";
@@ -237,7 +242,7 @@ const employmentType = ref<GuideEmploymentType | "">("");
 const language = ref("");
 const pageNum = ref(1);
 const pageSize = ref(10);
-const groundOperatorOptions = computed(() => tourismResources.supplier.filter((item) => item.status === "enabled"));
+const groundOperatorOptions = computed(() => resourceService.suppliers.filter((item) => item.status === "enabled"));
 const filteredRows = computed(() => props.rows.filter((record) => (
   (!gender.value || record.gender === gender.value)
   && (!employmentType.value || record.employmentType === employmentType.value)

@@ -131,7 +131,7 @@
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { tourismResources } from "@/data/data";
+import { resourceService } from "@/services/resource.service";
 import type { AttractionPriceItemType, AttractionPriceRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 
@@ -159,7 +159,7 @@ const itemTypeOptions: Array<{ value: AttractionPriceItemType; labelKey: string 
   { value: "activity", labelKey: "attraction.itemActivity" },
   { value: "package", labelKey: "attraction.itemPackage" },
 ];
-const groundOperatorOptions = computed(() => tourismResources.supplier.filter((item) => item.status === "enabled"));
+const groundOperatorOptions = computed(() => resourceService.suppliers.filter((item) => item.status === "enabled"));
 const unitOptions = computed(() => getResourceUnitOptions("attraction", locale.value));
 const rules = computed<FormRules>(() => ({
   itemType: [{ required: true, message: t("attraction.itemTypeRequired"), trigger: "change" }],

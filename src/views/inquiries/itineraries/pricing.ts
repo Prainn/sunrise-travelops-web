@@ -1,4 +1,4 @@
-import { attractions, guides, hotels, restaurants, tourismResources } from "@/data/data";
+import { resourceService } from "@/services/resource.service";
 import type { ItineraryItemType, ItineraryPriceUnit, ItineraryResourceItem } from "@/types/itinerary";
 import { createId, multiplyMoney } from "@/utils";
 
@@ -42,7 +42,7 @@ const attractionItemTypeLabelKeys = {
 const DIRECT_PRICE_NAME = "直营报价";
 
 export function getResourcePriceOptions(): ResourcePriceOption[] {
-  const supplierNames = new Map(tourismResources.supplier.map((item) => [item.id, item.name]));
+  const supplierNames = new Map(resourceService.suppliers.map((item) => [item.id, item.name]));
   function providerName(isGroundOperatorProvided: boolean, groundOperatorId: string) {
     return isGroundOperatorProvided
       ? supplierNames.get(groundOperatorId) ?? "地接社报价"
@@ -50,7 +50,7 @@ export function getResourcePriceOptions(): ResourcePriceOption[] {
   }
 
   return [
-    ...hotels.filter((hotel) => hotel.status === "enabled").flatMap((hotel) => hotel.roomTypes.flatMap((roomType) => roomType.pricePlans.map((price) => ({
+    ...resourceService.hotels.filter((hotel) => hotel.status === "enabled").flatMap((hotel) => hotel.roomTypes.flatMap((roomType) => roomType.pricePlans.map((price) => ({
       id: `hotel:${price.id}`,
       type: "hotel" as const,
       resourceId: hotel.id,
@@ -83,7 +83,7 @@ export function getResourcePriceOptions(): ResourcePriceOption[] {
       ],
       searchText: `${hotel.name} ${hotel.city} ${roomType.name} ${price.periodName}`,
     })))),
-    ...attractions.filter((attraction) => attraction.status === "enabled").flatMap((attraction) => attraction.prices.map((price) => ({
+    ...resourceService.attractions.filter((attraction) => attraction.status === "enabled").flatMap((attraction) => attraction.prices.map((price) => ({
       id: `attraction:${price.id}`,
       type: "attraction" as const,
       resourceId: attraction.id,
@@ -115,7 +115,7 @@ export function getResourcePriceOptions(): ResourcePriceOption[] {
       ],
       searchText: `${attraction.name} ${attraction.area} ${price.itemName} ${price.audience}`,
     }))),
-    ...restaurants.filter((restaurant) => restaurant.status === "enabled").flatMap((restaurant) => restaurant.prices.map((price) => ({
+    ...resourceService.restaurants.filter((restaurant) => restaurant.status === "enabled").flatMap((restaurant) => restaurant.prices.map((price) => ({
       id: `restaurant:${price.id}`,
       type: "restaurant" as const,
       resourceId: restaurant.id,
@@ -145,7 +145,7 @@ export function getResourcePriceOptions(): ResourcePriceOption[] {
       ],
       searchText: `${restaurant.name} ${restaurant.city} ${restaurant.cuisine} ${price.menuName}`,
     }))),
-    ...tourismResources.transport.filter((resource) => resource.status === "enabled").map((resource) => ({
+    ...resourceService.transports.filter((resource) => resource.status === "enabled").map((resource) => ({
       id: `vehicle:${resource.id}`,
       type: "vehicle" as const,
       resourceId: resource.id,
@@ -173,7 +173,7 @@ export function getResourcePriceOptions(): ResourcePriceOption[] {
       ],
       searchText: `${resource.name} ${resource.city} ${resource.plateNumber ?? ""}`,
     })),
-    ...guides.filter((guide) => guide.status === "enabled").map((guide) => ({
+    ...resourceService.guides.filter((guide) => guide.status === "enabled").map((guide) => ({
       id: `guide:${guide.id}`,
       type: "guide" as const,
       resourceId: guide.id,

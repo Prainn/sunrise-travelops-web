@@ -4,6 +4,7 @@
       :rows="rows"
       :columns="columns"
       :search-fields="['code', 'name', 'city']"
+      :permissions="RESOURCE_PERMISSIONS.transport"
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
@@ -22,7 +23,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { tourismResources } from "@/data/data";
+import { RESOURCE_PERMISSIONS } from "@/constants";
+import { resourceService } from "@/services/resource.service";
 import type { TourismResourceRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 import ResourceEditorDialog from "../components/ResourceEditorDialog.vue";
@@ -111,7 +113,7 @@ const fields = computed<ResourceFormField[]>(() => [
   }
 ]);
 const { rows, record, isDialogVisible, isEditing, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<TourismResourceRecord>({
-  records: tourismResources.transport,
+  records: resourceService.transports,
   idPrefix: "transport",
   codePrefix: "VEH",
   createEmpty: () => ({ ...createEmptyTourismResourceRecord(), unit: "vehicleDay" }),

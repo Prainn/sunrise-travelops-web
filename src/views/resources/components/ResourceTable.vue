@@ -27,6 +27,7 @@
     >
       <TableToolbar @refresh="resetQuery">
         <el-button
+          v-has-perm="permissions.create"
           type="primary"
           @click="emit('create')"
         >
@@ -65,6 +66,7 @@
           >
             <template #default="scope">
               <el-button
+                v-has-perm="permissions.update"
                 type="primary"
                 link
                 @click="editRow(scope.row)"
@@ -72,6 +74,7 @@
                 {{ $t("common.edit") }}
               </el-button>
               <el-button
+                v-has-perm="permissions.update"
                 type="warning"
                 link
                 @click="toggleRowStatus(scope.row)"
@@ -79,6 +82,7 @@
                 {{ $t(scope.row.status === "enabled" ? "common.disabled" : "common.enabled") }}
               </el-button>
               <el-button
+                v-has-perm="permissions.delete"
                 type="danger"
                 link
                 @click="deleteRow(scope.row)"
@@ -102,12 +106,14 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
+import type { ResourcePermissionSet } from "@/constants";
 import type { ResourceColumn, ResourceRow } from "../types";
 
 const props = defineProps<{
   rows: ResourceRow[];
   columns: ResourceColumn[];
   searchFields: string[];
+  permissions: ResourcePermissionSet;
 }>();
 
 const emit = defineEmits<{

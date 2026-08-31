@@ -4,6 +4,7 @@
       :rows="rows"
       :columns="columns"
       :search-fields="['code', 'name', 'countryOrRegion', 'contact', 'email', 'phone']"
+      :permissions="RESOURCE_PERMISSIONS.agency"
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
@@ -20,7 +21,8 @@
 </template>
 
 <script setup lang="ts">
-import { tourismResources } from "@/data/data";
+import { RESOURCE_PERMISSIONS } from "@/constants";
+import { resourceService } from "@/services/resource.service";
 import type { TourismResourceRecord } from "@/types/resource";
 import ResourceEditorDialog from "../components/ResourceEditorDialog.vue";
 import ResourceTable from "../components/ResourceTable.vue";
@@ -46,7 +48,7 @@ const fields: ResourceFormField[] = [
   { prop: "remark", labelKey: "common.remark", type: "textarea" },
 ];
 const { rows, record, isDialogVisible, isEditing, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<TourismResourceRecord>({
-  records: tourismResources.agency,
+  records: resourceService.agencies,
   idPrefix: "agency",
   codePrefix: "AGY",
   createEmpty: createEmptyTourismResourceRecord,

@@ -269,7 +269,7 @@ import type { FormInstance, FormRules } from "element-plus";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { YUNNAN_TOURISM_REGION_OPTIONS } from "@/constants/yunnan-tourism-regions";
-import { hotels, tourismResources } from "@/data/data";
+import { resourceService } from "@/services/resource.service";
 import type { HotelPricePlanRecord, HotelRecord } from "@/types/resource";
 import { createId, generateNextCode } from "@/utils";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
@@ -281,7 +281,7 @@ type HotelForm = HotelRecord & { cityPath: string[] };
 defineOptions({ name: "Hotel" });
 
 const { t, locale } = useI18n();
-const hotelStore = reactive(hotels);
+const hotelStore = reactive(resourceService.hotels);
 const keywords = ref("");
 const city = ref("");
 const isHotelDialogVisible = ref(false);
@@ -298,7 +298,7 @@ const isEditing = computed(() => Boolean(editingId.value));
 const isEditingPrice = computed(() => Boolean(editingRoomId.value && editingPricePlanId.value));
 const cityOptions = computed(() => [...new Set(hotelStore.map((hotel) => hotel.city))]);
 const groundOperatorOptions = computed(() =>
-  tourismResources.supplier.filter((item) => item.status === "enabled")
+  resourceService.suppliers.filter((item) => item.status === "enabled")
 );
 const hotelUnitOptions = computed(() => getResourceUnitOptions("hotel", locale.value));
 const filteredHotels = computed(() => {

@@ -1,10 +1,11 @@
 import type { ItineraryQuoteCalculation, ItineraryQuoteLine, ItineraryQuoteSettings, ItineraryRecord } from "@/types/itinerary";
+import { DEFAULT_QUOTE_PROFIT_MARGIN_RATE } from "@/constants";
 import { multiplyMoney, roundMoney, sumMoney } from "@/utils";
 
 export const CHILD_RATE = 70;
 
 export const DEFAULT_QUOTE_SETTINGS: ItineraryQuoteSettings = {
-  adultUnitPrice: 0,
+  adultUnitPrice: null,
 };
 
 export function createDefaultQuoteSettings(): ItineraryQuoteSettings {
@@ -28,7 +29,10 @@ export function calculateItineraryQuote(
   const baseGroupCost = roundMoney(Math.max(totalCost - singleSupplementTotal, 0));
   const adultEquivalentCount = itinerary.adults + itinerary.childrenCount * CHILD_RATE / 100;
   const baseCostPerPerson = adultEquivalentCount ? roundMoney(baseGroupCost / adultEquivalentCount) : 0;
-  const adultUnitPrice = Math.max(roundMoney(itinerary.quote.adultUnitPrice), 0);
+  const suggestedAdultUnitPrice = calculateSuggestedAdultUnitPrice(totalCost, singleSupplementTotal, adultEquivalentCount);
+  const adultUnitPrice = itinerary.quote.adultUnitPrice === null
+    ? suggestedAdultUnitPrice
+    : Math.max(roundMoney(itinerary.quote.adultUnitPrice), 0);
   const childUnitPrice = roundMoney(adultUnitPrice * CHILD_RATE / 100);
   const lines: ItineraryQuoteLine[] = [
     createQuoteLine("adult", itinerary.adults, adultUnitPrice),
@@ -43,6 +47,7 @@ export function calculateItineraryQuote(
     hotelRoomCount: calculateHotelRoomCount(itinerary),
     baseGroupCost,
     baseCostPerPerson,
+    adultUnitPrice,
     childUnitPrice,
     singleSupplementUnitCost,
     singleSupplementTotal,
@@ -51,6 +56,16 @@ export function calculateItineraryQuote(
     actualMarginRate: totalPrice ? profit / totalPrice * 100 : 0,
     lines,
   };
+}
+
+function calculateSuggestedAdultUnitPrice(
+  totalCost: number,
+  singleSupplementTotal: number,
+  adultEquivalentCount: number
+) {
+  if (!adultEquivalentCount) return 0;
+  const targetTotalPrice = totalCost / (1 - DEFAULT_QUOTE_PROFIT_MARGIN_RATE / 100);
+  return Math.max(roundMoney((targetTotalPrice - singleSupplementTotal) / adultEquivalentCount), 0);
 }
 
 export function calculateSingleSupplementUnitCost(

@@ -54,6 +54,13 @@ describe("itinerary quote pricing", () => {
     expect(result.totalPrice).toBe(4700);
   });
 
+  it("suggests an adult price with a 10 percent total margin until it is manually changed", () => {
+    const result = calculateItineraryQuote(createPricingInput(), 3260);
+
+    expect(result.adultUnitPrice).toBe(905.56);
+    expect(result.actualMarginRate).toBeCloseTo(10, 1);
+  });
+
   it("treats one hotel room night as 0.5 and two nights as 1 for one guest", () => {
     const itinerary = createPricingInput({
       dailyPlans: [createHotelDay("lijiang", 1980), createHotelDay("shangrila-1", 1080), createHotelDay("shangrila-2", 1080)],
@@ -79,5 +86,17 @@ describe("itinerary quote pricing", () => {
     expect(result.lines[0]).toEqual({ type: "adult", quantity: 4, unitPrice: 6864, totalPrice: 27_456 });
     expect(result.lines[2]).toEqual({ type: "single_supplement", quantity: 2, unitPrice: 2070, totalPrice: 4140 });
     expect(result.totalPrice).toBe(31_596);
+  });
+
+  it("keeps the suggested total margin at 10 percent when single supplements exist", () => {
+    const itinerary = createPricingInput({
+      singleRoomCount: 2,
+      dailyPlans: [createHotelDay("lijiang", 1980), createHotelDay("shangrila-1", 1080), createHotelDay("shangrila-2", 1080)],
+    });
+
+    const result = calculateItineraryQuote(itinerary, 18_852);
+
+    expect(result.adultUnitPrice).toBe(4201.67);
+    expect(result.actualMarginRate).toBeCloseTo(10, 1);
   });
 });

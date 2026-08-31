@@ -42,7 +42,7 @@
         <div class="quote-panel__price-editor">
           <span>¥</span>
           <el-input-number
-            :model-value="quote.adultUnitPrice"
+            :model-value="calculation.adultUnitPrice"
             :disabled="!editable"
             :min="0"
             :precision="2"

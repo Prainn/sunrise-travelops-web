@@ -189,9 +189,8 @@
 import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import {
-  attractions, guides, hotels, itineraries, restaurants, tourismResources,
-} from "@/data/data";
+import { inquiryService } from "@/services/inquiry.service";
+import { resourceService } from "@/services/resource.service";
 import type { ItineraryItemType } from "@/types/itinerary";
 import type {
   BusinessCategoryOptionRecord, BusinessCategoryTypeRecord, ResourceUnitRecord, TransportMethodRecord,
@@ -277,15 +276,16 @@ async function saveItem() {
 }
 
 function isUnitUsed(code: string) {
-  return hotels.some((hotel) => hotel.unit === code || hotel.roomTypes.some((room) => room.pricePlans.some((price) => price.unit === code)))
-    || attractions.some((item) => item.unit === code || item.prices.some((price) => price.unit === code))
-    || restaurants.some((item) => item.unit === code || item.prices.some((price) => price.unit === code))
-    || tourismResources.transport.some((item) => item.unit === code) || guides.some((guide) => guide.unit === code);
+  return resourceService.hotels.some((hotel) => hotel.unit === code || hotel.roomTypes.some((room) => room.pricePlans.some((price) => price.unit === code)))
+    || resourceService.attractions.some((item) => item.unit === code || item.prices.some((price) => price.unit === code))
+    || resourceService.restaurants.some((item) => item.unit === code || item.prices.some((price) => price.unit === code))
+    || resourceService.transports.some((item) => item.unit === code)
+    || resourceService.guides.some((guide) => guide.unit === code);
 }
 
 async function removeItem(row: CategoryItem) {
   if (isResourceUnit.value && isUnitUsed(row.code)) return void ElMessage.warning(t("businessCategory.unitInUse"));
-  const transportInUse = itineraries.some((itinerary) => itinerary.dailyPlans.some((day) => day.transport.split(",").includes(row.code)));
+  const transportInUse = inquiryService.itineraries.some((itinerary) => itinerary.dailyPlans.some((day) => day.transport.split(",").includes(row.code)));
   if (isTransportMethod.value && transportInUse) return void ElMessage.warning(t("businessCategory.transportInUse"));
   try { await ElMessageBox.confirm(t("common.deleteConfirm"), t("common.warning"), { type: "warning" }); } catch { return; }
   sourceItems.value.splice(sourceItems.value.findIndex((item) => item.id === row.id), 1);

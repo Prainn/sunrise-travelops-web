@@ -2,7 +2,7 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import type { InquiryRecord } from "@/types/inquiry";
 import type { ItineraryRecord } from "@/types/itinerary";
-import { formatMoney, sumMoney } from "@/utils";
+import { formatDateTime, formatMoney, sumMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
 import { getTransportMethodNames } from "@/utils/transport-method";
 import { calculateItineraryQuote } from "./quote-pricing";
@@ -15,12 +15,14 @@ const BLOCK_GAP_MM = 5;
 export interface GeneratedItineraryPdf {
   blob: Blob;
   fileName: string;
+  generatedAt: string;
 }
 
 export async function generateItineraryPdf(itinerary: ItineraryRecord, inquiry: InquiryRecord): Promise<GeneratedItineraryPdf> {
+  const generatedAt = formatDateTime(new Date());
   const documentRoot = document.createElement("section");
   documentRoot.style.cssText = "position:fixed;left:-10000px;top:0;width:760px;padding:32px;background:#fff;color:#1f2937;font-family:Arial,'Microsoft YaHei',sans-serif;box-sizing:content-box;";
-  documentRoot.innerHTML = buildPdfHtml(itinerary, inquiry);
+  documentRoot.innerHTML = buildPdfHtml(itinerary, inquiry, generatedAt);
   document.body.appendChild(documentRoot);
 
   try {
@@ -36,6 +38,7 @@ export async function generateItineraryPdf(itinerary: ItineraryRecord, inquiry: 
     return {
       blob: pdf.output("blob"),
       fileName: `${sanitizeFileName(itinerary.code)}-${sanitizeFileName(itinerary.title)}.pdf`,
+      generatedAt,
     };
   } finally {
     documentRoot.remove();
@@ -86,7 +89,7 @@ function addPdfPage(pdf: jsPDF) {
   return PAGE_MARGIN_MM;
 }
 
-function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord) {
+function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord, generatedAt: string) {
   const totalCost = sumMoney(itinerary.dailyPlans.flatMap((day) => day.items).map((item) => item.totalCost));
   const quote = calculateItineraryQuote(itinerary, totalCost);
   const daySections = itinerary.dailyPlans.map((day) => `
@@ -110,6 +113,7 @@ function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord) {
       <h1 style="margin:0 0 8px;font-size:26px;">${escapeHtml(itinerary.title)}</h1>
       <div style="color:#606266;">行程编号：${escapeHtml(itinerary.code)} · 旅行社：${escapeHtml(inquiry.agencyName)}</div>
       <div style="margin-top:6px;color:#606266;">日期：${escapeHtml(itinerary.startDate)} — ${escapeHtml(itinerary.endDate)} · 共 ${itinerary.days} 天</div>
+      <div style="margin-top:6px;color:#606266;">报价生成时间：${escapeHtml(generatedAt)}</div>
     </header>
     ${daySections}
     <footer data-pdf-block style="padding:18px;background:#ecf5ff;text-align:right;font-size:20px;font-weight:700;color:#2563eb;box-sizing:border-box;">

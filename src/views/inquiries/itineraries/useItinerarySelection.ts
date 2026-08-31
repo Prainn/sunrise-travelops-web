@@ -1,13 +1,13 @@
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { inquiries, itineraries } from "@/data/data";
+import { inquiryService } from "@/services/inquiry.service";
 import { getDefaultItineraryId } from "./workflow";
 
 export function useItinerarySelection() {
   const route = useRoute();
   const router = useRouter();
-  const inquiryStore = reactive(inquiries);
-  const itineraryStore = reactive(itineraries);
+  const inquiryStore = reactive(inquiryService.inquiries);
+  const itineraryStore = reactive(inquiryService.itineraries);
   const inquiryId = computed(() => String(route.params.inquiryId ?? ""));
   const inquiry = computed(() => inquiryStore.find((item) => item.id === inquiryId.value));
   const rows = computed(() => itineraryStore

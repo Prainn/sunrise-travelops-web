@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { guides } from "@/data/data";
+import { resourceService } from "@/services/resource.service";
 import type { GuideRecord } from "@/types/resource";
 import { useResourceMaintenance } from "../useResourceMaintenance";
 import GuideEditorDialog from "./components/GuideEditorDialog.vue";
@@ -44,7 +44,7 @@ const {
   saveRecord: saveGuide,
   deleteRecord: deleteGuide,
 } = useResourceMaintenance<GuideRecord>({
-  records: guides,
+  records: resourceService.guides,
   idPrefix: "guide",
   codePrefix: "GDE",
   createEmpty: createEmptyGuide,

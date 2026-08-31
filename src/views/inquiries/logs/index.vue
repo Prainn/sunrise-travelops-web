@@ -75,7 +75,7 @@
 import { computed, onMounted, ref } from "vue";
 import type { TagProps } from "element-plus";
 import { useRoute, useRouter } from "vue-router";
-import { inquiries } from "@/data/data";
+import { inquiryService } from "@/services/inquiry.service";
 import { inquiryLogService } from "@/services";
 import type { InquiryLogAction, InquiryLogRecord } from "@/types/inquiry-log";
 
@@ -94,7 +94,7 @@ const ACTION_TAG_TYPES: Record<InquiryLogAction, TagProps["type"]> = {
 const route = useRoute();
 const router = useRouter();
 const inquiryId = computed(() => String(route.params.inquiryId ?? ""));
-const inquiry = computed(() => inquiries.find((record) => record.id === inquiryId.value));
+const inquiry = computed(() => inquiryService.inquiries.find((record) => record.id === inquiryId.value));
 const logs = ref<InquiryLogRecord[]>([]);
 const isLoading = ref(false);
 

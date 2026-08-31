@@ -4,7 +4,7 @@ export type ItineraryItemType = "hotel" | "attraction" | "restaurant" | "vehicle
 export type ItineraryPriceUnit = string;
 
 export interface ItineraryQuoteSettings {
-  adultUnitPrice: number;
+  adultUnitPrice: number | null;
 }
 
 export type ItineraryQuoteLineType = "adult" | "child" | "single_supplement";
@@ -21,6 +21,7 @@ export interface ItineraryQuoteCalculation {
   hotelRoomCount: number;
   baseGroupCost: number;
   baseCostPerPerson: number;
+  adultUnitPrice: number;
   childUnitPrice: number;
   singleSupplementUnitCost: number;
   singleSupplementTotal: number;
@@ -85,6 +86,7 @@ export interface ItineraryRecord {
   quote: ItineraryQuoteSettings;
   dailyPlans: ItineraryDayRecord[];
   status: ItineraryStatus;
+  quoteGeneratedAt: string;
   creator: string;
   createdAt: string;
   updatedAt: string;

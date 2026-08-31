@@ -13,6 +13,7 @@
     >
       <TableToolbar @refresh="resetQuery">
         <el-button
+          v-has-perm="RESOURCE_PERMISSIONS.restaurant.create"
           type="primary"
           @click="emit('create')"
         >
@@ -35,6 +36,7 @@
                 <div class="restaurant-table__price-header">
                   <strong>{{ $t("restaurant.priceItems") }}</strong>
                   <el-button
+                    v-has-perm="RESOURCE_PERMISSIONS.restaurant.update"
                     type="primary"
                     link
                     @click="emit('create-price', scope.row as RestaurantRecord)"
@@ -132,6 +134,7 @@
                   >
                     <template #default="priceScope">
                       <el-button
+                        v-has-perm="RESOURCE_PERMISSIONS.restaurant.update"
                         type="primary"
                         link
                         @click="emit('edit-price', scope.row as RestaurantRecord, priceScope.row as RestaurantPriceRecord)"
@@ -139,6 +142,7 @@
                         {{ $t("common.edit") }}
                       </el-button>
                       <el-button
+                        v-has-perm="RESOURCE_PERMISSIONS.restaurant.delete"
                         type="danger"
                         link
                         @click="emit('delete-price', scope.row as RestaurantRecord, priceScope.row as RestaurantPriceRecord)"
@@ -200,6 +204,7 @@
           >
             <template #default="scope">
               <el-button
+                v-has-perm="RESOURCE_PERMISSIONS.restaurant.update"
                 type="primary"
                 link
                 @click="emit('edit', scope.row as RestaurantRecord)"
@@ -207,6 +212,7 @@
                 {{ $t("common.edit") }}
               </el-button>
               <el-button
+                v-has-perm="RESOURCE_PERMISSIONS.restaurant.update"
                 type="warning"
                 link
                 @click="emit('toggle-status', scope.row as RestaurantRecord)"
@@ -214,6 +220,7 @@
                 {{ $t(scope.row.status === "enabled" ? "common.disabled" : "common.enabled") }}
               </el-button>
               <el-button
+                v-has-perm="RESOURCE_PERMISSIONS.restaurant.delete"
                 type="danger"
                 link
                 @click="emit('delete', scope.row as RestaurantRecord)"
@@ -237,7 +244,8 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { tourismResources } from "@/data/data";
+import { RESOURCE_PERMISSIONS } from "@/constants";
+import { resourceService } from "@/services/resource.service";
 import type { RestaurantPriceRecord, RestaurantPriceUnit, RestaurantRecord } from "@/types/resource";
 import { formatMoney } from "@/utils";
 import TableToolbar from "@/components/TableToolbar/index.vue";
@@ -261,7 +269,7 @@ const priceUnit = ref<RestaurantPriceUnit | "">("");
 const pageNum = ref(1);
 const pageSize = ref(10);
 const cityOptions = computed(() => [...new Set(props.rows.map((record) => record.city))]);
-const groundOperatorOptions = computed(() => tourismResources.supplier.filter((item) => item.status === "enabled"));
+const groundOperatorOptions = computed(() => resourceService.suppliers.filter((item) => item.status === "enabled"));
 const filteredRows = computed(() => props.rows.filter((record) => (
   (!city.value || record.city === city.value)
   && (!priceUnit.value || record.prices.some((price) => price.unit === priceUnit.value))

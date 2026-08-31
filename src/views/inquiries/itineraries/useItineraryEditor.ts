@@ -27,7 +27,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       adults: 1, childrenCount: 0, singleRoomCount: 0, hotelLevel: "", roomPreference: "", transportPreference: "",
       guideRequired: false, guideLanguage: "", pace: "", mealRequirements: "", budget: 0, specialRequirements: "",
       inquiryCoordinatorNotes: "", operationsCoordinator: options.inquiry.value?.operationsCoordinator ?? "", quote: createDefaultQuoteSettings(),
-      dailyPlans: [], status: "draft", creator: "", createdAt: "", updatedAt: "",
+      dailyPlans: [], status: "draft", quoteGeneratedAt: "", creator: "", createdAt: "", updatedAt: "",
     };
   }
 
@@ -127,6 +127,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       code: generateItineraryCode(),
       title: `${source.title} ${copySuffix}`,
       status: "draft",
+      quoteGeneratedAt: "",
       creator: options.getCreator(),
       createdAt: formatDateTime(new Date()),
       updatedAt: formatDateTime(new Date()),

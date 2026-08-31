@@ -217,7 +217,7 @@
 import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules, type UploadFile } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { tourismResources } from "@/data/data";
+import { resourceService } from "@/services/resource.service";
 import type { GuideRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 
@@ -232,7 +232,7 @@ const formRef = ref<FormInstance>();
 const form = reactive<GuideRecord>({ ...props.record, languages: [...props.record.languages] });
 const isVisible = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) });
 const languageOptions = ["中文", "英文", "日文", "韩文", "泰文"];
-const groundOperatorOptions = computed(() => tourismResources.supplier.filter((item) => item.status === "enabled"));
+const groundOperatorOptions = computed(() => resourceService.suppliers.filter((item) => item.status === "enabled"));
 const unitOptions = computed(() => getResourceUnitOptions("guide", locale.value));
 const rules = computed<FormRules>(() => ({
   certificateNo: [{ required: true, message: t("guide.certificateNoRequired"), trigger: "blur" }],

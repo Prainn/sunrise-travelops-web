@@ -1,7 +1,7 @@
 import { reactive } from "vue";
-import { transportMethods } from "@/data/data";
+import { configurationService } from "@/services/configuration.service";
 
-export const transportMethodStore = reactive(transportMethods);
+export const transportMethodStore = reactive(configurationService.transportMethods);
 
 export function getTransportMethodName(code: string, locale = "zh-CN") {
   const method = transportMethodStore.find((item) => item.code === code);
