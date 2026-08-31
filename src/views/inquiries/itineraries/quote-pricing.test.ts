@@ -14,8 +14,7 @@ function createPricingInput(overrides: Partial<ItineraryRecord> = {}) {
 
 function createHotelDay(id: string, unitCost: number, roomCount = 3): ItineraryDayRecord {
   return {
-    id, dayNumber: 1, date: "2026-10-01", departure: "", destination: "", transport: "", title: "",
-    description: "", mealSummary: "", accommodationSummary: "",
+    id, dayNumber: 1, date: "2026-10-01", departure: "", destination: "", transport: "", description: "",
     items: [{
       id: `hotel-${id}`, type: "hotel", resourceId: "hotel", resourcePriceId: "price", resourceName: "Hotel",
       priceName: "Room", providerName: "Direct", quantity: roomCount, unit: "roomNight", unitCost,

@@ -53,10 +53,7 @@ export interface ItineraryDayRecord {
   departure: string;
   destination: string;
   transport: string;
-  title?: string;
   description?: string;
-  mealSummary?: string;
-  accommodationSummary?: string;
   items: ItineraryResourceItem[];
 }
 
@@ -65,22 +62,11 @@ export interface ItineraryRecord {
   inquiryId: string;
   code: string;
   title: string;
-  destinations: string;
   startDate: string;
   endDate: string;
   days: number;
   adults: number;
   childrenCount: number;
-  hotelLevel: string;
-  roomPreference: string;
-  transportPreference: string;
-  guideRequired: boolean;
-  guideLanguage: string;
-  pace: string;
-  mealRequirements: string;
-  budget: number;
-  specialRequirements: string;
-  inquiryCoordinatorNotes: string;
   operationsCoordinator: string;
   quote: ItineraryQuoteSettings;
   dailyPlans: ItineraryDayRecord[];

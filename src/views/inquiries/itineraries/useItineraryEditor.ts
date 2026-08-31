@@ -23,10 +23,9 @@ interface ItineraryEditorOptions {
 export function useItineraryEditor(options: ItineraryEditorOptions) {
   function createEmptyItinerary(): ItineraryRecord {
     return {
-      id: "", inquiryId: options.inquiryId.value, code: "", title: "", destinations: "", startDate: "", endDate: "", days: 0,
-      adults: 1, childrenCount: 0, hotelLevel: "", roomPreference: "", transportPreference: "",
-      guideRequired: false, guideLanguage: "", pace: "", mealRequirements: "", budget: 0, specialRequirements: "",
-      inquiryCoordinatorNotes: "", operationsCoordinator: options.inquiry.value?.operationsCoordinator ?? "", quote: createDefaultQuoteSettings(),
+      id: "", inquiryId: options.inquiryId.value, code: "", title: "", startDate: "", endDate: "", days: 0,
+      adults: 1, childrenCount: 0, operationsCoordinator: options.inquiry.value?.operationsCoordinator ?? "",
+      quote: createDefaultQuoteSettings(),
       dailyPlans: [], status: "draft", quoteGeneratedAt: "", creator: "", createdAt: "", updatedAt: "",
     };
   }
