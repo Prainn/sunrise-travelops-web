@@ -351,7 +351,7 @@ export const inquiries: InquiryRecord[] = [
     id: "inquiry-15", code: "INQ-202608-015", agencyId: "agency-5", agencyCode: "AGY-005", agencyName: "Seoul Hanul Travel",
     contactName: "Min-jun Park", email: "minjun@example.com", phone: "+82 2-555-0105", countryOrRegion: "韩国",
     sourceChannel: "Referral", originalMessage: "10 人企业团希望安排昆明、大理、丽江 7 天游，包含欢迎宴和特色文化体验。",
-    internalRemark: "新询盘演示数据，已预置完整行程供查看。", owner: "李娜", operationsCoordinator: "陈晨", nextFollowUpAt: "2026-09-01 16:00", plannedDays: 7,
+    internalRemark: "新询盘演示数据，待操作计调创建行程。", owner: "李娜", operationsCoordinator: "陈晨", nextFollowUpAt: "2026-09-01 16:00", plannedDays: 7,
     lostReason: "", status: "new", creator: "inquiry_lina", createdAt: "2026-08-31 08:45",
   },
 ];
@@ -531,20 +531,6 @@ function createCompleteItineraryVariant(options: CompleteItineraryVariant): Itin
 }
 
 export const itineraries: ItineraryRecord[] = [
-  createCompleteItineraryVariant({
-    id: "itinerary-new",
-    inquiryId: "inquiry-15",
-    code: "ITI-202608-015",
-    title: "昆明大理丽江经典 7 日企业团",
-    origin: "首尔",
-    status: "draft",
-    quoteGeneratedAt: "",
-    adultUnitPrice: null,
-    operationsCoordinator: "陈晨",
-    creator: "operations_chenchen",
-    createdAt: "2026-08-31 09:00",
-    updatedAt: "2026-08-31 09:00",
-  }),
   createCompleteItineraryVariant({
     id: "itinerary-planning",
     inquiryId: "inquiry-11",

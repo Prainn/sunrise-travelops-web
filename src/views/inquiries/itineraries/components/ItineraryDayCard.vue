@@ -176,7 +176,7 @@ import { formatMoney, sumMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
 import ItineraryDayForm from "./ItineraryDayForm.vue";
 
-type EditableDayField = "departure" | "destination" | "transport";
+type EditableDayField = "departure" | "destination" | "transport" | "description";
 const props = defineProps<{
   day: ItineraryDayRecord;
   contentEditable: boolean;

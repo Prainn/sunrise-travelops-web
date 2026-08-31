@@ -6,7 +6,7 @@ import { transitionInquiry } from "../inquiry-workflow";
 import { recalculateItem } from "./pricing";
 import { calculateHotelRoomCount, createDefaultQuoteSettings } from "./quote-pricing";
 
-type EditableDayField = "departure" | "destination" | "transport";
+type EditableDayField = "departure" | "destination" | "transport" | "description";
 
 interface ItineraryEditorOptions {
   inquiry: ComputedRef<InquiryRecord | undefined>;
@@ -67,7 +67,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   function createDailyPlans(startDate: string, dayCount: number): ItineraryDayRecord[] {
     return Array.from({ length: dayCount }, (_, index) => ({
       id: createId("day"), dayNumber: index + 1, date: addDays(startDate, index), departure: "", destination: "",
-      transport: "", items: [],
+      transport: "", description: "", items: [],
     }));
   }
 

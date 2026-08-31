@@ -38,6 +38,20 @@
         />
       </el-select>
     </el-form-item>
+    <el-form-item
+      class="day-form__description"
+      :label="$t('itinerary.dayDescription')"
+    >
+      <el-input
+        :model-value="day.description"
+        :disabled="!editable"
+        type="textarea"
+        :rows="4"
+        resize="vertical"
+        :placeholder="$t('itinerary.dayDescriptionPlaceholder')"
+        @update:model-value="updateField('description', $event)"
+      />
+    </el-form-item>
   </el-form>
 </template>
 
@@ -47,7 +61,7 @@ import { useI18n } from "vue-i18n";
 import type { ItineraryDayRecord } from "@/types/itinerary";
 import { getTransportMethodOptions } from "@/utils/transport-method";
 
-type EditableDayField = "departure" | "destination" | "transport";
+type EditableDayField = "departure" | "destination" | "transport" | "description";
 
 const props = defineProps<{ day: ItineraryDayRecord; editable: boolean }>();
 const emit = defineEmits<{ "update-field": [field: EditableDayField, value: string] }>();
@@ -77,6 +91,8 @@ function updateTransport(values: string[]) {
   :deep(.el-form-item__label) { padding-bottom: 6px; color: var(--el-text-color-regular); font-weight: 500; line-height: 20px; }
   :deep(.el-select) { width: 100%; }
 }
+
+.day-form__description { grid-column: 1 / -1; }
 
 @media (width <= 900px) {
   .day-form { grid-template-columns: 1fr; }

@@ -75,11 +75,13 @@ describe("local data services", () => {
   it("keeps itinerary mock records linked to existing inquiries", () => {
     expect(inquiries).toHaveLength(5);
     expect(inquiries.map((inquiry) => inquiry.status).sort()).toEqual(["archived", "lost", "new", "planning", "quoted"]);
-    expect(itineraries.map((itinerary) => itinerary.status)).toEqual(["draft", "draft", "quoted", "draft", "archived"]);
+    expect(itineraries.map((itinerary) => itinerary.status)).toEqual(["draft", "quoted", "draft", "archived"]);
     expect(itineraries.every((itinerary) => itinerary.days > 0)).toBe(true);
     expect(itineraries.every((itinerary) => inquiries.some((inquiry) => inquiry.id === itinerary.inquiryId))).toBe(true);
     expect(itineraries.every((itinerary) => itinerary.updatedAt.length > 0)).toBe(true);
-    expect(inquiries.every((inquiry) => itineraries.some((itinerary) => itinerary.inquiryId === inquiry.id))).toBe(true);
+    expect(itineraries.some((itinerary) => itinerary.inquiryId === "inquiry-15")).toBe(false);
+    expect(inquiries.filter((inquiry) => inquiry.id !== "inquiry-15").every((inquiry) =>
+      itineraries.some((itinerary) => itinerary.inquiryId === inquiry.id))).toBe(true);
     expect(inquiries.every((inquiry) => inquiry.plannedDays > 0)).toBe(true);
     expect(inquiries.every((inquiry) => inquiry.operationsCoordinator.length > 0)).toBe(true);
     expect(inquiries.every((inquiry) => tourismResources.agency.some((agency) => agency.id === inquiry.agencyId))).toBe(true);
@@ -100,7 +102,7 @@ describe("local data services", () => {
     expect(guides).toHaveLength(7);
   });
 
-  it("provides a complete seven-day itinerary for every inquiry", () => {
+  it("provides a complete seven-day itinerary for every inquiry except the new inquiry", () => {
     const resourcePriceKeys = new Set(getResourcePriceOptions().map((option) =>
       `${option.type}:${option.resourceId}:${option.resourcePriceId}`));
     const itineraryIds = itineraries.flatMap((itinerary) => [
@@ -108,7 +110,7 @@ describe("local data services", () => {
       ...itinerary.dailyPlans.flatMap((day) => [day.id, ...day.items.map((item) => item.id)]),
     ]);
 
-    expect(itineraries).toHaveLength(5);
+    expect(itineraries).toHaveLength(4);
     expect(new Set(itineraryIds).size).toBe(itineraryIds.length);
     expect(itineraries.every((itinerary) => itinerary.days === 7)).toBe(true);
     expect(itineraries.every((itinerary) => itinerary.dailyPlans.length === 7)).toBe(true);
