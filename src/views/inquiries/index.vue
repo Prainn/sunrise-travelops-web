@@ -79,16 +79,18 @@ const agencyOptions = computed(() => resourceService.agencies.filter((agency) =>
 const ownerOptions = computed(() => getEnabledCoordinatorNames("INQUIRY_COORDINATOR"));
 const operationsCoordinatorOptions = computed(() => getEnabledCoordinatorNames("OPERATIONS_COORDINATOR"));
 const sourceOptions = ["WhatsApp", "Email", "Website", "WeChat", "Referral"];
-const filteredInquiries = computed(() => inquiryStore.filter((record) => {
-  const query = keywords.value.toLowerCase();
-  return (
-    (!status.value || record.status === status.value)
-    && (!owner.value || record.owner === owner.value)
-    && (!sourceChannel.value || record.sourceChannel === sourceChannel.value)
-    && (!query || [record.code, record.agencyName, record.contactName, record.email, record.phone]
-      .some((field) => field.toLowerCase().includes(query)))
-  );
-}));
+const filteredInquiries = computed(() => inquiryStore
+  .filter((record) => {
+    const query = keywords.value.toLowerCase();
+    return (
+      (!status.value || record.status === status.value)
+      && (!owner.value || record.owner === owner.value)
+      && (!sourceChannel.value || record.sourceChannel === sourceChannel.value)
+      && (!query || [record.code, record.agencyName, record.contactName, record.email, record.phone]
+        .some((field) => field.toLowerCase().includes(query)))
+    );
+  })
+  .sort((left, right) => right.createdAt.localeCompare(left.createdAt)));
 const pagedInquiries = computed(() => filteredInquiries.value.slice(
   (pageNum.value - 1) * pageSize.value,
   pageNum.value * pageSize.value

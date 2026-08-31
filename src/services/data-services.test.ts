@@ -8,6 +8,7 @@ vi.mock("@/utils/auth", () => ({
 import { attractions, businessCategoryTypes, guides, hotels, inquiries, inquiryLogs, itineraries, resourceUnits, restaurants, tourismResources, transportMethods, users } from "@/data/data";
 import { getResourceUnitName } from "@/utils/resource-unit";
 import { getTransportMethodNames } from "@/utils/transport-method";
+import { getResourcePriceOptions } from "@/views/inquiries/itineraries/pricing";
 import { dictionaryService } from "./dictionary.service";
 import { userService } from "./user.service";
 
@@ -72,7 +73,7 @@ describe("local data services", () => {
   });
 
   it("keeps itinerary mock records linked to existing inquiries", () => {
-    expect(itineraries.map((itinerary) => itinerary.status)).toEqual(["draft", "quoted", "draft"]);
+    expect(itineraries.map((itinerary) => itinerary.status)).toEqual(["draft", "quoted", "draft", "draft"]);
     expect(itineraries.every((itinerary) => itinerary.days > 0)).toBe(true);
     expect(itineraries.every((itinerary) => inquiries.some((inquiry) => inquiry.id === itinerary.inquiryId))).toBe(true);
     expect(itineraries.every((itinerary) => itinerary.updatedAt.length > 0)).toBe(true);
@@ -87,7 +88,7 @@ describe("local data services", () => {
   });
 
   it("provides enough mock records for list, filter, and pagination testing", () => {
-    expect(inquiries).toHaveLength(10);
+    expect(inquiries).toHaveLength(15);
     expect(tourismResources.agency).toHaveLength(8);
     expect(tourismResources.supplier).toHaveLength(3);
     expect(tourismResources.transport).toHaveLength(5);
@@ -95,6 +96,26 @@ describe("local data services", () => {
     expect(attractions).toHaveLength(8);
     expect(restaurants).toHaveLength(12);
     expect(guides).toHaveLength(7);
+  });
+
+  it("provides a complete seven-day itinerary for the new planning inquiry", () => {
+    const itinerary = itineraries.find((record) => record.inquiryId === "inquiry-11");
+    const resourcePriceKeys = new Set(getResourcePriceOptions().map((option) =>
+      `${option.type}:${option.resourceId}:${option.resourcePriceId}`));
+
+    expect(itinerary?.days).toBe(7);
+    expect(itinerary?.dailyPlans).toHaveLength(7);
+    expect(itinerary?.dailyPlans.map((day) => day.dayNumber)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(itinerary?.dailyPlans.every((day) => (
+      day.description.length > 0
+      && day.mealSummary.length > 0
+      && day.accommodationSummary.length > 0
+      && day.items.length > 0
+    ))).toBe(true);
+    expect(itinerary?.dailyPlans.flatMap((day) => day.items).every((item) =>
+      resourcePriceKeys.has(`${item.type}:${item.resourceId}:${item.resourcePriceId}`))).toBe(true);
+    expect(itinerary?.dailyPlans.flatMap((day) => day.items).every((item) =>
+      item.totalCost === item.unitCost * item.quantity)).toBe(true);
   });
 
   it("keeps ground operator references linked to supplier mock data", () => {

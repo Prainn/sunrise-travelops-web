@@ -113,6 +113,7 @@ function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord, genera
       <h1 style="margin:0 0 8px;font-size:26px;">${escapeHtml(itinerary.title)}</h1>
       <div style="color:#606266;">行程编号：${escapeHtml(itinerary.code)} · 旅行社：${escapeHtml(inquiry.agencyName)}</div>
       <div style="margin-top:6px;color:#606266;">日期：${escapeHtml(itinerary.startDate)} — ${escapeHtml(itinerary.endDate)} · 共 ${itinerary.days} 天</div>
+      <div style="margin-top:6px;color:#606266;">人数：成人 ${itinerary.adults} 人 · 儿童 ${itinerary.childrenCount} 人</div>
       <div style="margin-top:6px;color:#606266;">报价生成时间：${escapeHtml(generatedAt)}</div>
     </header>
     ${daySections}
