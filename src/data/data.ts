@@ -8,7 +8,10 @@ import type {
   AttractionRecord, BusinessCategoryTypeRecord, GuideRecord, HotelRecord, ResourceUnitRecord,
   RestaurantRecord, TourismResourceRecord, TourismResourceType, TransportMethodRecord,
 } from "@/types/resource";
-import { ROLE_ROOT } from "@/constants";
+import { DEFAULT_QUOTE_PROFIT_MARGIN_RATE, ROLE_ROOT } from "@/constants";
+import { roundMoney } from "@/utils";
+
+const DEFAULT_QUOTE_ADULT_UNIT_PRICE = roundMoney(3260 / 6 / (1 - DEFAULT_QUOTE_PROFIT_MARGIN_RATE / 100));
 
 const adminPermissions = [
   "sys:user:list",
@@ -429,7 +432,7 @@ export const itineraries: ItineraryRecord[] = [
     specialRequirements: "丽江安排一晚古城内住宿",
     inquiryCoordinatorNotes: "首次合作，优先保证酒店位置和英文服务。",
     operationsCoordinator: "张伟",
-    quote: { adultUnitPrice: 876.34 },
+    quote: { adultUnitPrice: DEFAULT_QUOTE_ADULT_UNIT_PRICE },
     dailyPlans: [
       {
         id: "itinerary-1-day-1", dayNumber: 1, date: "2026-10-12", departure: "新加坡", destination: "昆明", transport: "flight,businessCar",

@@ -1,3 +1,5 @@
+export * from "./constant";
+
 /** 应用存储前缀 */
 export const APP_PREFIX = "vea";
 
