@@ -32,6 +32,7 @@
       :owner-options="ownerOptions"
       :operations-coordinator-options="operationsCoordinatorOptions"
       :source-options="sourceOptions"
+      @create-contact="createAgencyContact"
       @submit="saveInquiry"
     />
     <InquiryDetailDrawer
@@ -146,6 +147,17 @@ function openEditDialog(record: InquiryRecord) {
 function openDetailDrawer(record: InquiryRecord) {
   selectedInquiry.value = record;
   isDetailVisible.value = true;
+}
+
+function createAgencyContact(agencyId: string, name: string) {
+  const agency = resourceService.agencies.find((item) => item.id === agencyId);
+  if (!agency || agency.contacts.some((contact) => contact.name.toLowerCase() === name.toLowerCase())) return;
+  agency.contacts.push({
+    id: createId("agency-contact"),
+    name,
+    phone: "",
+  });
+  ElMessage.success(t("inquiry.contactAdded", { name }));
 }
 
 function openItineraryManagement(record: InquiryRecord) {

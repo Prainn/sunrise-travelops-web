@@ -41,69 +41,14 @@
             </el-select>
           </el-form-item>
         </el-col>
-        <el-col :span="12">
-          <el-form-item
-            :label="$t('inquiry.agencyName')"
-            prop="agencyId"
-          >
-            <el-select
-              v-model="form.agencyId"
-              filterable
-              :placeholder="$t('common.selectPlaceholder')"
-              @change="selectAgency"
-            >
-              <el-option
-                v-for="agency in agencyOptions"
-                :key="agency.id"
-                :label="`${agency.name} (${agency.code})`"
-                :value="agency.id"
-              />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item :label="$t('inquiry.agencyCode')">
-            <el-input
-              v-model="form.agencyCode"
-              disabled
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item
-            :label="$t('inquiry.contactName')"
-            prop="contactName"
-          >
-            <el-input
-              v-model="form.contactName"
-              disabled
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item :label="$t('inquiry.email')">
-            <el-input
-              v-model="form.email"
-              disabled
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item :label="$t('inquiry.phone')">
-            <el-input
-              v-model="form.phone"
-              disabled
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item :label="$t('inquiry.countryOrRegion')">
-            <el-input
-              v-model="form.countryOrRegion"
-              disabled
-            />
-          </el-form-item>
-        </el-col>
+        <InquiryAgencyFields
+          :record="form"
+          :agency-options="agencyOptions"
+          @create-contact="createContact"
+          @select-agency="selectAgency"
+          @select-contact="selectContact"
+          @update-contact-name="form.contactName = $event"
+        />
         <el-col :span="12">
           <el-form-item
             :label="$t('inquiry.sourceChannel')"
@@ -233,14 +178,15 @@ import { computed, reactive, ref } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { InquiryRecord } from "@/types/inquiry";
-import type { TourismResourceRecord } from "@/types/resource";
+import type { AgencyContactRecord, AgencyRecord } from "@/types/resource";
+import InquiryAgencyFields from "./InquiryAgencyFields.vue";
 import { INQUIRY_STATUS_OPTIONS } from "../options";
 
 const props = defineProps<{
   modelValue: boolean;
   record: InquiryRecord;
   isEditing: boolean;
-  agencyOptions: TourismResourceRecord[];
+  agencyOptions: AgencyRecord[];
   ownerOptions: string[];
   operationsCoordinatorOptions: string[];
   sourceOptions: string[];
@@ -248,11 +194,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
   submit: [record: InquiryRecord];
+  "create-contact": [agencyId: string, name: string];
 }>();
 
 const { t } = useI18n();
 const formRef = ref<FormInstance>();
 const form = reactive<InquiryRecord>({ ...props.record });
+const selectedAgency = computed(() => props.agencyOptions.find((agency) => agency.id === form.agencyId));
 const editableStatusOptions = computed(() => {
   if (!props.isEditing) return INQUIRY_STATUS_OPTIONS.filter((item) => item.value === "new");
   const allowedStatuses = props.record.status === "quoted"
@@ -262,7 +210,7 @@ const editableStatusOptions = computed(() => {
 });
 const rules = computed<FormRules>(() => ({
   agencyId: [{ required: true, message: t("inquiry.agencyRequired"), trigger: "change" }],
-  contactName: [{ required: true, message: t("inquiry.contactNameRequired"), trigger: "blur" }],
+  contactName: [{ required: true, message: t("inquiry.contactNameRequired"), trigger: "change" }],
   sourceChannel: [{ required: true, message: t("inquiry.sourceChannelRequired"), trigger: "change" }],
   owner: [{ required: props.isEditing, message: t("inquiry.ownerRequired"), trigger: "change" }],
   operationsCoordinator: [{ required: true, message: t("inquiry.operationsCoordinatorRequired"), trigger: "change" }],
@@ -273,7 +221,21 @@ const rules = computed<FormRules>(() => ({
 
 function resetForm() {
   Object.assign(form, props.record);
+  syncAgencyDetails();
   formRef.value?.clearValidate();
+}
+
+function syncAgencyDetails() {
+  const agency = selectedAgency.value;
+  if (!agency) return;
+  const contact = agency.contacts.find((item) => item.name === form.contactName);
+  Object.assign(form, {
+    agencyCode: agency.code,
+    agencyName: agency.name,
+    email: agency.email,
+    phone: contact?.phone ?? "",
+    countryOrRegion: agency.countryOrRegion,
+  });
 }
 
 function selectAgency(agencyId: string) {
@@ -283,15 +245,27 @@ function selectAgency(agencyId: string) {
     agencyId: agency.id,
     agencyCode: agency.code,
     agencyName: agency.name,
-    contactName: agency.contact,
+    contactName: "",
     email: agency.email,
-    phone: agency.phone,
+    phone: "",
     countryOrRegion: agency.countryOrRegion,
   });
 }
 
+function selectContact(contact: AgencyContactRecord) {
+  form.contactName = contact.name;
+  form.phone = contact.phone;
+}
+
+function createContact(name: string) {
+  if (!selectedAgency.value) return;
+  form.phone = "";
+  emit("create-contact", selectedAgency.value.id, name);
+}
+
 async function submitForm() {
   if (!(await formRef.value?.validate().catch(() => false))) return;
+  syncAgencyDetails();
   emit("submit", { ...form, lostReason: form.status === "lost" ? form.lostReason : "" });
 }
 </script>

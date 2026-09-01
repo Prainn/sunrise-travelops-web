@@ -3,6 +3,30 @@ import type { ItineraryItemType, ItineraryPriceUnit } from "./itinerary";
 export type ResourceStatus = "enabled" | "disabled";
 export type TourismResourceType = "agency" | "supplier" | "transport";
 
+export interface AgencyContactRecord {
+  id: string;
+  name: string;
+  phone: string;
+}
+
+export interface AgencyRecord {
+  id: string;
+  code: string;
+  name: string;
+  city: string;
+  countryOrRegion: string;
+  email: string;
+  status: ResourceStatus;
+  remark: string;
+  contacts: AgencyContactRecord[];
+}
+
+export interface TourismResourceCollection {
+  agency: AgencyRecord[];
+  supplier: TourismResourceRecord[];
+  transport: TourismResourceRecord[];
+}
+
 export interface ResourceUnitRecord {
   id: string;
   code: ItineraryPriceUnit;

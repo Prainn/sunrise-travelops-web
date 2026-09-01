@@ -6,7 +6,7 @@ import type { ItineraryRecord } from "@/types/itinerary";
 import type { InquiryRecord } from "@/types/inquiry";
 import type {
   AttractionRecord, BusinessCategoryTypeRecord, GuideRecord, HotelRecord, ResourceUnitRecord,
-  RestaurantRecord, TourismResourceRecord, TourismResourceType, TransportMethodRecord,
+  RestaurantRecord, TourismResourceCollection, TourismResourceRecord, TransportMethodRecord,
 } from "@/types/resource";
 import { ALL_RESOURCE_PERMISSIONS, ROLE_ROOT } from "@/constants";
 
@@ -998,16 +998,55 @@ export const attractions: AttractionRecord[] = [
 ];
 
 /** 旅游资源前端原型数据，按业务实体分开维护。 */
-export const tourismResources: Record<TourismResourceType, TourismResourceRecord[]> = {
+export const tourismResources: TourismResourceCollection = {
   agency: [
-    { id: "agency-1", code: "AGY-001", name: "新加坡远景旅行社", city: "新加坡", countryOrRegion: "新加坡", contact: "Emily Tan", email: "emily@example.com", phone: "+65 6123 4567", status: "enabled", remark: "东南亚团队客户" },
-    { id: "agency-2", code: "AGY-002", name: "Malaysia Star Holidays", city: "吉隆坡", countryOrRegion: "马来西亚", contact: "Jason Lee", email: "jason@example.com", phone: "+60 3-1234 5678", status: "enabled", remark: "摄影团客户" },
-    { id: "agency-3", code: "AGY-003", name: "Bangkok Discovery Travel", city: "曼谷", countryOrRegion: "泰国", contact: "Narin Chai", email: "narin@example.com", phone: "+66 2-123-4567", status: "enabled", remark: "小团定制客户" },
-    { id: "agency-4", code: "AGY-004", name: "Jakarta Nusantara Tours", city: "雅加达", countryOrRegion: "印度尼西亚", contact: "Ayu Pratama", email: "ayu@example.com", phone: "+62 21 555 0104", status: "enabled", remark: "英文团队客户" },
-    { id: "agency-5", code: "AGY-005", name: "Seoul Hanul Travel", city: "首尔", countryOrRegion: "韩国", contact: "Min-jun Park", email: "minjun@example.com", phone: "+82 2-555-0105", status: "enabled", remark: "摄影和文化团队" },
-    { id: "agency-6", code: "AGY-006", name: "Taipei Formosa Holidays", city: "台北", countryOrRegion: "中国台湾", contact: "林怡君", email: "yijun@example.com", phone: "+886 2 5550 1060", status: "enabled", remark: "家庭定制团" },
-    { id: "agency-7", code: "AGY-007", name: "Hong Kong Evergreen Travel", city: "香港", countryOrRegion: "中国香港", contact: "Kelly Wong", email: "kelly@example.com", phone: "+852 2555 0107", status: "enabled", remark: "亲子和银发团队" },
-    { id: "agency-8", code: "AGY-008", name: "Manila Archipelago Travel", city: "马尼拉", countryOrRegion: "菲律宾", contact: "Maria Santos", email: "maria@example.com", phone: "+63 2 8555 0108", status: "disabled", remark: "暂停合作" },
+    {
+      id: "agency-1", code: "AGY-001", name: "新加坡远景旅行社", city: "新加坡", countryOrRegion: "新加坡", email: "emily@example.com", status: "enabled", remark: "东南亚团队客户",
+      contacts: [
+        { id: "agency-contact-1", name: "Emily Tan", phone: "+65 6123 4567" },
+        { id: "agency-contact-2", name: "Daniel Lim", phone: "+65 6123 4570" },
+      ],
+    },
+    {
+      id: "agency-2", code: "AGY-002", name: "Malaysia Star Holidays", city: "吉隆坡", countryOrRegion: "马来西亚", email: "jason@example.com", status: "enabled", remark: "摄影团客户",
+      contacts: [
+        { id: "agency-contact-3", name: "Jason Lee", phone: "+60 3-1234 5678" },
+        { id: "agency-contact-4", name: "Amelia Wong", phone: "+60 3-1234 5680" },
+      ],
+    },
+    {
+      id: "agency-3", code: "AGY-003", name: "Bangkok Discovery Travel", city: "曼谷", countryOrRegion: "泰国", email: "narin@example.com", status: "enabled", remark: "小团定制客户",
+      contacts: [
+        { id: "agency-contact-5", name: "Narin Chai", phone: "+66 2-123-4567" },
+        { id: "agency-contact-6", name: "Pim Suda", phone: "+66 2-123-4568" },
+      ],
+    },
+    {
+      id: "agency-4", code: "AGY-004", name: "Jakarta Nusantara Tours", city: "雅加达", countryOrRegion: "印度尼西亚", email: "ayu@example.com", status: "enabled", remark: "英文团队客户",
+      contacts: [{ id: "agency-contact-7", name: "Ayu Pratama", phone: "+62 21 555 0104" }],
+    },
+    {
+      id: "agency-5", code: "AGY-005", name: "Seoul Hanul Travel", city: "首尔", countryOrRegion: "韩国", email: "minjun@example.com", status: "enabled", remark: "摄影和文化团队",
+      contacts: [
+        { id: "agency-contact-8", name: "Min-jun Park", phone: "+82 2-555-0105" },
+        { id: "agency-contact-9", name: "Seo-yeon Kim", phone: "+82 2-555-0106" },
+      ],
+    },
+    {
+      id: "agency-6", code: "AGY-006", name: "Taipei Formosa Holidays", city: "台北", countryOrRegion: "中国台湾", email: "yijun@example.com", status: "enabled", remark: "家庭定制团",
+      contacts: [{ id: "agency-contact-10", name: "林怡君", phone: "+886 2 5550 1060" }],
+    },
+    {
+      id: "agency-7", code: "AGY-007", name: "Hong Kong Evergreen Travel", city: "香港", countryOrRegion: "中国香港", email: "kelly@example.com", status: "enabled", remark: "亲子和银发团队",
+      contacts: [
+        { id: "agency-contact-11", name: "Kelly Wong", phone: "+852 2555 0107" },
+        { id: "agency-contact-12", name: "Oscar Chan", phone: "+852 2555 0108" },
+      ],
+    },
+    {
+      id: "agency-8", code: "AGY-008", name: "Manila Archipelago Travel", city: "马尼拉", countryOrRegion: "菲律宾", email: "maria@example.com", status: "disabled", remark: "暂停合作",
+      contacts: [{ id: "agency-contact-13", name: "Maria Santos", phone: "+63 2 8555 0108" }],
+    },
   ],
   supplier: [
     { id: "supplier-1", code: "SUP-001", name: "云南云途地接社", city: "昆明", countryOrRegion: "中国", contact: "李经理", email: "", phone: "13800000001", status: "enabled", remark: "云南线路综合地接社" },

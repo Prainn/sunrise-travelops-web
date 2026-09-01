@@ -11,6 +11,11 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AgencyContactDialog: typeof import('./../src/views/resources/agency/components/AgencyContactDialog.vue')['default']
+    AgencyContactSelect: typeof import('./../src/views/inquiries/components/AgencyContactSelect.vue')['default']
+    AgencyContactsPanel: typeof import('./../src/views/resources/agency/components/AgencyContactsPanel.vue')['default']
+    AgencyEditorDialog: typeof import('./../src/views/resources/agency/components/AgencyEditorDialog.vue')['default']
+    AgencySidebar: typeof import('./../src/views/resources/agency/components/AgencySidebar.vue')['default']
     AppLink: typeof import('./../src/components/AppLink/index.vue')['default']
     AppVersionNotifier: typeof import('./../src/components/AppVersionNotifier.vue')['default']
     AttractionEditorDialog: typeof import('./../src/views/resources/attraction/components/AttractionEditorDialog.vue')['default']
@@ -56,6 +61,7 @@ declare module 'vue' {
     ElMenu: typeof import('element-plus/es')['ElMenu']
     ElMenuItem: typeof import('element-plus/es')['ElMenuItem']
     ElOption: typeof import('element-plus/es')['ElOption']
+    ElOptionGroup: typeof import('element-plus/es')['ElOptionGroup']
     ElPageHeader: typeof import('element-plus/es')['ElPageHeader']
     ElPagination: typeof import('element-plus/es')['ElPagination']
     ElRadio: typeof import('element-plus/es')['ElRadio']
@@ -83,6 +89,7 @@ declare module 'vue' {
     GuideTable: typeof import('./../src/views/resources/guide/components/GuideTable.vue')['default']
     Hamburger: typeof import('./../src/components/Hamburger/index.vue')['default']
     HotelTable: typeof import('./../src/views/resources/hotel/components/HotelTable.vue')['default']
+    InquiryAgencyFields: typeof import('./../src/views/inquiries/components/InquiryAgencyFields.vue')['default']
     InquiryDetailDrawer: typeof import('./../src/views/inquiries/components/InquiryDetailDrawer.vue')['default']
     InquiryEditorDialog: typeof import('./../src/views/inquiries/components/InquiryEditorDialog.vue')['default']
     InquirySearchForm: typeof import('./../src/views/inquiries/components/InquirySearchForm.vue')['default']
