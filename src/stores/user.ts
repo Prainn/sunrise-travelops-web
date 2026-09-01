@@ -4,7 +4,7 @@ import type { UserInfo } from "@/types/user";
 import { authService, userService } from "@/services";
 import type { LoginRequest } from "@/types/auth";
 
-import { AuthStorage } from "@/utils/auth";
+import { AuthStorage } from "@/utils/auth-storage";
 import { usePermissionStoreHook } from "@/stores/permission";
 import { useDictStoreHook } from "@/stores/dict";
 import { useTagsViewStore } from "./tags-view";
@@ -46,7 +46,7 @@ export const useUserStore = defineStore("user", () => {
    * 获取用户信息
    */
   async function getUserInfo(): Promise<UserInfo> {
-    const data = await userService.getCurrentUser(AuthStorage.getAccessToken());
+    const data = await userService.getCurrentUser();
     if (!data) {
       throw new Error("Verification failed, please Login again.");
     }
@@ -58,8 +58,11 @@ export const useUserStore = defineStore("user", () => {
    * 登出
    */
   async function logout(): Promise<void> {
-    await authService.logout();
-    resetAllState();
+    try {
+      await authService.logout();
+    } finally {
+      resetAllState();
+    }
   }
 
   /**

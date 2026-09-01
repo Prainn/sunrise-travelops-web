@@ -806,6 +806,7 @@
   "service": {
     "auth": {
       "invalidCredentials": "Incorrect username or password",
+      "credentialManagementUnavailable": "The backend does not provide credential management yet",
       "missingRefreshToken": "No valid refresh token",
       "sessionExpired": "Your session has expired"
     },

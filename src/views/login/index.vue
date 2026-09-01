@@ -149,7 +149,7 @@ import router from "@/router";
 import { hasRouteChainAccess } from "@/router/access";
 import { useUserStore } from "@/stores/user";
 import type { LoginRequest } from "@/types/auth";
-import { AuthStorage } from "@/utils/auth";
+import { AuthStorage } from "@/utils/auth-storage";
 import { appConfig } from "@/settings";
 import ThemeSwitch from "@/components/ThemeSwitch/index.vue";
 import logo from "@/assets/images/logo.png";
@@ -166,8 +166,8 @@ const UserIcon = markRaw(User);
 const LockIcon = markRaw(Lock);
 
 const loginFormData = ref<LoginRequest>({
-  username: "admin",
-  password: "123456",
+  username: "",
+  password: "",
   rememberMe: AuthStorage.getRememberMe(),
 });
 

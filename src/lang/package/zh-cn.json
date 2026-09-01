@@ -806,6 +806,7 @@
   "service": {
     "auth": {
       "invalidCredentials": "用户名或密码错误",
+      "credentialManagementUnavailable": "后端暂未提供密码与凭证管理接口",
       "missingRefreshToken": "没有有效的刷新令牌",
       "sessionExpired": "登录状态已失效，请重新登录"
     },

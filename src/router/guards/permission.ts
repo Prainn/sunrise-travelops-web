@@ -35,7 +35,7 @@ export function setupPermissionGuard() {
       const permissionStore = usePermissionStore();
       const userStore = useUserStore();
 
-      if (!userStore.userInfo?.roles?.length) {
+      if (!userStore.userInfo?.username) {
         await userStore.getUserInfo();
       }
 

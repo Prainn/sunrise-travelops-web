@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lang/utils", () => ({ translate: (key: string) => key }));
-vi.mock("@/utils/auth", () => ({
-  AuthStorage: { getAccessToken: () => "" },
-}));
 
 import { attractions, businessCategoryTypes, guides, hotels, inquiries, inquiryLogs, itineraries, resourceUnits, restaurants, tourismResources, transportMethods, users } from "@/data/data";
 import { getResourceUnitName } from "@/utils/resource-unit";

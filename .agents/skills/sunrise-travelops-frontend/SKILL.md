@@ -1,9 +1,9 @@
 ---
-name: vue-admin
-description: Vue 3 + TypeScript development standards. Use this skill when building Vue 3 applications with Composition API, Pinia, UnoCSS and SCSS. Covers naming, CSS architecture, component structure, API patterns and code quality. UI-library agnostic (Element Plus, Ant Design Vue, etc).
+name: sunrise-travelops-frontend
+description: Sunrise TravelOps frontend development standards for this Vue 3 and TypeScript repository. Use when implementing or reviewing pages, components, stores, services, styles, or API boundaries in sunrise-travel-ops-web.
 ---
 
-# Vue 3 开发规范
+# Sunrise TravelOps 前端开发规范
 
 ## 技术栈
 

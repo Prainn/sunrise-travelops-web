@@ -102,11 +102,7 @@ After starting, visit http://localhost:3000 and log in with `admin` / `123456`.
 
 ## AI Programming
 
-This project ships with an [Agent Skill](https://skills.sh/youlaitech/youlai-skills). Once installed, the AI coding assistant automatically follows this project's Vue3 development conventions (naming, directory structure, BEM + UnoCSS, component and API conventions). It supports 70+ agents including CodeBuddy, Claude Code, Cursor, Codex, and GitHub Copilot.
-
-```bash
-npx skills add https://github.com/youlaitech/youlai-skills --skill vue-admin
-```
+This project includes the local [sunrise-travelops-frontend](.agents/skills/sunrise-travelops-frontend/SKILL.md) Agent Skill. Compatible AI programming assistants can use it to apply this project's frontend development conventions and best practices.
 
 ## Ecosystem Matrix
 

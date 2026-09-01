@@ -13,8 +13,9 @@ import type {
   UserProfileForm,
   UserQueryParams,
 } from "@/types/user";
-import { AuthStorage } from "@/utils/auth";
 import { authService } from "./auth.service";
+
+let currentUsername = "";
 
 function createId(): string {
   return String(Math.max(0, ...users.map((item) => Number(item.id) || 0)) + 1);
@@ -27,16 +28,13 @@ function requireUser(userId: string) {
 }
 
 function requireCurrentUser() {
-  const userId = authService.getUserId(AuthStorage.getAccessToken());
-  return requireUser(userId ?? "");
+  const user = users.find((item) => item.username === currentUsername);
+  if (!user) throw new Error(translate("service.user.notFound"));
+  return user;
 }
 
-function verifyPassword(data: PasswordVerifyForm) {
-  const user = requireCurrentUser();
-  if (user.password !== data.password) {
-    throw new Error(translate("service.auth.invalidCredentials"));
-  }
-  return user;
+function rejectUnsupportedCredentialMutation(): never {
+  throw new Error(translate("service.auth.credentialManagementUnavailable"));
 }
 
 function toUserItem(user: (typeof users)[number]): UserItem {
@@ -147,7 +145,6 @@ export const userService = {
     users.push({
       id: createId(),
       username,
-      password: "123456",
       status: data.status === 0 ? "disabled" : "enabled",
       nickname,
       avatar: data.avatar ?? "",
@@ -195,28 +192,26 @@ export const userService = {
     }
   },
 
-  /** 重置本地原型用户密码。 */
-  async resetPassword(userId: string, password: string): Promise<void> {
-    if (password.length < 6) throw new Error(translate("service.user.passwordMin"));
-    requireUser(userId).password = password;
+  /** 密码重置需等待后端提供对应接口。 */
+  async resetPassword(_userId: string, _password: string): Promise<void> {
+    rejectUnsupportedCredentialMutation();
   },
 
-  /** 获取当前本地原型会话对应的用户身份与权限。 */
-  async getCurrentUser(accessToken: string): Promise<UserInfo> {
-    const userId = authService.getUserId(accessToken);
-    const user = users.find((item) => item.id === userId && item.status === "enabled");
-
-    if (!user) {
-      throw new Error(translate("service.auth.sessionExpired"));
-    }
+  /** 获取后端当前用户，并映射为页面使用的身份与权限结构。 */
+  async getCurrentUser(): Promise<UserInfo> {
+    const currentUser = await authService.getCurrentUser();
+    currentUsername = currentUser.username;
+    const prototypeUser = users.find((item) => item.username === currentUser.username);
 
     return {
-      userId: user.id,
-      username: user.username,
-      nickname: user.nicknameKey ? translate(user.nicknameKey) : user.nickname,
-      avatar: user.avatar,
-      roles: [...user.roles],
-      perms: [...user.perms],
+      userId: currentUser.id,
+      username: currentUser.username,
+      nickname: prototypeUser?.nicknameKey
+        ? translate(prototypeUser.nicknameKey)
+        : prototypeUser?.nickname ?? currentUser.username,
+      avatar: prototypeUser?.avatar ?? "/favicon.ico",
+      roles: [],
+      perms: [...currentUser.permissions],
     };
   },
 
@@ -260,30 +255,27 @@ export const userService = {
     if (data.gender !== undefined) user.gender = data.gender;
   },
 
-  async changePassword(data: PasswordChangeForm): Promise<void> {
-    const user = verifyPassword({ password: data.oldPassword });
-    user.password = data.newPassword ?? user.password;
+  async changePassword(_data: PasswordChangeForm): Promise<void> {
+    rejectUnsupportedCredentialMutation();
   },
 
   async sendMobileCode(_mobile: string): Promise<void> {},
 
-  async bindOrChangeMobile(data: MobileUpdateForm): Promise<void> {
-    const user = verifyPassword(data);
-    user.mobile = data.mobile ?? "";
+  async bindOrChangeMobile(_data: MobileUpdateForm): Promise<void> {
+    rejectUnsupportedCredentialMutation();
   },
 
-  async unbindMobile(data: PasswordVerifyForm): Promise<void> {
-    verifyPassword(data).mobile = "";
+  async unbindMobile(_data: PasswordVerifyForm): Promise<void> {
+    rejectUnsupportedCredentialMutation();
   },
 
   async sendEmailCode(_email: string): Promise<void> {},
 
-  async bindOrChangeEmail(data: EmailUpdateForm): Promise<void> {
-    const user = verifyPassword(data);
-    user.email = data.email ?? "";
+  async bindOrChangeEmail(_data: EmailUpdateForm): Promise<void> {
+    rejectUnsupportedCredentialMutation();
   },
 
-  async unbindEmail(data: PasswordVerifyForm): Promise<void> {
-    verifyPassword(data).email = "";
+  async unbindEmail(_data: PasswordVerifyForm): Promise<void> {
+    rejectUnsupportedCredentialMutation();
   },
 };

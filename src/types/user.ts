@@ -1,5 +1,24 @@
 import type { BaseQueryParams } from "@/types/common";
 
+/** 尚未接入用户管理 API 的本地原型用户记录。 */
+export interface PrototypeUserRecord {
+  id: string;
+  username: string;
+  status: "enabled" | "disabled";
+  nickname: string;
+  nicknameKey?: string;
+  avatar: string;
+  gender: number;
+  mobile: string;
+  email: string;
+  deptId: number;
+  roleIds: number[];
+  roleNames: string;
+  createTime: string;
+  roles: string[];
+  perms: string[];
+}
+
 export interface UserInfo {
   userId?: string;
   username?: string;

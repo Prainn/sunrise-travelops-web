@@ -1,11 +1,11 @@
 {
   "version": 1,
   "skills": {
-    "vue-admin": {
-      "source": "youlaitech/youlai-skills",
+    "sunrise-travelops-frontend": {
+      "source": "Prainn/sunrise-travelops-web",
       "sourceType": "github",
-      "skillPath": "skills/vue-admin/SKILL.md",
-      "computedHash": "b8b0b7645b45e287a7c57da205aa9a016122004f4a84e82720b271658b971874"
+      "skillPath": ".agents/skills/sunrise-travelops-frontend/SKILL.md",
+      "computedHash": "4dd6fd7e0e12e58c4cfcfbb63539e1551cd379a37aea8af6e99425eee9aa0213"
     }
   }
 }

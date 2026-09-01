@@ -1,4 +1,4 @@
-import type { PrototypeUserRecord } from "@/types/auth";
+import type { PrototypeUserRecord } from "@/types/user";
 import type { SystemDictionaryItem, SystemDictionaryType } from "@/types/dictionary";
 import type { VisitOverviewDetail, VisitTrendDetail } from "@/types/dashboard";
 import type { InquiryLogRecord } from "@/types/inquiry-log";
@@ -6,7 +6,7 @@ import type { ItineraryRecord } from "@/types/itinerary";
 import type { InquiryRecord } from "@/types/inquiry";
 import type {
   AttractionRecord, BusinessCategoryTypeRecord, GuideRecord, HotelRecord, ResourceUnitRecord,
-  RestaurantRecord, TourismResourceCollection, TourismResourceRecord, TransportMethodRecord,
+  RestaurantRecord, TourismResourceCollection, TransportMethodRecord,
 } from "@/types/resource";
 import { ALL_RESOURCE_PERMISSIONS, ROLE_ROOT } from "@/constants";
 
@@ -73,15 +73,14 @@ export const roleDefinitions = [
 ] as const;
 
 /**
- * 本地原型账号。
+ * 本地原型用户目录。
  *
- * 这些账号只用于前端演示，不代表生产环境的真实认证数据。
+ * 这些记录仅供尚未接入后端的用户管理和员工选择页面使用，不参与登录鉴权。
  */
 export const users: PrototypeUserRecord[] = [
   {
     id: "1",
     username: "admin",
-    password: "123456",
     status: "enabled",
     nickname: "admin",
     nicknameKey: "user.seed.admin",
@@ -99,7 +98,6 @@ export const users: PrototypeUserRecord[] = [
   {
     id: "2",
     username: "inquiry",
-    password: "123456",
     status: "enabled",
     nickname: "王敏",
     avatar: "/favicon.ico",
@@ -116,7 +114,6 @@ export const users: PrototypeUserRecord[] = [
   {
     id: "3",
     username: "resource",
-    password: "123456",
     status: "enabled",
     nickname: "resource",
     nicknameKey: "user.seed.resourceManager",
@@ -134,7 +131,6 @@ export const users: PrototypeUserRecord[] = [
   {
     id: "4",
     username: "operations",
-    password: "123456",
     status: "enabled",
     nickname: "张伟",
     avatar: "/favicon.ico",
@@ -151,7 +147,6 @@ export const users: PrototypeUserRecord[] = [
   {
     id: "5",
     username: "inquiry_lina",
-    password: "123456",
     status: "enabled",
     nickname: "李娜",
     avatar: "/favicon.ico",
@@ -168,7 +163,6 @@ export const users: PrototypeUserRecord[] = [
   {
     id: "6",
     username: "inquiry_zhouyue",
-    password: "123456",
     status: "enabled",
     nickname: "周悦",
     avatar: "/favicon.ico",
@@ -185,7 +179,6 @@ export const users: PrototypeUserRecord[] = [
   {
     id: "7",
     username: "operations_chenchen",
-    password: "123456",
     status: "enabled",
     nickname: "陈晨",
     avatar: "/favicon.ico",
@@ -202,7 +195,6 @@ export const users: PrototypeUserRecord[] = [
   {
     id: "8",
     username: "operations_zhaolei",
-    password: "123456",
     status: "enabled",
     nickname: "赵磊",
     avatar: "/favicon.ico",
