@@ -261,6 +261,7 @@
     "delete": "删除",
     "deleteCancelled": "已取消删除",
     "deleteConfirm": "确认删除？",
+    "deleteFailed": "删除失败",
     "deleteSelectedConfirm": "确定删除选中的数据吗？",
     "deleteSuccess": "删除成功",
     "disabled": "禁用",
@@ -533,23 +534,6 @@
     "optionValue": "选项值",
     "optionValuePlaceholder": "请输入选项值",
     "searchPlaceholder": "搜索分类名称或编码",
-    "seed": {
-      "commonStatus": {
-        "name": "启用状态",
-        "remark": "系统数据通用的启用与禁用状态"
-      },
-      "gender": {
-        "female": "女",
-        "male": "男",
-        "name": "用户性别",
-        "remark": "用户资料中的性别选项",
-        "unset": "未设置"
-      },
-      "yesNo": {
-        "name": "是否选项",
-        "remark": "系统表单通用的是与否选项"
-      }
-    },
     "tagTypePlaceholder": "请选择标签样式"
   },
   "user": {
@@ -811,7 +795,9 @@
       "sessionExpired": "登录状态已失效，请重新登录"
     },
     "dictionary": {
+      "codeMismatch": "请求中的分类编码与当前分类不一致",
       "codeExists": "分类编码已存在",
+      "idMismatch": "请求中的记录 ID 与当前记录不一致",
       "notFound": "未找到该系统分类",
       "optionNotFound": "未找到该分类选项",
       "optionRequiredFields": "选项名称和选项值不能为空",

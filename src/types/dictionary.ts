@@ -26,6 +26,7 @@ export interface DictTypeForm {
 export interface DictItemQueryParams extends BaseQueryParams {
   keywords?: string;
   dictCode?: string;
+  status?: number;
 }
 
 export interface DictItem {
@@ -53,12 +54,3 @@ export interface DictItemOption {
   label: string;
   tagType?: DictionaryTagType;
 }
-
-export type SystemDictionaryType = DictTypeItem & {
-  nameKey?: string;
-  remarkKey?: string;
-};
-
-export type SystemDictionaryItem = DictItem & {
-  labelKey?: string;
-};

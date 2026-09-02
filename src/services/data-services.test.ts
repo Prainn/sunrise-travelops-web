@@ -6,7 +6,6 @@ import { attractions, businessCategoryTypes, guides, hotels, inquiries, inquiryL
 import { getResourceUnitName } from "@/utils/resource-unit";
 import { getTransportMethodNames } from "@/utils/transport-method";
 import { getResourcePriceOptions } from "@/views/inquiries/itineraries/pricing";
-import { dictionaryService } from "./dictionary.service";
 import { userService } from "./user.service";
 
 describe("local data services", () => {
@@ -184,11 +183,5 @@ describe("local data services", () => {
     expect(created?.perms).toContain("resource:hotel:list");
 
     await userService.deleteByIds(created?.id ?? "");
-  });
-
-  it("returns enabled dictionary items in configured order", async () => {
-    const items = await dictionaryService.getDictItems("gender");
-
-    expect(items.map((item) => item.value)).toEqual(["1", "2", "0"]);
   });
 });

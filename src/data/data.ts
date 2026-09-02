@@ -1,5 +1,4 @@
 import type { PrototypeUserRecord } from "@/types/user";
-import type { SystemDictionaryItem, SystemDictionaryType } from "@/types/dictionary";
 import type { VisitOverviewDetail, VisitTrendDetail } from "@/types/dashboard";
 import type { InquiryLogRecord } from "@/types/inquiry-log";
 import type { ItineraryRecord } from "@/types/itinerary";
@@ -207,106 +206,6 @@ export const users: PrototypeUserRecord[] = [
     createTime: "2026-08-19 10:10:00",
     roles: ["OPERATIONS_COORDINATOR"],
     perms: operationsPermissions,
-  },
-];
-
-export const systemDictionaryTypes: SystemDictionaryType[] = [
-  {
-    id: "1",
-    name: "gender",
-    nameKey: "dictionary.seed.gender.name",
-    dictCode: "gender",
-    status: 1,
-    remarkKey: "dictionary.seed.gender.remark",
-  },
-  {
-    id: "2",
-    name: "common_status",
-    nameKey: "dictionary.seed.commonStatus.name",
-    dictCode: "common_status",
-    status: 1,
-    remarkKey: "dictionary.seed.commonStatus.remark",
-  },
-  {
-    id: "3",
-    name: "yes_no",
-    nameKey: "dictionary.seed.yesNo.name",
-    dictCode: "yes_no",
-    status: 1,
-    remarkKey: "dictionary.seed.yesNo.remark",
-  },
-];
-
-export const systemDictionaryItems: SystemDictionaryItem[] = [
-  {
-    id: "1",
-    dictCode: "gender",
-    label: "male",
-    labelKey: "dictionary.seed.gender.male",
-    value: "1",
-    status: 1,
-    sort: 1,
-    tagType: "primary",
-  },
-  {
-    id: "2",
-    dictCode: "gender",
-    label: "female",
-    labelKey: "dictionary.seed.gender.female",
-    value: "2",
-    status: 1,
-    sort: 2,
-    tagType: "danger",
-  },
-  {
-    id: "3",
-    dictCode: "gender",
-    label: "unset",
-    labelKey: "dictionary.seed.gender.unset",
-    value: "0",
-    status: 1,
-    sort: 3,
-    tagType: "info",
-  },
-  {
-    id: "4",
-    dictCode: "common_status",
-    label: "enabled",
-    labelKey: "common.enabled",
-    value: "1",
-    status: 1,
-    sort: 1,
-    tagType: "success",
-  },
-  {
-    id: "5",
-    dictCode: "common_status",
-    label: "disabled",
-    labelKey: "common.disabled",
-    value: "0",
-    status: 1,
-    sort: 2,
-    tagType: "info",
-  },
-  {
-    id: "6",
-    dictCode: "yes_no",
-    label: "yes",
-    labelKey: "common.yes",
-    value: "1",
-    status: 1,
-    sort: 1,
-    tagType: "success",
-  },
-  {
-    id: "7",
-    dictCode: "yes_no",
-    label: "no",
-    labelKey: "common.no",
-    value: "0",
-    status: 1,
-    sort: 2,
-    tagType: "info",
   },
 ];
 

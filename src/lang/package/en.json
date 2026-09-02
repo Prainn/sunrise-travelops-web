@@ -261,6 +261,7 @@
     "delete": "Delete",
     "deleteCancelled": "Deletion cancelled",
     "deleteConfirm": "Confirm deletion?",
+    "deleteFailed": "Deletion failed",
     "deleteSelectedConfirm": "Delete the selected records?",
     "deleteSuccess": "Deleted successfully",
     "disabled": "Disabled",
@@ -533,23 +534,6 @@
     "optionValue": "Option Value",
     "optionValuePlaceholder": "Enter an option value",
     "searchPlaceholder": "Search category name or code",
-    "seed": {
-      "commonStatus": {
-        "name": "Enabled Status",
-        "remark": "Shared enabled and disabled states"
-      },
-      "gender": {
-        "female": "Female",
-        "male": "Male",
-        "name": "User Gender",
-        "remark": "Gender options used in user profiles",
-        "unset": "Not set"
-      },
-      "yesNo": {
-        "name": "Yes or No",
-        "remark": "Shared yes and no options for forms"
-      }
-    },
     "tagTypePlaceholder": "Select a tag style"
   },
   "user": {
@@ -811,7 +795,9 @@
       "sessionExpired": "Your session has expired"
     },
     "dictionary": {
+      "codeMismatch": "The dictionary code does not match the current category",
       "codeExists": "Category code already exists",
+      "idMismatch": "The record ID does not match the current record",
       "notFound": "System category not found",
       "optionNotFound": "Category option not found",
       "optionRequiredFields": "Option name and value are required",

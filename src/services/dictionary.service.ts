@@ -1,6 +1,6 @@
-import type { OptionItem, PageResult } from "@/types/common";
-import { systemDictionaryItems, systemDictionaryTypes } from "@/data/data";
+import { ApiRequestError, request } from "@/api/request";
 import { translate } from "@/lang/utils";
+import type { OptionItem, PageResult } from "@/types/common";
 import type {
   DictItem,
   DictItemForm,
@@ -11,227 +11,167 @@ import type {
   DictTypeQueryParams,
 } from "@/types/dictionary";
 
-function paginate<T>(list: T[], pageNum: number, pageSize: number): PageResult<T> {
-  const start = (pageNum - 1) * pageSize;
+interface ApiPageResult<T> extends PageResult<T> {
+  page: number;
+  pageSize: number;
+}
+
+const DICTIONARY_BASE_URL = "/system/dictionaries";
+
+const ERROR_MESSAGE_KEYS: Record<string, string> = {
+  DICTIONARY_TYPE_NOT_FOUND: "service.dictionary.notFound",
+  DICTIONARY_TYPES_NOT_FOUND: "service.dictionary.notFound",
+  DICTIONARY_ITEM_NOT_FOUND: "service.dictionary.optionNotFound",
+  DICTIONARY_ITEMS_NOT_FOUND: "service.dictionary.optionNotFound",
+  DICTIONARY_CODE_EXISTS: "service.dictionary.codeExists",
+  DICTIONARY_ITEM_VALUE_EXISTS: "service.dictionary.valueExists",
+  DICTIONARY_ID_MISMATCH: "service.dictionary.idMismatch",
+  DICTIONARY_CODE_MISMATCH: "service.dictionary.codeMismatch",
+  PERMISSION_DENIED: "request.permissionDenied",
+};
+
+function buildQuery(query: DictTypeQueryParams | DictItemQueryParams): string {
+  const params = new URLSearchParams({
+    pageNum: String(query.pageNum),
+    pageSize: String(query.pageSize),
+  });
+  const keywords = query.keywords?.trim();
+  if (keywords) params.set("keywords", keywords);
+  if (query.status !== undefined) params.set("status", String(query.status));
+  return params.toString();
+}
+
+function getDictionaryItemBaseUrl(dictCode: string): string {
+  return `${DICTIONARY_BASE_URL}/${encodeURIComponent(dictCode)}/items`;
+}
+
+async function withDictionaryError<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      const messageKey = ERROR_MESSAGE_KEYS[error.code];
+      if (messageKey) throw new Error(translate(messageKey), { cause: error });
+    }
+    throw error;
+  }
+}
+
+function toDictionaryTypeInput(data: DictTypeForm) {
   return {
-    list: list.slice(start, start + pageSize),
-    total: list.length,
+    id: data.id,
+    name: data.name?.trim() ?? "",
+    dictCode: data.dictCode?.trim() ?? "",
+    status: data.status ?? 1,
+    remark: data.remark?.trim(),
   };
 }
 
-function createId(records: Array<{ id: string }>): string {
-  return String(Math.max(0, ...records.map((item) => Number(item.id) || 0)) + 1);
-}
-
-function localizeDictionaryType(item: (typeof systemDictionaryTypes)[number]): DictTypeItem {
+function toDictionaryItemInput(dictCode: string, data: DictItemForm) {
   return {
-    ...item,
-    name: item.nameKey ? translate(item.nameKey) : item.name,
-    remark: item.remarkKey ? translate(item.remarkKey) : item.remark,
+    id: data.id,
+    dictCode,
+    label: data.label?.trim() ?? "",
+    value: data.value?.trim() ?? "",
+    status: data.status ?? 1,
+    sort: data.sort ?? 1,
+    tagType: data.tagType ?? "",
   };
-}
-
-function localizeDictionaryItem(item: (typeof systemDictionaryItems)[number]): DictItem {
-  return {
-    ...item,
-    label: item.labelKey ? translate(item.labelKey) : item.label,
-  };
-}
-
-function requireDictionaryType(id: string): (typeof systemDictionaryTypes)[number] {
-  const dictionaryType = systemDictionaryTypes.find((item) => item.id === id);
-  if (!dictionaryType) throw new Error(translate("service.dictionary.notFound"));
-  return dictionaryType;
-}
-
-function requireDictionaryItem(
-  dictCode: string,
-  id: string
-): (typeof systemDictionaryItems)[number] {
-  const dictionaryItem = systemDictionaryItems.find(
-    (item) => item.dictCode === dictCode && item.id === id
-  );
-  if (!dictionaryItem) throw new Error(translate("service.dictionary.optionNotFound"));
-  return dictionaryItem;
-}
-
-function ensureUniqueDictCode(dictCode: string, currentId?: string): void {
-  const exists = systemDictionaryTypes.some(
-    (item) => item.dictCode === dictCode && item.id !== currentId
-  );
-  if (exists) throw new Error(translate("service.dictionary.codeExists"));
-}
-
-function ensureUniqueItemValue(dictCode: string, value: string, currentId?: string): void {
-  const exists = systemDictionaryItems.some(
-    (item) => item.dictCode === dictCode && item.value === value && item.id !== currentId
-  );
-  if (exists) throw new Error(translate("service.dictionary.valueExists"));
 }
 
 export const dictionaryService = {
   async getPage(query: DictTypeQueryParams): Promise<PageResult<DictTypeItem>> {
-    const keywords = query.keywords?.trim().toLowerCase();
-    const filtered = systemDictionaryTypes.filter((item) => {
-      const localized = localizeDictionaryType(item);
-      const matchesKeywords =
-        !keywords ||
-        localized.name.toLowerCase().includes(keywords) ||
-        item.dictCode.toLowerCase().includes(keywords);
-      const matchesStatus = query.status === undefined || item.status === query.status;
-      return matchesKeywords && matchesStatus;
+    return withDictionaryError(async () => {
+      const data = await request<ApiPageResult<DictTypeItem>>(
+        `${DICTIONARY_BASE_URL}?${buildQuery(query)}`
+      );
+      return { list: data.list, total: data.total };
     });
-
-    return paginate(
-      filtered.map(localizeDictionaryType),
-      query.pageNum,
-      query.pageSize
-    );
   },
 
   async getList(): Promise<OptionItem[]> {
-    return systemDictionaryTypes
-      .filter((item) => item.status === 1)
-      .map((item) => ({ value: item.dictCode, label: localizeDictionaryType(item).name }));
+    return withDictionaryError(() => request<OptionItem[]>(`${DICTIONARY_BASE_URL}/options`));
   },
 
   async getFormData(id: string): Promise<DictTypeForm> {
-    return localizeDictionaryType(requireDictionaryType(id));
+    return withDictionaryError(() =>
+      request<DictTypeItem>(`${DICTIONARY_BASE_URL}/${encodeURIComponent(id)}`)
+    );
   },
 
   async create(data: DictTypeForm): Promise<void> {
-    const name = data.name?.trim();
-    const dictCode = data.dictCode?.trim();
-    if (!name || !dictCode) throw new Error(translate("service.dictionary.requiredFields"));
-    ensureUniqueDictCode(dictCode);
-
-    systemDictionaryTypes.push({
-      id: createId(systemDictionaryTypes),
-      name,
-      dictCode,
-      status: data.status ?? 1,
-      remark: data.remark?.trim(),
-    });
+    await withDictionaryError(() =>
+      request<DictTypeItem>(DICTIONARY_BASE_URL, {
+        method: "POST",
+        body: toDictionaryTypeInput(data),
+      })
+    );
   },
 
   async update(id: string, data: DictTypeForm): Promise<void> {
-    const dictionaryType = requireDictionaryType(id);
-    const name = data.name?.trim();
-    const dictCode = data.dictCode?.trim();
-    if (!name || !dictCode) throw new Error(translate("service.dictionary.requiredFields"));
-    ensureUniqueDictCode(dictCode, id);
-
-    const previousCode = dictionaryType.dictCode;
-    Object.assign(dictionaryType, {
-      name,
-      dictCode,
-      status: data.status ?? 1,
-      remark: data.remark?.trim(),
-    });
-    delete dictionaryType.nameKey;
-    delete dictionaryType.remarkKey;
-
-    if (previousCode !== dictCode) {
-      systemDictionaryItems.forEach((item) => {
-        if (item.dictCode === previousCode) item.dictCode = dictCode;
-      });
-    }
+    await withDictionaryError(() =>
+      request<DictTypeItem>(`${DICTIONARY_BASE_URL}/${encodeURIComponent(id)}`, {
+        method: "PUT",
+        body: toDictionaryTypeInput(data),
+      })
+    );
   },
 
   async deleteByIds(ids: string): Promise<void> {
-    const idSet = new Set(ids.split(",").filter(Boolean));
-    const codes = new Set(
-      systemDictionaryTypes.filter((item) => idSet.has(item.id)).map((item) => item.dictCode)
+    const params = new URLSearchParams({ ids });
+    await withDictionaryError(() =>
+      request<void>(`${DICTIONARY_BASE_URL}?${params.toString()}`, { method: "DELETE" })
     );
-
-    for (let index = systemDictionaryTypes.length - 1; index >= 0; index -= 1) {
-      if (idSet.has(systemDictionaryTypes[index].id)) systemDictionaryTypes.splice(index, 1);
-    }
-    for (let index = systemDictionaryItems.length - 1; index >= 0; index -= 1) {
-      if (codes.has(systemDictionaryItems[index].dictCode)) systemDictionaryItems.splice(index, 1);
-    }
   },
 
   async getDictItemPage(
     dictCode: string,
     query: DictItemQueryParams
   ): Promise<PageResult<DictItem>> {
-    const keywords = query.keywords?.trim().toLowerCase();
-    const filtered = systemDictionaryItems
-      .filter(
-        (item) => {
-          const localized = localizeDictionaryItem(item);
-          return (
-            item.dictCode === dictCode &&
-            (!keywords ||
-              localized.label.toLowerCase().includes(keywords) ||
-              item.value.toLowerCase().includes(keywords))
-          );
-        }
-      )
-      .sort((first, second) => (first.sort ?? 0) - (second.sort ?? 0));
-
-    return paginate(
-      filtered.map(localizeDictionaryItem),
-      query.pageNum,
-      query.pageSize
-    );
+    return withDictionaryError(async () => {
+      const data = await request<ApiPageResult<DictItem>>(
+        `${getDictionaryItemBaseUrl(dictCode)}?${buildQuery(query)}`
+      );
+      return { list: data.list, total: data.total };
+    });
   },
 
   async getDictItems(dictCode: string): Promise<DictItemOption[]> {
-    return systemDictionaryItems
-      .filter((item) => item.dictCode === dictCode && item.status === 1)
-      .sort((first, second) => (first.sort ?? 0) - (second.sort ?? 0))
-      .map((item) => ({
-        value: item.value,
-        label: localizeDictionaryItem(item).label,
-        tagType: item.tagType,
-      }));
+    return withDictionaryError(() =>
+      request<DictItemOption[]>(`${getDictionaryItemBaseUrl(dictCode)}/options`)
+    );
   },
 
   async createDictItem(dictCode: string, data: DictItemForm): Promise<void> {
-    const label = data.label?.trim();
-    const value = data.value?.trim();
-    if (!label || !value) throw new Error(translate("service.dictionary.optionRequiredFields"));
-    ensureUniqueItemValue(dictCode, value);
-
-    systemDictionaryItems.push({
-      id: createId(systemDictionaryItems),
-      dictCode,
-      label,
-      value,
-      status: data.status ?? 1,
-      sort: data.sort ?? 1,
-      tagType: data.tagType ?? "",
-    });
+    await withDictionaryError(() =>
+      request<DictItem>(getDictionaryItemBaseUrl(dictCode), {
+        method: "POST",
+        body: toDictionaryItemInput(dictCode, data),
+      })
+    );
   },
 
   async getDictItemFormData(dictCode: string, id: string): Promise<DictItemForm> {
-    return localizeDictionaryItem(requireDictionaryItem(dictCode, id));
+    return withDictionaryError(() =>
+      request<DictItem>(`${getDictionaryItemBaseUrl(dictCode)}/${encodeURIComponent(id)}`)
+    );
   },
 
   async updateDictItem(dictCode: string, id: string, data: DictItemForm): Promise<void> {
-    const dictionaryItem = requireDictionaryItem(dictCode, id);
-    const label = data.label?.trim();
-    const value = data.value?.trim();
-    if (!label || !value) throw new Error(translate("service.dictionary.optionRequiredFields"));
-    ensureUniqueItemValue(dictCode, value, id);
-
-    Object.assign(dictionaryItem, {
-      label,
-      value,
-      status: data.status ?? 1,
-      sort: data.sort ?? 1,
-      tagType: data.tagType ?? "",
-    });
-    delete dictionaryItem.labelKey;
+    await withDictionaryError(() =>
+      request<DictItem>(`${getDictionaryItemBaseUrl(dictCode)}/${encodeURIComponent(id)}`, {
+        method: "PUT",
+        body: toDictionaryItemInput(dictCode, data),
+      })
+    );
   },
 
   async deleteDictItems(dictCode: string, ids: string): Promise<void> {
-    const idSet = new Set(ids.split(",").filter(Boolean));
-    for (let index = systemDictionaryItems.length - 1; index >= 0; index -= 1) {
-      const item = systemDictionaryItems[index];
-      if (item.dictCode === dictCode && idSet.has(item.id)) systemDictionaryItems.splice(index, 1);
-    }
+    const params = new URLSearchParams({ ids });
+    await withDictionaryError(() =>
+      request<void>(`${getDictionaryItemBaseUrl(dictCode)}?${params.toString()}`, {
+        method: "DELETE",
+      })
+    );
   },
 };

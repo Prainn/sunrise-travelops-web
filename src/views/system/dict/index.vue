@@ -372,6 +372,8 @@ async function handleDelete(id?: string): Promise<void> {
     dictStore.clearDictCache();
     ElMessage.success(t("common.deleteSuccess"));
     handleResetQuery();
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("common.deleteFailed"));
   } finally {
     loading.value = false;
   }
