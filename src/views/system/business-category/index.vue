@@ -1,6 +1,7 @@
 <template>
   <div class="page-container business-category-page">
     <el-card
+      v-loading="loading"
       class="business-category-page__card"
       shadow="never"
     >
@@ -14,7 +15,7 @@
           </div>
         </div>
         <el-button
-          v-hasPerm="'sys:business-category:create'"
+          v-hasPerm="'sys:business-dictionary:create'"
           type="primary"
           @click="openTypeDialog"
         >
@@ -44,6 +45,7 @@
           <BusinessCategoryPanel
             v-if="selectedCategory"
             :category="selectedCategory"
+            @changed="loadCategoryTypes"
           />
         </main>
       </div>
@@ -96,11 +98,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { BusinessCategoryTypeRecord } from "@/types/resource";
-import { createId } from "@/utils";
+import { businessDictionaryService } from "@/services";
 import { businessCategoryTypeStore, getBusinessCategoryTypeName } from "@/utils/business-category";
 import BusinessCategoryPanel from "./components/BusinessCategoryPanel.vue";
 
@@ -112,6 +114,7 @@ const { locale, t } = useI18n();
 const categoryTypes = businessCategoryTypeStore;
 const activeCategory = ref(categoryTypes[0]?.code ?? "");
 const selectedCategory = computed(() => categoryTypes.find((category) => category.code === activeCategory.value));
+const loading = ref(false);
 const typeDialogVisible = ref(false);
 const typeFormRef = ref<FormInstance>();
 const typeForm = reactive<CategoryTypeForm>(emptyTypeForm());
@@ -134,6 +137,21 @@ function openTypeDialog() {
   typeDialogVisible.value = true;
 }
 
+async function loadCategoryTypes() {
+  loading.value = true;
+  try {
+    const types = await businessDictionaryService.getTypes();
+    categoryTypes.splice(0, categoryTypes.length, ...types);
+    if (!activeCategory.value || !categoryTypes.some((category) => category.code === activeCategory.value)) {
+      activeCategory.value = categoryTypes[0]?.code ?? "";
+    }
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  } finally {
+    loading.value = false;
+  }
+}
+
 async function createCategoryType() {
   await typeFormRef.value?.validate();
   const code = typeForm.code.trim();
@@ -141,18 +159,22 @@ async function createCategoryType() {
     ElMessage.warning(t("businessCategory.typeCodeDuplicate"));
     return;
   }
-  categoryTypes.push({
-    id: createId("business-category"),
-    code,
-    name: typeForm.name.trim(),
-    englishName: typeForm.englishName.trim(),
-    builtIn: false,
-    items: [],
-  });
-  activeCategory.value = code;
-  typeDialogVisible.value = false;
-  ElMessage.success(t("common.createSuccess"));
+  try {
+    await businessDictionaryService.createType({
+      code,
+      name: typeForm.name.trim(),
+      englishName: typeForm.englishName.trim(),
+    });
+    await loadCategoryTypes();
+    activeCategory.value = code;
+    typeDialogVisible.value = false;
+    ElMessage.success(t("common.createSuccess"));
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  }
 }
+
+onMounted(loadCategoryTypes);
 </script>
 
 <style scoped lang="scss">

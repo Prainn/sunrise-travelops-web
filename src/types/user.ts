@@ -1,6 +1,6 @@
 import type { BaseQueryParams } from "@/types/common";
 
-/** 尚未接入用户管理 API 的本地原型用户记录。 */
+/** 尚未接入后端的员工目录和个人资料兜底记录。 */
 export interface PrototypeUserRecord {
   id: string;
   username: string;
@@ -12,11 +12,8 @@ export interface PrototypeUserRecord {
   mobile: string;
   email: string;
   deptId: number;
-  roleIds: number[];
-  roleNames: string;
   createTime: string;
   roles: string[];
-  perms: string[];
 }
 
 export interface UserInfo {
@@ -31,7 +28,7 @@ export interface UserInfo {
 export interface UserQueryParams extends BaseQueryParams {
   keywords?: string;
   deptId?: number;
-  roleId?: number;
+  roleId?: string | number;
   status?: number;
   createTime?: [string, string];
 }
@@ -58,9 +55,11 @@ export interface UserForm {
   gender?: number;
   mobile?: string;
   nickname?: string;
-  roleIds?: number[];
+  roleIds?: Array<string | number>;
   status?: number;
   username?: string;
+  password?: string;
+  temporaryPassword?: string;
 }
 
 export interface UserProfileDetail {

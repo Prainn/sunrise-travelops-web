@@ -101,7 +101,7 @@ export const constantRoutes: RouteRecordRaw[] = [
           title: "businessCategories",
           icon: "el-icon-Grid",
           keepAlive: true,
-          perms: ["sys:business-category:list"],
+          perms: ["sys:business-dictionary:list"],
         },
       },
       {
@@ -199,7 +199,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "Hotel",
         component: () => import("@/views/resources/hotel/index.vue"),
         meta: {
-          title: "hotelsAndRoomTypes",
+          title: "hotels",
           icon: "el-icon-House",
           keepAlive: true,
           perms: ["resource:hotel:list"],

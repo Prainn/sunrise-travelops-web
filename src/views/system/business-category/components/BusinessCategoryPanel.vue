@@ -13,7 +13,7 @@
     >
       <TableToolbar @refresh="resetQuery">
         <el-button
-          v-hasPerm="'sys:business-category:create'"
+          v-hasPerm="'sys:business-dictionary:create'"
           type="primary"
           @click="openCreate"
         >
@@ -22,7 +22,8 @@
       </TableToolbar>
       <div class="page-table-wrapper">
         <el-table
-          :data="filteredRows"
+          v-loading="loading"
+          :data="rows"
           height="100%"
           border
           row-key="id"
@@ -83,7 +84,7 @@
           >
             <template #default="scope">
               <el-button
-                v-hasPerm="'sys:business-category:update'"
+                v-hasPerm="'sys:business-dictionary:update'"
                 link
                 type="primary"
                 @click="openEdit(scope.row as CategoryItem)"
@@ -91,7 +92,7 @@
                 {{ $t("common.edit") }}
               </el-button>
               <el-button
-                v-hasPerm="'sys:business-category:delete'"
+                v-hasPerm="'sys:business-dictionary:delete'"
                 link
                 type="danger"
                 @click="removeItem(scope.row as CategoryItem)"
@@ -186,18 +187,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
+import { businessDictionaryService } from "@/services";
 import { inquiryService } from "@/services/inquiry.service";
-import { resourceService } from "@/services/resource.service";
 import type { ItineraryItemType } from "@/types/itinerary";
 import type {
-  BusinessCategoryOptionRecord, BusinessCategoryTypeRecord, ResourceUnitRecord, TransportMethodRecord,
+  BusinessCategoryOptionRecord, BusinessCategoryTypeRecord,
 } from "@/types/resource";
-import { createId } from "@/utils";
-import { resourceUnitStore } from "@/utils/resource-unit";
-import { transportMethodStore } from "@/utils/transport-method";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import BusinessCategorySearch from "./BusinessCategorySearch.vue";
 
@@ -205,33 +203,20 @@ interface CategoryItem extends BusinessCategoryOptionRecord {
   resourceTypes: ItineraryItemType[];
 }
 
-type SourceItem = ResourceUnitRecord | TransportMethodRecord | BusinessCategoryOptionRecord;
-
 const props = defineProps<{ category: BusinessCategoryTypeRecord }>();
+const emit = defineEmits<{ changed: [] }>();
 const { t } = useI18n();
 const resourceTypes: ItineraryItemType[] = ["hotel", "attraction", "restaurant", "vehicle", "guide"];
 const keyword = ref("");
 const status = ref("");
+const loading = ref(false);
+const rows = ref<CategoryItem[]>([]);
 const dialogVisible = ref(false);
 const editingId = ref("");
 const formRef = ref<FormInstance>();
 const form = reactive<CategoryItem>(emptyItem());
 const isResourceUnit = computed(() => props.category.code === "resource-unit");
 const isTransportMethod = computed(() => props.category.code === "transport-method");
-const sourceItems = computed<SourceItem[]>(() => {
-  if (isResourceUnit.value) return resourceUnitStore;
-  if (isTransportMethod.value) return transportMethodStore;
-  return props.category.items;
-});
-const rows = computed<CategoryItem[]>(() => sourceItems.value.map((item) => ({
-  ...item,
-  resourceTypes: "resourceTypes" in item ? item.resourceTypes : [],
-})));
-const filteredRows = computed(() => {
-  const term = keyword.value.trim().toLowerCase();
-  return rows.value.filter((item) => (!status.value || item.status === status.value)
-    && (!term || `${item.name} ${item.englishName} ${item.code}`.toLowerCase().includes(term)));
-});
 const labelKeys = computed(() => {
   if (isResourceUnit.value) return { name: "businessCategory.name", code: "businessCategory.code", search: "businessCategory.searchPlaceholder" };
   if (isTransportMethod.value) return { name: "businessCategory.transportName", code: "businessCategory.transportCode", search: "businessCategory.transportSearchPlaceholder" };
@@ -249,7 +234,12 @@ const rules = computed<FormRules<CategoryItem>>(() => ({
   resourceTypes: [{ required: isResourceUnit.value, type: "array", min: 1, message: t("businessCategory.resourceTypesRequired"), trigger: "change" }],
 }));
 
-watch(() => props.category.code, () => { resetQuery(); dialogVisible.value = false; });
+watch(() => props.category.code, () => {
+  resetQuery();
+  dialogVisible.value = false;
+  loadItems();
+});
+watch([keyword, status], () => loadItems(), { flush: "post" });
 
 function emptyItem(): CategoryItem {
   return { id: "", code: "", name: "", englishName: "", resourceTypes: [], status: "enabled", remark: "" };
@@ -258,39 +248,67 @@ function resetQuery() { keyword.value = ""; status.value = ""; }
 function openCreate() { editingId.value = ""; Object.assign(form, emptyItem()); dialogVisible.value = true; }
 function openEdit(row: CategoryItem) { editingId.value = row.id; Object.assign(form, row, { resourceTypes: [...row.resourceTypes] }); dialogVisible.value = true; }
 
+async function loadItems() {
+  loading.value = true;
+  try {
+    const items = await businessDictionaryService.getItems(props.category.code, {
+      keyword: keyword.value,
+      status: status.value,
+    });
+    rows.value = items.map((item) => ({
+      ...item,
+      resourceTypes: "resourceTypes" in item ? item.resourceTypes as ItineraryItemType[] : [],
+    }));
+    props.category.items.splice(0, props.category.items.length, ...items);
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  } finally {
+    loading.value = false;
+  }
+}
+
 async function saveItem() {
   await formRef.value?.validate();
-  const duplicate = sourceItems.value.some((item) => item.code === form.code.trim() && item.id !== editingId.value);
+  const duplicate = rows.value.some((item) => item.code === form.code.trim() && item.id !== editingId.value);
   if (duplicate) {
     const key = isResourceUnit.value ? "businessCategory.codeDuplicate" : isTransportMethod.value ? "businessCategory.transportCodeDuplicate" : "businessCategory.optionCodeDuplicate";
     return void ElMessage.warning(t(key));
   }
-  const value = { code: form.code.trim(), name: form.name.trim(), englishName: form.englishName.trim(), status: form.status, remark: form.remark };
-  const existing = sourceItems.value.find((item) => item.id === editingId.value);
-  if (existing) Object.assign(existing, value, isResourceUnit.value ? { resourceTypes: [...form.resourceTypes] } : {});
-  else if (isResourceUnit.value) resourceUnitStore.push({ ...value, id: createId("resource-unit"), resourceTypes: [...form.resourceTypes] });
-  else if (isTransportMethod.value) transportMethodStore.push({ ...value, id: createId("transport-method") });
-  else props.category.items.push({ ...value, id: createId(props.category.code) });
-  dialogVisible.value = false;
-  ElMessage.success(t("businessCategory.saveSuccess"));
-}
-
-function isUnitUsed(code: string) {
-  return resourceService.hotels.some((hotel) => hotel.unit === code || hotel.roomTypes.some((room) => room.pricePlans.some((price) => price.unit === code)))
-    || resourceService.attractions.some((item) => item.unit === code || item.prices.some((price) => price.unit === code))
-    || resourceService.restaurants.some((item) => item.unit === code || item.prices.some((price) => price.unit === code))
-    || resourceService.transports.some((item) => item.unit === code)
-    || resourceService.guides.some((guide) => guide.unit === code);
+  const value = {
+    code: form.code.trim(),
+    name: form.name.trim(),
+    englishName: form.englishName.trim(),
+    resourceTypes: [...form.resourceTypes],
+    status: form.status,
+    remark: form.remark,
+  };
+  try {
+    if (editingId.value) await businessDictionaryService.updateItem(props.category.code, editingId.value, value);
+    else await businessDictionaryService.createItem(props.category.code, value);
+    await loadItems();
+    emit("changed");
+    dialogVisible.value = false;
+    ElMessage.success(t("businessCategory.saveSuccess"));
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  }
 }
 
 async function removeItem(row: CategoryItem) {
-  if (isResourceUnit.value && isUnitUsed(row.code)) return void ElMessage.warning(t("businessCategory.unitInUse"));
   const transportInUse = inquiryService.itineraries.some((itinerary) => itinerary.dailyPlans.some((day) => day.transport.split(",").includes(row.code)));
   if (isTransportMethod.value && transportInUse) return void ElMessage.warning(t("businessCategory.transportInUse"));
   try { await ElMessageBox.confirm(t("common.deleteConfirm"), t("common.warning"), { type: "warning" }); } catch { return; }
-  sourceItems.value.splice(sourceItems.value.findIndex((item) => item.id === row.id), 1);
-  ElMessage.success(t("common.deleteSuccess"));
+  try {
+    await businessDictionaryService.deleteItems(props.category.code, row.id);
+    await loadItems();
+    emit("changed");
+    ElMessage.success(t("common.deleteSuccess"));
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  }
 }
+
+onMounted(loadItems);
 </script>
 
 <style scoped lang="scss">

@@ -235,9 +235,19 @@
             <el-table-column
               :label="$t('user.rolesLabel')"
               prop="roleNames"
-              min-width="160"
-              show-overflow-tooltip
-            />
+              width="400"
+            >
+              <template #default="scope">
+                <el-tag
+                  v-for="role in scope.row.roleNames.split(',')"
+                  :key="role"
+                  size="small"
+                  class="mr-2"
+                >
+                  {{ role }}
+                </el-tag>
+              </template>
+            </el-table-column>
             <el-table-column
               :label="$t('user.mobile')"
               prop="mobile"
@@ -297,7 +307,7 @@
 
         <pagination
           v-if="total > 0"
-          v-model:page="params.pageNum"
+          v-model:page="params.page"
           v-model:limit="params.pageSize"
           :total="total"
           class="page-pagination"
@@ -448,21 +458,25 @@
       destroy-on-close
       @closed="resetResetPasswordForm"
     >
-      <div class="mb-16px">
-        {{ $t("user.userLabel") }}：{{
-          resetPasswordDialog.nickname || resetPasswordDialog.username || "-"
-        }}
-        <span v-if="resetPasswordDialog.nickname && resetPasswordDialog.username">
-          （{{ resetPasswordDialog.username }}）
-        </span>
-      </div>
-
       <el-form
         ref="resetPasswordFormRef"
         :model="resetPasswordForm"
         :rules="resetPasswordRules"
         label-width="84px"
       >
+        <el-form-item :label="$t('user.nickname')">
+          <el-input
+            :model-value=" resetPasswordDialog.username "
+            readonly
+          />
+        </el-form-item>
+        <el-form-item :label="$t('user.username')">
+          <el-input
+            :model-value=" resetPasswordDialog.nickname || resetPasswordDialog.username"
+            readonly
+          />
+        </el-form-item>
+
         <el-form-item
           :label="$t('user.newPassword')"
           prop="password"
@@ -497,7 +511,9 @@
 </template>
 
 <script setup lang="ts">
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
+import { h } from "vue";
+import type { FormInstance, FormRules } from "element-plus";
+import { Female, Male } from "@element-plus/icons-vue";
 
 import type { UserForm, UserItem, UserQueryParams } from "@/types/user";
 import type { OptionItem } from "@/types/common";
@@ -506,7 +522,6 @@ import { useAppStore } from "@/stores/app";
 import { useUserStore } from "@/stores/user";
 import { usePageTable, useTableSelection } from "@/composables";
 import { CommonStatus, DeviceEnum, DialogMode, UserGender } from "@/enums";
-import { Female, Male } from "@element-plus/icons-vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 
 defineOptions({
@@ -516,7 +531,7 @@ defineOptions({
 
 const appStore = useAppStore();
 const userStore = useUserStore();
-const { t } = useI18n();
+const { locale, t } = useI18n();
 
 const queryFormRef = ref<FormInstance>();
 const userFormRef = ref<FormInstance>();
@@ -528,7 +543,7 @@ const { loading, list, total, params, fetchData, handleQuery, handleResetQuery }
   UserQueryParams
 >({
   initialParams: {
-    pageNum: 1,
+    page: 1,
     pageSize: 10,
   },
   request: userService.getPage,
@@ -601,6 +616,20 @@ function getAvatarText(row: UserItem): string {
   return text.slice(0, 1).toUpperCase();
 }
 
+async function showTemporaryPassword(password: string): Promise<void> {
+  await ElMessageBox.alert(
+    h("div", { class: "temporary-password-message" }, [
+      h("div", { class: "temporary-password-message__tip" }, t("user.temporaryPasswordTip")),
+      h("div", { class: "temporary-password-message__value" }, password),
+    ]),
+    t("user.temporaryPasswordTitle"),
+    {
+      confirmButtonText: t("common.confirm"),
+      customClass: "temporary-password-box",
+    }
+  );
+}
+
 /**
  * 加载用户角色选项。
  */
@@ -610,6 +639,10 @@ async function loadFormOptions(): Promise<void> {
     userService.getDepartmentOptions(),
   ]);
 }
+
+watch(locale, () => {
+  loadFormOptions();
+});
 
 /**
  * 打开用户表单弹窗。
@@ -676,11 +709,16 @@ const handleSubmit = useDebounceFn(async () => {
       await userService.update(formData.id, formData);
       ElMessage.success(t("user.updateSuccess"));
     } else {
-      await userService.create(formData);
+      const created = await userService.create(formData);
       ElMessage.success(t("user.createSuccess"));
+      if (created.temporaryPassword) {
+        await showTemporaryPassword(created.temporaryPassword);
+      }
     }
     closeDialog();
     handleQuery();
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
   } finally {
     loading.value = false;
   }
@@ -728,6 +766,8 @@ async function handleDelete(id?: string): Promise<void> {
     await userService.deleteByIds(userIds);
     ElMessage.success(t("common.deleteSuccess"));
     handleQuery();
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
   } finally {
     loading.value = false;
   }
@@ -783,6 +823,8 @@ const handleResetPasswordSubmit = useDebounceFn(async () => {
     await userService.resetPassword(resetPasswordDialog.userId, resetPasswordForm.password);
     ElMessage.success(t("user.passwordResetSuccess"));
     closeResetPasswordDialog();
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
   } finally {
     resetPasswordSubmitting.value = false;
   }
@@ -813,5 +855,34 @@ onMounted(() => {
     background: var(--el-color-primary-light-9);
     border-radius: 50%;
   }
+}
+
+:global(.temporary-password-box .el-message-box__message) {
+  width: 100%;
+}
+
+:global(.temporary-password-message) {
+  width: 100%;
+}
+
+:global(.temporary-password-message__tip) {
+  color: var(--el-text-color-secondary);
+  line-height: 1.6;
+}
+
+:global(.temporary-password-message__value) {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+  padding: 12px 16px;
+  color: var(--el-text-color-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+  overflow-wrap: anywhere;
+  background: var(--el-fill-color-light);
+  border-radius: var(--el-border-radius-base);
 }
 </style>

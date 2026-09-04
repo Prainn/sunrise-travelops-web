@@ -1,7 +1,7 @@
 import { reactive } from "vue";
-import { configurationService } from "@/services/configuration.service";
+import type { BusinessCategoryTypeRecord } from "@/types/resource";
 
-export const businessCategoryTypeStore = reactive(configurationService.businessCategoryTypes);
+export const businessCategoryTypeStore = reactive<BusinessCategoryTypeRecord[]>([]);
 
 export function getBusinessCategoryTypeName(name: string, englishName: string, locale = "zh-CN") {
   return locale.toLowerCase().startsWith("en") ? englishName : name;

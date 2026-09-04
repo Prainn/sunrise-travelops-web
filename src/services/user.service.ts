@@ -1,5 +1,6 @@
 import type { OptionItem, PageResult } from "@/types/common";
-import { departmentDefinitions, roleDefinitions, users } from "@/data/data";
+import { departmentDefinitions, users } from "@/data/data";
+import { request } from "@/api/request";
 import { translate } from "@/lang/utils";
 import type {
   EmailUpdateForm,
@@ -17,15 +18,31 @@ import { authService } from "./auth.service";
 
 let currentUsername = "";
 
-function createId(): string {
-  return String(Math.max(0, ...users.map((item) => Number(item.id) || 0)) + 1);
-}
+type UserCreateResult = UserForm & { temporaryPassword?: string };
+type RoleOption = OptionItem & {
+  code?: string;
+  name?: string;
+};
 
-function requireUser(userId: string) {
-  const user = users.find((item) => item.id === userId);
-  if (!user) throw new Error(translate("service.user.notFound"));
-  return user;
-}
+const USER_BASE_URL = "/users";
+
+const ROLE_LABEL_KEYS: Record<string, string> = {
+  ADMIN: "user.roles.systemAdministrator",
+  INQUIRY_COORDINATOR: "user.roles.inquiryCoordinator",
+  OPERATIONS_COORDINATOR: "user.roles.operationsCoordinator",
+  RESOURCE_MANAGER: "user.roles.resourceManager",
+};
+
+const ROLE_NAME_LABEL_KEYS: Record<string, string> = {
+  inquirycoordinator: "user.roles.inquiryCoordinator",
+  operationscoordinator: "user.roles.operationsCoordinator",
+  resourcemanager: "user.roles.resourceManager",
+  systemadministrator: "user.roles.systemAdministrator",
+  收客计调: "user.roles.inquiryCoordinator",
+  操作计调: "user.roles.operationsCoordinator",
+  资源主管: "user.roles.resourceManager",
+  系统管理员: "user.roles.systemAdministrator",
+};
 
 function requireCurrentUser() {
   const user = users.find((item) => item.username === currentUsername);
@@ -37,43 +54,9 @@ function rejectUnsupportedCredentialMutation(): never {
   throw new Error(translate("service.auth.credentialManagementUnavailable"));
 }
 
-function toUserItem(user: (typeof users)[number]): UserItem {
-  return {
-    id: user.id,
-    username: user.username,
-    nickname: user.nicknameKey ? translate(user.nicknameKey) : user.nickname,
-    avatar: user.avatar,
-    gender: user.gender,
-    mobile: user.mobile,
-    email: user.email,
-    deptName: getDepartmentName(user.deptId),
-    roleNames: getRoleNames(user.roleIds),
-    status: user.status === "enabled" ? 1 : 0,
-    createTime: user.createTime,
-  };
-}
-
-function toUserForm(user: (typeof users)[number]): UserForm {
-  return {
-    id: user.id,
-    username: user.username,
-    nickname: user.nicknameKey ? translate(user.nicknameKey) : user.nickname,
-    avatar: user.avatar,
-    gender: user.gender,
-    mobile: user.mobile,
-    email: user.email,
-    deptId: user.deptId,
-    roleIds: [...user.roleIds],
-    status: user.status === "enabled" ? 1 : 0,
-  };
-}
-
-function getRoleNames(roleIds: number[]): string {
-  const roleNameMap = new Map<number, string>(
-    roleDefinitions.map((role) => [role.value, translate(role.labelKey)] as const)
-  );
-  return roleIds
-    .map((id) => roleNameMap.get(id))
+function getRoleNames(roles: string[]): string {
+  return roles
+    .map((role) => translate(ROLE_LABEL_KEYS[role] ?? role))
     .filter(Boolean)
     .join(",");
 }
@@ -83,118 +66,83 @@ function getDepartmentName(deptId: number): string {
   return department ? translate(department.labelKey) : "";
 }
 
-function getRoleAccess(roleIds: number[]) {
-  const roles = new Set<string>();
-  const perms = new Set<string>();
-  roleDefinitions
-    .filter((definition) => roleIds.includes(definition.value))
-    .forEach((definition) => {
-      definition.roles.forEach((role) => roles.add(role));
-      definition.perms.forEach((perm) => perms.add(perm));
-    });
-  return { roles: [...roles], perms: [...perms] };
+function buildUserParams(query: UserQueryParams) {
+  const keywords = query.keywords?.trim();
+  return {
+    page: query.page,
+    pageSize: query.pageSize,
+    keywords,
+    status: query.status,
+    deptId: query.deptId,
+    roleId: query.roleId,
+    createTime: query.createTime,
+  };
+}
+
+function toUserInput(data: UserForm, options: { includeUsername?: boolean; includePassword?: boolean } = {}) {
+  const input: Record<string, unknown> = {
+    id: data.id,
+    nickname: data.nickname?.trim() ?? "",
+    avatar: data.avatar ?? "",
+    gender: data.gender ?? 0,
+    mobile: data.mobile?.trim() ?? "",
+    email: data.email?.trim() ?? "",
+    deptId: data.deptId,
+    roleIds: data.roleIds ?? [],
+    status: data.status ?? 1,
+  };
+  if (options.includeUsername) input.username = data.username?.trim() ?? "";
+  if (options.includePassword) input.password = data.password?.trim() || undefined;
+  return input;
+}
+
+function normalizeRoleName(value: string): string {
+  return value.replace(/[\s_-]+/g, "").toLowerCase();
+}
+
+function localizeRoleOption(option: RoleOption): OptionItem {
+  const labelKey = ROLE_LABEL_KEYS[option.code ?? ""]
+    ?? ROLE_NAME_LABEL_KEYS[normalizeRoleName(option.name ?? option.label)];
+  return {
+    ...option,
+    label: labelKey ? translate(labelKey) : option.label,
+  };
 }
 
 export const userService = {
-  /** 从本地原型数据中获取用户分页列表。 */
   async getPage(query: UserQueryParams): Promise<PageResult<UserItem>> {
-    const keywords = query.keywords?.trim().toLowerCase();
-    const [startDate, endDate] = query.createTime ?? [];
-    const filtered = users.filter((user) => {
-      const matchesKeywords =
-        !keywords ||
-        user.username.toLowerCase().includes(keywords) ||
-        (user.nicknameKey ? translate(user.nicknameKey) : user.nickname)
-          .toLowerCase()
-          .includes(keywords) ||
-        user.mobile.includes(keywords);
-      const status = user.status === "enabled" ? 1 : 0;
-      const matchesStatus = query.status === undefined || query.status === status;
-      const matchesDepartment = !query.deptId || user.deptId === query.deptId;
-      const matchesRole = !query.roleId || user.roleIds.includes(query.roleId);
-      const date = user.createTime.slice(0, 10);
-      const matchesStartDate = !startDate || date >= startDate;
-      const matchesEndDate = !endDate || date <= endDate;
-      return matchesKeywords && matchesStatus && matchesDepartment && matchesRole
-        && matchesStartDate && matchesEndDate;
+    return request.get<PageResult<UserItem>>(USER_BASE_URL, {
+      params: buildUserParams(query),
     });
-    const start = (query.pageNum - 1) * query.pageSize;
-
-    return {
-      list: filtered.slice(start, start + query.pageSize).map(toUserItem),
-      total: filtered.length,
-    };
   },
 
-  /** 获取本地用户表单数据。 */
   async getFormData(userId: string): Promise<UserForm> {
-    return toUserForm(requireUser(userId));
+    return request.get<UserForm>(`${USER_BASE_URL}/${encodeURIComponent(userId)}`);
   },
 
-  /** 创建本地原型用户。 */
-  async create(data: UserForm): Promise<void> {
-    const username = data.username?.trim();
-    const nickname = data.nickname?.trim();
-    if (!username || !nickname) throw new Error(translate("service.user.requiredIdentity"));
-    if (users.some((user) => user.username === username)) {
-      throw new Error(translate("service.user.usernameExists"));
-    }
-
-    const roleIds = (data.roleIds ?? []).map(Number);
-    const { roles, perms } = getRoleAccess(roleIds);
-    users.push({
-      id: createId(),
-      username,
-      status: data.status === 0 ? "disabled" : "enabled",
-      nickname,
-      avatar: data.avatar ?? "",
-      gender: data.gender ?? 0,
-      mobile: data.mobile?.trim() ?? "",
-      email: data.email?.trim() ?? "",
-      deptId: Number(data.deptId),
-      roleIds,
-      roleNames: getRoleNames(roleIds),
-      createTime: new Date().toISOString().slice(0, 19).replace("T", " "),
-      roles,
-      perms,
-    });
+  async create(data: UserForm): Promise<UserCreateResult> {
+    return request.post<UserCreateResult>(
+      USER_BASE_URL,
+      toUserInput(data, { includeUsername: true, includePassword: true })
+    );
   },
 
-  /** 更新本地原型用户。 */
   async update(userId: string, data: UserForm): Promise<void> {
-    const user = requireUser(userId);
-    const nickname = data.nickname?.trim();
-    if (!nickname) throw new Error(translate("service.user.nicknameRequired"));
-    const roleIds = (data.roleIds ?? []).map(Number);
-    const { roles, perms } = getRoleAccess(roleIds);
-
-    Object.assign(user, {
-      nickname,
-      avatar: data.avatar ?? "",
-      gender: data.gender ?? 0,
-      mobile: data.mobile?.trim() ?? "",
-      email: data.email?.trim() ?? "",
-      deptId: Number(data.deptId),
-      roleIds,
-      roleNames: getRoleNames(roleIds),
-      roles,
-      perms,
-      status: data.status === 0 ? "disabled" : "enabled",
-    });
-    delete user.nicknameKey;
+    await request.put<UserForm>(
+      `${USER_BASE_URL}/${encodeURIComponent(userId)}`,
+      toUserInput({ ...data, id: userId })
+    );
   },
 
-  /** 删除本地原型用户。 */
   async deleteByIds(ids: string): Promise<void> {
-    const idSet = new Set(ids.split(",").filter(Boolean));
-    for (let index = users.length - 1; index >= 0; index -= 1) {
-      if (idSet.has(users[index].id)) users.splice(index, 1);
-    }
+    await request.delete<void>(USER_BASE_URL, { params: { ids } });
   },
 
-  /** 密码重置需等待后端提供对应接口。 */
-  async resetPassword(_userId: string, _password: string): Promise<void> {
-    rejectUnsupportedCredentialMutation();
+  async resetPassword(userId: string, password: string): Promise<void> {
+    await request.post<void>(
+      `${USER_BASE_URL}/${encodeURIComponent(userId)}/reset-password`,
+      { password }
+    );
   },
 
   /** 获取后端当前用户，并映射为页面使用的身份与权限结构。 */
@@ -216,17 +164,12 @@ export const userService = {
   },
 
   async getRoleOptions(): Promise<OptionItem[]> {
-    return roleDefinitions.map((role) => ({
-      value: role.value,
-      label: translate(role.labelKey),
-    }));
+    const options = await request.get<RoleOption[]>(`${USER_BASE_URL}/options/roles`);
+    return options.map(localizeRoleOption);
   },
 
   async getDepartmentOptions(): Promise<OptionItem[]> {
-    return departmentDefinitions.map((department) => ({
-      value: department.value,
-      label: translate(department.labelKey),
-    }));
+    return request.get<OptionItem[]>(`${USER_BASE_URL}/options/departments`);
   },
 
   async getProfile(): Promise<UserProfileDetail> {
@@ -240,7 +183,7 @@ export const userService = {
       mobile: user.mobile,
       email: user.email,
       deptName: getDepartmentName(user.deptId),
-      roleNames: getRoleNames(user.roleIds),
+      roleNames: getRoleNames(user.roles),
       createTime: user.createTime,
     };
   },

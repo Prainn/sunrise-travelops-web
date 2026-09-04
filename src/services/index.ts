@@ -1,4 +1,5 @@
 export { authService } from "./auth.service";
+export { businessDictionaryService } from "./business-dictionary.service";
 export { dictionaryService } from "./dictionary.service";
 export { dashboardService } from "./dashboard.service";
 export { inquiryLogService } from "./inquiry-log.service";
