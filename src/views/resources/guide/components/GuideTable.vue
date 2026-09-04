@@ -11,7 +11,7 @@
       class="page-content"
       shadow="never"
     >
-      <TableToolbar @refresh="resetQuery">
+      <TableToolbar @refresh="emit('refresh')">
         <el-button
           v-has-perm="RESOURCE_PERMISSIONS.guide.create"
           type="primary"
@@ -229,6 +229,7 @@ import GuideSearchForm from "./GuideSearchForm.vue";
 
 const props = defineProps<{ rows: GuideRecord[] }>();
 const emit = defineEmits<{
+  refresh: [];
   create: [];
   edit: [record: GuideRecord];
   delete: [record: GuideRecord];
@@ -242,7 +243,7 @@ const employmentType = ref<GuideEmploymentType | "">("");
 const language = ref("");
 const pageNum = ref(1);
 const pageSize = ref(10);
-const groundOperatorOptions = computed(() => resourceService.suppliers.filter((item) => item.status === "enabled"));
+const groundOperatorOptions = computed(() => resourceService.supplierOptions);
 const filteredRows = computed(() => props.rows.filter((record) => (
   (!gender.value || record.gender === gender.value)
   && (!employmentType.value || record.employmentType === employmentType.value)

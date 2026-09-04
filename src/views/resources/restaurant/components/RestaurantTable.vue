@@ -11,7 +11,7 @@
       class="page-content"
       shadow="never"
     >
-      <TableToolbar @refresh="resetQuery">
+      <TableToolbar @refresh="emit('refresh')">
         <el-button
           v-has-perm="RESOURCE_PERMISSIONS.restaurant.create"
           type="primary"
@@ -26,6 +26,7 @@
           border
           height="100%"
           row-key="id"
+          @expand-change="changeExpand"
         >
           <el-table-column
             type="expand"
@@ -253,10 +254,12 @@ import RestaurantSearchForm from "./RestaurantSearchForm.vue";
 
 const props = defineProps<{ rows: RestaurantRecord[] }>();
 const emit = defineEmits<{
+  refresh: [];
   create: [];
   edit: [record: RestaurantRecord];
   delete: [record: RestaurantRecord];
   "toggle-status": [record: RestaurantRecord];
+  expand: [record: RestaurantRecord];
   "create-price": [record: RestaurantRecord];
   "edit-price": [record: RestaurantRecord, price: RestaurantPriceRecord];
   "delete-price": [record: RestaurantRecord, price: RestaurantPriceRecord];
@@ -269,10 +272,10 @@ const priceUnit = ref<RestaurantPriceUnit | "">("");
 const pageNum = ref(1);
 const pageSize = ref(10);
 const cityOptions = computed(() => [...new Set(props.rows.map((record) => record.city))]);
-const groundOperatorOptions = computed(() => resourceService.suppliers.filter((item) => item.status === "enabled"));
+const groundOperatorOptions = computed(() => resourceService.supplierOptions);
 const filteredRows = computed(() => props.rows.filter((record) => (
   (!city.value || record.city === city.value)
-  && (!priceUnit.value || record.prices.some((price) => price.unit === priceUnit.value))
+  && (!priceUnit.value || record.unit === priceUnit.value)
   && (!keywords.value || [record.code, record.name, record.city, record.cuisine]
     .some((field) => field.toLowerCase().includes(keywords.value.toLowerCase())))
 )));
@@ -284,6 +287,13 @@ function resetQuery() {
   city.value = "";
   priceUnit.value = "";
   pageNum.value = 1;
+}
+
+function changeExpand(record: RestaurantRecord, expanded: RestaurantRecord[] | boolean) {
+  const isExpanded = Array.isArray(expanded)
+    ? expanded.some((item) => item.id === record.id)
+    : expanded;
+  if (isExpanded) emit("expand", record);
 }
 
 function getGroundOperatorName(id: string) {

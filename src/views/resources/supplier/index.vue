@@ -5,6 +5,7 @@
       :columns="columns"
       :search-fields="['code', 'name', 'city']"
       :permissions="RESOURCE_PERMISSIONS.supplier"
+      @refresh="loadRecords"
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
@@ -23,7 +24,7 @@
 <script setup lang="ts">
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import { resourceService } from "@/services/resource.service";
-import type { TourismResourceRecord } from "@/types/resource";
+import type { SupplierRecord } from "@/types/resource";
 import ResourceEditorDialog from "../components/ResourceEditorDialog.vue";
 import ResourceTable from "../components/ResourceTable.vue";
 import type { ResourceColumn, ResourceFormField } from "../types";
@@ -79,9 +80,10 @@ const fields: ResourceFormField[] = [
     "type": "textarea"
   }
 ];
-const { rows, record, isDialogVisible, isEditing, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<TourismResourceRecord>({
+const { rows, record, isDialogVisible, isEditing, loadRecords, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<SupplierRecord>({
   records: resourceService.suppliers,
-  idPrefix: "supplier",
+  api: resourceService.supplierApi,
+  loadRecords: () => resourceService.loadSuppliers(),
   codePrefix: "SUP",
   createEmpty: createEmptyTourismResourceRecord,
 });

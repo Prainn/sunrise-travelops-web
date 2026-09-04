@@ -5,17 +5,18 @@
       :columns="columns"
       :search-fields="['code', 'name', 'city']"
       :permissions="RESOURCE_PERMISSIONS.transport"
+      @refresh="loadRecords"
       @create="openCreateDialog"
-      @edit="openEditDialog"
-      @toggle-status="toggleStatus"
-      @delete="deleteRecord"
+      @edit="editTransport"
+      @toggle-status="toggleTransportStatus"
+      @delete="deleteTransport"
     />
     <ResourceEditorDialog
       v-model="isDialogVisible"
       :record="record"
       :fields="fields"
       :title-key="isEditing ? 'resource.editTitle' : 'resource.createTitle'"
-      @submit="saveRecord"
+      @submit="saveTransport"
     />
   </div>
 </template>
@@ -25,12 +26,12 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import { resourceService } from "@/services/resource.service";
-import type { TourismResourceRecord } from "@/types/resource";
+import type { TourismResourceRecord, TransportRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 import ResourceEditorDialog from "../components/ResourceEditorDialog.vue";
 import ResourceTable from "../components/ResourceTable.vue";
 import type { ResourceColumn, ResourceFormField } from "../types";
-import { createEmptyTourismResourceRecord, useResourceMaintenance } from "../useResourceMaintenance";
+import { useResourceMaintenance } from "../useResourceMaintenance";
 
 defineOptions({ name: "TransportResource" });
 
@@ -112,10 +113,31 @@ const fields = computed<ResourceFormField[]>(() => [
     "type": "textarea"
   }
 ]);
-const { rows, record, isDialogVisible, isEditing, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<TourismResourceRecord>({
+const { rows, record, isDialogVisible, isEditing, loadRecords, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<TransportRecord>({
   records: resourceService.transports,
-  idPrefix: "transport",
+  api: resourceService.transportApi,
+  loadRecords: () => resourceService.loadTransports(),
   codePrefix: "VEH",
-  createEmpty: () => ({ ...createEmptyTourismResourceRecord(), unit: "vehicleDay" }),
+  createEmpty: () => ({
+    id: "", code: "", name: "", plateNumber: "", seats: 1, dailyPrice: 0,
+    unit: "vehicleDay", city: "", countryOrRegion: "", contact: "", email: "", phone: "",
+    status: "enabled", remark: "",
+  }),
 });
+
+function editTransport(record: TourismResourceRecord) {
+  return openEditDialog(record as TransportRecord);
+}
+
+function toggleTransportStatus(record: TourismResourceRecord) {
+  return toggleStatus(record as TransportRecord);
+}
+
+function deleteTransport(record: TourismResourceRecord) {
+  return deleteRecord(record as TransportRecord);
+}
+
+function saveTransport(record: TourismResourceRecord) {
+  return saveRecord(record as TransportRecord);
+}
 </script>

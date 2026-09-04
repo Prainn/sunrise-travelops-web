@@ -126,7 +126,7 @@ const { t, locale } = useI18n();
 const formRef = ref<FormInstance>();
 const form = reactive<RestaurantPriceRecord>({ ...props.record });
 const isVisible = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) });
-const groundOperatorOptions = computed(() => resourceService.suppliers.filter((item) => item.status === "enabled"));
+const groundOperatorOptions = computed(() => resourceService.supplierOptions);
 const unitOptions = computed(() => getResourceUnitOptions("restaurant", locale.value));
 const rules = computed<FormRules>(() => ({
   menuName: [{ required: true, message: t("restaurant.menuNameRequired"), trigger: "blur" }],

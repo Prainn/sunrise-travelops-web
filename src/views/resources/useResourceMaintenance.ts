@@ -1,8 +1,9 @@
-import { computed, reactive, ref, type Ref } from "vue";
+import { computed, onMounted, reactive, ref, type Ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { ResourceStatus, TourismResourceRecord } from "@/types/resource";
-import { createId, generateNextCode } from "@/utils";
+import type { ResourceCrud } from "@/services/resource.service";
+import { generateNextCode } from "@/utils";
 
 interface ResourceMaintenanceRecord {
   id: string;
@@ -12,9 +13,10 @@ interface ResourceMaintenanceRecord {
 
 interface ResourceMaintenanceOptions<T extends ResourceMaintenanceRecord> {
   records: T[];
-  idPrefix: string;
   codePrefix: string;
   createEmpty: () => T;
+  api: ResourceCrud<T>;
+  loadRecords: () => Promise<T[]>;
   cloneForEdit?: (record: T) => T;
   createRecord?: (record: T, id: string) => T;
   updateRecord?: (current: T, record: T) => void;
@@ -36,6 +38,14 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
   const record = ref<T>(options.createEmpty()) as Ref<T>;
   const isEditing = computed(() => Boolean(editingId.value));
 
+  async function loadRecords() {
+    try {
+      await options.loadRecords();
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : String(error));
+    }
+  }
+
   function openCreateDialog() {
     editingId.value = "";
     record.value = {
@@ -45,28 +55,47 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
     isDialogVisible.value = true;
   }
 
-  function openEditDialog(row: T) {
-    editingId.value = row.id;
-    record.value = options.cloneForEdit?.(row) ?? { ...row };
-    isDialogVisible.value = true;
-  }
-
-  function toggleStatus(row: T) {
-    row.status = row.status === "enabled" ? "disabled" : "enabled";
-    ElMessage.success(t("common.updateSuccess"));
-  }
-
-  function saveRecord(value: T) {
-    const current = rows.find((item) => item.id === editingId.value);
-    if (current) {
-      if (options.updateRecord) options.updateRecord(current, value);
-      else Object.assign(current, value);
-    } else {
-      const id = createId(options.idPrefix);
-      rows.push(options.createRecord?.(value, id) ?? { ...value, id });
+  async function openEditDialog(row: T) {
+    try {
+      const detail = await options.api.getDetail(row.id);
+      editingId.value = row.id;
+      record.value = options.cloneForEdit?.(detail) ?? { ...detail };
+      isDialogVisible.value = true;
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : String(error));
     }
-    isDialogVisible.value = false;
-    ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
+  }
+
+  async function toggleStatus(row: T) {
+    try {
+      const updated = await options.api.update(row.id, {
+        ...row,
+        status: row.status === "enabled" ? "disabled" : "enabled",
+      });
+      Object.assign(row, updated);
+      ElMessage.success(t("common.updateSuccess"));
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  async function saveRecord(value: T) {
+    try {
+      const current = rows.find((item) => item.id === editingId.value);
+      const saved = current
+        ? await options.api.update(current.id, value)
+        : await options.api.create(value);
+      if (current) {
+        if (options.updateRecord) options.updateRecord(current, saved);
+        else Object.assign(current, saved);
+      } else {
+        rows.push(options.createRecord?.(saved, saved.id) ?? saved);
+      }
+      isDialogVisible.value = false;
+      ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : String(error));
+    }
   }
 
   async function deleteRecord(row: T) {
@@ -80,14 +109,20 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
       return;
     }
 
-    const index = rows.findIndex((item) => item.id === row.id);
-    if (index < 0) return;
-    rows.splice(index, 1);
-    ElMessage.success(t("common.deleteSuccess"));
+    try {
+      await options.api.deleteByIds(row.id);
+      const index = rows.findIndex((item) => item.id === row.id);
+      if (index >= 0) rows.splice(index, 1);
+      ElMessage.success(t("common.deleteSuccess"));
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : String(error));
+    }
   }
+
+  onMounted(loadRecords);
 
   return {
     rows, record, isDialogVisible, isEditing,
-    openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord,
+    loadRecords, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord,
   };
 }

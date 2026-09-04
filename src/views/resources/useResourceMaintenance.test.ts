@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { confirm, success } = vi.hoisted(() => ({
+const { confirm, success, error } = vi.hoisted(() => ({
   confirm: vi.fn(() => Promise.resolve()),
   success: vi.fn(),
+  error: vi.fn(),
 }));
 
 vi.mock("element-plus", () => ({
-  ElMessage: { success },
+  ElMessage: { success, error },
   ElMessageBox: { confirm },
 }));
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
@@ -35,9 +36,17 @@ describe("resource maintenance", () => {
     const records: TestResource[] = [
       { id: "resource-1", code: "TST-001", name: "原记录", status: "enabled", children: ["child-1"] },
     ];
+    const api = {
+      getPage: vi.fn(),
+      getDetail: vi.fn(async (id: string) => ({ ...records.find((item) => item.id === id)! })),
+      create: vi.fn(async (record: TestResource) => ({ ...record, id: "resource-2" })),
+      update: vi.fn(async (_id: string, record: TestResource) => ({ ...record })),
+      deleteByIds: vi.fn(async () => undefined),
+    };
     const maintenance = useResourceMaintenance<TestResource>({
       records,
-      idPrefix: "resource",
+      api,
+      loadRecords: vi.fn(async () => records),
       codePrefix: "TST",
       createEmpty,
       cloneForEdit: (record) => ({ ...record, children: [...record.children] }),
@@ -47,17 +56,17 @@ describe("resource maintenance", () => {
 
     maintenance.openCreateDialog();
     expect(maintenance.record.value.code).toBe("TST-002");
-    maintenance.saveRecord({ ...maintenance.record.value, name: "新增记录", children: ["discarded"] });
+    await maintenance.saveRecord({ ...maintenance.record.value, name: "新增记录", children: ["discarded"] });
     expect(records[1].name).toBe("新增记录");
     expect(records[1].children).toEqual([]);
 
-    maintenance.openEditDialog(records[0]);
+    await maintenance.openEditDialog(records[0]);
     maintenance.record.value.children.push("form-only");
     expect(records[0].children).toEqual(["child-1"]);
-    maintenance.saveRecord({ ...maintenance.record.value, name: "已更新" });
+    await maintenance.saveRecord({ ...maintenance.record.value, name: "已更新" });
     expect(records[0]).toMatchObject({ name: "已更新", children: ["child-1"] });
 
-    maintenance.toggleStatus(records[0]);
+    await maintenance.toggleStatus(records[0]);
     expect(records[0].status).toBe("disabled");
 
     await maintenance.deleteRecord(records[0]);

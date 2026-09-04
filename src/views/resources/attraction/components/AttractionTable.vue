@@ -11,7 +11,7 @@
       class="page-content"
       shadow="never"
     >
-      <TableToolbar @refresh="resetQuery">
+      <TableToolbar @refresh="emit('refresh')">
         <el-button
           v-has-perm="RESOURCE_PERMISSIONS.attraction.create"
           type="primary"
@@ -26,6 +26,7 @@
           border
           height="100%"
           row-key="id"
+          @expand-change="changeExpand"
         >
           <el-table-column
             type="expand"
@@ -69,11 +70,11 @@
                   />
                   <el-table-column
                     prop="periodName"
-                    :label="$t('hotel.pricePeriod')"
+                    :label="$t('attraction.pricePeriod')"
                     width="90"
                   />
                   <el-table-column
-                    :label="$t('hotel.effectivePeriod')"
+                    :label="$t('attraction.effectivePeriod')"
                     min-width="180"
                   >
                     <template #default="priceScope">
@@ -176,7 +177,7 @@
             align="center"
           >
             <template #default="scope">
-              {{ scope.row.prices.length }}
+              {{ scope.row.priceCount ?? scope.row.prices.length }}
             </template>
           </el-table-column>
           <el-table-column
@@ -259,10 +260,12 @@ import { attractionCategoryLabelKeys, attractionItemTypeLabelKeys } from "../opt
 
 const props = defineProps<{ rows: AttractionRecord[] }>();
 const emit = defineEmits<{
+  refresh: [];
   create: [];
   edit: [record: AttractionRecord];
   delete: [record: AttractionRecord];
   "toggle-status": [record: AttractionRecord];
+  expand: [record: AttractionRecord];
   "create-price": [record: AttractionRecord];
   "edit-price": [record: AttractionRecord, price: AttractionPriceRecord];
   "delete-price": [record: AttractionRecord, price: AttractionPriceRecord];
@@ -274,7 +277,7 @@ const area = ref("");
 const category = ref<AttractionCategory | "">("");
 const pageNum = ref(1);
 const pageSize = ref(10);
-const groundOperatorOptions = computed(() => resourceService.suppliers.filter((item) => item.status === "enabled"));
+const groundOperatorOptions = computed(() => resourceService.supplierOptions);
 const filteredRows = computed(() => props.rows.filter((record) => (
   (!area.value || record.area === area.value)
   && (!category.value || record.category === category.value)
@@ -288,6 +291,12 @@ function resetQuery() {
   area.value = "";
   category.value = "";
   pageNum.value = 1;
+}
+function changeExpand(record: AttractionRecord, expanded: AttractionRecord[] | boolean) {
+  const isExpanded = Array.isArray(expanded)
+    ? expanded.some((item) => item.id === record.id)
+    : expanded;
+  if (isExpanded) emit("expand", record);
 }
 function formatPeriod(price: AttractionPriceRecord) {
   return price.startDate && price.endDate ? `${price.startDate} — ${price.endDate}` : t("common.notSet");

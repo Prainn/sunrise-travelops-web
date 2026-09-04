@@ -57,7 +57,7 @@
             </el-button>
             <el-button
               v-has-perm="permissions.update"
-              type="warning"
+              :type="agency.status === 'enabled' ? 'warning' : 'success'"
               link
               @click="emit('toggle-status', agency)"
             >

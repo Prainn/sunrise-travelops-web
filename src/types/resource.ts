@@ -1,15 +1,30 @@
 import type { ItineraryItemType, ItineraryPriceUnit } from "./itinerary";
 
 export type ResourceStatus = "enabled" | "disabled";
-export type TourismResourceType = "agency" | "supplier" | "transport";
 
-export interface AgencyContactRecord {
+export interface ResourceAuditRecord {
+  version?: number;
+  createdAt?: string;
+  createdBy?: string | null;
+  updatedAt?: string;
+  updatedBy?: string | null;
+}
+
+export interface ResourceQueryParams {
+  page: number;
+  pageSize: number;
+  keywords?: string;
+  status?: ResourceStatus;
+}
+
+export interface AgencyContactRecord extends ResourceAuditRecord {
   id: string;
+  agencyId?: string;
   name: string;
   phone: string;
 }
 
-export interface AgencyRecord {
+export interface AgencyRecord extends ResourceAuditRecord {
   id: string;
   code: string;
   name: string;
@@ -19,12 +34,7 @@ export interface AgencyRecord {
   status: ResourceStatus;
   remark: string;
   contacts: AgencyContactRecord[];
-}
-
-export interface TourismResourceCollection {
-  agency: AgencyRecord[];
-  supplier: TourismResourceRecord[];
-  transport: TourismResourceRecord[];
+  contactCount?: number;
 }
 
 export interface ResourceUnitRecord {
@@ -51,6 +61,7 @@ export interface BusinessCategoryOptionRecord {
   code: string;
   name: string;
   englishName: string;
+  resourceTypes?: ItineraryItemType[];
   status: ResourceStatus;
   remark: string;
 }
@@ -64,8 +75,8 @@ export interface BusinessCategoryTypeRecord {
   items: BusinessCategoryOptionRecord[];
 }
 
-export interface TourismResourceRecord {
-  [key: string]: string | number;
+export interface TourismResourceRecord extends ResourceAuditRecord {
+  [key: string]: string | number | null | undefined;
   id: string;
   code: string;
   name: string;
@@ -78,27 +89,22 @@ export interface TourismResourceRecord {
   remark: string;
 }
 
-export interface HotelPricePlanRecord {
-  id: string;
-  periodName: string;
-  startDate: string;
-  endDate: string;
-  individualPrice: number;
-  groupPrice: number;
-  unit: ItineraryPriceUnit;
-  minimumRooms: number;
-  isGroundOperatorProvided: boolean;
-  groundOperatorId: string;
-}
+export interface SupplierRecord extends TourismResourceRecord {}
 
-export interface HotelRoomTypeRecord {
+export interface SupplierOptionRecord {
   id: string;
+  code: string;
   name: string;
-  rackRate: number;
-  pricePlans: HotelPricePlanRecord[];
 }
 
-export interface HotelRecord {
+export interface TransportRecord extends TourismResourceRecord {
+  plateNumber: string;
+  seats: number;
+  dailyPrice: number;
+  unit: ItineraryPriceUnit;
+}
+
+export interface HotelRecord extends ResourceAuditRecord {
   id: string;
   code: string;
   name: string;
@@ -110,16 +116,20 @@ export interface HotelRecord {
   address: string;
   phone: string;
   nearby: string;
+  basicRoomType: string;
+  individualPrice: number;
+  groupPrice: number | null;
+  minimumGroupSize: number | null;
   unit: ItineraryPriceUnit;
   status: ResourceStatus;
-  roomTypes: HotelRoomTypeRecord[];
 }
 
 export type AttractionCategory = "scenic" | "performance" | "experience" | "transport" | "package";
 export type AttractionPriceItemType = "ticket" | "transport" | "guide" | "activity" | "package";
 
-export interface AttractionPriceRecord {
+export interface AttractionPriceRecord extends ResourceAuditRecord {
   id: string;
+  attractionId?: string;
   itemType: AttractionPriceItemType;
   itemName: string;
   audience: string;
@@ -135,7 +145,7 @@ export interface AttractionPriceRecord {
   groundOperatorId: string;
 }
 
-export interface AttractionRecord {
+export interface AttractionRecord extends ResourceAuditRecord {
   id: string;
   code: string;
   name: string;
@@ -146,12 +156,13 @@ export interface AttractionRecord {
   unit: ItineraryPriceUnit;
   status: ResourceStatus;
   prices: AttractionPriceRecord[];
+  priceCount?: number;
 }
 
 export type GuideGender = "male" | "female";
 export type GuideEmploymentType = "full-time" | "part-time";
 
-export interface GuideRecord {
+export interface GuideRecord extends ResourceAuditRecord {
   id: string;
   code: string;
   certificateNo: string;
@@ -162,7 +173,7 @@ export interface GuideRecord {
   employmentType: GuideEmploymentType;
   identityNumber: string;
   phone: string;
-  dailyPrice: number;
+  dailyPrice: number | null;
   unit: ItineraryPriceUnit;
   hasLaborContract: boolean;
   isGroundOperatorProvided: boolean;
@@ -174,8 +185,9 @@ export interface GuideRecord {
 
 export type RestaurantPriceUnit = string;
 
-export interface RestaurantPriceRecord {
+export interface RestaurantPriceRecord extends ResourceAuditRecord {
   id: string;
+  restaurantId?: string;
   menuName: string;
   dishDetails?: string;
   unit: RestaurantPriceUnit;
@@ -186,7 +198,7 @@ export interface RestaurantPriceRecord {
   groundOperatorId: string;
 }
 
-export interface RestaurantRecord {
+export interface RestaurantRecord extends ResourceAuditRecord {
   id: string;
   code: string;
   name: string;
@@ -199,4 +211,5 @@ export interface RestaurantRecord {
   unit: RestaurantPriceUnit;
   status: ResourceStatus;
   prices: RestaurantPriceRecord[];
+  priceCount?: number;
 }

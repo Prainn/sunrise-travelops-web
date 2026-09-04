@@ -40,12 +40,12 @@
         />
       </el-form-item>
       <el-form-item
-        :label="$t('hotel.pricePeriod')"
+        :label="$t('attraction.pricePeriod')"
         prop="periodName"
       >
         <el-input v-model.trim="form.periodName" />
       </el-form-item>
-      <el-form-item :label="$t('hotel.effectivePeriod')">
+      <el-form-item :label="$t('attraction.effectivePeriod')">
         <el-date-picker
           v-model="form.dates"
           type="daterange"
@@ -159,7 +159,7 @@ const itemTypeOptions: Array<{ value: AttractionPriceItemType; labelKey: string 
   { value: "activity", labelKey: "attraction.itemActivity" },
   { value: "package", labelKey: "attraction.itemPackage" },
 ];
-const groundOperatorOptions = computed(() => resourceService.suppliers.filter((item) => item.status === "enabled"));
+const groundOperatorOptions = computed(() => resourceService.supplierOptions);
 const unitOptions = computed(() => getResourceUnitOptions("attraction", locale.value));
 const rules = computed<FormRules>(() => ({
   itemType: [{ required: true, message: t("attraction.itemTypeRequired"), trigger: "change" }],

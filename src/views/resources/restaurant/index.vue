@@ -2,10 +2,12 @@
   <div class="resource-page">
     <RestaurantTable
       :rows="restaurantStore"
+      @refresh="loadRecords"
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
       @delete="deleteRestaurant"
+      @expand="loadRestaurantPrices"
       @create-price="openCreatePriceDialog"
       @edit-price="openEditPriceDialog"
       @delete-price="deletePrice"
@@ -31,7 +33,6 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { resourceService } from "@/services/resource.service";
 import type { RestaurantPriceRecord, RestaurantRecord } from "@/types/resource";
-import { createId } from "@/utils";
 import { useResourceMaintenance } from "../useResourceMaintenance";
 import RestaurantEditorDialog from "./components/RestaurantEditorDialog.vue";
 import RestaurantPriceDialog from "./components/RestaurantPriceDialog.vue";
@@ -44,6 +45,9 @@ const isPriceDialogVisible = ref(false);
 const editingPriceId = ref("");
 const selectedRestaurant = ref<RestaurantRecord>();
 const priceForm = ref<RestaurantPriceRecord>(createEmptyPrice());
+const loadedRestaurantPriceIds = new Set<string>();
+const loadingRestaurantPriceIds = new Set<string>();
+let areSupplierOptionsLoaded = false;
 
 function createEmptyRestaurant(): RestaurantRecord {
   return {
@@ -64,6 +68,7 @@ const {
   record: restaurantForm,
   isDialogVisible: isRestaurantDialogVisible,
   isEditing,
+  loadRecords,
   openCreateDialog,
   openEditDialog,
   toggleStatus,
@@ -71,7 +76,8 @@ const {
   deleteRecord: deleteRestaurant,
 } = useResourceMaintenance<RestaurantRecord>({
   records: resourceService.restaurants,
-  idPrefix: "restaurant",
+  api: resourceService.restaurantApi,
+  loadRecords: loadRestaurants,
   codePrefix: "RES",
   createEmpty: createEmptyRestaurant,
   cloneForEdit: (record) => ({ ...record, prices: record.prices }),
@@ -79,27 +85,68 @@ const {
   updateRecord: (current, record) => Object.assign(current, record, { prices: current.prices }),
 });
 
-function openCreatePriceDialog(record: RestaurantRecord) {
+async function loadRestaurants() {
+  loadedRestaurantPriceIds.clear();
+  return resourceService.loadRestaurants();
+}
+
+async function loadRestaurantPrices(record: RestaurantRecord) {
+  if (loadedRestaurantPriceIds.has(record.id) || loadingRestaurantPriceIds.has(record.id)) return;
+  loadingRestaurantPriceIds.add(record.id);
+  try {
+    await resourceService.loadRestaurantPrices(record.id);
+    loadedRestaurantPriceIds.add(record.id);
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+  } finally {
+    loadingRestaurantPriceIds.delete(record.id);
+  }
+}
+
+async function loadSupplierOptions() {
+  if (areSupplierOptionsLoaded) return true;
+  try {
+    await resourceService.loadSupplierOptions();
+    areSupplierOptionsLoaded = true;
+    return true;
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+    return false;
+  }
+}
+
+async function openCreatePriceDialog(record: RestaurantRecord) {
+  if (!(await loadSupplierOptions())) return;
   selectedRestaurant.value = record;
   editingPriceId.value = "";
   priceForm.value = { ...createEmptyPrice(), unit: record.unit };
   isPriceDialogVisible.value = true;
 }
 
-function openEditPriceDialog(record: RestaurantRecord, price: RestaurantPriceRecord) {
+async function openEditPriceDialog(record: RestaurantRecord, price: RestaurantPriceRecord) {
+  if (!(await loadSupplierOptions())) return;
   selectedRestaurant.value = record;
   editingPriceId.value = price.id;
   priceForm.value = { ...price };
   isPriceDialogVisible.value = true;
 }
 
-function savePrice(price: RestaurantPriceRecord) {
+async function savePrice(price: RestaurantPriceRecord) {
   if (!selectedRestaurant.value) return;
-  const current = selectedRestaurant.value.prices.find((item) => item.id === editingPriceId.value);
-  if (current) Object.assign(current, price);
-  else selectedRestaurant.value.prices.push({ ...price, id: createId("restaurant-price") });
-  isPriceDialogVisible.value = false;
-  ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
+  const restaurant = selectedRestaurant.value;
+  const current = restaurant.prices.find((item) => item.id === editingPriceId.value);
+  try {
+    const saved = current
+      ? await resourceService.restaurantApi.updatePrice(restaurant.id, current.id, price)
+      : await resourceService.restaurantApi.createPrice(restaurant.id, price);
+    if (current) Object.assign(current, saved);
+    else restaurant.prices.push(saved);
+    restaurant.priceCount = restaurant.prices.length;
+    isPriceDialogVisible.value = false;
+    ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+  }
 }
 
 async function deletePrice(record: RestaurantRecord, price: RestaurantPriceRecord) {
@@ -108,9 +155,14 @@ async function deletePrice(record: RestaurantRecord, price: RestaurantPriceRecor
   } catch {
     return;
   }
-  const index = record.prices.findIndex((item) => item.id === price.id);
-  if (index < 0) return;
-  record.prices.splice(index, 1);
-  ElMessage.success(t("common.deleteSuccess"));
+  try {
+    await resourceService.restaurantApi.deletePrices(record.id, price.id);
+    const index = record.prices.findIndex((item) => item.id === price.id);
+    if (index >= 0) record.prices.splice(index, 1);
+    record.priceCount = record.prices.length;
+    ElMessage.success(t("common.deleteSuccess"));
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+  }
 }
 </script>

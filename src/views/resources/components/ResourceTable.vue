@@ -25,7 +25,7 @@
       class="page-content"
       shadow="never"
     >
-      <TableToolbar @refresh="resetQuery">
+      <TableToolbar @refresh="emit('refresh')">
         <el-button
           v-has-perm="permissions.create"
           type="primary"
@@ -117,6 +117,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
+  refresh: [];
   create: [];
   edit: [row: ResourceRow];
   delete: [row: ResourceRow];

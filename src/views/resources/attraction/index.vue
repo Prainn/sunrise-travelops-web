@@ -2,10 +2,12 @@
   <div class="resource-page">
     <AttractionTable
       :rows="attractionStore"
+      @refresh="loadRecords"
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
       @delete="deleteAttraction"
+      @expand="loadAttractionPrices"
       @create-price="openCreatePriceDialog"
       @edit-price="openEditPriceDialog"
       @delete-price="deletePrice"
@@ -31,7 +33,6 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { resourceService } from "@/services/resource.service";
 import type { AttractionPriceRecord, AttractionRecord } from "@/types/resource";
-import { createId } from "@/utils";
 import { useResourceMaintenance } from "../useResourceMaintenance";
 import AttractionEditorDialog from "./components/AttractionEditorDialog.vue";
 import AttractionPriceDialog from "./components/AttractionPriceDialog.vue";
@@ -44,6 +45,9 @@ const isPriceDialogVisible = ref(false);
 const editingPriceId = ref("");
 const selectedAttraction = ref<AttractionRecord>();
 const priceForm = ref<AttractionPriceRecord>(createEmptyPrice());
+const loadedAttractionPriceIds = new Set<string>();
+const loadingAttractionPriceIds = new Set<string>();
+let areSupplierOptionsLoaded = false;
 
 function createEmptyAttraction(): AttractionRecord {
   return { id: "", code: "", name: "", area: "", category: "scenic", restroomLocation: "", remark: "", unit: "personVisit", status: "enabled", prices: [] };
@@ -56,6 +60,7 @@ const {
   record: attractionForm,
   isDialogVisible: isAttractionDialogVisible,
   isEditing,
+  loadRecords,
   openCreateDialog,
   openEditDialog,
   toggleStatus,
@@ -63,7 +68,8 @@ const {
   deleteRecord: deleteAttraction,
 } = useResourceMaintenance<AttractionRecord>({
   records: resourceService.attractions,
-  idPrefix: "attraction",
+  api: resourceService.attractionApi,
+  loadRecords: loadAttractions,
   codePrefix: "ATT",
   createEmpty: createEmptyAttraction,
   cloneForEdit: (record) => ({ ...record, prices: record.prices }),
@@ -73,25 +79,67 @@ const {
     current.prices.forEach((price) => { price.unit = current.unit; });
   },
 });
-function openCreatePriceDialog(record: AttractionRecord) {
+
+async function loadAttractions() {
+  loadedAttractionPriceIds.clear();
+  return resourceService.loadAttractions();
+}
+
+async function loadAttractionPrices(record: AttractionRecord) {
+  if (loadedAttractionPriceIds.has(record.id) || loadingAttractionPriceIds.has(record.id)) return;
+  loadingAttractionPriceIds.add(record.id);
+  try {
+    await resourceService.loadAttractionPrices(record.id);
+    loadedAttractionPriceIds.add(record.id);
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+  } finally {
+    loadingAttractionPriceIds.delete(record.id);
+  }
+}
+
+async function loadSupplierOptions() {
+  if (areSupplierOptionsLoaded) return true;
+  try {
+    await resourceService.loadSupplierOptions();
+    areSupplierOptionsLoaded = true;
+    return true;
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+    return false;
+  }
+}
+
+async function openCreatePriceDialog(record: AttractionRecord) {
+  if (!(await loadSupplierOptions())) return;
   selectedAttraction.value = record;
   editingPriceId.value = "";
   priceForm.value = { ...createEmptyPrice(), unit: record.unit };
   isPriceDialogVisible.value = true;
 }
-function openEditPriceDialog(record: AttractionRecord, price: AttractionPriceRecord) {
+async function openEditPriceDialog(record: AttractionRecord, price: AttractionPriceRecord) {
+  if (!(await loadSupplierOptions())) return;
   selectedAttraction.value = record;
   editingPriceId.value = price.id;
   priceForm.value = { ...price };
   isPriceDialogVisible.value = true;
 }
-function savePrice(price: AttractionPriceRecord) {
+async function savePrice(price: AttractionPriceRecord) {
   if (!selectedAttraction.value) return;
-  const current = selectedAttraction.value.prices.find((item) => item.id === editingPriceId.value);
-  if (current) Object.assign(current, price);
-  else selectedAttraction.value.prices.push({ ...price, id: createId("attraction-price") });
-  isPriceDialogVisible.value = false;
-  ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
+  const attraction = selectedAttraction.value;
+  const current = attraction.prices.find((item) => item.id === editingPriceId.value);
+  try {
+    const saved = current
+      ? await resourceService.attractionApi.updatePrice(attraction.id, current.id, price)
+      : await resourceService.attractionApi.createPrice(attraction.id, price);
+    if (current) Object.assign(current, saved);
+    else attraction.prices.push(saved);
+    attraction.priceCount = attraction.prices.length;
+    isPriceDialogVisible.value = false;
+    ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+  }
 }
 async function deletePrice(record: AttractionRecord, price: AttractionPriceRecord) {
   try {
@@ -99,9 +147,14 @@ async function deletePrice(record: AttractionRecord, price: AttractionPriceRecor
   } catch {
     return;
   }
-  const index = record.prices.findIndex((item) => item.id === price.id);
-  if (index < 0) return;
-  record.prices.splice(index, 1);
-  ElMessage.success(t("common.deleteSuccess"));
+  try {
+    await resourceService.attractionApi.deletePrices(record.id, price.id);
+    const index = record.prices.findIndex((item) => item.id === price.id);
+    if (index >= 0) record.prices.splice(index, 1);
+    record.priceCount = record.prices.length;
+    ElMessage.success(t("common.deleteSuccess"));
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+  }
 }
 </script>

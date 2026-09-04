@@ -38,7 +38,6 @@ import { useI18n } from "vue-i18n";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import { resourceService } from "@/services/resource.service";
 import type { AgencyContactRecord, AgencyRecord } from "@/types/resource";
-import { createId } from "@/utils";
 import AgencyContactDialog from "./components/AgencyContactDialog.vue";
 import AgencyContactsPanel from "./components/AgencyContactsPanel.vue";
 import AgencyEditorDialog from "./components/AgencyEditorDialog.vue";
@@ -48,6 +47,8 @@ import { useResourceMaintenance } from "../useResourceMaintenance";
 defineOptions({ name: "Agency" });
 
 const { t } = useI18n();
+const loadedContactAgencyIds = new Set<string>();
+const loadingContactAgencyIds = new Set<string>();
 
 function createEmptyAgencyRecord(): AgencyRecord {
   return {
@@ -68,7 +69,8 @@ const {
   deleteRecord,
 } = useResourceMaintenance<AgencyRecord>({
   records: resourceService.agencies,
-  idPrefix: "agency",
+  api: resourceService.agencyApi,
+  loadRecords: loadAgencies,
   codePrefix: "AGY",
   createEmpty: createEmptyAgencyRecord,
   cloneForEdit: (agency) => ({ ...agency, contacts: agency.contacts.map((contact) => ({ ...contact })) }),
@@ -89,13 +91,38 @@ const isContactEditing = computed(() => Boolean(editingContactId.value));
 watch(() => rows.map((agency) => agency.id), (ids) => {
   if (!ids.includes(selectedAgencyId.value)) selectedAgencyId.value = ids[0] ?? "";
 });
+watch(selectedAgencyId, loadAgencyContacts, { immediate: true });
+
+async function loadAgencies() {
+  loadedContactAgencyIds.clear();
+  const agencies = await resourceService.loadAgencies();
+  const nextAgencyId = agencies.some((agency) => agency.id === selectedAgencyId.value)
+    ? selectedAgencyId.value
+    : agencies[0]?.id ?? "";
+  if (selectedAgencyId.value === nextAgencyId) await loadAgencyContacts(nextAgencyId);
+  else selectedAgencyId.value = nextAgencyId;
+  return agencies;
+}
+
+async function loadAgencyContacts(agencyId: string) {
+  if (!agencyId || loadedContactAgencyIds.has(agencyId) || loadingContactAgencyIds.has(agencyId)) return;
+  loadingContactAgencyIds.add(agencyId);
+  try {
+    await resourceService.loadAgencyContacts(agencyId);
+    loadedContactAgencyIds.add(agencyId);
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+  } finally {
+    loadingContactAgencyIds.delete(agencyId);
+  }
+}
 
 function createEmptyContact(): AgencyContactRecord {
   return { id: "", name: "", phone: "" };
 }
 
-function saveAgency(agency: AgencyRecord) {
-  saveAgencyRecord(agency);
+async function saveAgency(agency: AgencyRecord) {
+  await saveAgencyRecord(agency);
   const savedAgency = rows.find((item) => item.code === agency.code);
   if (savedAgency) selectedAgencyId.value = savedAgency.id;
 }
@@ -113,7 +140,7 @@ function openEditContactDialog(contact: AgencyContactRecord) {
   isContactDialogVisible.value = true;
 }
 
-function saveContact(contact: AgencyContactRecord) {
+async function saveContact(contact: AgencyContactRecord) {
   const agency = selectedAgency.value;
   if (!agency) return;
   const isDuplicate = agency.contacts.some((item) => (
@@ -124,10 +151,18 @@ function saveContact(contact: AgencyContactRecord) {
     return;
   }
   const current = agency.contacts.find((item) => item.id === editingContactId.value);
-  if (current) Object.assign(current, contact);
-  else agency.contacts.push({ ...contact, id: createId("agency-contact") });
-  isContactDialogVisible.value = false;
-  ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
+  try {
+    const saved = current
+      ? await resourceService.agencyApi.updateContact(agency.id, current.id, contact)
+      : await resourceService.agencyApi.createContact(agency.id, contact);
+    if (current) Object.assign(current, saved);
+    else agency.contacts.push(saved);
+    agency.contactCount = agency.contacts.length;
+    isContactDialogVisible.value = false;
+    ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+  }
 }
 
 async function deleteContact(contact: AgencyContactRecord) {
@@ -138,10 +173,15 @@ async function deleteContact(contact: AgencyContactRecord) {
   } catch {
     return;
   }
-  const index = agency.contacts.findIndex((item) => item.id === contact.id);
-  if (index < 0) return;
-  agency.contacts.splice(index, 1);
-  ElMessage.success(t("common.deleteSuccess"));
+  try {
+    await resourceService.agencyApi.deleteContacts(agency.id, contact.id);
+    const index = agency.contacts.findIndex((item) => item.id === contact.id);
+    if (index >= 0) agency.contacts.splice(index, 1);
+    agency.contactCount = agency.contacts.length;
+    ElMessage.success(t("common.deleteSuccess"));
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+  }
 }
 </script>
 
