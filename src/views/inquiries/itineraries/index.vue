@@ -156,6 +156,7 @@
         v-model="isResourceDialogVisible"
         :guest-count="guestCount"
         :hotel-room-count="hotelRoomCount"
+        :options="resourcePriceOptions"
         @submit="addResourceItem"
       />
       <ItineraryPdfPreviewDialog
@@ -252,6 +253,7 @@ const {
   isEditingPlan, isPdfPreviewVisible, isPlanDialogVisible, isResourceDialogVisible,
   isDraft, itemCount, itineraryForm, moveDay, openCreateDialog, openResourceDialog, priceEditable, quoteCalculation,
   openEditDialog, pdfPreviewUrl, removeDay, removeItem, router, rows, saveItinerary, selectedItinerary, selectedItineraryId,
+  resourcePriceOptions,
   submitItineraryPlan, totalCost,
   updateDayField, updateItemQuantity, updateItemUnitCost, updateQuote,
 } = useItineraryWorkspace({

@@ -194,6 +194,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
   submit: [record: InquiryRecord];
+  "select-agency": [agencyId: string];
   "create-contact": [agencyId: string, name: string];
 }>();
 
@@ -250,6 +251,7 @@ function selectAgency(agencyId: string) {
     phone: "",
     countryOrRegion: agency.countryOrRegion,
   });
+  emit("select-agency", agencyId);
 }
 
 function selectContact(contact: AgencyContactRecord) {

@@ -1,11 +1,13 @@
 import { computed, ref } from "vue";
 import { useInquiryLog } from "@/composables/useInquiryLog";
+import { resourceService } from "@/services/resource.service";
 import { useUserStore } from "@/stores/user";
 import type { ItineraryRecord, ItineraryResourceItem } from "@/types/itinerary";
 import { formatDateTime, hasUserPermission, sumMoney } from "@/utils";
 import { isInquiryReadOnly } from "../inquiry-workflow";
 import { canPerformItineraryOperation } from "./itinerary-workflow";
 import { calculateItineraryQuote } from "./quote-pricing";
+import { getResourcePriceOptions, reconcileItineraryResourceReferences, type ResourcePriceOption } from "./pricing";
 import { useItineraryEditor } from "./useItineraryEditor";
 import { useItineraryPdf } from "./useItineraryPdf";
 import { useItinerarySelection } from "./useItinerarySelection";
@@ -27,6 +29,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const isEditingPlan = ref(false);
   const isResourceDialogVisible = ref(false);
   const resourceTargetDayId = ref("");
+  const resourcePriceOptions = ref<ResourcePriceOption[]>([]);
   const inquiryReadOnly = computed(() => inquiry.value ? isInquiryReadOnly(inquiry.value.status) : true);
   const isDraft = computed(() => selectedItinerary.value?.status === "draft");
   const canCreateItinerary = computed(() => !inquiryReadOnly.value && hasUserPermission(userStore.userInfo, "itinerary:create"));
@@ -70,6 +73,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     canEditContent: () => contentEditable.value,
     canEditPrice: () => priceEditable.value,
     getCreator: () => userStore.userInfo.username ?? "",
+    findHotel: (id) => resourceService.hotels.find((hotel) => hotel.id === id),
   });
   const itineraryForm = ref<ItineraryRecord>(editor.createEmptyItinerary());
   const pdf = useItineraryPdf({
@@ -85,9 +89,21 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     isPlanDialogVisible.value = true;
   }
 
-  function openEditDialog() {
+  async function loadResourcePriceOptions() {
+    const resources = await resourceService.loadPricingResources();
+    resourcePriceOptions.value = getResourcePriceOptions(resources, guestCount.value);
+    reconcileItineraryResourceReferences(itineraryStore, resourcePriceOptions.value);
+  }
+
+  async function openEditDialog() {
     const plan = selectedItinerary.value;
     if (!plan || !canEditItineraryBasics.value) return;
+    try {
+      await loadResourcePriceOptions();
+    } catch {
+      messages.error("request.failed");
+      return;
+    }
     isEditingPlan.value = true;
     itineraryForm.value = { ...plan, dailyPlans: [...plan.dailyPlans] };
     isPlanDialogVisible.value = true;
@@ -129,8 +145,14 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     messages.success("common.updateSuccess");
   }
 
-  function openResourceDialog(dayId: string) {
+  async function openResourceDialog(dayId: string) {
     if (!contentEditable.value) return;
+    try {
+      await loadResourcePriceOptions();
+    } catch {
+      messages.error("request.failed");
+      return;
+    }
     resourceTargetDayId.value = dayId;
     isResourceDialogVisible.value = true;
   }
@@ -240,6 +262,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     openResourceDialog,
     pdfPreviewUrl: pdf.pdfPreviewUrl,
     priceEditable,
+    resourcePriceOptions,
     quoteCalculation,
     removeDay,
     removeItem: editor.removeItem,

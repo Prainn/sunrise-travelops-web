@@ -129,10 +129,15 @@ import { useI18n } from "vue-i18n";
 import type { ItineraryItemType, ItineraryResourceItem } from "@/types/itinerary";
 import { formatMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
-import { calculateItem, getResourcePriceOptions } from "../pricing";
+import { calculateItem } from "../pricing";
 import type { ResourcePriceDetail, ResourcePriceOption } from "../pricing";
 
-const props = defineProps<{ modelValue: boolean; guestCount: number; hotelRoomCount: number }>();
+const props = defineProps<{
+  modelValue: boolean;
+  guestCount: number;
+  hotelRoomCount: number;
+  options: ResourcePriceOption[];
+}>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [item: ItineraryResourceItem] }>();
 const { t, locale } = useI18n();
 const type = ref<ItineraryItemType>("hotel");
@@ -141,10 +146,9 @@ const selectedId = ref("");
 const keyword = ref("");
 const quantity = ref(1);
 const vehicleFee = ref(0);
-const resourcePriceOptions = ref<ResourcePriceOption[]>([]);
 const typeOptions = computed(() => (["hotel", "attraction", "restaurant", "vehicle", "guide"] as ItineraryItemType[])
   .map((value) => ({ label: t(`itinerary.resourceTypes.${value}`), value })));
-const filteredByType = computed(() => resourcePriceOptions.value.filter((option) => option.type === type.value));
+const filteredByType = computed(() => props.options.filter((option) => option.type === type.value));
 const cityOptions = computed(() => [...new Set(filteredByType.value.map((option) => option.city).filter(Boolean))]
   .sort((left, right) => left.localeCompare(right, "zh-CN")));
 const filteredByCity = computed(() => city.value
@@ -154,7 +158,7 @@ const visibleOptions = computed(() => {
   const normalized = keyword.value.trim().toLowerCase();
   return normalized ? filteredByCity.value.filter((option) => option.searchText.toLowerCase().includes(normalized)) : filteredByCity.value;
 });
-const selectedOption = computed(() => resourcePriceOptions.value.find((option) => option.id === selectedId.value));
+const selectedOption = computed(() => props.options.find((option) => option.id === selectedId.value));
 
 watch(type, () => {
   city.value = "";
@@ -171,7 +175,6 @@ watch(selectedOption, (option) => {
 });
 watch(() => props.modelValue, (visible) => {
   if (!visible) return;
-  resourcePriceOptions.value = getResourcePriceOptions();
   type.value = "hotel";
   city.value = "";
   selectedId.value = "";

@@ -1,9 +1,10 @@
 import type { ComputedRef, Ref } from "vue";
 import type { InquiryRecord } from "@/types/inquiry";
 import type { ItineraryDayRecord, ItineraryQuoteSettings, ItineraryRecord, ItineraryResourceItem } from "@/types/itinerary";
+import type { HotelRecord } from "@/types/resource";
 import { addDays, createId, formatDate, formatDateTime, generateNextCode } from "@/utils";
 import { transitionInquiry } from "../inquiry-workflow";
-import { recalculateItem } from "./pricing";
+import { getHotelUnitCost, recalculateItem } from "./pricing";
 import { calculateHotelRoomCount, createDefaultQuoteSettings } from "./quote-pricing";
 
 type EditableDayField = "departure" | "destination" | "transport" | "description";
@@ -18,6 +19,7 @@ interface ItineraryEditorOptions {
   canEditContent: () => boolean;
   canEditPrice: () => boolean;
   getCreator: () => string;
+  findHotel: (id: string) => HotelRecord | undefined;
 }
 
 export function useItineraryEditor(options: ItineraryEditorOptions) {
@@ -60,7 +62,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       childrenCount: record.childrenCount,
     });
     resizeDailyPlans(plan, record.days);
-    syncHotelRoomQuantities(plan);
+    syncHotelItems(plan);
     return plan;
   }
 
@@ -85,8 +87,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     const day = plan?.dailyPlans.find((record) => record.id === dayId);
     if (!plan || !day) return false;
     if (item.type === "hotel") {
-      item.quantity = calculateHotelRoomCount(plan);
-      recalculateItem(item);
+      syncHotelItem(plan, item);
     }
     day.items.push(item);
     touchSelectedItinerary();
@@ -220,12 +221,17 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     if (options.selectedItinerary.value) options.selectedItinerary.value.updatedAt = formatDateTime(new Date());
   }
 
-  function syncHotelRoomQuantities(plan: ItineraryRecord) {
-    const hotelRoomCount = calculateHotelRoomCount(plan);
+  function syncHotelItems(plan: ItineraryRecord) {
     plan.dailyPlans.flatMap((day) => day.items).filter((item) => item.type === "hotel").forEach((item) => {
-      item.quantity = hotelRoomCount;
-      recalculateItem(item);
+      syncHotelItem(plan, item);
     });
+  }
+
+  function syncHotelItem(plan: ItineraryRecord, item: ItineraryResourceItem) {
+    item.quantity = calculateHotelRoomCount(plan);
+    const hotel = options.findHotel(item.resourceId);
+    if (hotel) item.unitCost = getHotelUnitCost(hotel, plan.adults + plan.childrenCount);
+    recalculateItem(item);
   }
 
   function normalizeQuoteValue(value: number) {

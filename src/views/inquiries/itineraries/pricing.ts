@@ -1,5 +1,7 @@
-import { resourceService } from "@/services/resource.service";
-import type { ItineraryItemType, ItineraryPriceUnit, ItineraryResourceItem } from "@/types/itinerary";
+import type { ItineraryItemType, ItineraryPriceUnit, ItineraryRecord, ItineraryResourceItem } from "@/types/itinerary";
+import type {
+  AttractionRecord, GuideRecord, HotelRecord, RestaurantRecord, SupplierOptionRecord, TransportRecord,
+} from "@/types/resource";
 import { createId, multiplyMoney } from "@/utils";
 
 export interface ResourcePriceOption {
@@ -23,6 +25,15 @@ export interface ResourcePriceDetail {
   format?: "money" | "translation" | "unit";
 }
 
+export interface PricingResources {
+  suppliers: SupplierOptionRecord[];
+  hotels: HotelRecord[];
+  restaurants: RestaurantRecord[];
+  attractions: AttractionRecord[];
+  transports: TransportRecord[];
+  guides: GuideRecord[];
+}
+
 const attractionCategoryLabelKeys = {
   scenic: "attraction.categoryScenic",
   performance: "attraction.categoryPerformance",
@@ -41,8 +52,21 @@ const attractionItemTypeLabelKeys = {
 
 const DIRECT_PRICE_NAME = "直营报价";
 
-export function getResourcePriceOptions(): ResourcePriceOption[] {
-  const supplierNames = new Map(resourceService.suppliers.map((item) => [item.id, item.name]));
+export function getHotelUnitCost(
+  hotel: Pick<HotelRecord, "individualPrice" | "groupPrice" | "minimumGroupSize">,
+  guestCount: number
+): number {
+  const { groupPrice, minimumGroupSize } = hotel;
+  const hasGroupPrice = groupPrice !== null && groupPrice > 0;
+  const hasMinimumGroupSize = minimumGroupSize !== null && minimumGroupSize > 0;
+  if (hasGroupPrice && hasMinimumGroupSize && guestCount >= minimumGroupSize) {
+    return groupPrice;
+  }
+  return hotel.individualPrice;
+}
+
+export function getResourcePriceOptions(resources: PricingResources, guestCount = 0): ResourcePriceOption[] {
+  const supplierNames = new Map(resources.suppliers.map((item) => [item.id, item.name]));
   function providerName(isGroundOperatorProvided: boolean, groundOperatorId: string) {
     return isGroundOperatorProvided
       ? supplierNames.get(groundOperatorId) ?? "地接社报价"
@@ -50,17 +74,17 @@ export function getResourcePriceOptions(): ResourcePriceOption[] {
   }
 
   return [
-    ...resourceService.hotels.filter((hotel) => hotel.status === "enabled").flatMap((hotel) => hotel.roomTypes.flatMap((roomType) => roomType.pricePlans.map((price) => ({
-      id: `hotel:${price.id}`,
+    ...resources.hotels.filter((hotel) => hotel.status === "enabled").map((hotel) => ({
+      id: `hotel:${hotel.id}`,
       type: "hotel" as const,
       resourceId: hotel.id,
-      resourcePriceId: price.id,
+      resourcePriceId: hotel.id,
       resourceName: hotel.name,
-      priceName: `${roomType.name} · ${price.periodName}`,
-      providerName: providerName(price.isGroundOperatorProvided, price.groundOperatorId),
+      priceName: hotel.basicRoomType,
+      providerName: DIRECT_PRICE_NAME,
       city: hotel.city,
-      unit: price.unit,
-      unitCost: price.groupPrice,
+      unit: hotel.unit,
+      unitCost: getHotelUnitCost(hotel, guestCount),
       details: [
         { labelKey: "resource.code", value: hotel.code },
         { labelKey: "resource.hotelName", value: hotel.name },
@@ -71,19 +95,19 @@ export function getResourcePriceOptions(): ResourcePriceOption[] {
         { labelKey: "hotel.facilities", value: hotel.facilities },
         { labelKey: "hotel.breakfast", value: hotel.breakfast },
         { labelKey: "hotel.nearby", value: hotel.nearby },
-        { labelKey: "hotel.roomType", value: roomType.name },
-        { labelKey: "hotel.rackRate", value: roomType.rackRate, format: "money" as const },
-        { labelKey: "hotel.pricePeriod", value: price.periodName },
-        { labelKey: "hotel.effectivePeriod", value: price.startDate && price.endDate ? `${price.startDate} — ${price.endDate}` : "" },
-        { labelKey: "hotel.individualPrice", value: price.individualPrice, format: "money" as const },
-        { labelKey: "hotel.groupPrice", value: price.groupPrice, format: "money" as const },
-        { labelKey: "hotel.minimumRooms", value: price.minimumRooms },
-        { labelKey: "itinerary.priceUnit", value: price.unit, format: "unit" as const },
-        { labelKey: "itinerary.provider", value: providerName(price.isGroundOperatorProvided, price.groundOperatorId) },
+        { labelKey: "hotel.basicRoomType", value: hotel.basicRoomType },
+        { labelKey: "hotel.individualPrice", value: hotel.individualPrice, format: "money" as const },
+        {
+          labelKey: "hotel.groupPrice",
+          value: hotel.groupPrice ?? "",
+          format: hotel.groupPrice === null ? undefined : "money" as const,
+        },
+        { labelKey: "hotel.minimumGroupSize", value: hotel.minimumGroupSize ?? "" },
+        { labelKey: "itinerary.priceUnit", value: hotel.unit, format: "unit" as const },
       ],
-      searchText: `${hotel.name} ${hotel.city} ${roomType.name} ${price.periodName}`,
-    })))),
-    ...resourceService.attractions.filter((attraction) => attraction.status === "enabled").flatMap((attraction) => attraction.prices.map((price) => ({
+      searchText: `${hotel.name} ${hotel.city} ${hotel.basicRoomType}`,
+    })),
+    ...resources.attractions.filter((attraction) => attraction.status === "enabled").flatMap((attraction) => attraction.prices.map((price) => ({
       id: `attraction:${price.id}`,
       type: "attraction" as const,
       resourceId: attraction.id,
@@ -104,8 +128,8 @@ export function getResourcePriceOptions(): ResourcePriceOption[] {
         { labelKey: "attraction.itemType", value: attractionItemTypeLabelKeys[price.itemType], format: "translation" as const },
         { labelKey: "attraction.itemName", value: price.itemName },
         { labelKey: "attraction.audience", value: price.audience },
-        { labelKey: "hotel.pricePeriod", value: price.periodName },
-        { labelKey: "hotel.effectivePeriod", value: price.startDate && price.endDate ? `${price.startDate} — ${price.endDate}` : "" },
+        { labelKey: "attraction.pricePeriod", value: price.periodName },
+        { labelKey: "attraction.effectivePeriod", value: price.startDate && price.endDate ? `${price.startDate} — ${price.endDate}` : "" },
         { labelKey: "attraction.rackPrice", value: price.rackPrice, format: "money" as const },
         { labelKey: "attraction.settlementPrice", value: price.settlementPrice, format: "money" as const },
         { labelKey: "attraction.freeTicket", value: price.isFree ? "common.yes" : "common.no", format: "translation" as const },
@@ -115,7 +139,7 @@ export function getResourcePriceOptions(): ResourcePriceOption[] {
       ],
       searchText: `${attraction.name} ${attraction.area} ${price.itemName} ${price.audience}`,
     }))),
-    ...resourceService.restaurants.filter((restaurant) => restaurant.status === "enabled").flatMap((restaurant) => restaurant.prices.map((price) => ({
+    ...resources.restaurants.filter((restaurant) => restaurant.status === "enabled").flatMap((restaurant) => restaurant.prices.map((price) => ({
       id: `restaurant:${price.id}`,
       type: "restaurant" as const,
       resourceId: restaurant.id,
@@ -145,11 +169,11 @@ export function getResourcePriceOptions(): ResourcePriceOption[] {
       ],
       searchText: `${restaurant.name} ${restaurant.city} ${restaurant.cuisine} ${price.menuName}`,
     }))),
-    ...resourceService.transports.filter((resource) => resource.status === "enabled").map((resource) => ({
+    ...resources.transports.filter((resource) => resource.status === "enabled").map((resource) => ({
       id: `vehicle:${resource.id}`,
       type: "vehicle" as const,
       resourceId: resource.id,
-      resourcePriceId: `${resource.id}-daily`,
+      resourcePriceId: resource.id,
       resourceName: resource.name,
       priceName: "车辆日成本",
       providerName: DIRECT_PRICE_NAME,
@@ -173,17 +197,17 @@ export function getResourcePriceOptions(): ResourcePriceOption[] {
       ],
       searchText: `${resource.name} ${resource.city} ${resource.plateNumber ?? ""}`,
     })),
-    ...resourceService.guides.filter((guide) => guide.status === "enabled").map((guide) => ({
+    ...resources.guides.filter((guide) => guide.status === "enabled").map((guide) => ({
       id: `guide:${guide.id}`,
       type: "guide" as const,
       resourceId: guide.id,
-      resourcePriceId: `${guide.id}-daily`,
+      resourcePriceId: guide.id,
       resourceName: guide.name,
       priceName: `${guide.languages.join("/")} · 导游日成本`,
       providerName: providerName(guide.isGroundOperatorProvided, guide.groundOperatorId),
       city: "",
       unit: guide.unit,
-      unitCost: guide.dailyPrice,
+      unitCost: Number(guide.dailyPrice ?? 0),
       details: [
         { labelKey: "resource.code", value: guide.code },
         { labelKey: "guide.certificateNo", value: guide.certificateNo },
@@ -194,7 +218,7 @@ export function getResourcePriceOptions(): ResourcePriceOption[] {
         { labelKey: "guide.employmentType", value: guide.employmentType === "full-time" ? "guide.fullTime" : "guide.partTime", format: "translation" as const },
         { labelKey: "guide.identityNumber", value: guide.identityNumber },
         { labelKey: "resource.phone", value: guide.phone },
-        { labelKey: "resource.dailyPrice", value: guide.dailyPrice, format: "money" as const },
+        { labelKey: "resource.dailyPrice", value: Number(guide.dailyPrice ?? 0), format: "money" as const },
         { labelKey: "guide.hasLaborContract", value: guide.hasLaborContract ? "common.yes" : "common.no", format: "translation" as const },
         { labelKey: "guide.licensePhoto", value: guide.licensePhotoUrl ? "common.yes" : "common.no", format: "translation" as const },
         { labelKey: "common.remark", value: guide.remark },
@@ -204,6 +228,36 @@ export function getResourcePriceOptions(): ResourcePriceOption[] {
       searchText: `${guide.name} ${guide.languages.join(" ")}`,
     })),
   ];
+}
+
+export function reconcileItineraryResourceReferences(
+  itineraries: ItineraryRecord[],
+  options: ResourcePriceOption[]
+): number {
+  let unresolvedCount = 0;
+  itineraries.flatMap((itinerary) => itinerary.dailyPlans.flatMap((day) => day.items)).forEach((item) => {
+    const exact = options.find((option) => (
+      option.type === item.type
+      && option.resourceId === item.resourceId
+      && option.resourcePriceId === item.resourcePriceId
+    ));
+    if (exact) return;
+
+    let matches = options.filter((option) => option.type === item.type && option.resourceName === item.resourceName);
+    if (matches.length > 1) matches = matches.filter((option) => option.priceName === item.priceName);
+    if (matches.length > 1) matches = matches.filter((option) => option.unitCost === item.unitCost);
+    if (matches.length !== 1) {
+      unresolvedCount += 1;
+      return;
+    }
+
+    const match = matches[0];
+    item.resourceId = match.resourceId;
+    item.resourcePriceId = match.resourcePriceId;
+    item.providerName = match.providerName;
+    if (item.type === "vehicle") item.referenceUnitCost = match.unitCost;
+  });
+  return unresolvedCount;
 }
 
 export function calculateItem(

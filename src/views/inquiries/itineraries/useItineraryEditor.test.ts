@@ -2,11 +2,19 @@ import { computed, ref } from "vue";
 import { describe, expect, it } from "vitest";
 import type { InquiryRecord } from "@/types/inquiry";
 import type { ItineraryRecord } from "@/types/itinerary";
+import type { HotelRecord } from "@/types/resource";
 import { useItineraryEditor } from "./useItineraryEditor";
 
+const hotelResourceId = "00000000-0000-4000-8000-000000000002";
+
 function createEditor() {
+  const hotel: HotelRecord = {
+    id: hotelResourceId, code: "HTL-002", name: "Hotel", province: "云南省", city: "昆明市",
+    rating: "四星", facilities: "", breakfast: "", address: "", phone: "", nearby: "", basicRoomType: "Room",
+    individualPrice: 428, groupPrice: 200, minimumGroupSize: 10, unit: "roomNight", status: "enabled",
+  };
   const inquiry = ref<InquiryRecord>({
-    id: "inquiry-1", code: "INQ-001", agencyId: "agency-1", agencyCode: "AGY-001", agencyName: "Agency",
+    id: "inquiry-1", code: "INQ-001", agencyId: "00000000-0000-4000-8000-000000000001", agencyCode: "AGY-001", agencyName: "Agency",
     contactName: "Contact", email: "", phone: "", countryOrRegion: "", sourceChannel: "Email", originalMessage: "",
     internalRemark: "", owner: "Owner", operationsCoordinator: "Operator", nextFollowUpAt: "", plannedDays: 2,
     lostReason: "", status: "new", creator: "admin", createdAt: "2026-08-26 10:00",
@@ -24,6 +32,7 @@ function createEditor() {
     canEditContent: () => true,
     canEditPrice: () => true,
     getCreator: () => "operator",
+    findHotel: (id) => id === hotel.id ? hotel : undefined,
   });
   return { editor, inquiry, itineraryStore, selectedItinerary };
 }
@@ -47,7 +56,7 @@ describe("itinerary editor", () => {
     const original = editor.createItinerary(record);
     expect(original).not.toBeNull();
     original?.dailyPlans[0].items.push({
-      id: "item-original", type: "hotel", resourceId: "hotel-1", resourcePriceId: "price-1", resourceName: "Hotel",
+      id: "item-original", type: "hotel", resourceId: hotelResourceId, resourcePriceId: `${hotelResourceId}-price`, resourceName: "Hotel",
       priceName: "Room", providerName: "直营报价", quantity: 1, unit: "roomNight", unitCost: 100,
       totalCost: 100, remark: "",
     });
@@ -66,7 +75,7 @@ describe("itinerary editor", () => {
     const created = editor.createItinerary(record);
     expect(created).not.toBeNull();
     created?.dailyPlans[0].items.push({
-      id: "item-original", type: "hotel", resourceId: "hotel-1", resourcePriceId: "price-1", resourceName: "Hotel",
+      id: "item-original", type: "hotel", resourceId: hotelResourceId, resourcePriceId: `${hotelResourceId}-price`, resourceName: "Hotel",
       priceName: "Room", providerName: "直营报价", quantity: 1, unit: "roomNight", unitCost: 100,
       totalCost: 100, remark: "",
     });
@@ -89,24 +98,26 @@ describe("itinerary editor", () => {
     expect(updated?.endDate).toBe("2026-11-11");
   });
 
-  it("keeps hotel cost quantities in sync with the guest count", () => {
+  it("keeps hotel quantities and prices in sync with the guest count", () => {
     const { editor } = createEditor();
     const record = { ...editor.createEmptyItinerary(), code: "ITI-001", startDate: "2026-10-01", days: 1, adults: 4 };
     const created = editor.createItinerary(record);
     expect(created).not.toBeNull();
 
     editor.addResourceItem(created!.dailyPlans[0].id, {
-      id: "hotel", type: "hotel", resourceId: "hotel-1", resourcePriceId: "price-1", resourceName: "Hotel",
+      id: "hotel", type: "hotel", resourceId: hotelResourceId, resourcePriceId: `${hotelResourceId}-price`, resourceName: "Hotel",
       priceName: "Room", providerName: "直营报价", quantity: 1, unit: "roomNight", unitCost: 100, totalCost: 100, remark: "",
     });
 
     expect(created?.dailyPlans[0].items[0].quantity).toBe(2);
-    expect(created?.dailyPlans[0].items[0].totalCost).toBe(200);
+    expect(created?.dailyPlans[0].items[0].unitCost).toBe(428);
+    expect(created?.dailyPlans[0].items[0].totalCost).toBe(856);
 
-    editor.updateItineraryBasics({ ...created!, childrenCount: 1 });
+    editor.updateItineraryBasics({ ...created!, adults: 9, childrenCount: 1 });
 
-    expect(created?.dailyPlans[0].items[0].quantity).toBe(3);
-    expect(created?.dailyPlans[0].items[0].totalCost).toBe(300);
+    expect(created?.dailyPlans[0].items[0].quantity).toBe(5);
+    expect(created?.dailyPlans[0].items[0].unitCost).toBe(200);
+    expect(created?.dailyPlans[0].items[0].totalCost).toBe(1000);
   });
 
   it("allows a vehicle fee to override the selected resource cost", () => {

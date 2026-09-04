@@ -32,6 +32,7 @@
       :owner-options="ownerOptions"
       :operations-coordinator-options="operationsCoordinatorOptions"
       :source-options="sourceOptions"
+      @select-agency="loadAgencyContacts"
       @create-contact="createAgencyContact"
       @submit="saveInquiry"
     />
@@ -43,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
@@ -76,6 +77,7 @@ const isDetailVisible = ref(false);
 const editingId = ref("");
 const selectedInquiry = ref<InquiryRecord>();
 const inquiryForm = ref<InquiryRecord>(createEmptyInquiry());
+const loadedContactAgencyIds = new Set<string>();
 const agencyOptions = computed(() => resourceService.agencies.filter((agency) => agency.status === "enabled"));
 const ownerOptions = computed(() => getEnabledCoordinatorNames("INQUIRY_COORDINATOR"));
 const operationsCoordinatorOptions = computed(() => getEnabledCoordinatorNames("OPERATIONS_COORDINATOR"));
@@ -96,6 +98,20 @@ const pagedInquiries = computed(() => filteredInquiries.value.slice(
   (pageNum.value - 1) * pageSize.value,
   pageNum.value * pageSize.value
 ));
+
+onMounted(loadAgencies);
+
+async function loadAgencies() {
+  try {
+    const agencies = await resourceService.loadAgencies();
+    inquiryStore.forEach((inquiry) => {
+      const agency = agencies.find((item) => item.code === inquiry.agencyCode);
+      if (agency) inquiry.agencyId = agency.id;
+    });
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  }
+}
 
 function getEnabledCoordinatorNames(role: "INQUIRY_COORDINATOR" | "OPERATIONS_COORDINATOR") {
   return staffDirectoryService.users
@@ -137,11 +153,22 @@ function openCreateDialog() {
   isEditorVisible.value = true;
 }
 
-function openEditDialog(record: InquiryRecord) {
+async function openEditDialog(record: InquiryRecord) {
   if (isInquiryReadOnly(record.status)) return;
+  if (record.agencyId) await loadAgencyContacts(record.agencyId);
   editingId.value = record.id;
   inquiryForm.value = { ...record };
   isEditorVisible.value = true;
+}
+
+async function loadAgencyContacts(agencyId: string) {
+  if (loadedContactAgencyIds.has(agencyId)) return;
+  try {
+    await resourceService.loadAgencyContacts(agencyId);
+    loadedContactAgencyIds.add(agencyId);
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  }
 }
 
 function openDetailDrawer(record: InquiryRecord) {
@@ -149,15 +176,17 @@ function openDetailDrawer(record: InquiryRecord) {
   isDetailVisible.value = true;
 }
 
-function createAgencyContact(agencyId: string, name: string) {
+async function createAgencyContact(agencyId: string, name: string) {
   const agency = resourceService.agencies.find((item) => item.id === agencyId);
   if (!agency || agency.contacts.some((contact) => contact.name.toLowerCase() === name.toLowerCase())) return;
-  agency.contacts.push({
-    id: createId("agency-contact"),
-    name,
-    phone: "",
-  });
-  ElMessage.success(t("inquiry.contactAdded", { name }));
+  try {
+    const contact = await resourceService.agencyApi.createContact(agency.id, { id: "", name, phone: "" });
+    agency.contacts.push(contact);
+    agency.contactCount = agency.contacts.length;
+    ElMessage.success(t("inquiry.contactAdded", { name }));
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  }
 }
 
 function openItineraryManagement(record: InquiryRecord) {
