@@ -26,8 +26,10 @@ export function usePageTable<T, Q extends BaseQueryParams = BaseQueryParams>(
     loading.value = true;
     try {
       const data = await request(params);
-      list.value = data.list ?? [];
-      total.value = data.total ?? 0;
+      list.value = data.list;
+      total.value = data.total;
+      params.page = data.page;
+      params.pageSize = data.pageSize;
     } finally {
       loading.value = false;
     }
@@ -37,7 +39,7 @@ export function usePageTable<T, Q extends BaseQueryParams = BaseQueryParams>(
    * 回到第一页并查询
    */
   function handleQuery(): void {
-    params.pageNum = 1;
+    params.page = 1;
     fetchData();
   }
 

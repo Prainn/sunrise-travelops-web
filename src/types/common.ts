@@ -1,5 +1,5 @@
 export interface BaseQueryParams {
-  pageNum: number;
+  page: number;
   pageSize: number;
   sortBy?: string;
   order?: string;
@@ -8,6 +8,8 @@ export interface BaseQueryParams {
 export interface PageResult<T> {
   list: T[];
   total: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface OptionItem {

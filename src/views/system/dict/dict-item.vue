@@ -129,7 +129,7 @@
 
       <pagination
         v-if="total > 0"
-        v-model:page="params.pageNum"
+        v-model:page="params.page"
         v-model:limit="params.pageSize"
         :total="total"
         @pagination="fetchData"
@@ -289,7 +289,7 @@ const { loading, list, total, params, fetchData, handleQuery, handleResetQuery }
   DictItemQueryParams
 >({
   initialParams: {
-    pageNum: 1,
+    page: 1,
     pageSize: 10,
     dictCode: dictCode.value,
     keywords: "",
