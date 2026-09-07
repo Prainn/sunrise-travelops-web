@@ -1,6 +1,7 @@
 import type { ItineraryItemType, ItineraryPriceUnit } from "./itinerary";
 
 export type ResourceStatus = "enabled" | "disabled";
+export type VehicleServiceLevel = "standard" | "vip";
 
 export interface ResourceAuditRecord {
   version?: number;
@@ -98,6 +99,7 @@ export interface SupplierOptionRecord {
 }
 
 export interface TransportRecord extends TourismResourceRecord {
+  serviceLevel: VehicleServiceLevel;
   plateNumber: string;
   seats: number;
   dailyPrice: number;

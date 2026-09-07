@@ -1,7 +1,7 @@
 <template>
   <div class="resource-page">
     <ResourceTable
-      :rows="rows"
+      :rows="tableRows"
       :columns="columns"
       :search-fields="['code', 'name', 'city']"
       :permissions="RESOURCE_PERMISSIONS.transport"
@@ -35,7 +35,7 @@ import { useResourceMaintenance } from "../useResourceMaintenance";
 
 defineOptions({ name: "TransportResource" });
 
-const { locale } = useI18n();
+const { locale, t } = useI18n();
 
 const columns: ResourceColumn[] = [
   {
@@ -46,6 +46,10 @@ const columns: ResourceColumn[] = [
     "prop": "name",
     "labelKey": "resource.vehicleModel",
     "minWidth": 180
+  },
+  {
+    "prop": "serviceLevelLabel",
+    "labelKey": "resource.vehicleServiceLevel"
   },
   {
     "prop": "plateNumber",
@@ -73,6 +77,16 @@ const fields = computed<ResourceFormField[]>(() => [
     "prop": "name",
     "labelKey": "resource.vehicleModel",
     "required": true
+  },
+  {
+    "prop": "serviceLevel",
+    "labelKey": "resource.vehicleServiceLevel",
+    "required": true,
+    "type": "select",
+    "options": [
+      { label: t("resource.vehicleServiceLevels.standard"), value: "standard" },
+      { label: t("resource.vehicleServiceLevels.vip"), value: "vip" },
+    ]
   },
   {
     "prop": "plateNumber",
@@ -119,11 +133,15 @@ const { rows, record, isDialogVisible, isEditing, loadRecords, openCreateDialog,
   loadRecords: () => resourceService.loadTransports(),
   codePrefix: "VEH",
   createEmpty: () => ({
-    id: "", code: "", name: "", plateNumber: "", seats: 1, dailyPrice: 0,
+    id: "", code: "", name: "", serviceLevel: "standard", plateNumber: "", seats: 1, dailyPrice: 0,
     unit: "vehicleDay", city: "", countryOrRegion: "", contact: "", email: "", phone: "",
     status: "enabled", remark: "",
   }),
 });
+const tableRows = computed(() => rows.map((row) => ({
+  ...row,
+  serviceLevelLabel: t(`resource.vehicleServiceLevels.${row.serviceLevel}`),
+})));
 
 function editTransport(record: TourismResourceRecord) {
   return openEditDialog(record as TransportRecord);
