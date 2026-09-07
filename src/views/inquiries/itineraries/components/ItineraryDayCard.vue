@@ -53,6 +53,7 @@
 
     <ItineraryDayForm
       :day="day"
+      :destinations="destinations"
       :editable="contentEditable"
       @update-field="updateField"
     />
@@ -93,7 +94,7 @@
       >
         <template #default="scope">
           <el-input-number
-            v-if="contentEditable && scope.row.type !== 'hotel'"
+            v-if="contentEditable"
             class="day-card__quantity"
             :model-value="scope.row.quantity"
             :min="1"
@@ -113,21 +114,7 @@
         align="right"
       >
         <template #default="scope">
-          <div v-if="scope.row.type === 'vehicle'">
-            <el-input-number
-              v-if="contentEditable"
-              class="day-card__vehicle-fee"
-              :model-value="scope.row.unitCost"
-              :min="0"
-              :precision="2"
-              controls-position="right"
-              @change="emit('update-item-unit-cost', scope.$index, Number($event ?? 0))"
-            />
-            <span v-else>¥{{ formatMoney(scope.row.unitCost) }}</span>
-          </div>
-          <template v-else>
-            ¥{{ formatMoney(scope.row.unitCost) }}
-          </template>
+          ¥{{ formatMoney(scope.row.unitCost) }}
         </template>
       </el-table-column>
       <el-table-column
@@ -176,9 +163,10 @@ import { formatMoney, sumMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
 import ItineraryDayForm from "./ItineraryDayForm.vue";
 
-type EditableDayField = "departure" | "destination" | "transport" | "description";
+type EditableDayField = "departure" | "destination" | "overnightDestination" | "transport" | "description";
 const props = defineProps<{
   day: ItineraryDayRecord;
+  destinations: string[];
   contentEditable: boolean;
   isFirst: boolean;
   isLast: boolean;
@@ -188,7 +176,6 @@ const emit = defineEmits<{
   "add-item": [];
   "remove-item": [index: number];
   "update-item-quantity": [index: number, quantity: number];
-  "update-item-unit-cost": [index: number, unitCost: number];
   duplicate: [];
   remove: [];
   move: [offset: number];
@@ -208,11 +195,9 @@ function resourceUnitName(code: string) { return getResourceUnitName(code, local
 .day-card__identity { gap: 12px; }
 .day-card__number { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 10px; background: var(--el-color-primary); color: #fff; font-weight: 700; }
 .day-card__route { display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 600; }
-.day-card__date, small { color: var(--el-text-color-secondary); font-size: 12px; }
+.day-card__date, small { color: var(--el-text-color-secondary); font-size: 14px; }
 .day-card__provider { display: block; margin-top: 2px; color: var(--el-color-warning); }
 .day-card__quantity { width: 72px; margin-right: 4px; }
-.day-card__vehicle-fee { width: 118px; }
-.day-card__vehicle-reference { display: block; margin-bottom: 4px; white-space: nowrap; }
 .day-card__resources-header { margin: 20px 0 10px; }
 .day-card__resource-name { font-weight: 500; }
 .day-card__subtotal { margin-top: 12px; color: var(--el-text-color-secondary); }

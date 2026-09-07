@@ -71,28 +71,6 @@
           </el-descriptions-item>
         </el-descriptions>
         <el-form-item
-          v-if="type === 'vehicle'"
-          class="resource-dialog__reference-cost"
-          :label="$t('itinerary.vehicleReferenceCost')"
-        >
-          <el-input
-            :model-value="`¥${formatMoney(selectedOption.unitCost)}`"
-            disabled
-          />
-        </el-form-item>
-        <el-form-item
-          v-if="type === 'vehicle'"
-          class="resource-dialog__vehicle-fee"
-          :label="$t('itinerary.vehicleFee')"
-        >
-          <el-input-number
-            v-model="vehicleFee"
-            :min="0"
-            :precision="2"
-            controls-position="right"
-          />
-        </el-form-item>
-        <el-form-item
           class="resource-dialog__quantity"
           :label="$t('itinerary.quantity')"
         >
@@ -100,7 +78,6 @@
             v-model="quantity"
             :min="1"
             :precision="0"
-            :disabled="type === 'hotel'"
           />
           <span class="resource-dialog__unit">
             {{ resourceUnitName(selectedOption.unit) }}
@@ -126,7 +103,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import type { ItineraryItemType, ItineraryResourceItem } from "@/types/itinerary";
+import type { ItineraryDailyItemType, ItineraryResourceItem } from "@/types/itinerary";
 import { formatMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
 import { calculateItem } from "../pricing";
@@ -135,18 +112,16 @@ import type { ResourcePriceDetail, ResourcePriceOption } from "../pricing";
 const props = defineProps<{
   modelValue: boolean;
   guestCount: number;
-  hotelRoomCount: number;
   options: ResourcePriceOption[];
 }>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [item: ItineraryResourceItem] }>();
 const { t, locale } = useI18n();
-const type = ref<ItineraryItemType>("hotel");
+const type = ref<ItineraryDailyItemType>("attraction");
 const city = ref("");
 const selectedId = ref("");
 const keyword = ref("");
 const quantity = ref(1);
-const vehicleFee = ref(0);
-const typeOptions = computed(() => (["hotel", "attraction", "restaurant", "vehicle", "guide"] as ItineraryItemType[])
+const typeOptions = computed(() => (["restaurant", "attraction"] as ItineraryDailyItemType[])
   .map((value) => ({ label: t(`itinerary.resourceTypes.${value}`), value })));
 const filteredByType = computed(() => props.options.filter((option) => option.type === type.value));
 const cityOptions = computed(() => [...new Set(filteredByType.value.map((option) => option.city).filter(Boolean))]
@@ -164,23 +139,19 @@ watch(type, () => {
   city.value = "";
   selectedId.value = "";
   keyword.value = "";
-  quantity.value = type.value === "attraction" ? Math.max(props.guestCount, 1) : type.value === "hotel" ? Math.max(props.hotelRoomCount, 1) : 1;
+  quantity.value = type.value === "attraction" ? Math.max(props.guestCount, 1) : 1;
 });
 watch(city, () => {
   selectedId.value = "";
   keyword.value = "";
 });
-watch(selectedOption, (option) => {
-  vehicleFee.value = option?.type === "vehicle" ? option.unitCost : 0;
-});
 watch(() => props.modelValue, (visible) => {
   if (!visible) return;
-  type.value = "hotel";
+  type.value = "attraction";
   city.value = "";
   selectedId.value = "";
   keyword.value = "";
-  quantity.value = Math.max(props.hotelRoomCount, 1);
-  vehicleFee.value = 0;
+  quantity.value = Math.max(props.guestCount, 1);
 });
 
 function filterOptions(value: string) { keyword.value = value; }
@@ -193,8 +164,7 @@ function formatDetail(detail: ResourcePriceDetail) {
 }
 function submit() {
   if (!selectedOption.value) return;
-  const unitCost = selectedOption.value.type === "vehicle" ? vehicleFee.value : selectedOption.value.unitCost;
-  emit("submit", calculateItem(selectedOption.value, quantity.value, unitCost));
+  emit("submit", calculateItem(selectedOption.value, quantity.value));
   emit("update:modelValue", false);
 }
 </script>
@@ -206,8 +176,6 @@ function submit() {
 .resource-dialog__details { max-height: 320px; overflow-y: auto; }
 .resource-dialog__details :deep(.el-descriptions__label) { width: 140px; }
 .resource-dialog__details :deep(.el-descriptions__content) { white-space: normal; word-break: break-word; }
-.resource-dialog__reference-cost { margin-top: 18px; }
-.resource-dialog__vehicle-fee :deep(.el-input-number) { width: 100%; }
 .resource-dialog__quantity { margin-top: 18px; }
 .resource-dialog__unit { margin-left: 8px; color: var(--el-text-color-secondary); }
 </style>

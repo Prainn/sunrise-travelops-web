@@ -19,6 +19,22 @@
         @update:model-value="updateField('destination', $event)"
       />
     </el-form-item>
+    <el-form-item :label="$t('itinerary.overnightDestination')">
+      <el-select
+        :model-value="day.overnightDestination"
+        :disabled="!editable"
+        clearable
+        :placeholder="$t('itinerary.noOvernightStay')"
+        @update:model-value="updateField('overnightDestination', $event)"
+      >
+        <el-option
+          v-for="destination in destinations"
+          :key="destination"
+          :label="destination"
+          :value="destination"
+        />
+      </el-select>
+    </el-form-item>
     <el-form-item :label="$t('itinerary.transport')">
       <el-select
         :model-value="transportCodes"
@@ -61,9 +77,9 @@ import { useI18n } from "vue-i18n";
 import type { ItineraryDayRecord } from "@/types/itinerary";
 import { getTransportMethodOptions } from "@/utils/transport-method";
 
-type EditableDayField = "departure" | "destination" | "transport" | "description";
+type EditableDayField = "departure" | "destination" | "overnightDestination" | "transport" | "description";
 
-const props = defineProps<{ day: ItineraryDayRecord; editable: boolean }>();
+const props = defineProps<{ day: ItineraryDayRecord; destinations: string[]; editable: boolean }>();
 const emit = defineEmits<{ "update-field": [field: EditableDayField, value: string] }>();
 const { locale } = useI18n();
 const transportCodes = computed(() => props.day.transport.split(",").filter(Boolean));
@@ -80,7 +96,7 @@ function updateTransport(values: string[]) {
 <style scoped lang="scss">
 .day-form {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px 16px;
   padding: 16px;
   border: 1px solid var(--el-border-color-lighter);

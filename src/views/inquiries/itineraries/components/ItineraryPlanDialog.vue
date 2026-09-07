@@ -99,6 +99,25 @@
           style="width: 100%"
         />
       </el-form-item>
+      <el-form-item
+        :label="$t('itinerary.destinations')"
+        prop="destinations"
+      >
+        <el-select
+          v-model="form.destinations"
+          multiple
+          filterable
+          :placeholder="$t('itinerary.destinationsPlaceholder')"
+          style="width: 100%"
+        >
+          <el-option
+            v-for="destination in destinationOptions"
+            :key="destination"
+            :label="destination"
+            :value="destination"
+          />
+        </el-select>
+      </el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="emit('update:modelValue', false)">
@@ -125,17 +144,29 @@ const props = defineProps<{
   modelValue: boolean;
   record: ItineraryRecord;
   plannedDays: number;
+  destinationOptions: string[];
   isEditing?: boolean;
 }>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [record: ItineraryRecord] }>();
 const { t } = useI18n();
 const formRef = ref<FormInstance>();
-const form = reactive<ItineraryRecord>({ ...props.record, quote: { ...props.record.quote }, dailyPlans: [] });
+const form = reactive<ItineraryRecord>({
+  ...props.record,
+  destinations: [...props.record.destinations],
+  hotelPlans: props.record.hotelPlans.map((plan) => ({ ...plan, hotels: plan.hotels.map((hotel) => ({ ...hotel })) })),
+  vehiclePlans: props.record.vehiclePlans.map((plan) => ({
+    ...plan,
+    vehicle: plan.vehicle ? { ...plan.vehicle } : null,
+  })),
+  quote: { options: props.record.quote.options.map((option) => ({ ...option })) },
+  dailyPlans: [],
+});
 const rules = computed<FormRules>(() => ({
   title: [{ required: true, message: t("itinerary.titleRequired"), trigger: "blur" }],
   startDate: [{ required: true, message: t("itinerary.startDateRequired"), trigger: "change" }],
   adults: [{ required: true, message: t("itinerary.adultsRequired"), trigger: "blur" }],
   operationsCoordinator: [{ required: true, message: t("itinerary.coordinatorRequired"), trigger: "change" }],
+  destinations: [{ type: "array", required: true, min: 1, message: t("itinerary.destinationsRequired"), trigger: "change" }],
 }));
 
 const hasDayCountMismatch = computed(() => form.days !== props.plannedDays);
@@ -144,7 +175,13 @@ watch(() => [props.modelValue, props.record] as const, ([visible, record]) => {
   if (!visible) return;
   Object.assign(form, record, {
     days: props.isEditing ? record.dailyPlans.length || record.days : props.plannedDays,
-    quote: { ...record.quote },
+    destinations: [...record.destinations],
+    hotelPlans: record.hotelPlans.map((plan) => ({ ...plan, hotels: plan.hotels.map((hotel) => ({ ...hotel })) })),
+    vehiclePlans: record.vehiclePlans.map((plan) => ({
+      ...plan,
+      vehicle: plan.vehicle ? { ...plan.vehicle } : null,
+    })),
+    quote: { options: record.quote.options.map((option) => ({ ...option })) },
     dailyPlans: [],
   });
   syncEndDate();
@@ -154,7 +191,17 @@ watch(() => [form.startDate, form.days], syncEndDate);
 
 async function submitForm() {
   if (!await formRef.value?.validate().catch(() => false)) return;
-  emit("submit", { ...form, quote: { ...form.quote }, dailyPlans: [] });
+  emit("submit", {
+    ...form,
+    destinations: [...form.destinations],
+    hotelPlans: form.hotelPlans.map((plan) => ({ ...plan, hotels: plan.hotels.map((hotel) => ({ ...hotel })) })),
+    vehiclePlans: form.vehiclePlans.map((plan) => ({
+      ...plan,
+      vehicle: plan.vehicle ? { ...plan.vehicle } : null,
+    })),
+    quote: { options: form.quote.options.map((option) => ({ ...option })) },
+    dailyPlans: [],
+  });
 }
 
 function syncEndDate() {

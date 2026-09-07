@@ -3,8 +3,10 @@ import type { InquiryRecord } from "@/types/inquiry";
 import type { ItineraryRecord } from "@/types/itinerary";
 import { formatDateTime } from "@/utils";
 import { transitionInquiry } from "../inquiry-workflow";
+import { getEnabledHotelPlans, getIncompleteHotelPlanTiers } from "./hotel-plans";
 import { transitionItinerary } from "./itinerary-workflow";
 import { downloadGeneratedItineraryPdf, generateItineraryPdf, type GeneratedItineraryPdf } from "./pdf";
+import { getEnabledVehiclePlans, getIncompleteVehiclePlanTiers } from "./vehicle-plans";
 import { getDayCountMismatch, validateItineraryForPdf } from "./workflow";
 
 interface ItineraryPdfOptions {
@@ -26,6 +28,10 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     const validation = validateItineraryForPdf(plan.dailyPlans);
     return {
       ...validation,
+      hasEnabledHotelPlan: getEnabledHotelPlans(plan).length > 0,
+      incompleteHotelPlanTiers: getIncompleteHotelPlanTiers(plan),
+      hasEnabledVehiclePlan: getEnabledVehiclePlans(plan).length > 0,
+      incompleteVehiclePlanTiers: getIncompleteVehiclePlanTiers(plan),
       dayCountMismatch: getDayCountMismatch(plan.dailyPlans.length, inquiry.plannedDays),
       actualDays: plan.dailyPlans.length,
       plannedDays: inquiry.plannedDays,

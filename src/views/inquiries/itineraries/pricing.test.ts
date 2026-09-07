@@ -38,7 +38,7 @@ function createResources(): PricingResources {
     }],
     transports: [{
       id: ids.transport, code: "VEH-001", name: "测试车辆", city: "昆明", countryOrRegion: "中国", plateNumber: "云A00001",
-      seats: 7, dailyPrice: 800, unit: "vehicleDay", contact: "赵师傅", email: "", phone: "", status: "enabled", remark: "",
+      serviceLevel: "standard", seats: 7, dailyPrice: 800, unit: "vehicleDay", contact: "赵师傅", email: "", phone: "", status: "enabled", remark: "",
     }],
     guides: [{
       id: ids.guide, code: "GDE-001", certificateNo: "CERT", name: "测试导游", gender: "female", age: 30,
@@ -87,12 +87,21 @@ describe("resource pricing", () => {
     const options = getResourcePriceOptions(createResources());
     const itineraries = [{
       id: "itinerary-1", inquiryId: "inquiry-1", code: "ITI-001", title: "Test", startDate: "2026-10-01",
-      endDate: "2026-10-01", days: 1, adults: 2, childrenCount: 0, operationsCoordinator: "", quote: { adultUnitPrice: null },
-      dailyPlans: [{ id: "day-1", dayNumber: 1, date: "2026-10-01", departure: "", destination: "", transport: "", items: [{
+      endDate: "2026-10-01", days: 1, adults: 2, childrenCount: 0, destinations: ["昆明市"],
+      hotelPlans: [], vehiclePlans: [], operationsCoordinator: "", quote: {
+        options: [{
+          id: "quote-option-1", hotelTier: "preferred_non_five_star" as const, vehicleTier: "standard" as const,
+          adultUnitPrice: null, leaderFocEnabled: false,
+        }],
+      },
+      dailyPlans: [{
+        id: "day-1", dayNumber: 1, date: "2026-10-01", departure: "", destination: "", overnightDestination: "",
+        transport: "", items: [{
         id: "item-1", type: "hotel" as const, resourceId: "legacy-hotel", resourcePriceId: "legacy-price",
         resourceName: "测试酒店", priceName: "标准间", providerName: "直营报价", quantity: 1, unit: "roomNight",
         unitCost: 428, totalCost: 428, remark: "",
-      }] }],
+        }],
+      }],
       status: "draft" as const, quoteGeneratedAt: "", creator: "", createdAt: "", updatedAt: "",
     }];
 

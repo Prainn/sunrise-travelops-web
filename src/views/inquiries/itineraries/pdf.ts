@@ -1,15 +1,33 @@
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import type { InquiryRecord } from "@/types/inquiry";
-import type { ItineraryDayRecord, ItineraryRecord } from "@/types/itinerary";
+import type {
+  ItineraryDayRecord,
+  ItineraryQuoteCalculation,
+  ItineraryQuoteOption,
+  ItineraryQuoteOptionCalculation,
+  ItineraryRecord,
+} from "@/types/itinerary";
 import { formatDateTime, formatMoney, sumMoney } from "@/utils";
 import { getTransportMethodNames } from "@/utils/transport-method";
+import { getEnabledHotelPlans, getHotelPlanSelection, HOTEL_PLAN_TIER_LABELS } from "./hotel-plans";
 import { calculateItineraryQuote } from "./quote-pricing";
+import {
+  getEnabledVehiclePlans,
+  getVehiclePlan,
+  VEHICLE_PLAN_TIER_LABELS,
+} from "./vehicle-plans";
 
 const PAGE_MARGIN_MM = 10;
 const PAGE_CONTENT_WIDTH_MM = 190;
 const PAGE_CONTENT_HEIGHT_MM = 277;
 const BLOCK_GAP_MM = 5;
+const MAX_QUOTE_OPTIONS_PER_TABLE = 4;
+
+interface QuoteDisplayOption {
+  option: ItineraryQuoteOption;
+  calculation: ItineraryQuoteOptionCalculation;
+}
 
 export interface GeneratedItineraryPdf {
   blob: Blob;
@@ -120,9 +138,12 @@ function addPdfPage(pdf: jsPDF) {
 }
 
 function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord, generatedAt: string) {
-  const totalCost = sumMoney(itinerary.dailyPlans.flatMap((day) => day.items).map((item) => item.totalCost));
+  const totalCost = sumMoney(itinerary.dailyPlans
+    .flatMap((day) => day.items)
+    .filter((item) => item.type === "restaurant" || item.type === "attraction")
+    .map((item) => item.totalCost));
   const quote = calculateItineraryQuote(itinerary, totalCost);
-  const scheduleSections = buildScheduleSections(itinerary.dailyPlans);
+  const scheduleSections = buildScheduleSections(itinerary.dailyPlans, itinerary);
 
   return `
     <header data-pdf-block style="padding-bottom:18px;border-bottom:2px solid #2563eb;box-sizing:border-box;">
@@ -133,12 +154,129 @@ function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord, genera
       <div style="margin-top:6px;color:#606266;">报价生成时间：${escapeHtml(generatedAt)}</div>
     </header>
     ${scheduleSections}
-    <footer data-pdf-block style="padding:18px;background:#ecf5ff;text-align:right;font-size:20px;font-weight:700;color:#2563eb;box-sizing:border-box;">
-      行程总价：¥${formatMoney(quote.totalPrice)}
-    </footer>`;
+    ${buildHotelPairingSection(itinerary)}
+    ${buildQuoteSections(itinerary, quote)}`;
 }
 
-function buildScheduleSections(days: ItineraryDayRecord[]) {
+function buildHotelPairingSection(itinerary: ItineraryRecord) {
+  const hotelPlans = getEnabledHotelPlans(itinerary);
+  const vehiclePlans = getEnabledVehiclePlans(itinerary);
+  return `
+    <section data-pdf-block style="box-sizing:border-box;">
+      <h2 style="margin:0;font-size:18px;">酒店与车型搭配</h2>
+    </section>
+    <table data-pdf-block data-pdf-gap-mm="3" style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;box-sizing:border-box;">
+      <thead>
+        <tr style="background:#f3f4f6;">
+          <th style="${quoteHeaderStyle()};width:18%;">资源类别</th>
+          ${itinerary.destinations.map((destination) => `<th style="${quoteHeaderStyle()}">${escapeHtml(destination)}</th>`).join("")}
+        </tr>
+      </thead>
+      <tbody>
+        ${hotelPlans.map((plan) => `<tr>
+          <th style="${quoteLabelStyle()}">${escapeHtml(HOTEL_PLAN_TIER_LABELS[plan.tier])}</th>
+          ${itinerary.destinations.map((destination) => {
+            const hotel = plan.hotels.find((selection) => selection.destination === destination);
+            return `<td style="${quoteCellStyle()}">${escapeHtml(hotel?.hotelName ?? "-")}</td>`;
+          }).join("")}
+        </tr>`).join("")}
+        ${vehiclePlans.map((plan) => `<tr>
+          <th style="${quoteLabelStyle()}">${escapeHtml(VEHICLE_PLAN_TIER_LABELS[plan.tier])}</th>
+          <td colspan="${itinerary.destinations.length}" style="${quoteCellStyle()}">${escapeHtml(
+            plan.vehicle ? `${plan.vehicle.vehicleName}${plan.vehicle.seats ? `（${plan.vehicle.seats}座）` : ""}` : "-"
+          )}</td>
+        </tr>`).join("")}
+      </tbody>
+    </table>`;
+}
+
+function buildQuoteSections(itinerary: ItineraryRecord, quote: ItineraryQuoteCalculation) {
+  const guestCount = itinerary.adults + itinerary.childrenCount;
+  const options = itinerary.quote.options.flatMap((option) => {
+    const calculation = quote.options.find((record) => record.optionId === option.id);
+    return calculation ? [{ option, calculation }] : [];
+  });
+  const optionGroups = chunkQuoteOptions(options);
+
+  return `
+    <section data-pdf-block style="box-sizing:border-box;">
+      <h2 style="margin:0 0 6px;font-size:18px;">团队报价</h2>
+      <div style="color:#606266;font-size:12px;">报价按 ${guestCount} 名付费游客计算，FOC 仅适用于领队。</div>
+    </section>
+    ${optionGroups.map((group) => buildQuoteTable(group, itinerary, guestCount)).join("")}`;
+}
+
+function buildQuoteTable(
+  options: QuoteDisplayOption[],
+  itinerary: ItineraryRecord,
+  guestCount: number
+) {
+  const childRow = itinerary.childrenCount
+    ? buildQuoteRow("儿童团费", options, ({ calculation }) => `RMB ${formatMoney(calculation.childUnitPrice)} PP`)
+    : "";
+
+  return `
+    <table data-pdf-block data-pdf-gap-mm="3" style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;box-sizing:border-box;">
+      <thead>
+        <tr style="background:#f3f4f6;">
+          <th style="${quoteHeaderStyle()};width:18%;">报价项目</th>
+          ${options.map(({ option }) => `
+            <th style="${quoteHeaderStyle()}">
+              <div>${escapeHtml(HOTEL_PLAN_TIER_LABELS[option.hotelTier])}</div>
+              <div style="margin-top:3px;">${guestCount}PAX｜${escapeHtml(getVehicleQuoteLabel(itinerary, option.vehicleTier))}</div>
+            </th>`).join("")}
+        </tr>
+      </thead>
+      <tbody>
+        ${buildQuoteRow("成人团费", options, ({ option, calculation }) => `
+          <strong>RMB ${formatMoney(calculation.adultUnitPrice)} PP</strong>
+          <div style="margin-top:4px;color:${option.leaderFocEnabled ? "#15803d" : "#606266"};font-size:10px;">
+            ${option.leaderFocEnabled ? `${guestCount}+1 FOC (TOUR LEADER ONLY)` : "NO FOC"}
+          </div>`)}
+        ${childRow}
+        ${buildQuoteRow("单房差", options, ({ calculation }) => `RMB ${formatMoney(calculation.singleSupplementUnitCost)}`)}
+        ${buildQuoteRow("报价总计", options, ({ calculation }) => `<strong>RMB ${formatMoney(calculation.totalPrice)}</strong>`)}
+      </tbody>
+    </table>`;
+}
+
+function buildQuoteRow(
+  label: string,
+  options: QuoteDisplayOption[],
+  renderValue: (option: QuoteDisplayOption) => string
+) {
+  return `<tr>
+    <th style="${quoteLabelStyle()}">${label}</th>
+    ${options.map((option) => `<td style="${quoteCellStyle()}">${renderValue(option)}</td>`).join("")}
+  </tr>`;
+}
+
+function chunkQuoteOptions(options: QuoteDisplayOption[]) {
+  return Array.from(
+    { length: Math.ceil(options.length / MAX_QUOTE_OPTIONS_PER_TABLE) },
+    (_, index) => options.slice(index * MAX_QUOTE_OPTIONS_PER_TABLE, (index + 1) * MAX_QUOTE_OPTIONS_PER_TABLE)
+  );
+}
+
+function getVehicleQuoteLabel(itinerary: ItineraryRecord, tier: ItineraryQuoteOption["vehicleTier"]) {
+  const seats = getVehiclePlan(itinerary, tier)?.vehicle?.seats;
+  const seatLabel = seats ? `${seats}座` : "";
+  return `${seatLabel}${tier === "standard" ? "普通巴士" : "VIP巴士"}`;
+}
+
+function quoteHeaderStyle() {
+  return "padding:9px 7px;border:1px solid #9ca3af;text-align:center;vertical-align:middle;font-weight:700;word-break:break-word;";
+}
+
+function quoteLabelStyle() {
+  return "padding:9px 7px;border:1px solid #9ca3af;background:#f9fafb;text-align:left;vertical-align:middle;font-weight:700;";
+}
+
+function quoteCellStyle() {
+  return "padding:9px 7px;border:1px solid #9ca3af;text-align:center;vertical-align:middle;word-break:break-word;";
+}
+
+function buildScheduleSections(days: ItineraryDayRecord[], itinerary: ItineraryRecord) {
   const rows = days.map((day, index) => {
     const previousDay = days[index - 1];
     return `
@@ -149,8 +287,8 @@ function buildScheduleSections(days: ItineraryDayRecord[]) {
           <td style="${scheduleCellStyle("center")}">${escapeHtml(formatScheduleRoute(day))}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(getTransportMethodNames(day.transport) || "-")}</td>
           <td style="${scheduleCellStyle("left")};white-space:pre-wrap;line-height:1.6;">${escapeHtml(day.description?.trim() || "-")}</td>
-          <td style="${scheduleCellStyle("center")}">${escapeHtml(getDailyHotelNames(day) || "-")}</td>
-          <td style="${scheduleCellStyle("center")}">${escapeHtml(getDailyMealCodes(day, previousDay) || "-")}</td>
+          <td style="${scheduleCellStyle("center")}">${escapeHtml(getDailyHotelNames(day, itinerary) || "-")}</td>
+          <td style="${scheduleCellStyle("center")}">${escapeHtml(getDailyMealCodes(day, previousDay, itinerary) || "-")}</td>
         </tr></tbody>
       </table>`;
   }).join("");
@@ -195,20 +333,29 @@ function formatScheduleRoute(day: ItineraryDayRecord) {
   return `${day.departure} / ${day.destination}`;
 }
 
-function getDailyHotelNames(day: ItineraryDayRecord) {
-  return [...new Set(day.items.filter((item) => item.type === "hotel").map((item) => item.resourceName))].join(" / ");
+function getDailyHotelNames(day: ItineraryDayRecord, itinerary: ItineraryRecord) {
+  if (!day.overnightDestination) return "";
+  const hotelPlans = getEnabledHotelPlans(itinerary);
+  return hotelPlans.flatMap((plan) => {
+    const hotel = getHotelPlanSelection(itinerary, plan.tier, day.overnightDestination);
+    if (!hotel) return [];
+    const prefix = hotelPlans.length > 1 ? `${HOTEL_PLAN_TIER_LABELS[plan.tier]}：` : "";
+    return [`${prefix}${hotel.hotelName}`];
+  }).join(" / ");
 }
 
-function getDailyMealCodes(day: ItineraryDayRecord, previousDay?: ItineraryDayRecord) {
+function getDailyMealCodes(day: ItineraryDayRecord, previousDay: ItineraryDayRecord | undefined, itinerary: ItineraryRecord) {
   const restaurantText = day.items
     .filter((item) => item.type === "restaurant")
     .map((item) => `${item.id} ${item.priceName} ${item.remark}`)
     .join(" ");
   const dailyText = `${day.description ?? ""} ${restaurantText}`;
-  const previousHotelText = previousDay?.items
-    .filter((item) => item.type === "hotel")
-    .map((item) => `${item.priceName} ${item.remark}`)
-    .join(" ") ?? "";
+  const previousHotelText = previousDay?.overnightDestination
+    ? getEnabledHotelPlans(itinerary).flatMap((plan) => {
+        const hotel = getHotelPlanSelection(itinerary, plan.tier, previousDay.overnightDestination);
+        return hotel ? [hotel.breakfast] : [];
+      }).join(" ")
+    : "";
   const codes: string[] = [];
   if (/早餐|早饭|breakfast/i.test(`${dailyText} ${previousHotelText}`)) codes.push("B");
   if (/午餐|中餐|lunch/i.test(dailyText)) codes.push("L");
