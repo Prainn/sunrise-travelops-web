@@ -17,7 +17,7 @@
     "hotels": "Hotels",
     "restaurants": "Restaurants",
     "attractions": "Attractions",
-    "vehiclesAndDrivers": "Vehicles & Drivers",
+    "vehicleModels": "Vehicle Models",
     "guides": "Guides"
   },
   "appVersion": {
@@ -194,7 +194,7 @@
     "vehicleSubtotal": "Vehicle Subtotal",
     "hotelTiers": {
       "international_five_star": "International Five-Star",
-      "preferred_non_five_star": "Ctrip 4-5 Diamond Preferred"
+      "preferred_non_five_star": "Ctrip Preferred"
     },
     "quoteLineTypes": {
       "adult": "Adult Standard Price",
@@ -637,7 +637,6 @@
     "createContactTitle": "Add Contact",
     "createSupplierTitle": "Create Ground Operator",
     "createTitle": "Create Resource",
-    "driver": "Driver",
     "deleteAgencyConfirm": "Delete this travel agency and all of its contacts?",
     "deleteContactConfirm": "Delete this contact?",
     "editAgencyTitle": "Edit Travel Agency",
@@ -658,7 +657,6 @@
     "personName": "Person Name",
     "phone": "Phone",
     "dailyPrice": "Daily Cost",
-    "plateNumber": "Plate Number",
     "restaurantName": "Restaurant Name",
     "searchPlaceholder": "Search code, name, or city",
     "seats": "Seats",
@@ -694,16 +692,17 @@
     "deleteHotelConfirm": "Delete this hotel?",
     "editHotel": "Edit Hotel",
     "facilities": "Facilities",
-    "fiveStars": "Five Stars",
-    "fourStars": "Four Stars",
     "groupPrice": "Group Price",
     "individualPrice": "Individual Price",
     "individualPriceRequired": "Enter an individual price",
     "minimumGroupSize": "Minimum Group Size",
     "nameRequired": "Enter a hotel name",
     "nearby": "Nearby",
-    "searchPlaceholder": "Search hotel code, name, or address",
-    "threeStars": "Three Stars"
+    "ratings": {
+      "international_five_star": "International Five-Star",
+      "ctrip_preferred": "Ctrip Preferred"
+    },
+    "searchPlaceholder": "Search hotel code, name, or address"
   },
   "attraction": {
     "area": "Tourism Area",
@@ -945,7 +944,7 @@
     "ATTRACTION_NOT_FOUND": "Attraction not found",
     "ATTRACTION_PRICE_NOT_FOUND": "Attraction price not found",
     "ATTRACTION_PRICE_DATE_INVALID": "The attraction price end date cannot be earlier than the start date",
-    "TRANSPORT_NOT_FOUND": "Vehicle and driver resource not found",
+    "TRANSPORT_NOT_FOUND": "Vehicle model resource not found",
     "GUIDE_NOT_FOUND": "Guide not found",
     "DICTIONARY_TYPE_NOT_FOUND": "System category not found",
     "DICTIONARY_TYPES_NOT_FOUND": "One or more system categories were not found",

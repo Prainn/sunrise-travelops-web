@@ -1,4 +1,4 @@
-import type { TourismResourceRecord } from "@/types/resource";
+import type { ResourceRecord } from "@/types/resource";
 
 export interface ResourceColumn {
   prop: string;
@@ -12,4 +12,4 @@ export interface ResourceFormField extends ResourceColumn {
   options?: Array<{ label: string; value: string }>;
 }
 
-export type ResourceRow = TourismResourceRecord;
+export type ResourceRow = ResourceRecord;

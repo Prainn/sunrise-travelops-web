@@ -119,9 +119,8 @@ function attractionInput(data: AttractionRecord) {
 
 function transportInput(data: TransportRecord) {
   return {
-    id: data.id || undefined, code: data.code.trim(), name: data.name.trim(), plateNumber: data.plateNumber.trim(),
-    serviceLevel: data.serviceLevel, seats: data.seats, dailyPrice: data.dailyPrice, unit: data.unit,
-    city: data.city.trim(), contact: data.contact.trim(),
+    id: data.id || undefined, code: data.code.trim(), name: data.name.trim(), serviceLevel: data.serviceLevel,
+    seats: data.seats, dailyPrice: data.dailyPrice, unit: data.unit, city: data.city.trim(),
     phone: data.phone.trim(), status: data.status, remark: data.remark.trim(),
   };
 }

@@ -45,11 +45,11 @@
                   <el-option
                     v-for="hotel in getHotelOptions(tier, destination)"
                     :key="hotel.id"
-                    :label="`${hotel.name}｜${hotel.rating}｜${hotel.basicRoomType}`"
+                    :label="`${hotel.name}｜${$t(`hotel.ratings.${hotel.rating}`)}｜${hotel.basicRoomType}`"
                     :value="hotel.id"
                   >
                     <div class="itinerary-hotel-vehicle-plans__option">
-                      <span>{{ hotel.name }}｜{{ hotel.rating }}｜{{ hotel.basicRoomType }}</span>
+                      <span>{{ hotel.name }}｜{{ $t(`hotel.ratings.${hotel.rating}`) }}｜{{ hotel.basicRoomType }}</span>
                       <strong>¥{{ formatMoney(getHotelUnitCost(hotel, guestCount)) }}</strong>
                     </div>
                   </el-option>
@@ -104,11 +104,11 @@
                   <el-option
                     v-for="vehicle in getVehicleOptions(tier)"
                     :key="vehicle.id"
-                    :label="`${vehicle.name}｜${vehicle.seats}座｜${vehicle.city}｜${vehicle.plateNumber}`"
+                    :label="`${vehicle.name}｜${vehicle.seats}座｜${vehicle.city}`"
                     :value="vehicle.id"
                   >
                     <div class="itinerary-hotel-vehicle-plans__option">
-                      <span>{{ vehicle.name }}｜{{ vehicle.seats }}座｜{{ vehicle.city }}｜{{ vehicle.plateNumber }}</span>
+                      <span>{{ vehicle.name }}｜{{ vehicle.seats }}座｜{{ vehicle.city }}</span>
                       <strong>¥{{ formatMoney(vehicle.dailyPrice) }}</strong>
                     </div>
                   </el-option>

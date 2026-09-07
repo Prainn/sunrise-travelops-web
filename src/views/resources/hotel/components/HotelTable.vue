@@ -38,8 +38,12 @@
         <el-table-column
           prop="rating"
           :label="$t('resource.starRating')"
-          width="90"
-        />
+          width="130"
+        >
+          <template #default="scope">
+            {{ $t(`hotel.ratings.${scope.row.rating}`) }}
+          </template>
+        </el-table-column>
         <el-table-column
           prop="basicRoomType"
           :label="$t('hotel.basicRoomType')"

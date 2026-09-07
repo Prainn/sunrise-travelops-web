@@ -12,7 +12,7 @@ const vipVehicleResourceId = "00000000-0000-4000-8000-000000000005";
 function createEditor() {
   const preferredHotel: HotelRecord = {
     id: hotelResourceId, code: "HTL-002", name: "Hotel", province: "云南省", city: "昆明市",
-    rating: "四星", facilities: "", breakfast: "", address: "", phone: "", nearby: "", basicRoomType: "Room",
+    rating: "ctrip_preferred", facilities: "", breakfast: "", address: "", phone: "", nearby: "", basicRoomType: "Room",
     individualPrice: 428, groupPrice: 200, minimumGroupSize: 10, unit: "roomNight", status: "enabled",
   };
   const fiveStarHotel: HotelRecord = {
@@ -20,15 +20,15 @@ function createEditor() {
     id: "00000000-0000-4000-8000-000000000003",
     code: "HTL-003",
     name: "Five Star Hotel",
-    rating: "五星",
+    rating: "international_five_star",
     individualPrice: 600,
     groupPrice: 500,
   };
   const hotels = [preferredHotel, fiveStarHotel];
   const vehicle: TransportRecord = {
-    id: vehicleResourceId, code: "VEH-001", name: "Coach", city: "昆明市", countryOrRegion: "中国",
-    serviceLevel: "standard", plateNumber: "云A00001", seats: 38, dailyPrice: 800, unit: "vehicleDay", contact: "赵师傅",
-    email: "", phone: "", status: "enabled", remark: "",
+    id: vehicleResourceId, code: "VEH-001", name: "Coach", city: "昆明市",
+    serviceLevel: "standard", seats: 38, dailyPrice: 800, unit: "vehicleDay",
+    phone: "", status: "enabled", remark: "",
   };
   const vipVehicle: TransportRecord = {
     ...vehicle,
@@ -36,7 +36,6 @@ function createEditor() {
     code: "VEH-002",
     name: "VIP Coach",
     serviceLevel: "vip",
-    plateNumber: "云A00002",
     dailyPrice: 1200,
   };
   const vehicles = [vehicle, vipVehicle];

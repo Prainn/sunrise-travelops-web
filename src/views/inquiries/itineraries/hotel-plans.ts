@@ -5,7 +5,7 @@ export const HOTEL_PLAN_TIERS: ItineraryHotelTier[] = ["international_five_star"
 
 export const HOTEL_PLAN_TIER_LABELS: Record<ItineraryHotelTier, string> = {
   international_five_star: "国际五星",
-  preferred_non_five_star: "携程 4-5 钻优选",
+  preferred_non_five_star: "携程优选",
 };
 
 export function createDefaultHotelPlans(): ItineraryHotelPlan[] {
@@ -13,8 +13,9 @@ export function createDefaultHotelPlans(): ItineraryHotelPlan[] {
 }
 
 export function isHotelEligibleForTier(hotel: Pick<HotelRecord, "rating">, tier: ItineraryHotelTier) {
-  const isFiveStar = hotel.rating.trim() === "五星";
-  return tier === "international_five_star" ? isFiveStar : !isFiveStar;
+  return tier === "international_five_star"
+    ? hotel.rating === "international_five_star"
+    : hotel.rating === "ctrip_preferred";
 }
 
 export function getHotelPlan(itinerary: Pick<ItineraryRecord, "hotelPlans">, tier: ItineraryHotelTier) {

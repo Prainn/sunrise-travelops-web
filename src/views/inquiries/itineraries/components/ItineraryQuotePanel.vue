@@ -34,99 +34,113 @@
         :description="$t('itinerary.configureQuotePlansFirst')"
         :image-size="64"
       />
-      <div
+      <el-collapse
         v-else
+        v-model="expandedHotelTiers"
         class="quote-panel__options"
       >
-        <section
-          v-for="item in displayOptions"
-          :key="item.option.id"
-          class="quote-panel__option"
+        <el-collapse-item
+          v-for="group in displayGroups"
+          :key="group.hotelTier"
+          :name="group.hotelTier"
         >
-          <header class="quote-panel__option-header">
-            <strong>{{ $t(`itinerary.hotelTiers.${item.option.hotelTier}`) }}</strong>
-            <el-tag effect="plain">
-              {{ $t(`itinerary.vehicleServiceLevels.${item.option.vehicleTier}`) }}
-            </el-tag>
-          </header>
+          <template #title>
+            <strong class="quote-panel__tier-title">
+              {{ $t(`itinerary.hotelTiers.${group.hotelTier}`) }}
+            </strong>
+          </template>
 
-          <div class="quote-panel__cost-grid">
-            <div>
-              <span>{{ $t("itinerary.hotelCost") }}</span>
-              <strong>¥{{ formatMoney(item.calculation.hotelCost) }}</strong>
-            </div>
-            <div>
-              <span>{{ $t("itinerary.destinationVehicleCost") }}</span>
-              <strong>¥{{ formatMoney(item.calculation.vehicleCost) }}</strong>
-            </div>
-            <div>
-              <span>{{ $t("itinerary.baseGroupCost") }}</span>
-              <strong>¥{{ formatMoney(item.calculation.baseGroupCost) }}</strong>
-            </div>
-            <div>
-              <span>{{ $t("itinerary.baseCostPerPerson") }}</span>
-              <strong>¥{{ formatMoney(item.calculation.baseCostPerPerson) }}</strong>
-            </div>
-            <div>
-              <span>{{ $t("itinerary.quoteLineTypes.single_supplement") }}</span>
-              <strong>¥{{ formatMoney(item.calculation.singleSupplementUnitCost) }}</strong>
-            </div>
-          </div>
+          <div class="quote-panel__tier-options">
+            <section
+              v-for="item in group.items"
+              :key="item.option.id"
+              class="quote-panel__option"
+            >
+              <header class="quote-panel__option-header">
+                <el-tag effect="plain">
+                  {{ $t(`itinerary.vehicleServiceLevels.${item.option.vehicleTier}`) }}
+                </el-tag>
+              </header>
 
-          <div class="quote-panel__adult-price">
-            <span>{{ $t("itinerary.adultTourPricePerPerson") }}</span>
-            <div class="quote-panel__price-editor">
-              <span>¥</span>
-              <el-input-number
-                :model-value="item.calculation.adultUnitPrice"
-                :disabled="!editable"
-                :min="0"
-                :precision="2"
-                controls-position="right"
-                @update:model-value="updateAdultPrice(item.option.id, $event)"
-              />
-            </div>
-          </div>
-          <div
-            v-if="item.calculation.lines[1]?.quantity"
-            class="quote-panel__line"
-          >
-            <span>{{ $t("itinerary.childTourPrice") }}</span>
-            <strong>¥{{ formatMoney(item.calculation.childUnitPrice) }}</strong>
-          </div>
+              <div class="quote-panel__cost-grid">
+                <div>
+                  <span>{{ $t("itinerary.hotelCost") }}</span>
+                  <strong>¥{{ formatMoney(item.calculation.hotelCost) }}</strong>
+                </div>
+                <div>
+                  <span>{{ $t("itinerary.destinationVehicleCost") }}</span>
+                  <strong>¥{{ formatMoney(item.calculation.vehicleCost) }}</strong>
+                </div>
+                <div>
+                  <span>{{ $t("itinerary.baseGroupCost") }}</span>
+                  <strong>¥{{ formatMoney(item.calculation.baseGroupCost) }}</strong>
+                </div>
+                <div>
+                  <span>{{ $t("itinerary.baseCostPerPerson") }}</span>
+                  <strong>¥{{ formatMoney(item.calculation.baseCostPerPerson) }}</strong>
+                </div>
+                <div>
+                  <span>{{ $t("itinerary.quoteLineTypes.single_supplement") }}</span>
+                  <strong>¥{{ formatMoney(item.calculation.singleSupplementUnitCost) }}</strong>
+                </div>
+              </div>
 
-          <div class="quote-panel__foc-row">
-            <span>{{ $t("itinerary.leaderFoc") }}</span>
-            <el-switch
-              :model-value="item.option.leaderFocEnabled"
-              :disabled="!editable"
-              @update:model-value="updateLeaderFoc(item.option.id, $event)"
-            />
-          </div>
-          <el-tag
-            class="quote-panel__foc-tag"
-            :type="item.option.leaderFocEnabled ? 'success' : 'info'"
-            effect="plain"
-          >
-            {{ getFocLabel(item.option.leaderFocEnabled) }}
-          </el-tag>
+              <div class="quote-panel__adult-price">
+                <span>{{ $t("itinerary.adultTourPricePerPerson") }}</span>
+                <div class="quote-panel__price-editor">
+                  <span>¥</span>
+                  <el-input-number
+                    :model-value="item.calculation.adultUnitPrice"
+                    :disabled="!editable"
+                    :min="0"
+                    :precision="2"
+                    controls-position="right"
+                    @update:model-value="updateAdultPrice(item.option.id, $event)"
+                  />
+                </div>
+              </div>
+              <div
+                v-if="item.calculation.lines[1]?.quantity"
+                class="quote-panel__line"
+              >
+                <span>{{ $t("itinerary.childTourPrice") }}</span>
+                <strong>¥{{ formatMoney(item.calculation.childUnitPrice) }}</strong>
+              </div>
 
-          <div class="quote-panel__option-result">
-            <div>
-              <span>{{ $t("itinerary.profit") }}</span>
-              <strong>¥{{ formatMoney(item.calculation.profit) }}</strong>
-            </div>
-            <div>
-              <span>{{ $t("itinerary.actualMarginRate") }}</span>
-              <strong>{{ item.calculation.actualMarginRate.toFixed(1) }}%</strong>
-            </div>
-            <div class="quote-panel__option-total">
-              <span>{{ $t("itinerary.totalPrice") }}</span>
-              <strong>¥{{ formatMoney(item.calculation.totalPrice) }}</strong>
-            </div>
+              <div class="quote-panel__foc-row">
+                <span>{{ $t("itinerary.leaderFoc") }}</span>
+                <el-switch
+                  :model-value="item.option.leaderFocEnabled"
+                  :disabled="!editable"
+                  @update:model-value="updateLeaderFoc(item.option.id, $event)"
+                />
+              </div>
+              <el-tag
+                class="quote-panel__foc-tag"
+                :type="item.option.leaderFocEnabled ? 'success' : 'info'"
+                effect="plain"
+              >
+                {{ getFocLabel(item.option.leaderFocEnabled) }}
+              </el-tag>
+
+              <div class="quote-panel__option-result">
+                <div>
+                  <span>{{ $t("itinerary.profit") }}</span>
+                  <strong>¥{{ formatMoney(item.calculation.profit) }}</strong>
+                </div>
+                <div>
+                  <span>{{ $t("itinerary.actualMarginRate") }}</span>
+                  <strong>{{ item.calculation.actualMarginRate.toFixed(1) }}%</strong>
+                </div>
+                <div class="quote-panel__option-total">
+                  <span>{{ $t("itinerary.totalPrice") }}</span>
+                  <strong>¥{{ formatMoney(item.calculation.totalPrice) }}</strong>
+                </div>
+              </div>
+            </section>
           </div>
-        </section>
-      </div>
+        </el-collapse-item>
+      </el-collapse>
     </el-card>
 
     <div class="quote-panel__meta">
@@ -137,10 +151,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import type { ItineraryQuoteCalculation, ItineraryQuoteOption, ItineraryQuoteSettings } from "@/types/itinerary";
+import type { ItineraryHotelTier, ItineraryQuoteCalculation, ItineraryQuoteOption, ItineraryQuoteSettings } from "@/types/itinerary";
 import { formatMoney } from "@/utils";
+import { HOTEL_PLAN_TIERS } from "../hotel-plans";
 
 const props = defineProps<{
   quote: ItineraryQuoteSettings;
@@ -154,10 +169,15 @@ const emit = defineEmits<{
   "update-quote-option": [optionId: string, changes: Partial<Omit<ItineraryQuoteOption, "id">>];
 }>();
 const { t } = useI18n();
+const expandedHotelTiers = ref<ItineraryHotelTier[]>([...HOTEL_PLAN_TIERS]);
 const displayOptions = computed(() => props.quote.options.flatMap((option) => {
   const calculation = props.calculation.options.find((record) => record.optionId === option.id);
   return calculation ? [{ option, calculation }] : [];
 }));
+const displayGroups = computed(() => HOTEL_PLAN_TIERS.map((hotelTier) => ({
+  hotelTier,
+  items: displayOptions.value.filter((item) => item.option.hotelTier === hotelTier),
+})).filter((group) => group.items.length));
 
 function getFocLabel(enabled: boolean) {
   return enabled
@@ -182,10 +202,13 @@ function updateLeaderFoc(optionId: string, value: string | number | boolean) {
 .quote-panel__section-title { margin: 0; color: var(--el-text-color-primary); font-size: 16px; font-weight: 600; }
 .quote-panel__summary-row { display: flex; align-items: center; justify-content: space-between; min-height: 36px; font-size: 14px; }
 .quote-panel__summary-row strong { font-variant-numeric: tabular-nums; }
-.quote-panel__options { display: grid; gap: 16px; }
+.quote-panel__options { border-block: 0; }
+.quote-panel__options :deep(.el-collapse-item__header) { font-size: 16px; }
+.quote-panel__options :deep(.el-collapse-item__content) { padding-bottom: 16px; }
+.quote-panel__tier-title { color: var(--el-text-color-primary); }
+.quote-panel__tier-options { display: grid; gap: 16px; }
 .quote-panel__option { padding: 16px; border: 1px solid var(--el-border-color-light); border-radius: 8px; }
-.quote-panel__option-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-.quote-panel__option-header strong { color: var(--el-text-color-primary); font-size: 16px; }
+.quote-panel__option-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .quote-panel__cost-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; padding: 12px; border-radius: 6px; background: var(--el-fill-color-light); }
 .quote-panel__cost-grid div { display: grid; gap: 4px; }
 .quote-panel__cost-grid span { color: var(--el-text-color-secondary); font-size: 14px; }

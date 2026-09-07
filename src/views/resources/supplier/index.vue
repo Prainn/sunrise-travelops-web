@@ -7,16 +7,16 @@
       :permissions="RESOURCE_PERMISSIONS.supplier"
       @refresh="loadRecords"
       @create="openCreateDialog"
-      @edit="openEditDialog"
-      @toggle-status="toggleStatus"
-      @delete="deleteRecord"
+      @edit="editSupplier"
+      @toggle-status="toggleSupplierStatus"
+      @delete="deleteSupplier"
     />
     <ResourceEditorDialog
       v-model="isDialogVisible"
       :record="record"
       :fields="fields"
       :title-key="isEditing ? 'resource.editTitle' : 'resource.createTitle'"
-      @submit="saveRecord"
+      @submit="saveSupplier"
     />
   </div>
 </template>
@@ -27,7 +27,7 @@ import { resourceService } from "@/services/resource.service";
 import type { SupplierRecord } from "@/types/resource";
 import ResourceEditorDialog from "../components/ResourceEditorDialog.vue";
 import ResourceTable from "../components/ResourceTable.vue";
-import type { ResourceColumn, ResourceFormField } from "../types";
+import type { ResourceColumn, ResourceFormField, ResourceRow } from "../types";
 import { createEmptyTourismResourceRecord, useResourceMaintenance } from "../useResourceMaintenance";
 
 defineOptions({ name: "Supplier" });
@@ -87,4 +87,20 @@ const { rows, record, isDialogVisible, isEditing, loadRecords, openCreateDialog,
   codePrefix: "SUP",
   createEmpty: createEmptyTourismResourceRecord,
 });
+
+function editSupplier(record: ResourceRow) {
+  return openEditDialog(record as SupplierRecord);
+}
+
+function toggleSupplierStatus(record: ResourceRow) {
+  return toggleStatus(record as SupplierRecord);
+}
+
+function deleteSupplier(record: ResourceRow) {
+  return deleteRecord(record as SupplierRecord);
+}
+
+function saveSupplier(record: ResourceRow) {
+  return saveRecord(record as SupplierRecord);
+}
 </script>

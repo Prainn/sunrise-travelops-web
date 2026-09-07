@@ -25,7 +25,6 @@ export interface ItineraryHotelPlan {
 export interface ItineraryVehicleSelection {
   vehicleId: string;
   vehicleName: string;
-  plateNumber: string;
   seats: number;
   serviceDays: number;
   unit: ItineraryPriceUnit;

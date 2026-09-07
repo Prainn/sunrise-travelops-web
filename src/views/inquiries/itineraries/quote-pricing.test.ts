@@ -13,7 +13,7 @@ function createHotelPlan(
       destination: hotel.destination,
       hotelId: `${tier}-hotel-${index + 1}`,
       hotelName: `${hotel.destination} Hotel`,
-      rating: tier === "international_five_star" ? "五星" : "四星",
+      rating: tier === "international_five_star" ? "international_five_star" : "ctrip_preferred",
       roomType: "标准间",
       breakfast: "含早餐",
       unit: "roomNight",
@@ -108,7 +108,7 @@ describe("itinerary quote pricing", () => {
   it("adds the itinerary vehicle cost to the common group cost", () => {
     const itinerary = createPricingInput({
       vehiclePlans: [{ tier: "standard", vehicle: {
-          vehicleId: "vehicle-1", vehicleName: "考斯特", plateNumber: "云A00001",
+          vehicleId: "vehicle-1", vehicleName: "考斯特",
           seats: 38, serviceDays: 3, unit: "vehicleDay", referenceUnitCost: 1800, unitCost: 2000,
         } }],
     });
@@ -122,11 +122,11 @@ describe("itinerary quote pricing", () => {
 
   it("calculates every hotel and vehicle tier combination independently", () => {
     const standardVehicle = {
-      vehicleId: "standard-1", vehicleName: "普通巴士", plateNumber: "云A00001",
+      vehicleId: "standard-1", vehicleName: "普通巴士",
       seats: 38, serviceDays: 2, unit: "vehicleDay", referenceUnitCost: 1000, unitCost: 1000,
     };
     const vipVehicle = {
-      ...standardVehicle, vehicleId: "vip-1", vehicleName: "VIP巴士", plateNumber: "云A00002", unitCost: 1500,
+      ...standardVehicle, vehicleId: "vip-1", vehicleName: "VIP巴士", unitCost: 1500,
     };
     const itinerary = createPricingInput({
       destinations: ["昆明市"],

@@ -1,6 +1,7 @@
 import type { ItineraryItemType, ItineraryPriceUnit } from "./itinerary";
 
 export type ResourceStatus = "enabled" | "disabled";
+export type HotelRating = "international_five_star" | "ctrip_preferred";
 export type VehicleServiceLevel = "standard" | "vip";
 
 export interface ResourceAuditRecord {
@@ -76,17 +77,20 @@ export interface BusinessCategoryTypeRecord {
   items: BusinessCategoryOptionRecord[];
 }
 
-export interface TourismResourceRecord extends ResourceAuditRecord {
+export interface ResourceRecord extends ResourceAuditRecord {
   [key: string]: string | number | null | undefined;
   id: string;
   code: string;
   name: string;
+  status: ResourceStatus;
+}
+
+export interface TourismResourceRecord extends ResourceRecord {
   city: string;
   countryOrRegion: string;
   contact: string;
   email: string;
   phone: string;
-  status: ResourceStatus;
   remark: string;
 }
 
@@ -98,12 +102,14 @@ export interface SupplierOptionRecord {
   name: string;
 }
 
-export interface TransportRecord extends TourismResourceRecord {
+export interface TransportRecord extends ResourceRecord {
   serviceLevel: VehicleServiceLevel;
-  plateNumber: string;
   seats: number;
   dailyPrice: number;
   unit: ItineraryPriceUnit;
+  city: string;
+  phone: string;
+  remark: string;
 }
 
 export interface HotelRecord extends ResourceAuditRecord {
@@ -112,7 +118,7 @@ export interface HotelRecord extends ResourceAuditRecord {
   name: string;
   province: string;
   city: string;
-  rating: string;
+  rating: HotelRating;
   facilities: string;
   breakfast: string;
   address: string;

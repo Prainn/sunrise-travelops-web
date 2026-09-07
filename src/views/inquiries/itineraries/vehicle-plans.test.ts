@@ -8,7 +8,6 @@ import {
 const vehicle = {
   vehicleId: "vehicle-1",
   vehicleName: "考斯特",
-  plateNumber: "云A00001",
   seats: 38,
   serviceDays: 3,
   unit: "vehicleDay",

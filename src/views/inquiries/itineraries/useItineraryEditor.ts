@@ -202,7 +202,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     const selection: ItineraryVehicleSelection = {
       vehicleId: vehicle.id,
       vehicleName: vehicle.name,
-      plateNumber: vehicle.plateNumber,
       seats: vehicle.seats,
       serviceDays: existing?.serviceDays ?? Math.max(itinerary.days, 1),
       unit: vehicle.unit,

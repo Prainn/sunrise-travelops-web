@@ -232,7 +232,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "TransportResource",
         component: () => import("@/views/resources/transport/index.vue"),
         meta: {
-          title: "vehiclesAndDrivers",
+          title: "vehicleModels",
           icon: "el-icon-Van",
           keepAlive: true,
           perms: ["resource:transport:list"],

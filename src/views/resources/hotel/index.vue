@@ -126,14 +126,11 @@
         </el-form-item>
         <el-form-item :label="$t('resource.starRating')">
           <el-radio-group v-model="hotelForm.rating">
-            <el-radio value="三星">
-              {{ $t("hotel.threeStars") }}
+            <el-radio value="international_five_star">
+              {{ $t("hotel.ratings.international_five_star") }}
             </el-radio>
-            <el-radio value="四星">
-              {{ $t("hotel.fourStars") }}
-            </el-radio>
-            <el-radio value="五星">
-              {{ $t("hotel.fiveStars") }}
+            <el-radio value="ctrip_preferred">
+              {{ $t("hotel.ratings.ctrip_preferred") }}
             </el-radio>
           </el-radio-group>
         </el-form-item>
@@ -245,7 +242,7 @@ function createEmptyHotel(): HotelForm {
     province: "",
     city: "",
     cityPath: [],
-    rating: "",
+    rating: "international_five_star",
     facilities: "",
     breakfast: "",
     address: "",

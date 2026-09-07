@@ -26,11 +26,11 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import { resourceService } from "@/services/resource.service";
-import type { TourismResourceRecord, TransportRecord } from "@/types/resource";
+import type { TransportRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 import ResourceEditorDialog from "../components/ResourceEditorDialog.vue";
 import ResourceTable from "../components/ResourceTable.vue";
-import type { ResourceColumn, ResourceFormField } from "../types";
+import type { ResourceColumn, ResourceFormField, ResourceRow } from "../types";
 import { useResourceMaintenance } from "../useResourceMaintenance";
 
 defineOptions({ name: "TransportResource" });
@@ -52,10 +52,6 @@ const columns: ResourceColumn[] = [
     "labelKey": "resource.vehicleServiceLevel"
   },
   {
-    "prop": "plateNumber",
-    "labelKey": "resource.plateNumber"
-  },
-  {
     "prop": "seats",
     "labelKey": "resource.seats"
   },
@@ -66,10 +62,6 @@ const columns: ResourceColumn[] = [
   {
     "prop": "city",
     "labelKey": "resource.city"
-  },
-  {
-    "prop": "contact",
-    "labelKey": "resource.driver"
   }
 ];
 const fields = computed<ResourceFormField[]>(() => [
@@ -87,10 +79,6 @@ const fields = computed<ResourceFormField[]>(() => [
       { label: t("resource.vehicleServiceLevels.standard"), value: "standard" },
       { label: t("resource.vehicleServiceLevels.vip"), value: "vip" },
     ]
-  },
-  {
-    "prop": "plateNumber",
-    "labelKey": "resource.plateNumber"
   },
   {
     "prop": "seats",
@@ -114,10 +102,6 @@ const fields = computed<ResourceFormField[]>(() => [
     "labelKey": "resource.city"
   },
   {
-    "prop": "contact",
-    "labelKey": "resource.driver"
-  },
-  {
     "prop": "phone",
     "labelKey": "resource.phone"
   },
@@ -133,9 +117,8 @@ const { rows, record, isDialogVisible, isEditing, loadRecords, openCreateDialog,
   loadRecords: () => resourceService.loadTransports(),
   codePrefix: "VEH",
   createEmpty: () => ({
-    id: "", code: "", name: "", serviceLevel: "standard", plateNumber: "", seats: 1, dailyPrice: 0,
-    unit: "vehicleDay", city: "", countryOrRegion: "", contact: "", email: "", phone: "",
-    status: "enabled", remark: "",
+    id: "", code: "", name: "", serviceLevel: "standard", seats: 1, dailyPrice: 0,
+    unit: "vehicleDay", city: "", phone: "", status: "enabled", remark: "",
   }),
 });
 const tableRows = computed(() => rows.map((row) => ({
@@ -143,19 +126,19 @@ const tableRows = computed(() => rows.map((row) => ({
   serviceLevelLabel: t(`resource.vehicleServiceLevels.${row.serviceLevel}`),
 })));
 
-function editTransport(record: TourismResourceRecord) {
+function editTransport(record: ResourceRow) {
   return openEditDialog(record as TransportRecord);
 }
 
-function toggleTransportStatus(record: TourismResourceRecord) {
+function toggleTransportStatus(record: ResourceRow) {
   return toggleStatus(record as TransportRecord);
 }
 
-function deleteTransport(record: TourismResourceRecord) {
+function deleteTransport(record: ResourceRow) {
   return deleteRecord(record as TransportRecord);
 }
 
-function saveTransport(record: TourismResourceRecord) {
+function saveTransport(record: ResourceRow) {
   return saveRecord(record as TransportRecord);
 }
 </script>

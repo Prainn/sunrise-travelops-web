@@ -17,7 +17,7 @@
     "hotels": "酒店",
     "restaurants": "餐厅",
     "attractions": "景点",
-    "vehiclesAndDrivers": "车辆与司机",
+    "vehicleModels": "车型",
     "guides": "导游"
   },
   "appVersion": {
@@ -194,7 +194,7 @@
     "vehicleSubtotal": "车辆小计",
     "hotelTiers": {
       "international_five_star": "国际五星",
-      "preferred_non_five_star": "携程 4-5 钻优选"
+      "preferred_non_five_star": "携程优选"
     },
     "quoteLineTypes": {
       "adult": "成人标准报价",
@@ -637,7 +637,6 @@
     "createContactTitle": "新增联系人",
     "createSupplierTitle": "新增地接社",
     "createTitle": "新增资源",
-    "driver": "司机",
     "deleteAgencyConfirm": "确定删除该旅行社及其全部联系人吗？",
     "deleteContactConfirm": "确定删除该联系人吗？",
     "editAgencyTitle": "编辑旅行社",
@@ -658,7 +657,6 @@
     "personName": "人员姓名",
     "phone": "联系电话",
     "dailyPrice": "日成本",
-    "plateNumber": "车牌号",
     "restaurantName": "餐厅名称",
     "searchPlaceholder": "搜索编号、名称或城市",
     "seats": "座位数",
@@ -694,16 +692,17 @@
     "deleteHotelConfirm": "确定删除该酒店吗？",
     "editHotel": "编辑酒店",
     "facilities": "配套设施",
-    "fiveStars": "五星",
-    "fourStars": "四星",
     "groupPrice": "成团价",
     "individualPrice": "散客价",
     "individualPriceRequired": "请输入散客价",
     "minimumGroupSize": "成团人数",
     "nameRequired": "请输入酒店名称",
     "nearby": "周边配置",
-    "searchPlaceholder": "搜索酒店编号、名称或地址",
-    "threeStars": "三星"
+    "ratings": {
+      "international_five_star": "国际五星",
+      "ctrip_preferred": "携程优选"
+    },
+    "searchPlaceholder": "搜索酒店编号、名称或地址"
   },
   "attraction": {
     "area": "旅游区域",
@@ -945,7 +944,7 @@
     "ATTRACTION_NOT_FOUND": "未找到该景点",
     "ATTRACTION_PRICE_NOT_FOUND": "未找到该景点价格",
     "ATTRACTION_PRICE_DATE_INVALID": "景点价格的结束日期不能早于开始日期",
-    "TRANSPORT_NOT_FOUND": "未找到该车辆与司机资源",
+    "TRANSPORT_NOT_FOUND": "未找到该车型资源",
     "GUIDE_NOT_FOUND": "未找到该导游",
     "DICTIONARY_TYPE_NOT_FOUND": "未找到该系统分类",
     "DICTIONARY_TYPES_NOT_FOUND": "未找到一个或多个系统分类",

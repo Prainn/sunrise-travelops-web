@@ -17,7 +17,7 @@ function createResources(): PricingResources {
   return {
     suppliers: [{ id: ids.supplier, code: "SUP-001", name: "测试地接社" }],
     hotels: [{
-      id: ids.hotel, code: "HTL-001", name: "测试酒店", province: "云南省", city: "昆明市", rating: "四星",
+      id: ids.hotel, code: "HTL-001", name: "测试酒店", province: "云南省", city: "昆明市", rating: "ctrip_preferred",
       facilities: "", breakfast: "", address: "", phone: "", nearby: "", basicRoomType: "标准间",
       individualPrice: 428, groupPrice: 200, minimumGroupSize: 10, unit: "roomNight", status: "enabled",
     }],
@@ -37,8 +37,8 @@ function createResources(): PricingResources {
       }],
     }],
     transports: [{
-      id: ids.transport, code: "VEH-001", name: "测试车辆", city: "昆明", countryOrRegion: "中国", plateNumber: "云A00001",
-      serviceLevel: "standard", seats: 7, dailyPrice: 800, unit: "vehicleDay", contact: "赵师傅", email: "", phone: "", status: "enabled", remark: "",
+      id: ids.transport, code: "VEH-001", name: "测试车型", city: "昆明", serviceLevel: "standard",
+      seats: 7, dailyPrice: 800, unit: "vehicleDay", phone: "", status: "enabled", remark: "",
     }],
     guides: [{
       id: ids.guide, code: "GDE-001", certificateNo: "CERT", name: "测试导游", gender: "female", age: 30,
