@@ -113,18 +113,16 @@
             </template>
           </el-table-column>
           <el-table-column
-            :label="$t('resource.priceSource')"
+            :label="$t('resource.supplierName')"
             min-width="160"
           >
             <template #default="scope">
               <el-tag
-                v-if="scope.row.isGroundOperatorProvided"
                 type="warning"
                 effect="plain"
               >
                 {{ getGroundOperatorName(scope.row.groundOperatorId) }}
               </el-tag>
-              <span v-else>{{ $t("resource.directPrice") }}</span>
             </template>
           </el-table-column>
           <el-table-column

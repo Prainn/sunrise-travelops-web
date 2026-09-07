@@ -43,7 +43,7 @@ function createResources(): PricingResources {
     guides: [{
       id: ids.guide, code: "GDE-001", certificateNo: "CERT", name: "测试导游", gender: "female", age: 30,
       languages: ["中文"], employmentType: "full-time", identityNumber: "", phone: "", dailyPrice: 500,
-      unit: "guideDay", hasLaborContract: true, isGroundOperatorProvided: false, groundOperatorId: "",
+      unit: "guideDay", hasLaborContract: true, groundOperatorId: ids.supplier,
       licensePhotoUrl: "", remark: "", status: "enabled",
     }],
   };

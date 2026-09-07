@@ -13,7 +13,7 @@ export interface ResourceAuditRecord {
 export interface ResourceQueryParams {
   page: number;
   pageSize: number;
-  keywords?: string;
+  keyword?: string;
   status?: ResourceStatus;
 }
 
@@ -173,10 +173,9 @@ export interface GuideRecord extends ResourceAuditRecord {
   employmentType: GuideEmploymentType;
   identityNumber: string;
   phone: string;
-  dailyPrice: number | null;
+  dailyPrice: number;
   unit: ItineraryPriceUnit;
   hasLaborContract: boolean;
-  isGroundOperatorProvided: boolean;
   groundOperatorId: string;
   licensePhotoUrl: string;
   remark: string;

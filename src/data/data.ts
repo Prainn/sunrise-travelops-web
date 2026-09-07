@@ -3,9 +3,6 @@ import type { VisitOverviewDetail, VisitTrendDetail } from "@/types/dashboard";
 import type { InquiryLogRecord } from "@/types/inquiry-log";
 import type { ItineraryRecord } from "@/types/itinerary";
 import type { InquiryRecord } from "@/types/inquiry";
-import type {
-  ResourceUnitRecord, TransportMethodRecord,
-} from "@/types/resource";
 
 export const departmentDefinitions = [
   { value: 1, labelKey: "user.departments.systemManagement" },
@@ -465,26 +462,6 @@ export const inquiryLogs: InquiryLogRecord[] = [
     id: "inquiry-log-archived-inquiry-10", inquiryId: "inquiry-10", action: "inquiry_archived", occurredAt: "2026-08-17 09:00",
     ...getSeedOperator("inquiry_lina"), targetType: "inquiry", targetId: "inquiry-10", targetCode: "INQ-202608-010",
   },
-];
-
-/** 业务分类中的资源计价单位；旅游资源和行程仅保存单位编码。 */
-export const resourceUnits: ResourceUnitRecord[] = [
-  { id: "resource-unit-room-night", code: "roomNight", name: "间夜", englishName: "Room night", resourceTypes: ["hotel"], status: "enabled", remark: "酒店房型按间夜计价" },
-  { id: "resource-unit-person-visit", code: "personVisit", name: "人次", englishName: "Person visit", resourceTypes: ["attraction"], status: "enabled", remark: "景点门票及景区项目按使用人次计价" },
-  { id: "resource-unit-person-meal", code: "personMeal", name: "人/餐", englishName: "Person/meal", resourceTypes: ["restaurant"], status: "enabled", remark: "餐厅按每人每餐计价" },
-  { id: "resource-unit-table", code: "table", name: "桌", englishName: "Table", resourceTypes: ["restaurant"], status: "enabled", remark: "餐厅整桌报价" },
-  { id: "resource-unit-vehicle-day", code: "vehicleDay", name: "辆/天", englishName: "Vehicle/day", resourceTypes: ["vehicle"], status: "enabled", remark: "车辆按每辆每天计价" },
-  { id: "resource-unit-guide-day", code: "guideDay", name: "人/天", englishName: "Person/day", resourceTypes: ["guide"], status: "enabled", remark: "导游按每人每天计价" },
-];
-
-/** 业务分类中的交通方式；每日行程仅保存交通方式编码。 */
-export const transportMethods: TransportMethodRecord[] = [
-  { id: "transport-method-flight", code: "flight", name: "飞机", englishName: "Flight", status: "enabled", remark: "航空交通" },
-  { id: "transport-method-business-car", code: "businessCar", name: "商务车", englishName: "Business car", status: "enabled", remark: "小型团队包车" },
-  { id: "transport-method-high-speed-rail", code: "highSpeedRail", name: "动车", englishName: "High-speed rail", status: "enabled", remark: "动车或高铁" },
-  { id: "transport-method-coach", code: "coach", name: "旅游大巴", englishName: "Coach", status: "enabled", remark: "大型团队包车" },
-  { id: "transport-method-ship", code: "ship", name: "船", englishName: "Ship", status: "enabled", remark: "水路交通" },
-  { id: "transport-method-walking", code: "walking", name: "步行", englishName: "Walking", status: "enabled", remark: "徒步或步行游览" },
 ];
 
 export const visitOverview: VisitOverviewDetail = {

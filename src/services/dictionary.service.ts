@@ -13,11 +13,11 @@ import type {
 const DICTIONARY_BASE_URL = "/system/dictionaries";
 
 function buildParams(query: DictTypeQueryParams | DictItemQueryParams) {
-  const keywords = query.keywords?.trim();
+  const keyword = query.keyword?.trim();
   return {
     page: query.page,
     pageSize: query.pageSize,
-    keywords,
+    keyword,
     status: query.status,
   };
 }

@@ -3,7 +3,7 @@ import type { BaseQueryParams } from "@/types/common";
 export type DictionaryTagType = "success" | "warning" | "info" | "primary" | "danger" | "";
 
 export interface DictTypeQueryParams extends BaseQueryParams {
-  keywords?: string;
+  keyword?: string;
   status?: number;
 }
 
@@ -24,7 +24,7 @@ export interface DictTypeForm {
 }
 
 export interface DictItemQueryParams extends BaseQueryParams {
-  keywords?: string;
+  keyword?: string;
   dictCode?: string;
   status?: number;
 }

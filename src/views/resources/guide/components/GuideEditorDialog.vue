@@ -104,7 +104,10 @@
             maxlength="20"
           />
         </el-form-item>
-        <el-form-item :label="$t('resource.dailyPrice')">
+        <el-form-item
+          :label="$t('resource.dailyPrice')"
+          prop="dailyPrice"
+        >
           <el-input-number
             v-model="form.dailyPrice"
             :min="0"
@@ -129,14 +132,7 @@
         <el-form-item :label="$t('guide.hasLaborContract')">
           <el-switch v-model="form.hasLaborContract" />
         </el-form-item>
-        <el-form-item :label="$t('resource.isGroundOperatorProvided')">
-          <el-switch
-            v-model="form.isGroundOperatorProvided"
-            @change="changeProvider"
-          />
-        </el-form-item>
         <el-form-item
-          v-if="form.isGroundOperatorProvided"
           :label="$t('resource.supplierName')"
           prop="groundOperatorId"
         >
@@ -243,15 +239,12 @@ const rules = computed<FormRules>(() => ({
   employmentType: [{ required: true, message: t("guide.employmentTypeRequired"), trigger: "change" }],
   identityNumber: [{ required: true, message: t("guide.identityNumberRequired"), trigger: "blur" }],
   phone: [{ required: true, message: t("guide.phoneRequired"), trigger: "blur" }],
+  dailyPrice: [{ required: true, message: t("resource.dailyPriceRequired"), trigger: "change" }],
   unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
-  groundOperatorId: [{ required: form.isGroundOperatorProvided, message: t("resource.groundOperatorRequired"), trigger: "change" }],
+  groundOperatorId: [{ required: true, message: t("resource.groundOperatorRequired"), trigger: "change" }],
 }));
 
 watch(() => props.record, (record) => Object.assign(form, record, { languages: [...record.languages] }), { deep: true });
-
-function changeProvider(value: string | number | boolean) {
-  if (!value) form.groundOperatorId = "";
-}
 
 function handlePhotoChange(uploadFile: UploadFile) {
   const file = uploadFile.raw;

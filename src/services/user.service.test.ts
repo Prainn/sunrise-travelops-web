@@ -38,7 +38,7 @@ describe("userService", () => {
     await expect(userService.getPage({
       page: 1,
       pageSize: 10,
-      keywords: " admin ",
+      keyword: " admin ",
       status: 1,
       deptId: 1,
       roleId: "role-1",
@@ -49,7 +49,7 @@ describe("userService", () => {
       params: {
         page: 1,
         pageSize: 10,
-        keywords: "admin",
+        keyword: "admin",
         status: 1,
         deptId: 1,
         roleId: "role-1",

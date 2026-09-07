@@ -1,5 +1,7 @@
 import type { LoginResult } from "@/types/auth";
 import { AuthStorage } from "@/utils/auth-storage";
+import { translate, translateIfExists } from "@/lang/utils";
+import { ApiErrorCode } from "./error-code";
 
 export interface ApiResponse<T> {
   code: "SUCCESS";
@@ -36,8 +38,12 @@ interface ApiErrorOptions {
 }
 
 const API_BASE_URL = (import.meta.env.VITE_APP_BASE_API || "/api").replace(/\/$/, "");
-const NETWORK_ERROR_MESSAGE = "网络连接失败，请稍后重试";
-const SYSTEM_ERROR_MESSAGE = "系统请求失败，请稍后重试";
+
+function getErrorMessage(code: string, status?: number): string {
+  return translateIfExists(`apiErrors.${code}`)
+    ?? (status ? translateIfExists(`apiErrors.HTTP_${status}`) : undefined)
+    ?? translate("apiErrors.REQUEST_FAILED");
+}
 
 export class ApiError extends Error {
   readonly code: string;
@@ -107,11 +113,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 async function parseError(response: Response): Promise<ApiError> {
   const body = await response.json().catch(() => null) as Partial<ApiErrorResponse> | null;
   const code = typeof body?.code === "string" ? body.code : `HTTP_${response.status}`;
-  const message = typeof body?.message === "string" && body.message
-    ? body.message
-    : response.statusText || SYSTEM_ERROR_MESSAGE;
 
-  return new ApiError(message, {
+  return new ApiError(getErrorMessage(code, response.status), {
     code,
     status: response.status,
     details: isRecord(body?.details) ? body.details : undefined,
@@ -124,16 +127,16 @@ async function parseJsonData<T>(response: Response): Promise<T> {
   if (response.status === 204) return undefined as T;
 
   const body = await response.json().catch((error: unknown) => {
-    throw new ApiError(SYSTEM_ERROR_MESSAGE, {
-      code: "INVALID_API_RESPONSE",
+    throw new ApiError(getErrorMessage(ApiErrorCode.INVALID_API_RESPONSE, response.status), {
+      code: ApiErrorCode.INVALID_API_RESPONSE,
       status: response.status,
       cause: error,
     });
   }) as unknown;
 
   if (!isRecord(body) || body.code !== "SUCCESS" || !("data" in body)) {
-    throw new ApiError(SYSTEM_ERROR_MESSAGE, {
-      code: "INVALID_API_RESPONSE",
+    throw new ApiError(getErrorMessage(ApiErrorCode.INVALID_API_RESPONSE, response.status), {
+      code: ApiErrorCode.INVALID_API_RESPONSE,
       status: response.status,
     });
   }
@@ -161,8 +164,8 @@ async function expireSession(): Promise<void> {
 async function rotateTokens(): Promise<void> {
   const refreshToken = AuthStorage.getRefreshToken();
   if (!refreshToken) {
-    throw new ApiError("Missing refresh token", {
-      code: "MISSING_REFRESH_TOKEN",
+    throw new ApiError(getErrorMessage(ApiErrorCode.MISSING_REFRESH_TOKEN, 401), {
+      code: ApiErrorCode.MISSING_REFRESH_TOKEN,
       status: 401,
     });
   }
@@ -217,8 +220,8 @@ async function sendRequest(
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch (error) {
-    throw new ApiError(NETWORK_ERROR_MESSAGE, {
-      code: "NETWORK_ERROR",
+    throw new ApiError(getErrorMessage(ApiErrorCode.NETWORK_ERROR), {
+      code: ApiErrorCode.NETWORK_ERROR,
       cause: error,
     });
   }

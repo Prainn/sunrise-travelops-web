@@ -1,8 +1,8 @@
 import { reactive } from "vue";
-import { configurationService } from "@/services/configuration.service";
 import type { ItineraryItemType, ItineraryPriceUnit } from "@/types/itinerary";
+import type { ResourceUnitRecord } from "@/types/resource";
 
-export const resourceUnitStore = reactive(configurationService.resourceUnits);
+export const resourceUnitStore = reactive<ResourceUnitRecord[]>([]);
 
 export function getResourceUnitName(code: ItineraryPriceUnit, locale = "zh-CN") {
   const unit = resourceUnitStore.find((item) => item.code === code);

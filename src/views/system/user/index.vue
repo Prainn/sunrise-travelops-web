@@ -14,10 +14,10 @@
         >
           <el-form-item
             :label="$t('common.keywords')"
-            prop="keywords"
+            prop="keyword"
           >
             <el-input
-              v-model="params.keywords"
+              v-model="params.keyword"
               :placeholder="$t('user.searchPlaceholder')"
               class="page-search__keywords"
               clearable

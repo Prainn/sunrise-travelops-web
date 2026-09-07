@@ -67,11 +67,11 @@ function getDepartmentName(deptId: number): string {
 }
 
 function buildUserParams(query: UserQueryParams) {
-  const keywords = query.keywords?.trim();
+  const keyword = query.keyword?.trim();
   return {
     page: query.page,
     pageSize: query.pageSize,
-    keywords,
+    keyword,
     status: query.status,
     deptId: query.deptId,
     roleId: query.roleId,

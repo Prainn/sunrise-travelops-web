@@ -1,5 +1,6 @@
 import { reactive } from "vue";
 import { request } from "@/api/request";
+import { businessDictionaryService } from "@/services/business-dictionary.service";
 import type { PageResult } from "@/types/common";
 import type {
   AgencyContactRecord, AgencyRecord, AttractionPriceRecord, AttractionRecord,
@@ -21,7 +22,7 @@ interface ResourceCrud<T> {
 interface ApiMoneyFields {
   individualPrice?: string;
   groupPrice?: string | null;
-  dailyPrice?: string | null;
+  dailyPrice?: string;
   price?: string;
   rackPrice?: string;
   settlementPrice?: string;
@@ -129,8 +130,7 @@ function guideInput(data: GuideRecord) {
     id: data.id || undefined, code: data.code.trim(), name: data.name.trim(), certificateNo: data.certificateNo.trim(),
     gender: data.gender, age: data.age, languages: data.languages, employmentType: data.employmentType,
     identityNumber: data.identityNumber.trim(), phone: data.phone.trim(), dailyPrice: data.dailyPrice,
-    unit: data.unit, hasLaborContract: data.hasLaborContract, isGroundOperatorProvided: data.isGroundOperatorProvided,
-    groundOperatorId: data.isGroundOperatorProvided ? data.groundOperatorId : null,
+    unit: data.unit, hasLaborContract: data.hasLaborContract, groundOperatorId: data.groundOperatorId,
     licensePhotoUrl: data.licensePhotoUrl.trim(), remark: data.remark.trim(), status: data.status,
   };
 }
@@ -167,7 +167,7 @@ function normalizeTransport(data: ApiRecord<TransportRecord>): TransportRecord {
 }
 
 function normalizeGuide(data: ApiRecord<GuideRecord>): GuideRecord {
-  return { ...data, dailyPrice: data.dailyPrice === null ? null : normalizeMoney(data.dailyPrice), groundOperatorId: data.groundOperatorId ?? "" };
+  return { ...data, dailyPrice: normalizeMoney(data.dailyPrice), groundOperatorId: data.groundOperatorId ?? "" };
 }
 
 function contactInput(data: AgencyContactRecord) {
@@ -279,9 +279,11 @@ export const resourceService = {
     return replaceRecords(suppliers, await fetchAll(supplierApi));
   },
   async loadHotels() {
+    await businessDictionaryService.ensureBuiltInTypesLoaded();
     return replaceRecords(hotels, await fetchAll(hotelApi));
   },
   async loadRestaurants() {
+    await businessDictionaryService.ensureBuiltInTypesLoaded();
     return replaceRecords(restaurants, await fetchAll(restaurantApi));
   },
   async loadRestaurantPrices(restaurantId: string) {
@@ -294,6 +296,7 @@ export const resourceService = {
     return prices;
   },
   async loadAttractions() {
+    await businessDictionaryService.ensureBuiltInTypesLoaded();
     return replaceRecords(attractions, await fetchAll(attractionApi));
   },
   async loadAttractionPrices(attractionId: string) {
@@ -306,9 +309,11 @@ export const resourceService = {
     return prices;
   },
   async loadTransports() {
+    await businessDictionaryService.ensureBuiltInTypesLoaded();
     return replaceRecords(transports, await fetchAll(transportApi));
   },
   async loadGuides() {
+    await businessDictionaryService.ensureBuiltInTypesLoaded();
     return replaceRecords(guides, await fetchAll(guideApi));
   },
   async loadPricingResources() {

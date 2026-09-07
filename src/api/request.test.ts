@@ -7,8 +7,27 @@ const authStorageMock = vi.hoisted(() => ({
   setTokens: vi.fn(),
   clearAuth: vi.fn(),
 }));
+const localeMock = vi.hoisted(() => ({ value: "zh-cn" }));
 
 vi.mock("@/utils/auth-storage", () => ({ AuthStorage: authStorageMock }));
+vi.mock("@/lang/utils", () => {
+  const messages: Record<string, Record<string, string>> = {
+    "zh-cn": {
+      "apiErrors.VALIDATION_ERROR": "输入内容有误，请检查后重试",
+      "apiErrors.NETWORK_ERROR": "网络连接失败，请稍后重试",
+      "apiErrors.REQUEST_FAILED": "请求失败，请稍后重试",
+    },
+    en: {
+      "apiErrors.USERNAME_ALREADY_EXISTS": "This username is already in use",
+      "apiErrors.REQUEST_FAILED": "Request failed. Try again later",
+    },
+  };
+  const getMessage = (key: string) => messages[localeMock.value]?.[key];
+  return {
+    translate: (key: string) => getMessage(key) ?? key,
+    translateIfExists: (key: string) => getMessage(key),
+  };
+});
 
 import { ApiError, isApiError, request } from "./request";
 
@@ -42,6 +61,7 @@ describe("request", () => {
     authStorageMock.getAccessToken.mockReturnValue("");
     authStorageMock.getRefreshToken.mockReturnValue("");
     authStorageMock.getRememberMe.mockReturnValue(false);
+    localeMock.value = "zh-cn";
   });
 
   it("unwraps the unified success envelope and serializes query parameters", async () => {
@@ -81,7 +101,7 @@ describe("request", () => {
   it("preserves validation details and request metadata on ApiError", async () => {
     fetchMock.mockResolvedValue(jsonResponse({
       code: "VALIDATION_ERROR",
-      message: "请求参数校验失败",
+      message: "后端诊断信息",
       data: null,
       details: {
         username: ["用户名格式不正确"],
@@ -99,7 +119,7 @@ describe("request", () => {
     expect(error).toMatchObject({
       name: "ApiError",
       code: "VALIDATION_ERROR",
-      message: "请求参数校验失败",
+      message: "输入内容有误，请检查后重试",
       status: 400,
       details: {
         username: ["用户名格式不正确"],
@@ -130,6 +150,16 @@ describe("request", () => {
       code: "NETWORK_ERROR",
       message: "网络连接失败，请稍后重试",
     }));
+  });
+
+  it("shows the localized text for a stable error code instead of the backend message", async () => {
+    localeMock.value = "en";
+    fetchMock.mockResolvedValue(errorResponse(409, "USERNAME_ALREADY_EXISTS", "后端原始消息"));
+
+    await expect(request.get("/test")).rejects.toMatchObject({
+      code: "USERNAME_ALREADY_EXISTS",
+      message: "This username is already in use",
+    });
   });
 
   it("refreshes once and retries the original authenticated request", async () => {

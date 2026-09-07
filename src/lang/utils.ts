@@ -8,6 +8,11 @@ export function translate(key: string, params?: Record<string, string | number>)
   return params ? i18n.global.t(key, params) : i18n.global.t(key);
 }
 
+/** 仅在当前语言包存在对应文本时返回翻译。 */
+export function translateIfExists(key: string): string | undefined {
+  return i18n.global.te(key) ? i18n.global.t(key) : undefined;
+}
+
 /**
  * 翻译路由标题
  * 用于面包屑、侧边栏、标签页等场景

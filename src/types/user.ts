@@ -26,7 +26,7 @@ export interface UserInfo {
 }
 
 export interface UserQueryParams extends BaseQueryParams {
-  keywords?: string;
+  keyword?: string;
   deptId?: number;
   roleId?: string | number;
   status?: number;

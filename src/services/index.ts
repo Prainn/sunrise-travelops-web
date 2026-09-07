@@ -6,5 +6,4 @@ export { inquiryLogService } from "./inquiry-log.service";
 export { userService } from "./user.service";
 export { resourceService } from "./resource.service";
 export { inquiryService } from "./inquiry.service";
-export { configurationService } from "./configuration.service";
 export { staffDirectoryService } from "./staff-directory.service";

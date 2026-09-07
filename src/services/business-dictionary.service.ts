@@ -23,6 +23,8 @@ interface BusinessDictionaryItemQuery {
 }
 
 const BUSINESS_DICTIONARY_BASE_URL = "/system/business-dictionaries";
+let builtInTypesLoaded = false;
+let builtInTypesPromise: Promise<BusinessCategoryTypeRecord[]> | null = null;
 
 function getItemBaseUrl(typeCode: string): string {
   return `${BUSINESS_DICTIONARY_BASE_URL}/${encodeURIComponent(typeCode)}/items`;
@@ -79,6 +81,21 @@ export const businessDictionaryService = {
     const types = await request.get<BusinessCategoryTypeRecord[]>(BUSINESS_DICTIONARY_BASE_URL);
     syncBuiltInStores(types);
     return types;
+  },
+
+  async ensureBuiltInTypesLoaded(): Promise<BusinessCategoryTypeRecord[]> {
+    if (builtInTypesLoaded) return [];
+    if (builtInTypesPromise) return builtInTypesPromise;
+
+    builtInTypesPromise = this.getTypes()
+      .then((types) => {
+        builtInTypesLoaded = true;
+        return types;
+      })
+      .finally(() => {
+        builtInTypesPromise = null;
+      });
+    return builtInTypesPromise;
   },
 
   async createType(data: BusinessDictionaryTypeForm): Promise<BusinessCategoryTypeRecord> {

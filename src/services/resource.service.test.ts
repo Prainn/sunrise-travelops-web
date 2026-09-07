@@ -42,7 +42,7 @@ const hotel: HotelRecord = { ...audit, id: "hotel-1", code: "HTL-001", name: "Ho
 const restaurant: RestaurantRecord = { ...audit, id: "restaurant-1", code: "RES-001", name: "Restaurant", city: "昆明", cuisine: "云南菜", contact: "", phone: "", address: "", remark: "", unit: "personMeal", status: "enabled", prices: [] };
 const attraction: AttractionRecord = { ...audit, id: "attraction-1", code: "ATT-001", name: "Attraction", area: "昆明", category: "scenic", restroomLocation: "", remark: "", unit: "personVisit", status: "enabled", prices: [] };
 const transport: TransportRecord = { ...audit, id: "transport-1", code: "VEH-001", name: "Vehicle", plateNumber: "云A00001", seats: 7, dailyPrice: 800, unit: "vehicleDay", city: "昆明", countryOrRegion: "", contact: "赵师傅", email: "", phone: "13800000000", status: "enabled", remark: "" };
-const guide: GuideRecord = { ...audit, id: "guide-1", code: "GDE-001", certificateNo: "CERT", name: "Guide", gender: "female", age: 30, languages: ["中文"], employmentType: "full-time", identityNumber: "", phone: "", dailyPrice: 500, unit: "guideDay", hasLaborContract: true, isGroundOperatorProvided: false, groundOperatorId: "", licensePhotoUrl: "", remark: "", status: "enabled" };
+const guide: GuideRecord = { ...audit, id: "guide-1", code: "GDE-001", certificateNo: "CERT", name: "Guide", gender: "female", age: 30, languages: ["中文"], employmentType: "full-time", identityNumber: "", phone: "", dailyPrice: 500, unit: "guideDay", hasLaborContract: true, groundOperatorId: "00000000-0000-4000-8000-000000000001", licensePhotoUrl: "", remark: "", status: "enabled" };
 
 const topResources: Array<[string, ResourceCrud<never>]> = [
   ["agencies", resourceService.agencyApi as unknown as ResourceCrud<never>],
@@ -136,11 +136,11 @@ describe("resourceService", () => {
 
   it("uses every top-level list, detail, and batch-delete endpoint", async () => {
     for (const [name, api] of topResources) {
-      await api.getPage({ page: 2, pageSize: 20, keywords: " 云南 " });
+      await api.getPage({ page: 2, pageSize: 20, keyword: " 云南 " });
       await api.getDetail("resource/id");
       await api.deleteByIds("id-1,id-2");
 
-      expect(requestMock).toHaveBeenCalledWith(`/resources/${name}?page=2&pageSize=20&keywords=%E4%BA%91%E5%8D%97`);
+      expect(requestMock).toHaveBeenCalledWith(`/resources/${name}?page=2&pageSize=20&keyword=%E4%BA%91%E5%8D%97`);
       expect(requestMock).toHaveBeenCalledWith(`/resources/${name}/resource%2Fid`);
       expect(requestMock).toHaveBeenCalledWith(`/resources/${name}?ids=id-1%2Cid-2`, { method: "DELETE" });
     }

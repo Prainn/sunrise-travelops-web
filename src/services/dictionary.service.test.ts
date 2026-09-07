@@ -36,14 +36,14 @@ describe("dictionaryService", () => {
     await expect(dictionaryService.getPage({
       page: 2,
       pageSize: 10,
-      keywords: " gender ",
+      keyword: " gender ",
       status: 1,
     })).resolves.toEqual(page);
     expect(getMock).toHaveBeenCalledWith("/system/dictionaries", {
       params: {
         page: 2,
         pageSize: 10,
-        keywords: "gender",
+        keyword: "gender",
         status: 1,
       },
     });

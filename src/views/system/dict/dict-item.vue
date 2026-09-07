@@ -11,10 +11,10 @@
       >
         <el-form-item
           :label="$t('common.keywords')"
-          prop="keywords"
+          prop="keyword"
         >
           <el-input
-            v-model="params.keywords"
+            v-model="params.keyword"
             :placeholder="$t('dictionary.optionSearchPlaceholder')"
             class="page-search__keywords"
             clearable
@@ -292,7 +292,7 @@ const { loading, list, total, params, fetchData, handleQuery, handleResetQuery }
     page: 1,
     pageSize: 10,
     dictCode: dictCode.value,
-    keywords: "",
+    keyword: "",
   },
   request: (query) => dictionaryService.getDictItemPage(dictCode.value, query),
   onBeforeReset: () => queryFormRef.value?.resetFields(),

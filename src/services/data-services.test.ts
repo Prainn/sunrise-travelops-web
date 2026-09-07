@@ -2,9 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lang/utils", () => ({ translate: (key: string) => key }));
 
-import { inquiries, inquiryLogs, itineraries, transportMethods } from "@/data/data";
-import { getResourceUnitName } from "@/utils/resource-unit";
-import { getTransportMethodNames } from "@/utils/transport-method";
+import { inquiries, inquiryLogs, itineraries } from "@/data/data";
 
 describe("local data services", () => {
   it("keeps itinerary mock records linked to existing inquiries", () => {
@@ -42,22 +40,6 @@ describe("local data services", () => {
     )))).toBe(true);
     expect(itineraries.every((itinerary) => itinerary.dailyPlans.flatMap((day) => day.items).every((item) =>
       item.totalCost === item.unitCost * item.quantity))).toBe(true);
-  });
-
-  it("keeps resource unit labels backed by business category data", () => {
-    expect(getResourceUnitName("vehicleDay", "zh-CN")).toBe("辆/天");
-    expect(getResourceUnitName("personVisit", "zh-CN")).toBe("人次");
-    expect(getResourceUnitName("personMeal", "zh-CN")).toBe("人/餐");
-    expect(getResourceUnitName("guideDay", "zh-CN")).toBe("人/天");
-    expect(getResourceUnitName("roomNight", "en")).toBe("Room night");
-  });
-
-  it("keeps itinerary transport methods backed by business category mock data", () => {
-    const configuredCodes = new Set(transportMethods.map((method) => method.code));
-    const usedCodes = itineraries.flatMap((itinerary) => itinerary.dailyPlans.flatMap((day) => day.transport.split(",").filter(Boolean)));
-
-    expect(usedCodes.every((code) => configuredCodes.has(code))).toBe(true);
-    expect(getTransportMethodNames("flight,businessCar", "zh-CN")).toBe("飞机 / 商务车");
   });
 
 });
