@@ -274,7 +274,7 @@ async function handleSubmit() {
   &__photo-field { display: flex; align-items: center; gap: 12px; }
   &__photo { width: 72px; height: 88px; border-radius: 6px; }
   &__photo-actions { display: flex; align-items: center; gap: 8px; }
-  &__photo-tip { color: var(--el-text-color-secondary); font-size: 12px; }
+  &__photo-tip { color: var(--el-text-color-secondary); font-size: 14px; }
 }
 
 @media (width <= 768px) {

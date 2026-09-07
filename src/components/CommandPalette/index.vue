@@ -193,7 +193,7 @@ const handleInputKeydown: (evt: KeyboardEvent | Event) => void = (evt) => {
 .command-palette-trigger__text {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--el-text-color-secondary);
   white-space: nowrap;
 }
@@ -204,7 +204,7 @@ const handleInputKeydown: (evt: KeyboardEvent | Event) => void = (evt) => {
   justify-content: center;
   height: 18px;
   padding: 0 6px;
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1;
   color: var(--el-text-color-placeholder);
   white-space: nowrap;
@@ -289,7 +289,7 @@ const handleInputKeydown: (evt: KeyboardEvent | Event) => void = (evt) => {
 
 .command-palette-item__path {
   margin-top: 2px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--el-text-color-secondary);
 }
 
@@ -324,7 +324,7 @@ const handleInputKeydown: (evt: KeyboardEvent | Event) => void = (evt) => {
 }
 
 .command-palette-hint__text {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--el-text-color-secondary);
 }
 </style>

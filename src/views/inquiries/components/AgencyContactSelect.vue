@@ -5,7 +5,6 @@
     default-first-option
     filterable
     :disabled="!agency"
-    :placeholder="$t('inquiry.contactSelectPlaceholder')"
     @change="selectContact"
   >
     <el-option

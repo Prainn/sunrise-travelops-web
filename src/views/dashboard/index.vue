@@ -528,7 +528,7 @@ function updateVisitTrendChartOptions(d: VisitTrendDetail) {
     legend: {
       data: [t("dashboard.views"), t("dashboard.visitors")],
       bottom: 0,
-      textStyle: { fontSize: 12, color: textSecondary },
+      textStyle: { fontSize: 14, color: textSecondary },
       itemWidth: 10,
       itemHeight: 8,
       itemGap: 24,
@@ -539,7 +539,7 @@ function updateVisitTrendChartOptions(d: VisitTrendDetail) {
       data: d.dates,
       axisTick: { show: false },
       axisLine: { lineStyle: { color: colorWithAlpha(borderLighter, 0.82) } },
-      axisLabel: { fontSize: 11, color: textSecondary },
+      axisLabel: { fontSize: 14, color: textSecondary },
       splitLine: { show: false },
     },
     yAxis: {
@@ -547,7 +547,7 @@ function updateVisitTrendChartOptions(d: VisitTrendDetail) {
       axisLine: { show: false },
       axisTick: { show: false },
       splitLine: { lineStyle: { type: "dashed", color: gridLine, width: 1 } },
-      axisLabel: { fontSize: 11, color: textSecondary },
+      axisLabel: { fontSize: 14, color: textSecondary },
     },
     series: [
       {
@@ -682,7 +682,7 @@ $pad: 10px;
 
   &__date {
     margin: 0;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--el-text-color-secondary);
   }
 
@@ -723,7 +723,7 @@ $pad: 10px;
   justify-content: center;
   height: 30px;
   padding: 0 10px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--el-text-color-secondary);
   text-decoration: none;
   background: var(--el-fill-color-extra-light);
@@ -738,7 +738,7 @@ $pad: 10px;
   [class^="i-svg:"] {
     width: 15px;
     height: 15px;
-    font-size: 15px;
+    font-size: 16px;
     color: currentcolor;
   }
 
@@ -810,7 +810,7 @@ $pad: 10px;
 
   &__label {
     margin-bottom: 3px;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--el-text-color-secondary);
   }
 
@@ -819,7 +819,7 @@ $pad: 10px;
     flex-shrink: 0;
     gap: 3px;
     align-items: center;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
     color: var(--el-text-color-secondary);
 
@@ -918,7 +918,7 @@ $pad: 10px;
 
   &__label,
   &__value {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--el-text-color-secondary);
   }
 
@@ -1016,7 +1016,7 @@ $pad: 10px;
   &__label {
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--el-text-color-secondary);
     white-space: nowrap;
   }
@@ -1069,7 +1069,7 @@ $pad: 10px;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--el-text-color-regular);
     white-space: nowrap;
   }
@@ -1092,7 +1092,7 @@ $pad: 10px;
 
   &__time {
     flex-shrink: 0;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--el-text-color-secondary);
   }
 }
@@ -1140,14 +1140,14 @@ $pad: 10px;
   &__text {
     flex: 1;
     min-width: 0;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.4;
     color: var(--el-text-color-regular);
   }
 
   &__time {
     flex-shrink: 0;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--el-text-color-secondary);
   }
 }

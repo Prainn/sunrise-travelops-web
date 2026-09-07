@@ -194,7 +194,7 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
     padding: 8px 4px;
     margin: 6px;
     font: inherit;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.2;
     color: var(--menu-text);
     cursor: pointer;

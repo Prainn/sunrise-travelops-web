@@ -245,7 +245,7 @@ function handleSettingsClick() {
 
   &__name {
     margin-left: 8px;
-    font-size: 13px;
+    font-size: 14px;
     color: currentColor;
     white-space: nowrap;
     transition: color 0.3s;

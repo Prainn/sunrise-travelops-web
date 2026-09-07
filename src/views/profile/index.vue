@@ -548,7 +548,7 @@ onMounted(loadUserProfile);
 
 .profile-hero__desc {
   margin: 4px 0 0;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--el-text-color-secondary);
 }
 
@@ -556,7 +556,7 @@ onMounted(loadUserProfile);
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 8px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--el-text-color-secondary);
 }
 
@@ -613,7 +613,7 @@ onMounted(loadUserProfile);
 
 .profile-card__title {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 22px;
   color: var(--el-text-color-primary);
@@ -621,7 +621,7 @@ onMounted(loadUserProfile);
 
 .profile-card__extra,
 .profile-empty {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--el-text-color-placeholder);
 }
 
@@ -650,7 +650,7 @@ onMounted(loadUserProfile);
   display: flex;
   gap: 6px;
   align-items: center;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--el-text-color-secondary);
 }
 
@@ -659,7 +659,7 @@ onMounted(loadUserProfile);
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--el-text-color-primary);
   white-space: nowrap;
 }
@@ -710,13 +710,13 @@ onMounted(loadUserProfile);
 }
 
 .profile-login__device {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--el-text-color-primary);
 }
 
 .profile-login__meta,
 .profile-login__time {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--el-text-color-secondary);
 }
 

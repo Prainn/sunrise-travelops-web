@@ -131,7 +131,7 @@ function deleteContact(contact: unknown) {
 
     span {
       color: var(--el-text-color-secondary);
-      font-size: var(--el-font-size-small);
+      font-size: 14px;
     }
   }
 

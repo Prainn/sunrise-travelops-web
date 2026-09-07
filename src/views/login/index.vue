@@ -75,10 +75,6 @@
               <h2 class="login-card__title">
                 {{ $t("login.welcomeBack") }}
               </h2>
-              <p class="login-card__desc">
-                {{ $t("login.authenticationTip") }}
-              </p>
-
               <el-form
                 ref="loginFormRef"
                 :model="loginFormData"
@@ -295,7 +291,7 @@ $input-h: 44px;
     align-items: center;
     height: 22px;
     padding: 0 8px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     line-height: 1;
     color: rgba($primary, 0.88);
@@ -376,7 +372,7 @@ $input-h: 44px;
     align-items: center;
     height: 28px;
     padding: 0 13px;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: $text-primary;
     background: transparent;
@@ -450,7 +446,7 @@ $input-h: 44px;
   }
 
   &__title {
-    margin: 0 0 4px;
+    margin: 0 0 24px;
     font-size: 34px;
     font-weight: 750;
     line-height: 1.1;
@@ -458,11 +454,6 @@ $input-h: 44px;
     letter-spacing: 0;
   }
 
-  &__desc {
-    margin: 8px 0 24px;
-    font-size: 14px;
-    color: $text-muted;
-  }
 }
 
 :deep(.el-form-item) {
@@ -485,7 +476,7 @@ $input-h: 44px;
 .login-btn {
   width: 100%;
   height: 44px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   border-radius: 8px;
   box-shadow: 0 12px 24px rgba($primary, 0.18);
@@ -502,7 +493,7 @@ $input-h: 44px;
 
 .login-footer {
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: 14px;
   color: $text-muted;
 }
 
@@ -558,9 +549,6 @@ $input-h: 44px;
     color: rgb(255 255 255 / 85%);
   }
 
-  &__desc {
-    color: rgb(255 255 255 / 30%);
-  }
 }
 
 .dark .login-footer {

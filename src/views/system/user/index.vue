@@ -849,7 +849,7 @@ onMounted(() => {
     justify-content: center;
     width: 24px;
     height: 24px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--el-color-primary);
     background: var(--el-color-primary-light-9);
@@ -877,7 +877,7 @@ onMounted(() => {
   padding: 12px 16px;
   color: var(--el-text-color-primary);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.5;
   text-align: center;

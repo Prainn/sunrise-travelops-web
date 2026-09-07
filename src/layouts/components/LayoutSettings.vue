@@ -621,7 +621,7 @@ function handleCloseDrawer(): void {
   gap: 10px;
   align-items: center;
   margin-bottom: 12px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1;
   color: var(--el-text-color-primary);
@@ -649,7 +649,7 @@ function handleCloseDrawer(): void {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--el-text-color-regular);
 
   > span {
@@ -710,7 +710,7 @@ function handleCloseDrawer(): void {
   width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.1;
   color: var(--el-text-color-primary);
@@ -743,7 +743,7 @@ function handleCloseDrawer(): void {
   height: 24px;
   padding: 0 6px 0 8px;
   font: inherit;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--el-text-color-secondary);
   appearance: none;
   cursor: pointer;
@@ -755,7 +755,7 @@ function handleCloseDrawer(): void {
     background-color 0.18s;
 
   .el-icon {
-    font-size: 12px;
+    font-size: 14px;
     transition: transform 0.18s;
   }
 
@@ -783,7 +783,7 @@ function handleCloseDrawer(): void {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--el-text-color-placeholder);
 
   span:first-child {
@@ -811,7 +811,7 @@ function handleCloseDrawer(): void {
 }
 
 .custom-color-row__label {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--el-text-color-regular);
 }
@@ -821,7 +821,7 @@ function handleCloseDrawer(): void {
   overflow: hidden;
   text-overflow: ellipsis;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--el-text-color-secondary);
   white-space: nowrap;
 }
@@ -917,7 +917,7 @@ function handleCloseDrawer(): void {
     right: 0;
     bottom: 5px;
     left: 0;
-    font-size: 10px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--el-text-color-regular);
     text-align: center;
@@ -933,7 +933,7 @@ function handleCloseDrawer(): void {
     justify-content: center;
     width: 15px;
     height: 15px;
-    font-size: 10px;
+    font-size: 14px;
     color: var(--el-color-primary);
     background: var(--el-color-primary-light-9);
     border: 1px solid var(--el-color-primary-light-5);
@@ -1052,7 +1052,7 @@ function handleCloseDrawer(): void {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.1;
   white-space: nowrap;

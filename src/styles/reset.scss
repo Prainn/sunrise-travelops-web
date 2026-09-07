@@ -18,11 +18,16 @@ html {
 
 body {
   margin: 0;
+  font-size: 16px;
   font-family:
     Inter, system-ui, Avenir, "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+small {
+  font-size: 14px;
 }
 
 ::-webkit-scrollbar {

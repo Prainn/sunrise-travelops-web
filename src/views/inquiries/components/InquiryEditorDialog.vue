@@ -19,7 +19,6 @@
             <el-input
               v-model="form.code"
               disabled
-              :placeholder="$t('inquiry.codeGenerated')"
             />
           </el-form-item>
         </el-col>

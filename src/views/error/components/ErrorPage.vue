@@ -147,7 +147,7 @@ const visualMeta = computed(() =>
   height: 28px;
   padding: 0 10px;
   margin-bottom: 18px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--el-color-primary);
   background: var(--el-color-primary-light-9);
@@ -176,7 +176,7 @@ const visualMeta = computed(() =>
 .error-page__description {
   max-width: 440px;
   margin: 12px 0 0;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.8;
   color: var(--el-text-color-secondary);
 }
@@ -256,7 +256,7 @@ const visualMeta = computed(() =>
 
 .error-visual__name {
   margin-top: 8px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--el-text-color-secondary);
   letter-spacing: 0;
@@ -302,7 +302,7 @@ const visualMeta = computed(() =>
   height: 40px;
   padding: 0 12px;
   margin-top: 18px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--el-text-color-secondary);
   background: var(--el-fill-color-lighter);
   border: 1px solid var(--el-border-color-lighter);

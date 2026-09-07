@@ -10,9 +10,6 @@
           <div class="business-category-page__title">
             {{ $t("businessCategory.typeManagement") }}
           </div>
-          <div class="business-category-page__description">
-            {{ $t("businessCategory.typeDescription") }}
-          </div>
         </div>
         <el-button
           v-hasPerm="'sys:business-dictionary:create'"
@@ -193,12 +190,6 @@ onMounted(loadCategoryTypes);
 
 .business-category-page__title { font-weight: 600; }
 
-.business-category-page__description {
-  margin-top: 4px;
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-}
-
 .business-category-page :deep(.business-category-page__card > .el-card__body) {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -248,7 +239,7 @@ onMounted(loadCategoryTypes);
 .business-category-page__type-code {
   margin-top: 2px;
   color: var(--el-text-color-secondary);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .business-category-page__content {

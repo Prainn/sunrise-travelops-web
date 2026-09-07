@@ -185,17 +185,7 @@
         </el-form-item>
         <el-form-item>
           <template #label>
-            <div class="flex-y-center">
-              {{ $t("dictionary.displayStyle") }}
-              <el-tooltip>
-                <template #content>
-                  {{ $t("dictionary.displayStyleTip") }}
-                </template>
-                <el-icon class="ml-1 cursor-pointer">
-                  <QuestionFilled />
-                </el-icon>
-              </el-tooltip>
-            </div>
+            {{ $t("dictionary.displayStyle") }}
           </template>
           <el-select
             v-model="formData.tagType"
@@ -250,7 +240,6 @@
 
 <script setup lang="ts">
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
-import { QuestionFilled } from "@element-plus/icons-vue";
 
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { usePageTable, useTableSelection } from "@/composables";
