@@ -1,19 +1,14 @@
-import { computed, onBeforeUnmount, ref, shallowReactive, watch, type ComputedRef } from "vue";
+import { computed, onBeforeUnmount, ref, watch, type ComputedRef, type Ref } from "vue";
 import type { InquiryRecord } from "@/types/inquiry";
 import type { ItineraryRecord } from "@/types/itinerary";
-import { formatDateTime } from "@/utils";
-import { transitionInquiry } from "../inquiry-workflow";
+import { inquiryService, type PdfData } from "@/services/inquiry.service";
 import { getEnabledHotelPlans, getIncompleteHotelPlanTiers } from "./hotel-plans";
-import { transitionItinerary } from "./itinerary-workflow";
 import { downloadGeneratedItineraryPdf, generateItineraryPdf, type GeneratedItineraryPdf } from "./pdf";
 import { getEnabledVehiclePlans, getIncompleteVehiclePlanTiers } from "./vehicle-plans";
 import { getDayCountMismatch, validateItineraryForPdf, type PdfValidationIssue } from "./workflow";
 
-// Frontend phase: retain generated originals for the current application session.
-const originalPdfs = shallowReactive(new Map<string, GeneratedItineraryPdf>());
-
 interface ItineraryPdfOptions {
-  inquiry: ComputedRef<InquiryRecord | undefined>;
+  inquiry: Readonly<Ref<InquiryRecord | undefined>>;
   selectedItinerary: ComputedRef<ItineraryRecord | undefined>;
   canGenerate: () => boolean;
   canDownload: () => boolean;
@@ -25,7 +20,9 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
   const pdfPreviewFile = ref<GeneratedItineraryPdf>();
   const pdfPreviewUrl = ref("");
   let previewSource = "";
-  const canDownloadOriginal = computed(() => options.canDownload() && originalPdfs.has(options.selectedItinerary.value?.id ?? ""));
+  let previewData: PdfData | undefined;
+  let confirming = false;
+  const canDownloadOriginal = computed(() => options.canDownload() && options.selectedItinerary.value?.status === "quoted");
 
   function validatePdf() {
     const plan = options.selectedItinerary.value;
@@ -60,7 +57,10 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     try {
       closePdfPreview();
       const source = JSON.stringify(plan);
-      const file = await generateItineraryPdf(JSON.parse(source) as ItineraryRecord, { ...inquiry });
+      const data = await inquiryService.pdfData(plan.id);
+      if (data.itinerary.version !== plan.version) return false;
+      const file = await generateItineraryPdf(data.itinerary, data.inquiry, data);
+      previewData = data;
       if (options.selectedItinerary.value?.id !== plan.id || !options.canGenerate()) return false;
       previewSource = source;
       pdfPreviewFile.value = file;
@@ -72,24 +72,29 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     }
   }
 
-  function confirmPdfDownload(): boolean {
+  async function confirmPdfDownload(): Promise<boolean> {
     const plan = options.selectedItinerary.value;
     const inquiry = options.inquiry.value;
-    if (!plan || !inquiry || !pdfPreviewFile.value || !options.canGenerate() || JSON.stringify(plan) !== previewSource) return false;
-    originalPdfs.set(plan.id, pdfPreviewFile.value);
-    downloadGeneratedItineraryPdf(pdfPreviewFile.value);
-    plan.status = transitionItinerary(plan.status, "generate_quote");
-    plan.quoteGeneratedAt = pdfPreviewFile.value.generatedAt;
-    plan.updatedAt = formatDateTime(new Date());
-    inquiry.status = transitionInquiry(inquiry.status, "quote_generated");
-    closePdfPreview();
-    return true;
+    if (confirming || !plan || !inquiry || !pdfPreviewFile.value || !previewData || !options.canGenerate() || JSON.stringify(plan) !== previewSource) return false;
+    confirming = true;
+    try {
+      const data = await inquiryService.confirmPdf(previewData);
+      Object.assign(plan, await inquiryService.itinerary(plan.id));
+      Object.assign(inquiry, await inquiryService.detail(inquiry.id));
+      const file = await generateItineraryPdf(data.itinerary,data.inquiry,data);
+      downloadGeneratedItineraryPdf(file);
+      closePdfPreview();
+      return true;
+    } finally { confirming = false; }
   }
-
-  function downloadOriginal() {
-    if (!canDownloadOriginal.value) return;
-    const file = originalPdfs.get(options.selectedItinerary.value!.id);
-    if (file) downloadGeneratedItineraryPdf(file);
+  async function downloadOriginal() {
+    const id = options.selectedItinerary.value?.id;
+    if (!id || !canDownloadOriginal.value || isGeneratingPdf.value) return;
+    isGeneratingPdf.value = true;
+    try {
+      const data = await inquiryService.pdfData(id);
+      downloadGeneratedItineraryPdf(await generateItineraryPdf(data.itinerary,data.inquiry,data));
+    } finally { isGeneratingPdf.value = false; }
   }
 
   function closePdfPreview() {
@@ -98,6 +103,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     pdfPreviewUrl.value = "";
     pdfPreviewFile.value = undefined;
     previewSource = "";
+    previewData = undefined;
   }
 
   watch(() => options.selectedItinerary.value?.id, closePdfPreview);

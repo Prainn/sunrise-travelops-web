@@ -12,6 +12,8 @@ export type InquiryLogTargetType = "inquiry" | "itinerary";
 export interface InquiryLogRecord {
   id: string;
   inquiryId: string;
+  inquiryCode: string;
+  changes: { context?: { dayNumber?: number; name?: string; destination?: string; hotelTier?: string; vehicleTier?: string }; path: string; kind: "added" | "removed" | "changed"; before: unknown; after: unknown }[];
   action: InquiryLogAction;
   occurredAt: string;
   operatorId: string;

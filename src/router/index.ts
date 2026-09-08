@@ -150,6 +150,12 @@ export const constantRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: "logs",
+        name: "InquiryLogReport",
+        component: () => import("@/views/inquiries/logs/index.vue"),
+        meta: { title: "inquiryLogReport", icon: "el-icon-DataAnalysis", perms: ["inquiry:list"] },
+      },
+      {
         path: ":inquiryId/logs",
         name: "InquiryLogs",
         component: () => import("@/views/inquiries/logs/index.vue"),

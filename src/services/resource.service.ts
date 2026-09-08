@@ -45,7 +45,7 @@ function normalizeMoney(value: string | number | null | undefined): number {
   return value === null || value === undefined ? 0 : Number(value);
 }
 
-function createCrud<T>(
+function createCrud<T extends { code: string }>(
   resourceName: string,
   toInput: (data: T) => Record<string, unknown>,
   fromResponse: (data: ApiRecord<T>) => T = (data) => data as T
@@ -63,7 +63,7 @@ function createCrud<T>(
       return fromResponse(result);
     },
     create(data) {
-      return request.post<ApiRecord<T>>(baseUrl, toInput(data)).then(fromResponse);
+      return request.post<ApiRecord<T>>(baseUrl, { ...toInput(data), code: data.code.trim() || undefined }).then(fromResponse);
     },
     update(id, data) {
       return request.put<ApiRecord<T>>(

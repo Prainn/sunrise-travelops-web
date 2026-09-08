@@ -61,13 +61,13 @@ describe("userService", () => {
   it("localizes seeded role option labels from the backend", async () => {
     getMock.mockResolvedValue([
       { value: "role-1", label: "Inquiry Coordinator" },
-      { value: "role-2", label: "Operations Coordinator" },
+      { value: "role-2", label: "Inquiry Coordinator" },
       { value: "role-3", label: "自定义角色" },
     ]);
 
     await expect(userService.getRoleOptions()).resolves.toEqual([
       { value: "role-1", label: "user.roles.inquiryCoordinator" },
-      { value: "role-2", label: "user.roles.operationsCoordinator" },
+      { value: "role-2", label: "user.roles.inquiryCoordinator" },
       { value: "role-3", label: "自定义角色" },
     ]);
     expect(getMock).toHaveBeenCalledWith("/users/options/roles");

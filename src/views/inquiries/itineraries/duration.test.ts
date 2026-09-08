@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { itineraries } from "@/data/data";
+import { itineraries } from "@/test-fixtures/inquiries";
 import { destinationDuration, itineraryDuration, plannedDuration } from "./duration";
 
 describe("travel duration", () => {

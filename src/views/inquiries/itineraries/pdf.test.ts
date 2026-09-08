@@ -1,6 +1,6 @@
 import { getDayBreakfastStatus } from "./hotel-plans";
 import { describe, expect, it, vi } from "vitest";
-import { inquiries, itineraries } from "@/data/data";
+import { inquiries, itineraries } from "@/test-fixtures/inquiries";
 import { createDefaultQuoteOption, createDefaultQuoteSettings } from "./quote-pricing";
 
 vi.mock("html2canvas", () => ({ default: vi.fn() }));

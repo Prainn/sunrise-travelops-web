@@ -13,7 +13,10 @@
       :rules="rules"
       label-position="top"
     >
-      <el-form-item :label="$t('itinerary.code')">
+      <el-form-item
+        v-if="isEditing"
+        :label="$t('itinerary.code')"
+      >
         <el-input
           v-model="form.code"
           disabled
@@ -91,16 +94,6 @@
         :closable="false"
       />
       <el-form-item
-        :label="$t('itinerary.operationsCoordinator')"
-        prop="operationsCoordinator"
-      >
-        <el-input
-          v-model="form.operationsCoordinator"
-          disabled
-          style="width: 100%"
-        />
-      </el-form-item>
-      <el-form-item
         :label="$t('itinerary.destinations')"
         prop="destinations"
       >
@@ -168,7 +161,6 @@ const rules = computed<FormRules>(() => ({
   title: [{ required: true, message: t("itinerary.titleRequired"), trigger: "blur" }],
   startDate: [{ required: true, message: t("itinerary.startDateRequired"), trigger: "change" }],
   adults: [{ required: true, message: t("itinerary.adultsRequired"), trigger: "blur" }],
-  operationsCoordinator: [{ required: true, message: t("itinerary.coordinatorRequired"), trigger: "change" }],
   destinations: [{ type: "array", required: true, min: 1, message: t("itinerary.destinationsRequired"), trigger: "change" }],
 }));
 

@@ -85,7 +85,6 @@ const { rows, total, record, isDialogVisible, isEditing, loadRecords, openCreate
   records: resourceService.suppliers,
   api: resourceService.supplierApi,
   loadRecords: (query) => resourceService.loadSuppliers(query),
-  codePrefix: "SUP",
   createEmpty: createEmptyTourismResourceRecord,
 });
 

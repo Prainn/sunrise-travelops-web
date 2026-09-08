@@ -1,5 +1,14 @@
 <template>
-  <div class="page-container itinerary-page">
+  <div
+    v-loading="isLoading || isSaving"
+    class="page-container itinerary-page"
+  >
+    <el-alert
+      v-if="loadError"
+      :title="loadError"
+      type="error"
+      :closable="false"
+    />
     <template v-if="inquiry">
       <header class="itinerary-page__sticky-header">
         <el-card
@@ -261,7 +270,7 @@
     </template>
 
     <el-result
-      v-else
+      v-else-if="!isLoading && !loadError"
       icon="warning"
       :title="$t('itinerary.inquiryNotFound')"
     >
@@ -316,7 +325,7 @@ async function confirmAction(key: string, params: Record<string, unknown> = {}) 
 }
 
 const {
-  addDay, addResourceItem, canCreateItinerary, canEditItineraryBasics, canGeneratePdf, canSaveItinerary, contentEditable, copyItinerary,
+  isSaving, isLoading, loadError, addDay, addResourceItem, canCreateItinerary, canEditItineraryBasics, canGeneratePdf, canSaveItinerary, contentEditable, copyItinerary,
   closePdfPreview, confirmPdfDownload, destinationOptions, duplicateDay, guestCount, handleGeneratePdf, inquiry, isGeneratingPdf,
   isEditingPlan, isPdfPreviewVisible, isPlanDialogVisible, isResourceDialogVisible,
   isDraft, itemCount, itineraryForm, loadDestinationResourceOptions, moveDay, openCreateDialog, openResourceDialog, priceEditable, quoteCalculation,

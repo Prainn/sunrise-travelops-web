@@ -191,7 +191,6 @@ import { computed, onMounted, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { businessDictionaryService } from "@/services";
-import { inquiryService } from "@/services/inquiry.service";
 import type { ItineraryItemType } from "@/types/itinerary";
 import type {
   BusinessCategoryOptionRecord, BusinessCategoryTypeRecord,
@@ -295,8 +294,6 @@ async function saveItem() {
 }
 
 async function removeItem(row: CategoryItem) {
-  const transportInUse = inquiryService.itineraries.some((itinerary) => itinerary.dailyPlans.some((day) => day.transport.split(",").includes(row.code)));
-  if (isTransportMethod.value && transportInUse) return void ElMessage.warning(t("businessCategory.transportInUse"));
   try { await ElMessageBox.confirm(t("common.deleteConfirm"), t("common.warning"), { type: "warning" }); } catch { return; }
   try {
     await businessDictionaryService.deleteItems(props.category.code, row.id);

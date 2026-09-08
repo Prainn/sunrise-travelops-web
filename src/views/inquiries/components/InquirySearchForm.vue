@@ -32,9 +32,9 @@
         >
           <el-option
             v-for="option in ownerOptions"
-            :key="option"
-            :label="option"
-            :value="option"
+            :key="option.id"
+            :label="option.name"
+            :value="option.id"
           />
         </el-select>
       </el-form-item>
@@ -70,7 +70,7 @@ const props = defineProps<{
   status: InquiryStatus | "";
   owner: string;
   sourceChannel: string;
-  ownerOptions: string[];
+  ownerOptions: import("@/services/inquiry.service").PersonOption[];
   sourceOptions: string[];
 }>();
 const emit = defineEmits<{

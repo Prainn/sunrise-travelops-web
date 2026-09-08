@@ -22,7 +22,7 @@
         <el-table-column
           prop="code"
           :label="$t('inquiry.code')"
-          width="155"
+          width="240"
         />
         <el-table-column
           prop="agencyName"
@@ -48,11 +48,6 @@
         <el-table-column
           prop="owner"
           :label="$t('inquiry.owner')"
-          width="100"
-        />
-        <el-table-column
-          prop="operationsCoordinator"
-          :label="$t('inquiry.operationsCoordinator')"
           width="100"
         />
         <el-table-column

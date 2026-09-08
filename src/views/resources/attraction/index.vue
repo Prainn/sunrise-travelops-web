@@ -72,7 +72,6 @@ const {
   records: resourceService.attractions,
   api: resourceService.attractionApi,
   loadRecords: loadAttractions,
-  codePrefix: "ATT",
   createEmpty: createEmptyAttraction,
   cloneForEdit: (record) => ({ ...record, prices: record.prices }),
   createRecord: (record, id) => ({ ...record, id, prices: [] }),

@@ -26,7 +26,10 @@
         class="itinerary-hotel-vehicle-plans__card"
         shadow="never"
       >
-        <div class="itinerary-hotel-vehicle-plans__hotel-tiers">
+        <div
+          v-if="overnightDestinations.length"
+          class="itinerary-hotel-vehicle-plans__hotel-tiers"
+        >
           <article
             v-for="tier in HOTEL_PLAN_TIERS"
             :key="tier"
@@ -65,6 +68,12 @@
             </div>
           </article>
         </div>
+        <el-text
+          v-else
+          type="info"
+        >
+          {{ $t(pendingNights ? 'itinerary.hotelPlansPending' : 'itinerary.hotelPlansNotNeeded') }}
+        </el-text>
       </el-card>
     </section>
 

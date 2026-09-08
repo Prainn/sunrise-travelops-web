@@ -26,35 +26,14 @@
         :label="$t('itinerary.resourcePrice')"
         required
       >
-        <el-select
+        <RemoteSelect
           v-model="selectedId"
-          filterable
-          remote
-          :remote-method="filterOptions"
-          :loading="loading"
+          :query-key="JSON.stringify([city, mealSlot, locale])"
+          :load-options="loadPriceOptions"
           :placeholder="$t('itinerary.resourcePricePlaceholder')"
           style="width: 100%"
-        >
-          <el-option
-            v-for="option in visibleOptions"
-            :key="option.id"
-            :label="`${option.resourceName}｜${option.priceName}`"
-            :value="option.id"
-          >
-            <div class="resource-option">
-              <span>{{ option.resourceName }}｜{{ option.priceName }}</span>
-              <strong>¥{{ formatMoney(option.unitCost) }}/{{ resourceUnitName(option.unit) }}</strong>
-            </div>
-          </el-option>
-        </el-select>
+        />
       </el-form-item>
-      <Pagination
-        v-model:page="page"
-        v-model:limit="pageSize"
-        :total="total"
-        layout="total, sizes, prev, pager, next"
-        @pagination="loadOptions"
-      />
       <template v-if="selectedOption">
         <el-descriptions
           class="resource-dialog__details"
@@ -100,7 +79,8 @@
 </template>
 
 <script setup lang="ts">
-import Pagination from "@/components/Pagination/index.vue";
+import RemoteSelect from "@/components/RemoteSelect/index.vue";
+import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import { useResourcePriceSelection } from "../useResourcePriceSelection";
 import { ElMessage } from "element-plus";
 import { useCityOptions } from "@/composables/useCityOptions";
@@ -119,7 +99,14 @@ const props = defineProps<{
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [item: ItineraryResourceItem] }>();
 const { t, locale } = useI18n();
 const cityOptions = useCityOptions();
-const { city, selectedId, quantity, visibleOptions, selectedOption, page, pageSize, total, loading, loadOptions, filterOptions } = useResourcePriceSelection(props, () => ElMessage.error(t("request.failed")));
+const { city, selectedId, quantity, selectedOption, loadOptions } = useResourcePriceSelection(props, () => ElMessage.error(t("request.failed")));
+async function loadPriceOptions(query: RemoteOptionsQuery) {
+  const result = await loadOptions(query);
+  return { total: result.total, list: result.list.map(option => ({
+    id: option.id, label: `${option.resourceName}｜${option.priceName}`,
+    description: `¥${formatMoney(option.unitCost)}/${resourceUnitName(option.unit)}`,
+  })) };
+}
 function resourceUnitName(code: string) { return getResourceUnitName(code, locale.value); }
 function formatDetail(detail: ResourcePriceDetail) {
   if (detail.format === "money") return `¥${formatMoney(Number(detail.value))}`;
@@ -135,8 +122,6 @@ function submit() {
 </script>
 
 <style scoped lang="scss">
-.resource-option { display: flex; justify-content: space-between; gap: 16px; }
-.resource-option strong { color: var(--el-color-primary); font-weight: 500; }
 .resource-dialog__details { max-height: 320px; overflow-y: auto; }
 .resource-dialog__details :deep(.el-descriptions__label) { width: 140px; }
 .resource-dialog__details :deep(.el-descriptions__content) { white-space: normal; word-break: break-word; }

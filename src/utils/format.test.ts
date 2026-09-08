@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addDays, formatDate, formatDateTime, formatMoney } from "./format";
 import { roundMoney } from "./money";
-import { generateNextCode } from "./generate-code";
 
 describe("format utilities", () => {
   it("formats local dates and date times", () => {
@@ -17,9 +16,4 @@ describe("format utilities", () => {
     expect(roundMoney(10.125)).toBe(10.13);
   });
 
-  it("generates the next code for a prefix", () => {
-    const records = [{ code: "HTL-001" }, { code: "OTHER-099" }, { code: "HTL-003" }];
-
-    expect(generateNextCode(records, "HTL")).toBe("HTL-004");
-  });
 });

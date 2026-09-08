@@ -47,7 +47,9 @@
     <el-form-item :label="$t('inquiry.phone')">
       <el-input
         :model-value="record.phone"
-        disabled
+        :disabled="!record.agencyId || !record.contactName || Boolean(record.contactId)"
+        maxlength="50"
+        @update:model-value="emit('update-phone', $event)"
       />
     </el-form-item>
   </el-col>
@@ -78,6 +80,7 @@ const emit = defineEmits<{
   "select-contact": [contact: AgencyContactRecord];
   "create-contact": [name: string];
   "update-contact-name": [name: string];
+  "update-phone": [phone: string];
 }>();
 
 const selectedAgency = computed(() => props.agencyOptions.find((agency) => agency.id === props.record.agencyId));

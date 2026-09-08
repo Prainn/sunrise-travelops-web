@@ -43,7 +43,7 @@ function createEditor() {
   const inquiry = ref<InquiryRecord>({
     id: "inquiry-1", code: "INQ-001", agencyId: "00000000-0000-4000-8000-000000000001", agencyCode: "AGY-001", agencyName: "Agency",
     contactName: "Contact", email: "", phone: "", countryOrRegion: "", sourceChannel: "Email", originalMessage: "",
-    internalRemark: "", owner: "Owner", operationsCoordinator: "Operator", nextFollowUpAt: "", plannedDays: 2,
+    internalRemark: "", owner: "Owner", ownerId: "owner-id", contactId: "contact-id", version: 1, nextFollowUpAt: "", plannedDays: 2,
     lostReason: "", status: "new", creator: "admin", createdAt: "2026-08-26 10:00",
   });
   const itineraryStore: ItineraryRecord[] = [];

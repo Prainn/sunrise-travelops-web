@@ -51,7 +51,7 @@ describe("resource maintenance", () => {
       records,
       api,
       loadRecords,
-      codePrefix: "TST",
+
       createEmpty,
       cloneForEdit: (record) => ({ ...record, children: [...record.children] }),
       createRecord: (record, id) => ({ ...record, id, children: [] }),
@@ -61,14 +61,13 @@ describe("resource maintenance", () => {
     await maintenance.loadRecords({ keyword: "筛选" });
 
     maintenance.openCreateDialog();
-    expect(maintenance.record.value.code).toMatch(/^TST-[0-9a-f-]{36}$/);
+    expect(maintenance.record.value.code).toBe("");
     await maintenance.saveRecord({ ...maintenance.record.value, name: "新增记录", children: ["discarded"] });
     expect(records[1].name).toBe("新增记录");
     expect(records[1].children).toEqual([]);
 
-    const firstCode = maintenance.record.value.code;
     maintenance.openCreateDialog();
-    expect(maintenance.record.value.code).not.toBe(firstCode);
+    expect(maintenance.record.value.code).toBe("");
 
     await maintenance.openEditDialog(records[0]);
     maintenance.record.value.children.push("form-only");
@@ -91,7 +90,7 @@ describe("resource maintenance", () => {
       getPage: vi.fn(), getDetail: vi.fn(async () => ({ ...original })),
       create: vi.fn(), update: vi.fn(async (_id: string, data: TestResource) => data), deleteByIds: vi.fn(),
     };
-    const maintenance = useResourceMaintenance({ records, api, loadRecords: async () => records, codePrefix: "TST", createEmpty });
+    const maintenance = useResourceMaintenance({ records, api, loadRecords: async () => records, createEmpty });
     await maintenance.openEditDialog(original);
     records.splice(0);
     await maintenance.saveRecord({ ...maintenance.record.value, name: "Updated" });
@@ -103,7 +102,7 @@ describe("resource maintenance", () => {
     const records: TestResource[] = [{ ...createEmpty(), id: "resource-1", code: "TST-001" }];
     const loadRecords = vi.fn(async () => records);
     const api = { getPage: vi.fn(), getDetail: vi.fn(), create: vi.fn(), update: vi.fn(), deleteByIds: vi.fn() };
-    const maintenance = useResourceMaintenance({ records, api, loadRecords, codePrefix: "TST", createEmpty });
+    const maintenance = useResourceMaintenance({ records, api, loadRecords, createEmpty });
     await maintenance.loadRecords();
     expect(loadRecords).toHaveBeenLastCalledWith({ page: 1, pageSize: 10 });
     expect(maintenance.total.value).toBe(123);

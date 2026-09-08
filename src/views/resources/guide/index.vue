@@ -55,7 +55,6 @@ const {
   records: resourceService.guides,
   api: resourceService.guideApi,
   loadRecords: (query) => resourceService.loadGuides(query),
-  codePrefix: "GDE",
   createEmpty: createEmptyGuide,
   cloneForEdit: (record) => ({ ...record, languages: [...record.languages] }),
   createRecord: (record, id) => ({ ...record, id, languages: [...record.languages] }),

@@ -1,11 +1,11 @@
 import { businessDictionaryService } from "@/services/business-dictionary.service";
 import { itineraryDuration } from "./duration";
 import { computed, ref } from "vue";
-import { useInquiryLog } from "@/composables/useInquiryLog";
+import { inquiryService } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
 import { useUserStore } from "@/stores/user";
 import type { ItineraryDailyItemType, ItineraryRecord, ItineraryResourceItem, MealSlot } from "@/types/itinerary";
-import { formatDateTime, hasUserPermission, sumMoney } from "@/utils";
+import { hasUserPermission, sumMoney } from "@/utils";
 import { isInquiryReadOnly } from "../inquiry-workflow";
 import { canPerformItineraryOperation } from "./itinerary-workflow";
 import { calculateItineraryQuote } from "./quote-pricing";
@@ -25,7 +25,7 @@ interface WorkspaceMessages {
 export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const dailyItemTypes = new Set<ItineraryDailyItemType>(["restaurant", "attraction"]);
   const userStore = useUserStore();
-  const { recordInquiryLog } = useInquiryLog();
+  const isSaving = ref(false);
   const selection = useItinerarySelection();
   const { inquiry, inquiryId, itineraryStore, selectedItinerary, selectedItineraryId } = selection;
   const isPlanDialogVisible = ref(false);
@@ -36,22 +36,22 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const validationIssues = ref<PdfValidationIssue[]>([]);
   const inquiryReadOnly = computed(() => inquiry.value ? isInquiryReadOnly(inquiry.value.status) : true);
   const isDraft = computed(() => selectedItinerary.value?.status === "draft");
-  const canCreateItinerary = computed(() => !inquiryReadOnly.value && hasUserPermission(userStore.userInfo, "itinerary:create"));
+  const canCreateItinerary = computed(() => !isSaving.value && !inquiryReadOnly.value && hasUserPermission(userStore.userInfo, "itinerary:create"));
   const contentEditable = computed(() => Boolean(
     selectedItinerary.value
-    && !inquiryReadOnly.value
+    && !isSaving.value && !inquiryReadOnly.value
     && canPerformItineraryOperation(selectedItinerary.value.status, "edit_content")
     && hasUserPermission(userStore.userInfo, "itinerary:update")
   ));
   const priceEditable = computed(() => Boolean(
     selectedItinerary.value
-    && !inquiryReadOnly.value
+    && !isSaving.value && !inquiryReadOnly.value
     && canPerformItineraryOperation(selectedItinerary.value.status, "edit_price")
     && hasUserPermission(userStore.userInfo, "itinerary:price")
   ));
   const canGeneratePdf = computed(() => Boolean(
     selectedItinerary.value
-    && !inquiryReadOnly.value
+    && !isSaving.value && !inquiryReadOnly.value
     && canPerformItineraryOperation(selectedItinerary.value.status, "generate_pdf")
     && hasUserPermission(userStore.userInfo, "itinerary:pdf")
   ));
@@ -161,7 +161,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     if (!canCreateItinerary.value) return;
     if (!await loadDestinationResourceOptions()) return;
     isEditingPlan.value = false;
-    itineraryForm.value = { ...editor.createEmptyItinerary(), code: editor.generateItineraryCode() };
+    itineraryForm.value = { ...editor.createEmptyItinerary(), code: "" };
     isPlanDialogVisible.value = true;
   }
 
@@ -174,39 +174,41 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   }
 
   async function createItinerary(record: ItineraryRecord) {
+    if (isSaving.value) return;
+    const previousId = selectedItineraryId.value;
+    const previousStatus = inquiry.value?.status;
     const created = editor.createItinerary(record);
     if (!created) return;
-    isPlanDialogVisible.value = false;
-    await recordInquiryLog({
-      inquiryId: created.inquiryId,
-      action: "itinerary_created",
-      targetType: "itinerary",
-      targetId: created.id,
-      targetCode: created.code,
-      summary: created.title,
-      metadata: { creationMode: "new" },
-    });
-    messages.success("common.createSuccess");
+    isSaving.value = true;
+    try {
+      const saved = await inquiryService.createItinerary(created);
+      const index = itineraryStore.findIndex(p => p.id === created.id);
+      if (index >= 0) itineraryStore.splice(index,1,saved);
+      selectedItineraryId.value = saved.id;
+      isPlanDialogVisible.value = false;
+      await refreshInquiry();
+      messages.success("common.createSuccess");
+    } catch (error) {
+      const index = itineraryStore.findIndex(p => p.id === created.id);
+      if (index >= 0) itineraryStore.splice(index,1);
+      selectedItineraryId.value = previousId;
+      if (inquiry.value && previousStatus) inquiry.value.status = previousStatus;
+      reportError(error);
+    } finally { isSaving.value = false; }
   }
-
+  function reportError(error: unknown) {
+    const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
+    messages.error(code ? `apiErrors.${code}` : "request.failed");
+  }
+  async function refreshInquiry() {
+    try { if (inquiry.value) Object.assign(inquiry.value, await inquiryService.detail(inquiryId.value)); }
+    catch (error) { reportError(error); }
+  }
   async function submitItineraryPlan(record: ItineraryRecord) {
-    if (!isEditingPlan.value) {
-      await createItinerary(record);
-      return;
-    }
+    if (!isEditingPlan.value) { await createItinerary(record); return; }
     const updated = editor.updateItineraryBasics(record);
     if (!updated) return;
-    isPlanDialogVisible.value = false;
-    await recordInquiryLog({
-      inquiryId: updated.inquiryId,
-      action: "itinerary_saved",
-      targetType: "itinerary",
-      targetId: updated.id,
-      targetCode: updated.code,
-      summary: updated.title,
-      metadata: { editScope: "basic" },
-    });
-    messages.success("common.updateSuccess");
+    if (await saveItinerary()) isPlanDialogVisible.value = false;
   }
 
   async function openResourceDialog(dayId: string, mealSlot: MealSlot | null = null) {
@@ -221,33 +223,26 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   }
 
   async function copyItinerary() {
-    const copied = editor.copyItinerary(messages.translate("itinerary.copySuffix"));
-    if (!copied) return;
-    await recordInquiryLog({
-      inquiryId: copied.inquiryId,
-      action: "itinerary_created",
-      targetType: "itinerary",
-      targetId: copied.id,
-      targetCode: copied.code,
-      summary: copied.title,
-      metadata: { creationMode: "copy" },
-    });
-    messages.success("itinerary.copySuccess");
+    const source = selectedItinerary.value;
+    if (!source || !canCreateItinerary.value || isSaving.value) return;
+    isSaving.value = true;
+    try {
+      const saved = await inquiryService.copyItinerary(source,`${source.title} ${messages.translate("itinerary.copySuffix")}`);
+      itineraryStore.unshift(saved); selectedItineraryId.value = saved.id;
+      await refreshInquiry(); messages.success("itinerary.copySuccess");
+    } catch (error) { reportError(error); } finally { isSaving.value = false; }
   }
-
-  async function saveItinerary() {
+  async function saveItinerary(): Promise<boolean> {
     const plan = selectedItinerary.value;
-    if (!plan || !canSaveItinerary.value) return;
-    plan.updatedAt = formatDateTime(new Date());
-    await recordInquiryLog({
-      inquiryId: plan.inquiryId,
-      action: "itinerary_saved",
-      targetType: "itinerary",
-      targetId: plan.id,
-      targetCode: plan.code,
-      summary: plan.title,
-    });
-    messages.success("itinerary.saveSuccess");
+    if (!plan || !canSaveItinerary.value || isSaving.value) return false;
+    isSaving.value = true;
+    try {
+      const saved = await inquiryService.saveItinerary(plan);
+      Object.assign(plan,saved);
+      messages.success("itinerary.saveSuccess");
+      return true;
+    } catch (error) { reportError(error); return false; }
+    finally { isSaving.value = false; }
   }
 
   async function removeDay(index: number) {
@@ -270,6 +265,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       if (!confirmed) return;
     }
     try {
+      if (!await saveItinerary()) return;
       await pdf.generatePreview();
     } catch {
       messages.error("itinerary.pdfGenerationFailed");
@@ -277,28 +273,21 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   }
 
   async function confirmPdfDownload() {
-    const plan = selectedItinerary.value;
-    if (!plan) return;
-    if (!pdf.confirmPdfDownload()) {
-      messages.error("itinerary.previewChanged");
-      return;
-    }
-    await recordInquiryLog({
-      inquiryId: plan.inquiryId,
-      action: "itinerary_pdf_generated",
-      targetType: "itinerary",
-      targetId: plan.id,
-      targetCode: plan.code,
-      summary: plan.title,
-    });
-    messages.success("itinerary.pdfGenerated");
+    try {
+      if (!await pdf.confirmPdfDownload()) { messages.error("itinerary.previewChanged"); return; }
+      await refreshInquiry();
+      messages.success("itinerary.pdfGenerated");
+    } catch (error) { reportError(error); }
   }
 
   return {
+    isSaving,
+    isLoading: selection.isLoading,
+    loadError: selection.loadError,
     validationIssues,
     resourceMealSlot,
     canDownloadOriginal: pdf.canDownloadOriginal,
-    downloadOriginal: pdf.downloadOriginal,
+    downloadOriginal: async () => { try { await pdf.downloadOriginal(); } catch (error) { reportError(error); } },
     updateGuideSelection: selectGuideSelection,
     updateGuideDays: editor.updateGuideDays,
     updateMeal: editor.updateMeal,

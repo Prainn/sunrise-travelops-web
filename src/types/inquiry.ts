@@ -1,6 +1,7 @@
 export type InquiryStatus = "new" | "planning" | "quoted" | "lost" | "archived";
 
 export interface InquiryRecord {
+  version: number;
   id: string;
   code: string;
   agencyId: string;
@@ -14,7 +15,8 @@ export interface InquiryRecord {
   originalMessage: string;
   internalRemark: string;
   owner: string;
-  operationsCoordinator: string;
+  ownerId: string;
+  contactId: string;
   nextFollowUpAt: string;
   plannedDays: number;
   lostReason: string;

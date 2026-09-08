@@ -2,13 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 import { computed } from "vue";
 import type { ItineraryRecord } from "@/types/itinerary";
 
+vi.mock("@/services/inquiry.service", () => ({ inquiryService: {} }));
 const requests = vi.hoisted(() => ({ getPriceOptions: vi.fn(), getPriceSelection: vi.fn(), loadCityOptions: vi.fn(), ensureBuiltInTypesLoaded: vi.fn() }));
 vi.mock("@/services/resource.service", () => ({ resourceService: {
   ...requests, hotels: [], guides: [], transports: [], cityOptions: [],
 } }));
 vi.mock("@/services/business-dictionary.service", () => ({ businessDictionaryService: { ensureBuiltInTypesLoaded: requests.ensureBuiltInTypesLoaded } }));
 vi.mock("@/stores/user", () => ({ useUserStore: () => ({ userInfo: { username: "test", perms: ["itinerary:update"] } }) }));
-vi.mock("@/composables/useInquiryLog", () => ({ useInquiryLog: () => ({ recordInquiryLog: vi.fn() }) }));
 vi.mock("./useItineraryPdf", () => ({ useItineraryPdf: () => ({}) }));
 vi.mock("./useItinerarySelection", () => ({ useItinerarySelection: () => ({
   inquiry: computed(() => ({ id: "inquiry-1", status: "planning" })),

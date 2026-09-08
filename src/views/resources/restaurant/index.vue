@@ -80,7 +80,6 @@ const {
   records: resourceService.restaurants,
   api: resourceService.restaurantApi,
   loadRecords: loadRestaurants,
-  codePrefix: "RES",
   createEmpty: createEmptyRestaurant,
   cloneForEdit: (record) => ({ ...record, prices: record.prices }),
   createRecord: (record, id) => ({ ...record, id, prices: [] }),

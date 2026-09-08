@@ -17,7 +17,7 @@ import type {
   MealSlot,
 } from "@/types/itinerary";
 import type { HotelRecord, TransportRecord } from "@/types/resource";
-import { addDays, createId, formatDate, formatDateTime, generateNextCode } from "@/utils";
+import { addDays, createId, formatDateTime } from "@/utils";
 import { transitionInquiry } from "../inquiry-workflow";
 import { getHotelUnitCost, recalculateItem } from "./pricing";
 import { createDefaultHotelPlans, getHotelPlan, HOTEL_PLAN_TIERS, isHotelEligibleForTier } from "./hotel-plans";
@@ -27,7 +27,7 @@ import { createDefaultVehiclePlans, getVehiclePlan, VEHICLE_PLAN_TIERS } from ".
 type EditableDayField = "departure" | "destination" | "overnightDestination" | "transport" | "description";
 
 interface ItineraryEditorOptions {
-  inquiry: ComputedRef<InquiryRecord | undefined>;
+  inquiry: Readonly<Ref<InquiryRecord | undefined>>;
   inquiryId: ComputedRef<string>;
   itineraryStore: ItineraryRecord[];
   selectedItinerary: ComputedRef<ItineraryRecord | undefined>;
@@ -45,7 +45,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   function createEmptyItinerary(): ItineraryRecord {
     return {
       id: "", inquiryId: options.inquiryId.value, code: "", title: "", startDate: "", endDate: "", days: 0,
-      adults: 1, childrenCount: 0, operationsCoordinator: options.inquiry.value?.operationsCoordinator ?? "",
+      adults: 1, childrenCount: 0, version: 0,
       guidePlans: [], destinations: [], hotelPlans: createDefaultHotelPlans(), vehiclePlans: createDefaultVehiclePlans(), quote: createDefaultQuoteSettings(),
       dailyPlans: [], status: "draft", quoteGeneratedAt: "", creator: "", createdAt: "", updatedAt: "",
     };
@@ -59,7 +59,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       id: createId("itinerary"),
       inquiryId: options.inquiryId.value,
       creator: options.getCreator(),
-      operationsCoordinator: options.inquiry.value.operationsCoordinator,
       createdAt: timestamp,
       updatedAt: timestamp,
       destinations: [...record.destinations],
@@ -292,7 +291,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     const copied: ItineraryRecord = {
       ...source,
       id: createId("itinerary"),
-      code: generateItineraryCode(),
+      code: "",
       title: `${source.title} ${copySuffix}`,
       status: "draft",
       quoteGeneratedAt: "",
@@ -462,14 +461,9 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     return vehiclePlans.map((plan) => ({ ...plan, vehicle: plan.vehicle ? { ...plan.vehicle } : null }));
   }
 
-  function generateItineraryCode() {
-    const month = formatDate(new Date()).slice(0, 7).replace("-", "");
-    return generateNextCode(options.itineraryStore, `ITI-${month}`);
-  }
-
   return {
     updateGuideSelection, updateGuideDays, addDay, addResourceItem, clearHotelPlan, copyItinerary, createEmptyItinerary, createItinerary,
-    duplicateDay, generateItineraryCode, moveDay, removeDay, removeItem, updateDayField,
+    duplicateDay, moveDay, removeDay, removeItem, updateDayField,
     updateHotelPlanSelection, updateItineraryBasics, updateItemQuantity, updateQuoteOption,
     updateVehiclePlanSelection, updateVehiclePlanServiceDays, updateVehiclePlanUnitCost, updateMeal, updateQuoteSettings,
   };

@@ -15,7 +15,6 @@ interface ResourceMaintenanceRecord {
 interface ResourceMaintenanceOptions<T extends ResourceMaintenanceRecord> {
   records: T[];
   paginated?: boolean;
-  codePrefix: string;
   createEmpty: () => T;
   api: ResourceCrud<T>;
   loadRecords: (query?: ResourceListQuery) => Promise<T[]>;
@@ -57,7 +56,7 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
     editingId.value = "";
     record.value = {
       ...options.createEmpty(),
-      code: `${options.codePrefix}-${crypto.randomUUID()}`,
+      code: "",
     };
     isDialogVisible.value = true;
   }

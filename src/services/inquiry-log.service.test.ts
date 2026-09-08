@@ -1,39 +1,13 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { inquiryLogs } from "@/data/data";
+import { describe, expect, it, vi } from "vitest";
+const { get } = vi.hoisted(() => ({ get: vi.fn().mockResolvedValue({}) }));
+vi.mock("@/api/request", () => ({ request: { get } }));
 import { inquiryLogService } from "./inquiry-log.service";
-
-const initialLogCount = inquiryLogs.length;
-
-afterEach(() => {
-  inquiryLogs.splice(0, inquiryLogs.length - initialLogCount);
-});
-
-describe("inquiry log service", () => {
-  it("returns only the requested inquiry logs in descending time order", async () => {
-    const records = await inquiryLogService.listByInquiryId("inquiry-1");
-
-    expect(records.length).toBeGreaterThan(0);
-    expect(records.every((record) => record.inquiryId === "inquiry-1")).toBe(true);
-    expect(records.map((record) => record.occurredAt)).toEqual(
-      [...records].map((record) => record.occurredAt).sort().reverse()
-    );
-  });
-
-  it("appends the current operation to the mock log store", async () => {
-    const record = await inquiryLogService.append({
-      inquiryId: "inquiry-1",
-      action: "itinerary_saved",
-      operatorId: "4",
-      operatorUsername: "operations",
-      operatorName: "张伟",
-      targetType: "itinerary",
-      targetId: "itinerary-1",
-      targetCode: "ITI-202608-001",
-      summary: "云南经典 7 日方案",
-    });
-
-    expect(record.id).toMatch(/^inquiry-log-/);
-    expect(record.occurredAt).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
-    expect(inquiryLogs[0]).toEqual(record);
+describe("inquiry log API", () => {
+  it("sends the same time, operator and inquiry filters to details and full report", async () => {
+    const query = { page: 3, pageSize: 10, inquiryId: "inquiry", inquiryCode: "INQ-20260908-01", operatorId: "operator", from: "2026-09-01", to: "2026-09-08", action: "itinerary_saved" as const };
+    await inquiryLogService.list(query);
+    await inquiryLogService.report(query);
+    expect(get).toHaveBeenCalledWith("/inquiry-logs", { params: query });
+    expect(get).toHaveBeenCalledWith("/inquiry-logs/report", { params: query });
   });
 });

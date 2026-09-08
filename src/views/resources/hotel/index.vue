@@ -263,7 +263,7 @@ function resetQuery() {
 }
 function openCreateDialog() {
   editingId.value = "";
-  Object.assign(hotelForm, createEmptyHotel(), { code: `HTL-${crypto.randomUUID()}` });
+  Object.assign(hotelForm, createEmptyHotel());
   isHotelDialogVisible.value = true;
 }
 async function openEditDialog(hotel: HotelRecord) {

@@ -22,34 +22,32 @@ function setup() {
 beforeEach(() => { vi.clearAllMocks(); api.getPriceOptions.mockResolvedValue(pageResult("a")); api.getPriceSelection.mockResolvedValue({ marker: "a" }); });
 afterEach(() => { scopes.splice(0).forEach(scope => scope.stop()); });
 describe("resource price selection requests", () => {
-  it("requests nothing while closed, one typed page on open and one detail on selection", async () => {
+  it("defers options to the shared dropdown and loads one detail on selection", async () => {
     const { props, selection } = setup();
     await flush(); expect(api.getPriceOptions).not.toHaveBeenCalled();
     props.modelValue = true; await flush();
+    expect(api.getPriceOptions).not.toHaveBeenCalled();
+    await selection.loadOptions({ page: 1, pageSize: 10, keyword: "" });
     expect(api.getPriceOptions).toHaveBeenCalledExactlyOnceWith("restaurant", { page: 1, pageSize: 10, city: "", keyword: "" });
     expect(api.getPriceSelection).not.toHaveBeenCalled();
     selection.selectedId.value = "a"; await flush();
     expect(api.getPriceSelection).toHaveBeenCalledExactlyOnceWith("restaurant", "a");
     expect(selection.selectedOption.value?.id).toBe("a");
     props.modelValue = false; await flush(); props.mealSlot = null; props.modelValue = true; await flush();
+    await selection.loadOptions({ page: 1, pageSize: 10, keyword: "" });
     expect(api.getPriceOptions).toHaveBeenLastCalledWith("attraction", { page: 1, pageSize: 10, city: "", keyword: "" });
     expect(api.getPriceSelection).toHaveBeenCalledTimes(1);
   });
   it("uses server search, city filtering and requested page size without loading other pages", async () => {
     const { props, selection } = setup(); props.modelValue = true; await flush();
     selection.city.value = "大理"; await flush();
-    selection.filterOptions("门票"); await flush();
-    selection.page.value = 2; selection.pageSize.value = 20; await selection.loadOptions();
-    expect(api.getPriceOptions).toHaveBeenCalledTimes(4);
-    expect(api.getPriceOptions).toHaveBeenLastCalledWith("restaurant", { page: 2, pageSize: 20, city: "大理", keyword: "门票" });
+    await selection.loadOptions({ keyword: "门票", page: 2, pageSize: 10 });
+    expect(api.getPriceOptions).toHaveBeenCalledTimes(1);
+    expect(api.getPriceOptions).toHaveBeenLastCalledWith("restaurant", { page: 2, pageSize: 10, city: "大理", keyword: "门票" });
     expect(api.getPriceSelection).not.toHaveBeenCalled();
   });
-  it("ignores stale lists and details after another selection or closing", async () => {
+  it("ignores stale details after another selection or closing", async () => {
     const { props, selection } = setup(); props.modelValue = true; await flush();
-    let oldList!: (value: unknown) => void;
-    api.getPriceOptions.mockImplementationOnce(() => new Promise(resolve => { oldList = resolve; }));
-    selection.filterOptions("old"); selection.filterOptions("new"); await flush();
-    oldList(pageResult("old")); await flush(); expect(selection.visibleOptions.value[0].id).toBe("a");
     let oldDetail!: (value: unknown) => void;
     api.getPriceSelection.mockImplementationOnce(() => new Promise(resolve => { oldDetail = resolve; }));
     selection.selectedId.value = "old"; await flush(); selection.selectedId.value = "new"; await flush();

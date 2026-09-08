@@ -8,7 +8,6 @@ export { isExternal } from "./validate";
 // 数据格式化
 export { addDays, formatDate, formatDateTime, formatGrowthRate, formatMoney } from "./format";
 export { fromCents, multiplyMoney, roundMoney, sumMoney, toCents } from "./money";
-export { generateNextCode } from "./generate-code";
 export { createId } from "./create-id";
 export { hasUserPermission } from "./permission";
 export { readFileAsDataUrl } from "./file";

@@ -35,7 +35,7 @@ const columns: ResourceColumn[] = [
   { prop: "code", labelKey: "resource.code" }, { prop: "name", labelKey: "resource.city" }, { prop: "province", labelKey: "city.province" },
 ];
 const maintenance = useResourceMaintenance<CityRecord>({
-  records: resourceService.cities, api: resourceService.cityApi, loadRecords: (query) => resourceService.loadCities(query), codePrefix: "CITY",
+  records: resourceService.cities, api: resourceService.cityApi, loadRecords: (query) => resourceService.loadCities(query),
   createEmpty: () => ({ id: "", code: "", name: "", province: "", status: "enabled" }),
 });
 const { rows, total, record, isDialogVisible, isEditing, loadRecords, openCreateDialog } = maintenance;

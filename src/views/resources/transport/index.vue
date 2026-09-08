@@ -116,7 +116,6 @@ const { rows, total, record, isDialogVisible, isEditing, loadRecords, openCreate
   records: resourceService.transports,
   api: resourceService.transportApi,
   loadRecords: (query) => resourceService.loadTransports(query),
-  codePrefix: "VEH",
   createEmpty: () => ({
     id: "", code: "", name: "", serviceLevel: "standard", seats: 1, dailyPrice: 0,
     unit: "vehicleDay", city: "", phone: "", status: "enabled", remark: "",

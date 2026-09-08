@@ -37,11 +37,11 @@ export interface GeneratedItineraryPdf {
   generatedAt: string;
 }
 
-export async function generateItineraryPdf(itinerary: ItineraryRecord, inquiry: InquiryRecord): Promise<GeneratedItineraryPdf> {
-  const generatedAt = formatDateTime(new Date());
+export async function generateItineraryPdf(itinerary: ItineraryRecord, inquiry: InquiryRecord, snapshot?: { generatedAt: string; calculation: ItineraryQuoteCalculation; quoteCode: string; quoteVersion: number }): Promise<GeneratedItineraryPdf> {
+  const generatedAt = snapshot ? formatDateTime(new Date(snapshot.generatedAt)) : formatDateTime(new Date());
   const documentRoot = document.createElement("section");
   documentRoot.style.cssText = "position:fixed;left:-10000px;top:0;width:760px;padding:32px;background:#fff;color:#1f2937;font-family:Arial,'Microsoft YaHei',sans-serif;box-sizing:content-box;";
-  documentRoot.innerHTML = buildPdfHtml(itinerary, inquiry, generatedAt);
+  documentRoot.innerHTML = buildPdfHtml(itinerary, inquiry, generatedAt, snapshot);
   document.body.appendChild(documentRoot);
 
   try {
@@ -152,12 +152,12 @@ function addPdfPage(pdf: jsPDF) {
   return PAGE_MARGIN_MM;
 }
 
-export function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord, generatedAt: string) {
+export function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord, generatedAt: string, snapshot?: { calculation: ItineraryQuoteCalculation; quoteCode: string; quoteVersion: number }) {
   const totalCost = sumMoney(itinerary.dailyPlans
     .flatMap((day) => day.items)
     .filter((item) => item.type === "restaurant" || item.type === "attraction")
     .map((item) => item.totalCost));
-  const quote = calculateItineraryQuote(itinerary, totalCost);
+  const quote = snapshot?.calculation ?? calculateItineraryQuote(itinerary, totalCost);
   const scheduleSections = buildScheduleSections(itinerary.dailyPlans, itinerary);
 
   return `
@@ -166,7 +166,7 @@ export function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord,
       <div style="color:#606266;">行程编号：${escapeHtml(itinerary.code)} · 旅行社：${escapeHtml(inquiry.agencyName)}</div>
       <div style="margin-top:6px;color:#606266;">日期：${escapeHtml(itinerary.startDate)} — ${escapeHtml(itinerary.endDate)} · ${itineraryDuration(itinerary.dailyPlans).days}天${itineraryDuration(itinerary.dailyPlans).nights}晚</div>
       <div style="margin-top:6px;color:#606266;">人数：成人 ${itinerary.adults} 人 · 儿童 ${itinerary.childrenCount} 人</div>
-      <div style="margin-top:6px;color:#606266;">报价生成时间：${escapeHtml(generatedAt)}</div>
+      <div style="margin-top:6px;color:#606266;">${snapshot ? `报价编号：${escapeHtml(snapshot.quoteCode)} · V${snapshot.quoteVersion}<br>` : ""}报价生成时间：${escapeHtml(generatedAt)}</div>
     </header>
     ${scheduleSections}
     ${buildHotelPairingSection(itinerary)}

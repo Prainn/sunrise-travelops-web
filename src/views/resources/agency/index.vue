@@ -74,7 +74,6 @@ const {
   records: resourceService.agencies,
   api: resourceService.agencyApi,
   loadRecords: loadAgencies,
-  codePrefix: "AGY",
   createEmpty: createEmptyAgencyRecord,
   cloneForEdit: (agency) => ({ ...agency, contacts: agency.contacts.map((contact) => ({ ...contact })) }),
   createRecord: (agency, id) => ({ ...agency, id, contacts: agency.contacts.map((contact) => ({ ...contact })) }),

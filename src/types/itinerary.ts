@@ -144,6 +144,7 @@ export interface ItineraryGuidePlan {
 }
 
 export interface ItineraryRecord {
+  version: number;
   guidePlans: ItineraryGuidePlan[];
   id: string;
   inquiryId: string;
@@ -157,7 +158,6 @@ export interface ItineraryRecord {
   destinations: string[];
   hotelPlans: ItineraryHotelPlan[];
   vehiclePlans: ItineraryVehiclePlan[];
-  operationsCoordinator: string;
   quote: ItineraryQuoteSettings;
   dailyPlans: ItineraryDayRecord[];
   status: ItineraryStatus;

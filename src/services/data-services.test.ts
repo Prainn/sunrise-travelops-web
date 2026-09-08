@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lang/utils", () => ({ translate: (key: string) => key }));
 
-import { inquiries, inquiryLogs, itineraries } from "@/data/data";
+import { inquiries, inquiryLogs, itineraries } from "@/test-fixtures/inquiries";
 
 describe("local data services", () => {
   it("keeps itinerary mock records linked to existing inquiries", () => {
@@ -16,7 +16,7 @@ describe("local data services", () => {
     expect(inquiries.filter((inquiry) => inquiry.id !== "inquiry-15").every((inquiry) =>
       itineraries.some((itinerary) => itinerary.inquiryId === inquiry.id))).toBe(true);
     expect(inquiries.every((inquiry) => inquiry.plannedDays > 0)).toBe(true);
-    expect(inquiries.every((inquiry) => inquiry.operationsCoordinator.length > 0)).toBe(true);
+    expect(inquiries.every((inquiry) => inquiry.ownerId.length > 0)).toBe(true);
     expect(inquiries.every((inquiry) => ["new", "planning", "quoted", "lost", "archived"].includes(inquiry.status))).toBe(true);
     expect(itineraries.every((itinerary) => itinerary.days === inquiries.find((inquiry) => inquiry.id === itinerary.inquiryId)?.plannedDays)).toBe(true);
     expect(inquiryLogs.every((log) => inquiries.some((inquiry) => inquiry.id === log.inquiryId))).toBe(true);

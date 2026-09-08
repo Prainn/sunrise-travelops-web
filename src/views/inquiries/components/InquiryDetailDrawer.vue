@@ -25,9 +25,6 @@
         <el-descriptions-item :label="$t('inquiry.owner')">
           {{ record.owner }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('inquiry.operationsCoordinator')">
-          {{ record.operationsCoordinator }}
-        </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.contactName')">
           {{ record.contactName }}
         </el-descriptions-item>
