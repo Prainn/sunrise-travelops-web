@@ -31,7 +31,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     const plan = options.selectedItinerary.value;
     const inquiry = options.inquiry.value;
     if (!plan || !inquiry || !options.canGenerate()) return null;
-    const issues: PdfValidationIssue[] = validateItineraryForPdf(plan.dailyPlans, plan.destinations);
+    const issues: PdfValidationIssue[] = validateItineraryForPdf(plan.dailyPlans);
     if (!getEnabledHotelPlans(plan).length) issues.push({ key: "itinerary.pdfHotelPlanRequired", target: "itinerary-plans" });
     if (getIncompleteHotelPlanTiers(plan).length) issues.push({ key: "itinerary.validation.hotels", target: "itinerary-plans" });
     if (!getEnabledVehiclePlans(plan).length || getIncompleteVehiclePlanTiers(plan).length) {

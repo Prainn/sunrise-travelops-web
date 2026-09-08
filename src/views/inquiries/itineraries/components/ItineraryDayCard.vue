@@ -53,6 +53,7 @@
     </template>
 
     <ItineraryDayForm
+      :is-last="isLast"
       :day="day"
       :destinations="destinations"
       :editable="contentEditable"

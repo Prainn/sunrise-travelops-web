@@ -269,14 +269,13 @@
     "validation": {
       "title": "Complete these details; click to locate",
       "noDays": "Add a daily schedule",
-      "schedule": "D{day}: fill in departure, destination and schedule description",
+      "schedule": "D{day}: fill in the schedule description",
       "overnight": "D{day}: select accommodation or explicitly select no overnight stay",
       "lunch": "D{day}: lunch is included; choose a lunch resource",
       "dinner": "D{day}: dinner is included; choose a dinner resource",
       "hotels": "Complete destination hotels for each quoted tier",
       "vehicles": "Choose complete vehicle plans with enough seats",
-      "transportFee": "Transport quote {index}: provide a route and price per person",
-      "routeCity": "D{day}: choose route cities from itinerary destinations (except the first departure)."
+      "transportFee": "Transport quote {index}: provide a route and price per person"
     },
     "breakfastMixed": "Breakfast strategy varies",
     "feeDeparture": "Departure",

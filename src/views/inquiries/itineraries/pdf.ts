@@ -356,7 +356,7 @@ export function getDailyGuideText(day: ItineraryDayRecord, itinerary: ItineraryR
 }
 
 export function getDailyMealCodes(day: ItineraryDayRecord, breakfastStatus: "included" | "excluded" | "mixed" | "pending" = day.meals.breakfast ? "included" : "excluded") {
-  return [breakfastStatus === "pending" ? "早餐待确认" : breakfastStatus === "mixed" ? "B（按酒店方案）" : breakfastStatus === "included" ? "B" : "", day.meals.lunch ? "L" : "", day.meals.dinner ? "D" : ""].filter(Boolean).join(", ");
+  return [breakfastStatus === "pending" ? "早餐待确认" : breakfastStatus === "mixed" ? "早餐方案不一致" : breakfastStatus === "included" ? "B" : "", day.meals.lunch ? "L" : "", day.meals.dinner ? "D" : ""].filter(Boolean).join(", ");
 }
 
 function buildExtraFeeRows(itinerary: ItineraryRecord, columnCount: number) {
@@ -373,7 +373,7 @@ function buildExtraFeeRows(itinerary: ItineraryRecord, columnCount: number) {
 function buildCustomerTerms(itinerary: ItineraryRecord) {
   const hasMeals = itinerary.dailyPlans.some((day) => day.meals.lunch || day.meals.dinner);
   const rows: Array<[string, string]> = [
-    ["酒店", "行程所列酒店双人入住，是否含早以酒店方案表为准。早餐由前一晚酒店提供；每日 B 标记表示含早，“B（按酒店方案）”表示各方案含早情况不同。"],
+    ["酒店", "行程所列酒店双人入住，是否含早以酒店方案表为准。早餐由前一晚酒店提供；每日 B 标记表示含早，“早餐方案不一致”表示各方案含早情况不同。"],
     ["餐食", hasMeals ? "仅包含行程标注的午餐 L、晚餐 D，未标注的正餐自理。" : "团费不含正餐，请自理。"],
     ["交通", "行程所列旅游车服务；机票、动车票及小费不包含在团费中，另列报价不计入团费总计。"],
   ];

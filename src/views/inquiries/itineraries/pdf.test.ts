@@ -59,7 +59,7 @@ it("uses the previous night's hotel breakfast, including mixed options", () => {
   expect(getDayBreakfastStatus(itinerary, 1)).toBe("included");
   itinerary.hotelPlans.push({ tier: "preferred_non_five_star", hotels: [{ ...hotel, hotelId: "other", breakfastIncluded: false }] });
   expect(getDayBreakfastStatus(itinerary, 1)).toBe("mixed");
-  expect(getDailyMealCodes(itinerary.dailyPlans[1], "mixed")).toContain("B（按酒店方案）");
+  expect(getDailyMealCodes(itinerary.dailyPlans[1], "mixed")).toContain("早餐方案不一致");
   const html = buildPdfHtml(itinerary, inquiries[0], "now");
   expect(html).toContain("测试酒店（含早）");
   expect(html).toContain("测试酒店（不含早）");

@@ -31,14 +31,14 @@ describe("itinerary day-count workflow", () => {
   }
 
   it("allows arrival and departure days without resource items", () => {
-    expect(validateItineraryForPdf([day(), day({ id: "departure", dayNumber: 8, overnightDestination: "", description: "送机", departure: "昆明" })], ["昆明"])).toEqual([]);
+    expect(validateItineraryForPdf([day(), day({ id: "departure", dayNumber: 8, overnightDestination: "", description: "送机", departure: "昆明" })])).toEqual([]);
   });
 
   it("distinguishes an unfilled overnight stay from an explicit no-stay day", () => {
-    expect(validateItineraryForPdf([day({ overnightDestination: null })], ["昆明"])).toEqual([
+    expect(validateItineraryForPdf([day({ overnightDestination: null })])).toEqual([
       { key: "itinerary.validation.overnight", target: "day-arrival", params: { day: 1 } },
     ]);
-    expect(validateItineraryForPdf([day({ overnightDestination: "" })], ["昆明"])).toEqual([]);
+    expect(validateItineraryForPdf([day({ overnightDestination: "" })])).toEqual([]);
   });
 
   it("requires a separate restaurant item for each included meal", () => {
@@ -47,18 +47,19 @@ describe("itinerary day-count workflow", () => {
       resourceName: "餐厅", priceName: "套餐", quantity: 12, unit: "personMeal", unitCost: 60, totalCost: 720, remark: "",
     };
     const plan = day({ meals: { breakfast: true, lunch: true, dinner: true }, items: [lunch] });
-    expect(validateItineraryForPdf([plan], ["昆明"]).map((issue) => issue.key)).toEqual(["itinerary.validation.dinner"]);
+    expect(validateItineraryForPdf([plan]).map((issue) => issue.key)).toEqual(["itinerary.validation.dinner"]);
     plan.items.push({ ...lunch, id: "dinner", mealSlot: "dinner" });
-    expect(validateItineraryForPdf([plan], ["昆明"])).toEqual([]);
+    expect(validateItineraryForPdf([plan])).toEqual([]);
   });
-  it("allows only the first departure outside itinerary destinations, including on the final day", () => {
+  it("does not validate departure or arrival cities", () => {
     const first = day();
     const last = day({ id: "last", dayNumber: 2, departure: "昆明", destination: "新加坡" });
-    expect(validateItineraryForPdf([first], ["昆明"])).toEqual([]);
-    expect(validateItineraryForPdf([first, last], ["昆明"]).map((issue) => issue.key)).toContain("itinerary.validation.routeCity");
+    expect(validateItineraryForPdf([first])).toEqual([]);
+    expect(validateItineraryForPdf([first, last])).toEqual([]);
+    expect(validateItineraryForPdf([day({ departure: "", destination: "" })])).toEqual([]);
     last.destination = "昆明";
     last.departure = "新加坡";
-    expect(validateItineraryForPdf([first, last], ["昆明"]).map((issue) => issue.key)).toContain("itinerary.validation.routeCity");
+    expect(validateItineraryForPdf([first, last])).toEqual([]);
   });
 
 });

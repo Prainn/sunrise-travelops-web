@@ -269,16 +269,15 @@
     "validation": {
       "title": "请补全以下信息，点击可定位",
       "noDays": "请添加每日行程",
-      "schedule": "D{day}：请填写出发地、到达地和行程说明",
+      "schedule": "D{day}：请填写行程说明",
       "overnight": "D{day}：请选择住宿城市或明确不住宿",
       "lunch": "D{day}：已包含午餐，请选择午餐资源",
       "dinner": "D{day}：已包含晚餐，请选择晚餐资源",
       "hotels": "请补全各报价档次的目的地酒店",
       "vehicles": "请选择完整且座位数足够的车型方案",
-      "transportFee": "第 {index} 段交通报价：请填写区间和每人价格",
-      "routeCity": "D{day}：出发地和到达地须从行程目的地中选择（首日出发地除外）"
+      "transportFee": "第 {index} 段交通报价：请填写区间和每人价格"
     },
-    "breakfastMixed": "早餐方案不统一",
+    "breakfastMixed": "早餐方案不一致",
     "feeDeparture": "出发",
     "feeArrival": "到达",
     "cityGuides": "城市导游",

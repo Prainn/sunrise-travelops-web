@@ -314,21 +314,21 @@ it("selects the same guide in multiple cities, copies independently, and removes
   expect(copied.guidePlans).toEqual([]);
 });
 
-it("restricts daily route cities and clears invalid selections after reordering or destination removal", () => {
+it("preserves route text after reordering or destination removal", () => {
   const { editor } = createEditor();
   const plan = editor.createItinerary({ ...editor.createEmptyItinerary(), startDate: "2026-11-05", days: 2, destinations: ["昆明", "大理"] })!;
   editor.updateDayField(0, "departure", "新加坡机场");
   editor.updateDayField(0, "destination", "新加坡");
-  expect(plan.dailyPlans[0].destination).toBe("");
+  expect(plan.dailyPlans[0].destination).toBe("新加坡");
   editor.updateDayField(0, "destination", "昆明");
   editor.updateDayField(1, "departure", "昆明");
   editor.updateDayField(1, "destination", "大理");
   editor.updateDayField(1, "departure", "新加坡");
-  expect(plan.dailyPlans[1].departure).toBe("昆明");
+  expect(plan.dailyPlans[1].departure).toBe("新加坡");
   editor.moveDay(0, 1);
-  expect(plan.dailyPlans[1].departure).toBe("");
+  expect(plan.dailyPlans[1].departure).toBe("新加坡机场");
   editor.updateItineraryBasics({ ...plan, destinations: ["昆明"] });
-  expect(plan.dailyPlans[0].destination).toBe("");
+  expect(plan.dailyPlans[0].destination).toBe("大理");
 });
 
 it("excludes dates assigned to another city and releases them when cleared", () => {
@@ -346,4 +346,18 @@ it("excludes dates assigned to another city and releases them when cleared", () 
   editor.updateGuideSelection("昆明", "");
   editor.updateGuideDays("大理", [d1, d2, d3]);
   expect(plan.guidePlans[0].dayIds).toEqual([d1, d2, d3]);
+});
+
+it("preserves a final return city when moved into the middle", () => {
+  const { editor } = createEditor();
+  const plan = editor.createItinerary({ ...editor.createEmptyItinerary(), days: 3, startDate: "2026-11-05", destinations: ["昆明"] })!;
+  editor.updateDayField(2, "departure", "昆明");
+  editor.updateDayField(2, "destination", "香港");
+  expect(plan.dailyPlans[2].destination).toBe("香港");
+  editor.updateItineraryBasics({ ...plan, title: "Return trip" });
+  expect(plan.dailyPlans[2].destination).toBe("香港");
+  editor.moveDay(2, -1);
+  expect(plan.dailyPlans[1].destination).toBe("香港");
+  editor.updateDayField(1, "destination", "香港");
+  expect(plan.dailyPlans[1].destination).toBe("香港");
 });

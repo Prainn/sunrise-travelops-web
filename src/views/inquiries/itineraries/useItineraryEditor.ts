@@ -107,8 +107,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     if (!options.canEditContent()) return;
     const day = options.selectedItinerary.value?.dailyPlans[index];
     if (!day) return;
-    const destinations = options.selectedItinerary.value!.destinations;
-    if ((field === "destination" || (field === "departure" && index > 0)) && value && !destinations.includes(value)) return;
     if (field === "overnightDestination") day.overnightDestination = value;
     else day[field] = value ?? "";
     if (field === "overnightDestination" && options.selectedItinerary.value) syncBreakfast(options.selectedItinerary.value);
@@ -381,7 +379,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       day.dayNumber = index + 1;
       day.date = addDays(plan.startDate, index);
     });
-    syncRouteCities(plan);
     syncBreakfast(plan);
     plan.days = plan.dailyPlans.length;
     plan.endDate = plan.days ? addDays(plan.startDate, plan.days - 1) : plan.startDate;
@@ -401,15 +398,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     }
   }
 
-  function syncRouteCities(plan: ItineraryRecord) {
-    plan.dailyPlans.forEach((day, index) => {
-      if (index > 0 && !plan.destinations.includes(day.departure)) day.departure = "";
-      if (!plan.destinations.includes(day.destination)) day.destination = "";
-    });
-  }
-
   function syncDestinations(plan: ItineraryRecord) {
-    syncRouteCities(plan);
     const destinationSet = new Set(plan.destinations);
     plan.guidePlans = plan.guidePlans.filter((guide) => destinationSet.has(guide.destination));
     plan.dailyPlans.forEach((day) => {

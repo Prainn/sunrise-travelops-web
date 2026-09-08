@@ -27,16 +27,15 @@ export interface PdfValidationIssue {
   params?: Record<string, string | number>;
 }
 
-export function validateItineraryForPdf(days: ItineraryDayRecord[], destinations: string[]): PdfValidationIssue[] {
+export function validateItineraryForPdf(days: ItineraryDayRecord[]): PdfValidationIssue[] {
   const issues: PdfValidationIssue[] = [];
   if (!days.length) issues.push({ key: "itinerary.validation.noDays", target: "itinerary-plans" });
-  for (const [index, day] of days.entries()) {
+  for (const day of days) {
     const target = `day-${day.id}`;
     const params = { day: day.dayNumber };
-    if (!day.departure.trim() || !day.destination.trim() || !day.description?.trim()) {
+    if (!day.description?.trim()) {
       issues.push({ key: "itinerary.validation.schedule", target, params });
     }
-    if ((day.destination && !destinations.includes(day.destination)) || (index > 0 && day.departure && !destinations.includes(day.departure))) issues.push({ key: "itinerary.validation.routeCity", target, params });
     if (day.overnightDestination === null) issues.push({ key: "itinerary.validation.overnight", target, params });
     for (const slot of ["lunch", "dinner"] as const) {
       if (day.meals[slot] && !day.items.some((item) => item.type === "restaurant" && item.mealSlot === slot)) {

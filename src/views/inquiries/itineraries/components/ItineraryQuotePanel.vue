@@ -14,7 +14,13 @@
       v-else
       class="quote-panel__comparison"
     >
-      <table>
+      <table :style="{ minWidth: `${180 + displayOptions.length * 200}px` }">
+        <colgroup>
+          <col style="width: 180px"><col
+            v-for="item in displayOptions"
+            :key="item.option.id"
+          >
+        </colgroup>
         <thead>
           <tr>
             <th>{{ $t('itinerary.quoteConfigurations') }}</th>
@@ -276,9 +282,9 @@ function removeFee(id: string) {
 .quote-panel { display: grid; gap: 20px; font-size: 14px; }
 .quote-panel__summary { display: flex; flex-wrap: wrap; gap: 20px; color: var(--el-text-color-regular); }
 .quote-panel__comparison { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-th, td { min-width: 150px; padding: 12px; border: 1px solid var(--el-border-color); text-align: right; vertical-align: middle; }
-th:first-child { text-align: left; min-width: 145px; }
+table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+th, td { overflow-wrap: anywhere; padding: 12px; border: 1px solid var(--el-border-color); text-align: right; vertical-align: middle; }
+th:first-child { text-align: left; }
 thead th { background: var(--el-fill-color-light); font-weight: 600; }
 .quote-panel__comparison :deep(.el-input-number) { width: 140px; }
 .quote-panel__total { color: var(--el-color-primary); font-size: 16px; font-weight: 600; }
