@@ -1,6 +1,7 @@
 <template>
   <div class="resource-page">
     <AttractionTable
+      :total="total"
       :rows="attractionStore"
       @refresh="loadRecords"
       @query-change="loadRecords"
@@ -60,6 +61,7 @@ const {
   record: attractionForm,
   isDialogVisible: isAttractionDialogVisible,
   isEditing,
+  total,
   loadRecords,
   openCreateDialog,
   openEditDialog,
@@ -89,7 +91,8 @@ async function loadAttractionPrices(record: AttractionRecord) {
   if (loadedAttractionPriceIds.has(record.id) || loadingAttractionPriceIds.has(record.id)) return;
   loadingAttractionPriceIds.add(record.id);
   try {
-    await resourceService.loadAttractionPrices(record.id);
+    record.prices = await resourceService.loadAttractionPrices(record.id);
+    record.priceCount = record.prices.length;
     loadedAttractionPriceIds.add(record.id);
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : String(error));

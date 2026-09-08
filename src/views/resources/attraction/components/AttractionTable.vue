@@ -22,7 +22,7 @@
       </TableToolbar>
       <div class="page-table-wrapper">
         <el-table
-          :data="pagedRows"
+          :data="rows"
           border
           height="100%"
           row-key="id"
@@ -218,17 +218,19 @@
         </el-table>
       </div>
       <pagination
-        v-if="rows.length"
+        v-if="total > 0"
         v-model:page="pageNum"
         v-model:limit="pageSize"
         :total="total"
+        @pagination="refreshRows"
       />
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { useResourcePagination } from "@/views/resources/useResourcePagination";
+import { ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { useI18n } from "vue-i18n";
 import { RESOURCE_PERMISSIONS } from "@/constants";
@@ -244,7 +246,7 @@ import TableToolbar from "@/components/TableToolbar/index.vue";
 import AttractionSearchForm from "./AttractionSearchForm.vue";
 import { attractionCategoryLabelKeys, attractionItemTypeLabelKeys } from "../options";
 
-const props = defineProps<{ rows: AttractionRecord[] }>();
+defineProps<{ rows: AttractionRecord[]; total: number }>();
 const emit = defineEmits<{
   refresh: [query: ResourceListQuery];
   "query-change": [query: ResourceListQuery];
@@ -262,10 +264,7 @@ const { t } = useI18n();
 const keywords = ref("");
 const area = ref("");
 const category = ref<AttractionCategory | "">("");
-const pageNum = ref(1);
-const pageSize = ref(10);
-const total = computed(() => props.rows.length);
-const pagedRows = computed(() => props.rows.slice((pageNum.value - 1) * pageSize.value, pageNum.value * pageSize.value));
+const { pageNum, pageSize, paginationQuery } = useResourcePagination();
 const requestRows = useDebounceFn(() => emit("query-change", currentQuery()), 300);
 
 watch([keywords, area, category], () => {
@@ -274,7 +273,7 @@ watch([keywords, area, category], () => {
 });
 
 function currentQuery(): ResourceListQuery {
-  return { keyword: keywords.value, area: area.value, category: category.value || undefined };
+  return { ...paginationQuery(), keyword: keywords.value, area: area.value, category: category.value || undefined };
 }
 
 function resetQuery() {

@@ -1,6 +1,7 @@
 <template>
   <div class="resource-page">
     <ResourceTable
+      :total="total"
       :rows="rows"
       :columns="columns"
       :permissions="RESOURCE_PERMISSIONS.supplier"
@@ -80,7 +81,7 @@ const fields: ResourceFormField[] = [
     "type": "textarea"
   }
 ];
-const { rows, record, isDialogVisible, isEditing, loadRecords, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<SupplierRecord>({
+const { rows, total, record, isDialogVisible, isEditing, loadRecords, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<SupplierRecord>({
   records: resourceService.suppliers,
   api: resourceService.supplierApi,
   loadRecords: (query) => resourceService.loadSuppliers(query),

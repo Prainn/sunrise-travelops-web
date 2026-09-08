@@ -2,6 +2,8 @@ import { computed, onMounted, reactive, ref, type Ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { ResourceListQuery, ResourceStatus, TourismResourceRecord } from "@/types/resource";
+import { DEFAULT_PAGE_SIZE } from "@/components/Pagination/config";
+import { resourceService } from "@/services/resource.service";
 import type { ResourceCrud } from "@/services/resource.service";
 
 interface ResourceMaintenanceRecord {
@@ -12,6 +14,7 @@ interface ResourceMaintenanceRecord {
 
 interface ResourceMaintenanceOptions<T extends ResourceMaintenanceRecord> {
   records: T[];
+  paginated?: boolean;
   codePrefix: string;
   createEmpty: () => T;
   api: ResourceCrud<T>;
@@ -31,17 +34,20 @@ export function createEmptyTourismResourceRecord(): TourismResourceRecord {
 
 export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(options: ResourceMaintenanceOptions<T>) {
   const { t } = useI18n();
-  const rows = reactive(options.records) as unknown as T[];
+  const rows = reactive(options.paginated === false ? options.records : []) as unknown as T[];
   const isDialogVisible = ref(false);
   const editingId = ref("");
   const record = ref<T>(options.createEmpty()) as Ref<T>;
   const isEditing = computed(() => Boolean(editingId.value));
-  let activeQuery: ResourceListQuery | undefined;
+  const total = ref(0);
+  let activeQuery: ResourceListQuery | undefined = options.paginated === false ? undefined : { page: 1, pageSize: DEFAULT_PAGE_SIZE };
 
   async function loadRecords(query?: ResourceListQuery) {
-    if (query !== undefined) activeQuery = query;
+    if (query !== undefined) activeQuery = { ...activeQuery, ...query };
     try {
-      await options.loadRecords(activeQuery);
+      const loaded = await options.loadRecords(activeQuery);
+      if (options.paginated !== false) rows.splice(0, rows.length, ...loaded);
+      total.value = resourceService.getTotal(options.records);
     } catch (error) {
       ElMessage.error(error instanceof Error ? error.message : String(error));
     }
@@ -126,7 +132,7 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
   onMounted(loadRecords);
 
   return {
-    rows, record, isDialogVisible, isEditing,
+    rows, total, record, isDialogVisible, isEditing,
     loadRecords, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord,
   };
 }

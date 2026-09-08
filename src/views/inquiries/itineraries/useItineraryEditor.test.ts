@@ -330,3 +330,20 @@ it("restricts daily route cities and clears invalid selections after reordering 
   editor.updateItineraryBasics({ ...plan, destinations: ["昆明"] });
   expect(plan.dailyPlans[0].destination).toBe("");
 });
+
+it("excludes dates assigned to another city and releases them when cleared", () => {
+  const { editor } = createEditor();
+  const plan = editor.createItinerary({ ...editor.createEmptyItinerary(), days: 3, startDate: "2026-11-05", destinations: ["昆明", "大理"] })!;
+  const [d1, d2, d3] = plan.dailyPlans.map(day => day.id);
+  editor.updateGuideSelection("昆明", "g1");
+  editor.updateGuideSelection("大理", "g1");
+  editor.updateGuideDays("昆明", [d1, d2]);
+  editor.updateGuideDays("大理", [d1, d2, d3, d3, "invalid"]);
+  expect(plan.guidePlans[1].dayIds).toEqual([d3]);
+  editor.updateGuideDays("昆明", [d2]);
+  editor.updateGuideDays("大理", [d1, d2, d3]);
+  expect(plan.guidePlans[1].dayIds).toEqual([d1, d3]);
+  editor.updateGuideSelection("昆明", "");
+  editor.updateGuideDays("大理", [d1, d2, d3]);
+  expect(plan.guidePlans[0].dayIds).toEqual([d1, d2, d3]);
+});

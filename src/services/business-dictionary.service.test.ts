@@ -98,3 +98,31 @@ describe("businessDictionaryService", () => {
     })).rejects.toBe(error);
   });
 });
+
+it("initializes transport and unit labels once for concurrent itinerary consumers", async () => {
+  vi.clearAllMocks();
+  getMock.mockResolvedValue([
+    { id: "units", code: "resource-unit", name: "单位", englishName: "Units", builtIn: true, items: [
+      { id: "table", code: "table", name: "桌", englishName: "Table", status: "enabled", resourceTypes: ["restaurant"] },
+    ] },
+    { id: "transport", code: "transport-method", name: "交通方式", englishName: "Transport", builtIn: true, items: [
+      { id: "flight", code: "flight", name: "飞机", englishName: "Flight", status: "enabled" },
+      { id: "coach", code: "coach", name: "旅游大巴", englishName: "Coach", status: "enabled" },
+    ] },
+  ]);
+  await Promise.all([
+    businessDictionaryService.ensureBuiltInTypesLoaded(),
+    businessDictionaryService.ensureBuiltInTypesLoaded(),
+  ]);
+  await businessDictionaryService.ensureBuiltInTypesLoaded();
+  expect(getMock).toHaveBeenCalledTimes(1);
+  const { getResourceUnitName } = await import("@/utils/resource-unit");
+  const { getTransportMethodNames, getTransportMethodOptions } = await import("@/utils/transport-method");
+  expect(getResourceUnitName("table", "zh-CN")).toBe("桌");
+  expect(getResourceUnitName("table", "en")).toBe("Table");
+  expect(getTransportMethodNames("flight,coach", "zh-CN")).toBe("飞机 / 旅游大巴");
+  expect(getTransportMethodNames("flight,coach", "en")).toBe("Flight / Coach");
+  expect(getTransportMethodOptions("zh-CN")).toEqual([
+    { value: "flight", label: "飞机" }, { value: "coach", label: "旅游大巴" },
+  ]);
+});

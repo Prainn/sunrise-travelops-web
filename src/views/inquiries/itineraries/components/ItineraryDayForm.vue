@@ -94,19 +94,6 @@
         :placeholder="$t('itinerary.dayDescriptionPlaceholder')"
         @update:model-value="updateField('description', $event)"
       />
-      <div
-        v-if="editable"
-        class="day-form__shortcuts"
-      >
-        <el-button
-          v-for="shortcut in ['arrival', 'departure', 'free'] as const"
-          :key="shortcut"
-          size="small"
-          @click="updateField('description', $t(`itinerary.shortcuts.${shortcut}Text`))"
-        >
-          {{ $t(`itinerary.shortcuts.${shortcut}`) }}
-        </el-button>
-      </div>
     </el-form-item>
   </el-form>
 </template>
@@ -152,7 +139,6 @@ function updateTransport(values: string[]) {
 }
 
 .day-form__description { grid-column: 1 / -1; }
-.day-form__shortcuts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
 
 @media (width <= 900px) {
   .day-form { grid-template-columns: 1fr; }

@@ -29,7 +29,9 @@
         <el-select
           v-model="selectedId"
           filterable
-          :filter-method="filterOptions"
+          remote
+          :remote-method="filterOptions"
+          :loading="loading"
           :placeholder="$t('itinerary.resourcePricePlaceholder')"
           style="width: 100%"
         >
@@ -46,6 +48,13 @@
           </el-option>
         </el-select>
       </el-form-item>
+      <Pagination
+        v-model:page="page"
+        v-model:limit="pageSize"
+        :total="total"
+        layout="total, sizes, prev, pager, next"
+        @pagination="loadOptions"
+      />
       <template v-if="selectedOption">
         <el-descriptions
           class="resource-dialog__details"
@@ -91,62 +100,26 @@
 </template>
 
 <script setup lang="ts">
+import Pagination from "@/components/Pagination/index.vue";
+import { useResourcePriceSelection } from "../useResourcePriceSelection";
+import { ElMessage } from "element-plus";
 import { useCityOptions } from "@/composables/useCityOptions";
-import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import type { ItineraryDailyItemType, ItineraryResourceItem, MealSlot } from "@/types/itinerary";
+import type { ItineraryResourceItem, MealSlot } from "@/types/itinerary";
 import { formatMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
-import { calculateItem, getDefaultResourceQuantity } from "../pricing";
-import type { ResourcePriceDetail, ResourcePriceOption } from "../pricing";
+import { calculateItem } from "../pricing";
+import type { ResourcePriceDetail } from "../pricing";
 
 const props = defineProps<{
   modelValue: boolean;
   guestCount: number;
-  options: ResourcePriceOption[];
   mealSlot: MealSlot | null;
 }>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [item: ItineraryResourceItem] }>();
 const { t, locale } = useI18n();
-const type = computed<ItineraryDailyItemType>(() => props.mealSlot ? "restaurant" : "attraction");
-const city = ref("");
-const selectedId = ref("");
-const keyword = ref("");
-const quantity = ref(1);
-const filteredByType = computed(() => props.options.filter((option) => option.type === type.value));
 const cityOptions = useCityOptions();
-const filteredByCity = computed(() => city.value
-  ? filteredByType.value.filter((option) => option.city === city.value)
-  : filteredByType.value);
-const visibleOptions = computed(() => {
-  const normalized = keyword.value.trim().toLowerCase();
-  return normalized ? filteredByCity.value.filter((option) => option.searchText.toLowerCase().includes(normalized)) : filteredByCity.value;
-});
-const selectedOption = computed(() => props.options.find((option) => option.id === selectedId.value));
-
-watch(type, () => {
-  city.value = "";
-  selectedId.value = "";
-  keyword.value = "";
-  quantity.value = type.value === "attraction" ? Math.max(props.guestCount, 1) : 1;
-});
-watch(city, () => {
-  selectedId.value = "";
-  keyword.value = "";
-});
-watch(() => props.modelValue, (visible) => {
-  if (!visible) return;
-  city.value = "";
-  selectedId.value = "";
-  keyword.value = "";
-  quantity.value = Math.max(props.guestCount, 1);
-});
-
-watch(selectedOption, (option) => {
-  quantity.value = getDefaultResourceQuantity(option, props.guestCount);
-});
-
-function filterOptions(value: string) { keyword.value = value; }
+const { city, selectedId, quantity, visibleOptions, selectedOption, page, pageSize, total, loading, loadOptions, filterOptions } = useResourcePriceSelection(props, () => ElMessage.error(t("request.failed")));
 function resourceUnitName(code: string) { return getResourceUnitName(code, locale.value); }
 function formatDetail(detail: ResourcePriceDetail) {
   if (detail.format === "money") return `¥${formatMoney(Number(detail.value))}`;

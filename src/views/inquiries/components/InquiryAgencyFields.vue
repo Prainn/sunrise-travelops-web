@@ -4,19 +4,13 @@
       :label="$t('inquiry.agencyName')"
       prop="agencyId"
     >
-      <el-select
+      <ResourceSelect
+        kind="agencies"
         :model-value="record.agencyId"
-        filterable
+        :selected-label="record.agencyName"
         :placeholder="$t('common.selectPlaceholder')"
-        @change="emit('select-agency', $event)"
-      >
-        <el-option
-          v-for="agency in agencyOptions"
-          :key="agency.id"
-          :label="`${agency.name} (${agency.code})`"
-          :value="agency.id"
-        />
-      </el-select>
+        @update:model-value="emit('select-agency', $event)"
+      />
     </el-form-item>
   </el-col>
   <el-col :span="12">
@@ -68,6 +62,7 @@
 </template>
 
 <script setup lang="ts">
+import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import { computed } from "vue";
 import type { InquiryRecord } from "@/types/inquiry";
 import type { AgencyContactRecord, AgencyRecord } from "@/types/resource";

@@ -22,7 +22,7 @@
       </TableToolbar>
       <div class="page-table-wrapper">
         <el-table
-          :data="pagedRows"
+          :data="rows"
           border
           height="100%"
           row-key="id"
@@ -218,18 +218,20 @@
         </el-table>
       </div>
       <pagination
-        v-if="rows.length"
+        v-if="total > 0"
         v-model:page="pageNum"
         v-model:limit="pageSize"
         :total="total"
+        @pagination="refreshRows"
       />
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useResourcePagination } from "@/views/resources/useResourcePagination";
 import { useCityOptions } from "@/composables/useCityOptions";
-import { computed, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import type { ResourceListQuery, RestaurantPriceRecord, RestaurantPriceUnit, RestaurantRecord } from "@/types/resource";
@@ -237,7 +239,7 @@ import { formatMoney } from "@/utils";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import RestaurantSearchForm from "./RestaurantSearchForm.vue";
 
-const props = defineProps<{ rows: RestaurantRecord[] }>();
+defineProps<{ rows: RestaurantRecord[]; total: number }>();
 const emit = defineEmits<{
   refresh: [query: ResourceListQuery];
   "query-change": [query: ResourceListQuery];
@@ -254,11 +256,8 @@ const emit = defineEmits<{
 const keywords = ref("");
 const city = ref("");
 const priceUnit = ref<RestaurantPriceUnit | "">("");
-const pageNum = ref(1);
-const pageSize = ref(10);
+const { pageNum, pageSize, paginationQuery } = useResourcePagination();
 const cityOptions = useCityOptions();
-const total = computed(() => props.rows.length);
-const pagedRows = computed(() => props.rows.slice((pageNum.value - 1) * pageSize.value, pageNum.value * pageSize.value));
 const requestRows = useDebounceFn(() => emit("query-change", currentQuery()), 300);
 
 watch([keywords, city, priceUnit], () => {
@@ -267,7 +266,7 @@ watch([keywords, city, priceUnit], () => {
 });
 
 function currentQuery(): ResourceListQuery {
-  return { keyword: keywords.value, city: city.value, unit: priceUnit.value };
+  return { ...paginationQuery(), keyword: keywords.value, city: city.value, unit: priceUnit.value };
 }
 
 function resetQuery() {

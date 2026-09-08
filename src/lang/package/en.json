@@ -238,18 +238,11 @@
     "breakfastIncluded": "Breakfast included",
     "breakfastExcluded": "Breakfast not included",
     "meals": {
-      "lunch": "Lunch L included",
-      "dinner": "Dinner D included"
+      "breakfast": "Breakfast",
+      "lunch": "Lunch",
+      "dinner": "Dinner"
     },
     "selectMealResource": "Choose meal resource",
-    "shortcuts": {
-      "arrival": "Airport pickup",
-      "departure": "Airport transfer",
-      "free": "Free day",
-      "arrivalText": "Airport pickup, hotel transfer, check-in and rest.",
-      "departureText": "Airport transfer according to the flight schedule.",
-      "freeText": "Free day. Lunch and dinner at own expense."
-    },
     "guideCost": "Guide cost",
     "extraFees": "Not included in tour price",
     "chineseTip": "Chinese guide tips (full tour / person / RMB)",
@@ -285,7 +278,7 @@
       "transportFee": "Transport quote {index}: provide a route and price per person",
       "routeCity": "D{day}: choose route cities from itinerary destinations (except the first departure)."
     },
-    "breakfastMixed": "Breakfast B (by hotel option)",
+    "breakfastMixed": "Breakfast strategy varies",
     "feeDeparture": "Departure",
     "feeArrival": "Arrival",
     "cityGuides": "Guides by city",

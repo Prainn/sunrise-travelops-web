@@ -1,6 +1,7 @@
 <template>
   <div class="resource-page">
     <RestaurantTable
+      :total="total"
       :rows="restaurantStore"
       @refresh="loadRecords"
       @query-change="loadRecords"
@@ -68,6 +69,7 @@ const {
   record: restaurantForm,
   isDialogVisible: isRestaurantDialogVisible,
   isEditing,
+  total,
   loadRecords,
   openCreateDialog,
   openEditDialog,
@@ -94,7 +96,8 @@ async function loadRestaurantPrices(record: RestaurantRecord) {
   if (loadedRestaurantPriceIds.has(record.id) || loadingRestaurantPriceIds.has(record.id)) return;
   loadingRestaurantPriceIds.add(record.id);
   try {
-    await resourceService.loadRestaurantPrices(record.id);
+    record.prices = await resourceService.loadRestaurantPrices(record.id);
+    record.priceCount = record.prices.length;
     loadedRestaurantPriceIds.add(record.id);
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : String(error));

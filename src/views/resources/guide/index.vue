@@ -1,6 +1,7 @@
 <template>
   <div class="resource-page">
     <GuideTable
+      :total="total"
       :rows="guideStore"
       @refresh="loadRecords"
       @query-change="loadRecords"
@@ -43,6 +44,7 @@ const {
   record: guideForm,
   isDialogVisible,
   isEditing,
+  total,
   loadRecords,
   openCreateDialog: openCreateGuideDialog,
   openEditDialog: openEditGuideDialog,

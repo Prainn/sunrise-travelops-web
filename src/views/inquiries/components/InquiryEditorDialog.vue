@@ -185,9 +185,10 @@
 </template>
 
 <script setup lang="ts">
+import { resourceService } from "@/services/resource.service";
 import { plannedDuration } from "@/views/inquiries/itineraries/duration";
 import { computed, reactive, ref } from "vue";
-import type { FormInstance, FormRules } from "element-plus";
+import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { InquiryRecord } from "@/types/inquiry";
 import type { AgencyContactRecord, AgencyRecord } from "@/types/resource";
@@ -206,7 +207,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
   submit: [record: InquiryRecord];
-  "select-agency": [agencyId: string];
   "create-contact": [agencyId: string, name: string];
 }>();
 
@@ -233,6 +233,7 @@ const rules = computed<FormRules>(() => ({
 }));
 
 function resetForm() {
+  ++agencySelectionVersion;
   Object.assign(form, props.record);
   expandedDetails.value = props.isEditing ? ["followup"] : [];
   syncAgencyDetails();
@@ -252,9 +253,17 @@ function syncAgencyDetails() {
   });
 }
 
-function selectAgency(agencyId: string) {
-  const agency = props.agencyOptions.find((item) => item.id === agencyId);
-  if (!agency) return;
+let agencySelectionVersion = 0;
+async function selectAgency(agencyId: string) {
+  const version = ++agencySelectionVersion;
+  if (!agencyId) { Object.assign(form, { agencyId: "", agencyCode: "", agencyName: "", contactName: "", email: "", phone: "", countryOrRegion: "" }); return; }
+  let agency: AgencyRecord;
+  try { agency = await resourceService.agencyApi.getDetail(agencyId); }
+  catch { if (version === agencySelectionVersion) ElMessage.error(t("request.failed")); return; }
+  if (version !== agencySelectionVersion) return;
+  const index = resourceService.agencies.findIndex(item => item.id === agencyId);
+  if (index >= 0) resourceService.agencies.splice(index, 1, agency);
+  else resourceService.agencies.push(agency);
   Object.assign(form, {
     agencyId: agency.id,
     agencyCode: agency.code,
@@ -264,7 +273,7 @@ function selectAgency(agencyId: string) {
     phone: "",
     countryOrRegion: agency.countryOrRegion,
   });
-  emit("select-agency", agencyId);
+
 }
 
 function selectContact(contact: AgencyContactRecord) {

@@ -19,10 +19,11 @@
 </template>
 
 <script setup lang="ts">
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "./config";
 interface Props {
   /** 数据总条数 */
   total: number;
-  /** 每页条数选项，默认 [10, 20, 50, 100] */
+  /** 每页条数选项，默认 [10, 20, 50] */
   pageSizes?: number[];
   /** 分页布局，控制显示哪些子组件及其顺序 */
   layout?: string;
@@ -33,7 +34,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  pageSizes: () => [10, 20, 50, 100],
+  pageSizes: () => [...PAGE_SIZE_OPTIONS],
   layout: "total, sizes, prev, pager, next, jumper",
   background: true,
   hidden: false,
@@ -48,7 +49,7 @@ const emit = defineEmits<{
 const currentPage = defineModel<number>("page", { default: 1 });
 
 // 每页条数，双向绑定到父组件的 limit
-const pageSize = defineModel<number>("limit", { default: 10 });
+const pageSize = defineModel<number>("limit", { default: DEFAULT_PAGE_SIZE });
 
 // 数据总量变化后，若当前页超出最后一页，则回退到最后一页
 watch(

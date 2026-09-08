@@ -8,24 +8,14 @@
         class="guide-plans__row"
       >
         <span>{{ destination }}</span>
-        <el-select
+        <ResourceSelect
+          kind="guides"
           :model-value="selection(destination)?.guideId ?? ''"
+          :selected-label="selection(destination)?.guideName"
           :placeholder="$t('itinerary.noGuide')"
           :disabled="!editable"
-          filterable
           @update:model-value="emit('update-guide', destination, $event)"
-        >
-          <el-option
-            value=""
-            :label="$t('itinerary.noGuide')"
-          />
-          <el-option
-            v-for="guide in guides"
-            :key="guide.id"
-            :value="guide.id"
-            :label="`${guide.name} · ¥${formatMoney(guide.dailyPrice)}/${$t('itinerary.perDay')}`"
-          />
-        </el-select>
+        />
         <template v-if="selection(destination)">
           <el-form-item :label="$t('itinerary.guideServiceDates')">
             <el-select
@@ -35,7 +25,7 @@
               @update:model-value="emit('update-days', destination, $event)"
             >
               <el-option
-                v-for="day in dailyPlans"
+                v-for="day in getAvailableGuideDays(dailyPlans, plans, destination)"
                 :key="day.id"
                 :value="day.id"
                 :label="`D${day.dayNumber} · ${day.date} · ${day.departure} → ${day.destination}`"
@@ -49,10 +39,11 @@
   </section>
 </template>
 <script setup lang="ts">
+import { getAvailableGuideDays } from "../guide-plans";
 import type { ItineraryGuidePlan, ItineraryDayRecord } from "@/types/itinerary";
-import type { GuideRecord } from "@/types/resource";
+import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import { formatMoney } from "@/utils";
-const props = defineProps<{ destinations: string[]; dailyPlans: ItineraryDayRecord[]; plans: ItineraryGuidePlan[]; guides: GuideRecord[]; editable: boolean }>();
+const props = defineProps<{ destinations: string[]; dailyPlans: ItineraryDayRecord[]; plans: ItineraryGuidePlan[]; editable: boolean }>();
 const emit = defineEmits<{ 'update-guide': [destination: string, guideId: string]; 'update-days': [destination: string, days: string[]] }>();
 function selection(destination: string) { return props.plans.find((plan) => plan.destination === destination); }
 </script>

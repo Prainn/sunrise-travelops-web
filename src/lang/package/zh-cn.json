@@ -107,7 +107,7 @@
     "customerUnitPriceRequired": "必填",
     "dailyResources": "当日餐食与景点",
     "dayCountMismatch": "该询盘计划 {planned}天{plannedNights}晚，当前行程为 {actual}天{actualNights}晚，天数不一致。是否仍生成 PDF？",
-    "dailySchedule": "逐日行程",
+    "dailySchedule": "每日行程",
     "plannedDaysMismatchHint": "当前行程与询盘计划的 {plannedDuration} 不同，可继续保存。",
     "dateRangeInvalid": "结束日期不能早于开始日期",
     "dateRangeRequired": "请选择完整的出行日期",
@@ -238,18 +238,11 @@
     "breakfastIncluded": "含早餐",
     "breakfastExcluded": "不含早餐",
     "meals": {
-      "lunch": "含午餐 L",
-      "dinner": "含晚餐 D"
+      "breakfast": "早餐",
+      "lunch": "午餐",
+      "dinner": "晚餐"
     },
     "selectMealResource": "选择对应餐食",
-    "shortcuts": {
-      "arrival": "接机",
-      "departure": "送机",
-      "free": "自由活动",
-      "arrivalText": "接机后送往酒店，办理入住并休息。",
-      "departureText": "根据航班时间安排送机。",
-      "freeText": "全天自由活动，正餐自理。"
-    },
     "guideCost": "导游成本",
     "extraFees": "团费不包含",
     "chineseTip": "中文小费（全程每人／元）",
@@ -285,7 +278,7 @@
       "transportFee": "第 {index} 段交通报价：请填写区间和每人价格",
       "routeCity": "D{day}：出发地和到达地须从行程目的地中选择（首日出发地除外）"
     },
-    "breakfastMixed": "早餐 B（按酒店方案）",
+    "breakfastMixed": "早餐方案不统一",
     "feeDeparture": "出发",
     "feeArrival": "到达",
     "cityGuides": "城市导游",

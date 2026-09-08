@@ -1,3 +1,4 @@
+import { businessDictionaryService } from "@/services/business-dictionary.service";
 import { itineraryDuration } from "./duration";
 import { computed, ref } from "vue";
 import { useInquiryLog } from "@/composables/useInquiryLog";
@@ -8,7 +9,6 @@ import { formatDateTime, hasUserPermission, sumMoney } from "@/utils";
 import { isInquiryReadOnly } from "../inquiry-workflow";
 import { canPerformItineraryOperation } from "./itinerary-workflow";
 import { calculateItineraryQuote } from "./quote-pricing";
-import { getResourcePriceOptions, reconcileItineraryResourceReferences, type ResourcePriceOption } from "./pricing";
 import { useItineraryEditor } from "./useItineraryEditor";
 import { useItineraryPdf } from "./useItineraryPdf";
 import type { PdfValidationIssue } from "./workflow";
@@ -34,7 +34,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const resourceTargetDayId = ref("");
   const resourceMealSlot = ref<MealSlot | null>(null);
   const validationIssues = ref<PdfValidationIssue[]>([]);
-  const resourcePriceOptions = ref<ResourcePriceOption[]>([]);
   const inquiryReadOnly = computed(() => inquiry.value ? isInquiryReadOnly(inquiry.value.status) : true);
   const isDraft = computed(() => selectedItinerary.value?.status === "draft");
   const canCreateItinerary = computed(() => !inquiryReadOnly.value && hasUserPermission(userStore.userInfo, "itinerary:create"));
@@ -64,9 +63,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const dailyItems = computed(() => allItems.value.filter((item) => dailyItemTypes.has(item.type as ItineraryDailyItemType)));
   const dailyResourceCost = computed(() => sumMoney(dailyItems.value.map((item) => item.totalCost)));
   const itemCount = computed(() => dailyItems.value.length);
-  const hotelOptions = computed(() => resourceService.hotels.filter((hotel) => hotel.status === "enabled"));
-  const guideOptions = computed(() => resourceService.guides.filter((guide) => guide.status === "enabled"));
-  const vehicleOptions = computed(() => resourceService.transports.filter((vehicle) => vehicle.status === "enabled"));
   const destinationOptions = computed(() => resourceService.cityOptions.filter((city) => city.status === "enabled").map((city) => city.name));
   const quoteCalculation = computed(() => selectedItinerary.value
     ? calculateItineraryQuote(selectedItinerary.value, dailyResourceCost.value)
@@ -85,6 +81,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     findHotel: (id) => resourceService.hotels.find((hotel) => hotel.id === id),
     findVehicle: (id) => resourceService.transports.find((vehicle) => vehicle.id === id),
   });
+  const selectionVersions = new Map<string, number>();
   const itineraryForm = ref<ItineraryRecord>(editor.createEmptyItinerary());
   const pdf = useItineraryPdf({
     inquiry,
@@ -95,12 +92,69 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
 
   async function loadDestinationResourceOptions() {
     try {
-      await Promise.all([resourceService.loadCityOptions(), resourceService.loadHotels(), resourceService.loadTransports(), resourceService.loadGuides()]);
+      await Promise.all([
+        resourceService.loadCityOptions(),
+        businessDictionaryService.ensureBuiltInTypesLoaded(),
+      ]);
       return true;
     } catch {
       messages.error("request.failed");
       return false;
     }
+  }
+
+  async function selectGuideSelection(...args: Parameters<typeof editor.updateGuideSelection>) {
+    const id = args[args.length - 1] as string;
+    const key = 'GuideSelection:' + args.slice(0, -1).join(':');
+    const token = (selectionVersions.get(key) ?? 0) + 1;
+    selectionVersions.set(key, token);
+    const plan = selectedItinerary.value;
+    try {
+      if (id) {
+        const record = await resourceService.guideApi.getDetail(id);
+        if (selectionVersions.get(key) !== token || selectedItinerary.value !== plan) return;
+        const index = resourceService.guides.findIndex(item => item.id === id);
+        if (index >= 0) resourceService.guides.splice(index, 1, record);
+        else resourceService.guides.push(record);
+      }
+      editor.updateGuideSelection(...args);
+    } catch { messages.error("request.failed"); }
+  }
+
+  async function selectHotelPlanSelection(...args: Parameters<typeof editor.updateHotelPlanSelection>) {
+    const id = args[args.length - 1] as string;
+    const key = 'HotelPlanSelection:' + args.slice(0, -1).join(':');
+    const token = (selectionVersions.get(key) ?? 0) + 1;
+    selectionVersions.set(key, token);
+    const plan = selectedItinerary.value;
+    try {
+      if (id) {
+        const record = await resourceService.hotelApi.getDetail(id);
+        if (selectionVersions.get(key) !== token || selectedItinerary.value !== plan) return;
+        const index = resourceService.hotels.findIndex(item => item.id === id);
+        if (index >= 0) resourceService.hotels.splice(index, 1, record);
+        else resourceService.hotels.push(record);
+      }
+      editor.updateHotelPlanSelection(...args);
+    } catch { messages.error("request.failed"); }
+  }
+
+  async function selectVehiclePlanSelection(...args: Parameters<typeof editor.updateVehiclePlanSelection>) {
+    const id = args[args.length - 1] as string;
+    const key = 'VehiclePlanSelection:' + args.slice(0, -1).join(':');
+    const token = (selectionVersions.get(key) ?? 0) + 1;
+    selectionVersions.set(key, token);
+    const plan = selectedItinerary.value;
+    try {
+      if (id) {
+        const record = await resourceService.transportApi.getDetail(id);
+        if (selectionVersions.get(key) !== token || selectedItinerary.value !== plan) return;
+        const index = resourceService.transports.findIndex(item => item.id === id);
+        if (index >= 0) resourceService.transports.splice(index, 1, record);
+        else resourceService.transports.push(record);
+      }
+      editor.updateVehiclePlanSelection(...args);
+    } catch { messages.error("request.failed"); }
   }
 
   async function openCreateDialog() {
@@ -111,22 +165,9 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     isPlanDialogVisible.value = true;
   }
 
-  async function loadResourcePriceOptions() {
-    const resources = await resourceService.loadPricingResources();
-    resourcePriceOptions.value = getResourcePriceOptions(resources, guestCount.value)
-      .filter((option) => dailyItemTypes.has(option.type as ItineraryDailyItemType));
-    reconcileItineraryResourceReferences(itineraryStore, resourcePriceOptions.value);
-  }
-
   async function openEditDialog() {
     const plan = selectedItinerary.value;
     if (!plan || !canEditItineraryBasics.value) return;
-    try {
-      await loadResourcePriceOptions();
-    } catch {
-      messages.error("request.failed");
-      return;
-    }
     isEditingPlan.value = true;
     itineraryForm.value = { ...plan, dailyPlans: [...plan.dailyPlans] };
     isPlanDialogVisible.value = true;
@@ -170,12 +211,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
 
   async function openResourceDialog(dayId: string, mealSlot: MealSlot | null = null) {
     if (!contentEditable.value) return;
-    try {
-      await loadResourcePriceOptions();
-    } catch {
-      messages.error("request.failed");
-      return;
-    }
     resourceMealSlot.value = mealSlot;
     resourceTargetDayId.value = dayId;
     isResourceDialogVisible.value = true;
@@ -264,7 +299,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     resourceMealSlot,
     canDownloadOriginal: pdf.canDownloadOriginal,
     downloadOriginal: pdf.downloadOriginal,
-    updateGuideSelection: editor.updateGuideSelection,
+    updateGuideSelection: selectGuideSelection,
     updateGuideDays: editor.updateGuideDays,
     updateMeal: editor.updateMeal,
     updateQuoteSettings: editor.updateQuoteSettings,
@@ -279,11 +314,9 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     contentEditable,
     copyItinerary,
     createItinerary,
-    guideOptions,
     destinationOptions,
     duplicateDay: editor.duplicateDay,
     guestCount,
-    hotelOptions,
     handleGeneratePdf,
     inquiry,
     isEditingPlan,
@@ -301,7 +334,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     openResourceDialog,
     pdfPreviewUrl: pdf.pdfPreviewUrl,
     priceEditable,
-    resourcePriceOptions,
     quoteCalculation,
     removeDay,
     removeItem: editor.removeItem,
@@ -313,12 +345,11 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     submitItineraryPlan,
     updateDayField: editor.updateDayField,
     clearHotelPlan: editor.clearHotelPlan,
-    updateHotelPlanSelection: editor.updateHotelPlanSelection,
+    updateHotelPlanSelection: selectHotelPlanSelection,
     updateItemQuantity: editor.updateItemQuantity,
     updateQuoteOption: editor.updateQuoteOption,
-    updateVehiclePlanSelection: editor.updateVehiclePlanSelection,
+    updateVehiclePlanSelection: selectVehiclePlanSelection,
     updateVehiclePlanServiceDays: editor.updateVehiclePlanServiceDays,
     updateVehiclePlanUnitCost: editor.updateVehiclePlanUnitCost,
-    vehicleOptions,
   };
 }

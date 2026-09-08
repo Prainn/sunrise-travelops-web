@@ -228,16 +228,22 @@ function replaceRecords<T>(target: T[], records: T[]): T[] {
 }
 
 const loadVersions = new WeakMap<object, number>();
+const resourceTotals = new WeakMap<object, number>();
 
 async function loadResourceRecords<T>(target: T[], api: ResourceCrud<T>, query: ResourceListQuery = {}): Promise<T[]> {
   const version = (loadVersions.get(target) ?? 0) + 1;
   loadVersions.set(target, version);
-  const records = await fetchAll(api, query);
-  if (loadVersions.get(target) === version) return replaceRecords(target, records);
+  const result = query.page === undefined ? null : await api.getPage({ ...query });
+  const records = result ? result.list : await fetchAll(api, query);
+  if (loadVersions.get(target) === version) {
+    resourceTotals.set(target, result?.total ?? records.length);
+    return replaceRecords(target, records);
+  }
   return target;
 }
 
 export const resourceService = {
+  getTotal(records: object) { return resourceTotals.get(records) ?? 0; },
   cities,
   cityOptions,
   cityApi,
@@ -335,25 +341,25 @@ export const resourceService = {
     await businessDictionaryService.ensureBuiltInTypesLoaded();
     return loadResourceRecords(guides, guideApi, query);
   },
-  async loadPricingResources() {
-    await Promise.all([
-      this.loadHotels(),
-      this.loadRestaurants(),
-      this.loadAttractions(),
-      this.loadTransports(),
-      this.loadGuides(),
-    ]);
-    await Promise.all([
-      ...restaurants.map((restaurant) => this.loadRestaurantPrices(restaurant.id)),
-      ...attractions.map((attraction) => this.loadAttractionPrices(attraction.id)),
-    ]);
-    return {
-      hotels,
-      restaurants,
-      attractions,
-      transports,
-      guides,
-    };
+  async getSelectionOptions(kind: "hotels" | "transports" | "guides" | "agencies", query: ResourceQuery) {
+    return request.get<PageResult<{ id: string; name: string; code?: string; unitCost?: string; breakfastIncluded?: boolean; seats?: number; city?: string }>>(
+      `/resources/selections/${kind}`, { params: buildParams(query) }
+    );
+  },
+  async getPriceOptions(type: "restaurant" | "attraction", query: ResourceListQuery) {
+    const result = await request.get<PageResult<Omit<PriceSelectionItem, "unitCost"> & { unitCost: string }>>(
+      `/resources/selections/${type}-prices`, { params: buildParams({ ...query }) }
+    );
+    return { ...result, list: result.list.map(item => ({ ...item, unitCost: Number(item.unitCost) })) };
+  },
+  async getPriceSelection(type: "restaurant" | "attraction", id: string) {
+    const path = `/resources/selections/${type}-prices/${encodeURIComponent(id)}`;
+    if (type === "restaurant") {
+      const data = await request.get<{ resource: Omit<RestaurantRecord, "prices" | "priceCount">; price: ApiRecord<RestaurantPriceRecord> }>(path);
+      return { restaurants: [normalizeRestaurant({ ...data.resource, priceCount: 1, prices: [normalizeRestaurantPrice(data.price)] })], attractions: [], hotels: [], transports: [], guides: [] };
+    }
+    const data = await request.get<{ resource: Omit<AttractionRecord, "prices" | "priceCount">; price: ApiRecord<AttractionPriceRecord> }>(path);
+    return { attractions: [normalizeAttraction({ ...data.resource, priceCount: 1, prices: [normalizeAttractionPrice(data.price)] })], restaurants: [], hotels: [], transports: [], guides: [] };
   },
   hotelApi,
   restaurantApi: {
@@ -407,3 +413,13 @@ export const resourceService = {
 };
 
 export type { ResourceCrud };
+
+export interface PriceSelectionItem {
+  id: string;
+  resourceId: string;
+  resourceName: string;
+  priceName: string;
+  city: string;
+  unit: string;
+  unitCost: number;
+}

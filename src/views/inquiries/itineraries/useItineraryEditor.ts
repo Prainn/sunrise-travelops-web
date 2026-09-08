@@ -1,3 +1,4 @@
+import { getAvailableGuideDays } from "./guide-plans";
 import type { GuideRecord } from "@/types/resource";
 import { getDayBreakfastStatus } from "./hotel-plans";
 import type { ComputedRef, Ref } from "vue";
@@ -186,7 +187,8 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     if (!options.canEditContent() || !plan) return;
     const guide = plan.guidePlans.find((item) => item.destination === destination);
     if (guide) {
-      guide.dayIds = [...new Set(dayIds)].filter((id) => plan.dailyPlans.some((day) => day.id === id));
+      const available = new Set(getAvailableGuideDays(plan.dailyPlans, plan.guidePlans, destination).map(day => day.id));
+      guide.dayIds = [...new Set(dayIds)].filter(id => available.has(id));
       touchSelectedItinerary();
     }
   }

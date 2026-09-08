@@ -1,4 +1,4 @@
-import type { ItineraryItemType, ItineraryPriceUnit, ItineraryRecord, ItineraryResourceItem } from "@/types/itinerary";
+import type { ItineraryItemType, ItineraryPriceUnit, ItineraryResourceItem } from "@/types/itinerary";
 import type {
   AttractionRecord, GuideRecord, HotelRecord, RestaurantRecord, TransportRecord,
 } from "@/types/resource";
@@ -206,35 +206,6 @@ export function getResourcePriceOptions(resources: PricingResources, guestCount 
       searchText: `${guide.name} ${guide.languages.join(" ")}`,
     })),
   ];
-}
-
-export function reconcileItineraryResourceReferences(
-  itineraries: ItineraryRecord[],
-  options: ResourcePriceOption[]
-): number {
-  let unresolvedCount = 0;
-  itineraries.flatMap((itinerary) => itinerary.dailyPlans.flatMap((day) => day.items)).forEach((item) => {
-    const exact = options.find((option) => (
-      option.type === item.type
-      && option.resourceId === item.resourceId
-      && option.resourcePriceId === item.resourcePriceId
-    ));
-    if (exact) return;
-
-    let matches = options.filter((option) => option.type === item.type && option.resourceName === item.resourceName);
-    if (matches.length > 1) matches = matches.filter((option) => option.priceName === item.priceName);
-    if (matches.length > 1) matches = matches.filter((option) => option.unitCost === item.unitCost);
-    if (matches.length !== 1) {
-      unresolvedCount += 1;
-      return;
-    }
-
-    const match = matches[0];
-    item.resourceId = match.resourceId;
-    item.resourcePriceId = match.resourcePriceId;
-    if (item.type === "vehicle") item.referenceUnitCost = match.unitCost;
-  });
-  return unresolvedCount;
 }
 
 export function calculateItem(

@@ -37,7 +37,11 @@
     </el-card>
 
     <HotelTable
+      v-model:page="pageNum"
+      v-model:limit="pageSize"
+      :total="total"
       :rows="hotelStore"
+      @pagination="refreshHotels"
       @refresh="refreshHotels"
       @create="openCreateDialog"
       @edit="openEditDialog"
@@ -169,6 +173,7 @@
 </template>
 
 <script setup lang="ts">
+import { useResourcePagination } from "../useResourcePagination";
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import type { FormInstance, FormRules } from "element-plus";
@@ -186,7 +191,7 @@ type HotelForm = HotelRecord;
 defineOptions({ name: "Hotel" });
 
 const { t, locale } = useI18n();
-const hotelStore = reactive(resourceService.hotels);
+const hotelStore = reactive<HotelRecord[]>([]);
 const keywords = ref("");
 const city = ref("");
 const isHotelDialogVisible = ref(false);
@@ -195,6 +200,8 @@ const hotelFormRef = ref<FormInstance>();
 const hotelForm = reactive<HotelForm>(createEmptyHotel());
 const isEditing = computed(() => Boolean(editingId.value));
 const cityOptions = useCityOptions();
+const { pageNum, pageSize, paginationQuery } = useResourcePagination();
+const total = ref(0);
 const hotelUnitOptions = computed(() => getResourceUnitOptions("hotel", locale.value));
 const requestHotels = useDebounceFn(() => loadHotels(currentQuery()), 300);
 const hotelRules: FormRules = {
@@ -206,15 +213,20 @@ const hotelRules: FormRules = {
 
 onMounted(loadHotels);
 
-watch([keywords, city], () => requestHotels());
+watch([keywords, city], () => {
+  pageNum.value = 1;
+  requestHotels();
+});
 
 function currentQuery(): ResourceListQuery {
-  return { keyword: keywords.value, city: city.value };
+  return { ...paginationQuery(), keyword: keywords.value, city: city.value };
 }
 
 async function loadHotels(query?: ResourceListQuery) {
   try {
-    await resourceService.loadHotels(query);
+    const records = await resourceService.loadHotels(query ?? currentQuery());
+    hotelStore.splice(0, hotelStore.length, ...records);
+    total.value = resourceService.getTotal(resourceService.hotels);
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : String(error));
   }

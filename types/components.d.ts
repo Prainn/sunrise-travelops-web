@@ -114,6 +114,7 @@ declare module 'vue' {
     LayoutToolbar: typeof import('./../src/layouts/components/LayoutToolbar.vue')['default']
     Pagination: typeof import('./../src/components/Pagination/index.vue')['default']
     ResourceEditorDialog: typeof import('./../src/views/resources/components/ResourceEditorDialog.vue')['default']
+    ResourceSelect: typeof import('./../src/components/ResourceSelect/index.vue')['default']
     ResourceTable: typeof import('./../src/views/resources/components/ResourceTable.vue')['default']
     RestaurantEditorDialog: typeof import('./../src/views/resources/restaurant/components/RestaurantEditorDialog.vue')['default']
     RestaurantPriceDialog: typeof import('./../src/views/resources/restaurant/components/RestaurantPriceDialog.vue')['default']

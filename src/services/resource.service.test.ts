@@ -109,6 +109,16 @@ describe("resourceService", () => {
     expect(requestMock).not.toHaveBeenCalledWith(expect.stringMatching(/\/(contacts|prices)$/));
   });
 
+  it.each([10, 20, 50])("requests only the selected city page with pageSize %i and keeps the API total", async (pageSize) => {
+    const city = { id: "city-1", code: "CITY-001", name: "昆明", province: "云南省", status: "enabled" };
+    requestMock.mockResolvedValue({ list: [city], total: 123, page: 2, pageSize });
+    await resourceService.loadCities({ page: 2, pageSize, keyword: "昆明" });
+    expect(requestMock).toHaveBeenCalledTimes(1);
+    expect(requestMock).toHaveBeenCalledWith(`/resources/cities?page=2&pageSize=${pageSize}&keyword=${encodeURIComponent("昆明")}`);
+    expect(resourceService.cities).toEqual([city]);
+    expect(resourceService.getTotal(resourceService.cities)).toBe(123);
+  });
+
   it("loads child resources only for the requested parent", async () => {
     resourceService.agencies.push(agency);
     resourceService.restaurants.push(restaurant);
@@ -209,30 +219,18 @@ describe("resourceService", () => {
     expect(requestMock).toHaveBeenCalledWith("/resources/suppliers/options");
   });
 
-  it("loads itinerary pricing resources and their child prices from APIs", async () => {
-    const restaurantPrice = { id: "price-1", version: 1, menuName: "套餐", dishDetails: "", unit: "table", price: "600.00", dinerCount: 10, remark: "" };
-    const attractionPrice = { id: "price-2", version: 1, itemType: "ticket", itemName: "门票", audience: "成人", periodName: "常规期", startDate: null, endDate: null, rackPrice: "100.00", settlementPrice: "80.00", unit: "personVisit", isFree: false, priceNote: "" };
-    requestMock.mockImplementation(async (path) => {
-      if (path === "/resources/suppliers/options") return [{ id: supplier.id, code: supplier.code, name: supplier.name }];
-      if (path.startsWith("/resources/hotels?")) return { list: [{ ...hotel, individualPrice: "300.00", groupPrice: "260.00" }], total: 1, page: 1, pageSize: 100 };
-      if (path.startsWith("/resources/restaurants?")) return { list: [{ ...restaurant, prices: undefined }], total: 1, page: 1, pageSize: 100 };
-      if (path.startsWith("/resources/attractions?")) return { list: [{ ...attraction, prices: undefined }], total: 1, page: 1, pageSize: 100 };
-      if (path.startsWith("/resources/transports?")) return { list: [{ ...transport, dailyPrice: "800.00" }], total: 1, page: 1, pageSize: 100 };
-      if (path.startsWith("/resources/guides?")) return { list: [{ ...guide, dailyPrice: "500.00" }], total: 1, page: 1, pageSize: 100 };
-      if (path === `/resources/restaurants/${restaurant.id}/prices`) return [restaurantPrice];
-      if (path === `/resources/attractions/${attraction.id}/prices`) return [attractionPrice];
-      return [];
-    });
-
-    const resources = await resourceService.loadPricingResources();
-
-    expect(resources.hotels[0].individualPrice).toBe(300);
-    expect(resources.restaurants[0].prices[0].price).toBe(600);
-    expect(resources.attractions[0].prices[0].settlementPrice).toBe(80);
-    expect(resources.transports[0].dailyPrice).toBe(800);
-    expect(resources.guides[0].dailyPrice).toBe(500);
-    expect(requestMock).toHaveBeenCalledWith(`/resources/restaurants/${restaurant.id}/prices`);
-    expect(requestMock).toHaveBeenCalledWith(`/resources/attractions/${attraction.id}/prices`);
+  it("loads only one page of price options and the selected detail", async () => {
+    const price = { id: "price-1", version: 1, menuName: "套餐", dishDetails: "", unit: "table", price: "600.00", dinerCount: 10, remark: "" };
+    requestMock.mockResolvedValueOnce({ list: [{ id: price.id, resourceId: restaurant.id, resourceName: restaurant.name, priceName: price.menuName, city: restaurant.city, unit: "table", unitCost: "600.00" }], total: 44, page: 1, pageSize: 10 });
+    const result = await resourceService.getPriceOptions("restaurant", { page: 1, pageSize: 10 });
+    expect(result.list[0].unitCost).toBe(600);
+    expect(requestMock).toHaveBeenCalledTimes(1);
+    expect(requestMock).toHaveBeenLastCalledWith("/resources/selections/restaurant-prices?page=1&pageSize=10");
+    requestMock.mockResolvedValueOnce({ resource: restaurant, price });
+    const selected = await resourceService.getPriceSelection("restaurant", price.id);
+    expect(selected.restaurants[0].prices[0].price).toBe(600);
+    expect(requestMock).toHaveBeenCalledTimes(2);
+    expect(requestMock).toHaveBeenLastCalledWith("/resources/selections/restaurant-prices/price-1");
   });
 });
 

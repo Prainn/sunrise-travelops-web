@@ -70,6 +70,7 @@ const {
   saveRecord: saveAgencyRecord,
   deleteRecord,
 } = useResourceMaintenance<AgencyRecord>({
+  paginated: false,
   records: resourceService.agencies,
   api: resourceService.agencyApi,
   loadRecords: loadAgencies,

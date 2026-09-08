@@ -52,26 +52,15 @@
                 :key="destination"
               >
                 <span>{{ destination }}</span>
-                <el-select
+                <ResourceSelect
+                  kind="hotels"
                   :model-value="getHotelSelectionId(tier, destination)"
+                  :selected-label="getPlan(tier)?.hotels.find(hotel => hotel.destination === destination)?.hotelName"
+                  :filters="{ city: destination, rating: tier === 'international_five_star' ? tier : 'ctrip_preferred', guestCount }"
                   :disabled="!editable"
-                  clearable
-                  filterable
                   :placeholder="$t('itinerary.selectDestinationHotel')"
                   @update:model-value="emit('update-hotel-selection', tier, destination, $event)"
-                >
-                  <el-option
-                    v-for="hotel in getHotelOptions(tier, destination)"
-                    :key="hotel.id"
-                    :label="`${hotel.name}｜${$t(hotel.breakfastIncluded ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded')}｜¥${formatMoney(getHotelUnitCost(hotel, guestCount))}`"
-                    :value="hotel.id"
-                  >
-                    <div class="itinerary-hotel-vehicle-plans__option">
-                      <span>{{ hotel.name }}｜{{ $t(hotel.breakfastIncluded ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded') }}</span>
-                      <strong>¥{{ formatMoney(getHotelUnitCost(hotel, guestCount)) }}</strong>
-                    </div>
-                  </el-option>
-                </el-select>
+                />
               </label>
             </div>
           </article>
@@ -110,27 +99,15 @@
             <div class="itinerary-hotel-vehicle-plans__vehicle-body">
               <label class="itinerary-hotel-vehicle-plans__vehicle-select">
                 <span>{{ $t("itinerary.vehicleModel") }}</span>
-                <el-select
+                <ResourceSelect
+                  kind="transports"
                   :model-value="findVehiclePlan(tier)?.vehicle?.vehicleId ?? ''"
+                  :selected-label="findVehiclePlan(tier)?.vehicle?.vehicleName"
+                  :filters="{ serviceLevel: tier, guestCount }"
                   :disabled="!editable"
-                  clearable
-                  filterable
                   :placeholder="$t('itinerary.selectVehicle')"
-                  :no-data-text="$t('itinerary.noMatchingVehicles')"
                   @update:model-value="emit('update-vehicle', tier, $event)"
-                >
-                  <el-option
-                    v-for="vehicle in getVehicleOptions(tier)"
-                    :key="vehicle.id"
-                    :label="`${vehicle.name}｜${vehicle.seats}座｜${vehicle.city}`"
-                    :value="vehicle.id"
-                  >
-                    <div class="itinerary-hotel-vehicle-plans__option">
-                      <span>{{ vehicle.name }}｜{{ vehicle.seats }}座｜{{ vehicle.city }}</span>
-                      <strong>¥{{ formatMoney(vehicle.dailyPrice) }}</strong>
-                    </div>
-                  </el-option>
-                </el-select>
+                />
               </label>
 
               <div
@@ -181,6 +158,7 @@
 </template>
 
 <script setup lang="ts">
+import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import { destinationDuration, itineraryDuration } from "@/views/inquiries/itineraries/duration";
 import type {
   ItineraryHotelPlan,
@@ -189,11 +167,9 @@ import type {
   ItineraryVehiclePlan,
   ItineraryVehicleTier,
 } from "@/types/itinerary";
-import type { HotelRecord, TransportRecord } from "@/types/resource";
 import { computed } from "vue";
 import { formatMoney } from "@/utils";
-import { getHotelUnitCost } from "../pricing";
-import { getHotelPlan, HOTEL_PLAN_TIERS, isHotelEligibleForTier } from "../hotel-plans";
+import { getHotelPlan, HOTEL_PLAN_TIERS } from "../hotel-plans";
 import {
   calculateVehicleSubtotal,
   getVehiclePlan,
@@ -205,8 +181,6 @@ const props = defineProps<{
   dailyPlans: ItineraryDayRecord[];
   hotelPlans: ItineraryHotelPlan[];
   vehiclePlans: ItineraryVehiclePlan[];
-  hotels: HotelRecord[];
-  vehicles: TransportRecord[];
   guestCount: number;
   editable: boolean;
 }>();
@@ -229,25 +203,10 @@ function getHotelSelectionId(tier: ItineraryHotelTier, destination: string) {
   return getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)?.hotelId ?? "";
 }
 
-function getHotelOptions(tier: ItineraryHotelTier, destination: string) {
-  return props.hotels.filter((hotel) => (
-    hotel.status === "enabled"
-    && hotel.city === destination
-    && isHotelEligibleForTier(hotel, tier)
-  ));
-}
-
 function findVehiclePlan(tier: ItineraryVehicleTier) {
   return getVehiclePlan({ vehiclePlans: props.vehiclePlans }, tier);
 }
 
-function getVehicleOptions(tier: ItineraryVehicleTier) {
-  return props.vehicles.filter((vehicle) => (
-    vehicle.status === "enabled"
-    && vehicle.serviceLevel === tier
-    && vehicle.seats >= props.guestCount
-  ));
-}
 </script>
 
 <style scoped lang="scss">

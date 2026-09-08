@@ -6,6 +6,8 @@ const { confirm, success, error } = vi.hoisted(() => ({
   error: vi.fn(),
 }));
 
+vi.mock("@/services/resource.service", () => ({ resourceService: { getTotal: () => 123 } }));
+
 vi.mock("element-plus", () => ({
   ElMessage: { success, error },
   ElMessageBox: { confirm },
@@ -45,6 +47,7 @@ describe("resource maintenance", () => {
     };
     const loadRecords = vi.fn(async () => records);
     const maintenance = useResourceMaintenance<TestResource>({
+      paginated: false,
       records,
       api,
       loadRecords,
@@ -94,6 +97,21 @@ describe("resource maintenance", () => {
     await maintenance.saveRecord({ ...maintenance.record.value, name: "Updated" });
     expect(api.update).toHaveBeenCalledWith(original.id, expect.objectContaining({ name: "Updated" }));
     expect(api.create).not.toHaveBeenCalled();
+  });
+
+  it("defaults to API pages of ten and isolates table rows from full catalogue loads", async () => {
+    const records: TestResource[] = [{ ...createEmpty(), id: "resource-1", code: "TST-001" }];
+    const loadRecords = vi.fn(async () => records);
+    const api = { getPage: vi.fn(), getDetail: vi.fn(), create: vi.fn(), update: vi.fn(), deleteByIds: vi.fn() };
+    const maintenance = useResourceMaintenance({ records, api, loadRecords, codePrefix: "TST", createEmpty });
+    await maintenance.loadRecords();
+    expect(loadRecords).toHaveBeenLastCalledWith({ page: 1, pageSize: 10 });
+    expect(maintenance.total.value).toBe(123);
+    records.push({ ...createEmpty(), id: "catalogue-only" });
+    expect(maintenance.rows).toHaveLength(1);
+    await maintenance.loadRecords({ page: 2, pageSize: 20, keyword: "search" });
+    await maintenance.loadRecords();
+    expect(loadRecords).toHaveBeenLastCalledWith({ page: 2, pageSize: 20, keyword: "search" });
   });
 
 });

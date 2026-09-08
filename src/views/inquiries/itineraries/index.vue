@@ -6,7 +6,7 @@
           class="itinerary-page__overview rounded-0! border-0!"
           shadow="never"
         >
-          <el-page-header @back="router.back()">
+          <el-page-header @back="router.push('/inquiries/list')">
             <template #content>
               <el-select
                 v-if="selectedItinerary"
@@ -81,8 +81,6 @@
             :daily-plans="selectedItinerary.dailyPlans"
             :hotel-plans="selectedItinerary.hotelPlans"
             :vehicle-plans="selectedItinerary.vehiclePlans"
-            :hotels="hotelOptions"
-            :vehicles="vehicleOptions"
             :guest-count="guestCount"
             :editable="contentEditable"
             @clear-hotel-plan="clearHotelPlan"
@@ -95,7 +93,6 @@
             :destinations="selectedItinerary.destinations"
             :plans="selectedItinerary.guidePlans"
             :daily-plans="selectedItinerary.dailyPlans"
-            :guides="guideOptions"
             :editable="contentEditable"
             @update-guide="updateGuideSelection"
             @update-days="updateGuideDays"
@@ -183,7 +180,6 @@
       <ItineraryResourceDialog
         v-model="isResourceDialogVisible"
         :guest-count="guestCount"
-        :options="resourcePriceOptions"
         :meal-slot="resourceMealSlot"
         @submit="addResourceItem"
       />
@@ -321,14 +317,14 @@ async function confirmAction(key: string, params: Record<string, unknown> = {}) 
 
 const {
   addDay, addResourceItem, canCreateItinerary, canEditItineraryBasics, canGeneratePdf, canSaveItinerary, contentEditable, copyItinerary,
-  closePdfPreview, confirmPdfDownload, destinationOptions, duplicateDay, guestCount, handleGeneratePdf, hotelOptions, inquiry, isGeneratingPdf,
+  closePdfPreview, confirmPdfDownload, destinationOptions, duplicateDay, guestCount, handleGeneratePdf, inquiry, isGeneratingPdf,
   isEditingPlan, isPdfPreviewVisible, isPlanDialogVisible, isResourceDialogVisible,
   isDraft, itemCount, itineraryForm, loadDestinationResourceOptions, moveDay, openCreateDialog, openResourceDialog, priceEditable, quoteCalculation,
   openEditDialog, pdfPreviewUrl, removeDay, removeItem, router, rows, saveItinerary, selectedItinerary, selectedItineraryId,
-  resourcePriceOptions, vehicleOptions, resourceMealSlot, updateMeal, updateQuoteSettings,
+  resourceMealSlot, updateMeal, updateQuoteSettings,
   validationIssues, canDownloadOriginal, downloadOriginal,
   submitItineraryPlan,
-  guideOptions, updateGuideSelection, updateGuideDays, clearHotelPlan, updateDayField, updateHotelPlanSelection, updateItemQuantity, updateQuoteOption,
+  updateGuideSelection, updateGuideDays, clearHotelPlan, updateDayField, updateHotelPlanSelection, updateItemQuantity, updateQuoteOption,
   updateVehiclePlanSelection, updateVehiclePlanServiceDays, updateVehiclePlanUnitCost,
 } = useItineraryWorkspace({
   confirm: confirmAction,

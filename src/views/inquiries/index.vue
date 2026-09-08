@@ -32,7 +32,6 @@
       :owner-options="ownerOptions"
       :operations-coordinator-options="operationsCoordinatorOptions"
       :source-options="sourceOptions"
-      @select-agency="loadAgencyContacts"
       @create-contact="createAgencyContact"
       @submit="saveInquiry"
     />
@@ -44,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
@@ -99,20 +98,6 @@ const pagedInquiries = computed(() => filteredInquiries.value.slice(
   pageNum.value * pageSize.value
 ));
 
-onMounted(loadAgencies);
-
-async function loadAgencies() {
-  try {
-    const agencies = await resourceService.loadAgencies();
-    inquiryStore.forEach((inquiry) => {
-      const agency = agencies.find((item) => item.code === inquiry.agencyCode);
-      if (agency) inquiry.agencyId = agency.id;
-    });
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
-  }
-}
-
 function getEnabledCoordinatorNames(role: "INQUIRY_COORDINATOR" | "OPERATIONS_COORDINATOR") {
   return staffDirectoryService.users
     .filter((user) => user.status === "enabled" && user.roles.includes(role))
@@ -155,7 +140,13 @@ function openCreateDialog() {
 
 async function openEditDialog(record: InquiryRecord) {
   if (isInquiryReadOnly(record.status)) return;
-  if (record.agencyId) await loadAgencyContacts(record.agencyId);
+  try {
+    if (record.agencyCode) {
+      const options = await resourceService.getSelectionOptions("agencies", { page: 1, pageSize: 10, code: record.agencyCode });
+      if (options.list[0]) record.agencyId = options.list[0].id;
+    }
+    if (record.agencyId) await loadAgencyContacts(record.agencyId);
+  } catch { ElMessage.error(t("request.failed")); return; }
   editingId.value = record.id;
   inquiryForm.value = { ...record };
   isEditorVisible.value = true;
@@ -164,7 +155,10 @@ async function openEditDialog(record: InquiryRecord) {
 async function loadAgencyContacts(agencyId: string) {
   if (loadedContactAgencyIds.has(agencyId)) return;
   try {
-    await resourceService.loadAgencyContacts(agencyId);
+    const agency = await resourceService.agencyApi.getDetail(agencyId);
+    const index = resourceService.agencies.findIndex(item => item.id === agencyId);
+    if (index >= 0) resourceService.agencies.splice(index, 1, agency);
+    else resourceService.agencies.push(agency);
     loadedContactAgencyIds.add(agencyId);
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : t("request.failed"));

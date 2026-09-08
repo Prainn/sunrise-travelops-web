@@ -1,6 +1,7 @@
 <template>
   <div class="resource-page">
     <ResourceTable
+      :total="total"
       :rows="tableRows"
       :columns="columns"
       :permissions="RESOURCE_PERMISSIONS.transport"
@@ -111,7 +112,7 @@ const fields = computed<ResourceFormField[]>(() => [
     "type": "textarea"
   }
 ]);
-const { rows, record, isDialogVisible, isEditing, loadRecords, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<TransportRecord>({
+const { rows, total, record, isDialogVisible, isEditing, loadRecords, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<TransportRecord>({
   records: resourceService.transports,
   api: resourceService.transportApi,
   loadRecords: (query) => resourceService.loadTransports(query),

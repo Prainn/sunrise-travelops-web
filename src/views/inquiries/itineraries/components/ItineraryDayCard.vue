@@ -71,7 +71,12 @@
       </el-button>
     </div>
     <div class="day-card__meals">
-      <el-tag>{{ $t(breakfastStatus === 'pending' ? 'itinerary.breakfastPending' : breakfastStatus === 'mixed' ? 'itinerary.breakfastMixed' : breakfastStatus === 'included' ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded') }}</el-tag>
+      <el-tag
+        :type="breakfastStatus === 'included' ? 'success' : breakfastStatus === 'excluded' ? 'info' : 'warning'"
+        :title="$t(breakfastStatus === 'pending' ? 'itinerary.breakfastPending' : breakfastStatus === 'mixed' ? 'itinerary.breakfastMixed' : breakfastStatus === 'included' ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded')"
+      >
+        {{ $t(breakfastStatus === 'pending' ? 'itinerary.breakfastPending' : breakfastStatus === 'mixed' ? 'itinerary.breakfastMixed' : breakfastStatus === 'included' ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded') }}
+      </el-tag>
       <div
         v-for="slot in ['lunch', 'dinner'] as const"
         :key="slot"
@@ -107,14 +112,14 @@
       >
         <template #default="scope">
           <div class="day-card__resource-name">
+            <el-tag
+              v-if="scope.row.mealSlot"
+              size="small"
+            >
+              {{ $t(`itinerary.meals.${scope.row.mealSlot}`) }}
+            </el-tag>
             {{ scope.row.resourceName }}
           </div>
-          <el-tag
-            v-if="scope.row.mealSlot"
-            size="small"
-          >
-            {{ $t(`itinerary.meals.${scope.row.mealSlot}`) }}
-          </el-tag>
           <small>{{ scope.row.priceName }}</small>
         </template>
       </el-table-column>

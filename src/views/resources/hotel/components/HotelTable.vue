@@ -135,6 +135,13 @@
         </el-table-column>
       </el-table>
     </div>
+    <pagination
+      v-if="total > 0"
+      v-model:page="page"
+      v-model:limit="limit"
+      :total="total"
+      @pagination="emit('pagination')"
+    />
   </el-card>
 </template>
 
@@ -147,15 +154,19 @@ import { getResourceUnitName } from "@/utils/resource-unit";
 
 defineProps<{
   rows: HotelRecord[];
+  total: number;
 }>();
 
 const emit = defineEmits<{
   refresh: [];
+  pagination: [];
   create: [];
   edit: [hotel: HotelRecord];
   delete: [hotel: HotelRecord];
   "toggle-status": [hotel: HotelRecord];
 }>();
 
+const page = defineModel<number>("page", { required: true });
+const limit = defineModel<number>("limit", { required: true });
 const { locale } = useI18n();
 </script>
