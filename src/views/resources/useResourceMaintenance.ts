@@ -1,9 +1,8 @@
 import { computed, onMounted, reactive, ref, type Ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import type { ResourceStatus, TourismResourceRecord } from "@/types/resource";
+import type { ResourceListQuery, ResourceStatus, TourismResourceRecord } from "@/types/resource";
 import type { ResourceCrud } from "@/services/resource.service";
-import { generateNextCode } from "@/utils";
 
 interface ResourceMaintenanceRecord {
   id: string;
@@ -16,7 +15,7 @@ interface ResourceMaintenanceOptions<T extends ResourceMaintenanceRecord> {
   codePrefix: string;
   createEmpty: () => T;
   api: ResourceCrud<T>;
-  loadRecords: () => Promise<T[]>;
+  loadRecords: (query?: ResourceListQuery) => Promise<T[]>;
   cloneForEdit?: (record: T) => T;
   createRecord?: (record: T, id: string) => T;
   updateRecord?: (current: T, record: T) => void;
@@ -37,10 +36,12 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
   const editingId = ref("");
   const record = ref<T>(options.createEmpty()) as Ref<T>;
   const isEditing = computed(() => Boolean(editingId.value));
+  let activeQuery: ResourceListQuery | undefined;
 
-  async function loadRecords() {
+  async function loadRecords(query?: ResourceListQuery) {
+    if (query !== undefined) activeQuery = query;
     try {
-      await options.loadRecords();
+      await options.loadRecords(activeQuery);
     } catch (error) {
       ElMessage.error(error instanceof Error ? error.message : String(error));
     }
@@ -50,7 +51,7 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
     editingId.value = "";
     record.value = {
       ...options.createEmpty(),
-      code: generateNextCode(rows, options.codePrefix),
+      code: `${options.codePrefix}-${crypto.randomUUID()}`,
     };
     isDialogVisible.value = true;
   }
@@ -73,6 +74,7 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
         status: row.status === "enabled" ? "disabled" : "enabled",
       });
       Object.assign(row, updated);
+      await loadRecords();
       ElMessage.success(t("common.updateSuccess"));
     } catch (error) {
       ElMessage.error(error instanceof Error ? error.message : String(error));
@@ -82,17 +84,18 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
   async function saveRecord(value: T) {
     try {
       const current = rows.find((item) => item.id === editingId.value);
-      const saved = current
-        ? await options.api.update(current.id, value)
+      const saved = editingId.value
+        ? await options.api.update(editingId.value, value)
         : await options.api.create(value);
       if (current) {
         if (options.updateRecord) options.updateRecord(current, saved);
         else Object.assign(current, saved);
-      } else {
+      } else if (!editingId.value) {
         rows.push(options.createRecord?.(saved, saved.id) ?? saved);
       }
+      await loadRecords();
       isDialogVisible.value = false;
-      ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
+      ElMessage.success(t(editingId.value ? "common.updateSuccess" : "common.createSuccess"));
     } catch (error) {
       ElMessage.error(error instanceof Error ? error.message : String(error));
     }
@@ -113,6 +116,7 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
       await options.api.deleteByIds(row.id);
       const index = rows.findIndex((item) => item.id === row.id);
       if (index >= 0) rows.splice(index, 1);
+      await loadRecords();
       ElMessage.success(t("common.deleteSuccess"));
     } catch (error) {
       ElMessage.error(error instanceof Error ? error.message : String(error));

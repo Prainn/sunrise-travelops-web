@@ -210,7 +210,6 @@ async function saveInquiry(record: InquiryRecord) {
     const isMarkingLost = record.status === "lost" && current.status !== "lost";
     let nextStatus = current.status;
     if (isMarkingLost) nextStatus = transitionInquiry(current.status, "mark_lost");
-    else if (record.status === "planning" && current.status === "quoted") nextStatus = transitionInquiry(current.status, "reopen_for_planning");
     Object.assign(current, record, { status: nextStatus });
     await recordInquiryLog({
       inquiryId: current.id,

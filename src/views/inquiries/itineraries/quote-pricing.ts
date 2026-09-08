@@ -30,7 +30,11 @@ export function createDefaultQuoteOption(
 }
 
 export function createDefaultQuoteSettings(): ItineraryQuoteSettings {
-  return { options: [] };
+  return {
+    options: [], chineseTip: null, englishTip: null, transportFees: [],
+    customerNotes: "", holidayRestrictions: "",
+    hotelReplacementTerms: "如所列酒店满房，将调整为同级酒店。",
+  };
 }
 
 export function calculateHotelRoomCount(itinerary: Pick<ItineraryRecord, "adults" | "childrenCount">) {
@@ -39,9 +43,10 @@ export function calculateHotelRoomCount(itinerary: Pick<ItineraryRecord, "adults
 }
 
 export function calculateItineraryQuote(
-  itinerary: Pick<ItineraryRecord, "adults" | "childrenCount" | "hotelPlans" | "vehiclePlans" | "quote" | "dailyPlans">,
+  itinerary: Pick<ItineraryRecord, "adults" | "childrenCount" | "hotelPlans" | "vehiclePlans" | "quote" | "dailyPlans" | "guidePlans">,
   dailyResourceCost: number
 ): ItineraryQuoteCalculation {
+  const guideCost = sumMoney(itinerary.guidePlans.map((plan) => multiplyMoney(plan.dailyPrice, plan.dayIds.length)));
   const hotelGuestCount = itinerary.adults + itinerary.childrenCount;
   const normalizedDailyResourceCost = roundMoney(dailyResourceCost);
   const adultEquivalentCount = itinerary.adults + itinerary.childrenCount * CHILD_RATE / 100;
@@ -51,10 +56,11 @@ export function calculateItineraryQuote(
     hotelGuestCount,
     hotelRoomCount,
     dailyResourceCost: normalizedDailyResourceCost,
+    guideCost,
     options: itinerary.quote.options.map((option) => calculateQuoteOption(
       option,
       itinerary,
-      normalizedDailyResourceCost,
+      sumMoney([normalizedDailyResourceCost, guideCost]),
       hotelRoomCount,
       adultEquivalentCount
     )),

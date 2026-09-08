@@ -19,6 +19,16 @@ export interface ResourceQueryParams {
   status?: ResourceStatus;
 }
 
+export interface ResourceListQuery extends Partial<ResourceQueryParams> {
+  city?: string;
+  unit?: string;
+  area?: string;
+  category?: AttractionCategory;
+  gender?: GuideGender;
+  employmentType?: GuideEmploymentType;
+  language?: string;
+}
+
 export interface AgencyContactRecord extends ResourceAuditRecord {
   id: string;
   agencyId?: string;
@@ -85,6 +95,10 @@ export interface ResourceRecord extends ResourceAuditRecord {
   status: ResourceStatus;
 }
 
+export interface CityRecord extends ResourceRecord {
+  province: string;
+}
+
 export interface TourismResourceRecord extends ResourceRecord {
   city: string;
   countryOrRegion: string;
@@ -120,11 +134,11 @@ export interface HotelRecord extends ResourceAuditRecord {
   city: string;
   rating: HotelRating;
   facilities: string;
+  breakfastIncluded: boolean;
   breakfast: string;
   address: string;
   phone: string;
   nearby: string;
-  basicRoomType: string;
   individualPrice: number;
   groupPrice: number | null;
   minimumGroupSize: number | null;
@@ -149,8 +163,6 @@ export interface AttractionPriceRecord extends ResourceAuditRecord {
   unit: ItineraryPriceUnit;
   isFree: boolean;
   priceNote: string;
-  isGroundOperatorProvided: boolean;
-  groundOperatorId: string;
 }
 
 export interface AttractionRecord extends ResourceAuditRecord {
@@ -201,8 +213,6 @@ export interface RestaurantPriceRecord extends ResourceAuditRecord {
   price: number;
   dinerCount: number;
   remark: string;
-  isGroundOperatorProvided: boolean;
-  groundOperatorId: string;
 }
 
 export interface RestaurantRecord extends ResourceAuditRecord {

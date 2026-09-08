@@ -1,22 +1,12 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    :title="$t('itinerary.addResource')"
+    :title="mealSlot ? $t(`itinerary.meals.${mealSlot}`) : $t('itinerary.addResource')"
     width="680px"
     destroy-on-close
     @close="emit('update:modelValue', false)"
   >
     <el-form label-width="100px">
-      <el-form-item
-        :label="$t('itinerary.resourceType')"
-        required
-      >
-        <el-segmented
-          v-model="type"
-          class="resource-dialog__types"
-          :options="typeOptions"
-        />
-      </el-form-item>
       <el-form-item :label="$t('resource.city')">
         <el-select
           v-model="city"
@@ -101,31 +91,30 @@
 </template>
 
 <script setup lang="ts">
+import { useCityOptions } from "@/composables/useCityOptions";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import type { ItineraryDailyItemType, ItineraryResourceItem } from "@/types/itinerary";
+import type { ItineraryDailyItemType, ItineraryResourceItem, MealSlot } from "@/types/itinerary";
 import { formatMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
-import { calculateItem } from "../pricing";
+import { calculateItem, getDefaultResourceQuantity } from "../pricing";
 import type { ResourcePriceDetail, ResourcePriceOption } from "../pricing";
 
 const props = defineProps<{
   modelValue: boolean;
   guestCount: number;
   options: ResourcePriceOption[];
+  mealSlot: MealSlot | null;
 }>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [item: ItineraryResourceItem] }>();
 const { t, locale } = useI18n();
-const type = ref<ItineraryDailyItemType>("attraction");
+const type = computed<ItineraryDailyItemType>(() => props.mealSlot ? "restaurant" : "attraction");
 const city = ref("");
 const selectedId = ref("");
 const keyword = ref("");
 const quantity = ref(1);
-const typeOptions = computed(() => (["restaurant", "attraction"] as ItineraryDailyItemType[])
-  .map((value) => ({ label: t(`itinerary.resourceTypes.${value}`), value })));
 const filteredByType = computed(() => props.options.filter((option) => option.type === type.value));
-const cityOptions = computed(() => [...new Set(filteredByType.value.map((option) => option.city).filter(Boolean))]
-  .sort((left, right) => left.localeCompare(right, "zh-CN")));
+const cityOptions = useCityOptions();
 const filteredByCity = computed(() => city.value
   ? filteredByType.value.filter((option) => option.city === city.value)
   : filteredByType.value);
@@ -147,11 +136,14 @@ watch(city, () => {
 });
 watch(() => props.modelValue, (visible) => {
   if (!visible) return;
-  type.value = "attraction";
   city.value = "";
   selectedId.value = "";
   keyword.value = "";
   quantity.value = Math.max(props.guestCount, 1);
+});
+
+watch(selectedOption, (option) => {
+  quantity.value = getDefaultResourceQuantity(option, props.guestCount);
 });
 
 function filterOptions(value: string) { keyword.value = value; }
@@ -164,13 +156,12 @@ function formatDetail(detail: ResourcePriceDetail) {
 }
 function submit() {
   if (!selectedOption.value) return;
-  emit("submit", calculateItem(selectedOption.value, quantity.value));
+  emit("submit", { ...calculateItem(selectedOption.value, quantity.value), ...(props.mealSlot ? { mealSlot: props.mealSlot } : {}) });
   emit("update:modelValue", false);
 }
 </script>
 
 <style scoped lang="scss">
-.resource-dialog__types { max-width: 100%; }
 .resource-option { display: flex; justify-content: space-between; gap: 16px; }
 .resource-option strong { color: var(--el-color-primary); font-weight: 500; }
 .resource-dialog__details { max-height: 320px; overflow-y: auto; }

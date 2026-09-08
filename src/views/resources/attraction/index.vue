@@ -3,6 +3,7 @@
     <AttractionTable
       :rows="attractionStore"
       @refresh="loadRecords"
+      @query-change="loadRecords"
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
@@ -32,7 +33,7 @@ import { ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { resourceService } from "@/services/resource.service";
-import type { AttractionPriceRecord, AttractionRecord } from "@/types/resource";
+import type { AttractionPriceRecord, AttractionRecord, ResourceListQuery } from "@/types/resource";
 import { useResourceMaintenance } from "../useResourceMaintenance";
 import AttractionEditorDialog from "./components/AttractionEditorDialog.vue";
 import AttractionPriceDialog from "./components/AttractionPriceDialog.vue";
@@ -47,13 +48,12 @@ const selectedAttraction = ref<AttractionRecord>();
 const priceForm = ref<AttractionPriceRecord>(createEmptyPrice());
 const loadedAttractionPriceIds = new Set<string>();
 const loadingAttractionPriceIds = new Set<string>();
-let areSupplierOptionsLoaded = false;
 
 function createEmptyAttraction(): AttractionRecord {
   return { id: "", code: "", name: "", area: "", category: "scenic", restroomLocation: "", remark: "", unit: "personVisit", status: "enabled", prices: [] };
 }
 function createEmptyPrice(): AttractionPriceRecord {
-  return { id: "", itemType: "ticket", itemName: "景区门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 0, settlementPrice: 0, unit: "personVisit", isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" };
+  return { id: "", itemType: "ticket", itemName: "景区门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 0, settlementPrice: 0, unit: "personVisit", isFree: false, priceNote: "", };
 }
 const {
   rows: attractionStore,
@@ -80,9 +80,9 @@ const {
   },
 });
 
-async function loadAttractions() {
+async function loadAttractions(query?: ResourceListQuery) {
   loadedAttractionPriceIds.clear();
-  return resourceService.loadAttractions();
+  return resourceService.loadAttractions(query);
 }
 
 async function loadAttractionPrices(record: AttractionRecord) {
@@ -98,27 +98,13 @@ async function loadAttractionPrices(record: AttractionRecord) {
   }
 }
 
-async function loadSupplierOptions() {
-  if (areSupplierOptionsLoaded) return true;
-  try {
-    await resourceService.loadSupplierOptions();
-    areSupplierOptionsLoaded = true;
-    return true;
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : String(error));
-    return false;
-  }
-}
-
 async function openCreatePriceDialog(record: AttractionRecord) {
-  if (!(await loadSupplierOptions())) return;
   selectedAttraction.value = record;
   editingPriceId.value = "";
   priceForm.value = { ...createEmptyPrice(), unit: record.unit };
   isPriceDialogVisible.value = true;
 }
 async function openEditPriceDialog(record: AttractionRecord, price: AttractionPriceRecord) {
-  if (!(await loadSupplierOptions())) return;
   selectedAttraction.value = record;
   editingPriceId.value = price.id;
   priceForm.value = { ...price };

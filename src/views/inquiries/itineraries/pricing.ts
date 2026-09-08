@@ -1,6 +1,6 @@
 import type { ItineraryItemType, ItineraryPriceUnit, ItineraryRecord, ItineraryResourceItem } from "@/types/itinerary";
 import type {
-  AttractionRecord, GuideRecord, HotelRecord, RestaurantRecord, SupplierOptionRecord, TransportRecord,
+  AttractionRecord, GuideRecord, HotelRecord, RestaurantRecord, TransportRecord,
 } from "@/types/resource";
 import { createId, multiplyMoney } from "@/utils";
 
@@ -11,10 +11,10 @@ export interface ResourcePriceOption {
   resourcePriceId: string;
   resourceName: string;
   priceName: string;
-  providerName: string;
   city: string;
   unit: ItineraryPriceUnit;
   unitCost: number;
+  dinerCount?: number;
   details: ResourcePriceDetail[];
   searchText: string;
 }
@@ -26,7 +26,6 @@ export interface ResourcePriceDetail {
 }
 
 export interface PricingResources {
-  suppliers: SupplierOptionRecord[];
   hotels: HotelRecord[];
   restaurants: RestaurantRecord[];
   attractions: AttractionRecord[];
@@ -50,8 +49,6 @@ const attractionItemTypeLabelKeys = {
   package: "attraction.itemPackage",
 } as const;
 
-const DIRECT_PRICE_NAME = "直营报价";
-
 export function getHotelUnitCost(
   hotel: Pick<HotelRecord, "individualPrice" | "groupPrice" | "minimumGroupSize">,
   guestCount: number
@@ -66,13 +63,6 @@ export function getHotelUnitCost(
 }
 
 export function getResourcePriceOptions(resources: PricingResources, guestCount = 0): ResourcePriceOption[] {
-  const supplierNames = new Map(resources.suppliers.map((item) => [item.id, item.name]));
-  function providerName(isGroundOperatorProvided: boolean, groundOperatorId: string) {
-    return isGroundOperatorProvided
-      ? supplierNames.get(groundOperatorId) ?? "地接社报价"
-      : DIRECT_PRICE_NAME;
-  }
-
   return [
     ...resources.hotels.filter((hotel) => hotel.status === "enabled").map((hotel) => ({
       id: `hotel:${hotel.id}`,
@@ -80,8 +70,7 @@ export function getResourcePriceOptions(resources: PricingResources, guestCount 
       resourceId: hotel.id,
       resourcePriceId: hotel.id,
       resourceName: hotel.name,
-      priceName: hotel.basicRoomType,
-      providerName: DIRECT_PRICE_NAME,
+      priceName: hotel.name,
       city: hotel.city,
       unit: hotel.unit,
       unitCost: getHotelUnitCost(hotel, guestCount),
@@ -93,9 +82,9 @@ export function getResourcePriceOptions(resources: PricingResources, guestCount 
         { labelKey: "hotel.address", value: hotel.address },
         { labelKey: "resource.phone", value: hotel.phone },
         { labelKey: "hotel.facilities", value: hotel.facilities },
+        { labelKey: "hotel.breakfastIncluded", value: hotel.breakfastIncluded ? "含早餐" : "不含早餐" },
         { labelKey: "hotel.breakfast", value: hotel.breakfast },
         { labelKey: "hotel.nearby", value: hotel.nearby },
-        { labelKey: "hotel.basicRoomType", value: hotel.basicRoomType },
         { labelKey: "hotel.individualPrice", value: hotel.individualPrice, format: "money" as const },
         {
           labelKey: "hotel.groupPrice",
@@ -105,7 +94,7 @@ export function getResourcePriceOptions(resources: PricingResources, guestCount 
         { labelKey: "hotel.minimumGroupSize", value: hotel.minimumGroupSize ?? "" },
         { labelKey: "itinerary.priceUnit", value: hotel.unit, format: "unit" as const },
       ],
-      searchText: `${hotel.name} ${hotel.city} ${hotel.basicRoomType}`,
+      searchText: `${hotel.name} ${hotel.city}`,
     })),
     ...resources.attractions.filter((attraction) => attraction.status === "enabled").flatMap((attraction) => attraction.prices.map((price) => ({
       id: `attraction:${price.id}`,
@@ -114,7 +103,6 @@ export function getResourcePriceOptions(resources: PricingResources, guestCount 
       resourcePriceId: price.id,
       resourceName: attraction.name,
       priceName: `${price.itemName} · ${price.audience} · ${price.periodName}`,
-      providerName: providerName(price.isGroundOperatorProvided, price.groundOperatorId),
       city: attraction.area,
       unit: price.unit,
       unitCost: price.settlementPrice,
@@ -135,7 +123,6 @@ export function getResourcePriceOptions(resources: PricingResources, guestCount 
         { labelKey: "attraction.freeTicket", value: price.isFree ? "common.yes" : "common.no", format: "translation" as const },
         { labelKey: "attraction.priceNote", value: price.priceNote },
         { labelKey: "itinerary.priceUnit", value: price.unit, format: "unit" as const },
-        { labelKey: "itinerary.provider", value: providerName(price.isGroundOperatorProvided, price.groundOperatorId) },
       ],
       searchText: `${attraction.name} ${attraction.area} ${price.itemName} ${price.audience}`,
     }))),
@@ -146,10 +133,10 @@ export function getResourcePriceOptions(resources: PricingResources, guestCount 
       resourcePriceId: price.id,
       resourceName: restaurant.name,
       priceName: price.menuName,
-      providerName: providerName(price.isGroundOperatorProvided, price.groundOperatorId),
       city: restaurant.city,
       unit: price.unit,
       unitCost: price.price,
+      dinerCount: price.dinerCount,
       details: [
         { labelKey: "resource.code", value: restaurant.code },
         { labelKey: "resource.restaurantName", value: restaurant.name },
@@ -165,7 +152,6 @@ export function getResourcePriceOptions(resources: PricingResources, guestCount 
         { labelKey: "restaurant.dinerCount", value: price.dinerCount },
         { labelKey: "restaurant.price", value: price.price, format: "money" as const },
         { labelKey: "itinerary.priceRemark", value: price.remark },
-        { labelKey: "itinerary.provider", value: providerName(price.isGroundOperatorProvided, price.groundOperatorId) },
       ],
       searchText: `${restaurant.name} ${restaurant.city} ${restaurant.cuisine} ${price.menuName}`,
     }))),
@@ -176,7 +162,6 @@ export function getResourcePriceOptions(resources: PricingResources, guestCount 
       resourcePriceId: resource.id,
       resourceName: resource.name,
       priceName: "车辆日成本",
-      providerName: DIRECT_PRICE_NAME,
       city: resource.city,
       unit: String(resource.unit),
       unitCost: Number(resource.dailyPrice ?? 0),
@@ -189,7 +174,6 @@ export function getResourcePriceOptions(resources: PricingResources, guestCount 
         { labelKey: "resource.phone", value: resource.phone },
         { labelKey: "common.remark", value: resource.remark },
         { labelKey: "itinerary.priceUnit", value: String(resource.unit), format: "unit" as const },
-        { labelKey: "itinerary.provider", value: DIRECT_PRICE_NAME },
       ],
       searchText: `${resource.name} ${resource.city}`,
     })),
@@ -200,7 +184,6 @@ export function getResourcePriceOptions(resources: PricingResources, guestCount 
       resourcePriceId: guide.id,
       resourceName: guide.name,
       priceName: `${guide.languages.join("/")} · 导游日成本`,
-      providerName: providerName(true, guide.groundOperatorId),
       city: "",
       unit: guide.unit,
       unitCost: Number(guide.dailyPrice ?? 0),
@@ -219,7 +202,6 @@ export function getResourcePriceOptions(resources: PricingResources, guestCount 
         { labelKey: "guide.licensePhoto", value: guide.licensePhotoUrl ? "common.yes" : "common.no", format: "translation" as const },
         { labelKey: "common.remark", value: guide.remark },
         { labelKey: "itinerary.priceUnit", value: guide.unit, format: "unit" as const },
-        { labelKey: "itinerary.provider", value: providerName(true, guide.groundOperatorId) },
       ],
       searchText: `${guide.name} ${guide.languages.join(" ")}`,
     })),
@@ -250,7 +232,6 @@ export function reconcileItineraryResourceReferences(
     const match = matches[0];
     item.resourceId = match.resourceId;
     item.resourcePriceId = match.resourcePriceId;
-    item.providerName = match.providerName;
     if (item.type === "vehicle") item.referenceUnitCost = match.unitCost;
   });
   return unresolvedCount;
@@ -268,7 +249,6 @@ export function calculateItem(
     resourcePriceId: option.resourcePriceId,
     resourceName: option.resourceName,
     priceName: option.priceName,
-    providerName: option.providerName,
     quantity,
     unit: option.unit,
     referenceUnitCost: option.type === "vehicle" ? option.unitCost : undefined,
@@ -280,4 +260,9 @@ export function calculateItem(
 
 export function recalculateItem(item: ItineraryResourceItem) {
   item.totalCost = multiplyMoney(item.unitCost, item.quantity);
+}
+
+export function getDefaultResourceQuantity(option: ResourcePriceOption | undefined, guestCount: number) {
+  if (option?.unit === "table") return option.dinerCount && option.dinerCount > 0 ? Math.max(Math.ceil(guestCount / option.dinerCount), 1) : 1;
+  return Math.max(guestCount, 1);
 }

@@ -3,6 +3,7 @@
     <GuideTable
       :rows="guideStore"
       @refresh="loadRecords"
+      @query-change="loadRecords"
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
@@ -51,7 +52,7 @@ const {
 } = useResourceMaintenance<GuideRecord>({
   records: resourceService.guides,
   api: resourceService.guideApi,
-  loadRecords: () => resourceService.loadGuides(),
+  loadRecords: (query) => resourceService.loadGuides(query),
   codePrefix: "GDE",
   createEmpty: createEmptyGuide,
   cloneForEdit: (record) => ({ ...record, languages: [...record.languages] }),

@@ -11,7 +11,7 @@
       class="page-content"
       shadow="never"
     >
-      <TableToolbar @refresh="emit('refresh')">
+      <TableToolbar @refresh="refreshRows">
         <el-button
           v-has-perm="RESOURCE_PERMISSIONS.restaurant.create"
           type="primary"
@@ -105,21 +105,6 @@
                   >
                     <template #default="priceScope">
                       {{ priceScope.row.unit === "personMeal" ? "-" : priceScope.row.dinerCount }}
-                    </template>
-                  </el-table-column>
-                  <el-table-column
-                    :label="$t('resource.priceSource')"
-                    min-width="160"
-                  >
-                    <template #default="priceScope">
-                      <el-tag
-                        v-if="priceScope.row.isGroundOperatorProvided"
-                        type="warning"
-                        effect="plain"
-                      >
-                        {{ getGroundOperatorName(priceScope.row.groundOperatorId) }}
-                      </el-tag>
-                      <span v-else>{{ $t("resource.directPrice") }}</span>
                     </template>
                   </el-table-column>
                   <el-table-column
@@ -233,7 +218,7 @@
         </el-table>
       </div>
       <pagination
-        v-if="filteredRows.length"
+        v-if="rows.length"
         v-model:page="pageNum"
         v-model:limit="pageSize"
         :total="total"
@@ -243,18 +228,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { useI18n } from "vue-i18n";
+import { useCityOptions } from "@/composables/useCityOptions";
+import { computed, ref, watch } from "vue";
+import { useDebounceFn } from "@vueuse/core";
 import { RESOURCE_PERMISSIONS } from "@/constants";
-import { resourceService } from "@/services/resource.service";
-import type { RestaurantPriceRecord, RestaurantPriceUnit, RestaurantRecord } from "@/types/resource";
+import type { ResourceListQuery, RestaurantPriceRecord, RestaurantPriceUnit, RestaurantRecord } from "@/types/resource";
 import { formatMoney } from "@/utils";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import RestaurantSearchForm from "./RestaurantSearchForm.vue";
 
 const props = defineProps<{ rows: RestaurantRecord[] }>();
 const emit = defineEmits<{
-  refresh: [];
+  refresh: [query: ResourceListQuery];
+  "query-change": [query: ResourceListQuery];
   create: [];
   edit: [record: RestaurantRecord];
   delete: [record: RestaurantRecord];
@@ -265,22 +251,24 @@ const emit = defineEmits<{
   "delete-price": [record: RestaurantRecord, price: RestaurantPriceRecord];
 }>();
 
-const { t } = useI18n();
 const keywords = ref("");
 const city = ref("");
 const priceUnit = ref<RestaurantPriceUnit | "">("");
 const pageNum = ref(1);
 const pageSize = ref(10);
-const cityOptions = computed(() => [...new Set(props.rows.map((record) => record.city))]);
-const groundOperatorOptions = computed(() => resourceService.supplierOptions);
-const filteredRows = computed(() => props.rows.filter((record) => (
-  (!city.value || record.city === city.value)
-  && (!priceUnit.value || record.unit === priceUnit.value)
-  && (!keywords.value || [record.code, record.name, record.city, record.cuisine]
-    .some((field) => field.toLowerCase().includes(keywords.value.toLowerCase())))
-)));
-const total = computed(() => filteredRows.value.length);
-const pagedRows = computed(() => filteredRows.value.slice((pageNum.value - 1) * pageSize.value, pageNum.value * pageSize.value));
+const cityOptions = useCityOptions();
+const total = computed(() => props.rows.length);
+const pagedRows = computed(() => props.rows.slice((pageNum.value - 1) * pageSize.value, pageNum.value * pageSize.value));
+const requestRows = useDebounceFn(() => emit("query-change", currentQuery()), 300);
+
+watch([keywords, city, priceUnit], () => {
+  pageNum.value = 1;
+  requestRows();
+});
+
+function currentQuery(): ResourceListQuery {
+  return { keyword: keywords.value, city: city.value, unit: priceUnit.value };
+}
 
 function resetQuery() {
   keywords.value = "";
@@ -289,15 +277,15 @@ function resetQuery() {
   pageNum.value = 1;
 }
 
+function refreshRows() {
+  emit("refresh", currentQuery());
+}
+
 function changeExpand(record: RestaurantRecord, expanded: RestaurantRecord[] | boolean) {
   const isExpanded = Array.isArray(expanded)
     ? expanded.some((item) => item.id === record.id)
     : expanded;
   if (isExpanded) emit("expand", record);
-}
-
-function getGroundOperatorName(id: string) {
-  return groundOperatorOptions.value.find((item) => item.id === id)?.name ?? t("resource.groundOperatorProvidedTag");
 }
 
 function splitDishDetails(details: string) {

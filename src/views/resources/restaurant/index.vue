@@ -3,6 +3,7 @@
     <RestaurantTable
       :rows="restaurantStore"
       @refresh="loadRecords"
+      @query-change="loadRecords"
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
@@ -32,7 +33,7 @@ import { ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { resourceService } from "@/services/resource.service";
-import type { RestaurantPriceRecord, RestaurantRecord } from "@/types/resource";
+import type { ResourceListQuery, RestaurantPriceRecord, RestaurantRecord } from "@/types/resource";
 import { useResourceMaintenance } from "../useResourceMaintenance";
 import RestaurantEditorDialog from "./components/RestaurantEditorDialog.vue";
 import RestaurantPriceDialog from "./components/RestaurantPriceDialog.vue";
@@ -47,7 +48,6 @@ const selectedRestaurant = ref<RestaurantRecord>();
 const priceForm = ref<RestaurantPriceRecord>(createEmptyPrice());
 const loadedRestaurantPriceIds = new Set<string>();
 const loadingRestaurantPriceIds = new Set<string>();
-let areSupplierOptionsLoaded = false;
 
 function createEmptyRestaurant(): RestaurantRecord {
   return {
@@ -59,7 +59,7 @@ function createEmptyRestaurant(): RestaurantRecord {
 function createEmptyPrice(): RestaurantPriceRecord {
   return {
     id: "", menuName: "", dishDetails: "", unit: "personMeal", price: 0, dinerCount: 10, remark: "",
-    isGroundOperatorProvided: false, groundOperatorId: "",
+
   };
 }
 
@@ -85,9 +85,9 @@ const {
   updateRecord: (current, record) => Object.assign(current, record, { prices: current.prices }),
 });
 
-async function loadRestaurants() {
+async function loadRestaurants(query?: ResourceListQuery) {
   loadedRestaurantPriceIds.clear();
-  return resourceService.loadRestaurants();
+  return resourceService.loadRestaurants(query);
 }
 
 async function loadRestaurantPrices(record: RestaurantRecord) {
@@ -103,20 +103,7 @@ async function loadRestaurantPrices(record: RestaurantRecord) {
   }
 }
 
-async function loadSupplierOptions() {
-  if (areSupplierOptionsLoaded) return true;
-  try {
-    await resourceService.loadSupplierOptions();
-    areSupplierOptionsLoaded = true;
-    return true;
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : String(error));
-    return false;
-  }
-}
-
 async function openCreatePriceDialog(record: RestaurantRecord) {
-  if (!(await loadSupplierOptions())) return;
   selectedRestaurant.value = record;
   editingPriceId.value = "";
   priceForm.value = { ...createEmptyPrice(), unit: record.unit };
@@ -124,7 +111,6 @@ async function openCreatePriceDialog(record: RestaurantRecord) {
 }
 
 async function openEditPriceDialog(record: RestaurantRecord, price: RestaurantPriceRecord) {
-  if (!(await loadSupplierOptions())) return;
   selectedRestaurant.value = record;
   editingPriceId.value = price.id;
   priceForm.value = { ...price };

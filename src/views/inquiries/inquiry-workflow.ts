@@ -1,11 +1,11 @@
 import type { InquiryStatus } from "@/types/inquiry";
 
-export type InquiryAction = "itinerary_created" | "quote_generated" | "archive" | "mark_lost" | "reopen_for_planning";
+export type InquiryAction = "itinerary_created" | "quote_generated" | "archive" | "mark_lost";
 
 const INQUIRY_TRANSITIONS: Record<InquiryStatus, Partial<Record<InquiryAction, InquiryStatus>>> = {
   new: { itinerary_created: "planning", archive: "archived", mark_lost: "lost" },
   planning: { itinerary_created: "planning", quote_generated: "quoted", archive: "archived", mark_lost: "lost" },
-  quoted: { itinerary_created: "planning", quote_generated: "quoted", archive: "archived", mark_lost: "lost", reopen_for_planning: "planning" },
+  quoted: { itinerary_created: "planning", quote_generated: "quoted", archive: "archived", mark_lost: "lost" },
   lost: {},
   archived: {},
 };

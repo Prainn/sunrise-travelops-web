@@ -1,3 +1,4 @@
+import { createDefaultQuoteSettings } from "@/views/inquiries/itineraries/quote-pricing";
 import { describe, expect, it } from "vitest";
 import type { ItineraryDayRecord, ItineraryHotelPlan, ItineraryHotelTier, ItineraryRecord } from "@/types/itinerary";
 import { createDefaultHotelPlans } from "./hotel-plans";
@@ -14,8 +15,7 @@ function createHotelPlan(
       hotelId: `${tier}-hotel-${index + 1}`,
       hotelName: `${hotel.destination} Hotel`,
       rating: tier === "international_five_star" ? "international_five_star" : "ctrip_preferred",
-      roomType: "标准间",
-      breakfast: "含早餐",
+      breakfastIncluded: true, breakfast: "含早餐",
       unit: "roomNight",
       unitCost: hotel.unitCost,
     })),
@@ -30,6 +30,7 @@ function createDay(id: string, overnightDestination = ""): ItineraryDayRecord {
     departure: "",
     destination: "",
     overnightDestination,
+    meals: { breakfast: true, lunch: false, dinner: false },
     transport: "",
     description: "",
     items: [],
@@ -42,14 +43,31 @@ function createPricingInput(overrides: Partial<ItineraryRecord> = {}) {
     childrenCount: 0,
     destinations: [],
     hotelPlans: createDefaultHotelPlans(),
+    guidePlans: [],
     vehiclePlans: [{ tier: "standard", vehicle: null }],
-    quote: { options: [createDefaultQuoteOption("international_five_star", "standard", "five-star-standard")] },
+    quote: { ...createDefaultQuoteSettings(), options: [createDefaultQuoteOption("international_five_star", "standard", "five-star-standard")] },
     dailyPlans: [],
     ...overrides,
   } as ItineraryRecord;
 }
 
 describe("itinerary quote pricing", () => {
+  it("adds the whole-tour guide cost to each option and excludes customer extras from the tour total", () => {
+    const plan = createPricingInput({ adults: 12, guidePlans: [{ destination: "昆明", guideId: "g1", guideName: "Guide", dailyPrice: 600, dayIds: ["d1", "d2"] }, { destination: "大理", guideId: "g1", guideName: "Guide", dailyPrice: 600, dayIds: ["d3"] }], quote: {
+      ...createDefaultQuoteSettings(), chineseTip: 240, englishTip: 320,
+      transportFees: [{ id: "train", type: "train", departureCity: "昆明", arrivalCity: "大理", cabin: "first", unitPrice: 185 }],
+      options: [
+        { ...createDefaultQuoteOption("international_five_star", "standard"), adultUnitPrice: 4600 },
+        { ...createDefaultQuoteOption("international_five_star", "vip"), adultUnitPrice: 4700 },
+      ],
+    } });
+    const result = calculateItineraryQuote(plan, 1200);
+    expect(result.guideCost).toBe(1800);
+    expect(result.options.map((option) => option.baseGroupCost)).toEqual([3000, 3000]);
+    expect(result.options.map((option) => option.totalPrice)).toEqual([55200, 56400]);
+    expect(result.options[0].profit).toBe(52200);
+  });
+
   it("calculates rooms using double occupancy without collecting a single guest count", () => {
     expect(calculateHotelRoomCount(createPricingInput())).toBe(2);
   });
@@ -62,7 +80,7 @@ describe("itinerary quote pricing", () => {
   it("calculates child tour price from the adult price per person", () => {
     const itinerary = createPricingInput({
       childrenCount: 1,
-      quote: { options: [{ ...createDefaultQuoteOption("international_five_star", "standard", "five-star"), adultUnitPrice: 1000 }] },
+      quote: { ...createDefaultQuoteSettings(), options: [{ ...createDefaultQuoteOption("international_five_star", "standard", "five-star"), adultUnitPrice: 1000 }] },
     });
 
     const option = calculateItineraryQuote(itinerary, 3260).options[0];
@@ -84,18 +102,18 @@ describe("itinerary quote pricing", () => {
 
   it("calculates hotel cost independently for each enabled hotel tier", () => {
     const itinerary = createPricingInput({
-      destinations: ["昆明市"],
+      destinations: ["昆明"],
       hotelPlans: [
-        createHotelPlan("international_five_star", [{ destination: "昆明市", unitCost: 600 }]),
-        createHotelPlan("preferred_non_five_star", [{ destination: "昆明市", unitCost: 400 }]),
+        createHotelPlan("international_five_star", [{ destination: "昆明", unitCost: 600 }]),
+        createHotelPlan("preferred_non_five_star", [{ destination: "昆明", unitCost: 400 }]),
       ],
-      quote: {
+      quote: { ...createDefaultQuoteSettings(),
         options: [
           { ...createDefaultQuoteOption("international_five_star", "standard", "five-star"), adultUnitPrice: 1000 },
           { ...createDefaultQuoteOption("preferred_non_five_star", "standard", "preferred"), adultUnitPrice: 1200 },
         ],
       },
-      dailyPlans: [createDay("day-1", "昆明市"), createDay("day-2", "昆明市")],
+      dailyPlans: [createDay("day-1", "昆明"), createDay("day-2", "昆明")],
     });
 
     const result = calculateItineraryQuote(itinerary, 3260);
@@ -107,6 +125,7 @@ describe("itinerary quote pricing", () => {
 
   it("adds the itinerary vehicle cost to the common group cost", () => {
     const itinerary = createPricingInput({
+      guidePlans: [],
       vehiclePlans: [{ tier: "standard", vehicle: {
           vehicleId: "vehicle-1", vehicleName: "考斯特",
           seats: 38, serviceDays: 3, unit: "vehicleDay", referenceUnitCost: 1800, unitCost: 2000,
@@ -129,22 +148,23 @@ describe("itinerary quote pricing", () => {
       ...standardVehicle, vehicleId: "vip-1", vehicleName: "VIP巴士", unitCost: 1500,
     };
     const itinerary = createPricingInput({
-      destinations: ["昆明市"],
+      destinations: ["昆明"],
       hotelPlans: [
-        createHotelPlan("international_five_star", [{ destination: "昆明市", unitCost: 600 }]),
-        createHotelPlan("preferred_non_five_star", [{ destination: "昆明市", unitCost: 400 }]),
+        createHotelPlan("international_five_star", [{ destination: "昆明", unitCost: 600 }]),
+        createHotelPlan("preferred_non_five_star", [{ destination: "昆明", unitCost: 400 }]),
       ],
+      guidePlans: [],
       vehiclePlans: [
         { tier: "standard", vehicle: standardVehicle },
         { tier: "vip", vehicle: vipVehicle },
       ],
-      quote: { options: [
+      quote: { ...createDefaultQuoteSettings(), options: [
         createDefaultQuoteOption("international_five_star", "standard", "five-standard"),
         createDefaultQuoteOption("international_five_star", "vip", "five-vip"),
         createDefaultQuoteOption("preferred_non_five_star", "standard", "preferred-standard"),
         createDefaultQuoteOption("preferred_non_five_star", "vip", "preferred-vip"),
       ] },
-      dailyPlans: [createDay("day-1", "昆明市")],
+      dailyPlans: [createDay("day-1", "昆明")],
     });
 
     const result = calculateItineraryQuote(itinerary, 1000);
@@ -157,7 +177,7 @@ describe("itinerary quote pricing", () => {
   it("does not add a free tour leader to the chargeable guest quantity", () => {
     const itinerary = createPricingInput({
       adults: 16,
-      quote: {
+      quote: { ...createDefaultQuoteSettings(),
         options: [{
           ...createDefaultQuoteOption("international_five_star", "standard", "foc"), adultUnitPrice: 3000, leaderFocEnabled: true,
         }],
@@ -172,16 +192,16 @@ describe("itinerary quote pricing", () => {
 
   it("calculates single supplement from the selected tier and destination nights", () => {
     const itinerary = createPricingInput({
-      destinations: ["丽江市", "香格里拉市"],
+      destinations: ["丽江", "香格里拉"],
       hotelPlans: [createHotelPlan("international_five_star", [
-        { destination: "丽江市", unitCost: 1980 },
-        { destination: "香格里拉市", unitCost: 1080 },
+        { destination: "丽江", unitCost: 1980 },
+        { destination: "香格里拉", unitCost: 1080 },
       ])],
-      quote: { options: [{ ...createDefaultQuoteOption("international_five_star", "standard", "five-star"), adultUnitPrice: 6864 }] },
+      quote: { ...createDefaultQuoteSettings(), options: [{ ...createDefaultQuoteOption("international_five_star", "standard", "five-star"), adultUnitPrice: 6864 }] },
       dailyPlans: [
-        createDay("lijiang", "丽江市"),
-        createDay("shangrila-1", "香格里拉市"),
-        createDay("shangrila-2", "香格里拉市"),
+        createDay("lijiang", "丽江"),
+        createDay("shangrila-1", "香格里拉"),
+        createDay("shangrila-2", "香格里拉"),
       ],
     });
 

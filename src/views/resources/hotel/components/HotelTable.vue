@@ -45,11 +45,6 @@
           </template>
         </el-table-column>
         <el-table-column
-          prop="basicRoomType"
-          :label="$t('hotel.basicRoomType')"
-          min-width="180"
-        />
-        <el-table-column
           prop="individualPrice"
           :label="$t('hotel.individualPrice')"
           width="120"
@@ -74,6 +69,14 @@
         >
           <template #default="scope">
             {{ getResourceUnitName(scope.row.unit, locale) }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          :label="$t('hotel.breakfastIncluded')"
+          width="120"
+        >
+          <template #default="scope">
+            {{ $t(scope.row.breakfastIncluded ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded') }}
           </template>
         </el-table-column>
         <el-table-column

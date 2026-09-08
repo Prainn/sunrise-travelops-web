@@ -47,7 +47,7 @@
           {{ valueOrDash(record.nextFollowUpAt) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.plannedDays')">
-          {{ record.plannedDays }}
+          {{ $t("itinerary.duration", plannedDuration(record.plannedDays)) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('common.createdAt')">
           {{ record.createdAt }}
@@ -80,6 +80,7 @@
 </template>
 
 <script setup lang="ts">
+import { plannedDuration } from "@/views/inquiries/itineraries/duration";
 import { useI18n } from "vue-i18n";
 import type { InquiryRecord } from "@/types/inquiry";
 import { INQUIRY_STATUS_TAG_TYPES } from "../options";

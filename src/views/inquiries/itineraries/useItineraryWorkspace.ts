@@ -1,8 +1,9 @@
+import { itineraryDuration } from "./duration";
 import { computed, ref } from "vue";
 import { useInquiryLog } from "@/composables/useInquiryLog";
 import { resourceService } from "@/services/resource.service";
 import { useUserStore } from "@/stores/user";
-import type { ItineraryDailyItemType, ItineraryRecord, ItineraryResourceItem } from "@/types/itinerary";
+import type { ItineraryDailyItemType, ItineraryRecord, ItineraryResourceItem, MealSlot } from "@/types/itinerary";
 import { formatDateTime, hasUserPermission, sumMoney } from "@/utils";
 import { isInquiryReadOnly } from "../inquiry-workflow";
 import { canPerformItineraryOperation } from "./itinerary-workflow";
@@ -10,6 +11,7 @@ import { calculateItineraryQuote } from "./quote-pricing";
 import { getResourcePriceOptions, reconcileItineraryResourceReferences, type ResourcePriceOption } from "./pricing";
 import { useItineraryEditor } from "./useItineraryEditor";
 import { useItineraryPdf } from "./useItineraryPdf";
+import type { PdfValidationIssue } from "./workflow";
 import { useItinerarySelection } from "./useItinerarySelection";
 
 interface WorkspaceMessages {
@@ -30,6 +32,8 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const isEditingPlan = ref(false);
   const isResourceDialogVisible = ref(false);
   const resourceTargetDayId = ref("");
+  const resourceMealSlot = ref<MealSlot | null>(null);
+  const validationIssues = ref<PdfValidationIssue[]>([]);
   const resourcePriceOptions = ref<ResourcePriceOption[]>([]);
   const inquiryReadOnly = computed(() => inquiry.value ? isInquiryReadOnly(inquiry.value.status) : true);
   const isDraft = computed(() => selectedItinerary.value?.status === "draft");
@@ -61,9 +65,9 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const dailyResourceCost = computed(() => sumMoney(dailyItems.value.map((item) => item.totalCost)));
   const itemCount = computed(() => dailyItems.value.length);
   const hotelOptions = computed(() => resourceService.hotels.filter((hotel) => hotel.status === "enabled"));
+  const guideOptions = computed(() => resourceService.guides.filter((guide) => guide.status === "enabled"));
   const vehicleOptions = computed(() => resourceService.transports.filter((vehicle) => vehicle.status === "enabled"));
-  const destinationOptions = computed(() => [...new Set(hotelOptions.value.map((hotel) => hotel.city).filter(Boolean))]
-    .sort((left, right) => left.localeCompare(right, "zh-CN")));
+  const destinationOptions = computed(() => resourceService.cityOptions.filter((city) => city.status === "enabled").map((city) => city.name));
   const quoteCalculation = computed(() => selectedItinerary.value
     ? calculateItineraryQuote(selectedItinerary.value, dailyResourceCost.value)
     : null);
@@ -77,6 +81,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     canEditContent: () => contentEditable.value,
     canEditPrice: () => priceEditable.value,
     getCreator: () => userStore.userInfo.username ?? "",
+    findGuide: (id) => resourceService.guides.find((guide) => guide.id === id),
     findHotel: (id) => resourceService.hotels.find((hotel) => hotel.id === id),
     findVehicle: (id) => resourceService.transports.find((vehicle) => vehicle.id === id),
   });
@@ -85,11 +90,12 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     inquiry,
     selectedItinerary,
     canGenerate: () => canGeneratePdf.value,
+    canDownload: () => hasUserPermission(userStore.userInfo, "itinerary:pdf"),
   });
 
   async function loadDestinationResourceOptions() {
     try {
-      await Promise.all([resourceService.loadHotels(), resourceService.loadTransports()]);
+      await Promise.all([resourceService.loadCityOptions(), resourceService.loadHotels(), resourceService.loadTransports(), resourceService.loadGuides()]);
       return true;
     } catch {
       messages.error("request.failed");
@@ -162,7 +168,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     messages.success("common.updateSuccess");
   }
 
-  async function openResourceDialog(dayId: string) {
+  async function openResourceDialog(dayId: string, mealSlot: MealSlot | null = null) {
     if (!contentEditable.value) return;
     try {
       await loadResourcePriceOptions();
@@ -170,6 +176,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       messages.error("request.failed");
       return;
     }
+    resourceMealSlot.value = mealSlot;
     resourceTargetDayId.value = dayId;
     isResourceDialogVisible.value = true;
   }
@@ -216,37 +223,13 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   async function handleGeneratePdf() {
     const validation = pdf.validatePdf();
     if (!validation) return;
-    if (!validation.hasEnabledHotelPlan) {
-      messages.warning("itinerary.pdfHotelPlanRequired", {});
-      return;
-    }
-    if (validation.incompleteHotelPlanTiers.length) {
-      messages.warning("itinerary.pdfHotelPlanIncomplete", {
-        tiers: validation.incompleteHotelPlanTiers
-          .map((tier) => messages.translate(`itinerary.hotelTiers.${tier}`))
-          .join("、"),
-      });
-      return;
-    }
-    if (!validation.hasEnabledVehiclePlan) {
-      messages.warning("itinerary.pdfVehiclePlanRequired", {});
-      return;
-    }
-    if (validation.incompleteVehiclePlanTiers.length) {
-      messages.warning("itinerary.pdfVehiclePlanIncomplete", {
-        tiers: validation.incompleteVehiclePlanTiers
-          .map((tier) => messages.translate(`itinerary.vehicleServiceLevels.${tier}`))
-          .join("、"),
-      });
-      return;
-    }
-    if (validation.emptyDayNumbers.length) {
-      messages.warning("itinerary.pdfEmptyDays", { days: validation.emptyDayNumbers.map((day) => `D${day}`).join("、") });
-      return;
-    }
+    validationIssues.value = validation.issues;
+    if (validation.issues.length) return;
     if (validation.dayCountMismatch) {
       const confirmed = await messages.confirm("itinerary.dayCountMismatch", {
         planned: validation.plannedDays,
+        plannedNights: Math.max(validation.plannedDays - 1, 0),
+        actualNights: itineraryDuration(selectedItinerary.value!.dailyPlans).nights,
         actual: validation.actualDays,
       });
       if (!confirmed) return;
@@ -260,7 +243,11 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
 
   async function confirmPdfDownload() {
     const plan = selectedItinerary.value;
-    if (!plan || !pdf.confirmPdfDownload()) return;
+    if (!plan) return;
+    if (!pdf.confirmPdfDownload()) {
+      messages.error("itinerary.previewChanged");
+      return;
+    }
     await recordInquiryLog({
       inquiryId: plan.inquiryId,
       action: "itinerary_pdf_generated",
@@ -273,6 +260,14 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   }
 
   return {
+    validationIssues,
+    resourceMealSlot,
+    canDownloadOriginal: pdf.canDownloadOriginal,
+    downloadOriginal: pdf.downloadOriginal,
+    updateGuideSelection: editor.updateGuideSelection,
+    updateGuideDays: editor.updateGuideDays,
+    updateMeal: editor.updateMeal,
+    updateQuoteSettings: editor.updateQuoteSettings,
     addDay: editor.addDay,
     addResourceItem,
     canCreateItinerary,
@@ -284,6 +279,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     contentEditable,
     copyItinerary,
     createItinerary,
+    guideOptions,
     destinationOptions,
     duplicateDay: editor.duplicateDay,
     guestCount,

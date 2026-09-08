@@ -11,7 +11,7 @@
       class="page-content"
       shadow="never"
     >
-      <TableToolbar @refresh="emit('refresh')">
+      <TableToolbar @refresh="refreshRows">
         <el-button
           v-has-perm="RESOURCE_PERMISSIONS.guide.create"
           type="primary"
@@ -206,7 +206,7 @@
         </el-table>
       </div>
       <pagination
-        v-if="filteredRows.length"
+        v-if="rows.length"
         v-model:page="pageNum"
         v-model:limit="pageSize"
         :total="total"
@@ -216,18 +216,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
+import { useDebounceFn } from "@vueuse/core";
 import { useI18n } from "vue-i18n";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import { resourceService } from "@/services/resource.service";
-import type { GuideEmploymentType, GuideGender, GuideRecord } from "@/types/resource";
+import type { GuideEmploymentType, GuideGender, GuideRecord, ResourceListQuery } from "@/types/resource";
 import { formatMoney } from "@/utils";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import GuideSearchForm from "./GuideSearchForm.vue";
 
 const props = defineProps<{ rows: GuideRecord[] }>();
 const emit = defineEmits<{
-  refresh: [];
+  refresh: [query: ResourceListQuery];
+  "query-change": [query: ResourceListQuery];
   create: [];
   edit: [record: GuideRecord];
   delete: [record: GuideRecord];
@@ -242,15 +244,23 @@ const language = ref("");
 const pageNum = ref(1);
 const pageSize = ref(10);
 const groundOperatorOptions = computed(() => resourceService.supplierOptions);
-const filteredRows = computed(() => props.rows.filter((record) => (
-  (!gender.value || record.gender === gender.value)
-  && (!employmentType.value || record.employmentType === employmentType.value)
-  && (!language.value || record.languages.includes(language.value))
-  && (!keywords.value || [record.code, record.certificateNo, record.name, record.identityNumber, record.phone]
-    .some((field) => field.toLowerCase().includes(keywords.value.toLowerCase())))
-)));
-const total = computed(() => filteredRows.value.length);
-const pagedRows = computed(() => filteredRows.value.slice((pageNum.value - 1) * pageSize.value, pageNum.value * pageSize.value));
+const total = computed(() => props.rows.length);
+const pagedRows = computed(() => props.rows.slice((pageNum.value - 1) * pageSize.value, pageNum.value * pageSize.value));
+const requestRows = useDebounceFn(() => emit("query-change", currentQuery()), 300);
+
+watch([keywords, gender, employmentType, language], () => {
+  pageNum.value = 1;
+  requestRows();
+});
+
+function currentQuery(): ResourceListQuery {
+  return {
+    keyword: keywords.value,
+    gender: gender.value || undefined,
+    employmentType: employmentType.value || undefined,
+    language: language.value,
+  };
+}
 
 function resetQuery() {
   keywords.value = "";
@@ -258,6 +268,10 @@ function resetQuery() {
   employmentType.value = "";
   language.value = "";
   pageNum.value = 1;
+}
+
+function refreshRows() {
+  emit("refresh", currentQuery());
 }
 
 function getGroundOperatorName(id: string) {

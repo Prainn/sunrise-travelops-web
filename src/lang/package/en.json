@@ -18,7 +18,8 @@
     "restaurants": "Restaurants",
     "attractions": "Attractions",
     "vehicleModels": "Vehicle Models",
-    "guides": "Guides"
+    "guides": "Guides",
+    "cities": "Cities"
   },
   "appVersion": {
     "title": "New Version Available",
@@ -81,12 +82,13 @@
       "new": "New",
       "planning": "Itinerary Design",
       "quoted": "Quoted"
-    }
+    },
+    "followupDetails": "Follow-up and internal details (optional)"
   },
   "itinerary": {
     "actualMarginRate": "Actual Margin",
     "addDay": "Add Day",
-    "addResource": "Select Meal/Attraction",
+    "addResource": "Add attraction",
     "adults": "Adults",
     "allCities": "All cities",
     "baseCostPerPerson": "Base Cost per Person",
@@ -104,13 +106,12 @@
     "customerUnitPrice": "Price",
     "customerUnitPriceRequired": "Required",
     "dailyResources": "Daily Meals & Attractions",
-    "dayCountMismatch": "This inquiry is planned for {planned} days, but the itinerary currently has {actual} days. Generate the PDF anyway?",
+    "dayCountMismatch": "The inquiry plans {planned} days / {plannedNights} nights; this itinerary has {actual} days / {actualNights} nights. Generate PDF anyway?",
     "dailySchedule": "Daily Itinerary",
-    "plannedDaysMismatchHint": "This itinerary differs from the inquiry's {inquiryDays}-day plan. You can still save it.",
+    "plannedDaysMismatchHint": "This itinerary differs from the planned {plannedDuration}. You can still save.",
     "dateRangeInvalid": "The end date cannot be earlier than the start date",
     "dateRangeRequired": "Select a complete travel date range",
     "dayCost": "Daily Meals & Attractions Cost",
-    "dayCount": "{count} days",
     "dayDescription": "Itinerary description",
     "dayDescriptionPlaceholder": "Enter the day's sightseeing, activities, and itinerary details",
     "daySellingPrice": "Day Price",
@@ -122,7 +123,7 @@
     "destinationsPlaceholder": "Select the destination cities in this itinerary",
     "destinationsRequired": "Select at least one itinerary destination",
     "destinationCity": "Destination",
-    "destinationVehicleCost": "Destination Vehicle Cost",
+    "destinationVehicleCost": "Whole-tour vehicle cost",
     "dailyMealAttractionCost": "Meals & Attractions Cost",
     "editBasics": "Edit Basic Information",
     "editTitle": "Edit Itinerary",
@@ -150,7 +151,6 @@
     "noFoc": "NO FOC",
     "noPlans": "No itinerary has been created for this inquiry",
     "operationsCoordinator": "Operations Coordinator",
-    "pdfEmptyDays": "Cannot generate PDF: {days} has no itinerary details",
     "pdfGenerated": "PDF downloaded and itinerary locked as quoted",
     "pdfGenerationFailed": "PDF generation failed. Please try again",
     "pdfHotelPlanIncomplete": "Hotel selection is incomplete for: {tiers}",
@@ -166,7 +166,6 @@
     "priceSummary": "Price Summary",
     "priceUnit": "Price Unit",
     "profit": "Estimated Profit",
-    "provider": "Price Source",
     "quantity": "Quantity",
     "quoteConfigurations": "Group Quote",
     "quoteResult": "Quote Total",
@@ -230,7 +229,77 @@
     "travelDates": "Travel Dates",
     "unitCost": "Unit Cost",
     "unitPrice": "Unit Price",
-    "vehicleReferenceCost": "Reference Daily Cost"
+    "vehicleReferenceCost": "Reference Daily Cost",
+    "overnightPending": "Choose a city or no overnight stay",
+    "pendingNights": "{count} days need accommodation details",
+    "breakfastPending": "Breakfast to be confirmed",
+    "guideServiceDates": "Service dates",
+    "guideDatesRequired": "Select service dates for each guide",
+    "breakfastIncluded": "Breakfast included",
+    "breakfastExcluded": "Breakfast not included",
+    "meals": {
+      "lunch": "Lunch L included",
+      "dinner": "Dinner D included"
+    },
+    "selectMealResource": "Choose meal resource",
+    "shortcuts": {
+      "arrival": "Airport pickup",
+      "departure": "Airport transfer",
+      "free": "Free day",
+      "arrivalText": "Airport pickup, hotel transfer, check-in and rest.",
+      "departureText": "Airport transfer according to the flight schedule.",
+      "freeText": "Free day. Lunch and dinner at own expense."
+    },
+    "guideCost": "Guide cost",
+    "extraFees": "Not included in tour price",
+    "chineseTip": "Chinese guide tips (full tour / person / RMB)",
+    "englishTip": "English guide tips (full tour / person / RMB)",
+    "noExtraQuote": "Leave empty to omit",
+    "feeRoute": "For example: Kunming → Dali",
+    "cabin": "Cabin / seat class",
+    "cabins": {
+      "economy": "Economy",
+      "business": "Business",
+      "first": "First class",
+      "second": "Second class"
+    },
+    "extraUnitPrice": "Price per person (RMB)",
+    "addFlightFee": "Add flight quote",
+    "addTrainFee": "Add train quote",
+    "customerTerms": "Customer information",
+    "customerNotes": "Customer notes",
+    "holidayRestrictions": "Holiday restrictions",
+    "hotelReplacementTerms": "Equivalent hotel replacement terms",
+    "copyForRevision": "Copy to revise",
+    "downloadOriginal": "Download original",
+    "previewChanged": "The itinerary has changed. Generate a new preview before downloading.",
+    "validation": {
+      "title": "Complete these details; click to locate",
+      "noDays": "Add a daily schedule",
+      "schedule": "D{day}: fill in departure, destination and schedule description",
+      "overnight": "D{day}: select accommodation or explicitly select no overnight stay",
+      "lunch": "D{day}: lunch is included; choose a lunch resource",
+      "dinner": "D{day}: dinner is included; choose a dinner resource",
+      "hotels": "Complete destination hotels for each quoted tier",
+      "vehicles": "Choose complete vehicle plans with enough seats",
+      "transportFee": "Transport quote {index}: provide a route and price per person",
+      "routeCity": "D{day}: choose route cities from itinerary destinations (except the first departure)."
+    },
+    "breakfastMixed": "Breakfast B (by hotel option)",
+    "feeDeparture": "Departure",
+    "feeArrival": "Arrival",
+    "cityGuides": "Guides by city",
+    "noGuide": "No guide",
+    "guideServiceDays": "Service days",
+    "perDay": "day",
+    "feeCards": {
+      "tips": "Tips",
+      "flight": "Flights",
+      "train": "High-speed trains"
+    },
+    "nightCount": "{count} nights",
+    "totalNights": "Total {count} nights",
+    "duration": "{days} days / {nights} nights"
   },
   "businessCategory": {
     "applicableResources": "Applicable Resources",
@@ -661,12 +730,9 @@
     "searchPlaceholder": "Search code, name, or city",
     "seats": "Seats",
     "starRating": "Star Rating",
-    "directPrice": "Direct Quote",
     "groundOperatorProvidedTag": "Ground Operator Quote",
     "groundOperatorRequired": "Select a ground operator",
     "dailyPriceRequired": "Enter the daily price",
-    "isGroundOperatorProvided": "Provided by Ground Operator",
-    "priceSource": "Quote Source",
     "priceUnit": "Price Unit",
     "priceUnitRequired": "Select a price unit",
     "supplierName": "Ground Operator Name",
@@ -683,8 +749,6 @@
   },
   "hotel": {
     "address": "Address",
-    "basicRoomType": "Basic Room Type",
-    "basicRoomTypeRequired": "Enter a basic room type",
     "breakfast": "Breakfast",
     "cityPlaceholder": "Select province and city",
     "cityRequired": "Select a city",
@@ -702,7 +766,8 @@
       "international_five_star": "International Five-Star",
       "ctrip_preferred": "Ctrip Preferred"
     },
-    "searchPlaceholder": "Search hotel code, name, or address"
+    "searchPlaceholder": "Search hotel code, name, or address",
+    "breakfastIncluded": "Breakfast included"
   },
   "attraction": {
     "area": "Tourism Area",
@@ -930,6 +995,7 @@
     "RESOURCE_CODE_EXISTS": "This resource code is already in use",
     "RESOURCE_ID_MISMATCH": "The resource does not match the request URL",
     "RESOURCE_VERSION_CONFLICT": "This resource has changed. Refresh and try again",
+    "RESOURCE_CITY_INVALID": "Select an enabled city from the city library",
     "RESOURCE_UNIT_INVALID": "The selected price unit is invalid or disabled",
     "RESOURCE_IN_USE": "This resource is in use and cannot be deleted",
     "GROUND_OPERATOR_REQUIRED": "Select a ground operator",
@@ -992,5 +1058,10 @@
     "mobile": "Enter a valid mobile number",
     "number": "Enter a number",
     "url": "Enter a valid URL"
+  },
+  "city": {
+    "create": "Add city",
+    "edit": "Edit city",
+    "province": "Province / region"
   }
 }

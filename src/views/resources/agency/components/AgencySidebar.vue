@@ -24,7 +24,7 @@
     <el-scrollbar class="agency-sidebar__scrollbar">
       <div class="agency-sidebar__list">
         <div
-          v-for="agency in filteredRows"
+          v-for="agency in rows"
           :key="agency.id"
           class="agency-sidebar__item"
           :class="{ 'is-active': agency.id === selectedId }"
@@ -74,7 +74,7 @@
           </div>
         </div>
         <el-empty
-          v-if="!filteredRows.length"
+          v-if="!rows.length"
           :description="$t('resource.noAgencies')"
           :image-size="64"
         />
@@ -84,11 +84,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { ref, watch } from "vue";
+import { useDebounceFn } from "@vueuse/core";
 import type { ResourcePermissionSet } from "@/constants";
-import type { AgencyRecord } from "@/types/resource";
+import type { AgencyRecord, ResourceListQuery } from "@/types/resource";
 
-const props = defineProps<{
+defineProps<{
   rows: AgencyRecord[];
   selectedId: string;
   permissions: ResourcePermissionSet;
@@ -100,15 +101,13 @@ const emit = defineEmits<{
   edit: [agency: AgencyRecord];
   delete: [agency: AgencyRecord];
   "toggle-status": [agency: AgencyRecord];
+  "query-change": [query: ResourceListQuery];
 }>();
 
 const keywords = ref("");
-const filteredRows = computed(() => {
-  const value = keywords.value.toLowerCase();
-  if (!value) return props.rows;
-  return props.rows.filter((agency) => [agency.code, agency.name, agency.countryOrRegion, agency.email]
-    .some((field) => field.toLowerCase().includes(value)));
-});
+const requestRows = useDebounceFn(() => emit("query-change", { keyword: keywords.value }), 300);
+
+watch(keywords, () => requestRows());
 </script>
 
 <style scoped lang="scss">

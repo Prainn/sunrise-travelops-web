@@ -1,3 +1,5 @@
+import { itineraryDuration } from "./duration";
+import { getDayBreakfastStatus } from "./hotel-plans";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import type { InquiryRecord } from "@/types/inquiry";
@@ -10,7 +12,7 @@ import type {
 } from "@/types/itinerary";
 import { formatDateTime, formatMoney, sumMoney } from "@/utils";
 import { getTransportMethodNames } from "@/utils/transport-method";
-import { getEnabledHotelPlans, getHotelPlanSelection, HOTEL_PLAN_TIER_LABELS } from "./hotel-plans";
+import { calculateDestinationNights, getEnabledHotelPlans, HOTEL_PLAN_TIER_LABELS } from "./hotel-plans";
 import { calculateItineraryQuote } from "./quote-pricing";
 import {
   getEnabledVehiclePlans,
@@ -47,11 +49,24 @@ export async function generateItineraryPdf(itinerary: ItineraryRecord, inquiry: 
     let cursorY = PAGE_MARGIN_MM;
     const blocks = Array.from(documentRoot.querySelectorAll<HTMLElement>("[data-pdf-block]"));
     let scheduleHeaderCanvas: HTMLCanvasElement | undefined;
+    let pendingHeading: { canvas: HTMLCanvasElement; gap: number } | undefined;
 
     for (const block of blocks) {
       const canvas = await html2canvas(block, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
       const blockKind = block.dataset.pdfKind;
       const blockGap = Number(block.dataset.pdfGapMm ?? BLOCK_GAP_MM);
+      if (block.hasAttribute("data-pdf-keep-with-next")) {
+        pendingHeading = { canvas, gap: blockGap };
+        continue;
+      }
+      if (pendingHeading) {
+        const headingHeight = pendingHeading.canvas.height * PAGE_CONTENT_WIDTH_MM / pendingHeading.canvas.width;
+        const contentHeight = canvas.height * PAGE_CONTENT_WIDTH_MM / canvas.width;
+        const needed = pendingHeading.gap + headingHeight + blockGap + contentHeight;
+        if (cursorY > PAGE_MARGIN_MM && cursorY + needed > PAGE_MARGIN_MM + PAGE_CONTENT_HEIGHT_MM) cursorY = addPdfPage(pdf);
+        cursorY = addBlockToPdf(pdf, pendingHeading.canvas, cursorY, pendingHeading.gap);
+        pendingHeading = undefined;
+      }
       if (blockKind === "schedule-header") {
         scheduleHeaderCanvas = canvas;
         cursorY = addBlockToPdf(pdf, canvas, cursorY, blockGap);
@@ -137,7 +152,7 @@ function addPdfPage(pdf: jsPDF) {
   return PAGE_MARGIN_MM;
 }
 
-function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord, generatedAt: string) {
+export function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord, generatedAt: string) {
   const totalCost = sumMoney(itinerary.dailyPlans
     .flatMap((day) => day.items)
     .filter((item) => item.type === "restaurant" || item.type === "attraction")
@@ -149,40 +164,42 @@ function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord, genera
     <header data-pdf-block style="padding-bottom:18px;border-bottom:2px solid #2563eb;box-sizing:border-box;">
       <h1 style="margin:0 0 8px;font-size:26px;">${escapeHtml(itinerary.title)}</h1>
       <div style="color:#606266;">行程编号：${escapeHtml(itinerary.code)} · 旅行社：${escapeHtml(inquiry.agencyName)}</div>
-      <div style="margin-top:6px;color:#606266;">日期：${escapeHtml(itinerary.startDate)} — ${escapeHtml(itinerary.endDate)} · 共 ${itinerary.days} 天</div>
+      <div style="margin-top:6px;color:#606266;">日期：${escapeHtml(itinerary.startDate)} — ${escapeHtml(itinerary.endDate)} · ${itineraryDuration(itinerary.dailyPlans).days}天${itineraryDuration(itinerary.dailyPlans).nights}晚</div>
       <div style="margin-top:6px;color:#606266;">人数：成人 ${itinerary.adults} 人 · 儿童 ${itinerary.childrenCount} 人</div>
       <div style="margin-top:6px;color:#606266;">报价生成时间：${escapeHtml(generatedAt)}</div>
     </header>
     ${scheduleSections}
     ${buildHotelPairingSection(itinerary)}
-    ${buildQuoteSections(itinerary, quote)}`;
+    ${buildQuoteSections(itinerary, quote)}
+    ${buildCustomerTerms(itinerary)}`;
 }
 
 function buildHotelPairingSection(itinerary: ItineraryRecord) {
   const hotelPlans = getEnabledHotelPlans(itinerary);
   const vehiclePlans = getEnabledVehiclePlans(itinerary);
+  const hotelDestinations = Object.keys(calculateDestinationNights(itinerary));
   return `
-    <section data-pdf-block style="box-sizing:border-box;">
+    <section data-pdf-block data-pdf-keep-with-next style="box-sizing:border-box;">
       <h2 style="margin:0;font-size:18px;">酒店与车型搭配</h2>
     </section>
     <table data-pdf-block data-pdf-gap-mm="3" style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;box-sizing:border-box;">
       <thead>
         <tr style="background:#f3f4f6;">
           <th style="${quoteHeaderStyle()};width:18%;">资源类别</th>
-          ${itinerary.destinations.map((destination) => `<th style="${quoteHeaderStyle()}">${escapeHtml(destination)}</th>`).join("")}
+          ${hotelDestinations.map((destination) => `<th style="${quoteHeaderStyle()}">${escapeHtml(destination)}</th>`).join("")}
         </tr>
       </thead>
       <tbody>
         ${hotelPlans.map((plan) => `<tr>
           <th style="${quoteLabelStyle()}">${escapeHtml(HOTEL_PLAN_TIER_LABELS[plan.tier])}</th>
-          ${itinerary.destinations.map((destination) => {
+          ${hotelDestinations.map((destination) => {
             const hotel = plan.hotels.find((selection) => selection.destination === destination);
-            return `<td style="${quoteCellStyle()}">${escapeHtml(hotel?.hotelName ?? "-")}</td>`;
+            return `<td style="${quoteCellStyle()}">${escapeHtml(hotel ? `${hotel.hotelName}（${hotel.breakfastIncluded ? "含早" : "不含早"}）` : "-")}</td>`;
           }).join("")}
         </tr>`).join("")}
         ${vehiclePlans.map((plan) => `<tr>
           <th style="${quoteLabelStyle()}">${escapeHtml(VEHICLE_PLAN_TIER_LABELS[plan.tier])}</th>
-          <td colspan="${itinerary.destinations.length}" style="${quoteCellStyle()}">${escapeHtml(
+          <td colspan="${hotelDestinations.length}" style="${quoteCellStyle()}">${escapeHtml(
             plan.vehicle ? `${plan.vehicle.vehicleName}${plan.vehicle.seats ? `（${plan.vehicle.seats}座）` : ""}` : "-"
           )}</td>
         </tr>`).join("")}
@@ -199,7 +216,7 @@ function buildQuoteSections(itinerary: ItineraryRecord, quote: ItineraryQuoteCal
   const optionGroups = chunkQuoteOptions(options);
 
   return `
-    <section data-pdf-block style="box-sizing:border-box;">
+    <section data-pdf-block data-pdf-keep-with-next style="box-sizing:border-box;">
       <h2 style="margin:0 0 6px;font-size:18px;">团队报价</h2>
       <div style="color:#606266;font-size:12px;">报价按 ${guestCount} 名付费游客计算，FOC 仅适用于领队。</div>
     </section>
@@ -234,8 +251,9 @@ function buildQuoteTable(
             ${option.leaderFocEnabled ? `${guestCount}+1 FOC (TOUR LEADER ONLY)` : "NO FOC"}
           </div>`)}
         ${childRow}
+        ${buildExtraFeeRows(itinerary, options.length)}
         ${buildQuoteRow("单房差", options, ({ calculation }) => `RMB ${formatMoney(calculation.singleSupplementUnitCost)}`)}
-        ${buildQuoteRow("报价总计", options, ({ calculation }) => `<strong>RMB ${formatMoney(calculation.totalPrice)}</strong>`)}
+        ${buildQuoteRow("团费总计", options, ({ calculation }) => `<strong>RMB ${formatMoney(calculation.totalPrice)}</strong>`)}
       </tbody>
     </table>`;
 }
@@ -277,8 +295,7 @@ function quoteCellStyle() {
 }
 
 function buildScheduleSections(days: ItineraryDayRecord[], itinerary: ItineraryRecord) {
-  const rows = days.map((day, index) => {
-    const previousDay = days[index - 1];
+  const rows = days.map((day) => {
     return `
       <table data-pdf-block data-pdf-kind="schedule-row" data-pdf-gap-mm="0" style="${scheduleTableStyle()}">
         ${scheduleColgroup()}
@@ -286,15 +303,15 @@ function buildScheduleSections(days: ItineraryDayRecord[], itinerary: ItineraryR
           <td style="${scheduleCellStyle("center")}">${escapeHtml(formatScheduleDate(day.date))}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(formatScheduleRoute(day))}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(getTransportMethodNames(day.transport) || "-")}</td>
-          <td style="${scheduleCellStyle("left")};white-space:pre-wrap;line-height:1.6;">${escapeHtml(day.description?.trim() || "-")}</td>
-          <td style="${scheduleCellStyle("center")}">${escapeHtml(getDailyHotelNames(day, itinerary) || "-")}</td>
-          <td style="${scheduleCellStyle("center")}">${escapeHtml(getDailyMealCodes(day, previousDay, itinerary) || "-")}</td>
+          <td style="${scheduleCellStyle("left")};white-space:pre-wrap;line-height:1.6;">${escapeHtml((day.description?.trim() || "-") + "\n" + getDailyGuideText(day, itinerary))}</td>
+          <td style="${scheduleCellStyle("center")}">${escapeHtml(day.overnightDestination || "-")}</td>
+          <td style="${scheduleCellStyle("center")}">${escapeHtml(getDailyMealCodes(day, getDayBreakfastStatus(itinerary, itinerary.dailyPlans.indexOf(day))) || "-")}</td>
         </tr></tbody>
       </table>`;
   }).join("");
 
   return `
-    <section data-pdf-block style="box-sizing:border-box;">
+    <section data-pdf-block data-pdf-keep-with-next style="box-sizing:border-box;">
       <h2 style="margin:0;font-size:18px;">行程安排</h2>
     </section>
     <table data-pdf-block data-pdf-kind="schedule-header" data-pdf-gap-mm="0" style="${scheduleTableStyle()}">
@@ -333,34 +350,40 @@ function formatScheduleRoute(day: ItineraryDayRecord) {
   return `${day.departure} / ${day.destination}`;
 }
 
-function getDailyHotelNames(day: ItineraryDayRecord, itinerary: ItineraryRecord) {
-  if (!day.overnightDestination) return "";
-  const hotelPlans = getEnabledHotelPlans(itinerary);
-  return hotelPlans.flatMap((plan) => {
-    const hotel = getHotelPlanSelection(itinerary, plan.tier, day.overnightDestination);
-    if (!hotel) return [];
-    const prefix = hotelPlans.length > 1 ? `${HOTEL_PLAN_TIER_LABELS[plan.tier]}：` : "";
-    return [`${prefix}${hotel.hotelName}`];
-  }).join(" / ");
+export function getDailyGuideText(day: ItineraryDayRecord, itinerary: ItineraryRecord) {
+  const guides = itinerary.guidePlans.filter((guide) => guide.dayIds.includes(day.id));
+  return guides.length ? `导游服务：${guides.map((guide) => `${guide.destination}（含导游）`).join("、")}` : "当日不含导游服务";
 }
 
-function getDailyMealCodes(day: ItineraryDayRecord, previousDay: ItineraryDayRecord | undefined, itinerary: ItineraryRecord) {
-  const restaurantText = day.items
-    .filter((item) => item.type === "restaurant")
-    .map((item) => `${item.id} ${item.priceName} ${item.remark}`)
-    .join(" ");
-  const dailyText = `${day.description ?? ""} ${restaurantText}`;
-  const previousHotelText = previousDay?.overnightDestination
-    ? getEnabledHotelPlans(itinerary).flatMap((plan) => {
-        const hotel = getHotelPlanSelection(itinerary, plan.tier, previousDay.overnightDestination);
-        return hotel ? [hotel.breakfast] : [];
-      }).join(" ")
-    : "";
-  const codes: string[] = [];
-  if (/早餐|早饭|breakfast/i.test(`${dailyText} ${previousHotelText}`)) codes.push("B");
-  if (/午餐|中餐|lunch/i.test(dailyText)) codes.push("L");
-  if (/晚餐|晚饭|傍晚[^。]{0,24}(?:用餐|餐厅)|dinner|supper/i.test(dailyText)) codes.push("D");
-  return codes.join(", ");
+export function getDailyMealCodes(day: ItineraryDayRecord, breakfastStatus: "included" | "excluded" | "mixed" | "pending" = day.meals.breakfast ? "included" : "excluded") {
+  return [breakfastStatus === "pending" ? "早餐待确认" : breakfastStatus === "mixed" ? "B（按酒店方案）" : breakfastStatus === "included" ? "B" : "", day.meals.lunch ? "L" : "", day.meals.dinner ? "D" : ""].filter(Boolean).join(", ");
+}
+
+function buildExtraFeeRows(itinerary: ItineraryRecord, columnCount: number) {
+  const cabins = { economy: "经济舱", business: "商务舱", first: "一等座", second: "二等座" };
+  const rows: Array<[string, string]> = itinerary.quote.transportFees.map((fee) => [
+    fee.type === "flight" ? "机票（另付）" : "动车票（另付）",
+    `${fee.departureCity} → ${fee.arrivalCity} · ${cabins[fee.cabin]} · RMB ${formatMoney(fee.unitPrice ?? 0)} PP`,
+  ]);
+  if (itinerary.quote.chineseTip !== null) rows.push(["中文小费（另付）", `RMB ${formatMoney(itinerary.quote.chineseTip)} PP（全程，大小同价）`]);
+  if (itinerary.quote.englishTip !== null) rows.push(["英文小费（另付）", `RMB ${formatMoney(itinerary.quote.englishTip)} PP（全程，大小同价）`]);
+  return rows.map(([label, value]) => `<tr><th style="${quoteLabelStyle()}">${escapeHtml(label)}</th><td colspan="${columnCount}" style="${quoteCellStyle()}">${escapeHtml(value)}</td></tr>`).join("");
+}
+
+function buildCustomerTerms(itinerary: ItineraryRecord) {
+  const hasMeals = itinerary.dailyPlans.some((day) => day.meals.lunch || day.meals.dinner);
+  const rows: Array<[string, string]> = [
+    ["酒店", "行程所列酒店双人入住，是否含早以酒店方案表为准。早餐由前一晚酒店提供；每日 B 标记表示含早，“B（按酒店方案）”表示各方案含早情况不同。"],
+    ["餐食", hasMeals ? "仅包含行程标注的午餐 L、晚餐 D，未标注的正餐自理。" : "团费不含正餐，请自理。"],
+    ["交通", "行程所列旅游车服务；机票、动车票及小费不包含在团费中，另列报价不计入团费总计。"],
+  ];
+  if (itinerary.guidePlans.length > 0) rows.push(["导游", "导游服务以每日行程标注为准，未标注的日期不含导游。"]);
+  if (itinerary.quote.holidayRestrictions.trim()) rows.push(["节假日限制", itinerary.quote.holidayRestrictions]);
+  if (itinerary.quote.hotelReplacementTerms.trim()) rows.push(["同级酒店替换条款", itinerary.quote.hotelReplacementTerms]);
+  if (itinerary.quote.customerNotes.trim()) rows.push(["客户备注", itinerary.quote.customerNotes]);
+  return `<section data-pdf-block data-pdf-keep-with-next><h2 style="margin:0;font-size:18px;">团队标准与备注</h2></section>` + rows.map(([label, value]) => `
+    <section data-pdf-block data-pdf-gap-mm="2" style="font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;"><strong>${escapeHtml(label)}：</strong>${escapeHtml(value)}</section>
+  `).join("");
 }
 
 function scheduleHeaderStyle() {

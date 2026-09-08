@@ -8,6 +8,7 @@
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
       @delete="deleteRecord"
+      @query-change="loadRecords"
     />
     <AgencyContactsPanel
       :agency="selectedAgency"
@@ -37,7 +38,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import { resourceService } from "@/services/resource.service";
-import type { AgencyContactRecord, AgencyRecord } from "@/types/resource";
+import type { AgencyContactRecord, AgencyRecord, ResourceListQuery } from "@/types/resource";
 import AgencyContactDialog from "./components/AgencyContactDialog.vue";
 import AgencyContactsPanel from "./components/AgencyContactsPanel.vue";
 import AgencyEditorDialog from "./components/AgencyEditorDialog.vue";
@@ -62,6 +63,7 @@ const {
   record,
   isDialogVisible,
   isEditing,
+  loadRecords,
   openCreateDialog,
   openEditDialog,
   toggleStatus,
@@ -93,9 +95,9 @@ watch(() => rows.map((agency) => agency.id), (ids) => {
 });
 watch(selectedAgencyId, loadAgencyContacts, { immediate: true });
 
-async function loadAgencies() {
+async function loadAgencies(query?: ResourceListQuery) {
   loadedContactAgencyIds.clear();
-  const agencies = await resourceService.loadAgencies();
+  const agencies = await resourceService.loadAgencies(query);
   const nextAgencyId = agencies.some((agency) => agency.id === selectedAgencyId.value)
     ? selectedAgencyId.value
     : agencies[0]?.id ?? "";

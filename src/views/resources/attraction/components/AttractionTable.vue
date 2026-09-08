@@ -11,7 +11,7 @@
       class="page-content"
       shadow="never"
     >
-      <TableToolbar @refresh="emit('refresh')">
+      <TableToolbar @refresh="refreshRows">
         <el-button
           v-has-perm="RESOURCE_PERMISSIONS.attraction.create"
           type="primary"
@@ -97,21 +97,6 @@
                   >
                     <template #default="priceScope">
                       {{ formatPrice(priceScope.row as AttractionPriceRecord, "settlementPrice") }}
-                    </template>
-                  </el-table-column>
-                  <el-table-column
-                    :label="$t('resource.priceSource')"
-                    min-width="160"
-                  >
-                    <template #default="priceScope">
-                      <el-tag
-                        v-if="priceScope.row.isGroundOperatorProvided"
-                        type="warning"
-                        effect="plain"
-                      >
-                        {{ getGroundOperatorName(priceScope.row.groundOperatorId) }}
-                      </el-tag>
-                      <span v-else>{{ $t("resource.directPrice") }}</span>
                     </template>
                   </el-table-column>
                   <el-table-column
@@ -233,7 +218,7 @@
         </el-table>
       </div>
       <pagination
-        v-if="filteredRows.length"
+        v-if="rows.length"
         v-model:page="pageNum"
         v-model:limit="pageSize"
         :total="total"
@@ -243,15 +228,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
+import { useDebounceFn } from "@vueuse/core";
 import { useI18n } from "vue-i18n";
 import { RESOURCE_PERMISSIONS } from "@/constants";
-import { resourceService } from "@/services/resource.service";
 import type {
   AttractionCategory,
   AttractionPriceItemType,
   AttractionPriceRecord,
   AttractionRecord,
+  ResourceListQuery,
 } from "@/types/resource";
 import { formatMoney } from "@/utils";
 import TableToolbar from "@/components/TableToolbar/index.vue";
@@ -260,7 +246,8 @@ import { attractionCategoryLabelKeys, attractionItemTypeLabelKeys } from "../opt
 
 const props = defineProps<{ rows: AttractionRecord[] }>();
 const emit = defineEmits<{
-  refresh: [];
+  refresh: [query: ResourceListQuery];
+  "query-change": [query: ResourceListQuery];
   create: [];
   edit: [record: AttractionRecord];
   delete: [record: AttractionRecord];
@@ -277,20 +264,27 @@ const area = ref("");
 const category = ref<AttractionCategory | "">("");
 const pageNum = ref(1);
 const pageSize = ref(10);
-const groundOperatorOptions = computed(() => resourceService.supplierOptions);
-const filteredRows = computed(() => props.rows.filter((record) => (
-  (!area.value || record.area === area.value)
-  && (!category.value || record.category === category.value)
-  && (!keywords.value || [record.code, record.name, record.remark].some((field) => field.toLowerCase().includes(keywords.value.toLowerCase())))
-)));
-const total = computed(() => filteredRows.value.length);
-const pagedRows = computed(() => filteredRows.value.slice((pageNum.value - 1) * pageSize.value, pageNum.value * pageSize.value));
+const total = computed(() => props.rows.length);
+const pagedRows = computed(() => props.rows.slice((pageNum.value - 1) * pageSize.value, pageNum.value * pageSize.value));
+const requestRows = useDebounceFn(() => emit("query-change", currentQuery()), 300);
+
+watch([keywords, area, category], () => {
+  pageNum.value = 1;
+  requestRows();
+});
+
+function currentQuery(): ResourceListQuery {
+  return { keyword: keywords.value, area: area.value, category: category.value || undefined };
+}
 
 function resetQuery() {
   keywords.value = "";
   area.value = "";
   category.value = "";
   pageNum.value = 1;
+}
+function refreshRows() {
+  emit("refresh", currentQuery());
 }
 function changeExpand(record: AttractionRecord, expanded: AttractionRecord[] | boolean) {
   const isExpanded = Array.isArray(expanded)
@@ -304,9 +298,6 @@ function formatPeriod(price: AttractionPriceRecord) {
 function formatPrice(price: AttractionPriceRecord, field: "rackPrice" | "settlementPrice") {
   if (price.isFree) return "免费";
   return price[field] ? formatMoney(price[field]) : "-";
-}
-function getGroundOperatorName(id: string) {
-  return groundOperatorOptions.value.find((item) => item.id === id)?.name ?? t("resource.groundOperatorProvidedTag");
 }
 </script>
 

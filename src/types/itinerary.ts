@@ -11,7 +11,7 @@ export interface ItineraryHotelSelection {
   hotelId: string;
   hotelName: string;
   rating: string;
-  roomType: string;
+  breakfastIncluded: boolean;
   breakfast: string;
   unit: ItineraryPriceUnit;
   unitCost: number;
@@ -47,6 +47,28 @@ export interface ItineraryQuoteOption {
 
 export interface ItineraryQuoteSettings {
   options: ItineraryQuoteOption[];
+  chineseTip: number | null;
+  englishTip: number | null;
+  transportFees: ItineraryTransportFee[];
+  customerNotes: string;
+  holidayRestrictions: string;
+  hotelReplacementTerms: string;
+}
+
+export interface ItineraryTransportFee {
+  id: string;
+  type: "flight" | "train";
+  departureCity: string;
+  arrivalCity: string;
+  cabin: "economy" | "business" | "first" | "second";
+  unitPrice: number | null;
+}
+
+export type MealSlot = "lunch" | "dinner";
+export interface ItineraryMeals {
+  breakfast: boolean;
+  lunch: boolean;
+  dinner: boolean;
 }
 
 export type ItineraryQuoteLineType = "adult" | "child";
@@ -80,6 +102,7 @@ export interface ItineraryQuoteCalculation {
   hotelGuestCount: number;
   hotelRoomCount: number;
   dailyResourceCost: number;
+  guideCost: number;
   options: ItineraryQuoteOptionCalculation[];
 }
 
@@ -90,13 +113,13 @@ export interface ItineraryResourceItem {
   resourcePriceId: string;
   resourceName: string;
   priceName: string;
-  providerName: string;
   quantity: number;
   unit: ItineraryPriceUnit;
   referenceUnitCost?: number;
   unitCost: number;
   totalCost: number;
   remark: string;
+  mealSlot?: MealSlot;
 }
 
 export interface ItineraryDayRecord {
@@ -105,13 +128,23 @@ export interface ItineraryDayRecord {
   date: string;
   departure: string;
   destination: string;
-  overnightDestination: string;
+  overnightDestination: string | null;
+  meals: ItineraryMeals;
   transport: string;
   description?: string;
   items: ItineraryResourceItem[];
 }
 
+export interface ItineraryGuidePlan {
+  destination: string;
+  guideId: string;
+  guideName: string;
+  dailyPrice: number;
+  dayIds: string[];
+}
+
 export interface ItineraryRecord {
+  guidePlans: ItineraryGuidePlan[];
   id: string;
   inquiryId: string;
   code: string;

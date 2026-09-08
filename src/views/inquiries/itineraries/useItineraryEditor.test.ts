@@ -1,3 +1,4 @@
+import type { GuideRecord } from "@/types/resource";
 import { computed, ref } from "vue";
 import { describe, expect, it } from "vitest";
 import type { InquiryRecord } from "@/types/inquiry";
@@ -11,8 +12,8 @@ const vipVehicleResourceId = "00000000-0000-4000-8000-000000000005";
 
 function createEditor() {
   const preferredHotel: HotelRecord = {
-    id: hotelResourceId, code: "HTL-002", name: "Hotel", province: "云南省", city: "昆明市",
-    rating: "ctrip_preferred", facilities: "", breakfast: "", address: "", phone: "", nearby: "", basicRoomType: "Room",
+    id: hotelResourceId, code: "HTL-002", name: "Hotel", province: "云南省", city: "昆明",
+    rating: "ctrip_preferred", facilities: "", breakfastIncluded: true, breakfast: "", address: "", phone: "", nearby: "",
     individualPrice: 428, groupPrice: 200, minimumGroupSize: 10, unit: "roomNight", status: "enabled",
   };
   const fiveStarHotel: HotelRecord = {
@@ -26,7 +27,7 @@ function createEditor() {
   };
   const hotels = [preferredHotel, fiveStarHotel];
   const vehicle: TransportRecord = {
-    id: vehicleResourceId, code: "VEH-001", name: "Coach", city: "昆明市",
+    id: vehicleResourceId, code: "VEH-001", name: "Coach", city: "昆明",
     serviceLevel: "standard", seats: 38, dailyPrice: 800, unit: "vehicleDay",
     phone: "", status: "enabled", remark: "",
   };
@@ -58,6 +59,7 @@ function createEditor() {
     canEditContent: () => true,
     canEditPrice: () => true,
     getCreator: () => "operator",
+    findGuide: (id) => id === "g1" ? ({ id, name: "Guide", dailyPrice: 600, status: "enabled" } as GuideRecord) : undefined,
     findHotel: (id) => hotels.find((hotel) => hotel.id === id),
     findVehicle: (id) => vehicles.find((record) => record.id === id),
   });
@@ -65,6 +67,41 @@ function createEditor() {
 }
 
 describe("itinerary editor", () => {
+  it("keeps lunch and dinner separate, and removes cost when a meal is excluded", () => {
+    const { editor } = createEditor();
+    const plan = editor.createItinerary({ ...editor.createEmptyItinerary(), startDate: "2026-11-05", days: 2 })!;
+    const item = {
+      id: "lunch", type: "restaurant" as const, mealSlot: "lunch" as const,
+      resourceId: "restaurant", resourcePriceId: "price", resourceName: "餐厅", priceName: "套餐", quantity: 12, unit: "personMeal", unitCost: 60, totalCost: 720, remark: "",
+    };
+    expect(editor.addResourceItem(plan.dailyPlans[0].id, item)).toBe(false);
+    editor.updateMeal(0, "lunch", true);
+    editor.updateMeal(0, "dinner", true);
+    editor.addResourceItem(plan.dailyPlans[0].id, item);
+    editor.addResourceItem(plan.dailyPlans[0].id, { ...item, id: "dinner", mealSlot: "dinner" });
+    expect(plan.dailyPlans[0].items).toHaveLength(2);
+    editor.updateMeal(0, "lunch", false);
+    expect(plan.dailyPlans[0].items.map((record) => record.mealSlot)).toEqual(["dinner"]);
+    editor.updateDayField(0, "overnightDestination", "");
+    expect(plan.dailyPlans[1].meals.breakfast).toBe(false);
+    editor.updateDayField(0, "overnightDestination", "昆明");
+    expect(plan.dailyPlans[1].meals.breakfast).toBe(false);
+  });
+
+  it("copies meal choices and extra fees independently from the quoted source", () => {
+    const { editor } = createEditor();
+    const source = editor.createItinerary({ ...editor.createEmptyItinerary(), startDate: "2026-11-05", days: 2 })!;
+    editor.updateQuoteSettings({ transportFees: [{ id: "fee", type: "train", departureCity: "昆明", arrivalCity: "大理", cabin: "first", unitPrice: 185 }] });
+    source.status = "quoted";
+    const copied = editor.copyItinerary("调整")!;
+    copied.quote.transportFees[0].unitPrice = 200;
+    copied.dailyPlans[0].meals.lunch = true;
+    expect(source.quote.transportFees[0].unitPrice).toBe(185);
+    expect(source.dailyPlans[0].meals.lunch).toBe(false);
+    expect(copied.guidePlans).toEqual([]);
+    expect(copied.status).toBe("draft");
+  });
+
   it("creates an itinerary and its days with unique IDs", () => {
     const { editor, inquiry, itineraryStore } = createEditor();
     const record = { ...editor.createEmptyItinerary(), code: "ITI-001", startDate: "2026-10-01", days: 2 };
@@ -80,16 +117,16 @@ describe("itinerary editor", () => {
   it("copies nested entities with new IDs", () => {
     const { editor, selectedItinerary } = createEditor();
     const record = {
-      ...editor.createEmptyItinerary(), code: "ITI-001", startDate: "2026-10-01", days: 1, destinations: ["昆明市"],
+      ...editor.createEmptyItinerary(), code: "ITI-001", startDate: "2026-10-01", days: 1, destinations: ["昆明"],
     };
     const original = editor.createItinerary(record);
     expect(original).not.toBeNull();
     original?.dailyPlans[0].items.push({
       id: "item-original", type: "attraction", resourceId: "attraction-1", resourcePriceId: "price-1", resourceName: "Attraction",
-      priceName: "Room", providerName: "直营报价", quantity: 1, unit: "roomNight", unitCost: 100,
+      priceName: "Room", quantity: 1, unit: "roomNight", unitCost: 100,
       totalCost: 100, remark: "",
     });
-    editor.updateHotelPlanSelection("preferred_non_five_star", "昆明市", hotelResourceId);
+    editor.updateHotelPlanSelection("preferred_non_five_star", "昆明", hotelResourceId);
     editor.updateVehiclePlanSelection("standard", vehicleResourceId);
 
     const copied = editor.copyItinerary("副本");
@@ -113,7 +150,7 @@ describe("itinerary editor", () => {
     expect(created).not.toBeNull();
     created?.dailyPlans[0].items.push({
       id: "item-original", type: "attraction", resourceId: "attraction-1", resourcePriceId: "price-1", resourceName: "Attraction",
-      priceName: "Room", providerName: "直营报价", quantity: 1, unit: "roomNight", unitCost: 100,
+      priceName: "Room", quantity: 1, unit: "roomNight", unitCost: 100,
       totalCost: 100, remark: "",
     });
     const originalDayIds = created?.dailyPlans.map((day) => day.id);
@@ -139,17 +176,17 @@ describe("itinerary editor", () => {
     const { editor } = createEditor();
     const record = {
       ...editor.createEmptyItinerary(), code: "ITI-001", startDate: "2026-10-01", days: 1, adults: 4,
-      destinations: ["昆明市"],
+      destinations: ["昆明"],
     };
     const created = editor.createItinerary(record);
     expect(created).not.toBeNull();
 
     editor.updateVehiclePlanSelection("standard", vehicleResourceId);
-    editor.updateHotelPlanSelection("preferred_non_five_star", "昆明市", hotelResourceId);
+    editor.updateHotelPlanSelection("preferred_non_five_star", "昆明", hotelResourceId);
 
     expect(created?.quote.options).toHaveLength(1);
     expect(created?.quote.options[0].hotelTier).toBe("preferred_non_five_star");
-    expect(created?.hotelPlans[1].hotels[0]).toMatchObject({ destination: "昆明市", unitCost: 428 });
+    expect(created?.hotelPlans[1].hotels[0]).toMatchObject({ destination: "昆明", unitCost: 428 });
 
     editor.updateItineraryBasics({ ...created!, adults: 9, childrenCount: 1 });
 
@@ -165,14 +202,14 @@ describe("itinerary editor", () => {
 
     const added = editor.addResourceItem(created!.dailyPlans[0].id, {
       id: "hotel", type: "hotel", resourceId: hotelResourceId, resourcePriceId: hotelResourceId,
-      resourceName: "Hotel", priceName: "Room", providerName: "直营报价", quantity: 1,
+      resourceName: "Hotel", priceName: "Room", quantity: 1,
       unit: "roomNight", unitCost: 428, totalCost: 428, remark: "",
     });
 
     expect(added).toBe(false);
     expect(editor.addResourceItem(created!.dailyPlans[0].id, {
       id: "vehicle", type: "vehicle", resourceId: vehicleResourceId, resourcePriceId: vehicleResourceId,
-      resourceName: "Coach", priceName: "Daily Cost", providerName: "直营报价", quantity: 1,
+      resourceName: "Coach", priceName: "Daily Cost", quantity: 1,
       unit: "vehicleDay", unitCost: 800, totalCost: 800, remark: "",
     })).toBe(false);
     expect(created?.dailyPlans[0].items).toEqual([]);
@@ -182,7 +219,7 @@ describe("itinerary editor", () => {
     const { editor } = createEditor();
     const record = {
       ...editor.createEmptyItinerary(), code: "ITI-001", startDate: "2026-10-01", days: 1,
-      destinations: ["昆明市", "大理市", "丽江市"],
+      destinations: ["昆明", "大理", "丽江"],
     };
     const created = editor.createItinerary(record);
     expect(created).not.toBeNull();
@@ -200,7 +237,7 @@ describe("itinerary editor", () => {
     const { editor } = createEditor();
     const record = {
       ...editor.createEmptyItinerary(), code: "ITI-001", startDate: "2026-10-01", days: 1,
-      adults: 39, destinations: ["昆明市"],
+      adults: 39, destinations: ["昆明"],
     };
     const created = editor.createItinerary(record);
 
@@ -215,11 +252,11 @@ describe("itinerary editor", () => {
     const { editor } = createEditor();
     const created = editor.createItinerary({
       ...editor.createEmptyItinerary(), code: "ITI-001", startDate: "2026-10-01", days: 1,
-      destinations: ["昆明市"],
+      destinations: ["昆明"],
     });
 
-    editor.updateHotelPlanSelection("international_five_star", "昆明市", "00000000-0000-4000-8000-000000000003");
-    editor.updateHotelPlanSelection("preferred_non_five_star", "昆明市", hotelResourceId);
+    editor.updateHotelPlanSelection("international_five_star", "昆明", "00000000-0000-4000-8000-000000000003");
+    editor.updateHotelPlanSelection("preferred_non_five_star", "昆明", hotelResourceId);
     editor.updateVehiclePlanSelection("standard", vehicleResourceId);
     editor.updateVehiclePlanSelection("vip", vipVehicleResourceId);
 
@@ -234,12 +271,12 @@ describe("itinerary editor", () => {
   it("updates price and FOC on an automatically generated hotel-tier quote", () => {
     const { editor } = createEditor();
     const record = {
-      ...editor.createEmptyItinerary(), code: "ITI-001", startDate: "2026-10-01", days: 1, destinations: ["昆明市"],
+      ...editor.createEmptyItinerary(), code: "ITI-001", startDate: "2026-10-01", days: 1, destinations: ["昆明"],
     };
     const created = editor.createItinerary(record);
     expect(created).not.toBeNull();
     editor.updateVehiclePlanSelection("standard", vehicleResourceId);
-    editor.updateHotelPlanSelection("international_five_star", "昆明市", "00000000-0000-4000-8000-000000000003");
+    editor.updateHotelPlanSelection("international_five_star", "昆明", "00000000-0000-4000-8000-000000000003");
     const firstOptionId = created!.quote.options[0].id;
 
     editor.updateQuoteOption(firstOptionId, {
@@ -255,4 +292,41 @@ describe("itinerary editor", () => {
       leaderFocEnabled: true,
     });
   });
+});
+
+it("selects the same guide in multiple cities, copies independently, and removes obsolete assignments", () => {
+  const { editor } = createEditor();
+  const source = editor.createItinerary({ ...editor.createEmptyItinerary(), days: 2, startDate: "2026-11-05", destinations: ["昆明", "大理"] })!;
+  editor.updateGuideSelection("昆明", "g1");
+  editor.updateGuideSelection("大理", "g1");
+  editor.updateGuideDays("昆明", source.dailyPlans.map((day) => day.id));
+  expect(source.guidePlans.map((plan) => plan.dayIds.length)).toEqual([2, 0]);
+  editor.updateGuideDays("昆明", [...source.dailyPlans.map((day) => day.id), "invalid"]);
+  expect(source.guidePlans[0].dayIds.length).toBe(2);
+  const copied = editor.copyItinerary("copy")!;
+  expect(copied.guidePlans[0].dayIds).toEqual(copied.dailyPlans.map((day) => day.id));
+  editor.removeDay(0);
+  expect(copied.guidePlans[0].dayIds).toEqual([copied.dailyPlans[0].id]);
+  expect(source.guidePlans[0].dayIds.length).toBe(2);
+  editor.updateGuideSelection("大理", "");
+  expect(copied.guidePlans).toHaveLength(1);
+  editor.updateItineraryBasics({ ...copied, destinations: ["大理"] });
+  expect(copied.guidePlans).toEqual([]);
+});
+
+it("restricts daily route cities and clears invalid selections after reordering or destination removal", () => {
+  const { editor } = createEditor();
+  const plan = editor.createItinerary({ ...editor.createEmptyItinerary(), startDate: "2026-11-05", days: 2, destinations: ["昆明", "大理"] })!;
+  editor.updateDayField(0, "departure", "新加坡机场");
+  editor.updateDayField(0, "destination", "新加坡");
+  expect(plan.dailyPlans[0].destination).toBe("");
+  editor.updateDayField(0, "destination", "昆明");
+  editor.updateDayField(1, "departure", "昆明");
+  editor.updateDayField(1, "destination", "大理");
+  editor.updateDayField(1, "departure", "新加坡");
+  expect(plan.dailyPlans[1].departure).toBe("昆明");
+  editor.moveDay(0, 1);
+  expect(plan.dailyPlans[1].departure).toBe("");
+  editor.updateItineraryBasics({ ...plan, destinations: ["昆明"] });
+  expect(plan.dailyPlans[0].destination).toBe("");
 });

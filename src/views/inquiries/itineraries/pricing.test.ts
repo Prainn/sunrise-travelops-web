@@ -1,3 +1,4 @@
+import { createDefaultQuoteSettings } from "@/views/inquiries/itineraries/quote-pricing";
 import { describe, expect, it } from "vitest";
 import type { PricingResources } from "./pricing";
 import { calculateItem, getHotelUnitCost, getResourcePriceOptions, reconcileItineraryResourceReferences } from "./pricing";
@@ -15,17 +16,16 @@ const ids = {
 
 function createResources(): PricingResources {
   return {
-    suppliers: [{ id: ids.supplier, code: "SUP-001", name: "测试地接社" }],
     hotels: [{
-      id: ids.hotel, code: "HTL-001", name: "测试酒店", province: "云南省", city: "昆明市", rating: "ctrip_preferred",
-      facilities: "", breakfast: "", address: "", phone: "", nearby: "", basicRoomType: "标准间",
+      id: ids.hotel, code: "HTL-001", name: "测试酒店", province: "云南省", city: "昆明", rating: "ctrip_preferred",
+      facilities: "", breakfastIncluded: true, breakfast: "", address: "", phone: "", nearby: "",
       individualPrice: 428, groupPrice: 200, minimumGroupSize: 10, unit: "roomNight", status: "enabled",
     }],
     restaurants: [{
       id: ids.restaurant, code: "RES-001", name: "测试餐厅", city: "昆明", cuisine: "云南菜", contact: "", phone: "",
       address: "", remark: "", unit: "table", status: "enabled", prices: [{
         id: ids.restaurantPrice, menuName: "团队餐", dishDetails: "", unit: "table", price: 600, dinerCount: 10,
-        remark: "", isGroundOperatorProvided: true, groundOperatorId: ids.supplier,
+        remark: "",
       }],
     }],
     attractions: [{
@@ -33,7 +33,7 @@ function createResources(): PricingResources {
       remark: "", unit: "personVisit", status: "enabled", prices: [{
         id: ids.attractionPrice, itemType: "ticket", itemName: "门票", audience: "成人", periodName: "常规期",
         startDate: "", endDate: "", rackPrice: 100, settlementPrice: 80, unit: "personVisit", isFree: false,
-        priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "",
+        priceNote: "",
       }],
     }],
     transports: [{
@@ -65,12 +65,11 @@ describe("resource pricing", () => {
     expect(getHotelUnitCost({ ...hotel, minimumGroupSize: null }, 100)).toBe(428);
   });
 
-  it("builds provider names and excludes disabled API records", () => {
+  it("builds unified prices and excludes disabled API records", () => {
     const resources = createResources();
     resources.hotels.push({ ...resources.hotels[0], id: "00000000-0000-4000-8000-000000000009", status: "disabled" });
     const options = getResourcePriceOptions(resources);
 
-    expect(options.map((option) => option.providerName)).toContain("测试地接社");
     expect(options.some((option) => option.resourceId === "00000000-0000-4000-8000-000000000009")).toBe(false);
   });
 
@@ -87,18 +86,18 @@ describe("resource pricing", () => {
     const options = getResourcePriceOptions(createResources());
     const itineraries = [{
       id: "itinerary-1", inquiryId: "inquiry-1", code: "ITI-001", title: "Test", startDate: "2026-10-01",
-      endDate: "2026-10-01", days: 1, adults: 2, childrenCount: 0, destinations: ["昆明市"],
-      hotelPlans: [], vehiclePlans: [], operationsCoordinator: "", quote: {
+      endDate: "2026-10-01", days: 1, adults: 2, childrenCount: 0, destinations: ["昆明"],
+      guidePlans: [], hotelPlans: [], vehiclePlans: [], operationsCoordinator: "", quote: { ...createDefaultQuoteSettings(),
         options: [{
           id: "quote-option-1", hotelTier: "preferred_non_five_star" as const, vehicleTier: "standard" as const,
           adultUnitPrice: null, leaderFocEnabled: false,
         }],
       },
       dailyPlans: [{
-        id: "day-1", dayNumber: 1, date: "2026-10-01", departure: "", destination: "", overnightDestination: "",
+        id: "day-1", dayNumber: 1, date: "2026-10-01", departure: "", destination: "", overnightDestination: "", meals: { breakfast: false, lunch: false, dinner: false },
         transport: "", items: [{
         id: "item-1", type: "hotel" as const, resourceId: "legacy-hotel", resourcePriceId: "legacy-price",
-        resourceName: "测试酒店", priceName: "标准间", providerName: "直营报价", quantity: 1, unit: "roomNight",
+        resourceName: "测试酒店", priceName: "标准间", quantity: 1, unit: "roomNight",
         unitCost: 428, totalCost: 428, remark: "",
         }],
       }],
@@ -112,3 +111,13 @@ describe("resource pricing", () => {
     });
   });
 });
+
+it("defaults table meals to enough tables while leaving per-person quantities unchanged", () => {
+  const table = { unit: "table", dinerCount: 10 } as ResourcePriceOption;
+  expect(getDefaultResourceQuantity(table, 20)).toBe(2);
+  expect(getDefaultResourceQuantity(table, 21)).toBe(3);
+  expect(getDefaultResourceQuantity({ ...table, dinerCount: 0 }, 20)).toBe(1);
+  expect(getDefaultResourceQuantity({ ...table, unit: "personMeal" }, 20)).toBe(20);
+});
+import type { ResourcePriceOption } from "./pricing";
+import { getDefaultResourceQuantity } from "./pricing";

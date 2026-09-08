@@ -195,6 +195,12 @@ export const constantRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: "city",
+        name: "CityResource",
+        component: () => import("@/views/resources/city/index.vue"),
+        meta: { title: "cities", icon: "el-icon-Location", perms: ["resource:city:list"] },
+      },
+      {
         path: "hotel",
         name: "Hotel",
         component: () => import("@/views/resources/hotel/index.vue"),

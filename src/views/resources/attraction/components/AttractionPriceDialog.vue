@@ -85,26 +85,6 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item :label="$t('resource.isGroundOperatorProvided')">
-        <el-switch
-          v-model="form.isGroundOperatorProvided"
-          @change="changePriceProvider"
-        />
-      </el-form-item>
-      <el-form-item
-        v-if="form.isGroundOperatorProvided"
-        :label="$t('resource.supplierName')"
-        prop="groundOperatorId"
-      >
-        <el-select v-model="form.groundOperatorId">
-          <el-option
-            v-for="option in groundOperatorOptions"
-            :key="option.id"
-            :label="option.name"
-            :value="option.id"
-          />
-        </el-select>
-      </el-form-item>
       <el-form-item :label="$t('attraction.priceNote')">
         <el-input
           v-model.trim="form.priceNote"
@@ -131,7 +111,6 @@
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { resourceService } from "@/services/resource.service";
 import type { AttractionPriceItemType, AttractionPriceRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 
@@ -159,7 +138,6 @@ const itemTypeOptions: Array<{ value: AttractionPriceItemType; labelKey: string 
   { value: "activity", labelKey: "attraction.itemActivity" },
   { value: "package", labelKey: "attraction.itemPackage" },
 ];
-const groundOperatorOptions = computed(() => resourceService.supplierOptions);
 const unitOptions = computed(() => getResourceUnitOptions("attraction", locale.value));
 const rules = computed<FormRules>(() => ({
   itemType: [{ required: true, message: t("attraction.itemTypeRequired"), trigger: "change" }],
@@ -167,16 +145,11 @@ const rules = computed<FormRules>(() => ({
   audience: [{ required: true, message: t("attraction.audienceRequired"), trigger: "blur" }],
   periodName: [{ required: true, message: t("hotel.periodRequired"), trigger: "blur" }],
   unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
-  groundOperatorId: [{ required: form.isGroundOperatorProvided, message: t("resource.groundOperatorRequired"), trigger: "change" }],
 }));
 
 watch(() => props.record, (record) => Object.assign(form, record, {
   dates: record.startDate && record.endDate ? [record.startDate, record.endDate] : [],
 }), { deep: true });
-
-function changePriceProvider(value: string | number | boolean) {
-  if (!value) form.groundOperatorId = "";
-}
 
 async function handleSubmit() {
   if (!(await formRef.value?.validate().catch(() => false))) return;

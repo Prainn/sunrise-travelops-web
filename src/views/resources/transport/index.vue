@@ -3,9 +3,9 @@
     <ResourceTable
       :rows="tableRows"
       :columns="columns"
-      :search-fields="['code', 'name', 'city']"
       :permissions="RESOURCE_PERMISSIONS.transport"
       @refresh="loadRecords"
+      @query-change="loadRecords"
       @create="openCreateDialog"
       @edit="editTransport"
       @toggle-status="toggleTransportStatus"
@@ -114,7 +114,7 @@ const fields = computed<ResourceFormField[]>(() => [
 const { rows, record, isDialogVisible, isEditing, loadRecords, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<TransportRecord>({
   records: resourceService.transports,
   api: resourceService.transportApi,
-  loadRecords: () => resourceService.loadTransports(),
+  loadRecords: (query) => resourceService.loadTransports(query),
   codePrefix: "VEH",
   createEmpty: () => ({
     id: "", code: "", name: "", serviceLevel: "standard", seats: 1, dailyPrice: 0,

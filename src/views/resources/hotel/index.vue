@@ -37,8 +37,8 @@
     </el-card>
 
     <HotelTable
-      :rows="filteredHotels"
-      @refresh="loadHotels"
+      :rows="hotelStore"
+      @refresh="refreshHotels"
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
@@ -71,15 +71,9 @@
         </el-form-item>
         <el-form-item
           :label="$t('resource.city')"
-          prop="cityPath"
+          prop="city"
         >
-          <el-cascader
-            v-model="hotelForm.cityPath"
-            :options="YUNNAN_TOURISM_REGION_OPTIONS"
-            :placeholder="$t('hotel.cityPlaceholder')"
-            clearable
-            filterable
-          />
+          <CitySelect v-model="hotelForm.city" />
         </el-form-item>
         <el-form-item
           :label="$t('resource.priceUnit')"
@@ -93,12 +87,6 @@
               :value="option.value"
             />
           </el-select>
-        </el-form-item>
-        <el-form-item
-          :label="$t('hotel.basicRoomType')"
-          prop="basicRoomType"
-        >
-          <el-input v-model.trim="hotelForm.basicRoomType" />
         </el-form-item>
         <el-form-item
           :label="$t('hotel.individualPrice')"
@@ -147,6 +135,9 @@
             :rows="2"
           />
         </el-form-item>
+        <el-form-item :label="$t('hotel.breakfastIncluded')">
+          <el-switch v-model="hotelForm.breakfastIncluded" />
+        </el-form-item>
         <el-form-item :label="$t('hotel.breakfast')">
           <el-input
             v-model.trim="hotelForm.breakfast"
@@ -178,18 +169,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
+import { useDebounceFn } from "@vueuse/core";
 import type { FormInstance, FormRules } from "element-plus";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { YUNNAN_TOURISM_REGION_OPTIONS } from "@/constants/yunnan-tourism-regions";
+import CitySelect from "@/components/CitySelect.vue";
+import { useCityOptions } from "@/composables/useCityOptions";
 import { resourceService } from "@/services/resource.service";
-import type { HotelRecord } from "@/types/resource";
-import { generateNextCode } from "@/utils";
+import type { HotelRecord, ResourceListQuery } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 import HotelTable from "./components/HotelTable.vue";
 
-type HotelForm = HotelRecord & { cityPath: string[] };
+type HotelForm = HotelRecord;
 
 defineOptions({ name: "Hotel" });
 
@@ -202,36 +194,34 @@ const editingId = ref("");
 const hotelFormRef = ref<FormInstance>();
 const hotelForm = reactive<HotelForm>(createEmptyHotel());
 const isEditing = computed(() => Boolean(editingId.value));
-const cityOptions = computed(() => [...new Set(hotelStore.map((hotel) => hotel.city))]);
+const cityOptions = useCityOptions();
 const hotelUnitOptions = computed(() => getResourceUnitOptions("hotel", locale.value));
-const filteredHotels = computed(() => {
-  const query = keywords.value.toLowerCase();
-  return hotelStore.filter((hotel) => {
-    const matchesCity = !city.value || hotel.city === city.value;
-    const matchesKeywords =
-      !query ||
-      [hotel.code, hotel.name, hotel.address].some((field) =>
-        field.toLowerCase().includes(query)
-      );
-    return matchesCity && matchesKeywords;
-  });
-});
+const requestHotels = useDebounceFn(() => loadHotels(currentQuery()), 300);
 const hotelRules: FormRules = {
   name: [{ required: true, message: t("hotel.nameRequired"), trigger: "blur" }],
-  cityPath: [{ required: true, message: t("hotel.cityRequired"), trigger: "change" }],
-  basicRoomType: [{ required: true, message: t("hotel.basicRoomTypeRequired"), trigger: "blur" }],
+  city: [{ required: true, message: t("hotel.cityRequired"), trigger: "change" }],
   individualPrice: [{ required: true, message: t("hotel.individualPriceRequired"), trigger: "change" }],
   unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
 };
 
 onMounted(loadHotels);
 
-async function loadHotels() {
+watch([keywords, city], () => requestHotels());
+
+function currentQuery(): ResourceListQuery {
+  return { keyword: keywords.value, city: city.value };
+}
+
+async function loadHotels(query?: ResourceListQuery) {
   try {
-    await resourceService.loadHotels();
+    await resourceService.loadHotels(query);
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : String(error));
   }
+}
+
+function refreshHotels() {
+  loadHotels(currentQuery());
 }
 
 function createEmptyHotel(): HotelForm {
@@ -241,14 +231,13 @@ function createEmptyHotel(): HotelForm {
     name: "",
     province: "",
     city: "",
-    cityPath: [],
     rating: "international_five_star",
     facilities: "",
+    breakfastIncluded: true,
     breakfast: "",
     address: "",
     phone: "",
     nearby: "",
-    basicRoomType: "",
     individualPrice: 0,
     groupPrice: null,
     minimumGroupSize: null,
@@ -259,18 +248,17 @@ function createEmptyHotel(): HotelForm {
 function resetQuery() {
   keywords.value = "";
   city.value = "";
-  loadHotels();
 }
 function openCreateDialog() {
   editingId.value = "";
-  Object.assign(hotelForm, createEmptyHotel(), { code: generateNextCode(hotelStore, "HTL") });
+  Object.assign(hotelForm, createEmptyHotel(), { code: `HTL-${crypto.randomUUID()}` });
   isHotelDialogVisible.value = true;
 }
 async function openEditDialog(hotel: HotelRecord) {
   try {
     const detail = await resourceService.hotelApi.getDetail(hotel.id);
     editingId.value = hotel.id;
-    Object.assign(hotelForm, detail, { cityPath: [detail.province, detail.city] });
+    Object.assign(hotelForm, detail);
     isHotelDialogVisible.value = true;
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : String(error));
@@ -283,6 +271,7 @@ async function toggleStatus(hotel: HotelRecord) {
       status: hotel.status === "enabled" ? "disabled" : "enabled",
     });
     Object.assign(hotel, updated);
+    await loadHotels(currentQuery());
     ElMessage.success(t("common.updateSuccess"));
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : String(error));
@@ -294,6 +283,7 @@ async function deleteHotel(hotel: HotelRecord) {
     await resourceService.hotelApi.deleteByIds(hotel.id);
     const index = hotelStore.findIndex((item) => item.id === hotel.id);
     if (index >= 0) hotelStore.splice(index, 1);
+    await loadHotels(currentQuery());
     ElMessage.success(t("common.deleteSuccess"));
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : String(error));
@@ -301,18 +291,17 @@ async function deleteHotel(hotel: HotelRecord) {
 }
 async function saveHotel() {
   if (!(await hotelFormRef.value?.validate().catch(() => false))) return;
-  const { cityPath, ...formValue } = hotelForm;
-  formValue.province = cityPath[0];
-  formValue.city = cityPath[1];
+  const formValue = { ...hotelForm, province: resourceService.cityOptions.find((city) => city.name === hotelForm.city)?.province ?? hotelForm.province };
   const current = hotelStore.find((hotel) => hotel.id === editingId.value);
   try {
-    const saved = current
-      ? await resourceService.hotelApi.update(current.id, formValue)
+    const saved = editingId.value
+      ? await resourceService.hotelApi.update(editingId.value, formValue)
       : await resourceService.hotelApi.create(formValue);
     if (current) Object.assign(current, saved);
-    else hotelStore.push(saved);
+    else if (!editingId.value) hotelStore.push(saved);
+    await loadHotels(currentQuery());
     isHotelDialogVisible.value = false;
-    ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));
+    ElMessage.success(t(editingId.value ? "common.updateSuccess" : "common.createSuccess"));
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : String(error));
   }

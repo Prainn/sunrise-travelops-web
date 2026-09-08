@@ -43,10 +43,11 @@ describe("resource maintenance", () => {
       update: vi.fn(async (_id: string, record: TestResource) => ({ ...record })),
       deleteByIds: vi.fn(async () => undefined),
     };
+    const loadRecords = vi.fn(async () => records);
     const maintenance = useResourceMaintenance<TestResource>({
       records,
       api,
-      loadRecords: vi.fn(async () => records),
+      loadRecords,
       codePrefix: "TST",
       createEmpty,
       cloneForEdit: (record) => ({ ...record, children: [...record.children] }),
@@ -54,11 +55,17 @@ describe("resource maintenance", () => {
       updateRecord: (current, record) => Object.assign(current, record, { children: current.children }),
     });
 
+    await maintenance.loadRecords({ keyword: "筛选" });
+
     maintenance.openCreateDialog();
-    expect(maintenance.record.value.code).toBe("TST-002");
+    expect(maintenance.record.value.code).toMatch(/^TST-[0-9a-f-]{36}$/);
     await maintenance.saveRecord({ ...maintenance.record.value, name: "新增记录", children: ["discarded"] });
     expect(records[1].name).toBe("新增记录");
     expect(records[1].children).toEqual([]);
+
+    const firstCode = maintenance.record.value.code;
+    maintenance.openCreateDialog();
+    expect(maintenance.record.value.code).not.toBe(firstCode);
 
     await maintenance.openEditDialog(records[0]);
     maintenance.record.value.children.push("form-only");
@@ -72,5 +79,21 @@ describe("resource maintenance", () => {
     await maintenance.deleteRecord(records[0]);
     expect(confirm).toHaveBeenCalledOnce();
     expect(records.map((record) => record.name)).toEqual(["新增记录"]);
+    expect(loadRecords).toHaveBeenLastCalledWith({ keyword: "筛选" });
   });
+  it("updates the selected record even when a pending search removes it from the list", async () => {
+    const original: TestResource = { id: "resource-1", code: "TST-001", name: "Original", status: "enabled", children: [] };
+    const records = [original];
+    const api = {
+      getPage: vi.fn(), getDetail: vi.fn(async () => ({ ...original })),
+      create: vi.fn(), update: vi.fn(async (_id: string, data: TestResource) => data), deleteByIds: vi.fn(),
+    };
+    const maintenance = useResourceMaintenance({ records, api, loadRecords: async () => records, codePrefix: "TST", createEmpty });
+    await maintenance.openEditDialog(original);
+    records.splice(0);
+    await maintenance.saveRecord({ ...maintenance.record.value, name: "Updated" });
+    expect(api.update).toHaveBeenCalledWith(original.id, expect.objectContaining({ name: "Updated" }));
+    expect(api.create).not.toHaveBeenCalled();
+  });
+
 });

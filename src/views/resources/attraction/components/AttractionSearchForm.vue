@@ -13,18 +13,7 @@
         />
       </el-form-item>
       <el-form-item :label="$t('attraction.area')">
-        <el-select
-          v-model="area"
-          clearable
-          filterable
-        >
-          <el-option
-            v-for="option in YUNNAN_TOURISM_AREA_OPTIONS"
-            :key="option"
-            :label="option"
-            :value="option"
-          />
-        </el-select>
+        <CitySelect v-model="area" />
       </el-form-item>
       <el-form-item :label="$t('attraction.category')">
         <el-select
@@ -50,7 +39,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { YUNNAN_TOURISM_AREA_OPTIONS } from "@/constants/yunnan-tourism-regions";
+import CitySelect from "@/components/CitySelect.vue";
 import type { AttractionCategory } from "@/types/resource";
 import { attractionCategoryOptions } from "../options";
 

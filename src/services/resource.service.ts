@@ -4,12 +4,12 @@ import { businessDictionaryService } from "@/services/business-dictionary.servic
 import type { PageResult } from "@/types/common";
 import type {
   AgencyContactRecord, AgencyRecord, AttractionPriceRecord, AttractionRecord,
-  GuideRecord, HotelRecord, ResourceQueryParams,
+  CityRecord, GuideRecord, HotelRecord, ResourceListQuery,
   RestaurantPriceRecord, RestaurantRecord, SupplierOptionRecord, SupplierRecord,
   TransportRecord,
 } from "@/types/resource";
 
-type ResourceQuery = ResourceQueryParams & Record<string, string | number | undefined>;
+type ResourceQuery = ResourceListQuery & Record<string, string | number | undefined>;
 
 interface ResourceCrud<T> {
   getPage(query: ResourceQuery): Promise<PageResult<T>>;
@@ -95,8 +95,8 @@ function supplierInput(data: SupplierRecord) {
 function hotelInput(data: HotelRecord) {
   return {
     id: data.id || undefined, code: data.code.trim(), name: data.name.trim(), province: data.province.trim(),
-    city: data.city.trim(), rating: data.rating.trim(), facilities: data.facilities.trim(), breakfast: data.breakfast.trim(),
-    address: data.address.trim(), phone: data.phone.trim(), nearby: data.nearby.trim(), basicRoomType: data.basicRoomType.trim(),
+    city: data.city.trim(), rating: data.rating.trim(), facilities: data.facilities.trim(), breakfastIncluded: data.breakfastIncluded, breakfast: data.breakfast.trim(),
+    address: data.address.trim(), phone: data.phone.trim(), nearby: data.nearby.trim(),
     individualPrice: data.individualPrice, groupPrice: data.groupPrice, minimumGroupSize: data.minimumGroupSize,
     unit: data.unit, status: data.status,
   };
@@ -140,7 +140,7 @@ function normalizeHotel(data: ApiRecord<HotelRecord>): HotelRecord {
 }
 
 function normalizeRestaurantPrice(data: ApiRecord<RestaurantPriceRecord>): RestaurantPriceRecord {
-  return { ...data, price: normalizeMoney(data.price), dinerCount: data.dinerCount ?? 0, groundOperatorId: data.groundOperatorId ?? "" };
+  return { ...data, price: normalizeMoney(data.price), dinerCount: data.dinerCount ?? 0 };
 }
 
 function normalizeRestaurant(data: RestaurantRecord): RestaurantRecord {
@@ -154,7 +154,6 @@ function normalizeAttractionPrice(data: ApiRecord<AttractionPriceRecord>): Attra
     endDate: data.endDate ?? "",
     rackPrice: normalizeMoney(data.rackPrice),
     settlementPrice: normalizeMoney(data.settlementPrice),
-    groundOperatorId: data.groundOperatorId ?? "",
   };
 }
 
@@ -178,8 +177,6 @@ function restaurantPriceInput(data: RestaurantPriceRecord) {
   return {
     id: data.id || undefined, menuName: data.menuName.trim(), dishDetails: data.dishDetails?.trim() ?? "",
     unit: data.unit, price: data.price, dinerCount: data.dinerCount || null, remark: data.remark.trim(),
-    isGroundOperatorProvided: data.isGroundOperatorProvided,
-    groundOperatorId: data.isGroundOperatorProvided ? data.groundOperatorId : null,
     version: data.version,
   };
 }
@@ -189,12 +186,15 @@ function attractionPriceInput(data: AttractionPriceRecord) {
     id: data.id || undefined, itemType: data.itemType, itemName: data.itemName.trim(), audience: data.audience.trim(),
     periodName: data.periodName.trim(), startDate: data.startDate || null, endDate: data.endDate || null,
     rackPrice: data.rackPrice, settlementPrice: data.settlementPrice, unit: data.unit, isFree: data.isFree,
-    priceNote: data.priceNote.trim(), isGroundOperatorProvided: data.isGroundOperatorProvided,
-    groundOperatorId: data.isGroundOperatorProvided ? data.groundOperatorId : null,
+    priceNote: data.priceNote.trim(),
     version: data.version,
   };
 }
 
+const cityApi = createCrud<CityRecord>("cities", (data) => ({ code: data.code.trim(), name: data.name.trim(), province: data.province.trim(), status: data.status }));
+const cities = reactive<CityRecord[]>([]);
+const cityOptions = reactive<CityRecord[]>([]);
+let cityOptionsRequest: Promise<CityRecord[]> | null = null;
 const agencyApi = createCrud<AgencyRecord>("agencies", agencyInput, (data) => ({ ...data, contacts: data.contacts ?? [] }));
 const supplierApi = createCrud<SupplierRecord>("suppliers", supplierInput);
 const hotelApi = createCrud<HotelRecord>("hotels", hotelInput, normalizeHotel);
@@ -211,12 +211,12 @@ const transports = reactive<TransportRecord[]>([]);
 const guides = reactive<GuideRecord[]>([]);
 const supplierOptions = reactive<SupplierOptionRecord[]>([]);
 
-async function fetchAll<T>(api: ResourceCrud<T>): Promise<T[]> {
-  const firstPage = await api.getPage({ page: 1, pageSize: 100 });
+async function fetchAll<T>(api: ResourceCrud<T>, query: ResourceListQuery = {}): Promise<T[]> {
+  const firstPage = await api.getPage({ ...query, page: 1, pageSize: 100 });
   const records = [...firstPage.list];
   const pageCount = Math.ceil(firstPage.total / firstPage.pageSize);
   for (let page = 2; page <= pageCount; page += 1) {
-    const result = await api.getPage({ page, pageSize: 100 });
+    const result = await api.getPage({ ...query, page, pageSize: 100 });
     records.push(...result.list);
   }
   return records;
@@ -227,7 +227,26 @@ function replaceRecords<T>(target: T[], records: T[]): T[] {
   return target;
 }
 
+const loadVersions = new WeakMap<object, number>();
+
+async function loadResourceRecords<T>(target: T[], api: ResourceCrud<T>, query: ResourceListQuery = {}): Promise<T[]> {
+  const version = (loadVersions.get(target) ?? 0) + 1;
+  loadVersions.set(target, version);
+  const records = await fetchAll(api, query);
+  if (loadVersions.get(target) === version) return replaceRecords(target, records);
+  return target;
+}
+
 export const resourceService = {
+  cities,
+  cityOptions,
+  cityApi,
+  async loadCities(query: ResourceListQuery = {}) { return loadResourceRecords(cities, cityApi, query); },
+  loadCityOptions(): Promise<CityRecord[]> {
+    if (!cityOptionsRequest) cityOptionsRequest = request.get<CityRecord[]>(`${RESOURCE_BASE_URL}/cities/options`)
+      .then((records) => replaceRecords(cityOptions, records)).finally(() => { cityOptionsRequest = null; });
+    return cityOptionsRequest;
+  },
   agencies,
   suppliers,
   transports,
@@ -263,8 +282,8 @@ export const resourceService = {
     supplierOptions.splice(0, supplierOptions.length, ...options);
     return options;
   },
-  async loadAgencies() {
-    return replaceRecords(agencies, await fetchAll(agencyApi));
+  async loadAgencies(query: ResourceListQuery = {}) {
+    return loadResourceRecords(agencies, agencyApi, query);
   },
   async loadAgencyContacts(agencyId: string) {
     const contacts = await this.agencyApi.getContacts(agencyId);
@@ -275,16 +294,16 @@ export const resourceService = {
     }
     return contacts;
   },
-  async loadSuppliers() {
-    return replaceRecords(suppliers, await fetchAll(supplierApi));
+  async loadSuppliers(query: ResourceListQuery = {}) {
+    return loadResourceRecords(suppliers, supplierApi, query);
   },
-  async loadHotels() {
+  async loadHotels(query: ResourceListQuery = {}) {
     await businessDictionaryService.ensureBuiltInTypesLoaded();
-    return replaceRecords(hotels, await fetchAll(hotelApi));
+    return loadResourceRecords(hotels, hotelApi, query);
   },
-  async loadRestaurants() {
+  async loadRestaurants(query: ResourceListQuery = {}) {
     await businessDictionaryService.ensureBuiltInTypesLoaded();
-    return replaceRecords(restaurants, await fetchAll(restaurantApi));
+    return loadResourceRecords(restaurants, restaurantApi, query);
   },
   async loadRestaurantPrices(restaurantId: string) {
     const prices = await this.restaurantApi.getPrices(restaurantId);
@@ -295,9 +314,9 @@ export const resourceService = {
     }
     return prices;
   },
-  async loadAttractions() {
+  async loadAttractions(query: ResourceListQuery = {}) {
     await businessDictionaryService.ensureBuiltInTypesLoaded();
-    return replaceRecords(attractions, await fetchAll(attractionApi));
+    return loadResourceRecords(attractions, attractionApi, query);
   },
   async loadAttractionPrices(attractionId: string) {
     const prices = await this.attractionApi.getPrices(attractionId);
@@ -308,17 +327,16 @@ export const resourceService = {
     }
     return prices;
   },
-  async loadTransports() {
+  async loadTransports(query: ResourceListQuery = {}) {
     await businessDictionaryService.ensureBuiltInTypesLoaded();
-    return replaceRecords(transports, await fetchAll(transportApi));
+    return loadResourceRecords(transports, transportApi, query);
   },
-  async loadGuides() {
+  async loadGuides(query: ResourceListQuery = {}) {
     await businessDictionaryService.ensureBuiltInTypesLoaded();
-    return replaceRecords(guides, await fetchAll(guideApi));
+    return loadResourceRecords(guides, guideApi, query);
   },
   async loadPricingResources() {
     await Promise.all([
-      this.loadSupplierOptions(),
       this.loadHotels(),
       this.loadRestaurants(),
       this.loadAttractions(),
@@ -330,7 +348,6 @@ export const resourceService = {
       ...attractions.map((attraction) => this.loadAttractionPrices(attraction.id)),
     ]);
     return {
-      suppliers: supplierOptions,
       hotels,
       restaurants,
       attractions,

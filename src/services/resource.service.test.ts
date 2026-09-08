@@ -38,7 +38,7 @@ import { resourceService, type ResourceCrud } from "./resource.service";
 const audit = { version: 3, createdAt: "2026-09-04T00:00:00.000Z", createdBy: null, updatedAt: "2026-09-04T00:00:00.000Z", updatedBy: null };
 const agency: AgencyRecord = { ...audit, id: "agency-1", code: "AGY-001", name: "Agency", city: "Singapore", countryOrRegion: "Singapore", email: "a@example.com", status: "enabled", remark: "", contacts: [] };
 const supplier: SupplierRecord = { ...audit, id: "supplier-1", code: "SUP-001", name: "Supplier", city: "昆明", countryOrRegion: "中国", contact: "李经理", email: "", phone: "13800000000", status: "enabled", remark: "" };
-const hotel: HotelRecord = { ...audit, id: "hotel-1", code: "HTL-001", name: "Hotel", province: "云南省", city: "昆明市", rating: "international_five_star", facilities: "", breakfast: "", address: "", phone: "", nearby: "", basicRoomType: "标准间", individualPrice: 300, groupPrice: 260, minimumGroupSize: 10, unit: "roomNight", status: "enabled" };
+const hotel: HotelRecord = { ...audit, id: "hotel-1", code: "HTL-001", name: "Hotel", province: "云南省", city: "昆明", rating: "international_five_star", facilities: "", breakfastIncluded: true, breakfast: "", address: "", phone: "", nearby: "", individualPrice: 300, groupPrice: 260, minimumGroupSize: 10, unit: "roomNight", status: "enabled" };
 const restaurant: RestaurantRecord = { ...audit, id: "restaurant-1", code: "RES-001", name: "Restaurant", city: "昆明", cuisine: "云南菜", contact: "", phone: "", address: "", remark: "", unit: "personMeal", status: "enabled", prices: [] };
 const attraction: AttractionRecord = { ...audit, id: "attraction-1", code: "ATT-001", name: "Attraction", area: "昆明", category: "scenic", restroomLocation: "", remark: "", unit: "personVisit", status: "enabled", prices: [] };
 const transport: TransportRecord = { ...audit, id: "transport-1", code: "VEH-001", name: "Vehicle", serviceLevel: "standard", seats: 7, dailyPrice: 800, unit: "vehicleDay", city: "昆明", phone: "13800000000", status: "enabled", remark: "" };
@@ -56,6 +56,8 @@ const topResources: Array<[string, ResourceCrud<never>]> = [
 
 beforeEach(() => {
   requestMock.mockReset();
+  resourceService.cities.splice(0);
+  resourceService.cityOptions.splice(0);
   resourceService.agencies.splice(0);
   resourceService.suppliers.splice(0);
   resourceService.hotels.splice(0);
@@ -116,10 +118,10 @@ describe("resourceService", () => {
         return [{ id: "contact-1", name: "Emily", phone: "123" }];
       }
       if (path === `/resources/restaurants/${restaurant.id}/prices`) {
-        return [{ id: "price-1", menuName: "套餐", price: "600.00", dinerCount: 10, groundOperatorId: null }];
+        return [{ id: "price-1", menuName: "套餐", price: "600.00", dinerCount: 10 }];
       }
       if (path === `/resources/attractions/${attraction.id}/prices`) {
-        return [{ id: "price-2", itemType: "ticket", itemName: "门票", rackPrice: "100.00", settlementPrice: "80.00", groundOperatorId: null }];
+        return [{ id: "price-2", itemType: "ticket", itemName: "门票", rackPrice: "100.00", settlementPrice: "80.00" }];
       }
       return [];
     });
@@ -146,6 +148,20 @@ describe("resourceService", () => {
     }
   });
 
+  it("sends resource-specific filters to the list endpoint", async () => {
+    await resourceService.restaurantApi.getPage({
+      page: 1,
+      pageSize: 100,
+      keyword: " 云南菜 ",
+      city: " 昆明 ",
+      unit: "personMeal",
+    });
+
+    expect(requestMock).toHaveBeenCalledWith(
+      "/resources/restaurants?page=1&pageSize=100&keyword=%E4%BA%91%E5%8D%97%E8%8F%9C&city=%E6%98%86%E6%98%8E&unit=personMeal"
+    );
+  });
+
   it("uses all top-level create and versioned update endpoints", async () => {
     const cases = [
       ["agencies", resourceService.agencyApi, agency],
@@ -170,8 +186,8 @@ describe("resourceService", () => {
 
   it("uses contact, price, and supplier-option endpoints with backend null conventions", async () => {
     const contact = { ...audit, id: "contact-1", name: "Emily", phone: "123" };
-    const restaurantPrice = { ...audit, id: "price-1", menuName: "套餐", dishDetails: "", unit: "table", price: 600, dinerCount: 0, remark: "", isGroundOperatorProvided: false, groundOperatorId: "" };
-    const attractionPrice = { ...audit, id: "price-2", itemType: "ticket" as const, itemName: "门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 100, settlementPrice: 80, unit: "personVisit", isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: "" };
+    const restaurantPrice = { ...audit, id: "price-1", menuName: "套餐", dishDetails: "", unit: "table", price: 600, dinerCount: 0, remark: "" };
+    const attractionPrice = { ...audit, id: "price-2", itemType: "ticket" as const, itemName: "门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 100, settlementPrice: 80, unit: "personVisit", isFree: false, priceNote: "" };
 
     await resourceService.agencyApi.getContacts("agency-1");
     await resourceService.agencyApi.createContact("agency-1", { ...contact, id: "" });
@@ -188,14 +204,14 @@ describe("resourceService", () => {
     await resourceService.supplierApi.getOptions();
 
     expect(requestMock).toHaveBeenCalledWith("/resources/agencies/agency-1/contacts/contact-1", expect.objectContaining({ method: "PUT", body: expect.objectContaining({ version: 3 }) }));
-    expect(requestMock).toHaveBeenCalledWith("/resources/restaurants/restaurant-1/prices", expect.objectContaining({ method: "POST", body: expect.objectContaining({ dinerCount: null, groundOperatorId: null }) }));
-    expect(requestMock).toHaveBeenCalledWith("/resources/attractions/attraction-1/prices", expect.objectContaining({ method: "POST", body: expect.objectContaining({ startDate: null, endDate: null, groundOperatorId: null }) }));
+    expect(requestMock).toHaveBeenCalledWith("/resources/restaurants/restaurant-1/prices", expect.objectContaining({ method: "POST", body: expect.objectContaining({ dinerCount: null }) }));
+    expect(requestMock).toHaveBeenCalledWith("/resources/attractions/attraction-1/prices", expect.objectContaining({ method: "POST", body: expect.objectContaining({ startDate: null, endDate: null }) }));
     expect(requestMock).toHaveBeenCalledWith("/resources/suppliers/options");
   });
 
   it("loads itinerary pricing resources and their child prices from APIs", async () => {
-    const restaurantPrice = { id: "price-1", version: 1, menuName: "套餐", dishDetails: "", unit: "table", price: "600.00", dinerCount: 10, remark: "", isGroundOperatorProvided: false, groundOperatorId: null };
-    const attractionPrice = { id: "price-2", version: 1, itemType: "ticket", itemName: "门票", audience: "成人", periodName: "常规期", startDate: null, endDate: null, rackPrice: "100.00", settlementPrice: "80.00", unit: "personVisit", isFree: false, priceNote: "", isGroundOperatorProvided: false, groundOperatorId: null };
+    const restaurantPrice = { id: "price-1", version: 1, menuName: "套餐", dishDetails: "", unit: "table", price: "600.00", dinerCount: 10, remark: "" };
+    const attractionPrice = { id: "price-2", version: 1, itemType: "ticket", itemName: "门票", audience: "成人", periodName: "常规期", startDate: null, endDate: null, rackPrice: "100.00", settlementPrice: "80.00", unit: "personVisit", isFree: false, priceNote: "" };
     requestMock.mockImplementation(async (path) => {
       if (path === "/resources/suppliers/options") return [{ id: supplier.id, code: supplier.code, name: supplier.name }];
       if (path.startsWith("/resources/hotels?")) return { list: [{ ...hotel, individualPrice: "300.00", groupPrice: "260.00" }], total: 1, page: 1, pageSize: 100 };
@@ -217,5 +233,39 @@ describe("resourceService", () => {
     expect(resources.guides[0].dailyPrice).toBe(500);
     expect(requestMock).toHaveBeenCalledWith(`/resources/restaurants/${restaurant.id}/prices`);
     expect(requestMock).toHaveBeenCalledWith(`/resources/attractions/${attraction.id}/prices`);
+  });
+});
+
+describe("city options and hotel breakfast", () => {
+  it("loads the shared city options once for concurrent consumers and refreshes on next load", async () => {
+    const city = { id: "city-1", code: "CITY-001", name: "昆明", province: "云南省", status: "enabled" };
+    requestMock.mockResolvedValue([city]);
+    await Promise.all([resourceService.loadCityOptions(), resourceService.loadCityOptions()]);
+    expect(requestMock).toHaveBeenCalledTimes(1);
+    expect(requestMock).toHaveBeenCalledWith("/resources/cities/options");
+    expect(resourceService.cityOptions[0]).toEqual(city);
+    requestMock.mockResolvedValue([{ ...city, name: "大理" }]);
+    await resourceService.loadCityOptions();
+    expect(resourceService.cityOptions.map((record) => record.name)).toEqual(["大理"]);
+  });
+  it("keeps filtered city management rows separate from enabled city options", async () => {
+    const enabled = { id: "city-1", code: "CITY-001", name: "昆明", province: "云南省", status: "enabled" as const };
+    const disabled = { ...enabled, id: "city-2", code: "CITY-002", name: "大理", status: "disabled" as const };
+    requestMock.mockImplementation(async (path) => path.endsWith("/options")
+      ? [enabled]
+      : { list: [disabled], total: 1, page: 1, pageSize: 100 });
+    await resourceService.loadCities({ keyword: "大理" });
+    await resourceService.loadCityOptions();
+    expect(resourceService.cities).toEqual([disabled]);
+    expect(resourceService.cityOptions).toEqual([enabled]);
+    await resourceService.loadCities({ keyword: "大理" });
+    expect(resourceService.cityOptions).toEqual([enabled]);
+  });
+
+  it("preserves an explicit no-breakfast hotel on API writes", async () => {
+    requestMock.mockResolvedValue({ ...hotel, breakfastIncluded: false, individualPrice: "300.00" });
+    const saved = await resourceService.hotelApi.create({ ...hotel, breakfastIncluded: false });
+    expect(requestMock).toHaveBeenCalledWith("/resources/hotels", expect.objectContaining({ body: expect.objectContaining({ breakfastIncluded: false }) }));
+    expect(saved.breakfastIncluded).toBe(false);
   });
 });

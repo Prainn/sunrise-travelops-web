@@ -31,7 +31,7 @@
         <el-input v-model.trim="form.countryOrRegion" />
       </el-form-item>
       <el-form-item :label="$t('resource.city')">
-        <el-input v-model.trim="form.city" />
+        <CitySelect v-model="form.city" />
       </el-form-item>
       <el-form-item
         :label="$t('resource.agencyEmail')"
@@ -72,6 +72,7 @@
 </template>
 
 <script setup lang="ts">
+import CitySelect from "@/components/CitySelect.vue";
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";

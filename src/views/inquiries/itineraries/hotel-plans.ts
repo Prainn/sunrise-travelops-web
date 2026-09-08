@@ -42,9 +42,9 @@ export function isHotelPlanComplete(plan: ItineraryHotelPlan, destinations: stri
     && destinations.every((destination) => plan.hotels.some((hotel) => hotel.destination === destination && hotel.hotelId));
 }
 
-export function getIncompleteHotelPlanTiers(itinerary: Pick<ItineraryRecord, "destinations" | "hotelPlans">) {
+export function getIncompleteHotelPlanTiers(itinerary: Pick<ItineraryRecord, "dailyPlans" | "hotelPlans">) {
   return getEnabledHotelPlans(itinerary)
-    .filter((plan) => !isHotelPlanComplete(plan, itinerary.destinations))
+    .filter((plan) => !isHotelPlanComplete(plan, Object.keys(calculateDestinationNights(itinerary))))
     .map((plan) => plan.tier);
 }
 
@@ -55,4 +55,15 @@ export function calculateDestinationNights(itinerary: Pick<ItineraryRecord, "dai
     }
     return result;
   }, {});
+}
+
+export function getDayBreakfastStatus(itinerary: Pick<ItineraryRecord, "dailyPlans" | "hotelPlans">, dayIndex: number): "included" | "excluded" | "mixed" | "pending" {
+  const previous = itinerary.dailyPlans[dayIndex - 1];
+  if (!previous || previous.overnightDestination === "") return "excluded";
+  if (previous.overnightDestination === null) return "pending";
+  const plans = getEnabledHotelPlans(itinerary);
+  if (!plans.length || plans.some((plan) => !plan.hotels.some((hotel) => hotel.destination === previous.overnightDestination))) return "pending";
+  const hotels = plans.flatMap((plan) => plan.hotels.filter((hotel) => hotel.destination === previous.overnightDestination));
+  if (hotels.every((hotel) => hotel.breakfastIncluded)) return "included";
+  return hotels.some((hotel) => hotel.breakfastIncluded) ? "mixed" : "excluded";
 }

@@ -27,19 +27,7 @@
         :label="$t('resource.city')"
         prop="city"
       >
-        <el-select
-          v-model="form.city"
-          filterable
-          allow-create
-          default-first-option
-        >
-          <el-option
-            v-for="option in YUNNAN_TOURISM_AREA_OPTIONS"
-            :key="option"
-            :label="option"
-            :value="option"
-          />
-        </el-select>
+        <CitySelect v-model="form.city" />
       </el-form-item>
       <el-form-item :label="$t('resource.cuisine')">
         <el-input v-model.trim="form.cuisine" />
@@ -102,7 +90,7 @@
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { YUNNAN_TOURISM_AREA_OPTIONS } from "@/constants/yunnan-tourism-regions";
+import CitySelect from "@/components/CitySelect.vue";
 import type { RestaurantRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 

@@ -3,9 +3,9 @@
     <ResourceTable
       :rows="rows"
       :columns="columns"
-      :search-fields="['code', 'name', 'city']"
       :permissions="RESOURCE_PERMISSIONS.supplier"
       @refresh="loadRecords"
+      @query-change="loadRecords"
       @create="openCreateDialog"
       @edit="editSupplier"
       @toggle-status="toggleSupplierStatus"
@@ -83,7 +83,7 @@ const fields: ResourceFormField[] = [
 const { rows, record, isDialogVisible, isEditing, loadRecords, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<SupplierRecord>({
   records: resourceService.suppliers,
   api: resourceService.supplierApi,
-  loadRecords: () => resourceService.loadSuppliers(),
+  loadRecords: (query) => resourceService.loadSuppliers(query),
   codePrefix: "SUP",
   createEmpty: createEmptyTourismResourceRecord,
 });

@@ -48,6 +48,33 @@
           @select-contact="selectContact"
           @update-contact-name="form.contactName = $event"
         />
+        <el-col :span="24">
+          <el-form-item
+            :label="$t('inquiry.originalMessage')"
+            prop="originalMessage"
+          >
+            <el-input
+              v-model.trim="form.originalMessage"
+              type="textarea"
+              :rows="3"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item
+            :label="$t('inquiry.operationsCoordinator')"
+            prop="operationsCoordinator"
+          >
+            <el-select v-model="form.operationsCoordinator">
+              <el-option
+                v-for="option in operationsCoordinatorOptions"
+                :key="option"
+                :label="option"
+                :value="option"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
         <el-col :span="12">
           <el-form-item
             :label="$t('inquiry.sourceChannel')"
@@ -69,49 +96,6 @@
         </el-col>
         <el-col :span="12">
           <el-form-item
-            :label="$t('inquiry.owner')"
-            prop="owner"
-          >
-            <el-select
-              v-model="form.owner"
-              clearable
-            >
-              <el-option
-                v-for="option in ownerOptions"
-                :key="option"
-                :label="option"
-                :value="option"
-              />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item
-            :label="$t('inquiry.operationsCoordinator')"
-            prop="operationsCoordinator"
-          >
-            <el-select v-model="form.operationsCoordinator">
-              <el-option
-                v-for="option in operationsCoordinatorOptions"
-                :key="option"
-                :label="option"
-                :value="option"
-              />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item :label="$t('inquiry.nextFollowUpAt')">
-            <el-date-picker
-              v-model="form.nextFollowUpAt"
-              type="datetime"
-              value-format="YYYY-MM-DD HH:mm"
-              :placeholder="$t('inquiry.nextFollowUpPlaceholder')"
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item
             :label="$t('inquiry.plannedDays')"
             prop="plannedDays"
           >
@@ -122,6 +106,7 @@
               :precision="0"
               controls-position="right"
             />
+            <span style="width: 100%; margin-top: 4px; color: var(--el-text-color-secondary)">{{ $t('itinerary.duration', plannedDuration(form.plannedDays)) }}</span>
           </el-form-item>
         </el-col>
         <el-col
@@ -136,25 +121,52 @@
           </el-form-item>
         </el-col>
         <el-col :span="24">
-          <el-form-item
-            :label="$t('inquiry.originalMessage')"
-            prop="originalMessage"
-          >
-            <el-input
-              v-model.trim="form.originalMessage"
-              type="textarea"
-              :rows="3"
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="24">
-          <el-form-item :label="$t('inquiry.internalRemark')">
-            <el-input
-              v-model.trim="form.internalRemark"
-              type="textarea"
-              :rows="2"
-            />
-          </el-form-item>
+          <el-collapse v-model="expandedDetails">
+            <el-collapse-item
+              name="followup"
+              :title="$t('inquiry.followupDetails')"
+            >
+              <el-row :gutter="16">
+                <el-col :span="12">
+                  <el-form-item
+                    :label="$t('inquiry.owner')"
+                    prop="owner"
+                  >
+                    <el-select
+                      v-model="form.owner"
+                      clearable
+                    >
+                      <el-option
+                        v-for="option in ownerOptions"
+                        :key="option"
+                        :label="option"
+                        :value="option"
+                      />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item :label="$t('inquiry.nextFollowUpAt')">
+                    <el-date-picker
+                      v-model="form.nextFollowUpAt"
+                      type="datetime"
+                      value-format="YYYY-MM-DD HH:mm"
+                      :placeholder="$t('inquiry.nextFollowUpPlaceholder')"
+                    />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="24">
+                  <el-form-item :label="$t('inquiry.internalRemark')">
+                    <el-input
+                      v-model.trim="form.internalRemark"
+                      type="textarea"
+                      :rows="2"
+                    />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </el-collapse-item>
+          </el-collapse>
         </el-col>
       </el-row>
     </el-form>
@@ -173,6 +185,7 @@
 </template>
 
 <script setup lang="ts">
+import { plannedDuration } from "@/views/inquiries/itineraries/duration";
 import { computed, reactive, ref } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -199,12 +212,13 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const formRef = ref<FormInstance>();
+const expandedDetails = ref<string[]>([]);
 const form = reactive<InquiryRecord>({ ...props.record });
 const selectedAgency = computed(() => props.agencyOptions.find((agency) => agency.id === form.agencyId));
 const editableStatusOptions = computed(() => {
   if (!props.isEditing) return INQUIRY_STATUS_OPTIONS.filter((item) => item.value === "new");
   const allowedStatuses = props.record.status === "quoted"
-    ? ["quoted", "planning", "lost"]
+    ? ["quoted", "lost"]
     : [props.record.status, "lost"];
   return INQUIRY_STATUS_OPTIONS.filter((item) => allowedStatuses.includes(item.value));
 });
@@ -212,7 +226,6 @@ const rules = computed<FormRules>(() => ({
   agencyId: [{ required: true, message: t("inquiry.agencyRequired"), trigger: "change" }],
   contactName: [{ required: true, message: t("inquiry.contactNameRequired"), trigger: "change" }],
   sourceChannel: [{ required: true, message: t("inquiry.sourceChannelRequired"), trigger: "change" }],
-  owner: [{ required: props.isEditing, message: t("inquiry.ownerRequired"), trigger: "change" }],
   operationsCoordinator: [{ required: true, message: t("inquiry.operationsCoordinatorRequired"), trigger: "change" }],
   plannedDays: [{ required: true, message: t("inquiry.plannedDaysRequired"), trigger: "change" }],
   originalMessage: [{ required: true, message: t("inquiry.originalMessageRequired"), trigger: "blur" }],
@@ -221,6 +234,7 @@ const rules = computed<FormRules>(() => ({
 
 function resetForm() {
   Object.assign(form, props.record);
+  expandedDetails.value = props.isEditing ? ["followup"] : [];
   syncAgencyDetails();
   formRef.value?.clearValidate();
 }

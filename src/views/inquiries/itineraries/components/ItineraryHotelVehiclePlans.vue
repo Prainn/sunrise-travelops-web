@@ -1,8 +1,26 @@
 <template>
-  <div class="itinerary-hotel-vehicle-plans">
+  <div
+    id="itinerary-plans"
+    class="itinerary-hotel-vehicle-plans"
+  >
     <section>
       <div class="itinerary-hotel-vehicle-plans__toolbar h-12">
         <h3>{{ $t("itinerary.hotelPlans") }}</h3>
+        <div class="itinerary-hotel-vehicle-plans__nights ml-4">
+          <el-tag
+            v-for="destination in overnightDestinations"
+            :key="destination"
+          >
+            {{ destination }} · {{ $t('itinerary.nightCount', { count: destinationDuration(dailyPlans, destination).nights }) }}
+          </el-tag>
+          <strong>{{ $t('itinerary.totalNights', { count: itineraryDuration(dailyPlans).nights }) }}</strong>
+          <el-tag
+            v-if="pendingNights"
+            type="warning"
+          >
+            {{ $t('itinerary.pendingNights', { count: pendingNights }) }}
+          </el-tag>
+        </div>
       </div>
       <el-card
         class="itinerary-hotel-vehicle-plans__card"
@@ -30,7 +48,7 @@
 
             <div class="itinerary-hotel-vehicle-plans__hotel-list">
               <label
-                v-for="destination in destinations"
+                v-for="destination in overnightDestinations"
                 :key="destination"
               >
                 <span>{{ destination }}</span>
@@ -45,11 +63,11 @@
                   <el-option
                     v-for="hotel in getHotelOptions(tier, destination)"
                     :key="hotel.id"
-                    :label="`${hotel.name}｜${$t(`hotel.ratings.${hotel.rating}`)}｜${hotel.basicRoomType}`"
+                    :label="`${hotel.name}｜${$t(hotel.breakfastIncluded ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded')}｜¥${formatMoney(getHotelUnitCost(hotel, guestCount))}`"
                     :value="hotel.id"
                   >
                     <div class="itinerary-hotel-vehicle-plans__option">
-                      <span>{{ hotel.name }}｜{{ $t(`hotel.ratings.${hotel.rating}`) }}｜{{ hotel.basicRoomType }}</span>
+                      <span>{{ hotel.name }}｜{{ $t(hotel.breakfastIncluded ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded') }}</span>
                       <strong>¥{{ formatMoney(getHotelUnitCost(hotel, guestCount)) }}</strong>
                     </div>
                   </el-option>
@@ -163,13 +181,16 @@
 </template>
 
 <script setup lang="ts">
+import { destinationDuration, itineraryDuration } from "@/views/inquiries/itineraries/duration";
 import type {
   ItineraryHotelPlan,
+  ItineraryDayRecord,
   ItineraryHotelTier,
   ItineraryVehiclePlan,
   ItineraryVehicleTier,
 } from "@/types/itinerary";
 import type { HotelRecord, TransportRecord } from "@/types/resource";
+import { computed } from "vue";
 import { formatMoney } from "@/utils";
 import { getHotelUnitCost } from "../pricing";
 import { getHotelPlan, HOTEL_PLAN_TIERS, isHotelEligibleForTier } from "../hotel-plans";
@@ -181,6 +202,7 @@ import {
 
 const props = defineProps<{
   destinations: string[];
+  dailyPlans: ItineraryDayRecord[];
   hotelPlans: ItineraryHotelPlan[];
   vehiclePlans: ItineraryVehiclePlan[];
   hotels: HotelRecord[];
@@ -195,6 +217,9 @@ const emit = defineEmits<{
   "update-vehicle-days": [tier: ItineraryVehicleTier, serviceDays: number];
   "update-vehicle-cost": [tier: ItineraryVehicleTier, unitCost: number];
 }>();
+
+const overnightDestinations = computed(() => props.destinations.filter((destination) => props.dailyPlans.some((day) => day.overnightDestination === destination)));
+const pendingNights = computed(() => props.dailyPlans.filter((day) => day.overnightDestination === null).length);
 
 function getPlan(tier: ItineraryHotelTier) {
   return getHotelPlan({ hotelPlans: props.hotelPlans }, tier);
@@ -226,8 +251,8 @@ function getVehicleOptions(tier: ItineraryVehicleTier) {
 </script>
 
 <style scoped lang="scss">
-.itinerary-hotel-vehicle-plans { display: grid; gap: 16px; margin-bottom: 16px; }
-.itinerary-hotel-vehicle-plans__toolbar { display: flex; align-items: center; margin: 2px 0 14px; }
+.itinerary-hotel-vehicle-plans { scroll-margin-top: 270px; display: grid; gap: 24px; margin-bottom: 0; }
+.itinerary-hotel-vehicle-plans__toolbar { display: flex; align-items: center; min-height: 48px; margin: 0 0 14px; }
 .itinerary-hotel-vehicle-plans__toolbar h3 { margin: 0; }
 .itinerary-hotel-vehicle-plans__card { border-radius: 10px; }
 .itinerary-hotel-vehicle-plans__card :deep(.el-card__body) { padding: 16px 18px; }
@@ -242,6 +267,7 @@ function getVehicleOptions(tier: ItineraryVehicleTier) {
 .itinerary-hotel-vehicle-plans__hotel-list :deep(.el-select), .itinerary-hotel-vehicle-plans__vehicle-select :deep(.el-select) { width: 100%; }
 .itinerary-hotel-vehicle-plans__option { display: flex; justify-content: space-between; gap: 16px; }
 .itinerary-hotel-vehicle-plans__option strong { color: var(--el-color-primary); font-weight: 500; }
+.itinerary-hotel-vehicle-plans__vehicle-select { grid-template-columns: 72px minmax(0, 340px); }
 .itinerary-hotel-vehicle-plans__vehicle-body { display: grid; gap: 12px; padding: 12px; }
 .itinerary-hotel-vehicle-plans__vehicle-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding-top: 12px; border-top: 1px solid var(--el-border-color-lighter); }
 .itinerary-hotel-vehicle-plans__vehicle-fields label { display: grid; gap: 6px; color: var(--el-text-color-secondary); font-size: 14px; }
@@ -250,4 +276,8 @@ function getVehicleOptions(tier: ItineraryVehicleTier) {
 @media (width <= 1100px) {
   .itinerary-hotel-vehicle-plans__hotel-tiers, .itinerary-hotel-vehicle-plans__vehicle-tiers { grid-template-columns: 1fr; }
 }
+</style>
+
+<style scoped>
+.itinerary-hotel-vehicle-plans__nights { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 </style>

@@ -8,7 +8,18 @@
         >
           <el-page-header @back="router.back()">
             <template #content>
-              <span class="itinerary-page__title">{{ $t("inquiry.itineraryManagement") }}</span>
+              <el-select
+                v-if="selectedItinerary"
+                v-model="selectedItineraryId"
+                class="itinerary-page__plan-select"
+              >
+                <el-option
+                  v-for="row in rows"
+                  :key="row.id"
+                  :label="row.title"
+                  :value="row.id"
+                />
+              </el-select>
             </template>
             <template #extra>
               <el-button
@@ -24,17 +35,6 @@
             v-if="selectedItinerary"
             class="itinerary-page__plan-bar"
           >
-            <el-select
-              v-model="selectedItineraryId"
-              class="itinerary-page__plan-select"
-            >
-              <el-option
-                v-for="row in rows"
-                :key="row.id"
-                :label="`${row.title} · ${row.updatedAt || row.createdAt}`"
-                :value="row.id"
-              />
-            </el-select>
             <div class="itinerary-page__plan-summary">
               <h2>{{ selectedItinerary.title }}</h2>
               <p>
@@ -57,7 +57,7 @@
                 v-if="!isDraft && canCreateItinerary"
                 @click="copyItinerary"
               >
-                {{ $t("itinerary.copyAsDraft") }}
+                {{ $t("itinerary.copyForRevision") }}
               </el-button>
             </div>
           </div>
@@ -65,8 +65,11 @@
             <span><small>{{ $t("inquiry.code") }}</small>{{ inquiry.code }}</span>
             <span><small>{{ $t("inquiry.agencyName") }}</small>{{ inquiry.agencyName }}</span>
             <span><small>{{ $t("inquiry.contactName") }}</small>{{ inquiry.contactName }}</span>
-            <span><small>{{ $t("inquiry.plannedDays") }}</small>{{ inquiry.plannedDays }}</span>
-            <span class="itinerary-page__message"><small>{{ $t("inquiry.originalMessage") }}</small>{{ inquiry.originalMessage }}</span>
+            <span><small>{{ $t("inquiry.plannedDays") }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
+            <span
+              class="itinerary-page__message"
+              :title="inquiry.originalMessage"
+            ><small>{{ $t("inquiry.originalMessage") }}</small>{{ inquiry.originalMessage }}</span>
           </div>
         </el-card>
       </header>
@@ -75,6 +78,7 @@
         <main class="itinerary-page__workspace mx-4">
           <ItineraryHotelVehiclePlans
             :destinations="selectedItinerary.destinations"
+            :daily-plans="selectedItinerary.dailyPlans"
             :hotel-plans="selectedItinerary.hotelPlans"
             :vehicle-plans="selectedItinerary.vehiclePlans"
             :hotels="hotelOptions"
@@ -86,6 +90,15 @@
             @update-vehicle="updateVehiclePlanSelection"
             @update-vehicle-days="updateVehiclePlanServiceDays"
             @update-vehicle-cost="updateVehiclePlanUnitCost"
+          />
+          <ItineraryGuidePlans
+            :destinations="selectedItinerary.destinations"
+            :plans="selectedItinerary.guidePlans"
+            :daily-plans="selectedItinerary.dailyPlans"
+            :guides="guideOptions"
+            :editable="contentEditable"
+            @update-guide="updateGuideSelection"
+            @update-days="updateGuideDays"
           />
           <div class="itinerary-page__daily-toolbar h-12">
             <div>
@@ -104,12 +117,15 @@
             v-for="(day, index) in selectedItinerary.dailyPlans"
             :key="day.id"
             :day="day"
+            :breakfast-status="getDayBreakfastStatus(selectedItinerary, index)"
             :destinations="selectedItinerary.destinations"
             :content-editable="contentEditable"
             :is-first="index === 0"
             :is-last="index === selectedItinerary.dailyPlans.length - 1"
             @update-field="(field, value) => updateDayField(index, field, value)"
             @add-item="openResourceDialog(day.id)"
+            @update-meal="(slot, included) => updateMeal(index, slot, included)"
+            @select-meal="openResourceDialog(day.id, $event)"
             @remove-item="removeItem(day.id, $event)"
             @update-item-quantity="(itemIndex, quantity) => updateItemQuantity(day.id, itemIndex, quantity)"
             @duplicate="duplicateDay(index)"
@@ -120,7 +136,7 @@
 
         <footer class="itinerary-page__sticky-footer border-0! rounded-0!">
           <div class="itinerary-page__footer-summary">
-            {{ $t("itinerary.dayCount", { count: selectedItinerary.dailyPlans.length }) }} ·
+            {{ $t("itinerary.duration", itineraryDuration(selectedItinerary.dailyPlans)) }} ·
             {{ $t("itinerary.resourceItemCount", { count: itemCount }) }}
           </div>
           <div class="itinerary-page__footer-actions">
@@ -168,6 +184,7 @@
         v-model="isResourceDialogVisible"
         :guest-count="guestCount"
         :options="resourcePriceOptions"
+        :meal-slot="resourceMealSlot"
         @submit="addResourceItem"
       />
       <ItineraryPdfPreviewDialog
@@ -179,19 +196,59 @@
       <el-drawer
         v-model="isQuoteDrawerVisible"
         :title="$t('itinerary.quoteSettings')"
-        size="760px"
+        size="min(1200px, 96vw)"
       >
+        <section
+          v-if="validationIssues.length"
+          class="itinerary-page__validation"
+          role="alert"
+        >
+          <h3>{{ $t('itinerary.validation.title') }}</h3>
+          <ul>
+            <li
+              v-for="(issue, index) in validationIssues"
+              :key="index"
+            >
+              <el-button
+                link
+                type="danger"
+                @click="locateIssue(issue.target)"
+              >
+                {{ $t(issue.key, issue.params ?? {}) }}
+              </el-button>
+            </li>
+          </ul>
+        </section>
         <ItineraryQuotePanel
           v-if="selectedItinerary && quoteCalculation"
           :quote="selectedItinerary.quote"
           :calculation="quoteCalculation"
           :item-count="itemCount"
-          :day-count="selectedItinerary.dailyPlans.length"
+          :duration="itineraryDuration(selectedItinerary.dailyPlans)"
           :guest-count="guestCount"
           :editable="priceEditable"
           @update-quote-option="updateQuoteOption"
+          @update-settings="updateQuoteSettings"
         />
         <template #footer>
+          <el-button
+            v-if="canDownloadOriginal"
+            @click="downloadOriginal"
+          >
+            {{ $t('itinerary.downloadOriginal') }}
+          </el-button>
+          <el-button
+            v-if="!isDraft && canCreateItinerary"
+            @click="copyItinerary"
+          >
+            {{ $t('itinerary.copyForRevision') }}
+          </el-button>
+          <el-button
+            v-if="canSaveItinerary"
+            @click="saveItinerary"
+          >
+            {{ $t('itinerary.save') }}
+          </el-button>
           <el-button @click="isQuoteDrawerVisible = false">
             {{ $t("common.close") }}
           </el-button>
@@ -225,9 +282,12 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { plannedDuration, itineraryDuration } from "@/views/inquiries/itineraries/duration";
+import { nextTick, onMounted, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+import { getDayBreakfastStatus } from "./hotel-plans";
+import ItineraryGuidePlans from "./components/ItineraryGuidePlans.vue";
 import ItineraryDayCard from "./components/ItineraryDayCard.vue";
 import ItineraryHotelVehiclePlans from "./components/ItineraryHotelVehiclePlans.vue";
 import ItineraryPdfPreviewDialog from "./components/ItineraryPdfPreviewDialog.vue";
@@ -265,9 +325,10 @@ const {
   isEditingPlan, isPdfPreviewVisible, isPlanDialogVisible, isResourceDialogVisible,
   isDraft, itemCount, itineraryForm, loadDestinationResourceOptions, moveDay, openCreateDialog, openResourceDialog, priceEditable, quoteCalculation,
   openEditDialog, pdfPreviewUrl, removeDay, removeItem, router, rows, saveItinerary, selectedItinerary, selectedItineraryId,
-  resourcePriceOptions, vehicleOptions,
+  resourcePriceOptions, vehicleOptions, resourceMealSlot, updateMeal, updateQuoteSettings,
+  validationIssues, canDownloadOriginal, downloadOriginal,
   submitItineraryPlan,
-  clearHotelPlan, updateDayField, updateHotelPlanSelection, updateItemQuantity, updateQuoteOption,
+  guideOptions, updateGuideSelection, updateGuideDays, clearHotelPlan, updateDayField, updateHotelPlanSelection, updateItemQuantity, updateQuoteOption,
   updateVehiclePlanSelection, updateVehiclePlanServiceDays, updateVehiclePlanUnitCost,
 } = useItineraryWorkspace({
   confirm: confirmAction,
@@ -277,10 +338,22 @@ const {
   translate: t,
 });
 
+watch(selectedItineraryId, () => { validationIssues.value = []; });
+async function locateIssue(target: string) {
+  if (target === "quote") {
+    document.querySelector(".quote-panel__settings")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  isQuoteDrawerVisible.value = false;
+  await nextTick();
+  document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 onMounted(loadDestinationResourceOptions);
 </script>
 
 <style scoped lang="scss">
+.itinerary-page__validation { padding: 12px 16px; margin-bottom: 16px; background: var(--el-color-danger-light-9); border-radius: 8px; }
+.itinerary-page__validation h3 { margin: 0; font-size: 18px; }
 .itinerary-page { height: auto; min-height: 100%; overflow: visible; padding: 0; }
 .itinerary-page__sticky-header { position: sticky; z-index: 10; top: 0; background: var(--page-bg); box-shadow: var(--el-box-shadow-light); }
 .itinerary-page__overview :deep(.el-card__body) { padding: 14px 18px 12px; }
@@ -293,10 +366,10 @@ onMounted(loadDestinationResourceOptions);
 .itinerary-page__inquiry-summary span { display: flex; min-width: 0; gap: 6px; }
 .itinerary-page__inquiry-summary small { flex: none; color: var(--el-text-color-secondary); }
 .itinerary-page__message { grid-column: 1 / -1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.itinerary-page__plan-select { width: 100%; }
+.itinerary-page__plan-select { width: min(420px, 55vw); }
 .itinerary-page__plan-controls { display: flex; align-items: center; gap: 10px; }
 .itinerary-page__daily-toolbar h3 { margin: 0; }
-.itinerary-page__daily-toolbar { display: flex; justify-content: space-between; align-items: center; margin: 2px 0 14px; }
+.itinerary-page__daily-toolbar { display: flex; justify-content: space-between; align-items: center; min-height: 48px; margin: 24px 0 14px; }
 .itinerary-page__sticky-footer { position: sticky; z-index: 10; bottom: 0; display: flex; justify-content: space-between; align-items: center; min-height: 64px; padding: 12px 18px; background: var(--el-bg-color); box-shadow: var(--el-box-shadow-light); }
 .itinerary-page__footer-summary { color: var(--el-text-color-secondary); font-size: 14px; }
 .itinerary-page__footer-actions { display: flex; gap: 12px; }

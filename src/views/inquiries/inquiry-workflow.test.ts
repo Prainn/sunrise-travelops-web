@@ -11,7 +11,7 @@ describe("inquiry workflow", () => {
   it("moves active inquiries through allowed actions", () => {
     expect(transitionInquiry("new", "itinerary_created")).toBe("planning");
     expect(transitionInquiry("planning", "quote_generated")).toBe("quoted");
-    expect(transitionInquiry("quoted", "reopen_for_planning")).toBe("planning");
+    expect(transitionInquiry("quoted", "itinerary_created")).toBe("planning");
     expect(transitionInquiry("quoted", "archive")).toBe("archived");
   });
 

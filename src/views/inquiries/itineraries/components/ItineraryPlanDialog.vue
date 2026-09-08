@@ -57,6 +57,7 @@
               :min="1"
               controls-position="right"
             />
+            <span style="width: 100%; margin-top: 4px; color: var(--el-text-color-secondary)">{{ $t('itinerary.duration', plannedDuration(form.days)) }}</span>
           </el-form-item>
         </el-col>
         <el-col :span="8">
@@ -84,7 +85,7 @@
       <el-alert
         v-if="hasDayCountMismatch"
         class="itinerary-plan-dialog__day-hint"
-        :title="$t('itinerary.plannedDaysMismatchHint', { inquiryDays: plannedDays })"
+        :title="$t('itinerary.plannedDaysMismatchHint', { plannedDuration: $t('itinerary.duration', plannedDuration(plannedDays)) })"
         type="warning"
         show-icon
         :closable="false"
@@ -134,6 +135,7 @@
 </template>
 
 <script setup lang="ts">
+import { plannedDuration } from "@/views/inquiries/itineraries/duration";
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -154,11 +156,12 @@ const form = reactive<ItineraryRecord>({
   ...props.record,
   destinations: [...props.record.destinations],
   hotelPlans: props.record.hotelPlans.map((plan) => ({ ...plan, hotels: plan.hotels.map((hotel) => ({ ...hotel })) })),
+  guidePlans: props.record.guidePlans.map((plan) => ({ ...plan, dayIds: [...plan.dayIds] })),
   vehiclePlans: props.record.vehiclePlans.map((plan) => ({
     ...plan,
     vehicle: plan.vehicle ? { ...plan.vehicle } : null,
   })),
-  quote: { options: props.record.quote.options.map((option) => ({ ...option })) },
+  quote: { ...props.record.quote, transportFees: props.record.quote.transportFees.map((fee) => ({ ...fee })), options: props.record.quote.options.map((option) => ({ ...option })) },
   dailyPlans: [],
 });
 const rules = computed<FormRules>(() => ({
@@ -177,11 +180,12 @@ watch(() => [props.modelValue, props.record] as const, ([visible, record]) => {
     days: props.isEditing ? record.dailyPlans.length || record.days : props.plannedDays,
     destinations: [...record.destinations],
     hotelPlans: record.hotelPlans.map((plan) => ({ ...plan, hotels: plan.hotels.map((hotel) => ({ ...hotel })) })),
+    guidePlans: record.guidePlans.map((plan) => ({ ...plan, dayIds: [...plan.dayIds] })),
     vehiclePlans: record.vehiclePlans.map((plan) => ({
       ...plan,
       vehicle: plan.vehicle ? { ...plan.vehicle } : null,
     })),
-    quote: { options: record.quote.options.map((option) => ({ ...option })) },
+    quote: { ...record.quote, transportFees: record.quote.transportFees.map((fee) => ({ ...fee })), options: record.quote.options.map((option) => ({ ...option })) },
     dailyPlans: [],
   });
   syncEndDate();
@@ -195,11 +199,12 @@ async function submitForm() {
     ...form,
     destinations: [...form.destinations],
     hotelPlans: form.hotelPlans.map((plan) => ({ ...plan, hotels: plan.hotels.map((hotel) => ({ ...hotel })) })),
+    guidePlans: form.guidePlans.map((plan) => ({ ...plan, dayIds: [...plan.dayIds] })),
     vehiclePlans: form.vehiclePlans.map((plan) => ({
       ...plan,
       vehicle: plan.vehicle ? { ...plan.vehicle } : null,
     })),
-    quote: { options: form.quote.options.map((option) => ({ ...option })) },
+    quote: { ...form.quote, transportFees: form.quote.transportFees.map((fee) => ({ ...fee })), options: form.quote.options.map((option) => ({ ...option })) },
     dailyPlans: [],
   });
 }

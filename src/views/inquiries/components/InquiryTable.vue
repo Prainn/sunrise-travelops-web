@@ -58,9 +58,13 @@
         <el-table-column
           prop="plannedDays"
           :label="$t('inquiry.plannedDays')"
-          width="90"
+          min-width="150"
           align="center"
-        />
+        >
+          <template #default="scope">
+            {{ $t('itinerary.duration', plannedDuration(scope.row.plannedDays)) }}
+          </template>
+        </el-table-column>
         <el-table-column
           :label="$t('inquiry.nextFollowUpAt')"
           width="165"
@@ -158,6 +162,7 @@
 </template>
 
 <script setup lang="ts">
+import { plannedDuration } from "@/views/inquiries/itineraries/duration";
 import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { INQUIRY_STATUS_TAG_TYPES } from "../options";

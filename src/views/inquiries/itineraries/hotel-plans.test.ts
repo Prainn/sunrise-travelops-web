@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { ItineraryDayRecord } from "@/types/itinerary";
 import type { HotelRecord } from "@/types/resource";
 import {
   calculateDestinationNights,
@@ -20,17 +21,17 @@ describe("itinerary hotel plans", () => {
   it("activates a hotel tier by selection and requires every destination", () => {
     const hotelPlans = createDefaultHotelPlans();
     hotelPlans[0].hotels.push({
-      destination: "昆明市", hotelId: "hotel-1", hotelName: "昆明酒店", rating: "international_five_star", roomType: "标准间",
-      breakfast: "含早", unit: "roomNight", unitCost: 500,
+      destination: "昆明", hotelId: "hotel-1", hotelName: "昆明酒店", rating: "international_five_star",
+      breakfastIncluded: true, breakfast: "含早", unit: "roomNight", unitCost: 500,
     });
-    const itinerary = { destinations: ["昆明市", "大理市"], hotelPlans };
+    const itinerary = { destinations: ["昆明", "大理", "丽江"], hotelPlans, dailyPlans: [{ overnightDestination: "昆明" }, { overnightDestination: "大理" }] as ItineraryDayRecord[] };
 
     expect(getEnabledHotelPlans(itinerary)).toHaveLength(1);
     expect(getIncompleteHotelPlanTiers(itinerary)).toEqual(["international_five_star"]);
 
     hotelPlans[0].hotels.push({
-      destination: "大理市", hotelId: "hotel-2", hotelName: "大理酒店", rating: "international_five_star", roomType: "标准间",
-      breakfast: "含早", unit: "roomNight", unitCost: 600,
+      destination: "大理", hotelId: "hotel-2", hotelName: "大理酒店", rating: "international_five_star",
+      breakfastIncluded: true, breakfast: "含早", unit: "roomNight", unitCost: 600,
     });
     expect(getIncompleteHotelPlanTiers(itinerary)).toEqual([]);
   });
@@ -38,11 +39,11 @@ describe("itinerary hotel plans", () => {
   it("counts repeated stays in one destination without selecting a hotel per day", () => {
     expect(calculateDestinationNights({
       dailyPlans: [
-        { overnightDestination: "昆明市" },
-        { overnightDestination: "昆明市" },
-        { overnightDestination: "大理市" },
+        { overnightDestination: "昆明" },
+        { overnightDestination: "昆明" },
+        { overnightDestination: "大理" },
         { overnightDestination: "" },
       ],
-    } as never)).toEqual({ 昆明市: 2, 大理市: 1 });
+    } as never)).toEqual({ 昆明: 2, 大理: 1 });
   });
 });

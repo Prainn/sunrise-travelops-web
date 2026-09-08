@@ -1,4 +1,5 @@
 export const RESOURCE_PERMISSIONS = {
+  city: createResourcePermissions("city"),
   agency: createResourcePermissions("agency"),
   supplier: createResourcePermissions("supplier"),
   hotel: createResourcePermissions("hotel"),

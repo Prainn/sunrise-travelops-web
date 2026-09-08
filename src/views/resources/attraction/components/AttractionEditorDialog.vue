@@ -27,17 +27,7 @@
         :label="$t('attraction.area')"
         prop="area"
       >
-        <el-select
-          v-model="form.area"
-          filterable
-        >
-          <el-option
-            v-for="area in YUNNAN_TOURISM_AREA_OPTIONS"
-            :key="area"
-            :label="area"
-            :value="area"
-          />
-        </el-select>
+        <CitySelect v-model="form.area" />
       </el-form-item>
       <el-form-item
         :label="$t('attraction.category')"
@@ -108,7 +98,7 @@
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { YUNNAN_TOURISM_AREA_OPTIONS } from "@/constants/yunnan-tourism-regions";
+import CitySelect from "@/components/CitySelect.vue";
 import type { AttractionRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 import { attractionCategoryOptions } from "../options";

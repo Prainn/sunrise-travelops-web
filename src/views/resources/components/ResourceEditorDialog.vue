@@ -24,8 +24,13 @@
         :label="$t(field.labelKey)"
         :prop="field.prop"
       >
+        <CitySelect
+          v-if="field.prop === 'city'"
+          :model-value="String(form[field.prop] ?? '')"
+          @update:model-value="form[field.prop] = $event"
+        />
         <el-input-number
-          v-if="field.type === 'number'"
+          v-else-if="field.type === 'number'"
           :model-value="Number(form[field.prop] ?? 0)"
           :min="0"
           controls-position="right"
@@ -45,6 +50,7 @@
         <el-input
           v-else
           v-model.trim="form[field.prop]"
+          :disabled="field.disabled"
           :type="field.type === 'textarea' ? 'textarea' : 'text'"
           :rows="3"
         />
@@ -75,6 +81,7 @@
 </template>
 
 <script setup lang="ts">
+import CitySelect from "@/components/CitySelect.vue";
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";

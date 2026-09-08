@@ -5,28 +5,55 @@
   >
     <el-form-item :label="$t('itinerary.departure')">
       <el-input
+        v-if="day.dayNumber === 1"
         :model-value="day.departure"
         :disabled="!editable"
         :placeholder="$t('itinerary.departure')"
         @update:model-value="updateField('departure', $event)"
       />
+      <el-select
+        v-else
+        :model-value="day.departure"
+        :disabled="!editable"
+        filterable
+        clearable
+        @update:model-value="updateField('departure', $event)"
+      >
+        <el-option
+          v-for="city in destinations"
+          :key="city"
+          :label="city"
+          :value="city"
+        />
+      </el-select>
     </el-form-item>
     <el-form-item :label="$t('itinerary.destination')">
-      <el-input
+      <el-select
         :model-value="day.destination"
         :disabled="!editable"
-        :placeholder="$t('itinerary.destination')"
+        filterable
+        clearable
         @update:model-value="updateField('destination', $event)"
-      />
+      >
+        <el-option
+          v-for="city in destinations"
+          :key="city"
+          :label="city"
+          :value="city"
+        />
+      </el-select>
     </el-form-item>
     <el-form-item :label="$t('itinerary.overnightDestination')">
       <el-select
         :model-value="day.overnightDestination"
         :disabled="!editable"
-        clearable
-        :placeholder="$t('itinerary.noOvernightStay')"
+        :placeholder="$t('itinerary.overnightPending')"
         @update:model-value="updateField('overnightDestination', $event)"
       >
+        <el-option
+          :label="$t('itinerary.noOvernightStay')"
+          value=""
+        />
         <el-option
           v-for="destination in destinations"
           :key="destination"
@@ -67,6 +94,19 @@
         :placeholder="$t('itinerary.dayDescriptionPlaceholder')"
         @update:model-value="updateField('description', $event)"
       />
+      <div
+        v-if="editable"
+        class="day-form__shortcuts"
+      >
+        <el-button
+          v-for="shortcut in ['arrival', 'departure', 'free'] as const"
+          :key="shortcut"
+          size="small"
+          @click="updateField('description', $t(`itinerary.shortcuts.${shortcut}Text`))"
+        >
+          {{ $t(`itinerary.shortcuts.${shortcut}`) }}
+        </el-button>
+      </div>
     </el-form-item>
   </el-form>
 </template>
@@ -80,12 +120,15 @@ import { getTransportMethodOptions } from "@/utils/transport-method";
 type EditableDayField = "departure" | "destination" | "overnightDestination" | "transport" | "description";
 
 const props = defineProps<{ day: ItineraryDayRecord; destinations: string[]; editable: boolean }>();
-const emit = defineEmits<{ "update-field": [field: EditableDayField, value: string] }>();
+const emit = defineEmits<{
+  "update-field": [field: EditableDayField, value: string | null];
+}>();
 const { locale } = useI18n();
+
 const transportCodes = computed(() => props.day.transport.split(",").filter(Boolean));
 const transportOptions = computed(() => getTransportMethodOptions(locale.value));
 
-function updateField(field: EditableDayField, value: string) {
+function updateField(field: EditableDayField, value: string | null) {
   emit("update-field", field, value);
 }
 function updateTransport(values: string[]) {
@@ -109,6 +152,7 @@ function updateTransport(values: string[]) {
 }
 
 .day-form__description { grid-column: 1 / -1; }
+.day-form__shortcuts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
 
 @media (width <= 900px) {
   .day-form { grid-template-columns: 1fr; }
