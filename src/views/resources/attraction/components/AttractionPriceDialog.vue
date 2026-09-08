@@ -143,7 +143,7 @@ const rules = computed<FormRules>(() => ({
   itemType: [{ required: true, message: t("attraction.itemTypeRequired"), trigger: "change" }],
   itemName: [{ required: true, message: t("attraction.itemNameRequired"), trigger: "blur" }],
   audience: [{ required: true, message: t("attraction.audienceRequired"), trigger: "blur" }],
-  periodName: [{ required: true, message: t("hotel.periodRequired"), trigger: "blur" }],
+  periodName: [{ required: true, message: t("attraction.periodRequired"), trigger: "blur" }],
   unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
 }));
 

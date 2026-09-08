@@ -1,5 +1,24 @@
-# Sunrise TravelOps
+# Sunrise TravelOps 本地开发
 
-当前仓库是 Sunrise TravelOps P0 交互原型。登录、Token 刷新、退出和当前用户权限已接入本地后端，其他业务模块仍使用前端 mock 数据和运行时内存状态。仓库内需求基线见 [完整重构需求说明](docs/Sunrise%20TravelOps%20完全重构需求说明.md)、[P0 需求说明](docs/Sunrise%20TravelOps%20P0需求说明.md) 和 [前端接入后端待办](docs/backend-integration-todo.md)。
+环境要求：Node.js 24、pnpm 11。
 
-本地开发默认将 `/api` 代理到 `http://localhost:4000`。启动前端前请先启动后端，然后执行 `pnpm dev`。
+1. 先按后端项目 README 配置并启动本地后端，默认地址为 `http://localhost:4000`。
+2. 在当前前端仓库目录安装依赖并启动：
+
+```bash
+pnpm install
+pnpm dev
+```
+
+默认访问 `http://localhost:3000`；若端口被占用，以终端输出的地址为准。
+
+开发配置位于 `.env.development`：
+
+```dotenv
+VITE_APP_PORT=3000
+VITE_APP_TITLE=Sunrise TravelOps
+VITE_APP_BASE_API=/api
+VITE_APP_API_URL=http://localhost:4000
+```
+
+`/api` 请求由 Vite 代理到 `VITE_APP_API_URL`。本地后端地址或端口变化时，修改该配置并重启前端开发服务。
