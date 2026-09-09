@@ -41,4 +41,35 @@ describe("route access", () => {
       perms: ["sys:dict:list"],
     })).toBe(true);
   });
+
+  it("shows the inquiry summary menu only with the administrator permission", () => {
+    const routes: RouteRecordRaw[] = [
+      {
+        path: "/inquiries",
+        children: [
+          {
+            path: "list",
+            component: { template: "<div />" },
+            meta: { perms: ["inquiry:list"] },
+          },
+          {
+            path: "logs",
+            component: { template: "<div />" },
+            meta: { perms: ["inquiry:archive"] },
+          },
+        ],
+      },
+    ];
+
+    const coordinatorRoutes = filterRoutesByAccess(routes, {
+      perms: ["inquiry:list"],
+    });
+    const administratorRoutes = filterRoutesByAccess(routes, {
+      perms: ["inquiry:list", "inquiry:archive"],
+    });
+
+    expect(coordinatorRoutes[0].children).toHaveLength(1);
+    expect(coordinatorRoutes[0].children?.[0].path).toBe("list");
+    expect(administratorRoutes[0].children).toHaveLength(2);
+  });
 });
