@@ -136,7 +136,7 @@
           <el-table-column
             prop="code"
             :label="$t('resource.code')"
-            width="120"
+            width="200"
           />
           <el-table-column
             prop="name"

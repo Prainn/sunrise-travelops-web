@@ -28,20 +28,14 @@
           row-key="id"
         >
           <el-table-column
-            type="index"
-            :label="$t('guide.sequence')"
-            width="70"
-            align="center"
-          />
-          <el-table-column
             prop="code"
             :label="$t('resource.code')"
-            width="120"
+            width="200"
           />
           <el-table-column
             prop="certificateNo"
             :label="$t('guide.certificateNo')"
-            min-width="130"
+            min-width="180"
           />
           <el-table-column
             prop="name"
