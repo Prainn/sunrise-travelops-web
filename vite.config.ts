@@ -62,7 +62,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           injectTo: "head",
         }],
       },
-      ...(mode === "development"
+      ...(["development", "dev-local"].includes(mode)
         ? [
             VueDevTools({
               componentInspector: true,

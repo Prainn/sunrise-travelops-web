@@ -2,23 +2,28 @@
 
 Requirements: Node.js 24 and pnpm 11.
 
-1. Configure and start the local backend using its README. The default backend URL is `http://localhost:4000`.
-2. Install dependencies and start the frontend from this repository:
+Install dependencies and start the frontend from this repository:
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
+`pnpm dev` uses the online development API at `https://api-dev.sunrisevacation.cn/api` by default.
+
+To use the local backend development service (at `http://localhost:4000` by default), start the backend first and then run:
+
+```bash
+pnpm dev-local
+```
+
 Open `http://localhost:3000`. If the port is occupied, use the URL printed in the terminal.
 
-Development settings are in `.env.development`:
+The default development settings are in `.env.development`, and the local-backend settings are in `.env.dev-local`. Vite proxies `/api` requests to the corresponding environment's `VITE_APP_API_URL`.
 
 ```dotenv
 VITE_APP_PORT=3000
 VITE_APP_TITLE=Sunrise TravelOps
 VITE_APP_BASE_API=/api
-VITE_APP_API_URL=http://localhost:4000
+VITE_APP_API_URL=https://api-dev.sunrisevacation.cn
 ```
-
-Vite proxies `/api` requests to `VITE_APP_API_URL`. Update this setting and restart the frontend development server when the local backend address or port changes.
