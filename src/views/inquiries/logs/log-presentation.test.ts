@@ -4,12 +4,24 @@ import zh from "@/lang/package/zh-cn.json";
 import en from "@/lang/package/en.json";
 import { transportMethodStore } from "@/utils/transport-method";
 import { resourceUnitStore } from "@/utils/resource-unit";
-import { changeTone, formatLogValue } from "./log-presentation";
+import { canExpandLog, changeTone, formatLogValue } from "./log-presentation";
 
 const i18n = createI18n({ legacy: false, locale: "zh", messages: { zh, en } });
-function format(value: unknown, path: string, locale = "zh", targetType: "itinerary" | "inquiry" = "itinerary") {
+function format(
+  value: unknown,
+  path: string,
+  locale = "zh",
+  targetType: "itinerary" | "inquiry" = "itinerary",
+  days?: Record<string, { dayNumber: number; date: string }>
+) {
   i18n.global.locale.value = locale as "zh" | "en";
-  return formatLogValue(value, path, { t: i18n.global.t, te: i18n.global.te, locale, targetType });
+  return formatLogValue(value, path, {
+    t: i18n.global.t,
+    te: i18n.global.te,
+    locale,
+    targetType,
+    days,
+  });
 }
 beforeEach(() => {
   transportMethodStore.splice(0, transportMethodStore.length,
@@ -50,5 +62,21 @@ describe("log value presentation", () => {
     expect(changeTone({ before: false, after: null })).toBe("removed");
     expect(changeTone({ before: false, after: true })).toBe("changed");
     expect(format(false, "breakfastIncluded")).toBe("否");
+  });
+  it("formats guide service day IDs with itinerary day numbers and dates", () => {
+    expect(format(
+      ["day-1", "day-3"],
+      "guidePlans[昆明].dayIds",
+      "zh",
+      "itinerary",
+      {
+        "day-1": { dayNumber: 1, date: "2026-09-09" },
+        "day-3": { dayNumber: 3, date: "2026-09-11" },
+      }
+    )).toBe("第 1 天 · 2026-09-09\n第 3 天 · 2026-09-11");
+  });
+  it("disables expansion for PDF generation logs", () => {
+    expect(canExpandLog({ action: "itinerary_pdf_generated" })).toBe(false);
+    expect(canExpandLog({ action: "itinerary_saved" })).toBe(true);
   });
 });

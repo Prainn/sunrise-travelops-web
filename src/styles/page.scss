@@ -12,6 +12,11 @@
   background: var(--page-bg);
 }
 
+.resource-page {
+  height: 100%;
+  min-height: 0;
+}
+
 .page-container--split {
   flex-direction: row;
   overflow: hidden;

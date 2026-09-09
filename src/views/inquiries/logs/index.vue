@@ -3,7 +3,10 @@
     v-loading="isLoading"
     class="page-container inquiry-log-page"
   >
-    <el-card shadow="never">
+    <el-card
+      class="log-summary-card"
+      shadow="never"
+    >
       <el-page-header @back="router.push({ name: 'InquiryList' })">
         <template #content>
           {{ inquiry ? `${inquiry.code} · ${inquiry.agencyName}` : $t('inquiry.log.report') }}
@@ -85,116 +88,123 @@
       class="page-content"
       shadow="never"
     >
-      <el-alert
-        v-if="error"
-        :title="error"
-        type="error"
-        :closable="false"
-      />
-      <el-table
-        :data="logs"
-        row-key="id"
-        border
-      >
-        <el-table-column type="expand">
-          <template #default="{ row }">
-            <div class="change-details">
-              <p v-if="row.metadata?.creationMode === 'copy'">
-                {{ $t('inquiry.log.copySource') }}：{{ row.metadata.sourceCode }}
-              </p>
-              <p v-if="row.metadata?.lostReason">
-                {{ $t('inquiry.lostReason') }}：{{ row.metadata.lostReason }}
-              </p>
-              <el-table
-                :data="row.changes"
-                :row-class-name="({ row: change }) => `change-${changeTone(change as InquiryLogRecord['changes'][number])}`"
-                :show-overflow-tooltip="false"
-                border
+      <div class="log-table-feedback">
+        <el-alert
+          v-if="error"
+          :title="error"
+          type="error"
+          :closable="false"
+        />
+      </div>
+      <div class="page-table-wrapper">
+        <el-table
+          :data="logs"
+          :row-expandable="canExpandLog"
+          row-key="id"
+          class="page-table"
+          height="100%"
+          border
+        >
+          <el-table-column type="expand">
+            <template #default="{ row }">
+              <div class="change-details">
+                <p v-if="row.metadata?.creationMode === 'copy'">
+                  {{ $t('inquiry.log.copySource') }}：{{ row.metadata.sourceCode }}
+                </p>
+                <p v-if="row.metadata?.lostReason">
+                  {{ $t('inquiry.lostReason') }}：{{ row.metadata.lostReason }}
+                </p>
+                <el-table
+                  :data="row.changes"
+                  :row-class-name="({ row: change }) => `change-${changeTone(change as InquiryLogRecord['changes'][number])}`"
+                  :show-overflow-tooltip="false"
+                  border
+                >
+                  <el-table-column
+                    :label="$t('inquiry.log.field')"
+                    min-width="240"
+                  >
+                    <template #default="scope">
+                      {{ fieldLabel(scope.row as InquiryLogRecord["changes"][number]) }}
+                    </template>
+                  </el-table-column>
+                  <el-table-column
+                    :label="$t('inquiry.log.before')"
+                    min-width="280"
+                  >
+                    <template #default="scope">
+                      <pre>{{ displayValue(scope.row.before, scope.row.path, row.targetType, row.targetId) }}</pre>
+                    </template>
+                  </el-table-column>
+                  <el-table-column
+                    :label="$t('inquiry.log.after')"
+                    min-width="280"
+                  >
+                    <template #default="scope">
+                      <pre>{{ displayValue(scope.row.after, scope.row.path, row.targetType, row.targetId) }}</pre>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column
+            :label="$t('inquiry.log.time')"
+            min-width="175"
+          >
+            <template #default="{ row }">
+              {{ formatDateTime(new Date(row.occurredAt)) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="action"
+            :label="$t('inquiry.log.action')"
+            min-width="150"
+            :formatter="formatAction"
+          />
+          <el-table-column
+            :label="$t('inquiry.log.operator')"
+            min-width="150"
+          >
+            <template #default="{ row }">
+              {{ row.operatorName }}（{{ row.operatorUsername }}）
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="inquiryCode"
+            :label="$t('inquiry.code')"
+            min-width="180"
+            show-overflow-tooltip
+          />
+          <el-table-column
+            prop="targetCode"
+            :label="$t('inquiry.log.targetCode')"
+            min-width="180"
+            show-overflow-tooltip
+          />
+          <el-table-column
+            prop="summary"
+            :label="$t('itinerary.title')"
+            min-width="180"
+            show-overflow-tooltip
+          />
+          <el-table-column
+            :label="$t('common.actions')"
+            width="100"
+            fixed="right"
+          >
+            <template #default="{ row }">
+              <el-button
+                type="primary"
+                link
+                @click="router.push({ name: 'InquiryList', query: { code: row.inquiryCode } })"
               >
-                <el-table-column
-                  :label="$t('inquiry.log.field')"
-                  min-width="240"
-                >
-                  <template #default="scope">
-                    {{ fieldLabel(scope.row as InquiryLogRecord["changes"][number]) }}
-                  </template>
-                </el-table-column>
-                <el-table-column
-                  :label="$t('inquiry.log.before')"
-                  min-width="280"
-                >
-                  <template #default="scope">
-                    <pre>{{ displayValue(scope.row.before, scope.row.path, row.targetType) }}</pre>
-                  </template>
-                </el-table-column>
-                <el-table-column
-                  :label="$t('inquiry.log.after')"
-                  min-width="280"
-                >
-                  <template #default="scope">
-                    <pre>{{ displayValue(scope.row.after, scope.row.path, row.targetType) }}</pre>
-                  </template>
-                </el-table-column>
-              </el-table>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column
-          :label="$t('inquiry.log.time')"
-          min-width="175"
-        >
-          <template #default="{ row }">
-            {{ formatDateTime(new Date(row.occurredAt)) }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="action"
-          :label="$t('inquiry.log.action')"
-          min-width="150"
-          :formatter="formatAction"
-        />
-        <el-table-column
-          :label="$t('inquiry.log.operator')"
-          min-width="150"
-        >
-          <template #default="{ row }">
-            {{ row.operatorName }}（{{ row.operatorUsername }}）
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="inquiryCode"
-          :label="$t('inquiry.code')"
-          min-width="180"
-          show-overflow-tooltip
-        />
-        <el-table-column
-          prop="targetCode"
-          :label="$t('inquiry.log.targetCode')"
-          min-width="180"
-          show-overflow-tooltip
-        />
-        <el-table-column
-          prop="summary"
-          :label="$t('itinerary.title')"
-          min-width="180"
-          show-overflow-tooltip
-        />
-        <el-table-column
-          :label="$t('common.actions')"
-          width="100"
-          fixed="right"
-        >
-          <template #default="{ row }">
-            <el-button
-              type="primary"
-              link
-              @click="router.push({ name: 'InquiryList', query: { code: row.inquiryCode } })"
-            >
-              {{ $t('common.view') }}
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+                {{ $t('common.view') }}
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
       <pagination
         v-if="total"
         :page="page"
@@ -214,15 +224,17 @@ import { inquiryService, type PersonOption } from "@/services/inquiry.service";
 import { inquiryLogService, type LogReport } from "@/services/inquiry-log.service";
 import type { InquiryLogAction, InquiryLogRecord } from "@/types/inquiry-log";
 import type { InquiryRecord } from "@/types/inquiry";
+import type { ItineraryDayRecord } from "@/types/itinerary";
 import { formatDateTime } from "@/utils";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
-import { changeTone, formatLogValue } from "./log-presentation";
+import { canExpandLog, changeTone, formatLogValue } from "./log-presentation";
 defineOptions({ name: "InquiryLogs" });
 const { t, te, locale } = useI18n();
 const route = useRoute(); const router = useRouter();
 const inquiryId = computed(() => String(route.params.inquiryId ?? ""));
 const inquiry = ref<InquiryRecord>();
 const logs = ref<InquiryLogRecord[]>([]);
+const itineraryDays = ref<Record<string, Record<string, ItineraryDayRecord>>>({});
 const operators = ref<PersonOption[]>([]);
 const actions: InquiryLogAction[] = ["inquiry_created","inquiry_updated","itinerary_created","itinerary_saved","itinerary_pdf_generated","inquiry_archived","inquiry_lost"];
 const report = ref<LogReport>({ totalOperations: 0, inquiryCount: 0, operatorCount: 0, changedFields: 0, byAction: [] });
@@ -235,8 +247,16 @@ async function fetchLogs() {
   const query = { page: page.value, pageSize: pageSize.value, inquiryCode: inquiryCode.value, inquiryId: inquiryId.value || undefined, operatorId: operatorId.value, action: action.value, from: dates.value?.[0], to: dates.value?.[1] };
   try {
     const [details,summary,people,record] = await Promise.all([inquiryLogService.list(query),inquiryLogService.report(query),inquiryLogService.operators(),inquiryId.value ? inquiryService.detail(inquiryId.value) : Promise.resolve(undefined), businessDictionaryService.ensureBuiltInTypesLoaded()]);
+    const itineraryIds = [...new Set(details.list
+      .filter((row) => row.targetType === "itinerary" && row.changes.some((change) => change.path.endsWith(".dayIds")))
+      .map((row) => row.targetId))];
+    const itineraryRecords = await Promise.all(itineraryIds.map((id) => inquiryService.itinerary(id)));
     if (version !== requestVersion) return;
     logs.value = details.list; total.value = details.total; report.value = summary; operators.value = people; inquiry.value = record;
+    itineraryDays.value = Object.fromEntries(itineraryRecords.map((record) => [
+      record.id,
+      Object.fromEntries(record.dailyPlans.map((day) => [day.id, day])),
+    ]));
   } catch (reason) {
     if (version !== requestVersion) return;
     error.value = reason instanceof Error ? reason.message : t("request.failed"); logs.value = []; total.value = 0;
@@ -254,11 +274,19 @@ function fieldLabel(change: InquiryLogRecord["changes"][number]) {
   const label = path ? path.split('.').map(fieldName).join(' / ') : t('inquiry.log.record');
   return prefix ? `${prefix} · ${label}` : label;
 }
-function displayValue(value: unknown, path: string, targetType: InquiryLogRecord["targetType"]): string {
-  return formatLogValue(value, path, { t, te, locale: locale.value, targetType });
+function displayValue(value: unknown, path: string, targetType: InquiryLogRecord["targetType"], targetId: string): string {
+  return formatLogValue(value, path, {
+    t,
+    te,
+    locale: locale.value,
+    targetType,
+    days: itineraryDays.value[targetId],
+  });
 }
 </script>
 <style scoped>
+.log-summary-card { flex-shrink: 0; }
+.inquiry-log-page :deep(.el-table__expand-icon.is-disabled) { visibility: hidden; }
 .log-filters { margin-top: 20px; }
 .log-totals, .log-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
 .log-totals strong { margin-left: 8px; font-size: 18px; }
