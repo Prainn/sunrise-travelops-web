@@ -82,7 +82,10 @@
                 size="large"
                 :validate-on-rule-change="false"
               >
-                <el-form-item prop="username">
+                <el-form-item
+                  class="login-form__username"
+                  prop="username"
+                >
                   <el-input
                     v-model.trim="loginFormData.username"
                     :placeholder="$t('login.username')"
@@ -458,6 +461,10 @@ $input-h: 44px;
 
 :deep(.el-form-item) {
   margin-bottom: 14px;
+}
+
+:deep(.login-form__username) {
+  margin-bottom: 24px;
 }
 
 :deep(.el-input__wrapper) {
