@@ -108,7 +108,7 @@ function deleteContact(contact: unknown) {
 
 <style scoped lang="scss">
 .agency-contacts-panel {
-  min-width: 0;
+  @apply 'min-w-0';
 
   :deep(.el-card__body) {
     height: calc(100% - 69px);
@@ -122,23 +122,19 @@ function deleteContact(contact: unknown) {
   }
 
   &__header {
-    justify-content: space-between;
-    gap: 16px;
+    @apply 'justify-between gap-[16px]';
   }
 
   &__title {
-    gap: 10px;
+    @apply 'gap-[10px]';
 
     span {
-      color: var(--el-text-color-secondary);
-      font-size: 14px;
+      @apply 'text-[var(--el-text-color-secondary)] text-[14px]';
     }
   }
 
   small {
-    display: block;
-    margin-top: 5px;
-    color: var(--el-text-color-secondary);
+    @apply 'block mt-[5px] text-[var(--el-text-color-secondary)]';
   }
 }
 </style>

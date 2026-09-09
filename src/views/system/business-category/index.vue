@@ -5,9 +5,9 @@
       class="business-category-page__card"
       shadow="never"
     >
-      <div class="business-category-page__toolbar">
+      <div class="business-category-page__toolbar flex gap-[16px] items-center justify-between pb-[12px]">
         <div>
-          <div class="business-category-page__title">
+          <div class="business-category-page__title font-semibold">
             {{ $t("businessCategory.typeManagement") }}
           </div>
         </div>
@@ -20,9 +20,9 @@
         </el-button>
       </div>
 
-      <div class="business-category-page__workspace">
+      <div class="business-category-page__workspace grid [grid-template-columns:208px_minmax(0,_1fr)] min-h-0 overflow-hidden [border:1px_solid_var(--el-border-color-light)] rounded-[var(--el-border-radius-base)]">
         <nav
-          class="business-category-page__type-list"
+          class="business-category-page__type-list p-[8px] overflow-y-auto [background:var(--el-fill-color-extra-light)] [border-right:1px_solid_var(--el-border-color-light)]"
           :aria-label="$t('businessCategory.typeManagement')"
         >
           <button
@@ -34,11 +34,11 @@
             @click="activeCategory = category.code"
           >
             <span>{{ categoryName(category) }}</span>
-            <span class="business-category-page__type-code">{{ category.code }}</span>
+            <span class="business-category-page__type-code mt-[2px] text-[var(--el-text-color-secondary)] text-[14px]">{{ category.code }}</span>
           </button>
         </nav>
 
-        <main class="business-category-page__content">
+        <main class="business-category-page__content min-h-0 p-[12px] overflow-hidden">
           <BusinessCategoryPanel
             v-if="selectedCategory"
             :category="selectedCategory"
@@ -176,19 +176,8 @@ onMounted(loadCategoryTypes);
 
 <style scoped lang="scss">
 .business-category-page__card {
-  flex: 1;
-  min-height: 0;
+  @apply '[flex:1] min-h-0';
 }
-
-.business-category-page__toolbar {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 12px;
-}
-
-.business-category-page__title { font-weight: 600; }
 
 .business-category-page :deep(.business-category-page__card > .el-card__body) {
   display: grid;
@@ -198,33 +187,8 @@ onMounted(loadCategoryTypes);
   box-sizing: border-box;
 }
 
-.business-category-page__workspace {
-  display: grid;
-  grid-template-columns: 208px minmax(0, 1fr);
-  min-height: 0;
-  overflow: hidden;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: var(--el-border-radius-base);
-}
-
-.business-category-page__type-list {
-  padding: 8px;
-  overflow-y: auto;
-  background: var(--el-fill-color-extra-light);
-  border-right: 1px solid var(--el-border-color-light);
-}
-
 .business-category-page__type-button {
-  display: flex;
-  width: 100%;
-  padding: 10px 12px;
-  color: var(--el-text-color-regular);
-  text-align: left;
-  cursor: pointer;
-  background: transparent;
-  border: 0;
-  border-radius: var(--el-border-radius-base);
-  flex-direction: column;
+  @apply 'flex w-full p-[10px_12px] text-[var(--el-text-color-regular)] text-left cursor-pointer [background:transparent] [border:0] rounded-[var(--el-border-radius-base)] flex-col';
 
   & + & { margin-top: 4px; }
 
@@ -236,19 +200,7 @@ onMounted(loadCategoryTypes);
   }
 }
 
-.business-category-page__type-code {
-  margin-top: 2px;
-  color: var(--el-text-color-secondary);
-  font-size: 14px;
-}
-
-.business-category-page__content {
-  min-height: 0;
-  padding: 12px;
-  overflow: hidden;
-}
-
 @media (width <= 900px) {
-  .business-category-page__workspace { grid-template-columns: 168px minmax(0, 1fr); }
+  .business-category-page__workspace { @apply '[grid-template-columns:168px_minmax(0,_1fr)]'; }
 }
 </style>

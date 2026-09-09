@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      class="command-palette-trigger"
+      class="command-palette-trigger flex gap-[8px] items-center justify-between w-[200px] h-[28px] p-[0_8px_0_10px] [user-select:none] [background:var(--el-fill-color-extra-light)] [border:1px_solid_var(--el-border-color-light)] rounded-[6px] [transition:background-color_0.16s,_border-color_0.16s]"
       role="button"
       tabindex="0"
       :aria-label="$t('commandPalette.open')"
@@ -9,11 +9,11 @@
       @keydown.enter.prevent="open"
       @keydown.space.prevent="open"
     >
-      <div class="command-palette-trigger__left">
+      <div class="command-palette-trigger__left flex gap-[6px] items-center min-w-0">
         <div class="i-svg:search" />
-        <span class="command-palette-trigger__text">{{ $t("commandPalette.searchMenu") }}</span>
+        <span class="command-palette-trigger__text overflow-hidden text-ellipsis text-[14px] text-[var(--el-text-color-secondary)] whitespace-nowrap">{{ $t("commandPalette.searchMenu") }}</span>
       </div>
-      <kbd class="command-palette-trigger__kbd">Ctrl K</kbd>
+      <kbd class="command-palette-trigger__kbd inline-flex items-center justify-center h-[18px] p-[0_6px] text-[14px] leading-[1] text-[var(--el-text-color-placeholder)] whitespace-nowrap [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color)] rounded-[4px]">Ctrl K</kbd>
     </div>
 
     <el-dialog
@@ -23,7 +23,7 @@
       :show-close="false"
       @close="close"
     >
-      <div class="command-palette-dialog">
+      <div class="command-palette-dialog flex flex-col gap-[14px]">
         <el-input
           ref="inputRef"
           v-model="keyword"
@@ -36,7 +36,7 @@
             <div class="i-svg:search" />
           </template>
           <template #suffix>
-            <div class="command-palette-input__suffix">
+            <div class="command-palette-input__suffix inline-flex gap-[10px] items-center">
               <div
                 class="i-svg:close"
                 role="button"
@@ -48,17 +48,17 @@
           </template>
         </el-input>
 
-        <div class="command-palette-results">
+        <div class="command-palette-results max-h-[48vh] overflow-auto">
           <div
             v-if="displayList.length === 0"
-            class="command-palette-empty"
+            class="command-palette-empty p-[24px_0] text-[var(--el-text-color-secondary)] text-center"
           >
             {{ $t("commandPalette.noHistory") }}
           </div>
 
           <ul
             v-else
-            class="command-palette-list"
+            class="command-palette-list flex flex-col gap-[6px] p-0 m-0 [list-style:none]"
           >
             <li
               v-for="(item, idx) in displayList"
@@ -67,37 +67,37 @@
               @mouseenter="activeIndex = idx"
               @click="onGo(item)"
             >
-              <div class="command-palette-item__title">
+              <div class="command-palette-item__title text-[14px] text-[var(--el-text-color-primary)]">
                 {{ item.title }}
               </div>
-              <div class="command-palette-item__path">
+              <div class="command-palette-item__path mt-[2px] text-[14px] text-[var(--el-text-color-secondary)]">
                 {{ item.path }}
               </div>
             </li>
           </ul>
         </div>
 
-        <div class="command-palette-hints">
-          <div class="command-palette-hint">
-            <div class="command-palette-hint__key">
+        <div class="command-palette-hints flex gap-[14px] items-center pt-[10px] [border-top:1px_solid_var(--el-border-color-lighter)]">
+          <div class="command-palette-hint inline-flex gap-[6px] items-center">
+            <div class="command-palette-hint__key inline-flex items-center justify-center h-[24px] p-[0_8px] [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px]">
               <div class="i-svg:up" />
             </div>
-            <div class="command-palette-hint__key">
+            <div class="command-palette-hint__key inline-flex items-center justify-center h-[24px] p-[0_8px] [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px]">
               <div class="i-svg:down" />
             </div>
-            <span class="command-palette-hint__text">{{ $t("commandPalette.navigate") }}</span>
+            <span class="command-palette-hint__text text-[14px] text-[var(--el-text-color-secondary)]">{{ $t("commandPalette.navigate") }}</span>
           </div>
-          <div class="command-palette-hint">
-            <div class="command-palette-hint__key">
+          <div class="command-palette-hint inline-flex gap-[6px] items-center">
+            <div class="command-palette-hint__key inline-flex items-center justify-center h-[24px] p-[0_8px] [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px]">
               <div class="i-svg:enter" />
             </div>
-            <span class="command-palette-hint__text">{{ $t("common.select") }}</span>
+            <span class="command-palette-hint__text text-[14px] text-[var(--el-text-color-secondary)]">{{ $t("common.select") }}</span>
           </div>
-          <div class="command-palette-hint">
-            <div class="command-palette-hint__key">
+          <div class="command-palette-hint inline-flex gap-[6px] items-center">
+            <div class="command-palette-hint__key inline-flex items-center justify-center h-[24px] p-[0_8px] [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px]">
               <div class="i-svg:esc" />
             </div>
-            <span class="command-palette-hint__text">{{ $t("common.close") }}</span>
+            <span class="command-palette-hint__text text-[14px] text-[var(--el-text-color-secondary)]">{{ $t("common.close") }}</span>
           </div>
         </div>
       </div>
@@ -159,30 +159,6 @@ const handleInputKeydown: (evt: KeyboardEvent | Event) => void = (evt) => {
 </script>
 
 <style scoped>
-.command-palette-trigger {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  justify-content: space-between;
-  width: 200px;
-  height: 28px;
-  padding: 0 8px 0 10px;
-  user-select: none;
-  background: var(--el-fill-color-extra-light);
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 6px;
-  transition:
-    background-color 0.16s,
-    border-color 0.16s;
-}
-
-.command-palette-trigger__left {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  min-width: 0;
-}
-
 .command-palette-trigger__left :deep([class^="i-svg:"]) {
   flex-shrink: 0;
   width: 14px;
@@ -190,53 +166,16 @@ const handleInputKeydown: (evt: KeyboardEvent | Event) => void = (evt) => {
   color: var(--el-text-color-secondary) !important;
 }
 
-.command-palette-trigger__text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-  white-space: nowrap;
-}
-
-.command-palette-trigger__kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 18px;
-  padding: 0 6px;
-  font-size: 14px;
-  line-height: 1;
-  color: var(--el-text-color-placeholder);
-  white-space: nowrap;
-  background: var(--el-bg-color-overlay);
-  border: 1px solid var(--el-border-color);
-  border-radius: 4px;
-}
-
 .command-palette-trigger:focus-visible {
-  outline: 2px solid var(--el-color-primary);
-  outline-offset: 2px;
+  @apply '[outline:2px_solid_var(--el-color-primary)] [outline-offset:2px]';
 }
 
 .command-palette-trigger:hover {
-  background: var(--el-fill-color-light);
-  border-color: var(--el-border-color);
-}
-
-.command-palette-dialog {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  @apply '[background:var(--el-fill-color-light)] [border-color:var(--el-border-color)]';
 }
 
 .command-palette-input :deep(.el-input__wrapper) {
   border-radius: 10px;
-}
-
-.command-palette-input__suffix {
-  display: inline-flex;
-  gap: 10px;
-  align-items: center;
 }
 
 .command-palette-input__suffix :deep([class^="i-svg:"]) {
@@ -248,74 +187,16 @@ const handleInputKeydown: (evt: KeyboardEvent | Event) => void = (evt) => {
   color: var(--el-color-primary);
 }
 
-.command-palette-results {
-  max-height: 48vh;
-  overflow: auto;
-}
-
-.command-palette-empty {
-  padding: 24px 0;
-  color: var(--el-text-color-secondary);
-  text-align: center;
-}
-
-.command-palette-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
 .command-palette-item {
-  padding: 10px 12px;
-  cursor: pointer;
-  border-radius: 10px;
+  @apply 'p-[10px_12px] cursor-pointer rounded-[10px]';
 }
 
 .command-palette-item:hover {
-  background: var(--el-fill-color-light);
+  @apply '[background:var(--el-fill-color-light)]';
 }
 
 .command-palette-item.is-active {
   background: var(--el-color-primary-light-9);
-}
-
-.command-palette-item__title {
-  font-size: 14px;
-  color: var(--el-text-color-primary);
-}
-
-.command-palette-item__path {
-  margin-top: 2px;
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-}
-
-.command-palette-hints {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  padding-top: 10px;
-  border-top: 1px solid var(--el-border-color-lighter);
-}
-
-.command-palette-hint {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.command-palette-hint__key {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 24px;
-  padding: 0 8px;
-  background: var(--el-bg-color-overlay);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
 }
 
 .command-palette-hint__key :deep([class^="i-svg:"]) {
@@ -323,8 +204,4 @@ const handleInputKeydown: (evt: KeyboardEvent | Event) => void = (evt) => {
   color: var(--el-text-color-secondary);
 }
 
-.command-palette-hint__text {
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-}
 </style>

@@ -116,7 +116,7 @@
             :min="0"
             :precision="2"
             controls-position="right"
-            style="width: 100%"
+            class="w-full"
           />
         </el-form-item>
         <el-form-item
@@ -273,11 +273,11 @@ async function handleSubmit() {
 
 <style scoped lang="scss">
 .guide-editor {
-  &__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
-  &__photo-field { display: flex; align-items: center; gap: 12px; }
-  &__photo { width: 72px; height: 88px; border-radius: 6px; }
-  &__photo-actions { display: flex; align-items: center; gap: 8px; }
-  &__photo-tip { color: var(--el-text-color-secondary); font-size: 14px; }
+  &__grid { @apply 'grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] gap-x-[24px]'; }
+  &__photo-field { @apply 'flex items-center gap-[12px]'; }
+  &__photo { @apply 'w-[72px] h-[88px] rounded-[6px]'; }
+  &__photo-actions { @apply 'flex items-center gap-[8px]'; }
+  &__photo-tip { @apply 'text-[var(--el-text-color-secondary)] text-[14px]'; }
 }
 
 @media (width <= 768px) {

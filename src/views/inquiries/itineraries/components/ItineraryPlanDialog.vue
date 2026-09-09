@@ -60,7 +60,7 @@
               :min="1"
               controls-position="right"
             />
-            <span style="width: 100%; margin-top: 4px; color: var(--el-text-color-secondary)">{{ $t('itinerary.duration', plannedDuration(form.days)) }}</span>
+            <span class="w-full mt-[4px] text-[var(--el-text-color-secondary)]">{{ $t('itinerary.duration', plannedDuration(form.days)) }}</span>
           </el-form-item>
         </el-col>
         <el-col :span="8">
@@ -72,7 +72,7 @@
               v-model="form.startDate"
               type="date"
               value-format="YYYY-MM-DD"
-              style="width: 100%"
+              class="w-full"
             />
           </el-form-item>
         </el-col>
@@ -102,7 +102,7 @@
           multiple
           filterable
           :placeholder="$t('itinerary.destinationsPlaceholder')"
-          style="width: 100%"
+          class="w-full"
         >
           <el-option
             v-for="destination in destinationOptions"
@@ -211,5 +211,5 @@ function syncEndDate() {
 
 .itinerary-plan-dialog__form :deep(.el-input-number) { width: 100%; }
 
-.itinerary-plan-dialog__day-hint { margin-bottom: 18px; }
+.itinerary-plan-dialog__day-hint { @apply 'mb-[18px]'; }
 </style>

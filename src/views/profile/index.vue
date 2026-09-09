@@ -1,8 +1,8 @@
 <template>
   <div class="profile-page">
-    <section class="profile-hero">
-      <div class="profile-hero__body">
-        <div class="profile-avatar">
+    <section class="profile-hero flex gap-[16px] items-center justify-between p-[20px_24px]">
+      <div class="profile-hero__body gap-[16px] min-w-0">
+        <div class="profile-avatar relative shrink-0">
           <el-avatar
             :src="displayAvatar"
             :size="72"
@@ -20,16 +20,16 @@
           />
           <input
             ref="fileInput"
-            class="profile-avatar__input"
+            class="profile-avatar__input hidden"
             type="file"
             accept="image/*"
             @change="handleFileChange"
           />
         </div>
 
-        <div class="profile-hero__info">
-          <div class="profile-hero__title">
-            <h2 class="profile-hero__name">
+        <div class="profile-hero__info min-w-0">
+          <div class="profile-hero__title flex-wrap gap-[10px]">
+            <h2 class="profile-hero__name m-0 text-[22px] font-bold leading-[30px] text-[var(--el-text-color-primary)]">
               {{ displayName }}
             </h2>
             <el-tag
@@ -40,16 +40,16 @@
               {{ primaryRole }}
             </el-tag>
           </div>
-          <p class="profile-hero__desc">
+          <p class="profile-hero__desc m-[4px_0_0] text-[14px] text-[var(--el-text-color-secondary)]">
             {{ userProfile.username || "-" }} /
             {{ userProfile.deptName || $t("profile.unassignedDepartment") }}
           </p>
-          <div class="profile-hero__meta">
-            <span class="profile-hero__meta-item">
+          <div class="profile-hero__meta flex-wrap gap-[12px] mt-[8px] text-[14px] text-[var(--el-text-color-secondary)]">
+            <span class="profile-hero__meta-item gap-[4px]">
               <el-icon><Calendar /></el-icon>
               {{ $t("profile.joinedAt", { time: formatValue(userProfile.createTime) }) }}
             </span>
-            <span class="profile-hero__meta-item">
+            <span class="profile-hero__meta-item gap-[4px]">
               <el-icon><Location /></el-icon>
               {{ $t("profile.lastLogin", { time: recentLoginRecords[0]?.time }) }}
             </span>
@@ -57,7 +57,7 @@
         </div>
       </div>
 
-      <div class="profile-hero__actions">
+      <div class="profile-hero__actions shrink-0 gap-[8px]">
         <el-button
           :icon="Edit"
           @click="handleOpenDialog(DialogType.ACCOUNT)"
@@ -74,11 +74,11 @@
       </div>
     </section>
 
-    <div class="profile-page__layout">
+    <div class="profile-page__layout grid [grid-template-columns:minmax(280px,_340px)_minmax(0,_1fr)] gap-[16px] [align-items:start]">
       <aside class="profile-page__side">
-        <section class="profile-card">
-          <header class="profile-card__header">
-            <h3 class="profile-card__title">
+        <section class="profile-card p-[18px_20px]">
+          <header class="profile-card__header flex gap-[12px] items-start justify-between mb-[14px]">
+            <h3 class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]">
               {{ $t("profile.personalInfo") }}
             </h3>
             <el-tag
@@ -89,13 +89,13 @@
             </el-tag>
           </header>
 
-          <dl class="profile-info">
+          <dl class="profile-info grid gap-[10px] m-0">
             <div
               v-for="item in profileInfoItems"
               :key="item.label"
-              class="profile-info__item"
+              class="profile-info__item grid [grid-template-columns:92px_minmax(0,_1fr)] gap-[10px] items-center min-h-[34px] pb-[10px] [border-bottom:1px_solid_var(--el-border-color-extra-light)]"
             >
-              <dt class="profile-info__label">
+              <dt class="profile-info__label flex gap-[6px] items-center text-[14px] text-[var(--el-text-color-secondary)]">
                 <el-icon><component :is="item.icon" /></el-icon>
                 {{ item.label }}
               </dt>
@@ -109,9 +109,9 @@
           </dl>
         </section>
 
-        <section class="profile-card">
-          <header class="profile-card__header">
-            <h3 class="profile-card__title">
+        <section class="profile-card p-[18px_20px]">
+          <header class="profile-card__header flex gap-[12px] items-start justify-between mb-[14px]">
+            <h3 class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]">
               {{ $t("profile.rolesAndPermissions") }}
             </h3>
             <span class="profile-card__extra">
@@ -119,7 +119,7 @@
             </span>
           </header>
 
-          <div class="profile-tags">
+          <div class="profile-tags flex flex-wrap gap-[8px]">
             <el-tag
               v-for="role in roleList"
               :key="role"
@@ -138,9 +138,9 @@
       </aside>
 
       <main class="profile-page__main">
-        <section class="profile-card">
-          <header class="profile-card__header">
-            <h3 class="profile-card__title">
+        <section class="profile-card p-[18px_20px]">
+          <header class="profile-card__header flex gap-[12px] items-start justify-between mb-[14px]">
+            <h3 class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]">
               {{ $t("profile.recentLogins") }}
             </h3>
             <span class="profile-card__extra">
@@ -148,17 +148,17 @@
             </span>
           </header>
 
-          <div class="profile-login">
+          <div class="profile-login grid gap-[12px]">
             <div
               v-for="record in recentLoginRecords"
               :key="record.time"
-              class="profile-login__item"
+              class="profile-login__item grid [grid-template-columns:36px_minmax(0,_1fr)_auto] gap-[10px] items-center min-h-[44px]"
             >
-              <span class="profile-icon">
+              <span class="profile-icon flex [flex:0_0_36px] items-center justify-center w-[36px] h-[36px] text-[18px] text-[var(--el-color-primary)] [background:var(--el-color-primary-light-9)] rounded-[8px]">
                 <el-icon><Monitor /></el-icon>
               </span>
-              <div class="profile-login__body">
-                <strong class="profile-login__device">{{ record.device }}</strong>
+              <div class="profile-login__body min-w-0">
+                <strong class="profile-login__device text-[14px] text-[var(--el-text-color-primary)]">{{ record.device }}</strong>
                 <span class="profile-login__meta">{{ record.location }} / {{ record.ip }}</span>
               </div>
               <time class="profile-login__time">{{ record.time }}</time>
@@ -492,27 +492,12 @@ onMounted(loadUserProfile);
 
 <style lang="scss" scoped>
 .profile-page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-height: 100%;
-  padding: 16px;
+  @apply 'flex flex-col gap-[16px] min-h-full p-[16px]';
 }
 
 .profile-hero,
 .profile-card {
-  background: var(--content-bg);
-  border: 1px solid var(--card-border);
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
-}
-
-.profile-hero {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
+  @apply '[background:var(--content-bg)] [border:1px_solid_var(--card-border)] rounded-[var(--card-radius)] [box-shadow:var(--card-shadow)]';
 }
 
 .profile-hero__body,
@@ -520,234 +505,69 @@ onMounted(loadUserProfile);
 .profile-hero__meta,
 .profile-hero__actions,
 .profile-hero__meta-item {
-  display: flex;
-  align-items: center;
-}
-
-.profile-hero__body {
-  gap: 16px;
-  min-width: 0;
-}
-
-.profile-hero__info {
-  min-width: 0;
-}
-
-.profile-hero__title {
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.profile-hero__name {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 30px;
-  color: var(--el-text-color-primary);
-}
-
-.profile-hero__desc {
-  margin: 4px 0 0;
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-}
-
-.profile-hero__meta {
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 8px;
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-}
-
-.profile-hero__meta-item {
-  gap: 4px;
-}
-
-.profile-hero__actions {
-  flex-shrink: 0;
-  gap: 8px;
-}
-
-.profile-avatar {
-  position: relative;
-  flex-shrink: 0;
+  @apply 'flex items-center';
 }
 
 .profile-avatar__action {
-  position: absolute;
-  right: -2px;
-  bottom: -2px;
-  border: 2px solid var(--content-bg);
-}
-
-.profile-avatar__input {
-  display: none;
-}
-
-.profile-page__layout {
-  display: grid;
-  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
+  @apply 'absolute right-[-2px] bottom-[-2px] [border:2px_solid_var(--content-bg)]';
 }
 
 .profile-page__side,
 .profile-page__main {
-  display: grid;
-  gap: 16px;
-  min-width: 0;
-}
-
-.profile-card {
-  padding: 18px 20px;
-}
-
-.profile-card__header {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.profile-card__title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 22px;
-  color: var(--el-text-color-primary);
+  @apply 'grid gap-[16px] min-w-0';
 }
 
 .profile-card__extra,
 .profile-empty {
-  font-size: 14px;
-  color: var(--el-text-color-placeholder);
-}
-
-.profile-info {
-  display: grid;
-  gap: 10px;
-  margin: 0;
-}
-
-.profile-info__item {
-  display: grid;
-  grid-template-columns: 92px minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-  min-height: 34px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--el-border-color-extra-light);
+  @apply 'text-[14px] text-[var(--el-text-color-placeholder)]';
 }
 
 .profile-info__item:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
-}
-
-.profile-info__label {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
+  @apply 'pb-0 [border-bottom:0]';
 }
 
 .profile-info__value {
-  min-width: 0;
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 14px;
-  color: var(--el-text-color-primary);
-  white-space: nowrap;
-}
-
-.profile-icon {
-  display: flex;
-  flex: 0 0 36px;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  font-size: 18px;
-  color: var(--el-color-primary);
-  background: var(--el-color-primary-light-9);
-  border-radius: 8px;
-}
-
-.profile-login {
-  display: grid;
-  gap: 12px;
-}
-
-.profile-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.profile-login__body {
-  min-width: 0;
-}
-
-.profile-login__item {
-  display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: center;
-  min-height: 44px;
+  @apply 'min-w-0 m-0 overflow-hidden text-ellipsis text-[14px] text-[var(--el-text-color-primary)] whitespace-nowrap';
 }
 
 .profile-login__device,
 .profile-login__meta,
 .profile-login__time {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.profile-login__device {
-  font-size: 14px;
-  color: var(--el-text-color-primary);
+  @apply 'block overflow-hidden text-ellipsis whitespace-nowrap';
 }
 
 .profile-login__meta,
 .profile-login__time {
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
+  @apply 'text-[14px] text-[var(--el-text-color-secondary)]';
 }
 
 .is-muted {
-  color: var(--el-text-color-placeholder);
+  @apply 'text-[var(--el-text-color-placeholder)]';
 }
 
 @media (width <= 1200px) {
   .profile-page__layout {
-    grid-template-columns: 1fr;
+    @apply '[grid-template-columns:1fr]';
   }
 }
 
 @media (width <= 768px) {
   .profile-page {
-    padding: 12px;
+    @apply 'p-[12px]';
   }
 
   .profile-hero {
-    align-items: flex-start;
+    @apply 'items-start';
   }
 
   .profile-hero,
   .profile-hero__body,
   .profile-hero__actions {
-    flex-direction: column;
+    @apply 'flex-col';
   }
 
   .profile-hero__actions {
-    align-items: stretch;
-    width: 100%;
+    @apply 'items-stretch w-full';
   }
 
   .profile-hero__actions .el-button {
@@ -756,22 +576,21 @@ onMounted(loadUserProfile);
   }
 
   .profile-login__item {
-    grid-template-columns: 40px minmax(0, 1fr);
+    @apply '[grid-template-columns:40px_minmax(0,_1fr)]';
   }
 
   .profile-login__time {
-    grid-column: 2;
-    justify-self: start;
+    @apply '[grid-column:2] [justify-self:start]';
   }
 }
 
 @media (width <= 520px) {
   .profile-info__item {
-    grid-template-columns: 1fr;
+    @apply '[grid-template-columns:1fr]';
   }
 
   .profile-info__item {
-    gap: 4px;
+    @apply 'gap-[4px]';
   }
 }
 </style>

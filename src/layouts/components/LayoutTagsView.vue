@@ -6,7 +6,7 @@
       :view-style="{ height: '100%' }"
       @wheel="handleScroll"
     >
-      <div class="layout-tabs__list">
+      <div class="layout-tabs__list flex gap-[4px] items-center h-full">
         <div
           v-for="tag in visitedViews"
           :key="tag.fullPath"
@@ -67,11 +67,11 @@
       >
         <div
           v-if="!appStore.contentFullscreen"
-          class="i-svg:fullscreen icon-16"
+          class="i-svg:fullscreen icon-16 w-[16px] h-[16px]"
         />
         <div
           v-else
-          class="i-svg:fullscreen-exit icon-16"
+          class="i-svg:fullscreen-exit icon-16 w-[16px] h-[16px]"
         />
       </button>
       <el-dropdown
@@ -529,79 +529,32 @@ useContextMenuManager();
 
 <style lang="scss" scoped>
 .layout-tabs {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  width: 100%;
+  @apply 'relative z-[10] flex items-center w-full';
   height: $tags-view-height;
-  padding: 0 12px;
-  background-color: var(--content-bg);
-  border-bottom: 1px solid var(--card-border);
+  @apply 'p-[0_12px] bg-[var(--content-bg)] [border-bottom:1px_solid_var(--card-border)]';
 }
 
 .layout-tabs__scroll {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
+  @apply '[flex:1] min-w-0 h-full';
 
   :deep(.el-scrollbar__wrap) {
     overflow-y: hidden;
   }
 }
 
-.layout-tabs__list {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  height: 100%;
-}
-
 .layout-tabs__item {
-  position: relative;
-  display: inline-flex;
-  flex-shrink: 0;
-  gap: 6px;
-  align-items: center;
-  height: 26px;
-  padding: 0 12px;
-  font-size: 14px;
-  color: var(--el-text-color-regular);
-  cursor: pointer;
-  user-select: none;
-  background: #f8fafc;
-  border: 1px solid var(--card-border);
-  border-radius: 2px;
-  transition:
-    color 0.15s ease,
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+  @apply 'relative inline-flex shrink-0 gap-[6px] items-center h-[26px] p-[0_12px] text-[14px] text-[var(--el-text-color-regular)] cursor-pointer [user-select:none] [background:#f8fafc] [border:1px_solid_var(--card-border)] rounded-[2px] [transition:color_0.15s_ease,_background-color_0.15s_ease,_border-color_0.15s_ease]';
 
   &-icon {
-    flex-shrink: 0;
-    width: 14px;
-    height: 14px;
-    opacity: 0.5;
-    transition: opacity 0.15s ease;
+    @apply 'shrink-0 w-[14px] h-[14px] opacity-[0.5] [transition:opacity_0.15s_ease]';
   }
 
   &-text {
-    white-space: nowrap;
+    @apply 'whitespace-nowrap';
   }
 
   &-close {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    margin-left: 1px;
-    font-size: 14px;
-    border-radius: 4px;
-    opacity: 0;
-    transition:
-      opacity 0.12s ease,
-      background-color 0.12s ease;
+    @apply 'inline-flex items-center justify-center w-[16px] h-[16px] ml-[1px] text-[14px] rounded-[4px] opacity-0 [transition:opacity_0.12s_ease,_background-color_0.12s_ease]';
 
     :deep(div) {
       width: 12px;
@@ -619,11 +572,11 @@ useContextMenuManager();
     border-color: var(--el-border-color);
 
     .layout-tabs__item-close {
-      opacity: 1;
+      @apply 'opacity-[1]';
     }
 
     .layout-tabs__item-icon {
-      opacity: 0.7;
+      @apply 'opacity-[0.7]';
     }
   }
 
@@ -634,12 +587,11 @@ useContextMenuManager();
     border-color: var(--el-color-primary-light-5);
 
     .layout-tabs__item-icon {
-      color: var(--el-color-primary);
-      opacity: 1;
+      @apply 'text-[var(--el-color-primary)] opacity-[1]';
     }
 
     .layout-tabs__item-close {
-      opacity: 0.6;
+      @apply 'opacity-[0.6]';
 
       &:hover {
         background-color: var(--el-color-primary-light-7);
@@ -650,23 +602,18 @@ useContextMenuManager();
 
   &.is-affix {
     .layout-tabs__item-text {
-      font-weight: 500;
+      @apply 'font-medium';
     }
   }
 }
 
 .layout-tabs--line {
   .layout-tabs__list {
-    gap: 8px;
+    @apply 'gap-[8px]';
   }
 
   .layout-tabs__item {
-    height: 100%;
-    padding: 0 8px;
-    color: var(--el-text-color-secondary);
-    background: transparent;
-    border: 0;
-    border-radius: 0;
+    @apply 'h-full p-[0_8px] text-[var(--el-text-color-secondary)] [background:transparent] [border:0] rounded-0';
 
     &::after {
       position: absolute;
@@ -702,16 +649,11 @@ useContextMenuManager();
 
 .layout-tabs--card {
   .layout-tabs__list {
-    gap: 8px;
+    @apply 'gap-[8px]';
   }
 
   .layout-tabs__item {
-    height: 28px;
-    padding: 0 10px;
-    color: var(--el-text-color-secondary);
-    background: transparent;
-    border-color: transparent;
-    border-radius: 4px;
+    @apply 'h-[28px] p-[0_10px] text-[var(--el-text-color-secondary)] [background:transparent] [border-color:transparent] rounded-[4px]';
 
     &:hover {
       color: var(--el-text-color-primary);
@@ -728,30 +670,10 @@ useContextMenuManager();
 }
 
 .layout-tabs__actions {
-  display: flex;
-  flex-shrink: 0;
-  gap: 4px;
-  align-items: center;
-  height: 100%;
-  padding-left: 8px;
+  @apply 'flex shrink-0 gap-[4px] items-center h-full pl-[8px]';
 
   .layout-tabs__action {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    font: inherit;
-    color: var(--el-text-color-regular);
-    appearance: none;
-    cursor: pointer;
-    background: transparent;
-    border: 0;
-    border-radius: 6px;
-    transition:
-      color 0.15s ease,
-      background-color 0.15s ease;
+    @apply 'inline-flex items-center justify-center w-[30px] h-[30px] p-0 [font:inherit] text-[var(--el-text-color-regular)] [appearance:none] cursor-pointer [background:transparent] [border:0] rounded-[6px] [transition:color_0.15s_ease,_background-color_0.15s_ease]';
 
     &:hover {
       color: var(--el-color-primary);
@@ -769,23 +691,14 @@ useContextMenuManager();
     }
 
     .icon-16 {
+      @apply 'bg-[currentcolor]';
       color: currentcolor;
-      background-color: currentcolor;
     }
   }
 }
 
-.icon-16 {
-  width: 16px;
-  height: 16px;
-}
-
 .icon-14 {
-  flex-shrink: 0;
-  width: 14px;
-  height: 14px;
-  margin-right: 6px;
-  opacity: 0.55;
+  @apply 'shrink-0 w-[14px] h-[14px] mr-[6px] opacity-[0.55]';
 
   &.el-icon {
     width: 14px;
@@ -794,28 +707,10 @@ useContextMenuManager();
 }
 
 .layout-tabs-menu {
-  position: fixed;
-  z-index: 3000;
-  min-width: 150px;
-  padding: 6px;
-  margin: 0;
-  font-size: 14px;
-  color: var(--el-text-color-primary);
-  list-style-type: none;
-  background: var(--el-bg-color-overlay);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 10px;
-  box-shadow: var(--el-box-shadow);
+  @apply 'fixed z-[3000] min-w-[150px] p-[6px] m-0 text-[14px] text-[var(--el-text-color-primary)] [list-style-type:none] [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[10px] [box-shadow:var(--el-box-shadow)]';
 
   li {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    padding: 7px 10px;
-    margin: 1px 0;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: background-color 0.15s ease;
+    @apply 'flex gap-[10px] items-center p-[7px_10px] m-[1px_0] cursor-pointer rounded-[6px] [transition:background-color_0.15s_ease]';
 
     &:hover {
       background: var(--el-fill-color-light);
@@ -823,10 +718,7 @@ useContextMenuManager();
   }
 
   &__icon {
-    flex-shrink: 0;
-    width: 16px;
-    height: 16px;
-    opacity: 0.55;
+    @apply 'shrink-0 w-[16px] h-[16px] opacity-[0.55]';
   }
 
   &__danger {
@@ -835,18 +727,13 @@ useContextMenuManager();
       background-color: var(--el-color-danger-light-9);
 
       .layout-tabs-menu__icon {
-        opacity: 1;
+        @apply 'opacity-[1]';
       }
     }
   }
 
   &__divider {
-    height: 1px;
-    padding: 0 !important;
-    margin: 5px 8px !important;
-    pointer-events: none;
-    cursor: default !important;
-    background-color: var(--el-border-color-lighter);
+    @apply 'h-[1px] !p-0 !m-[5px_8px] pointer-events-none !cursor-default bg-[var(--el-border-color-lighter)]';
 
     &:hover {
       background-color: var(--el-border-color-lighter) !important;

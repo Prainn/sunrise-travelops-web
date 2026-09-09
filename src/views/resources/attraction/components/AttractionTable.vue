@@ -302,7 +302,7 @@ function formatPrice(price: AttractionPriceRecord, field: "rackPrice" | "settlem
 
 <style scoped lang="scss">
 .attraction-table {
-  &__prices { padding: 16px 48px; background: var(--el-fill-color-lighter); }
-  &__price-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  &__prices { @apply 'p-[16px_48px] [background:var(--el-fill-color-lighter)]'; }
+  &__price-header { @apply 'flex items-center justify-between mb-[12px]'; }
 }
 </style>

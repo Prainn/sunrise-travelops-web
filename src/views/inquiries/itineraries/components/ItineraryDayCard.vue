@@ -6,10 +6,10 @@
   >
     <template #header>
       <div class="day-card__header">
-        <div class="day-card__identity">
-          <span class="day-card__number">D{{ day.dayNumber }}</span>
+        <div class="day-card__identity gap-[12px]">
+          <span class="day-card__number grid w-[44px] h-[44px] place-items-center rounded-[10px] [background:var(--el-color-primary)] [color:#fff] font-bold">D{{ day.dayNumber }}</span>
           <div>
-            <div class="day-card__route">
+            <div class="day-card__route flex items-center gap-[6px] text-[16px] font-semibold">
               {{ day.departure || $t("itinerary.departure") }}
               <el-icon><Right /></el-icon>
               {{ day.destination || $t("itinerary.destination") }}
@@ -60,7 +60,7 @@
       @update-field="updateField"
     />
 
-    <div class="day-card__resources-header">
+    <div class="day-card__resources-header m-[20px_0_10px]">
       <strong>{{ $t("itinerary.dailyResources") }}</strong>
       <el-button
         v-if="contentEditable"
@@ -71,7 +71,7 @@
         {{ $t("itinerary.addResource") }}
       </el-button>
     </div>
-    <div class="day-card__meals">
+    <div class="day-card__meals flex flex-wrap items-center gap-[16px] mb-[12px]">
       <el-tag
         :type="breakfastStatus === 'included' ? 'success' : breakfastStatus === 'excluded' ? 'info' : 'warning'"
         :title="$t(breakfastStatus === 'pending' ? 'itinerary.breakfastPending' : breakfastStatus === 'mixed' ? 'itinerary.breakfastMixed' : breakfastStatus === 'included' ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded')"
@@ -112,7 +112,7 @@
         min-width="120"
       >
         <template #default="scope">
-          <div class="day-card__resource-name">
+          <div class="day-card__resource-name font-medium">
             <el-tag
               v-if="scope.row.mealSlot"
               size="small"
@@ -185,7 +185,7 @@
       :description="$t('itinerary.noDailyResources')"
       :image-size="52"
     />
-    <div class="day-card__subtotal">
+    <div class="day-card__subtotal mt-[12px] text-[var(--el-text-color-secondary)]">
       <span>{{ $t("itinerary.dayCost") }} ¥{{ formatMoney(dayCost) }}</span>
     </div>
   </el-card>
@@ -232,21 +232,16 @@ function resourceUnitName(code: string) { return getResourceUnitName(code, local
 </script>
 
 <style scoped lang="scss">
-.day-card__meals { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 12px; }
-.day-card__meal { display: flex; align-items: center; gap: 8px; }
-.day-card { scroll-margin-top: 270px; border-radius: 10px; }
+.day-card__meal { @apply 'flex items-center gap-[8px]'; }
+.day-card { @apply '[scroll-margin-top:270px] rounded-[10px]'; }
 .day-card + .day-card__meals { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 12px; }
-.day-card__meal { display: flex; align-items: center; gap: 8px; }
-.day-card { margin-top: 16px; }
-.day-card__header, .day-card__identity, .day-card__actions, .day-card__resources-header, .day-card__subtotal { display: flex; align-items: center; }
-.day-card__header, .day-card__resources-header, .day-card__subtotal { justify-content: space-between; }
-.day-card__identity { gap: 12px; }
-.day-card__number { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 10px; background: var(--el-color-primary); color: #fff; font-weight: 700; }
-.day-card__route { display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 600; }
-.day-card__date, small { color: var(--el-text-color-secondary); font-size: 14px; }
-.day-card__quantity { width: 72px; margin-right: 4px; }
-.day-card__resources-header { margin: 20px 0 10px; }
-.day-card__resource-name { font-weight: 500; }
-.day-card__subtotal { margin-top: 12px; color: var(--el-text-color-secondary); }
+.day-card__meal { @apply 'flex items-center gap-[8px]'; }
+.day-card { @apply 'mt-[16px]'; }
+.day-card__header, .day-card__identity, .day-card__actions, .day-card__resources-header, .day-card__subtotal { @apply 'flex items-center'; }
+.day-card__header, .day-card__resources-header, .day-card__subtotal { @apply 'justify-between'; }
+
+.day-card__date, small { @apply 'text-[var(--el-text-color-secondary)] text-[14px]'; }
+.day-card__quantity { @apply 'w-[72px] mr-[4px]'; }
+
 .day-card__subtotal strong { color: var(--el-color-primary); }
 </style>

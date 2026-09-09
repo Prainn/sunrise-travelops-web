@@ -104,17 +104,9 @@ const { topMenuItems, activeTopMenuPath, sideMenuRoutes, handleTopMenuSelect } =
 $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
 
 .layout-double {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 999;
-  display: flex;
+  @apply 'fixed top-0 bottom-0 left-0 z-[999] flex';
   width: $double-sidebar-width;
-  overflow: hidden;
-  background-color: var(--menu-background);
-  border-right: 1px solid var(--menu-border);
-  transition: width 0.28s;
+  @apply 'overflow-hidden bg-[var(--menu-background)] [border-right:1px_solid_var(--menu-border)] [transition:width_0.28s]';
 
   &.is-collapsed {
     width: $sidebar-width-collapsed + $sidebar-secondary-width;
@@ -125,12 +117,10 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
     }
 
     .layout-double__primary-item {
-      gap: 0;
-      min-height: 48px;
-      padding: 8px 4px;
+      @apply 'gap-0 min-h-[48px] p-[8px_4px]';
 
       span {
-        display: none;
+        @apply 'hidden';
       }
     }
   }
@@ -145,7 +135,7 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
     }
 
     .layout-double__title {
-      display: none;
+      @apply 'hidden';
     }
   }
 
@@ -154,11 +144,11 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
   }
 
   &__primary {
-    display: flex;
+    @apply 'flex';
     flex: 0 0 $sidebar-primary-width;
-    flex-direction: column;
+    @apply 'flex-col';
     width: $sidebar-primary-width;
-    overflow: hidden;
+    @apply 'overflow-hidden';
     background:
       linear-gradient(
         180deg,
@@ -166,10 +156,7 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
         var(--menu-background)
       ),
       var(--menu-background);
-    border-right: 1px solid var(--menu-border);
-    transition:
-      flex-basis 0.28s,
-      width 0.28s;
+    @apply '[border-right:1px_solid_var(--menu-border)] [transition:flex-basis_0.28s,_width_0.28s]';
 
     :deep(.layout-logo) {
       height: $navbar-height;
@@ -178,32 +165,11 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
   }
 
   &__primary-scroll {
-    flex: 1;
-    min-height: 0;
+    @apply '[flex:1] min-h-0';
   }
 
   &__primary-item {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    align-items: center;
-    justify-content: center;
-    width: calc(100% - 12px);
-    min-height: 64px;
-    padding: 8px 4px;
-    margin: 6px;
-    font: inherit;
-    font-size: 14px;
-    line-height: 1.2;
-    color: var(--menu-text);
-    cursor: pointer;
-    background: transparent;
-    border: 0;
-    border-radius: 8px;
-    transition:
-      color 0.18s,
-      background-color 0.18s;
+    @apply 'relative flex flex-col gap-[6px] items-center justify-center w-[calc(100%_-_12px)] min-h-[64px] p-[8px_4px] m-[6px] [font:inherit] text-[14px] leading-[1.2] text-[var(--menu-text)] cursor-pointer [background:transparent] [border:0] rounded-[8px] [transition:color_0.18s,_background-color_0.18s]';
 
     :deep(.layout-menu-icon) {
       width: 20px !important;
@@ -214,11 +180,7 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
     }
 
     span {
-      max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-align: center;
-      white-space: nowrap;
+      @apply 'max-w-full overflow-hidden text-ellipsis text-center whitespace-nowrap';
     }
 
     &:hover {
@@ -238,21 +200,7 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
   }
 
   &__primary-toggle {
-    display: flex;
-    flex: 0 0 48px;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding: 0;
-    font: inherit;
-    color: var(--menu-text);
-    cursor: pointer;
-    background: transparent;
-    border: none;
-    border-top: 1px solid var(--menu-border);
-    transition:
-      color 0.18s,
-      background-color 0.18s;
+    @apply 'flex [flex:0_0_48px] items-center justify-center w-full p-0 [font:inherit] text-[var(--menu-text)] cursor-pointer [background:transparent] [border:none] [border-top:1px_solid_var(--menu-border)] [transition:color_0.18s,_background-color_0.18s]';
 
     &:hover {
       color: var(--menu-active-text);
@@ -261,21 +209,13 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
   }
 
   &__primary-toggle-icon {
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
-    transition: transform 0.28s;
+    @apply 'w-[18px] h-[18px] text-[18px] [transition:transform_0.28s]';
   }
 
   &__secondary {
-    display: flex;
-    flex: 0 0 auto;
-    flex-direction: column;
+    @apply 'flex [flex:0_0_auto] flex-col';
     width: $sidebar-secondary-width;
-    min-width: 0;
-    overflow: hidden;
-    background-color: var(--menu-background);
-    transition: width 0.28s;
+    @apply 'min-w-0 overflow-hidden bg-[var(--menu-background)] [transition:width_0.28s]';
 
     :deep(.el-menu) {
       border: none;
@@ -303,36 +243,29 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
         }
 
         .el-sub-menu__icon-arrow {
-          display: none !important;
+          @apply '!hidden';
         }
       }
     }
   }
 
   &__secondary-scroll {
-    flex: 1;
-    min-height: 0;
+    @apply '[flex:1] min-h-0';
   }
 
   &__title {
-    display: flex;
+    @apply 'flex';
     flex: 0 0 $navbar-height;
-    align-items: center;
+    @apply 'items-center';
     min-width: $sidebar-secondary-width;
-    padding: 0 18px;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--sidebar-logo-text-color);
-    white-space: nowrap;
+    @apply 'p-[0_18px] text-[16px] font-semibold text-[var(--sidebar-logo-text-color)] whitespace-nowrap';
   }
 }
 
 .layout-main {
-  position: relative;
-  height: 100%;
+  @apply 'relative h-full';
   margin-left: $double-sidebar-width;
-  overflow-y: auto;
-  transition: margin-left 0.28s;
+  @apply 'overflow-y-auto [transition:margin-left_0.28s]';
 
   &.is-collapsed {
     margin-left: $sidebar-width-collapsed + $sidebar-secondary-width;
@@ -354,9 +287,7 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
 .is-mobile {
   .layout-double {
     width: $double-sidebar-width;
-    transition:
-      transform 0.28s,
-      width 0s;
+    @apply '[transition:transform_0.28s,_width_0s]';
   }
 
   &.is-sidebar-collapsed {
@@ -367,12 +298,12 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
 
   &.is-sidebar-open {
     .layout-double {
-      transform: translateX(0);
+      @apply '[transform:translateX(0)]';
     }
   }
 
   .layout-main {
-    margin-left: 0 !important;
+    @apply '!ml-0';
   }
 }
 </style>

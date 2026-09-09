@@ -5,7 +5,7 @@
       <div
         v-for="destination in destinations"
         :key="destination"
-        class="guide-plans__row"
+        class="guide-plans__row grid [grid-template-columns:72px_minmax(180px,340px)_minmax(240px,_1fr)_110px] items-center gap-[16px]"
       >
         <span>{{ destination }}</span>
         <ResourceSelect
@@ -48,11 +48,11 @@ const emit = defineEmits<{ 'update-guide': [destination: string, guideId: string
 function selection(destination: string) { return props.plans.find((plan) => plan.destination === destination); }
 </script>
 <style scoped lang="scss">
-.guide-plans { margin-top: 24px; }
+.guide-plans { @apply 'mt-[24px]'; }
 .guide-plans h3 { display: flex; align-items: center; min-height: 48px; margin: 0 0 14px; }
-.guide-plans__row { display: grid; grid-template-columns: 72px minmax(180px,340px) minmax(240px, 1fr) 110px; align-items: center; gap: 16px; }
+
 .guide-plans__row + .guide-plans__row { margin-top: 14px; }
 .guide-plans__row :deep(.el-form-item) { margin-bottom: 0; }
 .guide-plans__row :deep(.el-input-number) { width: 130px; }
-@media (width <= 800px) { .guide-plans__row { grid-template-columns: 70px minmax(0,1fr); } }
+@media (width <= 800px) { .guide-plans__row { @apply '[grid-template-columns:70px_minmax(0,1fr)]'; } }
 </style>

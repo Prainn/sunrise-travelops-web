@@ -1,6 +1,6 @@
 <template>
   <div class="quote-panel">
-    <div class="quote-panel__summary">
+    <div class="quote-panel__summary flex flex-wrap gap-[20px] text-[var(--el-text-color-regular)]">
       <span>{{ $t('itinerary.dailyMealAttractionCost') }} <strong>¥{{ formatMoney(calculation.dailyResourceCost) }}</strong></span>
       <span>{{ $t('itinerary.hotelRoomCount') }} <strong>{{ calculation.hotelRoomCount }}</strong></span>
       <span>{{ $t('itinerary.guideCost') }} <strong>¥{{ formatMoney(calculation.guideCost) }}</strong></span>
@@ -12,11 +12,11 @@
     />
     <div
       v-else
-      class="quote-panel__comparison"
+      class="quote-panel__comparison overflow-x-auto"
     >
       <table :style="{ minWidth: `${180 + displayOptions.length * 200}px` }">
         <colgroup>
-          <col style="width: 180px"><col
+          <col class="w-[180px]"><col
             v-for="item in displayOptions"
             :key="item.option.id"
           >
@@ -103,7 +103,7 @@
               {{ item.calculation.actualMarginRate.toFixed(1) }}%
             </td>
           </tr>
-          <tr class="quote-panel__total">
+          <tr class="quote-panel__total text-[var(--el-color-primary)] text-[16px] font-semibold">
             <th>{{ $t('itinerary.totalPrice') }}</th>
             <td
               v-for="item in displayOptions"
@@ -129,7 +129,7 @@
         <template #header>
           {{ $t('itinerary.feeCards.tips') }}
         </template>
-        <div class="quote-panel__two-columns">
+        <div class="quote-panel__two-columns grid [grid-template-columns:1fr_1fr] gap-[16px]">
           <el-form-item
             v-for="field in tipFields"
             :key="field"
@@ -158,16 +158,16 @@
         <div
           v-for="fee in quote.transportFees.filter((item) => item.type === type)"
           :key="fee.id"
-          class="quote-panel__transport"
+          class="quote-panel__transport grid [grid-template-columns:minmax(280px,_2fr)_minmax(140px,_1fr)_minmax(160px,_1fr)_auto] [align-items:end] gap-[12px]"
         >
-          <div class="quote-panel__route">
+          <div class="quote-panel__route grid [grid-template-columns:minmax(0,1fr)_auto_minmax(0,1fr)] gap-[8px] [align-items:end]">
             <el-form-item :label="$t('itinerary.feeDeparture')">
               <CitySelect
                 :model-value="fee.departureCity"
                 @update:model-value="updateFee(fee.id, { departureCity: $event, arrivalCity: $event === fee.arrivalCity ? '' : fee.arrivalCity })"
               />
             </el-form-item>
-            <span class="quote-panel__route-arrow">→</span>
+            <span class="quote-panel__route-arrow mb-[18px] leading-[32px]">→</span>
             <el-form-item :label="$t('itinerary.feeArrival')">
               <CitySelect
                 :model-value="fee.arrivalCity"
@@ -224,7 +224,7 @@
         />
       </el-form-item>
     </el-form>
-    <div class="quote-panel__summary">
+    <div class="quote-panel__summary flex flex-wrap gap-[20px] text-[var(--el-text-color-regular)]">
       <span>{{ $t('itinerary.resourceItemCount', { count: itemCount }) }}</span>
       <span>{{ $t('itinerary.duration', duration) }}</span>
     </div>
@@ -279,36 +279,34 @@ function removeFee(id: string) {
 </script>
 
 <style scoped lang="scss">
-.quote-panel { display: grid; gap: 20px; font-size: 14px; }
-.quote-panel__summary { display: flex; flex-wrap: wrap; gap: 20px; color: var(--el-text-color-regular); }
-.quote-panel__comparison { overflow-x: auto; }
-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
-th, td { overflow-wrap: anywhere; padding: 12px; border: 1px solid var(--el-border-color); text-align: right; vertical-align: middle; }
-th:first-child { text-align: left; }
+.quote-panel { @apply 'grid gap-[20px] text-[14px]'; }
+
+table { @apply 'w-full [table-layout:fixed] [border-collapse:collapse]'; }
+th, td { @apply '[overflow-wrap:anywhere] p-[12px] [border:1px_solid_var(--el-border-color)] text-right [vertical-align:middle]'; }
+th:first-child { @apply 'text-left'; }
 thead th { background: var(--el-fill-color-light); font-weight: 600; }
 .quote-panel__comparison :deep(.el-input-number) { width: 140px; }
-.quote-panel__total { color: var(--el-color-primary); font-size: 16px; font-weight: 600; }
-.quote-panel__fee-card { margin-bottom: 16px; border-radius: 10px; }
+
+.quote-panel__fee-card { @apply 'mb-[16px] rounded-[10px]'; }
 .quote-panel__fee-card :deep(.el-card__header) { font-weight: 600; background: var(--el-fill-color-extra-light); }
-.quote-panel__settings { border-top: 1px solid var(--el-border-color); }
+.quote-panel__settings { @apply '[border-top:1px_solid_var(--el-border-color)]'; }
 .quote-panel__settings h3 { font-size: 18px; margin: 20px 0 12px; }
 .quote-panel__settings p { color: var(--el-text-color-secondary); }
-.quote-panel__two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.quote-panel__transport { display: grid; grid-template-columns: minmax(280px, 2fr) minmax(140px, 1fr) minmax(160px, 1fr) auto; align-items: end; gap: 12px; }
+
 .quote-panel__settings :deep(.el-input-number), .quote-panel__settings :deep(.el-select) { width: 100%; }
-.quote-panel__buttons { display: flex; gap: 12px; }
+.quote-panel__buttons { @apply 'flex gap-[12px]'; }
 @media (width <= 720px) {
-  .quote-panel__two-columns, .quote-panel__transport { grid-template-columns: 1fr; }
+  .quote-panel__two-columns, .quote-panel__transport { @apply '[grid-template-columns:1fr]'; }
 }
 </style>
 
 <style scoped lang="scss">
 .quote-panel__transport :deep(.el-form-item) { min-width: 0; }
 .quote-panel__transport :deep(.el-form-item__label) { white-space: nowrap; }
-.quote-panel__route { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 8px; align-items: end; }
-.quote-panel__route-title { grid-column: 1 / -1; color: var(--el-text-color-regular); }
-.quote-panel__route-arrow { margin-bottom: 18px; line-height: 32px; }
+
+.quote-panel__route-title { @apply '[grid-column:1_/_-1] text-[var(--el-text-color-regular)]'; }
+
 .quote-panel__transport > .el-button { margin-bottom: 26px; }
-.quote-panel__settings { container-type: inline-size; }
-@container (max-width: 760px) { .quote-panel__transport { grid-template-columns: minmax(0,1fr) minmax(160px,1fr) auto; } .quote-panel__route { grid-column: 1 / -1; } }
+.quote-panel__settings { @apply '[container-type:inline-size]'; }
+@container (max-width: 760px) { .quote-panel__transport { @apply '[grid-template-columns:minmax(0,1fr)_minmax(160px,1fr)_auto]'; } .quote-panel__route { @apply '[grid-column:1_/_-1]'; } }
 </style>

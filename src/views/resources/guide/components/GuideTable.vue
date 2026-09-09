@@ -275,7 +275,7 @@ function getGroundOperatorName(id: string) {
 
 <style scoped lang="scss">
 .guide-table {
-  &__language { margin-right: 4px; }
-  &__photo { width: 36px; height: 36px; border-radius: 4px; }
+  &__language { @apply 'mr-[4px]'; }
+  &__photo { @apply 'w-[36px] h-[36px] rounded-[4px]'; }
 }
 </style>

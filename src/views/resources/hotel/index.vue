@@ -357,7 +357,7 @@ async function confirmDelete(messageKey: string) {
 
 <style scoped lang="scss">
 .hotel-page {
-  &__city-select { width: 150px; }
-  &__rating-select { width: 150px; }
+  &__city-select { @apply 'w-[150px]'; }
+  &__rating-select { @apply 'w-[150px]'; }
 }
 </style>

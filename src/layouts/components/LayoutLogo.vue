@@ -36,21 +36,16 @@ defineProps({
 
 <style lang="scss" scoped>
 .layout-logo {
-  width: 100%;
+  @apply 'w-full';
   height: $navbar-height;
   background-color: $sidebar-logo-background;
 
   &__image {
-    width: 38px;
-    height: 38px;
-    object-fit: contain;
+    @apply 'w-[38px] h-[38px] object-contain';
   }
 
   &__title {
-    flex-shrink: 0;
-    margin-left: 10px;
-    font-size: 14px;
-    font-weight: bold;
+    @apply 'shrink-0 ml-[10px] text-[14px] [font-weight:bold]';
     color: $sidebar-logo-text-color;
   }
 }
@@ -60,7 +55,7 @@ defineProps({
 .layout-root.layout--top,
 .layout-root.layout--mix {
   .layout-logo {
-    background-color: transparent !important;
+    @apply '!bg-[transparent]';
 
     &__title {
       color: var(--menu-text);
@@ -82,7 +77,7 @@ defineProps({
   }
 
   .layout-logo__title {
-    display: none;
+    @apply 'hidden';
   }
 }
 </style>

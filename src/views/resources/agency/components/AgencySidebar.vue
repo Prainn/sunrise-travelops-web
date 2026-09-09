@@ -112,7 +112,7 @@ watch(keywords, () => requestRows());
 
 <style scoped lang="scss">
 .agency-sidebar {
-  min-width: 0;
+  @apply 'min-w-0';
 
   :deep(.el-card__body) {
     display: flex;
@@ -136,26 +136,19 @@ watch(keywords, () => requestRows());
   }
 
   &__header {
-    font-weight: 600;
+    @apply 'font-semibold';
   }
 
   &__scrollbar {
-    flex: 1;
-    min-height: 0;
+    @apply '[flex:1] min-h-0';
   }
 
   &__list {
-    display: grid;
-    gap: 10px;
-    padding-right: 8px;
+    @apply 'grid gap-[10px] pr-[8px]';
   }
 
   &__item {
-    padding: 12px;
-    cursor: pointer;
-    border: 1px solid var(--el-border-color-lighter);
-    border-radius: var(--el-border-radius-base);
-    transition: border-color var(--el-transition-duration), background-color var(--el-transition-duration);
+    @apply 'p-[12px] cursor-pointer [border:1px_solid_var(--el-border-color-lighter)] rounded-[var(--el-border-radius-base)] [transition:border-color_var(--el-transition-duration),_background-color_var(--el-transition-duration)]';
 
     &:hover,
     &.is-active {
@@ -164,22 +157,16 @@ watch(keywords, () => requestRows());
     }
 
     strong {
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      @apply 'min-w-0 overflow-hidden text-ellipsis whitespace-nowrap';
     }
 
     small {
-      display: block;
-      margin-top: 6px;
-      color: var(--el-text-color-secondary);
+      @apply 'block mt-[6px] text-[var(--el-text-color-secondary)]';
     }
   }
 
   &__actions {
-    gap: 4px;
-    margin-top: 8px;
+    @apply 'gap-[4px] mt-[8px]';
   }
 }
 </style>

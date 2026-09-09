@@ -5,7 +5,7 @@
       <LangSelect size="text-18px" />
     </div>
 
-    <div class="login-layout">
+    <div class="login-layout flex [flex:1] min-h-full">
       <div class="login-brand">
         <div class="login-brand__header">
           <el-image
@@ -220,41 +220,20 @@ $text-muted: #98a2b3;
 $input-h: 44px;
 
 .login-page {
-  position: relative;
-  display: flex;
-  min-height: 100vh;
-  overflow: auto;
+  @apply 'relative flex min-h-[100vh] overflow-auto';
   background: $bg;
 }
 
 .login-toolbar {
-  position: fixed;
-  top: 28px;
-  right: 32px;
-  z-index: 10;
-  display: flex;
-  gap: 12px;
-  align-items: center;
+  @apply 'fixed top-[28px] right-[32px] z-[10] flex gap-[12px] items-center';
 
   :deep(*) {
     cursor: pointer;
   }
 }
 
-.login-layout {
-  display: flex;
-  flex: 1;
-  min-height: 100%;
-}
-
 .login-brand {
-  position: relative;
-  display: flex;
-  flex: 0 0 65%;
-  flex-direction: column;
-  min-height: 100vh;
-  padding: 28px 64px 48px;
-  overflow: hidden;
+  @apply 'relative flex [flex:0_0_65%] flex-col min-h-[100vh] p-[28px_64px_48px] overflow-hidden';
   background: url("@/assets/images/login/bg.svg") center / cover no-repeat;
   animation: login-pane-in 0.36s ease-out both;
 
@@ -265,63 +244,40 @@ $input-h: 44px;
   }
 
   &__header {
-    display: flex;
-    gap: 14px;
-    align-items: center;
+    @apply 'flex gap-[14px] items-center';
   }
 
   &__logo {
-    width: 82px;
-    height: 82px;
+    @apply 'w-[82px] h-[82px]';
   }
 
   &__identity {
-    display: inline-flex;
-    gap: 10px;
-    align-items: center;
-    min-width: 0;
+    @apply 'inline-flex gap-[10px] items-center min-w-0';
   }
 
   &__name {
-    font-size: 24px;
-    font-weight: 600;
-    line-height: 1;
+    @apply 'text-[24px] font-semibold leading-[1]';
     color: $text-primary;
   }
 
   &__version {
-    display: inline-flex;
-    align-items: center;
-    height: 22px;
-    padding: 0 8px;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1;
+    @apply 'inline-flex items-center h-[22px] p-[0_8px] text-[14px] font-semibold leading-[1]';
     color: rgba($primary, 0.88);
     background: rgba($primary, 0.07);
     border: 1px solid rgba($primary, 0.13);
-    border-radius: 999px;
+    @apply 'rounded-[999px]';
   }
 
   &__hero {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    justify-content: center;
-    width: min(720px, 100%);
-    padding: 20px 0 88px;
+    @apply 'flex [flex:1] flex-col justify-center w-[min(720px,_100%)] p-[20px_0_88px]';
   }
 
   &__main {
-    width: 100%;
+    @apply 'w-full';
   }
 
   &__tag {
-    gap: 8px;
-    height: 28px;
-    padding: 0 13px 0 11px;
-    margin-bottom: 18px;
-    font-weight: 700;
+    @apply 'gap-[8px] h-[28px] p-[0_13px_0_11px] mb-[18px] font-bold';
     color: $primary;
     background: rgba($primary, 0.035);
     border-color: rgba($primary, 0.14);
@@ -334,51 +290,29 @@ $input-h: 44px;
   }
 
   &__tag-dot {
-    display: inline-block;
-    flex-shrink: 0;
-    width: 7px;
-    height: 7px;
+    @apply 'inline-block shrink-0 w-[7px] h-[7px]';
     background: $primary;
-    border-radius: 50%;
+    @apply 'rounded-[50%]';
     box-shadow: 0 0 0 3px rgba($primary, 0.12);
   }
 
   &__title {
-    margin: 0 0 18px;
-    font-size: 46px;
-    font-weight: 800;
-    line-height: 1.18;
-    color: #222b3a;
-    letter-spacing: 0;
+    @apply 'm-[0_0_18px] text-[46px] [font-weight:800] leading-[1.18] [color:#222b3a] [letter-spacing:0]';
   }
 
   &__desc {
-    max-width: 560px;
-    margin: 0;
-    font-size: 16px;
-    line-height: 1.75;
+    @apply 'max-w-[560px] m-0 text-[16px] leading-[1.75]';
     color: $text-secondary;
   }
 
   &__features {
-    display: inline-flex;
-    align-items: center;
-    width: fit-content;
-    max-width: 100%;
-    margin-top: 28px;
+    @apply 'inline-flex items-center w-[fit-content] max-w-full mt-[28px]';
   }
 
   &__feature {
-    position: relative;
-    display: inline-flex;
-    gap: 8px;
-    align-items: center;
-    height: 28px;
-    padding: 0 13px;
-    font-size: 14px;
-    font-weight: 600;
+    @apply 'relative inline-flex gap-[8px] items-center h-[28px] p-[0_13px] text-[14px] font-semibold';
     color: $text-primary;
-    background: transparent;
+    @apply '[background:transparent]';
 
     &:first-child {
       padding-left: 0;
@@ -396,65 +330,39 @@ $input-h: 44px;
   }
 
   &__feature-mark {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
+    @apply 'inline-flex items-center justify-center w-[20px] h-[20px]';
     color: $primary;
     background: rgba($primary, 0.08);
     border: 1px solid rgba($primary, 0.1);
-    border-radius: 6px;
+    @apply 'rounded-[6px]';
   }
 
   &__feature-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 13px;
-    height: 13px;
+    @apply 'inline-flex items-center justify-center w-[13px] h-[13px]';
     color: $primary;
   }
 
   &__feature-text {
-    line-height: 1;
-    white-space: nowrap;
+    @apply 'leading-[1] whitespace-nowrap';
   }
 }
 
 .login-card {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex: 0 0 35%;
-  flex-direction: column;
-  align-items: center;
-  padding: 0 0 32px;
-  background: #fff;
+  @apply 'relative z-[1] flex [flex:0_0_35%] flex-col items-center p-[0_0_32px] [background:#fff]';
   animation: login-pane-in 0.36s ease-out 0.04s both;
 
   &__inner {
-    box-sizing: border-box;
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    justify-content: center;
-    width: 100%;
-    max-width: 430px;
-    padding: 0 20px;
+    @apply '[box-sizing:border-box] flex [flex:1] flex-col justify-center w-full max-w-[430px] p-[0_20px]';
   }
 
   &__form {
-    width: 100%;
+    @apply 'w-full';
   }
 
   &__title {
-    margin: 0 0 24px;
-    font-size: 34px;
-    font-weight: 750;
-    line-height: 1.1;
+    @apply 'm-[0_0_24px] text-[34px] [font-weight:750] leading-[1.1]';
     color: $text-primary;
-    letter-spacing: 0;
+    @apply '[letter-spacing:0]';
   }
 
 }
@@ -472,20 +380,12 @@ $input-h: 44px;
 }
 
 .login-options {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 22px;
-  font-size: 14px;
+  @apply 'flex items-center justify-between mb-[22px] text-[14px]';
   color: $text-secondary;
 }
 
 .login-btn {
-  width: 100%;
-  height: 44px;
-  font-size: 16px;
-  font-weight: 600;
-  border-radius: 8px;
+  @apply 'w-full h-[44px] text-[16px] font-semibold rounded-[8px]';
   box-shadow: 0 12px 24px rgba($primary, 0.18);
 
   &:hover {
@@ -499,8 +399,7 @@ $input-h: 44px;
 }
 
 .login-footer {
-  flex-shrink: 0;
-  font-size: 14px;
+  @apply 'shrink-0 text-[14px]';
   color: $text-muted;
 }
 
@@ -564,13 +463,12 @@ $input-h: 44px;
 
 .fade-slide-enter-active,
 .fade-slide-leave-active {
-  transition: all 0.2s ease;
+  @apply '[transition:all_0.2s_ease]';
 }
 
 .fade-slide-enter-from,
 .fade-slide-leave-to {
-  opacity: 0;
-  transform: translateY(6px);
+  @apply 'opacity-0 [transform:translateY(6px)]';
 }
 
 @keyframes login-pane-in {
@@ -587,20 +485,15 @@ $input-h: 44px;
 
 @media (max-width: 1024px) {
   .login-layout {
-    flex-direction: column;
+    @apply 'flex-col';
   }
 
   .login-toolbar {
-    position: absolute;
-    top: 37px;
+    @apply 'absolute top-[37px]';
   }
 
   .login-brand {
-    flex: none;
-    height: auto;
-    min-height: auto;
-    padding: 28px 40px 0;
-    background: #fff;
+    @apply '[flex:none] h-auto min-h-auto p-[28px_40px_0] [background:#fff]';
 
     &__hero {
       display: none;
@@ -612,24 +505,21 @@ $input-h: 44px;
   }
 
   .login-card {
-    flex: 1;
-    justify-content: flex-start;
-    padding: 96px 48px 0;
+    @apply '[flex:1] justify-start p-[96px_48px_0]';
   }
 }
 
 @media (max-width: 640px) {
   .login-toolbar {
-    top: 33px;
-    right: 20px;
+    @apply 'top-[33px] right-[20px]';
   }
 
   .login-brand {
-    padding: 24px 0 0 24px;
+    @apply 'p-[24px_0_0_24px]';
   }
 
   .login-card {
-    padding: 72px 24px 0;
+    @apply 'p-[72px_24px_0]';
 
     &__inner {
       width: 100%;

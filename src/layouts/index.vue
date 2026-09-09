@@ -40,7 +40,6 @@ const currentLayoutComponent = computed(() => {
 
 <style lang="scss" scoped>
 .layout-wrapper {
-  width: 100%;
-  height: 100%;
+  @apply 'w-full h-full';
 }
 </style>

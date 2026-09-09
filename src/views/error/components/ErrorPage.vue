@@ -1,17 +1,17 @@
 <template>
   <section class="error-page">
-    <div class="error-page__inner">
-      <div class="error-page__content">
-        <div class="error-page__label">
+    <div class="error-page__inner grid [grid-template-columns:minmax(0,_0.88fr)_minmax(360px,_1fr)] gap-[56px] items-center w-[min(1040px,_100%)]">
+      <div class="error-page__content min-w-0">
+        <div class="error-page__label inline-flex items-center h-[28px] p-[0_10px] mb-[18px] text-[14px] font-medium text-[var(--el-color-primary)] [background:var(--el-color-primary-light-9)] [border:1px_solid_var(--el-color-primary-light-8)] rounded-[6px]">
           {{ label }}
         </div>
-        <h1 class="error-page__code">
+        <h1 class="error-page__code m-0 text-[112px] font-bold leading-[0.9] text-[var(--el-color-primary)] [letter-spacing:0]">
           {{ statusCode }}
         </h1>
-        <h2 class="error-page__title">
+        <h2 class="error-page__title m-[28px_0_0] text-[26px] font-semibold leading-[1.35] text-[var(--el-text-color-primary)] [letter-spacing:0]">
           {{ title }}
         </h2>
-        <p class="error-page__description">
+        <p class="error-page__description max-w-[440px] m-[12px_0_0] text-[16px] leading-[1.8] text-[var(--el-text-color-secondary)]">
           {{ description }}
         </p>
         <div class="error-page__actions">
@@ -20,7 +20,7 @@
       </div>
 
       <div
-        class="error-page__visual"
+        class="error-page__visual flex justify-center min-w-0"
         aria-hidden="true"
       >
         <div class="error-visual">
@@ -30,29 +30,29 @@
             <span />
           </div>
 
-          <div class="error-visual__body">
-            <div class="error-visual__summary">
-              <div class="error-visual__icon">
+          <div class="error-visual__body p-[28px]">
+            <div class="error-visual__summary flex gap-[16px] items-center">
+              <div class="error-visual__icon grid place-items-center w-[68px] h-[68px] text-[var(--el-color-primary)] [background:var(--el-color-primary-light-9)] [border:1px_solid_var(--el-color-primary-light-8)] rounded-[8px]">
                 <el-icon :size="34">
                   <component :is="visualIcon" />
                 </el-icon>
               </div>
               <div>
-                <div class="error-visual__status">
+                <div class="error-visual__status text-[34px] font-bold leading-[1] text-[var(--el-text-color-primary)] [letter-spacing:0]">
                   {{ statusCode }}
                 </div>
-                <div class="error-visual__name">
+                <div class="error-visual__name mt-[8px] text-[14px] font-medium text-[var(--el-text-color-secondary)] [letter-spacing:0]">
                   {{ visualName }}
                 </div>
               </div>
             </div>
 
             <svg
-              class="error-visual__route"
+              class="error-visual__route block w-full h-auto mt-[28px]"
               viewBox="0 0 360 136"
             >
               <path
-                class="error-visual__route-line"
+                class="error-visual__route-line [fill:none] [stroke:var(--el-color-primary-light-5)] [stroke-width:4] [stroke-linecap:round] [stroke-dasharray:8_10]"
                 d="M56 48 H148 C174 48 174 88 200 88 H302"
               />
               <rect
@@ -80,7 +80,7 @@
                 rx="6"
               />
               <path
-                class="error-visual__break"
+                class="error-visual__break [fill:none] [stroke:var(--el-color-primary)] [stroke-width:4] [stroke-linecap:round]"
                 d="M224 76 L246 98 M246 76 L224 98"
               />
             </svg>
@@ -121,230 +121,75 @@ const visualMeta = computed(() =>
 
 <style lang="scss" scoped>
 .error-page {
-  display: grid;
-  place-items: center;
-  min-height: 100%;
-  padding: 56px 32px;
-  color: var(--el-text-color-primary);
-  background: var(--page-bg);
-}
-
-.error-page__inner {
-  display: grid;
-  grid-template-columns: minmax(0, 0.88fr) minmax(360px, 1fr);
-  gap: 56px;
-  align-items: center;
-  width: min(1040px, 100%);
-}
-
-.error-page__content {
-  min-width: 0;
-}
-
-.error-page__label {
-  display: inline-flex;
-  align-items: center;
-  height: 28px;
-  padding: 0 10px;
-  margin-bottom: 18px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--el-color-primary);
-  background: var(--el-color-primary-light-9);
-  border: 1px solid var(--el-color-primary-light-8);
-  border-radius: 6px;
-}
-
-.error-page__code {
-  margin: 0;
-  font-size: 112px;
-  font-weight: 700;
-  line-height: 0.9;
-  color: var(--el-color-primary);
-  letter-spacing: 0;
-}
-
-.error-page__title {
-  margin: 28px 0 0;
-  font-size: 26px;
-  font-weight: 600;
-  line-height: 1.35;
-  color: var(--el-text-color-primary);
-  letter-spacing: 0;
-}
-
-.error-page__description {
-  max-width: 440px;
-  margin: 12px 0 0;
-  font-size: 16px;
-  line-height: 1.8;
-  color: var(--el-text-color-secondary);
+  @apply 'grid place-items-center min-h-full p-[56px_32px] text-[var(--el-text-color-primary)] [background:var(--page-bg)]';
 }
 
 .error-page__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  margin-top: 28px;
+  @apply 'flex flex-wrap gap-[10px] items-center mt-[28px]';
 
   :deep(.el-button) {
     margin-left: 0;
   }
 }
 
-.error-page__visual {
-  display: flex;
-  justify-content: center;
-  min-width: 0;
-}
-
 .error-visual {
-  width: min(420px, 100%);
-  overflow: hidden;
-  background: var(--el-bg-color-overlay);
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 8px;
+  @apply 'w-[min(420px,_100%)] overflow-hidden [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color-light)] rounded-[8px]';
   box-shadow: var(--card-shadow, 0 16px 40px rgb(0 0 0 / 8%));
 }
 
 .error-visual__header {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  height: 42px;
-  padding: 0 16px;
-  background: var(--el-fill-color-lighter);
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  @apply 'flex gap-[6px] items-center h-[42px] p-[0_16px] [background:var(--el-fill-color-lighter)] [border-bottom:1px_solid_var(--el-border-color-lighter)]';
 
   span {
-    width: 18px;
-    height: 6px;
-    background: var(--el-fill-color-dark);
-    border-radius: 3px;
+    @apply 'w-[18px] h-[6px] [background:var(--el-fill-color-dark)] rounded-[3px]';
   }
 }
 
-.error-visual__body {
-  padding: 28px;
-}
-
-.error-visual__summary {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.error-visual__icon {
-  display: grid;
-  place-items: center;
-  width: 68px;
-  height: 68px;
-  color: var(--el-color-primary);
-  background: var(--el-color-primary-light-9);
-  border: 1px solid var(--el-color-primary-light-8);
-  border-radius: 8px;
-}
-
-.error-visual__status {
-  font-size: 34px;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--el-text-color-primary);
-  letter-spacing: 0;
-}
-
-.error-visual__name {
-  margin-top: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--el-text-color-secondary);
-  letter-spacing: 0;
-}
-
-.error-visual__route {
-  display: block;
-  width: 100%;
-  height: auto;
-  margin-top: 28px;
-}
-
-.error-visual__route-line {
-  fill: none;
-  stroke: var(--el-color-primary-light-5);
-  stroke-width: 4;
-  stroke-linecap: round;
-  stroke-dasharray: 8 10;
-}
-
 .error-visual__node {
-  fill: var(--el-color-primary-light-9);
-  stroke: var(--el-color-primary-light-7);
-  stroke-width: 2;
+  @apply '[fill:var(--el-color-primary-light-9)] [stroke:var(--el-color-primary-light-7)] [stroke-width:2]';
 }
 
 .error-visual__node--muted {
-  fill: var(--el-fill-color-lighter);
-  stroke: var(--el-border-color);
-}
-
-.error-visual__break {
-  fill: none;
-  stroke: var(--el-color-primary);
-  stroke-width: 4;
-  stroke-linecap: round;
+  @apply '[fill:var(--el-fill-color-lighter)] [stroke:var(--el-border-color)]';
 }
 
 .error-visual__meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 40px;
-  padding: 0 12px;
-  margin-top: 18px;
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-  background: var(--el-fill-color-lighter);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 6px;
+  @apply 'flex items-center justify-between h-[40px] p-[0_12px] mt-[18px] text-[14px] text-[var(--el-text-color-secondary)] [background:var(--el-fill-color-lighter)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[6px]';
 
   strong {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--el-color-primary);
+    @apply 'text-[14px] font-bold text-[var(--el-color-primary)]';
   }
 }
 
 @media (width <= 900px) {
   .error-page {
-    padding: 40px 20px;
+    @apply 'p-[40px_20px]';
   }
 
   .error-page__inner {
-    grid-template-columns: 1fr;
-    gap: 36px;
+    @apply '[grid-template-columns:1fr] gap-[36px]';
   }
 
   .error-page__code {
-    font-size: 84px;
+    @apply 'text-[84px]';
   }
 
   .error-page__title {
-    font-size: 22px;
+    @apply 'text-[22px]';
   }
 }
 
 @media (width <= 520px) {
   .error-page {
-    padding: 28px 16px;
+    @apply 'p-[28px_16px]';
   }
 
   .error-page__code {
-    font-size: 68px;
+    @apply 'text-[68px]';
   }
 
   .error-page__visual {
-    display: none;
+    @apply 'hidden';
   }
 }
 </style>

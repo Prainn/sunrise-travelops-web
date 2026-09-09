@@ -4,9 +4,9 @@
     class="itinerary-hotel-vehicle-plans"
   >
     <section>
-      <div class="itinerary-hotel-vehicle-plans__toolbar h-12">
+      <div class="itinerary-hotel-vehicle-plans__toolbar h-12 flex items-center min-h-[48px] m-[0_0_14px]">
         <h3>{{ $t("itinerary.hotelPlans") }}</h3>
-        <div class="itinerary-hotel-vehicle-plans__nights ml-4">
+        <div class="itinerary-hotel-vehicle-plans__nights ml-4 flex items-center flex-wrap gap-[12px]">
           <el-tag
             v-for="destination in overnightDestinations"
             :key="destination"
@@ -49,7 +49,7 @@
               </el-button>
             </header>
 
-            <div class="itinerary-hotel-vehicle-plans__hotel-list">
+            <div class="itinerary-hotel-vehicle-plans__hotel-list grid gap-[10px] p-[12px]">
               <label
                 v-for="destination in overnightDestinations"
                 :key="destination"
@@ -78,7 +78,7 @@
     </section>
 
     <section>
-      <div class="itinerary-hotel-vehicle-plans__toolbar h-12">
+      <div class="itinerary-hotel-vehicle-plans__toolbar h-12 flex items-center min-h-[48px] m-[0_0_14px]">
         <h3>{{ $t("itinerary.vehiclePlans") }}</h3>
       </div>
       <el-card
@@ -105,7 +105,7 @@
               </el-button>
             </header>
 
-            <div class="itinerary-hotel-vehicle-plans__vehicle-body">
+            <div class="itinerary-hotel-vehicle-plans__vehicle-body grid gap-[12px] p-[12px]">
               <label class="itinerary-hotel-vehicle-plans__vehicle-select">
                 <span>{{ $t("itinerary.vehicleModel") }}</span>
                 <ResourceSelect
@@ -121,7 +121,7 @@
 
               <div
                 v-if="findVehiclePlan(tier)?.vehicle"
-                class="itinerary-hotel-vehicle-plans__vehicle-fields"
+                class="itinerary-hotel-vehicle-plans__vehicle-fields grid [grid-template-columns:repeat(4,_minmax(0,_1fr))] gap-[10px] pt-[12px] [border-top:1px_solid_var(--el-border-color-lighter)]"
               >
                 <label>
                   <span>{{ $t("itinerary.vehicleServiceDays") }}</span>
@@ -219,33 +219,28 @@ function findVehiclePlan(tier: ItineraryVehicleTier) {
 </script>
 
 <style scoped lang="scss">
-.itinerary-hotel-vehicle-plans { scroll-margin-top: 270px; display: grid; gap: 24px; margin-bottom: 0; }
-.itinerary-hotel-vehicle-plans__toolbar { display: flex; align-items: center; min-height: 48px; margin: 0 0 14px; }
+.itinerary-hotel-vehicle-plans { @apply '[scroll-margin-top:270px] grid gap-[24px] mb-0'; }
+
 .itinerary-hotel-vehicle-plans__toolbar h3 { margin: 0; }
-.itinerary-hotel-vehicle-plans__card { border-radius: 10px; }
+.itinerary-hotel-vehicle-plans__card { @apply 'rounded-[10px]'; }
 .itinerary-hotel-vehicle-plans__card :deep(.el-card__body) { padding: 16px 18px; }
 .itinerary-hotel-vehicle-plans__hotel-tier > header, .itinerary-hotel-vehicle-plans__vehicle-tier > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.itinerary-hotel-vehicle-plans__hotel-tiers, .itinerary-hotel-vehicle-plans__vehicle-tiers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.itinerary-hotel-vehicle-plans__hotel-tier, .itinerary-hotel-vehicle-plans__vehicle-tier { overflow: hidden; border: 1px solid var(--el-border-color-lighter); border-radius: 8px; background: var(--el-bg-color); transition: border-color 0.2s, box-shadow 0.2s; }
+.itinerary-hotel-vehicle-plans__hotel-tiers, .itinerary-hotel-vehicle-plans__vehicle-tiers { @apply 'grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] gap-[12px]'; }
+.itinerary-hotel-vehicle-plans__hotel-tier, .itinerary-hotel-vehicle-plans__vehicle-tier { @apply 'overflow-hidden [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-bg-color)] [transition:border-color_0.2s,_box-shadow_0.2s]'; }
 .itinerary-hotel-vehicle-plans__hotel-tier.is-selected, .itinerary-hotel-vehicle-plans__vehicle-tier.is-selected { border-color: var(--el-color-primary-light-5); box-shadow: 0 0 0 1px var(--el-color-primary-light-8); }
 .itinerary-hotel-vehicle-plans__hotel-tier.is-selected > header, .itinerary-hotel-vehicle-plans__vehicle-tier.is-selected > header { background: var(--el-color-primary-light-9); }
 .itinerary-hotel-vehicle-plans__hotel-tier > header, .itinerary-hotel-vehicle-plans__vehicle-tier > header { min-height: 48px; padding: 0 14px; background: var(--el-fill-color-lighter); }
-.itinerary-hotel-vehicle-plans__hotel-list { display: grid; gap: 10px; padding: 12px; }
+
 .itinerary-hotel-vehicle-plans__hotel-list label, .itinerary-hotel-vehicle-plans__vehicle-select { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 8px; font-size: 14px; }
 .itinerary-hotel-vehicle-plans__hotel-list :deep(.el-select), .itinerary-hotel-vehicle-plans__vehicle-select :deep(.el-select) { width: 100%; }
-.itinerary-hotel-vehicle-plans__option { display: flex; justify-content: space-between; gap: 16px; }
+.itinerary-hotel-vehicle-plans__option { @apply 'flex justify-between gap-[16px]'; }
 .itinerary-hotel-vehicle-plans__option strong { color: var(--el-color-primary); font-weight: 500; }
-.itinerary-hotel-vehicle-plans__vehicle-select { grid-template-columns: 72px minmax(0, 340px); }
-.itinerary-hotel-vehicle-plans__vehicle-body { display: grid; gap: 12px; padding: 12px; }
-.itinerary-hotel-vehicle-plans__vehicle-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding-top: 12px; border-top: 1px solid var(--el-border-color-lighter); }
+
+.itinerary-hotel-vehicle-plans__vehicle-select { @apply '[grid-template-columns:72px_minmax(0,_340px)]'; }
 .itinerary-hotel-vehicle-plans__vehicle-fields label { display: grid; gap: 6px; color: var(--el-text-color-secondary); font-size: 14px; }
 .itinerary-hotel-vehicle-plans__vehicle-fields label > strong { display: flex; align-items: center; min-height: 32px; color: var(--el-text-color-primary); font-size: 14px; font-variant-numeric: tabular-nums; }
 .itinerary-hotel-vehicle-plans :deep(.el-input-number) { width: 100%; }
 @media (width <= 1100px) {
-  .itinerary-hotel-vehicle-plans__hotel-tiers, .itinerary-hotel-vehicle-plans__vehicle-tiers { grid-template-columns: 1fr; }
+  .itinerary-hotel-vehicle-plans__hotel-tiers, .itinerary-hotel-vehicle-plans__vehicle-tiers { @apply '[grid-template-columns:1fr]'; }
 }
-</style>
-
-<style scoped>
-.itinerary-hotel-vehicle-plans__nights { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 </style>

@@ -6,13 +6,13 @@
     :before-close="handleCloseDrawer"
     class="settings-drawer"
   >
-    <div class="layout-settings__content">
+    <div class="layout-settings__content [flex:1_1_auto] p-[16px_18px_20px] overflow-y-auto text-[var(--el-text-color-regular)]">
       <section class="layout-settings__section">
         <div class="layout-settings__section-title">
           {{ t("settings.theme") }}
         </div>
 
-        <div class="theme-mode">
+        <div class="theme-mode flex justify-center">
           <el-radio-group v-model="themeMode">
             <el-radio-button :value="ThemeMode.LIGHT">
               {{ t("login.light") }}
@@ -26,7 +26,7 @@
           </el-radio-group>
         </div>
 
-        <div class="layout-settings__card">
+        <div class="layout-settings__card mt-[14px]">
           <div class="layout-settings__card-header">
             <span>{{ t("settings.themePalette") }}</span>
             <button
@@ -39,7 +39,7 @@
             </button>
           </div>
 
-          <div class="palette-strip">
+          <div class="palette-strip grid [grid-template-columns:repeat(3,_minmax(0,_1fr))] gap-[6px]">
             <el-tooltip
               v-for="item in themePalettePresets"
               :key="item.id"
@@ -52,8 +52,8 @@
                 :class="['palette-option', { 'is-active': settingsStore.themePalette === item.id }]"
                 @click="settingsStore.applyThemePalette(item.id)"
               >
-                <span class="palette-option__name">{{ getPaletteName(item) }}</span>
-                <span class="palette-option__colors">
+                <span class="palette-option__name w-full overflow-hidden text-ellipsis text-[14px] font-bold leading-[1.1] text-[var(--el-text-color-primary)] whitespace-nowrap">{{ getPaletteName(item) }}</span>
+                <span class="palette-option__colors inline-flex shrink-0 items-center">
                   <span
                     v-for="color in getPaletteColors(item.colors)"
                     :key="color"
@@ -69,20 +69,20 @@
         <el-collapse-transition>
           <div
             v-show="isCustomColorsOpen"
-            class="custom-colors-panel"
+            class="custom-colors-panel p-[10px] mt-[8px] [background:var(--el-fill-color-blank)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px]"
           >
             <div class="custom-colors-panel__header">
               <span>{{ t("settings.customColors") }}</span>
               <span>{{ activePaletteName }}</span>
             </div>
 
-            <div class="custom-color-list">
+            <div class="custom-color-list grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] gap-[8px]">
               <div
                 v-for="item in colorOptions"
                 :key="item.name"
-                class="custom-color-row"
+                class="custom-color-row grid [grid-template-columns:minmax(0,_1fr)_28px] gap-[6px] items-center min-h-[34px] p-[0_8px] [background:var(--el-bg-color)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px]"
               >
-                <span class="custom-color-row__label">{{ getColorLabel(item.name) }}</span>
+                <span class="custom-color-row__label text-[14px] font-bold text-[var(--el-text-color-regular)]">{{ getColorLabel(item.name) }}</span>
                 <span class="custom-color-row__value">
                   {{ settingsStore.themeColors[item.name] }}
                 </span>
@@ -193,7 +193,7 @@
           <div class="layout-settings__card-header">
             <span class="text-xs">{{ t("settings.tagsViewStyle") }}</span>
           </div>
-          <div class="settings-tabs-style">
+          <div class="settings-tabs-style grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] gap-[8px]">
             <button
               v-for="item in tagsViewStyleOptions"
               :key="item.value"
@@ -215,7 +215,7 @@
                 <i></i>
                 <i></i>
               </span>
-              <span class="settings-tabs-style__label">{{ item.label }}</span>
+              <span class="settings-tabs-style__label max-w-full overflow-hidden text-ellipsis text-[14px] font-semibold leading-[1.1] whitespace-nowrap">{{ item.label }}</span>
             </button>
           </div>
         </div>
@@ -229,7 +229,7 @@
           <span class="text-xs">{{ t("settings.pageSwitchingAnimation") }}</span>
           <el-select
             v-model="settingsStore.pageSwitchingAnimation"
-            style="width: 150px"
+            class="w-[150px]"
           >
             <el-option
               v-for="(item, key) in pageSwitchingAnimationOptions"
@@ -536,26 +536,13 @@ function handleCloseDrawer(): void {
   }
 }
 
-.layout-settings__content {
-  flex: 1 1 auto;
-  padding: 16px 18px 20px;
-  overflow-y: auto;
-  color: var(--el-text-color-regular);
-}
-
 .layout-settings__section {
   & + & {
     margin-top: 20px;
   }
 
   .layout-settings__item {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 42px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--el-border-color-lighter);
+    @apply 'flex gap-[12px] items-center justify-between min-h-[42px] p-[8px_0] [border-bottom:1px_solid_var(--el-border-color-lighter)]';
 
     &:last-child {
       border-bottom: none;
@@ -569,24 +556,14 @@ function handleCloseDrawer(): void {
   }
 
   .layout-settings__item--sidebar-color {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    column-gap: 14px;
-    padding: 12px;
-    margin-top: 12px;
-    background: var(--el-fill-color-extra-light);
-    border: 1px solid var(--el-border-color-lighter);
-    border-radius: 8px;
+    @apply 'grid [grid-template-columns:auto_minmax(0,_1fr)] gap-x-[14px] p-[12px] mt-[12px] [background:var(--el-fill-color-extra-light)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px]';
 
     .layout-settings__item-label {
-      min-width: 64px;
-      color: var(--el-text-color-regular);
-      white-space: nowrap;
+      @apply 'min-w-[64px] text-[var(--el-text-color-regular)] whitespace-nowrap';
     }
 
     .layout-settings__item-control {
-      justify-content: flex-end;
-      min-width: 0;
+      @apply 'justify-end min-w-0';
     }
 
     :deep(.el-radio) {
@@ -607,24 +584,12 @@ function handleCloseDrawer(): void {
   }
 
   .layout-settings__item--block {
-    display: block;
-    min-height: 0;
-    padding-top: 10px;
-    padding-bottom: 12px;
-
-    border-bottom: 1px solid var(--el-border-color-lighter);
+    @apply 'block min-h-0 pt-[10px] pb-[12px] [border-bottom:1px_solid_var(--el-border-color-lighter)]';
   }
 }
 
 .layout-settings__section-title {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1;
-  color: var(--el-text-color-primary);
+  @apply 'flex gap-[10px] items-center mb-[12px] text-[14px] font-semibold leading-[1] text-[var(--el-text-color-primary)]';
 
   &::before,
   &::after {
@@ -635,22 +600,8 @@ function handleCloseDrawer(): void {
   }
 }
 
-.theme-mode {
-  display: flex;
-  justify-content: center;
-}
-
-.layout-settings__card {
-  margin-top: 14px;
-}
-
 .layout-settings__card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: var(--el-text-color-regular);
+  @apply 'flex items-center justify-between mb-[8px] text-[14px] text-[var(--el-text-color-regular)]';
 
   > span {
     font-weight: 500;
@@ -658,41 +609,15 @@ function handleCloseDrawer(): void {
 }
 
 .settings-footer {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  @apply 'grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] gap-[8px]';
 
   .el-button {
-    margin: 0;
+    @apply 'm-0';
   }
 }
 
-.palette-strip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-}
-
 .palette-option {
-  display: grid;
-  gap: 5px;
-  align-content: center;
-  justify-items: start;
-  width: 100%;
-  height: 44px;
-  padding: 6px 8px;
-  font: inherit;
-  color: var(--el-text-color-regular);
-  text-align: left;
-  appearance: none;
-  cursor: pointer;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
-  transition:
-    background-color 0.18s,
-    border-color 0.18s,
-    box-shadow 0.18s;
+  @apply 'grid gap-[5px] [align-content:center] [justify-items:start] w-full h-[44px] p-[6px_8px] [font:inherit] text-[var(--el-text-color-regular)] text-left [appearance:none] cursor-pointer [background:var(--el-bg-color)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [transition:background-color_0.18s,_border-color_0.18s,_box-shadow_0.18s]';
 
   &:hover {
     background: var(--el-fill-color-lighter);
@@ -706,29 +631,8 @@ function handleCloseDrawer(): void {
   }
 }
 
-.palette-option__name {
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.1;
-  color: var(--el-text-color-primary);
-  white-space: nowrap;
-}
-
-.palette-option__colors {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-}
-
 .palette-option__dot {
-  width: 10px;
-  height: 10px;
-  margin-left: -2px;
-  border: 1px solid var(--el-bg-color);
-  border-radius: 50%;
+  @apply 'w-[10px] h-[10px] ml-[-2px] [border:1px_solid_var(--el-bg-color)] rounded-[50%]';
   box-shadow: 0 0 0 1px rgb(0 0 0 / 4%);
 
   &:first-child {
@@ -737,26 +641,10 @@ function handleCloseDrawer(): void {
 }
 
 .custom-color-trigger {
-  display: inline-flex;
-  gap: 3px;
-  align-items: center;
-  height: 24px;
-  padding: 0 6px 0 8px;
-  font: inherit;
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-  appearance: none;
-  cursor: pointer;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  transition:
-    color 0.18s,
-    background-color 0.18s;
+  @apply 'inline-flex gap-[3px] items-center h-[24px] p-[0_6px_0_8px] [font:inherit] text-[14px] text-[var(--el-text-color-secondary)] [appearance:none] cursor-pointer [background:transparent] [border:none] rounded-[6px] [transition:color_0.18s,_background-color_0.18s]';
 
   .el-icon {
-    font-size: 14px;
-    transition: transform 0.18s;
+    @apply 'text-[14px] [transition:transform_0.18s]';
   }
 
   &:hover,
@@ -770,60 +658,18 @@ function handleCloseDrawer(): void {
   }
 }
 
-.custom-colors-panel {
-  padding: 10px;
-  margin-top: 8px;
-  background: var(--el-fill-color-blank);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
-}
-
 .custom-colors-panel__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: var(--el-text-color-placeholder);
+  @apply 'flex items-center justify-between mb-[8px] text-[14px] text-[var(--el-text-color-placeholder)]';
 
   span:first-child {
-    font-weight: 700;
-    color: var(--el-text-color-regular);
+    @apply 'font-bold text-[var(--el-text-color-regular)]';
   }
 }
 
-.custom-color-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.custom-color-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 28px;
-  gap: 6px;
-  align-items: center;
-  min-height: 34px;
-  padding: 0 8px;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
-}
-
-.custom-color-row__label {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--el-text-color-regular);
-}
-
 .custom-color-row__value {
-  display: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @apply 'hidden overflow-hidden text-ellipsis';
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-  white-space: nowrap;
+  @apply 'text-[14px] text-[var(--el-text-color-secondary)] whitespace-nowrap';
 }
 
 .custom-color-row :deep(.el-color-picker) {
@@ -839,27 +685,15 @@ function handleCloseDrawer(): void {
 }
 
 .settings-layout-select {
-  padding-top: 10px;
+  @apply 'pt-[10px]';
 
   .settings-layout-select__grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
+    @apply 'grid [grid-template-columns:repeat(4,_minmax(0,_1fr))] gap-[8px]';
   }
 }
 
 .settings-layout-select__item {
-  position: relative;
-  height: 72px;
-  overflow: hidden;
-  cursor: pointer;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
-  transition:
-    background-color 0.18s,
-    border-color 0.18s,
-    box-shadow 0.18s;
+  @apply 'relative h-[72px] overflow-hidden cursor-pointer [background:var(--el-bg-color)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [transition:background-color_0.18s,_border-color_0.18s,_box-shadow_0.18s]';
 
   &:hover {
     background: var(--el-fill-color-lighter);
@@ -867,136 +701,79 @@ function handleCloseDrawer(): void {
   }
 
   .settings-layout-preview {
-    position: relative;
-    width: 54px;
-    height: 34px;
-    margin: 8px auto 4px;
+    @apply 'relative w-[54px] h-[34px] m-[8px_auto_4px]';
   }
 
   .settings-layout-preview__header {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    height: 8px;
-    background: var(--el-color-primary);
-    border-radius: 2px;
+    @apply 'absolute top-0 right-0 left-0 h-[8px] [background:var(--el-color-primary)] rounded-[2px]';
   }
 
   .settings-layout-preview__sidebar {
-    position: absolute;
-    left: 0;
-    width: 12px;
-    background: var(--el-color-primary);
-    border-radius: 2px;
+    @apply 'absolute left-0 w-[12px] [background:var(--el-color-primary)] rounded-[2px]';
   }
 
   .settings-layout-preview__sub-sidebar {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 15px;
-    width: 14px;
-    background: var(--el-color-primary-light-9);
-    border: 1px solid var(--el-color-primary-light-6);
-    border-radius: 2px;
+    @apply 'absolute top-0 bottom-0 left-[15px] w-[14px] [background:var(--el-color-primary-light-9)] [border:1px_solid_var(--el-color-primary-light-6)] rounded-[2px]';
   }
 
   .settings-layout-preview__main {
-    position: absolute;
+    @apply 'absolute';
     background:
       linear-gradient(var(--el-fill-color-light) 0 0) 7px 7px / 18px 3px no-repeat,
       linear-gradient(var(--el-fill-color-light) 0 0) 7px 14px / 24px 3px no-repeat,
       var(--el-fill-color-lighter);
-    border: 1px solid var(--el-border-color-extra-light);
-    border-radius: 2px;
+    @apply '[border:1px_solid_var(--el-border-color-extra-light)] rounded-[2px]';
   }
 
   .settings-layout-select__name {
-    position: absolute;
-    right: 0;
-    bottom: 5px;
-    left: 0;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--el-text-color-regular);
-    text-align: center;
-    transition: color 0.3s ease;
+    @apply 'absolute right-0 bottom-[5px] left-0 text-[14px] font-medium text-[var(--el-text-color-regular)] text-center [transition:color_0.3s_ease]';
   }
 
   .settings-layout-select__check {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 15px;
-    height: 15px;
-    font-size: 14px;
-    color: var(--el-color-primary);
-    background: var(--el-color-primary-light-9);
-    border: 1px solid var(--el-color-primary-light-5);
-    border-radius: 50%;
+    @apply 'absolute top-[4px] right-[4px] flex items-center justify-center w-[15px] h-[15px] text-[14px] text-[var(--el-color-primary)] [background:var(--el-color-primary-light-9)] [border:1px_solid_var(--el-color-primary-light-5)] rounded-[50%]';
   }
 
   &.left {
     .settings-layout-preview__sidebar {
-      top: 4px;
-      bottom: 4px;
+      @apply 'top-[4px] bottom-[4px]';
     }
 
     .settings-layout-preview__main {
-      top: 4px;
-      right: 0;
-      bottom: 4px;
-      left: 16px;
+      @apply 'top-[4px] right-0 bottom-[4px] left-[16px]';
     }
   }
 
   &.top {
     .settings-layout-preview__header {
-      height: 12px;
+      @apply 'h-[12px]';
     }
 
     .settings-layout-preview__main {
-      top: 16px;
-      right: 0;
-      bottom: 0;
-      left: 0;
+      @apply 'top-[16px] right-0 bottom-0 left-0';
     }
   }
 
   &.mix {
     .settings-layout-preview__header {
-      height: 10px;
+      @apply 'h-[10px]';
     }
 
     .settings-layout-preview__sidebar {
-      top: 14px;
-      bottom: 0;
+      @apply 'top-[14px] bottom-0';
     }
 
     .settings-layout-preview__main {
-      top: 14px;
-      right: 0;
-      bottom: 0;
-      left: 16px;
+      @apply 'top-[14px] right-0 bottom-0 left-[16px]';
     }
   }
 
   &.double {
     .settings-layout-preview__sidebar {
-      top: 0;
-      bottom: 0;
-      width: 10px;
+      @apply 'top-0 bottom-0 w-[10px]';
     }
 
     .settings-layout-preview__main {
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 33px;
+      @apply 'top-0 right-0 bottom-0 left-[33px]';
     }
   }
 
@@ -1006,35 +783,13 @@ function handleCloseDrawer(): void {
     box-shadow: inset 0 0 0 1px var(--el-color-primary-light-6);
 
     .settings-layout-select__name {
-      font-weight: 600;
-      color: var(--el-color-primary);
+      @apply 'font-semibold text-[var(--el-color-primary)]';
     }
   }
 }
 
-.settings-tabs-style {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
 .settings-tabs-style__option {
-  display: grid;
-  gap: 6px;
-  align-content: center;
-  justify-items: center;
-  height: 58px;
-  padding: 7px 6px;
-  font: inherit;
-  color: var(--el-text-color-regular);
-  appearance: none;
-  cursor: pointer;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
-  transition:
-    background-color 0.16s,
-    border-color 0.16s;
+  @apply 'grid gap-[6px] [align-content:center] [justify-items:center] h-[58px] p-[7px_6px] [font:inherit] text-[var(--el-text-color-regular)] [appearance:none] cursor-pointer [background:var(--el-bg-color)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [transition:background-color_0.16s,_border-color_0.16s]';
 
   &:hover {
     background: var(--el-fill-color-lighter);
@@ -1048,43 +803,19 @@ function handleCloseDrawer(): void {
   }
 }
 
-.settings-tabs-style__label {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.1;
-  white-space: nowrap;
-}
-
 .settings-tabs-style__preview {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 54px;
-  height: 20px;
+  @apply 'inline-flex items-center justify-center w-[54px] h-[20px]';
 
   i {
-    display: block;
-    width: 16px;
-    height: 12px;
-    background: var(--el-fill-color-light);
-    border: 1px solid var(--el-border-color-lighter);
+    @apply 'block w-[16px] h-[12px] [background:var(--el-fill-color-light)] [border:1px_solid_var(--el-border-color-lighter)]';
   }
 }
 
 .settings-tabs-style__preview--line {
-  gap: 4px;
-  align-items: flex-end;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  @apply 'gap-[4px] items-end [border-bottom:1px_solid_var(--el-border-color-lighter)]';
 
   i {
-    width: 13px;
-    height: 10px;
-    background: transparent;
-    border: 0;
-    border-bottom: 2px solid transparent;
+    @apply 'w-[13px] h-[10px] [background:transparent] [border:0] [border-bottom:2px_solid_transparent]';
 
     &:nth-child(2) {
       border-bottom-color: var(--el-color-primary);
@@ -1093,14 +824,10 @@ function handleCloseDrawer(): void {
 }
 
 .settings-tabs-style__preview--card {
-  gap: 4px;
+  @apply 'gap-[4px]';
 
   i {
-    width: 14px;
-    height: 12px;
-    background: transparent;
-    border-color: transparent;
-    border-radius: 4px;
+    @apply 'w-[14px] h-[12px] [background:transparent] [border-color:transparent] rounded-[4px]';
 
     &:nth-child(2) {
       background: var(--el-color-primary-light-9);
@@ -1111,8 +838,7 @@ function handleCloseDrawer(): void {
 
 :deep(.copy-config-dialog) {
   .el-message-box__content {
-    max-height: 400px;
-    overflow-y: auto;
+    @apply 'max-h-[400px] overflow-y-auto';
   }
 }
 </style>

@@ -13,10 +13,6 @@ const { isFullscreen, toggle } = useFullscreen();
 
 <style lang="scss" scoped>
 .fullscreen-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
+  @apply 'flex items-center justify-center w-full h-full';
 }
 </style>

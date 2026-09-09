@@ -19,9 +19,9 @@
             <el-input
               v-model="params.keyword"
               :placeholder="$t('user.searchPlaceholder')"
-              class="page-search__keywords"
+              class="page-search__keywords w-[180px]"
               clearable
-              style="width: 180px"
+
               @keyup.enter="handleQuery"
             />
           </el-form-item>
@@ -34,7 +34,7 @@
               v-model="params.status"
               :placeholder="$t('common.all')"
               clearable
-              style="width: 112px"
+              class="w-[112px]"
             >
               <el-option
                 :label="$t('common.normal')"
@@ -95,7 +95,7 @@
               :start-placeholder="$t('common.startDate')"
               :end-placeholder="$t('common.endDate')"
               value-format="YYYY-MM-DD"
-              style="width: 240px"
+              class="w-[240px]"
             />
           </el-form-item>
 
@@ -838,22 +838,10 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .user-name-cell {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
+  @apply 'inline-flex gap-[8px] items-center';
 
   &__text {
-    display: inline-flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--el-color-primary);
-    background: var(--el-color-primary-light-9);
-    border-radius: 50%;
+    @apply 'inline-flex shrink-0 items-center justify-center w-[24px] h-[24px] text-[14px] font-medium text-[var(--el-color-primary)] [background:var(--el-color-primary-light-9)] rounded-[50%]';
   }
 }
 

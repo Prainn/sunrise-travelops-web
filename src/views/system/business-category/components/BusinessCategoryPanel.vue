@@ -146,7 +146,7 @@
           <el-select
             v-model="form.resourceTypes"
             multiple
-            style="width: 100%"
+            class="w-full"
           >
             <el-option
               v-for="type in resourceTypes"
@@ -309,6 +309,6 @@ onMounted(loadItems);
 </script>
 
 <style scoped lang="scss">
-.business-category-panel { display: flex; height: 100%; min-height: 0; gap: 12px; flex-direction: column; }
+.business-category-panel { @apply 'flex h-full min-h-0 gap-[12px] flex-col'; }
 .business-category-panel__tag + .business-category-panel__tag { margin-left: 6px; }
 </style>

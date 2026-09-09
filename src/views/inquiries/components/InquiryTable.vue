@@ -184,7 +184,6 @@ function isOverdue(record: InquiryRecord) {
 
 <style scoped lang="scss">
 .inquiry-table__overdue {
-  color: var(--el-color-danger);
-  font-weight: 600;
+  @apply 'text-[var(--el-color-danger)] font-semibold';
 }
 </style>

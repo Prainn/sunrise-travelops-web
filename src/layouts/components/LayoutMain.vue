@@ -79,46 +79,40 @@ const transitionName = computed(() => {
 
 <style lang="scss" scoped>
 .layout-content {
-  position: relative;
-  overflow-y: auto;
-  background-color: var(--page-bg);
+  @apply 'relative overflow-y-auto bg-[var(--page-bg)]';
 
   /* fade */
   .fade-enter-active,
   .fade-leave-active {
-    transition: opacity 0.3s ease-in-out;
+    @apply '[transition:opacity_0.3s_ease-in-out]';
   }
   .fade-enter-from,
   .fade-leave-to {
-    opacity: 0;
+    @apply 'opacity-0';
   }
 
   /* fade-slide */
   .fade-slide-leave-active,
   .fade-slide-enter-active {
-    transition: all 0.3s;
+    @apply '[transition:all_0.3s]';
   }
   .fade-slide-enter-from {
-    opacity: 0;
-    transform: translateX(-30px);
+    @apply 'opacity-0 [transform:translateX(-30px)]';
   }
   .fade-slide-leave-to {
-    opacity: 0;
-    transform: translateX(30px);
+    @apply 'opacity-0 [transform:translateX(30px)]';
   }
 
   /* fade-scale */
   .fade-scale-leave-active,
   .fade-scale-enter-active {
-    transition: all 0.28s;
+    @apply '[transition:all_0.28s]';
   }
   .fade-scale-enter-from {
-    opacity: 0;
-    transform: scale(1.2);
+    @apply 'opacity-0 [transform:scale(1.2)]';
   }
   .fade-scale-leave-to {
-    opacity: 0;
-    transform: scale(0.8);
+    @apply 'opacity-0 [transform:scale(0.8)]';
   }
 }
 </style>

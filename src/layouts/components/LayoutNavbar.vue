@@ -42,19 +42,13 @@ const sidebarState = computed(() =>
 
 <style lang="scss" scoped>
 .layout-navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  @apply 'flex items-center justify-between';
   height: $navbar-height;
-  padding: 0 14px 0 6px;
-  background-color: var(--content-bg);
-  border-bottom: 1px solid var(--card-border);
+  @apply 'p-[0_14px_0_6px] bg-[var(--content-bg)] [border-bottom:1px_solid_var(--card-border)]';
   box-shadow: 0 1px 0 rgb(15 23 42 / 3%);
 
   &__actions {
-    display: flex;
-    align-items: center;
-    height: 100%;
+    @apply 'flex items-center h-full';
   }
 }
 </style>

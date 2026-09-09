@@ -133,22 +133,16 @@ function updateTransport(values: string[]) {
 
 <style scoped lang="scss">
 .day-form {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px 16px;
-  padding: 16px;
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
-  background: var(--el-fill-color-extra-light);
+  @apply 'grid [grid-template-columns:repeat(4,_minmax(0,_1fr))] gap-[14px_16px] p-[16px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)]';
 
   :deep(.el-form-item) { margin-bottom: 0; }
   :deep(.el-form-item__label) { padding-bottom: 6px; color: var(--el-text-color-regular); font-weight: 500; line-height: 20px; }
   :deep(.el-select) { width: 100%; }
 }
 
-.day-form__description { grid-column: 1 / -1; }
+.day-form__description { @apply '[grid-column:1_/_-1]'; }
 
 @media (width <= 900px) {
-  .day-form { grid-template-columns: 1fr; }
+  .day-form { @apply '[grid-template-columns:1fr]'; }
 }
 </style>

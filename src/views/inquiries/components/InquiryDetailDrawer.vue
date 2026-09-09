@@ -93,18 +93,14 @@ function valueOrDash(value: string) {
 
 <style scoped lang="scss">
 .inquiry-detail__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 20px;
+  @apply 'flex items-start justify-between mb-[20px]';
 
   h3 {
-    margin: 0 0 4px;
-    font-size: 18px;
+    @apply 'm-[0_0_4px] text-[18px]';
   }
 
   span {
-    color: var(--el-text-color-secondary);
+    @apply 'text-[var(--el-text-color-secondary)]';
   }
 }
 </style>

@@ -60,30 +60,17 @@ const isLogoCollapsed = computed(() => width.value < 768);
 @use "@/styles/mixins" as *;
 
 .layout-header {
-  position: sticky;
-  top: 0;
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
+  @apply 'sticky top-0 z-[999] flex items-center justify-between w-full';
   height: $navbar-height;
   background-color: $menu-background;
-  border-bottom: 1px solid var(--card-border);
+  @apply '[border-bottom:1px_solid_var(--card-border)]';
 
   &__left {
-    display: flex;
-    flex: 1;
-    align-items: center;
-    min-width: 0;
-    height: 100%;
+    @apply 'flex [flex:1] items-center min-w-0 h-full';
   }
 
   &__logo {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    height: 100%;
+    @apply 'flex shrink-0 items-center h-full';
 
     :deep(.layout-logo) {
       height: $navbar-height;
@@ -91,12 +78,7 @@ const isLogoCollapsed = computed(() => width.value < 768);
   }
 
   &__menu {
-    display: flex;
-    flex: 1;
-    align-items: center;
-    min-width: 0;
-    height: 100%;
-    overflow: hidden;
+    @apply 'flex [flex:1] items-center min-w-0 h-full overflow-hidden';
 
     :deep(.el-menu) {
       height: 100%;
@@ -114,10 +96,10 @@ const isLogoCollapsed = computed(() => width.value < 768);
       border: none;
 
       .el-menu-item {
-        position: relative;
+        @apply 'relative';
         height: $navbar-height;
         line-height: $navbar-height;
-        border-bottom: none !important;
+        @apply '![border-bottom:none]';
 
         &::after {
           position: absolute;
@@ -159,13 +141,10 @@ const isLogoCollapsed = computed(() => width.value < 768);
 
         &.has-active-child {
           .el-sub-menu__title {
-            position: relative;
-            color: var(--el-color-primary) !important;
-            background-color: transparent !important;
-            border-bottom: none !important;
+            @apply 'relative !text-[var(--el-color-primary)] !bg-[transparent] ![border-bottom:none]';
 
             .menu-icon {
-              color: var(--el-color-primary) !important;
+              @apply '!text-[var(--el-color-primary)]';
             }
 
             &::after {
@@ -183,22 +162,18 @@ const isLogoCollapsed = computed(() => width.value < 768);
       }
 
       .el-menu--popup {
-        min-width: 160px;
+        @apply 'min-w-[160px]';
       }
     }
   }
 
   &__right {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    height: 100%;
-    padding-left: 12px;
+    @apply 'flex shrink-0 items-center h-full pl-[12px]';
   }
 }
 
 .layout-main {
   @include app-main-height;
-  overflow-y: auto;
+  @apply 'overflow-y-auto';
 }
 </style>

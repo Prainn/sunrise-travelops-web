@@ -77,10 +77,7 @@ function handleCurrentChange(val: number) {
 
 <style lang="scss" scoped>
 .pagination-container {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 14px;
-  overflow: visible;
+  @apply 'flex justify-end pt-[14px] overflow-visible';
 }
 
 .pagination-container.is-hidden {

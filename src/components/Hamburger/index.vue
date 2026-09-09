@@ -42,26 +42,11 @@ function toggleClick() {
 
 <style scoped lang="scss">
 .hamburger-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 100%;
-  padding: 0;
-  color: var(--el-text-color-regular);
-  cursor: pointer;
+  @apply 'flex items-center justify-center w-[48px] h-full p-0 text-[var(--el-text-color-regular)] cursor-pointer';
 
   .hamburger {
-    width: 16px;
-    height: 16px;
-    font-size: 16px;
-    vertical-align: middle;
+    @apply 'w-[16px] h-[16px] text-[16px] [vertical-align:middle] bg-[currentcolor] [transform:scaleX(-1)] [transition:color_0.16s,_transform_0.3s_ease]';
     color: currentcolor;
-    background-color: currentcolor;
-    transform: scaleX(-1);
-    transition:
-      color 0.16s,
-      transform 0.3s ease;
 
     &--white {
       color: #fff;

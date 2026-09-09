@@ -31,16 +31,10 @@ const { layoutClass, isSidebarOpen, isMobile, closeSidebar } = useLayout();
 
 <style lang="scss" scoped>
 .layout-root {
-  width: 100%;
-  height: 100%;
+  @apply 'w-full h-full';
 
   &__overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 999;
-    width: 100%;
-    height: 100%;
+    @apply 'fixed top-0 left-0 z-[999] w-full h-full';
     background-color: rgba(0, 0, 0, 0.3);
   }
 }

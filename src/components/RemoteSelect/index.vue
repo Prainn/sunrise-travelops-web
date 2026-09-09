@@ -25,7 +25,7 @@
       :value="item.id"
       :label="item.label"
     >
-      <div class="remote-select-option">
+      <div class="remote-select-option flex justify-between gap-[16px]">
         <span>{{ item.label }}</span>
         <strong v-if="item.description">{{ item.description }}</strong>
       </div>
@@ -75,6 +75,5 @@ function loadNextPage(direction: string) {
 }
 </script>
 <style scoped>
-.remote-select-option { display: flex; justify-content: space-between; gap: 16px; }
 .remote-select-option strong { color: var(--el-color-primary); font-weight: 500; }
 </style>

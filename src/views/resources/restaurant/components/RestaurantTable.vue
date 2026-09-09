@@ -294,8 +294,8 @@ function splitDishDetails(details: string) {
 
 <style scoped lang="scss">
 .restaurant-table {
-  &__prices { padding: 16px 48px; background: var(--el-fill-color-lighter); }
-  &__price-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  &__dish-list { max-height: 180px; margin: 0; padding-left: 18px; overflow-y: auto; line-height: 1.7; white-space: normal; }
+  &__prices { @apply 'p-[16px_48px] [background:var(--el-fill-color-lighter)]'; }
+  &__price-header { @apply 'flex items-center justify-between mb-[12px]'; }
+  &__dish-list { @apply 'max-h-[180px] m-0 pl-[18px] overflow-y-auto leading-[1.7] [white-space:normal]'; }
 }
 </style>

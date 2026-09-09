@@ -12,7 +12,7 @@
           v-model="city"
           clearable
           :placeholder="$t('itinerary.allCities')"
-          style="width: 100%"
+          class="w-full"
         >
           <el-option
             v-for="option in cityOptions"
@@ -31,7 +31,7 @@
           :query-key="JSON.stringify([city, mealSlot, locale])"
           :load-options="loadPriceOptions"
           :placeholder="$t('itinerary.resourcePricePlaceholder')"
-          style="width: 100%"
+          class="w-full"
         />
       </el-form-item>
       <template v-if="selectedOption">
@@ -57,7 +57,7 @@
             :min="1"
             :precision="0"
           />
-          <span class="resource-dialog__unit">
+          <span class="resource-dialog__unit ml-[8px] text-[var(--el-text-color-secondary)]">
             {{ resourceUnitName(selectedOption.unit) }}
           </span>
         </el-form-item>
@@ -122,9 +122,9 @@ function submit() {
 </script>
 
 <style scoped lang="scss">
-.resource-dialog__details { max-height: 320px; overflow-y: auto; }
+.resource-dialog__details { @apply 'max-h-[320px] overflow-y-auto'; }
 .resource-dialog__details :deep(.el-descriptions__label) { width: 140px; }
 .resource-dialog__details :deep(.el-descriptions__content) { white-space: normal; word-break: break-word; }
-.resource-dialog__quantity { margin-top: 18px; }
-.resource-dialog__unit { margin-left: 8px; color: var(--el-text-color-secondary); }
+.resource-dialog__quantity { @apply 'mt-[18px]'; }
+
 </style>

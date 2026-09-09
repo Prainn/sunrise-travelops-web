@@ -9,7 +9,7 @@
       trigger="click"
       @command="handleSizeChange"
     >
-      <div class="size-trigger">
+      <div class="size-trigger flex items-center justify-center w-full h-full">
         <div class="i-svg:size" />
       </div>
       <template #dropdown>
@@ -47,13 +47,3 @@ function handleSizeChange(size: string) {
   ElMessage.success(t("sizeSelect.message.success"));
 }
 </script>
-
-<style lang="scss" scoped>
-.size-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-}
-</style>

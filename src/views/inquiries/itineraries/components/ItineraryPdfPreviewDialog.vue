@@ -11,7 +11,7 @@
   >
     <iframe
       v-if="src"
-      class="itinerary-pdf-preview__frame"
+      class="itinerary-pdf-preview__frame block w-full h-[76vh] [border:1px_solid_var(--el-border-color)] rounded-[var(--el-border-radius-base)] [background:var(--el-fill-color-light)]"
       :src="src"
       :title="$t('itinerary.pdfPreviewTitle')"
     />
@@ -43,15 +43,6 @@ const emit = defineEmits<{
 </script>
 
 <style scoped lang="scss">
-.itinerary-pdf-preview__frame {
-  display: block;
-  width: 100%;
-  height: 76vh;
-  border: 1px solid var(--el-border-color);
-  border-radius: var(--el-border-radius-base);
-  background: var(--el-fill-color-light);
-}
-
 :global(.itinerary-pdf-preview .el-dialog__body) {
   padding-top: 8px;
   padding-bottom: 8px;

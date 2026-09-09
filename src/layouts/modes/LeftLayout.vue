@@ -54,25 +54,17 @@ const appStore = useAppStore();
 @use "@/styles/mixins" as *;
 
 .layout-sidebar {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 999;
+  @apply 'fixed top-0 bottom-0 left-0 z-[999]';
   width: $sidebar-width;
   background-color: $menu-background;
-  transition: width 0.28s;
+  @apply '[transition:width_0.28s]';
 
   &.is-collapsed {
     width: $sidebar-width-collapsed;
   }
 
   &__inner {
-    position: relative;
-    height: 100%;
-    background-color: var(--menu-background);
-    border-right: 1px solid var(--card-border);
-    transition: width 0.28s;
+    @apply 'relative h-full bg-[var(--menu-background)] [border-right:1px_solid_var(--card-border)] [transition:width_0.28s]';
 
     &.has-logo {
       .el-scrollbar {
@@ -87,11 +79,9 @@ const appStore = useAppStore();
 }
 
 .layout-main {
-  position: relative;
-  height: 100%;
+  @apply 'relative h-full';
   margin-left: $sidebar-width;
-  overflow-y: auto;
-  transition: margin-left 0.28s;
+  @apply 'overflow-y-auto [transition:margin-left_0.28s]';
 
   &.is-collapsed {
     margin-left: $sidebar-width-collapsed;
@@ -105,9 +95,7 @@ const appStore = useAppStore();
 .is-mobile {
   .layout-sidebar {
     width: $sidebar-width !important;
-    transition:
-      transform 0.28s,
-      width 0s;
+    @apply '[transition:transform_0.28s,_width_0s]';
   }
 
   &.is-sidebar-collapsed {
@@ -118,12 +106,12 @@ const appStore = useAppStore();
 
   &.is-sidebar-open {
     .layout-sidebar {
-      transform: translateX(0);
+      @apply '[transform:translateX(0)]';
     }
   }
 
   .layout-main {
-    margin-left: 0 !important;
+    @apply '!ml-0';
   }
 }
 </style>

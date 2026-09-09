@@ -14,7 +14,7 @@
       :value="contact.name"
     >
       <span>{{ contact.name }}</span>
-      <small class="agency-contact-select__phone">{{ contact.phone || "-" }}</small>
+      <small class="agency-contact-select__phone [float:right] text-[var(--el-text-color-secondary)]">{{ contact.phone || "-" }}</small>
     </el-option>
   </el-select>
 </template>
@@ -46,10 +46,3 @@ function selectContact(value: string) {
   emit("create", name);
 }
 </script>
-
-<style scoped lang="scss">
-.agency-contact-select__phone {
-  float: right;
-  color: var(--el-text-color-secondary);
-}
-</style>

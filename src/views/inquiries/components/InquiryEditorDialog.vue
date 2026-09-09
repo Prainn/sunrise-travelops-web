@@ -100,8 +100,7 @@
               controls-position="right"
             />
             <span
-              class="ml-4"
-              style="color: var(--el-text-color-secondary)"
+              class="ml-4 text-[var(--el-text-color-secondary)]"
             >{{ $t('itinerary.duration', plannedDuration(form.plannedDays)) }}</span>
           </el-form-item>
         </el-col>

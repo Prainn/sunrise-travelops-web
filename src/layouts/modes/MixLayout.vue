@@ -77,7 +77,7 @@
         </div>
       </div>
 
-      <div class="layout-main">
+      <div class="layout-main [flex:1] min-w-0 h-full ml-0 overflow-y-auto">
         <LayoutTagsView v-if="showTagsView" />
         <LayoutMain />
       </div>
@@ -136,36 +136,20 @@ const useMenuColors = computed(
 @use "@/styles/mixins" as *;
 
 .layout-header {
-  position: sticky;
-  top: 0;
-  z-index: 999;
-  width: 100%;
+  @apply 'sticky top-0 z-[999] w-full';
   height: $navbar-height;
-  background-color: var(--menu-background);
-  border-bottom: 1px solid var(--menu-border);
+  @apply 'bg-[var(--menu-background)] [border-bottom:1px_solid_var(--menu-border)]';
 
   &__content {
-    display: flex;
-    align-items: center;
-    height: 100%;
-    padding: 0;
+    @apply 'flex items-center h-full p-0';
   }
 
   &__logo {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
+    @apply 'flex shrink-0 items-center justify-center h-full';
   }
 
   &__menu {
-    display: flex;
-    flex: 1;
-    align-items: center;
-    min-width: 0;
-    height: 100%;
-    overflow: hidden;
+    @apply 'flex [flex:1] items-center min-w-0 h-full overflow-hidden';
 
     :deep(.el-menu) {
       height: 100%;
@@ -180,15 +164,9 @@ const useMenuColors = computed(
       height: 100%;
 
       .el-menu-item {
-        position: relative;
-        height: 100%;
-        padding: 0 14px;
+        @apply 'relative h-full p-[0_14px]';
         line-height: $navbar-height;
-        border-bottom: none !important;
-        border-radius: 0;
-        transition:
-          color 0.16s ease,
-          opacity 0.16s ease;
+        @apply '![border-bottom:none] rounded-0 [transition:color_0.16s_ease,_opacity_0.16s_ease]';
 
         &::after {
           position: absolute;
@@ -233,27 +211,19 @@ const useMenuColors = computed(
   }
 
   &__actions {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    height: 100%;
-    padding: 0 16px;
+    @apply 'flex shrink-0 items-center h-full p-[0_16px]';
   }
 }
 
 .layout-container {
   @include app-main-height;
-  display: flex;
-  padding-top: 0;
+  @apply 'flex pt-0';
 }
 
 .layout-sidebar {
-  position: relative;
+  @apply 'relative';
   width: $sidebar-width;
-  height: 100%;
-  background-color: var(--menu-background);
-  border-right: 1px solid var(--menu-border);
-  transition: width 0.28s;
+  @apply 'h-full bg-[var(--menu-background)] [border-right:1px_solid_var(--menu-border)] [transition:width_0.28s]';
 
   &.is-collapsed {
     width: $sidebar-width-collapsed !important;
@@ -265,7 +235,7 @@ const useMenuColors = computed(
     @include sidebar-scroll-height-with-toggle;
 
     .el-scrollbar__wrap {
-      overflow-x: hidden !important;
+      @apply '!overflow-x-hidden';
     }
 
     .el-scrollbar__bar.is-horizontal {
@@ -279,38 +249,19 @@ const useMenuColors = computed(
   }
 
   &__toggle {
-    position: absolute;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
+    @apply 'absolute bottom-0 flex items-center justify-center w-full';
     height: $sidebar-toggle-height;
     line-height: $sidebar-toggle-height;
-    cursor: pointer;
-    background-color: var(--menu-background);
-    border-top: 1px solid var(--menu-border);
+    @apply 'cursor-pointer bg-[var(--menu-background)] [border-top:1px_solid_var(--menu-border)]';
 
     &-icon {
-      width: 18px;
-      height: 18px;
-      font-size: 18px;
-      color: var(--el-text-color-secondary);
-      transition: color 0.16s;
+      @apply 'w-[18px] h-[18px] text-[18px] text-[var(--el-text-color-secondary)] [transition:color_0.16s]';
     }
 
     &:hover &-icon {
       color: var(--el-color-primary);
     }
   }
-}
-
-.layout-main {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  margin-left: 0;
-  overflow-y: auto;
 }
 
 :global(html.dark),

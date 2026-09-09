@@ -176,6 +176,6 @@ function resetQuery() {
 
 <style scoped lang="scss">
 .transport-page__service-level-select {
-  width: 150px;
+  @apply 'w-[150px]';
 }
 </style>

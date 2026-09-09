@@ -5,6 +5,8 @@ description: Sunrise TravelOps frontend development standards for this Vue 3 and
 
 # Sunrise TravelOps 前端开发规范
 
+遵守 workspace 根目录 `AGENTS.md` 中的需求、API contract 和范围约束。
+
 ## 技术栈
 
 Vue 3 (Composition API) · TypeScript · Vite · Pinia · Vue Router · UnoCSS · SCSS
@@ -89,32 +91,18 @@ async function handleSubmit() {
 
 ## CSS / UnoCSS / SCSS 边界
 
-**核心原则：UnoCSS 只处理无语义微调（间距、对齐），结构性样式归 BEM + SCSS。**
+**核心原则：优先使用 UnoCSS；无法直接、等价转换的样式保留 CSS/SCSS。**
 
-| 场景 | 方案 |
-|------|------|
-| 全局页面骨架 | 全局类（如 `page-*`），复用不重复造 |
-| 有结构语义的元素 | BEM + SCSS |
-| 无语义的布局微调 | UnoCSS（间距、flex 对齐等） |
-| 穿透/动画/媒体查询 | SCSS（`:deep()`、`@keyframes`、`@media`） |
-
-**BEM 元素上可附加少量无语义原子类（间距、对齐），但结构性样式（颜色、背景、圆角、阴影）必须收敛到 SCSS**：
-
-```vue
-<!-- ✅ 无 BEM 类 → 纯 UnoCSS -->
-<div class="flex-y-center gap-10px">...</div>
-
-<!-- ✅ BEM + 1-2 个无语义原子类（间距）可接受 -->
-<div class="user-card mt-4">...</div>
-
-<!-- ❌ BEM + 大量原子类（结构+语义混写） -->
-<div class="user-card flex flex-col gap-4 p-4 bg-white rounded shadow">...</div>
-```
-
-- 同一元素原子类 ≤ 3 个，超过提取 BEM
-- 颜色用 UI 库 CSS 变量或项目变量，禁止硬编码
-- 状态用 `is-*`：`is-collapsed`、`is-loading`；变体用 BEM Modifier：`layout--top`、`todo-row--done`
-- BEM 格式：`block__element--modifier`，kebab-case，Block 带页面前缀：`user-card`、`role-permission`
+- 优先使用项目现有 UnoCSS，在 Vue 模板的 `class` 中编写 utility class，表达布局、间距、尺寸、字体、颜色等样式。
+- 使用精确尺寸或 CSS 变量时采用 UnoCSS arbitrary value，保持现有主题和视觉效果；不要为了使用默认刻度改变设计尺寸。
+- 确实需要复用的样式组合可以使用 `uno.config.ts` 中的 shortcuts。共享页面类或依赖 scoped 选择器优先级的组件样式可使用 `@apply`。
+- 普通静态样式不要新增 `style` 属性或重复的 CSS/SCSS 声明。条件样式使用包含完整 utility class 字符串的 `:class`，不要动态拼接 UnoCSS 类名。
+- 无法直接、等价转换的样式可以保留 CSS/SCSS，例如 Element Plus 内部覆盖、`:deep()`、复杂嵌套/组合选择器、关键帧动画及 Sass 计算。PDF 导出模板中需要独立控制的排版样式可保留；运行时计算的尺寸、坐标、颜色和组件样式 API 可以保留 `:style` 或对应属性。
+- 转换时保持响应式断点、主题、状态样式和选择器优先级；不要靠批量添加 `!important` 覆盖层叠问题。
+- 颜色优先使用 UI 库 CSS 变量或项目变量，保持主题一致。
+- 可以保留用于语义、状态和选择器定位的 BEM 类，并与 UnoCSS utility class 共存；不限制单个元素的原子类数量。
+- 状态用 `is-*`：`is-collapsed`、`is-loading`；变体用 BEM Modifier：`layout--top`、`todo-row--done`。
+- BEM 格式：`block__element--modifier`，kebab-case，Block 带页面前缀：`user-card`、`role-permission`。
 
 ## 组件规范
 
@@ -266,8 +254,8 @@ const date = `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, 
 |--------|---------|
 | 类型用 `VO/DTO` 后缀 | 语义命名：`UserItem`、`UserForm` |
 | 硬编码颜色 `#409eff` | UI 库 CSS 变量或项目变量 |
-| 原子类 > 3 个 | 提取 BEM 类 + SCSS |
-| BEM + 大量原子类混写 | BEM 负责结构，原子类仅做无语义微调 |
+| 因原子类数量多而改写为重复 SCSS | 优先 UnoCSS；确有复用需求时提取 shortcuts |
+| 普通静态样式写在 `style` 或重复 CSS 中 | 使用 UnoCSS utility class；需要选择器优先级时可用 `@apply` |
 | `:deep()` 滥用 | 优先用组件属性/插槽配置 |
 | `height: 100vh` | `min-height: 100vh` |
 | z-index 魔法数字 | CSS 变量分层管理 |

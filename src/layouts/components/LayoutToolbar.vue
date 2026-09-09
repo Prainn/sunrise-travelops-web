@@ -130,26 +130,10 @@ function handleSettingsClick() {
   --layout-toolbar-hover-color: var(--el-color-primary);
   --layout-toolbar-hover-bg: var(--el-fill-color-light);
 
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  min-height: 32px;
+  @apply 'flex gap-[4px] items-center min-h-[32px]';
 
   &__item {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 32px;
-    height: 32px;
-    padding: 0 6px;
-    color: var(--layout-toolbar-color);
-    text-align: center;
-    cursor: pointer;
-    border-radius: 6px;
-    transition:
-      background-color 0.16s,
-      color 0.16s;
+    @apply 'relative flex items-center justify-center min-w-[32px] h-[32px] p-[0_6px] text-[var(--layout-toolbar-color)] text-center cursor-pointer rounded-[6px] [transition:background-color_0.16s,_color_0.16s]';
 
     > [class*="i-svg:"] {
       display: flex;
@@ -204,7 +188,7 @@ function handleSettingsClick() {
   }
 
   &__item--search {
-    color: var(--el-text-color-secondary);
+    @apply 'text-[var(--el-text-color-secondary)]';
 
     &:hover {
       background: transparent;
@@ -212,8 +196,7 @@ function handleSettingsClick() {
   }
 
   &__item--profile {
-    padding-right: 4px;
-    padding-left: 4px;
+    @apply 'pr-[4px] pl-[4px]';
 
     &:hover {
       background: transparent;
@@ -222,33 +205,18 @@ function handleSettingsClick() {
 }
 
 .layout-user {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 32px;
-  padding: 0 6px 0 2px;
+  @apply 'flex items-center justify-center h-[32px] p-[0_6px_0_2px]';
 
   &__avatar {
-    flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-    overflow: hidden;
-    border-radius: 50%;
+    @apply 'shrink-0 w-[28px] h-[28px] overflow-hidden rounded-[50%]';
   }
 
   &__avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
+    @apply 'w-full h-full object-cover [object-position:center]';
   }
 
   &__name {
-    margin-left: 8px;
-    font-size: 14px;
-    color: currentColor;
-    white-space: nowrap;
-    transition: color 0.3s;
+    @apply 'ml-[8px] text-[14px] text-[currentColor] whitespace-nowrap [transition:color_0.3s]';
   }
 }
 
@@ -258,7 +226,7 @@ function handleSettingsClick() {
   --layout-toolbar-hover-bg: var(--menu-hover);
 
   .layout-user__name {
-    color: currentColor;
+    @apply 'text-[currentColor]';
   }
 
 }
@@ -269,7 +237,7 @@ function handleSettingsClick() {
   --layout-toolbar-hover-bg: var(--el-fill-color-light);
 
   .layout-user__name {
-    color: var(--el-text-color-regular);
+    @apply 'text-[var(--el-text-color-regular)]';
   }
 
 }

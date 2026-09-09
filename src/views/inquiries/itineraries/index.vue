@@ -10,7 +10,7 @@
       :closable="false"
     />
     <template v-if="inquiry">
-      <header class="itinerary-page__sticky-header">
+      <header class="itinerary-page__sticky-header sticky z-[10] top-0 [background:var(--page-bg)] [box-shadow:var(--el-box-shadow-light)]">
         <el-card
           class="itinerary-page__overview rounded-0! border-0!"
           shadow="never"
@@ -42,9 +42,9 @@
           </el-page-header>
           <div
             v-if="selectedItinerary"
-            class="itinerary-page__plan-bar"
+            class="itinerary-page__plan-bar grid [grid-template-columns:360px_minmax(0,_1fr)_auto] items-center gap-[18px] mt-[12px] p-[12px_0] [border-top:1px_solid_var(--el-border-color-lighter)] [border-bottom:1px_solid_var(--el-border-color-lighter)]"
           >
-            <div class="itinerary-page__plan-summary">
+            <div class="itinerary-page__plan-summary min-w-0">
               <h2>{{ selectedItinerary.title }}</h2>
               <p>
                 {{ selectedItinerary.startDate }} — {{ selectedItinerary.endDate }} ·
@@ -52,7 +52,7 @@
               </p>
             </div>
 
-            <div class="itinerary-page__plan-controls">
+            <div class="itinerary-page__plan-controls flex items-center gap-[10px]">
               <el-tag :type="ITINERARY_STATUS_TAG_TYPES[selectedItinerary.status]">
                 {{ $t(`itinerary.statuses.${selectedItinerary.status}`) }}
               </el-tag>
@@ -70,13 +70,13 @@
               </el-button>
             </div>
           </div>
-          <div class="itinerary-page__inquiry-summary">
+          <div class="itinerary-page__inquiry-summary grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] items-center gap-[18px] mt-[10px] text-[14px]">
             <span><small>{{ $t("inquiry.code") }}</small>{{ inquiry.code }}</span>
             <span><small>{{ $t("inquiry.agencyName") }}</small>{{ inquiry.agencyName }}</span>
             <span><small>{{ $t("inquiry.contactName") }}</small>{{ inquiry.contactName }}</span>
             <span><small>{{ $t("inquiry.plannedDays") }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
             <span
-              class="itinerary-page__message"
+              class="itinerary-page__message [grid-column:1_/_-1] overflow-hidden whitespace-nowrap text-ellipsis"
               :title="inquiry.originalMessage"
             ><small>{{ $t("inquiry.originalMessage") }}</small>{{ inquiry.originalMessage }}</span>
           </div>
@@ -106,7 +106,7 @@
             @update-guide="updateGuideSelection"
             @update-days="updateGuideDays"
           />
-          <div class="itinerary-page__daily-toolbar h-12">
+          <div class="itinerary-page__daily-toolbar h-12 flex justify-between items-center min-h-[48px] m-[24px_0_14px]">
             <div>
               <h3>{{ $t("itinerary.dailySchedule") }}</h3>
             </div>
@@ -140,12 +140,12 @@
           />
         </main>
 
-        <footer class="itinerary-page__sticky-footer border-0! rounded-0!">
-          <div class="itinerary-page__footer-summary">
+        <footer class="itinerary-page__sticky-footer border-0! rounded-0! sticky z-[10] bottom-0 flex justify-between items-center min-h-[64px] p-[12px_18px] [background:var(--el-bg-color)] [box-shadow:var(--el-box-shadow-light)]">
+          <div class="itinerary-page__footer-summary text-[var(--el-text-color-secondary)] text-[14px]">
             {{ $t("itinerary.duration", itineraryDuration(selectedItinerary.dailyPlans)) }} ·
             {{ $t("itinerary.resourceItemCount", { count: itemCount }) }}
           </div>
-          <div class="itinerary-page__footer-actions">
+          <div class="itinerary-page__footer-actions flex gap-[12px]">
             <el-button
               :disabled="!canSaveItinerary"
               @click="saveItinerary"
@@ -205,7 +205,7 @@
       >
         <section
           v-if="validationIssues.length"
-          class="itinerary-page__validation"
+          class="itinerary-page__validation p-[12px_16px] mb-[16px] [background:var(--el-color-danger-light-9)] rounded-[8px]"
           role="alert"
         >
           <h3>{{ $t('itinerary.validation.title') }}</h3>
@@ -357,29 +357,24 @@ onMounted(loadDestinationResourceOptions);
 </script>
 
 <style scoped lang="scss">
-.itinerary-page__validation { padding: 12px 16px; margin-bottom: 16px; background: var(--el-color-danger-light-9); border-radius: 8px; }
 .itinerary-page__validation h3 { margin: 0; font-size: 18px; }
-.itinerary-page { height: auto; min-height: 100%; overflow: visible; padding: 0; }
-.itinerary-page__sticky-header { position: sticky; z-index: 10; top: 0; background: var(--page-bg); box-shadow: var(--el-box-shadow-light); }
+.itinerary-page { @apply 'h-auto min-h-full overflow-visible p-0'; }
+
 .itinerary-page__overview :deep(.el-card__body) { padding: 14px 18px 12px; }
-.itinerary-page__title { color: var(--el-text-color-primary); font-size: 18px; font-weight: 600; }
-.itinerary-page__plan-bar { display: grid; grid-template-columns: 360px minmax(0, 1fr) auto; align-items: center; gap: 18px; margin-top: 12px; padding: 12px 0; border-top: 1px solid var(--el-border-color-lighter); border-bottom: 1px solid var(--el-border-color-lighter); }
-.itinerary-page__plan-summary { min-width: 0; }
+.itinerary-page__title { @apply 'text-[var(--el-text-color-primary)] text-[18px] font-semibold'; }
+
 .itinerary-page__plan-summary h2 { overflow: hidden; margin: 0; font-size: 18px; text-overflow: ellipsis; white-space: nowrap; }
 .itinerary-page__plan-summary p { margin: 3px 0 0; color: var(--el-text-color-secondary); font-size: 14px; }
-.itinerary-page__inquiry-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: 18px; margin-top: 10px; font-size: 14px; }
+
 .itinerary-page__inquiry-summary span { display: flex; min-width: 0; gap: 6px; }
 .itinerary-page__inquiry-summary small { flex: none; color: var(--el-text-color-secondary); }
-.itinerary-page__message { grid-column: 1 / -1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.itinerary-page__plan-select { width: min(420px, 55vw); }
-.itinerary-page__plan-controls { display: flex; align-items: center; gap: 10px; }
+
+.itinerary-page__plan-select { @apply 'w-[min(420px,_55vw)]'; }
+
 .itinerary-page__daily-toolbar h3 { margin: 0; }
-.itinerary-page__daily-toolbar { display: flex; justify-content: space-between; align-items: center; min-height: 48px; margin: 24px 0 14px; }
-.itinerary-page__sticky-footer { position: sticky; z-index: 10; bottom: 0; display: flex; justify-content: space-between; align-items: center; min-height: 64px; padding: 12px 18px; background: var(--el-bg-color); box-shadow: var(--el-box-shadow-light); }
-.itinerary-page__footer-summary { color: var(--el-text-color-secondary); font-size: 14px; }
-.itinerary-page__footer-actions { display: flex; gap: 12px; }
+
 @media (width <= 1100px) {
-  .itinerary-page__plan-bar { grid-template-columns: minmax(260px, 1fr) auto; }
-  .itinerary-page__plan-summary { display: none; }
+  .itinerary-page__plan-bar { @apply '[grid-template-columns:minmax(260px,_1fr)_auto]'; }
+  .itinerary-page__plan-summary { @apply 'hidden'; }
 }
 </style>

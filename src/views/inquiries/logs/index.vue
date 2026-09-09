@@ -37,7 +37,7 @@
             v-model="operatorId"
             clearable
             filterable
-            style="width: 220px"
+            class="w-[220px]"
           >
             <el-option
               v-for="person in operators"
@@ -51,7 +51,7 @@
           <el-select
             v-model="action"
             clearable
-            style="width: 200px"
+            class="w-[200px]"
           >
             <el-option
               v-for="kind in actions"
@@ -107,7 +107,7 @@
         >
           <el-table-column type="expand">
             <template #default="{ row }">
-              <div class="change-details">
+              <div class="change-details p-[16px]">
                 <p v-if="row.metadata?.creationMode === 'copy'">
                   {{ $t('inquiry.log.copySource') }}：{{ row.metadata.sourceCode }}
                 </p>
@@ -285,14 +285,14 @@ function displayValue(value: unknown, path: string, targetType: InquiryLogRecord
 }
 </script>
 <style scoped>
-.log-summary-card { flex-shrink: 0; }
+.log-summary-card { @apply 'shrink-0'; }
 .inquiry-log-page :deep(.el-table__expand-icon.is-disabled) { visibility: hidden; }
-.log-filters { margin-top: 20px; }
-.log-totals, .log-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+.log-filters { @apply 'mt-[20px]'; }
+.log-totals, .log-actions { @apply 'flex flex-wrap gap-[16px] mt-[12px]'; }
 .log-totals strong { margin-left: 8px; font-size: 18px; }
-.change-details { padding: 16px; }
+
 .change-details :deep(.change-added) { color: var(--el-color-success); }
 .change-details :deep(.change-removed) { color: var(--el-color-danger); }
 .change-details :deep(.change-changed) { color: var(--el-color-warning); }
-pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; margin: 0; max-height: 360px; overflow: auto; }
+pre { @apply 'whitespace-pre-wrap [overflow-wrap:anywhere] [font:inherit] m-0 max-h-[360px] overflow-auto'; }
 </style>
