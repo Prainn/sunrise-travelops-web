@@ -5,13 +5,35 @@
       :rows="tableRows"
       :columns="columns"
       :permissions="RESOURCE_PERMISSIONS.transport"
+      :filters="queryFilters"
       @refresh="loadRecords"
       @query-change="loadRecords"
+      @reset-query="resetQuery"
       @create="openCreateDialog"
       @edit="editTransport"
       @toggle-status="toggleTransportStatus"
       @delete="deleteTransport"
-    />
+    >
+      <template #filters>
+        <el-form-item :label="$t('resource.vehicleServiceLevel')">
+          <el-select
+            v-model="serviceLevel"
+            :placeholder="$t('common.all')"
+            clearable
+            class="transport-page__service-level-select"
+          >
+            <el-option
+              :label="$t('resource.vehicleServiceLevels.standard')"
+              value="standard"
+            />
+            <el-option
+              :label="$t('resource.vehicleServiceLevels.vip')"
+              value="vip"
+            />
+          </el-select>
+        </el-form-item>
+      </template>
+    </ResourceTable>
     <ResourceEditorDialog
       v-model="isDialogVisible"
       :record="record"
@@ -24,11 +46,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import { resourceService } from "@/services/resource.service";
-import type { TransportRecord } from "@/types/resource";
+import type { ResourceListQuery, TransportRecord, VehicleServiceLevel } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 import ResourceEditorDialog from "../components/ResourceEditorDialog.vue";
 import ResourceTable from "../components/ResourceTable.vue";
@@ -38,6 +60,10 @@ import { useResourceMaintenance } from "../useResourceMaintenance";
 defineOptions({ name: "TransportResource" });
 
 const { locale, t } = useI18n();
+const serviceLevel = ref<VehicleServiceLevel | "">("");
+const queryFilters = computed<ResourceListQuery>(() => ({
+  serviceLevel: serviceLevel.value || undefined,
+}));
 
 const columns: ResourceColumn[] = [
   {
@@ -142,4 +168,14 @@ function deleteTransport(record: ResourceRow) {
 function saveTransport(record: ResourceRow) {
   return saveRecord(record as TransportRecord);
 }
+
+function resetQuery() {
+  serviceLevel.value = "";
+}
 </script>
+
+<style scoped lang="scss">
+.transport-page__service-level-select {
+  width: 150px;
+}
+</style>

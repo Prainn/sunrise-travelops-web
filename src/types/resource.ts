@@ -21,6 +21,8 @@ export interface ResourceQueryParams {
 
 export interface ResourceListQuery extends Partial<ResourceQueryParams> {
   city?: string;
+  rating?: HotelRating;
+  serviceLevel?: VehicleServiceLevel;
   unit?: string;
   area?: string;
   category?: AttractionCategory;

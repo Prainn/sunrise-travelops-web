@@ -28,6 +28,23 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item :label="$t('resource.starRating')">
+          <el-select
+            v-model="rating"
+            :placeholder="$t('common.all')"
+            clearable
+            class="hotel-page__rating-select"
+          >
+            <el-option
+              :label="$t('hotel.ratings.international_five_star')"
+              value="international_five_star"
+            />
+            <el-option
+              :label="$t('hotel.ratings.ctrip_preferred')"
+              value="ctrip_preferred"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button @click="resetQuery">
             {{ $t("common.reset") }}
@@ -185,7 +202,7 @@ import { useI18n } from "vue-i18n";
 import CitySelect from "@/components/CitySelect.vue";
 import { useCityOptions } from "@/composables/useCityOptions";
 import { resourceService } from "@/services/resource.service";
-import type { HotelRecord, ResourceListQuery } from "@/types/resource";
+import type { HotelRating, HotelRecord, ResourceListQuery } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 import HotelTable from "./components/HotelTable.vue";
 
@@ -197,6 +214,7 @@ const { t, locale } = useI18n();
 const hotelStore = reactive<HotelRecord[]>([]);
 const keywords = ref("");
 const city = ref("");
+const rating = ref<HotelRating | "">("");
 const isHotelDialogVisible = ref(false);
 const editingId = ref("");
 const hotelFormRef = ref<FormInstance>();
@@ -216,13 +234,18 @@ const hotelRules: FormRules = {
 
 onMounted(loadHotels);
 
-watch([keywords, city], () => {
+watch([keywords, city, rating], () => {
   pageNum.value = 1;
   requestHotels();
 });
 
 function currentQuery(): ResourceListQuery {
-  return { ...paginationQuery(), keyword: keywords.value, city: city.value };
+  return {
+    ...paginationQuery(),
+    keyword: keywords.value,
+    city: city.value,
+    rating: rating.value || undefined,
+  };
 }
 
 async function loadHotels(query?: ResourceListQuery) {
@@ -263,6 +286,7 @@ function createEmptyHotel(): HotelForm {
 function resetQuery() {
   keywords.value = "";
   city.value = "";
+  rating.value = "";
 }
 function openCreateDialog() {
   editingId.value = "";
@@ -334,5 +358,6 @@ async function confirmDelete(messageKey: string) {
 <style scoped lang="scss">
 .hotel-page {
   &__city-select { width: 150px; }
+  &__rating-select { width: 150px; }
 }
 </style>

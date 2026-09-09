@@ -170,6 +170,24 @@ describe("resourceService", () => {
     expect(requestMock).toHaveBeenCalledWith(
       "/resources/restaurants?page=1&pageSize=100&keyword=%E4%BA%91%E5%8D%97%E8%8F%9C&city=%E6%98%86%E6%98%8E&unit=personMeal"
     );
+
+    await resourceService.hotelApi.getPage({
+      page: 1,
+      pageSize: 20,
+      rating: "international_five_star",
+    });
+    await resourceService.transportApi.getPage({
+      page: 1,
+      pageSize: 20,
+      serviceLevel: "vip",
+    });
+
+    expect(requestMock).toHaveBeenCalledWith(
+      "/resources/hotels?page=1&pageSize=20&rating=international_five_star"
+    );
+    expect(requestMock).toHaveBeenCalledWith(
+      "/resources/transports?page=1&pageSize=20&serviceLevel=vip"
+    );
   });
 
   it("uses all top-level create and versioned update endpoints", async () => {

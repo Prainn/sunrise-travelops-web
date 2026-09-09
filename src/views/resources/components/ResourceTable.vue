@@ -13,6 +13,7 @@
             clearable
           />
         </el-form-item>
+        <slot name="filters" />
         <el-form-item>
           <el-button @click="resetQuery">
             {{ $t("common.reset") }}
@@ -113,11 +114,12 @@ import type { ResourcePermissionSet } from "@/constants";
 import type { ResourceListQuery } from "@/types/resource";
 import type { ResourceColumn, ResourceRow } from "../types";
 
-defineProps<{
+const props = defineProps<{
   rows: ResourceRow[];
   total: number;
   columns: ResourceColumn[];
   permissions: ResourcePermissionSet;
+  filters?: ResourceListQuery;
 }>();
 
 const emit = defineEmits<{
@@ -127,6 +129,7 @@ const emit = defineEmits<{
   edit: [row: ResourceRow];
   delete: [row: ResourceRow];
   "toggle-status": [row: ResourceRow];
+  "reset-query": [];
 }>();
 
 const keywords = ref("");
@@ -138,13 +141,19 @@ watch(keywords, () => {
   requestRows();
 });
 
+watch(() => props.filters, () => {
+  pageNum.value = 1;
+  requestRows();
+}, { deep: true });
+
 function currentQuery(): ResourceListQuery {
-  return { ...paginationQuery(), keyword: keywords.value };
+  return { ...paginationQuery(), keyword: keywords.value, ...props.filters };
 }
 
 function resetQuery() {
   keywords.value = "";
   pageNum.value = 1;
+  emit("reset-query");
 }
 
 function refreshRows() {
