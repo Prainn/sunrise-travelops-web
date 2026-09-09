@@ -28,7 +28,12 @@ describe("userService", () => {
 
   it("returns the unified user page and maps query parameters", async () => {
     const page = {
-      list: [{ id: "user-1", username: "admin", nickname: "admin" }],
+      list: [{
+        id: "user-1",
+        username: "admin",
+        nickname: "admin",
+        roleNames: "Inquiry Coordinator,RESOURCE_MANAGER,自定义角色",
+      }],
       total: 1,
       page: 1,
       pageSize: 10,
@@ -43,7 +48,13 @@ describe("userService", () => {
       deptId: 1,
       roleId: "role-1",
       createTime: ["2026-09-01", "2026-09-02"],
-    })).resolves.toEqual(page);
+    })).resolves.toEqual({
+      ...page,
+      list: [{
+        ...page.list[0],
+        roleNames: "user.roles.inquiryCoordinator,user.roles.resourceManager,自定义角色",
+      }],
+    });
 
     expect(getMock).toHaveBeenCalledWith("/users", {
       params: {
@@ -61,13 +72,13 @@ describe("userService", () => {
   it("localizes seeded role option labels from the backend", async () => {
     getMock.mockResolvedValue([
       { value: "role-1", label: "Inquiry Coordinator" },
-      { value: "role-2", label: "Inquiry Coordinator" },
+      { value: "role-2", label: "RESOURCE_MANAGER" },
       { value: "role-3", label: "自定义角色" },
     ]);
 
     await expect(userService.getRoleOptions()).resolves.toEqual([
       { value: "role-1", label: "user.roles.inquiryCoordinator" },
-      { value: "role-2", label: "user.roles.inquiryCoordinator" },
+      { value: "role-2", label: "user.roles.resourceManager" },
       { value: "role-3", label: "自定义角色" },
     ]);
     expect(getMock).toHaveBeenCalledWith("/users/options/roles");

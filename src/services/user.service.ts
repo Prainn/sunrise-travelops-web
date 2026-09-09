@@ -97,20 +97,39 @@ function normalizeRoleName(value: string): string {
   return value.replace(/[\s_-]+/g, "").toLowerCase();
 }
 
+function localizeRoleName(value: string, code?: string): string {
+  const labelKey = ROLE_LABEL_KEYS[code ?? ""]
+    ?? ROLE_LABEL_KEYS[value]
+    ?? ROLE_NAME_LABEL_KEYS[normalizeRoleName(value)];
+  return labelKey ? translate(labelKey) : value;
+}
+
+function localizeRoleNames(value?: string): string | undefined {
+  return value
+    ?.split(",")
+    .map((role) => localizeRoleName(role.trim()))
+    .join(",");
+}
+
 function localizeRoleOption(option: RoleOption): OptionItem {
-  const labelKey = ROLE_LABEL_KEYS[option.code ?? ""]
-    ?? ROLE_NAME_LABEL_KEYS[normalizeRoleName(option.name ?? option.label)];
   return {
     ...option,
-    label: labelKey ? translate(labelKey) : option.label,
+    label: localizeRoleName(option.name ?? option.label, option.code),
   };
 }
 
 export const userService = {
   async getPage(query: UserQueryParams): Promise<PageResult<UserItem>> {
-    return request.get<PageResult<UserItem>>(USER_BASE_URL, {
+    const result = await request.get<PageResult<UserItem>>(USER_BASE_URL, {
       params: buildUserParams(query),
     });
+    return {
+      ...result,
+      list: result.list.map((user) => ({
+        ...user,
+        roleNames: localizeRoleNames(user.roleNames),
+      })),
+    };
   },
 
   async getFormData(userId: string): Promise<UserForm> {
