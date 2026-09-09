@@ -6,6 +6,7 @@
 import { h, onBeforeUnmount, onMounted } from "vue";
 import { ElButton, ElNotification } from "element-plus";
 import type { NotificationHandle } from "element-plus";
+import "element-plus/es/components/notification/style/index";
 import { useI18n } from "vue-i18n";
 import { reloadPageWithoutConfirmation } from "@/utils/page-lifecycle";
 
