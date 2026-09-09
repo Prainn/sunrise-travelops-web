@@ -1,0 +1,126 @@
+#!/usr/bin/python3
+"""SSH forced command, installed root-owned; executed as sunrise-deploy."""
+import fcntl
+import json
+import os
+from pathlib import Path, PurePosixPath
+import re
+import shutil
+import sys
+import tarfile
+import tempfile
+import urllib.request
+
+BASE = Path('/opt/sunrise-travelops-dev/frontend')
+SITE = 'https://ops-dev.sunrisevacation.cn'
+SHARED_DIRS = ('js', 'css', 'img', 'fonts', 'media', 'assets')
+RELEASE_ID = re.compile(r'(?:[0-9a-f]{40}-[0-9]+-[0-9]+|bootstrap-[0-9]{14})')
+
+
+def switch(target):
+    pending = BASE / '.current-next'
+    pending.unlink(missing_ok=True)
+    pending.symlink_to(target)
+    pending.replace(BASE / 'current')
+
+
+def unpack(stream, destination):
+    total = 0
+    with tarfile.open(fileobj=stream, mode='r|gz') as archive:
+        for member in archive:
+            name = PurePosixPath(member.name)
+            if name.is_absolute() or '..' in name.parts or not (member.isdir() or member.isfile()):
+                raise ValueError('Archive contains an unsafe path or file type')
+            total += member.size
+            if total > 200 * 1024 * 1024:
+                raise ValueError('Unpacked frontend exceeds 200 MiB')
+            target = destination.joinpath(*name.parts)
+            if member.isdir():
+                target.mkdir(parents=True, exist_ok=True)
+            else:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with archive.extractfile(member) as source, target.open('xb') as output:
+                    shutil.copyfileobj(source, output)
+
+
+def fetch(path):
+    request = urllib.request.Request(SITE + path, headers={'Cache-Control': 'no-cache'})
+    with urllib.request.urlopen(request, timeout=15) as response:
+        return response.read()
+
+
+def verify(release):
+    expected = (release / 'index.html').read_bytes()
+    for path in ['/', '/inquiries']:
+        if fetch(path) != expected:
+            raise ValueError('Published HTML does not match release: ' + path)
+    if fetch('/__deploy.json') != (release / '__deploy.json').read_bytes():
+        raise ValueError('Published release marker does not match')
+    entry_assets = re.findall(r'(?:src|href)="(/(?:js|css)/[^"?#]+)', expected.decode())
+    if not entry_assets:
+        raise ValueError('No entry assets found')
+    for path in set(entry_assets):
+        if fetch(path) != (release / path.lstrip('/')).read_bytes():
+            raise ValueError('Published asset does not match: ' + path)
+
+
+def publish(release_id, stream):
+    if not RELEASE_ID.fullmatch(release_id):
+        raise ValueError('Invalid release ID')
+    destination = BASE / 'releases' / release_id
+    if destination.exists():
+        raise ValueError('Release already exists; use a new run attempt')
+    previous = os.readlink(BASE / 'current')
+    with tempfile.TemporaryDirectory(prefix='.upload-', dir=BASE) as temp:
+        stage = Path(temp)
+        unpack(stream, stage)
+        if not (stage / 'index.html').is_file() or not (stage / 'js').is_dir():
+            raise ValueError('Missing index.html or js')
+        (stage / '__deploy.json').write_text(json.dumps({'release': release_id}) + '\n')
+        # Hashed assets are shared so open browser tabs can load the older chunks.
+        for directory in SHARED_DIRS:
+            for source in (stage / directory).rglob('*'):
+                if not source.is_file():
+                    continue
+                target = BASE / 'shared' / source.relative_to(stage)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if target.exists():
+                    if source.read_bytes() != target.read_bytes():
+                        raise ValueError('Asset filename collision: ' + target.name)
+                else:
+                    shutil.copyfile(source, target)
+        # TemporaryDirectory defaults to 0700; Nginx must read this directory.
+        stage.chmod(0o755)
+        stage.rename(destination)
+    switch('releases/' + release_id)
+    try:
+        verify(destination)
+    except Exception:
+        switch(previous)
+        raise
+    (BASE / 'last-deployment.json').write_text(json.dumps({
+        'release': release_id, 'previous': previous, 'verified': True,
+    }) + '\n')
+    return {'release': release_id, 'previous': previous, 'verified': True}
+
+
+def main():
+    os.umask(0o022)
+    command = os.environ.get('SSH_ORIGINAL_COMMAND', '')
+    if command == 'status':
+        print(json.dumps({'current': os.readlink(BASE / 'current')}))
+        return
+    match = re.fullmatch(r'deploy (\S+)', command)
+    if not match:
+        raise ValueError('Only deploy <release-id> and status are permitted')
+    with (BASE / '.deploy.lock').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        print(json.dumps(publish(match[1], sys.stdin.buffer)))
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as error:
+        print('Deployment failed: ' + str(error), file=sys.stderr)
+        sys.exit(1)

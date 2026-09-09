@@ -1,0 +1,59 @@
+name: Deploy frontend dev
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-dev-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.20.0'
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: 11.22.0
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:server-dev
+      - name: Publish and verify
+        env:
+          DEPLOY_HOST: ${{ secrets.DEV_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEV_DEPLOY_USER }}
+          DEPLOY_KEY: ${{ secrets.DEV_DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEV_DEPLOY_KNOWN_HOSTS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${DEPLOY_HOST:?Missing DEV_DEPLOY_HOST}"
+          : "${DEPLOY_USER:?Missing DEV_DEPLOY_USER}"
+          : "${DEPLOY_KEY:?Missing DEV_DEPLOY_SSH_KEY}"
+          : "${DEPLOY_KNOWN_HOSTS:?Missing DEV_DEPLOY_KNOWN_HOSTS}"
+          install -d -m 700 "$RUNNER_TEMP/frontend-deploy"
+          trap 'rm -rf "$RUNNER_TEMP/frontend-deploy"' EXIT
+          printf '%s\n' "$DEPLOY_KEY" > "$RUNNER_TEMP/frontend-deploy/key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$RUNNER_TEMP/frontend-deploy/known_hosts"
+          chmod 600 "$RUNNER_TEMP/frontend-deploy/key"
+          release_id="${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          tar -czf "$RUNNER_TEMP/frontend-deploy/dist.tar.gz" -C dist .
+          ssh -T -i "$RUNNER_TEMP/frontend-deploy/key" \
+            -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$RUNNER_TEMP/frontend-deploy/known_hosts" \
+            -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
+            "$DEPLOY_USER@$DEPLOY_HOST" "deploy $release_id" \
+            < "$RUNNER_TEMP/frontend-deploy/dist.tar.gz"
+          printf 'Published `%s` to https://ops-dev.sunrisevacation.cn\n' "$release_id" >> "$GITHUB_STEP_SUMMARY"

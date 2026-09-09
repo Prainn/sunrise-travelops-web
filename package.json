@@ -18,7 +18,7 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky",
     "commit": "git-cz",
-    "deploy": "node deploy.mjs"
+    "build:server-dev": "vue-tsc --noEmit && vite build --mode server-dev"
   },
   "config": {
     "commitizen": {
