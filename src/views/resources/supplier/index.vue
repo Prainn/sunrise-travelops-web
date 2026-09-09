@@ -17,6 +17,7 @@
       :record="record"
       :fields="fields"
       :title-key="isEditing ? 'resource.editTitle' : 'resource.createTitle'"
+      :is-editing="isEditing"
       @submit="saveSupplier"
     />
   </div>

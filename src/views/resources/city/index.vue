@@ -17,6 +17,7 @@
       :record="record"
       :fields="fields"
       :title-key="isEditing ? 'city.edit' : 'city.create'"
+      :is-editing="isEditing"
       @submit="saveRecord"
     />
   </div>

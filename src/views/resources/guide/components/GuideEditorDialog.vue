@@ -12,7 +12,10 @@
       label-width="auto"
     >
       <div class="guide-editor__grid">
-        <el-form-item :label="$t('resource.code')">
+        <el-form-item
+          v-if="isEditing"
+          :label="$t('resource.code')"
+        >
           <el-input
             v-model="form.code"
             disabled

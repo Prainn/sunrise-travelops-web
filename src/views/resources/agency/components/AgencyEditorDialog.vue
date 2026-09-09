@@ -12,7 +12,10 @@
       :rules="rules"
       label-width="auto"
     >
-      <el-form-item :label="$t('resource.code')">
+      <el-form-item
+        v-if="isEditing"
+        :label="$t('resource.code')"
+      >
         <el-input
           v-model="form.code"
           disabled
