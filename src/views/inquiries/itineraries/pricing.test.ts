@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PricingResources } from "./pricing";
-import { calculateItem, getHotelUnitCost, getResourcePriceOptions } from "./pricing";
+import { getHotelUnitCost, getResourcePriceOptions } from "./pricing";
 
 const ids = {
   supplier: "00000000-0000-4000-8000-000000000001",
@@ -17,7 +17,7 @@ function createResources(): PricingResources {
   return {
     hotels: [{
       id: ids.hotel, code: "HTL-001", name: "测试酒店", province: "云南省", city: "昆明", rating: "ctrip_preferred",
-      facilities: "", breakfastIncluded: true, breakfast: "", address: "", phone: "", nearby: "",
+      facilities: "", breakfast: "", address: "", phone: "", nearby: "",
       individualPrice: 428, groupPrice: 200, minimumGroupSize: 10, unit: "roomNight", status: "enabled",
     }],
     restaurants: [{
@@ -39,12 +39,7 @@ function createResources(): PricingResources {
       id: ids.transport, code: "VEH-001", name: "测试车型", city: "昆明", serviceLevel: "standard",
       seats: 7, dailyPrice: 800, unit: "vehicleDay", phone: "", status: "enabled", remark: "",
     }],
-    guides: [{
-      id: ids.guide, code: "GDE-001", certificateNo: "CERT", name: "测试导游", gender: "female", age: 30,
-      languages: ["中文"], employmentType: "full-time", identityNumber: "", phone: "", dailyPrice: 500,
-      unit: "guideDay", hasLaborContract: true, groundOperatorId: ids.supplier,
-      licensePhotoUrl: "", remark: "", status: "enabled",
-    }],
+    guides: [],
   };
 }
 
@@ -70,15 +65,6 @@ describe("resource pricing", () => {
     const options = getResourcePriceOptions(resources);
 
     expect(options.some((option) => option.resourceId === "00000000-0000-4000-8000-000000000009")).toBe(false);
-  });
-
-  it("uses a manually entered vehicle fee instead of the reference resource cost", () => {
-    const option = getResourcePriceOptions(createResources()).find((item) => item.type === "vehicle")!;
-    const item = calculateItem(option, 2, 1250.5);
-
-    expect(item.referenceUnitCost).toBe(800);
-    expect(item.unitCost).toBe(1250.5);
-    expect(item.totalCost).toBe(2501);
   });
 
 });

@@ -72,14 +72,6 @@
           </template>
         </el-table-column>
         <el-table-column
-          :label="$t('hotel.breakfastIncluded')"
-          width="120"
-        >
-          <template #default="scope">
-            {{ $t(scope.row.breakfastIncluded ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded') }}
-          </template>
-        </el-table-column>
-        <el-table-column
           prop="address"
           :label="$t('hotel.address')"
           min-width="220"

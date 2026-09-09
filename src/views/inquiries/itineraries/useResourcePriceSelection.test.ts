@@ -13,7 +13,7 @@ const scopes: ReturnType<typeof effectScope>[] = [];
 const pageResult = (id: string) => ({ list: [{ id }], total: 42, page: 1, pageSize: 10 });
 const flush = async () => { await nextTick(); await Promise.resolve(); await nextTick(); };
 function setup() {
-  const props = reactive({ modelValue: false, guestCount: 10, mealSlot: "lunch" as MealSlot | null });
+  const props = reactive({ modelValue: false, guestCount: 10, destination: "昆明", mealSlot: "lunch" as MealSlot | null });
   const scope = effectScope(); scopes.push(scope);
   const error = vi.fn();
   const selection = scope.run(() => useResourcePriceSelection(props, error))!;
@@ -28,14 +28,14 @@ describe("resource price selection requests", () => {
     props.modelValue = true; await flush();
     expect(api.getPriceOptions).not.toHaveBeenCalled();
     await selection.loadOptions({ page: 1, pageSize: 10, keyword: "" });
-    expect(api.getPriceOptions).toHaveBeenCalledExactlyOnceWith("restaurant", { page: 1, pageSize: 10, city: "", keyword: "" });
+    expect(api.getPriceOptions).toHaveBeenCalledExactlyOnceWith("restaurant", { page: 1, pageSize: 10, city: "昆明", keyword: "" });
     expect(api.getPriceSelection).not.toHaveBeenCalled();
     selection.selectedId.value = "a"; await flush();
     expect(api.getPriceSelection).toHaveBeenCalledExactlyOnceWith("restaurant", "a");
     expect(selection.selectedOption.value?.id).toBe("a");
-    props.modelValue = false; await flush(); props.mealSlot = null; props.modelValue = true; await flush();
+    props.modelValue = false; await flush(); props.mealSlot = null; props.destination = "大理"; props.modelValue = true; await flush();
     await selection.loadOptions({ page: 1, pageSize: 10, keyword: "" });
-    expect(api.getPriceOptions).toHaveBeenLastCalledWith("attraction", { page: 1, pageSize: 10, city: "", keyword: "" });
+    expect(api.getPriceOptions).toHaveBeenLastCalledWith("attraction", { page: 1, pageSize: 10, city: "大理", keyword: "" });
     expect(api.getPriceSelection).toHaveBeenCalledTimes(1);
   });
   it("uses server search, city filtering and requested page size without loading other pages", async () => {

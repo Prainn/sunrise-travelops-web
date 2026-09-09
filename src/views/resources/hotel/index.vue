@@ -159,9 +159,6 @@
             :rows="2"
           />
         </el-form-item>
-        <el-form-item :label="$t('hotel.breakfastIncluded')">
-          <el-switch v-model="hotelForm.breakfastIncluded" />
-        </el-form-item>
         <el-form-item :label="$t('hotel.breakfast')">
           <el-input
             v-model.trim="hotelForm.breakfast"
@@ -271,7 +268,6 @@ function createEmptyHotel(): HotelForm {
     city: "",
     rating: "international_five_star",
     facilities: "",
-    breakfastIncluded: true,
     breakfast: "",
     address: "",
     phone: "",

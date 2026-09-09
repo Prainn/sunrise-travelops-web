@@ -114,11 +114,11 @@
         "vehicle": "Vehicle",
         "vehicleName": "Vehicle name",
         "seats": "Seats",
-        "serviceDays": "Service days",
+        "serviceDays": "Guide service days",
         "guidePlans": "Guide plans",
-        "guideName": "Guide name",
+        "guideName": "Guide service",
         "dailyPrice": "Daily price",
-        "dayIds": "Day ids",
+        "dayIds": "Vehicle dates",
         "quote": "Quote",
         "options": "Options",
         "hotelTier": "Hotel tier",
@@ -150,7 +150,14 @@
         "lostReason": "Lost reason",
         "owner": "Owner",
         "status": "Status",
-        "order": "Order"
+        "order": "Order",
+        "leaderCount": "Tour leaders",
+        "arrangements": "Vehicle arrangements",
+        "vehicles": "Vehicles and quantities",
+        "totalPrice": "Whole-trip total",
+        "secondLanguage": "Second language",
+        "shopping": "Shopping itinerary",
+        "otherExpenses": "Driver/guide and other expenses (included)"
       },
       "day": "Day {day}",
       "tiers": {
@@ -301,7 +308,7 @@
     "pendingNights": "{count} days need accommodation details",
     "breakfastPending": "Breakfast to be confirmed",
     "guideServiceDates": "Service dates",
-    "guideDatesRequired": "Select service dates for each guide",
+    "guideDatesRequired": "Enter the number of guide service days",
     "breakfastIncluded": "Breakfast included",
     "breakfastExcluded": "Breakfast not included",
     "meals": {
@@ -355,7 +362,8 @@
     },
     "nightCount": "{count} nights",
     "totalNights": "Total {count} nights",
-    "duration": "{days} days / {nights} nights"
+    "duration": "{days} days / {nights} nights",
+    "otherExpensesExceedTotal": "Included expenses cannot exceed the group total"
   },
   "businessCategory": {
     "applicableResources": "Applicable Resources",
@@ -707,7 +715,7 @@
     "resetPassword": "Reset Password",
     "rolePlaceholder": "Select roles",
     "roles": {
-      "inquiryCoordinator": "Inquiry Coordinator",
+      "coordinator": "Coordinator",
       "resourceManager": "Resource Manager",
       "systemAdministrator": "System Administrator"
     },
@@ -1003,5 +1011,46 @@
     "create": "Add city",
     "edit": "Edit city",
     "province": "Province / region"
+  },
+  "planning": {
+    "leaderCount": "Tour leaders",
+    "secondLanguage": "Second language",
+    "languageWithChinese": "Second language (Chinese included)",
+    "shopping": "Shopping itinerary",
+    "withShopping": "With shopping",
+    "withoutShopping": "Without shopping",
+    "guidePrice": "Daily price (CNY)",
+    "editGuide": "Edit guide rate",
+    "createGuide": "Add guide rate",
+    "guideService": "Guide service",
+    "selectGuide": "Select language and shopping service",
+    "dailyPrice": "Daily price",
+    "serviceDays": "Service days",
+    "vehiclePlans": "Vehicle plans",
+    "passengers": "Passengers",
+    "addArrangement": "Add vehicle arrangement",
+    "selectDates": "Select vehicle dates",
+    "addVehicle": "Add vehicle",
+    "vehicles": "vehicles",
+    "seats": "seats",
+    "delete": "Delete",
+    "totalVehiclePrice": "Total vehicle price for the entire trip (CNY)",
+    "capacityHint": "This arrangement: {seats} seats; the daily total must cover {passengers} passengers",
+    "hotelPriceUnit": "CNY / room / night · Breakfast included",
+    "hotelPrice": "Actual price per room per night",
+    "otherExpenses": "Driver/guide and other expenses",
+    "includedAmount": "Included amount (CNY)",
+    "includedHint": "Included in the tour total. Disclosed separately on the PDF; not added again.",
+    "languages": {
+      "none": "None (Chinese only)",
+      "en": "English",
+      "th": "Thai",
+      "vi": "Vietnamese",
+      "ms": "Malay",
+      "id": "Indonesian",
+      "my": "Burmese",
+      "km": "Khmer",
+      "lo": "Lao"
+    }
   }
 }

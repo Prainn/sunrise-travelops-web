@@ -32,7 +32,7 @@ describe("userService", () => {
         id: "user-1",
         username: "admin",
         nickname: "admin",
-        roleNames: "Inquiry Coordinator,RESOURCE_MANAGER,自定义角色",
+        roleNames: "Coordinator,RESOURCE_MANAGER,自定义角色",
       }],
       total: 1,
       page: 1,
@@ -52,7 +52,7 @@ describe("userService", () => {
       ...page,
       list: [{
         ...page.list[0],
-        roleNames: "user.roles.inquiryCoordinator,user.roles.resourceManager,自定义角色",
+        roleNames: "user.roles.coordinator,user.roles.resourceManager,自定义角色",
       }],
     });
 
@@ -71,13 +71,13 @@ describe("userService", () => {
 
   it("localizes seeded role option labels from the backend", async () => {
     getMock.mockResolvedValue([
-      { value: "role-1", label: "Inquiry Coordinator" },
+      { value: "role-1", label: "Coordinator" },
       { value: "role-2", label: "RESOURCE_MANAGER" },
       { value: "role-3", label: "自定义角色" },
     ]);
 
     await expect(userService.getRoleOptions()).resolves.toEqual([
-      { value: "role-1", label: "user.roles.inquiryCoordinator" },
+      { value: "role-1", label: "user.roles.coordinator" },
       { value: "role-2", label: "user.roles.resourceManager" },
       { value: "role-3", label: "自定义角色" },
     ]);

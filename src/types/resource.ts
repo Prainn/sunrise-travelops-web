@@ -20,15 +20,14 @@ export interface ResourceQueryParams {
 }
 
 export interface ResourceListQuery extends Partial<ResourceQueryParams> {
+  secondLanguage?: string;
+  shopping?: string;
   city?: string;
   rating?: HotelRating;
   serviceLevel?: VehicleServiceLevel;
   unit?: string;
   area?: string;
   category?: AttractionCategory;
-  gender?: GuideGender;
-  employmentType?: GuideEmploymentType;
-  language?: string;
 }
 
 export interface AgencyContactRecord extends ResourceAuditRecord {
@@ -121,9 +120,7 @@ export interface SupplierOptionRecord {
 export interface TransportRecord extends ResourceRecord {
   serviceLevel: VehicleServiceLevel;
   seats: number;
-  dailyPrice: number;
   unit: ItineraryPriceUnit;
-  city: string;
   phone: string;
   remark: string;
 }
@@ -136,7 +133,6 @@ export interface HotelRecord extends ResourceAuditRecord {
   city: string;
   rating: HotelRating;
   facilities: string;
-  breakfastIncluded: boolean;
   breakfast: string;
   address: string;
   phone: string;
@@ -181,27 +177,15 @@ export interface AttractionRecord extends ResourceAuditRecord {
   priceCount?: number;
 }
 
-export type GuideGender = "male" | "female";
-export type GuideEmploymentType = "full-time" | "part-time";
-
+export const GUIDE_LANGUAGE_OPTIONS = [
+  { value: 'none', label: '无（仅中文）' }, { value: 'en', label: '英文' },
+  { value: 'th', label: '泰语' }, { value: 'vi', label: '越南语' },
+  { value: 'ms', label: '马来语' }, { value: 'id', label: '印尼语' },
+  { value: 'my', label: '缅甸语' }, { value: 'km', label: '高棉语' }, { value: 'lo', label: '老挝语' },
+];
 export interface GuideRecord extends ResourceAuditRecord {
-  id: string;
-  code: string;
-  certificateNo: string;
-  name: string;
-  gender: GuideGender;
-  age: number;
-  languages: string[];
-  employmentType: GuideEmploymentType;
-  identityNumber: string;
-  phone: string;
-  dailyPrice: number;
-  unit: ItineraryPriceUnit;
-  hasLaborContract: boolean;
-  groundOperatorId: string;
-  licensePhotoUrl: string;
-  remark: string;
-  status: ResourceStatus;
+  id: string; code: string; name: string; status: ResourceStatus;
+  secondLanguage: string; shopping: boolean; dailyPrice: number;
 }
 
 export type RestaurantPriceUnit = string;

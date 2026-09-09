@@ -57,13 +57,11 @@ export function calculateDestinationNights(itinerary: Pick<ItineraryRecord, "dai
   }, {});
 }
 
-export function getDayBreakfastStatus(itinerary: Pick<ItineraryRecord, "dailyPlans" | "hotelPlans">, dayIndex: number): "included" | "excluded" | "mixed" | "pending" {
+export function getDayBreakfastStatus(itinerary: Pick<ItineraryRecord, "dailyPlans" | "hotelPlans">, dayIndex: number): "included" | "excluded" | "pending" {
   const previous = itinerary.dailyPlans[dayIndex - 1];
   if (!previous || previous.overnightDestination === "") return "excluded";
   if (previous.overnightDestination === null) return "pending";
   const plans = getEnabledHotelPlans(itinerary);
   if (!plans.length || plans.some((plan) => !plan.hotels.some((hotel) => hotel.destination === previous.overnightDestination))) return "pending";
-  const hotels = plans.flatMap((plan) => plan.hotels.filter((hotel) => hotel.destination === previous.overnightDestination));
-  if (hotels.every((hotel) => hotel.breakfastIncluded)) return "included";
-  return hotels.some((hotel) => hotel.breakfastIncluded) ? "mixed" : "excluded";
+  return "included";
 }

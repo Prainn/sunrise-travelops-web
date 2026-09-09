@@ -83,14 +83,6 @@ const columns: ResourceColumn[] = [
     "prop": "seats",
     "labelKey": "resource.seats"
   },
-  {
-    "prop": "dailyPrice",
-    "labelKey": "resource.dailyPrice"
-  },
-  {
-    "prop": "city",
-    "labelKey": "resource.city"
-  }
 ];
 const fields = computed<ResourceFormField[]>(() => [
   {
@@ -114,20 +106,11 @@ const fields = computed<ResourceFormField[]>(() => [
     "type": "number"
   },
   {
-    "prop": "dailyPrice",
-    "labelKey": "resource.dailyPrice",
-    "type": "number"
-  },
-  {
     "prop": "unit",
     "labelKey": "resource.priceUnit",
     "required": true,
     "type": "select",
     "options": getResourceUnitOptions("vehicle", locale.value)
-  },
-  {
-    "prop": "city",
-    "labelKey": "resource.city"
   },
   {
     "prop": "phone",
@@ -144,8 +127,8 @@ const { rows, total, record, isDialogVisible, isEditing, loadRecords, openCreate
   api: resourceService.transportApi,
   loadRecords: (query) => resourceService.loadTransports(query),
   createEmpty: () => ({
-    id: "", code: "", name: "", serviceLevel: "standard", seats: 1, dailyPrice: 0,
-    unit: "vehicleDay", city: "", phone: "", status: "enabled", remark: "",
+    id: "", code: "", name: "", serviceLevel: "standard", seats: 1,
+    unit: "vehicleDay", phone: "", status: "enabled", remark: "",
   }),
 });
 const tableRows = computed(() => rows.map((row) => ({

@@ -50,9 +50,10 @@
             </header>
 
             <div class="itinerary-hotel-vehicle-plans__hotel-list grid gap-[10px] p-[12px]">
-              <label
+              <div
                 v-for="destination in overnightDestinations"
                 :key="destination"
+                class="itinerary-hotel-vehicle-plans__hotel-selection"
               >
                 <span>{{ destination }}</span>
                 <ResourceSelect
@@ -64,7 +65,23 @@
                   :placeholder="$t('itinerary.selectDestinationHotel')"
                   @update:model-value="emit('update-hotel-selection', tier, destination, $event)"
                 />
-              </label>
+                <div
+                  v-if="getPlan(tier)?.hotels.some(h => h.destination === destination)"
+                  class="col-start-2 flex items-center flex-wrap gap-[8px]"
+                >
+                  <el-input-number
+                    class="!w-[160px]"
+                    :model-value="getPlan(tier)?.hotels.find(h => h.destination === destination)?.unitCost"
+                    :min="0"
+                    :precision="2"
+                    :disabled="!editable"
+                    controls-position="right"
+                    :aria-label="$t('planning.hotelPrice')"
+                    @change="emit('update-hotel-cost', tier, destination, Number($event ?? 0))"
+                  />
+                  <small>{{ $t('planning.hotelPriceUnit') }}</small>
+                </div>
+              </div>
             </div>
           </article>
         </div>
@@ -77,96 +94,18 @@
       </el-card>
     </section>
 
-    <section>
-      <div class="itinerary-hotel-vehicle-plans__toolbar h-12 flex items-center min-h-[48px] m-[0_0_14px]">
-        <h3>{{ $t("itinerary.vehiclePlans") }}</h3>
-      </div>
-      <el-card
-        class="itinerary-hotel-vehicle-plans__card"
-        shadow="never"
-      >
-        <div class="itinerary-hotel-vehicle-plans__vehicle-tiers">
-          <article
-            v-for="tier in VEHICLE_PLAN_TIERS"
-            :key="tier"
-            class="itinerary-hotel-vehicle-plans__vehicle-tier"
-            :class="{ 'is-selected': Boolean(findVehiclePlan(tier)?.vehicle) }"
-          >
-            <header>
-              <strong>{{ $t(`itinerary.vehicleServiceLevels.${tier}`) }}</strong>
-              <el-button
-                v-if="findVehiclePlan(tier)?.vehicle"
-                link
-                type="danger"
-                :disabled="!editable"
-                @click="emit('update-vehicle', tier, '')"
-              >
-                {{ $t("common.clear") }}
-              </el-button>
-            </header>
-
-            <div class="itinerary-hotel-vehicle-plans__vehicle-body grid gap-[12px] p-[12px]">
-              <label class="itinerary-hotel-vehicle-plans__vehicle-select">
-                <span>{{ $t("itinerary.vehicleModel") }}</span>
-                <ResourceSelect
-                  kind="transports"
-                  :model-value="findVehiclePlan(tier)?.vehicle?.vehicleId ?? ''"
-                  :selected-label="findVehiclePlan(tier)?.vehicle?.vehicleName"
-                  :filters="{ serviceLevel: tier, guestCount }"
-                  :disabled="!editable"
-                  :placeholder="$t('itinerary.selectVehicle')"
-                  @update:model-value="emit('update-vehicle', tier, $event)"
-                />
-              </label>
-
-              <div
-                v-if="findVehiclePlan(tier)?.vehicle"
-                class="itinerary-hotel-vehicle-plans__vehicle-fields grid [grid-template-columns:repeat(4,_minmax(0,_1fr))] gap-[10px] pt-[12px] [border-top:1px_solid_var(--el-border-color-lighter)]"
-              >
-                <label>
-                  <span>{{ $t("itinerary.vehicleServiceDays") }}</span>
-                  <el-input-number
-                    :model-value="findVehiclePlan(tier)?.vehicle?.serviceDays ?? 1"
-                    :disabled="!editable || !findVehiclePlan(tier)?.vehicle"
-                    :min="1"
-                    :precision="0"
-                    controls-position="right"
-                    @change="emit('update-vehicle-days', tier, Number($event ?? 1))"
-                  />
-                </label>
-                <label>
-                  <span>{{ $t("itinerary.vehicleReferenceCost") }}</span>
-                  <strong>
-                    {{ findVehiclePlan(tier)?.vehicle ? `¥${formatMoney(findVehiclePlan(tier)!.vehicle!.referenceUnitCost)}` : "-" }}
-                  </strong>
-                </label>
-                <label>
-                  <span>{{ $t("itinerary.vehicleDailyCost") }}</span>
-                  <el-input-number
-                    :model-value="findVehiclePlan(tier)?.vehicle?.unitCost ?? 0"
-                    :disabled="!editable || !findVehiclePlan(tier)?.vehicle"
-                    :min="0"
-                    :precision="2"
-                    controls-position="right"
-                    @change="emit('update-vehicle-cost', tier, Number($event ?? 0))"
-                  />
-                </label>
-                <label>
-                  <span>{{ $t("itinerary.vehicleSubtotal") }}</span>
-                  <strong>
-                    ¥{{ formatMoney(findVehiclePlan(tier)?.vehicle ? calculateVehicleSubtotal(findVehiclePlan(tier)!.vehicle!) : 0) }}
-                  </strong>
-                </label>
-              </div>
-            </div>
-          </article>
-        </div>
-      </el-card>
-    </section>
+    <ItineraryVehiclePlans
+      :plans="vehiclePlans"
+      :daily-plans="dailyPlans"
+      :passenger-count="guestCount"
+      :editable="editable"
+      @update-plan="(tier, plan) => emit('update-vehicle-plan', tier, plan)"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import ItineraryVehiclePlans from "./ItineraryVehiclePlans.vue";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import { destinationDuration, itineraryDuration } from "@/views/inquiries/itineraries/duration";
 import type {
@@ -177,13 +116,7 @@ import type {
   ItineraryVehicleTier,
 } from "@/types/itinerary";
 import { computed } from "vue";
-import { formatMoney } from "@/utils";
 import { getHotelPlan, HOTEL_PLAN_TIERS } from "../hotel-plans";
-import {
-  calculateVehicleSubtotal,
-  getVehiclePlan,
-  VEHICLE_PLAN_TIERS,
-} from "../vehicle-plans";
 
 const props = defineProps<{
   destinations: string[];
@@ -196,9 +129,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   "clear-hotel-plan": [tier: ItineraryHotelTier];
   "update-hotel-selection": [tier: ItineraryHotelTier, destination: string, hotelId: string];
-  "update-vehicle": [tier: ItineraryVehicleTier, vehicleId: string];
-  "update-vehicle-days": [tier: ItineraryVehicleTier, serviceDays: number];
-  "update-vehicle-cost": [tier: ItineraryVehicleTier, unitCost: number];
+  "update-hotel-cost": [tier: ItineraryHotelTier, destination: string, price: number];
+  "update-vehicle-plan": [tier: ItineraryVehicleTier, plan: ItineraryVehiclePlan];
 }>();
 
 const overnightDestinations = computed(() => props.destinations.filter((destination) => props.dailyPlans.some((day) => day.overnightDestination === destination)));
@@ -210,10 +142,6 @@ function getPlan(tier: ItineraryHotelTier) {
 
 function getHotelSelectionId(tier: ItineraryHotelTier, destination: string) {
   return getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)?.hotelId ?? "";
-}
-
-function findVehiclePlan(tier: ItineraryVehicleTier) {
-  return getVehiclePlan({ vehiclePlans: props.vehiclePlans }, tier);
 }
 
 </script>
@@ -231,7 +159,7 @@ function findVehiclePlan(tier: ItineraryVehicleTier) {
 .itinerary-hotel-vehicle-plans__hotel-tier.is-selected > header, .itinerary-hotel-vehicle-plans__vehicle-tier.is-selected > header { background: var(--el-color-primary-light-9); }
 .itinerary-hotel-vehicle-plans__hotel-tier > header, .itinerary-hotel-vehicle-plans__vehicle-tier > header { min-height: 48px; padding: 0 14px; background: var(--el-fill-color-lighter); }
 
-.itinerary-hotel-vehicle-plans__hotel-list label, .itinerary-hotel-vehicle-plans__vehicle-select { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 8px; font-size: 14px; }
+.itinerary-hotel-vehicle-plans__hotel-selection, .itinerary-hotel-vehicle-plans__vehicle-select { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 8px; font-size: 14px; }
 .itinerary-hotel-vehicle-plans__hotel-list :deep(.el-select), .itinerary-hotel-vehicle-plans__vehicle-select :deep(.el-select) { width: 100%; }
 .itinerary-hotel-vehicle-plans__option { @apply 'flex justify-between gap-[16px]'; }
 .itinerary-hotel-vehicle-plans__option strong { color: var(--el-color-primary); font-weight: 500; }

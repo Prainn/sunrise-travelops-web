@@ -48,7 +48,7 @@
               <h2>{{ selectedItinerary.title }}</h2>
               <p>
                 {{ selectedItinerary.startDate }} — {{ selectedItinerary.endDate }} ·
-                {{ $t("itinerary.guestCount") }} {{ guestCount }}
+                {{ $t("itinerary.guestCount") }} {{ guestCount }}＋{{ selectedItinerary.leaderCount }}
               </p>
             </div>
 
@@ -90,21 +90,20 @@
             :daily-plans="selectedItinerary.dailyPlans"
             :hotel-plans="selectedItinerary.hotelPlans"
             :vehicle-plans="selectedItinerary.vehiclePlans"
-            :guest-count="guestCount"
+            :guest-count="passengerCount"
             :editable="contentEditable"
             @clear-hotel-plan="clearHotelPlan"
             @update-hotel-selection="updateHotelPlanSelection"
-            @update-vehicle="updateVehiclePlanSelection"
-            @update-vehicle-days="updateVehiclePlanServiceDays"
-            @update-vehicle-cost="updateVehiclePlanUnitCost"
+            @update-vehicle-plan="updateVehiclePlan"
+            @update-hotel-cost="updateHotelCost"
           />
           <ItineraryGuidePlans
             :destinations="selectedItinerary.destinations"
             :plans="selectedItinerary.guidePlans"
-            :daily-plans="selectedItinerary.dailyPlans"
             :editable="contentEditable"
             @update-guide="updateGuideSelection"
             @update-days="updateGuideDays"
+            @update-price="updateGuidePrice"
           />
           <div class="itinerary-page__daily-toolbar h-12 flex justify-between items-center min-h-[48px] m-[24px_0_14px]">
             <div>
@@ -189,11 +188,13 @@
       <ItineraryResourceDialog
         v-model="isResourceDialogVisible"
         :guest-count="guestCount"
+        :destination="resourceDestination"
         :meal-slot="resourceMealSlot"
         @submit="addResourceItem"
       />
       <ItineraryPdfPreviewDialog
         v-model="isPdfPreviewVisible"
+        :loading="isDownloadingPdf"
         :src="pdfPreviewUrl"
         @confirm="confirmPdfDownload"
         @closed="closePdfPreview"
@@ -227,6 +228,7 @@
         <ItineraryQuotePanel
           v-if="selectedItinerary && quoteCalculation"
           :quote="selectedItinerary.quote"
+          :leader-count="selectedItinerary.leaderCount"
           :calculation="quoteCalculation"
           :item-count="itemCount"
           :duration="itineraryDuration(selectedItinerary.dailyPlans)"
@@ -238,6 +240,7 @@
         <template #footer>
           <el-button
             v-if="canDownloadOriginal"
+            :loading="isGeneratingPdf"
             @click="downloadOriginal"
           >
             {{ $t('itinerary.downloadOriginal') }}
@@ -331,10 +334,10 @@ const {
   isDraft, itemCount, itineraryForm, loadDestinationResourceOptions, moveDay, openCreateDialog, openResourceDialog, priceEditable, quoteCalculation,
   openEditDialog, pdfPreviewUrl, removeDay, removeItem, router, rows, saveItinerary, selectedItinerary, selectedItineraryId,
   resourceMealSlot, updateMeal, updateQuoteSettings,
-  validationIssues, canDownloadOriginal, downloadOriginal,
+  validationIssues, isDownloadingPdf, canDownloadOriginal, downloadOriginal,
   submitItineraryPlan,
   updateGuideSelection, updateGuideDays, clearHotelPlan, updateDayField, updateHotelPlanSelection, updateItemQuantity, updateQuoteOption,
-  updateVehiclePlanSelection, updateVehiclePlanServiceDays, updateVehiclePlanUnitCost,
+  updateVehiclePlan, updateHotelCost, updateGuidePrice, passengerCount, resourceDestination,
 } = useItineraryWorkspace({
   confirm: confirmAction,
   error: (key) => ElMessage.error(t(key)),

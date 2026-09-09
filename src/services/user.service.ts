@@ -28,15 +28,15 @@ const USER_BASE_URL = "/users";
 
 const ROLE_LABEL_KEYS: Record<string, string> = {
   ADMIN: "user.roles.systemAdministrator",
-  INQUIRY_COORDINATOR: "user.roles.inquiryCoordinator",
+  COORDINATOR: "user.roles.coordinator",
   RESOURCE_MANAGER: "user.roles.resourceManager",
 };
 
 const ROLE_NAME_LABEL_KEYS: Record<string, string> = {
-  inquirycoordinator: "user.roles.inquiryCoordinator",
+  coordinator: "user.roles.coordinator",
   resourcemanager: "user.roles.resourceManager",
   systemadministrator: "user.roles.systemAdministrator",
-  收客计调: "user.roles.inquiryCoordinator",
+  计调: "user.roles.coordinator",
   资源主管: "user.roles.resourceManager",
   系统管理员: "user.roles.systemAdministrator",
 };

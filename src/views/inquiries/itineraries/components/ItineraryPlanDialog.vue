@@ -49,6 +49,13 @@
           </el-form-item>
         </el-col>
       </el-row>
+      <el-form-item :label="$t('planning.leaderCount')">
+        <el-input-number
+          v-model="form.leaderCount"
+          :min="0"
+          :precision="0"
+        />
+      </el-form-item>
       <el-row
         class="itinerary-plan-dialog__date-row"
         :gutter="16"
@@ -56,11 +63,12 @@
         <el-col :span="8">
           <el-form-item :label="$t('inquiry.plannedDays')">
             <el-input-number
-              v-model="form.days"
+              :model-value="plannedDays"
+              disabled
               :min="1"
               controls-position="right"
             />
-            <span class="w-full mt-[4px] text-[var(--el-text-color-secondary)]">{{ $t('itinerary.duration', plannedDuration(form.days)) }}</span>
+            <span class="w-full mt-[4px] text-[var(--el-text-color-secondary)]">{{ $t('itinerary.duration', plannedDuration(plannedDays)) }}</span>
           </el-form-item>
         </el-col>
         <el-col :span="8">
@@ -149,11 +157,8 @@ const form = reactive<ItineraryRecord>({
   ...props.record,
   destinations: [...props.record.destinations],
   hotelPlans: props.record.hotelPlans.map((plan) => ({ ...plan, hotels: plan.hotels.map((hotel) => ({ ...hotel })) })),
-  guidePlans: props.record.guidePlans.map((plan) => ({ ...plan, dayIds: [...plan.dayIds] })),
-  vehiclePlans: props.record.vehiclePlans.map((plan) => ({
-    ...plan,
-    vehicle: plan.vehicle ? { ...plan.vehicle } : null,
-  })),
+  guidePlans: props.record.guidePlans.map((plan) => ({ ...plan })),
+  vehiclePlans: JSON.parse(JSON.stringify(props.record.vehiclePlans)),
   quote: { ...props.record.quote, transportFees: props.record.quote.transportFees.map((fee) => ({ ...fee })), options: props.record.quote.options.map((option) => ({ ...option })) },
   dailyPlans: [],
 });
@@ -169,14 +174,11 @@ const hasDayCountMismatch = computed(() => form.days !== props.plannedDays);
 watch(() => [props.modelValue, props.record] as const, ([visible, record]) => {
   if (!visible) return;
   Object.assign(form, record, {
-    days: props.isEditing ? record.dailyPlans.length || record.days : props.plannedDays,
+    days: props.isEditing ? record.dailyPlans.length || record.days : 1,
     destinations: [...record.destinations],
     hotelPlans: record.hotelPlans.map((plan) => ({ ...plan, hotels: plan.hotels.map((hotel) => ({ ...hotel })) })),
-    guidePlans: record.guidePlans.map((plan) => ({ ...plan, dayIds: [...plan.dayIds] })),
-    vehiclePlans: record.vehiclePlans.map((plan) => ({
-      ...plan,
-      vehicle: plan.vehicle ? { ...plan.vehicle } : null,
-    })),
+    guidePlans: record.guidePlans.map((plan) => ({ ...plan })),
+    vehiclePlans: JSON.parse(JSON.stringify(record.vehiclePlans)),
     quote: { ...record.quote, transportFees: record.quote.transportFees.map((fee) => ({ ...fee })), options: record.quote.options.map((option) => ({ ...option })) },
     dailyPlans: [],
   });
@@ -191,11 +193,8 @@ async function submitForm() {
     ...form,
     destinations: [...form.destinations],
     hotelPlans: form.hotelPlans.map((plan) => ({ ...plan, hotels: plan.hotels.map((hotel) => ({ ...hotel })) })),
-    guidePlans: form.guidePlans.map((plan) => ({ ...plan, dayIds: [...plan.dayIds] })),
-    vehiclePlans: form.vehiclePlans.map((plan) => ({
-      ...plan,
-      vehicle: plan.vehicle ? { ...plan.vehicle } : null,
-    })),
+    guidePlans: form.guidePlans.map((plan) => ({ ...plan })),
+    vehiclePlans: JSON.parse(JSON.stringify(form.vehiclePlans)),
     quote: { ...form.quote, transportFees: form.quote.transportFees.map((fee) => ({ ...fee })), options: form.quote.options.map((option) => ({ ...option })) },
     dailyPlans: [],
   });

@@ -93,6 +93,7 @@ import type { ResourcePriceDetail } from "../pricing";
 
 const props = defineProps<{
   modelValue: boolean;
+  destination?: string;
   guestCount: number;
   mealSlot: MealSlot | null;
 }>();

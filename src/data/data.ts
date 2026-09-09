@@ -38,7 +38,7 @@ export const users: PrototypeUserRecord[] = [
     email: "inquiry@sunrise.local",
     deptId: 3,
     createTime: "2026-08-19 09:10:00",
-    roles: ["INQUIRY_COORDINATOR"],
+    roles: ["COORDINATOR"],
   },
   {
     id: "3",
@@ -65,7 +65,7 @@ export const users: PrototypeUserRecord[] = [
     email: "operations@sunrise.local",
     deptId: 3,
     createTime: "2026-08-19 09:30:00",
-    roles: ["INQUIRY_COORDINATOR"],
+    roles: ["COORDINATOR"],
   },
   {
     id: "5",
@@ -78,7 +78,7 @@ export const users: PrototypeUserRecord[] = [
     email: "inquiry.lina@sunrise.local",
     deptId: 3,
     createTime: "2026-08-19 09:40:00",
-    roles: ["INQUIRY_COORDINATOR"],
+    roles: ["COORDINATOR"],
   },
   {
     id: "6",
@@ -91,7 +91,7 @@ export const users: PrototypeUserRecord[] = [
     email: "inquiry.zhouyue@sunrise.local",
     deptId: 3,
     createTime: "2026-08-19 09:50:00",
-    roles: ["INQUIRY_COORDINATOR"],
+    roles: ["COORDINATOR"],
   },
   {
     id: "7",
@@ -104,7 +104,7 @@ export const users: PrototypeUserRecord[] = [
     email: "operations.chenchen@sunrise.local",
     deptId: 3,
     createTime: "2026-08-19 10:00:00",
-    roles: ["INQUIRY_COORDINATOR"],
+    roles: ["COORDINATOR"],
   },
   {
     id: "8",
@@ -117,7 +117,7 @@ export const users: PrototypeUserRecord[] = [
     email: "operations.zhaolei@sunrise.local",
     deptId: 3,
     createTime: "2026-08-19 10:10:00",
-    roles: ["INQUIRY_COORDINATOR"],
+    roles: ["COORDINATOR"],
   },
 ];
 

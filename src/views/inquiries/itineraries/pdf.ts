@@ -16,7 +16,6 @@ import { calculateDestinationNights, getEnabledHotelPlans, HOTEL_PLAN_TIER_LABEL
 import { calculateItineraryQuote } from "./quote-pricing";
 import {
   getEnabledVehiclePlans,
-  getVehiclePlan,
   VEHICLE_PLAN_TIER_LABELS,
 } from "./vehicle-plans";
 
@@ -165,7 +164,7 @@ export function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord,
       <h1 style="margin:0 0 8px;font-size:26px;">${escapeHtml(itinerary.title)}</h1>
       <div style="color:#606266;">行程编号：${escapeHtml(itinerary.code)} · 旅行社：${escapeHtml(inquiry.agencyName)}</div>
       <div style="margin-top:6px;color:#606266;">日期：${escapeHtml(itinerary.startDate)} — ${escapeHtml(itinerary.endDate)} · ${itineraryDuration(itinerary.dailyPlans).days}天${itineraryDuration(itinerary.dailyPlans).nights}晚</div>
-      <div style="margin-top:6px;color:#606266;">人数：成人 ${itinerary.adults} 人 · 儿童 ${itinerary.childrenCount} 人</div>
+      <div style="margin-top:6px;color:#606266;">人数：成人 ${itinerary.adults} 人 · 儿童 ${itinerary.childrenCount} 人 · 领队 ${itinerary.leaderCount} 人（${itinerary.adults + itinerary.childrenCount}+${itinerary.leaderCount}）</div>
       <div style="margin-top:6px;color:#606266;">${snapshot ? `报价编号：${escapeHtml(snapshot.quoteCode)} · V${snapshot.quoteVersion}<br>` : ""}报价生成时间：${escapeHtml(generatedAt)}</div>
     </header>
     ${scheduleSections}
@@ -194,13 +193,13 @@ function buildHotelPairingSection(itinerary: ItineraryRecord) {
           <th style="${quoteLabelStyle()}">${escapeHtml(HOTEL_PLAN_TIER_LABELS[plan.tier])}</th>
           ${hotelDestinations.map((destination) => {
             const hotel = plan.hotels.find((selection) => selection.destination === destination);
-            return `<td style="${quoteCellStyle()}">${escapeHtml(hotel ? `${hotel.hotelName}（${hotel.breakfastIncluded ? "含早" : "不含早"}）` : "-")}</td>`;
+            return `<td style="${quoteCellStyle()}">${escapeHtml(hotel ? `${hotel.hotelName}（含早餐）` : "-")}</td>`;
           }).join("")}
         </tr>`).join("")}
         ${vehiclePlans.map((plan) => `<tr>
           <th style="${quoteLabelStyle()}">${escapeHtml(VEHICLE_PLAN_TIER_LABELS[plan.tier])}</th>
           <td colspan="${hotelDestinations.length}" style="${quoteCellStyle()}">${escapeHtml(
-            plan.vehicle ? `${plan.vehicle.vehicleName}${plan.vehicle.seats ? `（${plan.vehicle.seats}座）` : ""}` : "-"
+            plan.arrangements.map(a => `${a.dayIds.map(id => 'D' + itinerary.dailyPlans.find(d => d.id === id)?.dayNumber).join('、')}：${a.vehicles.map(v => `${v.vehicleName}（${v.seats}座）×${v.quantity}辆`).join('、')}`).join('；')
           )}</td>
         </tr>`).join("")}
       </tbody>
@@ -240,20 +239,21 @@ function buildQuoteTable(
           ${options.map(({ option }) => `
             <th style="${quoteHeaderStyle()}">
               <div>${escapeHtml(HOTEL_PLAN_TIER_LABELS[option.hotelTier])}</div>
-              <div style="margin-top:3px;">${guestCount}PAX｜${escapeHtml(getVehicleQuoteLabel(itinerary, option.vehicleTier))}</div>
+              <div style="margin-top:3px;">${guestCount}PAX｜${escapeHtml(getVehicleQuoteLabel(option.vehicleTier))}</div>
             </th>`).join("")}
         </tr>
       </thead>
       <tbody>
         ${buildQuoteRow("成人团费", options, ({ option, calculation }) => `
           <strong>RMB ${formatMoney(calculation.adultUnitPrice)} PP</strong>
-          <div style="margin-top:4px;color:${option.leaderFocEnabled ? "#15803d" : "#606266"};font-size:10px;">
-            ${option.leaderFocEnabled ? `${guestCount}+1 FOC (TOUR LEADER ONLY)` : "NO FOC"}
+          <div style="margin-top:4px;color:${(option.leaderFocEnabled && itinerary.leaderCount > 0) ? "#15803d" : "#606266"};font-size:10px;">
+            ${(option.leaderFocEnabled && itinerary.leaderCount > 0) ? `${guestCount}+${itinerary.leaderCount} FOC (TOUR LEADER ONLY)` : "NO FOC"}
           </div>`)}
         ${childRow}
         ${buildExtraFeeRows(itinerary, options.length)}
         ${buildQuoteRow("单房差", options, ({ calculation }) => `RMB ${formatMoney(calculation.singleSupplementUnitCost)}`)}
         ${buildQuoteRow("团费总计", options, ({ calculation }) => `<strong>RMB ${formatMoney(calculation.totalPrice)}</strong>`)}
+        ${buildQuoteRow("其中：司陪费和其它支出（已含）", options, () => `RMB ${formatMoney(itinerary.quote.otherExpenses)}`)}
       </tbody>
     </table>`;
 }
@@ -276,10 +276,8 @@ function chunkQuoteOptions(options: QuoteDisplayOption[]) {
   );
 }
 
-function getVehicleQuoteLabel(itinerary: ItineraryRecord, tier: ItineraryQuoteOption["vehicleTier"]) {
-  const seats = getVehiclePlan(itinerary, tier)?.vehicle?.seats;
-  const seatLabel = seats ? `${seats}座` : "";
-  return `${seatLabel}${tier === "standard" ? "普通巴士" : "VIP巴士"}`;
+function getVehicleQuoteLabel(tier: ItineraryQuoteOption["vehicleTier"]) {
+  return VEHICLE_PLAN_TIER_LABELS[tier];
 }
 
 function quoteHeaderStyle() {
@@ -303,7 +301,7 @@ function buildScheduleSections(days: ItineraryDayRecord[], itinerary: ItineraryR
           <td style="${scheduleCellStyle("center")}">${escapeHtml(formatScheduleDate(day.date))}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(formatScheduleRoute(day))}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(getTransportMethodNames(day.transport) || "-")}</td>
-          <td style="${scheduleCellStyle("left")};white-space:pre-wrap;line-height:1.6;">${escapeHtml((day.description?.trim() || "-") + "\n" + getDailyGuideText(day, itinerary))}</td>
+          <td style="${scheduleCellStyle("left")};white-space:pre-wrap;line-height:1.6;">${escapeHtml(day.description?.trim() || "-")}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(day.overnightDestination || "-")}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(getDailyMealCodes(day, getDayBreakfastStatus(itinerary, itinerary.dailyPlans.indexOf(day))) || "-")}</td>
         </tr></tbody>
@@ -350,13 +348,8 @@ function formatScheduleRoute(day: ItineraryDayRecord) {
   return `${day.departure} / ${day.destination}`;
 }
 
-export function getDailyGuideText(day: ItineraryDayRecord, itinerary: ItineraryRecord) {
-  const guides = itinerary.guidePlans.filter((guide) => guide.dayIds.includes(day.id));
-  return guides.length ? `导游服务：${guides.map((guide) => `${guide.destination}（含导游）`).join("、")}` : "当日不含导游服务";
-}
-
-export function getDailyMealCodes(day: ItineraryDayRecord, breakfastStatus: "included" | "excluded" | "mixed" | "pending" = day.meals.breakfast ? "included" : "excluded") {
-  return [breakfastStatus === "pending" ? "早餐待确认" : breakfastStatus === "mixed" ? "早餐方案不一致" : breakfastStatus === "included" ? "B" : "", day.meals.lunch ? "L" : "", day.meals.dinner ? "D" : ""].filter(Boolean).join(", ");
+export function getDailyMealCodes(day: ItineraryDayRecord, breakfastStatus: "included" | "excluded" | "pending" = day.meals.breakfast ? "included" : "excluded") {
+  return [breakfastStatus === "pending" ? "早餐待确认" : breakfastStatus === "included" ? "B" : "", day.meals.lunch ? "L" : "", day.meals.dinner ? "D" : ""].filter(Boolean).join(", ");
 }
 
 function buildExtraFeeRows(itinerary: ItineraryRecord, columnCount: number) {
@@ -373,11 +366,11 @@ function buildExtraFeeRows(itinerary: ItineraryRecord, columnCount: number) {
 function buildCustomerTerms(itinerary: ItineraryRecord) {
   const hasMeals = itinerary.dailyPlans.some((day) => day.meals.lunch || day.meals.dinner);
   const rows: Array<[string, string]> = [
-    ["酒店", "行程所列酒店双人入住，是否含早以酒店方案表为准。早餐由前一晚酒店提供；每日 B 标记表示含早，“早餐方案不一致”表示各方案含早情况不同。"],
+    ["酒店", "行程所列酒店按双人入住标准报价，均含早餐。早餐由前一晚酒店提供；每日 B 标记表示含早餐。"],
     ["餐食", hasMeals ? "仅包含行程标注的午餐 L、晚餐 D，未标注的正餐自理。" : "团费不含正餐，请自理。"],
     ["交通", "行程所列旅游车服务；机票、动车票及小费不包含在团费中，另列报价不计入团费总计。"],
   ];
-  if (itinerary.guidePlans.length > 0) rows.push(["导游", "导游服务以每日行程标注为准，未标注的日期不含导游。"]);
+  if (itinerary.guidePlans.length > 0) rows.push(["导游", itinerary.guidePlans.map(g => `${g.destination}：${g.guideName}，服务${g.serviceDays}天`).join("；")]);
   if (itinerary.quote.holidayRestrictions.trim()) rows.push(["节假日限制", itinerary.quote.holidayRestrictions]);
   if (itinerary.quote.hotelReplacementTerms.trim()) rows.push(["同级酒店替换条款", itinerary.quote.hotelReplacementTerms]);
   if (itinerary.quote.customerNotes.trim()) rows.push(["客户备注", itinerary.quote.customerNotes]);

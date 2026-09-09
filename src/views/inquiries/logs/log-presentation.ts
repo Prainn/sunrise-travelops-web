@@ -50,6 +50,7 @@ export function formatLogValue(value: unknown, path: string, context: DisplayCon
   switch (field) {
     case "status": key = `${targetType}.statuses.${value}`; break;
     case "tier": case "hotelTier": case "vehicleTier": key = `inquiry.log.tiers.${value}`; break;
+    case "secondLanguage": key = `planning.languages.${value}`; break;
     case "rating": key = `hotel.ratings.${value}`; break;
     case "mealSlot": key = `itinerary.meals.${value}`; break;
     case "cabin": key = `itinerary.cabins.${value}`; break;

@@ -63,7 +63,7 @@ function createCrud<T extends { code: string }>(
       return fromResponse(result);
     },
     create(data) {
-      return request.post<ApiRecord<T>>(baseUrl, { ...toInput(data), code: data.code.trim() || undefined }).then(fromResponse);
+      return request.post<ApiRecord<T>>(baseUrl, { ...toInput(data), ...(resourceName === "guides" ? {} : { code: data.code.trim() || undefined }) }).then(fromResponse);
     },
     update(id, data) {
       return request.put<ApiRecord<T>>(
@@ -95,7 +95,7 @@ function supplierInput(data: SupplierRecord) {
 function hotelInput(data: HotelRecord) {
   return {
     id: data.id || undefined, code: data.code.trim(), name: data.name.trim(), province: data.province.trim(),
-    city: data.city.trim(), rating: data.rating.trim(), facilities: data.facilities.trim(), breakfastIncluded: data.breakfastIncluded, breakfast: data.breakfast.trim(),
+    city: data.city.trim(), rating: data.rating.trim(), facilities: data.facilities.trim(), breakfast: data.breakfast.trim(),
     address: data.address.trim(), phone: data.phone.trim(), nearby: data.nearby.trim(),
     individualPrice: data.individualPrice, groupPrice: data.groupPrice, minimumGroupSize: data.minimumGroupSize,
     unit: data.unit, status: data.status,
@@ -120,19 +120,13 @@ function attractionInput(data: AttractionRecord) {
 function transportInput(data: TransportRecord) {
   return {
     id: data.id || undefined, code: data.code.trim(), name: data.name.trim(), serviceLevel: data.serviceLevel,
-    seats: data.seats, dailyPrice: data.dailyPrice, unit: data.unit, city: data.city.trim(),
+    seats: data.seats, unit: data.unit,
     phone: data.phone.trim(), status: data.status, remark: data.remark.trim(),
   };
 }
 
 function guideInput(data: GuideRecord) {
-  return {
-    id: data.id || undefined, code: data.code.trim(), name: data.name.trim(), certificateNo: data.certificateNo.trim(),
-    gender: data.gender, age: data.age, languages: data.languages, employmentType: data.employmentType,
-    identityNumber: data.identityNumber.trim(), phone: data.phone.trim(), dailyPrice: data.dailyPrice,
-    unit: data.unit, hasLaborContract: data.hasLaborContract, groundOperatorId: data.groundOperatorId,
-    licensePhotoUrl: data.licensePhotoUrl.trim(), remark: data.remark.trim(), status: data.status,
-  };
+  return { id: data.id || undefined, secondLanguage: data.secondLanguage, shopping: data.shopping, dailyPrice: data.dailyPrice };
 }
 
 function normalizeHotel(data: ApiRecord<HotelRecord>): HotelRecord {
@@ -161,12 +155,10 @@ function normalizeAttraction(data: AttractionRecord): AttractionRecord {
   return { ...data, prices: (data.prices ?? []).map((price) => normalizeAttractionPrice(price as unknown as ApiRecord<AttractionPriceRecord>)) };
 }
 
-function normalizeTransport(data: ApiRecord<TransportRecord>): TransportRecord {
-  return { ...data, dailyPrice: normalizeMoney(data.dailyPrice) };
-}
+function normalizeTransport(data: ApiRecord<TransportRecord>): TransportRecord { return data; }
 
 function normalizeGuide(data: ApiRecord<GuideRecord>): GuideRecord {
-  return { ...data, dailyPrice: normalizeMoney(data.dailyPrice), groundOperatorId: data.groundOperatorId ?? "" };
+  return { ...data, dailyPrice: normalizeMoney(data.dailyPrice) };
 }
 
 function contactInput(data: AgencyContactRecord) {
@@ -342,7 +334,7 @@ export const resourceService = {
     return loadResourceRecords(guides, guideApi, query);
   },
   async getSelectionOptions(kind: "hotels" | "transports" | "guides" | "agencies", query: ResourceQuery) {
-    return request.get<PageResult<{ id: string; name: string; code?: string; unitCost?: string; breakfastIncluded?: boolean; seats?: number; city?: string }>>(
+    return request.get<PageResult<{ id: string; name: string; code?: string; unitCost?: string; secondLanguage?: string; shopping?: boolean; seats?: number; city?: string }>>(
       `/resources/selections/${kind}`, { params: buildParams(query) }
     );
   },

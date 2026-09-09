@@ -1,12 +1,39 @@
 <template>
   <div class="page-container">
-    <GuideSearchForm
-      v-model:keywords="keywords"
-      v-model:gender="gender"
-      v-model:employment-type="employmentType"
-      v-model:language="language"
-      @reset="resetQuery"
-    />
+    <el-form
+      inline
+      class="page-search"
+    >
+      <el-form-item :label="$t('planning.secondLanguage')">
+        <el-select
+          v-model="secondLanguage"
+          clearable
+          class="w-[180px]"
+        >
+          <el-option
+            v-for="item in GUIDE_LANGUAGE_OPTIONS"
+            :key="item.value"
+            :value="item.value"
+            :label="$t(`planning.languages.${item.value}`)"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item :label="$t('planning.shopping')">
+        <el-select
+          v-model="shopping"
+          clearable
+          class="w-[140px]"
+        >
+          <el-option
+            :label="$t('planning.withShopping')"
+            value="true"
+          /><el-option
+            :label="$t('planning.withoutShopping')"
+            value="false"
+          />
+        </el-select>
+      </el-form-item>
+    </el-form>
     <el-card
       class="page-content"
       shadow="never"
@@ -17,7 +44,7 @@
           type="primary"
           @click="emit('create')"
         >
-          {{ $t("guide.createGuide") }}
+          {{ $t('planning.createGuide') }}
         </el-button>
       </TableToolbar>
       <div class="page-table-wrapper">
@@ -27,173 +54,40 @@
           height="100%"
           row-key="id"
         >
-          <el-table-column
-            prop="code"
-            :label="$t('resource.code')"
-            width="200"
-          />
-          <el-table-column
-            prop="certificateNo"
-            :label="$t('guide.certificateNo')"
-            min-width="180"
-          />
-          <el-table-column
-            prop="name"
-            :label="$t('resource.guideName')"
-            min-width="120"
-          />
-          <el-table-column
-            :label="$t('guide.gender')"
-            width="80"
-            align="center"
-          >
-            <template #default="scope">
-              {{ $t(scope.row.gender === "male" ? "guide.male" : "guide.female") }}
+          <el-table-column :label="$t('planning.guidePrice')">
+            <template #default="{ row }">
+              ¥{{ formatMoney(row.dailyPrice) }}
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('planning.secondLanguage')">
+            <template #default="{ row }">
+              {{ $t(`planning.languages.${row.secondLanguage}`) }}
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('planning.shopping')">
+            <template #default="{ row }">
+              {{ $t(row.shopping ? 'planning.withShopping' : 'planning.withoutShopping') }}
             </template>
           </el-table-column>
           <el-table-column
-            prop="age"
-            :label="$t('guide.age')"
-            width="80"
-            align="center"
-          />
-          <el-table-column
-            :label="$t('guide.languages')"
-            min-width="140"
+            :label="$t('common.operation')"
+            width="180"
           >
-            <template #default="scope">
-              <el-tag
-                v-for="item in scope.row.languages"
-                :key="item"
-                class="guide-table__language"
-                effect="plain"
-              >
-                {{ item }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            :label="$t('guide.employmentType')"
-            width="110"
-            align="center"
-          >
-            <template #default="scope">
-              <el-tag
-                :type="scope.row.employmentType === 'full-time' ? 'primary' : 'warning'"
-                effect="light"
-              >
-                {{ $t(scope.row.employmentType === "full-time" ? "guide.fullTime" : "guide.partTime") }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="identityNumber"
-            :label="$t('guide.identityNumber')"
-            min-width="190"
-          />
-          <el-table-column
-            prop="phone"
-            :label="$t('resource.phone')"
-            min-width="130"
-          />
-          <el-table-column
-            prop="dailyPrice"
-            :label="$t('resource.dailyPrice')"
-            width="110"
-            align="right"
-          >
-            <template #default="scope">
-              ¥{{ formatMoney(Number(scope.row.dailyPrice)) }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            :label="$t('resource.supplierName')"
-            min-width="160"
-          >
-            <template #default="scope">
-              <el-tag
-                type="warning"
-                effect="plain"
-              >
-                {{ getGroundOperatorName(scope.row.groundOperatorId) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            :label="$t('guide.hasLaborContract')"
-            width="100"
-            align="center"
-          >
-            <template #default="scope">
-              <el-tag :type="scope.row.hasLaborContract ? 'success' : 'warning'">
-                {{ $t(scope.row.hasLaborContract ? "common.yes" : "common.no") }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            :label="$t('guide.licensePhoto')"
-            width="110"
-            align="center"
-          >
-            <template #default="scope">
-              <el-image
-                v-if="scope.row.licensePhotoUrl"
-                class="guide-table__photo"
-                :src="scope.row.licensePhotoUrl"
-                :preview-src-list="[scope.row.licensePhotoUrl]"
-                preview-teleported
-                fit="cover"
-              />
-              <span v-else>-</span>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="remark"
-            :label="$t('common.remark')"
-            min-width="160"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            :label="$t('common.status')"
-            width="90"
-            align="center"
-          >
-            <template #default="scope">
-              <el-tag :type="scope.row.status === 'enabled' ? 'success' : 'info'">
-                {{ $t(`common.${scope.row.status}`) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            :label="$t('common.actions')"
-            width="220"
-            fixed="right"
-            align="center"
-          >
-            <template #default="scope">
+            <template #default="{ row }">
               <el-button
                 v-has-perm="RESOURCE_PERMISSIONS.guide.update"
+                link
                 type="primary"
-                link
-                @click="emit('edit', scope.row as GuideRecord)"
+                @click="emit('edit', row as GuideRecord)"
               >
-                {{ $t("common.edit") }}
-              </el-button>
-              <el-button
-                v-has-perm="RESOURCE_PERMISSIONS.guide.update"
-                type="warning"
-                link
-                @click="emit('toggle-status', scope.row as GuideRecord)"
-              >
-                {{ $t(scope.row.status === "enabled" ? "common.disabled" : "common.enabled") }}
-              </el-button>
-              <el-button
+                {{ $t('common.edit') }}
+              </el-button><el-button
                 v-has-perm="RESOURCE_PERMISSIONS.guide.delete"
-                type="danger"
                 link
-                @click="emit('delete', scope.row as GuideRecord)"
+                type="danger"
+                @click="emit('delete', row as GuideRecord)"
               >
-                {{ $t("common.delete") }}
+                {{ $t('common.delete') }}
               </el-button>
             </template>
           </el-table-column>
@@ -209,73 +103,20 @@
     </el-card>
   </div>
 </template>
-
 <script setup lang="ts">
-import { useResourcePagination } from "@/views/resources/useResourcePagination";
-import { computed, ref, watch } from "vue";
-import { useDebounceFn } from "@vueuse/core";
-import { useI18n } from "vue-i18n";
-import { RESOURCE_PERMISSIONS } from "@/constants";
-import { resourceService } from "@/services/resource.service";
-import type { GuideEmploymentType, GuideGender, GuideRecord, ResourceListQuery } from "@/types/resource";
-import { formatMoney } from "@/utils";
-import TableToolbar from "@/components/TableToolbar/index.vue";
-import GuideSearchForm from "./GuideSearchForm.vue";
-
+import { ref, watch } from 'vue';
+import { useDebounceFn } from '@vueuse/core';
+import { useResourcePagination } from '@/views/resources/useResourcePagination';
+import { GUIDE_LANGUAGE_OPTIONS, type GuideRecord, type ResourceListQuery } from '@/types/resource';
+import { RESOURCE_PERMISSIONS } from '@/constants';
+import { formatMoney } from '@/utils';
+import TableToolbar from '@/components/TableToolbar/index.vue';
 defineProps<{ rows: GuideRecord[]; total: number }>();
-const emit = defineEmits<{
-  refresh: [query: ResourceListQuery];
-  "query-change": [query: ResourceListQuery];
-  create: [];
-  edit: [record: GuideRecord];
-  delete: [record: GuideRecord];
-  "toggle-status": [record: GuideRecord];
-}>();
-
-const { t } = useI18n();
-const keywords = ref("");
-const gender = ref<GuideGender | "">("");
-const employmentType = ref<GuideEmploymentType | "">("");
-const language = ref("");
+const emit = defineEmits<{ refresh: [ResourceListQuery]; 'query-change': [ResourceListQuery]; create: []; edit: [GuideRecord]; delete: [GuideRecord] }>();
+const secondLanguage = ref(''); const shopping = ref('');
 const { pageNum, pageSize, paginationQuery } = useResourcePagination();
-const groundOperatorOptions = computed(() => resourceService.supplierOptions);
-const requestRows = useDebounceFn(() => emit("query-change", currentQuery()), 300);
-
-watch([keywords, gender, employmentType, language], () => {
-  pageNum.value = 1;
-  requestRows();
-});
-
-function currentQuery(): ResourceListQuery {
-  return {
-    ...paginationQuery(),
-    keyword: keywords.value,
-    gender: gender.value || undefined,
-    employmentType: employmentType.value || undefined,
-    language: language.value,
-  };
-}
-
-function resetQuery() {
-  keywords.value = "";
-  gender.value = "";
-  employmentType.value = "";
-  language.value = "";
-  pageNum.value = 1;
-}
-
-function refreshRows() {
-  emit("refresh", currentQuery());
-}
-
-function getGroundOperatorName(id: string) {
-  return groundOperatorOptions.value.find((item) => item.id === id)?.name ?? t("resource.groundOperatorProvidedTag");
-}
+function query(): ResourceListQuery { return { ...paginationQuery(), secondLanguage: secondLanguage.value || undefined, shopping: shopping.value || undefined }; }
+const requestRows = useDebounceFn(() => emit('query-change', query()), 300);
+watch([secondLanguage, shopping], () => { pageNum.value = 1; requestRows(); });
+function refreshRows() { emit('refresh', query()); }
 </script>
-
-<style scoped lang="scss">
-.guide-table {
-  &__language { @apply 'mr-[4px]'; }
-  &__photo { @apply 'w-[36px] h-[36px] rounded-[4px]'; }
-}
-</style>

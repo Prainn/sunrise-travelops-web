@@ -4,7 +4,7 @@ import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import { resourceService } from "@/services/resource.service";
 import { getResourcePriceOptions, getDefaultResourceQuantity, type ResourcePriceOption } from "./pricing";
 
-export function useResourcePriceSelection(props: { readonly modelValue: boolean; readonly guestCount: number; readonly mealSlot: MealSlot | null }, onError: () => void) {
+export function useResourcePriceSelection(props: { readonly destination?: string; readonly modelValue: boolean; readonly guestCount: number; readonly mealSlot: MealSlot | null }, onError: () => void) {
   const type = computed<ItineraryDailyItemType>(() => props.mealSlot ? "restaurant" : "attraction");
   const city = ref("");
   const selectedId = ref("");
@@ -31,7 +31,7 @@ export function useResourcePriceSelection(props: { readonly modelValue: boolean;
     selectedId.value = "";
     selectedOption.value = undefined;
     if (!visible) return;
-    if (city.value) city.value = "";
+    city.value = props.destination ?? "";
   });
 
   watch(selectedOption, (option) => {

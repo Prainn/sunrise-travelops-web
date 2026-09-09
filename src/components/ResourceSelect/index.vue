@@ -21,7 +21,8 @@ const { t, locale } = useI18n();
 type Item = Awaited<ReturnType<typeof resourceService.getSelectionOptions>>["list"][number];
 function label(item: Item) {
   if (props.kind === "agencies") return `${item.name} (${item.code})`;
-  const extra = props.kind === "hotels" ? t(item.breakfastIncluded ? "itinerary.breakfastIncluded" : "itinerary.breakfastExcluded") : props.kind === "transports" ? `${item.seats}座｜${item.city}` : "";
+  if (props.kind === "transports") return `${item.name}｜${item.seats}座`;
+  const extra = props.kind === "hotels" ? t("itinerary.breakfastIncluded") : "";
   return `${item.name}${extra ? `｜${extra}` : ""}｜¥${formatMoney(Number(item.unitCost))}`;
 }
 async function loadOptions(query: RemoteOptionsQuery) {

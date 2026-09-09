@@ -37,7 +37,7 @@ export const inquiries: InquiryRecord[] = [
     version: 1, ownerId: "user-2", contactId: "contact-1", id: "inquiry-15", code: "INQ-202608-015", agencyId: "", agencyCode: "AGY-005", agencyName: "Seoul Hanul Travel",
     contactName: "Min-jun Park", email: "minjun@example.com", phone: "+82 2-555-0105", countryOrRegion: "韩国",
     sourceChannel: "Referral", originalMessage: "10 人企业团希望安排昆明、大理、丽江 7 天游，包含欢迎宴和特色文化体验。",
-    internalRemark: "新询盘演示数据，待收客计调创建行程。", owner: "李娜", nextFollowUpAt: "2026-09-01 16:00", plannedDays: 7,
+    internalRemark: "新询盘演示数据，待计调创建行程。", owner: "李娜", nextFollowUpAt: "2026-09-01 16:00", plannedDays: 7,
     lostReason: "", status: "new", creator: "inquiry_lina", createdAt: "2026-08-31 08:45",
   },
 ];
@@ -52,7 +52,7 @@ const completeItineraryTemplate: ItineraryRecord = {
     endDate: "2026-10-25",
     days: 7,
     adults: 10,
-    childrenCount: 0,
+    childrenCount: 0, leaderCount: 0,
     destinations: ["昆明", "大理", "丽江"],
     hotelPlans: [
       { tier: "international_five_star", hotels: [] },
@@ -60,8 +60,8 @@ const completeItineraryTemplate: ItineraryRecord = {
     ],
     guidePlans: [],
     vehiclePlans: [
-      { tier: "standard", vehicle: null },
-      { tier: "vip", vehicle: null },
+      { tier: "standard", arrangements: [], totalPrice: null },
+      { tier: "vip", arrangements: [], totalPrice: null },
     ],
 
     quote: createDefaultQuoteSettings(),
@@ -207,7 +207,7 @@ function createCompleteItineraryVariant(options: CompleteItineraryVariant): Itin
     guidePlans: [],
     vehiclePlans: completeItineraryTemplate.vehiclePlans.map((plan) => ({
       ...plan,
-      vehicle: plan.vehicle ? { ...plan.vehicle } : null,
+      arrangements: plan.arrangements.map(a => ({ ...a, dayIds: [...a.dayIds], vehicles: a.vehicles.map(v => ({ ...v })) })),
     })),
     creator: options.creator,
     createdAt: options.createdAt,

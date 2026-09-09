@@ -114,11 +114,11 @@
         "vehicle": "车型",
         "vehicleName": "车型名称",
         "seats": "座位数",
-        "serviceDays": "用车天数",
+        "serviceDays": "导游服务天数",
         "guidePlans": "导游方案",
-        "guideName": "导游姓名",
+        "guideName": "导游服务",
         "dailyPrice": "导游日价",
-        "dayIds": "服务日期",
+        "dayIds": "用车日期",
         "quote": "报价设置",
         "options": "报价组合",
         "hotelTier": "酒店档次",
@@ -150,7 +150,14 @@
         "lostReason": "流失原因",
         "owner": "负责人",
         "status": "状态",
-        "order": "顺序"
+        "order": "顺序",
+        "leaderCount": "领队人数",
+        "arrangements": "用车安排",
+        "vehicles": "车型与数量",
+        "totalPrice": "全程总价",
+        "secondLanguage": "第二语种",
+        "shopping": "是否进店",
+        "otherExpenses": "司陪费和其它支出（已含）"
       },
       "day": "第 {day} 天",
       "tiers": {
@@ -166,7 +173,7 @@
     "nextFollowUpPlaceholder": "请选择下次跟进时间",
     "originalMessage": "客户原始消息",
     "originalMessageRequired": "请输入客户原始消息",
-    "owner": "收客计调",
+    "owner": "计调",
     "phone": "联系人电话",
     "plannedDays": "计划天数",
     "plannedDaysRequired": "请输入计划天数",
@@ -301,7 +308,7 @@
     "pendingNights": "{count} 天住宿未填写",
     "breakfastPending": "早餐待确认",
     "guideServiceDates": "服务日期",
-    "guideDatesRequired": "请为已选导游选择服务日期",
+    "guideDatesRequired": "请填写导游服务天数",
     "breakfastIncluded": "含早餐",
     "breakfastExcluded": "不含早餐",
     "meals": {
@@ -355,7 +362,8 @@
     },
     "nightCount": "{count}晚",
     "totalNights": "共{count}晚",
-    "duration": "{days}天{nights}晚"
+    "duration": "{days}天{nights}晚",
+    "otherExpensesExceedTotal": "司陪费和其它支出不能超过团费总价"
   },
   "businessCategory": {
     "applicableResources": "适用资源",
@@ -707,7 +715,7 @@
     "resetPassword": "重置密码",
     "rolePlaceholder": "请选择角色",
     "roles": {
-      "inquiryCoordinator": "收客计调",
+      "coordinator": "计调",
       "resourceManager": "资源主管",
       "systemAdministrator": "系统管理员"
     },
@@ -792,7 +800,7 @@
       "ctrip_preferred": "携程优选"
     },
     "searchPlaceholder": "搜索酒店编号、名称或地址",
-    "breakfastIncluded": "是否含早"
+    "breakfastIncluded": "含早餐"
   },
   "attraction": {
     "area": "旅游区域",
@@ -1003,5 +1011,46 @@
     "create": "新增城市",
     "edit": "编辑城市",
     "province": "省份 / 地区"
+  },
+  "planning": {
+    "leaderCount": "领队人数",
+    "secondLanguage": "第二语种",
+    "languageWithChinese": "第二语种（默认包含中文）",
+    "shopping": "是否进店",
+    "withShopping": "进店",
+    "withoutShopping": "不进店",
+    "guidePrice": "价格（元/天）",
+    "editGuide": "编辑导游价格",
+    "createGuide": "新增导游价格",
+    "guideService": "导游服务",
+    "selectGuide": "选择语种与是否进店",
+    "dailyPrice": "日价",
+    "serviceDays": "服务天数",
+    "vehiclePlans": "用车方案",
+    "passengers": "乘车人数",
+    "addArrangement": "新增用车安排",
+    "selectDates": "选择用车日期",
+    "addVehicle": "添加车型",
+    "vehicles": "辆",
+    "seats": "座",
+    "delete": "删除",
+    "totalVehiclePrice": "全行程全部用车总价（元）",
+    "capacityHint": "本条安排 {seats} 座；同日各安排合计须满足 {passengers} 人",
+    "hotelPriceUnit": "元/间/晚 · 含早餐",
+    "hotelPrice": "实际每间每晚价格",
+    "otherExpenses": "司陪费和其它支出",
+    "includedAmount": "已含金额（元）",
+    "includedHint": "包含在游客团费总计中，PDF单列披露，不另加总价。",
+    "languages": {
+      "none": "无（仅中文）",
+      "en": "英文",
+      "th": "泰语",
+      "vi": "越南语",
+      "ms": "马来语",
+      "id": "印尼语",
+      "my": "缅甸语",
+      "km": "高棉语",
+      "lo": "老挝语"
+    }
   }
 }

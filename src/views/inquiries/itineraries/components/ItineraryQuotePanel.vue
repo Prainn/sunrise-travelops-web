@@ -79,10 +79,10 @@
             >
               <el-switch
                 :model-value="item.option.leaderFocEnabled"
-                :disabled="!editable"
+                :disabled="!editable || !leaderCount"
                 @update:model-value="emit('update-quote-option', item.option.id, { leaderFocEnabled: Boolean($event) })"
               />
-              <div>{{ item.option.leaderFocEnabled ? $t('itinerary.leaderFocEnabledLabel', { count: guestCount }) : $t('itinerary.noFoc') }}</div>
+              <div>{{ item.option.leaderFocEnabled && leaderCount ? `${guestCount}+${leaderCount} FOC` : $t('itinerary.noFoc') }}</div>
             </td>
           </tr>
           <tr>
@@ -210,6 +210,18 @@
           {{ $t(type === 'flight' ? 'itinerary.addFlightFee' : 'itinerary.addTrainFee') }}
         </el-button>
       </el-card>
+      <h3>{{ $t('planning.otherExpenses') }}</h3>
+      <el-form-item :label="$t('planning.includedAmount')">
+        <el-input-number
+          :model-value="quote.otherExpenses"
+          :min="0"
+          :precision="2"
+          @change="emit('update-settings', { otherExpenses: $event ?? 0 })"
+        />
+      </el-form-item>
+      <el-text type="info">
+        {{ $t('planning.includedHint') }}
+      </el-text>
       <h3>{{ $t('itinerary.customerTerms') }}</h3>
       <el-form-item
         v-for="field in noteFields"
@@ -243,6 +255,7 @@ const props = defineProps<{
   itemCount: number;
   duration: { days: number; nights: number };
   guestCount: number;
+  leaderCount: number;
   editable: boolean;
 }>();
 const emit = defineEmits<{

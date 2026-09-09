@@ -74,9 +74,9 @@
     <div class="day-card__meals flex flex-wrap items-center gap-[16px] mb-[12px]">
       <el-tag
         :type="breakfastStatus === 'included' ? 'success' : breakfastStatus === 'excluded' ? 'info' : 'warning'"
-        :title="$t(breakfastStatus === 'pending' ? 'itinerary.breakfastPending' : breakfastStatus === 'mixed' ? 'itinerary.breakfastMixed' : breakfastStatus === 'included' ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded')"
+        :title="$t(breakfastStatus === 'pending' ? 'itinerary.breakfastPending' : breakfastStatus === 'included' ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded')"
       >
-        {{ $t(breakfastStatus === 'pending' ? 'itinerary.breakfastPending' : breakfastStatus === 'mixed' ? 'itinerary.breakfastMixed' : breakfastStatus === 'included' ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded') }}
+        {{ $t(breakfastStatus === 'pending' ? 'itinerary.breakfastPending' : breakfastStatus === 'included' ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded') }}
       </el-tag>
       <div
         v-for="slot in ['lunch', 'dinner'] as const"
@@ -203,7 +203,7 @@ import ItineraryDayForm from "./ItineraryDayForm.vue";
 type EditableDayField = "departure" | "destination" | "overnightDestination" | "transport" | "description";
 const props = defineProps<{
   day: ItineraryDayRecord;
-  breakfastStatus: "included" | "excluded" | "mixed" | "pending";
+  breakfastStatus: "included" | "excluded" | "pending";
   destinations: string[];
   contentEditable: boolean;
   isFirst: boolean;

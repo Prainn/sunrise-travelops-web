@@ -4,6 +4,9 @@
     :title="$t('itinerary.pdfPreviewTitle')"
     width="92vw"
     top="4vh"
+    :close-on-click-modal="!loading"
+    :close-on-press-escape="!loading"
+    :show-close="!loading"
     destroy-on-close
     class="itinerary-pdf-preview"
     @update:model-value="emit('update:modelValue', $event)"
@@ -16,11 +19,15 @@
       :title="$t('itinerary.pdfPreviewTitle')"
     />
     <template #footer>
-      <el-button @click="emit('update:modelValue', false)">
+      <el-button
+        :disabled="loading"
+        @click="emit('update:modelValue', false)"
+      >
         {{ $t("common.cancel") }}
       </el-button>
       <el-button
         type="primary"
+        :loading="loading"
         @click="emit('confirm')"
       >
         {{ $t("itinerary.confirmDownloadPdf") }}
@@ -33,6 +40,7 @@
 defineProps<{
   modelValue: boolean;
   src: string;
+  loading: boolean;
 }>();
 
 const emit = defineEmits<{
