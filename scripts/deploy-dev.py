@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """SSH forced command, installed root-owned; executed as sunrise-deploy."""
 import fcntl
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -98,10 +99,14 @@ def publish(release_id, stream):
     except Exception:
         switch(previous)
         raise
-    (BASE / 'last-deployment.json').write_text(json.dumps({
+    deployment = {
         'release': release_id, 'previous': previous, 'verified': True,
-    }) + '\n')
-    return {'release': release_id, 'previous': previous, 'verified': True}
+        'deployedAt': datetime.now(timezone.utc).isoformat(),
+    }
+    pending = BASE / 'last-deployment.json.next'
+    pending.write_text(json.dumps(deployment) + '\n')
+    pending.replace(BASE / 'last-deployment.json')
+    return deployment
 
 
 def main():

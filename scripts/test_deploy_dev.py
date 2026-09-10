@@ -1,5 +1,7 @@
 import importlib.util
 import io
+import json
+from datetime import datetime
 import os
 from pathlib import Path
 import tarfile
@@ -48,6 +50,8 @@ class DeploymentTests(unittest.TestCase):
         with patch.object(deploy, 'fetch', self.fetch):
             result = deploy.publish('bootstrap-20260909120000', archive(self.files))
         self.assertTrue(result['verified'])
+        self.assertIsNotNone(datetime.fromisoformat(result['deployedAt']).tzinfo)
+        self.assertEqual(json.loads((self.base / 'last-deployment.json').read_text()), result)
         self.assertEqual((self.base / 'shared' / 'js' / 'old.js').read_bytes(), b'old chunk')
         self.assertEqual(os.readlink(self.base / 'current'), 'releases/bootstrap-20260909120000')
 
@@ -56,6 +60,7 @@ class DeploymentTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'HTML does not match'):
                 deploy.publish('bootstrap-20260909120001', archive(self.files))
         self.assertEqual(os.readlink(self.base / 'current'), 'releases/old')
+        self.assertFalse((self.base / 'last-deployment.json').exists())
 
     def test_rejects_archive_path_traversal(self):
         with self.assertRaisesRegex(ValueError, 'unsafe path'):
