@@ -199,7 +199,7 @@ function buildHotelPairingSection(itinerary: ItineraryRecord) {
         ${vehiclePlans.map((plan) => `<tr>
           <th style="${quoteLabelStyle()}">${escapeHtml(VEHICLE_PLAN_TIER_LABELS[plan.tier])}</th>
           <td colspan="${hotelDestinations.length}" style="${quoteCellStyle()}">${escapeHtml(
-            plan.arrangements.map(a => `${a.dayIds.map(id => 'D' + itinerary.dailyPlans.find(d => d.id === id)?.dayNumber).join('、')}：${a.vehicles.map(v => `${v.vehicleName}（${v.seats}座）×${v.quantity}辆`).join('、')}`).join('；')
+            plan.arrangements.map(a => `${a.startDate === a.endDate ? a.startDate : `${a.startDate}—${a.endDate}`}：${a.vehicles.map(v => `${v.vehicleName}（${v.seats}座）×${v.quantity}辆`).join('、')}`).join('；')
           )}</td>
         </tr>`).join("")}
       </tbody>
@@ -370,7 +370,7 @@ function buildCustomerTerms(itinerary: ItineraryRecord) {
     ["餐食", hasMeals ? "仅包含行程标注的午餐 L、晚餐 D，未标注的正餐自理。" : "团费不含正餐，请自理。"],
     ["交通", "行程所列旅游车服务；机票、动车票及小费不包含在团费中，另列报价不计入团费总计。"],
   ];
-  if (itinerary.guidePlans.length > 0) rows.push(["导游", itinerary.guidePlans.map(g => `${g.destination}：${g.guideName}，服务${g.serviceDays}天`).join("；")]);
+  if (itinerary.guidePlans.length > 0) rows.push(["导游", itinerary.guidePlans.map(g => `${g.guideName}，服务${g.serviceDays}天`).join("；")]);
   if (itinerary.quote.holidayRestrictions.trim()) rows.push(["节假日限制", itinerary.quote.holidayRestrictions]);
   if (itinerary.quote.hotelReplacementTerms.trim()) rows.push(["同级酒店替换条款", itinerary.quote.hotelReplacementTerms]);
   if (itinerary.quote.customerNotes.trim()) rows.push(["客户备注", itinerary.quote.customerNotes]);

@@ -2,9 +2,9 @@ import { computed, onMounted, reactive, ref, type Ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { ResourceListQuery, ResourceStatus } from "@/types/resource";
-import { DEFAULT_PAGE_SIZE } from "@/components/Pagination/config";
 import { resourceService } from "@/services/resource.service";
 import type { ResourceCrud } from "@/services/resource.service";
+import { RESOURCE_PAGE_SIZE } from "./useResourcePagination";
 
 interface ResourceMaintenanceRecord {
   id: string;
@@ -32,7 +32,7 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
   const record = ref<T>(options.createEmpty()) as Ref<T>;
   const isEditing = computed(() => Boolean(editingId.value));
   const total = ref(0);
-  let activeQuery: ResourceListQuery | undefined = options.paginated === false ? undefined : { page: 1, pageSize: DEFAULT_PAGE_SIZE };
+  let activeQuery: ResourceListQuery | undefined = options.paginated === false ? undefined : { page: 1, pageSize: RESOURCE_PAGE_SIZE };
 
   async function loadRecords(query?: ResourceListQuery) {
     if (query !== undefined) activeQuery = { ...activeQuery, ...query };

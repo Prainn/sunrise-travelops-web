@@ -35,7 +35,6 @@ interface ItineraryEditorOptions {
   canEditPrice: () => boolean;
   getCreator: () => string;
   findHotel: (id: string) => HotelRecord | undefined;
-  findGuide: (id: string) => GuideRecord | undefined;
   findVehicle: (id: string) => TransportRecord | undefined;
 }
 
@@ -43,7 +42,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   function createEmptyItinerary(): ItineraryRecord {
     return {
       id: "", inquiryId: options.inquiryId.value, code: "", title: "", startDate: "", endDate: "", days: 0,
-      adults: 1, childrenCount: 0, leaderCount: 0, version: 0,
+      adults: 0, childrenCount: 0, leaderCount: 0, version: 0,
       guidePlans: [], destinations: [], hotelPlans: createDefaultHotelPlans(), vehiclePlans: createDefaultVehiclePlans(), quote: createDefaultQuoteSettings(),
       dailyPlans: [], status: "draft", quoteGeneratedAt: "", creator: "", createdAt: "", updatedAt: "",
     };
@@ -166,26 +165,26 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     touchSelectedItinerary();
   }
 
-  function updateGuideSelection(destination: string, guideId: string) {
+  function updateGuideSelection(guide: GuideRecord | null) {
     const plan = options.selectedItinerary.value;
-    if (!options.canEditContent() || !plan || !plan.destinations.includes(destination)) return;
-    const current = plan.guidePlans.find((item) => item.destination === destination);
-    if (!guideId) { plan.guidePlans = plan.guidePlans.filter((item) => item.destination !== destination); touchSelectedItinerary(); return; }
-    const guide = options.findGuide(guideId);
+    if (!options.canEditContent() || !plan) return;
+    if (!guide) { plan.guidePlans = []; touchSelectedItinerary(); return; }
     if (!guide || guide.status !== "enabled") return;
-    const selected = { destination, guideId, guideName: guide.name, secondLanguage: guide.secondLanguage, shopping: guide.shopping, dailyPrice: guide.dailyPrice, serviceDays: current?.serviceDays ?? options.inquiry.value?.plannedDays ?? 1 };
-    if (current) Object.assign(current, selected); else plan.guidePlans.push(selected);
+    plan.guidePlans = [{
+      destination: plan.destinations[0] ?? "",
+      guideId: guide.id,
+      guideName: guide.name,
+      secondLanguage: guide.secondLanguage,
+      shopping: guide.shopping,
+      dailyPrice: guide.dailyPrice,
+      serviceDays: options.inquiry.value?.plannedDays ?? 1,
+    }];
     touchSelectedItinerary();
   }
-  function updateGuidePrice(destination: string, dailyPrice: number) {
+  function updateGuidePrice(dailyPrice: number) {
     if (!options.canEditContent()) return;
-    const guide = options.selectedItinerary.value?.guidePlans.find(g => g.destination === destination);
+    const guide = options.selectedItinerary.value?.guidePlans[0];
     if (guide) { guide.dailyPrice = normalizeQuoteValue(dailyPrice); touchSelectedItinerary(); }
-  }
-  function updateGuideDays(destination: string, serviceDays: number) {
-    if (!options.canEditContent()) return;
-    const guide = options.selectedItinerary.value?.guidePlans.find(g => g.destination === destination);
-    if (guide) { guide.serviceDays = Math.max(1, Math.floor(serviceDays)); touchSelectedItinerary(); }
   }
   function updateHotelCost(tier: ItineraryHotelTier, destination: string, price: number) {
     if (!options.canEditContent()) return;
@@ -259,7 +258,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       destinations: [...source.destinations],
       guidePlans: source.guidePlans.map((plan) => ({ ...plan })),
       hotelPlans: cloneHotelPlans(source.hotelPlans),
-      vehiclePlans: cloneVehiclePlans(source.vehiclePlans).map(p => ({ ...p, arrangements: p.arrangements.map(a => ({ ...a, id: createId("vehicle-arrangement"), dayIds: a.dayIds.map(id => dayIdMap.get(id)!).filter(Boolean) })) })),
+      vehiclePlans: cloneVehiclePlans(source.vehiclePlans).map(p => ({ ...p, arrangements: p.arrangements.map(a => ({ ...a, id: createId("vehicle-arrangement") })) })),
       quote: { ...cloneQuoteSettings(source.quote), options: source.quote.options.map((option) => ({ ...option, id: createId("quote-option") })) },
       dailyPlans: source.dailyPlans.map((day) => ({
         ...day,
@@ -318,7 +317,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   }
 
   function syncPlanDates(plan: ItineraryRecord) {
-    plan.vehiclePlans.forEach(p => p.arrangements.forEach(a => { a.dayIds = a.dayIds.filter(id => plan.dailyPlans.some(day => day.id === id)); }));
     plan.dailyPlans.forEach((day, index) => {
       day.dayNumber = index + 1;
       day.date = addDays(plan.startDate, index);
@@ -344,7 +342,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
 
   function syncDestinations(plan: ItineraryRecord) {
     const destinationSet = new Set(plan.destinations);
-    plan.guidePlans = plan.guidePlans.filter((guide) => destinationSet.has(guide.destination));
+    if (plan.guidePlans[0]) plan.guidePlans[0].destination = plan.destinations[0] ?? "";
     plan.dailyPlans.forEach((day) => {
       if (day.overnightDestination && !destinationSet.has(day.overnightDestination)) day.overnightDestination = null;
     });
@@ -381,11 +379,11 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   }
 
   function cloneVehiclePlans(vehiclePlans: ItineraryVehiclePlan[]) {
-    return vehiclePlans.map(plan => ({ ...plan, arrangements: plan.arrangements.map(a => ({ ...a, dayIds: [...a.dayIds], vehicles: a.vehicles.map(v => ({ ...v })) })) }));
+    return vehiclePlans.map(plan => ({ ...plan, arrangements: plan.arrangements.map(a => ({ ...a, vehicles: a.vehicles.map(v => ({ ...v })) })) }));
   }
 
   return {
-    updateGuideSelection, updateGuideDays, updateGuidePrice, updateHotelCost, addDay, addResourceItem, clearHotelPlan, copyItinerary, createEmptyItinerary, createItinerary,
+    updateGuideSelection, updateGuidePrice, updateHotelCost, addDay, addResourceItem, clearHotelPlan, copyItinerary, createEmptyItinerary, createItinerary,
     duplicateDay, moveDay, removeDay, removeItem, updateDayField,
     updateHotelPlanSelection, updateItineraryBasics, updateItemQuantity, updateQuoteOption,
     updateVehiclePlan, updateMeal, updateQuoteSettings,

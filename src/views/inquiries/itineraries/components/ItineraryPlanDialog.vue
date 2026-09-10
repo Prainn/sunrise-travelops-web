@@ -36,7 +36,7 @@
           >
             <el-input-number
               v-model="form.adults"
-              :min="1"
+              :min="0"
             />
           </el-form-item>
         </el-col>
@@ -131,12 +131,11 @@
 </template>
 
 <script setup lang="ts">
-import { plannedDuration } from "@/views/inquiries/itineraries/duration";
+import { plannedDuration, plannedEndDate } from "@/views/inquiries/itineraries/duration";
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { ItineraryRecord } from "@/types/itinerary";
-import { addDays } from "@/utils";
 
 const props = defineProps<{
   modelValue: boolean;
@@ -160,7 +159,7 @@ const form = reactive<ItineraryRecord>({
 const rules = computed<FormRules>(() => ({
   title: [{ required: true, message: t("itinerary.titleRequired"), trigger: "blur" }],
   startDate: [{ required: true, message: t("itinerary.startDateRequired"), trigger: "change" }],
-  adults: [{ required: true, message: t("itinerary.adultsRequired"), trigger: "blur" }],
+  adults: [{ type: "number", required: true, min: 1, message: t("itinerary.adultsRequired"), trigger: "change" }],
   destinations: [{ type: "array", required: true, min: 1, message: t("itinerary.destinationsRequired"), trigger: "change" }],
 }));
 
@@ -178,7 +177,7 @@ watch(() => [props.modelValue, props.record] as const, ([visible, record]) => {
   syncEndDate();
 }, { deep: true });
 
-watch(() => [form.startDate, form.days], syncEndDate);
+watch(() => [form.startDate, form.days, props.plannedDays, props.isEditing], syncEndDate);
 
 async function submitForm() {
   if (!await formRef.value?.validate().catch(() => false)) return;
@@ -194,7 +193,8 @@ async function submitForm() {
 }
 
 function syncEndDate() {
-  form.endDate = form.startDate && form.days ? addDays(form.startDate, form.days - 1) : "";
+  const days = props.isEditing ? form.days : props.plannedDays;
+  form.endDate = plannedEndDate(form.startDate, days);
 }
 </script>
 

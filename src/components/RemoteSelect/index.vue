@@ -24,6 +24,7 @@
       :key="item.id"
       :value="item.id"
       :label="item.label"
+      :disabled="item.disabled"
     >
       <div class="remote-select-option flex justify-between gap-[16px]">
         <span>{{ item.label }}</span>

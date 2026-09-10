@@ -98,13 +98,13 @@ describe("resource maintenance", () => {
     expect(api.create).not.toHaveBeenCalled();
   });
 
-  it("defaults to API pages of ten and isolates table rows from full catalogue loads", async () => {
+  it("defaults to API pages of twenty and isolates table rows from full catalogue loads", async () => {
     const records: TestResource[] = [{ ...createEmpty(), id: "resource-1", code: "TST-001" }];
     const loadRecords = vi.fn(async () => records);
     const api = { getPage: vi.fn(), getDetail: vi.fn(), create: vi.fn(), update: vi.fn(), deleteByIds: vi.fn() };
     const maintenance = useResourceMaintenance({ records, api, loadRecords, createEmpty });
     await maintenance.loadRecords();
-    expect(loadRecords).toHaveBeenLastCalledWith({ page: 1, pageSize: 10 });
+    expect(loadRecords).toHaveBeenLastCalledWith({ page: 1, pageSize: 20 });
     expect(maintenance.total.value).toBe(123);
     records.push({ ...createEmpty(), id: "catalogue-only" });
     expect(maintenance.rows).toHaveLength(1);

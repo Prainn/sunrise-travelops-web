@@ -59,7 +59,6 @@ function createEditor() {
     canEditContent: () => true,
     canEditPrice: () => true,
     getCreator: () => "operator",
-    findGuide: (id) => id === "g1" ? ({ id, name: "Guide", dailyPrice: 600, status: "enabled" } as GuideRecord) : undefined,
     findHotel: (id) => hotels.find((hotel) => hotel.id === id),
     findVehicle: (id) => vehicles.find((record) => record.id === id),
   });
@@ -75,6 +74,18 @@ describe('itinerary editor business rules', () => {
     editor.addDay();
     expect(plan.dailyPlans[1].date).toBe('2026-11-06');
   });
+  it('keeps one whole-trip guide type and uses the inquiry duration', () => {
+    const { editor } = createEditor();
+    const plan = editor.createItinerary({ ...editor.createEmptyItinerary(), startDate: '2026-11-05', destinations: ['昆明', '大理'] })!;
+    const guide = { id: 'g1', code: 'GDE-001', name: '英文 · 不进店', secondLanguage: 'en', shopping: false, dailyPrice: 600, status: 'enabled' } as GuideRecord;
+    editor.updateGuideSelection(guide);
+    expect(plan.guidePlans).toEqual([expect.objectContaining({ guideId: 'g1', destination: '昆明', dailyPrice: 600, serviceDays: 2 })]);
+    editor.updateGuidePrice(520);
+    expect(plan.guidePlans[0].dailyPrice).toBe(520);
+    editor.updateGuideSelection({ ...guide, id: 'g2', code: 'GDE-002', shopping: true, name: '英文 · 进店' });
+    expect(plan.guidePlans).toHaveLength(1);
+    expect(plan.guidePlans[0]).toMatchObject({ guideId: 'g2', shopping: true, dailyPrice: 600 });
+  });
   it('preserves manually agreed hotel prices through basic edits and copies', () => {
     const { editor, hotels } = createEditor();
     const plan = editor.createItinerary({ ...editor.createEmptyItinerary(), startDate: '2026-11-05', days: 7, destinations: [hotels[1].city] })!;
@@ -86,16 +97,15 @@ describe('itinerary editor business rules', () => {
     expect(copy.hotelPlans[0].hotels[0].unitCost).toBe(123);
     expect(copy.hotelPlans[0].hotels[0]).not.toBe(plan.hotelPlans[0].hotels[0]);
   });
-  it('remaps vehicle dates in copies and removes deleted day associations', () => {
+  it('preserves vehicle date ranges in copies and daily plan edits', () => {
     const { editor } = createEditor();
     const plan = editor.createItinerary({ ...editor.createEmptyItinerary(), startDate: '2026-11-05' })!;
     editor.addDay();
-    editor.updateVehiclePlan('standard', { tier: 'standard', totalPrice: 5000, arrangements: [{ id: 'a', dayIds: plan.dailyPlans.map(d => d.id), vehicles: [{ vehicleId: 'v', vehicleName: 'Bus', seats: 39, quantity: 2 }] }] });
+    editor.updateVehiclePlan('standard', { tier: 'standard', totalPrice: 5000, arrangements: [{ id: 'a', startDate: '2026-11-05', endDate: '2026-11-06', vehicles: [{ vehicleId: 'v', vehicleName: 'Bus', seats: 39, quantity: 2 }] }] });
     const copy = editor.copyItinerary('copy')!;
-    expect(copy.vehiclePlans[0].arrangements[0].dayIds).toEqual(copy.dailyPlans.map(d => d.id));
-    expect(copy.vehiclePlans[0].arrangements[0].dayIds).not.toEqual(plan.dailyPlans.map(d => d.id));
+    expect(copy.vehiclePlans[0].arrangements[0]).toMatchObject({ startDate: '2026-11-05', endDate: '2026-11-06' });
     editor.removeDay(1);
-    expect(copy.vehiclePlans[0].arrangements[0].dayIds).toEqual([copy.dailyPlans[0].id]);
-    expect(plan.vehiclePlans[0].arrangements[0].dayIds).toHaveLength(2);
+    expect(copy.vehiclePlans[0].arrangements[0]).toMatchObject({ startDate: '2026-11-05', endDate: '2026-11-06' });
+    expect(plan.vehiclePlans[0].arrangements[0]).toMatchObject({ startDate: '2026-11-05', endDate: '2026-11-06' });
   });
 });

@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { itineraries } from "@/test-fixtures/inquiries";
-import { destinationDuration, itineraryDuration, plannedDuration } from "./duration";
+import { destinationDuration, itineraryDuration, plannedDuration, plannedEndDate } from "./duration";
 
 describe("travel duration", () => {
   it("uses zero nights for day trips and days minus one for planned trips", () => {
     expect(plannedDuration(1)).toEqual({ days: 1, nights: 0 });
     expect(plannedDuration(7)).toEqual({ days: 7, nights: 6 });
+    expect(plannedEndDate("2026-09-10", 15)).toBe("2026-09-24");
   });
   it("counts actual stays separately from travel days and excludes unfilled nights", () => {
     const days = structuredClone(itineraries[0].dailyPlans.slice(0, 3));

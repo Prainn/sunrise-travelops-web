@@ -1,10 +1,11 @@
 import { businessDictionaryService } from "@/services/business-dictionary.service";
 import { itineraryDuration } from "./duration";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { inquiryService } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
 import { useUserStore } from "@/stores/user";
 import type { ItineraryDailyItemType, ItineraryRecord, ItineraryResourceItem, MealSlot } from "@/types/itinerary";
+import type { GuideRecord } from "@/types/resource";
 import { hasUserPermission, sumMoney } from "@/utils";
 import { isInquiryReadOnly } from "../inquiry-workflow";
 import { canPerformItineraryOperation } from "./itinerary-workflow";
@@ -31,6 +32,13 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const isPlanDialogVisible = ref(false);
   const isEditingPlan = ref(false);
   const isResourceDialogVisible = ref(false);
+  const isGuideDialogVisible = ref(false);
+  const isGuideLoading = ref(false);
+  const isGuideMissing = ref(false);
+  const isGuideSaving = ref(false);
+  const guideLanguage = ref("");
+  const guideShopping = ref(false);
+  const guideForm = ref<GuideRecord>({ id: "", code: "", name: "", secondLanguage: "none", shopping: false, dailyPrice: 0, status: "enabled" });
   const resourceTargetDayId = ref("");
   const resourceMealSlot = ref<MealSlot | null>(null);
   const validationIssues = ref<PdfValidationIssue[]>([]);
@@ -57,6 +65,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   ));
   const canSaveItinerary = computed(() => contentEditable.value || priceEditable.value);
   const canEditItineraryBasics = computed(() => contentEditable.value);
+  const canCreateGuide = computed(() => contentEditable.value && hasUserPermission(userStore.userInfo, "resource:guide:create"));
   const guestCount = computed(() => selectedItinerary.value
     ? selectedItinerary.value.adults + selectedItinerary.value.childrenCount : 0);
   const allItems = computed(() => selectedItinerary.value?.dailyPlans.flatMap((day) => day.items) ?? []);
@@ -77,11 +86,11 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     canEditContent: () => contentEditable.value,
     canEditPrice: () => priceEditable.value,
     getCreator: () => userStore.userInfo.username ?? "",
-    findGuide: (id) => resourceService.guides.find((guide) => guide.id === id),
     findHotel: (id) => resourceService.hotels.find((hotel) => hotel.id === id),
     findVehicle: (id) => resourceService.transports.find((vehicle) => vehicle.id === id),
   });
   const selectionVersions = new Map<string, number>();
+  let guideSelectionVersion = 0;
   const itineraryForm = ref<ItineraryRecord>(editor.createEmptyItinerary());
   const pdf = useItineraryPdf({
     inquiry,
@@ -103,22 +112,88 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     }
   }
 
-  async function selectGuideSelection(...args: Parameters<typeof editor.updateGuideSelection>) {
-    const id = args[args.length - 1] as string;
-    const key = 'GuideSelection:' + args.slice(0, -1).join(':');
-    const token = (selectionVersions.get(key) ?? 0) + 1;
-    selectionVersions.set(key, token);
+  watch(() => selectedItinerary.value?.id, () => {
+    const guide = selectedItinerary.value?.guidePlans?.[0];
+    guideLanguage.value = guide?.secondLanguage ?? "";
+    guideShopping.value = guide?.shopping ?? false;
+    isGuideMissing.value = false;
+  }, { immediate: true });
+
+  watch(
+    () => [selectedItinerary.value?.id, inquiry.value?.plannedDays, selectedItinerary.value?.guidePlans[0]] as const,
+    () => {
+      const plan = selectedItinerary.value;
+      const days = inquiry.value?.plannedDays;
+      if (plan?.status === "draft" && days && plan.guidePlans[0]) plan.guidePlans[0].serviceDays = days;
+    },
+    { immediate: true, flush: "sync" },
+  );
+
+  async function updateGuideType(secondLanguage: string, shopping: boolean) {
+    const token = ++guideSelectionVersion;
+    guideLanguage.value = secondLanguage;
+    guideShopping.value = shopping;
+    isGuideMissing.value = false;
+    if (!contentEditable.value || !secondLanguage) {
+      if (!secondLanguage) editor.updateGuideSelection(null);
+      isGuideLoading.value = false;
+      return;
+    }
     const plan = selectedItinerary.value;
+    isGuideLoading.value = true;
     try {
-      if (id) {
-        const record = await resourceService.guideApi.getDetail(id);
-        if (selectionVersions.get(key) !== token || selectedItinerary.value !== plan) return;
-        const index = resourceService.guides.findIndex(item => item.id === id);
-        if (index >= 0) resourceService.guides.splice(index, 1, record);
-        else resourceService.guides.push(record);
+      const result = await resourceService.getSelectionOptions("guides", {
+        page: 1,
+        pageSize: 1,
+        secondLanguage,
+        shopping: String(shopping),
+      });
+      if (token !== guideSelectionVersion || selectedItinerary.value !== plan) return;
+      const match = result.list[0];
+      if (!match) {
+        editor.updateGuideSelection(null);
+        isGuideMissing.value = true;
+        return;
       }
-      editor.updateGuideSelection(...args);
-    } catch { messages.error("request.failed"); }
+      const record = await resourceService.guideApi.getDetail(match.id);
+      if (token !== guideSelectionVersion || selectedItinerary.value !== plan) return;
+      const index = resourceService.guides.findIndex(item => item.id === record.id);
+      if (index >= 0) resourceService.guides.splice(index, 1, record);
+      else resourceService.guides.push(record);
+      editor.updateGuideSelection(record);
+    } catch (error) {
+      reportError(error);
+    } finally {
+      if (token === guideSelectionVersion) isGuideLoading.value = false;
+    }
+  }
+
+  function openGuideCreateDialog() {
+    if (!canCreateGuide.value || !guideLanguage.value) return;
+    guideForm.value = {
+      id: "", code: "", name: "", status: "enabled", dailyPrice: 0,
+      secondLanguage: guideLanguage.value, shopping: guideShopping.value,
+    };
+    isGuideDialogVisible.value = true;
+  }
+
+  async function createGuide(record: GuideRecord) {
+    if (!canCreateGuide.value || isGuideSaving.value) return;
+    isGuideSaving.value = true;
+    try {
+      const saved = await resourceService.guideApi.create(record);
+      resourceService.guides.push(saved);
+      guideLanguage.value = saved.secondLanguage;
+      guideShopping.value = saved.shopping;
+      isGuideMissing.value = false;
+      editor.updateGuideSelection(saved);
+      isGuideDialogVisible.value = false;
+      messages.success("common.createSuccess");
+    } catch (error) {
+      reportError(error);
+    } finally {
+      isGuideSaving.value = false;
+    }
   }
 
   async function selectHotelPlanSelection(...args: Parameters<typeof editor.updateHotelPlanSelection>) {
@@ -276,13 +351,13 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     resourceMealSlot,
     canDownloadOriginal: pdf.canDownloadOriginal,
     downloadOriginal: async () => { try { await pdf.downloadOriginal(); } catch (error) { reportError(error); } },
-    updateGuideSelection: selectGuideSelection,
-    updateGuideDays: editor.updateGuideDays,
+    updateGuideType,
     updateMeal: editor.updateMeal,
     updateQuoteSettings: editor.updateQuoteSettings,
     addDay: editor.addDay,
     addResourceItem,
     canCreateItinerary,
+    canCreateGuide,
     canEditItineraryBasics,
     canGeneratePdf,
     canSaveItinerary,
@@ -304,12 +379,20 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     isDownloadingPdf: pdf.isDownloadingPdf,
     isPdfPreviewVisible: pdf.isPdfPreviewVisible,
     isPlanDialogVisible,
+    isGuideDialogVisible,
+    isGuideLoading,
+    isGuideMissing,
+    isGuideSaving,
     isResourceDialogVisible,
     itemCount,
     itineraryForm,
+    guideForm,
+    guideLanguage,
+    guideShopping,
     loadDestinationResourceOptions,
     moveDay: editor.moveDay,
     openCreateDialog,
+    openGuideCreateDialog,
     openEditDialog,
     openResourceDialog,
     pdfPreviewUrl: pdf.pdfPreviewUrl,
@@ -323,6 +406,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     selectedItineraryId,
     saveItinerary,
     submitItineraryPlan,
+    createGuide,
     updateDayField: editor.updateDayField,
     clearHotelPlan: editor.clearHotelPlan,
     updateHotelPlanSelection: selectHotelPlanSelection,

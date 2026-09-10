@@ -110,6 +110,7 @@ async function handleSubmit() {
 - script 内部顺序：导入（Vue → 第三方 → 类型 → 内部 → 相对路径）→ Props/Emits → 状态 → 计算属性 → 监听器 → 生命周期 → 方法 → defineExpose
 - Props 优先 TypeScript 类型声明 + `withDefaults`，不与运行时声明混用
 - 组件 ≤ 300 行，使用 `<script setup>`
+- 优先使用 Element Plus 已有组件及其标准结构；表单字段使用 `<el-form>`、`<el-form-item>` 和对应的 Element Plus 输入组件，不使用 `<label><el-input /></label>` 这类原生标签包裹组件的写法
 
 ## 类型与 API 约定
 

@@ -26,8 +26,8 @@
       <el-form-item :label="$t('planning.shopping')">
         <el-switch
           v-model="form.shopping"
-          :active-text="$t('planning.withShopping')"
-          in:active-text="$t('planning.withoutShopping')"
+          :active-text="$t('common.yes')"
+          :inactive-text="$t('common.no')"
         />
       </el-form-item>
     </el-form>

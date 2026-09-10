@@ -29,8 +29,10 @@ export interface ItineraryVehicleSelection {
 }
 export interface ItineraryVehicleArrangement {
   id: string;
-  dayIds: string[];
+  startDate: string;
+  endDate: string;
   vehicles: ItineraryVehicleSelection[];
+  totalPrice?: number | null;
 }
 export interface ItineraryVehiclePlan {
   tier: ItineraryVehicleTier;

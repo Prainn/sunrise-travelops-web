@@ -66,7 +66,9 @@
           </el-table-column>
           <el-table-column :label="$t('planning.shopping')">
             <template #default="{ row }">
-              {{ $t(row.shopping ? 'planning.withShopping' : 'planning.withoutShopping') }}
+              <el-tag :type="row.shopping ? 'success' : 'info'">
+                {{ $t(row.shopping ? 'planning.withShopping' : 'planning.withoutShopping') }}
+              </el-tag>
             </template>
           </el-table-column>
           <el-table-column

@@ -85,25 +85,25 @@
 
       <template v-if="selectedItinerary">
         <main class="itinerary-page__workspace mx-4">
-          <ItineraryHotelVehiclePlans
-            :destinations="selectedItinerary.destinations"
-            :daily-plans="selectedItinerary.dailyPlans"
-            :hotel-plans="selectedItinerary.hotelPlans"
-            :vehicle-plans="selectedItinerary.vehiclePlans"
-            :guest-count="passengerCount"
+          <ItineraryVehiclePlans
+            :plans="selectedItinerary.vehiclePlans"
+            :start-date="selectedItinerary.startDate"
+            :planned-days="inquiry.plannedDays"
+            :passenger-count="passengerCount"
             :editable="contentEditable"
-            @clear-hotel-plan="clearHotelPlan"
-            @update-hotel-selection="updateHotelPlanSelection"
-            @update-vehicle-plan="updateVehiclePlan"
-            @update-hotel-cost="updateHotelCost"
+            @update-plan="updateVehiclePlan"
           />
           <ItineraryGuidePlans
-            :destinations="selectedItinerary.destinations"
             :plans="selectedItinerary.guidePlans"
+            :second-language="guideLanguage"
+            :shopping="guideShopping"
             :editable="contentEditable"
-            @update-guide="updateGuideSelection"
-            @update-days="updateGuideDays"
+            :loading="isGuideLoading"
+            :missing="isGuideMissing"
+            :can-create="canCreateGuide"
+            @update-type="updateGuideType"
             @update-price="updateGuidePrice"
+            @create-guide="openGuideCreateDialog"
           />
           <div class="itinerary-page__daily-toolbar h-12 flex justify-between items-center min-h-[48px] m-[24px_0_14px]">
             <div>
@@ -136,6 +136,16 @@
             @duplicate="duplicateDay(index)"
             @remove="removeDay(index)"
             @move="moveDay(index, $event)"
+          />
+          <ItineraryHotelPlans
+            :destinations="selectedItinerary.destinations"
+            :daily-plans="selectedItinerary.dailyPlans"
+            :hotel-plans="selectedItinerary.hotelPlans"
+            :guest-count="passengerCount"
+            :editable="contentEditable"
+            @clear-plan="clearHotelPlan"
+            @update-selection="updateHotelPlanSelection"
+            @update-cost="updateHotelCost"
           />
         </main>
 
@@ -184,6 +194,12 @@
         :destination-options="destinationOptions"
         :is-editing="isEditingPlan"
         @submit="submitItineraryPlan"
+      />
+      <GuideEditorDialog
+        v-model="isGuideDialogVisible"
+        :record="guideForm"
+        :is-editing="false"
+        @submit="createGuide"
       />
       <ItineraryResourceDialog
         v-model="isResourceDialogVisible"
@@ -296,8 +312,10 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { getDayBreakfastStatus } from "./hotel-plans";
 import ItineraryGuidePlans from "./components/ItineraryGuidePlans.vue";
+import GuideEditorDialog from "@/views/resources/guide/components/GuideEditorDialog.vue";
 import ItineraryDayCard from "./components/ItineraryDayCard.vue";
-import ItineraryHotelVehiclePlans from "./components/ItineraryHotelVehiclePlans.vue";
+import ItineraryHotelPlans from "./components/ItineraryHotelPlans.vue";
+import ItineraryVehiclePlans from "./components/ItineraryVehiclePlans.vue";
 import ItineraryPdfPreviewDialog from "./components/ItineraryPdfPreviewDialog.vue";
 import ItineraryPlanDialog from "./components/ItineraryPlanDialog.vue";
 import ItineraryQuotePanel from "./components/ItineraryQuotePanel.vue";
@@ -331,12 +349,14 @@ const {
   isSaving, isLoading, loadError, addDay, addResourceItem, canCreateItinerary, canEditItineraryBasics, canGeneratePdf, canSaveItinerary, contentEditable, copyItinerary,
   closePdfPreview, confirmPdfDownload, destinationOptions, duplicateDay, guestCount, handleGeneratePdf, inquiry, isGeneratingPdf,
   isEditingPlan, isPdfPreviewVisible, isPlanDialogVisible, isResourceDialogVisible,
+  isGuideDialogVisible, isGuideLoading, isGuideMissing,
   isDraft, itemCount, itineraryForm, loadDestinationResourceOptions, moveDay, openCreateDialog, openResourceDialog, priceEditable, quoteCalculation,
   openEditDialog, pdfPreviewUrl, removeDay, removeItem, router, rows, saveItinerary, selectedItinerary, selectedItineraryId,
   resourceMealSlot, updateMeal, updateQuoteSettings,
+  canCreateGuide, createGuide, guideForm, guideLanguage, guideShopping, openGuideCreateDialog, updateGuideType,
   validationIssues, isDownloadingPdf, canDownloadOriginal, downloadOriginal,
   submitItineraryPlan,
-  updateGuideSelection, updateGuideDays, clearHotelPlan, updateDayField, updateHotelPlanSelection, updateItemQuantity, updateQuoteOption,
+  clearHotelPlan, updateDayField, updateHotelPlanSelection, updateItemQuantity, updateQuoteOption,
   updateVehiclePlan, updateHotelCost, updateGuidePrice, passengerCount, resourceDestination,
 } = useItineraryWorkspace({
   confirm: confirmAction,

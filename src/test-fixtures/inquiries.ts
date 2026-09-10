@@ -207,7 +207,7 @@ function createCompleteItineraryVariant(options: CompleteItineraryVariant): Itin
     guidePlans: [],
     vehiclePlans: completeItineraryTemplate.vehiclePlans.map((plan) => ({
       ...plan,
-      arrangements: plan.arrangements.map(a => ({ ...a, dayIds: [...a.dayIds], vehicles: a.vehicles.map(v => ({ ...v })) })),
+      arrangements: plan.arrangements.map(a => ({ ...a, vehicles: a.vehicles.map(v => ({ ...v })) })),
     })),
     creator: options.creator,
     createdAt: options.createdAt,
