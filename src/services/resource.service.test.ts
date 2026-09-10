@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { isReactive } from "vue";
 
 const { requestMock } = vi.hoisted(() => ({ requestMock: vi.fn() }));
 
@@ -32,12 +31,11 @@ vi.mock("@/api/request", () => {
 
 import type {
   AgencyRecord, AttractionRecord, GuideRecord, HotelRecord, RestaurantRecord,
-  SupplierRecord, TransportRecord,
+  TransportRecord,
 } from "@/types/resource";
 import { resourceService, type ResourceCrud } from "./resource.service";
 const audit = { version: 3, createdAt: "2026-09-04T00:00:00.000Z", createdBy: null, updatedAt: "2026-09-04T00:00:00.000Z", updatedBy: null };
 const agency: AgencyRecord = { ...audit, id: "agency-1", code: "AGY-001", name: "Agency", city: "Singapore", countryOrRegion: "Singapore", email: "a@example.com", status: "enabled", remark: "", contacts: [] };
-const supplier: SupplierRecord = { ...audit, id: "supplier-1", code: "SUP-001", name: "Supplier", city: "昆明", countryOrRegion: "中国", contact: "李经理", email: "", phone: "13800000000", status: "enabled", remark: "" };
 const hotel: HotelRecord = { ...audit, id: "hotel-1", code: "HTL-001", name: "Hotel", province: "云南省", city: "昆明", rating: "international_five_star", facilities: "", breakfast: "", address: "", phone: "", nearby: "", individualPrice: 300, groupPrice: 260, minimumGroupSize: 10, unit: "roomNight", status: "enabled" };
 const restaurant: RestaurantRecord = { ...audit, id: "restaurant-1", code: "RES-001", name: "Restaurant", city: "昆明", cuisine: "云南菜", contact: "", phone: "", address: "", remark: "", unit: "personMeal", status: "enabled", prices: [] };
 const attraction: AttractionRecord = { ...audit, id: "attraction-1", code: "ATT-001", name: "Attraction", area: "昆明", category: "scenic", restroomLocation: "", remark: "", unit: "personVisit", status: "enabled", prices: [] };
@@ -46,7 +44,6 @@ const guide: GuideRecord = { ...audit, id: "guide-1", code: "GDE-001", name: "�
 
 const topResources: Array<[string, ResourceCrud<never>]> = [
   ["agencies", resourceService.agencyApi as unknown as ResourceCrud<never>],
-  ["suppliers", resourceService.supplierApi as unknown as ResourceCrud<never>],
   ["hotels", resourceService.hotelApi as unknown as ResourceCrud<never>],
   ["restaurants", resourceService.restaurantApi as unknown as ResourceCrud<never>],
   ["attractions", resourceService.attractionApi as unknown as ResourceCrud<never>],
@@ -59,13 +56,11 @@ beforeEach(() => {
   resourceService.cities.splice(0);
   resourceService.cityOptions.splice(0);
   resourceService.agencies.splice(0);
-  resourceService.suppliers.splice(0);
   resourceService.hotels.splice(0);
   resourceService.restaurants.splice(0);
   resourceService.attractions.splice(0);
   resourceService.transports.splice(0);
   resourceService.guides.splice(0);
-  resourceService.supplierOptions.splice(0);
   requestMock.mockImplementation(async (path, options) => {
     if (!options?.method && path.includes("?")) return { list: [], total: 0, page: 1, pageSize: 20 };
     if (!options?.method && (path.endsWith("/contacts") || path.endsWith("/prices") || path.endsWith("/options"))) return [];
@@ -75,9 +70,7 @@ beforeEach(() => {
 
 describe("resourceService", () => {
   it("starts every runtime resource collection without frontend mock records", () => {
-    expect(isReactive(resourceService.suppliers)).toBe(true);
     expect(resourceService.agencies).toEqual([]);
-    expect(resourceService.suppliers).toEqual([]);
     expect(resourceService.hotels).toEqual([]);
     expect(resourceService.restaurants).toEqual([]);
     expect(resourceService.attractions).toEqual([]);
@@ -193,7 +186,6 @@ describe("resourceService", () => {
   it("uses all top-level create and versioned update endpoints", async () => {
     const cases = [
       ["agencies", resourceService.agencyApi, agency],
-      ["suppliers", resourceService.supplierApi, supplier],
       ["hotels", resourceService.hotelApi, hotel],
       ["restaurants", resourceService.restaurantApi, restaurant],
       ["attractions", resourceService.attractionApi, attraction],
@@ -212,7 +204,7 @@ describe("resourceService", () => {
     }
   });
 
-  it("uses contact, price, and supplier-option endpoints with backend null conventions", async () => {
+  it("uses contact and price endpoints with backend null conventions", async () => {
     const contact = { ...audit, id: "contact-1", name: "Emily", phone: "123" };
     const restaurantPrice = { ...audit, id: "price-1", menuName: "套餐", dishDetails: "", unit: "table", price: 600, dinerCount: 0, remark: "" };
     const attractionPrice = { ...audit, id: "price-2", itemType: "ticket" as const, itemName: "门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 100, settlementPrice: 80, unit: "personVisit", isFree: false, priceNote: "" };
@@ -229,12 +221,9 @@ describe("resourceService", () => {
     await resourceService.attractionApi.createPrice("attraction-1", { ...attractionPrice, id: "" });
     await resourceService.attractionApi.updatePrice("attraction-1", attractionPrice.id, attractionPrice);
     await resourceService.attractionApi.deletePrices("attraction-1", attractionPrice.id);
-    await resourceService.supplierApi.getOptions();
-
     expect(requestMock).toHaveBeenCalledWith("/resources/agencies/agency-1/contacts/contact-1", expect.objectContaining({ method: "PUT", body: expect.objectContaining({ version: 3 }) }));
     expect(requestMock).toHaveBeenCalledWith("/resources/restaurants/restaurant-1/prices", expect.objectContaining({ method: "POST", body: expect.objectContaining({ dinerCount: null }) }));
     expect(requestMock).toHaveBeenCalledWith("/resources/attractions/attraction-1/prices", expect.objectContaining({ method: "POST", body: expect.objectContaining({ startDate: null, endDate: null }) }));
-    expect(requestMock).toHaveBeenCalledWith("/resources/suppliers/options");
   });
 
   it("loads only one page of price options and the selected detail", async () => {

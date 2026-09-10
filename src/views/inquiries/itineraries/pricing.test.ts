@@ -3,7 +3,6 @@ import type { PricingResources } from "./pricing";
 import { getHotelUnitCost, getResourcePriceOptions } from "./pricing";
 
 const ids = {
-  supplier: "00000000-0000-4000-8000-000000000001",
   hotel: "00000000-0000-4000-8000-000000000002",
   restaurant: "00000000-0000-4000-8000-000000000003",
   restaurantPrice: "00000000-0000-4000-8000-000000000004",

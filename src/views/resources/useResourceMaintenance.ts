@@ -1,7 +1,7 @@
 import { computed, onMounted, reactive, ref, type Ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import type { ResourceListQuery, ResourceStatus, TourismResourceRecord } from "@/types/resource";
+import type { ResourceListQuery, ResourceStatus } from "@/types/resource";
 import { DEFAULT_PAGE_SIZE } from "@/components/Pagination/config";
 import { resourceService } from "@/services/resource.service";
 import type { ResourceCrud } from "@/services/resource.service";
@@ -22,13 +22,6 @@ interface ResourceMaintenanceOptions<T extends ResourceMaintenanceRecord> {
   createRecord?: (record: T, id: string) => T;
   updateRecord?: (current: T, record: T) => void;
   deleteConfirmKey?: string;
-}
-
-export function createEmptyTourismResourceRecord(): TourismResourceRecord {
-  return {
-    id: "", code: "", name: "", city: "", countryOrRegion: "", contact: "", email: "", phone: "",
-    status: "enabled", remark: "",
-  };
 }
 
 export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(options: ResourceMaintenanceOptions<T>) {

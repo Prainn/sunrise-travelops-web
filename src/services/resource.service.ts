@@ -5,8 +5,7 @@ import type { PageResult } from "@/types/common";
 import type {
   AgencyContactRecord, AgencyRecord, AttractionPriceRecord, AttractionRecord,
   CityRecord, GuideRecord, HotelRecord, ResourceListQuery,
-  RestaurantPriceRecord, RestaurantRecord, SupplierOptionRecord, SupplierRecord,
-  TransportRecord,
+  RestaurantPriceRecord, RestaurantRecord, TransportRecord,
 } from "@/types/resource";
 
 type ResourceQuery = ResourceListQuery & Record<string, string | number | undefined>;
@@ -81,14 +80,6 @@ function agencyInput(data: AgencyRecord) {
   return {
     id: data.id || undefined, code: data.code.trim(), name: data.name.trim(), city: data.city.trim(),
     countryOrRegion: data.countryOrRegion.trim(), email: data.email.trim(), status: data.status, remark: data.remark.trim(),
-  };
-}
-
-function supplierInput(data: SupplierRecord) {
-  return {
-    id: data.id || undefined, code: data.code.trim(), name: data.name.trim(), city: data.city.trim(),
-    countryOrRegion: data.countryOrRegion.trim(), contact: data.contact.trim(), email: data.email.trim(),
-    phone: data.phone.trim(), status: data.status, remark: data.remark.trim(),
   };
 }
 
@@ -188,20 +179,17 @@ const cities = reactive<CityRecord[]>([]);
 const cityOptions = reactive<CityRecord[]>([]);
 let cityOptionsRequest: Promise<CityRecord[]> | null = null;
 const agencyApi = createCrud<AgencyRecord>("agencies", agencyInput, (data) => ({ ...data, contacts: data.contacts ?? [] }));
-const supplierApi = createCrud<SupplierRecord>("suppliers", supplierInput);
 const hotelApi = createCrud<HotelRecord>("hotels", hotelInput, normalizeHotel);
 const restaurantApi = createCrud<RestaurantRecord>("restaurants", restaurantInput, normalizeRestaurant);
 const attractionApi = createCrud<AttractionRecord>("attractions", attractionInput, normalizeAttraction);
 const transportApi = createCrud<TransportRecord>("transports", transportInput, normalizeTransport);
 const guideApi = createCrud<GuideRecord>("guides", guideInput, normalizeGuide);
 const agencies = reactive<AgencyRecord[]>([]);
-const suppliers = reactive<SupplierRecord[]>([]);
 const hotels = reactive<HotelRecord[]>([]);
 const restaurants = reactive<RestaurantRecord[]>([]);
 const attractions = reactive<AttractionRecord[]>([]);
 const transports = reactive<TransportRecord[]>([]);
 const guides = reactive<GuideRecord[]>([]);
-const supplierOptions = reactive<SupplierOptionRecord[]>([]);
 
 async function fetchAll<T>(api: ResourceCrud<T>, query: ResourceListQuery = {}): Promise<T[]> {
   const firstPage = await api.getPage({ ...query, page: 1, pageSize: 100 });
@@ -246,13 +234,11 @@ export const resourceService = {
     return cityOptionsRequest;
   },
   agencies,
-  suppliers,
   transports,
   hotels,
   restaurants,
   attractions,
   guides,
-  supplierOptions,
   agencyApi: {
     ...agencyApi,
     getContacts(agencyId: string) {
@@ -269,17 +255,6 @@ export const resourceService = {
       await request.delete<void>(baseUrl, { params: { ids } });
     },
   },
-  supplierApi: {
-    ...supplierApi,
-    getOptions() {
-      return request.get<SupplierOptionRecord[]>(`${RESOURCE_BASE_URL}/suppliers/options`);
-    },
-  },
-  async loadSupplierOptions() {
-    const options = await request.get<SupplierOptionRecord[]>(`${RESOURCE_BASE_URL}/suppliers/options`);
-    supplierOptions.splice(0, supplierOptions.length, ...options);
-    return options;
-  },
   async loadAgencies(query: ResourceListQuery = {}) {
     return loadResourceRecords(agencies, agencyApi, query);
   },
@@ -291,9 +266,6 @@ export const resourceService = {
       agency.contactCount = contacts.length;
     }
     return contacts;
-  },
-  async loadSuppliers(query: ResourceListQuery = {}) {
-    return loadResourceRecords(suppliers, supplierApi, query);
   },
   async loadHotels(query: ResourceListQuery = {}) {
     await businessDictionaryService.ensureBuiltInTypesLoaded();

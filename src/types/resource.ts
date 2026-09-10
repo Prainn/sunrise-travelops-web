@@ -100,23 +100,6 @@ export interface CityRecord extends ResourceRecord {
   province: string;
 }
 
-export interface TourismResourceRecord extends ResourceRecord {
-  city: string;
-  countryOrRegion: string;
-  contact: string;
-  email: string;
-  phone: string;
-  remark: string;
-}
-
-export interface SupplierRecord extends TourismResourceRecord {}
-
-export interface SupplierOptionRecord {
-  id: string;
-  code: string;
-  name: string;
-}
-
 export interface TransportRecord extends ResourceRecord {
   serviceLevel: VehicleServiceLevel;
   seats: number;

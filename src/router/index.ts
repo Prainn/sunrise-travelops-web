@@ -194,17 +194,6 @@ export const constantRoutes: RouteRecordRaw[] = [
         },
       },
       {
-        path: "supplier",
-        name: "Supplier",
-        component: () => import("@/views/resources/supplier/index.vue"),
-        meta: {
-          title: "suppliers",
-          icon: "el-icon-OfficeBuilding",
-          keepAlive: true,
-          perms: ["resource:supplier:list"],
-        },
-      },
-      {
         path: "city",
         name: "CityResource",
         component: () => import("@/views/resources/city/index.vue"),
