@@ -210,7 +210,6 @@
     "dailyResources": "Daily Meals & Attractions",
     "dayCountMismatch": "The inquiry plans {planned} days / {plannedNights} nights; this itinerary has {actual} days / {actualNights} nights. Generate PDF anyway?",
     "dailySchedule": "Daily Itinerary",
-    "plannedDaysMismatchHint": "This itinerary differs from the planned {plannedDuration}. You can still save.",
     "dayCost": "Daily Meals & Attractions Cost",
     "dayDescription": "Itinerary description",
     "dayDescriptionPlaceholder": "Enter the day's sightseeing, activities, and itinerary details",
@@ -1015,7 +1014,6 @@
   "planning": {
     "leaderCount": "Tour leaders",
     "secondLanguage": "Second language",
-    "languageWithChinese": "Second language (Chinese included)",
     "shopping": "Shopping itinerary",
     "withShopping": "With shopping",
     "withoutShopping": "Without shopping",

@@ -18,6 +18,53 @@ SHARED_DIRS = ('js', 'css', 'img', 'fonts', 'media', 'assets')
 RELEASE_ID = re.compile(r'(?:[0-9a-f]{40}-[0-9]+-[0-9]+|bootstrap-[0-9]{14})')
 
 
+def cleanup_plan():
+    current = (BASE / 'current').resolve(strict=True)
+    record = json.loads((BASE / 'last-deployment.json').read_text())
+    previous = (BASE / record['previous']).resolve(strict=True)
+    releases = (BASE / 'releases').resolve(strict=True)
+    if current.parent != releases or previous.parent != releases or not record.get('verified'):
+        raise ValueError('Cannot establish protected frontend releases')
+    verified = []
+    legacy = []
+    for path in releases.iterdir():
+        if path.is_symlink() or not path.is_dir():
+            continue
+        if not RELEASE_ID.fullmatch(path.name) and path.name != '20260909-dev':
+            continue
+        marker = path / '.verified.json'
+        if marker.is_file():
+            info = json.loads(marker.read_text())
+            if info.get('release') == path.name and info.get('verified') is True:
+                verified.append((info['verifiedAt'], path))
+        elif path.name == '20260909-dev' or path.name.startswith('bootstrap-'):
+            legacy.append(path)
+    latest = [path for _, path in sorted(verified, reverse=True)[:3]]
+    keep = {current, previous, *latest}
+    return {'keep': sorted(path.name for path in keep),
+            'remove': sorted(path.name for path in [*(path for _, path in verified), *legacy] if path not in keep)}
+
+
+def cleanup():
+    plan = cleanup_plan()
+    for name in plan['remove']:
+        path = BASE / 'releases' / name
+        if path.is_symlink():
+            raise ValueError('Release became a symlink')
+        shutil.rmtree(path)
+    return plan
+
+
+def cleanup_after_success(deployment):
+    try:
+        (BASE / 'releases' / deployment['release'] / '.verified.json').write_text(json.dumps({
+            'release': deployment['release'], 'verified': True, 'verifiedAt': deployment['deployedAt'],
+        }) + '\n')
+        print(json.dumps({'cleanup': cleanup()}), file=sys.stderr)
+    except Exception as error:
+        print('::warning::Frontend release cleanup failed: ' + str(error), file=sys.stderr)
+
+
 def switch(target):
     pending = BASE / '.current-next'
     pending.unlink(missing_ok=True)
@@ -106,11 +153,18 @@ def publish(release_id, stream):
     pending = BASE / 'last-deployment.json.next'
     pending.write_text(json.dumps(deployment) + '\n')
     pending.replace(BASE / 'last-deployment.json')
+    cleanup_after_success(deployment)
     return deployment
 
 
 def main():
     os.umask(0o022)
+    if sys.argv[1:] in [['cleanup-plan'], ['cleanup']] and os.geteuid() == 0:
+        with (BASE / '.deploy.lock').open('a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            verify((BASE / 'current').resolve(strict=True))
+            print(json.dumps(cleanup_plan() if sys.argv[1] == 'cleanup-plan' else cleanup()))
+        return
     command = os.environ.get('SSH_ORIGINAL_COMMAND', '')
     if command == 'status':
         print(json.dumps({'current': os.readlink(BASE / 'current')}))

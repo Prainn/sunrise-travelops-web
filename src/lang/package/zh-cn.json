@@ -210,7 +210,6 @@
     "dailyResources": "当日餐食与景点",
     "dayCountMismatch": "该询盘计划 {planned}天{plannedNights}晚，当前行程为 {actual}天{actualNights}晚，天数不一致。是否仍生成 PDF？",
     "dailySchedule": "每日行程",
-    "plannedDaysMismatchHint": "当前行程与询盘计划的 {plannedDuration} 不同，可继续保存。",
     "dayCost": "当日餐食与景点成本",
     "dayDescription": "行程安排",
     "dayDescriptionPlaceholder": "请输入当天的观光、活动和行程说明",
@@ -1015,7 +1014,6 @@
   "planning": {
     "leaderCount": "领队人数",
     "secondLanguage": "第二语种",
-    "languageWithChinese": "第二语种（默认包含中文）",
     "shopping": "是否进店",
     "withShopping": "进店",
     "withoutShopping": "不进店",

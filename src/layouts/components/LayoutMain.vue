@@ -79,7 +79,7 @@ const transitionName = computed(() => {
 
 <style lang="scss" scoped>
 .layout-content {
-  @apply 'relative overflow-y-auto bg-[var(--page-bg)]';
+  @apply 'relative overflow-x-hidden overflow-y-auto bg-[var(--page-bg)]';
 
   /* fade */
   .fade-enter-active,

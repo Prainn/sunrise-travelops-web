@@ -13,7 +13,7 @@
           :precision="2"
         />
       </el-form-item>
-      <el-form-item :label="$t('planning.languageWithChinese')">
+      <el-form-item :label="$t('planning.secondLanguage')">
         <el-select v-model="form.secondLanguage">
           <el-option
             v-for="item in GUIDE_LANGUAGE_OPTIONS"

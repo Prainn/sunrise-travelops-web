@@ -61,7 +61,7 @@
           </el-table-column>
           <el-table-column :label="$t('planning.secondLanguage')">
             <template #default="{ row }">
-              {{ $t(`planning.languages.${row.secondLanguage}`) }}
+              {{ row.secondLanguage ? $t(`planning.languages.${row.secondLanguage}`) : $t('common.notSet') }}
             </template>
           </el-table-column>
           <el-table-column :label="$t('planning.shopping')">
@@ -70,7 +70,7 @@
             </template>
           </el-table-column>
           <el-table-column
-            :label="$t('common.operation')"
+            :label="$t('common.actions')"
             width="180"
           >
             <template #default="{ row }">

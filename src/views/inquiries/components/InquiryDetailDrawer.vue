@@ -16,10 +16,13 @@
         </el-tag>
       </div>
       <el-descriptions
-        :column="2"
+        :column="1"
         border
       >
-        <el-descriptions-item :label="$t('inquiry.agencyCode')">
+        <el-descriptions-item
+          width="80"
+          :label="$t('inquiry.agencyCode')"
+        >
           {{ valueOrDash(record.agencyCode) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.owner')">

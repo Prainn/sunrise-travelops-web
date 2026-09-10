@@ -29,7 +29,7 @@
         <el-input v-model.trim="form.title" />
       </el-form-item>
       <el-row :gutter="16">
-        <el-col :span="12">
+        <el-col :span="8">
           <el-form-item
             :label="$t('itinerary.adults')"
             prop="adults"
@@ -40,7 +40,7 @@
             />
           </el-form-item>
         </el-col>
-        <el-col :span="12">
+        <el-col :span="8">
           <el-form-item :label="$t('itinerary.children')">
             <el-input-number
               v-model="form.childrenCount"
@@ -48,14 +48,17 @@
             />
           </el-form-item>
         </el-col>
+        <el-col :span="8">
+          <el-form-item :label="$t('planning.leaderCount')">
+            <el-input-number
+              v-model="form.leaderCount"
+              :min="0"
+              :precision="0"
+            />
+          </el-form-item>
+        </el-col>
       </el-row>
-      <el-form-item :label="$t('planning.leaderCount')">
-        <el-input-number
-          v-model="form.leaderCount"
-          :min="0"
-          :precision="0"
-        />
-      </el-form-item>
+
       <el-row
         class="itinerary-plan-dialog__date-row"
         :gutter="16"
@@ -93,14 +96,6 @@
           </el-form-item>
         </el-col>
       </el-row>
-      <el-alert
-        v-if="hasDayCountMismatch"
-        class="itinerary-plan-dialog__day-hint"
-        :title="$t('itinerary.plannedDaysMismatchHint', { plannedDuration: $t('itinerary.duration', plannedDuration(plannedDays)) })"
-        type="warning"
-        show-icon
-        :closable="false"
-      />
       <el-form-item
         :label="$t('itinerary.destinations')"
         prop="destinations"
@@ -168,8 +163,6 @@ const rules = computed<FormRules>(() => ({
   adults: [{ required: true, message: t("itinerary.adultsRequired"), trigger: "blur" }],
   destinations: [{ type: "array", required: true, min: 1, message: t("itinerary.destinationsRequired"), trigger: "change" }],
 }));
-
-const hasDayCountMismatch = computed(() => form.days !== props.plannedDays);
 
 watch(() => [props.modelValue, props.record] as const, ([visible, record]) => {
   if (!visible) return;

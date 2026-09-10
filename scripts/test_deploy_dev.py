@@ -78,6 +78,33 @@ class DeploymentTests(unittest.TestCase):
             deploy.publish('bootstrap-20260909120003', archive(self.files))
         self.assertEqual(os.readlink(self.base / 'current'), 'releases/old')
 
+    def test_cleanup_protects_current_previous_recent_and_shared_assets(self):
+        names = [f'bootstrap-2026090900000{i}' for i in range(6)]
+        for i, name in enumerate(names):
+            path = self.base / 'releases' / name
+            path.mkdir()
+            (path / '.verified.json').write_text(json.dumps({'release': name, 'verified': True, 'verifiedAt': str(i)}))
+        deploy.switch('releases/' + names[0])  # Rollback target is not among newest three.
+        (self.base / 'last-deployment.json').write_text(json.dumps({'previous': 'releases/' + names[1], 'verified': True}))
+        (self.base / 'releases' / 'bootstrap-20260908000000').symlink_to(self.base / 'shared', target_is_directory=True)
+        result = deploy.cleanup()
+        self.assertEqual(result['remove'], [names[2]])
+        self.assertEqual(len(result['keep']), 5)
+        self.assertTrue((self.base / 'shared/js/old.js').exists())
+        self.assertTrue((self.base / 'releases/old').exists())
+
+    def test_cleanup_failure_does_not_turn_verified_deploy_into_failure(self):
+        with patch.object(deploy, 'fetch', self.fetch), patch.object(deploy, 'cleanup', side_effect=OSError('denied')), patch('sys.stderr', new_callable=io.StringIO) as stderr:
+            result = deploy.publish('bootstrap-20260909120004', archive(self.files))
+        self.assertTrue(result['verified'])
+        self.assertIn('::warning::', stderr.getvalue())
+
+    def test_failed_publish_never_runs_cleanup(self):
+        with patch.object(deploy, 'fetch', return_value=b'wrong'), patch.object(deploy, 'cleanup') as cleanup:
+            with self.assertRaises(ValueError):
+                deploy.publish('bootstrap-20260909120005', archive(self.files))
+        cleanup.assert_not_called()
+
 
 if __name__ == '__main__':
     unittest.main()
