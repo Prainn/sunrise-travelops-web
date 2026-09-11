@@ -116,7 +116,7 @@
                   {{ $t('inquiry.lostReason') }}：{{ row.metadata.lostReason }}
                 </p>
                 <el-table
-                  :data="row.changes"
+                  :data="displayLogChanges(row.changes)"
                   :row-class-name="({ row: change }) => `change-${changeTone(change as InquiryLogRecord['changes'][number])}`"
                   :show-overflow-tooltip="false"
                   border
@@ -228,7 +228,7 @@ import type { InquiryRecord } from "@/types/inquiry";
 import type { ItineraryDayRecord } from "@/types/itinerary";
 import { formatDateTime } from "@/utils";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
-import { canExpandLog, changeTone, formatLogValue } from "./log-presentation";
+import { canExpandLog, changeTone, displayLogChanges, formatLogValue } from "./log-presentation";
 defineOptions({ name: "InquiryLogs" });
 const { t, te, locale } = useI18n();
 const route = useRoute(); const router = useRouter();

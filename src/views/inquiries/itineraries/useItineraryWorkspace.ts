@@ -41,6 +41,9 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const guideForm = ref<GuideRecord>({ id: "", code: "", name: "", secondLanguage: "none", shopping: false, dailyPrice: 0, status: "enabled" });
   const resourceTargetDayId = ref("");
   const resourceMealSlot = ref<MealSlot | null>(null);
+  const resourceCurrentItem = computed(() => selectedItinerary.value?.dailyPlans
+    .find(day => day.id === resourceTargetDayId.value)?.items
+    .find(item => item.type === "restaurant" && item.mealSlot === resourceMealSlot.value));
   const validationIssues = ref<PdfValidationIssue[]>([]);
   const inquiryReadOnly = computed(() => inquiry.value ? isInquiryReadOnly(inquiry.value.status) : true);
   const isDraft = computed(() => selectedItinerary.value?.status === "draft");
@@ -278,7 +281,8 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   }
 
   function addResourceItem(item: ItineraryResourceItem) {
-    if (editor.addResourceItem(resourceTargetDayId.value, item)) messages.success("itinerary.resourceAdded");
+    const editing = Boolean(resourceCurrentItem.value);
+    if (editor.addResourceItem(resourceTargetDayId.value, item)) messages.success(editing ? "itinerary.resourceUpdated" : "itinerary.resourceAdded");
   }
 
   async function copyItinerary() {
@@ -351,6 +355,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     loadError: selection.loadError,
     validationIssues,
     resourceMealSlot,
+    resourceCurrentItem,
     canDownloadOriginal: pdf.canDownloadOriginal,
     downloadOriginal: async () => { try { await pdf.downloadOriginal(); } catch (error) { reportError(error); } },
     updateGuideType,

@@ -91,6 +91,7 @@
         >
           <RemoteSelect
             v-model="selectedId"
+            :selected-label="selectedOption ? `${selectedOption.resourceName}｜${selectedOption.priceName}` : undefined"
             :query-key="JSON.stringify([city, mealSlot, locale])"
             :load-options="loadPriceOptions"
             :placeholder="$t('itinerary.resourcePricePlaceholder')"
@@ -143,7 +144,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import { useResourcePriceSelection } from "../useResourcePriceSelection";
@@ -151,9 +151,8 @@ import { ElMessage } from "element-plus";
 import { useCityOptions } from "@/composables/useCityOptions";
 import { useI18n } from "vue-i18n";
 import type { ItineraryResourceItem, MealSlot } from "@/types/itinerary";
-import { createId, formatMoney, multiplyMoney } from "@/utils";
+import { formatMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
-import { calculateItem } from "../pricing";
 import type { ResourcePriceDetail } from "../pricing";
 
 const props = defineProps<{
@@ -161,28 +160,12 @@ const props = defineProps<{
   destination?: string;
   guestCount: number;
   mealSlot: MealSlot | null;
+  currentItem?: ItineraryResourceItem;
 }>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [item: ItineraryResourceItem] }>();
 const { t, locale } = useI18n();
 const cityOptions = useCityOptions();
-const { city, selectedId, quantity, selectedOption, loadOptions } = useResourcePriceSelection(props, () => ElMessage.error(t("request.failed")));
-const source = ref<"library" | "custom">("library");
-const customName = ref("");
-const customPrice = ref<number>();
-const customUnit = ref<"personMeal" | "table">("personMeal");
-const customQuantity = ref<number>(1);
-const canSubmit = computed(() => props.mealSlot && source.value === "custom"
-  ? Boolean(customName.value.trim()) && customPrice.value != null && Number.isFinite(customPrice.value) && customPrice.value >= 0 && Number.isInteger(customQuantity.value) && customQuantity.value > 0
-  : Boolean(selectedOption.value));
-watch(() => props.modelValue, visible => {
-  if (!visible) return;
-  source.value = "library";
-  customName.value = "";
-  customPrice.value = undefined;
-  customUnit.value = "personMeal";
-  customQuantity.value = Math.max(props.guestCount, 1);
-});
-watch(customUnit, unit => { customQuantity.value = unit === "table" ? 1 : Math.max(props.guestCount, 1); });
+const { city, selectedId, quantity, selectedOption, loadOptions, source, customName, customPrice, customUnit, customQuantity, canSubmit, createItem } = useResourcePriceSelection(props, () => ElMessage.error(t("request.failed")));
 async function loadPriceOptions(query: RemoteOptionsQuery) {
   const result = await loadOptions(query);
   return { total: result.total, list: result.list.map(option => ({
@@ -198,17 +181,9 @@ function formatDetail(detail: ResourcePriceDetail) {
   return detail.value === "" ? "-" : String(detail.value);
 }
 function submit() {
-  if (!canSubmit.value) return;
-  if (props.mealSlot && source.value === "custom" && customPrice.value != null) {
-    emit("submit", { id: createId("item"), type: "restaurant", mealSlot: props.mealSlot,
-      resourceId: null, resourcePriceId: null, resourceName: customName.value.trim(), priceName: "",
-      unit: customUnit.value, unitCost: customPrice.value, quantity: customQuantity.value,
-      totalCost: multiplyMoney(customPrice.value, customQuantity.value), remark: "" });
-    emit("update:modelValue", false);
-    return;
-  }
-  if (!selectedOption.value) return;
-  emit("submit", { ...calculateItem(selectedOption.value, quantity.value), ...(props.mealSlot ? { mealSlot: props.mealSlot } : {}) });
+  const item = createItem();
+  if (!item) return;
+  emit("submit", item);
   emit("update:modelValue", false);
 }
 </script>

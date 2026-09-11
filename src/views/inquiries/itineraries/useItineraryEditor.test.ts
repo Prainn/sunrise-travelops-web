@@ -2,7 +2,7 @@ import type { GuideRecord } from "@/types/resource";
 import { computed, ref } from "vue";
 import { describe, expect, it } from "vitest";
 import type { InquiryRecord } from "@/types/inquiry";
-import type { ItineraryRecord } from "@/types/itinerary";
+import type { ItineraryRecord, ItineraryResourceItem } from "@/types/itinerary";
 import type { HotelRecord, TransportRecord } from "@/types/resource";
 import { useItineraryEditor } from "./useItineraryEditor";
 
@@ -123,4 +123,28 @@ it("inserts a blank day after the chosen day and shifts later dates without losi
   expect(plan.dailyPlans[1].overnightDestination).toBeNull();
   expect(plan.dailyPlans[2]).toMatchObject({ id: previousSecondId, description: "保留行程" });
   expect(plan.endDate).toBe("2026-11-07");
+});
+
+it("updates the meal in place across source changes, but gives an explicitly re-added meal a new identity", () => {
+  const { editor } = createEditor();
+  const plan = editor.createItinerary({ ...editor.createEmptyItinerary(), startDate: "2026-11-05" })!;
+  const day = plan.dailyPlans[0];
+  day.meals.dinner = true;
+  const meal: ItineraryResourceItem = { id: "meal", type: "restaurant", mealSlot: "dinner", resourceId: "r1", resourcePriceId: "p1", resourceName: "资源餐厅", priceName: "团餐", unit: "table", unitCost: 500, quantity: 1, totalCost: 500, remark: "少辣" };
+  const attraction: ItineraryResourceItem = { ...meal, id: "attraction", type: "attraction", mealSlot: undefined };
+  day.items = [meal, attraction];
+  for (const replacement of [
+    { ...meal, id: "generated-1", resourceId: null, resourcePriceId: null, resourceName: "自定义", priceName: "" },
+    { ...meal, id: "generated-2", resourceId: null, resourcePriceId: null, resourceName: "新名称", priceName: "", unit: "personMeal" as const, unitCost: 60, quantity: 10, totalCost: 600 },
+    { ...meal, id: "generated-3", resourceId: "r2", resourcePriceId: "p2" },
+    { ...meal, id: "generated-4", resourceId: "r3", resourcePriceId: "p3" },
+  ]) {
+    expect(editor.addResourceItem(day.id, replacement)).toBe(true);
+    expect(day.items.map(item => item.id)).toEqual(["meal", "attraction"]);
+    expect(day.items[0]).toEqual({ ...replacement, id: "meal" });
+    expect(day.items[1]).toEqual(attraction);
+  }
+  editor.removeItem(day.id, 0);
+  editor.addResourceItem(day.id, { ...meal, id: "new-meal" });
+  expect(day.items.map(item => item.id)).toEqual(["attraction", "new-meal"]);
 });

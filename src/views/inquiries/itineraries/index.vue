@@ -227,6 +227,7 @@
         :guest-count="guestCount"
         :destination="resourceDestination"
         :meal-slot="resourceMealSlot"
+        :current-item="resourceCurrentItem"
         @submit="addResourceItem"
       />
       <ItineraryPdfPreviewDialog
@@ -376,7 +377,7 @@ const {
   isGuideDialogVisible, isGuideLoading, isGuideMissing,
   isDraft, itemCount, itineraryForm, loadDestinationResourceOptions, openCreateDialog, openResourceDialog, priceEditable, quoteCalculation,
   openEditDialog, pdfPreviewUrl, removeDay, removeItem, router, rows, saveItinerary, selectedItinerary, selectedItineraryId,
-  resourceMealSlot, updateMeal, updateQuoteSettings,
+  resourceMealSlot, resourceCurrentItem, updateMeal, updateQuoteSettings,
   canCreateGuide, createGuide, guideForm, guideLanguage, guideShopping, openGuideCreateDialog, updateGuideType,
   validationIssues, isDownloadingPdf, canDownloadOriginal, downloadOriginal,
   submitItineraryPlan,

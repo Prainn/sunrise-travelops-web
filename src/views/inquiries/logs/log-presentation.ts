@@ -13,6 +13,22 @@ interface DisplayContext {
 }
 const hiddenFields = new Set(["id", "resourceId", "resourcePriceId", "hotelId", "vehicleId", "guideId", "agencyId", "contactId", "ownerId"]);
 
+export function displayLogChanges(changes: Change[]): Change[] {
+  const sourceChanges = new Map(changes.filter(change =>
+    /^dailyPlans\[[^\]]+\]\.items\[[^\]]+\]\.resourceId$/.test(change.path)
+    && ((change.before === null && typeof change.after === "string")
+      || (typeof change.before === "string" && change.after === null))
+  ).map(change => [change.path.replace(/\.resourceId$/, ""), change]));
+  return changes.flatMap(change => {
+    const itemPath = change.path.replace(/\.(resourceId|resourcePriceId)$/, "");
+    if (!sourceChanges.has(itemPath)) return [change];
+    if (change.path.endsWith(".resourcePriceId")) return [];
+    return [{ ...change, path: `${itemPath}.mealSource`, kind: "changed" as const,
+      before: change.before === null ? "custom" : "library",
+      after: change.after === null ? "custom" : "library" }];
+  });
+}
+
 function isEmpty(value: unknown): boolean {
   return value == null || value === "" ||
     (Array.isArray(value) && value.length === 0) ||
@@ -50,6 +66,7 @@ export function formatLogValue(value: unknown, path: string, context: DisplayCon
   if (field === "unit") return getResourceUnitName(value, locale);
   let key = "";
   switch (field) {
+    case "mealSource": key = value === "custom" ? "itinerary.customRestaurant" : "itinerary.mealLibrary"; break;
     case "status": key = `${targetType}.statuses.${value}`; break;
     case "tier": case "hotelTier": case "vehicleTier": key = `inquiry.log.tiers.${value}`; break;
     case "secondLanguage": key = `planning.languages.${value}`; break;

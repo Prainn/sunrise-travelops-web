@@ -117,7 +117,11 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     if (item.type === "restaurant") {
       if (!item.mealSlot || !day.meals[item.mealSlot]) return false;
       const previous = day.items.findIndex((record) => record.type === "restaurant" && record.mealSlot === item.mealSlot);
-      if (previous >= 0) day.items.splice(previous, 1);
+      if (previous >= 0) {
+        day.items[previous] = { ...item, id: day.items[previous].id, remark: day.items[previous].remark };
+        touchSelectedItinerary();
+        return true;
+      }
     }
     day.items.push(item);
     touchSelectedItinerary();

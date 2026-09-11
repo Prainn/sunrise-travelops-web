@@ -4,7 +4,7 @@ import zh from "@/lang/package/zh-cn.json";
 import en from "@/lang/package/en.json";
 import { transportMethodStore } from "@/utils/transport-method";
 import { resourceUnitStore } from "@/utils/resource-unit";
-import { canExpandLog, changeTone, formatLogValue } from "./log-presentation";
+import { canExpandLog, changeTone, displayLogChanges, formatLogValue } from "./log-presentation";
 
 const i18n = createI18n({ legacy: false, locale: "zh", messages: { zh, en } });
 function format(
@@ -87,4 +87,24 @@ it("localizes timestamp fields without changing dates or customer text", () => {
   expect(format({ nextFollowUpAt: instant }, "")).toContain("2026-09-18 00:00");
   expect(format("2026-09-18", "startDate")).toBe("2026-09-18");
   expect(format(instant, "description")).toBe(instant);
+});
+
+it.each([["restaurant-1", null, "library", "custom"], [null, "restaurant-2", "custom", "library"]] as const)("displays meal source transitions without exposing duplicate association changes", (before, after, oldSource, newSource) => {
+  const path = "dailyPlans[d3].items[dinner]";
+  const changes = [
+    { path: `${path}.resourceId`, kind: "changed" as const, before, after, context: { dayNumber: 3, name: "大理餐厅" } },
+    { path: `${path}.resourcePriceId`, kind: "changed" as const, before: before ? "p1" : null, after: after ? "p2" : null },
+    { path: `${path}.unitCost`, kind: "changed" as const, before: 50, after: 600 },
+  ];
+  const original = JSON.stringify(changes);
+  const displayed = displayLogChanges(changes);
+  expect(displayed).toEqual([
+    { ...changes[0], path: `${path}.mealSource`, before: oldSource, after: newSource }, changes[2],
+  ]);
+  expect(JSON.stringify(changes)).toBe(original);
+  expect(changeTone(displayed[0])).toBe("changed");
+  expect(format("library", `${path}.mealSource`)).toBe("资源库");
+  expect(format("custom", `${path}.mealSource`)).toBe("自定义");
+  expect(format("library", `${path}.mealSource`, "en")).toBe(en.itinerary.mealLibrary);
+  expect(format("custom", `${path}.mealSource`, "en")).toBe(en.itinerary.customRestaurant);
 });
