@@ -296,7 +296,7 @@ function buildTipRows(itinerary: ItineraryRecord, columnCount: number) {
 function buildCustomerTerms(itinerary: ItineraryRecord) {
   const hasMeals = itinerary.dailyPlans.some((day) => day.meals.lunch || day.meals.dinner);
   const rows: Array<[string, string]> = [
-    ["酒店", "行程中所标注或同级酒店，双标间两人入住【含早餐】"],
+    ["酒店", "行程中所标注或同级酒店，双标间两人入住，含早餐。"],
     ["餐食", hasMeals ? "行程中所列酒店提供早餐；包含标注的午餐 L、晚餐 D，未标注的正餐自理。" : "行程中所列酒店提供早餐，团费不含正餐，请自理。"],
     ["门票", "包含行程中所列门票及景区内区间费用。"],
     ...itinerary.guidePlans.length ? [["导游", "行程安排的导游服务。"] as [string, string]] : [],
