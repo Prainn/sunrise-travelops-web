@@ -1,4 +1,3 @@
-import { itineraryDuration } from "./duration";
 import { getDayBreakfastStatus } from "./hotel-plans";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
@@ -22,7 +21,7 @@ import {
 const PAGE_MARGIN_MM = 10;
 const PAGE_CONTENT_WIDTH_MM = 190;
 const PAGE_CONTENT_HEIGHT_MM = 277;
-const BLOCK_GAP_MM = 5;
+const BLOCK_GAP_MM = 1.5;
 const MAX_QUOTE_OPTIONS_PER_TABLE = 4;
 
 interface QuoteDisplayOption {
@@ -39,7 +38,7 @@ export interface GeneratedItineraryPdf {
 export async function generateItineraryPdf(itinerary: ItineraryRecord, inquiry: InquiryRecord, snapshot?: { generatedAt: string; calculation: ItineraryQuoteCalculation; quoteCode: string; quoteVersion: number }): Promise<GeneratedItineraryPdf> {
   const generatedAt = snapshot ? formatDateTime(new Date(snapshot.generatedAt)) : formatDateTime(new Date());
   const documentRoot = document.createElement("section");
-  documentRoot.style.cssText = "position:fixed;left:-10000px;top:0;width:760px;padding:32px;background:#fff;color:#1f2937;font-family:Arial,'Microsoft YaHei',sans-serif;box-sizing:content-box;";
+  documentRoot.style.cssText = "position:fixed;left:-10000px;top:0;width:760px;padding:0;background:#fff;color:#111;font-family:Arial,'Microsoft YaHei',sans-serif;box-sizing:content-box;";
   documentRoot.innerHTML = buildPdfHtml(itinerary, inquiry, generatedAt, snapshot);
   document.body.appendChild(documentRoot);
 
@@ -151,7 +150,7 @@ function addPdfPage(pdf: jsPDF) {
   return PAGE_MARGIN_MM;
 }
 
-export function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord, generatedAt: string, snapshot?: { calculation: ItineraryQuoteCalculation; quoteCode: string; quoteVersion: number }) {
+export function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord, _generatedAt: string, snapshot?: { calculation: ItineraryQuoteCalculation; quoteCode: string; quoteVersion: number }) {
   const totalCost = sumMoney(itinerary.dailyPlans
     .flatMap((day) => day.items)
     .filter((item) => item.type === "restaurant" || item.type === "attraction")
@@ -160,17 +159,16 @@ export function buildPdfHtml(itinerary: ItineraryRecord, inquiry: InquiryRecord,
   const scheduleSections = buildScheduleSections(itinerary.dailyPlans, itinerary);
 
   return `
-    <header data-pdf-block style="padding-bottom:18px;border-bottom:2px solid #2563eb;box-sizing:border-box;">
-      <h1 style="margin:0 0 8px;font-size:26px;">${escapeHtml(itinerary.title)}</h1>
-      <div style="color:#606266;">行程编号：${escapeHtml(itinerary.code)} · 旅行社：${escapeHtml(inquiry.agencyName)}</div>
-      <div style="margin-top:6px;color:#606266;">日期：${escapeHtml(itinerary.startDate)} — ${escapeHtml(itinerary.endDate)} · ${itineraryDuration(itinerary.dailyPlans).days}天${itineraryDuration(itinerary.dailyPlans).nights}晚</div>
-      <div style="margin-top:6px;color:#606266;">人数：成人 ${itinerary.adults} 人 · 儿童 ${itinerary.childrenCount} 人 · 领队 ${itinerary.leaderCount} 人（${itinerary.adults + itinerary.childrenCount}+${itinerary.leaderCount}）</div>
-      <div style="margin-top:6px;color:#606266;">${snapshot ? `报价编号：${escapeHtml(snapshot.quoteCode)} · V${snapshot.quoteVersion}<br>` : ""}报价生成时间：${escapeHtml(generatedAt)}</div>
+    <header data-pdf-block style="box-sizing:border-box;text-align:center;">
+      <h1 style="margin:0;font-size:20px;line-height:1.4;">${escapeHtml(itinerary.title)}</h1>
+      <div style="font-size:11px;line-height:1.5;">TO ${escapeHtml(inquiry.agencyName)} · ${escapeHtml(itinerary.startDate)} — ${escapeHtml(itinerary.endDate)} · ${itinerary.adults + itinerary.childrenCount}PAX</div>
     </header>
     ${scheduleSections}
+    ${buildCustomerTerms(itinerary)}
     ${buildHotelPairingSection(itinerary)}
     ${buildQuoteSections(itinerary, quote)}
-    ${buildCustomerTerms(itinerary)}`;
+    ${buildCustomerNotes(itinerary)}`;
+
 }
 
 function buildHotelPairingSection(itinerary: ItineraryRecord) {
@@ -178,10 +176,7 @@ function buildHotelPairingSection(itinerary: ItineraryRecord) {
   const vehiclePlans = getEnabledVehiclePlans(itinerary);
   const hotelDestinations = Object.keys(calculateDestinationNights(itinerary));
   return `
-    <section data-pdf-block data-pdf-keep-with-next style="box-sizing:border-box;">
-      <h2 style="margin:0;font-size:18px;">酒店与车型搭配</h2>
-    </section>
-    <table data-pdf-block data-pdf-gap-mm="3" style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;box-sizing:border-box;">
+    <table data-pdf-block data-pdf-gap-mm="0" style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;box-sizing:border-box;">
       <thead>
         <tr style="background:#f3f4f6;">
           <th style="${quoteHeaderStyle()};width:18%;">资源类别</th>
@@ -216,8 +211,7 @@ function buildQuoteSections(itinerary: ItineraryRecord, quote: ItineraryQuoteCal
 
   return `
     <section data-pdf-block data-pdf-keep-with-next style="box-sizing:border-box;">
-      <h2 style="margin:0 0 6px;font-size:18px;">团队报价</h2>
-      <div style="color:#606266;font-size:12px;">报价按 ${guestCount} 名付费游客计算，FOC 仅适用于领队。</div>
+      <h2 style="margin:0;font-size:13px;">团队报价【团费不含机票、动车票及小费】</h2>
     </section>
     ${optionGroups.map((group) => buildQuoteTable(group, itinerary, guestCount)).join("")}`;
 }
@@ -232,7 +226,7 @@ function buildQuoteTable(
     : "";
 
   return `
-    <table data-pdf-block data-pdf-gap-mm="3" style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;box-sizing:border-box;">
+    <table data-pdf-block data-pdf-gap-mm="0" style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;box-sizing:border-box;">
       <thead>
         <tr style="background:#f3f4f6;">
           <th style="${quoteHeaderStyle()};width:18%;">报价项目</th>
@@ -246,14 +240,14 @@ function buildQuoteTable(
       <tbody>
         ${buildQuoteRow("成人团费", options, ({ option, calculation }) => `
           <strong>RMB ${formatMoney(calculation.adultUnitPrice)} PP</strong>
-          <div style="margin-top:4px;color:${(option.leaderFocEnabled && itinerary.leaderCount > 0) ? "#15803d" : "#606266"};font-size:10px;">
-            ${(option.leaderFocEnabled && itinerary.leaderCount > 0) ? `${guestCount}+${itinerary.leaderCount} FOC (TOUR LEADER ONLY)` : "NO FOC"}
+          <div style="display:inline;margin-left:4px;color:${(option.leaderFocEnabled && itinerary.leaderCount > 0) ? "#15803d" : "#606266"};font-size:10px;">
+            ${(option.leaderFocEnabled && itinerary.leaderCount > 0) ? `${guestCount}+${itinerary.leaderCount} FOC` : "NO FOC"}
           </div>`)}
         ${childRow}
         ${buildExtraFeeRows(itinerary, options.length)}
         ${buildQuoteRow("单房差", options, ({ calculation }) => `RMB ${formatMoney(calculation.singleSupplementUnitCost)}`)}
         ${buildQuoteRow("团费总计", options, ({ calculation }) => `<strong>RMB ${formatMoney(calculation.totalPrice)}</strong>`)}
-        ${buildQuoteRow("其中：司陪费和其它支出（已含）", options, () => `RMB ${formatMoney(itinerary.quote.otherExpenses)}`)}
+        ${(itinerary.quote.otherExpenses ?? 0) > 0 ? buildQuoteRow("其中：司陪费和其它支出（已含）", options, () => `RMB ${formatMoney(itinerary.quote.otherExpenses ?? 0)}`) : ""}
       </tbody>
     </table>`;
 }
@@ -281,15 +275,15 @@ function getVehicleQuoteLabel(tier: ItineraryQuoteOption["vehicleTier"]) {
 }
 
 function quoteHeaderStyle() {
-  return "padding:9px 7px;border:1px solid #9ca3af;text-align:center;vertical-align:middle;font-weight:700;word-break:break-word;";
+  return "padding:3px 5px;border:1px solid #9ca3af;text-align:center;vertical-align:middle;font-weight:700;word-break:break-word;";
 }
 
 function quoteLabelStyle() {
-  return "padding:9px 7px;border:1px solid #9ca3af;background:#f9fafb;text-align:left;vertical-align:middle;font-weight:700;";
+  return "padding:3px 5px;border:1px solid #9ca3af;background:#f9fafb;text-align:left;vertical-align:middle;font-weight:700;";
 }
 
 function quoteCellStyle() {
-  return "padding:9px 7px;border:1px solid #9ca3af;text-align:center;vertical-align:middle;word-break:break-word;";
+  return "padding:3px 5px;border:1px solid #9ca3af;text-align:center;vertical-align:middle;word-break:break-word;";
 }
 
 function buildScheduleSections(days: ItineraryDayRecord[], itinerary: ItineraryRecord) {
@@ -301,7 +295,7 @@ function buildScheduleSections(days: ItineraryDayRecord[], itinerary: ItineraryR
           <td style="${scheduleCellStyle("center")}">${escapeHtml(formatScheduleDate(day.date))}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(formatScheduleRoute(day))}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(getTransportMethodNames(day.transport) || "-")}</td>
-          <td style="${scheduleCellStyle("left")};white-space:pre-wrap;line-height:1.6;">${escapeHtml(day.description?.trim() || "-")}</td>
+          <td style="${scheduleCellStyle("left")};white-space:pre-wrap;line-height:1.35;">${escapeHtml(day.description?.trim() || "-")}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(day.overnightDestination || "-")}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(getDailyMealCodes(day, getDayBreakfastStatus(itinerary, itinerary.dailyPlans.indexOf(day))) || "-")}</td>
         </tr></tbody>
@@ -310,7 +304,7 @@ function buildScheduleSections(days: ItineraryDayRecord[], itinerary: ItineraryR
 
   return `
     <section data-pdf-block data-pdf-keep-with-next style="box-sizing:border-box;">
-      <h2 style="margin:0;font-size:18px;">行程安排</h2>
+      <h2 style="margin:0;font-size:13px;">行程安排</h2>
     </section>
     <table data-pdf-block data-pdf-kind="schedule-header" data-pdf-gap-mm="0" style="${scheduleTableStyle()}">
       ${scheduleColgroup()}
@@ -332,8 +326,8 @@ function scheduleTableStyle() {
 
 function scheduleColgroup() {
   return `<colgroup>
-    <col style="width:8%;"><col style="width:17%;"><col style="width:12%;">
-    <col style="width:39%;"><col style="width:16%;"><col style="width:8%;">
+    <col style="width:8%;"><col style="width:17%;"><col style="width:8%;">
+    <col style="width:49%;"><col style="width:12%;"><col style="width:6%;">
   </colgroup>`;
 }
 
@@ -358,33 +352,36 @@ function buildExtraFeeRows(itinerary: ItineraryRecord, columnCount: number) {
     fee.type === "flight" ? "机票（另付）" : "动车票（另付）",
     `${fee.departureCity} → ${fee.arrivalCity} · ${cabins[fee.cabin]} · RMB ${formatMoney(fee.unitPrice ?? 0)} PP`,
   ]);
-  if (itinerary.quote.chineseTip !== null) rows.push(["中文小费（另付）", `RMB ${formatMoney(itinerary.quote.chineseTip)} PP（全程，大小同价）`]);
-  if (itinerary.quote.englishTip !== null) rows.push(["英文小费（另付）", `RMB ${formatMoney(itinerary.quote.englishTip)} PP（全程，大小同价）`]);
+  if ((itinerary.quote.chineseTip ?? 0) > 0) rows.push(["中文小费（另付）", `RMB ${formatMoney(itinerary.quote.chineseTip ?? 0)} PP（全程，大小同价）`]);
+  if ((itinerary.quote.englishTip ?? 0) > 0) rows.push(["英文小费（另付）", `RMB ${formatMoney(itinerary.quote.englishTip ?? 0)} PP（全程，大小同价）`]);
   return rows.map(([label, value]) => `<tr><th style="${quoteLabelStyle()}">${escapeHtml(label)}</th><td colspan="${columnCount}" style="${quoteCellStyle()}">${escapeHtml(value)}</td></tr>`).join("");
 }
 
 function buildCustomerTerms(itinerary: ItineraryRecord) {
   const hasMeals = itinerary.dailyPlans.some((day) => day.meals.lunch || day.meals.dinner);
   const rows: Array<[string, string]> = [
-    ["酒店", "行程所列酒店按双人入住标准报价，均含早餐。早餐由前一晚酒店提供；每日 B 标记表示含早餐。"],
+    ["酒店", "行程所列酒店，双人入住，含早餐。"],
     ["餐食", hasMeals ? "仅包含行程标注的午餐 L、晚餐 D，未标注的正餐自理。" : "团费不含正餐，请自理。"],
-    ["交通", "行程所列旅游车服务；机票、动车票及小费不包含在团费中，另列报价不计入团费总计。"],
+    ["交通", "行程所列旅游车服务；机票、动车票及小费另付。"],
   ];
   if (itinerary.guidePlans.length > 0) rows.push(["导游", itinerary.guidePlans.map(g => `${g.guideName}，服务${g.serviceDays}天`).join("；")]);
-  if (itinerary.quote.holidayRestrictions.trim()) rows.push(["节假日限制", itinerary.quote.holidayRestrictions]);
-  if (itinerary.quote.hotelReplacementTerms.trim()) rows.push(["同级酒店替换条款", itinerary.quote.hotelReplacementTerms]);
-  if (itinerary.quote.customerNotes.trim()) rows.push(["客户备注", itinerary.quote.customerNotes]);
-  return `<section data-pdf-block data-pdf-keep-with-next><h2 style="margin:0;font-size:18px;">团队标准与备注</h2></section>` + rows.map(([label, value]) => `
-    <section data-pdf-block data-pdf-gap-mm="2" style="font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;"><strong>${escapeHtml(label)}：</strong>${escapeHtml(value)}</section>
-  `).join("");
+  return `<section data-pdf-block data-pdf-keep-with-next><h2 style="margin:0;font-size:13px;">团队标准</h2></section>` +
+    rows.map(([label, value]) => `<table data-pdf-block data-pdf-gap-mm="0" style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;"><tr><th style="${quoteLabelStyle()};width:18%;">${escapeHtml(label)}</th><td style="${quoteCellStyle()};text-align:left;white-space:pre-wrap;">${escapeHtml(value)}</td></tr></table>`).join("");
+}
+
+function buildCustomerNotes(itinerary: ItineraryRecord) {
+  const notes = [itinerary.quote.holidayRestrictions, itinerary.quote.hotelReplacementTerms, itinerary.quote.customerNotes].filter(value => value.trim());
+  if (!notes.length) return "";
+  return `<section data-pdf-block data-pdf-keep-with-next><h2 style="margin:0;font-size:13px;">备注</h2></section>` +
+    notes.map(value => `<section data-pdf-block data-pdf-gap-mm="0" style="font-size:11px;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere;">${escapeHtml(value)}</section>`).join("");
 }
 
 function scheduleHeaderStyle() {
-  return "padding:8px 6px;border:1px solid #4b5563;text-align:center;vertical-align:middle;font-weight:700;";
+  return "padding:3px 4px;border:1px solid #4b5563;text-align:center;vertical-align:middle;font-weight:700;";
 }
 
 function scheduleCellStyle(textAlign: "left" | "center") {
-  return `padding:9px 6px;border-right:1px solid #4b5563;border-bottom:1px solid #4b5563;border-left:1px solid #4b5563;text-align:${textAlign};vertical-align:middle;word-break:break-word;`;
+  return `padding:4px 4px;border-right:1px solid #4b5563;border-bottom:1px solid #4b5563;border-left:1px solid #4b5563;text-align:${textAlign};vertical-align:middle;word-break:break-word;`;
 }
 
 function escapeHtml(value: string) {

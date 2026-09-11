@@ -192,6 +192,10 @@
     "hotelPlansPending": "Set the overnight cities in the daily itinerary before selecting hotels.",
     "hotelPlansNotNeeded": "All itinerary days are marked as no overnight stay. No hotels are needed.",
     "actualMarginRate": "Actual Margin",
+    "collapseDay": "Collapse",
+    "expandDay": "Expand",
+    "confirmAddBeyondPlannedDays": "The itinerary already has {days} days, matching the inquiry plan. Adding another day will exceed the planned duration. Continue?",
+    "addDayAfter": "Add a day after this",
     "addDay": "Add Day",
     "addResource": "Add attraction",
     "adults": "Adults",
@@ -348,7 +352,6 @@
       "vehicles": "Complete the vehicle arrangements and ensure enough seats",
       "transportFee": "Transport quote {index}: provide a route and price per person"
     },
-    "breakfastMixed": "Breakfast strategy varies",
     "feeDeparture": "Departure",
     "feeArrival": "Arrival",
     "cityGuides": "Guides by city",
@@ -1042,7 +1045,6 @@
     "hotelPrice": "Actual price per room per night",
     "otherExpenses": "Driver/guide expenses and other costs",
     "includedAmount": "Included amount (CNY)",
-    "includedHint": "This amount is included in the tour total and shown separately in the PDF. It is not added again.",
     "languages": {
       "none": "None (Chinese only)",
       "en": "English",

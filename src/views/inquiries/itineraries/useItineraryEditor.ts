@@ -273,11 +273,12 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     return copied;
   }
 
-  function addDay() {
+  function addDay(afterIndex?: number) {
     if (!options.canEditContent()) return;
     const plan = options.selectedItinerary.value;
     if (!plan) return;
-    plan.dailyPlans.push({
+    const position = afterIndex === undefined ? plan.dailyPlans.length : afterIndex + 1;
+    plan.dailyPlans.splice(position, 0, {
       id: createId("day"), dayNumber: plan.dailyPlans.length + 1, date: addDays(plan.startDate, plan.dailyPlans.length),
       departure: "", destination: "", overnightDestination: null, meals: { breakfast: plan.dailyPlans.length > 0, lunch: false, dinner: false }, transport: "", items: [],
     });

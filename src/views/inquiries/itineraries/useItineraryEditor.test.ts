@@ -109,3 +109,18 @@ describe('itinerary editor business rules', () => {
     expect(plan.vehiclePlans[0].arrangements[0]).toMatchObject({ startDate: '2026-11-05', endDate: '2026-11-06' });
   });
 });
+
+it("inserts a blank day after the chosen day and shifts later dates without losing content", () => {
+  const { editor } = createEditor();
+  const plan = editor.createItinerary({ ...editor.createEmptyItinerary(), startDate: "2026-11-05" })!;
+  editor.addDay();
+  plan.dailyPlans[1].description = "保留行程";
+  const previousSecondId = plan.dailyPlans[1].id;
+  editor.addDay(0);
+  expect(plan.dailyPlans.map(day => day.date)).toEqual(["2026-11-05", "2026-11-06", "2026-11-07"]);
+  expect(plan.dailyPlans.map(day => day.dayNumber)).toEqual([1, 2, 3]);
+  expect(plan.dailyPlans[1].items).toEqual([]);
+  expect(plan.dailyPlans[1].overnightDestination).toBeNull();
+  expect(plan.dailyPlans[2]).toMatchObject({ id: previousSecondId, description: "保留行程" });
+  expect(plan.endDate).toBe("2026-11-07");
+});

@@ -268,3 +268,14 @@ describe("city options and hotel breakfast", () => {
   });
 
 });
+
+it("reuses selector pages and refreshes them after a resource is deleted", async () => {
+  requestMock.mockResolvedValue({ list: [{ id: "bus", name: "Bus", seats: 19 }], total: 1 });
+  const query = { page: 1, pageSize: 20, serviceLevel: "standard" as const, keyword: " cache-test " };
+  await resourceService.getSelectionOptions("transports", query);
+  await resourceService.getSelectionOptions("transports", { ...query, keyword: "cache-test" });
+  expect(requestMock).toHaveBeenCalledTimes(1);
+  await resourceService.transportApi.deleteByIds("bus");
+  await resourceService.getSelectionOptions("transports", query);
+  expect(requestMock).toHaveBeenCalledTimes(3);
+});

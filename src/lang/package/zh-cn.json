@@ -192,6 +192,10 @@
     "hotelPlansPending": "请先在逐日行程中填写住宿城市，再选择酒店。",
     "hotelPlansNotNeeded": "逐日行程均设为不住宿，无需选择酒店。",
     "actualMarginRate": "实际毛利率",
+    "collapseDay": "收起",
+    "expandDay": "展开",
+    "confirmAddBeyondPlannedDays": "当前已有 {days} 天行程，与询盘计划天数相同。继续新增将超出计划天数，是否继续？",
+    "addDayAfter": "在此后新增一天",
     "addDay": "新增一天",
     "addResource": "添加景点",
     "adults": "成人",
@@ -348,7 +352,6 @@
       "vehicles": "请补全用车安排并确保座位数充足",
       "transportFee": "第 {index} 段交通报价：请填写区间和每人价格"
     },
-    "breakfastMixed": "早餐方案不一致",
     "feeDeparture": "出发",
     "feeArrival": "到达",
     "cityGuides": "城市导游",
@@ -1042,7 +1045,6 @@
     "hotelPrice": "实际每间每晚价格",
     "otherExpenses": "司陪费及其他支出",
     "includedAmount": "已含金额（元）",
-    "includedHint": "该金额已包含在游客团费总计中，将在 PDF 中单独说明，不重复计入总价。",
     "languages": {
       "none": "无（仅中文）",
       "en": "英文",

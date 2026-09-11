@@ -52,18 +52,20 @@
             <div
               v-for="destination in overnightDestinations"
               :key="destination"
-              class="itinerary-hotel-plans__selection"
+              class="itinerary-hotel-plans__selection flex items-start gap-4 p-[16px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)]"
             >
               <span>{{ destination }}</span>
-              <ResourceSelect
-                kind="hotels"
-                :model-value="getHotelSelectionId(tier, destination)"
-                :selected-label="getPlan(tier)?.hotels.find(hotel => hotel.destination === destination)?.hotelName"
-                :filters="{ city: destination, rating: tier === 'international_five_star' ? tier : 'ctrip_preferred', guestCount }"
-                :disabled="!editable"
-                :placeholder="$t('itinerary.selectDestinationHotel')"
-                @update:model-value="emit('update-selection', tier, destination, $event)"
-              />
+              <div class="w-1/2">
+                <ResourceSelect
+                  kind="hotels"
+                  :model-value="getHotelSelectionId(tier, destination)"
+                  :selected-label="getPlan(tier)?.hotels.find(hotel => hotel.destination === destination)?.hotelName"
+                  :filters="{ city: destination, rating: tier === 'international_five_star' ? tier : 'ctrip_preferred', guestCount }"
+                  :disabled="!editable"
+                  :placeholder="$t('itinerary.selectDestinationHotel')"
+                  @update:model-value="emit('update-selection', tier, destination, $event)"
+                />
+              </div>
               <div
                 v-if="getPlan(tier)?.hotels.some(hotel => hotel.destination === destination)"
                 class="col-start-2 flex items-center flex-wrap gap-[8px]"
@@ -143,7 +145,6 @@ function getHotelSelectionId(tier: ItineraryHotelTier, destination: string) {
 .itinerary-hotel-plans__tier > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; padding: 0 14px; background: var(--el-fill-color-lighter); }
 .itinerary-hotel-plans__tier.is-selected { border-color: var(--el-color-primary-light-5); box-shadow: 0 0 0 1px var(--el-color-primary-light-8); }
 .itinerary-hotel-plans__tier.is-selected > header { background: var(--el-color-primary-light-9); }
-.itinerary-hotel-plans__selection { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 8px; font-size: 14px; }
 .itinerary-hotel-plans__selection :deep(.el-select) { width: 100%; }
 @media (width <= 1100px) {
   .itinerary-hotel-plans__tiers { grid-template-columns: 1fr; }

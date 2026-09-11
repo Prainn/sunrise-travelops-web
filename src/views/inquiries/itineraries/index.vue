@@ -1,6 +1,8 @@
 <template>
   <div
-    v-loading="isLoading || isSaving"
+    v-loading.fullscreen="isLoading || isSaving"
+    element-loading-background="rgba(0, 0, 0, 0.2)"
+    :inert="isSaving"
     class="page-container itinerary-page"
   >
     <el-alert
@@ -113,30 +115,45 @@
               v-if="contentEditable"
               type="primary"
               plain
-              @click="addDay"
+              @click="handleAddDay()"
             >
               {{ $t("itinerary.addDay") }}
             </el-button>
           </div>
-          <ItineraryDayCard
+          <template
             v-for="(day, index) in selectedItinerary.dailyPlans"
             :key="day.id"
-            :day="day"
-            :breakfast-status="getDayBreakfastStatus(selectedItinerary, index)"
-            :destinations="selectedItinerary.destinations"
-            :content-editable="contentEditable"
-            :is-first="index === 0"
-            :is-last="index === selectedItinerary.dailyPlans.length - 1"
-            @update-field="(field, value) => updateDayField(index, field, value)"
-            @add-item="openResourceDialog(day.id)"
-            @update-meal="(slot, included) => updateMeal(index, slot, included)"
-            @select-meal="openResourceDialog(day.id, $event)"
-            @remove-item="removeItem(day.id, $event)"
-            @update-item-quantity="(itemIndex, quantity) => updateItemQuantity(day.id, itemIndex, quantity)"
-            @duplicate="duplicateDay(index)"
-            @remove="removeDay(index)"
-            @move="moveDay(index, $event)"
-          />
+          >
+            <ItineraryDayCard
+              :ref="(card) => setDayCard(day.id, card)"
+              :day="day"
+              :breakfast-status="getDayBreakfastStatus(selectedItinerary, index)"
+              :destinations="selectedItinerary.destinations"
+              :content-editable="contentEditable"
+              :planned-days="inquiry.plannedDays"
+              :is-last="index === selectedItinerary.dailyPlans.length - 1"
+              @update-field="(field, value) => updateDayField(index, field, value)"
+              @add-item="openResourceDialog(day.id)"
+              @update-meal="(slot, included) => updateMeal(index, slot, included)"
+              @select-meal="openResourceDialog(day.id, $event)"
+              @remove-item="removeItem(day.id, $event)"
+              @update-item-quantity="(itemIndex, quantity) => updateItemQuantity(day.id, itemIndex, quantity)"
+              @duplicate="duplicateDay(index)"
+              @remove="removeDay(index)"
+            />
+            <div
+              v-if="contentEditable"
+              class="flex justify-center py-3"
+            >
+              <el-button
+                plain
+                type="primary"
+                @click="handleAddDay(index)"
+              >
+                {{ $t('itinerary.addDayAfter') }}
+              </el-button>
+            </div>
+          </template>
           <ItineraryHotelPlans
             :destinations="selectedItinerary.destinations"
             :daily-plans="selectedItinerary.dailyPlans"
@@ -243,6 +260,7 @@
         </section>
         <ItineraryQuotePanel
           v-if="selectedItinerary && quoteCalculation"
+          :inert="isSaving"
           :quote="selectedItinerary.quote"
           :leader-count="selectedItinerary.leaderCount"
           :calculation="quoteCalculation"
@@ -350,7 +368,7 @@ const {
   closePdfPreview, confirmPdfDownload, destinationOptions, duplicateDay, guestCount, handleGeneratePdf, inquiry, isGeneratingPdf,
   isEditingPlan, isPdfPreviewVisible, isPlanDialogVisible, isResourceDialogVisible,
   isGuideDialogVisible, isGuideLoading, isGuideMissing,
-  isDraft, itemCount, itineraryForm, loadDestinationResourceOptions, moveDay, openCreateDialog, openResourceDialog, priceEditable, quoteCalculation,
+  isDraft, itemCount, itineraryForm, loadDestinationResourceOptions, openCreateDialog, openResourceDialog, priceEditable, quoteCalculation,
   openEditDialog, pdfPreviewUrl, removeDay, removeItem, router, rows, saveItinerary, selectedItinerary, selectedItineraryId,
   resourceMealSlot, updateMeal, updateQuoteSettings,
   canCreateGuide, createGuide, guideForm, guideLanguage, guideShopping, openGuideCreateDialog, updateGuideType,
@@ -367,7 +385,31 @@ const {
 });
 
 watch(selectedItineraryId, () => { validationIssues.value = []; });
+const dayCards = new Map<string, { expand: () => void }>();
+function setDayCard(id: string, card: unknown) {
+  if (card) dayCards.set(id, card as { expand: () => void });
+  else dayCards.delete(id);
+}
+const isConfirmingAddDay = ref(false);
+async function handleAddDay(afterIndex?: number) {
+  const plan = selectedItinerary.value;
+  if (!plan || !inquiry.value || !contentEditable.value || isSaving.value || isConfirmingAddDay.value) return;
+  isConfirmingAddDay.value = true;
+  try {
+    if (plan.dailyPlans.length === inquiry.value.plannedDays
+      && !await confirmAction("itinerary.confirmAddBeyondPlannedDays", { days: inquiry.value.plannedDays })) return;
+    if (selectedItinerary.value !== plan || !contentEditable.value || isSaving.value) return;
+    const position = afterIndex === undefined ? plan.dailyPlans.length : afterIndex + 1;
+    addDay(afterIndex);
+    await nextTick();
+    const day = plan.dailyPlans[position];
+    if (day) document.getElementById(`day-${day.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } finally {
+    isConfirmingAddDay.value = false;
+  }
+}
 async function locateIssue(target: string) {
+  if (target.startsWith("day-")) dayCards.get(target.slice(4))?.expand();
   if (target === "quote") {
     document.querySelector(".quote-panel__settings")?.scrollIntoView({ behavior: "smooth", block: "start" });
     return;

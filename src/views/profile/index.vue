@@ -47,11 +47,11 @@
           <div class="profile-hero__meta flex-wrap gap-[12px] mt-[8px] text-[14px] text-[var(--el-text-color-secondary)]">
             <span class="profile-hero__meta-item gap-[4px]">
               <el-icon><Calendar /></el-icon>
-              {{ $t("profile.joinedAt", { time: formatValue(userProfile.createTime) }) }}
+              {{ $t("profile.joinedAt", { time: formatDateTime(userProfile.createTime) }) }}
             </span>
             <span class="profile-hero__meta-item gap-[4px]">
               <el-icon><Location /></el-icon>
-              {{ $t("profile.lastLogin", { time: recentLoginRecords[0]?.time }) }}
+              {{ $t("profile.lastLogin", { time: formatDateTime(recentLoginRecords[0]?.time) }) }}
             </span>
           </div>
         </div>
@@ -161,7 +161,7 @@
                 <strong class="profile-login__device text-[14px] text-[var(--el-text-color-primary)]">{{ record.device }}</strong>
                 <span class="profile-login__meta">{{ record.location }} / {{ record.ip }}</span>
               </div>
-              <time class="profile-login__time">{{ record.time }}</time>
+              <time class="profile-login__time">{{ formatDateTime(record.time) }}</time>
             </div>
           </div>
         </section>
@@ -263,7 +263,7 @@ import type { Component } from "vue";
 import { computed, onMounted, reactive, ref } from "vue";
 import { userService } from "@/services";
 import { useUserStoreHook } from "@/stores/user";
-import { readFileAsDataUrl } from "@/utils";
+import { readFileAsDataUrl, formatDateTime } from "@/utils";
 import { redirectToLogin } from "@/utils/auth";
 
 import {
@@ -410,15 +410,11 @@ const profileInfoItems = computed<ProfileInfoItem[]>(() => [
   },
   {
     label: t("common.createdAt"),
-    value: formatValue(userProfile.value.createTime),
+    value: formatDateTime(userProfile.value.createTime),
     icon: Timer,
     muted: !userProfile.value.createTime,
   },
 ]);
-
-function formatValue(value?: Date | string) {
-  return value ? String(value) : "-";
-}
 
 const handleOpenDialog = (type: DialogType) => {
   dialogState.type = type;

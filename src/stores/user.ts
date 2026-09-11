@@ -1,3 +1,4 @@
+import { clearResourceOptionsCache } from "@/services/resource-options-cache";
 import { store } from "./store";
 
 import type { UserInfo } from "@/types/user";
@@ -87,6 +88,7 @@ export const useUserStore = defineStore("user", () => {
    */
   function resetUserState(): void {
     AuthStorage.clearAuth();
+    clearResourceOptionsCache();
     userInfo.value = {} as UserInfo;
   }
 

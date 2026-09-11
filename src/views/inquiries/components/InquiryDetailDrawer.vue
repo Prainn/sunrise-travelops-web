@@ -44,13 +44,13 @@
           {{ record.sourceChannel }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.nextFollowUpAt')">
-          {{ valueOrDash(record.nextFollowUpAt) }}
+          {{ formatDateTime(record.nextFollowUpAt) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.plannedDays')">
           {{ $t("itinerary.duration", plannedDuration(record.plannedDays)) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('common.createdAt')">
-          {{ record.createdAt }}
+          {{ formatDateTime(record.createdAt) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.creator')">
           {{ record.creator }}
@@ -80,6 +80,7 @@
 </template>
 
 <script setup lang="ts">
+import { formatDateTime } from "@/utils";
 import { plannedDuration } from "@/views/inquiries/itineraries/duration";
 import { useI18n } from "vue-i18n";
 import type { InquiryRecord } from "@/types/inquiry";

@@ -1,3 +1,4 @@
+import { clearResourceOptionsCache, loadResourceOptions } from "./resource-options-cache";
 import { reactive } from "vue";
 import { request } from "@/api/request";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
@@ -62,16 +63,17 @@ function createCrud<T extends { code: string }>(
       return fromResponse(result);
     },
     create(data) {
-      return request.post<ApiRecord<T>>(baseUrl, { ...toInput(data), ...(resourceName === "guides" ? {} : { code: data.code.trim() || undefined }) }).then(fromResponse);
+      return request.post<ApiRecord<T>>(baseUrl, { ...toInput(data), ...(resourceName === "guides" ? {} : { code: data.code.trim() || undefined }) }).then(result => { clearResourceOptionsCache(); return fromResponse(result); });
     },
     update(id, data) {
       return request.put<ApiRecord<T>>(
         `${baseUrl}/${encodeURIComponent(id)}`,
         { ...toInput(data), id, version: (data as T & { version?: number }).version }
-      ).then(fromResponse);
+      ).then(result => { clearResourceOptionsCache(); return fromResponse(result); });
     },
     async deleteByIds(ids) {
       await request.delete<void>(baseUrl, { params: { ids } });
+      clearResourceOptionsCache();
     },
   };
 }
@@ -253,6 +255,7 @@ export const resourceService = {
     async deleteContacts(agencyId: string, ids: string) {
       const baseUrl = `${RESOURCE_BASE_URL}/agencies/${encodeURIComponent(agencyId)}/contacts`;
       await request.delete<void>(baseUrl, { params: { ids } });
+      clearResourceOptionsCache();
     },
   },
   async loadAgencies(query: ResourceListQuery = {}) {
@@ -306,14 +309,14 @@ export const resourceService = {
     return loadResourceRecords(guides, guideApi, query);
   },
   async getSelectionOptions(kind: "hotels" | "transports" | "guides" | "agencies", query: ResourceQuery) {
-    return request.get<PageResult<{ id: string; name: string; code?: string; unitCost?: string; secondLanguage?: string; shopping?: boolean; seats?: number; city?: string }>>(
-      `/resources/selections/${kind}`, { params: buildParams(query) }
-    );
+    const path = `/resources/selections/${kind}`;
+    const params = buildParams(query);
+    return loadResourceOptions(path, params, () => request.get<PageResult<{ id: string; name: string; code?: string; unitCost?: string; secondLanguage?: string; shopping?: boolean; seats?: number; city?: string }>>(path, { params }));
   },
   async getPriceOptions(type: "restaurant" | "attraction", query: ResourceListQuery) {
-    const result = await request.get<PageResult<Omit<PriceSelectionItem, "unitCost"> & { unitCost: string }>>(
-      `/resources/selections/${type}-prices`, { params: buildParams({ ...query }) }
-    );
+    const path = `/resources/selections/${type}-prices`;
+    const params = buildParams({ ...query });
+    const result = await loadResourceOptions(path, params, () => request.get<PageResult<Omit<PriceSelectionItem, "unitCost"> & { unitCost: string }>>(path, { params }));
     return { ...result, list: result.list.map(item => ({ ...item, unitCost: Number(item.unitCost) })) };
   },
   async getPriceSelection(type: "restaurant" | "attraction", id: string) {
@@ -336,17 +339,18 @@ export const resourceService = {
       return request.post<ApiRecord<RestaurantPriceRecord>>(
         `${RESOURCE_BASE_URL}/restaurants/${encodeURIComponent(restaurantId)}/prices`,
         restaurantPriceInput(data)
-      ).then(normalizeRestaurantPrice);
+      ).then(result => { clearResourceOptionsCache(); return normalizeRestaurantPrice(result); });
     },
     updatePrice(restaurantId: string, priceId: string, data: RestaurantPriceRecord) {
       return request.put<ApiRecord<RestaurantPriceRecord>>(
         `${RESOURCE_BASE_URL}/restaurants/${encodeURIComponent(restaurantId)}/prices/${encodeURIComponent(priceId)}`,
         { ...restaurantPriceInput(data), id: priceId }
-      ).then(normalizeRestaurantPrice);
+      ).then(result => { clearResourceOptionsCache(); return normalizeRestaurantPrice(result); });
     },
     async deletePrices(restaurantId: string, ids: string) {
       const baseUrl = `${RESOURCE_BASE_URL}/restaurants/${encodeURIComponent(restaurantId)}/prices`;
       await request.delete<void>(baseUrl, { params: { ids } });
+      clearResourceOptionsCache();
     },
   },
   attractionApi: {
@@ -359,17 +363,18 @@ export const resourceService = {
       return request.post<ApiRecord<AttractionPriceRecord>>(
         `${RESOURCE_BASE_URL}/attractions/${encodeURIComponent(attractionId)}/prices`,
         attractionPriceInput(data)
-      ).then(normalizeAttractionPrice);
+      ).then(result => { clearResourceOptionsCache(); return normalizeAttractionPrice(result); });
     },
     updatePrice(attractionId: string, priceId: string, data: AttractionPriceRecord) {
       return request.put<ApiRecord<AttractionPriceRecord>>(
         `${RESOURCE_BASE_URL}/attractions/${encodeURIComponent(attractionId)}/prices/${encodeURIComponent(priceId)}`,
         { ...attractionPriceInput(data), id: priceId }
-      ).then(normalizeAttractionPrice);
+      ).then(result => { clearResourceOptionsCache(); return normalizeAttractionPrice(result); });
     },
     async deletePrices(attractionId: string, ids: string) {
       const baseUrl = `${RESOURCE_BASE_URL}/attractions/${encodeURIComponent(attractionId)}/prices`;
       await request.delete<void>(baseUrl, { params: { ids } });
+      clearResourceOptionsCache();
     },
   },
   transportApi,

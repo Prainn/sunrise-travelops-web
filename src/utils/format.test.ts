@@ -17,3 +17,17 @@ describe("format utilities", () => {
   });
 
 });
+
+it("converts ISO timestamps and offsets to local time, including date rollover", () => {
+  const local = new Date(2026, 8, 18, 0, 0);
+  expect(formatDateTime(local.toISOString())).toBe("2026-09-18 00:00");
+  expect(formatDateTime("2026-09-17T16:00:00.000Z")).toBe(
+    formatDateTime(new Date(Date.UTC(2026, 8, 17, 16)))
+  );
+  expect(formatDateTime("2026-09-18T00:00:00+08:00")).toBe(
+    formatDateTime("2026-09-17T16:00:00Z")
+  );
+  expect(formatDateTime("2026-09-18 09:30:00")).toBe("2026-09-18 09:30");
+  expect(formatDateTime(null)).toBe("-");
+  expect(formatDateTime("invalid")).toBe("-");
+});

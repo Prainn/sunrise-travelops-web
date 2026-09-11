@@ -86,3 +86,14 @@ it('shows included expenses with a 60000 total and hides internal hotel costs', 
   expect(html).toContain('司陪费和其它支出（已含）'); expect(html).toContain('500.00');
   expect(html).not.toContain('领队住宿成本');
 });
+
+it.each([null, 0])("hides optional charges when their amount is %s", (amount) => {
+  const plan = structuredClone(itineraries[0]);
+  plan.quote = { ...createDefaultQuoteSettings(), chineseTip: amount, englishTip: amount, otherExpenses: amount,
+    options: [{ ...createDefaultQuoteOption("international_five_star", "standard"), adultUnitPrice: 1000 }] };
+  const html = buildPdfHtml(plan, inquiries[0], "now");
+  expect(html).not.toContain("中文小费（另付）");
+  expect(html).not.toContain("英文小费（另付）");
+  expect(html).not.toContain("司陪费和其它支出（已含）");
+  expect(createDefaultQuoteSettings().otherExpenses).toBeNull();
+});

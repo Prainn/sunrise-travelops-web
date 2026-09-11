@@ -129,7 +129,7 @@
         <template #header>
           {{ $t('itinerary.feeCards.tips') }}
         </template>
-        <div class="quote-panel__two-columns grid [grid-template-columns:1fr_1fr] gap-[16px]">
+        <div class="quote-panel__two-columns p-[16px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)] grid [grid-template-columns:1fr_1fr] gap-[16px]">
           <el-form-item
             v-for="field in tipFields"
             :key="field"
@@ -158,7 +158,7 @@
         <div
           v-for="fee in quote.transportFees.filter((item) => item.type === type)"
           :key="fee.id"
-          class="quote-panel__transport grid [grid-template-columns:minmax(280px,_2fr)_minmax(140px,_1fr)_minmax(160px,_1fr)_auto] [align-items:end] gap-[12px]"
+          class="quote-panel__transport p-[16px] mb-[12px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)] grid [grid-template-columns:minmax(280px,_2fr)_minmax(140px,_1fr)_minmax(160px,_1fr)_auto] [align-items:end] gap-[12px]"
         >
           <div class="quote-panel__route grid [grid-template-columns:minmax(0,1fr)_auto_minmax(0,1fr)] gap-[8px] [align-items:end]">
             <el-form-item :label="$t('itinerary.feeDeparture')">
@@ -213,15 +213,13 @@
       <h3>{{ $t('planning.otherExpenses') }}</h3>
       <el-form-item :label="$t('planning.includedAmount')">
         <el-input-number
-          :model-value="quote.otherExpenses"
+          :model-value="quote.otherExpenses ?? undefined"
+          :placeholder="$t('itinerary.noExtraQuote')"
           :min="0"
           :precision="2"
-          @change="emit('update-settings', { otherExpenses: $event ?? 0 })"
+          @change="emit('update-settings', { otherExpenses: $event ?? null })"
         />
       </el-form-item>
-      <el-text type="info">
-        {{ $t('planning.includedHint') }}
-      </el-text>
       <h3>{{ $t('itinerary.customerTerms') }}</h3>
       <el-form-item
         v-for="field in noteFields"

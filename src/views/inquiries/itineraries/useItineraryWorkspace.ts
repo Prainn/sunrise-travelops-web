@@ -45,18 +45,20 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const inquiryReadOnly = computed(() => inquiry.value ? isInquiryReadOnly(inquiry.value.status) : true);
   const isDraft = computed(() => selectedItinerary.value?.status === "draft");
   const canCreateItinerary = computed(() => !isSaving.value && !inquiryReadOnly.value && hasUserPermission(userStore.userInfo, "itinerary:create"));
-  const contentEditable = computed(() => Boolean(
+  const contentFormVisible = computed(() => Boolean(
     selectedItinerary.value
-    && !isSaving.value && !inquiryReadOnly.value
+    && !inquiryReadOnly.value
     && canPerformItineraryOperation(selectedItinerary.value.status, "edit_content")
     && hasUserPermission(userStore.userInfo, "itinerary:update")
   ));
-  const priceEditable = computed(() => Boolean(
+  const priceFormVisible = computed(() => Boolean(
     selectedItinerary.value
-    && !isSaving.value && !inquiryReadOnly.value
+    && !inquiryReadOnly.value
     && canPerformItineraryOperation(selectedItinerary.value.status, "edit_price")
     && hasUserPermission(userStore.userInfo, "itinerary:price")
   ));
+  const contentEditable = computed(() => contentFormVisible.value && !isSaving.value);
+  const priceEditable = computed(() => priceFormVisible.value && !isSaving.value);
   const canGeneratePdf = computed(() => Boolean(
     selectedItinerary.value
     && !isSaving.value && !inquiryReadOnly.value
@@ -363,7 +365,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     canSaveItinerary,
     closePdfPreview: pdf.closePdfPreview,
     confirmPdfDownload,
-    contentEditable,
+    contentEditable: contentFormVisible,
     copyItinerary,
     createItinerary,
     destinationOptions,
@@ -396,7 +398,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     openEditDialog,
     openResourceDialog,
     pdfPreviewUrl: pdf.pdfPreviewUrl,
-    priceEditable,
+    priceEditable: priceFormVisible,
     quoteCalculation,
     removeDay,
     removeItem: editor.removeItem,

@@ -17,7 +17,10 @@ export function formatDate(value: Date): string {
 }
 
 /** 将日期格式化为本地日期时间字符串，精确到分钟。 */
-export function formatDateTime(value: Date): string {
+export function formatDateTime(input: Date | string | null | undefined): string {
+  if (!input) return "-";
+  const value = input instanceof Date ? input : new Date(input);
+  if (Number.isNaN(value.getTime())) return "-";
   const hours = String(value.getHours()).padStart(2, "0");
   const minutes = String(value.getMinutes()).padStart(2, "0");
   return `${formatDate(value)} ${hours}:${minutes}`;

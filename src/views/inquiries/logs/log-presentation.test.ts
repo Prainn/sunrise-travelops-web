@@ -80,3 +80,11 @@ describe("log value presentation", () => {
     expect(canExpandLog({ action: "itinerary_saved" })).toBe(true);
   });
 });
+
+it("localizes timestamp fields without changing dates or customer text", () => {
+  const instant = new Date(2026, 8, 18, 0, 0).toISOString();
+  expect(format(instant, "nextFollowUpAt")).toBe("2026-09-18 00:00");
+  expect(format({ nextFollowUpAt: instant }, "")).toContain("2026-09-18 00:00");
+  expect(format("2026-09-18", "startDate")).toBe("2026-09-18");
+  expect(format(instant, "description")).toBe(instant);
+});

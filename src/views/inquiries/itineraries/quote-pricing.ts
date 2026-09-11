@@ -31,7 +31,7 @@ export function createDefaultQuoteOption(
 
 export function createDefaultQuoteSettings(): ItineraryQuoteSettings {
   return {
-    options: [], chineseTip: null, englishTip: null, transportFees: [], otherExpenses: 0,
+    options: [], chineseTip: null, englishTip: null, transportFees: [], otherExpenses: null,
     customerNotes: "", holidayRestrictions: "",
     hotelReplacementTerms: "如所列酒店满房，将调整为同级酒店。",
   };

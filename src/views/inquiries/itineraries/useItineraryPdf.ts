@@ -31,7 +31,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     if (!plan || !inquiry || !options.canGenerate()) return null;
     const issues: PdfValidationIssue[] = validateItineraryForPdf(plan.dailyPlans);
     const costs = plan.dailyPlans.flatMap(d => d.items).reduce((sum, item) => sum + item.totalCost, 0);
-    if (calculateItineraryQuote(plan, costs).options.some(o => plan.quote.otherExpenses > o.totalPrice)) issues.push({ key: "itinerary.otherExpensesExceedTotal", target: "quote" });
+    if (calculateItineraryQuote(plan, costs).options.some(o => (plan.quote.otherExpenses ?? 0) > o.totalPrice)) issues.push({ key: "itinerary.otherExpensesExceedTotal", target: "quote" });
     if (!getEnabledHotelPlans(plan).length) issues.push({ key: "itinerary.pdfHotelPlanRequired", target: "itinerary-plans" });
     if (getIncompleteHotelPlanTiers(plan).length) issues.push({ key: "itinerary.validation.hotels", target: "itinerary-plans" });
     if (!getEnabledVehiclePlans(plan).length || getIncompleteVehiclePlanTiers(plan).length) {

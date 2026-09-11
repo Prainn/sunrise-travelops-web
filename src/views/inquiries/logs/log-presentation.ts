@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/utils/format";
 import type { InquiryLogRecord } from "@/types/inquiry-log";
 import { getTransportMethodNames } from "@/utils/transport-method";
 import { getResourceUnitName } from "@/utils/resource-unit";
@@ -44,6 +45,7 @@ export function formatLogValue(value: unknown, path: string, context: DisplayCon
     }).join("\n");
   }
   if (typeof value !== "string" || !value) return String(value);
+  if (["nextFollowUpAt", "createdAt", "updatedAt", "quoteGeneratedAt", "occurredAt"].includes(field ?? "")) return formatDateTime(value);
   if (field === "transport") return getTransportMethodNames(value, locale);
   if (field === "unit") return getResourceUnitName(value, locale);
   let key = "";

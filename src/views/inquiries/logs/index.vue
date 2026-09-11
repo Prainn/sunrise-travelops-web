@@ -50,8 +50,9 @@
         <el-form-item :label="$t('inquiry.log.action')">
           <el-select
             v-model="action"
+            :placeholder="$t('common.selectPlaceholder')"
             clearable
-            class="w-[200px]"
+            class="!w-[200px]"
           >
             <el-option
               v-for="kind in actions"
@@ -153,7 +154,7 @@
             min-width="175"
           >
             <template #default="{ row }">
-              {{ formatDateTime(new Date(row.occurredAt)) }}
+              {{ formatDateTime(row.occurredAt) }}
             </template>
           </el-table-column>
           <el-table-column

@@ -262,6 +262,7 @@
             <el-table-column
               :label="$t('common.createdAt')"
               prop="createTime"
+              :formatter="(row) => formatDateTime(row.createTime)"
               width="160"
               show-overflow-tooltip
             />
@@ -511,6 +512,7 @@
 </template>
 
 <script setup lang="ts">
+import { formatDateTime } from "@/utils";
 import { h } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { Female, Male } from "@element-plus/icons-vue";

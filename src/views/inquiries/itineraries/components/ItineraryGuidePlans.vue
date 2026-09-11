@@ -8,7 +8,7 @@
       shadow="never"
     >
       <el-form label-position="top">
-        <div class="grid grid-cols-1 gap-x-[24px] md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-x-[24px] md:grid-cols-2 p-[16px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)]">
           <el-form-item :label="$t('planning.secondLanguage')">
             <el-select
               class="w-full"
@@ -40,7 +40,7 @@
 
         <div
           v-if="plan"
-          class="grid grid-cols-1 gap-x-[24px] md:grid-cols-2"
+          class="grid grid-cols-1 gap-x-[24px] md:grid-cols-2 p-[16px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)]"
         >
           <el-form-item :label="$t('planning.dailyPrice')">
             <el-input-number

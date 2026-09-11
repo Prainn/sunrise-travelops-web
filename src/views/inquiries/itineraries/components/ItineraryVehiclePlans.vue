@@ -25,7 +25,7 @@
           <div
             v-for="(arrangement, index) in plan.arrangements"
             :key="arrangement.id"
-            class="mb-[16px] p-[14px] border border-solid border-[var(--el-border-color)] rounded-[8px]"
+            class="mb-[16px] p-[14px] border border-solid border-[var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)]"
           >
             <div class="mb-[12px] flex items-center justify-between gap-[12px]">
               <strong>{{ $t('planning.vehicleArrangementNumber', { number: index + 1 }) }}</strong>

@@ -28,15 +28,8 @@
       </el-select>
     </el-form-item>
     <el-form-item :label="$t('itinerary.destination')">
-      <el-input
-        v-if="isLast"
-        :model-value="day.destination"
-        :disabled="!editable"
-        :placeholder="$t('itinerary.destination')"
-        @update:model-value="updateField('destination', $event)"
-      />
       <el-select
-        v-else
+        :allow-create="allowCustomDestination"
         :model-value="day.destination"
         :disabled="!editable"
         filterable
@@ -114,7 +107,7 @@ import { getTransportMethodOptions } from "@/utils/transport-method";
 
 type EditableDayField = "departure" | "destination" | "overnightDestination" | "transport" | "description";
 
-const props = defineProps<{ day: ItineraryDayRecord; isLast: boolean; destinations: string[]; editable: boolean }>();
+const props = defineProps<{ day: ItineraryDayRecord; allowCustomDestination: boolean; destinations: string[]; editable: boolean }>();
 const emit = defineEmits<{
   "update-field": [field: EditableDayField, value: string | null];
 }>();

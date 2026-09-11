@@ -22,7 +22,7 @@
         <el-table-column
           prop="code"
           :label="$t('inquiry.code')"
-          width="240"
+          width="180"
         />
         <el-table-column
           prop="agencyName"
@@ -33,7 +33,7 @@
         <el-table-column
           prop="contactName"
           :label="$t('inquiry.contactName')"
-          min-width="130"
+          width="120"
         />
         <el-table-column
           prop="countryOrRegion"
@@ -53,7 +53,7 @@
         <el-table-column
           prop="plannedDays"
           :label="$t('inquiry.plannedDays')"
-          min-width="150"
+          min-width="100"
           align="center"
         >
           <template #default="scope">
@@ -62,14 +62,20 @@
         </el-table-column>
         <el-table-column
           :label="$t('inquiry.nextFollowUpAt')"
-          width="165"
+          width="210"
         >
           <template #default="scope">
             <span :class="{ 'inquiry-table__overdue': isOverdue(scope.row as InquiryRecord) }">
-              {{ scope.row.nextFollowUpAt || $t("common.notSet") }}
+              {{ formatDateTime(scope.row.nextFollowUpAt) === "-" ? $t("common.notSet") : formatDateTime(scope.row.nextFollowUpAt) }}
             </span>
           </template>
         </el-table-column>
+        <el-table-column
+          prop="createdAt"
+          :formatter="(row: InquiryRecord) => formatDateTime(row.createdAt)"
+          :label="$t('common.createdAt')"
+          width="210"
+        />
         <el-table-column
           :label="$t('common.status')"
           align="center"
@@ -80,11 +86,6 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="createdAt"
-          :label="$t('common.createdAt')"
-          width="165"
-        />
         <el-table-column
           :label="$t('common.actions')"
           width="190"
@@ -157,6 +158,7 @@
 </template>
 
 <script setup lang="ts">
+import { formatDateTime } from "@/utils";
 import { plannedDuration } from "@/views/inquiries/itineraries/duration";
 import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";
 import TableToolbar from "@/components/TableToolbar/index.vue";
