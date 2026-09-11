@@ -9,10 +9,9 @@ import type {
   ItineraryQuoteOptionCalculation,
   ItineraryRecord,
 } from "@/types/itinerary";
-import { formatDateTime, formatMoney, sumMoney } from "@/utils";
+import { formatDateTime, formatMoney } from "@/utils";
 import { getTransportMethodNames } from "@/utils/transport-method";
 import { HOTEL_PLAN_TIER_LABELS } from "./hotel-plans";
-import { calculateItineraryQuote } from "./quote-pricing";
 import {
   getEnabledVehiclePlans,
 } from "./vehicle-plans";
@@ -30,8 +29,8 @@ export interface ItineraryPrintDocument {
   generatedAt: string;
 }
 
-export async function generateItineraryPrintDocument(itinerary: ItineraryRecord, inquiry: InquiryRecord, snapshot?: { generatedAt: string; calculation: ItineraryQuoteCalculation; quoteCode: string; quoteVersion: number }): Promise<ItineraryPrintDocument> {
-  const generatedAt = snapshot ? formatDateTime(new Date(snapshot.generatedAt)) : formatDateTime(new Date());
+export async function generateItineraryPrintDocument(itinerary: ItineraryRecord, inquiry: InquiryRecord, snapshot: { generatedAt: string; calculation: ItineraryQuoteCalculation; quoteCode: string; quoteVersion: number }): Promise<ItineraryPrintDocument> {
+  const generatedAt = formatDateTime(new Date(snapshot.generatedAt));
   const fileName = `${sanitizeFileName(itinerary.code)}-${sanitizeFileName(itinerary.title)}.pdf`;
   const [header, footer] = await Promise.all([quoteHeaderUrl, quoteFooterUrl].map(async (url) => {
     const image = new Image();
@@ -112,12 +111,8 @@ export async function printItineraryDocument(file: ItineraryPrintDocument): Prom
   }
 }
 
-export function buildPdfHtml(itinerary: ItineraryRecord, _inquiry: InquiryRecord, _generatedAt: string, snapshot?: { calculation: ItineraryQuoteCalculation; quoteCode: string; quoteVersion: number }) {
-  const totalCost = sumMoney(itinerary.dailyPlans
-    .flatMap((day) => day.items)
-    .filter((item) => item.type === "restaurant" || item.type === "attraction")
-    .map((item) => item.totalCost));
-  const quote = snapshot?.calculation ?? calculateItineraryQuote(itinerary, totalCost);
+export function buildPdfHtml(itinerary: ItineraryRecord, _inquiry: InquiryRecord, _generatedAt: string, snapshot: { calculation: ItineraryQuoteCalculation; quoteCode: string; quoteVersion: number }) {
+  const quote = snapshot.calculation;
   const scheduleSections = buildScheduleSections(itinerary.dailyPlans, itinerary);
 
   return `

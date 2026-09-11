@@ -6,10 +6,10 @@ import { resourceService } from "@/services/resource.service";
 import { useUserStore } from "@/stores/user";
 import type { ItineraryDailyItemType, ItineraryRecord, ItineraryResourceItem, MealSlot } from "@/types/itinerary";
 import type { GuideRecord } from "@/types/resource";
-import { hasUserPermission, sumMoney } from "@/utils";
+import { hasUserPermission } from "@/utils";
 import { isInquiryReadOnly } from "../inquiry-workflow";
 import { canPerformItineraryOperation } from "./itinerary-workflow";
-import { calculateItineraryQuote } from "./quote-pricing";
+import { useItineraryQuote } from "./useItineraryQuote";
 import { useItineraryEditor } from "./useItineraryEditor";
 import { useItineraryPdf } from "./useItineraryPdf";
 import type { PdfValidationIssue } from "./workflow";
@@ -75,12 +75,10 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     ? selectedItinerary.value.adults + selectedItinerary.value.childrenCount : 0);
   const allItems = computed(() => selectedItinerary.value?.dailyPlans.flatMap((day) => day.items) ?? []);
   const dailyItems = computed(() => allItems.value.filter((item) => dailyItemTypes.has(item.type as ItineraryDailyItemType)));
-  const dailyResourceCost = computed(() => sumMoney(dailyItems.value.map((item) => item.totalCost)));
   const itemCount = computed(() => dailyItems.value.length);
   const destinationOptions = computed(() => resourceService.cityOptions.filter((city) => city.status === "enabled").map((city) => city.name));
-  const quoteCalculation = computed(() => selectedItinerary.value
-    ? calculateItineraryQuote(selectedItinerary.value, dailyResourceCost.value)
-    : null);
+  const quote = useItineraryQuote(selectedItinerary, () => contentFormVisible.value || priceFormVisible.value);
+  const quoteCalculation = quote.calculation;
   const editor = useItineraryEditor({
     inquiry,
     inquiryId,
@@ -405,6 +403,10 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     pdfPreviewUrl: pdf.pdfPreviewUrl,
     priceEditable: priceFormVisible,
     quoteCalculation,
+    quotePending: quote.pending,
+    quoteError: quote.error,
+    quoteCurrent: quote.current,
+    retryQuote: quote.retry,
     removeDay,
     removeItem: editor.removeItem,
     router: selection.router,

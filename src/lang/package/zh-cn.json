@@ -190,6 +190,9 @@
     "followupDetails": "跟进与内部信息"
   },
   "itinerary": {
+    "quoteCalculating": "正在计算报价…",
+    "quoteCalculationFailed": "报价计算失败，请重试。",
+    "retryQuoteCalculation": "重新计算",
     "mealSource": "餐厅方式",
     "mealLibrary": "资源库",
     "customRestaurant": "自定义",

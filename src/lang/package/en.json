@@ -190,6 +190,9 @@
     "followupDetails": "Follow-up and internal details"
   },
   "itinerary": {
+    "quoteCalculating": "Calculating quote…",
+    "quoteCalculationFailed": "Quote calculation failed. Please try again.",
+    "retryQuoteCalculation": "Recalculate",
     "mealSource": "Restaurant source",
     "mealLibrary": "Resource library",
     "customRestaurant": "Custom",

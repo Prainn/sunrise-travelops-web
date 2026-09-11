@@ -1,9 +1,9 @@
 <template>
   <div class="quote-panel grid gap-[20px] text-[14px]">
     <div class="quote-panel__summary flex flex-wrap gap-[20px] text-[var(--el-text-color-regular)]">
-      <span>{{ $t('itinerary.dailyMealAttractionCost') }} <strong>¥{{ formatMoney(calculation.dailyResourceCost) }}</strong></span>
-      <span>{{ $t('itinerary.hotelRoomCount') }} <strong>{{ calculation.hotelRoomCount }}</strong></span>
-      <span>{{ $t('itinerary.guideCost') }} <strong>¥{{ formatMoney(calculation.guideCost) }}</strong></span>
+      <span>{{ $t('itinerary.dailyMealAttractionCost') }} <strong>{{ calculationCurrent ? `¥${formatMoney(calculation.dailyResourceCost)}` : '—' }}</strong></span>
+      <span>{{ $t('itinerary.hotelRoomCount') }} <strong>{{ calculationCurrent ? calculation.hotelRoomCount : '—' }}</strong></span>
+      <span>{{ $t('itinerary.guideCost') }} <strong>{{ calculationCurrent ? `¥${formatMoney(calculation.guideCost)}` : '—' }}</strong></span>
     </div>
     <el-empty
       v-if="!displayOptions.length"
@@ -46,7 +46,7 @@
               v-for="item in displayOptions"
               :key="item.option.id"
             >
-              ¥{{ formatMoney(item.calculation[metric.field]) }}
+              {{ calculationCurrent ? `¥${formatMoney(item.calculation[metric.field])}` : '—' }}
             </td>
           </tr>
           <tr>
@@ -56,7 +56,7 @@
               :key="item.option.id"
             >
               <el-input-number
-                :model-value="item.calculation.adultUnitPrice"
+                :model-value="item.option.adultUnitPrice ?? (calculationCurrent ? item.calculation.adultUnitPrice : undefined)"
                 :disabled="!editable"
                 :min="0"
                 :precision="2"
@@ -71,7 +71,7 @@
               v-for="item in displayOptions"
               :key="item.option.id"
             >
-              ¥{{ formatMoney(item.calculation.childUnitPrice) }}
+              {{ calculationCurrent ? `¥${formatMoney(item.calculation.childUnitPrice)}` : '—' }}
             </td>
           </tr>
           <tr>
@@ -94,7 +94,7 @@
               v-for="item in displayOptions"
               :key="item.option.id"
             >
-              ¥{{ formatMoney(item.calculation.profit) }}
+              {{ calculationCurrent ? `¥${formatMoney(item.calculation.profit)}` : '—' }}
             </td>
           </tr>
           <tr>
@@ -103,7 +103,7 @@
               v-for="item in displayOptions"
               :key="item.option.id"
             >
-              {{ item.calculation.actualMarginRate.toFixed(1) }}%
+              {{ calculationCurrent ? `${item.calculation.actualMarginRate.toFixed(1)}%` : '—' }}
             </td>
           </tr>
           <tr class="quote-panel__total text-[var(--el-color-primary)] text-[16px] font-semibold">
@@ -112,7 +112,7 @@
               v-for="item in displayOptions"
               :key="item.option.id"
             >
-              ¥{{ formatMoney(item.calculation.totalPrice) }}
+              {{ calculationCurrent ? `¥${formatMoney(item.calculation.totalPrice)}` : '—' }}
             </td>
           </tr>
         </tbody>
@@ -266,6 +266,7 @@ import { createId, formatMoney, multiplyMoney, roundMoney } from "@/utils";
 const props = defineProps<{
   quote: ItineraryQuoteSettings;
   calculation: ItineraryQuoteCalculation;
+  calculationCurrent: boolean;
   itemCount: number;
   duration: { days: number; nights: number };
   guestCount: number;

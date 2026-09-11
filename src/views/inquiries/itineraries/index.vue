@@ -265,12 +265,35 @@
             </li>
           </ul>
         </section>
+        <div
+          v-if="quotePending"
+          role="status"
+          class="mb-3 text-[var(--el-text-color-secondary)]"
+        >
+          {{ $t('itinerary.quoteCalculating') }}
+        </div>
+        <el-alert
+          v-if="quoteError"
+          type="error"
+          :closable="false"
+          class="mb-3"
+        >
+          {{ $t('itinerary.quoteCalculationFailed') }}
+          <el-button
+            link
+            type="primary"
+            @click="retryQuote"
+          >
+            {{ $t('itinerary.retryQuoteCalculation') }}
+          </el-button>
+        </el-alert>
         <ItineraryQuotePanel
           v-if="selectedItinerary && quoteCalculation"
           :inert="isSaving"
           :quote="selectedItinerary.quote"
           :leader-count="selectedItinerary.leaderCount"
           :calculation="quoteCalculation"
+          :calculation-current="quoteCurrent"
           :item-count="itemCount"
           :duration="itineraryDuration(selectedItinerary.dailyPlans)"
           :guest-count="guestCount"
@@ -376,6 +399,7 @@ const {
   isEditingPlan, isPdfPreviewVisible, isPlanDialogVisible, isResourceDialogVisible,
   isGuideDialogVisible, isGuideLoading, isGuideMissing,
   isDraft, itemCount, itineraryForm, loadDestinationResourceOptions, openCreateDialog, openResourceDialog, priceEditable, quoteCalculation,
+  quotePending, quoteError, quoteCurrent, retryQuote,
   openEditDialog, pdfPreviewUrl, removeDay, removeItem, router, rows, saveItinerary, selectedItinerary, selectedItineraryId,
   resourceMealSlot, resourceCurrentItem, updateMeal, updateQuoteSettings,
   canCreateGuide, createGuide, guideForm, guideLanguage, guideShopping, openGuideCreateDialog, updateGuideType,

@@ -3,7 +3,38 @@ import { describe, expect, it } from "vitest";
 import { inquiries, itineraries } from "@/test-fixtures/inquiries";
 import { createDefaultQuoteOption, createDefaultQuoteSettings } from "./quote-pricing";
 
-import { buildPdfHtml, getDailyMealCodes } from "./pdf";
+import { buildPdfHtml as renderPdfHtml, getDailyMealCodes } from "./pdf";
+import type { ItineraryRecord } from "@/types/itinerary";
+
+function serverSnapshot(plan: ItineraryRecord): Parameters<typeof renderPdfHtml>[3] {
+  return {
+    quoteCode: "QUOTE-TEST", quoteVersion: 1,
+    calculation: {
+      hotelGuestCount: 10, hotelRoomCount: 5, dailyResourceCost: 500, guideCost: 100,
+      options: plan.quote.options.map(option => ({
+        optionId: option.id, hotelTier: option.hotelTier, vehicleTier: option.vehicleTier,
+        hotelCost: 100, vehicleCost: 100, commonGroupCost: 700, baseGroupCost: 800,
+        baseCostPerPerson: 80, singleSupplementUnitCost: 123.45,
+        adultUnitPrice: 1234.56, childUnitPrice: 864.19, totalPrice: 12345.60,
+        profit: 11545.60, actualMarginRate: 93.52, lines: [],
+      })),
+    },
+  };
+}
+function buildPdfHtml(...args: [Parameters<typeof renderPdfHtml>[0], Parameters<typeof renderPdfHtml>[1], string]) {
+  return renderPdfHtml(...args, serverSnapshot(args[0]));
+}
+
+it("prints server quote values even when local prices and quantities differ", () => {
+  const plan = structuredClone(itineraries[0]);
+  plan.childrenCount = 2;
+  plan.quote.options = [{ ...createDefaultQuoteOption("international_five_star", "standard"), adultUnitPrice: 99999 }];
+  const html = renderPdfHtml(plan, inquiries[0], "now", serverSnapshot(plan));
+  expect(html).toContain("1,234.56");
+  expect(html).toContain("864.19");
+  expect(html).toContain("123.45");
+  expect(html).not.toContain("99,999.00");
+});
 
 describe("customer PDF content", () => {
   it("uses explicit meal choices even when the description mentions excluded meals", () => {

@@ -16,7 +16,7 @@ export function normalizeInquiryMoney<T>(value: unknown, field = ""): T {
 function inquiryInput(record: InquiryRecord) {
   return { agencyId: record.agencyId, contactId: record.contactId, ownerId: record.ownerId || undefined, sourceChannel: record.sourceChannel, originalMessage: record.originalMessage, internalRemark: record.internalRemark, plannedDays: record.plannedDays, nextFollowUpAt: record.nextFollowUpAt ? new Date(record.nextFollowUpAt).toISOString() : null, status: record.status, lostReason: record.lostReason };
 }
-export function itineraryInput(record: ItineraryRecord) {
+export function itineraryInput(record: Pick<ItineraryRecord, "title" | "startDate" | "adults" | "childrenCount" | "leaderCount" | "destinations" | "dailyPlans" | "hotelPlans" | "vehiclePlans" | "guidePlans" | "quote">) {
   return { title: record.title, startDate: record.startDate, adults: record.adults, childrenCount: record.childrenCount, leaderCount: record.leaderCount, destinations: record.destinations, dailyPlans: record.dailyPlans, hotelPlans: record.hotelPlans, vehiclePlans: record.vehiclePlans, guidePlans: record.guidePlans, quote: record.quote };
 }
 export const inquiryService = {
@@ -31,6 +31,10 @@ export const inquiryService = {
   async itinerary(id: string) { return normalizeInquiryMoney<ItineraryRecord>(await request.get(`/itineraries/${id}`)); },
   async createItinerary(record: ItineraryRecord) { return normalizeInquiryMoney<ItineraryRecord>(await request.post(`/inquiries/${record.inquiryId}/itineraries`, itineraryInput(record))); },
   async saveItinerary(record: ItineraryRecord) { return normalizeInquiryMoney<ItineraryRecord>(await request.put(`/itineraries/${record.id}`, { ...itineraryInput(record), version: record.version })); },
+  async quoteCalculation(id: string) { return normalizeInquiryMoney<ItineraryQuoteCalculation>(await request.get(`/itineraries/${id}/quote-calculation`)); },
+  async previewQuote(record: ReturnType<typeof itineraryInput> & Pick<ItineraryRecord, "id">) {
+    return normalizeInquiryMoney<ItineraryQuoteCalculation>(await request.post(`/itineraries/${record.id}/quote-calculation`, itineraryInput(record)));
+  },
   async copyItinerary(record: ItineraryRecord, title: string) { return normalizeInquiryMoney<ItineraryRecord>(await request.post(`/itineraries/${record.id}/copy`, { version: record.version, title })); },
   async pdfData(id: string) { return normalizeInquiryMoney<PdfData>(await request.get(`/itineraries/${id}/pdf-data`)); },
   async confirmPdf(data: PdfData) { return normalizeInquiryMoney<PdfData>(await request.post(`/itineraries/${data.itinerary.id}/confirm-pdf`, { version: data.itinerary.version, inquiryVersion: data.inquiryVersion })); },

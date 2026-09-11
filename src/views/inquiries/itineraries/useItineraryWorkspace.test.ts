@@ -20,6 +20,7 @@ vi.mock("@/services/resource.service", () => ({ resourceService: {
 vi.mock("@/services/business-dictionary.service", () => ({ businessDictionaryService: { ensureBuiltInTypesLoaded: requests.ensureBuiltInTypesLoaded } }));
 vi.mock("@/stores/user", () => ({ useUserStore: () => ({ userInfo: { username: "test", perms: ["itinerary:update", "resource:guide:create"] } }) }));
 vi.mock("./useItineraryPdf", () => ({ useItineraryPdf: () => ({}) }));
+vi.mock("./useItineraryQuote", () => ({ useItineraryQuote: () => ({ calculation: computed(() => null) }) }));
 vi.mock("./useItinerarySelection", () => ({ useItinerarySelection: () => ({
   inquiry: computed(() => ({ id: "inquiry-1", status: "planning", plannedDays: 7 })),
   inquiryId: computed(() => "inquiry-1"),

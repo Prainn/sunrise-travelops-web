@@ -1,4 +1,3 @@
-export * from "./constant";
 export * from "./permissions";
 
 /** 应用存储前缀 */
