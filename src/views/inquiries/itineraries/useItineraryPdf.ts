@@ -2,9 +2,8 @@ import { computed, onBeforeUnmount, ref, watch, type ComputedRef, type Ref } fro
 import type { InquiryRecord } from "@/types/inquiry";
 import type { ItineraryRecord } from "@/types/itinerary";
 import { inquiryService, type PdfData } from "@/services/inquiry.service";
-import { calculateItineraryQuote } from "./quote-pricing";
 import { getEnabledHotelPlans, getIncompleteHotelPlanTiers } from "./hotel-plans";
-import { downloadGeneratedItineraryPdf, generateItineraryPdf, type GeneratedItineraryPdf } from "./pdf";
+import { printItineraryDocument, generateItineraryPrintDocument, type ItineraryPrintDocument } from "./pdf";
 import { getEnabledVehiclePlans, getIncompleteVehiclePlanTiers } from "./vehicle-plans";
 import { getDayCountMismatch, validateItineraryForPdf, type PdfValidationIssue } from "./workflow";
 
@@ -18,7 +17,7 @@ interface ItineraryPdfOptions {
 export function useItineraryPdf(options: ItineraryPdfOptions) {
   const isPdfPreviewVisible = ref(false);
   const isGeneratingPdf = ref(false);
-  const pdfPreviewFile = ref<GeneratedItineraryPdf>();
+  const pdfPreviewFile = ref<ItineraryPrintDocument>();
   const pdfPreviewUrl = ref("");
   let previewSource = "";
   let previewData: PdfData | undefined;
@@ -30,8 +29,6 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     const inquiry = options.inquiry.value;
     if (!plan || !inquiry || !options.canGenerate()) return null;
     const issues: PdfValidationIssue[] = validateItineraryForPdf(plan.dailyPlans);
-    const costs = plan.dailyPlans.flatMap(d => d.items).reduce((sum, item) => sum + item.totalCost, 0);
-    if (calculateItineraryQuote(plan, costs).options.some(o => (plan.quote.otherExpenses ?? 0) > o.totalPrice)) issues.push({ key: "itinerary.otherExpensesExceedTotal", target: "quote" });
     if (!getEnabledHotelPlans(plan).length) issues.push({ key: "itinerary.pdfHotelPlanRequired", target: "itinerary-plans" });
     if (getIncompleteHotelPlanTiers(plan).length) issues.push({ key: "itinerary.validation.hotels", target: "itinerary-plans" });
     if (!getEnabledVehiclePlans(plan).length || getIncompleteVehiclePlanTiers(plan).length) {
@@ -62,7 +59,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
       const source = JSON.stringify(plan);
       const data = await inquiryService.pdfData(plan.id);
       if (data.itinerary.version !== plan.version) return false;
-      const file = await generateItineraryPdf(data.itinerary, data.inquiry, data);
+      const file = await generateItineraryPrintDocument(data.itinerary, data.inquiry, data);
       previewData = data;
       if (options.selectedItinerary.value?.id !== plan.id || !options.canGenerate()) return false;
       previewSource = source;
@@ -84,8 +81,8 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
       const data = await inquiryService.confirmPdf(previewData);
       Object.assign(plan, await inquiryService.itinerary(plan.id));
       Object.assign(inquiry, await inquiryService.detail(inquiry.id));
-      const file = await generateItineraryPdf(data.itinerary,data.inquiry,data);
-      downloadGeneratedItineraryPdf(file);
+      const file = await generateItineraryPrintDocument(data.itinerary,data.inquiry,data);
+      await printItineraryDocument(file);
       closePdfPreview();
       return true;
     } finally { isDownloadingPdf.value = false; }
@@ -96,7 +93,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     isGeneratingPdf.value = true;
     try {
       const data = await inquiryService.pdfData(id);
-      downloadGeneratedItineraryPdf(await generateItineraryPdf(data.itinerary,data.inquiry,data));
+      await printItineraryDocument(await generateItineraryPrintDocument(data.itinerary,data.inquiry,data));
     } finally { isGeneratingPdf.value = false; }
   }
 

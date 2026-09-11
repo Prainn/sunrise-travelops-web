@@ -156,7 +156,7 @@
         "totalPrice": "全程总价",
         "secondLanguage": "第二语种",
         "shopping": "是否进店",
-        "otherExpenses": "司陪费和其它支出（已含）"
+        "otherExpenses": "司陪费和其它支出"
       },
       "day": "第 {day} 天",
       "tiers": {
@@ -189,6 +189,16 @@
     "followupDetails": "跟进与内部信息"
   },
   "itinerary": {
+    "mealSource": "餐厅方式",
+    "mealLibrary": "资源库",
+    "customRestaurant": "自定义",
+    "customRestaurantName": "餐厅名称",
+    "customMealUnit": "计价方式",
+    "customMealPerPerson": "按人/餐",
+    "customMealPerTable": "按桌",
+    "customMealPrice": "单价（元）",
+    "customMealHint": "仅保存到当前行程，不加入餐厅资源库。",
+
     "hotelPlansPending": "请先在逐日行程中填写住宿城市，再选择酒店。",
     "hotelPlansNotNeeded": "逐日行程均设为不住宿，无需选择酒店。",
     "actualMarginRate": "实际毛利率",
@@ -206,7 +216,7 @@
     "code": "行程编号",
     "createTitle": "新增行程",
     "createAndManage": "创建并进入管理",
-    "confirmDownloadPdf": "确认并下载 PDF",
+    "confirmDownloadPdf": "确认报价并导出 PDF",
     "copyDay": "复制当天",
     "copySuccess": "已复制为新的草稿行程",
     "copySuffix": "副本",
@@ -244,10 +254,11 @@
     "noOvernightStay": "当晚不住宿",
     "noFoc": "NO FOC",
     "noPlans": "该询盘尚未创建行程方案",
-    "pdfGenerated": "PDF 已下载，行程已锁定为已报价",
+    "pdfGenerated": "报价已确认，行程已锁定为已报价",
     "pdfGenerationFailed": "PDF 生成失败，请重试",
     "pdfHotelPlanRequired": "请至少完成一种酒店搭配后再生成 PDF",
-    "pdfPreviewTitle": "PDF 预览",
+    "pdfPreviewTitle": "报价预览",
+    "pdfPrintHint": "确认后报价将锁定，并打开打印窗口。请选择另存为 PDF，纸张 A4，缩放 100%，关闭浏览器页眉和页脚；最终分页以打印预览为准。取消打印不会撤销报价确认。",
     "save": "保存",
     "saveSuccess": "行程已保存",
     "priceRemark": "报价备注",
@@ -321,8 +332,9 @@
     "selectMealResource": "选择对应餐食",
     "guideCost": "导游成本",
     "extraFees": "团费不含项目",
-    "chineseTip": "中文小费（全程每人／元）",
-    "englishTip": "英文小费（全程每人／元）",
+    "tipTotal": "{days}天 · 全程每人 ¥{perPerson} · {people}人小费合计 ¥{total}（团费外）",
+    "chineseTip": "中文小费（每人每天／元）",
+    "englishTip": "英文小费（每人每天／元）",
     "noExtraQuote": "留空不展示",
     "cabin": "舱位／席别",
     "cabins": {
@@ -339,7 +351,7 @@
     "holidayRestrictions": "节假日限制",
     "hotelReplacementTerms": "同级酒店替换条款",
     "copyForRevision": "复制为新方案",
-    "downloadOriginal": "下载报价 PDF",
+    "downloadOriginal": "导出报价 PDF",
     "previewChanged": "行程已变更，请重新生成预览后下载。",
     "validation": {
       "title": "请补全以下信息，点击可定位",
@@ -363,8 +375,7 @@
     },
     "nightCount": "{count}晚",
     "totalNights": "共{count}晚",
-    "duration": "{days}天{nights}晚",
-    "otherExpensesExceedTotal": "司陪费和其它支出不能超过团费总价"
+    "duration": "{days}天{nights}晚"
   },
   "businessCategory": {
     "applicableResources": "适用资源",
@@ -1043,8 +1054,8 @@
     "capacityHint": "座位合计 {seats} 座，需覆盖 {passengers} 人",
     "hotelPriceUnit": "元/间/晚（含早餐）",
     "hotelPrice": "实际每间每晚价格",
-    "otherExpenses": "司陪费及其他支出",
-    "includedAmount": "已含金额（元）",
+    "otherExpenses": "司陪费及其他支出（另付）",
+    "extraAmount": "整团另付金额（元，不计入每人团费）",
     "languages": {
       "none": "无（仅中文）",
       "en": "英文",

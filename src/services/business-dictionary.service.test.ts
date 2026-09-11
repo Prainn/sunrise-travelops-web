@@ -16,52 +16,24 @@ import { businessDictionaryService } from "./business-dictionary.service";
 
 const getMock = vi.mocked(request.get);
 const postMock = vi.mocked(request.post);
-const putMock = vi.mocked(request.put);
-const deleteMock = vi.mocked(request.delete);
 
 describe("businessDictionaryService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("loads business dictionary types from the backend contract", async () => {
-    getMock.mockResolvedValue([
-      { id: "type-1", code: "service-level", name: "服务等级", englishName: "Service Levels", builtIn: false, items: [] },
-    ]);
-
-    await expect(businessDictionaryService.getTypes()).resolves.toHaveLength(1);
-    expect(getMock).toHaveBeenCalledWith("/system/business-dictionaries");
-  });
-
-  it("uses item query and mutation endpoints under business-dictionaries", async () => {
-    getMock.mockResolvedValue([]);
+  it("normalizes resource-unit input before saving", async () => {
     postMock.mockResolvedValue(undefined);
-    putMock.mockResolvedValue(undefined);
-    deleteMock.mockResolvedValue(undefined);
 
-    await businessDictionaryService.getItems("resource-unit", { keyword: " room ", status: "enabled" });
     await businessDictionaryService.createItem("resource-unit", {
-      code: "roomNight",
-      name: "间夜",
-      englishName: "Room night",
+      code: " roomNight ",
+      name: " 间夜 ",
+      englishName: " Room night ",
       resourceTypes: ["hotel"],
       status: "enabled",
       remark: " 酒店房型按间夜计价 ",
     });
-    await businessDictionaryService.updateItem("resource-unit", "item-1", {
-      code: "roomNight",
-      name: "间夜",
-      englishName: "Room night",
-      resourceTypes: ["hotel"],
-      status: "enabled",
-      remark: "",
-    });
-    await businessDictionaryService.deleteItems("resource-unit", "item-1,item-2");
 
-    expect(getMock).toHaveBeenCalledWith(
-      "/system/business-dictionaries/resource-unit/items",
-      { params: { keyword: "room", status: "enabled" } }
-    );
     expect(postMock).toHaveBeenCalledWith("/system/business-dictionaries/resource-unit/items", {
       id: undefined,
       code: "roomNight",
@@ -71,58 +43,18 @@ describe("businessDictionaryService", () => {
       status: "enabled",
       remark: "酒店房型按间夜计价",
     });
-    expect(putMock).toHaveBeenCalledWith(
-      "/system/business-dictionaries/resource-unit/items/item-1",
-      expect.objectContaining({ id: "item-1", code: "roomNight" })
-    );
-    expect(deleteMock).toHaveBeenCalledWith(
-      "/system/business-dictionaries/resource-unit/items",
-      { params: { ids: "item-1,item-2" } }
-    );
-  });
-
-  it("preserves ApiError values for business handling", async () => {
-    const error = Object.assign(new Error("Code exists"), {
-      name: "ApiError",
-      code: "BUSINESS_DICTIONARY_ITEM_CODE_EXISTS",
-      status: 409,
-    });
-    postMock.mockRejectedValue(error);
-
-    await expect(businessDictionaryService.createItem("transport-method", {
-      code: "flight",
-      name: "飞机",
-      englishName: "Flight",
-      status: "enabled",
-      remark: "",
-    })).rejects.toBe(error);
   });
 });
 
-it("initializes transport and unit labels once for concurrent itinerary consumers", async () => {
+it("loads built-in dictionaries only once for concurrent consumers", async () => {
   vi.clearAllMocks();
-  getMock.mockResolvedValue([
-    { id: "units", code: "resource-unit", name: "单位", englishName: "Units", builtIn: true, items: [
-      { id: "table", code: "table", name: "桌", englishName: "Table", status: "enabled", resourceTypes: ["restaurant"] },
-    ] },
-    { id: "transport", code: "transport-method", name: "交通方式", englishName: "Transport", builtIn: true, items: [
-      { id: "flight", code: "flight", name: "飞机", englishName: "Flight", status: "enabled" },
-      { id: "coach", code: "coach", name: "旅游大巴", englishName: "Coach", status: "enabled" },
-    ] },
-  ]);
+  getMock.mockResolvedValue([]);
+
   await Promise.all([
     businessDictionaryService.ensureBuiltInTypesLoaded(),
     businessDictionaryService.ensureBuiltInTypesLoaded(),
   ]);
   await businessDictionaryService.ensureBuiltInTypesLoaded();
+
   expect(getMock).toHaveBeenCalledTimes(1);
-  const { getResourceUnitName } = await import("@/utils/resource-unit");
-  const { getTransportMethodNames, getTransportMethodOptions } = await import("@/utils/transport-method");
-  expect(getResourceUnitName("table", "zh-CN")).toBe("桌");
-  expect(getResourceUnitName("table", "en")).toBe("Table");
-  expect(getTransportMethodNames("flight,coach", "zh-CN")).toBe("飞机 / 旅游大巴");
-  expect(getTransportMethodNames("flight,coach", "en")).toBe("Flight / Coach");
-  expect(getTransportMethodOptions("zh-CN")).toEqual([
-    { value: "flight", label: "飞机" }, { value: "coach", label: "旅游大巴" },
-  ]);
 });

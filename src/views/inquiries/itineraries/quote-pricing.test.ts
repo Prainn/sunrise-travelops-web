@@ -29,13 +29,26 @@ describe('quote business rules', () => {
     expect(q.guideCost).toBe(3150);
     expect(q.options[0]).toMatchObject({ vehicleCost: 8000, baseGroupCost: 13450 });
   });
-  it('discloses included expenses without adding them again or changing per-person calculations', () => {
+  it('excludes all extra fees from costs and per-person tour prices', () => {
     const p = plan(); p.adults = 60;
     const before = calculateItineraryQuote(p, 0);
-    p.quote.otherExpenses = 500;
+    p.quote.otherExpenses = 100000;
+    p.quote.chineseTip = 5000;
+    p.quote.englishTip = 6000;
+    p.quote.transportFees = [
+      { id: 'flight', type: 'flight', departureCity: 'A', arrivalCity: 'B', cabin: 'economy', unitPrice: 2000 },
+      { id: 'train', type: 'train', departureCity: 'B', arrivalCity: 'C', cabin: 'first', unitPrice: 500 },
+    ];
     const after = calculateItineraryQuote(p, 0);
     expect(after).toEqual(before);
     expect(after.options[0].totalPrice).toBe(60000);
+  });
+  it('keeps full-tour tips out of cost, tour price and profit for adults and children', () => {
+    const p = plan(); p.adults = 8; p.childrenCount = 2;
+    const before = calculateItineraryQuote(p, 0);
+    p.quote.chineseTip = 3000;
+    p.quote.englishTip = 5000;
+    expect(calculateItineraryQuote(p, 0)).toEqual(before);
   });
   it('uses actual hotel prices for each city night and keeps child pricing at seventy percent', () => {
     const p = plan(); p.adults = 2; p.childrenCount = 1;

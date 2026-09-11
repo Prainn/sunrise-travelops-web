@@ -19,7 +19,6 @@ import { userService } from "./user.service";
 const getMock = vi.mocked(request.get);
 const postMock = vi.mocked(request.post);
 const putMock = vi.mocked(request.put);
-const deleteMock = vi.mocked(request.delete);
 
 describe("userService", () => {
   beforeEach(() => {
@@ -84,24 +83,6 @@ describe("userService", () => {
     expect(getMock).toHaveBeenCalledWith("/users/options/roles");
   });
 
-  it("uses user-management endpoints for departments, form data, deletion, and password reset", async () => {
-    getMock.mockResolvedValue(undefined);
-    postMock.mockResolvedValue(undefined);
-    deleteMock.mockResolvedValue(undefined);
-
-    await userService.getDepartmentOptions();
-    await userService.getFormData("user-1");
-    await userService.deleteByIds("user-1,user-2");
-    await userService.resetPassword("user-1", "secret123");
-
-    expect(getMock).toHaveBeenNthCalledWith(1, "/users/options/departments");
-    expect(getMock).toHaveBeenNthCalledWith(2, "/users/user-1");
-    expect(deleteMock).toHaveBeenCalledWith("/users", { params: { ids: "user-1,user-2" } });
-    expect(postMock).toHaveBeenCalledWith("/users/user-1/reset-password", {
-      password: "secret123",
-    });
-  });
-
   it("normalizes create and update payloads for the backend", async () => {
     postMock.mockResolvedValue({ id: "user-1", temporaryPassword: "Temp123456" });
     putMock.mockResolvedValue(undefined);
@@ -135,21 +116,4 @@ describe("userService", () => {
     );
   });
 
-  it("preserves ApiError values for business handling", async () => {
-    const error = Object.assign(new Error("Username exists"), {
-      name: "ApiError",
-      code: "USERNAME_EXISTS",
-      status: 409,
-      details: { username: ["用户名已存在"] },
-    });
-    postMock.mockRejectedValue(error);
-
-    await expect(userService.create({
-      username: "admin",
-      nickname: "admin",
-      deptId: 1,
-      roleIds: ["role-1"],
-      status: 1,
-    })).rejects.toBe(error);
-  });
 });

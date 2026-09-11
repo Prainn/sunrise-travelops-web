@@ -28,7 +28,12 @@
     >
       <div class="remote-select-option flex justify-between gap-[16px]">
         <span>{{ item.label }}</span>
-        <strong v-if="item.description">{{ item.description }}</strong>
+        <strong
+          v-if="item.description"
+          class="font-500 text-[var(--el-color-primary)]"
+        >
+          {{ item.description }}
+        </strong>
       </div>
     </el-option>
     <template #empty>
@@ -75,6 +80,3 @@ function loadNextPage(direction: string) {
   if (direction === 'bottom' && visible.value && hasMore.value) void loadMore();
 }
 </script>
-<style scoped>
-.remote-select-option strong { color: var(--el-color-primary); font-weight: 500; }
-</style>

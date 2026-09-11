@@ -1,5 +1,5 @@
 <template>
-  <div class="quote-panel">
+  <div class="quote-panel grid gap-[20px] text-[14px]">
     <div class="quote-panel__summary flex flex-wrap gap-[20px] text-[var(--el-text-color-regular)]">
       <span>{{ $t('itinerary.dailyMealAttractionCost') }} <strong>¥{{ formatMoney(calculation.dailyResourceCost) }}</strong></span>
       <span>{{ $t('itinerary.hotelRoomCount') }} <strong>{{ calculation.hotelRoomCount }}</strong></span>
@@ -14,14 +14,17 @@
       v-else
       class="quote-panel__comparison overflow-x-auto"
     >
-      <table :style="{ minWidth: `${180 + displayOptions.length * 200}px` }">
+      <table
+        class="w-full [table-layout:fixed] [border-collapse:collapse]"
+        :style="{ minWidth: `${180 + displayOptions.length * 200}px` }"
+      >
         <colgroup>
           <col class="w-[180px]"><col
             v-for="item in displayOptions"
             :key="item.option.id"
           >
         </colgroup>
-        <thead>
+        <thead class="[&_th]:bg-[var(--el-fill-color-light)] [&_th]:font-600">
           <tr>
             <th>{{ $t('itinerary.quoteConfigurations') }}</th>
             <th
@@ -117,14 +120,16 @@
     </div>
 
     <el-form
-      class="quote-panel__settings"
+      class="quote-panel__settings [border-top:1px_solid_var(--el-border-color)] [container-type:inline-size]"
       label-position="top"
       :disabled="!editable"
     >
-      <h3>{{ $t('itinerary.extraFees') }}</h3>
+      <h3 class="m-[20px_0_12px] text-[18px]">
+        {{ $t('itinerary.extraFees') }}
+      </h3>
       <el-card
         shadow="never"
-        class="quote-panel__fee-card"
+        class="quote-panel__fee-card mb-[16px] rounded-[10px]"
       >
         <template #header>
           {{ $t('itinerary.feeCards.tips') }}
@@ -136,13 +141,19 @@
             :label="$t(`itinerary.${field}`)"
           >
             <el-input-number
-              :model-value="quote[field] ?? undefined"
+              :model-value="quote[field] == null ? undefined : roundMoney(quote[field] / duration.days)"
               :min="0"
               :precision="2"
               :placeholder="$t('itinerary.noExtraQuote')"
               controls-position="right"
-              @update:model-value="emit('update-settings', { [field]: $event ?? null })"
+              @update:model-value="emit('update-settings', { [field]: $event == null ? null : multiplyMoney($event, duration.days) })"
             />
+            <div
+              v-if="(quote[field] ?? 0) > 0"
+              class="w-full mt-[8px] text-[var(--el-text-color-regular)]"
+            >
+              {{ $t('itinerary.tipTotal', { people: guestCount, days: duration.days, perPerson: formatMoney(quote[field] ?? 0), total: formatMoney(multiplyMoney(quote[field] ?? 0, guestCount)) }) }}
+            </div>
           </el-form-item>
         </div>
       </el-card>
@@ -150,7 +161,7 @@
         v-for="type in transportTypes"
         :key="type"
         shadow="never"
-        class="quote-panel__fee-card"
+        class="quote-panel__fee-card mb-[16px] rounded-[10px]"
       >
         <template #header>
           {{ $t(`itinerary.feeCards.${type}`) }}
@@ -199,6 +210,7 @@
             />
           </el-form-item>
           <el-button
+            class="mb-[26px]"
             type="danger"
             link
             @click="removeFee(fee.id)"
@@ -210,8 +222,10 @@
           {{ $t(type === 'flight' ? 'itinerary.addFlightFee' : 'itinerary.addTrainFee') }}
         </el-button>
       </el-card>
-      <h3>{{ $t('planning.otherExpenses') }}</h3>
-      <el-form-item :label="$t('planning.includedAmount')">
+      <h3 class="m-[20px_0_12px] text-[18px]">
+        {{ $t('planning.otherExpenses') }}
+      </h3>
+      <el-form-item :label="$t('planning.extraAmount')">
         <el-input-number
           :model-value="quote.otherExpenses ?? undefined"
           :placeholder="$t('itinerary.noExtraQuote')"
@@ -220,7 +234,9 @@
           @change="emit('update-settings', { otherExpenses: $event ?? null })"
         />
       </el-form-item>
-      <h3>{{ $t('itinerary.customerTerms') }}</h3>
+      <h3 class="m-[20px_0_12px] text-[18px]">
+        {{ $t('itinerary.customerTerms') }}
+      </h3>
       <el-form-item
         v-for="field in noteFields"
         :key="field"
@@ -245,7 +261,7 @@
 import CitySelect from "@/components/CitySelect.vue";
 import { computed } from "vue";
 import type { ItineraryQuoteCalculation, ItineraryQuoteOption, ItineraryQuoteSettings, ItineraryTransportFee } from "@/types/itinerary";
-import { createId, formatMoney } from "@/utils";
+import { createId, formatMoney, multiplyMoney, roundMoney } from "@/utils";
 
 const props = defineProps<{
   quote: ItineraryQuoteSettings;
@@ -290,22 +306,13 @@ function removeFee(id: string) {
 </script>
 
 <style scoped lang="scss">
-.quote-panel { @apply 'grid gap-[20px] text-[14px]'; }
-
-table { @apply 'w-full [table-layout:fixed] [border-collapse:collapse]'; }
 th, td { @apply '[overflow-wrap:anywhere] p-[12px] [border:1px_solid_var(--el-border-color)] text-right [vertical-align:middle]'; }
 th:first-child { @apply 'text-left'; }
-thead th { background: var(--el-fill-color-light); font-weight: 600; }
 .quote-panel__comparison :deep(.el-input-number) { width: 140px; }
 
-.quote-panel__fee-card { @apply 'mb-[16px] rounded-[10px]'; }
 .quote-panel__fee-card :deep(.el-card__header) { font-weight: 600; background: var(--el-fill-color-extra-light); }
-.quote-panel__settings { @apply '[border-top:1px_solid_var(--el-border-color)]'; }
-.quote-panel__settings h3 { font-size: 18px; margin: 20px 0 12px; }
-.quote-panel__settings p { color: var(--el-text-color-secondary); }
 
 .quote-panel__settings :deep(.el-input-number), .quote-panel__settings :deep(.el-select) { width: 100%; }
-.quote-panel__buttons { @apply 'flex gap-[12px]'; }
 @media (width <= 720px) {
   .quote-panel__two-columns, .quote-panel__transport { @apply '[grid-template-columns:1fr]'; }
 }
@@ -315,9 +322,5 @@ thead th { background: var(--el-fill-color-light); font-weight: 600; }
 .quote-panel__transport :deep(.el-form-item) { min-width: 0; }
 .quote-panel__transport :deep(.el-form-item__label) { white-space: nowrap; }
 
-.quote-panel__route-title { @apply '[grid-column:1_/_-1] text-[var(--el-text-color-regular)]'; }
-
-.quote-panel__transport > .el-button { margin-bottom: 26px; }
-.quote-panel__settings { @apply '[container-type:inline-size]'; }
 @container (max-width: 760px) { .quote-panel__transport { @apply '[grid-template-columns:minmax(0,1fr)_minmax(160px,1fr)_auto]'; } .quote-panel__route { @apply '[grid-column:1_/_-1]'; } }
 </style>

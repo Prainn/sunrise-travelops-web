@@ -1,10 +1,8 @@
 import { getDayBreakfastStatus } from "./hotel-plans";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { inquiries, itineraries } from "@/test-fixtures/inquiries";
 import { createDefaultQuoteOption, createDefaultQuoteSettings } from "./quote-pricing";
 
-vi.mock("html2canvas", () => ({ default: vi.fn() }));
-vi.mock("jspdf", () => ({ jsPDF: vi.fn() }));
 import { buildPdfHtml, getDailyMealCodes } from "./pdf";
 
 describe("customer PDF content", () => {
@@ -41,7 +39,7 @@ describe("customer PDF content", () => {
     expect(html).not.toContain("<script>");
     expect(html).not.toContain("12,345");
     expect(html).not.toContain("12345");
-    expect(html).toContain("55,200.00");
+    expect(html).not.toContain("55,200.00");
     itinerary.dailyPlans[1].meals.lunch = true;
     expect(buildPdfHtml(itinerary, inquiries[0], "now")).toContain("未标注的正餐自理");
   });
@@ -66,24 +64,25 @@ it("shows pending breakfast until the prior night and every selected tier are kn
   expect(getDayBreakfastStatus(plan, 1)).toBe("pending");
 });
 
-it("shows guide service days without inventing daily coverage", () => {
+it("describes guide service without exposing internal plans", () => {
   const plan = structuredClone(itineraries[0]);
   plan.guidePlans = [{ destination: "昆明", guideId: "g", guideName: "Guide", dailyPrice: 9999, secondLanguage: "en", shopping: false, serviceDays: 3 }];
   plan.dailyPlans[0].overnightDestination = "昆明";
   const html = buildPdfHtml(plan, inquiries[0], "now");
   const daily = html.slice(0, html.indexOf("酒店与车型搭配"));
-  expect(html).toContain("服务3天");
+  expect(html).toContain("行程安排的导游服务");
+  expect(html).not.toContain("服务3天");
   expect(daily).not.toContain("当日不含导游服务");
   expect(daily).toMatch(/<td[^>]*>昆明<\/td>/);
   expect(daily).not.toContain("9999");
 });
 
-it('shows included expenses with a 60000 total and hides internal hotel costs', () => {
+it('shows group extra expenses separately without a group tour total', () => {
   const p = structuredClone(itineraries[0]); p.adults = 60; p.childrenCount = 0; p.leaderCount = 1;
   p.quote = { ...createDefaultQuoteSettings(), otherExpenses: 500, options: [{ ...createDefaultQuoteOption('international_five_star', 'standard'), adultUnitPrice: 1000 }] };
   const html = buildPdfHtml(p, inquiries[0], 'now');
-  expect(html).toContain('60,000.00'); expect(html).not.toContain('60,500.00');
-  expect(html).toContain('司陪费和其它支出（已含）'); expect(html).toContain('500.00');
+  expect(html).not.toContain('60,000.00'); expect(html).not.toContain('60,500.00');
+  expect(html).toContain('司陪费及其他支出（另付）'); expect(html).toContain('500.00（整团）');
   expect(html).not.toContain('领队住宿成本');
 });
 
@@ -94,6 +93,6 @@ it.each([null, 0])("hides optional charges when their amount is %s", (amount) =>
   const html = buildPdfHtml(plan, inquiries[0], "now");
   expect(html).not.toContain("中文小费（另付）");
   expect(html).not.toContain("英文小费（另付）");
-  expect(html).not.toContain("司陪费和其它支出（已含）");
+  expect(html).not.toContain("司陪费及其他支出（另付）");
   expect(createDefaultQuoteSettings().otherExpenses).toBeNull();
 });

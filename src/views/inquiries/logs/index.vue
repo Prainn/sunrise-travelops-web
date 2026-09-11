@@ -4,7 +4,7 @@
     class="page-container inquiry-log-page"
   >
     <el-card
-      class="log-summary-card"
+      class="log-summary-card shrink-0"
       shadow="never"
     >
       <el-page-header @back="router.push({ name: 'InquiryList' })">
@@ -14,7 +14,7 @@
       </el-page-header>
       <el-form
         :inline="true"
-        class="log-filters"
+        class="log-filters mt-[20px]"
       >
         <el-form-item :label="$t('inquiry.code')">
           <el-input
@@ -69,13 +69,13 @@
           {{ $t('common.search') }}
         </el-button>
       </el-form>
-      <div class="log-totals">
-        <span>{{ $t('inquiry.log.totalOperations') }} <strong>{{ report.totalOperations }}</strong></span>
-        <span>{{ $t('inquiry.log.inquiryCount') }} <strong>{{ report.inquiryCount }}</strong></span>
-        <span>{{ $t('inquiry.log.operatorCount') }} <strong>{{ report.operatorCount }}</strong></span>
-        <span>{{ $t('inquiry.log.changedFields') }} <strong>{{ report.changedFields }}</strong></span>
+      <div class="log-totals mt-[12px] flex flex-wrap gap-[16px]">
+        <span>{{ $t('inquiry.log.totalOperations') }} <strong class="ml-[8px] text-[18px]">{{ report.totalOperations }}</strong></span>
+        <span>{{ $t('inquiry.log.inquiryCount') }} <strong class="ml-[8px] text-[18px]">{{ report.inquiryCount }}</strong></span>
+        <span>{{ $t('inquiry.log.operatorCount') }} <strong class="ml-[8px] text-[18px]">{{ report.operatorCount }}</strong></span>
+        <span>{{ $t('inquiry.log.changedFields') }} <strong class="ml-[8px] text-[18px]">{{ report.changedFields }}</strong></span>
       </div>
-      <div class="log-actions">
+      <div class="log-actions mt-[12px] flex flex-wrap gap-[16px]">
         <el-tag
           v-for="item in report.byAction"
           :key="item.action"
@@ -134,7 +134,7 @@
                     min-width="280"
                   >
                     <template #default="scope">
-                      <pre>{{ displayValue(scope.row.before, scope.row.path, row.targetType, row.targetId) }}</pre>
+                      <pre class="m-0 max-h-[360px] overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere] [font:inherit]">{{ displayValue(scope.row.before, scope.row.path, row.targetType, row.targetId) }}</pre>
                     </template>
                   </el-table-column>
                   <el-table-column
@@ -142,7 +142,7 @@
                     min-width="280"
                   >
                     <template #default="scope">
-                      <pre>{{ displayValue(scope.row.after, scope.row.path, row.targetType, row.targetId) }}</pre>
+                      <pre class="m-0 max-h-[360px] overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere] [font:inherit]">{{ displayValue(scope.row.after, scope.row.path, row.targetType, row.targetId) }}</pre>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -286,14 +286,9 @@ function displayValue(value: unknown, path: string, targetType: InquiryLogRecord
 }
 </script>
 <style scoped>
-.log-summary-card { @apply 'shrink-0'; }
 .inquiry-log-page :deep(.el-table__expand-icon.is-disabled) { visibility: hidden; }
-.log-filters { @apply 'mt-[20px]'; }
-.log-totals, .log-actions { @apply 'flex flex-wrap gap-[16px] mt-[12px]'; }
-.log-totals strong { margin-left: 8px; font-size: 18px; }
 
 .change-details :deep(.change-added) { color: var(--el-color-success); }
 .change-details :deep(.change-removed) { color: var(--el-color-danger); }
 .change-details :deep(.change-changed) { color: var(--el-color-warning); }
-pre { @apply 'whitespace-pre-wrap [overflow-wrap:anywhere] [font:inherit] m-0 max-h-[360px] overflow-auto'; }
 </style>

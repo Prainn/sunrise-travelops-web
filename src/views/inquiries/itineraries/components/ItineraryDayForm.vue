@@ -1,6 +1,6 @@
 <template>
   <el-form
-    class="day-form"
+    class="day-form grid [grid-template-columns:repeat(4,_minmax(0,_1fr))] gap-[14px_16px] p-[16px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)] max-[900px]:[grid-template-columns:1fr]"
     label-position="top"
   >
     <el-form-item :label="$t('itinerary.departure')">
@@ -83,7 +83,7 @@
       </el-select>
     </el-form-item>
     <el-form-item
-      class="day-form__description"
+      class="day-form__description [grid-column:1_/_-1]"
       :label="$t('itinerary.dayDescription')"
     >
       <el-input
@@ -126,16 +126,8 @@ function updateTransport(values: string[]) {
 
 <style scoped lang="scss">
 .day-form {
-  @apply 'grid [grid-template-columns:repeat(4,_minmax(0,_1fr))] gap-[14px_16px] p-[16px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)]';
-
   :deep(.el-form-item) { margin-bottom: 0; }
   :deep(.el-form-item__label) { padding-bottom: 6px; color: var(--el-text-color-regular); font-weight: 500; line-height: 20px; }
   :deep(.el-select) { width: 100%; }
-}
-
-.day-form__description { @apply '[grid-column:1_/_-1]'; }
-
-@media (width <= 900px) {
-  .day-form { @apply '[grid-template-columns:1fr]'; }
 }
 </style>

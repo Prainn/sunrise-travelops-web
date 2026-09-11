@@ -202,6 +202,4 @@ function syncEndDate() {
 .itinerary-plan-dialog__form :deep(.el-form-item__label) { white-space: nowrap; }
 
 .itinerary-plan-dialog__form :deep(.el-input-number) { width: 100%; }
-
-.itinerary-plan-dialog__day-hint { @apply 'mb-[18px]'; }
 </style>

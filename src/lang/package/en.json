@@ -156,7 +156,7 @@
         "totalPrice": "Whole-trip total",
         "secondLanguage": "Second language",
         "shopping": "Shopping itinerary",
-        "otherExpenses": "Driver/guide and other expenses (included)"
+        "otherExpenses": "Driver/guide and other expenses (extra)"
       },
       "day": "Day {day}",
       "tiers": {
@@ -189,6 +189,16 @@
     "followupDetails": "Follow-up and internal details"
   },
   "itinerary": {
+    "mealSource": "Restaurant source",
+    "mealLibrary": "Resource library",
+    "customRestaurant": "Custom",
+    "customRestaurantName": "Restaurant name",
+    "customMealUnit": "Pricing unit",
+    "customMealPerPerson": "Per person / meal",
+    "customMealPerTable": "Per table",
+    "customMealPrice": "Unit price (CNY)",
+    "customMealHint": "Saved only to this itinerary, not to the restaurant library.",
+
     "hotelPlansPending": "Set the overnight cities in the daily itinerary before selecting hotels.",
     "hotelPlansNotNeeded": "All itinerary days are marked as no overnight stay. No hotels are needed.",
     "actualMarginRate": "Actual Margin",
@@ -206,7 +216,7 @@
     "code": "Itinerary No.",
     "createTitle": "Create Itinerary",
     "createAndManage": "Create and Manage",
-    "confirmDownloadPdf": "Confirm and Download PDF",
+    "confirmDownloadPdf": "Confirm Quote and Export PDF",
     "copyDay": "Copy Day",
     "copySuccess": "Copied as a new draft itinerary",
     "copySuffix": "Copy",
@@ -244,10 +254,11 @@
     "noOvernightStay": "No overnight stay",
     "noFoc": "NO FOC",
     "noPlans": "No itinerary has been created for this inquiry",
-    "pdfGenerated": "PDF downloaded and itinerary locked as quoted",
+    "pdfGenerated": "Quote confirmed and itinerary locked as quoted",
     "pdfGenerationFailed": "PDF generation failed. Please try again",
     "pdfHotelPlanRequired": "Complete at least one hotel selection before generating the PDF",
-    "pdfPreviewTitle": "PDF Preview",
+    "pdfPreviewTitle": "Quote Preview",
+    "pdfPrintHint": "Confirmation locks this quote and opens the print dialog. Choose Save as PDF, A4, 100% scale, and disable browser headers and footers. Check pagination in print preview. Cancelling printing does not undo quote confirmation.",
     "save": "Save",
     "saveSuccess": "Itinerary saved",
     "priceRemark": "Price Notes",
@@ -321,8 +332,9 @@
     "selectMealResource": "Choose meal resource",
     "guideCost": "Guide cost",
     "extraFees": "Items not included in the tour price",
-    "chineseTip": "Chinese guide tips (full tour / person / RMB)",
-    "englishTip": "English guide tips (full tour / person / RMB)",
+    "tipTotal": "{days} days · Full tour per person ¥{perPerson} · Tips for {people} guests ¥{total} (excluded from tour price)",
+    "chineseTip": "Chinese guide tips (person / day / RMB)",
+    "englishTip": "English guide tips (person / day / RMB)",
     "noExtraQuote": "Leave empty to omit",
     "cabin": "Cabin / seat class",
     "cabins": {
@@ -339,7 +351,7 @@
     "holidayRestrictions": "Holiday restrictions",
     "hotelReplacementTerms": "Equivalent hotel replacement terms",
     "copyForRevision": "Copy as new plan",
-    "downloadOriginal": "Download quote PDF",
+    "downloadOriginal": "Export quote PDF",
     "previewChanged": "The itinerary has changed. Generate a new preview before downloading.",
     "validation": {
       "title": "Complete these details; click to locate",
@@ -363,8 +375,7 @@
     },
     "nightCount": "{count} nights",
     "totalNights": "Total {count} nights",
-    "duration": "{days} days / {nights} nights",
-    "otherExpensesExceedTotal": "Included expenses cannot exceed the group total"
+    "duration": "{days} days / {nights} nights"
   },
   "businessCategory": {
     "applicableResources": "Applicable Resources",
@@ -1043,8 +1054,8 @@
     "capacityHint": "{seats} seats in total for {passengers} passengers",
     "hotelPriceUnit": "CNY/room/night (breakfast included)",
     "hotelPrice": "Actual price per room per night",
-    "otherExpenses": "Driver/guide expenses and other costs",
-    "includedAmount": "Included amount (CNY)",
+    "otherExpenses": "Driver/guide and other expenses (extra)",
+    "extraAmount": "Group extra charge (CNY, excluded from per-person tour price)",
     "languages": {
       "none": "None (Chinese only)",
       "en": "English",

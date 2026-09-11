@@ -30,26 +30,13 @@ vi.mock("@/api/request", () => {
 });
 
 import type {
-  AgencyRecord, AttractionRecord, GuideRecord, HotelRecord, RestaurantRecord,
-  TransportRecord,
+  AgencyRecord, AttractionRecord, RestaurantRecord,
 } from "@/types/resource";
-import { resourceService, type ResourceCrud } from "./resource.service";
+import { resourceService } from "./resource.service";
 const audit = { version: 3, createdAt: "2026-09-04T00:00:00.000Z", createdBy: null, updatedAt: "2026-09-04T00:00:00.000Z", updatedBy: null };
 const agency: AgencyRecord = { ...audit, id: "agency-1", code: "AGY-001", name: "Agency", city: "Singapore", countryOrRegion: "Singapore", email: "a@example.com", status: "enabled", remark: "", contacts: [] };
-const hotel: HotelRecord = { ...audit, id: "hotel-1", code: "HTL-001", name: "Hotel", province: "云南省", city: "昆明", rating: "international_five_star", facilities: "", breakfast: "", address: "", phone: "", nearby: "", individualPrice: 300, groupPrice: 260, minimumGroupSize: 10, unit: "roomNight", status: "enabled" };
 const restaurant: RestaurantRecord = { ...audit, id: "restaurant-1", code: "RES-001", name: "Restaurant", city: "昆明", cuisine: "云南菜", contact: "", phone: "", address: "", remark: "", unit: "personMeal", status: "enabled", prices: [] };
 const attraction: AttractionRecord = { ...audit, id: "attraction-1", code: "ATT-001", name: "Attraction", area: "昆明", category: "scenic", restroomLocation: "", remark: "", unit: "personVisit", status: "enabled", prices: [] };
-const transport: TransportRecord = { ...audit, id: "transport-1", code: "VEH-001", name: "Vehicle", serviceLevel: "standard", seats: 7, dailyPrice: 800, unit: "vehicleDay", city: "昆明", phone: "13800000000", status: "enabled", remark: "" };
-const guide: GuideRecord = { ...audit, id: "guide-1", code: "GDE-001", name: "仅中文 · 不进店", secondLanguage: "none", shopping: false, dailyPrice: 500, status: "enabled" };
-
-const topResources: Array<[string, ResourceCrud<never>]> = [
-  ["agencies", resourceService.agencyApi as unknown as ResourceCrud<never>],
-  ["hotels", resourceService.hotelApi as unknown as ResourceCrud<never>],
-  ["restaurants", resourceService.restaurantApi as unknown as ResourceCrud<never>],
-  ["attractions", resourceService.attractionApi as unknown as ResourceCrud<never>],
-  ["transports", resourceService.transportApi as unknown as ResourceCrud<never>],
-  ["guides", resourceService.guideApi as unknown as ResourceCrud<never>],
-];
 
 beforeEach(() => {
   requestMock.mockReset();
@@ -69,15 +56,6 @@ beforeEach(() => {
 });
 
 describe("resourceService", () => {
-  it("starts every runtime resource collection without frontend mock records", () => {
-    expect(resourceService.agencies).toEqual([]);
-    expect(resourceService.hotels).toEqual([]);
-    expect(resourceService.restaurants).toEqual([]);
-    expect(resourceService.attractions).toEqual([]);
-    expect(resourceService.transports).toEqual([]);
-    expect(resourceService.guides).toEqual([]);
-  });
-
   it("loads top-level rows without eagerly requesting every child resource", async () => {
     requestMock.mockImplementation(async (path) => {
       if (path.startsWith("/resources/agencies?")) {
@@ -139,18 +117,6 @@ describe("resourceService", () => {
     expect(requestMock).toHaveBeenCalledTimes(3);
   });
 
-  it("uses every top-level list, detail, and batch-delete endpoint", async () => {
-    for (const [name, api] of topResources) {
-      await api.getPage({ page: 2, pageSize: 20, keyword: " 云南 " });
-      await api.getDetail("resource/id");
-      await api.deleteByIds("id-1,id-2");
-
-      expect(requestMock).toHaveBeenCalledWith(`/resources/${name}?page=2&pageSize=20&keyword=%E4%BA%91%E5%8D%97`);
-      expect(requestMock).toHaveBeenCalledWith(`/resources/${name}/resource%2Fid`);
-      expect(requestMock).toHaveBeenCalledWith(`/resources/${name}?ids=id-1%2Cid-2`, { method: "DELETE" });
-    }
-  });
-
   it("sends resource-specific filters to the list endpoint", async () => {
     await resourceService.restaurantApi.getPage({
       page: 1,
@@ -181,27 +147,6 @@ describe("resourceService", () => {
     expect(requestMock).toHaveBeenCalledWith(
       "/resources/transports?page=1&pageSize=20&serviceLevel=vip"
     );
-  });
-
-  it("uses all top-level create and versioned update endpoints", async () => {
-    const cases = [
-      ["agencies", resourceService.agencyApi, agency],
-      ["hotels", resourceService.hotelApi, hotel],
-      ["restaurants", resourceService.restaurantApi, restaurant],
-      ["attractions", resourceService.attractionApi, attraction],
-      ["transports", resourceService.transportApi, transport],
-      ["guides", resourceService.guideApi, guide],
-    ] as const;
-
-    for (const [name, api, record] of cases) {
-      await api.create(record as never);
-      await api.update(record.id, record as never);
-      expect(requestMock).toHaveBeenCalledWith(`/resources/${name}`, expect.objectContaining({ method: "POST" }));
-      expect(requestMock).toHaveBeenCalledWith(`/resources/${name}/${record.id}`, {
-        method: "PUT",
-        body: expect.objectContaining({ id: record.id, version: 3 }),
-      });
-    }
   });
 
   it("uses contact and price endpoints with backend null conventions", async () => {

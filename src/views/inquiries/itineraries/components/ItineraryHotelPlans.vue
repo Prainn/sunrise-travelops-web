@@ -1,10 +1,12 @@
 <template>
   <section
     id="itinerary-hotels"
-    class="itinerary-hotel-plans mt-[24px]"
+    class="itinerary-hotel-plans mt-[24px] scroll-mt-[270px]"
   >
     <div class="itinerary-hotel-plans__toolbar min-h-[48px] mb-[14px] flex items-center">
-      <h3>{{ $t("itinerary.hotelPlans") }}</h3>
+      <h3 class="m-0">
+        {{ $t("itinerary.hotelPlans") }}
+      </h3>
       <div class="ml-4 flex items-center flex-wrap gap-[12px]">
         <el-tag
           v-for="destination in overnightDestinations"
@@ -22,20 +24,23 @@
       </div>
     </div>
     <el-card
-      class="itinerary-hotel-plans__card"
+      class="itinerary-hotel-plans__card rounded-[10px]"
       shadow="never"
     >
       <div
         v-if="overnightDestinations.length"
-        class="itinerary-hotel-plans__tiers"
+        class="itinerary-hotel-plans__tiers grid grid-cols-2 gap-[12px] max-[1100px]:grid-cols-1"
       >
         <article
           v-for="tier in HOTEL_PLAN_TIERS"
           :key="tier"
-          class="itinerary-hotel-plans__tier"
-          :class="{ 'is-selected': Boolean(getPlan(tier)?.hotels.length) }"
+          class="itinerary-hotel-plans__tier overflow-hidden rounded-[8px] bg-[var(--el-bg-color)] [border:1px_solid_var(--el-border-color-lighter)] [transition:border-color_0.2s,_box-shadow_0.2s]"
+          :class="{ 'is-selected [border-color:var(--el-color-primary-light-5)] [box-shadow:0_0_0_1px_var(--el-color-primary-light-8)]': Boolean(getPlan(tier)?.hotels.length) }"
         >
-          <header>
+          <header
+            class="min-h-[48px] flex items-center justify-between gap-[16px] px-[14px] bg-[var(--el-fill-color-lighter)]"
+            :class="{ 'bg-[var(--el-color-primary-light-9)]': Boolean(getPlan(tier)?.hotels.length) }"
+          >
             <strong>{{ $t(`itinerary.hotelTiers.${tier}`) }}</strong>
             <el-button
               v-if="getPlan(tier)?.hotels.length"
@@ -57,6 +62,7 @@
               <span>{{ destination }}</span>
               <div class="w-1/2">
                 <ResourceSelect
+                  class="w-full"
                   kind="hotels"
                   :model-value="getHotelSelectionId(tier, destination)"
                   :selected-label="getPlan(tier)?.hotels.find(hotel => hotel.destination === destination)?.hotelName"
@@ -135,18 +141,6 @@ function getHotelSelectionId(tier: ItineraryHotelTier, destination: string) {
 }
 </script>
 
-<style scoped lang="scss">
-.itinerary-hotel-plans { scroll-margin-top: 270px; }
-.itinerary-hotel-plans__toolbar h3 { margin: 0; }
-.itinerary-hotel-plans__card { border-radius: 10px; }
+<style scoped>
 .itinerary-hotel-plans__card :deep(.el-card__body) { padding: 16px 18px; }
-.itinerary-hotel-plans__tiers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.itinerary-hotel-plans__tier { overflow: hidden; border: 1px solid var(--el-border-color-lighter); border-radius: 8px; background: var(--el-bg-color); transition: border-color 0.2s, box-shadow 0.2s; }
-.itinerary-hotel-plans__tier > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; padding: 0 14px; background: var(--el-fill-color-lighter); }
-.itinerary-hotel-plans__tier.is-selected { border-color: var(--el-color-primary-light-5); box-shadow: 0 0 0 1px var(--el-color-primary-light-8); }
-.itinerary-hotel-plans__tier.is-selected > header { background: var(--el-color-primary-light-9); }
-.itinerary-hotel-plans__selection :deep(.el-select) { width: 100%; }
-@media (width <= 1100px) {
-  .itinerary-hotel-plans__tiers { grid-template-columns: 1fr; }
-}
 </style>

@@ -12,6 +12,9 @@
     @update:model-value="emit('update:modelValue', $event)"
     @closed="emit('closed')"
   >
+    <p class="mb-[12px] text-[var(--el-text-color-regular)]">
+      {{ $t('itinerary.pdfPrintHint') }}
+    </p>
     <iframe
       v-if="src"
       class="itinerary-pdf-preview__frame block w-full h-[76vh] [border:1px_solid_var(--el-border-color)] rounded-[var(--el-border-radius-base)] [background:var(--el-fill-color-light)]"

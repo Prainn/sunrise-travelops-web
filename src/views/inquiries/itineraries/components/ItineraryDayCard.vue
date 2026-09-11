@@ -1,13 +1,13 @@
 <template>
   <el-card
     :id="`day-${day.id}`"
-    class="day-card"
+    class="day-card mt-[16px] scroll-mt-[270px] rounded-[10px]"
     :class="{ 'is-collapsed': !expanded }"
     shadow="never"
   >
     <template #header>
-      <div class="day-card__header">
-        <div class="day-card__identity gap-[12px]">
+      <div class="day-card__header flex items-center justify-between">
+        <div class="day-card__identity flex items-center gap-[12px]">
           <span class="day-card__number grid w-[44px] h-[44px] place-items-center rounded-[10px] [background:var(--el-color-primary)] [color:#fff] font-bold">D{{ day.dayNumber }}</span>
           <div>
             <div class="day-card__route flex items-center gap-[6px] text-[16px] font-semibold">
@@ -15,10 +15,10 @@
               <el-icon><Right /></el-icon>
               {{ day.destination || $t("itinerary.destination") }}
             </div>
-            <span class="day-card__date">{{ day.date }}</span>
+            <span class="day-card__date text-[14px] text-[var(--el-text-color-secondary)]">{{ day.date }}</span>
           </div>
         </div>
-        <div class="day-card__actions">
+        <div class="day-card__actions flex items-center">
           <el-button
             link
             :aria-expanded="expanded"
@@ -58,7 +58,7 @@
         @update-field="updateField"
       />
 
-      <div class="day-card__resources-header m-[20px_0_10px]">
+      <div class="day-card__resources-header m-[20px_0_10px] flex items-center justify-between">
         <strong>{{ $t("itinerary.dailyResources") }}</strong>
         <el-button
           v-if="contentEditable"
@@ -79,7 +79,7 @@
         <div
           v-for="slot in ['lunch', 'dinner'] as const"
           :key="slot"
-          class="day-card__meal"
+          class="day-card__meal flex items-center gap-[8px]"
         >
           <el-checkbox
             :model-value="day.meals[slot]"
@@ -119,7 +119,7 @@
               </el-tag>
               {{ scope.row.resourceName }}
             </div>
-            <small>{{ scope.row.priceName }}</small>
+            <small class="text-[14px] text-[var(--el-text-color-secondary)]">{{ scope.row.priceName }}</small>
           </template>
         </el-table-column>
         <el-table-column
@@ -130,7 +130,7 @@
           <template #default="scope">
             <el-input-number
               v-if="contentEditable"
-              class="day-card__quantity"
+              class="day-card__quantity w-[72px] mr-[4px]"
               :model-value="scope.row.quantity"
               :min="1"
               :precision="0"
@@ -140,7 +140,7 @@
             <template v-else>
               {{ scope.row.quantity }}
             </template>
-            <small>{{ resourceUnitName(scope.row.unit) }}</small>
+            <small class="text-[14px] text-[var(--el-text-color-secondary)]">{{ resourceUnitName(scope.row.unit) }}</small>
           </template>
         </el-table-column>
         <el-table-column
@@ -183,7 +183,7 @@
         :description="$t('itinerary.noDailyResources')"
         :image-size="52"
       />
-      <div class="day-card__subtotal mt-[12px] text-[var(--el-text-color-secondary)]">
+      <div class="day-card__subtotal mt-[12px] flex items-center justify-between text-[var(--el-text-color-secondary)]">
         <span>{{ $t("itinerary.dayCost") }} ¥{{ formatMoney(dayCost) }}</span>
       </div>
     </div>
@@ -234,16 +234,4 @@ function resourceUnitName(code: string) { return getResourceUnitName(code, local
 <style scoped lang="scss">
 .day-card.is-collapsed :deep(.el-card__body) { display: none; }
 .day-card.is-collapsed :deep(.el-card__header) { border-bottom: 0; }
-.day-card__meal { @apply 'flex items-center gap-[8px]'; }
-.day-card { @apply '[scroll-margin-top:270px] rounded-[10px]'; }
-.day-card + .day-card__meals { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 12px; }
-.day-card__meal { @apply 'flex items-center gap-[8px]'; }
-.day-card { @apply 'mt-[16px]'; }
-.day-card__header, .day-card__identity, .day-card__actions, .day-card__resources-header, .day-card__subtotal { @apply 'flex items-center'; }
-.day-card__header, .day-card__resources-header, .day-card__subtotal { @apply 'justify-between'; }
-
-.day-card__date, small { @apply 'text-[var(--el-text-color-secondary)] text-[14px]'; }
-.day-card__quantity { @apply 'w-[72px] mr-[4px]'; }
-
-.day-card__subtotal strong { color: var(--el-color-primary); }
 </style>

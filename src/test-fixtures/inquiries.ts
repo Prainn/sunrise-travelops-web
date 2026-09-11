@@ -1,8 +1,6 @@
 import { createDefaultQuoteSettings } from "@/views/inquiries/itineraries/quote-pricing";
-import type { InquiryLogRecord } from "@/types/inquiry-log";
 import type { ItineraryRecord } from "@/types/itinerary";
 import type { InquiryRecord } from "@/types/inquiry";
-import { users } from "@/data/data";
 
 export const inquiries: InquiryRecord[] = [
   {
@@ -11,34 +9,6 @@ export const inquiries: InquiryRecord[] = [
     sourceChannel: "WhatsApp", originalMessage: "10 人计划 10 月到云南旅行 7 天，希望安排昆明、大理和丽江。",
     internalRemark: "报价 PDF 已发送，等待旅行社确认。", owner: "王敏", nextFollowUpAt: "2026-09-01 11:00", plannedDays: 7,
     lostReason: "", status: "quoted", creator: "admin", createdAt: "2026-08-21 09:30",
-  },
-  {
-    version: 1, ownerId: "user-2", contactId: "contact-1", id: "inquiry-10", code: "INQ-202608-010", agencyId: "", agencyCode: "AGY-002", agencyName: "Malaysia Star Holidays",
-    contactName: "Jason Lee", email: "jason@example.com", phone: "+60 3-1234 5678", countryOrRegion: "马来西亚",
-    sourceChannel: "WhatsApp", originalMessage: "10 人云南经典 7 天游，覆盖昆明、大理和丽江。",
-    internalRemark: "历史方案已归档，仅供查询和行程参考。", owner: "李娜", nextFollowUpAt: "", plannedDays: 7,
-    lostReason: "", status: "archived", creator: "admin", createdAt: "2026-08-16 15:00",
-  },
-  {
-    version: 1, ownerId: "user-2", contactId: "contact-1", id: "inquiry-11", code: "INQ-202608-011", agencyId: "", agencyCode: "AGY-007", agencyName: "Hong Kong Evergreen Travel",
-    contactName: "Kelly Wong", email: "kelly@example.com", phone: "+852 2555 0107", countryOrRegion: "中国香港",
-    sourceChannel: "WeChat", originalMessage: "10 人亲友团计划 10 月赴云南，希望 7 天走昆明、大理和丽江，安排舒适酒店、特色餐和中文导游。",
-    internalRemark: "日期和人数已确认，需控制每日车程并预留自由活动时间。", owner: "周悦", nextFollowUpAt: "2026-09-01 10:30", plannedDays: 7,
-    lostReason: "", status: "planning", creator: "inquiry_zhouyue", createdAt: "2026-08-30 09:20",
-  },
-  {
-    version: 1, ownerId: "user-2", contactId: "contact-1", id: "inquiry-14", code: "INQ-202608-014", agencyId: "", agencyCode: "AGY-003", agencyName: "Bangkok Discovery Travel",
-    contactName: "Narin Chai", email: "narin@example.com", phone: "+66 2-123-4567", countryOrRegion: "泰国",
-    sourceChannel: "Website", originalMessage: "10 人希望国庆后安排昆明、大理和丽江 7 天游，并入住景观酒店。",
-    internalRemark: "完整方案已制作，但客户未接受最终价格。", owner: "王敏", nextFollowUpAt: "", plannedDays: 7,
-    lostReason: "客户预算不足，最终选择其他目的地", status: "lost", creator: "inquiry", createdAt: "2026-08-29 16:10",
-  },
-  {
-    version: 1, ownerId: "user-2", contactId: "contact-1", id: "inquiry-15", code: "INQ-202608-015", agencyId: "", agencyCode: "AGY-005", agencyName: "Seoul Hanul Travel",
-    contactName: "Min-jun Park", email: "minjun@example.com", phone: "+82 2-555-0105", countryOrRegion: "韩国",
-    sourceChannel: "Referral", originalMessage: "10 人企业团希望安排昆明、大理、丽江 7 天游，包含欢迎宴和特色文化体验。",
-    internalRemark: "新询盘演示数据，待计调创建行程。", owner: "李娜", nextFollowUpAt: "2026-09-01 16:00", plannedDays: 7,
-    lostReason: "", status: "new", creator: "inquiry_lina", createdAt: "2026-08-31 08:45",
   },
 ];
 
@@ -240,112 +210,4 @@ export const itineraries: ItineraryRecord[] = [
     createdAt: "2026-08-30 10:40",
     updatedAt: "2026-08-31 09:15",
   }),
-  createCompleteItineraryVariant({
-    id: "itinerary-quoted",
-    inquiryId: "inquiry-1",
-    code: "ITI-202608-001",
-    title: "昆明大理丽江经典 7 日报价方案",
-    origin: "新加坡",
-    status: "quoted",
-    quoteGeneratedAt: "2026-08-26 17:40",
-
-    creator: "operations",
-    createdAt: "2026-08-24 10:20",
-    updatedAt: "2026-08-26 17:40",
-  }),
-  createCompleteItineraryVariant({
-    id: "itinerary-lost",
-    inquiryId: "inquiry-14",
-    code: "ITI-202608-014",
-    title: "昆明大理丽江经典 7 日预算方案",
-    origin: "曼谷",
-    status: "draft",
-    quoteGeneratedAt: "",
-
-    creator: "operations_zhaolei",
-    createdAt: "2026-08-29 17:00",
-    updatedAt: "2026-08-30 09:40",
-  }),
-  createCompleteItineraryVariant({
-    id: "itinerary-archived",
-    inquiryId: "inquiry-10",
-    code: "ITI-202608-010",
-    title: "昆明大理丽江经典 7 日历史方案",
-    origin: "吉隆坡",
-    status: "archived",
-    quoteGeneratedAt: "",
-
-    creator: "operations_chenchen",
-    createdAt: "2026-08-16 16:00",
-    updatedAt: "2026-08-17 09:00",
-  }),
-];
-
-function getSeedOperator(username: string) {
-  const user = users.find((record) => record.username === username);
-  return {
-    operatorId: user?.id ?? "",
-    operatorUsername: username,
-    operatorName: user?.nickname ?? username,
-  };
-}
-
-export const inquiryLogs: InquiryLogRecord[] = [
-  ...inquiries.map((inquiry) => ({
-    id: `inquiry-log-created-${inquiry.id}`,
-    inquiryId: inquiry.id, inquiryCode: inquiry.code, changes: [],
-    action: "inquiry_created" as const,
-    occurredAt: inquiry.createdAt,
-    ...getSeedOperator(inquiry.creator),
-    targetType: "inquiry" as const,
-    targetId: inquiry.id,
-    targetCode: inquiry.code,
-  })),
-  ...itineraries.map((itinerary) => ({
-    id: `inquiry-log-created-${itinerary.id}`,
-    inquiryId: itinerary.inquiryId, inquiryCode: inquiries.find(i => i.id === itinerary.inquiryId)!.code, changes: [],
-    action: "itinerary_created" as const,
-    occurredAt: itinerary.createdAt,
-    ...getSeedOperator(itinerary.creator),
-    targetType: "itinerary" as const,
-    targetId: itinerary.id,
-    targetCode: itinerary.code,
-    summary: itinerary.title,
-    metadata: { creationMode: "new" },
-  })),
-  ...itineraries
-    .filter((itinerary) => itinerary.status === "draft" && itinerary.updatedAt !== itinerary.createdAt)
-    .map((itinerary) => ({
-      id: `inquiry-log-saved-${itinerary.id}`,
-      inquiryId: itinerary.inquiryId, inquiryCode: inquiries.find(i => i.id === itinerary.inquiryId)!.code, changes: [],
-      action: "itinerary_saved" as const,
-      occurredAt: itinerary.updatedAt,
-      ...getSeedOperator(itinerary.creator),
-      targetType: "itinerary" as const,
-      targetId: itinerary.id,
-      targetCode: itinerary.code,
-      summary: itinerary.title,
-    })),
-  ...itineraries
-    .filter((itinerary) => itinerary.status === "quoted")
-    .map((itinerary) => ({
-      id: `inquiry-log-pdf-${itinerary.id}`,
-      inquiryId: itinerary.inquiryId, inquiryCode: inquiries.find(i => i.id === itinerary.inquiryId)!.code, changes: [],
-      action: "itinerary_pdf_generated" as const,
-      occurredAt: itinerary.updatedAt,
-      ...getSeedOperator(itinerary.creator),
-      targetType: "itinerary" as const,
-      targetId: itinerary.id,
-      targetCode: itinerary.code,
-      summary: itinerary.title,
-    })),
-  {
-    inquiryCode: "INQ-202608-014", changes: [], id: "inquiry-log-lost-inquiry-14", inquiryId: "inquiry-14", action: "inquiry_lost", occurredAt: "2026-08-30 10:10",
-    ...getSeedOperator("inquiry"), targetType: "inquiry", targetId: "inquiry-14", targetCode: "INQ-202608-014",
-    metadata: { lostReason: "客户预算不足，最终选择其他目的地" },
-  },
-  {
-    inquiryCode: "INQ-202608-010", changes: [], id: "inquiry-log-archived-inquiry-10", inquiryId: "inquiry-10", action: "inquiry_archived", occurredAt: "2026-08-17 09:00",
-    ...getSeedOperator("inquiry_lina"), targetType: "inquiry", targetId: "inquiry-10", targetCode: "INQ-202608-010",
-  },
 ];

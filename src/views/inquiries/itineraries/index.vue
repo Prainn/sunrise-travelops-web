@@ -3,7 +3,7 @@
     v-loading.fullscreen="isLoading || isSaving"
     element-loading-background="rgba(0, 0, 0, 0.2)"
     :inert="isSaving"
-    class="page-container itinerary-page"
+    class="page-container itinerary-page h-auto min-h-full overflow-visible p-0"
   >
     <el-alert
       v-if="loadError"
@@ -22,7 +22,7 @@
               <el-select
                 v-if="selectedItinerary"
                 v-model="selectedItineraryId"
-                class="itinerary-page__plan-select"
+                class="itinerary-page__plan-select w-[min(360px,_45vw)]!"
               >
                 <el-option
                   v-for="row in rows"
@@ -44,11 +44,13 @@
           </el-page-header>
           <div
             v-if="selectedItinerary"
-            class="itinerary-page__plan-bar grid [grid-template-columns:360px_minmax(0,_1fr)_auto] items-center gap-[18px] mt-[12px] p-[12px_0] [border-top:1px_solid_var(--el-border-color-lighter)] [border-bottom:1px_solid_var(--el-border-color-lighter)]"
+            class="itinerary-page__plan-bar grid [grid-template-columns:360px_minmax(0,_1fr)_auto] items-center gap-[18px] mt-[12px] p-[12px_0] [border-top:1px_solid_var(--el-border-color-lighter)] [border-bottom:1px_solid_var(--el-border-color-lighter)] max-[1100px]:[grid-template-columns:minmax(260px,_1fr)_auto]"
           >
-            <div class="itinerary-page__plan-summary min-w-0">
-              <h2>{{ selectedItinerary.title }}</h2>
-              <p>
+            <div class="itinerary-page__plan-summary min-w-0 max-[1100px]:hidden">
+              <h2 class="m-0 overflow-hidden whitespace-nowrap text-ellipsis text-[18px]">
+                {{ selectedItinerary.title }}
+              </h2>
+              <p class="m-[3px_0_0] text-[14px] text-[var(--el-text-color-secondary)]">
                 {{ selectedItinerary.startDate }} — {{ selectedItinerary.endDate }} ·
                 {{ $t("itinerary.guestCount") }} {{ guestCount }}＋{{ selectedItinerary.leaderCount }}
               </p>
@@ -73,14 +75,14 @@
             </div>
           </div>
           <div class="itinerary-page__inquiry-summary grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] items-center gap-[18px] mt-[10px] text-[14px]">
-            <span><small>{{ $t("inquiry.code") }}</small>{{ inquiry.code }}</span>
-            <span><small>{{ $t("inquiry.agencyName") }}</small>{{ inquiry.agencyName }}</span>
-            <span><small>{{ $t("inquiry.contactName") }}</small>{{ inquiry.contactName }}</span>
-            <span><small>{{ $t("inquiry.plannedDays") }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
+            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{ $t("inquiry.code") }}</small>{{ inquiry.code }}</span>
+            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{ $t("inquiry.agencyName") }}</small>{{ inquiry.agencyName }}</span>
+            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{ $t("inquiry.contactName") }}</small>{{ inquiry.contactName }}</span>
+            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{ $t("inquiry.plannedDays") }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
             <span
-              class="itinerary-page__message [grid-column:1_/_-1] overflow-hidden whitespace-nowrap text-ellipsis"
+              class="itinerary-page__message min-w-0 flex gap-[6px] [grid-column:1_/_-1] overflow-hidden whitespace-nowrap text-ellipsis"
               :title="inquiry.originalMessage"
-            ><small>{{ $t("inquiry.originalMessage") }}</small>{{ inquiry.originalMessage }}</span>
+            ><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{ $t("inquiry.originalMessage") }}</small>{{ inquiry.originalMessage }}</span>
           </div>
         </el-card>
       </header>
@@ -109,7 +111,9 @@
           />
           <div class="itinerary-page__daily-toolbar h-12 flex justify-between items-center min-h-[48px] m-[24px_0_14px]">
             <div>
-              <h3>{{ $t("itinerary.dailySchedule") }}</h3>
+              <h3 class="m-0">
+                {{ $t("itinerary.dailySchedule") }}
+              </h3>
             </div>
             <el-button
               v-if="contentEditable"
@@ -242,7 +246,9 @@
           class="itinerary-page__validation p-[12px_16px] mb-[16px] [background:var(--el-color-danger-light-9)] rounded-[8px]"
           role="alert"
         >
-          <h3>{{ $t('itinerary.validation.title') }}</h3>
+          <h3 class="m-0 text-[18px]">
+            {{ $t('itinerary.validation.title') }}
+          </h3>
           <ul>
             <li
               v-for="(issue, index) in validationIssues"
@@ -421,25 +427,6 @@ async function locateIssue(target: string) {
 onMounted(loadDestinationResourceOptions);
 </script>
 
-<style scoped lang="scss">
-.itinerary-page__validation h3 { margin: 0; font-size: 18px; }
-.itinerary-page { @apply 'h-auto min-h-full overflow-visible p-0'; }
-
+<style scoped>
 .itinerary-page__overview :deep(.el-card__body) { padding: 14px 18px 12px; }
-.itinerary-page__title { @apply 'text-[var(--el-text-color-primary)] text-[18px] font-semibold'; }
-
-.itinerary-page__plan-summary h2 { overflow: hidden; margin: 0; font-size: 18px; text-overflow: ellipsis; white-space: nowrap; }
-.itinerary-page__plan-summary p { margin: 3px 0 0; color: var(--el-text-color-secondary); font-size: 14px; }
-
-.itinerary-page__inquiry-summary span { display: flex; min-width: 0; gap: 6px; }
-.itinerary-page__inquiry-summary small { flex: none; color: var(--el-text-color-secondary); }
-
-.itinerary-page__plan-select { @apply 'w-[min(420px,_55vw)]'; }
-
-.itinerary-page__daily-toolbar h3 { margin: 0; }
-
-@media (width <= 1100px) {
-  .itinerary-page__plan-bar { @apply '[grid-template-columns:minmax(260px,_1fr)_auto]'; }
-  .itinerary-page__plan-summary { @apply 'hidden'; }
-}
 </style>

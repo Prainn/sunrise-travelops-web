@@ -1,5 +1,5 @@
 <template>
-  <div class="business-category-panel">
+  <div class="business-category-panel h-full min-h-0 flex flex-col gap-[12px]">
     <BusinessCategorySearch
       v-model:keyword="keyword"
       v-model:status="status"
@@ -52,7 +52,7 @@
               <el-tag
                 v-for="type in scope.row.resourceTypes"
                 :key="type"
-                class="business-category-panel__tag"
+                class="business-category-panel__tag ml-[6px] first:ml-0"
                 effect="plain"
               >
                 {{ $t(`itinerary.resourceTypes.${type}`) }}
@@ -307,8 +307,3 @@ async function removeItem(row: CategoryItem) {
 
 onMounted(loadItems);
 </script>
-
-<style scoped lang="scss">
-.business-category-panel { @apply 'flex h-full min-h-0 gap-[12px] flex-col'; }
-.business-category-panel__tag + .business-category-panel__tag { margin-left: 6px; }
-</style>
