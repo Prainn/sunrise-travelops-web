@@ -30,6 +30,11 @@
     "refresh": "Refresh Now"
   },
   "inquiry": {
+    "uploadDocument": "Drop a Word document here, or click to upload",
+    "documentHint": "Accepts .doc / .docx, up to 2 MiB. Extracts text and line breaks, up to 200,000 characters.",
+    "documentParseFailed": "Unable to read the document. Check whether it is damaged, encrypted, empty or over 200,000 characters.",
+    "expandDocument": "Expand",
+    "collapseDocument": "Minimize",
     "agencyCode": "Agency Code",
     "agencyName": "Travel Agency",
     "agencyRequired": "Select a travel agency",

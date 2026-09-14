@@ -30,6 +30,11 @@
     "refresh": "立即刷新"
   },
   "inquiry": {
+    "uploadDocument": "拖拽 Word 文档到此处，或点击上传",
+    "documentHint": "支持 .doc / .docx，最大 2 MiB；提取文字及换行，最多 200,000 字符。",
+    "documentParseFailed": "文档解析失败，请检查文件是否损坏、加密、没有文字或超过 200,000 字符。",
+    "expandDocument": "放大",
+    "collapseDocument": "缩小",
     "agencyCode": "旅行社编号",
     "agencyName": "旅行社名称",
     "agencyRequired": "请选择旅行社",

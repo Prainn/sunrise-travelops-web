@@ -79,13 +79,15 @@
             <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{ $t("inquiry.agencyName") }}</small>{{ inquiry.agencyName }}</span>
             <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{ $t("inquiry.contactName") }}</small>{{ inquiry.contactName }}</span>
             <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{ $t("inquiry.plannedDays") }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
-            <span
-              class="itinerary-page__message min-w-0 flex gap-[6px] [grid-column:1_/_-1] overflow-hidden whitespace-nowrap text-ellipsis"
-              :title="inquiry.originalMessage"
-            ><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{ $t("inquiry.originalMessage") }}</small>{{ inquiry.originalMessage }}</span>
           </div>
         </el-card>
       </header>
+
+      <InquiryMessagePreview
+        v-if="inquiry.originalMessage"
+        :key="inquiry.id"
+        :text="inquiry.originalMessage"
+      />
 
       <template v-if="selectedItinerary">
         <main class="itinerary-page__workspace mx-4">
@@ -359,6 +361,7 @@ import { nextTick, onMounted, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { getDayBreakfastStatus } from "./hotel-plans";
+import InquiryMessagePreview from "./components/InquiryMessagePreview.vue";
 import ItineraryGuidePlans from "./components/ItineraryGuidePlans.vue";
 import GuideEditorDialog from "@/views/resources/guide/components/GuideEditorDialog.vue";
 import ItineraryDayCard from "./components/ItineraryDayCard.vue";

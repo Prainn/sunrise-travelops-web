@@ -20,6 +20,11 @@ export function itineraryInput(record: Pick<ItineraryRecord, "title" | "startDat
   return { title: record.title, startDate: record.startDate, adults: record.adults, childrenCount: record.childrenCount, leaderCount: record.leaderCount, destinations: record.destinations, dailyPlans: record.dailyPlans, hotelPlans: record.hotelPlans, vehiclePlans: record.vehiclePlans, guidePlans: record.guidePlans, quote: record.quote };
 }
 export const inquiryService = {
+  parseDocument(file: File) {
+    const body = new FormData();
+    body.append("file", file);
+    return request.post<{ text: string }>("/inquiries/parse-document", body);
+  },
   list(query: InquiryQuery) { return request.get<PageResult<InquiryRecord>>("/inquiries", { params: { ...query } }); },
   detail(id: string) { return request.get<InquiryRecord>(`/inquiries/${encodeURIComponent(id)}`); },
   owners() { return request.get<PersonOption[]>("/inquiries/owners"); },

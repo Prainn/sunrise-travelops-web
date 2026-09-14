@@ -94,7 +94,7 @@ function appendParams(url: string, params?: RequestParams): string {
 
 function createHeaders(options: RequestOptions, body?: unknown): Headers {
   const headers = new Headers(options.headers);
-  if (body !== undefined && !headers.has("Content-Type")) {
+  if (body !== undefined && !(body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -217,7 +217,7 @@ async function sendRequest(
       ...fetchOptions,
       method,
       headers: createHeaders(options, body),
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body instanceof FormData ? body : body === undefined ? undefined : JSON.stringify(body),
     });
   } catch (error) {
     throw new ApiError(getErrorMessage(ApiErrorCode.NETWORK_ERROR), {

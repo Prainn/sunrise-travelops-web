@@ -61,10 +61,10 @@
             :label="$t('inquiry.originalMessage')"
             prop="originalMessage"
           >
-            <el-input
-              v-model.trim="form.originalMessage"
-              type="textarea"
-              :rows="3"
+            <InquiryMessageInput
+              v-if="modelValue"
+              v-model="form.originalMessage"
+              @parsing="isParsingDocument = $event"
             />
           </el-form-item>
         </el-col>
@@ -175,6 +175,7 @@
       <el-button
         type="primary"
         :loading="creatingContact"
+        :disabled="isParsingDocument"
         @click="submitForm"
       >
         {{ $t("common.confirm") }}
@@ -192,6 +193,7 @@ import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { InquiryRecord } from "@/types/inquiry";
 import type { AgencyContactRecord, AgencyRecord } from "@/types/resource";
+import InquiryMessageInput from "./InquiryMessageInput.vue";
 import InquiryAgencyFields from "./InquiryAgencyFields.vue";
 import { INQUIRY_STATUS_OPTIONS } from "../options";
 
@@ -212,6 +214,7 @@ const { t } = useI18n();
 const formRef = ref<FormInstance>();
 const expandedDetails = ref<string[]>([]);
 const creatingContact = ref(false);
+const isParsingDocument = ref(false);
 const form = reactive<InquiryRecord>({ ...props.record });
 const selectedAgency = computed(() => props.agencyOptions.find((agency) => agency.id === form.agencyId));
 const editableStatusOptions = computed(() => {
@@ -289,7 +292,7 @@ function createContact(name: string) {
 }
 
 async function submitForm() {
-  if (creatingContact.value) return;
+  if (creatingContact.value || isParsingDocument.value) return;
   if (!(await formRef.value?.validate().catch(() => false)) || creatingContact.value) return;
   if (!form.contactId) {
     const agency = selectedAgency.value;

@@ -242,3 +242,17 @@ describe("request", () => {
     expect(isApiError(error)).toBe(true);
   });
 });
+
+it("uploads FormData with authentication and lets the browser set its boundary", async () => {
+  vi.stubGlobal("fetch", fetchMock);
+  fetchMock.mockReset();
+  authStorageMock.getAccessToken.mockReturnValue("upload-token");
+  fetchMock.mockResolvedValueOnce(jsonResponse(success({ text: "Hello\nWorld" })));
+  const body = new FormData();
+  body.append("file", new Blob(["document"]), "message.docx");
+  await expect(request.post("/inquiries/parse-document", body)).resolves.toEqual({ text: "Hello\nWorld" });
+  const options = fetchMock.mock.calls.at(-1)?.[1];
+  expect(options?.body).toBe(body);
+  expect(new Headers(options?.headers).has("Content-Type")).toBe(false);
+  expect(new Headers(options?.headers).get("Authorization")).toBe("Bearer upload-token");
+});
