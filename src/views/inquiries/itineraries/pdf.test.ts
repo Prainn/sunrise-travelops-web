@@ -113,7 +113,7 @@ it('shows group extra expenses separately without a group tour total', () => {
   p.quote = { ...createDefaultQuoteSettings(), otherExpenses: 500, options: [{ ...createDefaultQuoteOption('international_five_star', 'standard'), adultUnitPrice: 1000 }] };
   const html = buildPdfHtml(p, inquiries[0], 'now');
   expect(html).not.toContain('60,000.00'); expect(html).not.toContain('60,500.00');
-  expect(html).toContain('司陪费及其他支出（另付）'); expect(html).toContain('500.00（整团）');
+  expect(html).toContain('司陪费及其他支出'); expect(html).toContain('500.00（整团）');
   expect(html).not.toContain('领队住宿成本');
 });
 
@@ -122,8 +122,8 @@ it.each([null, 0])("hides optional charges when their amount is %s", (amount) =>
   plan.quote = { ...createDefaultQuoteSettings(), chineseTip: amount, englishTip: amount, otherExpenses: amount,
     options: [{ ...createDefaultQuoteOption("international_five_star", "standard"), adultUnitPrice: 1000 }] };
   const html = buildPdfHtml(plan, inquiries[0], "now");
-  expect(html).not.toContain("中文小费（另付）");
-  expect(html).not.toContain("英文小费（另付）");
-  expect(html).not.toContain("司陪费及其他支出（另付）");
+  expect(html).not.toContain("中文小费");
+  expect(html).not.toContain("英文小费");
+  expect(html).not.toContain("司陪费及其他支出");
   expect(createDefaultQuoteSettings().otherExpenses).toBeNull();
 });

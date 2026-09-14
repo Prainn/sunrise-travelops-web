@@ -141,18 +141,18 @@
             :label="$t(`itinerary.${field}`)"
           >
             <el-input-number
-              :model-value="quote[field] == null ? undefined : roundMoney(quote[field] / duration.days)"
+              :model-value="quote[field] ?? undefined"
               :min="0"
               :precision="2"
               :placeholder="$t('itinerary.noExtraQuote')"
               controls-position="right"
-              @update:model-value="emit('update-settings', { [field]: $event == null ? null : multiplyMoney($event, duration.days) })"
+              @update:model-value="emit('update-settings', { [field]: $event ?? null })"
             />
             <div
               v-if="(quote[field] ?? 0) > 0"
               class="w-full mt-[8px] text-[var(--el-text-color-regular)]"
             >
-              {{ $t('itinerary.tipTotal', { people: guestCount, days: duration.days, perPerson: formatMoney(quote[field] ?? 0), total: formatMoney(multiplyMoney(quote[field] ?? 0, guestCount)) }) }}
+              {{ $t('itinerary.tipTotal', { people: guestCount, perPerson: formatMoney(quote[field] ?? 0), total: formatMoney(multiplyMoney(quote[field] ?? 0, guestCount)) }) }}
             </div>
           </el-form-item>
         </div>
@@ -261,7 +261,7 @@
 import CitySelect from "@/components/CitySelect.vue";
 import { computed } from "vue";
 import type { ItineraryQuoteCalculation, ItineraryQuoteOption, ItineraryQuoteSettings, ItineraryTransportFee } from "@/types/itinerary";
-import { createId, formatMoney, multiplyMoney, roundMoney } from "@/utils";
+import { createId, formatMoney, multiplyMoney } from "@/utils";
 
 const props = defineProps<{
   quote: ItineraryQuoteSettings;

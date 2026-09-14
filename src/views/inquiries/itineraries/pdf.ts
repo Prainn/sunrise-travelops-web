@@ -172,7 +172,7 @@ function buildQuoteTable(
         ${buildExtraFeeRows(itinerary, options.length)}
         ${buildQuoteRow("单房差", options, ({ calculation }) => `RMB ${formatMoney(calculation.singleSupplementUnitCost)}`)}
         ${buildTipRows(itinerary, options.length)}
-        ${(itinerary.quote.otherExpenses ?? 0) > 0 ? `<tr><th style="${quoteLabelStyle()}">司陪费及其他支出（另付）</th><td colspan="${options.length}" style="${quoteCellStyle()}">RMB ${formatMoney(itinerary.quote.otherExpenses ?? 0)}（整团）</td></tr>` : ""}
+        ${(itinerary.quote.otherExpenses ?? 0) > 0 ? `<tr><th style="${quoteLabelStyle()}">司陪费及其他支出</th><td colspan="${options.length}" style="${quoteCellStyle()}">RMB ${formatMoney(itinerary.quote.otherExpenses ?? 0)}（整团）</td></tr>` : ""}
       </tbody>
     </table>`;
 }
@@ -273,7 +273,7 @@ export function getDailyMealCodes(day: ItineraryDayRecord, breakfastStatus: "inc
 function buildExtraFeeRows(itinerary: ItineraryRecord, columnCount: number) {
   const cabins = { economy: "经济舱", business: "商务舱", first: "一等座", second: "二等座" };
   const rows: Array<[string, string]> = itinerary.quote.transportFees.map((fee) => [
-    fee.type === "flight" ? "机票（另付）" : "动车票（另付）",
+    fee.type === "flight" ? "机票" : "动车票",
     `${fee.departureCity} → ${fee.arrivalCity} · ${cabins[fee.cabin]} · RMB ${formatMoney(fee.unitPrice ?? 0)} PP`,
   ]);
   return rows.map(([label, value]) => `<tr><th style="${quoteLabelStyle()}">${escapeHtml(label)}</th><td colspan="${columnCount}" style="${quoteCellStyle()}">${escapeHtml(value)}</td></tr>`).join("");
