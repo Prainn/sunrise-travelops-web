@@ -37,6 +37,7 @@
       </TableToolbar>
       <div class="page-table-wrapper">
         <el-table
+          v-loading="loading"
           :data="rows"
           border
           height="100%"
@@ -47,7 +48,16 @@
             :prop="column.prop"
             :label="$t(column.labelKey)"
             :min-width="column.minWidth ?? 120"
-          />
+          >
+            <template #default="{ row }">
+              <slot
+                :name="`column-${column.prop}`"
+                :row="row"
+              >
+                {{ row[column.prop] }}
+              </slot>
+            </template>
+          </el-table-column>
           <el-table-column
             :label="$t('common.status')"
             width="100"
@@ -115,6 +125,7 @@ import type { ResourceListQuery } from "@/types/resource";
 import type { ResourceColumn, ResourceRow } from "../types";
 
 const props = defineProps<{
+  loading?: boolean;
   rows: ResourceRow[];
   total: number;
   columns: ResourceColumn[];

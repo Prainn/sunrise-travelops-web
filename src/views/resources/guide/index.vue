@@ -1,6 +1,7 @@
 <template>
   <div class="resource-page">
     <GuideTable
+      :loading="isLoading"
       :total="total"
       :rows="guideStore"
       @refresh="loadRecords"
@@ -30,6 +31,7 @@ defineOptions({ name: "Guide" });
 function createEmptyGuide(): GuideRecord { return { id: "", code: "", name: "", secondLanguage: "none", shopping: false, dailyPrice: 0, status: "enabled" }; }
 
 const {
+  isLoading,
   rows: guideStore,
   record: guideForm,
   isDialogVisible,

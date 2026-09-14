@@ -1,6 +1,7 @@
 <template>
   <div class="resource-page">
     <ResourceTable
+      :loading="isLoading"
       :total="total"
       :rows="rows"
       :columns="columns"
@@ -39,7 +40,7 @@ const maintenance = useResourceMaintenance<CityRecord>({
   records: resourceService.cities, api: resourceService.cityApi, loadRecords: (query) => resourceService.loadCities(query),
   createEmpty: () => ({ id: "", code: "", name: "", province: "", status: "enabled" }),
 });
-const { rows, total, record, isDialogVisible, isEditing, loadRecords, openCreateDialog } = maintenance;
+const { isLoading, rows, total, record, isDialogVisible, isEditing, loadRecords, openCreateDialog } = maintenance;
 const fields = computed<ResourceFormField[]>(() => [
   { prop: "name", labelKey: "resource.city", required: true, disabled: isEditing.value },
   { prop: "province", labelKey: "city.province" },

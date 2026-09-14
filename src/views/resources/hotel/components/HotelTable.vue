@@ -15,6 +15,7 @@
 
     <div class="page-table-wrapper">
       <el-table
+        v-loading="loading"
         :data="rows"
         border
         height="100%"
@@ -41,7 +42,11 @@
           width="130"
         >
           <template #default="scope">
-            {{ $t(`hotel.ratings.${scope.row.rating}`) }}
+            <el-tag
+              :type="scope.row.rating === 'international_five_star' ? 'success' : 'info'"
+            >
+              {{ $t(`hotel.ratings.${scope.row.rating}`) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column
@@ -145,6 +150,7 @@ import type { HotelRecord } from "@/types/resource";
 import { getResourceUnitName } from "@/utils/resource-unit";
 
 defineProps<{
+  loading?: boolean;
   rows: HotelRecord[];
   total: number;
 }>();

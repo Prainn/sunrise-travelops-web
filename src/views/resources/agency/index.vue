@@ -2,6 +2,7 @@
   <div class="page-container agency-page">
     <AgencySidebar
       v-model:selected-id="selectedAgencyId"
+      :loading="isLoading"
       :rows="rows"
       :permissions="RESOURCE_PERMISSIONS.agency"
       @create="openCreateDialog"
@@ -11,6 +12,7 @@
       @query-change="loadRecords"
     />
     <AgencyContactsPanel
+      :loading="isLoading || loadingContactAgencyIds.has(selectedAgencyId)"
       :agency="selectedAgency"
       :permissions="RESOURCE_PERMISSIONS.agency"
       @create="openCreateContactDialog"
@@ -49,7 +51,7 @@ defineOptions({ name: "Agency" });
 
 const { t } = useI18n();
 const loadedContactAgencyIds = new Set<string>();
-const loadingContactAgencyIds = new Set<string>();
+const loadingContactAgencyIds = reactive(new Set<string>());
 
 function createEmptyAgencyRecord(): AgencyRecord {
   return {
@@ -59,6 +61,7 @@ function createEmptyAgencyRecord(): AgencyRecord {
 }
 
 const {
+  isLoading,
   rows,
   record,
   isDialogVisible,

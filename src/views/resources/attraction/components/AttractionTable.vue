@@ -22,6 +22,7 @@
       </TableToolbar>
       <div class="page-table-wrapper">
         <el-table
+          v-loading="loading"
           :data="rows"
           border
           height="100%"
@@ -46,6 +47,7 @@
                   </el-button>
                 </div>
                 <el-table
+                  v-loading="loadingPriceIds?.has(scope.row.id) === true"
                   :data="scope.row.prices"
                   border
                   size="small"
@@ -246,7 +248,9 @@ import TableToolbar from "@/components/TableToolbar/index.vue";
 import AttractionSearchForm from "./AttractionSearchForm.vue";
 import { attractionCategoryLabelKeys, attractionItemTypeLabelKeys } from "../options";
 
-defineProps<{ rows: AttractionRecord[]; total: number }>();
+defineProps<{
+  loadingPriceIds?: Set<string>;
+  loading?: boolean; rows: AttractionRecord[]; total: number }>();
 const emit = defineEmits<{
   refresh: [query: ResourceListQuery];
   "query-change": [query: ResourceListQuery];

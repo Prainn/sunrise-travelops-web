@@ -1,6 +1,8 @@
 <template>
   <div class="resource-page">
     <AttractionTable
+      :loading-price-ids="loadingAttractionPriceIds"
+      :loading="isLoading"
       :total="total"
       :rows="attractionStore"
       @refresh="loadRecords"
@@ -48,7 +50,7 @@ const editingPriceId = ref("");
 const selectedAttraction = ref<AttractionRecord>();
 const priceForm = ref<AttractionPriceRecord>(createEmptyPrice());
 const loadedAttractionPriceIds = new Set<string>();
-const loadingAttractionPriceIds = new Set<string>();
+const loadingAttractionPriceIds = reactive(new Set<string>());
 
 function createEmptyAttraction(): AttractionRecord {
   return { id: "", code: "", name: "", area: "", category: "scenic", restroomLocation: "", remark: "", unit: "personVisit", status: "enabled", prices: [] };
@@ -57,6 +59,7 @@ function createEmptyPrice(): AttractionPriceRecord {
   return { id: "", itemType: "ticket", itemName: "景区门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 0, settlementPrice: 0, unit: "personVisit", isFree: false, priceNote: "", };
 }
 const {
+  isLoading,
   rows: attractionStore,
   record: attractionForm,
   isDialogVisible: isAttractionDialogVisible,

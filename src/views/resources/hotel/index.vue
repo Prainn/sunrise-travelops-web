@@ -56,6 +56,7 @@
     <HotelTable
       v-model:page="pageNum"
       v-model:limit="pageSize"
+      :loading="isLoading"
       :total="total"
       :rows="hotelStore"
       @pagination="refreshHotels"
@@ -245,13 +246,18 @@ function currentQuery(): ResourceListQuery {
   };
 }
 
+const isLoading = ref(false);
+
 async function loadHotels(query?: ResourceListQuery) {
+  isLoading.value = true;
   try {
     const records = await resourceService.loadHotels(query ?? currentQuery());
     hotelStore.splice(0, hotelStore.length, ...records);
     total.value = resourceService.getTotal(resourceService.hotels);
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : String(error));
+  } finally {
+    isLoading.value = false;
   }
 }
 

@@ -32,16 +32,20 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
   const record = ref<T>(options.createEmpty()) as Ref<T>;
   const isEditing = computed(() => Boolean(editingId.value));
   const total = ref(0);
+  const isLoading = ref(false);
   let activeQuery: ResourceListQuery | undefined = options.paginated === false ? undefined : { page: 1, pageSize: RESOURCE_PAGE_SIZE };
 
   async function loadRecords(query?: ResourceListQuery) {
     if (query !== undefined) activeQuery = { ...activeQuery, ...query };
+    isLoading.value = true;
     try {
       const loaded = await options.loadRecords(activeQuery);
       if (options.paginated !== false) rows.splice(0, rows.length, ...loaded);
       total.value = resourceService.getTotal(options.records);
     } catch (error) {
       ElMessage.error(error instanceof Error ? error.message : String(error));
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -124,7 +128,7 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
   onMounted(loadRecords);
 
   return {
-    rows, total, record, isDialogVisible, isEditing,
+    rows, total, isLoading, record, isDialogVisible, isEditing,
     loadRecords, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord,
   };
 }

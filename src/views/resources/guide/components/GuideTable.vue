@@ -49,6 +49,7 @@
       </TableToolbar>
       <div class="page-table-wrapper">
         <el-table
+          v-loading="loading"
           :data="rows"
           border
           height="100%"
@@ -113,7 +114,8 @@ import { GUIDE_LANGUAGE_OPTIONS, type GuideRecord, type ResourceListQuery } from
 import { RESOURCE_PERMISSIONS } from '@/constants';
 import { formatMoney } from '@/utils';
 import TableToolbar from '@/components/TableToolbar/index.vue';
-defineProps<{ rows: GuideRecord[]; total: number }>();
+defineProps<{
+  loading?: boolean; rows: GuideRecord[]; total: number }>();
 const emit = defineEmits<{ refresh: [ResourceListQuery]; 'query-change': [ResourceListQuery]; create: []; edit: [GuideRecord]; delete: [GuideRecord] }>();
 const secondLanguage = ref(''); const shopping = ref('');
 const { pageNum, pageSize, paginationQuery } = useResourcePagination();

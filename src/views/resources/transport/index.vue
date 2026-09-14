@@ -1,6 +1,7 @@
 <template>
   <div class="resource-page">
     <ResourceTable
+      :loading="isLoading"
       :total="total"
       :rows="tableRows"
       :columns="columns"
@@ -14,6 +15,11 @@
       @toggle-status="toggleTransportStatus"
       @delete="deleteTransport"
     >
+      <template #column-serviceLevelLabel="{ row }">
+        <el-tag :type="row.serviceLevel === 'vip' ? 'success' : 'info'">
+          {{ row.serviceLevelLabel }}
+        </el-tag>
+      </template>
       <template #filters>
         <el-form-item :label="$t('resource.vehicleServiceLevel')">
           <el-select
@@ -122,7 +128,7 @@ const fields = computed<ResourceFormField[]>(() => [
     "type": "textarea"
   }
 ]);
-const { rows, total, record, isDialogVisible, isEditing, loadRecords, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<TransportRecord>({
+const { isLoading, rows, total, record, isDialogVisible, isEditing, loadRecords, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<TransportRecord>({
   records: resourceService.transports,
   api: resourceService.transportApi,
   loadRecords: (query) => resourceService.loadTransports(query),

@@ -1,6 +1,8 @@
 <template>
   <div class="resource-page">
     <RestaurantTable
+      :loading-price-ids="loadingRestaurantPriceIds"
+      :loading="isLoading"
       :total="total"
       :rows="restaurantStore"
       @refresh="loadRecords"
@@ -48,7 +50,7 @@ const editingPriceId = ref("");
 const selectedRestaurant = ref<RestaurantRecord>();
 const priceForm = ref<RestaurantPriceRecord>(createEmptyPrice());
 const loadedRestaurantPriceIds = new Set<string>();
-const loadingRestaurantPriceIds = new Set<string>();
+const loadingRestaurantPriceIds = reactive(new Set<string>());
 
 function createEmptyRestaurant(): RestaurantRecord {
   return {
@@ -65,6 +67,7 @@ function createEmptyPrice(): RestaurantPriceRecord {
 }
 
 const {
+  isLoading,
   rows: restaurantStore,
   record: restaurantForm,
   isDialogVisible: isRestaurantDialogVisible,

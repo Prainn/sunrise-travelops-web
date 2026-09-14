@@ -26,6 +26,7 @@
 
     <el-table
       v-if="agency"
+      v-loading="loading"
       :data="agency.contacts"
       border
       height="100%"
@@ -87,6 +88,7 @@ import type { ResourcePermissionSet } from "@/constants";
 import type { AgencyContactRecord, AgencyRecord } from "@/types/resource";
 
 defineProps<{
+  loading?: boolean;
   agency?: AgencyRecord;
   permissions: ResourcePermissionSet;
 }>();

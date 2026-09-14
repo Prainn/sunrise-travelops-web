@@ -1,5 +1,6 @@
 <template>
   <el-card
+    v-loading="loading"
     class="agency-sidebar"
     shadow="never"
   >
@@ -90,6 +91,7 @@ import type { ResourcePermissionSet } from "@/constants";
 import type { AgencyRecord, ResourceListQuery } from "@/types/resource";
 
 defineProps<{
+  loading?: boolean;
   rows: AgencyRecord[];
   selectedId: string;
   permissions: ResourcePermissionSet;
