@@ -74,24 +74,9 @@
       </div>
     </section>
 
-    <el-alert
-      v-if="securityLoadFailed"
-      type="error"
-      :closable="false"
-      :title="$t('profile.securityLoadFailed')"
-    >
-      <el-button
-        link
-        type="primary"
-        @click="loadSecurity"
-      >
-        {{ $t("profile.retry") }}
-      </el-button>
-    </el-alert>
-
     <div
       v-loading="isSecurityLoading"
-      class="profile-page__layout grid [grid-template-columns:minmax(280px,_340px)_minmax(0,_1fr)] gap-[16px] [align-items:start]"
+      class="profile-page__layout grid [grid-template-columns:minmax(280px,_340px)_minmax(0,_1fr)] gap-[16px] [align-items:stretch]"
     >
       <aside class="profile-page__side">
         <section class="profile-card p-[18px_20px]">
@@ -125,57 +110,6 @@
               </dd>
             </div>
           </dl>
-        </section>
-
-        <section class="profile-card p-[18px_20px]">
-          <header class="profile-card__header flex gap-[12px] items-start justify-between mb-[14px]">
-            <h3 class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]">
-              {{ $t("profile.rolesAndPermissions") }}
-            </h3>
-            <span
-              v-if="!securityLoadFailed && !isSecurityLoading"
-              class="profile-card__extra"
-            >
-              {{ $t("profile.permissionCount", { count: permissionCount }) }}
-            </span>
-          </header>
-
-          <div
-            v-if="!securityLoadFailed && !isSecurityLoading"
-            class="profile-tags flex flex-wrap gap-[8px]"
-          >
-            <el-tag
-              v-for="role in roleList"
-              :key="role.code"
-              class="m-0"
-              size="small"
-              effect="light"
-            >
-              {{ role.name }}
-            </el-tag>
-            <span
-              v-if="!roleList.length"
-              class="profile-empty"
-            >{{ $t("profile.noRoles") }}</span>
-          </div>
-          <div
-            v-if="!securityLoadFailed && !isSecurityLoading"
-            class="grid gap-[8px] mt-[16px]"
-          >
-            <el-empty
-              v-if="!security.permissions.length"
-              :description="$t('profile.noPermissions')"
-              :image-size="48"
-            />
-            <div
-              v-for="permission in security.permissions"
-              :key="permission.code"
-              class="text-[13px] break-words"
-            >
-              <div>{{ permission.name }}</div>
-              <code class="text-[var(--el-text-color-secondary)]">{{ permission.code }}</code>
-            </div>
-          </div>
         </section>
       </aside>
 
@@ -220,6 +154,69 @@
       </main>
     </div>
 
+    <section class="profile-card p-[18px_20px]">
+      <header class="profile-card__header flex gap-[12px] items-start justify-between mb-[14px]">
+        <h3 class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]">
+          {{ $t("profile.rolesAndPermissions") }}
+        </h3>
+        <span
+          v-if="!securityLoadFailed && !isSecurityLoading"
+          class="profile-card__extra"
+        >
+          {{ $t("profile.permissionCount", { count: permissionCount }) }}
+        </span>
+      </header>
+
+      <div
+        v-if="!securityLoadFailed && !isSecurityLoading"
+        class="profile-tags flex flex-wrap gap-[8px]"
+      >
+        <el-tag
+          v-for="role in roleList"
+          :key="role.code"
+          class="m-0"
+          size="small"
+          effect="light"
+        >
+          {{ role.name }}
+        </el-tag>
+        <span
+          v-if="!roleList.length"
+          class="profile-empty"
+        >{{ $t("profile.noRoles") }}</span>
+      </div>
+      <div
+        v-if="!securityLoadFailed && !isSecurityLoading"
+        class="grid gap-[8px] mt-[16px]"
+      >
+        <el-table
+          :data="pagedPermissions"
+          row-key="code"
+          :empty-text="$t('profile.noPermissions')"
+          border
+        >
+          <el-table-column
+            prop="name"
+            :label="$t('profile.permissionName')"
+            min-width="180"
+          />
+          <el-table-column
+            prop="code"
+            :label="$t('profile.permissionCode')"
+            min-width="240"
+          />
+        </el-table>
+        <el-pagination
+          v-if="permissionCount > 10"
+          v-model:current-page="permissionPage"
+          :page-size="10"
+          :total="permissionCount"
+          layout="total, prev, pager, next"
+          class="mt-[16px] justify-end"
+        />
+      </div>
+    </section>
+
     <el-dialog
       v-model="dialogState.visible"
       :title="t(dialogState.titleKey)"
@@ -256,7 +253,7 @@
         ref="passwordChangeFormRef"
         :model="passwordChangeForm"
         :rules="passwordChangeRules"
-        label-width="88px"
+        label-width="108px"
         class="pr-10px"
       >
         <el-form-item
@@ -296,6 +293,7 @@
           <el-button @click="handleCancel">{{ $t("common.cancel") }}</el-button>
           <el-button
             type="primary"
+            :loading="isSubmitting"
             @click="handleSubmit"
           >{{ $t("common.confirm") }}</el-button>
         </span>
@@ -363,6 +361,7 @@ const userProfileFormRef = ref();
 const passwordChangeFormRef = ref();
 
 const userProfileForm = reactive<UserProfileForm>({});
+const isSubmitting = ref(false);
 const passwordChangeForm = reactive<PasswordChangeForm>({});
 
 const security = ref<ProfileSecurity>({ roles: [], permissions: [], recentLogins: [] });
@@ -375,6 +374,7 @@ async function loadSecurity() {
   securityLoadFailed.value = false;
   try {
     security.value = await userService.getProfileSecurity();
+    permissionPage.value = 1;
   } catch {
     securityLoadFailed.value = true;
   } finally {
@@ -388,7 +388,7 @@ const userProfileRules = computed(() => ({
 
 const passwordChangeRules = computed(() => ({
   oldPassword: [{ required: true, message: t("profile.oldPasswordPlaceholder"), trigger: "blur" }],
-  newPassword: [{ required: true, message: t("user.newPasswordPlaceholder"), trigger: "blur" }],
+  newPassword: [{ required: true, message: t("user.newPasswordPlaceholder"), trigger: "blur" }, { min: 6, max: 128, message: t("profile.passwordLength"), trigger: "blur" }],
   confirmPassword: [
     { required: true, message: t("profile.confirmPasswordPlaceholder"), trigger: "blur" },
     {
@@ -418,6 +418,8 @@ const displayName = computed(() => {
 
 const roleList = computed(() => security.value.roles);
 const primaryRole = computed(() => roleList.value[0]?.name || "-");
+const permissionPage = ref(1);
+const pagedPermissions = computed(() => security.value.permissions.slice((permissionPage.value - 1) * 10, permissionPage.value * 10));
 const permissionCount = computed(() => security.value.permissions.length);
 
 const genderText = computed(() => {
@@ -469,27 +471,38 @@ const handleOpenDialog = (type: DialogType) => {
       userProfileForm.gender = userProfile.value.gender;
       break;
     case DialogType.PASSWORD:
+      passwordChangeForm.oldPassword = "";
+      passwordChangeForm.newPassword = "";
+      passwordChangeForm.confirmPassword = "";
       dialogState.titleKey = "profile.changePassword";
       break;
   }
 };
 
 const handleSubmit = async () => {
-  if (dialogState.type === DialogType.ACCOUNT) {
-    if (!(await userProfileFormRef.value?.validate())) return;
-    await userService.updateProfile(userProfileForm);
-    ElMessage.success(t("profile.updateSuccess"));
-    if (userProfileForm.nickname) userStore.userInfo.nickname = userProfileForm.nickname;
-  } else if (dialogState.type === DialogType.PASSWORD) {
-    if (!(await passwordChangeFormRef.value?.validate())) return;
-    await userService.changePassword(passwordChangeForm);
-    dialogState.visible = false;
-    await redirectToLogin(t("profile.passwordChangedRelogin"));
-    return;
-  }
+  if (isSubmitting.value) return;
+  isSubmitting.value = true;
+  try {
+    if (dialogState.type === DialogType.ACCOUNT) {
+      if (!(await userProfileFormRef.value?.validate().catch(() => false))) return;
+      await userService.updateProfile(userProfileForm);
+      ElMessage.success(t("profile.updateSuccess"));
+      if (userProfileForm.nickname) userStore.userInfo.nickname = userProfileForm.nickname;
+    } else if (dialogState.type === DialogType.PASSWORD) {
+      if (!(await passwordChangeFormRef.value?.validate().catch(() => false))) return;
+      await userService.changePassword(passwordChangeForm);
+      dialogState.visible = false;
+      await redirectToLogin(t("profile.passwordChangedRelogin"));
+      return;
+    }
 
-  dialogState.visible = false;
-  await loadUserProfile();
+    dialogState.visible = false;
+    await loadUserProfile();
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("apiErrors.REQUEST_FAILED"));
+  } finally {
+    isSubmitting.value = false;
+  }
 };
 
 const handleCancel = () => {
@@ -521,8 +534,11 @@ const handleFileChange = async (event: Event) => {
 };
 
 const loadUserProfile = async () => {
-  const data = await userService.getProfile();
-  userProfile.value = data;
+  try {
+    userProfile.value = await userService.getProfile();
+  } catch {
+    userProfile.value = {};
+  }
 };
 
 onMounted(loadUserProfile);

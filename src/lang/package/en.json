@@ -559,6 +559,7 @@
     "oldPassword": "Old Password",
     "oldPasswordPlaceholder": "Enter the old password",
     "passwordChangedRelogin": "Password changed. Please sign in again.",
+    "passwordLength": "Password must be 6–128 characters",
     "passwordMismatch": "The passwords do not match",
     "permissionCount": "{count} permissions",
     "personalInfo": "Personal Information",
@@ -570,10 +571,10 @@
     "unnamedUser": "Unnamed User",
     "updateSuccess": "Profile updated",
     "noLogins": "No successful login records",
+    "permissionName": "Permission name",
+    "permissionCode": "Permission code",
     "noPermissions": "No effective permissions",
-    "unknownClient": "Unknown client",
-    "securityLoadFailed": "Failed to load roles, permissions and recent logins",
-    "retry": "Retry"
+    "unknownClient": "Unknown client"
   },
   "dictionary": {
     "code": "Category Code",
@@ -829,6 +830,7 @@
   "apiErrors": {
     "VALIDATION_ERROR": "Some information is invalid. Check it and try again",
     "BAD_REQUEST": "The request does not meet the required format",
+    "AUTH_PASSWORD_INCORRECT": "The current password is incorrect. Please try again.",
     "AUTH_INVALID_CREDENTIALS": "Incorrect username or password",
     "AUTH_TOKEN_INVALID": "Your sign-in session is invalid. Sign in again",
     "AUTH_TOKEN_EXPIRED": "Your session has expired. Sign in again",

@@ -1,5 +1,5 @@
 import type { OptionItem, PageResult } from "@/types/common";
-import { departmentDefinitions, users } from "@/data/data";
+import { users } from "@/data/data";
 import { request } from "@/api/request";
 import { translate } from "@/lang/utils";
 import type {
@@ -50,11 +50,6 @@ function requireCurrentUser() {
 
 function rejectUnsupportedCredentialMutation(): never {
   throw new Error(translate("service.auth.credentialManagementUnavailable"));
-}
-
-function getDepartmentName(deptId: number): string {
-  const department = departmentDefinitions.find((item) => item.value === deptId);
-  return department ? translate(department.labelKey) : "";
 }
 
 function buildUserParams(query: UserQueryParams) {
@@ -186,19 +181,8 @@ export const userService = {
     return request.get<OptionItem[]>(`${USER_BASE_URL}/options/departments`);
   },
 
-  async getProfile(): Promise<UserProfileDetail> {
-    const user = requireCurrentUser();
-    return {
-      id: user.id,
-      username: user.username,
-      nickname: user.nicknameKey ? translate(user.nicknameKey) : user.nickname,
-      avatar: user.avatar,
-      gender: user.gender,
-      mobile: user.mobile,
-      email: user.email,
-      deptName: getDepartmentName(user.deptId),
-      createTime: user.createTime,
-    };
+  getProfile(): Promise<UserProfileDetail> {
+    return request.get<UserProfileDetail>("/auth/me/profile");
   },
 
   async updateProfile(data: UserProfileForm): Promise<void> {
@@ -211,8 +195,8 @@ export const userService = {
     if (data.gender !== undefined) user.gender = data.gender;
   },
 
-  async changePassword(_data: PasswordChangeForm): Promise<void> {
-    rejectUnsupportedCredentialMutation();
+  async changePassword(data: PasswordChangeForm): Promise<void> {
+    await request.post<void>("/auth/me/password", { oldPassword: data.oldPassword, newPassword: data.newPassword });
   },
 
   async sendMobileCode(_mobile: string): Promise<void> {},
