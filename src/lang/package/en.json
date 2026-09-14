@@ -501,15 +501,6 @@
     "logoutConfirm": "Log out of the current account?",
     "profile": "Profile"
   },
-  "sizeSelect": {
-    "default": "Default",
-    "large": "Large",
-    "message": {
-      "success": "Interface size changed"
-    },
-    "small": "Small",
-    "tooltip": "Interface size"
-  },
   "langSelect": {
     "message": {
       "success": "Language changed"
@@ -518,67 +509,6 @@
   "language": {
     "chinese": "中文",
     "english": "English"
-  },
-  "settings": {
-    "assist": "Accessibility",
-    "classicBlue": "Classic Blue",
-    "colorWeak": "Color Weakness",
-    "confirmReset": "Reset all settings to their defaults?",
-    "copyConfig": "Copy Config",
-    "copyFailed": "Failed to copy configuration",
-    "copySuccess": "Configuration copied",
-    "copying": "Copying configuration...",
-    "customColors": "Custom Colors",
-    "customPalette": "Custom",
-    "doubleLayout": "Double-column",
-    "fade": "Fade",
-    "fade-scale": "Fade and Scale",
-    "fade-slide": "Fade and Slide",
-    "grayMode": "Grayscale",
-    "interface": "Interface",
-    "leftLayout": "Left Sidebar",
-    "minimalWhite": "Minimal White",
-    "mixLayout": "Mixed",
-    "navigation": "Navigation",
-    "none": "None",
-    "pageSwitchingAnimation": "Page Transition",
-    "project": "Project Settings",
-    "resetConfig": "Reset Defaults",
-    "resetSuccess": "Default configuration restored",
-    "resetting": "Restoring defaults...",
-    "showAppLogo": "Show Logo",
-    "showTagsView": "Show Tabs",
-    "showWatermark": "Show Watermark",
-    "sidebarColorScheme": "Sidebar Colors",
-    "tagsViewStyle": "Tab Style",
-    "tagsViewStyles": {
-      "card": "Card",
-      "line": "Line"
-    },
-    "theme": "Theme",
-    "themeColorNames": {
-      "danger": "Danger",
-      "info": "Info",
-      "primary": "Primary",
-      "success": "Success",
-      "warning": "Warning"
-    },
-    "themePalette": "Color Palette",
-    "themePalettes": {
-      "antDesign": {
-        "description": "Stable colors for business systems",
-        "name": "AntD"
-      },
-      "arco": {
-        "description": "Clear blue-orange contrast",
-        "name": "ArcoD"
-      },
-      "elementPlus": {
-        "description": "Close to the component defaults",
-        "name": "ElementD"
-      }
-    },
-    "topLayout": "Top Navigation"
   },
   "tags": {
     "actions": "Tab actions",
@@ -597,14 +527,6 @@
     "searchMenu": "Search menus"
   },
   "dashboard": {
-    "activities": {
-      "adminLogin": "Administrator signed in",
-      "backupCompleted": "System backup completed",
-      "certificateRenewed": "Security certificate renewed",
-      "loginPolicyUpdated": "Login policy updated",
-      "permissionsUpdated": "User permissions updated",
-      "userCreated": "New user created"
-    },
     "documentation": "Documentation",
     "greeting": {
       "afternoon": "Good afternoon",
@@ -613,39 +535,10 @@
       "late": "Working late",
       "morning": "Good morning"
     },
-    "itemCount": "{count} items",
     "lastDays": "Last {days} days",
-    "pendingCount": "{count} pending",
-    "summary": {
-      "completedToday": "Completed Today",
-      "createdToday": "Created Today",
-      "dueSoon": "Due Soon"
-    },
-    "systemActivity": "System Activity",
     "systemUsers": "System Users",
-    "time": {
-      "hoursAgo": "{count} hours ago",
-      "minutesAgo": "{count} minutes ago",
-      "yesterdayAt": "Yesterday at {time}"
-    },
     "todayViews": "Views Today",
     "todayVisitors": "Visitors Today",
-    "todoItems": "To-do Items",
-    "todoOverview": "To-do Overview",
-    "todoTypes": {
-      "approval": "Approval",
-      "configuration": "Configuration",
-      "notice": "Notice",
-      "review": "Review",
-      "ticket": "Ticket"
-    },
-    "todos": {
-      "leaveRequest": "Process leave request",
-      "processTicket": "Follow up customer ticket",
-      "publishNotice": "Publish system notice",
-      "updatePermissions": "Update role permissions",
-      "verifyUser": "Review new user profile"
-    },
     "video": "Video Guide",
     "views": "Views",
     "visitTrend": "Visit Trend",
@@ -657,16 +550,10 @@
     "changePassword": "Change Password",
     "confirmPassword": "Confirm New Password",
     "confirmPasswordPlaceholder": "Enter the new password again",
-    "defaultRole": "User",
     "department": "Department",
     "editProfile": "Edit Profile",
     "joinedAt": "Joined: {date}",
     "lastLogin": "Last login: {date}",
-    "locations": {
-      "hangzhou": "Hangzhou, Zhejiang",
-      "shanghai": "Shanghai",
-      "shenzhen": "Shenzhen, Guangdong"
-    },
     "nicknamePlaceholder": "Enter a nickname",
     "noRoles": "No roles",
     "oldPassword": "Old Password",
@@ -681,7 +568,12 @@
     "unassignedDepartment": "No department",
     "unbound": "Unbound",
     "unnamedUser": "Unnamed User",
-    "updateSuccess": "Profile updated"
+    "updateSuccess": "Profile updated",
+    "noLogins": "No successful login records",
+    "noPermissions": "No effective permissions",
+    "unknownClient": "Unknown client",
+    "securityLoadFailed": "Failed to load roles, permissions and recent logins",
+    "retry": "Retry"
   },
   "dictionary": {
     "code": "Category Code",

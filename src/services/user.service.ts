@@ -3,6 +3,7 @@ import { departmentDefinitions, users } from "@/data/data";
 import { request } from "@/api/request";
 import { translate } from "@/lang/utils";
 import type {
+  ProfileSecurity,
   EmailUpdateForm,
   MobileUpdateForm,
   PasswordChangeForm,
@@ -49,13 +50,6 @@ function requireCurrentUser() {
 
 function rejectUnsupportedCredentialMutation(): never {
   throw new Error(translate("service.auth.credentialManagementUnavailable"));
-}
-
-function getRoleNames(roles: string[]): string {
-  return roles
-    .map((role) => translate(ROLE_LABEL_KEYS[role] ?? role))
-    .filter(Boolean)
-    .join(",");
 }
 
 function getDepartmentName(deptId: number): string {
@@ -119,6 +113,10 @@ function localizeRoleOption(option: RoleOption): OptionItem {
 }
 
 export const userService = {
+  getProfileSecurity(): Promise<ProfileSecurity> {
+    return request.get<ProfileSecurity>("/auth/me/security");
+  },
+
   async getPage(query: UserQueryParams): Promise<PageResult<UserItem>> {
     const result = await request.get<PageResult<UserItem>>(USER_BASE_URL, {
       params: buildUserParams(query),
@@ -199,7 +197,6 @@ export const userService = {
       mobile: user.mobile,
       email: user.email,
       deptName: getDepartmentName(user.deptId),
-      roleNames: getRoleNames(user.roles),
       createTime: user.createTime,
     };
   },

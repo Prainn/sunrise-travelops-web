@@ -21,53 +21,13 @@ export type ThemeColorName = (typeof themeColorNames)[number];
 
 export type ThemeColorMap = Record<ThemeColorName, string>;
 
-export interface ThemePalettePreset {
-  id: string;
-  name: string;
-  description: string;
-  colors: ThemeColorMap;
-}
-
-export const themePalettePresets = [
-  {
-    id: "arco",
-    name: "ArcoD",
-    description: "High-contrast blue and orange palette",
-    colors: {
-      primary: "#165DFF",
-      success: "#00B42A",
-      warning: "#FF7D00",
-      danger: "#F53F3F",
-      info: "#86909C",
-    },
-  },
-  {
-    id: "ant-design",
-    name: "AntD",
-    description: "Stable palette for standard business systems",
-    colors: {
-      primary: "#1677FF",
-      success: "#52C41A",
-      warning: "#FAAD14",
-      danger: "#FF4D4F",
-      info: "#1677FF",
-    },
-  },
-  {
-    id: "element-plus",
-    name: "ElementD",
-    description: "Palette close to the component defaults",
-    colors: {
-      primary: "#409EFF",
-      success: "#67C23A",
-      warning: "#E6A23C",
-      danger: "#F56C6C",
-      info: "#909399",
-    },
-  },
-] as const satisfies readonly ThemePalettePreset[];
-
-export const defaultThemePalette = themePalettePresets[0];
+const defaultThemeColors: ThemeColorMap = {
+  primary: "#165DFF",
+  success: "#00B42A",
+  warning: "#FF7D00",
+  danger: "#F53F3F",
+  info: "#86909C",
+};
 
 export const appConfig = {
   name: pkg.name as string,
@@ -77,8 +37,7 @@ export const appConfig = {
 
 export const defaults = {
   theme: prefersDark ? ThemeMode.DARK : ThemeMode.LIGHT,
-  themePalette: defaultThemePalette.id,
-  themeColors: { ...defaultThemePalette.colors },
+  themeColors: { ...defaultThemeColors },
   sidebarColorScheme: SidebarColor.MINIMAL_WHITE,
   layout: LayoutMode.LEFT,
   size: ComponentSize.DEFAULT,
@@ -88,6 +47,5 @@ export const defaults = {
   showAppLogo: true,
   showWatermark: false,
   pageSwitchingAnimation: "fade-slide",
-  showSettings: true,
   watermarkContent: pkg.name,
 } as const;

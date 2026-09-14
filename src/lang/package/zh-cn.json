@@ -501,15 +501,6 @@
     "logoutConfirm": "确定退出当前账号吗？",
     "profile": "个人中心"
   },
-  "sizeSelect": {
-    "default": "默认",
-    "large": "大型",
-    "message": {
-      "success": "界面尺寸切换成功"
-    },
-    "small": "小型",
-    "tooltip": "界面尺寸"
-  },
   "langSelect": {
     "message": {
       "success": "语言切换成功"
@@ -518,67 +509,6 @@
   "language": {
     "chinese": "中文",
     "english": "English"
-  },
-  "settings": {
-    "assist": "辅助设置",
-    "classicBlue": "经典蓝",
-    "colorWeak": "色弱模式",
-    "confirmReset": "确定将所有设置恢复为默认值吗？",
-    "copyConfig": "复制配置",
-    "copyFailed": "复制配置失败",
-    "copySuccess": "配置已复制到剪贴板",
-    "copying": "正在复制配置...",
-    "customColors": "自定义颜色",
-    "customPalette": "自定义",
-    "doubleLayout": "双列模式",
-    "fade": "淡入淡出",
-    "fade-scale": "缩放切换",
-    "fade-slide": "平滑切换",
-    "grayMode": "灰色模式",
-    "interface": "界面设置",
-    "leftLayout": "左侧模式",
-    "minimalWhite": "极简白",
-    "mixLayout": "混合模式",
-    "navigation": "导航设置",
-    "none": "无动画",
-    "pageSwitchingAnimation": "页面切换动画",
-    "project": "项目配置",
-    "resetConfig": "恢复默认",
-    "resetSuccess": "已恢复默认配置",
-    "resetting": "正在恢复默认配置...",
-    "showAppLogo": "显示 Logo",
-    "showTagsView": "显示页签",
-    "showWatermark": "显示水印",
-    "sidebarColorScheme": "侧边栏配色",
-    "tagsViewStyle": "页签风格",
-    "tagsViewStyles": {
-      "card": "卡片",
-      "line": "线性"
-    },
-    "theme": "主题设置",
-    "themeColorNames": {
-      "danger": "危险",
-      "info": "信息",
-      "primary": "主色",
-      "success": "成功",
-      "warning": "警告"
-    },
-    "themePalette": "配色体系",
-    "themePalettes": {
-      "antDesign": {
-        "description": "规范稳重，适合业务系统",
-        "name": "AntD"
-      },
-      "arco": {
-        "description": "蓝橙对比清晰，默认推荐",
-        "name": "ArcoD"
-      },
-      "elementPlus": {
-        "description": "贴近组件默认配色",
-        "name": "ElementD"
-      }
-    },
-    "topLayout": "顶部模式"
   },
   "tags": {
     "actions": "页签操作",
@@ -597,14 +527,6 @@
     "searchMenu": "搜索菜单"
   },
   "dashboard": {
-    "activities": {
-      "adminLogin": "管理员登录系统",
-      "backupCompleted": "系统备份已完成",
-      "certificateRenewed": "安全证书已更新",
-      "loginPolicyUpdated": "登录策略已更新",
-      "permissionsUpdated": "用户权限已更新",
-      "userCreated": "创建了新用户"
-    },
     "documentation": "项目文档",
     "greeting": {
       "afternoon": "下午好",
@@ -613,39 +535,10 @@
       "late": "夜深了",
       "morning": "早上好"
     },
-    "itemCount": "{count} 项",
     "lastDays": "最近 {days} 天",
-    "pendingCount": "{count} 项待处理",
-    "summary": {
-      "completedToday": "今日已完成",
-      "createdToday": "今日新增",
-      "dueSoon": "即将到期"
-    },
-    "systemActivity": "系统动态",
     "systemUsers": "系统用户",
-    "time": {
-      "hoursAgo": "{count} 小时前",
-      "minutesAgo": "{count} 分钟前",
-      "yesterdayAt": "昨天 {time}"
-    },
     "todayViews": "今日浏览量",
     "todayVisitors": "今日访客",
-    "todoItems": "待办事项",
-    "todoOverview": "待办概览",
-    "todoTypes": {
-      "approval": "审批",
-      "configuration": "配置",
-      "notice": "通知",
-      "review": "审核",
-      "ticket": "工单"
-    },
-    "todos": {
-      "leaveRequest": "处理请假申请",
-      "processTicket": "跟进客户工单",
-      "publishNotice": "发布系统通知",
-      "updatePermissions": "更新角色权限",
-      "verifyUser": "审核新用户资料"
-    },
     "video": "视频教程",
     "views": "浏览量",
     "visitTrend": "访问趋势",
@@ -657,16 +550,10 @@
     "changePassword": "修改密码",
     "confirmPassword": "确认新密码",
     "confirmPasswordPlaceholder": "请再次输入新密码",
-    "defaultRole": "普通用户",
     "department": "所属部门",
     "editProfile": "编辑资料",
     "joinedAt": "加入时间：{date}",
     "lastLogin": "最后登录：{date}",
-    "locations": {
-      "hangzhou": "浙江杭州",
-      "shanghai": "上海",
-      "shenzhen": "广东深圳"
-    },
     "nicknamePlaceholder": "请输入昵称",
     "noRoles": "暂无角色",
     "oldPassword": "原密码",
@@ -681,7 +568,12 @@
     "unassignedDepartment": "未分配部门",
     "unbound": "未绑定",
     "unnamedUser": "未命名用户",
-    "updateSuccess": "个人资料更新成功"
+    "updateSuccess": "个人资料更新成功",
+    "noLogins": "暂无成功登录记录",
+    "noPermissions": "暂无有效权限",
+    "unknownClient": "未知客户端",
+    "securityLoadFailed": "角色、权限与最近登录加载失败",
+    "retry": "重试"
   },
   "dictionary": {
     "code": "分类编码",

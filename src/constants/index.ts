@@ -36,14 +36,10 @@ export const STORAGE_KEYS = {
   LAYOUT: `${APP_PREFIX}:ui:layout`,
   SIDEBAR_COLOR_SCHEME: `${APP_PREFIX}:ui:sidebar_color_scheme`,
   THEME: `${APP_PREFIX}:ui:theme`,
-  THEME_PALETTE: `${APP_PREFIX}:ui:theme_palette`,
   THEME_COLORS: `${APP_PREFIX}:ui:theme_colors`,
-  GRAY_MODE: `${APP_PREFIX}:ui:gray_mode`,
-  COLOR_WEAK: `${APP_PREFIX}:ui:color_weak`,
 
   // 应用
   DEVICE: `${APP_PREFIX}:app:device`,
-  SIZE: `${APP_PREFIX}:app:size`,
   LANGUAGE: `${APP_PREFIX}:app:language`,
   SIDEBAR_STATUS: `${APP_PREFIX}:app:sidebar_status`,
   ACTIVE_TOP_MENU_PATH: `${APP_PREFIX}:app:active_top_menu_path`,

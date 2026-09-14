@@ -14,7 +14,7 @@ export const useAppStore = defineStore("app", () => {
   /**
    * 组件默认尺寸
    */
-  const size = useStorage(STORAGE_KEYS.SIZE, defaults.size);
+  const size = ref(defaults.size);
 
   /**
    * 当前语言
@@ -95,13 +95,6 @@ export const useAppStore = defineStore("app", () => {
   }
 
   /**
-   * 切换组件尺寸
-   */
-  function changeSize(val: string) {
-    size.value = val;
-  }
-
-  /**
    * 切换语言
    */
   function changeLanguage(val: string) {
@@ -131,7 +124,6 @@ export const useAppStore = defineStore("app", () => {
     size,
     contentFullscreen,
     toggleDevice,
-    changeSize,
     changeLanguage,
     toggleSidebar,
     closeSidebar,

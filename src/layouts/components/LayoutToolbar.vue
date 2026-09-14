@@ -6,14 +6,6 @@
       </div>
 
       <div class="layout-toolbar__item">
-        <Fullscreen />
-      </div>
-
-      <div class="layout-toolbar__item">
-        <SizeSelect />
-      </div>
-
-      <div class="layout-toolbar__item">
         <LangSelect />
       </div>
     </template>
@@ -44,29 +36,18 @@
         </template>
       </el-dropdown>
     </div>
-
-    <div
-      v-if="defaults.showSettings"
-      class="layout-toolbar__item"
-      @click="handleSettingsClick"
-    >
-      <div class="i-svg:setting" />
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import { defaults } from "@/settings";
 import { DeviceEnum, SidebarColor, ThemeMode, LayoutMode } from "@/enums/settings";
 import { useAppStore } from "@/stores/app";
 import { useSettingsStore } from "@/stores/settings";
 import { useUserStore } from "@/stores/user";
 
 import CommandPalette from "@/components/CommandPalette/index.vue";
-import Fullscreen from "@/components/Fullscreen/index.vue";
-import SizeSelect from "@/components/SizeSelect/index.vue";
 import LangSelect from "@/components/LangSelect/index.vue";
 
 const { t } = useI18n();
@@ -115,13 +96,6 @@ function logout() {
     });
   });
 }
-
-/**
- * 打开系统设置页面
- */
-function handleSettingsClick() {
-  settingStore.settingsVisible = true;
-}
 </script>
 
 <style lang="scss" scoped>
@@ -152,8 +126,6 @@ function handleSettingsClick() {
     }
 
     :deep(.el-tooltip__trigger),
-    :deep(.fullscreen-trigger),
-    :deep(.size-trigger),
     :deep(.notice__trigger) {
       color: inherit;
     }

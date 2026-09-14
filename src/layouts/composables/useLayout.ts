@@ -3,7 +3,6 @@ import { useAppStore } from "@/stores/app";
 import { usePermissionStore } from "@/stores/permission";
 import { useSettingsStore } from "@/stores/settings";
 import { DeviceEnum } from "@/enums/settings";
-import { defaults } from "@/settings";
 
 /**
  * 提供布局组件共用的响应式状态
@@ -18,7 +17,6 @@ export function useLayout() {
   const currentLayout = computed(() => settingsStore.layout);
   const isSidebarOpen = computed(() => appStore.sidebar.opened);
   const showTagsView = computed(() => settingsStore.showTagsView);
-  const showSettings = computed(() => defaults.showSettings);
   const showLogo = computed(() => settingsStore.showAppLogo);
 
   const layoutClass = computed(() => ({
@@ -65,7 +63,6 @@ export function useLayout() {
     layoutClass,
     isSidebarOpen,
     showTagsView,
-    showSettings,
     showLogo,
     routes,
     sideMenuRoutes,

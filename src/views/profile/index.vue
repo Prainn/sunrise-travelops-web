@@ -47,11 +47,11 @@
           <div class="profile-hero__meta flex-wrap gap-[12px] mt-[8px] text-[14px] text-[var(--el-text-color-secondary)]">
             <span class="profile-hero__meta-item gap-[4px]">
               <el-icon><Calendar /></el-icon>
-              {{ $t("profile.joinedAt", { time: formatDateTime(userProfile.createTime) }) }}
+              {{ $t("profile.joinedAt", { date: formatDateTime(userProfile.createTime) }) }}
             </span>
             <span class="profile-hero__meta-item gap-[4px]">
               <el-icon><Location /></el-icon>
-              {{ $t("profile.lastLogin", { time: formatDateTime(recentLoginRecords[0]?.time) }) }}
+              {{ $t("profile.lastLogin", { date: formatDateTime(recentLoginRecords[0]?.time) }) }}
             </span>
           </div>
         </div>
@@ -74,7 +74,25 @@
       </div>
     </section>
 
-    <div class="profile-page__layout grid [grid-template-columns:minmax(280px,_340px)_minmax(0,_1fr)] gap-[16px] [align-items:start]">
+    <el-alert
+      v-if="securityLoadFailed"
+      type="error"
+      :closable="false"
+      :title="$t('profile.securityLoadFailed')"
+    >
+      <el-button
+        link
+        type="primary"
+        @click="loadSecurity"
+      >
+        {{ $t("profile.retry") }}
+      </el-button>
+    </el-alert>
+
+    <div
+      v-loading="isSecurityLoading"
+      class="profile-page__layout grid [grid-template-columns:minmax(280px,_340px)_minmax(0,_1fr)] gap-[16px] [align-items:start]"
+    >
       <aside class="profile-page__side">
         <section class="profile-card p-[18px_20px]">
           <header class="profile-card__header flex gap-[12px] items-start justify-between mb-[14px]">
@@ -114,25 +132,49 @@
             <h3 class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]">
               {{ $t("profile.rolesAndPermissions") }}
             </h3>
-            <span class="profile-card__extra">
+            <span
+              v-if="!securityLoadFailed && !isSecurityLoading"
+              class="profile-card__extra"
+            >
               {{ $t("profile.permissionCount", { count: permissionCount }) }}
             </span>
           </header>
 
-          <div class="profile-tags flex flex-wrap gap-[8px]">
+          <div
+            v-if="!securityLoadFailed && !isSecurityLoading"
+            class="profile-tags flex flex-wrap gap-[8px]"
+          >
             <el-tag
               v-for="role in roleList"
-              :key="role"
+              :key="role.code"
               class="m-0"
               size="small"
               effect="light"
             >
-              {{ role }}
+              {{ role.name }}
             </el-tag>
             <span
               v-if="!roleList.length"
               class="profile-empty"
             >{{ $t("profile.noRoles") }}</span>
+          </div>
+          <div
+            v-if="!securityLoadFailed && !isSecurityLoading"
+            class="grid gap-[8px] mt-[16px]"
+          >
+            <el-empty
+              v-if="!security.permissions.length"
+              :description="$t('profile.noPermissions')"
+              :image-size="48"
+            />
+            <div
+              v-for="permission in security.permissions"
+              :key="permission.code"
+              class="text-[13px] break-words"
+            >
+              <div>{{ permission.name }}</div>
+              <code class="text-[var(--el-text-color-secondary)]">{{ permission.code }}</code>
+            </div>
           </div>
         </section>
       </aside>
@@ -143,23 +185,33 @@
             <h3 class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]">
               {{ $t("profile.recentLogins") }}
             </h3>
-            <span class="profile-card__extra">
-              {{ $t("profile.recentCount", { count: 3 }) }}
+            <span
+              v-if="!securityLoadFailed && !isSecurityLoading"
+              class="profile-card__extra"
+            >
+              {{ $t("profile.recentCount", { count: recentLoginRecords.length }) }}
             </span>
           </header>
 
-          <div class="profile-login grid gap-[12px]">
+          <div
+            v-if="!securityLoadFailed && !isSecurityLoading"
+            class="profile-login grid gap-[12px]"
+          >
+            <el-empty
+              v-if="!recentLoginRecords.length"
+              :description="$t('profile.noLogins')"
+            />
             <div
               v-for="record in recentLoginRecords"
-              :key="record.time"
+              :key="record.id"
               class="profile-login__item grid [grid-template-columns:36px_minmax(0,_1fr)_auto] gap-[10px] items-center min-h-[44px]"
             >
               <span class="profile-icon flex [flex:0_0_36px] items-center justify-center w-[36px] h-[36px] text-[18px] text-[var(--el-color-primary)] [background:var(--el-color-primary-light-9)] rounded-[8px]">
                 <el-icon><Monitor /></el-icon>
               </span>
               <div class="profile-login__body min-w-0">
-                <strong class="profile-login__device text-[14px] text-[var(--el-text-color-primary)]">{{ record.device }}</strong>
-                <span class="profile-login__meta">{{ record.location }} / {{ record.ip }}</span>
+                <strong class="profile-login__device break-all text-[14px] text-[var(--el-text-color-primary)]">{{ record.userAgent || $t("profile.unknownClient") }}</strong>
+                <span class="profile-login__meta">{{ record.ip || "-" }}</span>
               </div>
               <time class="profile-login__time">{{ formatDateTime(record.time) }}</time>
             </div>
@@ -254,6 +306,7 @@
 
 <script lang="ts" setup>
 import type {
+  ProfileSecurity,
   UserProfileDetail,
   PasswordChangeForm,
   UserProfileForm,
@@ -312,26 +365,22 @@ const passwordChangeFormRef = ref();
 const userProfileForm = reactive<UserProfileForm>({});
 const passwordChangeForm = reactive<PasswordChangeForm>({});
 
-const recentLoginRecords = computed(() => [
-  {
-    device: "Chrome / Windows",
-    location: t("profile.locations.shanghai"),
-    ip: "192.168.1.26",
-    time: "2026-06-20 09:32",
-  },
-  {
-    device: "Edge / Windows",
-    location: t("profile.locations.hangzhou"),
-    ip: "192.168.1.18",
-    time: "2026-06-19 18:46",
-  },
-  {
-    device: "Safari / iOS",
-    location: t("profile.locations.shenzhen"),
-    ip: "192.168.1.12",
-    time: "2026-06-18 14:08",
-  },
-]);
+const security = ref<ProfileSecurity>({ roles: [], permissions: [], recentLogins: [] });
+const isSecurityLoading = ref(true);
+const securityLoadFailed = ref(false);
+const recentLoginRecords = computed(() => security.value.recentLogins);
+
+async function loadSecurity() {
+  isSecurityLoading.value = true;
+  securityLoadFailed.value = false;
+  try {
+    security.value = await userService.getProfileSecurity();
+  } catch {
+    securityLoadFailed.value = true;
+  } finally {
+    isSecurityLoading.value = false;
+  }
+}
 
 const userProfileRules = computed(() => ({
   nickname: [{ required: true, message: t("profile.nicknamePlaceholder"), trigger: "blur" }],
@@ -367,16 +416,9 @@ const displayName = computed(() => {
   );
 });
 
-const roleList = computed(() => {
-  return (userProfile.value.roleNames || "")
-    .split(/[,，]/)
-    .map((role) => role.trim())
-    .filter(Boolean);
-});
-
-const primaryRole = computed(() => roleList.value[0] || t("profile.defaultRole"));
-
-const permissionCount = computed(() => userStore.userInfo.perms?.length || 0);
+const roleList = computed(() => security.value.roles);
+const primaryRole = computed(() => roleList.value[0]?.name || "-");
+const permissionCount = computed(() => security.value.permissions.length);
 
 const genderText = computed(() => {
   if (userProfile.value.gender === 1) return t("user.male");
@@ -484,6 +526,7 @@ const loadUserProfile = async () => {
 };
 
 onMounted(loadUserProfile);
+onMounted(loadSecurity);
 </script>
 
 <style lang="scss" scoped>

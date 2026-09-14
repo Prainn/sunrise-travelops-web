@@ -71,7 +71,6 @@ export interface UserProfileDetail {
   mobile?: string;
   email?: string;
   deptName?: string;
-  roleNames?: string;
   createTime?: string;
 }
 
@@ -99,4 +98,10 @@ export interface MobileUpdateForm extends PasswordVerifyForm {
 export interface EmailUpdateForm extends PasswordVerifyForm {
   email?: string;
   code?: string;
+}
+
+export interface ProfileSecurity {
+  roles: Array<{ code: string; name: string }>;
+  permissions: Array<{ code: string; name: string }>;
+  recentLogins: Array<{ id: string; time: string; ip: string; userAgent: string }>;
 }

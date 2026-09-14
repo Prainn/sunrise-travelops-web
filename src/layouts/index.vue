@@ -1,7 +1,6 @@
 <template>
   <div class="layout-wrapper">
     <component :is="currentLayoutComponent" />
-    <Settings v-if="showSettings" />
   </div>
 </template>
 
@@ -14,10 +13,9 @@ import LeftLayout from "./modes/LeftLayout.vue";
 import TopLayout from "./modes/TopLayout.vue";
 import MixLayout from "./modes/MixLayout.vue";
 import DoubleLayout from "./modes/DoubleLayout.vue";
-import Settings from "./components/LayoutSettings.vue";
 
 const route = useRoute();
-const { currentLayout, showSettings } = useLayout();
+const { currentLayout } = useLayout();
 
 useLayoutDevice();
 

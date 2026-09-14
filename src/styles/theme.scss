@@ -55,8 +55,3 @@ html.dark {
   --card-shadow: none;
   --card-shadow-hover: none;
 }
-
-// 无障碍模式
-html.color-weak {
-  filter: invert(80%);
-}

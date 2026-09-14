@@ -9,15 +9,11 @@ import {
   watchSystemTheme,
 } from "@/utils/theme";
 import { STORAGE_KEYS } from "@/constants";
-import { defaults, themePalettePresets } from "@/settings";
-import type { ThemeColorMap, ThemeColorName } from "@/settings";
-
-const CUSTOM_THEME_PALETTE = "custom";
-const HEX_COLOR_RE = /^#[0-9a-f]{6}$/i;
+import { defaults } from "@/settings";
+import type { ThemeColorMap } from "@/settings";
 
 export const useSettingsStore = defineStore("setting", () => {
   // 界面显示
-  const settingsVisible = ref(false);
   const showTagsView = useStorage(STORAGE_KEYS.SHOW_TAGS_VIEW, defaults.showTagsView);
   const tagsViewStyle = useStorage<TagsViewStyle>(
     STORAGE_KEYS.TAGS_VIEW_STYLE,
@@ -39,20 +35,11 @@ export const useSettingsStore = defineStore("setting", () => {
 
   // 主题
   const theme = useStorage<ThemeMode>(STORAGE_KEYS.THEME, defaults.theme);
-  const themePalette = useStorage<string>(STORAGE_KEYS.THEME_PALETTE, defaults.themePalette);
   const themeColors = useStorage<ThemeColorMap>(STORAGE_KEYS.THEME_COLORS, {
     ...defaults.themeColors,
   });
 
-  const activeThemePalette = computed(
-    () => themePalettePresets.find((item) => item.id === themePalette.value) || null
-  );
-
   const resolvedTheme = ref<ThemeMode>(resolveThemeMode(theme.value));
-
-  // 特殊模式
-  const grayMode = useStorage(STORAGE_KEYS.GRAY_MODE, false);
-  const colorWeak = useStorage(STORAGE_KEYS.COLOR_WEAK, false);
 
   // 主题变化监听
   let stopWatchingSystemTheme: (() => void) | undefined;
@@ -87,75 +74,16 @@ export const useSettingsStore = defineStore("setting", () => {
     immediate: true,
   });
 
-  // 灰色模式监听
-  watch(
-    grayMode,
-    (v) => {
-      document.documentElement.style.filter = v ? "grayscale(100%)" : "";
-    },
-    { immediate: true }
-  );
-
-  // 色弱模式监听
-  watch(
-    colorWeak,
-    (v) => {
-      document.documentElement.classList.toggle("color-weak", v);
-    },
-    { immediate: true }
-  );
-
-  function applyThemePalette(id: string) {
-    const preset = themePalettePresets.find((item) => item.id === id);
-    if (!preset) return;
-
-    themePalette.value = preset.id;
-    themeColors.value = { ...preset.colors };
-  }
-
-  function updateThemeColor(name: ThemeColorName, color: string) {
-    if (!HEX_COLOR_RE.test(color)) return;
-
-    themePalette.value = CUSTOM_THEME_PALETTE;
-    themeColors.value = {
-      ...themeColors.value,
-      [name]: color,
-    };
-  }
-
-  function resetSettings() {
-    showTagsView.value = defaults.showTagsView;
-    tagsViewStyle.value = defaults.tagsViewStyle;
-    showAppLogo.value = defaults.showAppLogo;
-    showWatermark.value = defaults.showWatermark;
-    pageSwitchingAnimation.value = defaults.pageSwitchingAnimation;
-    grayMode.value = false;
-    colorWeak.value = false;
-    sidebarColorScheme.value = defaults.sidebarColorScheme;
-    layout.value = defaults.layout as LayoutMode;
-    themePalette.value = defaults.themePalette;
-    themeColors.value = { ...defaults.themeColors };
-    theme.value = defaults.theme;
-  }
-
   return {
-    settingsVisible,
     showTagsView,
     tagsViewStyle,
     showAppLogo,
     showWatermark,
     pageSwitchingAnimation,
-    grayMode,
-    colorWeak,
     sidebarColorScheme,
     layout,
-    themePalette,
     themeColors,
     theme,
     resolvedTheme,
-    activeThemePalette,
-    applyThemePalette,
-    updateThemeColor,
-    resetSettings,
   };
 });
