@@ -20,7 +20,7 @@
     "restaurants": "餐厅",
     "attractions": "景点",
     "vehicleModels": "车型",
-    "guides": "导游",
+    "guides": "导游管理",
     "cities": "城市",
     "inquiryLogReport": "询盘汇总"
   },
@@ -753,6 +753,14 @@
     "periodRequired": "请输入价格时段名称"
   },
   "guide": {
+    "name": "导游姓名",
+    "detail": "导游档案详情",
+    "priceSettings": "服务价格设置",
+    "createPrice": "新增服务价格",
+    "editPrice": "编辑服务价格",
+    "referenceDailyPrice": "参考日价（元/天）",
+    "searchPeople": "搜索姓名、导游证号、身份证号",
+    "genderOptions": { "0": "未填", "1": "男", "2": "女" },
     "age": "年龄",
     "ageRequired": "请输入年龄",
     "certificateNo": "导游证号",
@@ -927,7 +935,7 @@
     "withoutShopping": "不进店",
     "guidePrice": "价格（元/天）",
     "editGuide": "编辑导游价格",
-    "createGuide": "新增导游价格",
+    "createGuide": "新增服务价格",
     "guideService": "导游服务",
     "selectGuide": "选择语种与是否进店",
     "selectLanguage": "请选择第二语种",

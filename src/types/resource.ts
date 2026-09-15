@@ -173,6 +173,16 @@ export interface GuideRecord extends ResourceAuditRecord {
   secondLanguage: string; shopping: boolean; dailyPrice: number;
 }
 
+export interface GuidePersonRecord extends ResourceAuditRecord {
+  id: string;
+  code: string;
+  name: string;
+  gender: 0 | 1 | 2;
+  certificateNo: string | null;
+  identityNumber: string | null;
+  status: ResourceStatus;
+}
+
 export type RestaurantPriceUnit = string;
 
 export interface RestaurantPriceRecord extends ResourceAuditRecord {

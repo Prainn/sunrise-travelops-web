@@ -7,7 +7,7 @@ import type { ResourceLibrary } from "@/types/auth";
 import type { PageResult } from "@/types/common";
 import type {
   AgencyContactRecord, AgencyRecord, AttractionPriceRecord, AttractionRecord,
-  CityRecord, GuideRecord, HotelRecord, ResourceListQuery,
+  CityRecord, GuidePersonRecord, GuideRecord, HotelRecord, ResourceListQuery,
   RestaurantPriceRecord, RestaurantRecord, TransportRecord,
 } from "@/types/resource";
 
@@ -65,7 +65,7 @@ function createCrud<T extends { code: string; library?: ResourceLibrary }>(
       return fromResponse(result);
     },
     create(data) {
-      return request.post<ApiRecord<T>>(baseUrl, { library: data.library ?? selectedResourceLibrary.value, ...toInput(data), ...(resourceName === "guides" ? {} : { code: data.code.trim() || undefined }) }).then(result => { clearResourceOptionsCache(); return fromResponse(result); });
+      return request.post<ApiRecord<T>>(baseUrl, { library: data.library ?? selectedResourceLibrary.value, ...toInput(data), ...(["guides", "guide-people"].includes(resourceName) ? {} : { code: data.code.trim() || undefined }) }).then(result => { clearResourceOptionsCache(); return fromResponse(result); });
     },
     update(id, data) {
       return request.put<ApiRecord<T>>(
@@ -121,7 +121,18 @@ function transportInput(data: TransportRecord) {
 }
 
 function guideInput(data: GuideRecord) {
-  return { id: data.id || undefined, secondLanguage: data.secondLanguage, shopping: data.shopping, dailyPrice: data.dailyPrice };
+  return { id: data.id || undefined, secondLanguage: data.secondLanguage, shopping: data.shopping, dailyPrice: data.dailyPrice, status: data.status };
+}
+
+function guidePersonInput(data: GuidePersonRecord) {
+  return {
+    id: data.id || undefined,
+    name: data.name.trim(),
+    gender: data.gender,
+    certificateNo: data.certificateNo === "" ? null : data.certificateNo,
+    identityNumber: data.identityNumber === "" ? null : data.identityNumber,
+    status: data.status,
+  };
 }
 
 function normalizeHotel(data: ApiRecord<HotelRecord>): HotelRecord {
@@ -188,12 +199,14 @@ const restaurantApi = createCrud<RestaurantRecord>("restaurants", restaurantInpu
 const attractionApi = createCrud<AttractionRecord>("attractions", attractionInput, normalizeAttraction);
 const transportApi = createCrud<TransportRecord>("transports", transportInput, normalizeTransport);
 const guideApi = createCrud<GuideRecord>("guides", guideInput, normalizeGuide);
+const guidePersonApi = createCrud<GuidePersonRecord>("guide-people", guidePersonInput);
 const agencies = reactive<AgencyRecord[]>([]);
 const hotels = reactive<HotelRecord[]>([]);
 const restaurants = reactive<RestaurantRecord[]>([]);
 const attractions = reactive<AttractionRecord[]>([]);
 const transports = reactive<TransportRecord[]>([]);
 const guides = reactive<GuideRecord[]>([]);
+const guidePeople = reactive<GuidePersonRecord[]>([]);
 
 async function fetchAll<T>(api: ResourceCrud<T>, query: ResourceListQuery = {}): Promise<T[]> {
   const firstPage = await api.getPage({ ...query, page: 1, pageSize: 100 });
@@ -245,6 +258,7 @@ export const resourceService = {
   restaurants,
   attractions,
   guides,
+  guidePeople,
   agencyApi: {
     ...agencyApi,
     getContacts(agencyId: string) {
@@ -311,6 +325,9 @@ export const resourceService = {
   async loadGuides(query: ResourceListQuery = {}) {
     await businessDictionaryService.ensureBuiltInTypesLoaded();
     return loadResourceRecords(guides, guideApi, query);
+  },
+  async loadGuidePeople(query: ResourceListQuery = {}) {
+    return loadResourceRecords(guidePeople, guidePersonApi, query);
   },
   async getSelectionOptions(kind: "hotels" | "transports" | "guides" | "agencies", query: ResourceQuery) {
     const path = `/resources/selections/${kind}`;
@@ -383,6 +400,7 @@ export const resourceService = {
   },
   transportApi,
   guideApi,
+  guidePersonApi,
 };
 
 export type { ResourceCrud };

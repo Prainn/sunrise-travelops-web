@@ -4,32 +4,28 @@
       inline
       class="page-search"
     >
-      <el-form-item :label="$t('planning.secondLanguage')">
-        <el-select
-          v-model="secondLanguage"
+      <ResourceBusinessFilter />
+      <el-form-item>
+        <el-input
+          v-model="keyword"
+          :placeholder="$t('guide.searchPeople')"
           clearable
-          class="w-[180px]"
-        >
-          <el-option
-            v-for="item in GUIDE_LANGUAGE_OPTIONS"
-            :key="item.value"
-            :value="item.value"
-            :label="$t(`planning.languages.${item.value}`)"
-          />
-        </el-select>
+          class="w-[320px]"
+        />
       </el-form-item>
-      <el-form-item :label="$t('planning.shopping')">
+      <el-form-item :label="$t('common.status')">
         <el-select
-          v-model="shopping"
+          v-model="status"
           clearable
           class="w-[140px]"
         >
           <el-option
-            :label="$t('planning.withShopping')"
-            value="true"
-          /><el-option
-            :label="$t('planning.withoutShopping')"
-            value="false"
+            :label="$t('common.enabled')"
+            value="enabled"
+          />
+          <el-option
+            :label="$t('common.disabled')"
+            value="disabled"
           />
         </el-select>
       </el-form-item>
@@ -49,7 +45,10 @@
           type="primary"
           @click="emit('create')"
         >
-          {{ $t('guide.createPrice') }}
+          {{ $t('guide.createGuide') }}
+        </el-button>
+        <el-button @click="emit('open-prices')">
+          {{ $t('guide.priceSettings') }}
         </el-button>
       </TableToolbar>
       <div class="page-table-wrapper">
@@ -62,27 +61,39 @@
         >
           <el-table-column
             :label="$t('identity.library')"
-            min-width="200"
+            min-width="190"
           >
             <template #default="{ row }">
               <ResourceLibraryTag :library="row.library" />
             </template>
           </el-table-column>
-          <el-table-column :label="$t('guide.referenceDailyPrice')">
+          <el-table-column
+            prop="name"
+            :label="$t('guide.name')"
+            min-width="160"
+          />
+          <el-table-column
+            :label="$t('guide.gender')"
+            min-width="100"
+          >
             <template #default="{ row }">
-              ¥{{ formatMoney(row.dailyPrice) }}
+              {{ $t(`guide.genderOptions.${row.gender}`) }}
             </template>
           </el-table-column>
-          <el-table-column :label="$t('planning.secondLanguage')">
+          <el-table-column
+            :label="$t('guide.certificateNo')"
+            min-width="220"
+          >
             <template #default="{ row }">
-              {{ row.secondLanguage ? $t(`planning.languages.${row.secondLanguage}`) : $t('common.notSet') }}
+              {{ row.certificateNo ?? $t('common.notSet') }}
             </template>
           </el-table-column>
-          <el-table-column :label="$t('planning.shopping')">
+          <el-table-column
+            :label="$t('guide.identityNumber')"
+            min-width="220"
+          >
             <template #default="{ row }">
-              <el-tag :type="row.shopping ? 'success' : 'info'">
-                {{ $t(row.shopping ? 'planning.withShopping' : 'planning.withoutShopping') }}
-              </el-tag>
+              {{ row.identityNumber ?? $t('common.notSet') }}
             </template>
           </el-table-column>
           <el-table-column
@@ -97,27 +108,37 @@
           </el-table-column>
           <el-table-column
             :label="$t('common.actions')"
-            width="260"
+            min-width="260"
+            fixed="right"
           >
             <template #default="{ row }">
+              <el-button
+                link
+                type="primary"
+                @click="emit('detail', row as GuidePersonRecord)"
+              >
+                {{ $t('guide.detail') }}
+              </el-button>
               <el-button
                 v-has-perm="RESOURCE_PERMISSIONS.guide.update"
                 link
                 type="primary"
-                @click="emit('edit', row as GuideRecord)"
+                @click="emit('edit', row as GuidePersonRecord)"
               >
                 {{ $t('common.edit') }}
-              </el-button><el-button
+              </el-button>
+              <el-button
                 v-has-perm="RESOURCE_PERMISSIONS.guide.update"
                 link
-                @click="emit('toggle-status', row as GuideRecord)"
+                @click="emit('toggle-status', row as GuidePersonRecord)"
               >
                 {{ $t(row.status === 'enabled' ? 'common.disabled' : 'common.enabled') }}
-              </el-button><el-button
+              </el-button>
+              <el-button
                 v-has-perm="RESOURCE_PERMISSIONS.guide.delete"
                 link
                 type="danger"
-                @click="emit('delete', row as GuideRecord)"
+                @click="emit('delete', row as GuidePersonRecord)"
               >
                 {{ $t('common.delete') }}
               </el-button>
@@ -135,28 +156,43 @@
     </el-card>
   </div>
 </template>
+
 <script setup lang="ts">
+import { ref, watch } from "vue";
+import { useDebounceFn } from "@vueuse/core";
+import { RESOURCE_PERMISSIONS } from "@/constants";
 import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
-import { ref, watch } from 'vue';
-import { useDebounceFn } from '@vueuse/core';
-import { useResourcePagination } from '@/views/resources/useResourcePagination';
-import { GUIDE_LANGUAGE_OPTIONS, type GuideRecord, type ResourceListQuery } from '@/types/resource';
-import { RESOURCE_PERMISSIONS } from '@/constants';
-import { formatMoney } from '@/utils';
-import TableToolbar from '@/components/TableToolbar/index.vue';
-defineProps<{
-  loading?: boolean; rows: GuideRecord[]; total: number }>();
-const emit = defineEmits<{ refresh: [ResourceListQuery]; 'query-change': [ResourceListQuery]; create: []; edit: [GuideRecord]; 'toggle-status': [GuideRecord]; delete: [GuideRecord] }>();
-const secondLanguage = ref(''); const shopping = ref('');
+import TableToolbar from "@/components/TableToolbar/index.vue";
+import { resetResourceBusinessFilter } from "@/services/resource-library";
+import type { GuidePersonRecord, ResourceListQuery, ResourceStatus } from "@/types/resource";
+import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
+import { useResourcePagination } from "@/views/resources/useResourcePagination";
+
+defineProps<{ loading?: boolean; rows: GuidePersonRecord[]; total: number }>();
+const emit = defineEmits<{
+  refresh: [ResourceListQuery];
+  'query-change': [ResourceListQuery];
+  create: [];
+  'open-prices': [];
+  detail: [GuidePersonRecord];
+  edit: [GuidePersonRecord];
+  'toggle-status': [GuidePersonRecord];
+  delete: [GuidePersonRecord];
+}>();
+const keyword = ref("");
+const status = ref<ResourceStatus | "">("");
 const { pageNum, pageSize, paginationQuery } = useResourcePagination();
-function query(): ResourceListQuery { return { ...paginationQuery(), secondLanguage: secondLanguage.value || undefined, shopping: shopping.value || undefined }; }
+function query(): ResourceListQuery {
+  return { ...paginationQuery(), keyword: keyword.value || undefined, status: status.value || undefined };
+}
 const requestRows = useDebounceFn(() => emit('query-change', query()), 300);
-watch([secondLanguage, shopping], () => { pageNum.value = 1; requestRows(); });
+watch([keyword, status], () => { pageNum.value = 1; requestRows(); });
 function refreshRows() { emit('refresh', query()); }
 function resetQuery() {
-  secondLanguage.value = '';
-  shopping.value = '';
+  keyword.value = "";
+  status.value = "";
   pageNum.value = 1;
+  resetResourceBusinessFilter();
   requestRows();
 }
 </script>

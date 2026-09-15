@@ -31,7 +31,7 @@ vi.mock("@/api/request", () => {
 });
 
 import type {
-  AgencyRecord, AttractionRecord, RestaurantRecord,
+  AgencyRecord, AttractionRecord, GuidePersonRecord, RestaurantRecord,
 } from "@/types/resource";
 import { resourceService } from "./resource.service";
 const audit = { version: 3, createdAt: "2026-09-04T00:00:00.000Z", createdBy: null, updatedAt: "2026-09-04T00:00:00.000Z", updatedBy: null };
@@ -51,6 +51,7 @@ beforeEach(() => {
   resourceService.attractions.splice(0);
   resourceService.transports.splice(0);
   resourceService.guides.splice(0);
+  resourceService.guidePeople.splice(0);
   requestMock.mockImplementation(async (path, options) => {
     if (!options?.method && (path.endsWith("/contacts") || path.endsWith("/prices") || path.split("?")[0].endsWith("/options"))) return [];
     if (!options?.method && path.includes("?")) return { list: [], total: 0, page: 1, pageSize: 20 };
@@ -59,11 +60,43 @@ beforeEach(() => {
 });
 
 describe("resourceService", () => {
+  it("keeps guide-person document text and the price endpoint separate", async () => {
+    const person: GuidePersonRecord = {
+      ...audit,
+      id: "person-1",
+      code: "GPR-001",
+      library: "shengxu",
+      name: "测试导游",
+      gender: 0,
+      certificateNo: "00123x",
+      identityNumber: "临时编号-A01",
+      status: "enabled",
+    };
+    requestMock.mockResolvedValue(person);
+    const created = await resourceService.guidePersonApi.create(person);
+    expect(created.certificateNo).toBe("00123x");
+    expect(created.identityNumber).toBe("临时编号-A01");
+    expect(requestMock).toHaveBeenCalledWith("/resources/guide-people", {
+      method: "POST",
+      body: expect.objectContaining({
+        certificateNo: "00123x",
+        identityNumber: "临时编号-A01",
+        library: "shengxu",
+      }),
+    });
+    expect(requestMock.mock.calls[0][1].body).not.toHaveProperty("code");
+    await resourceService.guidePersonApi.update(person.id, { ...person, certificateNo: null });
+    expect(requestMock.mock.calls[1][1].body.certificateNo).toBeNull();
+    requestMock.mockResolvedValue({ list: [], total: 0, page: 1, pageSize: 20 });
+    await resourceService.guideApi.getPage({ page: 1, pageSize: 20 });
+    expect(requestMock.mock.calls[2][0]).toContain("/resources/guides?");
+  });
+
   it.each(["shengxu", "linxi", "website"] as const)("clears the headquarters %s filter from every resource request on reset", async (businessUnit) => {
     selectedResourceBusinessUnit.value = businessUnit;
     selectedResourceLibrary.value = businessUnit === "shengxu" ? "shengxu" : "shared";
     resetResourceBusinessFilter();
-    for (const api of [resourceService.agencyApi, resourceService.cityApi, resourceService.hotelApi, resourceService.restaurantApi, resourceService.attractionApi, resourceService.transportApi, resourceService.guideApi]) {
+    for (const api of [resourceService.agencyApi, resourceService.cityApi, resourceService.hotelApi, resourceService.restaurantApi, resourceService.attractionApi, resourceService.transportApi, resourceService.guideApi, resourceService.guidePersonApi]) {
       await api.getPage({ page: 1, pageSize: 10 });
     }
     for (const [url] of requestMock.mock.calls) {
@@ -84,12 +117,12 @@ describe("resourceService", () => {
     selectedResourceBusinessUnit.value = businessUnit;
     selectedResourceLibrary.value = businessUnit === "shengxu" ? "shengxu" : "shared";
     requestMock.mockResolvedValue({ list: [], total: 71, page: 3, pageSize: 20 });
-    const apis = [resourceService.agencyApi, resourceService.cityApi, resourceService.hotelApi, resourceService.restaurantApi, resourceService.attractionApi, resourceService.transportApi, resourceService.guideApi];
+    const apis = [resourceService.agencyApi, resourceService.cityApi, resourceService.hotelApi, resourceService.restaurantApi, resourceService.attractionApi, resourceService.transportApi, resourceService.guideApi, resourceService.guidePersonApi];
     for (const api of apis) {
       const page = await api.getPage({ page: 3, pageSize: 20 });
       expect(page).toMatchObject({ total: 71, page: 3, pageSize: 20 });
     }
-    expect(requestMock).toHaveBeenCalledTimes(7);
+    expect(requestMock).toHaveBeenCalledTimes(8);
     for (const [url] of requestMock.mock.calls) {
       expect(url).toContain(`page=3&pageSize=20&businessUnit=${businessUnit}`);
       expect(url).not.toContain("library=");

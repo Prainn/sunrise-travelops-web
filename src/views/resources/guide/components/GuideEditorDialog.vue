@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    :title="$t(isEditing ? 'planning.editGuide' : 'planning.createGuide')"
+    :title="$t(isEditing ? 'guide.editPrice' : 'guide.createPrice')"
     width="460px"
     @close="emit('update:modelValue', false)"
   >
@@ -9,7 +9,7 @@
       <el-form-item :label="$t('identity.library')">
         <ResourceLibraryTag :library="form.library" />
       </el-form-item>
-      <el-form-item :label="$t('planning.guidePrice')">
+      <el-form-item :label="$t('guide.referenceDailyPrice')">
         <el-input-number
           v-model="form.dailyPrice"
           :min="0"
@@ -32,6 +32,21 @@
           :active-text="$t('common.yes')"
           :inactive-text="$t('common.no')"
         />
+      </el-form-item>
+      <el-form-item :label="$t('common.status')">
+        <el-select
+          v-model="form.status"
+          class="w-full"
+        >
+          <el-option
+            :label="$t('common.enabled')"
+            value="enabled"
+          />
+          <el-option
+            :label="$t('common.disabled')"
+            value="disabled"
+          />
+        </el-select>
       </el-form-item>
     </el-form>
     <template #footer>

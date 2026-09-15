@@ -20,7 +20,7 @@
     "restaurants": "Restaurants",
     "attractions": "Attractions",
     "vehicleModels": "Vehicle Models",
-    "guides": "Guides",
+    "guides": "Guide Management",
     "cities": "Cities",
     "inquiryLogReport": "Inquiry summary"
   },
@@ -753,6 +753,14 @@
     "periodRequired": "Enter a pricing period name"
   },
   "guide": {
+    "name": "Guide name",
+    "detail": "Guide profile details",
+    "priceSettings": "Service Price Settings",
+    "createPrice": "Add service price",
+    "editPrice": "Edit service price",
+    "referenceDailyPrice": "Reference daily price (CNY/day)",
+    "searchPeople": "Search name, guide licence or identity number",
+    "genderOptions": { "0": "Not set", "1": "Male", "2": "Female" },
     "age": "Age",
     "ageRequired": "Enter age",
     "certificateNo": "Guide License No.",
@@ -927,7 +935,7 @@
     "withoutShopping": "Without shopping",
     "guidePrice": "Daily price (CNY)",
     "editGuide": "Edit guide rate",
-    "createGuide": "Add guide rate",
+    "createGuide": "Add service price",
     "guideService": "Guide service",
     "selectGuide": "Select language and shopping service",
     "selectLanguage": "Select a second language",
