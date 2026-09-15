@@ -13,30 +13,20 @@ Vue 3 (Composition API) · TypeScript · Vite · Pinia · Vue Router · UnoCSS �
 
 ## 目录结构
 
-```
+```text
 src/
-├── api/                        # API 请求层
-│   ├── common.ts              # 公共类型（ApiResult, PageResult 等）
-│   └── system/user/
-│       ├── index.ts           # API 对象
-│       └── types.ts           # 请求/响应类型
-├── components/                 # 全局复用组件
-├── composables/                # 组合式函数（use 前缀）
-├── constants/                  # 常量
-├── directives/                 # 自定义指令
-├── enums/                      # 枚举
-├── lang/                       # 国际化
-├── layouts/                    # 布局组件
-├── plugins/                    # 插件注册
-├── router/                     # 路由 + 守卫
-├── stores/                     # Pinia（扁平结构，无 modules/ 子目录）
-├── styles/                     # 全局样式
-├── utils/                      # 工具函数
-├── views/                      # 页面（与路由对应）
-│   └── system/user/
-│       ├── index.vue
-│       └── components/
-└── settings.ts
+├── api/request.ts             # fetch、认证刷新、响应解包与错误
+├── services/                  # 各业务 *.service.ts 和请求映射
+├── types/                     # 领域类型，common.ts 分页类型
+├── components/                # 全局复用组件
+├── composables/                # 通用组合函数
+├── router/                    # 静态路由与权限守卫
+├── stores/                    # 扁平 Pinia stores
+├── lang/                      # 中英文文案
+├── layouts/                   # 应用布局
+├── styles/                    # 全局样式
+├── utils/                     # 工具函数
+└── views/                     # 页面、附近 components 和业务 composables
 ```
 
 ## 命名规范
@@ -114,14 +104,11 @@ async function handleSubmit() {
 
 ## 类型与 API 约定
 
-### 公共类型（api/common.ts）
+### 公共类型与请求边界
 
-```typescript
-interface ApiResult<T = unknown> { code: string; data: T; msg: string; }
-interface BaseQueryParams { pageNum: number; pageSize: number; sortBy?: string; order?: string; }
-interface PageResult<T> { list: T[]; total: number; }
-interface OptionItem { value: string | number; label: string; children?: OptionItem[]; }
-```
+`api/request.ts` 定义 ApiResponse/ApiErrorResponse，成功结构为 `{ code: "SUCCESS", message: string, data: T }`，request 方法返回解包后的 data；204 返回 undefined。使用 `/api` 基础路径，不加 `/v1`。
+
+`types/common.ts` 定义 `BaseQueryParams { page, pageSize }`、`PageResult<T> { list, total, page, pageSize }` 和 OptionItem。业务字段以根 docs/api 和后端实际实现核对。
 
 ### 类型命名
 
@@ -135,34 +122,24 @@ interface OptionItem { value: string | number; label: string; children?: OptionI
 
 ### API 定义
 
+业务服务采用 `services/*.service.ts` 导出的对象，通过现有 request.get/post/put/patch/delete 调用端点；前端领域类型放在 `src/types`。
+
 ```typescript
-const USER_BASE_URL = "/api/v1/users";
+import { request } from "@/api/request";
+import type { PageResult } from "@/types/common";
+import type { InquiryRecord } from "@/types/inquiry";
 
-const UserAPI = {
-  /** 获取用户分页列表。 */
-  getPage(q: UserQueryParams) { return request<unknown, PageResult<UserItem>>({ url: USER_BASE_URL, method: "get", params: q }); },
-  /** 获取表单详情。 */
-  getFormData(id: string) { return request<unknown, UserForm>({ url: `${USER_BASE_URL}/${id}/form`, method: "get" }); },
-  /** 新增。 */
-  create(data: UserForm) { return request({ url: USER_BASE_URL, method: "post", data }); },
-  /** 修改。 */
-  update(id: string, data: UserForm) { return request({ url: `${USER_BASE_URL}/${id}`, method: "put", data }); },
-  /** 删除。 */
-  deleteByIds(ids: string) { return request({ url: `${USER_BASE_URL}/${ids}`, method: "delete" }); },
+export const inquiryService = {
+  list(query: { page: number; pageSize: number; keyword?: string }) {
+    return request.get<PageResult<InquiryRecord>>("/inquiries", { params: query });
+  },
+  detail(id: string) {
+    return request.get<InquiryRecord>(`/inquiries/${encodeURIComponent(id)}`);
+  },
 };
-
-export default UserAPI;
-export * from "./types";
 ```
 
-| 操作 | 方法名 | HTTP |
-|------|--------|------|
-| 分页查询 | `getPage` | GET |
-| 表单详情 | `getFormData` | GET |
-| 新增 | `create` | POST |
-| 修改 | `update` | PUT |
-| 删除 | `deleteByIds` | DELETE |
-| 导出/导入 | `export` / `import` | GET / POST |
+请求方法、路径与业务服务名称遵循现有调用者，不从示例创建另一套 API 层。
 
 ## Store
 
@@ -245,7 +222,6 @@ const index = list.findIndex(item => item.id === id); // 查找索引
 ```typescript
 // ✅ 页面表达业务意图，格式细节集中复用
 const createdAt = formatDateTime(new Date());
-const nextCode = generateNextCode(records, "HTL");
 
 // ❌ 页面重复实现补零和日期拼接
 const date = `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
@@ -276,14 +252,14 @@ const date = `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, 
 - [ ] 类型无 `VO/DTO` 后缀
 - [ ] 布尔值有 `is/has/can/should` 前缀
 - [ ] `handle` 仅用于流程编排
-- [ ] API 用 `const XXXAPI = {}` 对象字面量
+- [ ] API 用 `const xxxService = {}` 对象字面量
 - [ ] BEM 带页面/功能前缀
-- [ ] BEM 元素上原子类仅做无语义微调，结构性样式收敛到 SCSS
+- [ ] UnoCSS 优先；无法等价表达的复杂选择器和覆盖样式保留 SCSS
 - [ ] 颜色用 CSS 变量，不硬编码
 - [ ] SFC 块顺序：template → script → style
 - [ ] Store 用 Setup Store + `useXxxStoreHook()`
 - [ ] 公共函数有 JSDoc，无复述性注释
-- [ ] 页面无重复的日期、金额、编号等基础格式化实现
+- [ ] 页面无重复的日期、金额等基础格式化实现
 - [ ] 抽象来自真实重复，没有复杂泛型、配置驱动或多层包装
 - [ ] 业务流程可顺序阅读，长链式表达式和嵌套三元已拆开
 - [ ] 组件 ≤ 300 行，使用 `<script setup>`

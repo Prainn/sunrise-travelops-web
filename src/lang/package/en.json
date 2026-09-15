@@ -313,10 +313,8 @@
     "startDateRequired": "Select a start date",
     "adultsRequired": "Enter the number of adults",
     "statuses": {
-      "archived": "Archived",
       "draft": "Draft",
-      "quoted": "Quoted",
-      "ready_for_costing": "Ready for Costing"
+      "quoted": "Quoted"
     },
     "title": "Itinerary Title",
     "titleRequired": "Enter an itinerary title",
@@ -824,7 +822,6 @@
   },
   "service": {
     "auth": {
-      "credentialManagementUnavailable": "Password and sign-in credential changes are currently unavailable",
       "missingRefreshToken": "No valid refresh token"
     },
     "user": {

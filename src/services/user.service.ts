@@ -3,10 +3,7 @@ import { request } from "@/api/request";
 import { translate } from "@/lang/utils";
 import type {
   ProfileSecurity,
-  EmailUpdateForm,
-  MobileUpdateForm,
   PasswordChangeForm,
-  PasswordVerifyForm,
   UserForm,
   IdentityRoleOption,
   DepartmentOption,
@@ -35,10 +32,6 @@ const ROLE_NAME_LABEL_KEYS: Record<string, string> = {
   资源主管: "user.roles.resourceManager",
   系统管理员: "user.roles.systemAdministrator",
 };
-
-function rejectUnsupportedCredentialMutation(): never {
-  throw new Error(translate("service.auth.credentialManagementUnavailable"));
-}
 
 function buildUserParams(query: UserQueryParams) {
   const keyword = query.keyword?.trim();
@@ -157,25 +150,5 @@ export const userService = {
 
   async changePassword(data: PasswordChangeForm): Promise<void> {
     await request.post<void>("/auth/me/password", { oldPassword: data.oldPassword, newPassword: data.newPassword });
-  },
-
-  async sendMobileCode(_mobile: string): Promise<void> {},
-
-  async bindOrChangeMobile(_data: MobileUpdateForm): Promise<void> {
-    rejectUnsupportedCredentialMutation();
-  },
-
-  async unbindMobile(_data: PasswordVerifyForm): Promise<void> {
-    rejectUnsupportedCredentialMutation();
-  },
-
-  async sendEmailCode(_email: string): Promise<void> {},
-
-  async bindOrChangeEmail(_data: EmailUpdateForm): Promise<void> {
-    rejectUnsupportedCredentialMutation();
-  },
-
-  async unbindEmail(_data: PasswordVerifyForm): Promise<void> {
-    rejectUnsupportedCredentialMutation();
   },
 };

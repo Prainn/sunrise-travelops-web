@@ -14,7 +14,7 @@ pnpm dev
 如需访问本地后端开发服务（默认为 `http://localhost:4000`），请先启动后端，再运行：
 
 ```bash
-pnpm dev-local
+pnpm dev:local
 ```
 
 默认访问 `http://localhost:3000`；若端口被占用，以终端输出的地址为准。

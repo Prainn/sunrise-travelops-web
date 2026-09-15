@@ -15,7 +15,7 @@ import type {
   ItineraryQuoteSettings,
   MealSlot,
 } from "@/types/itinerary";
-import type { HotelRecord, TransportRecord } from "@/types/resource";
+import type { HotelRecord } from "@/types/resource";
 import { addDays, createId, formatDateTime } from "@/utils";
 import { transitionInquiry } from "../inquiry-workflow";
 import { getHotelUnitCost, recalculateItem } from "./pricing";
@@ -36,7 +36,6 @@ interface ItineraryEditorOptions {
   canEditPrice: () => boolean;
   getCreator: () => string;
   findHotel: (id: string) => HotelRecord | undefined;
-  findVehicle: (id: string) => TransportRecord | undefined;
 }
 
 export function useItineraryEditor(options: ItineraryEditorOptions) {
@@ -250,38 +249,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     touchSelectedItinerary();
   }
 
-  function copyItinerary(copySuffix: string): ItineraryRecord | null {
-    const source = options.selectedItinerary.value;
-    if (!source || !options.canCreate() || !options.inquiry.value) return null;
-    const dayIdMap = new Map(source.dailyPlans.map((day) => [day.id, createId("day")]));
-    const copied: ItineraryRecord = {
-      ...source,
-      id: createId("itinerary"),
-      code: "",
-      title: `${source.title} ${copySuffix}`,
-      status: "draft",
-      quoteGeneratedAt: "",
-      creator: options.getCreator(),
-      createdAt: formatDateTime(new Date()),
-      updatedAt: formatDateTime(new Date()),
-      destinations: [...source.destinations],
-      guidePlans: source.guidePlans.map((plan) => ({ ...plan })),
-      hotelPlans: cloneHotelPlans(source.hotelPlans),
-      vehiclePlans: cloneVehiclePlans(source.vehiclePlans).map(p => ({ ...p, arrangements: p.arrangements.map(a => ({ ...a, id: createId("vehicle-arrangement") })) })),
-      quote: { ...cloneQuoteSettings(source.quote), options: source.quote.options.map((option) => ({ ...option, id: createId("quote-option") })) },
-      dailyPlans: source.dailyPlans.map((day) => ({
-        ...day,
-        meals: { ...day.meals },
-        id: dayIdMap.get(day.id)!,
-        items: day.items.map((item) => ({ ...item, id: createId("item") })),
-      })),
-    };
-    options.itineraryStore.unshift(copied);
-    options.inquiry.value.status = transitionInquiry(options.inquiry.value.status, "itinerary_created");
-    options.selectedItineraryId.value = copied.id;
-    return copied;
-  }
-
   function addDay(afterIndex?: number) {
     if (!options.canEditContent()) return;
     const plan = options.selectedItinerary.value;
@@ -313,16 +280,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     const plan = options.selectedItinerary.value;
     if (!plan) return;
     plan.dailyPlans.splice(index, 1);
-    syncPlanDates(plan);
-  }
-
-  function moveDay(index: number, offset: number) {
-    if (!options.canEditContent()) return;
-    const plan = options.selectedItinerary.value;
-    if (!plan) return;
-    const target = index + offset;
-    if (target < 0 || target >= plan.dailyPlans.length) return;
-    [plan.dailyPlans[index], plan.dailyPlans[target]] = [plan.dailyPlans[target], plan.dailyPlans[index]];
     syncPlanDates(plan);
   }
 
@@ -393,8 +350,8 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   }
 
   return {
-    updateGuideSelection, updateGuidePrice, updateHotelCost, addDay, addResourceItem, clearHotelPlan, copyItinerary, createEmptyItinerary, createItinerary,
-    duplicateDay, moveDay, removeDay, removeItem, updateDayField,
+    updateGuideSelection, updateGuidePrice, updateHotelCost, addDay, addResourceItem, clearHotelPlan, createEmptyItinerary, createItinerary,
+    duplicateDay, removeDay, removeItem, updateDayField,
     updateHotelPlanSelection, updateItineraryBasics, updateItemQuantity, updateQuoteOption,
     updateVehiclePlan, updateMeal, updateQuoteSettings,
   };

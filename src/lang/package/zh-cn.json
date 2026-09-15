@@ -313,10 +313,8 @@
     "startDateRequired": "请选择开始日期",
     "adultsRequired": "请输入成人数量",
     "statuses": {
-      "archived": "已归档",
       "draft": "草稿",
-      "quoted": "已报价",
-      "ready_for_costing": "待核价"
+      "quoted": "已报价"
     },
     "title": "行程标题",
     "titleRequired": "请输入行程标题",
@@ -824,7 +822,6 @@
   },
   "service": {
     "auth": {
-      "credentialManagementUnavailable": "当前暂不支持修改密码或管理登录凭证",
       "missingRefreshToken": "没有有效的刷新令牌"
     },
     "user": {

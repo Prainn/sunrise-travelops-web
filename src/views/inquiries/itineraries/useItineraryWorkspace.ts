@@ -96,7 +96,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     canEditPrice: () => priceEditable.value,
     getCreator: () => userStore.userInfo.username ?? "",
     findHotel: (id) => resourceService.hotels.find((hotel) => hotel.id === id),
-    findVehicle: (id) => resourceService.transports.find((vehicle) => vehicle.id === id),
   });
   const selectionVersions = new Map<string, number>();
   let guideSelectionVersion = 0;
@@ -402,7 +401,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     guideLanguage,
     guideShopping,
     loadDestinationResourceOptions,
-    moveDay: editor.moveDay,
     openCreateDialog,
     openGuideCreateDialog,
     openEditDialog,

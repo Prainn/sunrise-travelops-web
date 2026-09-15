@@ -1,22 +1,6 @@
 import type { LoginScope, ResourceLibrary } from "./auth";
 import type { BaseQueryParams } from "@/types/common";
 
-/** 尚未接入后端的员工目录和个人资料兜底记录。 */
-export interface PrototypeUserRecord {
-  id: string;
-  username: string;
-  status: "enabled" | "disabled";
-  nickname: string;
-  nicknameKey?: string;
-  avatar: string;
-  gender: number;
-  mobile: string;
-  email: string;
-  deptId: number;
-  createTime: string;
-  roles: string[];
-}
-
 export interface UserInfo {
   identityId?: string;
   scope?: LoginScope;
@@ -90,20 +74,6 @@ export interface PasswordChangeForm {
   oldPassword?: string;
   newPassword?: string;
   confirmPassword?: string;
-}
-
-export interface PasswordVerifyForm {
-  password?: string;
-}
-
-export interface MobileUpdateForm extends PasswordVerifyForm {
-  mobile?: string;
-  code?: string;
-}
-
-export interface EmailUpdateForm extends PasswordVerifyForm {
-  email?: string;
-  code?: string;
 }
 
 export interface ProfileSecurity {

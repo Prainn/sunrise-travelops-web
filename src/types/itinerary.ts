@@ -1,4 +1,4 @@
-export type ItineraryStatus = "draft" | "ready_for_costing" | "quoted" | "archived";
+export type ItineraryStatus = "draft" | "quoted";
 
 export type ItineraryItemType = "hotel" | "attraction" | "restaurant" | "vehicle" | "guide";
 export type ItineraryDailyItemType = Extract<ItineraryItemType, "attraction" | "restaurant">;

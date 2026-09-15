@@ -29,7 +29,7 @@ describe("server quote preview", () => {
       inquiry: ref(undefined), inquiryId: computed(() => "inquiry"), itineraryStore: [],
       selectedItinerary: computed(() => selected.value), selectedItineraryId: ref(selected.value!.id),
       canCreate: () => false, canEditContent: () => true, canEditPrice: () => true,
-      getCreator: () => "test", findHotel: () => undefined, findVehicle: () => undefined,
+      getCreator: () => "test", findHotel: () => undefined,
     });
     await vi.advanceTimersByTimeAsync(300);
     api.previewQuote.mockClear();

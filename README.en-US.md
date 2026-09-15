@@ -14,7 +14,7 @@ pnpm dev
 To use the local backend development service (at `http://localhost:4000` by default), start the backend first and then run:
 
 ```bash
-pnpm dev-local
+pnpm dev:local
 ```
 
 Open `http://localhost:3000`. If the port is occupied, use the URL printed in the terminal.

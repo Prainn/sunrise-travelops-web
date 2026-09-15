@@ -3,13 +3,10 @@ import { computed, ref } from "vue";
 import { describe, expect, it } from "vitest";
 import type { InquiryRecord } from "@/types/inquiry";
 import type { ItineraryRecord, ItineraryResourceItem } from "@/types/itinerary";
-import type { HotelRecord, TransportRecord } from "@/types/resource";
+import type { HotelRecord } from "@/types/resource";
 import { useItineraryEditor } from "./useItineraryEditor";
 
 const hotelResourceId = "00000000-0000-4000-8000-000000000002";
-const vehicleResourceId = "00000000-0000-4000-8000-000000000004";
-const vipVehicleResourceId = "00000000-0000-4000-8000-000000000005";
-
 function createEditor() {
   const preferredHotel: HotelRecord = {
     id: hotelResourceId, code: "HTL-002", name: "Hotel", province: "云南省", city: "昆明",
@@ -26,20 +23,6 @@ function createEditor() {
     groupPrice: 500,
   };
   const hotels = [preferredHotel, fiveStarHotel];
-  const vehicle: TransportRecord = {
-    id: vehicleResourceId, code: "VEH-001", name: "Coach", city: "昆明",
-    serviceLevel: "standard", seats: 38, dailyPrice: 800, unit: "vehicleDay",
-    phone: "", status: "enabled", remark: "",
-  };
-  const vipVehicle: TransportRecord = {
-    ...vehicle,
-    id: vipVehicleResourceId,
-    code: "VEH-002",
-    name: "VIP Coach",
-    serviceLevel: "vip",
-
-  };
-  const vehicles = [vehicle, vipVehicle];
   const inquiry = ref<InquiryRecord>({
     id: "inquiry-1", code: "INQ-001", agencyId: "00000000-0000-4000-8000-000000000001", agencyCode: "AGY-001", agencyName: "Agency",
     contactName: "Contact", email: "", phone: "", countryOrRegion: "", sourceChannel: "Email", originalMessage: "",
@@ -60,9 +43,8 @@ function createEditor() {
     canEditPrice: () => true,
     getCreator: () => "operator",
     findHotel: (id) => hotels.find((hotel) => hotel.id === id),
-    findVehicle: (id) => vehicles.find((record) => record.id === id),
   });
-  return { editor, hotels, inquiry, itineraryStore, selectedItinerary, vehicle, vipVehicle };
+  return { editor, hotels, inquiry, itineraryStore, selectedItinerary };
 }
 
 describe('itinerary editor business rules', () => {
@@ -86,26 +68,21 @@ describe('itinerary editor business rules', () => {
     expect(plan.guidePlans).toHaveLength(1);
     expect(plan.guidePlans[0]).toMatchObject({ guideId: 'g2', shopping: true, dailyPrice: 600 });
   });
-  it('preserves manually agreed hotel prices through basic edits and copies', () => {
+  it('preserves manually agreed hotel prices through basic edits', () => {
     const { editor, hotels } = createEditor();
     const plan = editor.createItinerary({ ...editor.createEmptyItinerary(), startDate: '2026-11-05', days: 7, destinations: [hotels[1].city] })!;
     editor.updateHotelPlanSelection('international_five_star', hotels[1].city, hotels[1].id);
     editor.updateHotelCost('international_five_star', hotels[1].city, 123);
     editor.updateItineraryBasics({ ...plan, adults: 19, leaderCount: 1 });
     expect(plan.hotelPlans[0].hotels[0].unitCost).toBe(123);
-    const copy = editor.copyItinerary('copy')!;
-    expect(copy.hotelPlans[0].hotels[0].unitCost).toBe(123);
-    expect(copy.hotelPlans[0].hotels[0]).not.toBe(plan.hotelPlans[0].hotels[0]);
+
   });
-  it('preserves vehicle date ranges in copies and daily plan edits', () => {
+  it('preserves vehicle date ranges through daily plan edits', () => {
     const { editor } = createEditor();
     const plan = editor.createItinerary({ ...editor.createEmptyItinerary(), startDate: '2026-11-05' })!;
     editor.addDay();
     editor.updateVehiclePlan('standard', { tier: 'standard', totalPrice: 5000, arrangements: [{ id: 'a', startDate: '2026-11-05', endDate: '2026-11-06', vehicles: [{ vehicleId: 'v', vehicleName: 'Bus', seats: 39, quantity: 2 }] }] });
-    const copy = editor.copyItinerary('copy')!;
-    expect(copy.vehiclePlans[0].arrangements[0]).toMatchObject({ startDate: '2026-11-05', endDate: '2026-11-06' });
     editor.removeDay(1);
-    expect(copy.vehiclePlans[0].arrangements[0]).toMatchObject({ startDate: '2026-11-05', endDate: '2026-11-06' });
     expect(plan.vehiclePlans[0].arrangements[0]).toMatchObject({ startDate: '2026-11-05', endDate: '2026-11-06' });
   });
 });
