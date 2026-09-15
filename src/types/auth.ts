@@ -1,5 +1,8 @@
+export type LoginScope = "headquarters" | "shengxu" | "linxi" | "website";
+export type ResourceLibrary = "shengxu" | "shared";
 /** 登录表单数据。 */
 export interface LoginRequest {
+  scope: LoginScope;
   username: string;
   password: string;
   rememberMe?: boolean;
@@ -15,6 +18,14 @@ export interface LoginResult {
 
 /** 后端当前用户响应。 */
 export interface CurrentUserResult {
+  nickname: string;
+  identityId: string;
+  scope: LoginScope;
+  scopeName: string;
+  deptId: number | null;
+  deptName: string;
+  roles: string[];
+  resourceLibrary: ResourceLibrary | null;
   id: string;
   username: string;
   permissions: string[];

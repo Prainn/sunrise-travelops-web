@@ -1,5 +1,4 @@
-import type { OptionItem, PageResult } from "@/types/common";
-import { users } from "@/data/data";
+import type { PageResult } from "@/types/common";
 import { request } from "@/api/request";
 import { translate } from "@/lang/utils";
 import type {
@@ -9,6 +8,8 @@ import type {
   PasswordChangeForm,
   PasswordVerifyForm,
   UserForm,
+  IdentityRoleOption,
+  DepartmentOption,
   UserInfo,
   UserItem,
   UserProfileDetail,
@@ -17,14 +18,7 @@ import type {
 } from "@/types/user";
 import { authService } from "./auth.service";
 
-let currentUsername = "";
-
 type UserCreateResult = UserForm & { temporaryPassword?: string };
-type RoleOption = OptionItem & {
-  code?: string;
-  name?: string;
-};
-
 const USER_BASE_URL = "/users";
 
 const ROLE_LABEL_KEYS: Record<string, string> = {
@@ -41,12 +35,6 @@ const ROLE_NAME_LABEL_KEYS: Record<string, string> = {
   资源主管: "user.roles.resourceManager",
   系统管理员: "user.roles.systemAdministrator",
 };
-
-function requireCurrentUser() {
-  const user = users.find((item) => item.username === currentUsername);
-  if (!user) throw new Error(translate("service.user.notFound"));
-  return user;
-}
 
 function rejectUnsupportedCredentialMutation(): never {
   throw new Error(translate("service.auth.credentialManagementUnavailable"));
@@ -73,8 +61,7 @@ function toUserInput(data: UserForm, options: { includeUsername?: boolean; inclu
     gender: data.gender ?? 0,
     mobile: data.mobile?.trim() ?? "",
     email: data.email?.trim() ?? "",
-    deptId: data.deptId,
-    roleIds: data.roleIds ?? [],
+    identities: data.identities.map(({ id, scope, deptId, roleIds }) => ({ id, scope, deptId, roleIds })),
     status: data.status ?? 1,
   };
   if (options.includeUsername) input.username = data.username?.trim() ?? "";
@@ -100,13 +87,6 @@ function localizeRoleNames(value?: string): string | undefined {
     .join(",");
 }
 
-function localizeRoleOption(option: RoleOption): OptionItem {
-  return {
-    ...option,
-    label: localizeRoleName(option.name ?? option.label, option.code),
-  };
-}
-
 export const userService = {
   getProfileSecurity(): Promise<ProfileSecurity> {
     return request.get<ProfileSecurity>("/auth/me/security");
@@ -120,7 +100,8 @@ export const userService = {
       ...result,
       list: result.list.map((user) => ({
         ...user,
-        roleNames: localizeRoleNames(user.roleNames),
+        deptName: user.identities.map(i => i.deptName).join(" / "),
+        roleNames: user.identities.map(i => localizeRoleNames(i.roleNames)).join(","),
       })),
     };
   },
@@ -157,42 +138,21 @@ export const userService = {
   /** 获取后端当前用户，并映射为页面使用的身份与权限结构。 */
   async getCurrentUser(): Promise<UserInfo> {
     const currentUser = await authService.getCurrentUser();
-    currentUsername = currentUser.username;
-    const prototypeUser = users.find((item) => item.username === currentUser.username);
-
-    return {
-      userId: currentUser.id,
-      username: currentUser.username,
-      nickname: prototypeUser?.nicknameKey
-        ? translate(prototypeUser.nicknameKey)
-        : prototypeUser?.nickname ?? currentUser.username,
-      avatar: prototypeUser?.avatar ?? "/favicon.ico",
-      roles: [],
-      perms: [...currentUser.permissions],
-    };
+    return { userId: currentUser.id, username: currentUser.username, nickname: currentUser.nickname, avatar: "/favicon.ico", roles: currentUser.roles, perms: [...currentUser.permissions], identityId: currentUser.identityId, scope: currentUser.scope, scopeName: currentUser.scopeName, deptName: currentUser.deptName, resourceLibrary: currentUser.resourceLibrary };
   },
-
-  async getRoleOptions(): Promise<OptionItem[]> {
-    const options = await request.get<RoleOption[]>(`${USER_BASE_URL}/options/roles`);
-    return options.map(localizeRoleOption);
+  async getRoleOptions(): Promise<IdentityRoleOption[]> {
+    const options = await request.get<IdentityRoleOption[]>(`${USER_BASE_URL}/options/roles`);
+    return options.map(option => ({...option, label: localizeRoleName(option.label, option.code)}));
   },
-
-  async getDepartmentOptions(): Promise<OptionItem[]> {
-    return request.get<OptionItem[]>(`${USER_BASE_URL}/options/departments`);
-  },
+  async getDepartmentOptions(): Promise<DepartmentOption[]> { return request.get<DepartmentOption[]>(`${USER_BASE_URL}/options/departments`); },
+  inquiryImpact(id: string) { return request.get<{total: number; unfinished: number}>(`${USER_BASE_URL}/${id}/inquiry-impact`); },
 
   getProfile(): Promise<UserProfileDetail> {
     return request.get<UserProfileDetail>("/auth/me/profile");
   },
 
   async updateProfile(data: UserProfileForm): Promise<void> {
-    const user = requireCurrentUser();
-    if (data.nickname !== undefined) {
-      user.nickname = data.nickname.trim();
-      delete user.nicknameKey;
-    }
-    if (data.avatar !== undefined) user.avatar = data.avatar;
-    if (data.gender !== undefined) user.gender = data.gender;
+    await request.patch<void>("/auth/me/profile",data);
   },
 
   async changePassword(data: PasswordChangeForm): Promise<void> {

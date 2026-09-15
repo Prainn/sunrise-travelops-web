@@ -207,7 +207,6 @@
     "customMealPerTable": "Per table",
     "customMealPrice": "Unit price (CNY)",
     "customMealHint": "Saved only to this itinerary, not to the restaurant library.",
-
     "hotelPlansPending": "Set the overnight cities in the daily itinerary before selecting hotels.",
     "hotelPlansNotNeeded": "All itinerary days are marked as no overnight stay. No hotels are needed.",
     "actualMarginRate": "Actual Margin",
@@ -601,6 +600,7 @@
     "tagTypePlaceholder": "Select a tag style"
   },
   "user": {
+    "basicInfo": "Basic information",
     "cannotDeleteCurrent": "The current user cannot be deleted",
     "createSuccess": "User created",
     "createTitle": "Create User",
@@ -971,5 +971,44 @@
       "km": "Khmer",
       "lo": "Lao"
     }
+  },
+  "identity": {
+    "scope": "Login scope",
+    "chooseScope": "Select login scope",
+    "scopes": {
+      "headquarters": "Headquarters",
+      "shengxu": "Shengxu",
+      "linxi": "Linxi",
+      "website": "Website"
+    },
+    "superuser": "Super administrator",
+    "identities": "Authorized identities",
+    "impact": "{total} assigned inquiries, {unfinished} unfinished",
+    "transferFirst": "Transfer unfinished inquiries before changing this account or identity",
+    "transfer": "Transfer inquiry",
+    "owner": "Receiving coordinator",
+    "reason": "Reason",
+    "reasonPlaceholder": "Enter the reason for this price change",
+    "reference": "Reference price",
+    "unknown": "Historical reference unknown",
+    "actual": "Actual price",
+    "prices": "Itinerary prices and adjustment reasons",
+    "history": "Price history",
+    "automatic": "Use segment total",
+    "library": "Resource library",
+    "shared": "Linxi / Website shared library",
+    "readOnly": "Read only for current identity",
+    "amounts": "{before} → {after}",
+    "time": "Time",
+    "operator": "Operator",
+    "noReference": "No resource reference price",
+    "businessUnit": "Business unit",
+    "allBusinesses": "All business units",
+    "allLibraries": "All resource libraries",
+    "libraries": {
+      "shengxu": "Sunrise library",
+      "shared": "Ttrip / Lynx shared library"
+    },
+    "selectLibraryToCreate": "Select a business unit before creating a resource"
   }
 }

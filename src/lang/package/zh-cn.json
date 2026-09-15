@@ -207,7 +207,6 @@
     "customMealPerTable": "按桌",
     "customMealPrice": "单价（元）",
     "customMealHint": "仅保存到当前行程，不加入餐厅资源库。",
-
     "hotelPlansPending": "请先在逐日行程中填写住宿城市，再选择酒店。",
     "hotelPlansNotNeeded": "逐日行程均设为不住宿，无需选择酒店。",
     "actualMarginRate": "实际毛利率",
@@ -601,6 +600,7 @@
     "tagTypePlaceholder": "请选择标签样式"
   },
   "user": {
+    "basicInfo": "基本信息",
     "cannotDeleteCurrent": "不能删除当前登录用户",
     "createSuccess": "用户创建成功",
     "createTitle": "新增用户",
@@ -971,5 +971,44 @@
       "km": "高棉语",
       "lo": "老挝语"
     }
+  },
+  "identity": {
+    "scope": "登录范围",
+    "chooseScope": "请选择登录范围",
+    "scopes": {
+      "headquarters": "总部",
+      "shengxu": "盛旭",
+      "linxi": "霖熹",
+      "website": "独立站"
+    },
+    "superuser": "超级管理员",
+    "identities": "身份授权",
+    "impact": "名下 {total} 个询盘，其中 {unfinished} 个未完成",
+    "transferFirst": "请先转交未完成询盘，再调整人员身份或状态",
+    "transfer": "转交询盘",
+    "owner": "接收计调",
+    "reason": "原因",
+    "reasonPlaceholder": "请填写本次调整原因",
+    "reference": "参考价",
+    "unknown": "历史参考价未知",
+    "actual": "实际价格",
+    "prices": "行程价格与调价原因",
+    "history": "调价历史",
+    "automatic": "恢复自动合计",
+    "library": "资源库",
+    "shared": "霖熹 / 独立站共享库",
+    "readOnly": "当前身份只读",
+    "amounts": "{before} → {after}",
+    "time": "操作时间",
+    "operator": "操作人",
+    "noReference": "无资源库参考价",
+    "businessUnit": "所属业务部",
+    "allBusinesses": "全部业务部",
+    "allLibraries": "全部资源库",
+    "libraries": {
+      "shengxu": "盛旭资源库",
+      "shared": "霖熹／独立站共享库"
+    },
+    "selectLibraryToCreate": "请先选择所属业务部，再新增资源"
   }
 }

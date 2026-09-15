@@ -16,7 +16,8 @@
 </template>
 <script setup lang="ts">
 import { useCityOptions } from "@/composables/useCityOptions";
-defineProps<{ modelValue: string; disabledCity?: string }>();
+import type { ResourceLibrary } from "@/types/auth";
+const props = defineProps<{ modelValue: string; disabledCity?: string; library?: ResourceLibrary }>();
 const emit = defineEmits<{ "update:modelValue": [value: string] }>();
-const cityOptions = useCityOptions();
+const cityOptions = useCityOptions(() => props.library);
 </script>

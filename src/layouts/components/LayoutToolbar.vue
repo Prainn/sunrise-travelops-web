@@ -19,7 +19,7 @@
               class="layout-user__avatar-img"
             />
           </div>
-          <span class="layout-user__name">{{ userStore.userInfo.username }}</span>
+          <span class="layout-user__name">{{ userStore.userInfo.nickname }} · {{ userStore.userInfo.deptName || $t("identity.superuser") }}</span>
         </div>
         <template #dropdown>
           <el-dropdown-menu>

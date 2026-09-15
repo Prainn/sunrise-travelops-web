@@ -83,6 +83,22 @@
                 :validate-on-rule-change="false"
               >
                 <el-form-item
+                  prop="scope"
+                >
+                  <el-select
+                    v-model="loginFormData.scope"
+                    :placeholder="$t('identity.chooseScope')"
+                    class="w-full"
+                  >
+                    <el-option
+                      v-for="scope in ['headquarters','shengxu','linxi','website']"
+                      :key="scope"
+                      :value="scope"
+                      :label="$t(`identity.scopes.${scope}`)"
+                    />
+                  </el-select>
+                </el-form-item>
+                <el-form-item
                   class="login-form__username"
                   prop="username"
                 >
@@ -100,7 +116,7 @@
                 >
                   <el-form-item prop="password">
                     <el-input
-                      v-model.trim="loginFormData.password"
+                      v-model="loginFormData.password"
                       :placeholder="$t('login.password')"
                       type="password"
                       show-password
@@ -145,7 +161,6 @@ defineOptions({ name: "LoginPage", inheritAttrs: false });
 import { Clock, Lock, User } from "@element-plus/icons-vue";
 import type { FormInstance } from "element-plus";
 import router from "@/router";
-import { hasRouteChainAccess } from "@/router/access";
 import { useUserStore } from "@/stores/user";
 import type { LoginRequest } from "@/types/auth";
 import { AuthStorage } from "@/utils/auth-storage";
@@ -154,7 +169,6 @@ import ThemeSwitch from "@/components/ThemeSwitch/index.vue";
 import logo from "@/assets/images/logo.png";
 
 const userStore = useUserStore();
-const route = useRoute();
 const { t } = useI18n();
 
 const loginFormRef = ref<FormInstance>();
@@ -165,6 +179,7 @@ const UserIcon = markRaw(User);
 const LockIcon = markRaw(Lock);
 
 const loginFormData = ref<LoginRequest>({
+  scope: "headquarters",
   username: "",
   password: "",
   rememberMe: AuthStorage.getRememberMe(),
@@ -189,13 +204,7 @@ async function handleLoginSubmit() {
   try {
     await userStore.login(loginFormData.value);
     await userStore.getUserInfo();
-    const redirectPath = (route.query.redirect as string) || "/";
-    const targetRoute = router.resolve(decodeURIComponent(redirectPath));
-    const canAccessTarget = hasRouteChainAccess(
-      targetRoute.matched.map((record) => record.meta),
-      userStore.userInfo
-    );
-    await router.push(canAccessTarget ? targetRoute.fullPath : "/");
+    await router.push("/");
   } catch (error) {
     userStore.resetAllState();
     ElMessage.error(error instanceof Error ? error.message : t("login.failed"));

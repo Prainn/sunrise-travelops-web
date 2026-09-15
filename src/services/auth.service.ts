@@ -3,10 +3,10 @@ import type { CurrentUserResult, LoginRequest, LoginResult } from "@/types/auth"
 
 export const authService = {
   /** 使用后端账号密码登录。 */
-  async login({ username, password }: LoginRequest): Promise<LoginResult> {
+  async login({ scope, username, password }: LoginRequest): Promise<LoginResult> {
     return request.post<LoginResult>(
       "/auth/login",
-      { username, password },
+      { scope, username, password },
       { requiresAuth: false }
     );
   },

@@ -31,7 +31,7 @@ describe("userService", () => {
         id: "user-1",
         username: "admin",
         nickname: "admin",
-        roleNames: "Coordinator,RESOURCE_MANAGER,自定义角色",
+        identities: [{scope:"shengxu",deptName:"盛旭 · 计调部",roleNames: "Coordinator,RESOURCE_MANAGER,自定义角色"}],
       }],
       total: 1,
       page: 1,
@@ -51,6 +51,7 @@ describe("userService", () => {
       ...page,
       list: [{
         ...page.list[0],
+        deptName:"盛旭 · 计调部",
         roleNames: "user.roles.coordinator,user.roles.resourceManager,自定义角色",
       }],
     });
@@ -90,8 +91,7 @@ describe("userService", () => {
     await userService.create({
       username: " operations_li ",
       nickname: " 李明 ",
-      deptId: 3,
-      roleIds: ["role-1"],
+      identities:[{scope:"shengxu",deptId:3,roleIds:["role-1"]}],
       status: 1,
       email: " operations.li@sunrise.local ",
       password: " secret123 ",
@@ -99,8 +99,7 @@ describe("userService", () => {
     await userService.update("user-1", {
       username: "ignored",
       nickname: " 李明 ",
-      deptId: 3,
-      roleIds: ["role-1"],
+      identities:[{scope:"shengxu",deptId:3,roleIds:["role-1"]}],
       status: 1,
     });
 

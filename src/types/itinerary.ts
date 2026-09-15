@@ -6,7 +6,7 @@ export type ItineraryPriceUnit = string;
 export type ItineraryHotelTier = "international_five_star" | "preferred_non_five_star";
 export type ItineraryVehicleTier = VehicleServiceLevel;
 
-export interface ItineraryHotelSelection {
+export interface ItineraryHotelSelection extends PriceReference {
   destination: string;
   hotelId: string;
   hotelName: string;
@@ -35,6 +35,9 @@ export interface ItineraryVehicleArrangement {
   totalPrice?: number | null;
 }
 export interface ItineraryVehiclePlan {
+  pricingMode?: 'automatic' | 'manual' | 'unknown' | null;
+  segmentTotal?: number | null;
+  adjustmentReason?: string | null;
   tier: ItineraryVehicleTier;
   arrangements: ItineraryVehicleArrangement[];
   totalPrice: number | null;
@@ -113,7 +116,7 @@ export interface ItineraryQuoteCalculation {
   options: ItineraryQuoteOptionCalculation[];
 }
 
-export interface ItineraryResourceItem {
+export interface ItineraryResourceItem extends PriceReference {
   id: string;
   type: ItineraryItemType;
   /** Both IDs are null for an itinerary-only custom restaurant. */
@@ -123,7 +126,6 @@ export interface ItineraryResourceItem {
   priceName: string;
   quantity: number;
   unit: ItineraryPriceUnit;
-  referenceUnitCost?: number;
   unitCost: number;
   totalCost: number;
   remark: string;
@@ -143,7 +145,7 @@ export interface ItineraryDayRecord {
   items: ItineraryResourceItem[];
 }
 
-export interface ItineraryGuidePlan {
+export interface ItineraryGuidePlan extends PriceReference {
   destination: string;
   guideId: string;
   guideName: string;
@@ -178,3 +180,6 @@ export interface ItineraryRecord {
   updatedAt: string;
 }
 import type { VehicleServiceLevel } from "./resource";
+
+export interface PriceReference { referencePrice?: number | null; referenceBasis?: string | null; adjustmentReason?: string | null }
+export interface PriceAdjustment { id: string; itemKey: string; itemName: string; itemType: string; referenceBasis: string; referencePrice: number | null; beforePrice: number | null; afterPrice: number; reason: string; action: string; operatorName: string; occurredAt: string }

@@ -1,6 +1,22 @@
 <!-- 用户列表 -->
 <template>
-  <div class="page-container user-page">
+  <div class="page-container page-container--split user-page">
+    <aside class="page-aside">
+      <div class="page-aside__inner p-3 overflow-y-auto!">
+        <h3 class="mb-3 text-sm font-medium">
+          {{ $t('user.department') }}
+        </h3>
+        <el-tree
+          :data="departmentTree"
+          node-key="key"
+          :current-node-key="params.deptId ?? 'all'"
+          default-expand-all
+          highlight-current
+          :expand-on-click-node="false"
+          @node-click="handleDepartmentClick"
+        />
+      </div>
+    </aside>
     <div class="page-main">
       <el-card
         class="page-search"
@@ -43,24 +59,6 @@
               <el-option
                 :label="$t('common.disabled')"
                 :value="CommonStatus.DISABLED"
-              />
-            </el-select>
-          </el-form-item>
-
-          <el-form-item
-            :label="$t('user.department')"
-            prop="deptId"
-          >
-            <el-select
-              v-model="params.deptId"
-              :placeholder="$t('common.all')"
-              clearable
-            >
-              <el-option
-                v-for="item in departmentOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
               />
             </el-select>
           </el-form-item>
@@ -228,10 +226,21 @@
             </el-table-column>
             <el-table-column
               :label="$t('user.department')"
-              prop="deptName"
-              min-width="140"
-              show-overflow-tooltip
-            />
+              min-width="220"
+            >
+              <template #default="{ row }">
+                <div
+                  v-for="identity in row.identities"
+                  :key="identity.scope"
+                  class="flex items-center gap-2"
+                >
+                  <el-tag size="small">
+                    {{ $t(`identity.scopes.${identity.scope}`) }}
+                  </el-tag>
+                  <span>{{ identity.deptName }}</span>
+                </div>
+              </template>
+            </el-table-column>
             <el-table-column
               :label="$t('user.rolesLabel')"
               prop="roleNames"
@@ -330,8 +339,11 @@
         ref="userFormRef"
         :model="formData"
         :rules="rules"
-        label-width="80px"
+        label-width="auto"
       >
+        <h4 class="mt-0 mb-5 text-base font-semibold leading-6">
+          {{ $t('user.basicInfo') }}
+        </h4>
         <el-form-item
           :label="$t('user.username')"
           prop="username"
@@ -360,44 +372,22 @@
           <DictSelect
             v-model="formData.gender"
             code="gender"
+            :style="{ width: '100%' }"
           />
         </el-form-item>
 
-        <el-form-item
-          :label="$t('user.department')"
-          prop="deptId"
-        >
-          <el-select
-            v-model="formData.deptId"
-            :placeholder="$t('user.departmentPlaceholder')"
-          >
-            <el-option
-              v-for="item in departmentOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item
-          :label="$t('user.rolesLabel')"
-          prop="roleIds"
-        >
-          <el-select
-            v-model="formData.roleIds"
-            multiple
-            :placeholder="$t('common.selectPlaceholder')"
-          >
-            <el-option
-              v-for="item in roleOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-        </el-form-item>
-
+        <UserIdentityFields
+          v-model="formData.identities"
+          :roles="roleOptions"
+          :departments="departmentOptions"
+        />
+        <el-alert
+          v-if="impact"
+          :title="$t('identity.impact', impact)"
+          :type="impact.unfinished ? 'warning' : 'info'"
+          :closable="false"
+          class="mb-4"
+        />
         <el-form-item
           :label="$t('user.mobile')"
           prop="mobile"
@@ -465,15 +455,29 @@
         :rules="resetPasswordRules"
         label-width="84px"
       >
+        <el-form-item :label="$t('identity.businessUnit')">
+          <div class="flex flex-col gap-2">
+            <div
+              v-for="identity in resetPasswordDialog.identities"
+              :key="identity.scope"
+              class="flex items-center gap-2"
+            >
+              <el-tag size="small">
+                {{ $t(`identity.scopes.${identity.scope}`) }}
+              </el-tag>
+              <span>{{ identity.deptName }}</span>
+            </div>
+          </div>
+        </el-form-item>
         <el-form-item :label="$t('user.nickname')">
           <el-input
-            :model-value=" resetPasswordDialog.username "
+            :model-value="resetPasswordDialog.nickname"
             readonly
           />
         </el-form-item>
         <el-form-item :label="$t('user.username')">
           <el-input
-            :model-value=" resetPasswordDialog.nickname || resetPasswordDialog.username"
+            :model-value="resetPasswordDialog.username"
             readonly
           />
         </el-form-item>
@@ -517,8 +521,8 @@ import { h } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { Female, Male } from "@element-plus/icons-vue";
 
-import type { UserForm, UserItem, UserQueryParams } from "@/types/user";
-import type { OptionItem } from "@/types/common";
+import UserIdentityFields from "./components/UserIdentityFields.vue";
+import type { IdentityRoleOption, DepartmentOption, UserForm, UserItem, UserQueryParams } from "@/types/user";
 import { userService } from "@/services";
 import { useAppStore } from "@/stores/app";
 import { useUserStore } from "@/stores/user";
@@ -547,6 +551,7 @@ const { loading, list, total, params, fetchData, handleQuery, handleResetQuery }
   initialParams: {
     page: 1,
     pageSize: 10,
+    deptId: undefined,
   },
   request: userService.getPage,
   onBeforeReset: () => queryFormRef.value?.resetFields(),
@@ -562,17 +567,20 @@ const dialogState = reactive({
 
 const resetPasswordSubmitting = ref(false);
 
+const impact = ref<{total: number; unfinished: number}>();
 const initialFormData: UserForm = {
+  identities: [{ scope: userStore.userInfo.scope ?? "shengxu", roleIds: [] }],
   status: CommonStatus.ENABLED,
 };
 
-const formData = reactive<UserForm>({ ...initialFormData });
+const formData = reactive<UserForm>(structuredClone(initialFormData));
 
 type ResetPasswordForm = {
   password: string;
 };
 
 const resetPasswordDialog = reactive({
+  identities: [] as UserItem["identities"],
   visible: false,
   userId: "",
   username: "",
@@ -583,8 +591,27 @@ const resetPasswordForm = reactive<ResetPasswordForm>({
   password: "",
 });
 
-const roleOptions = ref<OptionItem[]>([]);
-const departmentOptions = ref<OptionItem[]>([]);
+const roleOptions = ref<IdentityRoleOption[]>([]);
+const departmentOptions = ref<DepartmentOption[]>([]);
+
+type DepartmentTreeNode = { key: string | number; label: string; deptId?: number; children?: DepartmentTreeNode[] };
+const departmentTree = computed<DepartmentTreeNode[]>(() => [{
+  key: 'all',
+  label: t('common.all'),
+  children: [...new Set(departmentOptions.value.map(dept => dept.scope))].map(scope => ({
+    key: scope,
+    label: t(`identity.scopes.${scope}`),
+    children: departmentOptions.value.filter(dept => dept.scope === scope).map(dept => ({
+      key: dept.value, label: dept.label, deptId: dept.value,
+    })),
+  })),
+}]);
+
+function handleDepartmentClick(node: DepartmentTreeNode): void {
+  if (node.key !== 'all' && node.deptId === undefined) return;
+  params.deptId = node.deptId;
+  handleQuery();
+}
 
 const drawerSize = computed(() => (appStore.device === DeviceEnum.DESKTOP ? "600px" : "90%"));
 
@@ -595,8 +622,6 @@ const resetPasswordDialogWidth = computed(() =>
 const rules = computed<FormRules<UserForm>>(() => ({
   username: [{ required: true, message: t("user.usernamePlaceholder"), trigger: "blur" }],
   nickname: [{ required: true, message: t("user.nicknamePlaceholder"), trigger: "blur" }],
-  deptId: [{ required: true, message: t("user.departmentPlaceholder"), trigger: "change" }],
-  roleIds: [{ required: true, message: t("user.rolePlaceholder"), trigger: "change" }],
   email: [{ type: "email", message: t("user.emailInvalid"), trigger: "blur" }],
   mobile: [{ pattern: /^1[3-9]\d{9}$/, message: t("user.mobileInvalid"), trigger: "blur" }],
 }));
@@ -670,7 +695,8 @@ function resetForm(): void {
   Object.keys(formData).forEach((key) => {
     delete (formData as Record<string, unknown>)[key];
   });
-  Object.assign(formData, initialFormData);
+  Object.assign(formData, structuredClone(initialFormData));
+  impact.value = undefined;
 }
 
 /**
@@ -680,6 +706,8 @@ async function handleCreateClick(): Promise<void> {
   dialogState.titleKey = "user.createTitle";
   dialogState.mode = DialogMode.CREATE;
   await loadFormOptions();
+  const department = departmentOptions.value.find(dept => dept.value === params.deptId);
+  if (department) formData.identities = [{ scope: department.scope, deptId: department.value, roleIds: [] }];
   openDialog();
 }
 
@@ -692,6 +720,7 @@ async function handleEditClick(id: string): Promise<void> {
   await loadFormOptions();
   const data = await userService.getFormData(id);
   Object.assign(formData, data);
+  impact.value = await userService.inquiryImpact(id);
   openDialog();
 }
 
@@ -753,6 +782,8 @@ async function handleDelete(id?: string): Promise<void> {
   }
 
   try {
+    const impacts = await Promise.all(userIds.split(",").map(value => userService.inquiryImpact(value)));
+    if (impacts.some(value => value.unfinished > 0)) { ElMessage.warning(t("identity.transferFirst")); return; }
     await ElMessageBox.confirm(t("user.deleteConfirm"), t("common.warning"), {
       confirmButtonText: t("common.confirm"),
       cancelButtonText: t("common.cancel"),
@@ -781,6 +812,7 @@ async function handleDelete(id?: string): Promise<void> {
  * @param row 用户行数据
  */
 function openResetPasswordDialog(row: UserItem): void {
+  resetPasswordDialog.identities = row.identities;
   resetPasswordDialog.userId = row.id;
   resetPasswordDialog.username = row.username ?? "";
   resetPasswordDialog.nickname = row.nickname ?? "";
@@ -805,6 +837,7 @@ function resetResetPasswordForm(): void {
   resetPasswordFormRef.value?.resetFields();
   resetPasswordFormRef.value?.clearValidate();
   resetPasswordForm.password = "";
+  resetPasswordDialog.identities = [];
   resetPasswordDialog.userId = "";
   resetPasswordDialog.username = "";
   resetPasswordDialog.nickname = "";
@@ -839,6 +872,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+
 .user-name-cell {
   @apply 'inline-flex gap-[8px] items-center';
 

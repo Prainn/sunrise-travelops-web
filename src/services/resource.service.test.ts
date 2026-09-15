@@ -1,3 +1,4 @@
+import { resetResourceBusinessFilter, selectedResourceBusinessUnit, selectedResourceLibrary } from "@/services/resource-library";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { requestMock } = vi.hoisted(() => ({ requestMock: vi.fn() }));
@@ -39,6 +40,8 @@ const restaurant: RestaurantRecord = { ...audit, id: "restaurant-1", code: "RES-
 const attraction: AttractionRecord = { ...audit, id: "attraction-1", code: "ATT-001", name: "Attraction", area: "昆明", category: "scenic", restroomLocation: "", remark: "", unit: "personVisit", status: "enabled", prices: [] };
 
 beforeEach(() => {
+  selectedResourceBusinessUnit.value = undefined;
+  selectedResourceLibrary.value = "shengxu";
   requestMock.mockReset();
   resourceService.cities.splice(0);
   resourceService.cityOptions.splice(0);
@@ -49,13 +52,69 @@ beforeEach(() => {
   resourceService.transports.splice(0);
   resourceService.guides.splice(0);
   requestMock.mockImplementation(async (path, options) => {
+    if (!options?.method && (path.endsWith("/contacts") || path.endsWith("/prices") || path.split("?")[0].endsWith("/options"))) return [];
     if (!options?.method && path.includes("?")) return { list: [], total: 0, page: 1, pageSize: 20 };
-    if (!options?.method && (path.endsWith("/contacts") || path.endsWith("/prices") || path.endsWith("/options"))) return [];
     return options?.body ?? {};
   });
 });
 
 describe("resourceService", () => {
+  it.each(["shengxu", "linxi", "website"] as const)("clears the headquarters %s filter from every resource request on reset", async (businessUnit) => {
+    selectedResourceBusinessUnit.value = businessUnit;
+    selectedResourceLibrary.value = businessUnit === "shengxu" ? "shengxu" : "shared";
+    resetResourceBusinessFilter();
+    for (const api of [resourceService.agencyApi, resourceService.cityApi, resourceService.hotelApi, resourceService.restaurantApi, resourceService.attractionApi, resourceService.transportApi, resourceService.guideApi]) {
+      await api.getPage({ page: 1, pageSize: 10 });
+    }
+    for (const [url] of requestMock.mock.calls) {
+      expect(url).not.toContain("businessUnit=");
+      expect(url).not.toContain("library=");
+      expect(url).toContain("page=1&pageSize=10");
+    }
+  });
+
+  it.each(["shengxu", "shared"] as const)("keeps an ordinary account within its %s library on reset", async (library) => {
+    selectedResourceLibrary.value = library;
+    resetResourceBusinessFilter();
+    await resourceService.hotelApi.getPage({ page: 1, pageSize: 10 });
+    expect(requestMock).toHaveBeenCalledWith(`/resources/hotels?library=${library}&page=1&pageSize=10`);
+  });
+
+  it.each(["shengxu", "linxi", "website"] as const)("sends %s business filtering to every resource list without changing pagination", async (businessUnit) => {
+    selectedResourceBusinessUnit.value = businessUnit;
+    selectedResourceLibrary.value = businessUnit === "shengxu" ? "shengxu" : "shared";
+    requestMock.mockResolvedValue({ list: [], total: 71, page: 3, pageSize: 20 });
+    const apis = [resourceService.agencyApi, resourceService.cityApi, resourceService.hotelApi, resourceService.restaurantApi, resourceService.attractionApi, resourceService.transportApi, resourceService.guideApi];
+    for (const api of apis) {
+      const page = await api.getPage({ page: 3, pageSize: 20 });
+      expect(page).toMatchObject({ total: 71, page: 3, pageSize: 20 });
+    }
+    expect(requestMock).toHaveBeenCalledTimes(7);
+    for (const [url] of requestMock.mock.calls) {
+      expect(url).toContain(`page=3&pageSize=20&businessUnit=${businessUnit}`);
+      expect(url).not.toContain("library=");
+    }
+  });
+
+  it("keeps server pagination when headquarters reads all libraries", async () => {
+    selectedResourceLibrary.value = undefined;
+    const rows = [{ ...agency, library: "shengxu" }, { ...agency, id: "shared-agency", library: "shared" }];
+    requestMock.mockResolvedValue({ list: rows, total: 73, page: 2, pageSize: 10 });
+    await resourceService.loadAgencies({ page: 2, pageSize: 10 });
+    expect(requestMock).toHaveBeenCalledTimes(1);
+    expect(requestMock).toHaveBeenCalledWith("/resources/agencies?page=2&pageSize=10");
+    expect(resourceService.agencies).toEqual(rows);
+    expect(resourceService.getTotal(resourceService.agencies)).toBe(73);
+  });
+
+  it("reads a resource by ID without leaking a different list filter into the detail request", async () => {
+    selectedResourceLibrary.value = "shengxu";
+    requestMock.mockResolvedValue({ ...agency, library: "shared" });
+    const detail = await resourceService.agencyApi.getDetail(agency.id);
+    expect(requestMock).toHaveBeenCalledWith(`/resources/agencies/${agency.id}`);
+    expect(detail.library).toBe("shared");
+  });
+
   it("loads top-level rows without eagerly requesting every child resource", async () => {
     requestMock.mockImplementation(async (path) => {
       if (path.startsWith("/resources/agencies?")) {
@@ -85,7 +144,7 @@ describe("resourceService", () => {
     requestMock.mockResolvedValue({ list: [city], total: 123, page: 2, pageSize });
     await resourceService.loadCities({ page: 2, pageSize, keyword: "昆明" });
     expect(requestMock).toHaveBeenCalledTimes(1);
-    expect(requestMock).toHaveBeenCalledWith(`/resources/cities?page=2&pageSize=${pageSize}&keyword=${encodeURIComponent("昆明")}`);
+    expect(requestMock).toHaveBeenCalledWith(`/resources/cities?library=shengxu&page=2&pageSize=${pageSize}&keyword=${encodeURIComponent("昆明")}`);
     expect(resourceService.cities).toEqual([city]);
     expect(resourceService.getTotal(resourceService.cities)).toBe(123);
   });
@@ -127,7 +186,7 @@ describe("resourceService", () => {
     });
 
     expect(requestMock).toHaveBeenCalledWith(
-      "/resources/restaurants?page=1&pageSize=100&keyword=%E4%BA%91%E5%8D%97%E8%8F%9C&city=%E6%98%86%E6%98%8E&unit=personMeal"
+      "/resources/restaurants?library=shengxu&page=1&pageSize=100&keyword=%E4%BA%91%E5%8D%97%E8%8F%9C&city=%E6%98%86%E6%98%8E&unit=personMeal"
     );
 
     await resourceService.hotelApi.getPage({
@@ -142,10 +201,10 @@ describe("resourceService", () => {
     });
 
     expect(requestMock).toHaveBeenCalledWith(
-      "/resources/hotels?page=1&pageSize=20&rating=international_five_star"
+      "/resources/hotels?library=shengxu&page=1&pageSize=20&rating=international_five_star"
     );
     expect(requestMock).toHaveBeenCalledWith(
-      "/resources/transports?page=1&pageSize=20&serviceLevel=vip"
+      "/resources/transports?library=shengxu&page=1&pageSize=20&serviceLevel=vip"
     );
   });
 
@@ -177,7 +236,7 @@ describe("resourceService", () => {
     const result = await resourceService.getPriceOptions("restaurant", { page: 1, pageSize: 10 });
     expect(result.list[0].unitCost).toBe(600);
     expect(requestMock).toHaveBeenCalledTimes(1);
-    expect(requestMock).toHaveBeenLastCalledWith("/resources/selections/restaurant-prices?page=1&pageSize=10");
+    expect(requestMock).toHaveBeenLastCalledWith("/resources/selections/restaurant-prices?library=shengxu&page=1&pageSize=10");
     requestMock.mockResolvedValueOnce({ resource: restaurant, price });
     const selected = await resourceService.getPriceSelection("restaurant", price.id);
     expect(selected.restaurants[0].prices[0].price).toBe(600);
@@ -192,7 +251,7 @@ describe("city options and hotel breakfast", () => {
     requestMock.mockResolvedValue([city]);
     await Promise.all([resourceService.loadCityOptions(), resourceService.loadCityOptions()]);
     expect(requestMock).toHaveBeenCalledTimes(1);
-    expect(requestMock).toHaveBeenCalledWith("/resources/cities/options");
+    expect(requestMock).toHaveBeenCalledWith("/resources/cities/options?library=shengxu");
     expect(resourceService.cityOptions[0]).toEqual(city);
     requestMock.mockResolvedValue([{ ...city, name: "大理" }]);
     await resourceService.loadCityOptions();
@@ -201,7 +260,7 @@ describe("city options and hotel breakfast", () => {
   it("keeps filtered city management rows separate from enabled city options", async () => {
     const enabled = { id: "city-1", code: "CITY-001", name: "昆明", province: "云南省", status: "enabled" as const };
     const disabled = { ...enabled, id: "city-2", code: "CITY-002", name: "大理", status: "disabled" as const };
-    requestMock.mockImplementation(async (path) => path.endsWith("/options")
+    requestMock.mockImplementation(async (path) => path.split("?")[0].endsWith("/options")
       ? [enabled]
       : { list: [disabled], total: 1, page: 1, pageSize: 100 });
     await resourceService.loadCities({ keyword: "大理" });

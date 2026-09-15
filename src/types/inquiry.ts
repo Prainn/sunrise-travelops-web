@@ -1,6 +1,7 @@
 export type InquiryStatus = "new" | "planning" | "quoted" | "lost" | "archived";
 
 export interface InquiryRecord {
+  businessUnit?: "shengxu" | "linxi" | "website";
   version: number;
   id: string;
   code: string;

@@ -1,7 +1,9 @@
+import { selectedResourceBusinessUnit, selectedResourceLibrary } from "./resource-library";
 import { clearResourceOptionsCache, loadResourceOptions } from "./resource-options-cache";
-import { reactive } from "vue";
+import { reactive, watch } from "vue";
 import { request } from "@/api/request";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
+import type { ResourceLibrary } from "@/types/auth";
 import type { PageResult } from "@/types/common";
 import type {
   AgencyContactRecord, AgencyRecord, AttractionPriceRecord, AttractionRecord,
@@ -35,7 +37,7 @@ type ApiRecord<T> = {
 const RESOURCE_BASE_URL = "/resources";
 
 function buildParams(query: ResourceQuery): ResourceQuery {
-  return Object.fromEntries(Object.entries(query).map(([key, value]) => {
+  return Object.fromEntries(Object.entries({library: selectedResourceLibrary.value, ...query}).map(([key, value]) => {
     const normalizedValue = typeof value === "string" ? value.trim() : value;
     return [key, normalizedValue || normalizedValue === 0 ? normalizedValue : undefined];
   })) as ResourceQuery;
@@ -45,7 +47,7 @@ function normalizeMoney(value: string | number | null | undefined): number {
   return value === null || value === undefined ? 0 : Number(value);
 }
 
-function createCrud<T extends { code: string }>(
+function createCrud<T extends { code: string; library?: ResourceLibrary }>(
   resourceName: string,
   toInput: (data: T) => Record<string, unknown>,
   fromResponse: (data: ApiRecord<T>) => T = (data) => data as T
@@ -54,7 +56,7 @@ function createCrud<T extends { code: string }>(
   return {
     async getPage(query) {
       const result = await request.get<PageResult<ApiRecord<T>>>(baseUrl, {
-        params: buildParams(query),
+        params: buildParams({ ...query, ...(selectedResourceBusinessUnit.value ? { businessUnit: selectedResourceBusinessUnit.value, library: undefined } : {}) }),
       });
       return { ...result, list: result.list.map(fromResponse) };
     },
@@ -63,7 +65,7 @@ function createCrud<T extends { code: string }>(
       return fromResponse(result);
     },
     create(data) {
-      return request.post<ApiRecord<T>>(baseUrl, { ...toInput(data), ...(resourceName === "guides" ? {} : { code: data.code.trim() || undefined }) }).then(result => { clearResourceOptionsCache(); return fromResponse(result); });
+      return request.post<ApiRecord<T>>(baseUrl, { library: data.library ?? selectedResourceLibrary.value, ...toInput(data), ...(resourceName === "guides" ? {} : { code: data.code.trim() || undefined }) }).then(result => { clearResourceOptionsCache(); return fromResponse(result); });
     },
     update(id, data) {
       return request.put<ApiRecord<T>>(
@@ -224,6 +226,7 @@ async function loadResourceRecords<T>(target: T[], api: ResourceCrud<T>, query: 
   return target;
 }
 
+watch(selectedResourceLibrary, () => { cityOptionsRequest = null; cityOptions.splice(0); clearResourceOptionsCache(); }, { flush: "sync" });
 export const resourceService = {
   getTotal(records: object) { return resourceTotals.get(records) ?? 0; },
   cities,
@@ -231,8 +234,9 @@ export const resourceService = {
   cityApi,
   async loadCities(query: ResourceListQuery = {}) { return loadResourceRecords(cities, cityApi, query); },
   loadCityOptions(): Promise<CityRecord[]> {
-    if (!cityOptionsRequest) cityOptionsRequest = request.get<CityRecord[]>(`${RESOURCE_BASE_URL}/cities/options`)
-      .then((records) => replaceRecords(cityOptions, records)).finally(() => { cityOptionsRequest = null; });
+    const library = selectedResourceLibrary.value;
+    if (!cityOptionsRequest) cityOptionsRequest = request.get<CityRecord[]>(`${RESOURCE_BASE_URL}/cities/options`, {params:{library:selectedResourceLibrary.value}})
+      .then((records) => library === selectedResourceLibrary.value ? replaceRecords(cityOptions, records) : cityOptions).finally(() => { if (library === selectedResourceLibrary.value) cityOptionsRequest = null; });
     return cityOptionsRequest;
   },
   agencies,

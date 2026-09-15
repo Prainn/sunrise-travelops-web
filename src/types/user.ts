@@ -1,3 +1,4 @@
+import type { LoginScope, ResourceLibrary } from "./auth";
 import type { BaseQueryParams } from "@/types/common";
 
 /** 尚未接入后端的员工目录和个人资料兜底记录。 */
@@ -17,6 +18,11 @@ export interface PrototypeUserRecord {
 }
 
 export interface UserInfo {
+  identityId?: string;
+  scope?: LoginScope;
+  scopeName?: string;
+  deptName?: string;
+  resourceLibrary?: ResourceLibrary | null;
   userId?: string;
   username?: string;
   nickname?: string;
@@ -34,6 +40,7 @@ export interface UserQueryParams extends BaseQueryParams {
 }
 
 export interface UserItem {
+  identities: UserIdentity[];
   id: string;
   avatar?: string;
   createTime?: string;
@@ -48,14 +55,13 @@ export interface UserItem {
 }
 
 export interface UserForm {
+  identities: UserIdentity[];
   id?: string;
   avatar?: string;
-  deptId?: number;
   email?: string;
   gender?: number;
   mobile?: string;
   nickname?: string;
-  roleIds?: Array<string | number>;
   status?: number;
   username?: string;
   password?: string;
@@ -105,3 +111,7 @@ export interface ProfileSecurity {
   permissions: Array<{ code: string; name: string }>;
   recentLogins: Array<{ id: string; time: string; ip: string; userAgent: string }>;
 }
+
+export interface UserIdentity { id?: string; scope: LoginScope; deptId?: number | null; deptName?: string; roleIds: string[]; roleNames?: string }
+export interface IdentityRoleOption { value: string; label: string; code: string; scopes: LoginScope[] }
+export interface DepartmentOption { value: number; label: string; scope: LoginScope }

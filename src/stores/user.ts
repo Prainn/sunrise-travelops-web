@@ -1,3 +1,4 @@
+import { selectedResourceBusinessUnit, selectedResourceLibrary } from "@/services/resource-library";
 import { clearResourceOptionsCache } from "@/services/resource-options-cache";
 import { store } from "./store";
 
@@ -13,7 +14,7 @@ import { translate } from "@/lang/utils";
 
 export const useUserStore = defineStore("user", () => {
   // 用户信息
-  const userInfo = ref<UserInfo>({} as UserInfo);
+  const userInfo = ref<UserInfo>({ roles: [], perms: [] });
   // 记住我状态
   const rememberMe = ref(AuthStorage.getRememberMe());
 
@@ -51,6 +52,8 @@ export const useUserStore = defineStore("user", () => {
     if (!data) {
       throw new Error("Verification failed, please Login again.");
     }
+    if (userInfo.value.userId !== data.userId || userInfo.value.scope !== data.scope)
+      selectedResourceLibrary.value = data.resourceLibrary ?? undefined;
     Object.assign(userInfo.value, data);
     return data;
   }
@@ -74,6 +77,8 @@ export const useUserStore = defineStore("user", () => {
   function resetAllState(): void {
     // 1. 重置用户状态
     resetUserState();
+    selectedResourceLibrary.value = undefined;
+    selectedResourceBusinessUnit.value = undefined;
 
     // 2. 重置其他模块状态
     usePermissionStoreHook().resetRouter();
@@ -89,7 +94,7 @@ export const useUserStore = defineStore("user", () => {
   function resetUserState(): void {
     AuthStorage.clearAuth();
     clearResourceOptionsCache();
-    userInfo.value = {} as UserInfo;
+    userInfo.value = { roles: [], perms: [] };
   }
 
   /**
