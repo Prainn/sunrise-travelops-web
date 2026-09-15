@@ -97,7 +97,7 @@
         </el-table-column>
         <el-table-column
           :label="$t('common.actions')"
-          width="190"
+          width="240"
           fixed="right"
           align="center"
         >
