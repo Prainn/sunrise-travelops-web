@@ -12,6 +12,9 @@
       :rules="rules"
       label-width="auto"
     >
+      <el-form-item :label="$t('identity.library')">
+        <ResourceLibraryTag :library="form.library" />
+      </el-form-item>
       <el-form-item
         v-if="isEditing"
         :label="$t('resource.code')"
@@ -34,7 +37,10 @@
         <el-input v-model.trim="form.countryOrRegion" />
       </el-form-item>
       <el-form-item :label="$t('resource.city')">
-        <CitySelect v-model="form.city" />
+        <CitySelect
+          v-model="form.city"
+          :library="form.library"
+        />
       </el-form-item>
       <el-form-item
         :label="$t('resource.agencyEmail')"
@@ -75,6 +81,7 @@
 </template>
 
 <script setup lang="ts">
+import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import CitySelect from "@/components/CitySelect.vue";
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";

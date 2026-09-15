@@ -15,6 +15,25 @@
       :rules="rules"
       label-width="auto"
     >
+      <el-form-item
+        v-if="userStore.userInfo.scope === 'headquarters'"
+        :label="$t('identity.scope')"
+      >
+        <el-select
+          v-model="form.businessUnit"
+          :disabled="isEditing"
+          :placeholder="$t('identity.chooseScope')"
+          @change="changeBusinessUnit"
+        >
+          <el-option
+            v-for="scope in ['shengxu','linxi','website']"
+            :key="scope"
+            :value="scope"
+            :label="$t(`identity.scopes.${scope}`)"
+          />
+        </el-select>
+      </el-form-item>
+
       <el-row :gutter="16">
         <el-col
           v-if="isEditing"
@@ -132,10 +151,11 @@
                   >
                     <el-select
                       v-model="form.ownerId"
-                      clearable
+                      :disabled="isEditing || !userStore.userInfo.roles.includes('ROOT')"
+                      :placeholder="$t('common.selectPlaceholder')"
                     >
                       <el-option
-                        v-for="option in ownerOptions"
+                        v-for="option in scopedOwners"
                         :key="option.id"
                         :label="option.name"
                         :value="option.id"
@@ -185,6 +205,8 @@
 </template>
 
 <script setup lang="ts">
+import { selectedResourceLibrary } from "@/services/resource-library";
+import { useUserStore } from "@/stores/user";
 import { inquiryService } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
 import { plannedDuration } from "@/views/inquiries/itineraries/duration";
@@ -211,6 +233,8 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const userStore = useUserStore();
+const scopedOwners = ref(props.ownerOptions);
 const formRef = ref<FormInstance>();
 const expandedDetails = ref<string[]>([]);
 const creatingContact = ref(false);
@@ -236,11 +260,20 @@ const rules = computed<FormRules>(() => ({
 function resetForm() {
   ++agencySelectionVersion;
   Object.assign(form, props.record);
+  selectedResourceLibrary.value = form.businessUnit === "shengxu" ? "shengxu" : "shared";
+  void refreshOwners();
   expandedDetails.value = props.isEditing ? ["followup"] : [];
   syncAgencyDetails();
   formRef.value?.clearValidate();
 }
 
+async function refreshOwners() { try { scopedOwners.value = await inquiryService.owners(form.businessUnit);
+  if (!props.isEditing && userStore.userInfo.userId && userStore.userInfo.username && userStore.userInfo.nickname && userStore.userInfo.scope !== "headquarters" && !scopedOwners.value.some(person => person.id === userStore.userInfo.userId)) scopedOwners.value.push({id:userStore.userInfo.userId,username:userStore.userInfo.username,name:userStore.userInfo.nickname}); } catch (error) { ElMessage.error(error instanceof Error ? error.message : t("request.failed")); } }
+async function changeBusinessUnit() {
+  selectedResourceLibrary.value = form.businessUnit === 'shengxu' ? 'shengxu' : 'shared';
+  form.agencyId='';form.contactId='';form.ownerId='';
+  await Promise.all([resourceService.loadAgencies(),refreshOwners()]);
+}
 function syncAgencyDetails() {
   const agency = selectedAgency.value;
   if (!agency) return;

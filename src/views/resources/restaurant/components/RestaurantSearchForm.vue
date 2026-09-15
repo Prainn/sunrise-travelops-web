@@ -4,6 +4,7 @@
     shadow="never"
   >
     <el-form :inline="true">
+      <ResourceBusinessFilter />
       <el-form-item :label="$t('common.keywords')">
         <el-input
           v-model.trim="keywords"
@@ -49,6 +50,7 @@
 </template>
 
 <script setup lang="ts">
+import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { RestaurantPriceUnit } from "@/types/resource";

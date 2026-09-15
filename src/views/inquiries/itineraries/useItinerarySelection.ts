@@ -1,3 +1,5 @@
+import { selectedResourceLibrary } from "@/services/resource-library";
+import { resourceService } from "@/services/resource.service";
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { inquiryService } from "@/services/inquiry.service";
@@ -20,6 +22,9 @@ export function useItinerarySelection() {
     const version = ++requestVersion; isLoading.value = true; loadError.value = "";
     try {
       const [record,plans] = await Promise.all([inquiryService.detail(inquiryId.value),inquiryService.listItineraries(inquiryId.value)]);
+      if (version !== requestVersion) return;
+      selectedResourceLibrary.value = record.businessUnit === "shengxu" ? "shengxu" : "shared";
+      await resourceService.loadCityOptions();
       if (version !== requestVersion) return;
       inquiry.value = record; itineraryStore.splice(0,itineraryStore.length,...plans);
       selectedItineraryId.value = getDefaultItineraryId(plans,String(route.query.itineraryId ?? selectedItineraryId.value));

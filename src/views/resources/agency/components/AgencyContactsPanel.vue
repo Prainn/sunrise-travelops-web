@@ -8,6 +8,7 @@
         <div v-if="agency">
           <div class="agency-contacts-panel__title">
             <strong>{{ agency.name }}</strong>
+            <ResourceLibraryTag :library="agency.library" />
             <span>{{ agency.code }}</span>
           </div>
           <small>{{ agency.countryOrRegion }} · {{ agency.email || "-" }}</small>
@@ -84,6 +85,7 @@
 </template>
 
 <script setup lang="ts">
+import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import type { ResourcePermissionSet } from "@/constants";
 import type { AgencyContactRecord, AgencyRecord } from "@/types/resource";
 

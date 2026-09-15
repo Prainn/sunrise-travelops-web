@@ -16,6 +16,27 @@
         :inline="true"
         class="log-filters mt-[20px]"
       >
+        <el-form-item
+          v-if="userStore.userInfo.scope === 'headquarters' && !inquiryId"
+          :label="$t('identity.businessUnit')"
+        >
+          <el-select
+            v-model="businessUnit"
+            class="!w-[180px]"
+            @change="search"
+          >
+            <el-option
+              value=""
+              :label="$t('identity.allBusinesses')"
+            />
+            <el-option
+              v-for="unit in ['shengxu', 'linxi', 'website']"
+              :key="unit"
+              :value="unit"
+              :label="$t(`identity.scopes.${unit}`)"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item :label="$t('inquiry.code')">
           <el-input
             v-model.trim="inquiryCode"
@@ -218,6 +239,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { useUserStore } from "@/stores/user";
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -239,13 +261,15 @@ const itineraryDays = ref<Record<string, Record<string, ItineraryDayRecord>>>({}
 const operators = ref<PersonOption[]>([]);
 const actions: InquiryLogAction[] = ["inquiry_created","inquiry_updated","itinerary_created","itinerary_saved","itinerary_pdf_generated","inquiry_archived","inquiry_lost"];
 const report = ref<LogReport>({ totalOperations: 0, inquiryCount: 0, operatorCount: 0, changedFields: 0, byAction: [] });
+const userStore = useUserStore();
+const businessUnit = ref<"" | "shengxu" | "linxi" | "website">("");
 const inquiryCode = ref("");
 const dates = ref<string[]>([]); const operatorId = ref(""); const action = ref<InquiryLogAction | "">("");
 const page = ref(1); const pageSize = ref(10); const total = ref(0); const isLoading = ref(false); const error = ref("");
 let requestVersion = 0;
 async function fetchLogs() {
   const version = ++requestVersion; isLoading.value = true; error.value = "";
-  const query = { page: page.value, pageSize: pageSize.value, inquiryCode: inquiryCode.value, inquiryId: inquiryId.value || undefined, operatorId: operatorId.value, action: action.value, from: dates.value?.[0], to: dates.value?.[1] };
+  const query = { businessUnit: userStore.userInfo.scope === "headquarters" && !inquiryId.value ? businessUnit.value || undefined : undefined, page: page.value, pageSize: pageSize.value, inquiryCode: inquiryCode.value, inquiryId: inquiryId.value || undefined, operatorId: operatorId.value, action: action.value, from: dates.value?.[0], to: dates.value?.[1] };
   try {
     const [details,summary,people,record] = await Promise.all([inquiryLogService.list(query),inquiryLogService.report(query),inquiryLogService.operators(),inquiryId.value ? inquiryService.detail(inquiryId.value) : Promise.resolve(undefined), businessDictionaryService.ensureBuiltInTypesLoaded()]);
     const itineraryIds = [...new Set(details.list

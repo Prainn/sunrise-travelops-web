@@ -192,6 +192,6 @@ async function deleteContact(contact: AgencyContactRecord) {
 
 <style scoped lang="scss">
 .agency-page {
-  @apply 'grid [grid-template-columns:minmax(280px,_340px)_minmax(0,_1fr)] gap-[16px] min-h-[620px]';
+  @apply 'grid [grid-template-columns:minmax(380px,_440px)_minmax(0,_1fr)] gap-[16px] min-h-[620px]';
 }
 </style>

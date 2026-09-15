@@ -22,6 +22,14 @@
         row-key="id"
       >
         <el-table-column
+          :label="$t('identity.library')"
+          min-width="200"
+        >
+          <template #default="{ row }">
+            <ResourceLibraryTag :library="row.library" />
+          </template>
+        </el-table-column>
+        <el-table-column
           prop="code"
           :label="$t('resource.code')"
           width="200"
@@ -143,6 +151,7 @@
 </template>
 
 <script setup lang="ts">
+import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { useI18n } from "vue-i18n";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { RESOURCE_PERMISSIONS } from "@/constants";

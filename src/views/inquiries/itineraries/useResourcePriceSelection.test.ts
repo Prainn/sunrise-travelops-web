@@ -67,7 +67,7 @@ describe("resource price selection requests", () => {
 const customMeal: ItineraryResourceItem = {
   id: "dinner-1", type: "restaurant", mealSlot: "dinner", resourceId: null, resourcePriceId: null,
   resourceName: "大理餐厅2", priceName: "", unit: "table", unitCost: 600, quantity: 3,
-  totalCost: 1800, remark: "少辣",
+  totalCost: 1800, remark: "少辣", referencePrice:null, referenceBasis:"unknown", adjustmentReason:"",
 };
 
 describe("editing meal arrangements", () => {

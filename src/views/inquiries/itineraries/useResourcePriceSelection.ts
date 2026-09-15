@@ -10,7 +10,10 @@ export function useResourcePriceSelection(props: { readonly destination?: string
   const city = ref("");
   const selectedId = ref("");
   const quantity = ref(1);
+  const actualPrice = ref(0);
+  const adjustmentReason = ref("");
   const selectedOption = ref<ResourcePriceOption>();
+  const referencePrice = computed(() => props.currentItem && props.currentItem.resourcePriceId === selectedOption.value?.resourcePriceId ? props.currentItem.referencePrice ?? null : selectedOption.value?.unitCost ?? null);
   const source = ref<"library" | "custom">("library");
   const customName = ref("");
   const customPrice = ref<number>();
@@ -39,6 +42,8 @@ export function useResourcePriceSelection(props: { readonly destination?: string
   }, { flush: "sync" });
   watch(selectedOption, (option) => {
     quantity.value = getDefaultResourceQuantity(option, props.guestCount);
+    actualPrice.value = option?.unitCost ?? 0;
+    adjustmentReason.value = "";
   }, { flush: "sync" });
   watch(customUnit, unit => {
     customQuantity.value = unit === "table" ? 1 : Math.max(props.guestCount, 1);
@@ -51,6 +56,7 @@ export function useResourcePriceSelection(props: { readonly destination?: string
     if (visible) {
       city.value = props.destination ?? "";
       const item = props.currentItem;
+      adjustmentReason.value = item?.adjustmentReason ?? "";
       const custom = item?.type === "restaurant" && item.resourceId === null && item.resourcePriceId === null;
       source.value = custom ? "custom" : "library";
       customName.value = custom ? item.resourceName : "";
@@ -68,6 +74,7 @@ export function useResourcePriceSelection(props: { readonly destination?: string
           ],
         };
         quantity.value = item.quantity;
+        actualPrice.value = item.unitCost; adjustmentReason.value = item.adjustmentReason ?? "";
       }
     }
     initializing = false;
@@ -78,6 +85,7 @@ export function useResourcePriceSelection(props: { readonly destination?: string
     const current = props.currentItem;
     if (props.mealSlot && source.value === "custom" && customPrice.value != null) {
       return {
+        referencePrice: null, referenceBasis: "unknown", adjustmentReason: adjustmentReason.value,
         id: current?.id ?? createId("item"), type: "restaurant", mealSlot: props.mealSlot,
         resourceId: null, resourcePriceId: null, resourceName: customName.value.trim(), priceName: "",
         unit: customUnit.value, unitCost: customPrice.value, quantity: customQuantity.value,
@@ -87,13 +95,14 @@ export function useResourcePriceSelection(props: { readonly destination?: string
     const option = selectedOption.value;
     if (!option) return;
     if (current && current.resourcePriceId === option.resourcePriceId) {
-      return { ...current, quantity: quantity.value, totalCost: multiplyMoney(current.unitCost, quantity.value) };
+      return { ...current, unitCost: actualPrice.value, adjustmentReason: adjustmentReason.value, quantity: quantity.value, totalCost: multiplyMoney(actualPrice.value, quantity.value) };
     }
-    const item = calculateItem(option, quantity.value);
+    const item = calculateItem(option, quantity.value, actualPrice.value);
+    item.adjustmentReason = adjustmentReason.value;
     return { ...item, id: current?.id ?? item.id, remark: current?.remark ?? "",
       ...(props.mealSlot ? { mealSlot: props.mealSlot } : {}) };
   }
 
   onScopeDispose(() => { ++detailVersion; });
-  return { city, selectedId, quantity, selectedOption, loadOptions, source, customName, customPrice, customUnit, customQuantity, canSubmit, createItem };
+  return { actualPrice, referencePrice, adjustmentReason, city, selectedId, quantity, selectedOption, loadOptions, source, customName, customPrice, customUnit, customQuantity, canSubmit, createItem };
 }

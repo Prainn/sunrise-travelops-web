@@ -77,3 +77,24 @@ it("defaults table meals to enough tables while leaving per-person quantities un
 });
 import type { ResourcePriceOption } from "./pricing";
 import { getDefaultResourceQuantity } from "./pricing";
+
+import type { ItineraryRecord } from '@/types/itinerary';
+import { missingPriceReasons } from './price-adjustments';
+it('validates new price reasons, restoration, resource replacement and custom meals before saving',()=>{
+  const previous={dailyPlans:[{dayNumber:1,items:[{id:'meal',resourceName:'餐厅',resourceId:'r1',resourcePriceId:'p1',unitCost:50,referencePrice:50,quantity:2}]}],hotelPlans:[],guidePlans:[],vehiclePlans:[]} as unknown as ItineraryRecord;
+  const next=structuredClone(previous);const item=next.dailyPlans[0].items[0];item.quantity=10;
+  expect(missingPriceReasons(next,previous)).toEqual([]);
+  item.unitCost=60;item.adjustmentReason='  ';expect(missingPriceReasons(next,previous)).toEqual(['D1 · 餐厅']);
+  item.adjustmentReason='新协议';expect(missingPriceReasons(next,previous)).toEqual([]);
+  const adjusted=structuredClone(next);item.unitCost=50;item.adjustmentReason='';expect(missingPriceReasons(next,adjusted)).toEqual([]);
+  item.resourcePriceId='p2';item.referencePrice=100;expect(missingPriceReasons(next,previous)).toEqual(['D1 · 餐厅']);
+  item.resourceId=null;item.resourcePriceId=null;item.referencePrice=null;expect(missingPriceReasons(next)).toEqual([]);
+  const savedCustom=structuredClone(next);item.unitCost=70;expect(missingPriceReasons(next,savedCustom)).toEqual(['D1 · 餐厅']);
+  const later=structuredClone(next);item.unitCost=50;expect(missingPriceReasons(next,later)).toEqual(['D1 · 餐厅']);
+});
+it('requires a manual vehicle reason for missing segments or deviations but not automatic totals',()=>{
+  const plan={dailyPlans:[],hotelPlans:[],guidePlans:[],vehiclePlans:[{tier:'standard',totalPrice:900,pricingMode:'manual',arrangements:[{totalPrice:null}]}]} as unknown as ItineraryRecord;
+  expect(missingPriceReasons(plan)).toEqual(['standard']);
+  plan.vehiclePlans[0].arrangements[0].totalPrice=1000;expect(missingPriceReasons(plan)).toEqual(['standard']);
+  plan.vehiclePlans[0].totalPrice=1000;plan.vehiclePlans[0].pricingMode='automatic';expect(missingPriceReasons(plan)).toEqual([]);
+});

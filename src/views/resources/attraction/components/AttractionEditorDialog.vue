@@ -11,6 +11,9 @@
       :rules="rules"
       label-width="auto"
     >
+      <el-form-item :label="$t('identity.library')">
+        <ResourceLibraryTag :library="form.library" />
+      </el-form-item>
       <el-form-item
         v-if="isEditing"
         :label="$t('resource.code')"
@@ -30,7 +33,10 @@
         :label="$t('attraction.area')"
         prop="area"
       >
-        <CitySelect v-model="form.area" />
+        <CitySelect
+          v-model="form.area"
+          :library="form.library"
+        />
       </el-form-item>
       <el-form-item
         :label="$t('attraction.category')"
@@ -98,6 +104,7 @@
 </template>
 
 <script setup lang="ts">
+import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";

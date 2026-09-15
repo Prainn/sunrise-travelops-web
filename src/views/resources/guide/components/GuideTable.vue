@@ -4,6 +4,7 @@
       inline
       class="page-search"
     >
+      <ResourceBusinessFilter />
       <el-form-item :label="$t('planning.secondLanguage')">
         <el-select
           v-model="secondLanguage"
@@ -33,6 +34,11 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item>
+        <el-button @click="resetQuery">
+          {{ $t('common.reset') }}
+        </el-button>
+      </el-form-item>
     </el-form>
     <el-card
       class="page-content"
@@ -55,6 +61,14 @@
           height="100%"
           row-key="id"
         >
+          <el-table-column
+            :label="$t('identity.library')"
+            min-width="200"
+          >
+            <template #default="{ row }">
+              <ResourceLibraryTag :library="row.library" />
+            </template>
+          </el-table-column>
           <el-table-column :label="$t('planning.guidePrice')">
             <template #default="{ row }">
               ¥{{ formatMoney(row.dailyPrice) }}
@@ -107,6 +121,9 @@
   </div>
 </template>
 <script setup lang="ts">
+import { resetResourceBusinessFilter } from "@/services/resource-library";
+import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
+import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { ref, watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
 import { useResourcePagination } from '@/views/resources/useResourcePagination';
@@ -123,4 +140,11 @@ function query(): ResourceListQuery { return { ...paginationQuery(), secondLangu
 const requestRows = useDebounceFn(() => emit('query-change', query()), 300);
 watch([secondLanguage, shopping], () => { pageNum.value = 1; requestRows(); });
 function refreshRows() { emit('refresh', query()); }
+function resetQuery() {
+  secondLanguage.value = '';
+  shopping.value = '';
+  pageNum.value = 1;
+  resetResourceBusinessFilter();
+  requestRows();
+}
 </script>

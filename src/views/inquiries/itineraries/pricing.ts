@@ -173,7 +173,7 @@ export function calculateItem(
     priceName: option.priceName,
     quantity,
     unit: option.unit,
-    referenceUnitCost: option.type === "vehicle" ? option.unitCost : undefined,
+    referencePrice: option.unitCost, referenceBasis: "resource_price", adjustmentReason: "",
     unitCost,
     totalCost: multiplyMoney(unitCost, quantity),
     remark: "",

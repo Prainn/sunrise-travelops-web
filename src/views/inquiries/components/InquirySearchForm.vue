@@ -4,6 +4,26 @@
     shadow="never"
   >
     <el-form :inline="true">
+      <el-form-item
+        v-if="userStore.userInfo.scope === 'headquarters'"
+        :label="$t('identity.businessUnit')"
+      >
+        <el-select
+          v-model="businessUnit"
+          class="!w-[180px]"
+        >
+          <el-option
+            value=""
+            :label="$t('identity.allBusinesses')"
+          />
+          <el-option
+            v-for="unit in ['shengxu', 'linxi', 'website']"
+            :key="unit"
+            :value="unit"
+            :label="$t(`identity.scopes.${unit}`)"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item :label="$t('common.keywords')">
         <el-input
           v-model.trim="keywords"
@@ -62,10 +82,14 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { useUserStore } from "@/stores/user";
+import type { InquiryRecord } from "@/types/inquiry";
+const userStore = useUserStore();
 import type { InquiryStatus } from "@/types/inquiry";
 import { INQUIRY_STATUS_OPTIONS } from "../options";
 
 const props = defineProps<{
+  businessUnit: NonNullable<InquiryRecord["businessUnit"]> | "";
   keywords: string;
   status: InquiryStatus | "";
   owner: string;
@@ -74,6 +98,7 @@ const props = defineProps<{
   sourceOptions: string[];
 }>();
 const emit = defineEmits<{
+  "update:businessUnit": [value: NonNullable<InquiryRecord["businessUnit"]> | ""];
   "update:keywords": [value: string];
   "update:status": [value: InquiryStatus | ""];
   "update:owner": [value: string];
@@ -82,6 +107,7 @@ const emit = defineEmits<{
 }>();
 
 const statusOptions = INQUIRY_STATUS_OPTIONS;
+const businessUnit = computed({ get: () => props.businessUnit, set: (value) => emit("update:businessUnit", value) });
 const keywords = computed({ get: () => props.keywords, set: (value) => emit("update:keywords", value) });
 const status = computed({ get: () => props.status, set: (value) => emit("update:status", value) });
 const owner = computed({ get: () => props.owner, set: (value) => emit("update:owner", value) });

@@ -1,3 +1,4 @@
+import { missingPriceReasons } from "./price-adjustments";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
 import { itineraryDuration } from "./duration";
 import { computed, ref, watch } from "vue";
@@ -29,6 +30,11 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const isSaving = ref(false);
   const selection = useItinerarySelection();
   const { inquiry, inquiryId, itineraryStore, selectedItinerary, selectedItineraryId } = selection;
+  const savedPrices = new Map<string, ItineraryRecord>();
+  watch(() => [selectedItinerary.value?.id, selectedItinerary.value?.version], () => {
+    const plan = selectedItinerary.value;
+    if (plan) savedPrices.set(plan.id, JSON.parse(JSON.stringify(plan)) as ItineraryRecord);
+  }, {immediate: true, flush: 'post'});
   const isPlanDialogVisible = ref(false);
   const isEditingPlan = ref(false);
   const isResourceDialogVisible = ref(false);
@@ -99,7 +105,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     inquiry,
     selectedItinerary,
     canGenerate: () => canGeneratePdf.value,
-    canDownload: () => hasUserPermission(userStore.userInfo, "itinerary:pdf"),
+    canDownload: () => hasUserPermission(userStore.userInfo, "itinerary:download"),
   });
 
   async function loadDestinationResourceOptions() {
@@ -296,6 +302,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   async function saveItinerary(): Promise<boolean> {
     const plan = selectedItinerary.value;
     if (!plan || !canSaveItinerary.value || isSaving.value) return false;
+    if (missingPriceReasons(plan,savedPrices.get(plan.id)).length) { messages.error("identity.reasonPlaceholder"); return false; }
     isSaving.value = true;
     try {
       const saved = await inquiryService.saveItinerary(plan);

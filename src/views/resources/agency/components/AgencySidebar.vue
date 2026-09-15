@@ -17,11 +17,25 @@
       </div>
     </template>
 
-    <el-input
-      v-model.trim="keywords"
-      :placeholder="$t('resource.agencySearchPlaceholder')"
-      clearable
-    />
+    <el-form :inline="true">
+      <ResourceBusinessFilter />
+      <el-form-item
+        :label="$t('common.keywords')"
+        class="w-full pr-2"
+      >
+        <el-input
+          v-model.trim="keywords"
+          :placeholder="$t('resource.agencySearchPlaceholder')"
+          clearable
+        />
+      </el-form-item>
+      <el-form-item>
+        <el-button @click="resetQuery">
+          {{ $t("common.reset") }}
+        </el-button>
+      </el-form-item>
+    </el-form>
+
     <el-scrollbar class="agency-sidebar__scrollbar">
       <div class="agency-sidebar__list">
         <div
@@ -34,7 +48,9 @@
           @click="emit('update:selectedId', agency.id)"
           @keydown.enter="emit('update:selectedId', agency.id)"
         >
-          <div class="agency-sidebar__item-heading">
+          <ResourceLibraryTag :library="agency.library" />
+
+          <div class="agency-sidebar__item-heading mt-2">
             <strong>{{ agency.name }}</strong>
             <el-tag
               :type="agency.status === 'enabled' ? 'success' : 'info'"
@@ -85,6 +101,9 @@
 </template>
 
 <script setup lang="ts">
+import { resetResourceBusinessFilter } from "@/services/resource-library";
+import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
+import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import type { ResourcePermissionSet } from "@/constants";
@@ -110,6 +129,12 @@ const keywords = ref("");
 const requestRows = useDebounceFn(() => emit("query-change", { keyword: keywords.value }), 300);
 
 watch(keywords, () => requestRows());
+
+function resetQuery() {
+  keywords.value = "";
+  resetResourceBusinessFilter();
+  requestRows();
+}
 </script>
 
 <style scoped lang="scss">

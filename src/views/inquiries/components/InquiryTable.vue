@@ -20,6 +20,15 @@
         row-key="id"
       >
         <el-table-column
+          v-if="userStore.userInfo.scope === 'headquarters'"
+          :label="$t('identity.businessUnit')"
+          width="120"
+        >
+          <template #default="{ row }">
+            <el-tag>{{ $t(`identity.scopes.${row.businessUnit}`) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column
           prop="code"
           :label="$t('inquiry.code')"
           width="180"
@@ -100,6 +109,10 @@
             >
               {{ $t("common.view") }}
             </el-button>
+            <InquiryTransferButton
+              :inquiry="scope.row as InquiryRecord"
+              @transferred="emit('refresh')"
+            />
             <el-button
               v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus)"
               v-hasPerm="'inquiry:update'"
@@ -158,6 +171,9 @@
 </template>
 
 <script setup lang="ts">
+import { useUserStore } from "@/stores/user";
+const userStore = useUserStore();
+import InquiryTransferButton from "./InquiryTransferButton.vue";
 import { formatDateTime } from "@/utils";
 import { plannedDuration } from "@/views/inquiries/itineraries/duration";
 import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";

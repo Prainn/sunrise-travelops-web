@@ -8,7 +8,7 @@
     <template v-if="record">
       <div class="inquiry-detail__header">
         <div>
-          <h3>{{ record.agencyName }}</h3>
+          <h3>{{ record.agencyName }} <el-tag>{{ $t(`identity.scopes.${record.businessUnit}`) }}</el-tag></h3>
           <span>{{ record.code }}</span>
         </div>
         <el-tag :type="INQUIRY_STATUS_TAG_TYPES[record.status]">

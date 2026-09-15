@@ -5,6 +5,7 @@
       shadow="never"
     >
       <el-form :inline="true">
+        <ResourceBusinessFilter />
         <el-form-item :label="$t('common.keywords')">
           <el-input
             v-model.trim="keywords"
@@ -79,6 +80,9 @@
         :rules="hotelRules"
         label-width="auto"
       >
+        <el-form-item :label="$t('identity.library')">
+          <ResourceLibraryTag :library="hotelForm.library" />
+        </el-form-item>
         <el-form-item
           v-if="isEditing"
           :label="$t('resource.code')"
@@ -98,7 +102,10 @@
           :label="$t('resource.city')"
           prop="city"
         >
-          <CitySelect v-model="hotelForm.city" />
+          <CitySelect
+            v-model="hotelForm.city"
+            :library="hotelForm.library"
+          />
         </el-form-item>
         <el-form-item
           :label="$t('resource.priceUnit')"
@@ -191,12 +198,16 @@
 </template>
 
 <script setup lang="ts">
+import { resetResourceBusinessFilter } from "@/services/resource-library";
+import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
+import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { useResourcePagination } from "../useResourcePagination";
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import type { FormInstance, FormRules } from "element-plus";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+import { selectedResourceLibrary } from "@/services/resource-library";
 import CitySelect from "@/components/CitySelect.vue";
 import { useCityOptions } from "@/composables/useCityOptions";
 import { resourceService } from "@/services/resource.service";
@@ -286,13 +297,20 @@ function createEmptyHotel(): HotelForm {
   };
 }
 function resetQuery() {
+  resetResourceBusinessFilter();
+  pageNum.value = 1;
   keywords.value = "";
   city.value = "";
   rating.value = "";
+  requestHotels();
 }
 function openCreateDialog() {
+  if (!selectedResourceLibrary.value) {
+    ElMessage.info(t("identity.selectLibraryToCreate"));
+    return;
+  }
   editingId.value = "";
-  Object.assign(hotelForm, createEmptyHotel());
+  Object.assign(hotelForm, createEmptyHotel(), { library: selectedResourceLibrary.value });
   isHotelDialogVisible.value = true;
 }
 async function openEditDialog(hotel: HotelRecord) {
@@ -332,7 +350,7 @@ async function deleteHotel(hotel: HotelRecord) {
 }
 async function saveHotel() {
   if (!(await hotelFormRef.value?.validate().catch(() => false))) return;
-  const formValue = { ...hotelForm, province: resourceService.cityOptions.find((city) => city.name === hotelForm.city)?.province ?? hotelForm.province };
+  const formValue = { ...hotelForm, province: resourceService.cityOptions.find((city) => city.name === hotelForm.city && city.library === hotelForm.library)?.province ?? hotelForm.province };
   const current = hotelStore.find((hotel) => hotel.id === editingId.value);
   try {
     const saved = editingId.value

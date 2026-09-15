@@ -1,3 +1,4 @@
+import { selectedResourceLibrary } from "@/services/resource-library";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { confirm, success, error } = vi.hoisted(() => ({
@@ -9,7 +10,7 @@ const { confirm, success, error } = vi.hoisted(() => ({
 vi.mock("@/services/resource.service", () => ({ resourceService: { getTotal: () => 123 } }));
 
 vi.mock("element-plus", () => ({
-  ElMessage: { success, error },
+  ElMessage: { success, error, info: vi.fn() },
   ElMessageBox: { confirm },
 }));
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
@@ -29,11 +30,25 @@ function createEmpty(): TestResource {
 }
 
 beforeEach(() => {
+  selectedResourceLibrary.value = "shengxu";
   confirm.mockClear();
   success.mockClear();
 });
 
 describe("resource maintenance", () => {
+  it("requires a concrete library before creating from the all-libraries view", () => {
+    const api = { getPage: vi.fn(), getDetail: vi.fn(), create: vi.fn(), update: vi.fn(), deleteByIds: vi.fn() };
+    const maintenance = useResourceMaintenance({ records: [] as TestResource[], api, loadRecords: async () => [], createEmpty });
+    selectedResourceLibrary.value = undefined;
+    maintenance.openCreateDialog();
+    expect(maintenance.isDialogVisible.value).toBe(false);
+    expect(api.create).not.toHaveBeenCalled();
+    selectedResourceLibrary.value = "shared";
+    maintenance.openCreateDialog();
+    expect(maintenance.isDialogVisible.value).toBe(true);
+    expect(maintenance.record.value).toMatchObject({ library: "shared" });
+  });
+
   it("shares create, edit, status, and delete flow while preserving custom hooks", async () => {
     const records: TestResource[] = [
       { id: "resource-1", code: "TST-001", name: "原记录", status: "enabled", children: ["child-1"] },

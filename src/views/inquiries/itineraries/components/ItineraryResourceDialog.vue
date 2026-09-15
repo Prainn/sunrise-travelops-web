@@ -54,6 +54,7 @@
             :min="0"
             :max="1e9"
             :precision="2"
+            @change="adjustmentReason=''"
           />
         </el-form-item>
         <el-form-item
@@ -112,6 +113,17 @@
               {{ formatDetail(detail) }}
             </el-descriptions-item>
           </el-descriptions>
+          <el-form-item :label="$t('identity.reference')">
+            <el-text>{{ referencePrice == null ? $t('identity.unknown') : referencePrice }}</el-text>
+          </el-form-item>
+          <el-form-item :label="$t('identity.actual')">
+            <el-input-number
+              v-model="actualPrice"
+              :min="0"
+              :precision="2"
+              @change="adjustmentReason=''"
+            />
+          </el-form-item>
           <el-form-item
             class="resource-dialog__quantity mt-[18px]"
             :label="$t('itinerary.quantity')"
@@ -127,6 +139,12 @@
           </el-form-item>
         </template>
       </template>
+      <el-form-item :label="$t('identity.reason')">
+        <el-input
+          v-model="adjustmentReason"
+          :placeholder="$t('identity.reasonPlaceholder')"
+        />
+      </el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="emit('update:modelValue', false)">
@@ -165,7 +183,7 @@ const props = defineProps<{
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [item: ItineraryResourceItem] }>();
 const { t, locale } = useI18n();
 const cityOptions = useCityOptions();
-const { city, selectedId, quantity, selectedOption, loadOptions, source, customName, customPrice, customUnit, customQuantity, canSubmit, createItem } = useResourcePriceSelection(props, () => ElMessage.error(t("request.failed")));
+const { actualPrice, referencePrice, adjustmentReason, city, selectedId, quantity, selectedOption, loadOptions, source, customName, customPrice, customUnit, customQuantity, canSubmit, createItem } = useResourcePriceSelection(props, () => ElMessage.error(t("request.failed")));
 async function loadPriceOptions(query: RemoteOptionsQuery) {
   const result = await loadOptions(query);
   return { total: result.total, list: result.list.map(option => ({

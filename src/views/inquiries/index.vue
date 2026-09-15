@@ -4,6 +4,7 @@
     class="page-container"
   >
     <InquirySearchForm
+      v-model:business-unit="businessUnit"
       v-model:keywords="keywords"
       v-model:status="status"
       v-model:owner="owner"
@@ -68,6 +69,7 @@ const inquiryStore = ref<InquiryRecord[]>([]);
 const total = ref(0);
 const isLoading = ref(false);
 const keywords = ref("");
+const businessUnit = ref<NonNullable<InquiryRecord["businessUnit"]> | "">("");
 const status = ref<InquiryStatus | "">("");
 const owner = ref("");
 const sourceChannel = ref("");
@@ -86,7 +88,7 @@ function showError(error: unknown) { ElMessage.error(error instanceof Error ? er
 async function fetchInquiries() {
   const version = ++fetchVersion; isLoading.value = true;
   try {
-    const result = await inquiryService.list({ page: pageNum.value, pageSize: pageSize.value, keyword: keywords.value === exactCode.value ? undefined : keywords.value, code: keywords.value === exactCode.value ? exactCode.value || undefined : undefined, status: status.value, ownerId: owner.value, sourceChannel: sourceChannel.value });
+    const result = await inquiryService.list({ businessUnit: user.userInfo.scope === "headquarters" ? businessUnit.value || undefined : undefined, page: pageNum.value, pageSize: pageSize.value, keyword: keywords.value === exactCode.value ? undefined : keywords.value, code: keywords.value === exactCode.value ? exactCode.value || undefined : undefined, status: status.value, ownerId: owner.value, sourceChannel: sourceChannel.value });
     if (version !== fetchVersion) return;
     inquiryStore.value = result.list; total.value = result.total;
   } catch (error) { if (version === fetchVersion) showError(error); }
@@ -95,6 +97,7 @@ async function fetchInquiries() {
 function applyRouteCode() {
   if (route.name !== 'InquiryList') return;
   const code = typeof route.query.code === 'string' ? route.query.code : '';
+  businessUnit.value = '';
   exactCode.value = code;
   keywords.value = code;
   status.value = ''; owner.value = ''; sourceChannel.value = ''; pageNum.value = 1;
@@ -105,12 +108,12 @@ onActivated(async () => {
   if (route.query.code) applyRouteCode();
   await nextTick(); isActive = true;
   await fetchInquiries(); try { ownerOptions.value = await inquiryService.owners(); } catch (error) { showError(error); } });
-watch([keywords,status,owner,sourceChannel], () => { if (!isActive) return; if (pageNum.value === 1) void fetchInquiries(); else pageNum.value = 1; });
+watch([keywords,status,owner,sourceChannel,businessUnit], () => { if (!isActive) return; if (pageNum.value === 1) void fetchInquiries(); else pageNum.value = 1; });
 watch([pageNum,pageSize], () => { if (isActive) void fetchInquiries(); });
 function createEmptyInquiry(): InquiryRecord {
-  return { id: "", version: 0, code: "", agencyId: "", contactId: "", agencyCode: "", agencyName: "", contactName: "", email: "", phone: "", countryOrRegion: "", sourceChannel: "", originalMessage: "", internalRemark: "", owner: user.userInfo.nickname ?? "", ownerId: user.userInfo.userId ?? "", nextFollowUpAt: "", plannedDays: 1, lostReason: "", status: "new", creator: "", createdAt: "" };
+  return { businessUnit: user.userInfo.scope === "headquarters" ? "shengxu" : user.userInfo.scope, id: "", version: 0, code: "", agencyId: "", contactId: "", agencyCode: "", agencyName: "", contactName: "", email: "", phone: "", countryOrRegion: "", sourceChannel: "", originalMessage: "", internalRemark: "", owner: user.userInfo.nickname ?? "", ownerId: user.userInfo.scope === "headquarters" ? "" : user.userInfo.userId ?? "", nextFollowUpAt: "", plannedDays: 1, lostReason: "", status: "new", creator: "", createdAt: "" };
 }
-function resetQuery() { keywords.value = ""; status.value = ""; owner.value = ""; sourceChannel.value = ""; pageNum.value = 1; }
+function resetQuery() { businessUnit.value = ""; keywords.value = ""; status.value = ""; owner.value = ""; sourceChannel.value = ""; pageNum.value = 1; }
 function changePageSize(value: number) { pageSize.value = value; pageNum.value = 1; }
 function openCreateDialog() { editingId.value = ""; inquiryForm.value = createEmptyInquiry(); isEditorVisible.value = true; }
 async function openEditDialog(record: InquiryRecord) {

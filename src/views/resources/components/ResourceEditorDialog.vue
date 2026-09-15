@@ -12,6 +12,9 @@
       :rules="rules"
       label-width="auto"
     >
+      <el-form-item :label="$t('identity.library')">
+        <ResourceLibraryTag :library="form.library" />
+      </el-form-item>
       <el-form-item
         v-if="isEditing"
         :label="$t('resource.code')"
@@ -29,6 +32,7 @@
       >
         <CitySelect
           v-if="field.prop === 'city'"
+          :library="form.library"
           :model-value="String(form[field.prop] ?? '')"
           @update:model-value="form[field.prop] = $event"
         />
@@ -84,6 +88,7 @@
 </template>
 
 <script setup lang="ts">
+import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import CitySelect from "@/components/CitySelect.vue";
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";

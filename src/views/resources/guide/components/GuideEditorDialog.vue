@@ -6,6 +6,9 @@
     @close="emit('update:modelValue', false)"
   >
     <el-form label-position="top">
+      <el-form-item :label="$t('identity.library')">
+        <ResourceLibraryTag :library="form.library" />
+      </el-form-item>
       <el-form-item :label="$t('planning.guidePrice')">
         <el-input-number
           v-model="form.dailyPrice"
@@ -44,6 +47,7 @@
   </el-dialog>
 </template>
 <script setup lang="ts">
+import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { reactive, watch } from 'vue';
 import { GUIDE_LANGUAGE_OPTIONS, type GuideRecord } from '@/types/resource';
 const props = defineProps<{ modelValue: boolean; record: GuideRecord; isEditing: boolean }>();

@@ -19,6 +19,9 @@
         >
           <el-page-header @back="router.push('/inquiries/list')">
             <template #content>
+              <el-tag class="mr-[10px]">
+                {{ $t(`identity.scopes.${inquiry.businessUnit}`) }}
+              </el-tag>
               <el-select
                 v-if="selectedItinerary"
                 v-model="selectedItineraryId"
@@ -169,6 +172,11 @@
             @clear-plan="clearHotelPlan"
             @update-selection="updateHotelPlanSelection"
             @update-cost="updateHotelCost"
+          />
+          <ItineraryPriceAdjustments
+            v-if="selectedItinerary"
+            :plan="selectedItinerary"
+            :editable="priceEditable"
           />
         </main>
 
@@ -369,6 +377,7 @@ import ItineraryHotelPlans from "./components/ItineraryHotelPlans.vue";
 import ItineraryVehiclePlans from "./components/ItineraryVehiclePlans.vue";
 import ItineraryPdfPreviewDialog from "./components/ItineraryPdfPreviewDialog.vue";
 import ItineraryPlanDialog from "./components/ItineraryPlanDialog.vue";
+import ItineraryPriceAdjustments from "./components/ItineraryPriceAdjustments.vue";
 import ItineraryQuotePanel from "./components/ItineraryQuotePanel.vue";
 import ItineraryResourceDialog from "./components/ItineraryResourceDialog.vue";
 import { ITINERARY_STATUS_TAG_TYPES } from "./options";

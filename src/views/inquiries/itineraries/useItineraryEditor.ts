@@ -1,3 +1,4 @@
+import { calculateVehiclePlanAutomaticTotal } from "./vehicle-plans";
 import type { GuideRecord } from "@/types/resource";
 import { getDayBreakfastStatus } from "./hotel-plans";
 import type { ComputedRef, Ref } from "vue";
@@ -181,6 +182,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       secondLanguage: guide.secondLanguage,
       shopping: guide.shopping,
       dailyPrice: guide.dailyPrice,
+      referencePrice: guide.dailyPrice, referenceBasis: "resource_price", adjustmentReason: "",
       serviceDays: options.inquiry.value?.plannedDays ?? 1,
     }];
     touchSelectedItinerary();
@@ -188,12 +190,12 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   function updateGuidePrice(dailyPrice: number) {
     if (!options.canEditContent()) return;
     const guide = options.selectedItinerary.value?.guidePlans[0];
-    if (guide) { guide.dailyPrice = normalizeQuoteValue(dailyPrice); touchSelectedItinerary(); }
+    if (guide) { guide.dailyPrice = normalizeQuoteValue(dailyPrice); guide.adjustmentReason = ""; touchSelectedItinerary(); }
   }
   function updateHotelCost(tier: ItineraryHotelTier, destination: string, price: number) {
     if (!options.canEditContent()) return;
     const hotel = options.selectedItinerary.value?.hotelPlans.find(p => p.tier === tier)?.hotels.find(h => h.destination === destination);
-    if (hotel) { hotel.unitCost = normalizeQuoteValue(price); touchSelectedItinerary(); }
+    if (hotel) { hotel.unitCost = normalizeQuoteValue(price); hotel.adjustmentReason = ""; touchSelectedItinerary(); }
   }
 
   function updateHotelPlanSelection(tier: ItineraryHotelTier, destination: string, hotelId: string) {
@@ -218,6 +220,8 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       breakfast: hotel.breakfast,
       unit: hotel.unit,
       unitCost: getHotelUnitCost(hotel, plan.adults + plan.childrenCount + plan.leaderCount),
+      referencePrice: getHotelUnitCost(hotel, plan.adults + plan.childrenCount + plan.leaderCount),
+      referenceBasis: hotel.groupPrice != null && hotel.minimumGroupSize != null && plan.adults + plan.childrenCount + plan.leaderCount >= hotel.minimumGroupSize ? "hotel_group" : "hotel_individual", adjustmentReason: "",
     };
     if (selectionIndex >= 0) hotelPlan.hotels.splice(selectionIndex, 1, selection);
     else hotelPlan.hotels.push(selection);
@@ -240,6 +244,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     const plan = options.selectedItinerary.value;
     const target = plan && getVehiclePlan(plan, tier);
     if (!plan || !target) return;
+    if (value.totalPrice !== target.totalPrice || calculateVehiclePlanAutomaticTotal(value) !== calculateVehiclePlanAutomaticTotal(target)) { value.adjustmentReason = ""; value.pricingMode = value.totalPrice === calculateVehiclePlanAutomaticTotal(value) ? "automatic" : "manual"; }
     Object.assign(target, cloneVehiclePlans([value])[0]);
     syncQuoteOptions(plan);
     touchSelectedItinerary();
