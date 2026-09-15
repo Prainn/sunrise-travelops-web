@@ -68,6 +68,11 @@ describe("resourceService", () => {
       library: "shengxu",
       name: "测试导游",
       gender: 0,
+      age: 36,
+      contact: "微信: guide-01",
+      employmentType: "part_time",
+      hasLaborContract: false,
+      remark: "可周末接团",
       certificateNo: "00123x",
       identityNumber: "临时编号-A01",
       status: "enabled",
@@ -81,6 +86,11 @@ describe("resourceService", () => {
       body: expect.objectContaining({
         certificateNo: "00123x",
         identityNumber: "临时编号-A01",
+        age: 36,
+        contact: "微信: guide-01",
+        employmentType: "part_time",
+        hasLaborContract: false,
+        remark: "可周末接团",
         library: "shengxu",
       }),
     });

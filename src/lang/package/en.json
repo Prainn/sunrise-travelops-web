@@ -770,7 +770,7 @@
     "employmentType": "Employment Type",
     "employmentTypeRequired": "Select an employment type",
     "female": "Female",
-    "fullTime": "Full-time Guide",
+    "fullTime": "Full-time",
     "gender": "Gender",
     "genderRequired": "Select gender",
     "hasLaborContract": "Labor Contract",
@@ -781,7 +781,11 @@
     "licensePhoto": "Guide License Photo",
     "male": "Male",
     "nameRequired": "Enter a guide name",
-    "partTime": "Part-time Guide",
+    "partTime": "Part-time",
+    "contact": "Contact details",
+    "contractYes": "Yes",
+    "contractNo": "No",
+    "remark": "Notes",
     "phoneRequired": "Enter contact details",
     "photoSizeError": "Image size cannot exceed 2 MB",
     "photoTip": "JPG or PNG, up to 2 MB",
@@ -1014,6 +1018,7 @@
       "shengxu": "Sunrise library",
       "shared": "Ttrip / Lynx shared library"
     },
-    "selectLibraryToCreate": "Select a business unit before creating a resource"
+    "selectLibraryToCreate": "Select a business unit before creating a resource",
+    "selectBusinessUnitToCreate": "Select a business unit"
   }
 }

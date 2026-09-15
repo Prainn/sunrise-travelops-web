@@ -178,6 +178,11 @@ export interface GuidePersonRecord extends ResourceAuditRecord {
   code: string;
   name: string;
   gender: 0 | 1 | 2;
+  age: number | null;
+  contact: string | null;
+  employmentType: 'full_time' | 'part_time' | null;
+  hasLaborContract: boolean | null;
+  remark: string | null;
   certificateNo: string | null;
   identityNumber: string | null;
   status: ResourceStatus;

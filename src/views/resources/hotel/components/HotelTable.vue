@@ -23,7 +23,7 @@
       >
         <el-table-column
           :label="$t('identity.library')"
-          min-width="200"
+          width="160"
         >
           <template #default="{ row }">
             <ResourceLibraryTag :library="row.library" />

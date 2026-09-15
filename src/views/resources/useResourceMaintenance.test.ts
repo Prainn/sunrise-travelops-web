@@ -18,6 +18,7 @@ vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
 import { useResourceMaintenance } from "./useResourceMaintenance";
 
 interface TestResource {
+  library?: "shengxu" | "shared";
   id: string;
   code: string;
   name: string;
@@ -47,6 +48,18 @@ describe("resource maintenance", () => {
     maintenance.openCreateDialog();
     expect(maintenance.isDialogVisible.value).toBe(true);
     expect(maintenance.record.value).toMatchObject({ library: "shared" });
+  });
+
+  it("opens the guide person form from all libraries so the target can be selected inside it", () => {
+    const api = { getPage: vi.fn(), getDetail: vi.fn(), create: vi.fn(), update: vi.fn(), deleteByIds: vi.fn() };
+    const maintenance = useResourceMaintenance({
+      records: [] as TestResource[], api, loadRecords: async () => [], createEmpty,
+      selectLibraryInDialog: true,
+    });
+    selectedResourceLibrary.value = undefined;
+    maintenance.openCreateDialog();
+    expect(maintenance.isDialogVisible.value).toBe(true);
+    expect(maintenance.record.value.library).toBeUndefined();
   });
 
   it("shares create, edit, status, and delete flow while preserving custom hooks", async () => {

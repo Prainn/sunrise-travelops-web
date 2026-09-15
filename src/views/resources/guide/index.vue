@@ -38,6 +38,21 @@
         <el-descriptions-item :label="$t('guide.gender')">
           {{ $t(`guide.genderOptions.${personDetail.gender}`) }}
         </el-descriptions-item>
+        <el-descriptions-item :label="$t('guide.age')">
+          {{ personDetail.age ?? $t('common.notSet') }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('guide.contact')">
+          {{ personDetail.contact ?? $t('common.notSet') }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('guide.employmentType')">
+          {{ personDetail.employmentType ? $t(`guide.${personDetail.employmentType === 'full_time' ? 'fullTime' : 'partTime'}`) : $t('common.notSet') }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('guide.hasLaborContract')">
+          {{ personDetail.hasLaborContract === null ? $t('common.notSet') : $t(personDetail.hasLaborContract ? 'guide.contractYes' : 'guide.contractNo') }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('guide.remark')">
+          {{ personDetail.remark ?? $t('common.notSet') }}
+        </el-descriptions-item>
         <el-descriptions-item :label="$t('guide.certificateNo')">
           {{ personDetail.certificateNo ?? $t('common.notSet') }}
         </el-descriptions-item>
@@ -90,7 +105,7 @@ import GuideTable from "./components/GuideTable.vue";
 defineOptions({ name: "Guide" });
 
 function createEmptyPerson(): GuidePersonRecord {
-  return { id: "", code: "", name: "", gender: 0, certificateNo: null, identityNumber: null, status: "enabled" };
+  return { id: "", code: "", name: "", gender: 0, age: null, contact: null, employmentType: null, hasLaborContract: null, remark: null, certificateNo: null, identityNumber: null, status: "enabled" };
 }
 function createEmptyPrice(): GuideRecord {
   return { id: "", code: "", name: "", secondLanguage: "none", shopping: false, dailyPrice: 0, status: "enabled" };
@@ -114,6 +129,7 @@ const {
   api: resourceService.guidePersonApi,
   loadRecords: (query) => resourceService.loadGuidePeople(query),
   createEmpty: createEmptyPerson,
+  selectLibraryInDialog: true,
 });
 
 const isPersonDetailVisible = ref(false);

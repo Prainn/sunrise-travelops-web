@@ -5,12 +5,11 @@
       class="page-search"
     >
       <ResourceBusinessFilter />
-      <el-form-item>
+      <el-form-item class="w-300px">
         <el-input
           v-model="keyword"
           :placeholder="$t('guide.searchPeople')"
           clearable
-          class="w-[320px]"
         />
       </el-form-item>
       <el-form-item :label="$t('common.status')">
@@ -78,6 +77,50 @@
           >
             <template #default="{ row }">
               {{ $t(`guide.genderOptions.${row.gender}`) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            :label="$t('guide.age')"
+            min-width="90"
+          >
+            <template #default="{ row }">
+              {{ row.age ?? $t('common.notSet') }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="contact"
+            :label="$t('guide.contact')"
+            min-width="180"
+            show-overflow-tooltip
+          >
+            <template #default="{ row }">
+              {{ row.contact ?? $t('common.notSet') }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            :label="$t('guide.employmentType')"
+            min-width="110"
+          >
+            <template #default="{ row }">
+              {{ row.employmentType ? $t(`guide.${row.employmentType === 'full_time' ? 'fullTime' : 'partTime'}`) : $t('common.notSet') }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            :label="$t('guide.hasLaborContract')"
+            min-width="110"
+          >
+            <template #default="{ row }">
+              {{ row.hasLaborContract === null ? $t('common.notSet') : $t(row.hasLaborContract ? 'guide.contractYes' : 'guide.contractNo') }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="remark"
+            :label="$t('guide.remark')"
+            min-width="180"
+            show-overflow-tooltip
+          >
+            <template #default="{ row }">
+              {{ row.remark ?? $t('common.notSet') }}
             </template>
           </el-table-column>
           <el-table-column

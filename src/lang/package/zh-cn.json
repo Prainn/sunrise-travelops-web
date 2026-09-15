@@ -770,7 +770,7 @@
     "employmentType": "岗位类型",
     "employmentTypeRequired": "请选择岗位类型",
     "female": "女",
-    "fullTime": "专职导游",
+    "fullTime": "专职",
     "gender": "性别",
     "genderRequired": "请选择性别",
     "hasLaborContract": "劳动合同",
@@ -781,7 +781,11 @@
     "licensePhoto": "导游证照片",
     "male": "男",
     "nameRequired": "请输入导游姓名",
-    "partTime": "兼职导游",
+    "partTime": "兼职",
+    "contact": "联系方式",
+    "contractYes": "有",
+    "contractNo": "无",
+    "remark": "备注",
     "phoneRequired": "请输入联系方式",
     "photoSizeError": "图片大小不能超过 2MB",
     "photoTip": "支持 JPG、PNG，大小不超过 2MB",
@@ -1014,6 +1018,7 @@
       "shengxu": "盛旭资源库",
       "shared": "霖熹／独立站共享库"
     },
-    "selectLibraryToCreate": "请先选择所属业务部，再新增资源"
+    "selectLibraryToCreate": "请先选择所属业务部，再新增资源",
+    "selectBusinessUnitToCreate": "请选择所属业务部"
   }
 }

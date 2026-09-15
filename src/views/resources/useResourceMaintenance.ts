@@ -19,6 +19,7 @@ interface ResourceMaintenanceOptions<T extends ResourceMaintenanceRecord> {
   records: T[];
   paginated?: boolean;
   createEmpty: () => T;
+  selectLibraryInDialog?: boolean;
   api: ResourceCrud<T>;
   loadRecords: (query?: ResourceListQuery) => Promise<T[]>;
   cloneForEdit?: (record: T) => T;
@@ -53,7 +54,7 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
   }
 
   function openCreateDialog() {
-    if (!selectedResourceLibrary.value) {
+    if (!selectedResourceLibrary.value && !options.selectLibraryInDialog) {
       ElMessage.info(t("identity.selectLibraryToCreate"));
       return;
     }
