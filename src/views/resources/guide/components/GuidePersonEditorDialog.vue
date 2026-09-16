@@ -100,13 +100,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item :label="$t('guide.remark')">
-        <el-input
-          v-model="form.remark"
-          type="textarea"
-          :rows="3"
-        />
-      </el-form-item>
+
       <el-form-item :label="$t('guide.certificateNo')">
         <el-input v-model="form.certificateNo" />
       </el-form-item>
@@ -127,6 +121,13 @@
             value="disabled"
           />
         </el-select>
+      </el-form-item>
+      <el-form-item :label="$t('guide.remark')">
+        <el-input
+          v-model="form.remark"
+          type="textarea"
+          :rows="3"
+        />
       </el-form-item>
     </el-form>
     <template #footer>
