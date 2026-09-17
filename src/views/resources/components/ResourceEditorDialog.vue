@@ -12,7 +12,28 @@
       :rules="rules"
       label-width="auto"
     >
-      <el-form-item :label="$t('identity.library')">
+      <el-form-item
+        v-if="isHeadquarters && !isEditing"
+        :label="$t('identity.businessUnit')"
+        prop="library"
+      >
+        <el-select
+          v-model="selectedBusinessUnit"
+          :placeholder="$t('identity.selectBusinessUnitToCreate')"
+          @change="setBusinessUnit"
+        >
+          <el-option
+            v-for="unit in ['shengxu', 'linxi', 'website']"
+            :key="unit"
+            :value="unit"
+            :label="$t(`identity.scopes.${unit}`)"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item
+        v-else
+        :label="$t('identity.library')"
+      >
         <ResourceLibraryTag :library="form.library" />
       </el-form-item>
       <el-form-item
@@ -93,6 +114,8 @@ import CitySelect from "@/components/CitySelect.vue";
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
+import { useUserStore } from "@/stores/user";
+import type { LoginScope } from "@/types/auth";
 import type { ResourceFormField, ResourceRow } from "../types";
 
 const props = defineProps<{
@@ -109,16 +132,34 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const userStore = useUserStore();
+const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters");
+const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const formRef = ref<FormInstance>();
 const form = reactive<ResourceRow>({ ...props.record });
 const isVisible = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) });
-const rules = computed<FormRules>(() => Object.fromEntries(props.fields.filter((field) => field.required).map((field) => [field.prop, [{
-  required: true,
-  message: t("resource.fieldRequired", { field: t(field.labelKey) }),
-  trigger: field.type === "select" ? "change" : "blur",
-}]])));
+const rules = computed<FormRules>(() => ({
+  ...Object.fromEntries(props.fields.filter((field) => field.required).map((field) => [field.prop, [{
+    required: true,
+    message: t("resource.fieldRequired", { field: t(field.labelKey) }),
+    trigger: field.type === "select" ? "change" : "blur",
+  }]])),
+  library: [{ required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" }],
+}));
 
-watch(() => props.record, (record) => Object.assign(form, record), { deep: true });
+watch(() => [props.modelValue, props.record] as const, ([visible, record]) => {
+  if (!visible) return;
+  Object.assign(form, record);
+  if (isHeadquarters.value && !props.isEditing) {
+    selectedBusinessUnit.value = "";
+    form.library = undefined;
+  }
+}, { deep: true });
+
+function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
+  form.library = unit === "shengxu" ? "shengxu" : "shared";
+  formRef.value?.validateField("library");
+}
 
 function resetForm() {
   formRef.value?.clearValidate();

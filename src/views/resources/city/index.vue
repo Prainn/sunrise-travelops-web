@@ -39,6 +39,7 @@ const columns: ResourceColumn[] = [
 const maintenance = useResourceMaintenance<CityRecord>({
   records: resourceService.cities, api: resourceService.cityApi, loadRecords: (query) => resourceService.loadCities(query),
   createEmpty: () => ({ id: "", code: "", name: "", province: "", status: "enabled" }),
+  selectLibraryInDialog: true,
 });
 const { isLoading, rows, total, record, isDialogVisible, isEditing, loadRecords, openCreateDialog } = maintenance;
 const fields = computed<ResourceFormField[]>(() => [

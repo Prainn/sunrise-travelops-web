@@ -78,6 +78,7 @@ const {
   api: resourceService.agencyApi,
   loadRecords: loadAgencies,
   createEmpty: createEmptyAgencyRecord,
+  selectLibraryInDialog: true,
   cloneForEdit: (agency) => ({ ...agency, contacts: agency.contacts.map((contact) => ({ ...contact })) }),
   createRecord: (agency, id) => ({ ...agency, id, contacts: agency.contacts.map((contact) => ({ ...contact })) }),
   updateRecord: (current, agency) => Object.assign(current, agency, {

@@ -11,7 +11,28 @@
       :rules="rules"
       label-width="auto"
     >
-      <el-form-item :label="$t('identity.library')">
+      <el-form-item
+        v-if="isHeadquarters && !isEditing"
+        :label="$t('identity.businessUnit')"
+        prop="library"
+      >
+        <el-select
+          v-model="selectedBusinessUnit"
+          :placeholder="$t('identity.selectBusinessUnitToCreate')"
+          @change="setBusinessUnit"
+        >
+          <el-option
+            v-for="unit in ['shengxu', 'linxi', 'website']"
+            :key="unit"
+            :value="unit"
+            :label="$t(`identity.scopes.${unit}`)"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item
+        v-else
+        :label="$t('identity.library')"
+      >
         <ResourceLibraryTag :library="form.library" />
       </el-form-item>
       <el-form-item
@@ -100,6 +121,8 @@ import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
+import { useUserStore } from "@/stores/user";
+import type { LoginScope } from "@/types/auth";
 import CitySelect from "@/components/CitySelect.vue";
 import type { RestaurantRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
@@ -111,17 +134,35 @@ const emit = defineEmits<{
 }>();
 
 const { t, locale } = useI18n();
+const userStore = useUserStore();
+const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters");
+const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const formRef = ref<FormInstance>();
 const form = reactive<RestaurantRecord>({ ...props.record });
 const isVisible = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) });
 const unitOptions = computed(() => getResourceUnitOptions("restaurant", locale.value));
 const rules = computed<FormRules>(() => ({
+  library: [{ required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" }],
   name: [{ required: true, message: t("restaurant.nameRequired"), trigger: "blur" }],
   city: [{ required: true, message: t("restaurant.cityRequired"), trigger: "change" }],
   unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
 }));
 
-watch(() => props.record, (record) => Object.assign(form, record), { deep: true });
+watch(() => [props.modelValue, props.record] as const, ([visible, record]) => {
+  if (!visible) return;
+  Object.assign(form, record);
+  if (isHeadquarters.value && !props.isEditing) {
+    selectedBusinessUnit.value = "";
+    form.library = undefined;
+  }
+}, { deep: true });
+
+function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
+  const library = unit === "shengxu" ? "shengxu" : "shared";
+  if (form.library !== library) form.city = "";
+  form.library = library;
+  formRef.value?.validateField("library");
+}
 
 async function handleSubmit() {
   if (!(await formRef.value?.validate().catch(() => false))) return;

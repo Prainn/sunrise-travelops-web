@@ -381,13 +381,7 @@
           :roles="roleOptions"
           :departments="departmentOptions"
         />
-        <el-alert
-          v-if="impact"
-          :title="$t('identity.impact', impact)"
-          :type="impact.unfinished ? 'warning' : 'info'"
-          :closable="false"
-          class="mb-4"
-        />
+        
         <el-form-item
           :label="$t('user.mobile')"
           prop="mobile"
@@ -424,6 +418,13 @@
           />
         </el-form-item>
       </el-form>
+
+      <el-alert
+        v-if="impact"
+        :title="$t('identity.impact', impact)"
+        :type="impact.unfinished ? 'warning' : 'info'"
+        :closable="false"
+      />
 
       <template #footer>
         <div class="dialog-footer">

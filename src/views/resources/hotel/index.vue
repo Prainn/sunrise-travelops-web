@@ -80,7 +80,28 @@
         :rules="hotelRules"
         label-width="auto"
       >
-        <el-form-item :label="$t('identity.library')">
+        <el-form-item
+          v-if="isHeadquarters && !isEditing"
+          :label="$t('identity.businessUnit')"
+          prop="library"
+        >
+          <el-select
+            v-model="selectedBusinessUnit"
+            :placeholder="$t('identity.selectBusinessUnitToCreate')"
+            @change="setBusinessUnit"
+          >
+            <el-option
+              v-for="unit in ['shengxu', 'linxi', 'website']"
+              :key="unit"
+              :value="unit"
+              :label="$t(`identity.scopes.${unit}`)"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item
+          v-else
+          :label="$t('identity.library')"
+        >
           <ResourceLibraryTag :library="hotelForm.library" />
         </el-form-item>
         <el-form-item
@@ -208,6 +229,8 @@ import type { FormInstance, FormRules } from "element-plus";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { selectedResourceLibrary } from "@/services/resource-library";
+import { useUserStore } from "@/stores/user";
+import type { LoginScope } from "@/types/auth";
 import CitySelect from "@/components/CitySelect.vue";
 import { useCityOptions } from "@/composables/useCityOptions";
 import { resourceService } from "@/services/resource.service";
@@ -220,6 +243,9 @@ type HotelForm = HotelRecord;
 defineOptions({ name: "Hotel" });
 
 const { t, locale } = useI18n();
+const userStore = useUserStore();
+const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters");
+const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const hotelStore = reactive<HotelRecord[]>([]);
 const keywords = ref("");
 const city = ref("");
@@ -235,6 +261,7 @@ const total = ref(0);
 const hotelUnitOptions = computed(() => getResourceUnitOptions("hotel", locale.value));
 const requestHotels = useDebounceFn(() => loadHotels(currentQuery()), 300);
 const hotelRules: FormRules = {
+  library: [{ required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" }],
   name: [{ required: true, message: t("hotel.nameRequired"), trigger: "blur" }],
   city: [{ required: true, message: t("hotel.cityRequired"), trigger: "change" }],
   individualPrice: [{ required: true, message: t("hotel.individualPriceRequired"), trigger: "change" }],
@@ -305,13 +332,19 @@ function resetQuery() {
   requestHotels();
 }
 function openCreateDialog() {
-  if (!selectedResourceLibrary.value) {
-    ElMessage.info(t("identity.selectLibraryToCreate"));
-    return;
-  }
   editingId.value = "";
   Object.assign(hotelForm, createEmptyHotel(), { library: selectedResourceLibrary.value });
+  if (isHeadquarters.value) {
+    selectedBusinessUnit.value = "";
+    hotelForm.library = undefined;
+  }
   isHotelDialogVisible.value = true;
+}
+function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
+  const library = unit === "shengxu" ? "shengxu" : "shared";
+  if (hotelForm.library !== library) hotelForm.city = "";
+  hotelForm.library = library;
+  hotelFormRef.value?.validateField("library");
 }
 async function openEditDialog(hotel: HotelRecord) {
   try {

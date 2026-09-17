@@ -84,6 +84,7 @@ const {
   api: resourceService.restaurantApi,
   loadRecords: loadRestaurants,
   createEmpty: createEmptyRestaurant,
+  selectLibraryInDialog: true,
   cloneForEdit: (record) => ({ ...record, prices: record.prices }),
   createRecord: (record, id) => ({ ...record, id, prices: [] }),
   updateRecord: (current, record) => Object.assign(current, record, { prices: current.prices }),

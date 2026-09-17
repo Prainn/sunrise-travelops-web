@@ -136,6 +136,7 @@ const { isLoading, rows, total, record, isDialogVisible, isEditing, loadRecords,
     id: "", code: "", name: "", serviceLevel: "standard", seats: 1,
     unit: "vehicleDay", phone: "", status: "enabled", remark: "",
   }),
+  selectLibraryInDialog: true,
 });
 const tableRows = computed(() => rows.map((row) => ({
   ...row,

@@ -3,6 +3,7 @@
     :model-value="modelValue"
     :title="$t(isEditing ? 'guide.editGuide' : 'guide.createGuide')"
     width="520px"
+    class="h-70vh overflow-y-auto"
     @close="emit('update:modelValue', false)"
   >
     <el-form
