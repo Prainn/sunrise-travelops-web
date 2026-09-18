@@ -9,8 +9,10 @@
     remote-show-suffix
     :debounce="300"
     :remote-method="search"
+    :loading-text="$t('remoteSelect.loading')"
+    :no-match-text="$t('remoteSelect.empty')"
     :loading="loading && !items.length"
-    @visible-change="open"
+    @visible-change="handleVisibleChange"
     @end-reached="loadNextPage"
     @update:model-value="select($event || '')"
   >
@@ -19,6 +21,7 @@
       :value="modelValue"
       :label="selected?.id === modelValue ? selected.label : selectedLabel || modelValue"
     />
+
     <el-option
       v-for="item in items"
       :key="item.id"
@@ -28,6 +31,7 @@
     >
       <div class="remote-select-option flex justify-between gap-[16px]">
         <span>{{ item.label }}</span>
+
         <strong
           v-if="item.description"
           class="font-500 text-[var(--el-color-primary)]"
@@ -36,47 +40,118 @@
         </strong>
       </div>
     </el-option>
+
     <template #empty>
       <p class="el-select-dropdown__empty">
-        {{ loading ? '\u00a0' : $t('remoteSelect.empty') }}
+        {{ loading ? $t("remoteSelect.loading") : $t("remoteSelect.empty") }}
       </p>
     </template>
   </el-select>
 </template>
+
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { useRemoteOptions, type RemoteOptionsPage, type RemoteOptionsQuery } from "@/composables/useRemoteOptions";
+import {
+  useRemoteOptions,
+  type RemoteOptionsPage,
+  type RemoteOptionsQuery,
+} from "@/composables/useRemoteOptions";
 import type { RemoteSelectOption } from "./types";
-const props = withDefaults(defineProps<{
-  modelValue: string;
-  loadOptions: (query: RemoteOptionsQuery) => Promise<RemoteOptionsPage<RemoteSelectOption>>;
-  queryKey?: string;
-  selectedLabel?: string;
-  disabled?: boolean;
-  placeholder?: string;
-  clearable?: boolean;
-}>(), { clearable: true, queryKey: "" });
-const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
+
+const props = withDefaults(
+  defineProps<{
+    modelValue: string;
+    loadOptions: (
+      query: RemoteOptionsQuery,
+    ) => Promise<RemoteOptionsPage<RemoteSelectOption>>;
+    queryKey?: string;
+    selectedLabel?: string;
+    disabled?: boolean;
+    placeholder?: string;
+    clearable?: boolean;
+  }>(),
+  {
+    clearable: true,
+    queryKey: "",
+  },
+);
+
+const emit = defineEmits<{
+  "update:modelValue": [value: string];
+}>();
+
 const { t } = useI18n();
+
 const visible = ref(false);
 const selected = ref<RemoteSelectOption>();
-const { items, loading, hasMore, search: searchOptions, loadMore, reset } = useRemoteOptions(
-  query => props.loadOptions(query), () => ElMessage.error(t("request.failed")),
+
+const {
+  items,
+  loading,
+  hasMore,
+  search: searchOptions,
+  loadMore,
+  reset,
+} = useRemoteOptions(
+  query => props.loadOptions(query),
+  () => ElMessage.error(t("request.failed")),
 );
+
 function select(value: string) {
-  selected.value = items.value.find(item => item.id === value) ?? (selected.value?.id === value ? selected.value : undefined);
-  emit('update:modelValue', value);
+  selected.value =
+    items.value.find(item => item.id === value) ??
+    (selected.value?.id === value ? selected.value : undefined);
+
+  emit("update:modelValue", value);
 }
-function search(value: string) { if (visible.value) void searchOptions(value); }
-function open(value: boolean) {
+
+function handleVisibleChange(value: boolean) {
   visible.value = value;
-  if (value && !loading.value && !items.value.length) void searchOptions("");
-  else if (!value) reset();
+
+  if (
+    value &&
+    !loading.value &&
+    !items.value.length
+  ) {
+    void searchOptions("");
+  }
 }
-watch(() => props.queryKey, () => { reset(); if (visible.value) void searchOptions(""); });
+
+function search(value: string) {
+  if (!visible.value) {
+    return;
+  }
+
+  void searchOptions(value);
+}
+
 function loadNextPage(direction: string) {
-  if (direction === 'bottom' && visible.value && hasMore.value) void loadMore();
+  if (
+    direction === "bottom" &&
+    visible.value &&
+    hasMore.value &&
+    !loading.value
+  ) {
+    void loadMore();
+  }
 }
+
+watch(
+  () => props.queryKey,
+  () => {
+    reset();
+
+    if (visible.value) {
+      void searchOptions("");
+    }
+  },
+);
 </script>
+
+<style scoped>
+.remote-select-option {
+  width: 100%;
+}
+</style>

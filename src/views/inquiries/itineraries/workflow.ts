@@ -29,7 +29,7 @@ export interface PdfValidationIssue {
 
 export function validateItineraryForPdf(days: ItineraryDayRecord[]): PdfValidationIssue[] {
   const issues: PdfValidationIssue[] = [];
-  if (!days.length) issues.push({ key: "itinerary.validation.noDays", target: "itinerary-plans" });
+  if (!days.length) issues.push({ key: "itinerary.validation.noDays", target: "itinerary-daily" });
   for (const day of days) {
     const target = `day-${day.id}`;
     const params = { day: day.dayNumber };

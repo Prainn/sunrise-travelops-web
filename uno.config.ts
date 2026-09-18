@@ -37,6 +37,7 @@ export default defineConfig({
     "flex-x-start": "flex items-center justify-start",
     "flex-x-between": "flex items-center justify-between",
     "flex-x-end": "flex items-center justify-end",
+    'sb': 'border-1 border-solid border-red',
   },
   theme: {
     colors: {

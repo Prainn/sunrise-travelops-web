@@ -29,13 +29,13 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     const inquiry = options.inquiry.value;
     if (!plan || !inquiry || !options.canGenerate()) return null;
     const issues: PdfValidationIssue[] = validateItineraryForPdf(plan.dailyPlans);
-    if (!getEnabledHotelPlans(plan).length) issues.push({ key: "itinerary.pdfHotelPlanRequired", target: "itinerary-plans" });
-    if (getIncompleteHotelPlanTiers(plan).length) issues.push({ key: "itinerary.validation.hotels", target: "itinerary-plans" });
+    if (!getEnabledHotelPlans(plan).length) issues.push({ key: "itinerary.pdfHotelPlanRequired", target: "itinerary-hotels" });
+    if (getIncompleteHotelPlanTiers(plan).length) issues.push({ key: "itinerary.validation.hotels", target: "itinerary-hotels" });
     if (!getEnabledVehiclePlans(plan).length || getIncompleteVehiclePlanTiers(plan).length) {
-      issues.push({ key: "itinerary.validation.vehicles", target: "itinerary-plans" });
+      issues.push({ key: "itinerary.validation.vehicles", target: "itinerary-vehicles" });
     }
     if (!plan.quote.options.length) issues.push({ key: "itinerary.configureQuotePlansFirst", target: "quote" });
-    if (plan.guidePlans.some((guide) => !guide.serviceDays)) issues.push({ key: "itinerary.guideDatesRequired", target: "itinerary-plans" });
+    if (plan.guidePlans.some((guide) => !guide.serviceDays)) issues.push({ key: "itinerary.guideDatesRequired", target: "itinerary-guides" });
     plan.quote.transportFees.forEach((fee, index) => {
       if ((!fee.departureCity.trim() || !fee.arrivalCity.trim() || fee.departureCity === fee.arrivalCity) || fee.unitPrice === null || !Number.isFinite(fee.unitPrice) || fee.unitPrice < 0) {
         issues.push({ key: "itinerary.validation.transportFee", target: "quote", params: { index: index + 1 } });

@@ -1,5 +1,6 @@
 {
   "remoteSelect": {
+    "loading": "Loading",
     "empty": "No matching options"
   },
   "route": {
@@ -956,6 +957,7 @@
     "vehicleDateOutOfRange": "Vehicle dates must be within the inquiry's planned dates",
     "vehicleDateOverlap": "The selected dates overlap another vehicle arrangement",
     "arrangementVehicles": "Vehicles",
+    "addNewVehicle": "Add a vehicle",
     "arrangementVehiclePrice": "Segment price (CNY)",
     "optionalPrice": "Optional",
     "addVehicle": "Select a vehicle",

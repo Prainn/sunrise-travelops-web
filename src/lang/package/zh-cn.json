@@ -1,5 +1,6 @@
 {
   "remoteSelect": {
+    "loading": "加载中",
     "empty": "无匹配选项"
   },
   "route": {
@@ -956,6 +957,7 @@
     "vehicleDateOutOfRange": "用车日期须在询盘计划日期内",
     "vehicleDateOverlap": "所选日期与已有用车安排重叠",
     "arrangementVehicles": "使用车型",
+    "addNewVehicle": "新增车辆",
     "arrangementVehiclePrice": "本段用车价格（元）",
     "optionalPrice": "选填",
     "addVehicle": "请选择车型",

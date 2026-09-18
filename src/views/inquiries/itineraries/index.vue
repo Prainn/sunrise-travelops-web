@@ -83,6 +83,29 @@
             <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{ $t("inquiry.contactName") }}</small>{{ inquiry.contactName }}</span>
             <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{ $t("inquiry.plannedDays") }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
           </div>
+          <div
+            v-if="selectedItinerary"
+            class="flex flex-wrap gap-[10px] mt-[12px]"
+          >
+            <el-button
+              type="primary"
+              @click="isVehiclePlansDialogVisible = true"
+            >
+              {{ $t('planning.vehiclePlans') }}
+            </el-button>
+            <el-button
+              type="primary"
+              @click="isGuidePlansDialogVisible = true"
+            >
+              {{ $t('planning.guideService') }}
+            </el-button>
+            <el-button
+              type="primary"
+              @click="isHotelPlansDialogVisible = true"
+            >
+              {{ $t('itinerary.hotelPlans') }}
+            </el-button>
+          </div>
         </el-card>
       </header>
 
@@ -94,27 +117,10 @@
 
       <template v-if="selectedItinerary">
         <main class="itinerary-page__workspace mx-4">
-          <ItineraryVehiclePlans
-            :plans="selectedItinerary.vehiclePlans"
-            :start-date="selectedItinerary.startDate"
-            :planned-days="inquiry.plannedDays"
-            :passenger-count="passengerCount"
-            :editable="contentEditable"
-            @update-plan="updateVehiclePlan"
-          />
-          <ItineraryGuidePlans
-            :plans="selectedItinerary.guidePlans"
-            :second-language="guideLanguage"
-            :shopping="guideShopping"
-            :editable="contentEditable"
-            :loading="isGuideLoading"
-            :missing="isGuideMissing"
-            :can-create="canCreateGuide"
-            @update-type="updateGuideType"
-            @update-price="updateGuidePrice"
-            @create-guide="openGuideCreateDialog"
-          />
-          <div class="itinerary-page__daily-toolbar h-12 flex justify-between items-center min-h-[48px] m-[24px_0_14px]">
+          <div
+            id="itinerary-daily"
+            class="itinerary-page__daily-toolbar h-12 flex justify-between items-center min-h-[48px] m-[24px_0_14px]"
+          >
             <div>
               <h3 class="m-0">
                 {{ $t("itinerary.dailySchedule") }}
@@ -163,16 +169,6 @@
               </el-button>
             </div>
           </template>
-          <ItineraryHotelPlans
-            :destinations="selectedItinerary.destinations"
-            :daily-plans="selectedItinerary.dailyPlans"
-            :hotel-plans="selectedItinerary.hotelPlans"
-            :guest-count="passengerCount"
-            :editable="contentEditable"
-            @clear-plan="clearHotelPlan"
-            @update-selection="updateHotelPlanSelection"
-            @update-cost="updateHotelCost"
-          />
           <ItineraryPriceAdjustments
             v-if="selectedItinerary"
             :plan="selectedItinerary"
@@ -225,6 +221,42 @@
         :destination-options="destinationOptions"
         :is-editing="isEditingPlan"
         @submit="submitItineraryPlan"
+      />
+      <ItineraryVehiclePlansDialog
+        v-if="selectedItinerary"
+        v-model="isVehiclePlansDialogVisible"
+        :plans="selectedItinerary.vehiclePlans"
+        :start-date="selectedItinerary.startDate"
+        :planned-days="inquiry.plannedDays"
+        :passenger-count="passengerCount"
+        :editable="contentEditable"
+        @update-plan="updateVehiclePlan"
+      />
+      <ItineraryGuidePlansDialog
+        v-if="selectedItinerary"
+        v-model="isGuidePlansDialogVisible"
+        :plans="selectedItinerary.guidePlans"
+        :second-language="guideLanguage"
+        :shopping="guideShopping"
+        :editable="contentEditable"
+        :loading="isGuideLoading"
+        :missing="isGuideMissing"
+        :can-create="canCreateGuide"
+        @update-type="updateGuideType"
+        @update-price="updateGuidePrice"
+        @create-guide="openGuideCreateDialog"
+      />
+      <ItineraryHotelPlansDialog
+        v-if="selectedItinerary"
+        v-model="isHotelPlansDialogVisible"
+        :destinations="selectedItinerary.destinations"
+        :daily-plans="selectedItinerary.dailyPlans"
+        :hotel-plans="selectedItinerary.hotelPlans"
+        :guest-count="passengerCount"
+        :editable="contentEditable"
+        @clear-plan="clearHotelPlan"
+        @update-selection="updateHotelPlanSelection"
+        @update-cost="updateHotelCost"
       />
       <GuideEditorDialog
         v-model="isGuideDialogVisible"
@@ -370,11 +402,11 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { getDayBreakfastStatus } from "./hotel-plans";
 import InquiryMessagePreview from "./components/InquiryMessagePreview.vue";
-import ItineraryGuidePlans from "./components/ItineraryGuidePlans.vue";
+import ItineraryGuidePlansDialog from "./components/ItineraryGuidePlansDialog.vue";
 import GuideEditorDialog from "@/views/resources/guide/components/GuideEditorDialog.vue";
 import ItineraryDayCard from "./components/ItineraryDayCard.vue";
-import ItineraryHotelPlans from "./components/ItineraryHotelPlans.vue";
-import ItineraryVehiclePlans from "./components/ItineraryVehiclePlans.vue";
+import ItineraryHotelPlansDialog from "./components/ItineraryHotelPlansDialog.vue";
+import ItineraryVehiclePlansDialog from "./components/ItineraryVehiclePlansDialog.vue";
 import ItineraryPdfPreviewDialog from "./components/ItineraryPdfPreviewDialog.vue";
 import ItineraryPlanDialog from "./components/ItineraryPlanDialog.vue";
 import ItineraryPriceAdjustments from "./components/ItineraryPriceAdjustments.vue";
@@ -386,6 +418,9 @@ import { useItineraryWorkspace } from "./useItineraryWorkspace";
 defineOptions({ name: "InquiryItineraries" });
 const { t } = useI18n();
 const isQuoteDrawerVisible = ref(false);
+const isVehiclePlansDialogVisible = ref(false);
+const isGuidePlansDialogVisible = ref(false);
+const isHotelPlansDialogVisible = ref(false);
 
 async function confirmAction(key: string, params: Record<string, unknown> = {}) {
   try {
@@ -427,7 +462,12 @@ const {
   translate: t,
 });
 
-watch(selectedItineraryId, () => { validationIssues.value = []; });
+watch(selectedItineraryId, () => {
+  validationIssues.value = [];
+  isVehiclePlansDialogVisible.value = false;
+  isGuidePlansDialogVisible.value = false;
+  isHotelPlansDialogVisible.value = false;
+});
 const dayCards = new Map<string, { expand: () => void }>();
 function setDayCard(id: string, card: unknown) {
   if (card) dayCards.set(id, card as { expand: () => void });
@@ -458,6 +498,9 @@ async function locateIssue(target: string) {
     return;
   }
   isQuoteDrawerVisible.value = false;
+  if (target === "itinerary-vehicles") isVehiclePlansDialogVisible.value = true;
+  if (target === "itinerary-guides") isGuidePlansDialogVisible.value = true;
+  if (target === "itinerary-hotels") isHotelPlansDialogVisible.value = true;
   await nextTick();
   document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }

@@ -3,14 +3,14 @@
     :model-value="modelValue"
     :title="$t(isEditing ? 'guide.editGuide' : 'guide.createGuide')"
     width="520px"
-    class="h-70vh overflow-y-auto"
     @close="emit('update:modelValue', false)"
   >
     <el-form
       ref="formRef"
       :model="form"
       :rules="rules"
-      label-position="top"
+      label-position="left"
+      label-width="100px"
     >
       <el-form-item
         v-if="isHeadquarters && !isEditing"

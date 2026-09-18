@@ -1,0 +1,145 @@
+<template>
+  <el-dialog
+    :model-value="modelValue"
+    :title="$t('planning.guideService')"
+    width="min(1200px, 96vw)"
+    @close="emit('update:modelValue', false)"
+  >
+    <section id="itinerary-guides">
+      <el-card
+        v-loading="loading"
+        shadow="never"
+      >
+        <el-form label-position="left">
+          <div class="grid grid-cols-1 gap-x-[24px] md:grid-cols-2 p-[16px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)]">
+            <el-form-item :label="$t('planning.secondLanguage')">
+              <el-select
+                class="w-full"
+                :model-value="secondLanguage"
+                :disabled="!editable"
+                :placeholder="$t('planning.selectLanguage')"
+                @change="updateLanguage"
+              >
+                <el-option
+                  v-for="item in GUIDE_LANGUAGE_OPTIONS"
+                  :key="item.value"
+                  :value="item.value"
+                  :label="$t(`planning.languages.${item.value}`)"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item :label="$t('planning.shopping')">
+              <el-switch
+                :model-value="shopping"
+                :disabled="!editable"
+                :active-text="$t('common.yes')"
+                :inactive-text="$t('common.no')"
+                @change="updateShopping"
+              />
+            </el-form-item>
+          </div>
+
+          <el-divider v-if="plan" />
+
+          <div
+            v-if="plan"
+            class="gap-x-[24px] md:grid-cols-2 p-[16px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)]"
+          >
+            <el-form-item :label="$t('planning.dailyPrice')">
+              <el-input-number
+                class="w-full"
+                :model-value="plan.dailyPrice"
+                :min="0"
+                :precision="2"
+                :disabled="!editable"
+                controls-position="right"
+                @update:model-value="emit('update-price', Number($event ?? 0))"
+              />
+            </el-form-item>
+            <div class="flex items-center">
+              <el-form-item
+                :label="$t('planning.guideTotalPrice')"
+                class="w-400px"
+              >
+                <div class="w-full">
+                  <el-input
+                    :model-value="formatMoney(totalPrice)"
+                    readonly
+                  >
+                    <template #prepend>
+                      ¥
+                    </template>
+                  </el-input>
+                  <el-text
+                    type="info"
+                    size="small"
+                  >
+                    ¥{{ formatMoney(plan.dailyPrice) }} × {{ plan.serviceDays }}
+                  </el-text>
+                  <el-tag
+                    type="info"
+                    effect="plain"
+                    size="small"
+                    class="ml-2"
+                  >
+                    {{ $t('planning.serviceDays') }}：{{ plan.serviceDays }}
+                  </el-tag>
+                </div>
+              </el-form-item>
+            </div>
+          </div>
+        </el-form>
+
+        <div
+          v-if="missing"
+          class="flex items-center gap-[10px] mt-[14px]"
+        >
+          <el-text type="danger">
+            {{ $t('planning.noMatchingGuide') }}
+          </el-text>
+          <el-button
+            v-if="canCreate"
+            type="primary"
+            link
+            @click="emit('create-guide')"
+          >
+            {{ $t('common.create') }}
+          </el-button>
+        </div>
+      </el-card>
+    </section>
+  </el-dialog>
+</template>
+<script setup lang="ts">
+import { computed } from 'vue';
+import type { ItineraryGuidePlan } from '@/types/itinerary';
+import { GUIDE_LANGUAGE_OPTIONS } from '@/types/resource';
+import { formatMoney, multiplyMoney } from '@/utils';
+
+const props = defineProps<{
+  plans: ItineraryGuidePlan[];
+  secondLanguage: string;
+  shopping: boolean;
+  editable: boolean;
+  loading: boolean;
+  missing: boolean;
+  canCreate: boolean;
+  modelValue: boolean;
+}>();
+const emit = defineEmits<{
+  'update-type': [secondLanguage: string, shopping: boolean];
+  'update-price': [price: number];
+  'create-guide': [];
+  'update:modelValue': [value: boolean];
+}>();
+const plan = computed(() => props.plans[0]);
+const totalPrice = computed(() => plan.value ? multiplyMoney(plan.value.dailyPrice, plan.value.serviceDays) : 0);
+
+function updateLanguage(value: string) {
+  emit('update-type', value, props.shopping);
+}
+
+function updateShopping(value: string | number | boolean) {
+  emit('update-type', props.secondLanguage, Boolean(value));
+}
+</script>
