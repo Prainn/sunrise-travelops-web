@@ -59,7 +59,7 @@
               :key="destination"
               class="itinerary-hotel-plans__selection flex items-start gap-4 p-[16px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)]"
             >
-              <span>{{ destination }}</span>
+              <span class="min-w-100px">{{ destination }}</span>
               <div class="w-1/2">
                 <ResourceSelect
                   class="w-full"
