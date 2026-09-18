@@ -25,53 +25,6 @@
             </p>
           </div>
         </div>
-        <div class="dash-header__end">
-          <a
-            href="https://github.com/youlaitech/vue3-element-admin"
-            target="_blank"
-            title="GitHub"
-            class="quick-link"
-          >
-            <span class="i-svg:github" />
-            <span>GitHub</span>
-          </a>
-          <a
-            href="https://gitee.com/youlaiorg/vue3-element-admin"
-            target="_blank"
-            title="Gitee"
-            class="quick-link"
-          >
-            <span class="i-svg:gitee" />
-            <span>Gitee</span>
-          </a>
-          <a
-            href="https://gitcode.com/youlai/vue3-element-admin"
-            target="_blank"
-            title="GitCode"
-            class="quick-link"
-          >
-            <span class="i-svg:gitcode" />
-            <span>GitCode</span>
-          </a>
-          <a
-            href="https://juejin.cn/post/7228990409909108793"
-            target="_blank"
-            :title="$t('dashboard.documentation')"
-            class="quick-link"
-          >
-            <el-icon><Document /></el-icon>
-            <span>{{ $t("dashboard.documentation") }}</span>
-          </a>
-          <a
-            href="https://www.bilibili.com/video/BV1eFUuYyEFj"
-            target="_blank"
-            :title="$t('dashboard.video')"
-            class="quick-link"
-          >
-            <el-icon><VideoPlay /></el-icon>
-            <span>{{ $t("dashboard.video") }}</span>
-          </a>
-        </div>
       </div>
     </section>
 
@@ -146,11 +99,11 @@
             size="small"
           >
             <el-radio-button
-              :label="$t('dashboard.lastDays', { count: 7 })"
+              :label="$t('dashboard.lastDays', { days: 7 })"
               :value="7"
             />
             <el-radio-button
-              :label="$t('dashboard.lastDays', { count: 30 })"
+              :label="$t('dashboard.lastDays', { days: 30 })"
               :value="30"
             />
           </el-radio-group>
@@ -181,8 +134,6 @@ import {
   View,
   ArrowUp,
   ArrowDown,
-  Document,
-  VideoPlay,
 } from "@element-plus/icons-vue";
 
 const userStore = useUserStore();

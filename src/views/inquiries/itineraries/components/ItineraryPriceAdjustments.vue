@@ -37,7 +37,7 @@
           :key="vehicle.tier"
           class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4"
         >
-          <el-form-item :label="$t(`itinerary.vehicleTiers.${vehicle.tier}`) + ' · ' + $t('identity.actual')">
+          <el-form-item :label="$t(`inquiry.log.tiers.${vehicle.tier}`) + ' · ' + $t('identity.actual')">
             <el-input-number
               :model-value="vehicle.totalPrice"
               :min="0"
