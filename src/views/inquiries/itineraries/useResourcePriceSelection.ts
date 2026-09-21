@@ -20,12 +20,22 @@ export function useResourcePriceSelection(props: { readonly destination?: string
   const customUnit = ref<"personMeal" | "table">("personMeal");
   const customQuantity = ref(1);
   const dinerCount = ref<number>();
-  const canSubmit = computed(() => props.mealSlot && source.value === "custom"
+  const baseCanSubmit = computed(() => props.mealSlot && source.value === "custom"
     ? Boolean(customName.value.trim()) && customPrice.value != null && Number.isFinite(customPrice.value) && customPrice.value >= 0 && Number.isInteger(customQuantity.value) && customQuantity.value > 0
     : Boolean(selectedOption.value));
-  const canSubmitWithDiners = computed(() => canSubmit.value &&
+  const reasonRequired = computed(() => {
+    if (props.mealSlot && source.value === "custom") return true;
+    const option = selectedOption.value;
+    if (!option) return false;
+    const current = props.currentItem;
+    const sameSource = current?.resourceId === option.resourceId && current.resourcePriceId === option.resourcePriceId;
+    const comparison = sameSource ? current.unitCost : referencePrice.value;
+    return comparison == null || roundMoney(actualPrice.value) !== roundMoney(comparison);
+  });
+  const canSubmitWithDiners = computed(() => baseCanSubmit.value &&
     ((source.value === 'custom' ? customUnit.value : selectedOption.value?.unit) !== 'table' ||
-      (dinerCount.value != null && Number.isInteger(dinerCount.value) && dinerCount.value > 0)));
+      (dinerCount.value != null && Number.isInteger(dinerCount.value) && dinerCount.value > 0)) &&
+    (!reasonRequired.value || Boolean(adjustmentReason.value.trim())));
   let detailVersion = 0;
   let initializing = false;
   function loadOptions(query: RemoteOptionsQuery) {
@@ -115,5 +125,5 @@ export function useResourcePriceSelection(props: { readonly destination?: string
   }
 
   onScopeDispose(() => { ++detailVersion; });
-  return { actualPrice, referencePrice, adjustmentReason, city, selectedId, quantity, selectedOption, loadOptions, source, customName, customPrice, customUnit, customQuantity, dinerCount, canSubmit: canSubmitWithDiners, createItem };
+  return { actualPrice, referencePrice, adjustmentReason, reasonRequired, city, selectedId, quantity, selectedOption, loadOptions, source, customName, customPrice, customUnit, customQuantity, dinerCount, canSubmit: canSubmitWithDiners, createItem };
 }

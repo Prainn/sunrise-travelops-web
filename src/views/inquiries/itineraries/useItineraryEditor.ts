@@ -257,7 +257,8 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     const plan = options.selectedItinerary.value;
     const target = plan && getVehiclePlan(plan, tier);
     if (!plan || !target) return;
-    if (value.totalPrice !== target.totalPrice || calculateVehiclePlanAutomaticTotal(value) !== calculateVehiclePlanAutomaticTotal(target)) { value.adjustmentReason = ""; value.pricingMode = value.totalPrice === calculateVehiclePlanAutomaticTotal(value) ? "automatic" : "manual"; }
+    if (value.totalPrice !== target.totalPrice) value.adjustmentReason = "";
+    value.pricingMode = value.totalPrice === calculateVehiclePlanAutomaticTotal(value) ? "automatic" : "manual";
     Object.assign(target, cloneVehiclePlans([value])[0]);
     syncQuoteOptions(plan);
     touchSelectedItinerary();
@@ -308,6 +309,10 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
         if (!vehiclePlan?.arrangements.length) return [];
         const key = `${hotelTier}:${vehicleTier}`;
         const option = existing.get(key) ?? createDefaultQuoteOption(hotelTier, vehicleTier, createId("quote-option"));
+        option.staffRoomCosts = plan.destinations.map(destination => ({
+          destination,
+          total: option.staffRoomCosts.find(cost => cost.destination === destination)?.total ?? null,
+        }));
         option.paxPrices = plan.paxTiers.map(pax => ({ pax, adultUnitPrice: option.paxPrices.find(price => price.pax === pax)?.adultUnitPrice ?? null }));
         return [option];
       });
@@ -320,7 +325,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   }
 
   function cloneQuoteSettings(quote: ItineraryRecord["quote"]): ItineraryRecord["quote"] {
-    return { ...quote, transportFees: quote.transportFees.map((fee) => ({ ...fee })), options: quote.options.map((option) => ({ ...option, paxPrices: option.paxPrices.map(price => ({ ...price })) })) };
+    return { ...quote, transportFees: quote.transportFees.map((fee) => ({ ...fee })), options: quote.options.map((option) => ({ ...option, staffRoomCosts: option.staffRoomCosts.map(cost => ({ ...cost })), paxPrices: option.paxPrices.map(price => ({ ...price })) })) };
   }
 
   function cloneHotelPlans(hotelPlans: ItineraryHotelPlan[]): ItineraryHotelPlan[] {

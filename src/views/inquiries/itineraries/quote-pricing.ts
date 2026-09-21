@@ -10,7 +10,7 @@ export function createDefaultQuoteOption(
     hotelTier,
     vehicleTier,
     guideServiceTotal: null,
-    staffRoomTotal: null,
+    staffRoomCosts: [],
     paxPrices: [],
   };
 }

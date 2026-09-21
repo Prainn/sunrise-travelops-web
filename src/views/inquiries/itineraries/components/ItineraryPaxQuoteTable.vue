@@ -10,36 +10,33 @@
     >
       <el-form-item :label="$t('itinerary.guideServiceTotal')">
         <el-input-number
-          :model-value="option.guideServiceTotal ?? (current ? calculation?.guideServiceTotal : undefined)"
+          :model-value="option.guideServiceTotal ?? undefined"
           :min="0"
           :max="1e9"
           :precision="2"
           :controls="false"
           @update:model-value="emit('update-option', { guideServiceTotal: $event ?? null })"
         />
-        <el-button
-          link
-          class="ml-2"
-          @click="emit('update-option', { guideServiceTotal: null })"
-        >
-          {{ $t('itinerary.followGuideCost') }}
-        </el-button>
       </el-form-item>
-      <el-form-item :label="$t('itinerary.staffRoomTotal')">
+      <el-form-item
+        v-for="destination in destinations"
+        :key="destination"
+        :label="$t('itinerary.staffRoomDestinationTotal', { destination })"
+      >
         <el-input-number
-          :model-value="option.staffRoomTotal ?? undefined"
+          :model-value="staffRoomTotalFor(destination) ?? undefined"
           :min="0"
           :max="1e9"
           :precision="2"
           :controls="false"
-          @update:model-value="emit('update-option', { staffRoomTotal: $event ?? null })"
+          @update:model-value="updateStaffRoomTotal(destination, $event)"
         />
       </el-form-item>
     </el-form>
     <el-table
       :data="rows"
       border
-      class="w-full"
+      class="w-full mt-4"
     >
       <el-table-column
         label="PAX"
@@ -117,6 +114,7 @@ const props = defineProps<{
   option: ItineraryQuoteOption;
   calculation?: ItineraryQuoteOptionCalculation;
   dailyResourceCost: number;
+  destinations: string[];
   current: boolean;
   editable: boolean;
 }>();
@@ -125,13 +123,21 @@ const rows = computed<Array<Partial<ItineraryPaxCalculation> & { pax: number }>>
   props.calculation?.paxPrices.find(row => row.pax === price.pax) ?? { pax: price.pax }));
 const metrics = [
   { field: 'childUnitPrice', label: 'itinerary.childTourPrice' },
-  { field: 'leaderUnitPrice', label: 'itinerary.leaderTourPrice' },
   { field: 'singleSupplementUnitCost', label: 'itinerary.quoteLineTypes.single_supplement' },
   { field: 'tipUnitPrice', label: 'itinerary.tipPerPerson' },
   { field: 'profitPerPerson', label: 'itinerary.profitPerPerson' },
 ] as const;
 function money(value: number | undefined) { return props.current && value !== undefined ? `¥${formatMoney(value)}` : '—'; }
 function priceFor(pax: number) { return props.option.paxPrices.find(price => price.pax === pax)?.adultUnitPrice; }
+function staffRoomTotalFor(destination: string) { return props.option.staffRoomCosts.find(cost => cost.destination === destination)?.total ?? null; }
+function updateStaffRoomTotal(destination: string, value: number | undefined) {
+  emit('update-option', {
+    staffRoomCosts: props.destinations.map(city => ({
+      destination: city,
+      total: city === destination ? value ?? null : staffRoomTotalFor(city),
+    })),
+  });
+}
 function updatePrice(pax: number, value: number | undefined) {
   emit('update-option', { paxPrices: props.option.paxPrices.map(row => ({ pax: row.pax, adultUnitPrice: row.pax === pax ? value ?? null : priceFor(row.pax) ?? null })) });
 }

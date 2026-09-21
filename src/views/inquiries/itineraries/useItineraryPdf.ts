@@ -2,10 +2,8 @@ import { computed, onBeforeUnmount, ref, watch, type ComputedRef, type Ref } fro
 import type { InquiryRecord } from "@/types/inquiry";
 import type { ItineraryRecord } from "@/types/itinerary";
 import { inquiryService, type PdfData } from "@/services/inquiry.service";
-import { getEnabledHotelPlans, getIncompleteHotelPlanTiers } from "./hotel-plans";
 import { printItineraryDocument, generateItineraryPrintDocument, type ItineraryPrintDocument } from "./pdf";
-import { getEnabledVehiclePlans, getIncompleteVehiclePlanTiers } from "./vehicle-plans";
-import { getDayCountMismatch, validateItineraryForPdf, type PdfValidationIssue } from "./workflow";
+import { getDayCountMismatch, getItineraryValidationIssues } from "./workflow";
 
 interface ItineraryPdfOptions {
   inquiry: Readonly<Ref<InquiryRecord | undefined>>;
@@ -28,19 +26,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     const plan = options.selectedItinerary.value;
     const inquiry = options.inquiry.value;
     if (!plan || !inquiry || !options.canGenerate()) return null;
-    const issues: PdfValidationIssue[] = validateItineraryForPdf(plan.dailyPlans);
-    if (!getEnabledHotelPlans(plan).length) issues.push({ key: "itinerary.pdfHotelPlanRequired", target: "itinerary-hotels" });
-    if (getIncompleteHotelPlanTiers(plan).length) issues.push({ key: "itinerary.validation.hotels", target: "itinerary-hotels" });
-    if (!getEnabledVehiclePlans(plan).length || getIncompleteVehiclePlanTiers(plan).length) {
-      issues.push({ key: "itinerary.validation.vehicles", target: "itinerary-vehicles" });
-    }
-    if (!plan.quote.options.length) issues.push({ key: "itinerary.configureQuotePlansFirst", target: "quote" });
-    if (plan.guidePlans.some((guide) => !guide.serviceDays)) issues.push({ key: "itinerary.guideDatesRequired", target: "itinerary-guides" });
-    plan.quote.transportFees.forEach((fee, index) => {
-      if ((!fee.departureCity.trim() || !fee.arrivalCity.trim() || fee.departureCity === fee.arrivalCity) || fee.unitPrice === null || !Number.isFinite(fee.unitPrice) || fee.unitPrice < 0) {
-        issues.push({ key: "itinerary.validation.transportFee", target: "quote", params: { index: index + 1 } });
-      }
-    });
+    const issues = getItineraryValidationIssues(plan);
     return {
       issues,
       dayCountMismatch: getDayCountMismatch(plan.dailyPlans.length, inquiry.plannedDays),

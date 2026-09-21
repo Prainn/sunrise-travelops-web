@@ -113,8 +113,14 @@
               {{ formatDetail(detail) }}
             </el-descriptions-item>
           </el-descriptions>
-          <el-form-item :label="$t('identity.reference')">
-            <el-text>{{ referencePrice == null ? $t('identity.unknown') : referencePrice }}</el-text>
+          <el-form-item
+            :label="$t('identity.reference')"
+            class="mt-4"
+          >
+            <el-input-number
+              :model-value="referencePrice == null ? 0 : referencePrice"
+              readonly
+            />
           </el-form-item>
           <el-form-item :label="$t('identity.actual')">
             <el-input-number
@@ -152,7 +158,11 @@
           :disabled="source === 'library' && Boolean(currentItem?.dinerCount || selectedOption?.dinerCount)"
         />
       </el-form-item>
-      <el-form-item :label="$t('identity.reason')">
+      <el-form-item
+        v-if="reasonRequired"
+        :label="$t('identity.reason')"
+        required
+      >
         <el-input
           v-model="adjustmentReason"
           :placeholder="$t('identity.reasonPlaceholder')"
@@ -196,7 +206,7 @@ const props = defineProps<{
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [item: ItineraryResourceItem] }>();
 const { t, locale } = useI18n();
 const cityOptions = useCityOptions();
-const { actualPrice, referencePrice, adjustmentReason, city, selectedId, quantity, selectedOption, loadOptions, source, customName, customPrice, customUnit, customQuantity, dinerCount, canSubmit, createItem } = useResourcePriceSelection(props, () => ElMessage.error(t("request.failed")));
+const { actualPrice, referencePrice, adjustmentReason, reasonRequired, city, selectedId, quantity, selectedOption, loadOptions, source, customName, customPrice, customUnit, customQuantity, dinerCount, canSubmit, createItem } = useResourcePriceSelection(props, () => ElMessage.error(t("request.failed")));
 async function loadPriceOptions(query: RemoteOptionsQuery) {
   const result = await loadOptions(query);
   return { total: result.total, list: result.list.map(option => ({

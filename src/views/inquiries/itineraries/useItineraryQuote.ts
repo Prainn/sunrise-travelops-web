@@ -13,7 +13,7 @@ export function useItineraryQuote(selected: Readonly<Ref<ItineraryRecord | undef
   const stop = watch(
     [() => {
       const plan = selected.value;
-      if (!plan) return "null";
+      if (!plan || plan.version < 1) return "null";
       const preview = plan.status === "draft" && canPreview();
       return JSON.stringify({
         id: plan.id,
@@ -30,9 +30,9 @@ export function useItineraryQuote(selected: Readonly<Ref<ItineraryRecord | undef
       lastId = plan?.id;
       current.value = false;
       error.value = false;
-      pending.value = Boolean(plan);
-      if (!plan) return;
-      const request = JSON.parse(serialized) as { id: string; input?: ReturnType<typeof itineraryInput> };
+      const request = JSON.parse(serialized) as { id: string; input?: ReturnType<typeof itineraryInput> } | null;
+      pending.value = Boolean(request);
+      if (!request) return;
       let cancelled = false;
       const timer = setTimeout(async () => {
         try {

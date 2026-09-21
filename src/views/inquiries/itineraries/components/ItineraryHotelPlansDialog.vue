@@ -29,7 +29,7 @@
     </template>
     <section
       id="itinerary-hotels"
-      class="itinerary-hotel-plans"
+      class="itinerary-hotel-plans max-h-60vh overflow-y-auto"
     >
       <el-card
         class="itinerary-hotel-plans__card rounded-[10px]"
@@ -139,6 +139,7 @@
         v-if="editable"
         type="primary"
         :loading="saving"
+        :disabled="!canSave"
         @click="emit('save')"
       >
         {{ $t('itinerary.save') }}
@@ -152,7 +153,7 @@ import { computed, watch } from "vue";
 import { resourceService } from "@/services/resource.service";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import type { ItineraryDayRecord, ItineraryHotelPlan, ItineraryHotelTier } from "@/types/itinerary";
-import { getHotelPlan, HOTEL_PLAN_TIERS } from "../hotel-plans";
+import { getHotelPlan, getIncompleteHotelPlanTiers, HOTEL_PLAN_TIERS } from "../hotel-plans";
 import { destinationDuration, itineraryDuration } from "../duration";
 
 const props = defineProps<{
@@ -189,6 +190,10 @@ function hotelResource(tier: ItineraryHotelTier, destination: string) {
 
 const overnightDestinations = computed(() => props.destinations.filter(destination => props.dailyPlans.some(day => day.overnightDestination === destination)));
 const pendingNights = computed(() => props.dailyPlans.filter(day => day.overnightDestination === null).length);
+const canSave = computed(() => !getIncompleteHotelPlanTiers({
+  dailyPlans: props.dailyPlans,
+  hotelPlans: props.hotelPlans,
+}).length);
 
 function getPlan(tier: ItineraryHotelTier) {
   return getHotelPlan({ hotelPlans: props.hotelPlans }, tier);

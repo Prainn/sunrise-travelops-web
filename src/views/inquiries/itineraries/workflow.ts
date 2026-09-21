@@ -1,4 +1,6 @@
-import type { ItineraryDayRecord } from "@/types/itinerary";
+import type { ItineraryRecord } from "@/types/itinerary";
+import { getEnabledHotelPlans, getIncompleteHotelPlanTiers } from "./hotel-plans";
+import { getEnabledVehiclePlans, getIncompleteVehiclePlanTiers } from "./vehicle-plans";
 export type DayCountMismatch = "shorter" | "longer" | null;
 
 interface ItinerarySelectionItem {
@@ -27,8 +29,12 @@ export interface PdfValidationIssue {
   params?: Record<string, string | number>;
 }
 
-export function validateItineraryForPdf(days: ItineraryDayRecord[]): PdfValidationIssue[] {
+type ItineraryValidationInput = Pick<ItineraryRecord,
+  "dailyPlans" | "hotelPlans" | "vehiclePlans" | "paxTiers" | "guidePlans" | "quote">;
+
+export function getItineraryValidationIssues(plan: ItineraryValidationInput): PdfValidationIssue[] {
   const issues: PdfValidationIssue[] = [];
+  const days = plan.dailyPlans;
   if (!days.length) issues.push({ key: "itinerary.validation.noDays", target: "itinerary-daily" });
   for (const day of days) {
     const target = `day-${day.id}`;
@@ -43,5 +49,22 @@ export function validateItineraryForPdf(days: ItineraryDayRecord[]): PdfValidati
       }
     }
   }
+  if (!getEnabledHotelPlans(plan).length) {
+    issues.push({ key: "itinerary.pdfHotelPlanRequired", target: "itinerary-hotels" });
+  } else if (getIncompleteHotelPlanTiers(plan).length) {
+    issues.push({ key: "itinerary.validation.hotels", target: "itinerary-hotels" });
+  }
+  if (!getEnabledVehiclePlans(plan).length || getIncompleteVehiclePlanTiers(plan).length) {
+    issues.push({ key: "itinerary.validation.vehicles", target: "itinerary-vehicles" });
+  }
+  if (plan.guidePlans.some((guide) => !guide.serviceDays)) {
+    issues.push({ key: "itinerary.guideDatesRequired", target: "itinerary-guides" });
+  }
+  plan.quote.transportFees.forEach((fee, index) => {
+    if ((!fee.departureCity.trim() || !fee.arrivalCity.trim() || fee.departureCity === fee.arrivalCity)
+      || fee.unitPrice === null || !Number.isFinite(fee.unitPrice) || fee.unitPrice < 0) {
+      issues.push({ key: "itinerary.validation.transportFee", target: "quote", params: { index: index + 1 } });
+    }
+  });
   return issues;
 }

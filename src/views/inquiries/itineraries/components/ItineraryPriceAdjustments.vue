@@ -161,9 +161,10 @@ function needsReason(row: ReturnType<typeof itineraryPriceRows>[number]) {
   const actual=row.get();
   const reference=row.fields.referencePrice;
   if (actual==null) return false;
-  if (reference!=null) return roundMoney(actual)!==roundMoney(reference);
   const initial=initialPrices.get(row.key);
-  return row.custom && initial!=null && roundMoney(actual)!==roundMoney(initial);
+  if (row.custom) return true;
+  if (reference!=null && roundMoney(actual)!==roundMoney(reference)) return true;
+  return initial!=null && roundMoney(actual)!==roundMoney(initial);
 }
 function vehicleNeedsReason(vehicle: ItineraryVehiclePlan) {
   const total=calculateVehiclePlanAutomaticTotal(vehicle);

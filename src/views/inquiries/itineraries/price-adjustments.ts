@@ -16,15 +16,14 @@ export function missingPriceReasons(plan: ItineraryRecord, previous?: ItineraryR
   for (const item of itineraryPriceRows(plan)) {
     const saved=old.get(item.key); const before=saved?.source===item.source ? saved : undefined; const actual=item.get(); const ref=item.fields.referencePrice;
     if (actual == null || (before && roundMoney(before.get() ?? 0) === roundMoney(actual))) continue;
-    if (ref != null && roundMoney(ref)===roundMoney(actual)) continue;
-    if (!before && item.custom) continue;
+    if (!before && ref != null && roundMoney(ref)===roundMoney(actual)) continue;
     if (!item.fields.adjustmentReason?.trim()) missing.push(item.name);
   }
   for (const vehicle of plan.vehiclePlans) {
     const before=previous?.vehiclePlans.find(v=>v.tier===vehicle.tier);
     const total=calculateVehiclePlanAutomaticTotal(vehicle);
     if (vehicle.totalPrice==null || vehicle.pricingMode==='automatic' || (total!=null && roundMoney(total)===roundMoney(vehicle.totalPrice))) continue;
-    if (before?.totalPrice===vehicle.totalPrice && before.pricingMode===vehicle.pricingMode && calculateVehiclePlanAutomaticTotal(before)===total) continue;
+    if (before?.totalPrice==null || roundMoney(before.totalPrice)===roundMoney(vehicle.totalPrice)) continue;
     if (!vehicle.adjustmentReason?.trim()) missing.push(vehicle.tier);
   }
   return missing;

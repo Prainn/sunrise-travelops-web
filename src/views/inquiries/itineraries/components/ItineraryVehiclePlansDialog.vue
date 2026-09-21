@@ -177,6 +177,7 @@
         v-if="editable"
         type="primary"
         :loading="saving"
+        :disabled="!canSave"
         @click="emit('save')"
       >
         {{ $t('itinerary.save') }}
@@ -193,12 +194,16 @@ import ResourceSelect from '@/components/ResourceSelect/index.vue';
 import { resourceService } from '@/services/resource.service';
 import type { ItineraryVehicleArrangement, ItineraryVehiclePlan, ItineraryVehicleTier } from '@/types/itinerary';
 import { addDays, createId, formatDate, formatMoney } from '@/utils';
-import { calculateVehiclePlanAutomaticTotal, isVehiclePlanTotalOverridden, withVehiclePlanArrangements } from '../vehicle-plans';
+import { calculateVehiclePlanAutomaticTotal, getIncompleteVehiclePlanTiers, isVehiclePlanTotalOverridden, withVehiclePlanArrangements } from '../vehicle-plans';
 
 const props = defineProps<{ plans: ItineraryVehiclePlan[]; startDate: string; plannedDays: number; passengerCount: number; editable: boolean; modelValue: boolean; saving: boolean }>();
 const emit = defineEmits<{ 'update-plan': [tier: ItineraryVehicleTier, plan: ItineraryVehiclePlan]; save: []; cancel: [] }>();
 const { t } = useI18n();
 const tripEndDate = computed(() => addDays(props.startDate, props.plannedDays - 1));
+const canSave = computed(() => !getIncompleteVehiclePlanTiers({
+  paxTiers: [props.passengerCount],
+  vehiclePlans: props.plans,
+}).length);
 const isAddingNewVehicle = ref(false)
 
 function updateArrangements(plan: ItineraryVehiclePlan, arrangements: ItineraryVehiclePlan['arrangements']) {
@@ -206,10 +211,13 @@ function updateArrangements(plan: ItineraryVehiclePlan, arrangements: ItineraryV
 }
 
 function addArrangement(plan: ItineraryVehiclePlan) {
+  const defaultDate = Array.from({ length: props.plannedDays }, (_, index) => addDays(props.startDate, index))
+    .find(date => !plan.arrangements.some(arrangement => arrangement.startDate && arrangement.endDate
+      && date >= arrangement.startDate && date <= arrangement.endDate)) ?? '';
   updateArrangements(plan, [...plan.arrangements, {
     id: createId('vehicle-arrangement'),
-    startDate: '',
-    endDate: '',
+    startDate: defaultDate,
+    endDate: defaultDate,
     vehicles: [],
     totalPrice: null,
   }]);

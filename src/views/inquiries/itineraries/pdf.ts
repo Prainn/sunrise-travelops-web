@@ -148,13 +148,12 @@ function buildPaxQuoteSections(itinerary: ItineraryRecord, quote: PaxQuoteCalcul
       return `<tr><th style="${quoteLabelStyle()}">${price.pax} PAX</th>
         <td style="${quoteCellStyle()}">${withTip(price.adultUnitPrice)}</td>
         <td style="${quoteCellStyle()}">${withTip(price.childUnitPrice)}</td>
-        <td style="${quoteCellStyle()}">RMB ${formatMoney(price.leaderUnitPrice)}</td>
         <td style="${quoteCellStyle()}">RMB ${formatMoney(price.singleSupplementUnitCost)}</td></tr>`;
     }).join('');
     return `<table data-pdf-block style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;">
-      <thead><tr><th colspan="5" style="${quoteHeaderStyle()}">${escapeHtml(title)}</th></tr>
-        <tr>${['人数档位', '成人团费＋小费', `儿童团费（${itinerary.childRate}%）＋小费`, '领队费', '单房差'].map(label => `<th style="${quoteHeaderStyle()}">${escapeHtml(label)}</th>`).join('')}</tr></thead>
-      <tbody>${rows}${buildExtraFeeRows(itinerary, 4)}${buildTipRows(itinerary, 4, false)}</tbody>
+      <thead><tr><th colspan="4" style="${quoteHeaderStyle()}">${escapeHtml(title)}</th></tr>
+        <tr>${['人数档位', '成人团费＋小费', `儿童团费（${itinerary.childRate}%）＋小费`, '单房差'].map(label => `<th style="${quoteHeaderStyle()}">${escapeHtml(label)}</th>`).join('')}</tr></thead>
+      <tbody>${rows}${buildExtraFeeRows(itinerary, 3)}${buildTipRows(itinerary, 3, false)}</tbody>
     </table>`;
   }).join('');
   return `<section data-pdf-block data-pdf-keep-with-next><h2 style="margin:0;font-size:13px;">三、团队报价【人民币／人；小费另列，机票、动车票及额外自费另付】</h2></section>${tables}`;

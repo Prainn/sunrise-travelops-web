@@ -2,12 +2,12 @@
   <div class="quote-panel grid gap-[20px] text-[14px]">
     <template v-if="!legacyCalculation">
       <div class="flex gap-5 flex-wrap">
-        <span>{{ $t('itinerary.dailyMealAttractionCost') }}: {{ calculationCurrent && paxCalculation ? formatMoney(paxCalculation.dailyResourceCost) : '—' }}</span>
-        <span>{{ $t('itinerary.guideCost') }}: {{ calculationCurrent && paxCalculation ? formatMoney(paxCalculation.guideCost) : '—' }}</span>
+        <span>{{ $t('itinerary.dailyMealAttractionCost') }}: {{ calculationVisible && paxCalculation ? formatMoney(paxCalculation.dailyResourceCost) : '—' }}</span>
+        <span>{{ $t('itinerary.guideCost') }}: {{ calculationVisible && paxCalculation ? formatMoney(paxCalculation.guideCost) : '—' }}</span>
       </div>
       <el-empty
         v-if="!displayOptions.length"
-        :description="$t('itinerary.configureQuotePlansFirst')"
+        :description="$t('itinerary.noQuoteOptions')"
         :image-size="64"
       />
       <ItineraryPaxQuoteTable
@@ -16,7 +16,8 @@
         :option="item.option"
         :calculation="item.calculation"
         :daily-resource-cost="paxCalculation?.dailyResourceCost ?? 0"
-        :current="calculationCurrent && Boolean(item.calculation)"
+        :destinations="destinations"
+        :current="calculationVisible && Boolean(item.calculation)"
         :editable="editable"
         @update-option="emit('update-quote-option', item.option.id, $event)"
       />
@@ -185,6 +186,8 @@ const props = defineProps<{
   quote: ItineraryQuoteSettings;
   calculation: ItineraryQuoteCalculation | null;
   calculationCurrent: boolean;
+  calculationPending: boolean;
+  destinations: string[];
   itemCount: number;
   duration: { days: number; nights: number };
   editable: boolean;
@@ -195,6 +198,7 @@ const emit = defineEmits<{
 }>();
 const paxCalculation = computed(() => props.calculation && 'pricingVersion' in props.calculation ? props.calculation : null);
 const legacyCalculation = computed(() => props.calculation && !('pricingVersion' in props.calculation) ? props.calculation : null);
+const calculationVisible = computed(() => props.calculationCurrent || props.calculationPending);
 const displayOptions = computed(() => props.quote.options.flatMap(option => {
   const calculation = paxCalculation.value?.options.find(record => record.optionId === option.id);
   return [{ option, calculation }];

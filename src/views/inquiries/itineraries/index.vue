@@ -312,11 +312,13 @@
           </ul>
         </section>
         <div
-          v-if="quotePending"
           role="status"
-          class="mb-3 text-[var(--el-text-color-secondary)]"
+          aria-live="polite"
+          class="h-[24px] mb-3 text-[var(--el-text-color-secondary)]"
         >
-          {{ $t('itinerary.quoteCalculating') }}
+          <span v-show="quotePending">
+            {{ $t('itinerary.quoteCalculating') }}
+          </span>
         </div>
         <el-alert
           v-if="quoteError"
@@ -339,6 +341,8 @@
           :quote="selectedItinerary.quote"
           :calculation="quoteCalculation"
           :calculation-current="quoteCurrent"
+          :calculation-pending="quotePending"
+          :destinations="selectedItinerary.destinations"
           :item-count="itemCount"
           :duration="itineraryDuration(selectedItinerary.dailyPlans)"
           :editable="priceEditable"

@@ -53,7 +53,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const validationIssues = ref<PdfValidationIssue[]>([]);
   const inquiryReadOnly = computed(() => inquiry.value ? isInquiryReadOnly(inquiry.value.status) : true);
   const isDraft = computed(() => selectedItinerary.value?.status === "draft");
-  const canCreateItinerary = computed(() => !isSaving.value && !inquiryReadOnly.value && hasUserPermission(userStore.userInfo, "itinerary:create"));
+  const canCreateItinerary = computed(() => !inquiryReadOnly.value && hasUserPermission(userStore.userInfo, "itinerary:create"));
   const contentFormVisible = computed(() => Boolean(
     selectedItinerary.value
     && !inquiryReadOnly.value
@@ -66,7 +66,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     && canPerformItineraryOperation(selectedItinerary.value.status, "edit_price")
     && hasUserPermission(userStore.userInfo, "itinerary:price")
   ));
-  const contentEditable = computed(() => contentFormVisible.value && !isSaving.value);
+  const contentEditable = computed(() => contentFormVisible.value);
   const priceEditable = computed(() => priceFormVisible.value && !isSaving.value);
   const canGeneratePdf = computed(() => Boolean(
     selectedItinerary.value
