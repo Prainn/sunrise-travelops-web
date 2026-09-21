@@ -9,13 +9,14 @@ export function createDefaultQuoteOption(
     id,
     hotelTier,
     vehicleTier,
-    adultUnitPrice: null,
-    leaderFocEnabled: false,
+    guideServiceTotal: null,
+    staffRoomTotal: null,
+    paxPrices: [],
   };
 }
 export function createDefaultQuoteSettings(): ItineraryQuoteSettings {
   return {
-    options: [], chineseTip: null, englishTip: null, transportFees: [], otherExpenses: null,
+    options: [], chineseTip: null, englishTip: null, transportFees: [],
     customerNotes: "", holidayRestrictions: "",
     hotelReplacementTerms: "如所列酒店满房，将调整为同级酒店。",
   };

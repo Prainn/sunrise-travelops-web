@@ -6,7 +6,10 @@ import type {
   ItineraryDayRecord,
   ItineraryQuoteCalculation,
   ItineraryQuoteOption,
-  ItineraryQuoteOptionCalculation,
+  LegacyQuoteOptionCalculation,
+  LegacyQuoteCalculation,
+  PaxQuoteCalculation,
+  ItineraryQuoteSettings,
   ItineraryRecord,
 } from "@/types/itinerary";
 import { formatDateTime, formatMoney } from "@/utils";
@@ -18,9 +21,20 @@ import {
 
 const MAX_QUOTE_OPTIONS_PER_TABLE = 4;
 
+interface LegacyQuoteOption {
+  id: string;
+  hotelTier: ItineraryQuoteOption['hotelTier'];
+  vehicleTier: ItineraryQuoteOption['vehicleTier'];
+  adultUnitPrice: number | null;
+  leaderFocEnabled: boolean;
+}
+type LegacyItineraryRecord = Omit<ItineraryRecord, 'paxTiers' | 'childRate' | 'quote'> & {
+  adults: number; childrenCount: number; leaderCount: number;
+  quote: Omit<ItineraryQuoteSettings, 'options'> & { options: LegacyQuoteOption[]; otherExpenses: number | null };
+};
 interface QuoteDisplayOption {
-  option: ItineraryQuoteOption;
-  calculation: ItineraryQuoteOptionCalculation;
+  option: LegacyQuoteOption;
+  calculation: LegacyQuoteOptionCalculation;
 }
 
 export interface ItineraryPrintDocument {
@@ -121,12 +135,32 @@ export function buildPdfHtml(itinerary: ItineraryRecord, _inquiry: InquiryRecord
     </header>
     ${scheduleSections}
     ${buildCustomerTerms(itinerary)}
-    ${buildQuoteSections(itinerary, quote)}
+    ${"pricingVersion" in quote ? buildPaxQuoteSections(itinerary, quote) : buildQuoteSections(itinerary as unknown as LegacyItineraryRecord, quote)}
     ${buildCustomerNotes(itinerary)}`;
 
 }
 
-function buildQuoteSections(itinerary: ItineraryRecord, quote: ItineraryQuoteCalculation) {
+function buildPaxQuoteSections(itinerary: ItineraryRecord, quote: PaxQuoteCalculation) {
+  const tables = quote.options.map(option => {
+    const title = `${HOTEL_PLAN_TIER_LABELS[option.hotelTier]} · ${getVehicleQuoteLabel(itinerary, option.vehicleTier)}`;
+    const rows = option.paxPrices.map(price => {
+      const withTip = (amount: number) => `RMB ${formatMoney(amount)}${price.tipUnitPrice > 0 ? ` + ${formatMoney(price.tipUnitPrice)}` : ''}`;
+      return `<tr><th style="${quoteLabelStyle()}">${price.pax} PAX</th>
+        <td style="${quoteCellStyle()}">${withTip(price.adultUnitPrice)}</td>
+        <td style="${quoteCellStyle()}">${withTip(price.childUnitPrice)}</td>
+        <td style="${quoteCellStyle()}">RMB ${formatMoney(price.leaderUnitPrice)}</td>
+        <td style="${quoteCellStyle()}">RMB ${formatMoney(price.singleSupplementUnitCost)}</td></tr>`;
+    }).join('');
+    return `<table data-pdf-block style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;">
+      <thead><tr><th colspan="5" style="${quoteHeaderStyle()}">${escapeHtml(title)}</th></tr>
+        <tr>${['人数档位', '成人团费＋小费', `儿童团费（${itinerary.childRate}%）＋小费`, '领队费', '单房差'].map(label => `<th style="${quoteHeaderStyle()}">${escapeHtml(label)}</th>`).join('')}</tr></thead>
+      <tbody>${rows}${buildExtraFeeRows(itinerary, 4)}${buildTipRows(itinerary, 4, false)}</tbody>
+    </table>`;
+  }).join('');
+  return `<section data-pdf-block data-pdf-keep-with-next><h2 style="margin:0;font-size:13px;">三、团队报价【人民币／人；小费另列，机票、动车票及额外自费另付】</h2></section>${tables}`;
+}
+
+function buildQuoteSections(itinerary: LegacyItineraryRecord, quote: LegacyQuoteCalculation) {
   const guestCount = itinerary.adults + itinerary.childrenCount;
   const options = itinerary.quote.options.flatMap((option) => {
     const calculation = quote.options.find((record) => record.optionId === option.id);
@@ -143,7 +177,7 @@ function buildQuoteSections(itinerary: ItineraryRecord, quote: ItineraryQuoteCal
 
 function buildQuoteTable(
   options: QuoteDisplayOption[],
-  itinerary: ItineraryRecord,
+  itinerary: LegacyItineraryRecord,
   guestCount: number
 ) {
   const childRow = itinerary.childrenCount
@@ -195,7 +229,7 @@ function chunkQuoteOptions(options: QuoteDisplayOption[]) {
   );
 }
 
-function getVehicleQuoteLabel(itinerary: ItineraryRecord, tier: ItineraryQuoteOption["vehicleTier"]) {
+function getVehicleQuoteLabel(itinerary: Pick<ItineraryRecord, "vehiclePlans">, tier: ItineraryQuoteOption["vehicleTier"]) {
   const plan = getEnabledVehiclePlans(itinerary).find(plan => plan.tier === tier);
   const seats = [...new Set(plan?.arrangements.flatMap(a => a.vehicles.map(v => v.seats)) ?? [])];
   return `${seats.length ? `${seats.join("/")}座` : ""}${tier === "vip" ? "VIP" : "普通"}巴士`;
@@ -270,7 +304,7 @@ export function getDailyMealCodes(day: ItineraryDayRecord, breakfastStatus: "inc
   return [breakfastStatus === "pending" ? "早餐待确认" : breakfastStatus === "included" ? "B" : "", day.meals.lunch ? "L" : "", day.meals.dinner ? "D" : ""].filter(Boolean).join(", ");
 }
 
-function buildExtraFeeRows(itinerary: ItineraryRecord, columnCount: number) {
+function buildExtraFeeRows(itinerary: { quote: Pick<ItineraryQuoteSettings, "transportFees"> }, columnCount: number) {
   const cabins = { economy: "经济舱", business: "商务舱", first: "一等座", second: "二等座" };
   const rows: Array<[string, string]> = itinerary.quote.transportFees.map((fee) => [
     fee.type === "flight" ? "机票" : "动车票",
@@ -279,12 +313,12 @@ function buildExtraFeeRows(itinerary: ItineraryRecord, columnCount: number) {
   return rows.map(([label, value]) => `<tr><th style="${quoteLabelStyle()}">${escapeHtml(label)}</th><td colspan="${columnCount}" style="${quoteCellStyle()}">${escapeHtml(value)}</td></tr>`).join("");
 }
 
-function buildTipRows(itinerary: ItineraryRecord, columnCount: number) {
-  const tips = [["中文", itinerary.quote.chineseTip], ["英文", itinerary.quote.englishTip]] as const;
+function buildTipRows(itinerary: { quote: Pick<ItineraryQuoteSettings, "chineseTip" | "englishTip"> }, columnCount: number, legacy = true) {
+  const tips = [["中文", itinerary.quote.chineseTip], [legacy ? "英文" : "英文／第二语言", itinerary.quote.englishTip]] as const;
   const visible = tips.filter(([, amount]) => (amount ?? 0) > 0);
   return visible.map(([language, amount], index) => `<tr>
     ${index === 0 ? `<th rowspan="${visible.length}" style="${quoteLabelStyle()}">全程小费</th>` : ""}
-    <td colspan="${columnCount}" style="${quoteCellStyle()};text-align:left;">【${language}】 RMB ${formatMoney(amount ?? 0)} PP NO FOC【大小同价，不含行李费】</td>
+    <td colspan="${columnCount}" style="${quoteCellStyle()};text-align:left;">【${language}】 RMB ${formatMoney(amount ?? 0)} PP ${legacy ? "NO FOC【大小同价，不含行李费】" : "【成人儿童同价，领队仅收酒店费，不含行李费】"}</td>
   </tr>`).join("");
 }
 

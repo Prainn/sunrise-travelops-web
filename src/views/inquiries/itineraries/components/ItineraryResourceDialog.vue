@@ -58,7 +58,7 @@
           />
         </el-form-item>
         <el-form-item
-          :label="$t('itinerary.quantity')"
+          :label="$t('itinerary.perPersonQuantity')"
           required
         >
           <el-input-number
@@ -126,7 +126,7 @@
           </el-form-item>
           <el-form-item
             class="resource-dialog__quantity mt-[18px]"
-            :label="$t('itinerary.quantity')"
+            :label="$t('itinerary.perPersonQuantity')"
           >
             <el-input-number
               v-model="quantity"
@@ -134,11 +134,24 @@
               :precision="0"
             />
             <span class="resource-dialog__unit ml-[8px] text-[var(--el-text-color-secondary)]">
-              {{ resourceUnitName(selectedOption.unit) }}
+              {{ $t("itinerary.usageCount") }}
             </span>
           </el-form-item>
         </template>
       </template>
+      <el-form-item
+        v-if="(source === 'custom' ? customUnit : selectedOption?.unit) === 'table'"
+        :label="$t('restaurant.dinerCount')"
+        required
+      >
+        <el-input-number
+          v-model="dinerCount"
+          :min="1"
+          :max="10000"
+          :precision="0"
+          :disabled="source === 'library' && Boolean(currentItem?.dinerCount || selectedOption?.dinerCount)"
+        />
+      </el-form-item>
       <el-form-item :label="$t('identity.reason')">
         <el-input
           v-model="adjustmentReason"
@@ -183,7 +196,7 @@ const props = defineProps<{
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [item: ItineraryResourceItem] }>();
 const { t, locale } = useI18n();
 const cityOptions = useCityOptions();
-const { actualPrice, referencePrice, adjustmentReason, city, selectedId, quantity, selectedOption, loadOptions, source, customName, customPrice, customUnit, customQuantity, canSubmit, createItem } = useResourcePriceSelection(props, () => ElMessage.error(t("request.failed")));
+const { actualPrice, referencePrice, adjustmentReason, city, selectedId, quantity, selectedOption, loadOptions, source, customName, customPrice, customUnit, customQuantity, dinerCount, canSubmit, createItem } = useResourcePriceSelection(props, () => ElMessage.error(t("request.failed")));
 async function loadPriceOptions(query: RemoteOptionsQuery) {
   const result = await loadOptions(query);
   return { total: result.total, list: result.list.map(option => ({

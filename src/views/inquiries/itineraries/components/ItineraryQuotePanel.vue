@@ -1,125 +1,59 @@
 <template>
   <div class="quote-panel grid gap-[20px] text-[14px]">
-    <div class="quote-panel__summary flex flex-wrap gap-[20px] text-[var(--el-text-color-regular)]">
-      <span>{{ $t('itinerary.dailyMealAttractionCost') }} <strong>{{ calculationCurrent ? `¥${formatMoney(calculation.dailyResourceCost)}` : '—' }}</strong></span>
-      <span>{{ $t('itinerary.hotelRoomCount') }} <strong>{{ calculationCurrent ? calculation.hotelRoomCount : '—' }}</strong></span>
-      <span>{{ $t('itinerary.guideCost') }} <strong>{{ calculationCurrent ? `¥${formatMoney(calculation.guideCost)}` : '—' }}</strong></span>
-    </div>
-    <el-empty
-      v-if="!displayOptions.length"
-      :description="$t('itinerary.configureQuotePlansFirst')"
-      :image-size="64"
-    />
-    <div
-      v-else
-      class="quote-panel__comparison overflow-x-auto"
-    >
-      <table
-        class="w-full [table-layout:fixed] [border-collapse:collapse]"
-        :style="{ minWidth: `${180 + displayOptions.length * 200}px` }"
+    <template v-if="!legacyCalculation">
+      <div class="flex gap-5 flex-wrap">
+        <span>{{ $t('itinerary.dailyMealAttractionCost') }}: {{ calculationCurrent && paxCalculation ? formatMoney(paxCalculation.dailyResourceCost) : '—' }}</span>
+        <span>{{ $t('itinerary.guideCost') }}: {{ calculationCurrent && paxCalculation ? formatMoney(paxCalculation.guideCost) : '—' }}</span>
+      </div>
+      <el-empty
+        v-if="!displayOptions.length"
+        :description="$t('itinerary.configureQuotePlansFirst')"
+        :image-size="64"
+      />
+      <ItineraryPaxQuoteTable
+        v-for="item in displayOptions"
+        :key="item.option.id"
+        :option="item.option"
+        :calculation="item.calculation"
+        :daily-resource-cost="paxCalculation?.dailyResourceCost ?? 0"
+        :current="calculationCurrent && Boolean(item.calculation)"
+        :editable="editable"
+        @update-option="emit('update-quote-option', item.option.id, $event)"
+      />
+    </template>
+    <template v-else-if="legacyCalculation">
+      <el-alert
+        :title="$t('itinerary.legacyQuote')"
+        type="info"
+        :closable="false"
+      />
+      <el-table
+        :data="legacyCalculation.options"
+        border
       >
-        <colgroup>
-          <col class="w-[180px]"><col
-            v-for="item in displayOptions"
-            :key="item.option.id"
-          >
-        </colgroup>
-        <thead class="[&_th]:bg-[var(--el-fill-color-light)] [&_th]:font-600">
-          <tr>
-            <th>{{ $t('itinerary.quoteConfigurations') }}</th>
-            <th
-              v-for="item in displayOptions"
-              :key="item.option.id"
-            >
-              {{ $t(`itinerary.hotelTiers.${item.option.hotelTier}`) }}<br>
-              {{ $t(`itinerary.vehicleServiceLevels.${item.option.vehicleTier}`) }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="metric in costMetrics"
-            :key="metric.field"
-          >
-            <th>{{ $t(metric.label) }}</th>
-            <td
-              v-for="item in displayOptions"
-              :key="item.option.id"
-            >
-              {{ calculationCurrent ? `¥${formatMoney(item.calculation[metric.field])}` : '—' }}
-            </td>
-          </tr>
-          <tr>
-            <th>{{ $t('itinerary.adultTourPricePerPerson') }}</th>
-            <td
-              v-for="item in displayOptions"
-              :key="item.option.id"
-            >
-              <el-input-number
-                :model-value="item.option.adultUnitPrice ?? (calculationCurrent ? item.calculation.adultUnitPrice : undefined)"
-                :disabled="!editable"
-                :min="0"
-                :precision="2"
-                :controls="false"
-                @update:model-value="emit('update-quote-option', item.option.id, { adultUnitPrice: $event ?? null })"
-              />
-            </td>
-          </tr>
-          <tr v-if="displayOptions.some((item) => item.calculation.lines[1]?.quantity)">
-            <th>{{ $t('itinerary.childTourPrice') }}</th>
-            <td
-              v-for="item in displayOptions"
-              :key="item.option.id"
-            >
-              {{ calculationCurrent ? `¥${formatMoney(item.calculation.childUnitPrice)}` : '—' }}
-            </td>
-          </tr>
-          <tr>
-            <th>{{ $t('itinerary.leaderFoc') }}</th>
-            <td
-              v-for="item in displayOptions"
-              :key="item.option.id"
-            >
-              <el-switch
-                :model-value="item.option.leaderFocEnabled"
-                :disabled="!editable || !leaderCount"
-                @update:model-value="emit('update-quote-option', item.option.id, { leaderFocEnabled: Boolean($event) })"
-              />
-              <div>{{ item.option.leaderFocEnabled && leaderCount ? `${guestCount}+${leaderCount} FOC` : $t('itinerary.noFoc') }}</div>
-            </td>
-          </tr>
-          <tr>
-            <th>{{ $t('itinerary.profit') }}</th>
-            <td
-              v-for="item in displayOptions"
-              :key="item.option.id"
-            >
-              {{ calculationCurrent ? `¥${formatMoney(item.calculation.profit)}` : '—' }}
-            </td>
-          </tr>
-          <tr>
-            <th>{{ $t('itinerary.actualMarginRate') }}</th>
-            <td
-              v-for="item in displayOptions"
-              :key="item.option.id"
-            >
-              {{ calculationCurrent ? `${item.calculation.actualMarginRate.toFixed(1)}%` : '—' }}
-            </td>
-          </tr>
-          <tr class="quote-panel__total text-[var(--el-color-primary)] text-[16px] font-semibold">
-            <th>{{ $t('itinerary.totalPrice') }}</th>
-            <td
-              v-for="item in displayOptions"
-              :key="item.option.id"
-            >
-              {{ calculationCurrent ? `¥${formatMoney(item.calculation.totalPrice)}` : '—' }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+        <el-table-column
+          :label="$t('itinerary.quoteConfigurations')"
+          min-width="180"
+        >
+          <template #default="{ row }">
+            {{ $t(`itinerary.hotelTiers.${row.hotelTier}`) }} / {{ $t(`itinerary.vehicleServiceLevels.${row.vehicleTier}`) }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('itinerary.adultTourPricePerPerson')">
+          <template #default="{ row }">
+            {{ formatMoney(row.adultUnitPrice) }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('itinerary.childTourPrice')">
+          <template #default="{ row }">
+            {{ formatMoney(row.childUnitPrice) }}
+          </template>
+        </el-table-column>
+      </el-table>
+    </template>
 
     <el-form
+      v-if="!legacyCalculation"
       class="quote-panel__settings [border-top:1px_solid_var(--el-border-color)] [container-type:inline-size]"
       label-position="top"
       :disabled="!editable"
@@ -146,14 +80,9 @@
               :precision="2"
               :placeholder="$t('itinerary.noExtraQuote')"
               controls-position="right"
+              :disabled="quote[field] === null && quote[field === 'chineseTip' ? 'englishTip' : 'chineseTip'] !== null"
               @update:model-value="emit('update-settings', { [field]: $event ?? null })"
             />
-            <div
-              v-if="(quote[field] ?? 0) > 0"
-              class="w-full mt-[8px] text-[var(--el-text-color-regular)]"
-            >
-              {{ $t('itinerary.tipTotal', { people: guestCount, perPerson: formatMoney(quote[field] ?? 0), total: formatMoney(multiplyMoney(quote[field] ?? 0, guestCount)) }) }}
-            </div>
           </el-form-item>
         </div>
       </el-card>
@@ -223,18 +152,6 @@
         </el-button>
       </el-card>
       <h3 class="m-[20px_0_12px] text-[18px]">
-        {{ $t('planning.otherExpenses') }}
-      </h3>
-      <el-form-item :label="$t('planning.extraAmount')">
-        <el-input-number
-          :model-value="quote.otherExpenses ?? undefined"
-          :placeholder="$t('itinerary.noExtraQuote')"
-          :min="0"
-          :precision="2"
-          @change="emit('update-settings', { otherExpenses: $event ?? null })"
-        />
-      </el-form-item>
-      <h3 class="m-[20px_0_12px] text-[18px]">
         {{ $t('itinerary.customerTerms') }}
       </h3>
       <el-form-item
@@ -258,36 +175,30 @@
 </template>
 
 <script setup lang="ts">
+import ItineraryPaxQuoteTable from "./ItineraryPaxQuoteTable.vue";
 import CitySelect from "@/components/CitySelect.vue";
 import { computed } from "vue";
 import type { ItineraryQuoteCalculation, ItineraryQuoteOption, ItineraryQuoteSettings, ItineraryTransportFee } from "@/types/itinerary";
-import { createId, formatMoney, multiplyMoney } from "@/utils";
+import { createId, formatMoney } from "@/utils";
 
 const props = defineProps<{
   quote: ItineraryQuoteSettings;
-  calculation: ItineraryQuoteCalculation;
+  calculation: ItineraryQuoteCalculation | null;
   calculationCurrent: boolean;
   itemCount: number;
   duration: { days: number; nights: number };
-  guestCount: number;
-  leaderCount: number;
   editable: boolean;
 }>();
 const emit = defineEmits<{
   "update-quote-option": [optionId: string, changes: Partial<Omit<ItineraryQuoteOption, "id">>];
   "update-settings": [changes: Partial<Omit<ItineraryQuoteSettings, "options">>];
 }>();
-const displayOptions = computed(() => props.quote.options.flatMap((option) => {
-  const calculation = props.calculation.options.find((record) => record.optionId === option.id);
-  return calculation ? [{ option, calculation }] : [];
+const paxCalculation = computed(() => props.calculation && 'pricingVersion' in props.calculation ? props.calculation : null);
+const legacyCalculation = computed(() => props.calculation && !('pricingVersion' in props.calculation) ? props.calculation : null);
+const displayOptions = computed(() => props.quote.options.flatMap(option => {
+  const calculation = paxCalculation.value?.options.find(record => record.optionId === option.id);
+  return [{ option, calculation }];
 }));
-const costMetrics = [
-  { field: "hotelCost", label: "itinerary.hotelCost" },
-  { field: "vehicleCost", label: "itinerary.destinationVehicleCost" },
-  { field: "baseGroupCost", label: "itinerary.baseGroupCost" },
-  { field: "baseCostPerPerson", label: "itinerary.baseCostPerPerson" },
-  { field: "singleSupplementUnitCost", label: "itinerary.quoteLineTypes.single_supplement" },
-] as const;
 const transportTypes = ["flight", "train"] as const;
 const tipFields = ["chineseTip", "englishTip"] as const;
 const noteFields = ["customerNotes", "holidayRestrictions", "hotelReplacementTerms"] as const;

@@ -4,7 +4,8 @@
     :title="$t('planning.vehiclePlans')"
     width="min(1200px, 96vw)"
     destroy-on-close
-    @close="emit('update:modelValue', false)"
+    :close-on-click-modal="false"
+    @close="emit('cancel')"
   >
     <section id="itinerary-vehicles">
       <div class="grid gap-[16px] lg:grid-cols-2 max-h-60vh overflow-y-auto">
@@ -168,6 +169,19 @@
         </el-card>
       </div>
     </section>
+    <template #footer>
+      <el-button @click="emit('cancel')">
+        {{ $t(editable ? 'common.cancel' : 'common.close') }}
+      </el-button>
+      <el-button
+        v-if="editable"
+        type="primary"
+        :loading="saving"
+        @click="emit('save')"
+      >
+        {{ $t('itinerary.save') }}
+      </el-button>
+    </template>
   </el-dialog>
 </template>
 
@@ -181,8 +195,8 @@ import type { ItineraryVehicleArrangement, ItineraryVehiclePlan, ItineraryVehicl
 import { addDays, createId, formatDate, formatMoney } from '@/utils';
 import { calculateVehiclePlanAutomaticTotal, isVehiclePlanTotalOverridden, withVehiclePlanArrangements } from '../vehicle-plans';
 
-const props = defineProps<{ plans: ItineraryVehiclePlan[]; startDate: string; plannedDays: number; passengerCount: number; editable: boolean; modelValue: boolean }>();
-const emit = defineEmits<{ 'update-plan': [tier: ItineraryVehicleTier, plan: ItineraryVehiclePlan], "update:modelValue": [value: boolean] }>();
+const props = defineProps<{ plans: ItineraryVehiclePlan[]; startDate: string; plannedDays: number; passengerCount: number; editable: boolean; modelValue: boolean; saving: boolean }>();
+const emit = defineEmits<{ 'update-plan': [tier: ItineraryVehicleTier, plan: ItineraryVehiclePlan]; save: []; cancel: [] }>();
 const { t } = useI18n();
 const tripEndDate = computed(() => addDays(props.startDate, props.plannedDays - 1));
 const isAddingNewVehicle = ref(false)

@@ -2,8 +2,9 @@
   <el-dialog
     :model-value="modelValue"
     :title="$t('planning.guideService')"
-    width="min(1200px, 96vw)"
-    @close="emit('update:modelValue', false)"
+    width="min(600px, 96vw)"
+    :close-on-click-modal="false"
+    @close="emit('cancel')"
   >
     <section id="itinerary-guides">
       <el-card
@@ -45,7 +46,10 @@
             v-if="plan"
             class="gap-x-[24px] md:grid-cols-2 p-[16px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)]"
           >
-            <el-form-item :label="$t('planning.dailyPrice')">
+            <el-form-item
+              :label="$t('planning.dailyPrice')"
+              label-width="160px"
+            >
               <el-input-number
                 class="w-full"
                 :model-value="plan.dailyPrice"
@@ -59,32 +63,30 @@
             <div class="flex items-center">
               <el-form-item
                 :label="$t('planning.guideTotalPrice')"
-                class="w-400px"
+                label-width="160px"
               >
-                <div class="w-full">
-                  <el-input
-                    :model-value="formatMoney(totalPrice)"
-                    readonly
-                  >
-                    <template #prepend>
-                      ¥
-                    </template>
-                  </el-input>
-                  <el-text
-                    type="info"
-                    size="small"
-                  >
-                    ¥{{ formatMoney(plan.dailyPrice) }} × {{ plan.serviceDays }}
-                  </el-text>
-                  <el-tag
-                    type="info"
-                    effect="plain"
-                    size="small"
-                    class="ml-2"
-                  >
-                    {{ $t('planning.serviceDays') }}：{{ plan.serviceDays }}
-                  </el-tag>
-                </div>
+                <el-input
+                  :model-value="formatMoney(totalPrice)"
+                  readonly
+                >
+                  <template #prepend>
+                    ¥
+                  </template>
+                </el-input>
+                <el-text
+                  type="info"
+                  size="small"
+                >
+                  ¥{{ formatMoney(plan.dailyPrice) }} × {{ plan.serviceDays }}
+                </el-text>
+                <el-tag
+                  type="info"
+                  effect="plain"
+                  size="small"
+                  class="ml-2"
+                >
+                  {{ $t('planning.serviceDays') }}：{{ plan.serviceDays }}
+                </el-tag>
               </el-form-item>
             </div>
           </div>
@@ -108,6 +110,19 @@
         </div>
       </el-card>
     </section>
+    <template #footer>
+      <el-button @click="emit('cancel')">
+        {{ $t(editable ? 'common.cancel' : 'common.close') }}
+      </el-button>
+      <el-button
+        v-if="editable"
+        type="primary"
+        :loading="saving"
+        @click="emit('save')"
+      >
+        {{ $t('itinerary.save') }}
+      </el-button>
+    </template>
   </el-dialog>
 </template>
 <script setup lang="ts">
@@ -125,12 +140,14 @@ const props = defineProps<{
   missing: boolean;
   canCreate: boolean;
   modelValue: boolean;
+  saving: boolean;
 }>();
 const emit = defineEmits<{
   'update-type': [secondLanguage: string, shopping: boolean];
   'update-price': [price: number];
   'create-guide': [];
-  'update:modelValue': [value: boolean];
+  save: [];
+  cancel: [];
 }>();
 const plan = computed(() => props.plans[0]);
 const totalPrice = computed(() => plan.value ? multiplyMoney(plan.value.dailyPrice, plan.value.serviceDays) : 0);

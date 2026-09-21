@@ -6,7 +6,7 @@ import type { AgencyContactRecord } from "@/types/resource";
 export interface PersonOption { id: string; name: string; username: string }
 export interface InquiryQuery { businessUnit?: InquiryRecord["businessUnit"]; page: number; pageSize: number; keyword?: string; code?: string; status?: InquiryStatus | ""; ownerId?: string; sourceChannel?: string }
 export interface PdfData { inquiry: InquiryRecord; itinerary: ItineraryRecord; inquiryVersion: number; generatedAt: string; quoteCode: string; quoteVersion: number; calculation: ItineraryQuoteCalculation }
-const MONEY_FIELDS = new Set(["referencePrice","segmentTotal","beforePrice","afterPrice","unitCost","totalCost","dailyPrice","adultUnitPrice","unitPrice","chineseTip","englishTip","childUnitPrice","hotelCost","vehicleCost","commonGroupCost","baseGroupCost","baseCostPerPerson","singleSupplementUnitCost","totalPrice","profit","dailyResourceCost","guideCost","otherExpenses"]);
+const MONEY_FIELDS = new Set(["hotelUnitCost","vehicleTotal","guideServiceTotal","staffRoomTotal","vehicleUnitCost","guideServiceUnitCost","staffRoomUnitCost","leaderUnitPrice","tipUnitPrice","profitPerPerson","referencePrice","segmentTotal","beforePrice","afterPrice","unitCost","totalCost","dailyPrice","adultUnitPrice","unitPrice","chineseTip","englishTip","childUnitPrice","hotelCost","vehicleCost","commonGroupCost","baseGroupCost","baseCostPerPerson","singleSupplementUnitCost","totalPrice","profit","dailyResourceCost","guideCost","otherExpenses"]);
 export function normalizeInquiryMoney<T>(value: unknown, field = ""): T {
   if (typeof value === "string" && MONEY_FIELDS.has(field)) return Number(value) as T;
   if (Array.isArray(value)) return value.map(item => normalizeInquiryMoney(item)) as T;
@@ -16,8 +16,8 @@ export function normalizeInquiryMoney<T>(value: unknown, field = ""): T {
 function inquiryInput(record: InquiryRecord) {
   return { businessUnit: record.businessUnit, agencyId: record.agencyId, contactId: record.contactId, ownerId: record.ownerId || undefined, sourceChannel: record.sourceChannel, originalMessage: record.originalMessage, internalRemark: record.internalRemark, plannedDays: record.plannedDays, nextFollowUpAt: record.nextFollowUpAt ? new Date(record.nextFollowUpAt).toISOString() : null, status: record.status, lostReason: record.lostReason };
 }
-export function itineraryInput(record: Pick<ItineraryRecord, "title" | "startDate" | "adults" | "childrenCount" | "leaderCount" | "destinations" | "dailyPlans" | "hotelPlans" | "vehiclePlans" | "guidePlans" | "quote">) {
-  return { title: record.title, startDate: record.startDate, adults: record.adults, childrenCount: record.childrenCount, leaderCount: record.leaderCount, destinations: record.destinations, dailyPlans: record.dailyPlans, hotelPlans: record.hotelPlans, vehiclePlans: record.vehiclePlans, guidePlans: record.guidePlans, quote: record.quote };
+export function itineraryInput(record: Pick<ItineraryRecord, "title" | "startDate" | "paxTiers" | "childRate" | "destinations" | "dailyPlans" | "hotelPlans" | "vehiclePlans" | "guidePlans" | "quote">) {
+  return { title: record.title, startDate: record.startDate, paxTiers: record.paxTiers, childRate: record.childRate, destinations: record.destinations, dailyPlans: record.dailyPlans, hotelPlans: record.hotelPlans, vehiclePlans: record.vehiclePlans, guidePlans: record.guidePlans, quote: record.quote };
 }
 export const inquiryService = {
   parseDocument(file: File) {

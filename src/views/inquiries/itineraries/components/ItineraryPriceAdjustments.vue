@@ -1,8 +1,16 @@
 <template>
-  <section class="mt-6">
-    <h3>{{ $t('identity.prices') }}</h3>
+  <el-dialog
+    :model-value="modelValue"
+    :title="$t('identity.prices')"
+    width="min(1200px, 96vw)"
+    :close-on-click-modal="false"
+    @close="emit('cancel')"
+  >
     <el-card shadow="never">
-      <el-form label-position="top">
+      <el-form
+        v-if="rows.length || activeVehiclePlans.length"
+        label-position="top"
+      >
         <div
           v-for="row in rows"
           :key="row.key"
@@ -22,18 +30,25 @@
           </el-form-item>
           <el-form-item
             :label="$t('identity.reason')"
-            :required="row.fields.referencePrice != null && row.get() !== row.fields.referencePrice"
+            :required="needsReason(row)"
           >
             <el-input
+              v-if="needsReason(row)"
               :model-value="row.fields.adjustmentReason ?? ''"
               :disabled="!editable"
               :placeholder="$t('identity.reasonPlaceholder')"
-              @update:model-value="row.fields.adjustmentReason = $event; emit('change')"
+              @update:model-value="row.fields.adjustmentReason = $event"
             />
+            <el-text
+              v-else
+              type="info"
+            >
+              {{ $t('identity.reasonNotNeeded') }}
+            </el-text>
           </el-form-item>
         </div>
         <div
-          v-for="vehicle in plan.vehiclePlans.filter(v => v.arrangements.length)"
+          v-for="vehicle in activeVehiclePlans"
           :key="vehicle.tier"
           class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4"
         >
@@ -43,30 +58,41 @@
               :min="0"
               :precision="2"
               :disabled="!editable"
-              @change="vehicle.totalPrice=Number($event); vehicle.pricingMode='manual'; vehicle.adjustmentReason=''; emit('change')"
+              @change="vehicle.totalPrice=Number($event); vehicle.pricingMode='manual'; vehicle.adjustmentReason=''"
             />
           </el-form-item>
           <el-form-item :label="$t('identity.reference')">
             <el-button
               :disabled="!editable || calculateVehiclePlanAutomaticTotal(vehicle)==null"
-              @click="vehicle.pricingMode='automatic';vehicle.totalPrice=calculateVehiclePlanAutomaticTotal(vehicle);vehicle.adjustmentReason='';emit('change')"
+              @click="vehicle.pricingMode='automatic';vehicle.totalPrice=calculateVehiclePlanAutomaticTotal(vehicle);vehicle.adjustmentReason=''"
             >
               {{ $t('identity.automatic') }} · {{ calculateVehiclePlanAutomaticTotal(vehicle) ?? '—' }}
             </el-button>
           </el-form-item>
           <el-form-item
             :label="$t('identity.reason')"
-            :required="vehicle.totalPrice !== calculateVehiclePlanAutomaticTotal(vehicle) || calculateVehiclePlanAutomaticTotal(vehicle)==null"
+            :required="vehicleNeedsReason(vehicle)"
           >
             <el-input
+              v-if="vehicleNeedsReason(vehicle)"
               :model-value="vehicle.adjustmentReason ?? ''"
               :disabled="!editable"
               :placeholder="$t('identity.reasonPlaceholder')"
-              @update:model-value="vehicle.adjustmentReason=$event;emit('change')"
+              @update:model-value="vehicle.adjustmentReason=$event"
             />
+            <el-text
+              v-else
+              type="info"
+            >
+              {{ $t('identity.reasonNotNeeded') }}
+            </el-text>
           </el-form-item>
         </div>
       </el-form>
+      <el-empty
+        v-else
+        :description="$t('identity.noPriceItems')"
+      />
       <el-collapse @change="loadHistory">
         <el-collapse-item
           :title="$t('identity.history')"
@@ -102,20 +128,52 @@
         </el-collapse-item>
       </el-collapse>
     </el-card>
-  </section>
+    <template #footer>
+      <el-button @click="emit('cancel')">
+        {{ $t(editable ? 'common.cancel' : 'common.close') }}
+      </el-button>
+      <el-button
+        v-if="editable"
+        type="primary"
+        :loading="saving"
+        @click="emit('save')"
+      >
+        {{ $t('itinerary.save') }}
+      </el-button>
+    </template>
+  </el-dialog>
 </template>
 <script setup lang="ts">
 import {ElMessage} from "element-plus";
-import type { ItineraryRecord, PriceAdjustment } from '@/types/itinerary';
+import type { ItineraryRecord, ItineraryVehiclePlan, PriceAdjustment } from '@/types/itinerary';
 import { itineraryPriceRows } from '../price-adjustments';
 import { calculateVehiclePlanAutomaticTotal } from '../vehicle-plans';
 import { inquiryService } from '@/services/inquiry.service';
-import { formatMoney, formatDateTime } from '@/utils';
-const props=defineProps<{plan:ItineraryRecord;editable:boolean}>();
-const emit=defineEmits<{change:[]}>();
+import { formatMoney, formatDateTime, roundMoney } from '@/utils';
+const props=defineProps<{plan:ItineraryRecord;editable:boolean;modelValue:boolean;saving:boolean}>();
+const emit=defineEmits<{save:[];cancel:[]}>();
 const rows=computed(()=>itineraryPriceRows(props.plan));
+const activeVehiclePlans=computed(()=>props.plan.vehiclePlans.filter(vehicle=>vehicle.arrangements.length));
 const history=ref<PriceAdjustment[]>([]);
-function changePrice(row: ReturnType<typeof itineraryPriceRows>[number], value:number) { row.set(value);row.fields.adjustmentReason='';emit('change'); }
+const initialPrices=new Map<string,number|null>();
+function changePrice(row: ReturnType<typeof itineraryPriceRows>[number], value:number) { row.set(value);row.fields.adjustmentReason=''; }
+function needsReason(row: ReturnType<typeof itineraryPriceRows>[number]) {
+  const actual=row.get();
+  const reference=row.fields.referencePrice;
+  if (actual==null) return false;
+  if (reference!=null) return roundMoney(actual)!==roundMoney(reference);
+  const initial=initialPrices.get(row.key);
+  return row.custom && initial!=null && roundMoney(actual)!==roundMoney(initial);
+}
+function vehicleNeedsReason(vehicle: ItineraryVehiclePlan) {
+  const total=calculateVehiclePlanAutomaticTotal(vehicle);
+  return vehicle.totalPrice!=null && (total==null || roundMoney(vehicle.totalPrice)!==roundMoney(total));
+}
 async function loadHistory() { try { history.value=await inquiryService.priceAdjustments(props.plan.id); } catch(error) { ElMessage.error(error instanceof Error ? error.message : String(error)); } }
 watch(()=>props.plan.id,()=>{history.value=[];});
+watch(()=>props.modelValue,visible=>{
+  if (!visible) return;
+  initialPrices.clear();
+  for (const row of rows.value) initialPrices.set(row.key,row.get());
+});
 </script>

@@ -2,7 +2,8 @@
   <el-dialog
     :model-value="modelValue"
     width="min(1400px, 96vw)"
-    @close="emit('update:modelValue', false)"
+    :close-on-click-modal="false"
+    @close="emit('cancel')"
   >
     <template #header>
       <div class="itinerary-hotel-plans__toolbar min-h-[48px] flex items-center">
@@ -73,7 +74,7 @@
                     kind="hotels"
                     :model-value="getHotelSelectionId(tier, destination)"
                     :selected-label="getPlan(tier)?.hotels.find(hotel => hotel.destination === destination)?.hotelName"
-                    :filters="{ city: destination, rating: tier === 'international_five_star' ? tier : 'ctrip_preferred', guestCount }"
+                    :filters="{ city: destination, rating: tier === 'international_five_star' ? tier : 'ctrip_preferred' }"
                     :disabled="!editable"
                     :placeholder="$t('itinerary.selectDestinationHotel')"
                     @update:model-value="emit('update-selection', tier, destination, $event)"
@@ -83,6 +84,22 @@
                   v-if="getPlan(tier)?.hotels.some(hotel => hotel.destination === destination)"
                   class="col-start-2 flex items-center flex-wrap gap-[8px]"
                 >
+                  <el-select
+                    class="!w-[210px]"
+                    :disabled="!editable || !hotelResource(tier, destination)"
+                    :model-value="getPlan(tier)?.hotels.find(hotel => hotel.destination === destination)?.referenceBasis"
+                    @update:model-value="emit('update-rate', tier, destination, $event)"
+                  >
+                    <el-option
+                      value="hotel_individual"
+                      :label="`${$t('hotel.individualPrice')} ¥${hotelResource(tier, destination)?.individualPrice ?? '—'}`"
+                    />
+                    <el-option
+                      v-if="hotelResource(tier, destination)?.groupPrice != null"
+                      value="hotel_group"
+                      :label="`${$t('hotel.groupPrice')} ¥${hotelResource(tier, destination)?.groupPrice}`"
+                    />
+                  </el-select>
                   <el-input-number
                     class="!w-[160px]"
                     :model-value="getPlan(tier)?.hotels.find(hotel => hotel.destination === destination)?.unitCost"
@@ -114,11 +131,25 @@
         </el-text>
       </el-card>
     </section>
+    <template #footer>
+      <el-button @click="emit('cancel')">
+        {{ $t(editable ? 'common.cancel' : 'common.close') }}
+      </el-button>
+      <el-button
+        v-if="editable"
+        type="primary"
+        :loading="saving"
+        @click="emit('save')"
+      >
+        {{ $t('itinerary.save') }}
+      </el-button>
+    </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watch } from "vue";
+import { resourceService } from "@/services/resource.service";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import type { ItineraryDayRecord, ItineraryHotelPlan, ItineraryHotelTier } from "@/types/itinerary";
 import { getHotelPlan, HOTEL_PLAN_TIERS } from "../hotel-plans";
@@ -128,16 +159,33 @@ const props = defineProps<{
   destinations: string[];
   dailyPlans: ItineraryDayRecord[];
   hotelPlans: ItineraryHotelPlan[];
-  guestCount: number;
   editable: boolean;
   modelValue: boolean;
+  saving: boolean;
 }>();
 const emit = defineEmits<{
   "clear-plan": [tier: ItineraryHotelTier];
   "update-selection": [tier: ItineraryHotelTier, destination: string, hotelId: string];
+  "update-rate": [tier: ItineraryHotelTier, destination: string, basis: "hotel_group" | "hotel_individual"];
   "update-cost": [tier: ItineraryHotelTier, destination: string, price: number];
-  'update:modelValue': [value: boolean];
+  save: [];
+  cancel: [];
 }>();
+
+watch(() => props.modelValue, async visible => {
+  if (!visible) return;
+  const ids = [...new Set(props.hotelPlans.flatMap(plan => plan.hotels.map(hotel => hotel.hotelId)))];
+  await Promise.allSettled(ids.map(async id => {
+    const record = await resourceService.hotelApi.getDetail(id);
+    const index = resourceService.hotels.findIndex(hotel => hotel.id === id);
+    if (index < 0) resourceService.hotels.push(record);
+    else resourceService.hotels[index] = record;
+  }));
+});
+function hotelResource(tier: ItineraryHotelTier, destination: string) {
+  const id = getHotelSelectionId(tier, destination);
+  return resourceService.hotels.find(hotel => hotel.id === id);
+}
 
 const overnightDestinations = computed(() => props.destinations.filter(destination => props.dailyPlans.some(day => day.overnightDestination === destination)));
 const pendingNights = computed(() => props.dailyPlans.filter(day => day.overnightDestination === null).length);

@@ -43,23 +43,27 @@ export interface ItineraryVehiclePlan {
   totalPrice: number | null;
 }
 
+export interface ItineraryPaxPrice {
+  pax: number;
+  adultUnitPrice: number | null;
+}
+
 export interface ItineraryQuoteOption {
   id: string;
   hotelTier: ItineraryHotelTier;
   vehicleTier: ItineraryVehicleTier;
-  adultUnitPrice: number | null;
-  leaderFocEnabled: boolean;
+  guideServiceTotal: number | null;
+  staffRoomTotal: number | null;
+  paxPrices: ItineraryPaxPrice[];
 }
 
 export interface ItineraryQuoteSettings {
   options: ItineraryQuoteOption[];
-  /** Full-tour tips per guest, excluded from tour price and internal cost. */
+  /** Full-tour tip per adult/child, charged separately and included in profit. */
   chineseTip: number | null;
-  /** Full-tour tips per guest, excluded from tour price and internal cost. */
+  /** Full-tour tip per adult/child, charged separately and included in profit. */
   englishTip: number | null;
   transportFees: ItineraryTransportFee[];
-  /** Group extra charge, excluded from tour price and internal cost. */
-  otherExpenses: number | null;
   customerNotes: string;
   holidayRestrictions: string;
   hotelReplacementTerms: string;
@@ -90,7 +94,7 @@ export interface ItineraryQuoteLine {
   totalPrice: number;
 }
 
-export interface ItineraryQuoteOptionCalculation {
+export interface LegacyQuoteOptionCalculation {
   optionId: string;
   hotelTier: ItineraryHotelTier;
   vehicleTier: ItineraryVehicleTier;
@@ -108,13 +112,48 @@ export interface ItineraryQuoteOptionCalculation {
   lines: ItineraryQuoteLine[];
 }
 
-export interface ItineraryQuoteCalculation {
+export interface LegacyQuoteCalculation {
   hotelGuestCount: number;
   hotelRoomCount: number;
   dailyResourceCost: number;
   guideCost: number;
+  options: LegacyQuoteOptionCalculation[];
+}
+
+export interface ItineraryPaxCalculation {
+  pax: number;
+  vehicleUnitCost: number;
+  guideServiceUnitCost: number;
+  staffRoomUnitCost: number;
+  baseCostPerPerson: number;
+  adultUnitPrice: number;
+  childUnitPrice: number;
+  leaderUnitPrice: number;
+  singleSupplementUnitCost: number;
+  tipUnitPrice: number;
+  profitPerPerson: number;
+  actualMarginRate: number | null;
+}
+
+export interface ItineraryQuoteOptionCalculation {
+  optionId: string;
+  hotelTier: ItineraryHotelTier;
+  vehicleTier: ItineraryVehicleTier;
+  hotelUnitCost: number;
+  vehicleTotal: number;
+  guideServiceTotal: number;
+  staffRoomTotal: number;
+  paxPrices: ItineraryPaxCalculation[];
+}
+
+export interface PaxQuoteCalculation {
+  pricingVersion: 2;
+  dailyResourceCost: number;
+  guideCost: number;
   options: ItineraryQuoteOptionCalculation[];
 }
+
+export type ItineraryQuoteCalculation = PaxQuoteCalculation | LegacyQuoteCalculation;
 
 export interface ItineraryResourceItem extends PriceReference {
   id: string;
@@ -125,6 +164,7 @@ export interface ItineraryResourceItem extends PriceReference {
   resourceName: string;
   priceName: string;
   quantity: number;
+  dinerCount: number | null;
   unit: ItineraryPriceUnit;
   unitCost: number;
   totalCost: number;
@@ -165,9 +205,8 @@ export interface ItineraryRecord {
   startDate: string;
   endDate: string;
   days: number;
-  adults: number;
-  childrenCount: number;
-  leaderCount: number;
+  paxTiers: number[];
+  childRate: number;
   destinations: string[];
   hotelPlans: ItineraryHotelPlan[];
   vehiclePlans: ItineraryVehiclePlan[];

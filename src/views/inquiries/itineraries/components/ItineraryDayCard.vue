@@ -27,21 +27,6 @@
           >
             {{ $t(expanded ? 'itinerary.collapseDay' : 'itinerary.expandDay') }}
           </el-button>
-          <el-button
-            v-if="contentEditable"
-            link
-            @click="emit('duplicate')"
-          >
-            {{ $t("itinerary.copyDay") }}
-          </el-button>
-          <el-button
-            v-if="contentEditable"
-            type="danger"
-            link
-            @click="emit('remove')"
-          >
-            {{ $t("common.delete") }}
-          </el-button>
         </div>
       </div>
     </template>
@@ -123,7 +108,7 @@
           </template>
         </el-table-column>
         <el-table-column
-          :label="$t('itinerary.quantity')"
+          :label="$t('itinerary.perPersonQuantity')"
           width="160"
           align="right"
         >
@@ -140,7 +125,7 @@
             <template v-else>
               {{ scope.row.quantity }}
             </template>
-            <small class="text-[14px] text-[var(--el-text-color-secondary)]">{{ resourceUnitName(scope.row.unit) }}</small>
+            <small class="text-[14px] text-[var(--el-text-color-secondary)]">{{ $t("itinerary.usageCount") }}</small>
           </template>
         </el-table-column>
         <el-table-column
@@ -153,7 +138,7 @@
           </template>
         </el-table-column>
         <el-table-column
-          :label="$t('itinerary.totalCost')"
+          :label="$t('itinerary.resourceCostPerPerson')"
           width="100"
           align="right"
         >
@@ -196,7 +181,6 @@ import { useI18n } from "vue-i18n";
 import { Right } from "@element-plus/icons-vue";
 import type { ItineraryDayRecord, MealSlot } from "@/types/itinerary";
 import { formatMoney, sumMoney } from "@/utils";
-import { getResourceUnitName } from "@/utils/resource-unit";
 import ItineraryDayForm from "./ItineraryDayForm.vue";
 
 type EditableDayField = "departure" | "destination" | "overnightDestination" | "transport" | "description";
@@ -215,20 +199,17 @@ const emit = defineEmits<{
   "add-item": [];
   "remove-item": [index: number];
   "update-item-quantity": [index: number, quantity: number];
-  duplicate: [];
-  remove: [];
 }>();
 const expanded = ref(true);
 defineExpose({ expand: () => { expanded.value = true; } });
 const dayCost = computed(() => sumMoney(props.day.items.map((item) => item.totalCost)));
-const { locale, t } = useI18n();
+const { t } = useI18n();
 
 function mealLabel(slot: MealSlot) {
   const item = props.day.items.find((item) => item.type === "restaurant" && item.mealSlot === slot);
   return item ? `${item.resourceName} · ${item.priceName}` : t("itinerary.selectMealResource");
 }
 function updateField(field: EditableDayField, value: string | null) { emit("update-field", field, value); }
-function resourceUnitName(code: string) { return getResourceUnitName(code, locale.value); }
 </script>
 
 <style scoped lang="scss">

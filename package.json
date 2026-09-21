@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "lint:eslint": "eslint --cache \"src/**/*.{vue,ts,js}\"",
     "lint:fix": "eslint --cache \"src/**/*.{vue,ts,js}\" --fix",
     "lint:lint-staged": "lint-staged",

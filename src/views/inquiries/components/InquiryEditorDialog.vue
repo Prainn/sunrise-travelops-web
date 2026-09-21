@@ -123,6 +123,26 @@
             >{{ $t('itinerary.duration', plannedDuration(form.plannedDays)) }}</span>
           </el-form-item>
         </el-col>
+        <el-col :span="12">
+          <el-form-item
+            :label="$t('inquiry.owner')"
+            prop="ownerId"
+          >
+            <el-select
+              v-model="form.ownerId"
+              :disabled="isEditing || userStore.userInfo.scope !== 'headquarters' || loadingOwners"
+              :loading="loadingOwners"
+              :placeholder="$t('common.selectPlaceholder')"
+            >
+              <el-option
+                v-for="option in scopedOwners"
+                :key="option.id"
+                :label="option.name"
+                :value="option.id"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
         <el-col
           v-if="form.status === 'lost'"
           :span="12"
@@ -144,25 +164,6 @@
               :title="$t('inquiry.followupDetails')"
             >
               <el-row :gutter="16">
-                <el-col :span="12">
-                  <el-form-item
-                    :label="$t('inquiry.owner')"
-                    prop="ownerId"
-                  >
-                    <el-select
-                      v-model="form.ownerId"
-                      :disabled="isEditing || !userStore.userInfo.roles.includes('ROOT')"
-                      :placeholder="$t('common.selectPlaceholder')"
-                    >
-                      <el-option
-                        v-for="option in scopedOwners"
-                        :key="option.id"
-                        :label="option.name"
-                        :value="option.id"
-                      />
-                    </el-select>
-                  </el-form-item>
-                </el-col>
                 <el-col :span="12">
                   <el-form-item :label="$t('inquiry.nextFollowUpAt')">
                     <el-date-picker
@@ -195,7 +196,7 @@
       <el-button
         type="primary"
         :loading="creatingContact"
-        :disabled="isParsingDocument"
+        :disabled="isParsingDocument || loadingOwners"
         @click="submitForm"
       >
         {{ $t("common.confirm") }}
@@ -235,6 +236,8 @@ const emit = defineEmits<{
 const { t } = useI18n();
 const userStore = useUserStore();
 const scopedOwners = ref(props.ownerOptions);
+const loadingOwners = ref(false);
+let ownerRequestVersion = 0;
 const formRef = ref<FormInstance>();
 const expandedDetails = ref<string[]>([]);
 const creatingContact = ref(false);
@@ -249,6 +252,7 @@ const editableStatusOptions = computed(() => {
   return INQUIRY_STATUS_OPTIONS.filter((item) => allowedStatuses.includes(item.value));
 });
 const rules = computed<FormRules>(() => ({
+  ownerId: [{ required: !props.isEditing && userStore.userInfo.scope === "headquarters", message: t("common.selectPlaceholder"), trigger: "change" }],
   agencyId: [{ required: true, message: t("inquiry.agencyRequired"), trigger: "change" }],
   contactName: [{ required: true, message: t("inquiry.contactNameRequired"), trigger: "change" }],
   sourceChannel: [{ required: true, message: t("inquiry.sourceChannelRequired"), trigger: "change" }],
@@ -267,8 +271,24 @@ function resetForm() {
   formRef.value?.clearValidate();
 }
 
-async function refreshOwners() { try { scopedOwners.value = await inquiryService.owners(form.businessUnit);
-  if (!props.isEditing && userStore.userInfo.userId && userStore.userInfo.username && userStore.userInfo.nickname && userStore.userInfo.scope !== "headquarters" && !scopedOwners.value.some(person => person.id === userStore.userInfo.userId)) scopedOwners.value.push({id:userStore.userInfo.userId,username:userStore.userInfo.username,name:userStore.userInfo.nickname}); } catch (error) { ElMessage.error(error instanceof Error ? error.message : t("request.failed")); } }
+async function refreshOwners() {
+  const version = ++ownerRequestVersion;
+  loadingOwners.value = true;
+  scopedOwners.value = [];
+  try {
+    const owners = await inquiryService.owners(form.businessUnit);
+    if (version !== ownerRequestVersion) return;
+    scopedOwners.value = owners;
+    const user = userStore.userInfo;
+    if (!props.isEditing && user.scope !== "headquarters" && user.userId && user.username && user.nickname && !owners.some(person => person.id === user.userId)) {
+      scopedOwners.value.push({ id: user.userId, username: user.username, name: user.nickname });
+    }
+  } catch (error) {
+    if (version === ownerRequestVersion) ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  } finally {
+    if (version === ownerRequestVersion) loadingOwners.value = false;
+  }
+}
 async function changeBusinessUnit() {
   selectedResourceLibrary.value = form.businessUnit === 'shengxu' ? 'shengxu' : 'shared';
   form.agencyId='';form.contactId='';form.ownerId='';
@@ -325,7 +345,7 @@ function createContact(name: string) {
 }
 
 async function submitForm() {
-  if (creatingContact.value || isParsingDocument.value) return;
+  if (creatingContact.value || isParsingDocument.value || loadingOwners.value) return;
   if (!(await formRef.value?.validate().catch(() => false)) || creatingContact.value) return;
   if (!form.contactId) {
     const agency = selectedAgency.value;

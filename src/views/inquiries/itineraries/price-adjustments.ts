@@ -1,11 +1,12 @@
 import type { ItineraryRecord, PriceReference } from '@/types/itinerary';
-import { roundMoney, multiplyMoney } from '@/utils';
+import { roundMoney } from '@/utils';
+import { recalculateItem } from './pricing';
 import { calculateVehiclePlanAutomaticTotal } from './vehicle-plans';
 export function itineraryPriceRows(plan: ItineraryRecord) {
   const row = (key: string, name: string, fields: PriceReference, get: () => number | null, set: (price: number) => void, custom = false, source = "") => ({key,name,fields,get,set,custom,source});
   return [
-    ...plan.dailyPlans.flatMap(d => d.items.map(i => row(`item:${i.id}`,`D${d.dayNumber} · ${i.resourceName}`,i,()=>i.unitCost,v=>{i.unitCost=v;i.totalCost=multiplyMoney(v,i.quantity);},i.resourceId===null,`${i.resourceId}:${i.resourcePriceId}`))),
-    ...plan.hotelPlans.flatMap(p=>p.hotels.map(h=>row(`hotel:${p.tier}:${h.destination}`,h.hotelName,h,()=>h.unitCost,v=>{h.unitCost=v;},false,h.hotelId))),
+    ...plan.dailyPlans.flatMap(d => d.items.map(i => row(`item:${i.id}`,`D${d.dayNumber} · ${i.resourceName}`,i,()=>i.unitCost,v=>{i.unitCost=v;recalculateItem(i);},i.resourceId===null,`${i.resourceId}:${i.resourcePriceId}`))),
+    ...plan.hotelPlans.flatMap(p=>p.hotels.map(h=>row(`hotel:${p.tier}:${h.destination}`,h.hotelName,h,()=>h.unitCost,v=>{h.unitCost=v;},false,`${h.hotelId}:${h.referenceBasis}`))),
     ...plan.guidePlans.map(g=>row(`guide:${g.destination}`,g.guideName,g,()=>g.dailyPrice,v=>{g.dailyPrice=v;},false,g.guideId)),
   ];
 }

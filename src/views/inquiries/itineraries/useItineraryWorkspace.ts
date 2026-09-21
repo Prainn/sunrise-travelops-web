@@ -78,7 +78,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const canEditItineraryBasics = computed(() => contentEditable.value);
   const canCreateGuide = computed(() => contentEditable.value && hasUserPermission(userStore.userInfo, "resource:guide:create"));
   const guestCount = computed(() => selectedItinerary.value
-    ? selectedItinerary.value.adults + selectedItinerary.value.childrenCount : 0);
+    ? Math.max(0, ...selectedItinerary.value.paxTiers) : 0);
   const allItems = computed(() => selectedItinerary.value?.dailyPlans.flatMap((day) => day.items) ?? []);
   const dailyItems = computed(() => allItems.value.filter((item) => dailyItemTypes.has(item.type as ItineraryDailyItemType)));
   const itemCount = computed(() => dailyItems.value.length);
@@ -312,11 +312,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     finally { isSaving.value = false; }
   }
 
-  async function removeDay(index: number) {
-    if (!contentEditable.value || !await messages.confirm("itinerary.deleteDayConfirm")) return;
-    editor.removeDay(index);
-  }
-
   const isPreparingPdf = ref(false);
   async function handleGeneratePdf() {
     if (isPreparingPdf.value || pdf.isGeneratingPdf.value) return;
@@ -365,7 +360,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     updateGuideType,
     updateMeal: editor.updateMeal,
     updateQuoteSettings: editor.updateQuoteSettings,
-    addDay: editor.addDay,
     addResourceItem,
     canCreateItinerary,
     canCreateGuide,
@@ -378,9 +372,8 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     copyItinerary,
     createItinerary,
     destinationOptions,
-    duplicateDay: editor.duplicateDay,
     guestCount,
-    passengerCount: computed(() => guestCount.value + (selectedItinerary.value?.leaderCount ?? 0)),
+    passengerCount: computed(() => guestCount.value),
     resourceDestination: computed(() => selectedItinerary.value?.dailyPlans.find(day => day.id === resourceTargetDayId.value)?.destination ?? ""),
     handleGeneratePdf,
     inquiry,
@@ -412,7 +405,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     quoteError: quote.error,
     quoteCurrent: quote.current,
     retryQuote: quote.retry,
-    removeDay,
     removeItem: editor.removeItem,
     router: selection.router,
     rows: selection.rows,
@@ -428,6 +420,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     updateQuoteOption: editor.updateQuoteOption,
     updateVehiclePlan: editor.updateVehiclePlan,
     updateHotelCost: editor.updateHotelCost,
+    updateHotelRate: editor.updateHotelRate,
     updateGuidePrice: editor.updateGuidePrice,
   };
 }

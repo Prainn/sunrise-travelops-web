@@ -2,7 +2,7 @@ import type { ItineraryItemType, ItineraryPriceUnit, ItineraryResourceItem } fro
 import type {
   AttractionRecord, GuideRecord, HotelRecord, RestaurantRecord, TransportRecord,
 } from "@/types/resource";
-import { createId, multiplyMoney } from "@/utils";
+import { createId, multiplyMoney, roundMoney } from "@/utils";
 
 export interface ResourcePriceOption {
   id: string;
@@ -172,19 +172,19 @@ export function calculateItem(
     resourceName: option.resourceName,
     priceName: option.priceName,
     quantity,
+    dinerCount: option.unit === "table" ? option.dinerCount ?? null : null,
     unit: option.unit,
     referencePrice: option.unitCost, referenceBasis: "resource_price", adjustmentReason: "",
     unitCost,
-    totalCost: multiplyMoney(unitCost, quantity),
+    totalCost: multiplyMoney(option.unit === "table" && option.dinerCount ? roundMoney(unitCost / option.dinerCount) : unitCost, quantity),
     remark: "",
   };
 }
 
 export function recalculateItem(item: ItineraryResourceItem) {
-  item.totalCost = multiplyMoney(item.unitCost, item.quantity);
+  item.totalCost = multiplyMoney(item.unit === "table" && item.dinerCount ? roundMoney(item.unitCost / item.dinerCount) : item.unitCost, item.quantity);
 }
 
-export function getDefaultResourceQuantity(option: ResourcePriceOption | undefined, guestCount: number) {
-  if (option?.unit === "table") return option.dinerCount && option.dinerCount > 0 ? Math.max(Math.ceil(guestCount / option.dinerCount), 1) : 1;
-  return Math.max(guestCount, 1);
+export function getDefaultResourceQuantity() {
+  return 1;
 }

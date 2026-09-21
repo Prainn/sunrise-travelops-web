@@ -23,8 +23,8 @@ export function withVehiclePlanArrangements(plan: ItineraryVehiclePlan, arrangem
   if (followsAutomaticTotal) nextPlan.totalPrice = calculateVehiclePlanAutomaticTotal(nextPlan);
   return nextPlan;
 }
-export function getIncompleteVehiclePlanTiers(itinerary: Pick<ItineraryRecord, 'adults' | 'childrenCount' | 'leaderCount' | 'vehiclePlans'>) {
-  const passengers = itinerary.adults + itinerary.childrenCount + itinerary.leaderCount;
+export function getIncompleteVehiclePlanTiers(itinerary: Pick<ItineraryRecord, 'paxTiers' | 'vehiclePlans'>) {
+  const passengers = Math.max(0, ...itinerary.paxTiers);
   return getEnabledVehiclePlans(itinerary).filter(plan => {
     if (plan.totalPrice === null || plan.arrangements.some(arrangement => !arrangement.startDate || !arrangement.endDate || !arrangement.vehicles.length)) return true;
     const sorted = [...plan.arrangements].sort((a, b) => a.startDate.localeCompare(b.startDate));

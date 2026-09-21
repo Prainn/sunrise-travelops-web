@@ -18,7 +18,7 @@ import type {
 import type { HotelRecord } from "@/types/resource";
 import { addDays, createId, formatDateTime } from "@/utils";
 import { transitionInquiry } from "../inquiry-workflow";
-import { getHotelUnitCost, recalculateItem } from "./pricing";
+import { recalculateItem } from "./pricing";
 import { createDefaultHotelPlans, getHotelPlan, HOTEL_PLAN_TIERS, isHotelEligibleForTier } from "./hotel-plans";
 import { createDefaultQuoteOption, createDefaultQuoteSettings } from "./quote-pricing";
 import { createDefaultVehiclePlans, getVehiclePlan, VEHICLE_PLAN_TIERS } from "./vehicle-plans";
@@ -42,7 +42,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   function createEmptyItinerary(): ItineraryRecord {
     return {
       id: "", inquiryId: options.inquiryId.value, code: "", title: "", startDate: "", endDate: "", days: 0,
-      adults: 0, childrenCount: 0, leaderCount: 0, version: 0,
+      paxTiers: [], childRate: 90, version: 0,
       guidePlans: [], destinations: [], hotelPlans: createDefaultHotelPlans(), vehiclePlans: createDefaultVehiclePlans(), quote: createDefaultQuoteSettings(),
       dailyPlans: [], status: "draft", quoteGeneratedAt: "", creator: "", createdAt: "", updatedAt: "",
     };
@@ -50,6 +50,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
 
   function createItinerary(record: ItineraryRecord): ItineraryRecord | null {
     if (!options.canCreate() || !options.inquiry.value) return null;
+    const plannedDays = options.inquiry.value.plannedDays;
     const timestamp = formatDateTime(new Date());
     const created: ItineraryRecord = {
       ...record,
@@ -63,8 +64,8 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       hotelPlans: cloneHotelPlans(record.hotelPlans),
       vehiclePlans: cloneVehiclePlans(record.vehiclePlans),
       quote: cloneQuoteSettings(record.quote),
-      dailyPlans: createDailyPlans(record.startDate, 1),
-      days: 1, endDate: record.startDate,
+      dailyPlans: createDailyPlans(record.startDate, plannedDays),
+      days: plannedDays, endDate: addDays(record.startDate, plannedDays - 1),
     };
     syncQuoteOptions(created);
     options.itineraryStore.unshift(created);
@@ -80,11 +81,11 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     Object.assign(plan, {
       title: record.title,
       startDate: record.startDate,
-      adults: record.adults,
-      childrenCount: record.childrenCount,
-      leaderCount: record.leaderCount,
+      paxTiers: [...record.paxTiers],
+      childRate: record.childRate,
       destinations: [...record.destinations],
     });
+    ensurePlannedDays(plan, options.inquiry.value?.plannedDays ?? plan.dailyPlans.length);
     syncPlanDates(plan);
     syncDestinations(plan);
     syncBreakfast(plan);
@@ -97,6 +98,11 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       id: createId("day"), dayNumber: index + 1, date: addDays(startDate, index), departure: "", destination: "",
       overnightDestination: null, meals: { breakfast: index > 0, lunch: false, dinner: false }, transport: "", description: "", items: [],
     }));
+  }
+
+  function ensurePlannedDays(plan: ItineraryRecord, plannedDays: number) {
+    if (plan.dailyPlans.length >= plannedDays) return;
+    plan.dailyPlans.push(...createDailyPlans(plan.startDate, plannedDays).slice(plan.dailyPlans.length));
   }
 
   function updateDayField(index: number, field: EditableDayField, value: string | null) {
@@ -162,10 +168,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     if (!options.canEditPrice()) return;
     const option = options.selectedItinerary.value?.quote.options.find((record) => record.id === optionId);
     if (!option) return;
-    const adultUnitPrice = changes.adultUnitPrice === undefined
-      ? option.adultUnitPrice
-      : changes.adultUnitPrice === null ? null : normalizeQuoteValue(changes.adultUnitPrice);
-    Object.assign(option, changes, { adultUnitPrice });
+    Object.assign(option, changes);
     touchSelectedItinerary();
   }
 
@@ -218,13 +221,24 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       rating: hotel.rating,
       breakfast: hotel.breakfast,
       unit: hotel.unit,
-      unitCost: getHotelUnitCost(hotel, plan.adults + plan.childrenCount + plan.leaderCount),
-      referencePrice: getHotelUnitCost(hotel, plan.adults + plan.childrenCount + plan.leaderCount),
-      referenceBasis: hotel.groupPrice != null && hotel.minimumGroupSize != null && plan.adults + plan.childrenCount + plan.leaderCount >= hotel.minimumGroupSize ? "hotel_group" : "hotel_individual", adjustmentReason: "",
+      unitCost: hotel.individualPrice,
+      referencePrice: hotel.individualPrice,
+      referenceBasis: "hotel_individual", adjustmentReason: "",
     };
     if (selectionIndex >= 0) hotelPlan.hotels.splice(selectionIndex, 1, selection);
     else hotelPlan.hotels.push(selection);
     syncQuoteOptions(plan);
+    touchSelectedItinerary();
+  }
+
+  function updateHotelRate(tier: ItineraryHotelTier, destination: string, basis: 'hotel_group' | 'hotel_individual') {
+    if (!options.canEditContent()) return;
+    const hotel = options.selectedItinerary.value?.hotelPlans.find(plan => plan.tier === tier)?.hotels.find(item => item.destination === destination);
+    const resource = hotel && options.findHotel(hotel.hotelId);
+    if (!hotel || !resource) return;
+    const price = basis === 'hotel_group' ? resource.groupPrice : resource.individualPrice;
+    if (price == null) return;
+    Object.assign(hotel, { unitCost: price, referencePrice: price, referenceBasis: basis, adjustmentReason: '' });
     touchSelectedItinerary();
   }
 
@@ -247,40 +261,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     Object.assign(target, cloneVehiclePlans([value])[0]);
     syncQuoteOptions(plan);
     touchSelectedItinerary();
-  }
-
-  function addDay(afterIndex?: number) {
-    if (!options.canEditContent()) return;
-    const plan = options.selectedItinerary.value;
-    if (!plan) return;
-    const position = afterIndex === undefined ? plan.dailyPlans.length : afterIndex + 1;
-    plan.dailyPlans.splice(position, 0, {
-      id: createId("day"), dayNumber: plan.dailyPlans.length + 1, date: addDays(plan.startDate, plan.dailyPlans.length),
-      departure: "", destination: "", overnightDestination: null, meals: { breakfast: plan.dailyPlans.length > 0, lunch: false, dinner: false }, transport: "", items: [],
-    });
-    syncPlanDates(plan);
-  }
-
-  function duplicateDay(index: number) {
-    if (!options.canEditContent()) return;
-    const plan = options.selectedItinerary.value;
-    const source = plan?.dailyPlans[index];
-    if (!plan || !source) return;
-    plan.dailyPlans.splice(index + 1, 0, {
-      ...source,
-      meals: { ...source.meals },
-      id: createId("day"),
-      items: source.items.map((item) => ({ ...item, id: createId("item") })),
-    });
-    syncPlanDates(plan);
-  }
-
-  function removeDay(index: number) {
-    if (!options.canEditContent()) return;
-    const plan = options.selectedItinerary.value;
-    if (!plan) return;
-    plan.dailyPlans.splice(index, 1);
-    syncPlanDates(plan);
   }
 
   function syncPlanDates(plan: ItineraryRecord) {
@@ -327,7 +307,9 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
         const vehiclePlan = getVehiclePlan(plan, vehicleTier);
         if (!vehiclePlan?.arrangements.length) return [];
         const key = `${hotelTier}:${vehicleTier}`;
-        return [existing.get(key) ?? createDefaultQuoteOption(hotelTier, vehicleTier, createId("quote-option"))];
+        const option = existing.get(key) ?? createDefaultQuoteOption(hotelTier, vehicleTier, createId("quote-option"));
+        option.paxPrices = plan.paxTiers.map(pax => ({ pax, adultUnitPrice: option.paxPrices.find(price => price.pax === pax)?.adultUnitPrice ?? null }));
+        return [option];
       });
     });
   }
@@ -338,7 +320,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   }
 
   function cloneQuoteSettings(quote: ItineraryRecord["quote"]): ItineraryRecord["quote"] {
-    return { ...quote, transportFees: quote.transportFees.map((fee) => ({ ...fee })), options: quote.options.map((option) => ({ ...option })) };
+    return { ...quote, transportFees: quote.transportFees.map((fee) => ({ ...fee })), options: quote.options.map((option) => ({ ...option, paxPrices: option.paxPrices.map(price => ({ ...price })) })) };
   }
 
   function cloneHotelPlans(hotelPlans: ItineraryHotelPlan[]): ItineraryHotelPlan[] {
@@ -350,8 +332,8 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   }
 
   return {
-    updateGuideSelection, updateGuidePrice, updateHotelCost, addDay, addResourceItem, clearHotelPlan, createEmptyItinerary, createItinerary,
-    duplicateDay, removeDay, removeItem, updateDayField,
+    updateGuideSelection, updateGuidePrice, updateHotelCost, updateHotelRate, addResourceItem, clearHotelPlan, createEmptyItinerary, createItinerary,
+    removeItem, updateDayField,
     updateHotelPlanSelection, updateItineraryBasics, updateItemQuantity, updateQuoteOption,
     updateVehiclePlan, updateMeal, updateQuoteSettings,
   };
