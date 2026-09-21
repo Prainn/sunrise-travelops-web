@@ -107,11 +107,17 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
 
   function updateDayField(index: number, field: EditableDayField, value: string | null) {
     if (!options.canEditContent()) return;
-    const day = options.selectedItinerary.value?.dailyPlans[index];
-    if (!day) return;
-    if (field === "overnightDestination") day.overnightDestination = value;
-    else day[field] = value ?? "";
-    if (field === "overnightDestination" && options.selectedItinerary.value) syncBreakfast(options.selectedItinerary.value);
+    const plan = options.selectedItinerary.value;
+    const day = plan?.dailyPlans[index];
+    if (!plan || !day) return;
+    const isLast = index === plan.dailyPlans.length - 1;
+    if (field === "overnightDestination") {
+      if (!isLast) return;
+      day.overnightDestination = value;
+    } else {
+      day[field] = value ?? "";
+      if (field === "destination" && !isLast) day.overnightDestination = value || null;
+    }
     touchSelectedItinerary();
   }
 
@@ -300,6 +306,10 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   }
 
   function syncQuoteOptions(plan: ItineraryRecord) {
+    plan.quote.staffRoomCosts = plan.destinations.map(destination => ({
+      destination,
+      total: plan.quote.staffRoomCosts.find(cost => cost.destination === destination)?.total ?? null,
+    }));
     const existing = new Map(plan.quote.options.map((option) => [`${option.hotelTier}:${option.vehicleTier}`, option]));
     plan.quote.options = HOTEL_PLAN_TIERS.flatMap((hotelTier) => {
       const hotelPlan = getHotelPlan(plan, hotelTier);
@@ -309,10 +319,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
         if (!vehiclePlan?.arrangements.length) return [];
         const key = `${hotelTier}:${vehicleTier}`;
         const option = existing.get(key) ?? createDefaultQuoteOption(hotelTier, vehicleTier, createId("quote-option"));
-        option.staffRoomCosts = plan.destinations.map(destination => ({
-          destination,
-          total: option.staffRoomCosts.find(cost => cost.destination === destination)?.total ?? null,
-        }));
         option.paxPrices = plan.paxTiers.map(pax => ({ pax, adultUnitPrice: option.paxPrices.find(price => price.pax === pax)?.adultUnitPrice ?? null }));
         return [option];
       });
@@ -325,7 +331,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   }
 
   function cloneQuoteSettings(quote: ItineraryRecord["quote"]): ItineraryRecord["quote"] {
-    return { ...quote, transportFees: quote.transportFees.map((fee) => ({ ...fee })), options: quote.options.map((option) => ({ ...option, staffRoomCosts: option.staffRoomCosts.map(cost => ({ ...cost })), paxPrices: option.paxPrices.map(price => ({ ...price })) })) };
+    return { ...quote, staffRoomCosts: quote.staffRoomCosts.map(cost => ({ ...cost })), transportFees: quote.transportFees.map((fee) => ({ ...fee })), options: quote.options.map((option) => ({ ...option, paxPrices: option.paxPrices.map(price => ({ ...price })) })) };
   }
 
   function cloneHotelPlans(hotelPlans: ItineraryHotelPlan[]): ItineraryHotelPlan[] {

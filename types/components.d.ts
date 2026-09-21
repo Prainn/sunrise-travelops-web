@@ -104,6 +104,7 @@ declare module 'vue' {
     ItineraryPriceAdjustments: typeof import('./../src/views/inquiries/itineraries/components/ItineraryPriceAdjustments.vue')['default']
     ItineraryQuotePanel: typeof import('./../src/views/inquiries/itineraries/components/ItineraryQuotePanel.vue')['default']
     ItineraryResourceDialog: typeof import('./../src/views/inquiries/itineraries/components/ItineraryResourceDialog.vue')['default']
+    ItinerarySharedCosts: typeof import('./../src/views/inquiries/itineraries/components/ItinerarySharedCosts.vue')['default']
     ItineraryVehiclePlansDialog: typeof import('./../src/views/inquiries/itineraries/components/ItineraryVehiclePlansDialog.vue')['default']
     LangSelect: typeof import('./../src/components/LangSelect/index.vue')['default']
     LayoutLogo: typeof import('./../src/layouts/components/LayoutLogo.vue')['default']

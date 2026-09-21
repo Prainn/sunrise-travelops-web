@@ -312,14 +312,13 @@
           </ul>
         </section>
         <div
+          v-if="quotePending"
+          v-loading="true"
+          :element-loading-text="$t('itinerary.quoteCalculating')"
+          class="absolute inset-0 z-[10]"
           role="status"
-          aria-live="polite"
-          class="h-[24px] mb-3 text-[var(--el-text-color-secondary)]"
-        >
-          <span v-show="quotePending">
-            {{ $t('itinerary.quoteCalculating') }}
-          </span>
-        </div>
+          :aria-label="$t('itinerary.quoteCalculating')"
+        />
         <el-alert
           v-if="quoteError"
           type="error"
@@ -337,7 +336,7 @@
         </el-alert>
         <ItineraryQuotePanel
           v-if="selectedItinerary"
-          :inert="isSaving"
+          :inert="isSaving || quotePending"
           :quote="selectedItinerary.quote"
           :calculation="quoteCalculation"
           :calculation-current="quoteCurrent"

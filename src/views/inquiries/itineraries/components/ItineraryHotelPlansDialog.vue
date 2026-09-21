@@ -153,7 +153,7 @@ import { computed, watch } from "vue";
 import { resourceService } from "@/services/resource.service";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import type { ItineraryDayRecord, ItineraryHotelPlan, ItineraryHotelTier } from "@/types/itinerary";
-import { getHotelPlan, getIncompleteHotelPlanTiers, HOTEL_PLAN_TIERS } from "../hotel-plans";
+import { calculateDestinationNights, getHotelPlan, getIncompleteHotelPlanTiers, HOTEL_PLAN_TIERS } from "../hotel-plans";
 import { destinationDuration, itineraryDuration } from "../duration";
 
 const props = defineProps<{
@@ -188,7 +188,8 @@ function hotelResource(tier: ItineraryHotelTier, destination: string) {
   return resourceService.hotels.find(hotel => hotel.id === id);
 }
 
-const overnightDestinations = computed(() => props.destinations.filter(destination => props.dailyPlans.some(day => day.overnightDestination === destination)));
+const overnightDestinations = computed(() => Object.keys(calculateDestinationNights({ dailyPlans: props.dailyPlans }))
+  .filter(destination => props.destinations.includes(destination)));
 const pendingNights = computed(() => props.dailyPlans.filter(day => day.overnightDestination === null).length);
 const canSave = computed(() => !getIncompleteHotelPlanTiers({
   dailyPlans: props.dailyPlans,

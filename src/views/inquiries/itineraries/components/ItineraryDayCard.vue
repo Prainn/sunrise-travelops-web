@@ -37,6 +37,7 @@
     >
       <ItineraryDayForm
         :allow-custom-destination="isLast && day.dayNumber >= plannedDays"
+        :is-last="isLast"
         :day="day"
         :destinations="destinations"
         :editable="contentEditable"

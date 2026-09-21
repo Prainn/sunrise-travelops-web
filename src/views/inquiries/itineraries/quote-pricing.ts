@@ -9,13 +9,12 @@ export function createDefaultQuoteOption(
     id,
     hotelTier,
     vehicleTier,
-    guideServiceTotal: null,
-    staffRoomCosts: [],
     paxPrices: [],
   };
 }
 export function createDefaultQuoteSettings(): ItineraryQuoteSettings {
   return {
+    guideServiceTotal: null, staffRoomCosts: [],
     options: [], chineseTip: null, englishTip: null, transportFees: [],
     customerNotes: "", holidayRestrictions: "",
     hotelReplacementTerms: "如所列酒店满房，将调整为同级酒店。",

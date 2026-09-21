@@ -47,7 +47,7 @@
     <el-form-item :label="$t('itinerary.overnightDestination')">
       <el-select
         :model-value="day.overnightDestination"
-        :disabled="!editable"
+        :disabled="!editable || !isLast"
         :placeholder="$t('itinerary.overnightPending')"
         @update:model-value="updateField('overnightDestination', $event)"
       >
@@ -107,7 +107,7 @@ import { getTransportMethodOptions } from "@/utils/transport-method";
 
 type EditableDayField = "departure" | "destination" | "overnightDestination" | "transport" | "description";
 
-const props = defineProps<{ day: ItineraryDayRecord; allowCustomDestination: boolean; destinations: string[]; editable: boolean }>();
+const props = defineProps<{ day: ItineraryDayRecord; isLast: boolean; allowCustomDestination: boolean; destinations: string[]; editable: boolean }>();
 const emit = defineEmits<{
   "update-field": [field: EditableDayField, value: string | null];
 }>();

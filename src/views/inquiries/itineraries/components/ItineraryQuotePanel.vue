@@ -1,10 +1,14 @@
 <template>
   <div class="quote-panel grid gap-[20px] text-[14px]">
     <template v-if="!legacyCalculation">
-      <div class="flex gap-5 flex-wrap">
-        <span>{{ $t('itinerary.dailyMealAttractionCost') }}: {{ calculationVisible && paxCalculation ? formatMoney(paxCalculation.dailyResourceCost) : '—' }}</span>
-        <span>{{ $t('itinerary.guideCost') }}: {{ calculationVisible && paxCalculation ? formatMoney(paxCalculation.guideCost) : '—' }}</span>
-      </div>
+      <ItinerarySharedCosts
+        :quote="quote"
+        :calculation="paxCalculation"
+        :destinations="destinations"
+        :current="calculationVisible"
+        :editable="editable"
+        @update-settings="emit('update-settings', $event)"
+      />
       <el-empty
         v-if="!displayOptions.length"
         :description="$t('itinerary.noQuoteOptions')"
@@ -15,8 +19,8 @@
         :key="item.option.id"
         :option="item.option"
         :calculation="item.calculation"
-        :daily-resource-cost="paxCalculation?.dailyResourceCost ?? 0"
-        :destinations="destinations"
+        :meal-cost="paxCalculation?.mealCost"
+        :attraction-cost="paxCalculation?.attractionCost"
         :current="calculationVisible && Boolean(item.calculation)"
         :editable="editable"
         @update-option="emit('update-quote-option', item.option.id, $event)"
@@ -176,6 +180,7 @@
 </template>
 
 <script setup lang="ts">
+import ItinerarySharedCosts from "./ItinerarySharedCosts.vue";
 import ItineraryPaxQuoteTable from "./ItineraryPaxQuoteTable.vue";
 import CitySelect from "@/components/CitySelect.vue";
 import { computed } from "vue";

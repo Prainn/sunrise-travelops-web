@@ -3,36 +3,6 @@
     <template #header>
       {{ $t(`itinerary.hotelTiers.${option.hotelTier}`) }} · {{ $t(`itinerary.vehicleServiceLevels.${option.vehicleTier}`) }}
     </template>
-    <el-form
-      inline
-      label-position="top"
-      :disabled="!editable"
-    >
-      <el-form-item :label="$t('itinerary.guideServiceTotal')">
-        <el-input-number
-          :model-value="option.guideServiceTotal ?? undefined"
-          :min="0"
-          :max="1e9"
-          :precision="2"
-          :controls="false"
-          @update:model-value="emit('update-option', { guideServiceTotal: $event ?? null })"
-        />
-      </el-form-item>
-      <el-form-item
-        v-for="destination in destinations"
-        :key="destination"
-        :label="$t('itinerary.staffRoomDestinationTotal', { destination })"
-      >
-        <el-input-number
-          :model-value="staffRoomTotalFor(destination) ?? undefined"
-          :min="0"
-          :max="1e9"
-          :precision="2"
-          :controls="false"
-          @update:model-value="updateStaffRoomTotal(destination, $event)"
-        />
-      </el-form-item>
-    </el-form>
     <el-table
       :data="rows"
       border
@@ -56,7 +26,8 @@
             <template #content>
               <template v-if="calculation">
                 {{ $t('itinerary.hotelPerPerson') }}: {{ formatMoney(calculation.hotelUnitCost) }}<br>
-                {{ $t('itinerary.dailyMealAttractionCost') }}: {{ formatMoney(dailyResourceCost) }}<br>
+                {{ $t('itinerary.mealCost') }}: {{ mealCost == null ? '—' : formatMoney(mealCost) }}<br>
+                {{ $t('itinerary.attractionCost') }}: {{ attractionCost == null ? '—' : formatMoney(attractionCost) }}<br>
                 {{ $t('itinerary.vehiclePerPerson') }}: {{ formatMoney(row.vehicleUnitCost) }}<br>
                 {{ $t('itinerary.guideServicePerPerson') }}: {{ formatMoney(row.guideServiceUnitCost) }}<br>
                 {{ $t('itinerary.staffRoomPerPerson') }}: {{ formatMoney(row.staffRoomUnitCost) }}
@@ -113,8 +84,8 @@ import { formatMoney } from '@/utils';
 const props = defineProps<{
   option: ItineraryQuoteOption;
   calculation?: ItineraryQuoteOptionCalculation;
-  dailyResourceCost: number;
-  destinations: string[];
+  mealCost?: number;
+  attractionCost?: number;
   current: boolean;
   editable: boolean;
 }>();
@@ -129,15 +100,6 @@ const metrics = [
 ] as const;
 function money(value: number | undefined) { return props.current && value !== undefined ? `¥${formatMoney(value)}` : '—'; }
 function priceFor(pax: number) { return props.option.paxPrices.find(price => price.pax === pax)?.adultUnitPrice; }
-function staffRoomTotalFor(destination: string) { return props.option.staffRoomCosts.find(cost => cost.destination === destination)?.total ?? null; }
-function updateStaffRoomTotal(destination: string, value: number | undefined) {
-  emit('update-option', {
-    staffRoomCosts: props.destinations.map(city => ({
-      destination: city,
-      total: city === destination ? value ?? null : staffRoomTotalFor(city),
-    })),
-  });
-}
 function updatePrice(pax: number, value: number | undefined) {
   emit('update-option', { paxPrices: props.option.paxPrices.map(row => ({ pax: row.pax, adultUnitPrice: row.pax === pax ? value ?? null : priceFor(row.pax) ?? null })) });
 }
