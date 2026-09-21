@@ -66,8 +66,15 @@
       </el-collapse-item>
       <el-collapse-item name="guide">
         <template #title>
-          <div class="flex items-center gap-4 w-full pr-3">
+          <div class="flex flex-wrap items-center gap-4 w-full pr-3">
             <strong>{{ $t('itinerary.guideServiceSection') }}</strong>
+            <span
+              v-for="price in sharedPaxPrices"
+              :key="price.pax"
+            >
+              <template v-if="sharedPaxPrices.length > 1">PAX {{ price.pax }}：</template>{{ money(price.guideServiceUnitCost) }}
+            </span>
+            <span v-if="!sharedPaxPrices.length">—</span>
             <span class="ml-auto text-[var(--el-color-primary)]">{{ $t(expanded.includes('guide') ? 'itinerary.collapseCostDetails' : 'itinerary.expandCostDetails') }}</span>
           </div>
         </template>
@@ -92,8 +99,15 @@
       </el-collapse-item>
       <el-collapse-item name="staffRooms">
         <template #title>
-          <div class="flex items-center gap-4 w-full pr-3">
+          <div class="flex flex-wrap items-center gap-4 w-full pr-3">
             <strong>{{ $t('itinerary.staffRoomSection') }}</strong>
+            <span
+              v-for="price in sharedPaxPrices"
+              :key="price.pax"
+            >
+              <template v-if="sharedPaxPrices.length > 1">PAX {{ price.pax }}：</template>{{ money(price.staffRoomUnitCost) }}
+            </span>
+            <span v-if="!sharedPaxPrices.length">—</span>
             <span class="ml-auto text-[var(--el-color-primary)]">{{ $t(expanded.includes('staffRooms') ? 'itinerary.collapseCostDetails' : 'itinerary.expandCostDetails') }}</span>
           </div>
         </template>
@@ -159,6 +173,7 @@
         </el-button>
         <el-button
           v-if="editable"
+          :disabled="otherAmount == null || (otherAmount > 0 && !otherReason.trim())"
           type="primary"
           @click="applyOtherCost"
         >
@@ -170,7 +185,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import type { ItineraryQuoteSettings, PaxQuoteCalculation } from '@/types/itinerary';
 import { formatMoney } from '@/utils';
 
@@ -185,6 +200,8 @@ const emit = defineEmits<{
   'update-settings': [changes: Partial<Omit<ItineraryQuoteSettings, 'options'>>];
 }>();
 const expanded = ref<string[]>([]);
+// Shared costs have the same PAX breakdown in every hotel/vehicle option.
+const sharedPaxPrices = computed(() => props.calculation?.options[0]?.paxPrices ?? []);
 const sections = [
   { kind: 'meal', totalKey: 'mealCost', detailsKey: 'mealDetails', amountKey: 'mealOtherCost', reasonKey: 'mealOtherReason' },
   { kind: 'attraction', totalKey: 'attractionCost', detailsKey: 'attractionDetails', amountKey: 'attractionOtherCost', reasonKey: 'attractionOtherReason' },
