@@ -271,7 +271,7 @@
     "costUnitPerPerson": "Unit cost per person",
     "costQuantity": "Uses",
     "costSubtotal": "Subtotal per person",
-    "otherCostPerPerson": "Other (per person)",
+    "otherCost": "Other",
     "otherCostReason": "Reason for other cost",
     "otherCostReasonRequired": "Enter a reason for the other cost",
     "hotelCostDetails": "Hotel costs by city",

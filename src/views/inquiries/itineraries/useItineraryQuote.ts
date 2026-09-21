@@ -15,12 +15,17 @@ export function useItineraryQuote(selected: Readonly<Ref<ItineraryRecord | undef
       const plan = selected.value;
       if (!plan || plan.version < 1) return "null";
       const preview = plan.status === "draft" && canPreview();
+      const input = preview ? itineraryInput(plan) : undefined;
+      if (input) {
+        // Reasons are saved with the form but do not affect a price preview.
+        input.quote = { ...input.quote, mealOtherReason: '', attractionOtherReason: '' };
+      }
       return JSON.stringify({
         id: plan.id,
         status: plan.status,
         preview,
         // Draft preview depends on submitted content; GET reads a saved version.
-        input: preview ? itineraryInput(plan) : undefined,
+        input,
         version: preview ? undefined : plan.version,
       });
     }, () => retryCount.value] as const,
@@ -31,10 +36,11 @@ export function useItineraryQuote(selected: Readonly<Ref<ItineraryRecord | undef
       current.value = false;
       error.value = false;
       const request = JSON.parse(serialized) as { id: string; input?: ReturnType<typeof itineraryInput> } | null;
-      pending.value = Boolean(request);
+      pending.value = false;
       if (!request) return;
       let cancelled = false;
       const timer = setTimeout(async () => {
+        pending.value = true;
         try {
           const result = request.input
             ? await inquiryService.previewQuote({ ...request.input, id: request.id })
@@ -47,7 +53,7 @@ export function useItineraryQuote(selected: Readonly<Ref<ItineraryRecord | undef
         } finally {
           if (!cancelled) pending.value = false;
         }
-      }, 300);
+      }, request.input ? 800 : 0);
       onCleanup(() => { cancelled = true; clearTimeout(timer); });
     },
     { immediate: true, flush: "sync" },

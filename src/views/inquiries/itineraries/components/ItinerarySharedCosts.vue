@@ -61,7 +61,9 @@
           :disabled="!editable"
           class="flex flex-wrap gap-4"
         >
-          <el-form-item :label="$t('itinerary.otherCostPerPerson')">
+          <el-form-item
+            :label="$t('itinerary.otherCost')"
+          >
             <el-input-number
               :model-value="quote[section.amountKey] ?? undefined"
               :min="0"
