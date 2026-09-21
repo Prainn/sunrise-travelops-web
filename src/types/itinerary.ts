@@ -61,6 +61,10 @@ export interface ItineraryQuoteOption {
 }
 
 export interface ItineraryQuoteSettings {
+  mealOtherCost: number | null;
+  mealOtherReason: string;
+  attractionOtherCost: number | null;
+  attractionOtherReason: string;
   guideServiceTotal: number | null;
   staffRoomCosts: ItineraryStaffRoomCost[];
   options: ItineraryQuoteOption[];
@@ -144,6 +148,7 @@ export interface ItineraryQuoteOptionCalculation {
   optionId: string;
   hotelTier: ItineraryHotelTier;
   vehicleTier: ItineraryVehicleTier;
+  hotelCityCosts?: { destination: string; nights: number; unitCost: number; totalCost: number }[];
   hotelUnitCost: number;
   vehicleTotal: number;
   guideServiceTotal: number;
@@ -154,6 +159,8 @@ export interface ItineraryQuoteOptionCalculation {
 export interface PaxQuoteCalculation {
   pricingVersion: 2;
   dailyResourceCost: number;
+  mealDetails?: { dayNumber: number; resourceName: string; unitCost: number; quantity: number; totalCost: number }[];
+  attractionDetails?: { dayNumber: number; resourceName: string; unitCost: number; quantity: number; totalCost: number }[];
   mealCost?: number;
   attractionCost?: number;
   guideCost: number;

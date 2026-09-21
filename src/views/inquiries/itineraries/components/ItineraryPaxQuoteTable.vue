@@ -1,7 +1,60 @@
 <template>
   <el-card shadow="never">
     <template #header>
-      {{ $t(`itinerary.hotelTiers.${option.hotelTier}`) }} · {{ $t(`itinerary.vehicleServiceLevels.${option.vehicleTier}`) }}
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <span>{{ $t(`itinerary.hotelTiers.${option.hotelTier}`) }} · {{ $t(`itinerary.vehicleServiceLevels.${option.vehicleTier}`) }}</span>
+        <el-popover
+          trigger="click"
+          :width="520"
+          placement="bottom-end"
+        >
+          <template #reference>
+            <el-button
+              size="small"
+              :disabled="!current || !calculation?.hotelCityCosts"
+            >
+              {{ $t('itinerary.hotelCostDetails') }}
+            </el-button>
+          </template>
+          <h4 class="mt-0">
+            {{ $t('itinerary.hotelCostDetails') }}
+          </h4>
+          <el-table
+            :data="calculation?.hotelCityCosts ?? []"
+            border
+          >
+            <el-table-column
+              prop="destination"
+              :label="$t('itinerary.hotelCostCity')"
+              min-width="100"
+            />
+            <el-table-column
+              prop="nights"
+              :label="$t('itinerary.hotelCostNights')"
+              width="65"
+            />
+            <el-table-column
+              :label="$t('itinerary.hotelRoomNightPrice')"
+              min-width="125"
+            >
+              <template #default="{ row }">
+                {{ money(row.unitCost) }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              :label="$t('itinerary.hotelPerPerson')"
+              min-width="125"
+            >
+              <template #default="{ row }">
+                {{ money(row.totalCost) }}
+              </template>
+            </el-table-column>
+          </el-table>
+          <div class="mt-3 text-right font-semibold">
+            {{ $t('itinerary.hotelCostTotal') }}：{{ money(calculation?.hotelUnitCost) }}
+          </div>
+        </el-popover>
+      </div>
     </template>
     <el-table
       :data="rows"

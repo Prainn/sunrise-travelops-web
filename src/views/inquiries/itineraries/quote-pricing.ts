@@ -14,6 +14,7 @@ export function createDefaultQuoteOption(
 }
 export function createDefaultQuoteSettings(): ItineraryQuoteSettings {
   return {
+    mealOtherCost: null, mealOtherReason: "", attractionOtherCost: null, attractionOtherReason: "",
     guideServiceTotal: null, staffRoomCosts: [],
     options: [], chineseTip: null, englishTip: null, transportFees: [],
     customerNotes: "", holidayRestrictions: "",

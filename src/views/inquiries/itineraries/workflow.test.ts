@@ -51,6 +51,7 @@ function createPlan({ hotel = true, vehicle = true } = {}): ValidationPlan {
     paxTiers: [10],
     guidePlans: [],
     quote: {
+      mealOtherCost: null, mealOtherReason: "", attractionOtherCost: null, attractionOtherReason: "",
       guideServiceTotal: null,
       staffRoomCosts: [],
       options: [],

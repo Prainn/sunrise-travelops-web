@@ -16,7 +16,7 @@ import type {
   MealSlot,
 } from "@/types/itinerary";
 import type { HotelRecord } from "@/types/resource";
-import { addDays, createId, formatDateTime } from "@/utils";
+import { addDays, createId, formatDateTime, roundMoney, sumMoney } from "@/utils";
 import { transitionInquiry } from "../inquiry-workflow";
 import { recalculateItem } from "./pricing";
 import { createDefaultHotelPlans, getHotelPlan, HOTEL_PLAN_TIERS, isHotelEligibleForTier } from "./hotel-plans";
@@ -151,7 +151,15 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
 
   function updateQuoteSettings(changes: Partial<Omit<ItineraryQuoteSettings, "options">>) {
     if (!options.canEditPrice() || !options.selectedItinerary.value) return;
-    Object.assign(options.selectedItinerary.value.quote, changes);
+    const quote = options.selectedItinerary.value.quote;
+    const delta = sumMoney((['mealOtherCost', 'attractionOtherCost'] as const).map(key =>
+      key in changes ? roundMoney((changes[key] ?? 0) - (quote[key] ?? 0)) : 0));
+    if (delta) {
+      for (const option of quote.options) for (const price of option.paxPrices) {
+        if (price.adultUnitPrice != null) price.adultUnitPrice = Math.max(0, sumMoney([price.adultUnitPrice, delta]));
+      }
+    }
+    Object.assign(quote, changes);
     touchSelectedItinerary();
   }
 
