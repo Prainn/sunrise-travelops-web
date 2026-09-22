@@ -1,4 +1,4 @@
-import type { ItineraryRecord, PriceReference } from "@/types/itinerary";
+import type { ItineraryRecord, ItineraryVehiclePlan, PriceReference } from "@/types/itinerary";
 import { roundMoney } from "@/utils";
 import { recalculateItem } from "./pricing";
 import { calculateVehiclePlanAutomaticTotal } from "./vehicle-plans";
@@ -63,30 +63,39 @@ export function missingPriceReasons(plan: ItineraryRecord, previous?: ItineraryR
   const old = new Map(previous ? itineraryPriceRows(previous).map((r) => [r.key, r]) : []);
   const missing: string[] = [];
   for (const item of itineraryPriceRows(plan)) {
-    const saved = old.get(item.key);
-    const before = saved?.source === item.source ? saved : undefined;
-    const actual = item.get();
-    const ref = item.fields.referencePrice;
-    if (actual == null || (before && roundMoney(before.get() ?? 0) === roundMoney(actual)))
-      continue;
-    if (!before && ref != null && roundMoney(ref) === roundMoney(actual)) continue;
-    if (!item.fields.adjustmentReason?.trim()) missing.push(item.name);
+    if (resourcePriceNeedsReason(item, old.get(item.key)) && !item.fields.adjustmentReason?.trim())
+      missing.push(item.name);
   }
   for (const vehicle of plan.vehiclePlans) {
     const before = previous?.vehiclePlans.find((v) => v.tier === vehicle.tier);
-    const total = calculateVehiclePlanAutomaticTotal(vehicle);
-    if (
-      vehicle.totalPrice == null ||
-      vehicle.pricingMode === "automatic" ||
-      (total != null && roundMoney(total) === roundMoney(vehicle.totalPrice))
-    )
-      continue;
-    if (
-      before?.totalPrice == null ||
-      roundMoney(before.totalPrice) === roundMoney(vehicle.totalPrice)
-    )
-      continue;
-    if (!vehicle.adjustmentReason?.trim()) missing.push(vehicle.tier);
+    if (vehiclePriceNeedsReason(vehicle, before) && !vehicle.adjustmentReason?.trim())
+      missing.push(vehicle.tier);
   }
   return missing;
+}
+
+export function vehiclePriceNeedsReason(
+  vehicle: ItineraryVehiclePlan,
+  previous?: ItineraryVehiclePlan,
+): boolean {
+  const total = calculateVehiclePlanAutomaticTotal(vehicle);
+  return (
+    previous?.totalPrice != null &&
+    vehicle.totalPrice != null &&
+    roundMoney(previous.totalPrice) !== roundMoney(vehicle.totalPrice) &&
+    vehicle.pricingMode !== "automatic" &&
+    (total == null || roundMoney(total) !== roundMoney(vehicle.totalPrice))
+  );
+}
+
+export function resourcePriceNeedsReason(
+  item: ReturnType<typeof itineraryPriceRows>[number],
+  saved?: ReturnType<typeof itineraryPriceRows>[number],
+): boolean {
+  const actual = item.get();
+  if (actual == null) return false;
+  const before = saved?.source === item.source ? saved : undefined;
+  if (before) return roundMoney(before.get() ?? 0) !== roundMoney(actual);
+  const reference = item.fields.referencePrice;
+  return item.custom || reference == null || roundMoney(reference) !== roundMoney(actual);
 }

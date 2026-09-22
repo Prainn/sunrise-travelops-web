@@ -26,11 +26,7 @@
             }}</span>
           </div>
         </template>
-        <el-table
-          :data="current ? (calculation?.[section.detailsKey] ?? []) : []"
-          border
-          class="mb-4"
-        >
+        <el-table :data="calculation?.[section.detailsKey] ?? []" border class="mb-4">
           <el-table-column :label="$t('itinerary.costDay')" prop="dayNumber" width="80" />
           <el-table-column :label="$t('itinerary.costItem')" prop="resourceName" min-width="180" />
           <el-table-column :label="$t('itinerary.costUnitPerPerson')" min-width="130">
@@ -133,7 +129,7 @@
     <el-dialog
       v-model="otherCostVisible"
       append-to-body
-      width="min(520px, 92vw)"
+      width="min(720px, 92vw)"
       :title="activeSection ? `${$t(activeSection.titleKey)} · ${$t('itinerary.otherCosts')}` : ''"
     >
       <el-form label-position="top" :disabled="!editable" @submit.prevent="applyOtherCost">
@@ -225,7 +221,6 @@ const props = defineProps<{
   paxTiers: number[];
   calculation: PaxQuoteCalculation | null;
   destinations: string[];
-  current: boolean;
   editable: boolean;
 }>();
 const emit = defineEmits<{
@@ -344,7 +339,7 @@ function applyOtherCost() {
 }
 
 function money(value: number | undefined) {
-  return props.current && value != null ? `¥${formatMoney(value)}` : "—";
+  return `¥${formatMoney(value)}`;
 }
 function staffRoomTotalFor(destination: string) {
   return props.quote.staffRoomCosts.find((cost) => cost.destination === destination)?.total ?? null;
@@ -366,7 +361,7 @@ function updateStaffRoomTotal(destination: string, value: number | undefined) {
   }
   :deep(.el-descriptions__label),
   :deep(.el-descriptions__content) {
-    width: 25%;
+    width: 35%;
   }
 }
 .pax-other-cost + .pax-other-cost {

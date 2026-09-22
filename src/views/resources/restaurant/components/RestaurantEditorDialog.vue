@@ -58,6 +58,9 @@
       <el-form-item :label="$t('restaurant.address')">
         <el-input v-model.trim="form.address" />
       </el-form-item>
+      <el-form-item :label="$t('resource.description')">
+        <el-input v-model.trim="form.description" type="textarea" :rows="3" />
+      </el-form-item>
       <el-form-item :label="$t('common.remark')">
         <el-input v-model.trim="form.remark" type="textarea" :rows="3" />
       </el-form-item>

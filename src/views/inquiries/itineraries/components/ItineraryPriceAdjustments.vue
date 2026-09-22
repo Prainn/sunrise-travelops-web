@@ -7,9 +7,9 @@
     @close="emit('cancel')"
   >
     <el-card shadow="never" class="max-h-60vh overflow-y-auto">
-      <el-form v-if="rows.length || activeVehiclePlans.length" label-position="top">
+      <el-form v-if="adjustedRows.length || activeVehiclePlans.length" label-position="top">
         <div
-          v-for="row in rows"
+          v-for="row in adjustedRows"
           :key="row.key"
           class="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-4 mb-4"
         >
@@ -40,7 +40,7 @@
               @update:model-value="row.fields.adjustmentReason = $event"
             />
             <el-text v-else type="info">
-              {{ $t("identity.reasonNotNeeded") }}
+              {{ row.fields.adjustmentReason?.trim() || $t("common.notSet") }}
             </el-text>
           </el-form-item>
         </div>
@@ -74,7 +74,7 @@
               "
             >
               {{ $t("identity.automatic") }} ·
-              {{ calculateVehiclePlanAutomaticTotal(vehicle) ?? "—" }}
+              {{ calculateVehiclePlanAutomaticTotal(vehicle) ?? 0 }}
             </el-button>
           </el-form-item>
           <el-form-item :label="$t('identity.reason')" :required="vehicleNeedsReason(vehicle)">
@@ -94,7 +94,7 @@
       <el-empty v-else :description="$t('identity.noPriceItems')" />
       <el-collapse @change="loadHistory">
         <el-collapse-item :title="$t('identity.history')" name="history">
-          <el-table :data="history" size="small" :loading="isHistoryLoading">
+          <el-table v-loading="isHistoryLoading" :data="history" size="small">
             <el-table-column prop="itemName" :label="$t('identity.actual')" />
             <el-table-column :label="$t('identity.actual')">
               <template #default="{ row }">
@@ -125,42 +125,48 @@
 <script setup lang="ts">
 import { ElMessage } from "element-plus";
 import type { ItineraryRecord, ItineraryVehiclePlan, PriceAdjustment } from "@/types/itinerary";
-import { itineraryPriceRows } from "../price-adjustments";
+import {
+  itineraryPriceRows,
+  resourcePriceNeedsReason,
+  vehiclePriceNeedsReason,
+} from "../price-adjustments";
 import { calculateVehiclePlanAutomaticTotal } from "../vehicle-plans";
 import { inquiryService } from "@/services/inquiry.service";
-import { formatMoney, formatDateTime, roundMoney } from "@/utils";
+import { formatMoney, formatDateTime } from "@/utils";
 const props = defineProps<{
   plan: ItineraryRecord;
+  savedPlan?: ItineraryRecord;
   editable: boolean;
   modelValue: boolean;
   saving: boolean;
 }>();
 const emit = defineEmits<{ save: []; cancel: [] }>();
 const rows = computed(() => itineraryPriceRows(props.plan));
+const adjustedRows = computed(() => rows.value.filter((row) => row.custom || needsReason(row)));
 const activeVehiclePlans = computed(() =>
-  props.plan.vehiclePlans.filter((vehicle) => vehicle.arrangements.length),
+  props.plan.vehiclePlans.filter(
+    (vehicle) => vehicle.arrangements.length && vehicleNeedsReason(vehicle),
+  ),
 );
 const history = ref<PriceAdjustment[]>([]);
 const isHistoryLoading = ref(false);
-const initialPrices = new Map<string, number | null>();
+const savedRows = computed(
+  () =>
+    new Map(
+      props.savedPlan ? itineraryPriceRows(props.savedPlan).map((row) => [row.key, row]) : [],
+    ),
+);
 function changePrice(row: ReturnType<typeof itineraryPriceRows>[number], value: number) {
   row.set(value);
   row.fields.adjustmentReason = "";
 }
 function needsReason(row: ReturnType<typeof itineraryPriceRows>[number]) {
-  const actual = row.get();
-  const reference = row.fields.referencePrice;
-  if (actual == null) return false;
-  const initial = initialPrices.get(row.key);
-  if (row.custom) return true;
-  if (reference != null && roundMoney(actual) !== roundMoney(reference)) return true;
-  return initial != null && roundMoney(actual) !== roundMoney(initial);
+  return resourcePriceNeedsReason(row, savedRows.value.get(row.key));
 }
 function vehicleNeedsReason(vehicle: ItineraryVehiclePlan) {
-  const total = calculateVehiclePlanAutomaticTotal(vehicle);
-  return (
-    vehicle.totalPrice != null &&
-    (total == null || roundMoney(vehicle.totalPrice) !== roundMoney(total))
+  return vehiclePriceNeedsReason(
+    vehicle,
+    props.savedPlan?.vehiclePlans.find((saved) => saved.tier === vehicle.tier),
   );
 }
 async function loadHistory() {
@@ -177,14 +183,6 @@ watch(
   () => props.plan.id,
   () => {
     history.value = [];
-  },
-);
-watch(
-  () => props.modelValue,
-  (visible) => {
-    if (!visible) return;
-    initialPrices.clear();
-    for (const row of rows.value) initialPrices.set(row.key, row.get());
   },
 );
 </script>

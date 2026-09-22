@@ -9,7 +9,6 @@ export function useItineraryQuote(
   const calculation = ref<ItineraryQuoteCalculation | null>(null);
   const pending = ref(false);
   const error = ref(false);
-  const current = ref(false);
   const retryCount = ref(0);
   let lastId: string | undefined;
 
@@ -21,9 +20,16 @@ export function useItineraryQuote(
         const preview = plan.status === "draft" && canPreview();
         const input = preview ? itineraryInput(plan) : undefined;
         if (input) {
-          // Reasons are saved with the form but do not affect a price preview.
+          // Keep display-only edits out of the preview trigger.
           input.quote = {
             ...input.quote,
+            chineseTip: null,
+            englishTip: null,
+            transportFees: [],
+            options: input.quote.options.map((option) => ({
+              ...option,
+              paxPrices: option.paxPrices.map((price) => ({ ...price, adultUnitPrice: null })),
+            })),
             mealOtherReason: "",
             attractionOtherReason: "",
             paxOtherCosts: input.quote.paxOtherCosts.map((cost) => ({
@@ -39,6 +45,11 @@ export function useItineraryQuote(
           preview,
           // Draft preview depends on submitted content; GET reads a saved version.
           input,
+          transportPrices: input
+            ? plan.quote.transportFees
+                .filter((fee) => fee.unitPrice !== null)
+                .map(({ id, type, unitPrice }) => ({ id, type, unitPrice }))
+            : undefined,
           version: preview ? undefined : plan.version,
         });
       },
@@ -48,7 +59,6 @@ export function useItineraryQuote(
       const plan = selected.value;
       if (lastId !== plan?.id) calculation.value = null;
       lastId = plan?.id;
-      current.value = false;
       error.value = false;
       const request = JSON.parse(serialized) as {
         id: string;
@@ -61,12 +71,14 @@ export function useItineraryQuote(
         async () => {
           pending.value = true;
           try {
+            if (request.input && plan) {
+              request.input.quote.transportFees = itineraryInput(plan).quote.transportFees;
+            }
             const result = request.input
               ? await inquiryService.previewQuote({ ...request.input, id: request.id })
               : await inquiryService.quoteCalculation(request.id);
             if (cancelled) return;
             calculation.value = result;
-            current.value = true;
           } catch {
             if (!cancelled) error.value = true;
           } finally {
@@ -87,7 +99,6 @@ export function useItineraryQuote(
     calculation,
     pending,
     error,
-    current,
     retry: () => {
       retryCount.value++;
     },

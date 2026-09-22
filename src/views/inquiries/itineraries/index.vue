@@ -192,6 +192,7 @@
         v-if="selectedItinerary"
         :model-value="isVehiclePlansDialogVisible"
         :plans="selectedItinerary.vehiclePlans"
+        :saved-plans="savedItinerary?.vehiclePlans ?? []"
         :start-date="selectedItinerary.startDate"
         :planned-days="inquiry.plannedDays"
         :passenger-count="passengerCount"
@@ -214,6 +215,7 @@
         :saving="isSaving"
         @update-type="updateGuideType"
         @update-price="updateGuidePrice"
+        @update-reason="updateGuideReason"
         @create-guide="openGuideCreateDialog"
         @save="saveSectionDialog('guide')"
         @cancel="cancelSectionDialog('guide')"
@@ -229,6 +231,7 @@
         @clear-plan="clearHotelPlan"
         @update-selection="updateHotelPlanSelection"
         @update-cost="updateHotelCost"
+        @update-reason="updateHotelReason"
         @update-rate="updateHotelRate"
         @save="saveSectionDialog('hotel')"
         @cancel="cancelSectionDialog('hotel')"
@@ -237,6 +240,7 @@
         v-if="selectedItinerary"
         :model-value="isPriceAdjustmentsDialogVisible"
         :plan="selectedItinerary"
+        :saved-plan="savedItinerary"
         :editable="priceEditable"
         :saving="isSaving"
         @save="saveSectionDialog('price')"
@@ -266,7 +270,7 @@
       <el-drawer
         v-model="isQuoteDrawerVisible"
         :title="$t('itinerary.quoteSettings')"
-        size="min(1200px, 96vw)"
+        size="min(1400px, 96vw)"
       >
         <section
           v-if="validationIssues.length"
@@ -298,6 +302,11 @@
             {{ $t("itinerary.retryQuoteCalculation") }}
           </el-button>
         </el-alert>
+        <el-switch
+          v-model="showChildPrice"
+          :active-text="$t('itinerary.showChildPriceInPdf')"
+          class="mb-3"
+        />
         <ItineraryQuotePanel
           v-if="selectedItinerary"
           :inert="isSaving || quotePending"
@@ -305,8 +314,6 @@
           :guide-plans="selectedItinerary.guidePlans"
           :pax-tiers="selectedItinerary.paxTiers"
           :calculation="quoteCalculation"
-          :calculation-current="quoteCurrent"
-          :calculation-pending="quotePending"
           :destinations="quoteDestinations"
           :item-count="itemCount"
           :duration="itineraryDuration(selectedItinerary.dailyPlans)"
@@ -362,7 +369,7 @@ import { plannedDuration, itineraryDuration } from "@/views/inquiries/itinerarie
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import type { ItineraryRecord } from "@/types/itinerary";
+import type { ItineraryHotelTier, ItineraryRecord } from "@/types/itinerary";
 import { getDayBreakfastStatus } from "./hotel-plans";
 import InquiryMessagePreview from "./components/InquiryMessagePreview.vue";
 import ItineraryGuidePlansDialog from "./components/ItineraryGuidePlansDialog.vue";
@@ -387,7 +394,6 @@ const isHotelPlansDialogVisible = ref(false);
 const isPriceAdjustmentsDialogVisible = ref(false);
 type SectionDialog = "vehicle" | "guide" | "hotel" | "price";
 const activeSectionDialog = ref<SectionDialog>();
-const sectionDialogSnapshot = ref<ItineraryRecord>();
 
 async function confirmAction(key: string, params: Record<string, unknown> = {}) {
   try {
@@ -444,7 +450,6 @@ const {
   quoteCalculation,
   quotePending,
   quoteError,
-  quoteCurrent,
   retryQuote,
   openEditDialog,
   pdfPreviewUrl,
@@ -481,6 +486,9 @@ const {
   updateGuidePrice,
   passengerCount,
   resourceDestination,
+  sectionDialogSnapshot,
+  savedItinerary,
+  showChildPrice,
 } = useItineraryWorkspace({
   confirm: confirmAction,
   error: (key) => ElMessage.error(t(key)),
@@ -520,6 +528,20 @@ function setSectionDialogVisible(section: SectionDialog, visible: boolean) {
   if (section === "guide") isGuidePlansDialogVisible.value = visible;
   if (section === "hotel") isHotelPlansDialogVisible.value = visible;
   if (section === "price") isPriceAdjustmentsDialogVisible.value = visible;
+}
+
+function updateGuideReason(reason: string) {
+  if (!contentEditable.value) return;
+  const guide = selectedItinerary.value?.guidePlans[0];
+  if (guide) guide.adjustmentReason = reason;
+}
+
+function updateHotelReason(tier: ItineraryHotelTier, destination: string, reason: string) {
+  if (!contentEditable.value) return;
+  const hotel = selectedItinerary.value?.hotelPlans
+    .find((plan) => plan.tier === tier)
+    ?.hotels.find((item) => item.destination === destination);
+  if (hotel) hotel.adjustmentReason = reason;
 }
 
 function openSectionDialog(section: SectionDialog) {

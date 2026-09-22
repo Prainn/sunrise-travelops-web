@@ -8,8 +8,13 @@
     @close="emit('cancel')"
   >
     <section id="itinerary-vehicles">
-      <div class="grid gap-[16px] lg:grid-cols-2 max-h-60vh overflow-y-auto">
-        <el-card v-for="plan in plans" :key="plan.tier" shadow="never">
+      <div class="grid gap-[16px] lg:grid-cols-2">
+        <el-card
+          v-for="plan in plans"
+          :key="plan.tier"
+          shadow="never"
+          class="max-h-60vh overflow-y-auto"
+        >
           <template #header>
             <div class="flex justify-between items-center">
               <strong>{{ $t(`itinerary.vehicleServiceLevels.${plan.tier}`) }}</strong>
@@ -155,6 +160,26 @@
                 @change="changePlanTotal(plan, $event ?? null)"
               />
             </el-form-item>
+            <el-form-item
+              v-if="
+                vehiclePriceNeedsReason(
+                  plan,
+                  savedPlans.find((saved) => saved.tier === plan.tier),
+                )
+              "
+              :label="$t('identity.reason')"
+            >
+              <el-input
+                :model-value="plan.adjustmentReason ?? ''"
+                :disabled="!editable"
+                :placeholder="$t('identity.reasonPlaceholder')"
+                type="textarea"
+                :rows="2"
+                @update:model-value="
+                  emit('update-plan', plan.tier, { ...plan, adjustmentReason: $event })
+                "
+              />
+            </el-form-item>
             <el-alert
               v-if="isVehiclePlanTotalOverridden(plan)"
               type="info"
@@ -188,6 +213,7 @@
 </template>
 
 <script setup lang="ts">
+import { vehiclePriceNeedsReason } from "../price-adjustments";
 import { ElMessage } from "element-plus";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
@@ -208,6 +234,7 @@ import {
 
 const props = defineProps<{
   plans: ItineraryVehiclePlan[];
+  savedPlans: ItineraryVehiclePlan[];
   startDate: string;
   plannedDays: number;
   passengerCount: number;

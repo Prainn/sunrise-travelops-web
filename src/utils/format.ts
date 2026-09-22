@@ -34,8 +34,8 @@ export function addDays(date: string, days: number): string {
 }
 
 /** 将金额格式化为两位小数，不包含货币符号。 */
-export function formatMoney(value: number): string {
-  return value.toLocaleString("zh-CN", {
+export function formatMoney(value: number | null | undefined): string {
+  return (value ?? 0).toLocaleString("zh-CN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

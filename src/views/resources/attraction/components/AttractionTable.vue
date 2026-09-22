@@ -285,7 +285,7 @@ function formatPeriod(price: AttractionPriceRecord) {
 }
 function formatPrice(price: AttractionPriceRecord, field: "rackPrice" | "settlementPrice") {
   if (price.isFree) return "免费";
-  return price[field] ? formatMoney(price[field]) : "-";
+  return formatMoney(price[field]);
 }
 </script>
 

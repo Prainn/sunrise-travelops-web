@@ -28,27 +28,16 @@
         </div>
       </div>
     </template>
-    <section id="itinerary-hotels" class="itinerary-hotel-plans max-h-60vh overflow-y-auto">
-      <el-card class="itinerary-hotel-plans__card rounded-[10px]" shadow="never">
-        <div
-          v-if="overnightDestinations.length"
-          class="itinerary-hotel-plans__tiers grid grid-cols-2 gap-[12px] max-[1100px]:grid-cols-1"
+    <section id="itinerary-hotels">
+      <div v-if="overnightDestinations.length" class="grid gap-[16px] lg:grid-cols-2">
+        <el-card
+          v-for="tier in HOTEL_PLAN_TIERS"
+          :key="tier"
+          shadow="never"
+          class="max-h-60vh overflow-y-auto"
         >
-          <article
-            v-for="tier in HOTEL_PLAN_TIERS"
-            :key="tier"
-            class="itinerary-hotel-plans__tier overflow-hidden rounded-[8px] bg-[var(--el-bg-color)] [border:1px_solid_var(--el-border-color-lighter)] [transition:border-color_0.2s,_box-shadow_0.2s]"
-            :class="{
-              'is-selected [border-color:var(--el-color-primary-light-5)] [box-shadow:0_0_0_1px_var(--el-color-primary-light-8)]':
-                Boolean(getPlan(tier)?.hotels.length),
-            }"
-          >
-            <header
-              class="min-h-[48px] flex items-center justify-between gap-[16px] px-[14px] bg-[var(--el-fill-color-lighter)]"
-              :class="{
-                'bg-[var(--el-color-primary-light-9)]': Boolean(getPlan(tier)?.hotels.length),
-              }"
-            >
+          <template #header>
+            <div class="flex justify-between items-center">
               <strong>{{ $t(`itinerary.hotelTiers.${tier}`) }}</strong>
               <el-button
                 v-if="getPlan(tier)?.hotels.length"
@@ -59,86 +48,95 @@
               >
                 {{ $t("common.clear") }}
               </el-button>
-            </header>
-
-            <div class="grid gap-[10px] p-[12px]">
-              <div
-                v-for="destination in overnightDestinations"
-                :key="destination"
-                class="itinerary-hotel-plans__selection flex items-start gap-4 p-[16px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)]"
-              >
-                <span class="min-w-100px">{{ destination }}</span>
-                <div class="w-1/2">
-                  <ResourceSelect
-                    class="w-full"
-                    kind="hotels"
-                    :model-value="getHotelSelectionId(tier, destination)"
-                    :selected-label="
-                      getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)
-                        ?.hotelName
-                    "
-                    :filters="{
-                      city: destination,
-                      rating: tier === 'international_five_star' ? tier : 'ctrip_preferred',
-                    }"
-                    :disabled="!editable"
-                    :placeholder="$t('itinerary.selectDestinationHotel')"
-                    @update:model-value="emit('update-selection', tier, destination, $event)"
-                  />
-                </div>
-                <div
-                  v-if="getPlan(tier)?.hotels.some((hotel) => hotel.destination === destination)"
-                  class="col-start-2 flex items-center flex-wrap gap-[8px]"
-                >
-                  <el-select
-                    class="!w-[210px]"
-                    :disabled="!editable || !hotelResource(tier, destination)"
-                    :model-value="
-                      getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)
-                        ?.referenceBasis
-                    "
-                    @update:model-value="emit('update-rate', tier, destination, $event)"
-                  >
-                    <el-option
-                      value="hotel_individual"
-                      :label="`${$t('hotel.individualPrice')} ¥${hotelResource(tier, destination)?.individualPrice ?? '—'}`"
-                    />
-                    <el-option
-                      v-if="hotelResource(tier, destination)?.groupPrice != null"
-                      value="hotel_group"
-                      :label="`${$t('hotel.groupPrice')} ¥${hotelResource(tier, destination)?.groupPrice}`"
-                    />
-                  </el-select>
-                  <el-input-number
-                    class="!w-[160px]"
-                    :model-value="
-                      getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)
-                        ?.unitCost
-                    "
-                    :min="0"
-                    :precision="2"
-                    :disabled="!editable"
-                    controls-position="right"
-                    :aria-label="$t('planning.hotelPrice')"
-                    @change="emit('update-cost', tier, destination, Number($event ?? 0))"
-                  />
-                  <small>{{ $t("planning.hotelPriceUnit") }}</small>
-                </div>
-              </div>
             </div>
-          </article>
-        </div>
-        <el-alert
-          v-else-if="pendingNights"
-          type="info"
-          show-icon
-          :closable="false"
-          :title="$t('itinerary.hotelPlansPending')"
-        />
-        <el-text v-else type="info">
-          {{ $t("itinerary.hotelPlansNotNeeded") }}
-        </el-text>
-      </el-card>
+          </template>
+
+          <div
+            v-for="destination in overnightDestinations"
+            :key="destination"
+            class="mb-[16px] flex items-start gap-4 p-[14px] border border-solid border-[var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)]"
+          >
+            <span class="min-w-100px">{{ destination }}</span>
+            <div class="w-1/2">
+              <ResourceSelect
+                class="w-full"
+                kind="hotels"
+                :model-value="getHotelSelectionId(tier, destination)"
+                :selected-label="
+                  getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)
+                    ?.hotelName
+                "
+                :filters="{
+                  city: destination,
+                  rating: tier === 'international_five_star' ? tier : 'ctrip_preferred',
+                }"
+                :disabled="!editable"
+                :placeholder="$t('itinerary.selectDestinationHotel')"
+                @update:model-value="emit('update-selection', tier, destination, $event)"
+              />
+            </div>
+            <div
+              v-if="getPlan(tier)?.hotels.some((hotel) => hotel.destination === destination)"
+              class="col-start-2 flex items-center flex-wrap gap-[8px]"
+            >
+              <el-select
+                class="!w-[210px]"
+                :disabled="!editable || !hotelResource(tier, destination)"
+                :model-value="
+                  getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)
+                    ?.referenceBasis
+                "
+                @update:model-value="emit('update-rate', tier, destination, $event)"
+              >
+                <el-option
+                  value="hotel_individual"
+                  :label="`${$t('hotel.individualPrice')} ¥${hotelResource(tier, destination)?.individualPrice ?? 0}`"
+                />
+                <el-option
+                  v-if="hotelResource(tier, destination)?.groupPrice != null"
+                  value="hotel_group"
+                  :label="`${$t('hotel.groupPrice')} ¥${hotelResource(tier, destination)?.groupPrice}`"
+                />
+              </el-select>
+              <el-input-number
+                class="!w-[160px]"
+                :model-value="
+                  getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)?.unitCost
+                "
+                :min="0"
+                :precision="2"
+                :disabled="!editable"
+                controls-position="right"
+                :aria-label="$t('planning.hotelPrice')"
+                @change="emit('update-cost', tier, destination, Number($event ?? 0))"
+              />
+              <small>{{ $t("planning.hotelPriceUnit") }}</small>
+              <el-input
+                :model-value="
+                  getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)
+                    ?.adjustmentReason ?? ''
+                "
+                :disabled="!editable"
+                :aria-label="$t('identity.reason')"
+                :placeholder="$t('identity.reasonPlaceholder')"
+                type="textarea"
+                :rows="2"
+                @update:model-value="emit('update-reason', tier, destination, $event)"
+              />
+            </div>
+          </div>
+        </el-card>
+      </div>
+      <el-alert
+        v-else-if="pendingNights"
+        type="info"
+        show-icon
+        :closable="false"
+        :title="$t('itinerary.hotelPlansPending')"
+      />
+      <el-text v-else type="info">
+        {{ $t("itinerary.hotelPlansNotNeeded") }}
+      </el-text>
     </section>
     <template #footer>
       <el-button @click="emit('cancel')">
@@ -187,6 +185,7 @@ const emit = defineEmits<{
     basis: "hotel_group" | "hotel_individual",
   ];
   "update-cost": [tier: ItineraryHotelTier, destination: string, price: number];
+  "update-reason": [tier: ItineraryHotelTier, destination: string, reason: string];
   save: [];
   cancel: [];
 }>();
@@ -237,9 +236,3 @@ function getHotelSelectionId(tier: ItineraryHotelTier, destination: string) {
   return getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)?.hotelId ?? "";
 }
 </script>
-
-<style scoped>
-.itinerary-hotel-plans__card :deep(.el-card__body) {
-  padding: 16px 18px;
-}
-</style>

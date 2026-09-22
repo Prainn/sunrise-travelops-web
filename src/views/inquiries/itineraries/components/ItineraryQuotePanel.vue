@@ -7,7 +7,6 @@
         :pax-tiers="paxTiers"
         :calculation="paxCalculation"
         :destinations="destinations"
-        :current="calculationVisible"
         :editable="editable"
         @update-settings="emit('update-settings', $event)"
       />
@@ -23,7 +22,7 @@
         :calculation="item.calculation"
         :meal-cost="paxCalculation?.mealCost"
         :attraction-cost="paxCalculation?.attractionCost"
-        :current="calculationVisible && Boolean(item.calculation)"
+        :tip-unit-price="tipUnitPrice"
         :editable="editable"
         @update-option="emit('update-quote-option', item.option.id, $event)"
       />
@@ -63,24 +62,24 @@
         <template #header>
           {{ $t("itinerary.feeCards.tips") }}
         </template>
-        <div
-          class="quote-panel__two-columns p-[16px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)] grid [grid-template-columns:1fr_1fr] gap-[16px]"
-        >
-          <el-form-item v-for="field in tipFields" :key="field" :label="$t(`itinerary.${field}`)">
-            <el-input-number
-              :model-value="quote[field] ?? undefined"
-              :min="0"
-              :precision="2"
-              :placeholder="$t('itinerary.noExtraQuote')"
-              controls-position="right"
-              :disabled="
-                quote[field] === null &&
-                quote[field === 'chineseTip' ? 'englishTip' : 'chineseTip'] !== null
-              "
-              @update:model-value="emit('update-settings', { [field]: $event ?? null })"
-            />
-          </el-form-item>
-        </div>
+        <el-row :gutter="16">
+          <el-col v-for="field in tipFields" :key="field" :span="12">
+            <el-form-item :label="$t(`itinerary.${field}`)">
+              <el-input-number
+                :model-value="quote[field] ?? undefined"
+                :min="0"
+                :precision="2"
+                :placeholder="$t('itinerary.noExtraQuote')"
+                controls-position="right"
+                :disabled="
+                  quote[field] === null &&
+                  quote[field === 'chineseTip' ? 'englishTip' : 'chineseTip'] !== null
+                "
+                @update:model-value="emit('update-settings', { [field]: $event ?? null })"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-card>
       <el-card
         v-for="type in transportTypes"
@@ -187,8 +186,6 @@ const props = defineProps<{
   guidePlans: ItineraryGuidePlan[];
   paxTiers: number[];
   calculation: ItineraryQuoteCalculation | null;
-  calculationCurrent: boolean;
-  calculationPending: boolean;
   destinations: string[];
   itemCount: number;
   duration: { days: number; nights: number };
@@ -204,7 +201,7 @@ const paxCalculation = computed(() =>
 const legacyCalculation = computed(() =>
   props.calculation && !("pricingVersion" in props.calculation) ? props.calculation : null,
 );
-const calculationVisible = computed(() => props.calculationCurrent || props.calculationPending);
+const tipUnitPrice = computed(() => props.quote.chineseTip ?? props.quote.englishTip ?? 0);
 const displayOptions = computed(() =>
   props.quote.options.flatMap((option) => {
     const calculation = paxCalculation.value?.options.find(

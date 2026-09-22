@@ -8,7 +8,7 @@
         >
         <el-popover trigger="click" :width="520" placement="bottom-end">
           <template #reference>
-            <el-button size="small" :disabled="!current || !calculation?.hotelCityCosts">
+            <el-button size="small" :disabled="!calculation?.hotelCityCosts">
               {{ $t("itinerary.hotelCostDetails") }}
             </el-button>
           </template>
@@ -72,17 +72,15 @@
           {{ money(row[metric.field]) }}
         </template>
       </el-table-column>
-      <el-table-column :label="$t('itinerary.baseCostPerPerson')" min-width="130" fixed="right">
+      <el-table-column :label="$t('itinerary.tourCostPerPerson')" min-width="130" fixed="right">
         <template #default="{ row }">
-          <el-tooltip :disabled="!current" placement="top">
+          <el-tooltip :disabled="!calculation" placement="top">
             <template #content>
               <template v-if="calculation">
                 {{ $t("itinerary.hotelPerPerson") }}: {{ formatMoney(calculation.hotelUnitCost)
                 }}<br />
-                {{ $t("itinerary.mealCost") }}: {{ mealCost == null ? "—" : formatMoney(mealCost)
-                }}<br />
-                {{ $t("itinerary.attractionCost") }}:
-                {{ attractionCost == null ? "—" : formatMoney(attractionCost) }}<br />
+                {{ $t("itinerary.mealCost") }}: {{ formatMoney(mealCost) }}<br />
+                {{ $t("itinerary.attractionCost") }}: {{ formatMoney(attractionCost) }}<br />
                 {{ $t("itinerary.vehiclePerPerson") }}: {{ formatMoney(row.vehicleUnitCost) }}<br />
                 {{ $t("itinerary.guideServicePerPerson") }}:
                 {{ formatMoney(row.guideServiceUnitCost) }}<br />
@@ -101,7 +99,7 @@
         <template #default="{ row }">
           <el-input-number
             class="!w-[145px]"
-            :model-value="priceFor(row.pax) ?? (current ? row.adultUnitPrice : undefined)"
+            :model-value="adultPrice(row.pax, row.adultUnitPrice)"
             :min="0"
             :max="1e9"
             :precision="2"
@@ -109,6 +107,16 @@
             :disabled="!editable"
             @update:model-value="updatePrice(row.pax, $event)"
           />
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('itinerary.profitPerPerson')" min-width="130" fixed="right">
+        <template #default="{ row }">
+          {{ money(profitPerPerson(row.pax, row.adultUnitPrice, row.baseCostPerPerson)) }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('itinerary.actualMarginRate')" min-width="130" fixed="right">
+        <template #default="{ row }">
+          {{ marginRate(row.pax, row.adultUnitPrice, row.baseCostPerPerson) }}
         </template>
       </el-table-column>
     </el-table>
@@ -122,14 +130,14 @@ import type {
   ItineraryQuoteOption,
   ItineraryQuoteOptionCalculation,
 } from "@/types/itinerary";
-import { formatMoney } from "@/utils";
+import { formatMoney, sumMoney } from "@/utils";
 
 const props = defineProps<{
   option: ItineraryQuoteOption;
   calculation?: ItineraryQuoteOptionCalculation;
   mealCost?: number;
   attractionCost?: number;
-  current: boolean;
+  tipUnitPrice: number;
   editable: boolean;
 }>();
 const emit = defineEmits<{
@@ -146,7 +154,18 @@ const metrics = [
   { field: "singleSupplementUnitCost", label: "itinerary.quoteLineTypes.single_supplement" },
 ] as const;
 function money(value: number | undefined) {
-  return props.current && value !== undefined ? `¥${formatMoney(value)}` : "0";
+  return `¥${formatMoney(value)}`;
+}
+function adultPrice(pax: number, calculatedPrice?: number) {
+  return priceFor(pax) ?? calculatedPrice ?? 0;
+}
+function profitPerPerson(pax: number, calculatedPrice?: number, baseCost?: number) {
+  return sumMoney([adultPrice(pax, calculatedPrice), props.tipUnitPrice, -(baseCost ?? 0)]);
+}
+function marginRate(pax: number, calculatedPrice?: number, baseCost?: number) {
+  const revenue = sumMoney([adultPrice(pax, calculatedPrice), props.tipUnitPrice]);
+  const profit = profitPerPerson(pax, calculatedPrice, baseCost);
+  return revenue === 0 ? "0%" : `${formatMoney((profit / revenue) * 100)}%`;
 }
 function priceFor(pax: number) {
   return props.option.paxPrices.find((price) => price.pax === pax)?.adultUnitPrice;

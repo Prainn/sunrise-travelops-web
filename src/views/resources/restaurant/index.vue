@@ -62,6 +62,7 @@ function createEmptyRestaurant(): RestaurantRecord {
     contact: "",
     phone: "",
     address: "",
+    description: "",
     remark: "",
     unit: "personMeal",
     status: "enabled",

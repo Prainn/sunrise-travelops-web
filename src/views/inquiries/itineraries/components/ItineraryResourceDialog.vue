@@ -19,10 +19,15 @@
       </el-form-item>
       <template v-if="mealSlot && source === 'custom'">
         <el-form-item :label="$t('itinerary.customRestaurantName')" required>
-          <el-input v-model="customName" :maxlength="500" />
+          <div class="flex gap-2 w-300px">
+            <el-input v-model="customName" :maxlength="500"> </el-input>
+            <el-button type="primary" @click="customName = $t('itinerary.pending')">
+              {{ $t("itinerary.pending") }}
+            </el-button>
+          </div>
         </el-form-item>
         <el-form-item :label="$t('itinerary.customMealUnit')">
-          <el-select v-model="customUnit" class="w-full">
+          <el-select v-model="customUnit" class="w-300px!">
             <el-option value="personMeal" :label="$t('itinerary.customMealPerPerson')" />
             <el-option value="table" :label="$t('itinerary.customMealPerTable')" />
           </el-select>
@@ -158,7 +163,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [item: ItineraryResourceItem];
+  submit: [item: ItineraryResourceItem, description: string];
 }>();
 const { t, locale } = useI18n();
 const cityOptions = useCityOptions();
@@ -196,7 +201,7 @@ function resourceUnitName(code: string) {
   return getResourceUnitName(code, locale.value);
 }
 function formatDetail(detail: ResourcePriceDetail) {
-  if (detail.format === "money") return `¥${formatMoney(Number(detail.value))}`;
+  if (detail.format === "money") return `¥${formatMoney(Number(detail.value ?? 0))}`;
   if (detail.format === "translation") return t(String(detail.value));
   if (detail.format === "unit") return resourceUnitName(String(detail.value));
   return detail.value === "" ? "-" : String(detail.value);
@@ -204,7 +209,7 @@ function formatDetail(detail: ResourcePriceDetail) {
 function submit() {
   const item = createItem();
   if (!item) return;
-  emit("submit", item);
+  emit("submit", item, item.resourceId ? (selectedOption.value?.description ?? "") : "");
   emit("update:modelValue", false);
 }
 </script>

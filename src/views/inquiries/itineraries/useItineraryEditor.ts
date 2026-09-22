@@ -158,17 +158,30 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     touchSelectedItinerary();
   }
 
-  function addResourceItem(dayId: string, item: ItineraryResourceItem): boolean {
+  function addResourceItem(
+    dayId: string,
+    item: ItineraryResourceItem,
+    description: string,
+  ): boolean {
     if (!options.canEditContent()) return false;
     const plan = options.selectedItinerary.value;
     const day = plan?.dailyPlans.find((record) => record.id === dayId);
     if (!plan || !day || !["attraction", "restaurant"].includes(item.type)) return false;
+    const appendDescription = () => {
+      const text = description.trim();
+      if (!text) return;
+      const existing = (day.description ?? "").trimEnd();
+      day.description = existing
+        ? `${existing}${/[；;]$/.test(existing) ? "" : "；"}${text}`
+        : text;
+    };
     if (item.type === "restaurant") {
       if (!item.mealSlot || !day.meals[item.mealSlot]) return false;
       const previous = day.items.findIndex(
         (record) => record.type === "restaurant" && record.mealSlot === item.mealSlot,
       );
       if (previous >= 0) {
+        if (day.items[previous].resourceId !== item.resourceId) appendDescription();
         day.items[previous] = {
           ...item,
           id: day.items[previous].id,
@@ -179,6 +192,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       }
     }
     day.items.push(item);
+    appendDescription();
     touchSelectedItinerary();
     return true;
   }

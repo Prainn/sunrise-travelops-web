@@ -203,7 +203,9 @@ const { t } = useI18n();
 
 function mealLabel(slot: MealSlot) {
   const item = props.day.items.find((item) => item.type === "restaurant" && item.mealSlot === slot);
-  return item ? `${item.resourceName} · ${item.priceName}` : t("itinerary.selectMealResource");
+  return item
+    ? `${item.resourceName} ${item.priceName ? `· ${item.priceName}` : ""}`
+    : t("itinerary.selectMealResource");
 }
 function updateField(field: EditableDayField, value: string | null) {
   emit("update-field", field, value);

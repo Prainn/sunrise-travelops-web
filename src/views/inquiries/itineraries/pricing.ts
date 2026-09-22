@@ -18,6 +18,7 @@ export interface ResourcePriceOption {
   resourceId: string;
   resourcePriceId: string;
   resourceName: string;
+  description?: string;
   priceName: string;
   city: string;
   unit: ItineraryPriceUnit;
@@ -126,6 +127,7 @@ export function getResourcePriceOptions(
           resourceId: attraction.id,
           resourcePriceId: price.id,
           resourceName: attraction.name,
+          description: attraction.description,
           priceName: `${price.itemName} · ${price.audience} · ${price.periodName}`,
           city: attraction.area,
           unit: price.unit,
@@ -140,6 +142,7 @@ export function getResourcePriceOptions(
               format: "translation" as const,
             },
             { labelKey: "attraction.restroomLocation", value: attraction.restroomLocation },
+            { labelKey: "resource.description", value: attraction.description },
             { labelKey: "itinerary.resourceRemark", value: attraction.remark },
             {
               labelKey: "attraction.itemType",
@@ -180,6 +183,7 @@ export function getResourcePriceOptions(
           resourceId: restaurant.id,
           resourcePriceId: price.id,
           resourceName: restaurant.name,
+          description: restaurant.description,
           priceName: price.menuName,
           city: restaurant.city,
           unit: price.unit,
@@ -193,6 +197,7 @@ export function getResourcePriceOptions(
             { labelKey: "restaurant.address", value: restaurant.address },
             { labelKey: "resource.contact", value: restaurant.contact },
             { labelKey: "resource.phone", value: restaurant.phone },
+            { labelKey: "resource.description", value: restaurant.description },
             { labelKey: "itinerary.resourceRemark", value: restaurant.remark },
             { labelKey: "restaurant.menuName", value: price.menuName },
             { labelKey: "restaurant.dishDetails", value: price.dishDetails ?? "" },

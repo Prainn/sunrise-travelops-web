@@ -155,6 +155,7 @@ export interface AttractionRecord extends ResourceAuditRecord {
   area: string;
   category: AttractionCategory;
   restroomLocation: string;
+  description: string;
   remark: string;
   unit: ItineraryPriceUnit;
   status: ResourceStatus;
@@ -220,6 +221,7 @@ export interface RestaurantRecord extends ResourceAuditRecord {
   contact: string;
   phone: string;
   address: string;
+  description: string;
   remark: string;
   unit: RestaurantPriceUnit;
   status: ResourceStatus;

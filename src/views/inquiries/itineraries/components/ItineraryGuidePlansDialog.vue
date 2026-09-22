@@ -50,6 +50,16 @@
               @update:model-value="emit('update-price', Number($event ?? 0))"
             />
           </el-form-item>
+          <el-form-item :label="$t('identity.reason')" label-width="160px">
+            <el-input
+              :model-value="plan.adjustmentReason ?? ''"
+              :disabled="!editable"
+              :placeholder="$t('identity.reasonPlaceholder')"
+              type="textarea"
+              :rows="2"
+              @update:model-value="emit('update-reason', $event)"
+            />
+          </el-form-item>
           <div class="flex items-center">
             <el-form-item :label="$t('planning.guideTotalPrice')" label-width="160px">
               <el-input :model-value="formatMoney(totalPrice)" readonly>
@@ -104,6 +114,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   "update-type": [secondLanguage: string, shopping: boolean];
   "update-price": [price: number];
+  "update-reason": [reason: string];
   "create-guide": [];
   save: [];
   cancel: [];

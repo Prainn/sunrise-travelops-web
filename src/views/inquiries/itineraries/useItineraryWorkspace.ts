@@ -35,12 +35,13 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const isSaving = ref(false);
   const selection = useItinerarySelection();
   const { inquiry, inquiryId, itineraryStore, selectedItinerary, selectedItineraryId } = selection;
-  const savedPrices = new Map<string, ItineraryRecord>();
+  const sectionDialogSnapshot = ref<ItineraryRecord>();
+  const savedPrices = ref(new Map<string, ItineraryRecord>());
   watch(
     () => [selectedItinerary.value?.id, selectedItinerary.value?.version],
     () => {
       const plan = selectedItinerary.value;
-      if (plan) savedPrices.set(plan.id, JSON.parse(JSON.stringify(plan)) as ItineraryRecord);
+      if (plan) savedPrices.value.set(plan.id, JSON.parse(JSON.stringify(plan)) as ItineraryRecord);
     },
     { immediate: true, flush: "post" },
   );
@@ -100,7 +101,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const canGeneratePdf = computed(() =>
     Boolean(
       selectedItinerary.value &&
-      !isSaving.value &&
       !inquiryReadOnly.value &&
       canPerformItineraryOperation(selectedItinerary.value.status, "generate_pdf") &&
       hasUserPermission(userStore.userInfo, "itinerary:pdf"),
@@ -127,7 +127,12 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       .map((city) => city.name),
   );
   const quote = useItineraryQuote(
-    selectedItinerary,
+    computed(() => {
+      const plan = selectedItinerary.value;
+      const snapshot = sectionDialogSnapshot.value;
+      // Section edits enter the preview only after their save succeeds.
+      return snapshot && snapshot.id === plan?.id ? snapshot : plan;
+    }),
     () => contentFormVisible.value || priceFormVisible.value,
   );
   const quoteCalculation = quote.calculation;
@@ -356,9 +361,9 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     isResourceDialogVisible.value = true;
   }
 
-  function addResourceItem(item: ItineraryResourceItem) {
+  function addResourceItem(item: ItineraryResourceItem, description: string) {
     const editing = Boolean(resourceCurrentItem.value);
-    if (editor.addResourceItem(resourceTargetDayId.value, item))
+    if (editor.addResourceItem(resourceTargetDayId.value, item, description))
       messages.success(editing ? "itinerary.resourceUpdated" : "itinerary.resourceAdded");
   }
 
@@ -384,7 +389,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   async function saveItinerary(): Promise<boolean> {
     const plan = selectedItinerary.value;
     if (!plan || !canSaveItinerary.value || isSaving.value) return false;
-    if (missingPriceReasons(plan, savedPrices.get(plan.id)).length) {
+    if (missingPriceReasons(plan, savedPrices.value.get(plan.id)).length) {
       messages.error("identity.reasonPlaceholder");
       return false;
     }
@@ -446,6 +451,12 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   }
 
   return {
+    sectionDialogSnapshot,
+    savedItinerary: computed(() => {
+      const id = selectedItinerary.value?.id;
+      return id ? savedPrices.value.get(id) : undefined;
+    }),
+    showChildPrice: pdf.showChildPrice,
     isSaving,
     isLoading: selection.isLoading,
     loadError: selection.loadError,
@@ -510,7 +521,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     quoteCalculation,
     quotePending: quote.pending,
     quoteError: quote.error,
-    quoteCurrent: quote.current,
     retryQuote: quote.retry,
     removeItem: editor.removeItem,
     router: selection.router,

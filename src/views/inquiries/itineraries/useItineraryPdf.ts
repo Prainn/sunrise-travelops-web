@@ -17,6 +17,8 @@ interface ItineraryPdfOptions {
 }
 
 export function useItineraryPdf(options: ItineraryPdfOptions) {
+  const showChildPrice = ref(false);
+  let previewShowChildPrice = false;
   const isPdfPreviewVisible = ref(false);
   const isGeneratingPdf = ref(false);
   const pdfPreviewFile = ref<ItineraryPrintDocument>();
@@ -49,9 +51,15 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     try {
       closePdfPreview();
       const source = JSON.stringify(plan);
+      previewShowChildPrice = showChildPrice.value;
       const data = await inquiryService.pdfData(plan.id);
       if (data.itinerary.version !== plan.version) return false;
-      const file = await generateItineraryPrintDocument(data.itinerary, data.inquiry, data);
+      const file = await generateItineraryPrintDocument(
+        data.itinerary,
+        data.inquiry,
+        data,
+        previewShowChildPrice,
+      );
       previewData = data;
       if (options.selectedItinerary.value?.id !== plan.id || !options.canGenerate()) return false;
       previewSource = source;
@@ -82,7 +90,12 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
       const data = await inquiryService.confirmPdf(previewData);
       Object.assign(plan, await inquiryService.itinerary(plan.id));
       Object.assign(inquiry, await inquiryService.detail(inquiry.id));
-      const file = await generateItineraryPrintDocument(data.itinerary, data.inquiry, data);
+      const file = await generateItineraryPrintDocument(
+        data.itinerary,
+        data.inquiry,
+        data,
+        previewShowChildPrice,
+      );
       await printItineraryDocument(file);
       closePdfPreview();
       return true;
@@ -97,7 +110,12 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     try {
       const data = await inquiryService.pdfData(id);
       await printItineraryDocument(
-        await generateItineraryPrintDocument(data.itinerary, data.inquiry, data),
+        await generateItineraryPrintDocument(
+          data.itinerary,
+          data.inquiry,
+          data,
+          showChildPrice.value,
+        ),
       );
     } finally {
       isGeneratingPdf.value = false;
@@ -113,10 +131,17 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     previewData = undefined;
   }
 
-  watch(() => options.selectedItinerary.value?.id, closePdfPreview);
+  watch(
+    () => options.selectedItinerary.value?.id,
+    () => {
+      closePdfPreview();
+      showChildPrice.value = false;
+    },
+  );
   onBeforeUnmount(closePdfPreview);
 
   return {
+    showChildPrice,
     isDownloadingPdf,
     canDownloadOriginal,
     downloadOriginal,
