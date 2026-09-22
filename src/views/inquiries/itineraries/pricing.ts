@@ -19,6 +19,7 @@ export interface ResourcePriceOption {
   resourcePriceId: string;
   resourceName: string;
   description?: string;
+  isStandardPrice?: boolean;
   priceName: string;
   city: string;
   unit: ItineraryPriceUnit;
@@ -128,6 +129,7 @@ export function getResourcePriceOptions(
           resourcePriceId: price.id,
           resourceName: attraction.name,
           description: attraction.description,
+          isStandardPrice: attraction.isStandardPrice,
           priceName: `${price.itemName} · ${price.audience} · ${price.periodName}`,
           city: attraction.area,
           unit: price.unit,
@@ -184,6 +186,7 @@ export function getResourcePriceOptions(
           resourcePriceId: price.id,
           resourceName: restaurant.name,
           description: restaurant.description,
+          isStandardPrice: restaurant.isStandardPrice,
           priceName: price.menuName,
           city: restaurant.city,
           unit: price.unit,

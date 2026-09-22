@@ -149,6 +149,7 @@ export interface AttractionPriceRecord extends ResourceAuditRecord {
 }
 
 export interface AttractionRecord extends ResourceAuditRecord {
+  isStandardPrice: boolean;
   id: string;
   code: string;
   name: string;
@@ -213,6 +214,7 @@ export interface RestaurantPriceRecord extends ResourceAuditRecord {
 }
 
 export interface RestaurantRecord extends ResourceAuditRecord {
+  isStandardPrice: boolean;
   id: string;
   code: string;
   name: string;

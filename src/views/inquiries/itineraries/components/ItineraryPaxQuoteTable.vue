@@ -149,10 +149,21 @@ const rows = computed<Array<Partial<ItineraryPaxCalculation> & { pax: number }>>
       props.calculation?.paxPrices.find((row) => row.pax === price.pax) ?? { pax: price.pax },
   ),
 );
-const metrics = [
-  { field: "childUnitPrice", label: "itinerary.childTourPrice" },
-  { field: "singleSupplementUnitCost", label: "itinerary.quoteLineTypes.single_supplement" },
-] as const;
+const metrics = computed(
+  () =>
+    [
+      {
+        field: "childUnitPrice",
+        label: props.calculation?.paxPrices.some((row) => row.childWithoutBedUnitPrice != null)
+          ? "itinerary.childWithBedPrice"
+          : "itinerary.childTourPrice",
+      },
+      ...(props.calculation?.paxPrices.some((row) => row.childWithoutBedUnitPrice != null)
+        ? [{ field: "childWithoutBedUnitPrice", label: "itinerary.childWithoutBedPrice" } as const]
+        : []),
+      { field: "singleSupplementUnitCost", label: "itinerary.quoteLineTypes.single_supplement" },
+    ] as const,
+);
 function money(value: number | undefined) {
   return `¥${formatMoney(value)}`;
 }

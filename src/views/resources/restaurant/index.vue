@@ -63,6 +63,7 @@ function createEmptyRestaurant(): RestaurantRecord {
     phone: "",
     address: "",
     description: "",
+    isStandardPrice: false,
     remark: "",
     unit: "personMeal",
     status: "enabled",

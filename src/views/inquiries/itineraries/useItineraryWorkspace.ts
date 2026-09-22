@@ -533,7 +533,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     updateDayField: editor.updateDayField,
     clearHotelPlan: editor.clearHotelPlan,
     updateHotelPlanSelection: selectHotelPlanSelection,
-    updateItemQuantity: editor.updateItemQuantity,
     updateQuoteOption: editor.updateQuoteOption,
     updateVehiclePlan: editor.updateVehiclePlan,
     updateHotelCost: editor.updateHotelCost,

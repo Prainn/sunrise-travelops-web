@@ -18,7 +18,6 @@ import type {
 import type { HotelRecord } from "@/types/resource";
 import { addDays, createId, formatDateTime, roundMoney, sumMoney } from "@/utils";
 import { transitionInquiry } from "../inquiry-workflow";
-import { recalculateItem } from "./pricing";
 import {
   createDefaultHotelPlans,
   getHotelPlan,
@@ -56,6 +55,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       days: 0,
       paxTiers: [],
       childRate: 90,
+      childWithoutBedRate: 90,
       version: 0,
       guidePlans: [],
       destinations: [],
@@ -110,6 +110,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       startDate: record.startDate,
       paxTiers: [...record.paxTiers],
       childRate: record.childRate,
+      childWithoutBedRate: record.childWithoutBedRate,
       destinations: [...record.destinations],
     });
     ensurePlannedDays(plan, options.inquiry.value?.plannedDays ?? plan.dailyPlans.length);
@@ -147,6 +148,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     const plan = options.selectedItinerary.value;
     const day = plan?.dailyPlans[index];
     if (!plan || !day) return;
+    const oldOvernight = day.overnightDestination;
     const isLast = index === plan.dailyPlans.length - 1;
     if (field === "overnightDestination") {
       if (!isLast) return;
@@ -155,6 +157,13 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       day[field] = value ?? "";
       if (field === "destination" && !isLast) day.overnightDestination = value || null;
     }
+    const next = plan.dailyPlans[index + 1];
+    if (
+      next &&
+      day.overnightDestination !== oldOvernight &&
+      (!next.departure || next.departure === oldOvernight)
+    )
+      next.departure = day.overnightDestination ?? "";
     touchSelectedItinerary();
   }
 
@@ -241,17 +250,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     options.selectedItinerary.value?.dailyPlans
       .find((day) => day.id === dayId)
       ?.items.splice(itemIndex, 1);
-    touchSelectedItinerary();
-  }
-
-  function updateItemQuantity(dayId: string, itemIndex: number, quantity: number) {
-    if (!options.canEditContent()) return;
-    const item = options.selectedItinerary.value?.dailyPlans.find((day) => day.id === dayId)?.items[
-      itemIndex
-    ];
-    if (!item) return;
-    item.quantity = quantity;
-    recalculateItem(item);
     touchSelectedItinerary();
   }
 
@@ -522,7 +520,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     updateDayField,
     updateHotelPlanSelection,
     updateItineraryBasics,
-    updateItemQuantity,
     updateQuoteOption,
     updateVehiclePlan,
     updateMeal,

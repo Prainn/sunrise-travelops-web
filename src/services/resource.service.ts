@@ -158,6 +158,7 @@ function restaurantInput(data: RestaurantRecord) {
     phone: data.phone.trim(),
     address: data.address.trim(),
     description: data.description.trim(),
+    isStandardPrice: data.isStandardPrice,
     remark: data.remark.trim(),
     unit: data.unit,
     status: data.status,
@@ -173,6 +174,7 @@ function attractionInput(data: AttractionRecord) {
     category: data.category,
     restroomLocation: data.restroomLocation.trim(),
     description: data.description.trim(),
+    isStandardPrice: data.isStandardPrice,
     remark: data.remark.trim(),
     unit: data.unit,
     status: data.status,
@@ -652,6 +654,7 @@ export const resourceService = {
 export type { ResourceCrud };
 
 export interface PriceSelectionItem {
+  isStandardPrice: boolean;
   id: string;
   resourceId: string;
   resourceName: string;

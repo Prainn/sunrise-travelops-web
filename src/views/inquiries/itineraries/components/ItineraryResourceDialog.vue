@@ -41,9 +41,7 @@
             @change="adjustmentReason = ''"
           />
         </el-form-item>
-        <el-form-item :label="$t('itinerary.perPersonQuantity')" required>
-          <el-input-number v-model="customQuantity" :min="1" :max="100000" :precision="0" />
-        </el-form-item>
+
         <p>{{ $t("itinerary.customMealHint") }}</p>
       </template>
       <template v-else>
@@ -101,15 +99,6 @@
               @change="adjustmentReason = ''"
             />
           </el-form-item>
-          <el-form-item
-            class="resource-dialog__quantity mt-[18px]"
-            :label="$t('itinerary.perPersonQuantity')"
-          >
-            <el-input-number v-model="quantity" :min="1" :precision="0" />
-            <span class="resource-dialog__unit ml-[8px] text-[var(--el-text-color-secondary)]">
-              {{ $t("itinerary.usageCount") }}
-            </span>
-          </el-form-item>
         </template>
       </template>
       <el-form-item
@@ -130,6 +119,12 @@
       <el-form-item v-if="reasonRequired" :label="$t('identity.reason')" required>
         <el-input v-model="adjustmentReason" :placeholder="$t('identity.reasonPlaceholder')" />
       </el-form-item>
+      <el-alert
+        v-if="duplicate"
+        :title="$t('apiErrors.ITINERARY_RESOURCE_DUPLICATE')"
+        type="warning"
+        :closable="false"
+      />
     </el-form>
     <template #footer>
       <el-button @click="emit('update:modelValue', false)">
@@ -160,6 +155,7 @@ const props = defineProps<{
   guestCount: number;
   mealSlot: MealSlot | null;
   currentItem?: ItineraryResourceItem;
+  itineraryItems: ItineraryResourceItem[];
 }>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
@@ -174,14 +170,14 @@ const {
   reasonRequired,
   city,
   selectedId,
-  quantity,
   selectedOption,
   loadOptions,
+  isDuplicate,
+  duplicate,
   source,
   customName,
   customPrice,
   customUnit,
-  customQuantity,
   dinerCount,
   canSubmit,
   createItem,
@@ -192,7 +188,8 @@ async function loadPriceOptions(query: RemoteOptionsQuery) {
     total: result.total,
     list: result.list.map((option) => ({
       id: option.id,
-      label: `${option.resourceName}｜${option.priceName}`,
+      label: `${option.isStandardPrice ? `[${t("resource.standardPrice")}] ` : ""}${option.resourceName}｜${option.priceName}`,
+      disabled: isDuplicate(option.resourceId, option.isStandardPrice),
       description: `¥${formatMoney(option.unitCost)}/${resourceUnitName(option.unit)}`,
     })),
   };

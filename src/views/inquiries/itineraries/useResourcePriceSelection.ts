@@ -18,6 +18,7 @@ export function useResourcePriceSelection(
     readonly guestCount: number;
     readonly mealSlot: MealSlot | null;
     readonly currentItem?: ItineraryResourceItem;
+    readonly itineraryItems: ItineraryResourceItem[];
   },
   onError: () => void,
 ) {
@@ -41,6 +42,26 @@ export function useResourcePriceSelection(
   const customUnit = ref<"personMeal" | "table">("personMeal");
   const customQuantity = ref(1);
   const dinerCount = ref<number>();
+  function isDuplicate(resourceId: string | null, isStandardPrice = false, name = "") {
+    if (isStandardPrice) return false;
+    return props.itineraryItems.some(
+      (item) =>
+        item.id !== props.currentItem?.id &&
+        item.type === type.value &&
+        (resourceId
+          ? item.resourceId === resourceId
+          : item.resourceId === null &&
+            item.resourceName.trim().toLowerCase() === name.trim().toLowerCase()),
+    );
+  }
+  const duplicate = computed(() =>
+    source.value === "custom"
+      ? isDuplicate(null, false, customName.value)
+      : Boolean(
+          selectedOption.value &&
+          isDuplicate(selectedOption.value.resourceId, selectedOption.value.isStandardPrice),
+        ),
+  );
   const baseCanSubmit = computed(() =>
     props.mealSlot && source.value === "custom"
       ? Boolean(customName.value.trim()) &&
@@ -65,6 +86,7 @@ export function useResourcePriceSelection(
   const canSubmitWithDiners = computed(
     () =>
       baseCanSubmit.value &&
+      !duplicate.value &&
       ((source.value === "custom" ? customUnit.value : selectedOption.value?.unit) !== "table" ||
         (dinerCount.value != null && Number.isInteger(dinerCount.value) && dinerCount.value > 0)) &&
       (!reasonRequired.value || Boolean(adjustmentReason.value.trim())),
@@ -134,7 +156,7 @@ export function useResourcePriceSelection(
         customName.value = custom ? item.resourceName : "";
         customPrice.value = custom ? item.unitCost : undefined;
         customUnit.value = custom && item.unit === "table" ? "table" : "personMeal";
-        customQuantity.value = custom ? item.quantity : 1;
+        customQuantity.value = 1;
         if (item && !custom && item.resourceId && item.resourcePriceId) {
           selectedId.value = item.resourcePriceId;
           selectedOption.value = {
@@ -153,7 +175,20 @@ export function useResourcePriceSelection(
               { labelKey: "itinerary.customMealPrice", value: item.unitCost, format: "money" },
             ],
           };
-          quantity.value = item.quantity;
+          const version = detailVersion;
+          void resourceService
+            .getPriceSelection(item.type as ItineraryDailyItemType, item.resourcePriceId)
+            .then((resources) => {
+              if (version !== detailVersion || !selectedOption.value) return;
+              selectedOption.value.isStandardPrice = getResourcePriceOptions(
+                resources,
+                props.guestCount,
+              )[0]?.isStandardPrice;
+            })
+            .catch(() => {
+              if (version === detailVersion) onError();
+            });
+          quantity.value = 1;
           actualPrice.value = item.unitCost;
           adjustmentReason.value = item.adjustmentReason ?? "";
         }
@@ -231,6 +266,8 @@ export function useResourcePriceSelection(
     quantity,
     selectedOption,
     loadOptions,
+    isDuplicate,
+    duplicate,
     source,
     customName,
     customPrice,

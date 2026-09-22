@@ -61,6 +61,7 @@ function createEmptyAttraction(): AttractionRecord {
     category: "scenic",
     restroomLocation: "",
     description: "",
+    isStandardPrice: false,
     remark: "",
     unit: "personVisit",
     status: "enabled",

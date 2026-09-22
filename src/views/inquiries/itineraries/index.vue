@@ -145,9 +145,6 @@
               @update-meal="(slot, included) => updateMeal(index, slot, included)"
               @select-meal="openResourceDialog(day.id, $event)"
               @remove-item="removeItem(day.id, $event)"
-              @update-item-quantity="
-                (itemIndex, quantity) => updateItemQuantity(day.id, itemIndex, quantity)
-              "
             />
           </template>
         </main>
@@ -258,6 +255,7 @@
         :destination="resourceDestination"
         :meal-slot="resourceMealSlot"
         :current-item="resourceCurrentItem"
+        :itinerary-items="selectedItinerary?.dailyPlans.flatMap((day) => day.items) ?? []"
         @submit="addResourceItem"
       />
       <ItineraryPdfPreviewDialog
@@ -478,7 +476,6 @@ const {
   clearHotelPlan,
   updateDayField,
   updateHotelPlanSelection,
-  updateItemQuantity,
   updateQuoteOption,
   updateVehiclePlan,
   updateHotelCost,

@@ -93,7 +93,7 @@
         "staffRoomOtherCost": "Other staff accommodation costs",
         "staffRoomOtherReason": "Reason for other staff accommodation costs",
         "pax": "PAX",
-        "childRate": "Child fare percentage",
+        "childRate": "Child fare percentage (with bed)",
         "guideServiceTotal": "Driver / guide service total",
         "staffRoomCosts": "Staff accommodation by city",
         "total": "Amount",
@@ -180,7 +180,8 @@
         "totalPrice": "Whole-trip total",
         "secondLanguage": "Second language",
         "shopping": "Shopping itinerary",
-        "otherExpenses": "Driver/guide and other expenses (extra)"
+        "otherExpenses": "Driver/guide and other expenses (extra)",
+        "childWithoutBedRate": "Child fare percentage (without bed)"
       },
       "day": "Day {day}",
       "tiers": {
@@ -223,7 +224,7 @@
     "vehiclePerPerson": "Vehicle per person",
     "hotelPerPerson": "Hotel per person",
     "childRateRequired": "Enter a child fare percentage from 0 to 100",
-    "childRate": "Child fare percentage",
+    "childRate": "Child fare percentage (with bed)",
     "paxRequired": "Add 1–20 PAX tiers",
     "paxTiers": "PAX tiers",
     "paxPlaceholder": "Select or enter PAX tiers",
@@ -409,7 +410,10 @@
     },
     "nightCount": "{count} nights",
     "totalNights": "Total {count} nights",
-    "duration": "{days} days / {nights} nights"
+    "duration": "{days} days / {nights} nights",
+    "childWithoutBedRate": "Child fare percentage (without bed)",
+    "childWithBedPrice": "Child fare (with bed)",
+    "childWithoutBedPrice": "Child fare (without bed)"
   },
   "businessCategory": {
     "applicableResources": "Applicable Resources",
@@ -703,7 +707,9 @@
     "vehicleServiceLevels": {
       "standard": "Standard Vehicle",
       "vip": "VIP Vehicle"
-    }
+    },
+    "isStandardPrice": "Standard price",
+    "standardPrice": "Standard price"
   },
   "hotel": {
     "address": "Address",
@@ -918,7 +924,9 @@
     "INQUIRY_OWNER_INVALID": "Inquiry owner invalid",
     "INQUIRY_CONTACT_INVALID": "Inquiry contact invalid",
     "ITINERARY_INVALID": "Itinerary invalid",
-    "PDF_NOT_READY": "Pdf not ready"
+    "PDF_NOT_READY": "Pdf not ready",
+    "ITINERARY_RESOURCE_DUPLICATE": "Non-standard attractions and meals cannot be repeated within the itinerary",
+    "RESOURCE_STANDARD_PRICE_EXISTS": "This city already has a standard-price resource in this library"
   },
   "request": {
     "failed": "Request failed",

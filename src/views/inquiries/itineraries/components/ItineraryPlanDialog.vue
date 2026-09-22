@@ -46,6 +46,15 @@
             </el-input-number>
           </el-form-item>
         </el-col>
+        <el-col :span="12">
+          <el-form-item :label="$t('itinerary.childWithoutBedRate')" prop="childWithoutBedRate">
+            <el-input-number v-model="form.childWithoutBedRate" :min="0" :max="100" :precision="2">
+              <template #suffix>
+                <span class="text-[var(--el-text-color-secondary)]">%</span>
+              </template>
+            </el-input-number>
+          </el-form-item>
+        </el-col>
       </el-row>
       <el-row :gutter="16">
         <el-col :span="8">
@@ -167,6 +176,16 @@ const rules = computed<FormRules>(() => ({
       min: 1,
       max: 20,
       message: t("itinerary.paxRequired"),
+      trigger: "change",
+    },
+  ],
+  childWithoutBedRate: [
+    {
+      type: "number",
+      required: true,
+      min: 0,
+      max: 100,
+      message: t("itinerary.childRateRequired"),
       trigger: "change",
     },
   ],

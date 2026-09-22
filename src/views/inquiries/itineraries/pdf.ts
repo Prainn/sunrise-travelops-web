@@ -26,7 +26,10 @@ interface LegacyQuoteOption {
   adultUnitPrice: number | null;
   leaderFocEnabled: boolean;
 }
-type LegacyItineraryRecord = Omit<ItineraryRecord, "paxTiers" | "childRate" | "quote"> & {
+type LegacyItineraryRecord = Omit<
+  ItineraryRecord,
+  "paxTiers" | "childRate" | "childWithoutBedRate" | "quote"
+> & {
   adults: number;
   childrenCount: number;
   leaderCount: number;
@@ -173,18 +176,20 @@ function buildPaxQuoteSections(
   const tables = quote.options
     .map((option) => {
       const title = `${HOTEL_PLAN_TIER_LABELS[option.hotelTier]} · ${getVehicleQuoteLabel(itinerary, option.vehicleTier)}`;
+      const hasBedRates = option.paxPrices.some((price) => price.childWithoutBedUnitPrice != null);
+      const childColumns = showChildPrice ? (hasBedRates ? 2 : 1) : 0;
       const rows = option.paxPrices
         .map((price) => {
           return `<tr><th style="${quoteLabelStyle()}">${price.pax} PAX</th>
         <td style="${quoteCellStyle()}">RMB ${formatMoney(price.adultUnitPrice)}</td>
-        ${showChildPrice ? `<td style="${quoteCellStyle()}">RMB ${formatMoney(price.childUnitPrice)}</td>` : ""}
+        ${showChildPrice ? `<td style="${quoteCellStyle()}">RMB ${formatMoney(price.childUnitPrice)}</td>${hasBedRates ? `<td style="${quoteCellStyle()}">RMB ${formatMoney(price.childWithoutBedUnitPrice)}</td>` : ""}` : ""}
         <td style="${quoteCellStyle()}">RMB ${formatMoney(price.singleSupplementUnitCost)}</td></tr>`;
         })
         .join("");
       return `<table data-pdf-block style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;">
-      <thead><tr><th colspan="${showChildPrice ? 4 : 3}" style="${quoteHeaderStyle()}">${escapeHtml(title)}</th></tr>
-        <tr>${["人数档位", "成人团费", ...(showChildPrice ? [`儿童团费（${itinerary.childRate}%）`] : []), "单房差"].map((label) => `<th style="${quoteHeaderStyle()}">${escapeHtml(label)}</th>`).join("")}</tr></thead>
-      <tbody>${rows}${buildExtraFeeRows(itinerary, showChildPrice ? 3 : 2)}</tbody>
+      <thead><tr><th colspan="${3 + childColumns}" style="${quoteHeaderStyle()}">${escapeHtml(title)}</th></tr>
+        <tr>${["人数档位", "成人团费", ...(showChildPrice ? (hasBedRates ? [`儿童占床（${itinerary.childRate}%）`, `儿童不占床（${itinerary.childWithoutBedRate}%）`] : [`儿童团费（${itinerary.childRate}%）`]) : []), "单房差"].map((label) => `<th style="${quoteHeaderStyle()}">${escapeHtml(label)}</th>`).join("")}</tr></thead>
+      <tbody>${rows}${buildExtraFeeRows(itinerary, 2 + childColumns)}</tbody>
     </table>`;
     })
     .join("");

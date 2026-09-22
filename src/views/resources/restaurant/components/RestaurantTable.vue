@@ -26,6 +26,11 @@
           row-key="id"
           @expand-change="changeExpand"
         >
+          <el-table-column :label="$t('resource.isStandardPrice')" width="125">
+            <template #default="{ row }">{{
+              $t(row.isStandardPrice ? "common.yes" : "common.no")
+            }}</template>
+          </el-table-column>
           <el-table-column :label="$t('identity.library')" min-width="200">
             <template #default="{ row }">
               <ResourceLibraryTag :library="row.library" />

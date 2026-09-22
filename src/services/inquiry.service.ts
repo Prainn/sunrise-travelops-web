@@ -55,6 +55,7 @@ const MONEY_FIELDS = new Set([
   "chineseTip",
   "englishTip",
   "childUnitPrice",
+  "childWithoutBedUnitPrice",
   "hotelCost",
   "vehicleCost",
   "commonGroupCost",
@@ -104,6 +105,7 @@ export function itineraryInput(
     | "startDate"
     | "paxTiers"
     | "childRate"
+    | "childWithoutBedRate"
     | "destinations"
     | "dailyPlans"
     | "hotelPlans"
@@ -117,8 +119,12 @@ export function itineraryInput(
     startDate: record.startDate,
     paxTiers: record.paxTiers,
     childRate: record.childRate,
+    childWithoutBedRate: record.childWithoutBedRate,
     destinations: record.destinations,
-    dailyPlans: record.dailyPlans,
+    dailyPlans: record.dailyPlans.map((day) => ({
+      ...day,
+      items: day.items.map((item) => ({ ...item, quantity: 1 })),
+    })),
     hotelPlans: record.hotelPlans,
     vehiclePlans: record.vehiclePlans,
     guidePlans: record.guidePlans,

@@ -93,7 +93,7 @@
         "staffRoomOtherCost": "司陪房其它费用",
         "staffRoomOtherReason": "司陪房其它费用原因",
         "pax": "PAX人数",
-        "childRate": "儿童团费比例",
+        "childRate": "儿童占床团费比例",
         "guideServiceTotal": "司导服全程总额",
         "staffRoomCosts": "司陪房城市费用",
         "total": "金额",
@@ -180,7 +180,8 @@
         "totalPrice": "全程总价",
         "secondLanguage": "第二语种",
         "shopping": "是否进店",
-        "otherExpenses": "司陪费和其它支出"
+        "otherExpenses": "司陪费和其它支出",
+        "childWithoutBedRate": "儿童不占床团费比例"
       },
       "day": "第 {day} 天",
       "tiers": {
@@ -223,7 +224,7 @@
     "vehiclePerPerson": "车辆人均",
     "hotelPerPerson": "酒店人均",
     "childRateRequired": "请输入0–100的儿童团费比例",
-    "childRate": "儿童团费比例",
+    "childRate": "儿童占床团费比例",
     "paxRequired": "请添加至少一个人数档位（最多20档）",
     "paxTiers": "人数档位",
     "paxPlaceholder": "请选择或输入人数档位",
@@ -409,7 +410,10 @@
     },
     "nightCount": "{count}晚",
     "totalNights": "共{count}晚",
-    "duration": "{days}天{nights}晚"
+    "duration": "{days}天{nights}晚",
+    "childWithoutBedRate": "儿童不占床团费比例",
+    "childWithBedPrice": "儿童团费（占床）",
+    "childWithoutBedPrice": "儿童团费（不占床）"
   },
   "businessCategory": {
     "applicableResources": "适用资源",
@@ -703,7 +707,9 @@
     "vehicleServiceLevels": {
       "standard": "普通车型",
       "vip": "VIP 车型"
-    }
+    },
+    "isStandardPrice": "是否为标准价",
+    "standardPrice": "标准价"
   },
   "hotel": {
     "address": "地址",
@@ -918,7 +924,9 @@
     "INQUIRY_OWNER_INVALID": "无效的询盘负责人",
     "INQUIRY_CONTACT_INVALID": "请选择该旅行社的有效联系人",
     "ITINERARY_INVALID": "行程数据不符合要求，请检查填写内容",
-    "PDF_NOT_READY": "请完善行程及报价后生成 PDF"
+    "PDF_NOT_READY": "请完善行程及报价后生成 PDF",
+    "ITINERARY_RESOURCE_DUPLICATE": "行程中不可重复使用非标准价景点或餐食",
+    "RESOURCE_STANDARD_PRICE_EXISTS": "该资源库城市已有标准价资源，请先取消原资源的标准价标记"
   },
   "request": {
     "failed": "请求失败",

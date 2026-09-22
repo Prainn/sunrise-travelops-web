@@ -118,25 +118,7 @@
             }}</small>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('itinerary.perPersonQuantity')" width="160" align="right">
-          <template #default="scope">
-            <el-input-number
-              v-if="contentEditable"
-              class="day-card__quantity w-[72px] mr-[4px]"
-              :model-value="scope.row.quantity"
-              :min="1"
-              :precision="0"
-              controls-position="right"
-              @change="emit('update-item-quantity', scope.$index, Number($event ?? 1))"
-            />
-            <template v-else>
-              {{ scope.row.quantity }}
-            </template>
-            <small class="text-[14px] text-[var(--el-text-color-secondary)]">{{
-              $t("itinerary.usageCount")
-            }}</small>
-          </template>
-        </el-table-column>
+
         <el-table-column :label="$t('itinerary.unitCost')" width="190" align="right">
           <template #default="scope"> ¥{{ formatMoney(scope.row.unitCost) }} </template>
         </el-table-column>
@@ -190,7 +172,6 @@ const emit = defineEmits<{
   "select-meal": [slot: MealSlot];
   "add-item": [];
   "remove-item": [index: number];
-  "update-item-quantity": [index: number, quantity: number];
 }>();
 const expanded = ref(true);
 defineExpose({
