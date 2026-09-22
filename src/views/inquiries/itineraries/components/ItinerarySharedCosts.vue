@@ -81,21 +81,6 @@
         <div class="mb-4 text-[var(--el-text-color-regular)]">
           {{ $t('itinerary.guideCost') }}：{{ money(calculation?.guideCost) }}
         </div>
-        <el-form
-          label-position="top"
-          :disabled="!editable"
-        >
-          <el-form-item :label="$t('itinerary.guideServiceTotal')">
-            <el-input-number
-              :model-value="quote.guideServiceTotal ?? undefined"
-              :min="0"
-              :max="1e9"
-              :precision="2"
-              :controls="false"
-              @update:model-value="emit('update-settings', { guideServiceTotal: $event ?? null })"
-            />
-          </el-form-item>
-        </el-form>
       </el-collapse-item>
       <el-collapse-item name="staffRooms">
         <template #title>
