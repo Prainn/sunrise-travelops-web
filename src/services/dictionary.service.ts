@@ -70,7 +70,7 @@ export const dictionaryService = {
   async update(id: string, data: DictTypeForm): Promise<void> {
     await request.put<DictTypeItem>(
       `${DICTIONARY_BASE_URL}/${encodeURIComponent(id)}`,
-      toDictionaryTypeInput(data)
+      toDictionaryTypeInput(data),
     );
   },
 
@@ -80,7 +80,7 @@ export const dictionaryService = {
 
   async getDictItemPage(
     dictCode: string,
-    query: DictItemQueryParams
+    query: DictItemQueryParams,
   ): Promise<PageResult<DictItem>> {
     return request.get<PageResult<DictItem>>(getDictionaryItemBaseUrl(dictCode), {
       params: buildParams(query),
@@ -94,20 +94,18 @@ export const dictionaryService = {
   async createDictItem(dictCode: string, data: DictItemForm): Promise<void> {
     await request.post<DictItem>(
       getDictionaryItemBaseUrl(dictCode),
-      toDictionaryItemInput(dictCode, data)
+      toDictionaryItemInput(dictCode, data),
     );
   },
 
   async getDictItemFormData(dictCode: string, id: string): Promise<DictItemForm> {
-    return request.get<DictItem>(
-      `${getDictionaryItemBaseUrl(dictCode)}/${encodeURIComponent(id)}`
-    );
+    return request.get<DictItem>(`${getDictionaryItemBaseUrl(dictCode)}/${encodeURIComponent(id)}`);
   },
 
   async updateDictItem(dictCode: string, id: string, data: DictItemForm): Promise<void> {
     await request.put<DictItem>(
       `${getDictionaryItemBaseUrl(dictCode)}/${encodeURIComponent(id)}`,
-      toDictionaryItemInput(dictCode, data)
+      toDictionaryItemInput(dictCode, data),
     );
   },
 

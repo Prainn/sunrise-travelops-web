@@ -11,30 +11,25 @@
           {{ $t("itinerary.hotelPlans") }}
         </h3>
         <div class="ml-4 flex items-center flex-wrap gap-[12px]">
-          <el-tag
-            v-for="destination in overnightDestinations"
-            :key="destination"
-          >
-            {{ destination }} · {{ $t('itinerary.nightCount', { count: destinationDuration(dailyPlans, destination).nights }) }}
+          <el-tag v-for="destination in overnightDestinations" :key="destination">
+            {{ destination }} ·
+            {{
+              $t("itinerary.nightCount", {
+                count: destinationDuration(dailyPlans, destination).nights,
+              })
+            }}
           </el-tag>
-          <strong>{{ $t('itinerary.totalNights', { count: itineraryDuration(dailyPlans).nights }) }}</strong>
-          <el-tag
-            v-if="pendingNights"
-            type="warning"
-          >
-            {{ $t('itinerary.pendingNights', { count: pendingNights }) }}
+          <strong>{{
+            $t("itinerary.totalNights", { count: itineraryDuration(dailyPlans).nights })
+          }}</strong>
+          <el-tag v-if="pendingNights" type="warning">
+            {{ $t("itinerary.pendingNights", { count: pendingNights }) }}
           </el-tag>
         </div>
       </div>
     </template>
-    <section
-      id="itinerary-hotels"
-      class="itinerary-hotel-plans max-h-60vh overflow-y-auto"
-    >
-      <el-card
-        class="itinerary-hotel-plans__card rounded-[10px]"
-        shadow="never"
-      >
+    <section id="itinerary-hotels" class="itinerary-hotel-plans max-h-60vh overflow-y-auto">
+      <el-card class="itinerary-hotel-plans__card rounded-[10px]" shadow="never">
         <div
           v-if="overnightDestinations.length"
           class="itinerary-hotel-plans__tiers grid grid-cols-2 gap-[12px] max-[1100px]:grid-cols-1"
@@ -43,11 +38,16 @@
             v-for="tier in HOTEL_PLAN_TIERS"
             :key="tier"
             class="itinerary-hotel-plans__tier overflow-hidden rounded-[8px] bg-[var(--el-bg-color)] [border:1px_solid_var(--el-border-color-lighter)] [transition:border-color_0.2s,_box-shadow_0.2s]"
-            :class="{ 'is-selected [border-color:var(--el-color-primary-light-5)] [box-shadow:0_0_0_1px_var(--el-color-primary-light-8)]': Boolean(getPlan(tier)?.hotels.length) }"
+            :class="{
+              'is-selected [border-color:var(--el-color-primary-light-5)] [box-shadow:0_0_0_1px_var(--el-color-primary-light-8)]':
+                Boolean(getPlan(tier)?.hotels.length),
+            }"
           >
             <header
               class="min-h-[48px] flex items-center justify-between gap-[16px] px-[14px] bg-[var(--el-fill-color-lighter)]"
-              :class="{ 'bg-[var(--el-color-primary-light-9)]': Boolean(getPlan(tier)?.hotels.length) }"
+              :class="{
+                'bg-[var(--el-color-primary-light-9)]': Boolean(getPlan(tier)?.hotels.length),
+              }"
             >
               <strong>{{ $t(`itinerary.hotelTiers.${tier}`) }}</strong>
               <el-button
@@ -73,21 +73,30 @@
                     class="w-full"
                     kind="hotels"
                     :model-value="getHotelSelectionId(tier, destination)"
-                    :selected-label="getPlan(tier)?.hotels.find(hotel => hotel.destination === destination)?.hotelName"
-                    :filters="{ city: destination, rating: tier === 'international_five_star' ? tier : 'ctrip_preferred' }"
+                    :selected-label="
+                      getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)
+                        ?.hotelName
+                    "
+                    :filters="{
+                      city: destination,
+                      rating: tier === 'international_five_star' ? tier : 'ctrip_preferred',
+                    }"
                     :disabled="!editable"
                     :placeholder="$t('itinerary.selectDestinationHotel')"
                     @update:model-value="emit('update-selection', tier, destination, $event)"
                   />
                 </div>
                 <div
-                  v-if="getPlan(tier)?.hotels.some(hotel => hotel.destination === destination)"
+                  v-if="getPlan(tier)?.hotels.some((hotel) => hotel.destination === destination)"
                   class="col-start-2 flex items-center flex-wrap gap-[8px]"
                 >
                   <el-select
                     class="!w-[210px]"
                     :disabled="!editable || !hotelResource(tier, destination)"
-                    :model-value="getPlan(tier)?.hotels.find(hotel => hotel.destination === destination)?.referenceBasis"
+                    :model-value="
+                      getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)
+                        ?.referenceBasis
+                    "
                     @update:model-value="emit('update-rate', tier, destination, $event)"
                   >
                     <el-option
@@ -102,7 +111,10 @@
                   </el-select>
                   <el-input-number
                     class="!w-[160px]"
-                    :model-value="getPlan(tier)?.hotels.find(hotel => hotel.destination === destination)?.unitCost"
+                    :model-value="
+                      getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)
+                        ?.unitCost
+                    "
                     :min="0"
                     :precision="2"
                     :disabled="!editable"
@@ -110,7 +122,7 @@
                     :aria-label="$t('planning.hotelPrice')"
                     @change="emit('update-cost', tier, destination, Number($event ?? 0))"
                   />
-                  <small>{{ $t('planning.hotelPriceUnit') }}</small>
+                  <small>{{ $t("planning.hotelPriceUnit") }}</small>
                 </div>
               </div>
             </div>
@@ -123,17 +135,14 @@
           :closable="false"
           :title="$t('itinerary.hotelPlansPending')"
         />
-        <el-text
-          v-else
-          type="info"
-        >
-          {{ $t('itinerary.hotelPlansNotNeeded') }}
+        <el-text v-else type="info">
+          {{ $t("itinerary.hotelPlansNotNeeded") }}
         </el-text>
       </el-card>
     </section>
     <template #footer>
       <el-button @click="emit('cancel')">
-        {{ $t(editable ? 'common.cancel' : 'common.close') }}
+        {{ $t(editable ? "common.cancel" : "common.close") }}
       </el-button>
       <el-button
         v-if="editable"
@@ -142,7 +151,7 @@
         :disabled="!canSave"
         @click="emit('save')"
       >
-        {{ $t('itinerary.save') }}
+        {{ $t("itinerary.save") }}
       </el-button>
     </template>
   </el-dialog>
@@ -153,7 +162,12 @@ import { computed, watch } from "vue";
 import { resourceService } from "@/services/resource.service";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import type { ItineraryDayRecord, ItineraryHotelPlan, ItineraryHotelTier } from "@/types/itinerary";
-import { calculateDestinationNights, getHotelPlan, getIncompleteHotelPlanTiers, HOTEL_PLAN_TIERS } from "../hotel-plans";
+import {
+  calculateDestinationNights,
+  getHotelPlan,
+  getIncompleteHotelPlanTiers,
+  HOTEL_PLAN_TIERS,
+} from "../hotel-plans";
 import { destinationDuration, itineraryDuration } from "../duration";
 
 const props = defineProps<{
@@ -167,45 +181,65 @@ const props = defineProps<{
 const emit = defineEmits<{
   "clear-plan": [tier: ItineraryHotelTier];
   "update-selection": [tier: ItineraryHotelTier, destination: string, hotelId: string];
-  "update-rate": [tier: ItineraryHotelTier, destination: string, basis: "hotel_group" | "hotel_individual"];
+  "update-rate": [
+    tier: ItineraryHotelTier,
+    destination: string,
+    basis: "hotel_group" | "hotel_individual",
+  ];
   "update-cost": [tier: ItineraryHotelTier, destination: string, price: number];
   save: [];
   cancel: [];
 }>();
 
-watch(() => props.modelValue, async visible => {
-  if (!visible) return;
-  const ids = [...new Set(props.hotelPlans.flatMap(plan => plan.hotels.map(hotel => hotel.hotelId)))];
-  await Promise.allSettled(ids.map(async id => {
-    const record = await resourceService.hotelApi.getDetail(id);
-    const index = resourceService.hotels.findIndex(hotel => hotel.id === id);
-    if (index < 0) resourceService.hotels.push(record);
-    else resourceService.hotels[index] = record;
-  }));
-});
+watch(
+  () => props.modelValue,
+  async (visible) => {
+    if (!visible) return;
+    const ids = [
+      ...new Set(props.hotelPlans.flatMap((plan) => plan.hotels.map((hotel) => hotel.hotelId))),
+    ];
+    await Promise.allSettled(
+      ids.map(async (id) => {
+        const record = await resourceService.hotelApi.getDetail(id);
+        const index = resourceService.hotels.findIndex((hotel) => hotel.id === id);
+        if (index < 0) resourceService.hotels.push(record);
+        else resourceService.hotels[index] = record;
+      }),
+    );
+  },
+);
 function hotelResource(tier: ItineraryHotelTier, destination: string) {
   const id = getHotelSelectionId(tier, destination);
-  return resourceService.hotels.find(hotel => hotel.id === id);
+  return resourceService.hotels.find((hotel) => hotel.id === id);
 }
 
-const overnightDestinations = computed(() => Object.keys(calculateDestinationNights({ dailyPlans: props.dailyPlans }))
-  .filter(destination => props.destinations.includes(destination)));
-const pendingNights = computed(() => props.dailyPlans.filter(day => day.overnightDestination === null).length);
-const canSave = computed(() => !getIncompleteHotelPlanTiers({
-  dailyPlans: props.dailyPlans,
-  hotelPlans: props.hotelPlans,
-}).length);
+const overnightDestinations = computed(() =>
+  Object.keys(calculateDestinationNights({ dailyPlans: props.dailyPlans })).filter((destination) =>
+    props.destinations.includes(destination),
+  ),
+);
+const pendingNights = computed(
+  () => props.dailyPlans.filter((day) => day.overnightDestination === null).length,
+);
+const canSave = computed(
+  () =>
+    !getIncompleteHotelPlanTiers({
+      dailyPlans: props.dailyPlans,
+      hotelPlans: props.hotelPlans,
+    }).length,
+);
 
 function getPlan(tier: ItineraryHotelTier) {
   return getHotelPlan({ hotelPlans: props.hotelPlans }, tier);
 }
 
 function getHotelSelectionId(tier: ItineraryHotelTier, destination: string) {
-  return getPlan(tier)?.hotels.find(hotel => hotel.destination === destination)?.hotelId ?? "";
+  return getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)?.hotelId ?? "";
 }
-
 </script>
 
 <style scoped>
-.itinerary-hotel-plans__card :deep(.el-card__body) { padding: 16px 18px; }
+.itinerary-hotel-plans__card :deep(.el-card__body) {
+  padding: 16px 18px;
+}
 </style>

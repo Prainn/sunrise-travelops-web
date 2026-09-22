@@ -13,7 +13,7 @@
     @closed="emit('closed')"
   >
     <p class="mb-[12px] text-[var(--el-text-color-regular)]">
-      {{ $t('itinerary.pdfPrintHint') }}
+      {{ $t("itinerary.pdfPrintHint") }}
     </p>
     <iframe
       v-if="src"
@@ -22,17 +22,10 @@
       :title="$t('itinerary.pdfPreviewTitle')"
     />
     <template #footer>
-      <el-button
-        :disabled="loading"
-        @click="emit('update:modelValue', false)"
-      >
+      <el-button :disabled="loading" @click="emit('update:modelValue', false)">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button
-        type="primary"
-        :loading="loading"
-        @click="emit('confirm')"
-      >
+      <el-button type="primary" :loading="loading" @click="emit('confirm')">
         {{ $t("itinerary.confirmDownloadPdf") }}
       </el-button>
     </template>

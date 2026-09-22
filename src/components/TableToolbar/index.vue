@@ -4,14 +4,8 @@
       <slot />
     </div>
     <div class="page-toolbar__right">
-      <el-tooltip
-        :content="$t('common.refresh')"
-        placement="top"
-      >
-        <el-button
-          class="page-icon-btn"
-          @click="emit('refresh')"
-        >
+      <el-tooltip :content="$t('common.refresh')" placement="top">
+        <el-button class="page-icon-btn" @click="emit('refresh')">
           <el-icon><Refresh /></el-icon>
         </el-button>
       </el-tooltip>

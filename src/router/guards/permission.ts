@@ -45,7 +45,7 @@ export function setupPermissionGuard() {
 
       const canAccessRoute = hasRouteChainAccess(
         to.matched.map((record) => record.meta),
-        userStore.userInfo
+        userStore.userInfo,
       );
       if (!canAccessRoute) {
         return { path: "/401", replace: true };

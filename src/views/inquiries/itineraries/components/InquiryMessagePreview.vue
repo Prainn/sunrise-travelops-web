@@ -4,19 +4,21 @@
       ref="panel"
       :aria-label="$t('inquiry.originalMessage')"
       class="fixed flex flex-col overflow-hidden rounded-lg border border-solid border-[var(--el-border-color)] bg-[var(--el-bg-color)] shadow-lg text-[var(--el-text-color-primary)]"
-      :style="{ left: `${x}px`, top: `${y}px`, width: `${width}px`, height: `${height}px`, zIndex: 'var(--el-index-popper)' }"
+      :style="{
+        left: `${x}px`,
+        top: `${y}px`,
+        width: `${width}px`,
+        height: `${height}px`,
+        zIndex: 'var(--el-index-popper)',
+      }"
     >
       <div
         ref="handle"
         class="flex shrink-0 touch-none cursor-move select-none items-center justify-between gap-2 border-0 border-b border-solid border-[var(--el-border-color-lighter)] px-3 py-2"
       >
-        <span class="text-xs">{{ $t('inquiry.originalMessage') }}</span>
-        <el-button
-          size="small"
-          :aria-expanded="isExpanded"
-          @click="isExpanded = !isExpanded"
-        >
-          {{ $t(isExpanded ? 'inquiry.collapseDocument' : 'inquiry.expandDocument') }}
+        <span class="text-xs">{{ $t("inquiry.originalMessage") }}</span>
+        <el-button size="small" :aria-expanded="isExpanded" @click="isExpanded = !isExpanded">
+          {{ $t(isExpanded ? "inquiry.collapseDocument" : "inquiry.expandDocument") }}
         </el-button>
       </div>
       <div
@@ -67,8 +69,12 @@ const { x, y } = useDraggable(panel, {
     position.y = Math.max(8, Math.min(position.y, viewportHeight.value - height.value - 8));
   },
 });
-watch([width, height], () => {
-  x.value = Math.max(8, Math.min(x.value, viewportWidth.value - width.value - 8));
-  y.value = Math.max(8, Math.min(y.value, viewportHeight.value - height.value - 8));
-}, { immediate: true });
+watch(
+  [width, height],
+  () => {
+    x.value = Math.max(8, Math.min(x.value, viewportWidth.value - width.value - 8));
+    y.value = Math.max(8, Math.min(y.value, viewportHeight.value - height.value - 8));
+  },
+  { immediate: true },
+);
 </script>

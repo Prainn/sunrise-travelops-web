@@ -1,21 +1,14 @@
 <template>
   <div class="layout-logo">
     <transition enter-active-class="animate__animated animate__fadeInLeft">
-      <router-link
-        :key="+collapse"
-        class="wh-full flex-center"
-        to="/"
-      >
+      <router-link :key="+collapse" class="wh-full flex-center" to="/">
         <img
           v-if="userStore.userInfo.scope === 'shengxu'"
           :src="logo"
           class="layout-logo__image"
           alt="Sunrise"
         />
-        <span
-          v-if="!collapse || userStore.userInfo.scope !== 'shengxu'"
-          class="layout-logo__title"
-        >
+        <span v-if="!collapse || userStore.userInfo.scope !== 'shengxu'" class="layout-logo__title">
           {{ brandTitle }}
         </span>
       </router-link>
@@ -30,10 +23,14 @@ import logo from "@/assets/images/logo-emblem.png";
 const userStore = useUserStore();
 const brandTitle = computed(() => {
   switch (userStore.userInfo.scope) {
-    case "shengxu": return "Sunrise";
-    case "linxi": return "Ttrip";
-    case "website": return "Lynx";
-    default: return "总部";
+    case "shengxu":
+      return "Sunrise";
+    case "linxi":
+      return "Ttrip";
+    case "website":
+      return "Lynx";
+    default:
+      return "总部";
   }
 });
 

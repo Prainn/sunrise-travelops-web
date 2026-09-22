@@ -7,68 +7,39 @@
     @close="emit('update:modelValue', false)"
   >
     <el-form label-width="100px">
-      <el-form-item
-        v-if="mealSlot"
-        :label="$t('itinerary.mealSource')"
-      >
+      <el-form-item v-if="mealSlot" :label="$t('itinerary.mealSource')">
         <el-radio-group v-model="source">
           <el-radio-button value="library">
-            {{ $t('itinerary.mealLibrary') }}
+            {{ $t("itinerary.mealLibrary") }}
           </el-radio-button>
           <el-radio-button value="custom">
-            {{ $t('itinerary.customRestaurant') }}
+            {{ $t("itinerary.customRestaurant") }}
           </el-radio-button>
         </el-radio-group>
       </el-form-item>
       <template v-if="mealSlot && source === 'custom'">
-        <el-form-item
-          :label="$t('itinerary.customRestaurantName')"
-          required
-        >
-          <el-input
-            v-model="customName"
-            :maxlength="500"
-          />
+        <el-form-item :label="$t('itinerary.customRestaurantName')" required>
+          <el-input v-model="customName" :maxlength="500" />
         </el-form-item>
         <el-form-item :label="$t('itinerary.customMealUnit')">
-          <el-select
-            v-model="customUnit"
-            class="w-full"
-          >
-            <el-option
-              value="personMeal"
-              :label="$t('itinerary.customMealPerPerson')"
-            />
-            <el-option
-              value="table"
-              :label="$t('itinerary.customMealPerTable')"
-            />
+          <el-select v-model="customUnit" class="w-full">
+            <el-option value="personMeal" :label="$t('itinerary.customMealPerPerson')" />
+            <el-option value="table" :label="$t('itinerary.customMealPerTable')" />
           </el-select>
         </el-form-item>
-        <el-form-item
-          :label="$t('itinerary.customMealPrice')"
-          required
-        >
+        <el-form-item :label="$t('itinerary.customMealPrice')" required>
           <el-input-number
             v-model="customPrice"
             :min="0"
             :max="1e9"
             :precision="2"
-            @change="adjustmentReason=''"
+            @change="adjustmentReason = ''"
           />
         </el-form-item>
-        <el-form-item
-          :label="$t('itinerary.perPersonQuantity')"
-          required
-        >
-          <el-input-number
-            v-model="customQuantity"
-            :min="1"
-            :max="100000"
-            :precision="0"
-          />
+        <el-form-item :label="$t('itinerary.perPersonQuantity')" required>
+          <el-input-number v-model="customQuantity" :min="1" :max="100000" :precision="0" />
         </el-form-item>
-        <p>{{ $t('itinerary.customMealHint') }}</p>
+        <p>{{ $t("itinerary.customMealHint") }}</p>
       </template>
       <template v-else>
         <el-form-item :label="$t('resource.city')">
@@ -86,13 +57,14 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item
-          :label="$t('itinerary.resourcePrice')"
-          required
-        >
+        <el-form-item :label="$t('itinerary.resourcePrice')" required>
           <RemoteSelect
             v-model="selectedId"
-            :selected-label="selectedOption ? `${selectedOption.resourceName}｜${selectedOption.priceName}` : undefined"
+            :selected-label="
+              selectedOption
+                ? `${selectedOption.resourceName}｜${selectedOption.priceName}`
+                : undefined
+            "
             :query-key="JSON.stringify([city, mealSlot, locale])"
             :load-options="loadPriceOptions"
             :placeholder="$t('itinerary.resourcePricePlaceholder')"
@@ -113,32 +85,22 @@
               {{ formatDetail(detail) }}
             </el-descriptions-item>
           </el-descriptions>
-          <el-form-item
-            :label="$t('identity.reference')"
-            class="mt-4"
-          >
-            <el-input-number
-              :model-value="referencePrice == null ? 0 : referencePrice"
-              readonly
-            />
+          <el-form-item :label="$t('identity.reference')" class="mt-4">
+            <el-input-number :model-value="referencePrice == null ? 0 : referencePrice" readonly />
           </el-form-item>
           <el-form-item :label="$t('identity.actual')">
             <el-input-number
               v-model="actualPrice"
               :min="0"
               :precision="2"
-              @change="adjustmentReason=''"
+              @change="adjustmentReason = ''"
             />
           </el-form-item>
           <el-form-item
             class="resource-dialog__quantity mt-[18px]"
             :label="$t('itinerary.perPersonQuantity')"
           >
-            <el-input-number
-              v-model="quantity"
-              :min="1"
-              :precision="0"
-            />
+            <el-input-number v-model="quantity" :min="1" :precision="0" />
             <span class="resource-dialog__unit ml-[8px] text-[var(--el-text-color-secondary)]">
               {{ $t("itinerary.usageCount") }}
             </span>
@@ -155,29 +117,20 @@
           :min="1"
           :max="10000"
           :precision="0"
-          :disabled="source === 'library' && Boolean(currentItem?.dinerCount || selectedOption?.dinerCount)"
+          :disabled="
+            source === 'library' && Boolean(currentItem?.dinerCount || selectedOption?.dinerCount)
+          "
         />
       </el-form-item>
-      <el-form-item
-        v-if="reasonRequired"
-        :label="$t('identity.reason')"
-        required
-      >
-        <el-input
-          v-model="adjustmentReason"
-          :placeholder="$t('identity.reasonPlaceholder')"
-        />
+      <el-form-item v-if="reasonRequired" :label="$t('identity.reason')" required>
+        <el-input v-model="adjustmentReason" :placeholder="$t('identity.reasonPlaceholder')" />
       </el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="emit('update:modelValue', false)">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button
-        type="primary"
-        :disabled="!canSubmit"
-        @click="submit"
-      >
+      <el-button type="primary" :disabled="!canSubmit" @click="submit">
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -203,18 +156,45 @@ const props = defineProps<{
   mealSlot: MealSlot | null;
   currentItem?: ItineraryResourceItem;
 }>();
-const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [item: ItineraryResourceItem] }>();
+const emit = defineEmits<{
+  "update:modelValue": [value: boolean];
+  submit: [item: ItineraryResourceItem];
+}>();
 const { t, locale } = useI18n();
 const cityOptions = useCityOptions();
-const { actualPrice, referencePrice, adjustmentReason, reasonRequired, city, selectedId, quantity, selectedOption, loadOptions, source, customName, customPrice, customUnit, customQuantity, dinerCount, canSubmit, createItem } = useResourcePriceSelection(props, () => ElMessage.error(t("request.failed")));
+const {
+  actualPrice,
+  referencePrice,
+  adjustmentReason,
+  reasonRequired,
+  city,
+  selectedId,
+  quantity,
+  selectedOption,
+  loadOptions,
+  source,
+  customName,
+  customPrice,
+  customUnit,
+  customQuantity,
+  dinerCount,
+  canSubmit,
+  createItem,
+} = useResourcePriceSelection(props, () => ElMessage.error(t("request.failed")));
 async function loadPriceOptions(query: RemoteOptionsQuery) {
   const result = await loadOptions(query);
-  return { total: result.total, list: result.list.map(option => ({
-    id: option.id, label: `${option.resourceName}｜${option.priceName}`,
-    description: `¥${formatMoney(option.unitCost)}/${resourceUnitName(option.unit)}`,
-  })) };
+  return {
+    total: result.total,
+    list: result.list.map((option) => ({
+      id: option.id,
+      label: `${option.resourceName}｜${option.priceName}`,
+      description: `¥${formatMoney(option.unitCost)}/${resourceUnitName(option.unit)}`,
+    })),
+  };
 }
-function resourceUnitName(code: string) { return getResourceUnitName(code, locale.value); }
+function resourceUnitName(code: string) {
+  return getResourceUnitName(code, locale.value);
+}
 function formatDetail(detail: ResourcePriceDetail) {
   if (detail.format === "money") return `¥${formatMoney(Number(detail.value))}`;
   if (detail.format === "translation") return t(String(detail.value));
@@ -230,6 +210,11 @@ function submit() {
 </script>
 
 <style scoped lang="scss">
-.resource-dialog__details :deep(.el-descriptions__label) { width: 140px; }
-.resource-dialog__details :deep(.el-descriptions__content) { white-space: normal; word-break: break-word; }
+.resource-dialog__details :deep(.el-descriptions__label) {
+  width: 140px;
+}
+.resource-dialog__details :deep(.el-descriptions__content) {
+  white-space: normal;
+  word-break: break-word;
+}
 </style>

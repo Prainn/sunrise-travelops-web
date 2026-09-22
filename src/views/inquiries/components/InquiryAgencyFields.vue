@@ -1,9 +1,6 @@
 <template>
   <el-col :span="12">
-    <el-form-item
-      :label="$t('inquiry.agencyName')"
-      prop="agencyId"
-    >
+    <el-form-item :label="$t('inquiry.agencyName')" prop="agencyId">
       <ResourceSelect
         kind="agencies"
         :model-value="record.agencyId"
@@ -15,17 +12,11 @@
   </el-col>
   <el-col :span="12">
     <el-form-item :label="$t('inquiry.agencyCode')">
-      <el-input
-        :model-value="record.agencyCode"
-        disabled
-      />
+      <el-input :model-value="record.agencyCode" disabled />
     </el-form-item>
   </el-col>
   <el-col :span="12">
-    <el-form-item
-      :label="$t('inquiry.contactName')"
-      prop="contactName"
-    >
+    <el-form-item :label="$t('inquiry.contactName')" prop="contactName">
       <AgencyContactSelect
         :model-value="record.contactName"
         :agency="selectedAgency"
@@ -37,10 +28,7 @@
   </el-col>
   <el-col :span="12">
     <el-form-item :label="$t('inquiry.email')">
-      <el-input
-        :model-value="record.email"
-        disabled
-      />
+      <el-input :model-value="record.email" disabled />
     </el-form-item>
   </el-col>
   <el-col :span="12">
@@ -55,10 +43,7 @@
   </el-col>
   <el-col :span="12">
     <el-form-item :label="$t('inquiry.countryOrRegion')">
-      <el-input
-        :model-value="record.countryOrRegion"
-        disabled
-      />
+      <el-input :model-value="record.countryOrRegion" disabled />
     </el-form-item>
   </el-col>
 </template>
@@ -83,7 +68,9 @@ const emit = defineEmits<{
   "update-phone": [phone: string];
 }>();
 
-const selectedAgency = computed(() => props.agencyOptions.find((agency) => agency.id === props.record.agencyId));
+const selectedAgency = computed(() =>
+  props.agencyOptions.find((agency) => agency.id === props.record.agencyId),
+);
 </script>
 
 <style scoped lang="scss">

@@ -5,12 +5,7 @@
     width="620px"
     destroy-on-close
   >
-    <el-form
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      label-width="auto"
-    >
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="auto">
       <el-form-item
         v-if="isHeadquarters && !isEditing"
         :label="$t('identity.businessUnit')"
@@ -29,40 +24,19 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item
-        v-else
-        :label="$t('identity.library')"
-      >
+      <el-form-item v-else :label="$t('identity.library')">
         <ResourceLibraryTag :library="form.library" />
       </el-form-item>
-      <el-form-item
-        v-if="isEditing"
-        :label="$t('resource.code')"
-      >
-        <el-input
-          v-model="form.code"
-          disabled
-        />
+      <el-form-item v-if="isEditing" :label="$t('resource.code')">
+        <el-input v-model="form.code" disabled />
       </el-form-item>
-      <el-form-item
-        :label="$t('resource.attractionName')"
-        prop="name"
-      >
+      <el-form-item :label="$t('resource.attractionName')" prop="name">
         <el-input v-model.trim="form.name" />
       </el-form-item>
-      <el-form-item
-        :label="$t('attraction.area')"
-        prop="area"
-      >
-        <CitySelect
-          v-model="form.area"
-          :library="form.library"
-        />
+      <el-form-item :label="$t('attraction.area')" prop="area">
+        <CitySelect v-model="form.area" :library="form.library" />
       </el-form-item>
-      <el-form-item
-        :label="$t('attraction.category')"
-        prop="category"
-      >
+      <el-form-item :label="$t('attraction.category')" prop="category">
         <el-select v-model="form.category">
           <el-option
             v-for="option in attractionCategoryOptions"
@@ -72,10 +46,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item
-        :label="$t('resource.priceUnit')"
-        prop="unit"
-      >
+      <el-form-item :label="$t('resource.priceUnit')" prop="unit">
         <el-select v-model="form.unit">
           <el-option
             v-for="option in unitOptions"
@@ -86,18 +57,10 @@
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('attraction.restroomLocation')">
-        <el-input
-          v-model.trim="form.restroomLocation"
-          type="textarea"
-          :rows="2"
-        />
+        <el-input v-model.trim="form.restroomLocation" type="textarea" :rows="2" />
       </el-form-item>
       <el-form-item :label="$t('common.remark')">
-        <el-input
-          v-model.trim="form.remark"
-          type="textarea"
-          :rows="3"
-        />
+        <el-input v-model.trim="form.remark" type="textarea" :rows="3" />
       </el-form-item>
       <el-form-item :label="$t('common.status')">
         <el-radio-group v-model="form.status">
@@ -114,10 +77,7 @@
       <el-button @click="isVisible = false">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button
-        type="primary"
-        @click="handleSubmit"
-      >
+      <el-button type="primary" @click="handleSubmit">
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -153,24 +113,33 @@ const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters
 const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const formRef = ref<FormInstance>();
 const form = reactive<AttractionRecord>({ ...props.record });
-const isVisible = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) });
+const isVisible = computed({
+  get: () => props.modelValue,
+  set: (value) => emit("update:modelValue", value),
+});
 const unitOptions = computed(() => getResourceUnitOptions("attraction", locale.value));
 const rules = computed<FormRules>(() => ({
-  library: [{ required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" }],
+  library: [
+    { required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" },
+  ],
   name: [{ required: true, message: t("attraction.nameRequired"), trigger: "blur" }],
   area: [{ required: true, message: t("attraction.areaRequired"), trigger: "change" }],
   category: [{ required: true, message: t("attraction.categoryRequired"), trigger: "change" }],
   unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
 }));
 
-watch(() => [props.modelValue, props.record] as const, ([visible, record]) => {
-  if (!visible) return;
-  Object.assign(form, record);
-  if (isHeadquarters.value && !props.isEditing) {
-    selectedBusinessUnit.value = "";
-    form.library = undefined;
-  }
-}, { deep: true });
+watch(
+  () => [props.modelValue, props.record] as const,
+  ([visible, record]) => {
+    if (!visible) return;
+    Object.assign(form, record);
+    if (isHeadquarters.value && !props.isEditing) {
+      selectedBusinessUnit.value = "";
+      form.library = undefined;
+    }
+  },
+  { deep: true },
+);
 
 function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
   const library = unit === "shengxu" ? "shengxu" : "shared";

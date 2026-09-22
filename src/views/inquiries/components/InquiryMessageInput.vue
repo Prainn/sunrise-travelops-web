@@ -10,11 +10,11 @@
       class="mb-2"
     >
       <el-button :loading="isParsing">
-        {{ $t('inquiry.uploadDocument') }}
+        {{ $t("inquiry.uploadDocument") }}
       </el-button>
       <template #tip>
         <div class="text-xs text-[var(--el-text-color-secondary)]">
-          {{ $t('inquiry.documentHint') }}
+          {{ $t("inquiry.documentHint") }}
         </div>
       </template>
     </el-upload>
@@ -43,7 +43,10 @@ const emit = defineEmits<{
 const { t } = useI18n();
 const isParsing = ref(false);
 let isActive = true;
-onBeforeUnmount(() => { isActive = false; emit("parsing", false); });
+onBeforeUnmount(() => {
+  isActive = false;
+  emit("parsing", false);
+});
 
 async function importDocument(upload: UploadFile) {
   const file = upload.raw;

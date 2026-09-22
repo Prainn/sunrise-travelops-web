@@ -4,15 +4,8 @@
       <div class="card dash-header__card">
         <div class="dash-header__start">
           <div class="dash-avatar">
-            <img
-              v-if="userStore.userInfo.avatar"
-              :src="userStore.userInfo.avatar"
-              alt=""
-            />
-            <el-icon
-              v-else
-              :size="22"
-            >
+            <img v-if="userStore.userInfo.avatar" :src="userStore.userInfo.avatar" alt="" />
+            <el-icon v-else :size="22">
               <User />
             </el-icon>
           </div>
@@ -94,25 +87,13 @@
           <h3 class="card__title">
             {{ $t("dashboard.visitTrend") }}
           </h3>
-          <el-radio-group
-            v-model="visitTrendDateRange"
-            size="small"
-          >
-            <el-radio-button
-              :label="$t('dashboard.lastDays', { days: 7 })"
-              :value="7"
-            />
-            <el-radio-button
-              :label="$t('dashboard.lastDays', { days: 30 })"
-              :value="30"
-            />
+          <el-radio-group v-model="visitTrendDateRange" size="small">
+            <el-radio-button :label="$t('dashboard.lastDays', { days: 7 })" :value="7" />
+            <el-radio-button :label="$t('dashboard.lastDays', { days: 30 })" :value="30" />
           </el-radio-group>
         </div>
         <div class="card__body card__body--chart">
-          <ECharts
-            :options="visitTrendChartOptions"
-            height="260px"
-          />
+          <ECharts :options="visitTrendChartOptions" height="260px" />
         </div>
       </div>
     </section>
@@ -129,12 +110,7 @@ import { useUserStore } from "@/stores/user";
 import { useSettingsStore } from "@/stores/settings";
 import { formatGrowthRate } from "@/utils";
 import { useTransition } from "@vueuse/core";
-import {
-  User,
-  View,
-  ArrowUp,
-  ArrowDown,
-} from "@element-plus/icons-vue";
+import { User, View, ArrowUp, ArrowDown } from "@element-plus/icons-vue";
 
 const userStore = useUserStore();
 const settingsStore = useSettingsStore();
@@ -184,14 +160,14 @@ const tUv = useTransition(
   {
     duration: 800,
     transition: [0.25, 0.1, 0.25, 1.0],
-  }
+  },
 );
 const tPv = useTransition(
   computed(() => visitOverviewData.value.todayPvCount),
   {
     duration: 800,
     transition: [0.25, 0.1, 0.25, 1.0],
-  }
+  },
 );
 const displayTransitionUvCount = computed(() => Math.round(Number(tUv.value)));
 const displayTransitionPvCount = computed(() => Math.round(Number(tPv.value)));
@@ -339,7 +315,7 @@ function updateVisitTrendChartOptions(d: VisitTrendDetail) {
 watch(
   () => visitTrendDateRange.value,
   () => fetchVisitTrendData(),
-  { immediate: true }
+  { immediate: true },
 );
 watch(
   () => [settingsStore.resolvedTheme, settingsStore.themeColors, locale.value],
@@ -350,7 +326,7 @@ watch(
       if (visitTrendData.value) updateVisitTrendChartOptions(visitTrendData.value);
     });
   },
-  { deep: true }
+  { deep: true },
 );
 onMounted(() => {
   fetchVisitOverviewData();
@@ -503,7 +479,6 @@ $pad: 10px;
     &--chart {
       @apply 'p-[14px_18px_16px]';
     }
-
   }
 }
 

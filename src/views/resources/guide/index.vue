@@ -19,16 +19,8 @@
       :is-editing="isPersonEditing"
       @submit="savePerson"
     />
-    <el-drawer
-      v-model="isPersonDetailVisible"
-      :title="$t('guide.detail')"
-      size="520px"
-    >
-      <el-descriptions
-        v-if="personDetail"
-        :column="1"
-        border
-      >
+    <el-drawer v-model="isPersonDetailVisible" :title="$t('guide.detail')" size="520px">
+      <el-descriptions v-if="personDetail" :column="1" border>
         <el-descriptions-item :label="$t('identity.library')">
           <ResourceLibraryTag :library="personDetail.library" />
         </el-descriptions-item>
@@ -39,36 +31,40 @@
           {{ $t(`guide.genderOptions.${personDetail.gender}`) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('guide.age')">
-          {{ personDetail.age ?? $t('common.notSet') }}
+          {{ personDetail.age ?? $t("common.notSet") }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('guide.contact')">
-          {{ personDetail.contact ?? $t('common.notSet') }}
+          {{ personDetail.contact ?? $t("common.notSet") }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('guide.employmentType')">
-          {{ personDetail.employmentType ? $t(`guide.${personDetail.employmentType === 'full_time' ? 'fullTime' : 'partTime'}`) : $t('common.notSet') }}
+          {{
+            personDetail.employmentType
+              ? $t(`guide.${personDetail.employmentType === "full_time" ? "fullTime" : "partTime"}`)
+              : $t("common.notSet")
+          }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('guide.hasLaborContract')">
-          {{ personDetail.hasLaborContract === null ? $t('common.notSet') : $t(personDetail.hasLaborContract ? 'guide.contractYes' : 'guide.contractNo') }}
+          {{
+            personDetail.hasLaborContract === null
+              ? $t("common.notSet")
+              : $t(personDetail.hasLaborContract ? "guide.contractYes" : "guide.contractNo")
+          }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('guide.remark')">
-          {{ personDetail.remark ?? $t('common.notSet') }}
+          {{ personDetail.remark ?? $t("common.notSet") }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('guide.certificateNo')">
-          {{ personDetail.certificateNo ?? $t('common.notSet') }}
+          {{ personDetail.certificateNo ?? $t("common.notSet") }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('guide.identityNumber')">
-          {{ personDetail.identityNumber ?? $t('common.notSet') }}
+          {{ personDetail.identityNumber ?? $t("common.notSet") }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('common.status')">
-          {{ $t(personDetail.status === 'enabled' ? 'common.enabled' : 'common.disabled') }}
+          {{ $t(personDetail.status === "enabled" ? "common.enabled" : "common.disabled") }}
         </el-descriptions-item>
       </el-descriptions>
     </el-drawer>
-    <el-drawer
-      v-model="isPriceDrawerVisible"
-      :title="$t('guide.priceSettings')"
-      size="80%"
-    >
+    <el-drawer v-model="isPriceDrawerVisible" :title="$t('guide.priceSettings')" size="80%">
       <GuideTable
         :loading="isPriceLoading"
         :total="priceTotal"
@@ -105,10 +101,31 @@ import GuideTable from "./components/GuideTable.vue";
 defineOptions({ name: "Guide" });
 
 function createEmptyPerson(): GuidePersonRecord {
-  return { id: "", code: "", name: "", gender: 0, age: null, contact: null, employmentType: null, hasLaborContract: null, remark: null, certificateNo: null, identityNumber: null, status: "enabled" };
+  return {
+    id: "",
+    code: "",
+    name: "",
+    gender: 0,
+    age: null,
+    contact: null,
+    employmentType: null,
+    hasLaborContract: null,
+    remark: null,
+    certificateNo: null,
+    identityNumber: null,
+    status: "enabled",
+  };
 }
 function createEmptyPrice(): GuideRecord {
-  return { id: "", code: "", name: "", secondLanguage: "none", shopping: false, dailyPrice: 0, status: "enabled" };
+  return {
+    id: "",
+    code: "",
+    name: "",
+    secondLanguage: "none",
+    shopping: false,
+    dailyPrice: 0,
+    status: "enabled",
+  };
 }
 
 const {

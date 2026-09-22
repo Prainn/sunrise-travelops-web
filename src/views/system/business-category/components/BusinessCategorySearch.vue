@@ -1,8 +1,5 @@
 <template>
-  <el-card
-    class="page-search"
-    shadow="never"
-  >
+  <el-card class="page-search" shadow="never">
     <el-form :inline="true">
       <el-form-item :label="$t('common.keywords')">
         <el-input
@@ -13,19 +10,9 @@
         />
       </el-form-item>
       <el-form-item :label="$t('common.status')">
-        <el-select
-          v-model="status"
-          clearable
-          :placeholder="$t('common.all')"
-        >
-          <el-option
-            :label="$t('common.normal')"
-            value="enabled"
-          />
-          <el-option
-            :label="$t('common.disabled')"
-            value="disabled"
-          />
+        <el-select v-model="status" clearable :placeholder="$t('common.all')">
+          <el-option :label="$t('common.normal')" value="enabled" />
+          <el-option :label="$t('common.disabled')" value="disabled" />
         </el-select>
       </el-form-item>
       <el-form-item>

@@ -10,7 +10,11 @@ export function getTransportMethodName(code: string, locale = "zh-CN") {
 }
 
 export function getTransportMethodNames(value: string, locale = "zh-CN") {
-  return value.split(",").filter(Boolean).map((code) => getTransportMethodName(code, locale)).join(" / ");
+  return value
+    .split(",")
+    .filter(Boolean)
+    .map((code) => getTransportMethodName(code, locale))
+    .join(" / ");
 }
 
 export function getTransportMethodOptions(locale = "zh-CN") {

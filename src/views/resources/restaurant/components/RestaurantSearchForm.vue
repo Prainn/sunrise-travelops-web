@@ -1,8 +1,5 @@
 <template>
-  <el-card
-    class="page-search"
-    shadow="never"
-  >
+  <el-card class="page-search" shadow="never">
     <el-form :inline="true">
       <ResourceBusinessFilter />
       <el-form-item :label="$t('common.keywords')">
@@ -14,24 +11,12 @@
         />
       </el-form-item>
       <el-form-item :label="$t('resource.city')">
-        <el-select
-          v-model="city"
-          clearable
-          filterable
-        >
-          <el-option
-            v-for="option in cityOptions"
-            :key="option"
-            :label="option"
-            :value="option"
-          />
+        <el-select v-model="city" clearable filterable>
+          <el-option v-for="option in cityOptions" :key="option" :label="option" :value="option" />
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('restaurant.priceUnit')">
-        <el-select
-          v-model="priceUnit"
-          clearable
-        >
+        <el-select v-model="priceUnit" clearable>
           <el-option
             v-for="option in unitOptions"
             :key="option.value"

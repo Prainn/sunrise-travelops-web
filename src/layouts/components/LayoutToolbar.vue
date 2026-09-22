@@ -14,22 +14,19 @@
       <el-dropdown trigger="click">
         <div class="layout-user">
           <div class="layout-user__avatar">
-            <img
-              :src="userStore.userInfo.avatar"
-              class="layout-user__avatar-img"
-            />
+            <img :src="userStore.userInfo.avatar" class="layout-user__avatar-img" />
           </div>
-          <span class="layout-user__name">{{ userStore.userInfo.nickname }} · {{ userStore.userInfo.deptName || $t("identity.superuser") }}</span>
+          <span class="layout-user__name"
+            >{{ userStore.userInfo.nickname }} ·
+            {{ userStore.userInfo.deptName || $t("identity.superuser") }}</span
+          >
         </div>
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item @click="handleProfileClick">
               {{ t("navbar.profile") }}
             </el-dropdown-item>
-            <el-dropdown-item
-              divided
-              @click="logout"
-            >
+            <el-dropdown-item divided @click="logout">
               {{ t("navbar.logout") }}
             </el-dropdown-item>
           </el-dropdown-menu>
@@ -200,7 +197,6 @@ function logout() {
   .layout-user__name {
     @apply 'text-[currentColor]';
   }
-
 }
 
 .layout-toolbar--dark {
@@ -211,7 +207,6 @@ function logout() {
   .layout-user__name {
     @apply 'text-[var(--el-text-color-regular)]';
   }
-
 }
 
 ::v-deep(.el-dropdown-menu) {

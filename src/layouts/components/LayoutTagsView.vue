@@ -20,17 +20,10 @@
           @contextmenu.prevent="openContextMenu(tag, $event)"
         >
           <template v-if="tag.icon">
-            <el-icon
-              v-if="isEpIcon(tag.icon)"
-              :size="14"
-            >
+            <el-icon v-if="isEpIcon(tag.icon)" :size="14">
               <component :is="toEpIconName(tag.icon)" />
             </el-icon>
-            <span
-              v-else
-              class="layout-tabs__item-icon"
-              :class="`i-svg:${tag.icon}`"
-            />
+            <span v-else class="layout-tabs__item-icon" :class="`i-svg:${tag.icon}`" />
           </template>
           <span class="layout-tabs__item-text">
             {{ translateRouteTitle(tag.title) }}
@@ -69,15 +62,9 @@
           v-if="!appStore.contentFullscreen"
           class="i-svg:fullscreen icon-16 w-[16px] h-[16px]"
         />
-        <div
-          v-else
-          class="i-svg:fullscreen-exit icon-16 w-[16px] h-[16px]"
-        />
+        <div v-else class="i-svg:fullscreen-exit icon-16 w-[16px] h-[16px]" />
       </button>
-      <el-dropdown
-        trigger="click"
-        @command="handleActionCommand"
-      >
+      <el-dropdown trigger="click" @command="handleActionCommand">
         <button
           type="button"
           class="layout-tabs__action"
@@ -91,25 +78,16 @@
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="refresh">
-              <el-icon
-                :size="14"
-                class="icon-14"
-              >
+              <el-icon :size="14" class="icon-14">
                 <Refresh />
               </el-icon>
               <span>{{ $t("tags.refreshCurrent") }}</span>
             </el-dropdown-item>
-            <el-dropdown-item
-              v-if="currentTag && !currentTag.affix"
-              command="closeCurrent"
-            >
+            <el-dropdown-item v-if="currentTag && !currentTag.affix" command="closeCurrent">
               <div class="i-svg:close icon-14" />
               <span>{{ $t("tags.closeCurrent") }}</span>
             </el-dropdown-item>
-            <el-dropdown-item
-              divided
-              command="closeOtherTags"
-            >
+            <el-dropdown-item divided command="closeOtherTags">
               <div class="i-svg:close_other icon-14" />
               <span>{{ $t("tags.closeOthers") }}</span>
             </el-dropdown-item>
@@ -121,10 +99,7 @@
               <div class="i-svg:close_right icon-14" />
               <span>{{ $t("tags.closeRight") }}</span>
             </el-dropdown-item>
-            <el-dropdown-item
-              divided
-              command="closeAllTags"
-            >
+            <el-dropdown-item divided command="closeAllTags">
               <div class="i-svg:close_all icon-14" />
               <span>{{ $t("tags.closeAll") }}</span>
             </el-dropdown-item>
@@ -134,16 +109,9 @@
     </div>
 
     <Teleport to="body">
-      <ul
-        v-show="contextMenu.visible"
-        class="layout-tabs-menu"
-        :style="contextMenuStyle"
-      >
+      <ul v-show="contextMenu.visible" class="layout-tabs-menu" :style="contextMenuStyle">
         <li @click="refreshSelectedTag(selectedTag)">
-          <el-icon
-            :size="16"
-            class="layout-tabs-menu__icon"
-          >
+          <el-icon :size="16" class="layout-tabs-menu__icon">
             <Refresh />
           </el-icon>
           <span>{{ $t("common.refresh") }}</span>
@@ -161,17 +129,11 @@
           <div class="i-svg:close_other layout-tabs-menu__icon" />
           <span>{{ $t("tags.closeOthers") }}</span>
         </li>
-        <li
-          v-if="!isFirstView"
-          @click="closeLeftTags"
-        >
+        <li v-if="!isFirstView" @click="closeLeftTags">
           <div class="i-svg:close_left layout-tabs-menu__icon" />
           <span>{{ $t("tags.closeLeft") }}</span>
         </li>
-        <li
-          v-if="!isLastView"
-          @click="closeRightTags"
-        >
+        <li v-if="!isLastView" @click="closeRightTags">
           <div class="i-svg:close_right layout-tabs-menu__icon" />
           <span>{{ $t("tags.closeRight") }}</span>
         </li>
@@ -451,7 +413,7 @@ const closeSelectedTag = (tag: TagView | null) => {
  */
 function closeDirectionalTags(
   source: Ref<TagView | null>,
-  batchFn: (tag: TagView) => Promise<{ visitedViews: TagView[] }>
+  batchFn: (tag: TagView) => Promise<{ visitedViews: TagView[] }>,
 ) {
   const tag = source.value;
   if (!tag) return;
@@ -517,7 +479,7 @@ watch(
     addCurrentTag();
     updateCurrentTag();
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 onMounted(() => {

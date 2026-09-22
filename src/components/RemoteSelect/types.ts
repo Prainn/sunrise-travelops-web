@@ -1,1 +1,6 @@
-export interface RemoteSelectOption { id: string; label: string; description?: string; disabled?: boolean }
+export interface RemoteSelectOption {
+  id: string;
+  label: string;
+  description?: string;
+  disabled?: boolean;
+}

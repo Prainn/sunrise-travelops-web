@@ -1,21 +1,12 @@
 <template>
-  <el-card
-    class="page-search"
-    shadow="never"
-  >
+  <el-card class="page-search" shadow="never">
     <el-form :inline="true">
       <el-form-item
         v-if="userStore.userInfo.scope === 'headquarters'"
         :label="$t('identity.businessUnit')"
       >
-        <el-select
-          v-model="businessUnit"
-          class="!w-[180px]"
-        >
-          <el-option
-            value=""
-            :label="$t('identity.allBusinesses')"
-          />
+        <el-select v-model="businessUnit" class="!w-[180px]">
+          <el-option value="" :label="$t('identity.allBusinesses')" />
           <el-option
             v-for="unit in ['shengxu', 'linxi', 'website']"
             :key="unit"
@@ -33,10 +24,7 @@
         />
       </el-form-item>
       <el-form-item :label="$t('common.status')">
-        <el-select
-          v-model="status"
-          clearable
-        >
+        <el-select v-model="status" clearable>
           <el-option
             v-for="option in statusOptions"
             :key="option.value"
@@ -46,10 +34,7 @@
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('inquiry.owner')">
-        <el-select
-          v-model="owner"
-          clearable
-        >
+        <el-select v-model="owner" clearable>
           <el-option
             v-for="option in ownerOptions"
             :key="option.id"
@@ -59,10 +44,7 @@
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('inquiry.sourceChannel')">
-        <el-select
-          v-model="sourceChannel"
-          clearable
-        >
+        <el-select v-model="sourceChannel" clearable>
           <el-option
             v-for="option in sourceOptions"
             :key="option"
@@ -107,9 +89,18 @@ const emit = defineEmits<{
 }>();
 
 const statusOptions = INQUIRY_STATUS_OPTIONS;
-const businessUnit = computed({ get: () => props.businessUnit, set: (value) => emit("update:businessUnit", value) });
-const keywords = computed({ get: () => props.keywords, set: (value) => emit("update:keywords", value) });
+const businessUnit = computed({
+  get: () => props.businessUnit,
+  set: (value) => emit("update:businessUnit", value),
+});
+const keywords = computed({
+  get: () => props.keywords,
+  set: (value) => emit("update:keywords", value),
+});
 const status = computed({ get: () => props.status, set: (value) => emit("update:status", value) });
 const owner = computed({ get: () => props.owner, set: (value) => emit("update:owner", value) });
-const sourceChannel = computed({ get: () => props.sourceChannel, set: (value) => emit("update:sourceChannel", value) });
+const sourceChannel = computed({
+  get: () => props.sourceChannel,
+  set: (value) => emit("update:sourceChannel", value),
+});
 </script>

@@ -9,19 +9,12 @@
   >
     <section id="itinerary-vehicles">
       <div class="grid gap-[16px] lg:grid-cols-2 max-h-60vh overflow-y-auto">
-        <el-card
-          v-for="plan in plans"
-          :key="plan.tier"
-          shadow="never"
-        >
+        <el-card v-for="plan in plans" :key="plan.tier" shadow="never">
           <template #header>
             <div class="flex justify-between items-center">
               <strong>{{ $t(`itinerary.vehicleServiceLevels.${plan.tier}`) }}</strong>
-              <el-button
-                :disabled="!editable"
-                @click="addArrangement(plan)"
-              >
-                {{ $t('planning.addArrangement') }}
+              <el-button :disabled="!editable" @click="addArrangement(plan)">
+                {{ $t("planning.addArrangement") }}
               </el-button>
             </div>
           </template>
@@ -33,14 +26,16 @@
               class="mb-[16px] p-[14px] border border-solid border-[var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)]"
             >
               <div class="mb-[12px] flex items-center justify-between gap-[12px]">
-                <strong>{{ $t('planning.vehicleArrangementNumber', { number: index + 1 }) }}</strong>
+                <strong>{{
+                  $t("planning.vehicleArrangementNumber", { number: index + 1 })
+                }}</strong>
                 <el-button
                   :disabled="!editable"
                   type="danger"
                   link
                   @click="removeArrangement(plan, arrangement.id)"
                 >
-                  {{ $t('planning.delete') }}
+                  {{ $t("planning.delete") }}
                 </el-button>
               </div>
 
@@ -65,7 +60,10 @@
                   :key="vehicle.vehicleId"
                   class="mb-[8px] flex items-center gap-[8px]"
                 >
-                  <span class="flex-1">{{ vehicle.vehicleName }} · {{ vehicle.seats }} {{ $t('planning.seats') }}</span>
+                  <span class="flex-1"
+                    >{{ vehicle.vehicleName }} · {{ vehicle.seats }}
+                    {{ $t("planning.seats") }}</span
+                  >
                   <el-input-number
                     :model-value="vehicle.quantity"
                     :min="1"
@@ -73,16 +71,18 @@
                     :disabled="!editable"
                     class="!w-[100px]"
                     controls-position="right"
-                    @change="changeQuantity(plan, arrangement.id, vehicle.vehicleId, Number($event ?? 1))"
+                    @change="
+                      changeQuantity(plan, arrangement.id, vehicle.vehicleId, Number($event ?? 1))
+                    "
                   />
-                  <span>{{ $t('planning.vehicles') }}</span>
+                  <span>{{ $t("planning.vehicles") }}</span>
                   <el-button
                     :disabled="!editable"
                     link
                     type="danger"
                     @click="removeVehicle(plan, arrangement.id, vehicle.vehicleId)"
                   >
-                    {{ $t('planning.delete') }}
+                    {{ $t("planning.delete") }}
                   </el-button>
                 </div>
 
@@ -90,15 +90,11 @@
                   v-if="!isAddingNewVehicle"
                   class="flex items-center justify-center w-full mb-4"
                 >
-                  <el-button
-                    @click="isAddingNewVehicle = true"
-                  >
-                    {{ $t('planning.addNewVehicle') }}
+                  <el-button @click="isAddingNewVehicle = true">
+                    {{ $t("planning.addNewVehicle") }}
                   </el-button>
                 </div>
-                <template
-                  v-else
-                >
+                <template v-else>
                   <el-form-item
                     :label="$t('planning.arrangementVehicles')"
                     class="w-full items-center justify-center"
@@ -109,16 +105,15 @@
                       model-value=""
                       :filters="{ serviceLevel: plan.tier }"
                       :disabled="!editable"
-                      :disabled-option-ids="arrangement.vehicles.map(vehicle => vehicle.vehicleId)"
+                      :disabled-option-ids="
+                        arrangement.vehicles.map((vehicle) => vehicle.vehicleId)
+                      "
                       :placeholder="$t('planning.addVehicle')"
                       class="w-300px!"
                       @update:model-value="addVehicle(plan.tier, arrangement.id, $event)"
                     />
-                    <el-button
-                      class="ml-4"
-                      @click="isAddingNewVehicle = false"
-                    >
-                      {{ $t('common.cancel') }}
+                    <el-button class="ml-4" @click="isAddingNewVehicle = false">
+                      {{ $t("common.cancel") }}
                     </el-button>
                   </el-form-item>
                 </template>
@@ -135,19 +130,21 @@
                     @change="changeArrangementPrice(plan, arrangement.id, $event ?? null)"
                   />
                 </el-form-item>
-                <el-text
-                  type="info"
-                  size="small"
-                >
-                  {{ $t('planning.capacityHint', { seats: arrangement.vehicles.reduce((sum, vehicle) => sum + vehicle.seats * vehicle.quantity, 0), passengers: passengerCount }) }}
+                <el-text type="info" size="small">
+                  {{
+                    $t("planning.capacityHint", {
+                      seats: arrangement.vehicles.reduce(
+                        (sum, vehicle) => sum + vehicle.seats * vehicle.quantity,
+                        0,
+                      ),
+                      passengers: passengerCount,
+                    })
+                  }}
                 </el-text>
               </template>
             </div>
 
-            <el-form-item
-              v-if="plan.arrangements.length"
-              :label="$t('planning.totalVehiclePrice')"
-            >
+            <el-form-item v-if="plan.arrangements.length" :label="$t('planning.totalVehiclePrice')">
               <el-input-number
                 class="!w-full"
                 :model-value="plan.totalPrice ?? calculateVehiclePlanAutomaticTotal(plan)"
@@ -163,7 +160,11 @@
               type="info"
               show-icon
               :closable="false"
-              :title="$t('planning.vehicleTotalOverrideHint', { total: formatMoney(calculateVehiclePlanAutomaticTotal(plan) ?? 0) })"
+              :title="
+                $t('planning.vehicleTotalOverrideHint', {
+                  total: formatMoney(calculateVehiclePlanAutomaticTotal(plan) ?? 0),
+                })
+              "
             />
           </el-form>
         </el-card>
@@ -171,7 +172,7 @@
     </section>
     <template #footer>
       <el-button @click="emit('cancel')">
-        {{ $t(editable ? 'common.cancel' : 'common.close') }}
+        {{ $t(editable ? "common.cancel" : "common.close") }}
       </el-button>
       <el-button
         v-if="editable"
@@ -180,65 +181,111 @@
         :disabled="!canSave"
         @click="emit('save')"
       >
-        {{ $t('itinerary.save') }}
+        {{ $t("itinerary.save") }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ElMessage } from 'element-plus';
-import { computed } from 'vue';
-import { useI18n } from 'vue-i18n';
-import ResourceSelect from '@/components/ResourceSelect/index.vue';
-import { resourceService } from '@/services/resource.service';
-import type { ItineraryVehicleArrangement, ItineraryVehiclePlan, ItineraryVehicleTier } from '@/types/itinerary';
-import { addDays, createId, formatDate, formatMoney } from '@/utils';
-import { calculateVehiclePlanAutomaticTotal, getIncompleteVehiclePlanTiers, isVehiclePlanTotalOverridden, withVehiclePlanArrangements } from '../vehicle-plans';
+import { ElMessage } from "element-plus";
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+import ResourceSelect from "@/components/ResourceSelect/index.vue";
+import { resourceService } from "@/services/resource.service";
+import type {
+  ItineraryVehicleArrangement,
+  ItineraryVehiclePlan,
+  ItineraryVehicleTier,
+} from "@/types/itinerary";
+import { addDays, createId, formatDate, formatMoney } from "@/utils";
+import {
+  calculateVehiclePlanAutomaticTotal,
+  getIncompleteVehiclePlanTiers,
+  isVehiclePlanTotalOverridden,
+  withVehiclePlanArrangements,
+} from "../vehicle-plans";
 
-const props = defineProps<{ plans: ItineraryVehiclePlan[]; startDate: string; plannedDays: number; passengerCount: number; editable: boolean; modelValue: boolean; saving: boolean }>();
-const emit = defineEmits<{ 'update-plan': [tier: ItineraryVehicleTier, plan: ItineraryVehiclePlan]; save: []; cancel: [] }>();
+const props = defineProps<{
+  plans: ItineraryVehiclePlan[];
+  startDate: string;
+  plannedDays: number;
+  passengerCount: number;
+  editable: boolean;
+  modelValue: boolean;
+  saving: boolean;
+}>();
+const emit = defineEmits<{
+  "update-plan": [tier: ItineraryVehicleTier, plan: ItineraryVehiclePlan];
+  save: [];
+  cancel: [];
+}>();
 const { t } = useI18n();
 const tripEndDate = computed(() => addDays(props.startDate, props.plannedDays - 1));
-const canSave = computed(() => !getIncompleteVehiclePlanTiers({
-  paxTiers: [props.passengerCount],
-  vehiclePlans: props.plans,
-}).length);
-const isAddingNewVehicle = ref(false)
+const canSave = computed(
+  () =>
+    !getIncompleteVehiclePlanTiers({
+      paxTiers: [props.passengerCount],
+      vehiclePlans: props.plans,
+    }).length,
+);
+const isAddingNewVehicle = ref(false);
 
-function updateArrangements(plan: ItineraryVehiclePlan, arrangements: ItineraryVehiclePlan['arrangements']) {
-  emit('update-plan', plan.tier, withVehiclePlanArrangements(plan, arrangements));
+function updateArrangements(
+  plan: ItineraryVehiclePlan,
+  arrangements: ItineraryVehiclePlan["arrangements"],
+) {
+  emit("update-plan", plan.tier, withVehiclePlanArrangements(plan, arrangements));
 }
 
 function addArrangement(plan: ItineraryVehiclePlan) {
-  const defaultDate = Array.from({ length: props.plannedDays }, (_, index) => addDays(props.startDate, index))
-    .find(date => !plan.arrangements.some(arrangement => arrangement.startDate && arrangement.endDate
-      && date >= arrangement.startDate && date <= arrangement.endDate)) ?? '';
-  updateArrangements(plan, [...plan.arrangements, {
-    id: createId('vehicle-arrangement'),
-    startDate: defaultDate,
-    endDate: defaultDate,
-    vehicles: [],
-    totalPrice: null,
-  }]);
+  const defaultDate =
+    Array.from({ length: props.plannedDays }, (_, index) => addDays(props.startDate, index)).find(
+      (date) =>
+        !plan.arrangements.some(
+          (arrangement) =>
+            arrangement.startDate &&
+            arrangement.endDate &&
+            date >= arrangement.startDate &&
+            date <= arrangement.endDate,
+        ),
+    ) ?? "";
+  updateArrangements(plan, [
+    ...plan.arrangements,
+    {
+      id: createId("vehicle-arrangement"),
+      startDate: defaultDate,
+      endDate: defaultDate,
+      vehicles: [],
+      totalPrice: null,
+    },
+  ]);
 }
 
 function removeArrangement(plan: ItineraryVehiclePlan, id: string) {
-  updateArrangements(plan, plan.arrangements.filter(arrangement => arrangement.id !== id));
+  updateArrangements(
+    plan,
+    plan.arrangements.filter((arrangement) => arrangement.id !== id),
+  );
 }
 
 function arrangementDateRange(arrangement: ItineraryVehicleArrangement) {
-  return arrangement.startDate && arrangement.endDate ? [arrangement.startDate, arrangement.endDate] : [];
+  return arrangement.startDate && arrangement.endDate
+    ? [arrangement.startDate, arrangement.endDate]
+    : [];
 }
 
 function isDateDisabled(plan: ItineraryVehiclePlan, arrangementId: string, date: Date) {
   const value = formatDate(date);
   if (value < props.startDate || value > tripEndDate.value) return true;
-  return plan.arrangements.some(arrangement => arrangement.id !== arrangementId
-    && arrangement.startDate
-    && arrangement.endDate
-    && value >= arrangement.startDate
-    && value <= arrangement.endDate);
+  return plan.arrangements.some(
+    (arrangement) =>
+      arrangement.id !== arrangementId &&
+      arrangement.startDate &&
+      arrangement.endDate &&
+      value >= arrangement.startDate &&
+      value <= arrangement.endDate,
+  );
 }
 
 function disabledDateFor(plan: ItineraryVehiclePlan, arrangementId: string) {
@@ -247,57 +294,119 @@ function disabledDateFor(plan: ItineraryVehiclePlan, arrangementId: string) {
 
 function changeDateRange(plan: ItineraryVehiclePlan, id: string, value: unknown) {
   if (!Array.isArray(value) || value.length !== 2) {
-    updateArrangements(plan, plan.arrangements.map(arrangement => arrangement.id === id ? { ...arrangement, startDate: '', endDate: '' } : arrangement));
+    updateArrangements(
+      plan,
+      plan.arrangements.map((arrangement) =>
+        arrangement.id === id ? { ...arrangement, startDate: "", endDate: "" } : arrangement,
+      ),
+    );
     return;
   }
   const [startDate, endDate] = value.map(String);
   if (startDate < props.startDate || endDate > tripEndDate.value) {
-    ElMessage.warning(t('planning.vehicleDateOutOfRange'));
+    ElMessage.warning(t("planning.vehicleDateOutOfRange"));
     return;
   }
-  const overlaps = plan.arrangements.some(arrangement => arrangement.id !== id
-    && arrangement.startDate
-    && arrangement.endDate
-    && startDate <= arrangement.endDate
-    && endDate >= arrangement.startDate);
+  const overlaps = plan.arrangements.some(
+    (arrangement) =>
+      arrangement.id !== id &&
+      arrangement.startDate &&
+      arrangement.endDate &&
+      startDate <= arrangement.endDate &&
+      endDate >= arrangement.startDate,
+  );
   if (overlaps) {
-    ElMessage.warning(t('planning.vehicleDateOverlap'));
+    ElMessage.warning(t("planning.vehicleDateOverlap"));
     return;
   }
-  updateArrangements(plan, plan.arrangements.map(arrangement => arrangement.id === id ? { ...arrangement, startDate, endDate } : arrangement));
+  updateArrangements(
+    plan,
+    plan.arrangements.map((arrangement) =>
+      arrangement.id === id ? { ...arrangement, startDate, endDate } : arrangement,
+    ),
+  );
 }
 
 function changeArrangementPrice(plan: ItineraryVehiclePlan, id: string, totalPrice: number | null) {
-  updateArrangements(plan, plan.arrangements.map(arrangement => arrangement.id === id ? { ...arrangement, totalPrice } : arrangement));
+  updateArrangements(
+    plan,
+    plan.arrangements.map((arrangement) =>
+      arrangement.id === id ? { ...arrangement, totalPrice } : arrangement,
+    ),
+  );
 }
 
 function changePlanTotal(plan: ItineraryVehiclePlan, totalPrice: number | null) {
-  emit('update-plan', plan.tier, { ...plan, totalPrice: totalPrice ?? calculateVehiclePlanAutomaticTotal(plan) });
+  emit("update-plan", plan.tier, {
+    ...plan,
+    totalPrice: totalPrice ?? calculateVehiclePlanAutomaticTotal(plan),
+  });
 }
 
-function changeQuantity(plan: ItineraryVehiclePlan, id: string, vehicleId: string, quantity: number) {
-  updateArrangements(plan, plan.arrangements.map(arrangement => arrangement.id === id
-    ? { ...arrangement, vehicles: arrangement.vehicles.map(vehicle => vehicle.vehicleId === vehicleId ? { ...vehicle, quantity } : vehicle) }
-    : arrangement));
+function changeQuantity(
+  plan: ItineraryVehiclePlan,
+  id: string,
+  vehicleId: string,
+  quantity: number,
+) {
+  updateArrangements(
+    plan,
+    plan.arrangements.map((arrangement) =>
+      arrangement.id === id
+        ? {
+            ...arrangement,
+            vehicles: arrangement.vehicles.map((vehicle) =>
+              vehicle.vehicleId === vehicleId ? { ...vehicle, quantity } : vehicle,
+            ),
+          }
+        : arrangement,
+    ),
+  );
 }
 
 function removeVehicle(plan: ItineraryVehiclePlan, id: string, vehicleId: string) {
-  updateArrangements(plan, plan.arrangements.map(arrangement => arrangement.id === id
-    ? { ...arrangement, vehicles: arrangement.vehicles.filter(vehicle => vehicle.vehicleId !== vehicleId) }
-    : arrangement));
+  updateArrangements(
+    plan,
+    plan.arrangements.map((arrangement) =>
+      arrangement.id === id
+        ? {
+            ...arrangement,
+            vehicles: arrangement.vehicles.filter((vehicle) => vehicle.vehicleId !== vehicleId),
+          }
+        : arrangement,
+    ),
+  );
 }
 
 async function addVehicle(tier: ItineraryVehicleTier, id: string, vehicleId: string) {
   if (!vehicleId || !props.editable) return;
   try {
     const resource = await resourceService.transportApi.getDetail(vehicleId);
-    const plan = props.plans.find(record => record.tier === tier);
-    const target = plan?.arrangements.find(arrangement => arrangement.id === id);
-    if (!props.editable || !plan || !target || resource.serviceLevel !== tier || target.vehicles.some(vehicle => vehicle.vehicleId === vehicleId)) return;
+    const plan = props.plans.find((record) => record.tier === tier);
+    const target = plan?.arrangements.find((arrangement) => arrangement.id === id);
+    if (
+      !props.editable ||
+      !plan ||
+      !target ||
+      resource.serviceLevel !== tier ||
+      target.vehicles.some((vehicle) => vehicle.vehicleId === vehicleId)
+    )
+      return;
     isAddingNewVehicle.value = false;
-    updateArrangements(plan, plan.arrangements.map(arrangement => arrangement.id === id
-      ? { ...arrangement, vehicles: [...arrangement.vehicles, { vehicleId, vehicleName: resource.name, seats: resource.seats, quantity: 1 }] }
-      : arrangement));
+    updateArrangements(
+      plan,
+      plan.arrangements.map((arrangement) =>
+        arrangement.id === id
+          ? {
+              ...arrangement,
+              vehicles: [
+                ...arrangement.vehicles,
+                { vehicleId, vehicleName: resource.name, seats: resource.seats, quantity: 1 },
+              ],
+            }
+          : arrangement,
+      ),
+    );
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : String(error));
   }

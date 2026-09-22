@@ -5,16 +5,8 @@
     width="640px"
     destroy-on-close
   >
-    <el-form
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      label-width="auto"
-    >
-      <el-form-item
-        :label="$t('attraction.itemType')"
-        prop="itemType"
-      >
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="auto">
+      <el-form-item :label="$t('attraction.itemType')" prop="itemType">
         <el-select v-model="form.itemType">
           <el-option
             v-for="option in itemTypeOptions"
@@ -24,45 +16,26 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item
-        :label="$t('attraction.itemName')"
-        prop="itemName"
-      >
+      <el-form-item :label="$t('attraction.itemName')" prop="itemName">
         <el-input v-model.trim="form.itemName" />
       </el-form-item>
-      <el-form-item
-        :label="$t('attraction.audience')"
-        prop="audience"
-      >
+      <el-form-item :label="$t('attraction.audience')" prop="audience">
         <el-input
           v-model.trim="form.audience"
           :placeholder="$t('attraction.audiencePlaceholder')"
         />
       </el-form-item>
-      <el-form-item
-        :label="$t('attraction.pricePeriod')"
-        prop="periodName"
-      >
+      <el-form-item :label="$t('attraction.pricePeriod')" prop="periodName">
         <el-input v-model.trim="form.periodName" />
       </el-form-item>
       <el-form-item :label="$t('attraction.effectivePeriod')">
-        <el-date-picker
-          v-model="form.dates"
-          type="daterange"
-          value-format="YYYY-MM-DD"
-          clearable
-        />
+        <el-date-picker v-model="form.dates" type="daterange" value-format="YYYY-MM-DD" clearable />
       </el-form-item>
       <el-form-item :label="$t('attraction.freeTicket')">
         <el-switch v-model="form.isFree" />
       </el-form-item>
       <el-form-item :label="$t('attraction.rackPrice')">
-        <el-input-number
-          v-model="form.rackPrice"
-          :disabled="form.isFree"
-          :min="0"
-          :precision="2"
-        />
+        <el-input-number v-model="form.rackPrice" :disabled="form.isFree" :min="0" :precision="2" />
       </el-form-item>
       <el-form-item :label="$t('attraction.settlementPrice')">
         <el-input-number
@@ -72,10 +45,7 @@
           :precision="2"
         />
       </el-form-item>
-      <el-form-item
-        :label="$t('resource.priceUnit')"
-        prop="unit"
-      >
+      <el-form-item :label="$t('resource.priceUnit')" prop="unit">
         <el-select v-model="form.unit">
           <el-option
             v-for="option in unitOptions"
@@ -86,21 +56,14 @@
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('attraction.priceNote')">
-        <el-input
-          v-model.trim="form.priceNote"
-          type="textarea"
-          :rows="3"
-        />
+        <el-input v-model.trim="form.priceNote" type="textarea" :rows="3" />
       </el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="isVisible = false">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button
-        type="primary"
-        @click="handleSubmit"
-      >
+      <el-button type="primary" @click="handleSubmit">
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -130,7 +93,10 @@ const emit = defineEmits<{
 const { t, locale } = useI18n();
 const formRef = ref<FormInstance>();
 const form = reactive<AttractionPriceForm>({ ...props.record, dates: [] });
-const isVisible = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) });
+const isVisible = computed({
+  get: () => props.modelValue,
+  set: (value) => emit("update:modelValue", value),
+});
 const itemTypeOptions: Array<{ value: AttractionPriceItemType; labelKey: string }> = [
   { value: "ticket", labelKey: "attraction.itemTicket" },
   { value: "transport", labelKey: "attraction.itemTransport" },
@@ -147,9 +113,14 @@ const rules = computed<FormRules>(() => ({
   unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
 }));
 
-watch(() => props.record, (record) => Object.assign(form, record, {
-  dates: record.startDate && record.endDate ? [record.startDate, record.endDate] : [],
-}), { deep: true });
+watch(
+  () => props.record,
+  (record) =>
+    Object.assign(form, record, {
+      dates: record.startDate && record.endDate ? [record.startDate, record.endDate] : [],
+    }),
+  { deep: true },
+);
 
 async function handleSubmit() {
   if (!(await formRef.value?.validate().catch(() => false))) return;

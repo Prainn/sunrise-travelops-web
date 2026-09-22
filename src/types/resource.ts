@@ -163,14 +163,24 @@ export interface AttractionRecord extends ResourceAuditRecord {
 }
 
 export const GUIDE_LANGUAGE_OPTIONS = [
-  { value: 'none', label: '无（仅中文）' }, { value: 'en', label: '英文' },
-  { value: 'th', label: '泰语' }, { value: 'vi', label: '越南语' },
-  { value: 'ms', label: '马来语' }, { value: 'id', label: '印尼语' },
-  { value: 'my', label: '缅甸语' }, { value: 'km', label: '高棉语' }, { value: 'lo', label: '老挝语' },
+  { value: "none", label: "无（仅中文）" },
+  { value: "en", label: "英文" },
+  { value: "th", label: "泰语" },
+  { value: "vi", label: "越南语" },
+  { value: "ms", label: "马来语" },
+  { value: "id", label: "印尼语" },
+  { value: "my", label: "缅甸语" },
+  { value: "km", label: "高棉语" },
+  { value: "lo", label: "老挝语" },
 ];
 export interface GuideRecord extends ResourceAuditRecord {
-  id: string; code: string; name: string; status: ResourceStatus;
-  secondLanguage: string; shopping: boolean; dailyPrice: number;
+  id: string;
+  code: string;
+  name: string;
+  status: ResourceStatus;
+  secondLanguage: string;
+  shopping: boolean;
+  dailyPrice: number;
 }
 
 export interface GuidePersonRecord extends ResourceAuditRecord {
@@ -180,7 +190,7 @@ export interface GuidePersonRecord extends ResourceAuditRecord {
   gender: 0 | 1 | 2;
   age: number | null;
   contact: string | null;
-  employmentType: 'full_time' | 'part_time' | null;
+  employmentType: "full_time" | "part_time" | null;
   hasLaborContract: boolean | null;
   remark: string | null;
   certificateNo: string | null;

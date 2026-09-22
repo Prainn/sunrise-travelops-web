@@ -15,22 +15,25 @@ import type {
 import { formatDateTime, formatMoney } from "@/utils";
 import { getTransportMethodNames } from "@/utils/transport-method";
 import { HOTEL_PLAN_TIER_LABELS } from "./hotel-plans";
-import {
-  getEnabledVehiclePlans,
-} from "./vehicle-plans";
+import { getEnabledVehiclePlans } from "./vehicle-plans";
 
 const MAX_QUOTE_OPTIONS_PER_TABLE = 4;
 
 interface LegacyQuoteOption {
   id: string;
-  hotelTier: ItineraryQuoteOption['hotelTier'];
-  vehicleTier: ItineraryQuoteOption['vehicleTier'];
+  hotelTier: ItineraryQuoteOption["hotelTier"];
+  vehicleTier: ItineraryQuoteOption["vehicleTier"];
   adultUnitPrice: number | null;
   leaderFocEnabled: boolean;
 }
-type LegacyItineraryRecord = Omit<ItineraryRecord, 'paxTiers' | 'childRate' | 'quote'> & {
-  adults: number; childrenCount: number; leaderCount: number;
-  quote: Omit<ItineraryQuoteSettings, 'options'> & { options: LegacyQuoteOption[]; otherExpenses: number | null };
+type LegacyItineraryRecord = Omit<ItineraryRecord, "paxTiers" | "childRate" | "quote"> & {
+  adults: number;
+  childrenCount: number;
+  leaderCount: number;
+  quote: Omit<ItineraryQuoteSettings, "options"> & {
+    options: LegacyQuoteOption[];
+    otherExpenses: number | null;
+  };
 };
 interface QuoteDisplayOption {
   option: LegacyQuoteOption;
@@ -43,22 +46,33 @@ export interface ItineraryPrintDocument {
   generatedAt: string;
 }
 
-export async function generateItineraryPrintDocument(itinerary: ItineraryRecord, inquiry: InquiryRecord, snapshot: { generatedAt: string; calculation: ItineraryQuoteCalculation; quoteCode: string; quoteVersion: number }): Promise<ItineraryPrintDocument> {
+export async function generateItineraryPrintDocument(
+  itinerary: ItineraryRecord,
+  inquiry: InquiryRecord,
+  snapshot: {
+    generatedAt: string;
+    calculation: ItineraryQuoteCalculation;
+    quoteCode: string;
+    quoteVersion: number;
+  },
+): Promise<ItineraryPrintDocument> {
   const generatedAt = formatDateTime(new Date(snapshot.generatedAt));
   const fileName = `${sanitizeFileName(itinerary.code)}-${sanitizeFileName(itinerary.title)}.pdf`;
-  const [header, footer] = await Promise.all([quoteHeaderUrl, quoteFooterUrl].map(async (url) => {
-    const image = new Image();
-    image.src = url;
-    await image.decode();
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.min(image.naturalWidth, 2400);
-    canvas.height = Math.round(image.naturalHeight * canvas.width / image.naturalWidth);
-    const context = canvas.getContext("2d")!;
-    context.fillStyle = "#fff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/png");
-  }));
+  const [header, footer] = await Promise.all(
+    [quoteHeaderUrl, quoteFooterUrl].map(async (url) => {
+      const image = new Image();
+      image.src = url;
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.min(image.naturalWidth, 2400);
+      canvas.height = Math.round((image.naturalHeight * canvas.width) / image.naturalWidth);
+      const context = canvas.getContext("2d")!;
+      context.fillStyle = "#fff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/png");
+    }),
+  );
   const html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
     <title>${escapeHtml(fileName.replace(/\.pdf$/, ""))}</title>
     <style>
@@ -112,11 +126,16 @@ export async function printItineraryDocument(file: ItineraryPrintDocument): Prom
     });
     const printWindow = frame.contentWindow!;
     await printWindow.document.fonts.ready;
-    await Promise.all(Array.from(printWindow.document.images).map(image => image.decode()));
+    await Promise.all(Array.from(printWindow.document.images).map((image) => image.decode()));
     document.title = file.fileName.replace(/\.pdf$/, "");
     await new Promise<void>((resolve, reject) => {
       printWindow.addEventListener("afterprint", () => resolve(), { once: true });
-      try { printWindow.focus(); printWindow.print(); } catch (error) { reject(error); }
+      try {
+        printWindow.focus();
+        printWindow.print();
+      } catch (error) {
+        reject(error);
+      }
     });
   } finally {
     document.title = previousTitle;
@@ -125,7 +144,12 @@ export async function printItineraryDocument(file: ItineraryPrintDocument): Prom
   }
 }
 
-export function buildPdfHtml(itinerary: ItineraryRecord, _inquiry: InquiryRecord, _generatedAt: string, snapshot: { calculation: ItineraryQuoteCalculation; quoteCode: string; quoteVersion: number }) {
+export function buildPdfHtml(
+  itinerary: ItineraryRecord,
+  _inquiry: InquiryRecord,
+  _generatedAt: string,
+  snapshot: { calculation: ItineraryQuoteCalculation; quoteCode: string; quoteVersion: number },
+) {
   const quote = snapshot.calculation;
   const scheduleSections = buildScheduleSections(itinerary.dailyPlans, itinerary);
 
@@ -137,25 +161,29 @@ export function buildPdfHtml(itinerary: ItineraryRecord, _inquiry: InquiryRecord
     ${buildCustomerTerms(itinerary)}
     ${"pricingVersion" in quote ? buildPaxQuoteSections(itinerary, quote) : buildQuoteSections(itinerary as unknown as LegacyItineraryRecord, quote)}
     ${buildCustomerNotes(itinerary)}`;
-
 }
 
 function buildPaxQuoteSections(itinerary: ItineraryRecord, quote: PaxQuoteCalculation) {
-  const tables = quote.options.map(option => {
-    const title = `${HOTEL_PLAN_TIER_LABELS[option.hotelTier]} · ${getVehicleQuoteLabel(itinerary, option.vehicleTier)}`;
-    const rows = option.paxPrices.map(price => {
-      const withTip = (amount: number) => `RMB ${formatMoney(amount)}${price.tipUnitPrice > 0 ? ` + ${formatMoney(price.tipUnitPrice)}` : ''}`;
-      return `<tr><th style="${quoteLabelStyle()}">${price.pax} PAX</th>
+  const tables = quote.options
+    .map((option) => {
+      const title = `${HOTEL_PLAN_TIER_LABELS[option.hotelTier]} · ${getVehicleQuoteLabel(itinerary, option.vehicleTier)}`;
+      const rows = option.paxPrices
+        .map((price) => {
+          const withTip = (amount: number) =>
+            `RMB ${formatMoney(amount)}${price.tipUnitPrice > 0 ? ` + ${formatMoney(price.tipUnitPrice)}` : ""}`;
+          return `<tr><th style="${quoteLabelStyle()}">${price.pax} PAX</th>
         <td style="${quoteCellStyle()}">${withTip(price.adultUnitPrice)}</td>
         <td style="${quoteCellStyle()}">${withTip(price.childUnitPrice)}</td>
         <td style="${quoteCellStyle()}">RMB ${formatMoney(price.singleSupplementUnitCost)}</td></tr>`;
-    }).join('');
-    return `<table data-pdf-block style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;">
+        })
+        .join("");
+      return `<table data-pdf-block style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;">
       <thead><tr><th colspan="4" style="${quoteHeaderStyle()}">${escapeHtml(title)}</th></tr>
-        <tr>${['人数档位', '成人团费＋小费', `儿童团费（${itinerary.childRate}%）＋小费`, '单房差'].map(label => `<th style="${quoteHeaderStyle()}">${escapeHtml(label)}</th>`).join('')}</tr></thead>
+        <tr>${["人数档位", "成人团费＋小费", `儿童团费（${itinerary.childRate}%）＋小费`, "单房差"].map((label) => `<th style="${quoteHeaderStyle()}">${escapeHtml(label)}</th>`).join("")}</tr></thead>
       <tbody>${rows}${buildExtraFeeRows(itinerary, 3)}${buildTipRows(itinerary, 3, false)}</tbody>
     </table>`;
-  }).join('');
+    })
+    .join("");
   return `<section data-pdf-block data-pdf-keep-with-next><h2 style="margin:0;font-size:13px;">三、团队报价【人民币／人；小费另列，机票、动车票及额外自费另付】</h2></section>${tables}`;
 }
 
@@ -177,10 +205,14 @@ function buildQuoteSections(itinerary: LegacyItineraryRecord, quote: LegacyQuote
 function buildQuoteTable(
   options: QuoteDisplayOption[],
   itinerary: LegacyItineraryRecord,
-  guestCount: number
+  guestCount: number,
 ) {
   const childRow = itinerary.childrenCount
-    ? buildQuoteRow("儿童团费", options, ({ calculation }) => `RMB ${formatMoney(calculation.childUnitPrice)} PP`)
+    ? buildQuoteRow(
+        "儿童团费",
+        options,
+        ({ calculation }) => `RMB ${formatMoney(calculation.childUnitPrice)} PP`,
+      )
     : "";
 
   return `
@@ -188,19 +220,27 @@ function buildQuoteTable(
       <thead>
         <tr style="background:#f3f4f6;">
           <th style="${quoteHeaderStyle()};width:18%;"></th>
-          ${options.map(({ option }) => `
+          ${options
+            .map(
+              ({ option }) => `
             <th style="${quoteHeaderStyle()}">
-              ${new Set(itinerary.quote.options.map(option => option.hotelTier)).size > 1 ? `<div>${escapeHtml(HOTEL_PLAN_TIER_LABELS[option.hotelTier])}</div>` : ""}
+              ${new Set(itinerary.quote.options.map((option) => option.hotelTier)).size > 1 ? `<div>${escapeHtml(HOTEL_PLAN_TIER_LABELS[option.hotelTier])}</div>` : ""}
               <div style="margin-top:3px;">${guestCount}PAX【${escapeHtml(getVehicleQuoteLabel(itinerary, option.vehicleTier))}】</div>
-            </th>`).join("")}
+            </th>`,
+            )
+            .join("")}
         </tr>
       </thead>
       <tbody>
-        ${buildQuoteRow("成人团费", options, ({ option, calculation }) => `
+        ${buildQuoteRow(
+          "成人团费",
+          options,
+          ({ option, calculation }) => `
           <strong>RMB ${formatMoney(calculation.adultUnitPrice)} PP</strong>
-          <div style="display:inline;margin-left:4px;color:${(option.leaderFocEnabled && itinerary.leaderCount > 0) ? "#15803d" : "#606266"};font-size:10px;">
-            ${(option.leaderFocEnabled && itinerary.leaderCount > 0) ? `${guestCount}+${itinerary.leaderCount} FOC` : "NO FOC"}
-          </div>`)}
+          <div style="display:inline;margin-left:4px;color:${option.leaderFocEnabled && itinerary.leaderCount > 0 ? "#15803d" : "#606266"};font-size:10px;">
+            ${option.leaderFocEnabled && itinerary.leaderCount > 0 ? `${guestCount}+${itinerary.leaderCount} FOC` : "NO FOC"}
+          </div>`,
+        )}
         ${childRow}
         ${buildExtraFeeRows(itinerary, options.length)}
         ${buildQuoteRow("单房差", options, ({ calculation }) => `RMB ${formatMoney(calculation.singleSupplementUnitCost)}`)}
@@ -213,7 +253,7 @@ function buildQuoteTable(
 function buildQuoteRow(
   label: string,
   options: QuoteDisplayOption[],
-  renderValue: (option: QuoteDisplayOption) => string
+  renderValue: (option: QuoteDisplayOption) => string,
 ) {
   return `<tr>
     <th style="${quoteLabelStyle()}">${label}</th>
@@ -224,13 +264,19 @@ function buildQuoteRow(
 function chunkQuoteOptions(options: QuoteDisplayOption[]) {
   return Array.from(
     { length: Math.ceil(options.length / MAX_QUOTE_OPTIONS_PER_TABLE) },
-    (_, index) => options.slice(index * MAX_QUOTE_OPTIONS_PER_TABLE, (index + 1) * MAX_QUOTE_OPTIONS_PER_TABLE)
+    (_, index) =>
+      options.slice(index * MAX_QUOTE_OPTIONS_PER_TABLE, (index + 1) * MAX_QUOTE_OPTIONS_PER_TABLE),
   );
 }
 
-function getVehicleQuoteLabel(itinerary: Pick<ItineraryRecord, "vehiclePlans">, tier: ItineraryQuoteOption["vehicleTier"]) {
-  const plan = getEnabledVehiclePlans(itinerary).find(plan => plan.tier === tier);
-  const seats = [...new Set(plan?.arrangements.flatMap(a => a.vehicles.map(v => v.seats)) ?? [])];
+function getVehicleQuoteLabel(
+  itinerary: Pick<ItineraryRecord, "vehiclePlans">,
+  tier: ItineraryQuoteOption["vehicleTier"],
+) {
+  const plan = getEnabledVehiclePlans(itinerary).find((plan) => plan.tier === tier);
+  const seats = [
+    ...new Set(plan?.arrangements.flatMap((a) => a.vehicles.map((v) => v.seats)) ?? []),
+  ];
   return `${seats.length ? `${seats.join("/")}座` : ""}${tier === "vip" ? "VIP" : "普通"}巴士`;
 }
 
@@ -247,8 +293,9 @@ function quoteCellStyle() {
 }
 
 function buildScheduleSections(days: ItineraryDayRecord[], itinerary: ItineraryRecord) {
-  const rows = days.map((day) => {
-    return `
+  const rows = days
+    .map((day) => {
+      return `
       <tr>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(formatScheduleDate(day.date))}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(formatScheduleRoute(day))}</td>
@@ -257,7 +304,8 @@ function buildScheduleSections(days: ItineraryDayRecord[], itinerary: ItineraryR
           <td style="${scheduleCellStyle("center")}">${escapeHtml(day.overnightDestination || "-")}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(getDailyMealCodes(day, getDayBreakfastStatus(itinerary, itinerary.dailyPlans.indexOf(day))) || "-")}</td>
       </tr>`;
-  }).join("");
+    })
+    .join("");
 
   return `
     <section data-pdf-block data-pdf-keep-with-next style="box-sizing:border-box;">
@@ -299,35 +347,70 @@ function formatScheduleRoute(day: ItineraryDayRecord) {
   return `${day.departure} / ${day.destination}`;
 }
 
-export function getDailyMealCodes(day: ItineraryDayRecord, breakfastStatus: "included" | "excluded" | "pending" = day.meals.breakfast ? "included" : "excluded") {
-  return [breakfastStatus === "pending" ? "早餐待确认" : breakfastStatus === "included" ? "B" : "", day.meals.lunch ? "L" : "", day.meals.dinner ? "D" : ""].filter(Boolean).join(", ");
+export function getDailyMealCodes(
+  day: ItineraryDayRecord,
+  breakfastStatus: "included" | "excluded" | "pending" = day.meals.breakfast
+    ? "included"
+    : "excluded",
+) {
+  return [
+    breakfastStatus === "pending" ? "早餐待确认" : breakfastStatus === "included" ? "B" : "",
+    day.meals.lunch ? "L" : "",
+    day.meals.dinner ? "D" : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
 }
 
-function buildExtraFeeRows(itinerary: { quote: Pick<ItineraryQuoteSettings, "transportFees"> }, columnCount: number) {
+function buildExtraFeeRows(
+  itinerary: { quote: Pick<ItineraryQuoteSettings, "transportFees"> },
+  columnCount: number,
+) {
   const cabins = { economy: "经济舱", business: "商务舱", first: "一等座", second: "二等座" };
   const rows: Array<[string, string]> = itinerary.quote.transportFees.map((fee) => [
     fee.type === "flight" ? "机票" : "动车票",
     `${fee.departureCity} → ${fee.arrivalCity} · ${cabins[fee.cabin]} · RMB ${formatMoney(fee.unitPrice ?? 0)} PP`,
   ]);
-  return rows.map(([label, value]) => `<tr><th style="${quoteLabelStyle()}">${escapeHtml(label)}</th><td colspan="${columnCount}" style="${quoteCellStyle()}">${escapeHtml(value)}</td></tr>`).join("");
+  return rows
+    .map(
+      ([label, value]) =>
+        `<tr><th style="${quoteLabelStyle()}">${escapeHtml(label)}</th><td colspan="${columnCount}" style="${quoteCellStyle()}">${escapeHtml(value)}</td></tr>`,
+    )
+    .join("");
 }
 
-function buildTipRows(itinerary: { quote: Pick<ItineraryQuoteSettings, "chineseTip" | "englishTip"> }, columnCount: number, legacy = true) {
-  const tips = [["中文", itinerary.quote.chineseTip], [legacy ? "英文" : "英文／第二语言", itinerary.quote.englishTip]] as const;
+function buildTipRows(
+  itinerary: { quote: Pick<ItineraryQuoteSettings, "chineseTip" | "englishTip"> },
+  columnCount: number,
+  legacy = true,
+) {
+  const tips = [
+    ["中文", itinerary.quote.chineseTip],
+    [legacy ? "英文" : "英文／第二语言", itinerary.quote.englishTip],
+  ] as const;
   const visible = tips.filter(([, amount]) => (amount ?? 0) > 0);
-  return visible.map(([language, amount], index) => `<tr>
+  return visible
+    .map(
+      ([language, amount], index) => `<tr>
     ${index === 0 ? `<th rowspan="${visible.length}" style="${quoteLabelStyle()}">全程小费</th>` : ""}
     <td colspan="${columnCount}" style="${quoteCellStyle()};text-align:left;">【${language}】 RMB ${formatMoney(amount ?? 0)} PP ${legacy ? "NO FOC【大小同价，不含行李费】" : "【成人儿童同价，领队仅收酒店费，不含行李费】"}</td>
-  </tr>`).join("");
+  </tr>`,
+    )
+    .join("");
 }
 
 function buildCustomerTerms(itinerary: ItineraryRecord) {
   const hasMeals = itinerary.dailyPlans.some((day) => day.meals.lunch || day.meals.dinner);
   const rows: Array<[string, string]> = [
     ["酒店", "行程中所标注或同级酒店，双标间两人入住，含早餐。"],
-    ["餐食", hasMeals ? "行程中所列酒店提供早餐；包含标注的午餐 L、晚餐 D，未标注的正餐自理。" : "行程中所列酒店提供早餐，团费不含正餐，请自理。"],
+    [
+      "餐食",
+      hasMeals
+        ? "行程中所列酒店提供早餐；包含标注的午餐 L、晚餐 D，未标注的正餐自理。"
+        : "行程中所列酒店提供早餐，团费不含正餐，请自理。",
+    ],
     ["门票", "包含行程中所列门票及景区内区间费用。"],
-    ...itinerary.guidePlans.length ? [["导游", "行程安排的导游服务。"] as [string, string]] : [],
+    ...(itinerary.guidePlans.length ? [["导游", "行程安排的导游服务。"] as [string, string]] : []),
     ["交通", "行程中所列巴士服务。"],
   ];
   return `<section data-pdf-block data-pdf-keep-with-next><h2 style="margin:0;font-size:13px;">二、团队标准</h2></section>
@@ -338,10 +421,21 @@ function buildCustomerTerms(itinerary: ItineraryRecord) {
 }
 
 function buildCustomerNotes(itinerary: ItineraryRecord) {
-  const notes = [itinerary.quote.holidayRestrictions, itinerary.quote.hotelReplacementTerms, itinerary.quote.customerNotes].filter(value => value.trim());
+  const notes = [
+    itinerary.quote.holidayRestrictions,
+    itinerary.quote.hotelReplacementTerms,
+    itinerary.quote.customerNotes,
+  ].filter((value) => value.trim());
   if (!notes.length) return "";
-  return `<section data-pdf-block data-pdf-keep-with-next><h2 style="margin:0;font-size:13px;">四、备注</h2></section>` +
-    notes.map(value => `<section data-pdf-block data-pdf-gap-mm="0" style="font-size:11px;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere;">${escapeHtml(value)}</section>`).join("");
+  return (
+    `<section data-pdf-block data-pdf-keep-with-next><h2 style="margin:0;font-size:13px;">四、备注</h2></section>` +
+    notes
+      .map(
+        (value) =>
+          `<section data-pdf-block data-pdf-gap-mm="0" style="font-size:11px;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere;">${escapeHtml(value)}</section>`,
+      )
+      .join("")
+  );
 }
 
 function scheduleHeaderStyle() {
@@ -353,7 +447,12 @@ function scheduleCellStyle(textAlign: "left" | "center") {
 }
 
 function escapeHtml(value: string) {
-  return value.replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;" })[character] ?? character);
+  return value.replace(
+    /[&<>'"]/g,
+    (character) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character] ??
+      character,
+  );
 }
 
 function sanitizeFileName(value: string) {

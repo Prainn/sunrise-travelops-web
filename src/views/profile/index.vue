@@ -3,10 +3,7 @@
     <section class="profile-hero flex gap-[16px] items-center justify-between p-[20px_24px]">
       <div class="profile-hero__body gap-[16px] min-w-0">
         <div class="profile-avatar relative shrink-0">
-          <el-avatar
-            :src="displayAvatar"
-            :size="72"
-          >
+          <el-avatar :src="displayAvatar" :size="72">
             <el-icon><UserFilled /></el-icon>
           </el-avatar>
           <el-button
@@ -30,22 +27,24 @@
 
         <div class="profile-hero__info min-w-0">
           <div class="profile-hero__title flex-wrap gap-[10px]">
-            <h2 class="profile-hero__name m-0 text-[22px] font-bold leading-[30px] text-[var(--el-text-color-primary)]">
+            <h2
+              class="profile-hero__name m-0 text-[22px] font-bold leading-[30px] text-[var(--el-text-color-primary)]"
+            >
               {{ displayName }}
             </h2>
-            <el-tag
-              type="primary"
-              effect="light"
-              round
-            >
+            <el-tag type="primary" effect="light" round>
               {{ primaryRole }}
             </el-tag>
           </div>
-          <p class="profile-hero__desc m-[4px_0_0] text-[14px] text-[var(--el-text-color-secondary)]">
+          <p
+            class="profile-hero__desc m-[4px_0_0] text-[14px] text-[var(--el-text-color-secondary)]"
+          >
             {{ userProfile.username || "-" }} /
             {{ userProfile.deptName || $t("profile.unassignedDepartment") }}
           </p>
-          <div class="profile-hero__meta flex-wrap gap-[12px] mt-[8px] text-[14px] text-[var(--el-text-color-secondary)]">
+          <div
+            class="profile-hero__meta flex-wrap gap-[12px] mt-[8px] text-[14px] text-[var(--el-text-color-secondary)]"
+          >
             <span class="profile-hero__meta-item gap-[4px]">
               <el-icon><Calendar /></el-icon>
               {{ $t("profile.joinedAt", { date: formatDateTime(userProfile.createTime) }) }}
@@ -66,11 +65,7 @@
         >
           {{ $t("profile.editProfile") }}
         </el-button>
-        <el-button
-          type="primary"
-          :icon="Lock"
-          @click="handleOpenDialog(DialogType.PASSWORD)"
-        >
+        <el-button type="primary" :icon="Lock" @click="handleOpenDialog(DialogType.PASSWORD)">
           {{ $t("profile.changePassword") }}
         </el-button>
       </div>
@@ -82,14 +77,15 @@
     >
       <aside class="profile-page__side">
         <section class="profile-card p-[18px_20px]">
-          <header class="profile-card__header flex gap-[12px] items-start justify-between mb-[14px]">
-            <h3 class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]">
+          <header
+            class="profile-card__header flex gap-[12px] items-start justify-between mb-[14px]"
+          >
+            <h3
+              class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]"
+            >
               {{ $t("profile.personalInfo") }}
             </h3>
-            <el-tag
-              size="small"
-              effect="plain"
-            >
+            <el-tag size="small" effect="plain">
               {{ genderText }}
             </el-tag>
           </header>
@@ -100,14 +96,13 @@
               :key="item.label"
               class="profile-info__item grid [grid-template-columns:92px_minmax(0,_1fr)] gap-[10px] items-center min-h-[34px] pb-[10px] [border-bottom:1px_solid_var(--el-border-color-extra-light)]"
             >
-              <dt class="profile-info__label flex gap-[6px] items-center text-[14px] text-[var(--el-text-color-secondary)]">
+              <dt
+                class="profile-info__label flex gap-[6px] items-center text-[14px] text-[var(--el-text-color-secondary)]"
+              >
                 <el-icon><component :is="item.icon" /></el-icon>
                 {{ item.label }}
               </dt>
-              <dd
-                class="profile-info__value"
-                :class="{ 'is-muted': item.muted }"
-              >
+              <dd class="profile-info__value" :class="{ 'is-muted': item.muted }">
                 {{ item.value }}
               </dd>
             </div>
@@ -117,14 +112,15 @@
 
       <main class="profile-page__main">
         <section class="profile-card p-[18px_20px]">
-          <header class="profile-card__header flex gap-[12px] items-start justify-between mb-[14px]">
-            <h3 class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]">
+          <header
+            class="profile-card__header flex gap-[12px] items-start justify-between mb-[14px]"
+          >
+            <h3
+              class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]"
+            >
               {{ $t("profile.recentLogins") }}
             </h3>
-            <span
-              v-if="!securityLoadFailed && !isSecurityLoading"
-              class="profile-card__extra"
-            >
+            <span v-if="!securityLoadFailed && !isSecurityLoading" class="profile-card__extra">
               {{ $t("profile.recentCount", { count: recentLoginRecords.length }) }}
             </span>
           </header>
@@ -133,20 +129,22 @@
             v-if="!securityLoadFailed && !isSecurityLoading"
             class="profile-login grid gap-[12px]"
           >
-            <el-empty
-              v-if="!recentLoginRecords.length"
-              :description="$t('profile.noLogins')"
-            />
+            <el-empty v-if="!recentLoginRecords.length" :description="$t('profile.noLogins')" />
             <div
               v-for="record in recentLoginRecords"
               :key="record.id"
               class="profile-login__item grid [grid-template-columns:36px_minmax(0,_1fr)_auto] gap-[10px] items-center min-h-[44px]"
             >
-              <span class="profile-icon flex [flex:0_0_36px] items-center justify-center w-[36px] h-[36px] text-[18px] text-[var(--el-color-primary)] [background:var(--el-color-primary-light-9)] rounded-[8px]">
+              <span
+                class="profile-icon flex [flex:0_0_36px] items-center justify-center w-[36px] h-[36px] text-[18px] text-[var(--el-color-primary)] [background:var(--el-color-primary-light-9)] rounded-[8px]"
+              >
                 <el-icon><Monitor /></el-icon>
               </span>
               <div class="profile-login__body min-w-0">
-                <strong class="profile-login__device break-all text-[14px] text-[var(--el-text-color-primary)]">{{ record.userAgent || $t("profile.unknownClient") }}</strong>
+                <strong
+                  class="profile-login__device break-all text-[14px] text-[var(--el-text-color-primary)]"
+                  >{{ record.userAgent || $t("profile.unknownClient") }}</strong
+                >
                 <span class="profile-login__meta">{{ record.ip || "-" }}</span>
               </div>
               <time class="profile-login__time">{{ formatDateTime(record.time) }}</time>
@@ -158,13 +156,12 @@
 
     <section class="profile-card p-[18px_20px]">
       <header class="profile-card__header flex gap-[12px] items-start justify-between mb-[14px]">
-        <h3 class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]">
+        <h3
+          class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]"
+        >
           {{ $t("profile.rolesAndPermissions") }}
         </h3>
-        <span
-          v-if="!securityLoadFailed && !isSecurityLoading"
-          class="profile-card__extra"
-        >
+        <span v-if="!securityLoadFailed && !isSecurityLoading" class="profile-card__extra">
           {{ $t("profile.permissionCount", { count: permissionCount }) }}
         </span>
       </header>
@@ -173,40 +170,20 @@
         v-if="!securityLoadFailed && !isSecurityLoading"
         class="profile-tags flex flex-wrap gap-[8px]"
       >
-        <el-tag
-          v-for="role in roleList"
-          :key="role.code"
-          class="m-0"
-          size="small"
-          effect="light"
-        >
+        <el-tag v-for="role in roleList" :key="role.code" class="m-0" size="small" effect="light">
           {{ role.name }}
         </el-tag>
-        <span
-          v-if="!roleList.length"
-          class="profile-empty"
-        >{{ $t("profile.noRoles") }}</span>
+        <span v-if="!roleList.length" class="profile-empty">{{ $t("profile.noRoles") }}</span>
       </div>
-      <div
-        v-if="!securityLoadFailed && !isSecurityLoading"
-        class="grid gap-[8px] mt-[16px]"
-      >
+      <div v-if="!securityLoadFailed && !isSecurityLoading" class="grid gap-[8px] mt-[16px]">
         <el-table
           :data="pagedPermissions"
           row-key="code"
           :empty-text="$t('profile.noPermissions')"
           border
         >
-          <el-table-column
-            prop="name"
-            :label="$t('profile.permissionName')"
-            min-width="180"
-          />
-          <el-table-column
-            prop="code"
-            :label="$t('profile.permissionCode')"
-            min-width="240"
-          />
+          <el-table-column prop="name" :label="$t('profile.permissionName')" min-width="180" />
+          <el-table-column prop="code" :label="$t('profile.permissionCode')" min-width="240" />
         </el-table>
         <el-pagination
           v-if="permissionCount > 10"
@@ -233,20 +210,14 @@
         label-width="88px"
         class="pr-10px"
       >
-        <el-form-item
-          :label="$t('user.nickname')"
-          prop="nickname"
-        >
+        <el-form-item :label="$t('user.nickname')" prop="nickname">
           <el-input
             v-model="userProfileForm.nickname"
             :placeholder="$t('profile.nicknamePlaceholder')"
           />
         </el-form-item>
         <el-form-item :label="$t('user.gender')">
-          <DictSelect
-            v-model="userProfileForm.gender"
-            code="gender"
-          />
+          <DictSelect v-model="userProfileForm.gender" code="gender" />
         </el-form-item>
       </el-form>
 
@@ -258,46 +229,23 @@
         label-width="108px"
         class="pr-10px"
       >
-        <el-form-item
-          :label="$t('profile.oldPassword')"
-          prop="oldPassword"
-        >
-          <el-input
-            v-model="passwordChangeForm.oldPassword"
-            type="password"
-            show-password
-          />
+        <el-form-item :label="$t('profile.oldPassword')" prop="oldPassword">
+          <el-input v-model="passwordChangeForm.oldPassword" type="password" show-password />
         </el-form-item>
-        <el-form-item
-          :label="$t('user.newPassword')"
-          prop="newPassword"
-        >
-          <el-input
-            v-model="passwordChangeForm.newPassword"
-            type="password"
-            show-password
-          />
+        <el-form-item :label="$t('user.newPassword')" prop="newPassword">
+          <el-input v-model="passwordChangeForm.newPassword" type="password" show-password />
         </el-form-item>
-        <el-form-item
-          :label="$t('profile.confirmPassword')"
-          prop="confirmPassword"
-        >
-          <el-input
-            v-model="passwordChangeForm.confirmPassword"
-            type="password"
-            show-password
-          />
+        <el-form-item :label="$t('profile.confirmPassword')" prop="confirmPassword">
+          <el-input v-model="passwordChangeForm.confirmPassword" type="password" show-password />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <span class="inline-flex gap-2">
           <el-button @click="handleCancel">{{ $t("common.cancel") }}</el-button>
-          <el-button
-            type="primary"
-            :loading="isSubmitting"
-            @click="handleSubmit"
-          >{{ $t("common.confirm") }}</el-button>
+          <el-button type="primary" :loading="isSubmitting" @click="handleSubmit">{{
+            $t("common.confirm")
+          }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -390,7 +338,10 @@ const userProfileRules = computed(() => ({
 
 const passwordChangeRules = computed(() => ({
   oldPassword: [{ required: true, message: t("profile.oldPasswordPlaceholder"), trigger: "blur" }],
-  newPassword: [{ required: true, message: t("user.newPasswordPlaceholder"), trigger: "blur" }, { min: 6, max: 128, message: t("profile.passwordLength"), trigger: "blur" }],
+  newPassword: [
+    { required: true, message: t("user.newPasswordPlaceholder"), trigger: "blur" },
+    { min: 6, max: 128, message: t("profile.passwordLength"), trigger: "blur" },
+  ],
   confirmPassword: [
     { required: true, message: t("profile.confirmPasswordPlaceholder"), trigger: "blur" },
     {
@@ -421,7 +372,9 @@ const displayName = computed(() => {
 const roleList = computed(() => security.value.roles);
 const primaryRole = computed(() => roleList.value[0]?.name || "-");
 const permissionPage = ref(1);
-const pagedPermissions = computed(() => security.value.permissions.slice((permissionPage.value - 1) * 10, permissionPage.value * 10));
+const pagedPermissions = computed(() =>
+  security.value.permissions.slice((permissionPage.value - 1) * 10, permissionPage.value * 10),
+);
 const permissionCount = computed(() => security.value.permissions.length);
 
 const genderText = computed(() => {

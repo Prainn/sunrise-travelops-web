@@ -34,14 +34,27 @@ import type { ResourceColumn, ResourceFormField, ResourceRow } from "../types";
 import { useResourceMaintenance } from "../useResourceMaintenance";
 defineOptions({ name: "CityResource" });
 const columns: ResourceColumn[] = [
-  { prop: "code", labelKey: "resource.code" }, { prop: "name", labelKey: "resource.city" }, { prop: "province", labelKey: "city.province" },
+  { prop: "code", labelKey: "resource.code" },
+  { prop: "name", labelKey: "resource.city" },
+  { prop: "province", labelKey: "city.province" },
 ];
 const maintenance = useResourceMaintenance<CityRecord>({
-  records: resourceService.cities, api: resourceService.cityApi, loadRecords: (query) => resourceService.loadCities(query),
+  records: resourceService.cities,
+  api: resourceService.cityApi,
+  loadRecords: (query) => resourceService.loadCities(query),
   createEmpty: () => ({ id: "", code: "", name: "", province: "", status: "enabled" }),
   selectLibraryInDialog: true,
 });
-const { isLoading, rows, total, record, isDialogVisible, isEditing, loadRecords, openCreateDialog } = maintenance;
+const {
+  isLoading,
+  rows,
+  total,
+  record,
+  isDialogVisible,
+  isEditing,
+  loadRecords,
+  openCreateDialog,
+} = maintenance;
 const fields = computed<ResourceFormField[]>(() => [
   { prop: "name", labelKey: "resource.city", required: true, disabled: isEditing.value },
   { prop: "province", labelKey: "city.province" },

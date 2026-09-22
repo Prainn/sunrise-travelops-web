@@ -6,9 +6,18 @@ import { businessDictionaryService } from "@/services/business-dictionary.servic
 import type { ResourceLibrary } from "@/types/auth";
 import type { PageResult } from "@/types/common";
 import type {
-  AgencyContactRecord, AgencyRecord, AttractionPriceRecord, AttractionRecord,
-  CityRecord, GuidePersonRecord, GuideRecord, HotelRecord, ResourceListQuery,
-  RestaurantPriceRecord, RestaurantRecord, TransportRecord,
+  AgencyContactRecord,
+  AgencyRecord,
+  AttractionPriceRecord,
+  AttractionRecord,
+  CityRecord,
+  GuidePersonRecord,
+  GuideRecord,
+  HotelRecord,
+  ResourceListQuery,
+  RestaurantPriceRecord,
+  RestaurantRecord,
+  TransportRecord,
 } from "@/types/resource";
 
 type ResourceQuery = ResourceListQuery & Record<string, string | number | undefined>;
@@ -37,10 +46,12 @@ type ApiRecord<T> = {
 const RESOURCE_BASE_URL = "/resources";
 
 function buildParams(query: ResourceQuery): ResourceQuery {
-  return Object.fromEntries(Object.entries({library: selectedResourceLibrary.value, ...query}).map(([key, value]) => {
-    const normalizedValue = typeof value === "string" ? value.trim() : value;
-    return [key, normalizedValue || normalizedValue === 0 ? normalizedValue : undefined];
-  })) as ResourceQuery;
+  return Object.fromEntries(
+    Object.entries({ library: selectedResourceLibrary.value, ...query }).map(([key, value]) => {
+      const normalizedValue = typeof value === "string" ? value.trim() : value;
+      return [key, normalizedValue || normalizedValue === 0 ? normalizedValue : undefined];
+    }),
+  ) as ResourceQuery;
 }
 
 function normalizeMoney(value: string | number | null | undefined): number {
@@ -50,13 +61,18 @@ function normalizeMoney(value: string | number | null | undefined): number {
 function createCrud<T extends { code: string; library?: ResourceLibrary }>(
   resourceName: string,
   toInput: (data: T) => Record<string, unknown>,
-  fromResponse: (data: ApiRecord<T>) => T = (data) => data as T
+  fromResponse: (data: ApiRecord<T>) => T = (data) => data as T,
 ): ResourceCrud<T> {
   const baseUrl = `${RESOURCE_BASE_URL}/${resourceName}`;
   return {
     async getPage(query) {
       const result = await request.get<PageResult<ApiRecord<T>>>(baseUrl, {
-        params: buildParams({ ...query, ...(selectedResourceBusinessUnit.value ? { businessUnit: selectedResourceBusinessUnit.value, library: undefined } : {}) }),
+        params: buildParams({
+          ...query,
+          ...(selectedResourceBusinessUnit.value
+            ? { businessUnit: selectedResourceBusinessUnit.value, library: undefined }
+            : {}),
+        }),
       });
       return { ...result, list: result.list.map(fromResponse) };
     },
@@ -65,13 +81,30 @@ function createCrud<T extends { code: string; library?: ResourceLibrary }>(
       return fromResponse(result);
     },
     create(data) {
-      return request.post<ApiRecord<T>>(baseUrl, { library: data.library ?? selectedResourceLibrary.value, ...toInput(data), ...(["guides", "guide-people"].includes(resourceName) ? {} : { code: data.code.trim() || undefined }) }).then(result => { clearResourceOptionsCache(); return fromResponse(result); });
+      return request
+        .post<ApiRecord<T>>(baseUrl, {
+          library: data.library ?? selectedResourceLibrary.value,
+          ...toInput(data),
+          ...(["guides", "guide-people"].includes(resourceName)
+            ? {}
+            : { code: data.code.trim() || undefined }),
+        })
+        .then((result) => {
+          clearResourceOptionsCache();
+          return fromResponse(result);
+        });
     },
     update(id, data) {
-      return request.put<ApiRecord<T>>(
-        `${baseUrl}/${encodeURIComponent(id)}`,
-        { ...toInput(data), id, version: (data as T & { version?: number }).version }
-      ).then(result => { clearResourceOptionsCache(); return fromResponse(result); });
+      return request
+        .put<ApiRecord<T>>(`${baseUrl}/${encodeURIComponent(id)}`, {
+          ...toInput(data),
+          id,
+          version: (data as T & { version?: number }).version,
+        })
+        .then((result) => {
+          clearResourceOptionsCache();
+          return fromResponse(result);
+        });
     },
     async deleteByIds(ids) {
       await request.delete<void>(baseUrl, { params: { ids } });
@@ -82,46 +115,90 @@ function createCrud<T extends { code: string; library?: ResourceLibrary }>(
 
 function agencyInput(data: AgencyRecord) {
   return {
-    id: data.id || undefined, code: data.code.trim(), name: data.name.trim(), city: data.city.trim(),
-    countryOrRegion: data.countryOrRegion.trim(), email: data.email.trim(), status: data.status, remark: data.remark.trim(),
+    id: data.id || undefined,
+    code: data.code.trim(),
+    name: data.name.trim(),
+    city: data.city.trim(),
+    countryOrRegion: data.countryOrRegion.trim(),
+    email: data.email.trim(),
+    status: data.status,
+    remark: data.remark.trim(),
   };
 }
 
 function hotelInput(data: HotelRecord) {
   return {
-    id: data.id || undefined, code: data.code.trim(), name: data.name.trim(), province: data.province.trim(),
-    city: data.city.trim(), rating: data.rating.trim(), facilities: data.facilities.trim(), breakfast: data.breakfast.trim(),
-    address: data.address.trim(), phone: data.phone.trim(), nearby: data.nearby.trim(),
-    individualPrice: data.individualPrice, groupPrice: data.groupPrice, minimumGroupSize: data.minimumGroupSize,
-    unit: data.unit, status: data.status,
+    id: data.id || undefined,
+    code: data.code.trim(),
+    name: data.name.trim(),
+    province: data.province.trim(),
+    city: data.city.trim(),
+    rating: data.rating.trim(),
+    facilities: data.facilities.trim(),
+    breakfast: data.breakfast.trim(),
+    address: data.address.trim(),
+    phone: data.phone.trim(),
+    nearby: data.nearby.trim(),
+    individualPrice: data.individualPrice,
+    groupPrice: data.groupPrice,
+    minimumGroupSize: data.minimumGroupSize,
+    unit: data.unit,
+    status: data.status,
   };
 }
 
 function restaurantInput(data: RestaurantRecord) {
   return {
-    id: data.id || undefined, code: data.code.trim(), name: data.name.trim(), city: data.city.trim(),
-    cuisine: data.cuisine.trim(), contact: data.contact.trim(), phone: data.phone.trim(), address: data.address.trim(),
-    remark: data.remark.trim(), unit: data.unit, status: data.status,
+    id: data.id || undefined,
+    code: data.code.trim(),
+    name: data.name.trim(),
+    city: data.city.trim(),
+    cuisine: data.cuisine.trim(),
+    contact: data.contact.trim(),
+    phone: data.phone.trim(),
+    address: data.address.trim(),
+    remark: data.remark.trim(),
+    unit: data.unit,
+    status: data.status,
   };
 }
 
 function attractionInput(data: AttractionRecord) {
   return {
-    id: data.id || undefined, code: data.code.trim(), name: data.name.trim(), area: data.area.trim(), category: data.category,
-    restroomLocation: data.restroomLocation.trim(), remark: data.remark.trim(), unit: data.unit, status: data.status,
+    id: data.id || undefined,
+    code: data.code.trim(),
+    name: data.name.trim(),
+    area: data.area.trim(),
+    category: data.category,
+    restroomLocation: data.restroomLocation.trim(),
+    remark: data.remark.trim(),
+    unit: data.unit,
+    status: data.status,
   };
 }
 
 function transportInput(data: TransportRecord) {
   return {
-    id: data.id || undefined, code: data.code.trim(), name: data.name.trim(), serviceLevel: data.serviceLevel,
-    seats: data.seats, unit: data.unit,
-    phone: data.phone.trim(), status: data.status, remark: data.remark.trim(),
+    id: data.id || undefined,
+    code: data.code.trim(),
+    name: data.name.trim(),
+    serviceLevel: data.serviceLevel,
+    seats: data.seats,
+    unit: data.unit,
+    phone: data.phone.trim(),
+    status: data.status,
+    remark: data.remark.trim(),
   };
 }
 
 function guideInput(data: GuideRecord) {
-  return { id: data.id || undefined, secondLanguage: data.secondLanguage, shopping: data.shopping, dailyPrice: data.dailyPrice, status: data.status };
+  return {
+    id: data.id || undefined,
+    secondLanguage: data.secondLanguage,
+    shopping: data.shopping,
+    dailyPrice: data.dailyPrice,
+    status: data.status,
+  };
 }
 
 function guidePersonInput(data: GuidePersonRecord) {
@@ -141,7 +218,11 @@ function guidePersonInput(data: GuidePersonRecord) {
 }
 
 function normalizeHotel(data: ApiRecord<HotelRecord>): HotelRecord {
-  return { ...data, individualPrice: normalizeMoney(data.individualPrice), groupPrice: data.groupPrice === null ? null : normalizeMoney(data.groupPrice) };
+  return {
+    ...data,
+    individualPrice: normalizeMoney(data.individualPrice),
+    groupPrice: data.groupPrice === null ? null : normalizeMoney(data.groupPrice),
+  };
 }
 
 function normalizeRestaurantPrice(data: ApiRecord<RestaurantPriceRecord>): RestaurantPriceRecord {
@@ -149,7 +230,12 @@ function normalizeRestaurantPrice(data: ApiRecord<RestaurantPriceRecord>): Resta
 }
 
 function normalizeRestaurant(data: RestaurantRecord): RestaurantRecord {
-  return { ...data, prices: (data.prices ?? []).map((price) => normalizeRestaurantPrice(price as unknown as ApiRecord<RestaurantPriceRecord>)) };
+  return {
+    ...data,
+    prices: (data.prices ?? []).map((price) =>
+      normalizeRestaurantPrice(price as unknown as ApiRecord<RestaurantPriceRecord>),
+    ),
+  };
 }
 
 function normalizeAttractionPrice(data: ApiRecord<AttractionPriceRecord>): AttractionPriceRecord {
@@ -163,45 +249,86 @@ function normalizeAttractionPrice(data: ApiRecord<AttractionPriceRecord>): Attra
 }
 
 function normalizeAttraction(data: AttractionRecord): AttractionRecord {
-  return { ...data, prices: (data.prices ?? []).map((price) => normalizeAttractionPrice(price as unknown as ApiRecord<AttractionPriceRecord>)) };
+  return {
+    ...data,
+    prices: (data.prices ?? []).map((price) =>
+      normalizeAttractionPrice(price as unknown as ApiRecord<AttractionPriceRecord>),
+    ),
+  };
 }
 
-function normalizeTransport(data: ApiRecord<TransportRecord>): TransportRecord { return data; }
+function normalizeTransport(data: ApiRecord<TransportRecord>): TransportRecord {
+  return data;
+}
 
 function normalizeGuide(data: ApiRecord<GuideRecord>): GuideRecord {
   return { ...data, dailyPrice: normalizeMoney(data.dailyPrice) };
 }
 
 function contactInput(data: AgencyContactRecord) {
-  return { id: data.id || undefined, name: data.name.trim(), phone: data.phone.trim(), version: data.version };
+  return {
+    id: data.id || undefined,
+    name: data.name.trim(),
+    phone: data.phone.trim(),
+    version: data.version,
+  };
 }
 
 function restaurantPriceInput(data: RestaurantPriceRecord) {
   return {
-    id: data.id || undefined, menuName: data.menuName.trim(), dishDetails: data.dishDetails?.trim() ?? "",
-    unit: data.unit, price: data.price, dinerCount: data.dinerCount || null, remark: data.remark.trim(),
+    id: data.id || undefined,
+    menuName: data.menuName.trim(),
+    dishDetails: data.dishDetails?.trim() ?? "",
+    unit: data.unit,
+    price: data.price,
+    dinerCount: data.dinerCount || null,
+    remark: data.remark.trim(),
     version: data.version,
   };
 }
 
 function attractionPriceInput(data: AttractionPriceRecord) {
   return {
-    id: data.id || undefined, itemType: data.itemType, itemName: data.itemName.trim(), audience: data.audience.trim(),
-    periodName: data.periodName.trim(), startDate: data.startDate || null, endDate: data.endDate || null,
-    rackPrice: data.rackPrice, settlementPrice: data.settlementPrice, unit: data.unit, isFree: data.isFree,
+    id: data.id || undefined,
+    itemType: data.itemType,
+    itemName: data.itemName.trim(),
+    audience: data.audience.trim(),
+    periodName: data.periodName.trim(),
+    startDate: data.startDate || null,
+    endDate: data.endDate || null,
+    rackPrice: data.rackPrice,
+    settlementPrice: data.settlementPrice,
+    unit: data.unit,
+    isFree: data.isFree,
     priceNote: data.priceNote.trim(),
     version: data.version,
   };
 }
 
-const cityApi = createCrud<CityRecord>("cities", (data) => ({ code: data.code.trim(), name: data.name.trim(), province: data.province.trim(), status: data.status }));
+const cityApi = createCrud<CityRecord>("cities", (data) => ({
+  code: data.code.trim(),
+  name: data.name.trim(),
+  province: data.province.trim(),
+  status: data.status,
+}));
 const cities = reactive<CityRecord[]>([]);
 const cityOptions = reactive<CityRecord[]>([]);
 let cityOptionsRequest: Promise<CityRecord[]> | null = null;
-const agencyApi = createCrud<AgencyRecord>("agencies", agencyInput, (data) => ({ ...data, contacts: data.contacts ?? [] }));
+const agencyApi = createCrud<AgencyRecord>("agencies", agencyInput, (data) => ({
+  ...data,
+  contacts: data.contacts ?? [],
+}));
 const hotelApi = createCrud<HotelRecord>("hotels", hotelInput, normalizeHotel);
-const restaurantApi = createCrud<RestaurantRecord>("restaurants", restaurantInput, normalizeRestaurant);
-const attractionApi = createCrud<AttractionRecord>("attractions", attractionInput, normalizeAttraction);
+const restaurantApi = createCrud<RestaurantRecord>(
+  "restaurants",
+  restaurantInput,
+  normalizeRestaurant,
+);
+const attractionApi = createCrud<AttractionRecord>(
+  "attractions",
+  attractionInput,
+  normalizeAttraction,
+);
 const transportApi = createCrud<TransportRecord>("transports", transportInput, normalizeTransport);
 const guideApi = createCrud<GuideRecord>("guides", guideInput, normalizeGuide);
 const guidePersonApi = createCrud<GuidePersonRecord>("guide-people", guidePersonInput);
@@ -232,7 +359,11 @@ function replaceRecords<T>(target: T[], records: T[]): T[] {
 const loadVersions = new WeakMap<object, number>();
 const resourceTotals = new WeakMap<object, number>();
 
-async function loadResourceRecords<T>(target: T[], api: ResourceCrud<T>, query: ResourceListQuery = {}): Promise<T[]> {
+async function loadResourceRecords<T>(
+  target: T[],
+  api: ResourceCrud<T>,
+  query: ResourceListQuery = {},
+): Promise<T[]> {
   const version = (loadVersions.get(target) ?? 0) + 1;
   loadVersions.set(target, version);
   const result = query.page === undefined ? null : await api.getPage({ ...query });
@@ -244,17 +375,40 @@ async function loadResourceRecords<T>(target: T[], api: ResourceCrud<T>, query: 
   return target;
 }
 
-watch(selectedResourceLibrary, () => { cityOptionsRequest = null; cityOptions.splice(0); clearResourceOptionsCache(); }, { flush: "sync" });
+watch(
+  selectedResourceLibrary,
+  () => {
+    cityOptionsRequest = null;
+    cityOptions.splice(0);
+    clearResourceOptionsCache();
+  },
+  { flush: "sync" },
+);
 export const resourceService = {
-  getTotal(records: object) { return resourceTotals.get(records) ?? 0; },
+  getTotal(records: object) {
+    return resourceTotals.get(records) ?? 0;
+  },
   cities,
   cityOptions,
   cityApi,
-  async loadCities(query: ResourceListQuery = {}) { return loadResourceRecords(cities, cityApi, query); },
+  async loadCities(query: ResourceListQuery = {}) {
+    return loadResourceRecords(cities, cityApi, query);
+  },
   loadCityOptions(): Promise<CityRecord[]> {
     const library = selectedResourceLibrary.value;
-    if (!cityOptionsRequest) cityOptionsRequest = request.get<CityRecord[]>(`${RESOURCE_BASE_URL}/cities/options`, {params:{library:selectedResourceLibrary.value}})
-      .then((records) => library === selectedResourceLibrary.value ? replaceRecords(cityOptions, records) : cityOptions).finally(() => { if (library === selectedResourceLibrary.value) cityOptionsRequest = null; });
+    if (!cityOptionsRequest)
+      cityOptionsRequest = request
+        .get<CityRecord[]>(`${RESOURCE_BASE_URL}/cities/options`, {
+          params: { library: selectedResourceLibrary.value },
+        })
+        .then((records) =>
+          library === selectedResourceLibrary.value
+            ? replaceRecords(cityOptions, records)
+            : cityOptions,
+        )
+        .finally(() => {
+          if (library === selectedResourceLibrary.value) cityOptionsRequest = null;
+        });
     return cityOptionsRequest;
   },
   agencies,
@@ -267,13 +421,21 @@ export const resourceService = {
   agencyApi: {
     ...agencyApi,
     getContacts(agencyId: string) {
-      return request.get<AgencyContactRecord[]>(`${RESOURCE_BASE_URL}/agencies/${encodeURIComponent(agencyId)}/contacts`);
+      return request.get<AgencyContactRecord[]>(
+        `${RESOURCE_BASE_URL}/agencies/${encodeURIComponent(agencyId)}/contacts`,
+      );
     },
     createContact(agencyId: string, data: AgencyContactRecord) {
-      return request.post<AgencyContactRecord>(`${RESOURCE_BASE_URL}/agencies/${encodeURIComponent(agencyId)}/contacts`, contactInput(data));
+      return request.post<AgencyContactRecord>(
+        `${RESOURCE_BASE_URL}/agencies/${encodeURIComponent(agencyId)}/contacts`,
+        contactInput(data),
+      );
     },
     updateContact(agencyId: string, contactId: string, data: AgencyContactRecord) {
-      return request.put<AgencyContactRecord>(`${RESOURCE_BASE_URL}/agencies/${encodeURIComponent(agencyId)}/contacts/${encodeURIComponent(contactId)}`, { ...contactInput(data), id: contactId });
+      return request.put<AgencyContactRecord>(
+        `${RESOURCE_BASE_URL}/agencies/${encodeURIComponent(agencyId)}/contacts/${encodeURIComponent(contactId)}`,
+        { ...contactInput(data), id: contactId },
+      );
     },
     async deleteContacts(agencyId: string, ids: string) {
       const baseUrl = `${RESOURCE_BASE_URL}/agencies/${encodeURIComponent(agencyId)}/contacts`;
@@ -334,44 +496,109 @@ export const resourceService = {
   async loadGuidePeople(query: ResourceListQuery = {}) {
     return loadResourceRecords(guidePeople, guidePersonApi, query);
   },
-  async getSelectionOptions(kind: "hotels" | "transports" | "guides" | "agencies", query: ResourceQuery) {
+  async getSelectionOptions(
+    kind: "hotels" | "transports" | "guides" | "agencies",
+    query: ResourceQuery,
+  ) {
     const path = `/resources/selections/${kind}`;
     const params = buildParams(query);
-    return loadResourceOptions(path, params, () => request.get<PageResult<{ id: string; name: string; code?: string; unitCost?: string; secondLanguage?: string; shopping?: boolean; seats?: number; city?: string }>>(path, { params }));
+    return loadResourceOptions(path, params, () =>
+      request.get<
+        PageResult<{
+          id: string;
+          name: string;
+          code?: string;
+          unitCost?: string;
+          secondLanguage?: string;
+          shopping?: boolean;
+          seats?: number;
+          city?: string;
+        }>
+      >(path, { params }),
+    );
   },
   async getPriceOptions(type: "restaurant" | "attraction", query: ResourceListQuery) {
     const path = `/resources/selections/${type}-prices`;
     const params = buildParams({ ...query });
-    const result = await loadResourceOptions(path, params, () => request.get<PageResult<Omit<PriceSelectionItem, "unitCost"> & { unitCost: string }>>(path, { params }));
-    return { ...result, list: result.list.map(item => ({ ...item, unitCost: Number(item.unitCost) })) };
+    const result = await loadResourceOptions(path, params, () =>
+      request.get<PageResult<Omit<PriceSelectionItem, "unitCost"> & { unitCost: string }>>(path, {
+        params,
+      }),
+    );
+    return {
+      ...result,
+      list: result.list.map((item) => ({ ...item, unitCost: Number(item.unitCost) })),
+    };
   },
   async getPriceSelection(type: "restaurant" | "attraction", id: string) {
     const path = `/resources/selections/${type}-prices/${encodeURIComponent(id)}`;
     if (type === "restaurant") {
-      const data = await request.get<{ resource: Omit<RestaurantRecord, "prices" | "priceCount">; price: ApiRecord<RestaurantPriceRecord> }>(path);
-      return { restaurants: [normalizeRestaurant({ ...data.resource, priceCount: 1, prices: [normalizeRestaurantPrice(data.price)] })], attractions: [], hotels: [], transports: [], guides: [] };
+      const data = await request.get<{
+        resource: Omit<RestaurantRecord, "prices" | "priceCount">;
+        price: ApiRecord<RestaurantPriceRecord>;
+      }>(path);
+      return {
+        restaurants: [
+          normalizeRestaurant({
+            ...data.resource,
+            priceCount: 1,
+            prices: [normalizeRestaurantPrice(data.price)],
+          }),
+        ],
+        attractions: [],
+        hotels: [],
+        transports: [],
+        guides: [],
+      };
     }
-    const data = await request.get<{ resource: Omit<AttractionRecord, "prices" | "priceCount">; price: ApiRecord<AttractionPriceRecord> }>(path);
-    return { attractions: [normalizeAttraction({ ...data.resource, priceCount: 1, prices: [normalizeAttractionPrice(data.price)] })], restaurants: [], hotels: [], transports: [], guides: [] };
+    const data = await request.get<{
+      resource: Omit<AttractionRecord, "prices" | "priceCount">;
+      price: ApiRecord<AttractionPriceRecord>;
+    }>(path);
+    return {
+      attractions: [
+        normalizeAttraction({
+          ...data.resource,
+          priceCount: 1,
+          prices: [normalizeAttractionPrice(data.price)],
+        }),
+      ],
+      restaurants: [],
+      hotels: [],
+      transports: [],
+      guides: [],
+    };
   },
   hotelApi,
   restaurantApi: {
     ...restaurantApi,
     async getPrices(restaurantId: string) {
-      const data = await request.get<ApiRecord<RestaurantPriceRecord>[]>(`${RESOURCE_BASE_URL}/restaurants/${encodeURIComponent(restaurantId)}/prices`);
+      const data = await request.get<ApiRecord<RestaurantPriceRecord>[]>(
+        `${RESOURCE_BASE_URL}/restaurants/${encodeURIComponent(restaurantId)}/prices`,
+      );
       return data.map(normalizeRestaurantPrice);
     },
     createPrice(restaurantId: string, data: RestaurantPriceRecord) {
-      return request.post<ApiRecord<RestaurantPriceRecord>>(
-        `${RESOURCE_BASE_URL}/restaurants/${encodeURIComponent(restaurantId)}/prices`,
-        restaurantPriceInput(data)
-      ).then(result => { clearResourceOptionsCache(); return normalizeRestaurantPrice(result); });
+      return request
+        .post<ApiRecord<RestaurantPriceRecord>>(
+          `${RESOURCE_BASE_URL}/restaurants/${encodeURIComponent(restaurantId)}/prices`,
+          restaurantPriceInput(data),
+        )
+        .then((result) => {
+          clearResourceOptionsCache();
+          return normalizeRestaurantPrice(result);
+        });
     },
     updatePrice(restaurantId: string, priceId: string, data: RestaurantPriceRecord) {
-      return request.put<ApiRecord<RestaurantPriceRecord>>(
-        `${RESOURCE_BASE_URL}/restaurants/${encodeURIComponent(restaurantId)}/prices/${encodeURIComponent(priceId)}`,
-        { ...restaurantPriceInput(data), id: priceId }
-      ).then(result => { clearResourceOptionsCache(); return normalizeRestaurantPrice(result); });
+      return request
+        .put<ApiRecord<RestaurantPriceRecord>>(
+          `${RESOURCE_BASE_URL}/restaurants/${encodeURIComponent(restaurantId)}/prices/${encodeURIComponent(priceId)}`,
+          { ...restaurantPriceInput(data), id: priceId },
+        )
+        .then((result) => {
+          clearResourceOptionsCache();
+          return normalizeRestaurantPrice(result);
+        });
     },
     async deletePrices(restaurantId: string, ids: string) {
       const baseUrl = `${RESOURCE_BASE_URL}/restaurants/${encodeURIComponent(restaurantId)}/prices`;
@@ -382,20 +609,32 @@ export const resourceService = {
   attractionApi: {
     ...attractionApi,
     async getPrices(attractionId: string) {
-      const data = await request.get<ApiRecord<AttractionPriceRecord>[]>(`${RESOURCE_BASE_URL}/attractions/${encodeURIComponent(attractionId)}/prices`);
+      const data = await request.get<ApiRecord<AttractionPriceRecord>[]>(
+        `${RESOURCE_BASE_URL}/attractions/${encodeURIComponent(attractionId)}/prices`,
+      );
       return data.map(normalizeAttractionPrice);
     },
     createPrice(attractionId: string, data: AttractionPriceRecord) {
-      return request.post<ApiRecord<AttractionPriceRecord>>(
-        `${RESOURCE_BASE_URL}/attractions/${encodeURIComponent(attractionId)}/prices`,
-        attractionPriceInput(data)
-      ).then(result => { clearResourceOptionsCache(); return normalizeAttractionPrice(result); });
+      return request
+        .post<ApiRecord<AttractionPriceRecord>>(
+          `${RESOURCE_BASE_URL}/attractions/${encodeURIComponent(attractionId)}/prices`,
+          attractionPriceInput(data),
+        )
+        .then((result) => {
+          clearResourceOptionsCache();
+          return normalizeAttractionPrice(result);
+        });
     },
     updatePrice(attractionId: string, priceId: string, data: AttractionPriceRecord) {
-      return request.put<ApiRecord<AttractionPriceRecord>>(
-        `${RESOURCE_BASE_URL}/attractions/${encodeURIComponent(attractionId)}/prices/${encodeURIComponent(priceId)}`,
-        { ...attractionPriceInput(data), id: priceId }
-      ).then(result => { clearResourceOptionsCache(); return normalizeAttractionPrice(result); });
+      return request
+        .put<ApiRecord<AttractionPriceRecord>>(
+          `${RESOURCE_BASE_URL}/attractions/${encodeURIComponent(attractionId)}/prices/${encodeURIComponent(priceId)}`,
+          { ...attractionPriceInput(data), id: priceId },
+        )
+        .then((result) => {
+          clearResourceOptionsCache();
+          return normalizeAttractionPrice(result);
+        });
     },
     async deletePrices(attractionId: string, ids: string) {
       const baseUrl = `${RESOURCE_BASE_URL}/attractions/${encodeURIComponent(attractionId)}/prices`;

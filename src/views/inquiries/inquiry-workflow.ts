@@ -4,8 +4,18 @@ export type InquiryAction = "itinerary_created" | "quote_generated" | "archive" 
 
 const INQUIRY_TRANSITIONS: Record<InquiryStatus, Partial<Record<InquiryAction, InquiryStatus>>> = {
   new: { itinerary_created: "planning", archive: "archived", mark_lost: "lost" },
-  planning: { itinerary_created: "planning", quote_generated: "quoted", archive: "archived", mark_lost: "lost" },
-  quoted: { itinerary_created: "planning", quote_generated: "quoted", archive: "archived", mark_lost: "lost" },
+  planning: {
+    itinerary_created: "planning",
+    quote_generated: "quoted",
+    archive: "archived",
+    mark_lost: "lost",
+  },
+  quoted: {
+    itinerary_created: "planning",
+    quote_generated: "quoted",
+    archive: "archived",
+    mark_lost: "lost",
+  },
   lost: {},
   archived: {},
 };

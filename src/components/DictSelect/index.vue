@@ -23,11 +23,7 @@
     :style="style"
     @change="handleChange"
   >
-    <el-radio
-      v-for="option in options"
-      :key="option.value"
-      :value="option.value"
-    >
+    <el-radio v-for="option in options" :key="option.value" :value="option.value">
       {{ option.label }}
     </el-radio>
   </el-radio-group>
@@ -39,11 +35,7 @@
     :style="style"
     @change="handleChange"
   >
-    <el-checkbox
-      v-for="option in options"
-      :key="option.value"
-      :value="option.value"
-    >
+    <el-checkbox v-for="option in options" :key="option.value" :value="option.value">
       {{ option.label }}
     </el-checkbox>
   </el-checkbox-group>
@@ -97,7 +89,7 @@ const selectedValue = ref<any>(
     ? props.modelValue
     : Array.isArray(props.modelValue)
       ? props.modelValue
-      : undefined
+      : undefined,
 );
 
 // 监听 modelValue 和 options 的变化
@@ -109,7 +101,7 @@ watch(
         selectedValue.value = Array.isArray(newValue) ? newValue : [];
       } else {
         const matchedOption = newOptions.find(
-          (option) => String(option.value) === String(newValue)
+          (option) => String(option.value) === String(newValue),
         );
         selectedValue.value = matchedOption?.value;
       }
@@ -117,7 +109,7 @@ watch(
       selectedValue.value = undefined;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 // 监听 selectedValue 的变化并触发 update:modelValue

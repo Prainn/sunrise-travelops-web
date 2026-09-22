@@ -5,18 +5,12 @@
     :inert="isSaving"
     class="page-container itinerary-page h-auto min-h-full overflow-visible p-0"
   >
-    <el-alert
-      v-if="loadError"
-      :title="loadError"
-      type="error"
-      :closable="false"
-    />
+    <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" />
     <template v-if="inquiry">
-      <header class="itinerary-page__sticky-header sticky z-[10] top-0 [background:var(--page-bg)] [box-shadow:var(--el-box-shadow-light)]">
-        <el-card
-          class="itinerary-page__overview rounded-0! border-0!"
-          shadow="never"
-        >
+      <header
+        class="itinerary-page__sticky-header sticky z-[10] top-0 [background:var(--page-bg)] [box-shadow:var(--el-box-shadow-light)]"
+      >
+        <el-card class="itinerary-page__overview rounded-0! border-0!" shadow="never">
           <el-page-header @back="router.push('/inquiries/list')">
             <template #content>
               <el-tag class="mr-[10px]">
@@ -27,20 +21,11 @@
                 v-model="selectedItineraryId"
                 class="itinerary-page__plan-select w-[min(360px,_45vw)]!"
               >
-                <el-option
-                  v-for="row in rows"
-                  :key="row.id"
-                  :label="row.title"
-                  :value="row.id"
-                />
+                <el-option v-for="row in rows" :key="row.id" :label="row.title" :value="row.id" />
               </el-select>
             </template>
             <template #extra>
-              <el-button
-                v-if="canCreateItinerary"
-                type="primary"
-                @click="openCreateDialog"
-              >
+              <el-button v-if="canCreateItinerary" type="primary" @click="openCreateDialog">
                 {{ $t("itinerary.createTitle") }}
               </el-button>
             </template>
@@ -53,7 +38,9 @@
               <h2 class="m-0 overflow-hidden whitespace-nowrap text-ellipsis text-[18px] mr-2">
                 {{ selectedItinerary.title }}
               </h2>
-              <p class="m-[3px_0_0] flex flex-wrap items-center gap-[6px] text-[14px] text-[var(--el-text-color-secondary)]">
+              <p
+                class="m-[3px_0_0] flex flex-wrap items-center gap-[6px] text-[14px] text-[var(--el-text-color-secondary)]"
+              >
                 <span>{{ selectedItinerary.startDate }} — {{ selectedItinerary.endDate }}</span>
                 <el-tag
                   v-for="pax in selectedItinerary.paxTiers"
@@ -70,53 +57,57 @@
               <el-tag :type="ITINERARY_STATUS_TAG_TYPES[selectedItinerary.status]">
                 {{ $t(`itinerary.statuses.${selectedItinerary.status}`) }}
               </el-tag>
-              <el-button
-                v-if="canEditItineraryBasics"
-                @click="openEditDialog"
-              >
+              <el-button v-if="canEditItineraryBasics" @click="openEditDialog">
                 {{ $t("itinerary.editItinerary") }}
               </el-button>
-              <el-button
-                v-if="!isDraft && canCreateItinerary"
-                @click="copyItinerary"
-              >
+              <el-button v-if="!isDraft && canCreateItinerary" @click="copyItinerary">
                 {{ $t("itinerary.copyForRevision") }}
               </el-button>
             </div>
           </div>
-          <div class="itinerary-page__inquiry-summary grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] items-center gap-[18px] mt-[10px] text-[14px]">
-            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{ $t("inquiry.code") }}</small>{{ inquiry.code }}</span>
-            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{ $t("inquiry.agencyName") }}</small>{{ inquiry.agencyName }}</span>
-            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{ $t("inquiry.contactName") }}</small>{{ inquiry.contactName }}</span>
-            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{ $t("inquiry.plannedDays") }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
-          </div>
           <div
-            v-if="selectedItinerary"
-            class="flex flex-wrap gap-[10px] mt-[12px]"
+            class="itinerary-page__inquiry-summary grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] items-center gap-[18px] mt-[10px] text-[14px]"
           >
+            <span class="min-w-0 flex gap-[6px]"
+              ><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+                $t("inquiry.code")
+              }}</small
+              >{{ inquiry.code }}</span
+            >
+            <span class="min-w-0 flex gap-[6px]"
+              ><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+                $t("inquiry.agencyName")
+              }}</small
+              >{{ inquiry.agencyName }}</span
+            >
+            <span class="min-w-0 flex gap-[6px]"
+              ><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+                $t("inquiry.contactName")
+              }}</small
+              >{{ inquiry.contactName }}</span
+            >
+            <span class="min-w-0 flex gap-[6px]"
+              ><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+                $t("inquiry.plannedDays")
+              }}</small
+              >{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span
+            >
+          </div>
+          <div v-if="selectedItinerary" class="flex flex-wrap gap-[10px] mt-[12px]">
             <el-button
               :type="hasVehiclePlans ? 'primary' : ''"
               @click="openSectionDialog('vehicle')"
             >
-              {{ $t('planning.vehiclePlans') }}
+              {{ $t("planning.vehiclePlans") }}
             </el-button>
-            <el-button
-              :type="hasGuidePlans ? 'primary' : ''"
-              @click="openSectionDialog('guide')"
-            >
-              {{ $t('planning.guideService') }}
+            <el-button :type="hasGuidePlans ? 'primary' : ''" @click="openSectionDialog('guide')">
+              {{ $t("planning.guideService") }}
             </el-button>
-            <el-button
-              :type="hasHotelPlans ? 'primary' : ''"
-              @click="openSectionDialog('hotel')"
-            >
-              {{ $t('itinerary.hotelPlans') }}
+            <el-button :type="hasHotelPlans ? 'primary' : ''" @click="openSectionDialog('hotel')">
+              {{ $t("itinerary.hotelPlans") }}
             </el-button>
-            <el-button
-              :type="hasPriceItems ? 'primary' : ''"
-              @click="openSectionDialog('price')"
-            >
-              {{ $t('identity.prices') }}
+            <el-button :type="hasPriceItems ? 'primary' : ''" @click="openSectionDialog('price')">
+              {{ $t("identity.prices") }}
             </el-button>
           </div>
         </el-card>
@@ -140,10 +131,7 @@
               </h3>
             </div>
           </div>
-          <template
-            v-for="(day, index) in selectedItinerary.dailyPlans"
-            :key="day.id"
-          >
+          <template v-for="(day, index) in selectedItinerary.dailyPlans" :key="day.id">
             <ItineraryDayCard
               :ref="(card) => setDayCard(day.id, card)"
               :day="day"
@@ -157,44 +145,36 @@
               @update-meal="(slot, included) => updateMeal(index, slot, included)"
               @select-meal="openResourceDialog(day.id, $event)"
               @remove-item="removeItem(day.id, $event)"
-              @update-item-quantity="(itemIndex, quantity) => updateItemQuantity(day.id, itemIndex, quantity)"
+              @update-item-quantity="
+                (itemIndex, quantity) => updateItemQuantity(day.id, itemIndex, quantity)
+              "
             />
           </template>
         </main>
 
-        <footer class="itinerary-page__sticky-footer border-0! rounded-0! sticky z-[10] bottom-0 flex justify-between items-center min-h-[64px] p-[12px_18px] [background:var(--el-bg-color)] [box-shadow:var(--el-box-shadow-light)]">
-          <div class="itinerary-page__footer-summary text-[var(--el-text-color-secondary)] text-[14px]">
+        <footer
+          class="itinerary-page__sticky-footer border-0! rounded-0! sticky z-[10] bottom-0 flex justify-between items-center min-h-[64px] p-[12px_18px] [background:var(--el-bg-color)] [box-shadow:var(--el-box-shadow-light)]"
+        >
+          <div
+            class="itinerary-page__footer-summary text-[var(--el-text-color-secondary)] text-[14px]"
+          >
             {{ $t("itinerary.duration", itineraryDuration(selectedItinerary.dailyPlans)) }} ·
             {{ $t("itinerary.resourceItemCount", { count: itemCount }) }}
           </div>
           <div class="itinerary-page__footer-actions flex gap-[12px]">
-            <el-button
-              :disabled="!canSaveItinerary"
-              @click="saveItinerary"
-            >
+            <el-button :disabled="!canSaveItinerary" @click="saveItinerary">
               {{ $t("itinerary.save") }}
             </el-button>
-            <el-button
-              type="primary"
-              @click="isQuoteDrawerVisible = true"
-            >
+            <el-button type="primary" @click="isQuoteDrawerVisible = true">
               {{ $t("itinerary.viewQuote") }}
             </el-button>
           </div>
         </footer>
       </template>
 
-      <el-card
-        v-else
-        class="page-content"
-        shadow="never"
-      >
+      <el-card v-else class="page-content" shadow="never">
         <el-empty :description="$t('itinerary.noPlans')">
-          <el-button
-            v-if="canCreateItinerary"
-            type="primary"
-            @click="openCreateDialog"
-          >
+          <el-button v-if="canCreateItinerary" type="primary" @click="openCreateDialog">
             {{ $t("itinerary.createTitle") }}
           </el-button>
         </el-empty>
@@ -294,18 +274,11 @@
           role="alert"
         >
           <h3 class="m-0 text-[18px]">
-            {{ $t('itinerary.validation.title') }}
+            {{ $t("itinerary.validation.title") }}
           </h3>
           <ul>
-            <li
-              v-for="(issue, index) in validationIssues"
-              :key="index"
-            >
-              <el-button
-                link
-                type="danger"
-                @click="locateIssue(issue.target)"
-              >
+            <li v-for="(issue, index) in validationIssues" :key="index">
+              <el-button link type="danger" @click="locateIssue(issue.target)">
                 {{ $t(issue.key, issue.params ?? {}) }}
               </el-button>
             </li>
@@ -319,29 +292,22 @@
           role="status"
           :aria-label="$t('itinerary.quoteCalculating')"
         />
-        <el-alert
-          v-if="quoteError"
-          type="error"
-          :closable="false"
-          class="mb-3"
-        >
-          {{ $t('itinerary.quoteCalculationFailed') }}
-          <el-button
-            link
-            type="primary"
-            @click="retryQuote"
-          >
-            {{ $t('itinerary.retryQuoteCalculation') }}
+        <el-alert v-if="quoteError" type="error" :closable="false" class="mb-3">
+          {{ $t("itinerary.quoteCalculationFailed") }}
+          <el-button link type="primary" @click="retryQuote">
+            {{ $t("itinerary.retryQuoteCalculation") }}
           </el-button>
         </el-alert>
         <ItineraryQuotePanel
           v-if="selectedItinerary"
           :inert="isSaving || quotePending"
           :quote="selectedItinerary.quote"
+          :guide-plans="selectedItinerary.guidePlans"
+          :pax-tiers="selectedItinerary.paxTiers"
           :calculation="quoteCalculation"
           :calculation-current="quoteCurrent"
           :calculation-pending="quotePending"
-          :destinations="selectedItinerary.destinations"
+          :destinations="quoteDestinations"
           :item-count="itemCount"
           :duration="itineraryDuration(selectedItinerary.dailyPlans)"
           :editable="priceEditable"
@@ -354,19 +320,13 @@
             :loading="isGeneratingPdf"
             @click="downloadOriginal"
           >
-            {{ $t('itinerary.downloadOriginal') }}
+            {{ $t("itinerary.downloadOriginal") }}
           </el-button>
-          <el-button
-            v-if="!isDraft && canCreateItinerary"
-            @click="copyItinerary"
-          >
-            {{ $t('itinerary.copyForRevision') }}
+          <el-button v-if="!isDraft && canCreateItinerary" @click="copyItinerary">
+            {{ $t("itinerary.copyForRevision") }}
           </el-button>
-          <el-button
-            v-if="canSaveItinerary"
-            @click="saveItinerary"
-          >
-            {{ $t('itinerary.save') }}
+          <el-button v-if="canSaveItinerary" @click="saveItinerary">
+            {{ $t("itinerary.save") }}
           </el-button>
           <el-button @click="isQuoteDrawerVisible = false">
             {{ $t("common.close") }}
@@ -389,10 +349,7 @@
       :title="$t('itinerary.inquiryNotFound')"
     >
       <template #extra>
-        <el-button
-          type="primary"
-          @click="router.push({ name: 'InquiryList' })"
-        >
+        <el-button type="primary" @click="router.push({ name: 'InquiryList' })">
           {{ $t("common.goBack") }}
         </el-button>
       </template>
@@ -440,9 +397,11 @@ async function confirmAction(key: string, params: Record<string, unknown> = {}) 
       t(isDayCountMismatch ? "common.warning" : "common.tip"),
       {
         type: "warning",
-        confirmButtonText: isDayCountMismatch ? t("itinerary.generateDespiteMismatch") : t("common.confirm"),
+        confirmButtonText: isDayCountMismatch
+          ? t("itinerary.generateDespiteMismatch")
+          : t("common.confirm"),
         cancelButtonText: t("common.cancel"),
-      }
+      },
     );
     return true;
   } catch {
@@ -451,19 +410,77 @@ async function confirmAction(key: string, params: Record<string, unknown> = {}) 
 }
 
 const {
-  isSaving, isLoading, loadError, addResourceItem, canCreateItinerary, canEditItineraryBasics, canGeneratePdf, canSaveItinerary, contentEditable, copyItinerary,
-  closePdfPreview, confirmPdfDownload, destinationOptions, guestCount, handleGeneratePdf, inquiry, isGeneratingPdf,
-  isEditingPlan, isPdfPreviewVisible, isPlanDialogVisible, isResourceDialogVisible,
-  isGuideDialogVisible, isGuideLoading, isGuideMissing,
-  isDraft, itemCount, itineraryForm, loadDestinationResourceOptions, openCreateDialog, openResourceDialog, priceEditable, quoteCalculation,
-  quotePending, quoteError, quoteCurrent, retryQuote,
-  openEditDialog, pdfPreviewUrl, removeItem, router, rows, saveItinerary, selectedItinerary, selectedItineraryId,
-  resourceMealSlot, resourceCurrentItem, updateMeal, updateQuoteSettings,
-  canCreateGuide, createGuide, guideForm, guideLanguage, guideShopping, openGuideCreateDialog, updateGuideType,
-  validationIssues, isDownloadingPdf, canDownloadOriginal, downloadOriginal,
+  isSaving,
+  isLoading,
+  loadError,
+  addResourceItem,
+  canCreateItinerary,
+  canEditItineraryBasics,
+  canGeneratePdf,
+  canSaveItinerary,
+  contentEditable,
+  copyItinerary,
+  closePdfPreview,
+  confirmPdfDownload,
+  destinationOptions,
+  guestCount,
+  handleGeneratePdf,
+  inquiry,
+  isGeneratingPdf,
+  isEditingPlan,
+  isPdfPreviewVisible,
+  isPlanDialogVisible,
+  isResourceDialogVisible,
+  isGuideDialogVisible,
+  isGuideLoading,
+  isGuideMissing,
+  isDraft,
+  itemCount,
+  itineraryForm,
+  loadDestinationResourceOptions,
+  openCreateDialog,
+  openResourceDialog,
+  priceEditable,
+  quoteCalculation,
+  quotePending,
+  quoteError,
+  quoteCurrent,
+  retryQuote,
+  openEditDialog,
+  pdfPreviewUrl,
+  removeItem,
+  router,
+  rows,
+  saveItinerary,
+  selectedItinerary,
+  selectedItineraryId,
+  resourceMealSlot,
+  resourceCurrentItem,
+  updateMeal,
+  updateQuoteSettings,
+  canCreateGuide,
+  createGuide,
+  guideForm,
+  guideLanguage,
+  guideShopping,
+  openGuideCreateDialog,
+  updateGuideType,
+  validationIssues,
+  isDownloadingPdf,
+  canDownloadOriginal,
+  downloadOriginal,
   submitItineraryPlan,
-  clearHotelPlan, updateDayField, updateHotelPlanSelection, updateItemQuantity, updateQuoteOption,
-  updateVehiclePlan, updateHotelCost, updateHotelRate, updateGuidePrice, passengerCount, resourceDestination,
+  clearHotelPlan,
+  updateDayField,
+  updateHotelPlanSelection,
+  updateItemQuantity,
+  updateQuoteOption,
+  updateVehiclePlan,
+  updateHotelCost,
+  updateHotelRate,
+  updateGuidePrice,
+  passengerCount,
+  resourceDestination,
 } = useItineraryWorkspace({
   confirm: confirmAction,
   error: (key) => ElMessage.error(t(key)),
@@ -472,15 +489,31 @@ const {
   translate: t,
 });
 
-const hasVehiclePlans = computed(() => selectedItinerary.value?.vehiclePlans.some(plan => plan.arrangements.length) ?? false);
+const hasVehiclePlans = computed(
+  () => selectedItinerary.value?.vehiclePlans.some((plan) => plan.arrangements.length) ?? false,
+);
 const hasGuidePlans = computed(() => Boolean(selectedItinerary.value?.guidePlans.length));
-const hasHotelPlans = computed(() => selectedItinerary.value?.hotelPlans.some(plan => plan.hotels.length) ?? false);
-const hasPriceItems = computed(() => Boolean(selectedItinerary.value && (
-  selectedItinerary.value.dailyPlans.some(day => day.items.length)
-  || hasHotelPlans.value
-  || hasGuidePlans.value
-  || hasVehiclePlans.value
-)));
+const hasHotelPlans = computed(
+  () => selectedItinerary.value?.hotelPlans.some((plan) => plan.hotels.length) ?? false,
+);
+const quoteDestinations = computed(() => {
+  const plan = selectedItinerary.value;
+  if (!plan) return [];
+  const destinations = new Set(plan.destinations);
+  const dailyOrder = plan.dailyPlans
+    .map((day) => day.destination)
+    .filter((destination) => destinations.has(destination));
+  return [...new Set([...dailyOrder, ...plan.destinations])];
+});
+const hasPriceItems = computed(() =>
+  Boolean(
+    selectedItinerary.value &&
+    (selectedItinerary.value.dailyPlans.some((day) => day.items.length) ||
+      hasHotelPlans.value ||
+      hasGuidePlans.value ||
+      hasVehiclePlans.value),
+  ),
+);
 
 function setSectionDialogVisible(section: SectionDialog, visible: boolean) {
   if (section === "vehicle") isVehiclePlansDialogVisible.value = visible;
@@ -517,7 +550,7 @@ function cloneItinerary(plan: ItineraryRecord) {
 }
 
 async function saveSectionDialog(section: SectionDialog) {
-  if (activeSectionDialog.value !== section || !await saveItinerary()) return;
+  if (activeSectionDialog.value !== section || !(await saveItinerary())) return;
   activeSectionDialog.value = undefined;
   sectionDialogSnapshot.value = undefined;
   setSectionDialogVisible(section, false);
@@ -540,7 +573,9 @@ function setDayCard(id: string, card: unknown) {
 async function locateIssue(target: string) {
   if (target.startsWith("day-")) dayCards.get(target.slice(4))?.expand();
   if (target === "quote") {
-    document.querySelector(".quote-panel__settings")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document
+      .querySelector(".quote-panel__settings")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
     return;
   }
   isQuoteDrawerVisible.value = false;
@@ -554,5 +589,7 @@ onMounted(loadDestinationResourceOptions);
 </script>
 
 <style scoped>
-.itinerary-page__overview :deep(.el-card__body) { padding: 14px 18px 12px; }
+.itinerary-page__overview :deep(.el-card__body) {
+  padding: 14px 18px 12px;
+}
 </style>

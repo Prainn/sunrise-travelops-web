@@ -5,7 +5,12 @@ import { computed, ref, watch } from "vue";
 import { inquiryService } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
 import { useUserStore } from "@/stores/user";
-import type { ItineraryDailyItemType, ItineraryRecord, ItineraryResourceItem, MealSlot } from "@/types/itinerary";
+import type {
+  ItineraryDailyItemType,
+  ItineraryRecord,
+  ItineraryResourceItem,
+  MealSlot,
+} from "@/types/itinerary";
 import type { GuideRecord } from "@/types/resource";
 import { hasUserPermission } from "@/utils";
 import { isInquiryReadOnly } from "../inquiry-workflow";
@@ -31,10 +36,14 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const selection = useItinerarySelection();
   const { inquiry, inquiryId, itineraryStore, selectedItinerary, selectedItineraryId } = selection;
   const savedPrices = new Map<string, ItineraryRecord>();
-  watch(() => [selectedItinerary.value?.id, selectedItinerary.value?.version], () => {
-    const plan = selectedItinerary.value;
-    if (plan) savedPrices.set(plan.id, JSON.parse(JSON.stringify(plan)) as ItineraryRecord);
-  }, {immediate: true, flush: 'post'});
+  watch(
+    () => [selectedItinerary.value?.id, selectedItinerary.value?.version],
+    () => {
+      const plan = selectedItinerary.value;
+      if (plan) savedPrices.set(plan.id, JSON.parse(JSON.stringify(plan)) as ItineraryRecord);
+    },
+    { immediate: true, flush: "post" },
+  );
   const isPlanDialogVisible = ref(false);
   const isEditingPlan = ref(false);
   const isResourceDialogVisible = ref(false);
@@ -44,46 +53,83 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const isGuideSaving = ref(false);
   const guideLanguage = ref("");
   const guideShopping = ref(false);
-  const guideForm = ref<GuideRecord>({ id: "", code: "", name: "", secondLanguage: "none", shopping: false, dailyPrice: 0, status: "enabled" });
+  const guideForm = ref<GuideRecord>({
+    id: "",
+    code: "",
+    name: "",
+    secondLanguage: "none",
+    shopping: false,
+    dailyPrice: 0,
+    status: "enabled",
+  });
   const resourceTargetDayId = ref("");
   const resourceMealSlot = ref<MealSlot | null>(null);
-  const resourceCurrentItem = computed(() => selectedItinerary.value?.dailyPlans
-    .find(day => day.id === resourceTargetDayId.value)?.items
-    .find(item => item.type === "restaurant" && item.mealSlot === resourceMealSlot.value));
+  const resourceCurrentItem = computed(() =>
+    selectedItinerary.value?.dailyPlans
+      .find((day) => day.id === resourceTargetDayId.value)
+      ?.items.find(
+        (item) => item.type === "restaurant" && item.mealSlot === resourceMealSlot.value,
+      ),
+  );
   const validationIssues = ref<PdfValidationIssue[]>([]);
-  const inquiryReadOnly = computed(() => inquiry.value ? isInquiryReadOnly(inquiry.value.status) : true);
+  const inquiryReadOnly = computed(() =>
+    inquiry.value ? isInquiryReadOnly(inquiry.value.status) : true,
+  );
   const isDraft = computed(() => selectedItinerary.value?.status === "draft");
-  const canCreateItinerary = computed(() => !inquiryReadOnly.value && hasUserPermission(userStore.userInfo, "itinerary:create"));
-  const contentFormVisible = computed(() => Boolean(
-    selectedItinerary.value
-    && !inquiryReadOnly.value
-    && canPerformItineraryOperation(selectedItinerary.value.status, "edit_content")
-    && hasUserPermission(userStore.userInfo, "itinerary:update")
-  ));
-  const priceFormVisible = computed(() => Boolean(
-    selectedItinerary.value
-    && !inquiryReadOnly.value
-    && canPerformItineraryOperation(selectedItinerary.value.status, "edit_price")
-    && hasUserPermission(userStore.userInfo, "itinerary:price")
-  ));
+  const canCreateItinerary = computed(
+    () => !inquiryReadOnly.value && hasUserPermission(userStore.userInfo, "itinerary:create"),
+  );
+  const contentFormVisible = computed(() =>
+    Boolean(
+      selectedItinerary.value &&
+      !inquiryReadOnly.value &&
+      canPerformItineraryOperation(selectedItinerary.value.status, "edit_content") &&
+      hasUserPermission(userStore.userInfo, "itinerary:update"),
+    ),
+  );
+  const priceFormVisible = computed(() =>
+    Boolean(
+      selectedItinerary.value &&
+      !inquiryReadOnly.value &&
+      canPerformItineraryOperation(selectedItinerary.value.status, "edit_price") &&
+      hasUserPermission(userStore.userInfo, "itinerary:price"),
+    ),
+  );
   const contentEditable = computed(() => contentFormVisible.value);
   const priceEditable = computed(() => priceFormVisible.value && !isSaving.value);
-  const canGeneratePdf = computed(() => Boolean(
-    selectedItinerary.value
-    && !isSaving.value && !inquiryReadOnly.value
-    && canPerformItineraryOperation(selectedItinerary.value.status, "generate_pdf")
-    && hasUserPermission(userStore.userInfo, "itinerary:pdf")
-  ));
+  const canGeneratePdf = computed(() =>
+    Boolean(
+      selectedItinerary.value &&
+      !isSaving.value &&
+      !inquiryReadOnly.value &&
+      canPerformItineraryOperation(selectedItinerary.value.status, "generate_pdf") &&
+      hasUserPermission(userStore.userInfo, "itinerary:pdf"),
+    ),
+  );
   const canSaveItinerary = computed(() => contentEditable.value || priceEditable.value);
   const canEditItineraryBasics = computed(() => contentEditable.value);
-  const canCreateGuide = computed(() => contentEditable.value && hasUserPermission(userStore.userInfo, "resource:guide:create"));
-  const guestCount = computed(() => selectedItinerary.value
-    ? Math.max(0, ...selectedItinerary.value.paxTiers) : 0);
-  const allItems = computed(() => selectedItinerary.value?.dailyPlans.flatMap((day) => day.items) ?? []);
-  const dailyItems = computed(() => allItems.value.filter((item) => dailyItemTypes.has(item.type as ItineraryDailyItemType)));
+  const canCreateGuide = computed(
+    () => contentEditable.value && hasUserPermission(userStore.userInfo, "resource:guide:create"),
+  );
+  const guestCount = computed(() =>
+    selectedItinerary.value ? Math.max(0, ...selectedItinerary.value.paxTiers) : 0,
+  );
+  const allItems = computed(
+    () => selectedItinerary.value?.dailyPlans.flatMap((day) => day.items) ?? [],
+  );
+  const dailyItems = computed(() =>
+    allItems.value.filter((item) => dailyItemTypes.has(item.type as ItineraryDailyItemType)),
+  );
   const itemCount = computed(() => dailyItems.value.length);
-  const destinationOptions = computed(() => resourceService.cityOptions.filter((city) => city.status === "enabled").map((city) => city.name));
-  const quote = useItineraryQuote(selectedItinerary, () => contentFormVisible.value || priceFormVisible.value);
+  const destinationOptions = computed(() =>
+    resourceService.cityOptions
+      .filter((city) => city.status === "enabled")
+      .map((city) => city.name),
+  );
+  const quote = useItineraryQuote(
+    selectedItinerary,
+    () => contentFormVisible.value || priceFormVisible.value,
+  );
   const quoteCalculation = quote.calculation;
   const editor = useItineraryEditor({
     inquiry,
@@ -120,19 +166,29 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     }
   }
 
-  watch(() => selectedItinerary.value?.id, () => {
-    const guide = selectedItinerary.value?.guidePlans?.[0];
-    guideLanguage.value = guide?.secondLanguage ?? "";
-    guideShopping.value = guide?.shopping ?? false;
-    isGuideMissing.value = false;
-  }, { immediate: true });
+  watch(
+    () => selectedItinerary.value?.id,
+    () => {
+      const guide = selectedItinerary.value?.guidePlans?.[0];
+      guideLanguage.value = guide?.secondLanguage ?? "";
+      guideShopping.value = guide?.shopping ?? false;
+      isGuideMissing.value = false;
+    },
+    { immediate: true },
+  );
 
   watch(
-    () => [selectedItinerary.value?.id, inquiry.value?.plannedDays, selectedItinerary.value?.guidePlans[0]] as const,
+    () =>
+      [
+        selectedItinerary.value?.id,
+        inquiry.value?.plannedDays,
+        selectedItinerary.value?.guidePlans[0],
+      ] as const,
     () => {
       const plan = selectedItinerary.value;
       const days = inquiry.value?.plannedDays;
-      if (plan?.status === "draft" && days && plan.guidePlans[0]) plan.guidePlans[0].serviceDays = days;
+      if (plan?.status === "draft" && days && plan.guidePlans[0])
+        plan.guidePlans[0].serviceDays = days;
     },
     { immediate: true, flush: "sync" },
   );
@@ -165,7 +221,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       }
       const record = await resourceService.guideApi.getDetail(match.id);
       if (token !== guideSelectionVersion || selectedItinerary.value !== plan) return;
-      const index = resourceService.guides.findIndex(item => item.id === record.id);
+      const index = resourceService.guides.findIndex((item) => item.id === record.id);
       if (index >= 0) resourceService.guides.splice(index, 1, record);
       else resourceService.guides.push(record);
       editor.updateGuideSelection(record);
@@ -179,8 +235,13 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   function openGuideCreateDialog() {
     if (!canCreateGuide.value || !guideLanguage.value) return;
     guideForm.value = {
-      id: "", code: "", name: "", status: "enabled", dailyPrice: 0,
-      secondLanguage: guideLanguage.value, shopping: guideShopping.value,
+      id: "",
+      code: "",
+      name: "",
+      status: "enabled",
+      dailyPrice: 0,
+      secondLanguage: guideLanguage.value,
+      shopping: guideShopping.value,
     };
     isGuideDialogVisible.value = true;
   }
@@ -204,9 +265,11 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     }
   }
 
-  async function selectHotelPlanSelection(...args: Parameters<typeof editor.updateHotelPlanSelection>) {
+  async function selectHotelPlanSelection(
+    ...args: Parameters<typeof editor.updateHotelPlanSelection>
+  ) {
     const id = args[args.length - 1] as string;
-    const key = 'HotelPlanSelection:' + args.slice(0, -1).join(':');
+    const key = "HotelPlanSelection:" + args.slice(0, -1).join(":");
     const token = (selectionVersions.get(key) ?? 0) + 1;
     selectionVersions.set(key, token);
     const plan = selectedItinerary.value;
@@ -214,17 +277,19 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       if (id) {
         const record = await resourceService.hotelApi.getDetail(id);
         if (selectionVersions.get(key) !== token || selectedItinerary.value !== plan) return;
-        const index = resourceService.hotels.findIndex(item => item.id === id);
+        const index = resourceService.hotels.findIndex((item) => item.id === id);
         if (index >= 0) resourceService.hotels.splice(index, 1, record);
         else resourceService.hotels.push(record);
       }
       editor.updateHotelPlanSelection(...args);
-    } catch { messages.error("request.failed"); }
+    } catch {
+      messages.error("request.failed");
+    }
   }
 
   async function openCreateDialog() {
     if (!canCreateItinerary.value) return;
-    if (!await loadDestinationResourceOptions()) return;
+    if (!(await loadDestinationResourceOptions())) return;
     isEditingPlan.value = false;
     itineraryForm.value = { ...editor.createEmptyItinerary(), code: "" };
     isPlanDialogVisible.value = true;
@@ -247,30 +312,38 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     isSaving.value = true;
     try {
       const saved = await inquiryService.createItinerary(created);
-      const index = itineraryStore.findIndex(p => p.id === created.id);
-      if (index >= 0) itineraryStore.splice(index,1,saved);
+      const index = itineraryStore.findIndex((p) => p.id === created.id);
+      if (index >= 0) itineraryStore.splice(index, 1, saved);
       selectedItineraryId.value = saved.id;
       isPlanDialogVisible.value = false;
       await refreshInquiry();
       messages.success("common.createSuccess");
     } catch (error) {
-      const index = itineraryStore.findIndex(p => p.id === created.id);
-      if (index >= 0) itineraryStore.splice(index,1);
+      const index = itineraryStore.findIndex((p) => p.id === created.id);
+      if (index >= 0) itineraryStore.splice(index, 1);
       selectedItineraryId.value = previousId;
       if (inquiry.value && previousStatus) inquiry.value.status = previousStatus;
       reportError(error);
-    } finally { isSaving.value = false; }
+    } finally {
+      isSaving.value = false;
+    }
   }
   function reportError(error: unknown) {
     const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
     messages.error(code ? `apiErrors.${code}` : "request.failed");
   }
   async function refreshInquiry() {
-    try { if (inquiry.value) Object.assign(inquiry.value, await inquiryService.detail(inquiryId.value)); }
-    catch (error) { reportError(error); }
+    try {
+      if (inquiry.value) Object.assign(inquiry.value, await inquiryService.detail(inquiryId.value));
+    } catch (error) {
+      reportError(error);
+    }
   }
   async function submitItineraryPlan(record: ItineraryRecord) {
-    if (!isEditingPlan.value) { await createItinerary(record); return; }
+    if (!isEditingPlan.value) {
+      await createItinerary(record);
+      return;
+    }
     const updated = editor.updateItineraryBasics(record);
     if (!updated) return;
     if (await saveItinerary()) isPlanDialogVisible.value = false;
@@ -285,7 +358,8 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
 
   function addResourceItem(item: ItineraryResourceItem) {
     const editing = Boolean(resourceCurrentItem.value);
-    if (editor.addResourceItem(resourceTargetDayId.value, item)) messages.success(editing ? "itinerary.resourceUpdated" : "itinerary.resourceAdded");
+    if (editor.addResourceItem(resourceTargetDayId.value, item))
+      messages.success(editing ? "itinerary.resourceUpdated" : "itinerary.resourceAdded");
   }
 
   async function copyItinerary() {
@@ -293,23 +367,39 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     if (!source || !canCreateItinerary.value || isSaving.value) return;
     isSaving.value = true;
     try {
-      const saved = await inquiryService.copyItinerary(source,`${source.title} ${messages.translate("itinerary.copySuffix")}`);
-      itineraryStore.unshift(saved); selectedItineraryId.value = saved.id;
-      await refreshInquiry(); messages.success("itinerary.copySuccess");
-    } catch (error) { reportError(error); } finally { isSaving.value = false; }
+      const saved = await inquiryService.copyItinerary(
+        source,
+        `${source.title} ${messages.translate("itinerary.copySuffix")}`,
+      );
+      itineraryStore.unshift(saved);
+      selectedItineraryId.value = saved.id;
+      await refreshInquiry();
+      messages.success("itinerary.copySuccess");
+    } catch (error) {
+      reportError(error);
+    } finally {
+      isSaving.value = false;
+    }
   }
   async function saveItinerary(): Promise<boolean> {
     const plan = selectedItinerary.value;
     if (!plan || !canSaveItinerary.value || isSaving.value) return false;
-    if (missingPriceReasons(plan,savedPrices.get(plan.id)).length) { messages.error("identity.reasonPlaceholder"); return false; }
+    if (missingPriceReasons(plan, savedPrices.get(plan.id)).length) {
+      messages.error("identity.reasonPlaceholder");
+      return false;
+    }
     isSaving.value = true;
     try {
       const saved = await inquiryService.saveItinerary(plan);
-      Object.assign(plan,saved);
+      Object.assign(plan, saved);
       messages.success("itinerary.saveSuccess");
       return true;
-    } catch (error) { reportError(error); return false; }
-    finally { isSaving.value = false; }
+    } catch (error) {
+      reportError(error);
+      return false;
+    } finally {
+      isSaving.value = false;
+    }
   }
 
   const isPreparingPdf = ref(false);
@@ -317,35 +407,42 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     if (isPreparingPdf.value || pdf.isGeneratingPdf.value) return;
     isPreparingPdf.value = true;
     try {
-    const validation = pdf.validatePdf();
-    if (!validation) return;
-    validationIssues.value = validation.issues;
-    if (validation.issues.length) return;
-    if (validation.dayCountMismatch) {
-      const confirmed = await messages.confirm("itinerary.dayCountMismatch", {
-        planned: validation.plannedDays,
-        plannedNights: Math.max(validation.plannedDays - 1, 0),
-        actualNights: itineraryDuration(selectedItinerary.value!.dailyPlans).nights,
-        actual: validation.actualDays,
-      });
-      if (!confirmed) return;
+      const validation = pdf.validatePdf();
+      if (!validation) return;
+      validationIssues.value = validation.issues;
+      if (validation.issues.length) return;
+      if (validation.dayCountMismatch) {
+        const confirmed = await messages.confirm("itinerary.dayCountMismatch", {
+          planned: validation.plannedDays,
+          plannedNights: Math.max(validation.plannedDays - 1, 0),
+          actualNights: itineraryDuration(selectedItinerary.value!.dailyPlans).nights,
+          actual: validation.actualDays,
+        });
+        if (!confirmed) return;
+      }
+      try {
+        if (!(await saveItinerary())) return;
+        await pdf.generatePreview();
+      } catch {
+        messages.error("itinerary.pdfGenerationFailed");
+      }
+    } finally {
+      isPreparingPdf.value = false;
     }
-    try {
-      if (!await saveItinerary()) return;
-      await pdf.generatePreview();
-    } catch {
-      messages.error("itinerary.pdfGenerationFailed");
-    }
-    } finally { isPreparingPdf.value = false; }
   }
 
   async function confirmPdfDownload() {
     if (pdf.isDownloadingPdf.value) return;
     try {
-      if (!await pdf.confirmPdfDownload()) { messages.error("itinerary.previewChanged"); return; }
+      if (!(await pdf.confirmPdfDownload())) {
+        messages.error("itinerary.previewChanged");
+        return;
+      }
       await refreshInquiry();
       messages.success("itinerary.pdfGenerated");
-    } catch (error) { reportError(error); }
+    } catch (error) {
+      reportError(error);
+    }
   }
 
   return {
@@ -356,7 +453,13 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     resourceMealSlot,
     resourceCurrentItem,
     canDownloadOriginal: pdf.canDownloadOriginal,
-    downloadOriginal: async () => { try { await pdf.downloadOriginal(); } catch (error) { reportError(error); } },
+    downloadOriginal: async () => {
+      try {
+        await pdf.downloadOriginal();
+      } catch (error) {
+        reportError(error);
+      }
+    },
     updateGuideType,
     updateMeal: editor.updateMeal,
     updateQuoteSettings: editor.updateQuoteSettings,
@@ -374,7 +477,11 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     destinationOptions,
     guestCount,
     passengerCount: computed(() => guestCount.value),
-    resourceDestination: computed(() => selectedItinerary.value?.dailyPlans.find(day => day.id === resourceTargetDayId.value)?.destination ?? ""),
+    resourceDestination: computed(
+      () =>
+        selectedItinerary.value?.dailyPlans.find((day) => day.id === resourceTargetDayId.value)
+          ?.destination ?? "",
+    ),
     handleGeneratePdf,
     inquiry,
     isEditingPlan,

@@ -17,7 +17,7 @@
     @update:model-value="select($event || '')"
   >
     <el-option
-      v-if="modelValue && !items.some(item => item.id === modelValue)"
+      v-if="modelValue && !items.some((item) => item.id === modelValue)"
       :value="modelValue"
       :label="selected?.id === modelValue ? selected.label : selectedLabel || modelValue"
     />
@@ -32,10 +32,7 @@
       <div class="remote-select-option flex justify-between gap-[16px]">
         <span>{{ item.label }}</span>
 
-        <strong
-          v-if="item.description"
-          class="font-500 text-[var(--el-color-primary)]"
-        >
+        <strong v-if="item.description" class="font-500 text-[var(--el-color-primary)]">
           {{ item.description }}
         </strong>
       </div>
@@ -63,9 +60,7 @@ import type { RemoteSelectOption } from "./types";
 const props = withDefaults(
   defineProps<{
     modelValue: string;
-    loadOptions: (
-      query: RemoteOptionsQuery,
-    ) => Promise<RemoteOptionsPage<RemoteSelectOption>>;
+    loadOptions: (query: RemoteOptionsQuery) => Promise<RemoteOptionsPage<RemoteSelectOption>>;
     queryKey?: string;
     selectedLabel?: string;
     disabled?: boolean;
@@ -95,13 +90,13 @@ const {
   loadMore,
   reset,
 } = useRemoteOptions(
-  query => props.loadOptions(query),
+  (query) => props.loadOptions(query),
   () => ElMessage.error(t("request.failed")),
 );
 
 function select(value: string) {
   selected.value =
-    items.value.find(item => item.id === value) ??
+    items.value.find((item) => item.id === value) ??
     (selected.value?.id === value ? selected.value : undefined);
 
   emit("update:modelValue", value);
@@ -110,11 +105,7 @@ function select(value: string) {
 function handleVisibleChange(value: boolean) {
   visible.value = value;
 
-  if (
-    value &&
-    !loading.value &&
-    !items.value.length
-  ) {
+  if (value && !loading.value && !items.value.length) {
     void searchOptions("");
   }
 }
@@ -128,12 +119,7 @@ function search(value: string) {
 }
 
 function loadNextPage(direction: string) {
-  if (
-    direction === "bottom" &&
-    visible.value &&
-    hasMore.value &&
-    !loading.value
-  ) {
+  if (direction === "bottom" && visible.value && hasMore.value && !loading.value) {
     void loadMore();
   }
 }

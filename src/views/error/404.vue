@@ -7,17 +7,10 @@
     variant="missing"
   >
     <template #actions>
-      <el-button
-        type="primary"
-        :icon="House"
-        @click="goHome"
-      >
+      <el-button type="primary" :icon="House" @click="goHome">
         {{ $t("common.backHome") }}
       </el-button>
-      <el-button
-        :icon="Refresh"
-        @click="reload"
-      >
+      <el-button :icon="Refresh" @click="reload">
         {{ $t("common.reload") }}
       </el-button>
     </template>

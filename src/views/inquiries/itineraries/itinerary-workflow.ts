@@ -7,6 +7,9 @@ const ITINERARY_OPERATIONS: Record<ItineraryStatus, ItineraryOperation[]> = {
   quoted: [],
 };
 
-export function canPerformItineraryOperation(status: ItineraryStatus, operation: ItineraryOperation): boolean {
+export function canPerformItineraryOperation(
+  status: ItineraryStatus,
+  operation: ItineraryOperation,
+): boolean {
   return ITINERARY_OPERATIONS[status].includes(operation);
 }

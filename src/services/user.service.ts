@@ -46,7 +46,10 @@ function buildUserParams(query: UserQueryParams) {
   };
 }
 
-function toUserInput(data: UserForm, options: { includeUsername?: boolean; includePassword?: boolean } = {}) {
+function toUserInput(
+  data: UserForm,
+  options: { includeUsername?: boolean; includePassword?: boolean } = {},
+) {
   const input: Record<string, unknown> = {
     id: data.id,
     nickname: data.nickname?.trim() ?? "",
@@ -54,7 +57,12 @@ function toUserInput(data: UserForm, options: { includeUsername?: boolean; inclu
     gender: data.gender ?? 0,
     mobile: data.mobile?.trim() ?? "",
     email: data.email?.trim() ?? "",
-    identities: data.identities.map(({ id, scope, deptId, roleIds }) => ({ id, scope, deptId, roleIds })),
+    identities: data.identities.map(({ id, scope, deptId, roleIds }) => ({
+      id,
+      scope,
+      deptId,
+      roleIds,
+    })),
     status: data.status ?? 1,
   };
   if (options.includeUsername) input.username = data.username?.trim() ?? "";
@@ -67,9 +75,10 @@ function normalizeRoleName(value: string): string {
 }
 
 function localizeRoleName(value: string, code?: string): string {
-  const labelKey = ROLE_LABEL_KEYS[code ?? ""]
-    ?? ROLE_LABEL_KEYS[value]
-    ?? ROLE_NAME_LABEL_KEYS[normalizeRoleName(value)];
+  const labelKey =
+    ROLE_LABEL_KEYS[code ?? ""] ??
+    ROLE_LABEL_KEYS[value] ??
+    ROLE_NAME_LABEL_KEYS[normalizeRoleName(value)];
   return labelKey ? translate(labelKey) : value;
 }
 
@@ -93,8 +102,8 @@ export const userService = {
       ...result,
       list: result.list.map((user) => ({
         ...user,
-        deptName: user.identities.map(i => i.deptName).join(" / "),
-        roleNames: user.identities.map(i => localizeRoleNames(i.roleNames)).join(","),
+        deptName: user.identities.map((i) => i.deptName).join(" / "),
+        roleNames: user.identities.map((i) => localizeRoleNames(i.roleNames)).join(","),
       })),
     };
   },
@@ -106,14 +115,14 @@ export const userService = {
   async create(data: UserForm): Promise<UserCreateResult> {
     return request.post<UserCreateResult>(
       USER_BASE_URL,
-      toUserInput(data, { includeUsername: true, includePassword: true })
+      toUserInput(data, { includeUsername: true, includePassword: true }),
     );
   },
 
   async update(userId: string, data: UserForm): Promise<void> {
     await request.put<UserForm>(
       `${USER_BASE_URL}/${encodeURIComponent(userId)}`,
-      toUserInput({ ...data, id: userId })
+      toUserInput({ ...data, id: userId }),
     );
   },
 
@@ -122,33 +131,56 @@ export const userService = {
   },
 
   async resetPassword(userId: string, password: string): Promise<void> {
-    await request.post<void>(
-      `${USER_BASE_URL}/${encodeURIComponent(userId)}/reset-password`,
-      { password }
-    );
+    await request.post<void>(`${USER_BASE_URL}/${encodeURIComponent(userId)}/reset-password`, {
+      password,
+    });
   },
 
   /** 获取后端当前用户，并映射为页面使用的身份与权限结构。 */
   async getCurrentUser(): Promise<UserInfo> {
     const currentUser = await authService.getCurrentUser();
-    return { userId: currentUser.id, username: currentUser.username, nickname: currentUser.nickname, avatar: "/favicon.ico", roles: currentUser.roles, perms: [...currentUser.permissions], identityId: currentUser.identityId, scope: currentUser.scope, scopeName: currentUser.scopeName, deptName: currentUser.deptName, resourceLibrary: currentUser.resourceLibrary };
+    return {
+      userId: currentUser.id,
+      username: currentUser.username,
+      nickname: currentUser.nickname,
+      avatar: "/favicon.ico",
+      roles: currentUser.roles,
+      perms: [...currentUser.permissions],
+      identityId: currentUser.identityId,
+      scope: currentUser.scope,
+      scopeName: currentUser.scopeName,
+      deptName: currentUser.deptName,
+      resourceLibrary: currentUser.resourceLibrary,
+    };
   },
   async getRoleOptions(): Promise<IdentityRoleOption[]> {
     const options = await request.get<IdentityRoleOption[]>(`${USER_BASE_URL}/options/roles`);
-    return options.map(option => ({...option, label: localizeRoleName(option.label, option.code)}));
+    return options.map((option) => ({
+      ...option,
+      label: localizeRoleName(option.label, option.code),
+    }));
   },
-  async getDepartmentOptions(): Promise<DepartmentOption[]> { return request.get<DepartmentOption[]>(`${USER_BASE_URL}/options/departments`); },
-  inquiryImpact(id: string) { return request.get<{total: number; unfinished: number}>(`${USER_BASE_URL}/${id}/inquiry-impact`); },
+  async getDepartmentOptions(): Promise<DepartmentOption[]> {
+    return request.get<DepartmentOption[]>(`${USER_BASE_URL}/options/departments`);
+  },
+  inquiryImpact(id: string) {
+    return request.get<{ total: number; unfinished: number }>(
+      `${USER_BASE_URL}/${id}/inquiry-impact`,
+    );
+  },
 
   getProfile(): Promise<UserProfileDetail> {
     return request.get<UserProfileDetail>("/auth/me/profile");
   },
 
   async updateProfile(data: UserProfileForm): Promise<void> {
-    await request.patch<void>("/auth/me/profile",data);
+    await request.patch<void>("/auth/me/profile", data);
   },
 
   async changePassword(data: PasswordChangeForm): Promise<void> {
-    await request.post<void>("/auth/me/password", { oldPassword: data.oldPassword, newPassword: data.newPassword });
+    await request.post<void>("/auth/me/password", {
+      oldPassword: data.oldPassword,
+      newPassword: data.newPassword,
+    });
   },
 };

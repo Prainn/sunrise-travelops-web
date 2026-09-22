@@ -1,18 +1,17 @@
 <template>
-  <section
-    class="layout-content"
-    :style="{ height: appMainHeight }"
-  >
+  <section class="layout-content" :style="{ height: appMainHeight }">
     <router-view>
       <template #default="{ Component, route }">
-        <transition
-          :name="transitionName"
-          mode="out-in"
-        >
-          <keep-alive :include="cachedViews.filter(path => !path.startsWith('/resources'))">
+        <transition :name="transitionName" mode="out-in">
+          <keep-alive :include="cachedViews.filter((path) => !path.startsWith('/resources'))">
             <component
               :is="currentComponent(Component, route)"
-              :key="route.fullPath + (route.path.startsWith('/resources') ? `${selectedResourceBusinessUnit ?? ''}:${selectedResourceLibrary ?? ''}` : '')"
+              :key="
+                route.fullPath +
+                (route.path.startsWith('/resources')
+                  ? `${selectedResourceBusinessUnit ?? ''}:${selectedResourceLibrary ?? ''}`
+                  : '')
+              "
             />
           </keep-alive>
         </transition>
@@ -36,13 +35,17 @@ const { cachedViews } = toRefs(useTagsViewStore());
 const settingsStore = useSettingsStore();
 const activeRoute = useRoute();
 const userStore = useUserStore();
-watch(() => activeRoute.path, (path, previous) => {
-  if (path.startsWith("/resources") && !previous?.startsWith("/resources")) {
-    selectedResourceBusinessUnit.value = undefined;
-    selectedResourceLibrary.value = userStore.userInfo.resourceLibrary ?? undefined;
-  }
-  if (!path.startsWith("/resources")) selectedResourceBusinessUnit.value = undefined;
-}, { immediate: true, flush: "sync" });
+watch(
+  () => activeRoute.path,
+  (path, previous) => {
+    if (path.startsWith("/resources") && !previous?.startsWith("/resources")) {
+      selectedResourceBusinessUnit.value = undefined;
+      selectedResourceLibrary.value = userStore.userInfo.resourceLibrary ?? undefined;
+    }
+    if (!path.startsWith("/resources")) selectedResourceBusinessUnit.value = undefined;
+  },
+  { immediate: true, flush: "sync" },
+);
 
 const wrapperMap = new Map<string, Component>();
 const currentComponent = (component: Component, route: RouteLocationNormalized) => {

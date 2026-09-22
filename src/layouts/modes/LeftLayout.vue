@@ -5,19 +5,10 @@
       class="layout-sidebar"
       :class="{ 'is-collapsed': !isSidebarOpen }"
     >
-      <div
-        :class="{ 'has-logo': showLogo }"
-        class="layout-sidebar__inner"
-      >
-        <LayoutLogo
-          v-if="showLogo"
-          :collapse="!isSidebarOpen"
-        />
+      <div :class="{ 'has-logo': showLogo }" class="layout-sidebar__inner">
+        <LayoutLogo v-if="showLogo" :collapse="!isSidebarOpen" />
         <el-scrollbar>
-          <LayoutSidebar
-            :data="routes"
-            base-path=""
-          />
+          <LayoutSidebar :data="routes" base-path="" />
         </el-scrollbar>
       </div>
     </div>

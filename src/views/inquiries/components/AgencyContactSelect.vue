@@ -14,7 +14,10 @@
       :value="contact.name"
     >
       <span>{{ contact.name }}</span>
-      <small class="agency-contact-select__phone [float:right] text-[var(--el-text-color-secondary)]">{{ contact.phone || "-" }}</small>
+      <small
+        class="agency-contact-select__phone [float:right] text-[var(--el-text-color-secondary)]"
+        >{{ contact.phone || "-" }}</small
+      >
     </el-option>
   </el-select>
 </template>
@@ -35,7 +38,9 @@ const emit = defineEmits<{
 
 function selectContact(value: string) {
   const name = value.trim();
-  const contact = props.agency?.contacts.find((item) => item.name.toLowerCase() === name.toLowerCase());
+  const contact = props.agency?.contacts.find(
+    (item) => item.name.toLowerCase() === name.toLowerCase(),
+  );
   if (contact) {
     emit("update:modelValue", contact.name);
     emit("select", contact);

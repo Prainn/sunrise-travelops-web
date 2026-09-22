@@ -8,12 +8,7 @@
     <div class="login-layout flex [flex:1] min-h-full">
       <div class="login-brand">
         <div class="login-brand__header">
-          <el-image
-            :src="logo"
-            class="login-brand__logo"
-            fit="contain"
-            alt="Sunrise TravelOps"
-          />
+          <el-image :src="logo" class="login-brand__logo" fit="contain" alt="Sunrise TravelOps" />
           <div class="login-brand__identity">
             <span class="login-brand__name">{{ appConfig.title }}</span>
             <span class="login-brand__version">v{{ appConfig.version }}</span>
@@ -22,12 +17,7 @@
 
         <div class="login-brand__hero">
           <div class="login-brand__main">
-            <el-tag
-              class="login-brand__tag"
-              type="primary"
-              effect="plain"
-              round
-            >
+            <el-tag class="login-brand__tag" type="primary" effect="plain" round>
               <span class="login-brand__tag-dot" />
               Enterprise Ready
             </el-tag>
@@ -63,15 +53,8 @@
 
       <div class="login-card">
         <div class="login-card__inner">
-          <transition
-            name="fade-slide"
-            mode="out-in"
-          >
-            <div
-              v-if="true"
-              key="login"
-              class="login-card__form"
-            >
+          <transition name="fade-slide" mode="out-in">
+            <div v-if="true" key="login" class="login-card__form">
               <h2 class="login-card__title">
                 {{ $t("login.welcomeBack") }}
               </h2>
@@ -82,26 +65,21 @@
                 size="large"
                 :validate-on-rule-change="false"
               >
-                <el-form-item
-                  prop="scope"
-                >
+                <el-form-item prop="scope">
                   <el-select
                     v-model="loginFormData.scope"
                     :placeholder="$t('identity.chooseScope')"
                     class="w-full"
                   >
                     <el-option
-                      v-for="scope in ['headquarters','shengxu','linxi','website']"
+                      v-for="scope in ['headquarters', 'shengxu', 'linxi', 'website']"
                       :key="scope"
                       :value="scope"
                       :label="$t(`identity.scopes.${scope}`)"
                     />
                   </el-select>
                 </el-form-item>
-                <el-form-item
-                  class="login-form__username"
-                  prop="username"
-                >
+                <el-form-item class="login-form__username" prop="username">
                   <el-input
                     v-model.trim="loginFormData.username"
                     :placeholder="$t('login.username')"
@@ -109,11 +87,7 @@
                   />
                 </el-form-item>
 
-                <el-tooltip
-                  :visible="isCapsLock"
-                  :content="$t('login.capsLock')"
-                  placement="right"
-                >
+                <el-tooltip :visible="isCapsLock" :content="$t('login.capsLock')" placement="right">
                   <el-form-item prop="password">
                     <el-input
                       v-model="loginFormData.password"
@@ -147,9 +121,7 @@
           </transition>
         </div>
 
-        <div class="login-footer">
-          Copyright © 2021-2026 youlai.tech
-        </div>
+        <div class="login-footer">Copyright © 2021-2026 youlai.tech</div>
       </div>
     </div>
   </div>
@@ -196,7 +168,7 @@ const loginRules = computed(() => ({
 async function handleLoginSubmit() {
   const valid = await loginFormRef.value?.validate().then(
     () => true,
-    () => false
+    () => false,
   );
   if (!valid) return;
 
@@ -373,7 +345,6 @@ $input-h: 44px;
     color: $text-primary;
     @apply '[letter-spacing:0]';
   }
-
 }
 
 :deep(.el-form-item) {
@@ -463,7 +434,6 @@ $input-h: 44px;
   &__title {
     color: rgb(255 255 255 / 85%);
   }
-
 }
 
 .dark .login-footer {

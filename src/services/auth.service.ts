@@ -7,17 +7,13 @@ export const authService = {
     return request.post<LoginResult>(
       "/auth/login",
       { scope, username, password },
-      { requiresAuth: false }
+      { requiresAuth: false },
     );
   },
 
   /** 使用后端 Refresh Token 轮换一组新令牌。 */
   async refreshToken(refreshToken: string): Promise<LoginResult> {
-    return request.post<LoginResult>(
-      "/auth/refresh",
-      { refreshToken },
-      { requiresAuth: false }
-    );
+    return request.post<LoginResult>("/auth/refresh", { refreshToken }, { requiresAuth: false });
   },
 
   /** 注销后端当前会话。 */

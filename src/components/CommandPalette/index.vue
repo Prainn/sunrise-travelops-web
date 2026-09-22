@@ -11,9 +11,15 @@
     >
       <div class="command-palette-trigger__left flex gap-[6px] items-center min-w-0">
         <div class="i-svg:search" />
-        <span class="command-palette-trigger__text overflow-hidden text-ellipsis text-[14px] text-[var(--el-text-color-secondary)] whitespace-nowrap">{{ $t("commandPalette.searchMenu") }}</span>
+        <span
+          class="command-palette-trigger__text overflow-hidden text-ellipsis text-[14px] text-[var(--el-text-color-secondary)] whitespace-nowrap"
+          >{{ $t("commandPalette.searchMenu") }}</span
+        >
       </div>
-      <kbd class="command-palette-trigger__kbd inline-flex items-center justify-center h-[18px] p-[0_6px] text-[14px] leading-[1] text-[var(--el-text-color-placeholder)] whitespace-nowrap [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color)] rounded-[4px]">Ctrl K</kbd>
+      <kbd
+        class="command-palette-trigger__kbd inline-flex items-center justify-center h-[18px] p-[0_6px] text-[14px] leading-[1] text-[var(--el-text-color-placeholder)] whitespace-nowrap [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color)] rounded-[4px]"
+        >Ctrl K</kbd
+      >
     </div>
 
     <el-dialog
@@ -56,10 +62,7 @@
             {{ $t("commandPalette.noHistory") }}
           </div>
 
-          <ul
-            v-else
-            class="command-palette-list flex flex-col gap-[6px] p-0 m-0 [list-style:none]"
-          >
+          <ul v-else class="command-palette-list flex flex-col gap-[6px] p-0 m-0 [list-style:none]">
             <li
               v-for="(item, idx) in displayList"
               :key="item.path + idx"
@@ -67,37 +70,60 @@
               @mouseenter="activeIndex = idx"
               @click="onGo(item)"
             >
-              <div class="command-palette-item__title text-[14px] text-[var(--el-text-color-primary)]">
+              <div
+                class="command-palette-item__title text-[14px] text-[var(--el-text-color-primary)]"
+              >
                 {{ item.title }}
               </div>
-              <div class="command-palette-item__path mt-[2px] text-[14px] text-[var(--el-text-color-secondary)]">
+              <div
+                class="command-palette-item__path mt-[2px] text-[14px] text-[var(--el-text-color-secondary)]"
+              >
                 {{ item.path }}
               </div>
             </li>
           </ul>
         </div>
 
-        <div class="command-palette-hints flex gap-[14px] items-center pt-[10px] [border-top:1px_solid_var(--el-border-color-lighter)]">
+        <div
+          class="command-palette-hints flex gap-[14px] items-center pt-[10px] [border-top:1px_solid_var(--el-border-color-lighter)]"
+        >
           <div class="command-palette-hint inline-flex gap-[6px] items-center">
-            <div class="command-palette-hint__key inline-flex items-center justify-center h-[24px] p-[0_8px] [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px]">
+            <div
+              class="command-palette-hint__key inline-flex items-center justify-center h-[24px] p-[0_8px] [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px]"
+            >
               <div class="i-svg:up" />
             </div>
-            <div class="command-palette-hint__key inline-flex items-center justify-center h-[24px] p-[0_8px] [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px]">
+            <div
+              class="command-palette-hint__key inline-flex items-center justify-center h-[24px] p-[0_8px] [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px]"
+            >
               <div class="i-svg:down" />
             </div>
-            <span class="command-palette-hint__text text-[14px] text-[var(--el-text-color-secondary)]">{{ $t("commandPalette.navigate") }}</span>
+            <span
+              class="command-palette-hint__text text-[14px] text-[var(--el-text-color-secondary)]"
+              >{{ $t("commandPalette.navigate") }}</span
+            >
           </div>
           <div class="command-palette-hint inline-flex gap-[6px] items-center">
-            <div class="command-palette-hint__key inline-flex items-center justify-center h-[24px] p-[0_8px] [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px]">
+            <div
+              class="command-palette-hint__key inline-flex items-center justify-center h-[24px] p-[0_8px] [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px]"
+            >
               <div class="i-svg:enter" />
             </div>
-            <span class="command-palette-hint__text text-[14px] text-[var(--el-text-color-secondary)]">{{ $t("common.select") }}</span>
+            <span
+              class="command-palette-hint__text text-[14px] text-[var(--el-text-color-secondary)]"
+              >{{ $t("common.select") }}</span
+            >
           </div>
           <div class="command-palette-hint inline-flex gap-[6px] items-center">
-            <div class="command-palette-hint__key inline-flex items-center justify-center h-[24px] p-[0_8px] [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px]">
+            <div
+              class="command-palette-hint__key inline-flex items-center justify-center h-[24px] p-[0_8px] [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px]"
+            >
               <div class="i-svg:esc" />
             </div>
-            <span class="command-palette-hint__text text-[14px] text-[var(--el-text-color-secondary)]">{{ $t("common.close") }}</span>
+            <span
+              class="command-palette-hint__text text-[14px] text-[var(--el-text-color-secondary)]"
+              >{{ $t("common.close") }}</span
+            >
           </div>
         </div>
       </div>
@@ -203,5 +229,4 @@ const handleInputKeydown: (evt: KeyboardEvent | Event) => void = (evt) => {
   font-size: 14px;
   color: var(--el-text-color-secondary);
 }
-
 </style>

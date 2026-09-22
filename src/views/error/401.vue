@@ -7,17 +7,10 @@
     variant="locked"
   >
     <template #actions>
-      <el-button
-        type="primary"
-        :icon="House"
-        @click="goHome"
-      >
+      <el-button type="primary" :icon="House" @click="goHome">
         {{ $t("common.backHome") }}
       </el-button>
-      <el-button
-        :icon="Back"
-        @click="router.back()"
-      >
+      <el-button :icon="Back" @click="router.back()">
         {{ $t("common.goBack") }}
       </el-button>
     </template>

@@ -19,12 +19,7 @@
         clearable
         @update:model-value="updateField('departure', $event)"
       >
-        <el-option
-          v-for="city in destinations"
-          :key="city"
-          :label="city"
-          :value="city"
-        />
+        <el-option v-for="city in destinations" :key="city" :label="city" :value="city" />
       </el-select>
     </el-form-item>
     <el-form-item :label="$t('itinerary.destination')">
@@ -36,12 +31,7 @@
         clearable
         @update:model-value="updateField('destination', $event)"
       >
-        <el-option
-          v-for="city in destinations"
-          :key="city"
-          :label="city"
-          :value="city"
-        />
+        <el-option v-for="city in destinations" :key="city" :label="city" :value="city" />
       </el-select>
     </el-form-item>
     <el-form-item :label="$t('itinerary.overnightDestination')">
@@ -51,10 +41,7 @@
         :placeholder="$t('itinerary.overnightPending')"
         @update:model-value="updateField('overnightDestination', $event)"
       >
-        <el-option
-          :label="$t('itinerary.noOvernightStay')"
-          value=""
-        />
+        <el-option :label="$t('itinerary.noOvernightStay')" value="" />
         <el-option
           v-for="destination in destinations"
           :key="destination"
@@ -105,9 +92,16 @@ import { useI18n } from "vue-i18n";
 import type { ItineraryDayRecord } from "@/types/itinerary";
 import { getTransportMethodOptions } from "@/utils/transport-method";
 
-type EditableDayField = "departure" | "destination" | "overnightDestination" | "transport" | "description";
+type EditableDayField =
+  "departure" | "destination" | "overnightDestination" | "transport" | "description";
 
-const props = defineProps<{ day: ItineraryDayRecord; isLast: boolean; allowCustomDestination: boolean; destinations: string[]; editable: boolean }>();
+const props = defineProps<{
+  day: ItineraryDayRecord;
+  isLast: boolean;
+  allowCustomDestination: boolean;
+  destinations: string[];
+  editable: boolean;
+}>();
 const emit = defineEmits<{
   "update-field": [field: EditableDayField, value: string | null];
 }>();
@@ -126,8 +120,17 @@ function updateTransport(values: string[]) {
 
 <style scoped lang="scss">
 .day-form {
-  :deep(.el-form-item) { margin-bottom: 0; }
-  :deep(.el-form-item__label) { padding-bottom: 6px; color: var(--el-text-color-regular); font-weight: 500; line-height: 20px; }
-  :deep(.el-select) { width: 100%; }
+  :deep(.el-form-item) {
+    margin-bottom: 0;
+  }
+  :deep(.el-form-item__label) {
+    padding-bottom: 6px;
+    color: var(--el-text-color-regular);
+    font-weight: 500;
+    line-height: 20px;
+  }
+  :deep(.el-select) {
+    width: 100%;
+  }
 }
 </style>

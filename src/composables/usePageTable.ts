@@ -8,7 +8,7 @@ import type { BaseQueryParams, PageResult } from "@/types/common";
  * 只管理请求、分页数据和查询参数，不处理勾选、弹窗、表单
  */
 export function usePageTable<T, Q extends BaseQueryParams = BaseQueryParams>(
-  options: UsePageTableOptions<T, Q>
+  options: UsePageTableOptions<T, Q>,
 ): UsePageTableReturn<T, Q> {
   const { initialParams, request, onBeforeReset } = options;
 

@@ -4,7 +4,7 @@
     <aside class="page-aside">
       <div class="page-aside__inner p-3 overflow-y-auto!">
         <h3 class="mb-3 text-sm font-medium">
-          {{ $t('user.department') }}
+          {{ $t("user.department") }}
         </h3>
         <el-tree
           :data="departmentTree"
@@ -18,60 +18,32 @@
       </div>
     </aside>
     <div class="page-main">
-      <el-card
-        class="page-search"
-        shadow="never"
-      >
-        <el-form
-          ref="queryFormRef"
-          :model="params"
-          :inline="true"
-          label-width="auto"
-        >
-          <el-form-item
-            :label="$t('common.keywords')"
-            prop="keyword"
-          >
+      <el-card class="page-search" shadow="never">
+        <el-form ref="queryFormRef" :model="params" :inline="true" label-width="auto">
+          <el-form-item :label="$t('common.keywords')" prop="keyword">
             <el-input
               v-model="params.keyword"
               :placeholder="$t('user.searchPlaceholder')"
               class="page-search__keywords w-[180px]"
               clearable
-
               @keyup.enter="handleQuery"
             />
           </el-form-item>
 
-          <el-form-item
-            :label="$t('common.status')"
-            prop="status"
-          >
+          <el-form-item :label="$t('common.status')" prop="status">
             <el-select
               v-model="params.status"
               :placeholder="$t('common.all')"
               clearable
               class="w-[112px]"
             >
-              <el-option
-                :label="$t('common.normal')"
-                :value="CommonStatus.ENABLED"
-              />
-              <el-option
-                :label="$t('common.disabled')"
-                :value="CommonStatus.DISABLED"
-              />
+              <el-option :label="$t('common.normal')" :value="CommonStatus.ENABLED" />
+              <el-option :label="$t('common.disabled')" :value="CommonStatus.DISABLED" />
             </el-select>
           </el-form-item>
 
-          <el-form-item
-            :label="$t('user.rolesLabel')"
-            prop="roleId"
-          >
-            <el-select
-              v-model="params.roleId"
-              :placeholder="$t('common.all')"
-              clearable
-            >
+          <el-form-item :label="$t('user.rolesLabel')" prop="roleId">
+            <el-select v-model="params.roleId" :placeholder="$t('common.all')" clearable>
               <el-option
                 v-for="item in roleOptions"
                 :key="item.value"
@@ -81,10 +53,7 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item
-            :label="$t('common.createdAt')"
-            prop="createTime"
-          >
+          <el-form-item :label="$t('common.createdAt')" prop="createTime">
             <el-date-picker
               v-model="params.createTime"
               :editable="false"
@@ -98,10 +67,7 @@
           </el-form-item>
 
           <el-form-item>
-            <el-button
-              type="primary"
-              @click="handleQuery"
-            >
+            <el-button type="primary" @click="handleQuery">
               {{ $t("common.search") }}
             </el-button>
             <el-button @click="handleResetQuery">
@@ -111,16 +77,9 @@
         </el-form>
       </el-card>
 
-      <el-card
-        class="page-content"
-        shadow="never"
-      >
+      <el-card class="page-content" shadow="never">
         <TableToolbar @refresh="fetchData">
-          <el-button
-            v-hasPerm="['sys:user:create']"
-            type="primary"
-            @click="handleCreateClick"
-          >
+          <el-button v-hasPerm="['sys:user:create']" type="primary" @click="handleCreateClick">
             {{ $t("common.create") }}
           </el-button>
           <el-button
@@ -144,28 +103,12 @@
             row-key="id"
             @selection-change="handleSelectionChange"
           >
-            <el-table-column
-              type="selection"
-              width="42"
-              fixed="left"
-              align="center"
-            />
-            <el-table-column
-              :label="$t('user.nickname')"
-              min-width="140"
-              fixed="left"
-            >
+            <el-table-column type="selection" width="42" fixed="left" align="center" />
+            <el-table-column :label="$t('user.nickname')" min-width="140" fixed="left">
               <template #default="scope">
                 <div class="user-name-cell">
-                  <el-avatar
-                    v-if="scope.row.avatar"
-                    :src="scope.row.avatar"
-                    :size="24"
-                  />
-                  <span
-                    v-else
-                    class="user-name-cell__text"
-                  >
+                  <el-avatar v-if="scope.row.avatar" :src="scope.row.avatar" :size="24" />
+                  <span v-else class="user-name-cell__text">
                     {{ getAvatarText(scope.row as UserItem) }}
                   </span>
                   <span>{{ scope.row.nickname || "-" }}</span>
@@ -178,11 +121,7 @@
               prop="username"
               show-overflow-tooltip
             />
-            <el-table-column
-              :label="$t('common.status')"
-              align="center"
-              width="80"
-            >
+            <el-table-column :label="$t('common.status')" align="center" width="80">
               <template #default="scope">
                 <el-tag
                   :type="scope.row.status === CommonStatus.ENABLED ? 'success' : 'danger'"
@@ -196,11 +135,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column
-              :label="$t('user.gender')"
-              align="center"
-              width="70"
-            >
+            <el-table-column :label="$t('user.gender')" align="center" width="70">
               <template #default="scope">
                 <el-tag
                   v-if="
@@ -214,20 +149,13 @@
                     <Female v-else />
                   </el-icon>
                   <span>
-                    {{
-                      scope.row.gender === UserGender.MALE
-                        ? $t("user.male")
-                        : $t("user.female")
-                    }}
+                    {{ scope.row.gender === UserGender.MALE ? $t("user.male") : $t("user.female") }}
                   </span>
                 </el-tag>
                 <span v-else>-</span>
               </template>
             </el-table-column>
-            <el-table-column
-              :label="$t('user.department')"
-              min-width="220"
-            >
+            <el-table-column :label="$t('user.department')" min-width="220">
               <template #default="{ row }">
                 <div
                   v-for="identity in row.identities"
@@ -241,11 +169,7 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column
-              :label="$t('user.rolesLabel')"
-              prop="roleNames"
-              width="400"
-            >
+            <el-table-column :label="$t('user.rolesLabel')" prop="roleNames" width="400">
               <template #default="scope">
                 <el-tag
                   v-for="role in scope.row.roleNames.split(',')"
@@ -257,11 +181,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column
-              :label="$t('user.mobile')"
-              prop="mobile"
-              width="130"
-            />
+            <el-table-column :label="$t('user.mobile')" prop="mobile" width="130" />
             <el-table-column
               :label="$t('user.email')"
               prop="email"
@@ -275,11 +195,7 @@
               width="160"
               show-overflow-tooltip
             />
-            <el-table-column
-              :label="$t('common.actions')"
-              fixed="right"
-              width="200"
-            >
+            <el-table-column :label="$t('common.actions')" fixed="right" width="200">
               <template #default="scope">
                 <div>
                   <el-button
@@ -335,19 +251,11 @@
       destroy-on-close
       @close="closeDialog"
     >
-      <el-form
-        ref="userFormRef"
-        :model="formData"
-        :rules="rules"
-        label-width="auto"
-      >
+      <el-form ref="userFormRef" :model="formData" :rules="rules" label-width="auto">
         <h4 class="mt-0 mb-5 text-base font-semibold leading-6">
-          {{ $t('user.basicInfo') }}
+          {{ $t("user.basicInfo") }}
         </h4>
-        <el-form-item
-          :label="$t('user.username')"
-          prop="username"
-        >
+        <el-form-item :label="$t('user.username')" prop="username">
           <el-input
             v-model="formData.username"
             :readonly="!!formData.id"
@@ -355,25 +263,12 @@
           />
         </el-form-item>
 
-        <el-form-item
-          :label="$t('user.nickname')"
-          prop="nickname"
-        >
-          <el-input
-            v-model="formData.nickname"
-            :placeholder="$t('user.nicknamePlaceholder')"
-          />
+        <el-form-item :label="$t('user.nickname')" prop="nickname">
+          <el-input v-model="formData.nickname" :placeholder="$t('user.nicknamePlaceholder')" />
         </el-form-item>
 
-        <el-form-item
-          :label="$t('user.gender')"
-          prop="gender"
-        >
-          <DictSelect
-            v-model="formData.gender"
-            code="gender"
-            :style="{ width: '100%' }"
-          />
+        <el-form-item :label="$t('user.gender')" prop="gender">
+          <DictSelect v-model="formData.gender" code="gender" :style="{ width: '100%' }" />
         </el-form-item>
 
         <UserIdentityFields
@@ -381,11 +276,8 @@
           :roles="roleOptions"
           :departments="departmentOptions"
         />
-        
-        <el-form-item
-          :label="$t('user.mobile')"
-          prop="mobile"
-        >
+
+        <el-form-item :label="$t('user.mobile')" prop="mobile">
           <el-input
             v-model="formData.mobile"
             :placeholder="$t('user.mobilePlaceholder')"
@@ -393,10 +285,7 @@
           />
         </el-form-item>
 
-        <el-form-item
-          :label="$t('user.email')"
-          prop="email"
-        >
+        <el-form-item :label="$t('user.email')" prop="email">
           <el-input
             v-model="formData.email"
             :placeholder="$t('user.emailPlaceholder')"
@@ -404,10 +293,7 @@
           />
         </el-form-item>
 
-        <el-form-item
-          :label="$t('common.status')"
-          prop="status"
-        >
+        <el-form-item :label="$t('common.status')" prop="status">
           <el-switch
             v-model="formData.status"
             inline-prompt
@@ -428,10 +314,7 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button
-            type="primary"
-            @click="handleSubmit"
-          >
+          <el-button type="primary" @click="handleSubmit">
             {{ $t("common.confirm") }}
           </el-button>
           <el-button @click="closeDialog">
@@ -471,22 +354,13 @@
           </div>
         </el-form-item>
         <el-form-item :label="$t('user.nickname')">
-          <el-input
-            :model-value="resetPasswordDialog.nickname"
-            readonly
-          />
+          <el-input :model-value="resetPasswordDialog.nickname" readonly />
         </el-form-item>
         <el-form-item :label="$t('user.username')">
-          <el-input
-            :model-value="resetPasswordDialog.username"
-            readonly
-          />
+          <el-input :model-value="resetPasswordDialog.username" readonly />
         </el-form-item>
 
-        <el-form-item
-          :label="$t('user.newPassword')"
-          prop="password"
-        >
+        <el-form-item :label="$t('user.newPassword')" prop="password">
           <el-input
             v-model="resetPasswordForm.password"
             type="password"
@@ -523,7 +397,13 @@ import type { FormInstance, FormRules } from "element-plus";
 import { Female, Male } from "@element-plus/icons-vue";
 
 import UserIdentityFields from "./components/UserIdentityFields.vue";
-import type { IdentityRoleOption, DepartmentOption, UserForm, UserItem, UserQueryParams } from "@/types/user";
+import type {
+  IdentityRoleOption,
+  DepartmentOption,
+  UserForm,
+  UserItem,
+  UserQueryParams,
+} from "@/types/user";
 import { userService } from "@/services";
 import { useAppStore } from "@/stores/app";
 import { useUserStore } from "@/stores/user";
@@ -568,7 +448,7 @@ const dialogState = reactive({
 
 const resetPasswordSubmitting = ref(false);
 
-const impact = ref<{total: number; unfinished: number}>();
+const impact = ref<{ total: number; unfinished: number }>();
 const initialFormData: UserForm = {
   identities: [{ scope: userStore.userInfo.scope ?? "shengxu", roleIds: [] }],
   status: CommonStatus.ENABLED,
@@ -595,21 +475,32 @@ const resetPasswordForm = reactive<ResetPasswordForm>({
 const roleOptions = ref<IdentityRoleOption[]>([]);
 const departmentOptions = ref<DepartmentOption[]>([]);
 
-type DepartmentTreeNode = { key: string | number; label: string; deptId?: number; children?: DepartmentTreeNode[] };
-const departmentTree = computed<DepartmentTreeNode[]>(() => [{
-  key: 'all',
-  label: t('common.all'),
-  children: [...new Set(departmentOptions.value.map(dept => dept.scope))].map(scope => ({
-    key: scope,
-    label: t(`identity.scopes.${scope}`),
-    children: departmentOptions.value.filter(dept => dept.scope === scope).map(dept => ({
-      key: dept.value, label: dept.label, deptId: dept.value,
+type DepartmentTreeNode = {
+  key: string | number;
+  label: string;
+  deptId?: number;
+  children?: DepartmentTreeNode[];
+};
+const departmentTree = computed<DepartmentTreeNode[]>(() => [
+  {
+    key: "all",
+    label: t("common.all"),
+    children: [...new Set(departmentOptions.value.map((dept) => dept.scope))].map((scope) => ({
+      key: scope,
+      label: t(`identity.scopes.${scope}`),
+      children: departmentOptions.value
+        .filter((dept) => dept.scope === scope)
+        .map((dept) => ({
+          key: dept.value,
+          label: dept.label,
+          deptId: dept.value,
+        })),
     })),
-  })),
-}]);
+  },
+]);
 
 function handleDepartmentClick(node: DepartmentTreeNode): void {
-  if (node.key !== 'all' && node.deptId === undefined) return;
+  if (node.key !== "all" && node.deptId === undefined) return;
   params.deptId = node.deptId;
   handleQuery();
 }
@@ -617,7 +508,7 @@ function handleDepartmentClick(node: DepartmentTreeNode): void {
 const drawerSize = computed(() => (appStore.device === DeviceEnum.DESKTOP ? "600px" : "90%"));
 
 const resetPasswordDialogWidth = computed(() =>
-  appStore.device === DeviceEnum.DESKTOP ? "420px" : "90%"
+  appStore.device === DeviceEnum.DESKTOP ? "420px" : "90%",
 );
 
 const rules = computed<FormRules<UserForm>>(() => ({
@@ -654,7 +545,7 @@ async function showTemporaryPassword(password: string): Promise<void> {
     {
       confirmButtonText: t("common.confirm"),
       customClass: "temporary-password-box",
-    }
+    },
   );
 }
 
@@ -707,8 +598,9 @@ async function handleCreateClick(): Promise<void> {
   dialogState.titleKey = "user.createTitle";
   dialogState.mode = DialogMode.CREATE;
   await loadFormOptions();
-  const department = departmentOptions.value.find(dept => dept.value === params.deptId);
-  if (department) formData.identities = [{ scope: department.scope, deptId: department.value, roleIds: [] }];
+  const department = departmentOptions.value.find((dept) => dept.value === params.deptId);
+  if (department)
+    formData.identities = [{ scope: department.scope, deptId: department.value, roleIds: [] }];
   openDialog();
 }
 
@@ -731,7 +623,7 @@ async function handleEditClick(id: string): Promise<void> {
 const handleSubmit = useDebounceFn(async () => {
   const valid = await userFormRef.value?.validate().then(
     () => true,
-    () => false
+    () => false,
   );
   if (!valid) return;
 
@@ -783,8 +675,13 @@ async function handleDelete(id?: string): Promise<void> {
   }
 
   try {
-    const impacts = await Promise.all(userIds.split(",").map(value => userService.inquiryImpact(value)));
-    if (impacts.some(value => value.unfinished > 0)) { ElMessage.warning(t("identity.transferFirst")); return; }
+    const impacts = await Promise.all(
+      userIds.split(",").map((value) => userService.inquiryImpact(value)),
+    );
+    if (impacts.some((value) => value.unfinished > 0)) {
+      ElMessage.warning(t("identity.transferFirst"));
+      return;
+    }
     await ElMessageBox.confirm(t("user.deleteConfirm"), t("common.warning"), {
       confirmButtonText: t("common.confirm"),
       cancelButtonText: t("common.cancel"),
@@ -850,7 +747,7 @@ function resetResetPasswordForm(): void {
 const handleResetPasswordSubmit = useDebounceFn(async () => {
   const valid = await resetPasswordFormRef.value?.validate().then(
     () => true,
-    () => false
+    () => false,
   );
   if (!valid || !resetPasswordDialog.userId) return;
 
@@ -873,7 +770,6 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-
 .user-name-cell {
   @apply 'inline-flex gap-[8px] items-center';
 

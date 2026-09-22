@@ -1,8 +1,5 @@
 <template>
-  <el-card
-    class="page-content"
-    shadow="never"
-  >
+  <el-card class="page-content" shadow="never">
     <TableToolbar @refresh="emit('refresh')">
       <el-button
         v-has-perm="RESOURCE_PERMISSIONS.hotel.create"
@@ -14,45 +11,18 @@
     </TableToolbar>
 
     <div class="page-table-wrapper">
-      <el-table
-        v-loading="loading"
-        :data="rows"
-        border
-        height="100%"
-        row-key="id"
-      >
-        <el-table-column
-          :label="$t('identity.library')"
-          width="160"
-        >
+      <el-table v-loading="loading" :data="rows" border height="100%" row-key="id">
+        <el-table-column :label="$t('identity.library')" width="160">
           <template #default="{ row }">
             <ResourceLibraryTag :library="row.library" />
           </template>
         </el-table-column>
-        <el-table-column
-          prop="code"
-          :label="$t('resource.code')"
-          width="200"
-        />
-        <el-table-column
-          prop="name"
-          :label="$t('resource.hotelName')"
-          min-width="190"
-        />
-        <el-table-column
-          prop="city"
-          :label="$t('resource.city')"
-          width="100"
-        />
-        <el-table-column
-          prop="rating"
-          :label="$t('resource.starRating')"
-          width="130"
-        >
+        <el-table-column prop="code" :label="$t('resource.code')" width="200" />
+        <el-table-column prop="name" :label="$t('resource.hotelName')" min-width="190" />
+        <el-table-column prop="city" :label="$t('resource.city')" width="100" />
+        <el-table-column prop="rating" :label="$t('resource.starRating')" width="130">
           <template #default="scope">
-            <el-tag
-              :type="scope.row.rating === 'international_five_star' ? 'success' : 'info'"
-            >
+            <el-tag :type="scope.row.rating === 'international_five_star' ? 'success' : 'info'">
               {{ $t(`hotel.ratings.${scope.row.rating}`) }}
             </el-tag>
           </template>
@@ -75,11 +45,7 @@
           width="110"
           align="center"
         />
-        <el-table-column
-          prop="unit"
-          :label="$t('resource.priceUnit')"
-          width="120"
-        >
+        <el-table-column prop="unit" :label="$t('resource.priceUnit')" width="120">
           <template #default="scope">
             {{ getResourceUnitName(scope.row.unit, locale) }}
           </template>
@@ -90,27 +56,15 @@
           min-width="220"
           show-overflow-tooltip
         />
-        <el-table-column
-          prop="phone"
-          :label="$t('resource.phone')"
-          width="150"
-        />
-        <el-table-column
-          :label="$t('common.status')"
-          width="90"
-          align="center"
-        >
+        <el-table-column prop="phone" :label="$t('resource.phone')" width="150" />
+        <el-table-column :label="$t('common.status')" width="90" align="center">
           <template #default="scope">
             <el-tag :type="scope.row.status === 'enabled' ? 'success' : 'info'">
               {{ $t(`common.${scope.row.status}`) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column
-          :label="$t('common.actions')"
-          width="220"
-          fixed="right"
-        >
+        <el-table-column :label="$t('common.actions')" width="220" fixed="right">
           <template #default="scope">
             <el-button
               v-has-perm="RESOURCE_PERMISSIONS.hotel.update"

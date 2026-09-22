@@ -1,4 +1,5 @@
 import eslint from "@eslint/js";
+import prettierRecommended from "eslint-plugin-prettier/recommended";
 import globals from "globals";
 import * as typescriptEslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
@@ -156,5 +157,5 @@ export default [
       "@typescript-eslint/no-explicit-any": "off",
     },
   },
-
+  prettierRecommended,
 ];

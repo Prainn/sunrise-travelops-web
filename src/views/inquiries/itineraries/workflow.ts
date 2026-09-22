@@ -13,7 +13,8 @@ interface ItinerarySelectionItem {
 export function getDefaultItineraryId(records: ItinerarySelectionItem[], requestedId = "") {
   if (records.some((record) => record.id === requestedId)) return requestedId;
   const ordered = [...records].sort((left, right) =>
-    (right.updatedAt || right.createdAt).localeCompare(left.updatedAt || left.createdAt));
+    (right.updatedAt || right.createdAt).localeCompare(left.updatedAt || left.createdAt),
+  );
   return ordered.find((record) => record.status === "draft")?.id ?? ordered[0]?.id ?? "";
 }
 
@@ -29,8 +30,10 @@ export interface PdfValidationIssue {
   params?: Record<string, string | number>;
 }
 
-type ItineraryValidationInput = Pick<ItineraryRecord,
-  "dailyPlans" | "hotelPlans" | "vehiclePlans" | "paxTiers" | "guidePlans" | "quote">;
+type ItineraryValidationInput = Pick<
+  ItineraryRecord,
+  "dailyPlans" | "hotelPlans" | "vehiclePlans" | "paxTiers" | "guidePlans" | "quote"
+>;
 
 export function getItineraryValidationIssues(plan: ItineraryValidationInput): PdfValidationIssue[] {
   const issues: PdfValidationIssue[] = [];
@@ -42,9 +45,13 @@ export function getItineraryValidationIssues(plan: ItineraryValidationInput): Pd
     if (!day.description?.trim()) {
       issues.push({ key: "itinerary.validation.schedule", target, params });
     }
-    if (day.overnightDestination === null) issues.push({ key: "itinerary.validation.overnight", target, params });
+    if (day.overnightDestination === null)
+      issues.push({ key: "itinerary.validation.overnight", target, params });
     for (const slot of ["lunch", "dinner"] as const) {
-      if (day.meals[slot] && !day.items.some((item) => item.type === "restaurant" && item.mealSlot === slot)) {
+      if (
+        day.meals[slot] &&
+        !day.items.some((item) => item.type === "restaurant" && item.mealSlot === slot)
+      ) {
         issues.push({ key: `itinerary.validation.${slot}`, target, params });
       }
     }
@@ -61,9 +68,19 @@ export function getItineraryValidationIssues(plan: ItineraryValidationInput): Pd
     issues.push({ key: "itinerary.guideDatesRequired", target: "itinerary-guides" });
   }
   plan.quote.transportFees.forEach((fee, index) => {
-    if ((!fee.departureCity.trim() || !fee.arrivalCity.trim() || fee.departureCity === fee.arrivalCity)
-      || fee.unitPrice === null || !Number.isFinite(fee.unitPrice) || fee.unitPrice < 0) {
-      issues.push({ key: "itinerary.validation.transportFee", target: "quote", params: { index: index + 1 } });
+    if (
+      !fee.departureCity.trim() ||
+      !fee.arrivalCity.trim() ||
+      fee.departureCity === fee.arrivalCity ||
+      fee.unitPrice === null ||
+      !Number.isFinite(fee.unitPrice) ||
+      fee.unitPrice < 0
+    ) {
+      issues.push({
+        key: "itinerary.validation.transportFee",
+        target: "quote",
+        params: { index: index + 1 },
+      });
     }
   });
   return issues;

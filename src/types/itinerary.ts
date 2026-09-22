@@ -35,7 +35,7 @@ export interface ItineraryVehicleArrangement {
   totalPrice?: number | null;
 }
 export interface ItineraryVehiclePlan {
-  pricingMode?: 'automatic' | 'manual' | 'unknown' | null;
+  pricingMode?: "automatic" | "manual" | "unknown" | null;
   segmentTotal?: number | null;
   adjustmentReason?: string | null;
   tier: ItineraryVehicleTier;
@@ -53,6 +53,14 @@ export interface ItineraryStaffRoomCost {
   total: number | null;
 }
 
+export interface ItineraryPaxOtherCost {
+  pax: number;
+  guideOtherCost: number | null;
+  guideOtherReason: string;
+  staffRoomOtherCost: number | null;
+  staffRoomOtherReason: string;
+}
+
 export interface ItineraryQuoteOption {
   id: string;
   hotelTier: ItineraryHotelTier;
@@ -65,6 +73,7 @@ export interface ItineraryQuoteSettings {
   mealOtherReason: string;
   attractionOtherCost: number | null;
   attractionOtherReason: string;
+  paxOtherCosts: ItineraryPaxOtherCost[];
   staffRoomCosts: ItineraryStaffRoomCost[];
   options: ItineraryQuoteOption[];
   /** Full-tour tip per adult/child, charged separately and included in profit. */
@@ -157,8 +166,20 @@ export interface ItineraryQuoteOptionCalculation {
 export interface PaxQuoteCalculation {
   pricingVersion: 2;
   dailyResourceCost: number;
-  mealDetails?: { dayNumber: number; resourceName: string; unitCost: number; quantity: number; totalCost: number }[];
-  attractionDetails?: { dayNumber: number; resourceName: string; unitCost: number; quantity: number; totalCost: number }[];
+  mealDetails?: {
+    dayNumber: number;
+    resourceName: string;
+    unitCost: number;
+    quantity: number;
+    totalCost: number;
+  }[];
+  attractionDetails?: {
+    dayNumber: number;
+    resourceName: string;
+    unitCost: number;
+    quantity: number;
+    totalCost: number;
+  }[];
   mealCost?: number;
   attractionCost?: number;
   guideCost: number;
@@ -232,5 +253,22 @@ export interface ItineraryRecord {
 }
 import type { VehicleServiceLevel } from "./resource";
 
-export interface PriceReference { referencePrice?: number | null; referenceBasis?: string | null; adjustmentReason?: string | null }
-export interface PriceAdjustment { id: string; itemKey: string; itemName: string; itemType: string; referenceBasis: string; referencePrice: number | null; beforePrice: number | null; afterPrice: number; reason: string; action: string; operatorName: string; occurredAt: string }
+export interface PriceReference {
+  referencePrice?: number | null;
+  referenceBasis?: string | null;
+  adjustmentReason?: string | null;
+}
+export interface PriceAdjustment {
+  id: string;
+  itemKey: string;
+  itemName: string;
+  itemType: string;
+  referenceBasis: string;
+  referencePrice: number | null;
+  beforePrice: number | null;
+  afterPrice: number;
+  reason: string;
+  action: string;
+  operatorName: string;
+  occurredAt: string;
+}

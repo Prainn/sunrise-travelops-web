@@ -33,7 +33,7 @@ let redirectingToLogin = false;
  */
 export async function redirectToLogin(
   message: string = translate("request.relogin"),
-  notify: boolean = true
+  notify: boolean = true,
 ): Promise<void> {
   if (redirectingToLogin) return;
   redirectingToLogin = true;

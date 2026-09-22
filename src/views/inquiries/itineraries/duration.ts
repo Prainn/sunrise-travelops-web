@@ -10,11 +10,16 @@ export function plannedEndDate(startDate: string, days: number) {
 }
 
 export function itineraryDuration(days: ItineraryDayRecord[]) {
-  return { days: days.length, nights: days.filter((day) => Boolean(day.overnightDestination)).length };
+  return {
+    days: days.length,
+    nights: days.filter((day) => Boolean(day.overnightDestination)).length,
+  };
 }
 export function destinationDuration(days: ItineraryDayRecord[], destination: string) {
   return {
-    days: days.filter((day) => [day.departure, day.destination, day.overnightDestination].includes(destination)).length,
+    days: days.filter((day) =>
+      [day.departure, day.destination, day.overnightDestination].includes(destination),
+    ).length,
     nights: days.filter((day) => day.overnightDestination === destination).length,
   };
 }

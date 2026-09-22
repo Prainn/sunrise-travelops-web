@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="layout-root"
-    :class="layoutClass"
-  >
+  <div class="layout-root" :class="layoutClass">
     <div
       v-if="showOverlay && isMobile && isSidebarOpen"
       class="layout-root__overlay"
@@ -23,7 +20,7 @@ withDefaults(
   }>(),
   {
     showOverlay: true,
-  }
+  },
 );
 
 const { layoutClass, isSidebarOpen, isMobile, closeSidebar } = useLayout();

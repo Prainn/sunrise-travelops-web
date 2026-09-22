@@ -1,18 +1,8 @@
 <template>
   <div class="page-container">
-    <el-card
-      class="page-search"
-      shadow="never"
-    >
-      <el-form
-        ref="queryFormRef"
-        :model="params"
-        :inline="true"
-      >
-        <el-form-item
-          :label="$t('common.keywords')"
-          prop="keyword"
-        >
+    <el-card class="page-search" shadow="never">
+      <el-form ref="queryFormRef" :model="params" :inline="true">
+        <el-form-item :label="$t('common.keywords')" prop="keyword">
           <el-input
             v-model="params.keyword"
             :placeholder="$t('dictionary.searchPlaceholder')"
@@ -23,10 +13,7 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button
-            type="primary"
-            @click="handleQuery"
-          >
+          <el-button type="primary" @click="handleQuery">
             {{ $t("common.search") }}
           </el-button>
           <el-button @click="handleResetQuery">
@@ -36,16 +23,9 @@
       </el-form>
     </el-card>
 
-    <el-card
-      class="page-content"
-      shadow="never"
-    >
+    <el-card class="page-content" shadow="never">
       <TableToolbar @refresh="fetchData">
-        <el-button
-          v-has-perm="'sys:dict:create'"
-          type="primary"
-          @click="handleCreateClick()"
-        >
+        <el-button v-has-perm="'sys:dict:create'" type="primary" @click="handleCreateClick()">
           {{ $t("common.create") }}
         </el-button>
         <el-button
@@ -68,23 +48,10 @@
           height="100%"
           @selection-change="handleSelectionChange"
         >
-          <el-table-column
-            type="selection"
-            width="55"
-            align="center"
-          />
-          <el-table-column
-            :label="$t('dictionary.name')"
-            prop="name"
-          />
-          <el-table-column
-            :label="$t('dictionary.code')"
-            prop="dictCode"
-          />
-          <el-table-column
-            :label="$t('common.status')"
-            prop="status"
-          >
+          <el-table-column type="selection" width="55" align="center" />
+          <el-table-column :label="$t('dictionary.name')" prop="name" />
+          <el-table-column :label="$t('dictionary.code')" prop="dictCode" />
+          <el-table-column :label="$t('common.status')" prop="status">
             <template #default="scope">
               <el-tag :type="scope.row.status === CommonStatus.ENABLED ? 'success' : 'info'">
                 {{
@@ -95,12 +62,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column
-            fixed="right"
-            :label="$t('common.actions')"
-            align="center"
-            width="220"
-          >
+          <el-table-column fixed="right" :label="$t('common.actions')" align="center" width="220">
             <template #default="scope">
               <el-button
                 v-has-perm="'sys:dict-item:list'"
@@ -151,30 +113,13 @@
       destroy-on-close
       @close="closeDialog"
     >
-      <el-form
-        ref="dictFormRef"
-        :model="formData"
-        :rules="rules"
-        label-width="80px"
-      >
-        <el-form-item
-          :label="$t('dictionary.name')"
-          prop="name"
-        >
-          <el-input
-            v-model="formData.name"
-            :placeholder="$t('dictionary.namePlaceholder')"
-          />
+      <el-form ref="dictFormRef" :model="formData" :rules="rules" label-width="80px">
+        <el-form-item :label="$t('dictionary.name')" prop="name">
+          <el-input v-model="formData.name" :placeholder="$t('dictionary.namePlaceholder')" />
         </el-form-item>
 
-        <el-form-item
-          :label="$t('dictionary.code')"
-          prop="dictCode"
-        >
-          <el-input
-            v-model="formData.dictCode"
-            :placeholder="$t('dictionary.codePlaceholder')"
-          />
+        <el-form-item :label="$t('dictionary.code')" prop="dictCode">
+          <el-input v-model="formData.dictCode" :placeholder="$t('dictionary.codePlaceholder')" />
         </el-form-item>
 
         <el-form-item :label="$t('common.status')">
@@ -199,10 +144,7 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button
-            type="primary"
-            @click="handleSubmit"
-          >
+          <el-button type="primary" @click="handleSubmit">
             {{ $t("common.confirm") }}
           </el-button>
           <el-button @click="closeDialog">
@@ -319,7 +261,7 @@ async function handleEditClick(id: string): Promise<void> {
 async function handleSubmit(): Promise<void> {
   const valid = await dictFormRef.value?.validate().then(
     () => true,
-    () => false
+    () => false,
   );
   if (!valid) return;
 

@@ -13,27 +13,15 @@
       :rules="rules"
       label-position="top"
     >
-      <el-form-item
-        v-if="isEditing"
-        :label="$t('itinerary.code')"
-      >
-        <el-input
-          v-model="form.code"
-          disabled
-        />
+      <el-form-item v-if="isEditing" :label="$t('itinerary.code')">
+        <el-input v-model="form.code" disabled />
       </el-form-item>
-      <el-form-item
-        :label="$t('itinerary.title')"
-        prop="title"
-      >
+      <el-form-item :label="$t('itinerary.title')" prop="title">
         <el-input v-model.trim="form.title" />
       </el-form-item>
       <el-row :gutter="24">
         <el-col :span="12">
-          <el-form-item
-            :label="$t('itinerary.paxTiers')"
-            prop="paxTiers"
-          >
+          <el-form-item :label="$t('itinerary.paxTiers')" prop="paxTiers">
             <el-select
               :model-value="form.paxTiers"
               multiple
@@ -45,26 +33,13 @@
               :placeholder="$t('itinerary.paxPlaceholder')"
               @change="updatePaxTiers"
             >
-              <el-option
-                v-for="pax in paxOptions"
-                :key="pax"
-                :label="`${pax} PAX`"
-                :value="pax"
-              />
+              <el-option v-for="pax in paxOptions" :key="pax" :label="`${pax} PAX`" :value="pax" />
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item
-            :label="$t('itinerary.childRate')"
-            prop="childRate"
-          >
-            <el-input-number
-              v-model="form.childRate"
-              :min="0"
-              :max="100"
-              :precision="2"
-            >
+          <el-form-item :label="$t('itinerary.childRate')" prop="childRate">
+            <el-input-number v-model="form.childRate" :min="0" :max="100" :precision="2">
               <template #suffix>
                 <span class="text-[var(--el-text-color-secondary)]">%</span>
               </template>
@@ -81,14 +56,13 @@
               :min="1"
               controls-position="right"
             />
-            <span class="w-full mt-[4px] text-[var(--el-text-color-secondary)]">{{ $t('itinerary.duration', plannedDuration(plannedDays)) }}</span>
+            <span class="w-full mt-[4px] text-[var(--el-text-color-secondary)]">{{
+              $t("itinerary.duration", plannedDuration(plannedDays))
+            }}</span>
           </el-form-item>
         </el-col>
         <el-col :span="8">
-          <el-form-item
-            :label="$t('common.startDate')"
-            prop="startDate"
-          >
+          <el-form-item :label="$t('common.startDate')" prop="startDate">
             <el-date-picker
               v-model="form.startDate"
               type="date"
@@ -99,17 +73,11 @@
         </el-col>
         <el-col :span="8">
           <el-form-item :label="$t('common.endDate')">
-            <el-input
-              :model-value="form.endDate"
-              disabled
-            />
+            <el-input :model-value="form.endDate" disabled />
           </el-form-item>
         </el-col>
       </el-row>
-      <el-form-item
-        :label="$t('itinerary.destinations')"
-        prop="destinations"
-      >
+      <el-form-item :label="$t('itinerary.destinations')" prop="destinations">
         <el-select
           v-model="form.destinations"
           multiple
@@ -130,10 +98,7 @@
       <el-button @click="emit('update:modelValue', false)">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button
-        type="primary"
-        @click="submitForm"
-      >
+      <el-button type="primary" @click="submitForm">
         {{ $t(isEditing ? "common.confirm" : "itinerary.createAndManage") }}
       </el-button>
     </template>
@@ -154,15 +119,20 @@ const props = defineProps<{
   destinationOptions: string[];
   isEditing?: boolean;
 }>();
-const emit = defineEmits<{ "update:modelValue": [value: boolean]; submit: [record: ItineraryRecord] }>();
+const emit = defineEmits<{
+  "update:modelValue": [value: boolean];
+  submit: [record: ItineraryRecord];
+}>();
 const { t } = useI18n();
 const formRef = ref<FormInstance>();
 const DEFAULT_PAX_TIERS = [10, 12, 15, 18, 20, 25, 30];
 
 function updatePaxTiers(values: Array<number | string>) {
-  form.paxTiers = [...new Set(values
-    .map(Number)
-    .filter(value => Number.isInteger(value) && value >= 1 && value <= 10000))]
+  form.paxTiers = [
+    ...new Set(
+      values.map(Number).filter((value) => Number.isInteger(value) && value >= 1 && value <= 10000),
+    ),
+  ]
     .sort((left, right) => left - right)
     .slice(0, 20);
   formRef.value?.clearValidate("paxTiers");
@@ -171,48 +141,101 @@ const form = reactive<ItineraryRecord>({
   ...props.record,
   paxTiers: [...props.record.paxTiers],
   destinations: [...props.record.destinations],
-  hotelPlans: props.record.hotelPlans.map((plan) => ({ ...plan, hotels: plan.hotels.map((hotel) => ({ ...hotel })) })),
+  hotelPlans: props.record.hotelPlans.map((plan) => ({
+    ...plan,
+    hotels: plan.hotels.map((hotel) => ({ ...hotel })),
+  })),
   guidePlans: props.record.guidePlans.map((plan) => ({ ...plan })),
   vehiclePlans: JSON.parse(JSON.stringify(props.record.vehiclePlans)),
-  quote: { ...props.record.quote, transportFees: props.record.quote.transportFees.map((fee) => ({ ...fee })), options: props.record.quote.options.map((option) => ({ ...option })) },
+  quote: {
+    ...props.record.quote,
+    transportFees: props.record.quote.transportFees.map((fee) => ({ ...fee })),
+    options: props.record.quote.options.map((option) => ({ ...option })),
+  },
   dailyPlans: [],
 });
-const paxOptions = computed(() => [...new Set([...DEFAULT_PAX_TIERS, ...form.paxTiers])].sort((left, right) => left - right));
+const paxOptions = computed(() =>
+  [...new Set([...DEFAULT_PAX_TIERS, ...form.paxTiers])].sort((left, right) => left - right),
+);
 const rules = computed<FormRules>(() => ({
   title: [{ required: true, message: t("itinerary.titleRequired"), trigger: "blur" }],
   startDate: [{ required: true, message: t("itinerary.startDateRequired"), trigger: "change" }],
-  paxTiers: [{ type: "array", required: true, min: 1, max: 20, message: t("itinerary.paxRequired"), trigger: "change" }],
-  childRate: [{ type: "number", required: true, min: 0, max: 100, message: t("itinerary.childRateRequired"), trigger: "change" }],
-  destinations: [{ type: "array", required: true, min: 1, message: t("itinerary.destinationsRequired"), trigger: "change" }],
+  paxTiers: [
+    {
+      type: "array",
+      required: true,
+      min: 1,
+      max: 20,
+      message: t("itinerary.paxRequired"),
+      trigger: "change",
+    },
+  ],
+  childRate: [
+    {
+      type: "number",
+      required: true,
+      min: 0,
+      max: 100,
+      message: t("itinerary.childRateRequired"),
+      trigger: "change",
+    },
+  ],
+  destinations: [
+    {
+      type: "array",
+      required: true,
+      min: 1,
+      message: t("itinerary.destinationsRequired"),
+      trigger: "change",
+    },
+  ],
 }));
 
-watch(() => [props.modelValue, props.record] as const, ([visible, record]) => {
-  if (!visible) return;
-  Object.assign(form, record, {
-    paxTiers: [...record.paxTiers],
-    days: props.plannedDays,
-    destinations: [...record.destinations],
-    hotelPlans: record.hotelPlans.map((plan) => ({ ...plan, hotels: plan.hotels.map((hotel) => ({ ...hotel })) })),
-    guidePlans: record.guidePlans.map((plan) => ({ ...plan })),
-    vehiclePlans: JSON.parse(JSON.stringify(record.vehiclePlans)),
-    quote: { ...record.quote, transportFees: record.quote.transportFees.map((fee) => ({ ...fee })), options: record.quote.options.map((option) => ({ ...option })) },
-    dailyPlans: [],
-  });
-  syncEndDate();
-}, { deep: true });
+watch(
+  () => [props.modelValue, props.record] as const,
+  ([visible, record]) => {
+    if (!visible) return;
+    Object.assign(form, record, {
+      paxTiers: [...record.paxTiers],
+      days: props.plannedDays,
+      destinations: [...record.destinations],
+      hotelPlans: record.hotelPlans.map((plan) => ({
+        ...plan,
+        hotels: plan.hotels.map((hotel) => ({ ...hotel })),
+      })),
+      guidePlans: record.guidePlans.map((plan) => ({ ...plan })),
+      vehiclePlans: JSON.parse(JSON.stringify(record.vehiclePlans)),
+      quote: {
+        ...record.quote,
+        transportFees: record.quote.transportFees.map((fee) => ({ ...fee })),
+        options: record.quote.options.map((option) => ({ ...option })),
+      },
+      dailyPlans: [],
+    });
+    syncEndDate();
+  },
+  { deep: true },
+);
 
 watch(() => [form.startDate, props.plannedDays], syncEndDate);
 
 async function submitForm() {
-  if (!await formRef.value?.validate().catch(() => false)) return;
+  if (!(await formRef.value?.validate().catch(() => false))) return;
   emit("submit", {
     ...form,
     paxTiers: [...form.paxTiers],
     destinations: [...form.destinations],
-    hotelPlans: form.hotelPlans.map((plan) => ({ ...plan, hotels: plan.hotels.map((hotel) => ({ ...hotel })) })),
+    hotelPlans: form.hotelPlans.map((plan) => ({
+      ...plan,
+      hotels: plan.hotels.map((hotel) => ({ ...hotel })),
+    })),
     guidePlans: form.guidePlans.map((plan) => ({ ...plan })),
     vehiclePlans: JSON.parse(JSON.stringify(form.vehiclePlans)),
-    quote: { ...form.quote, transportFees: form.quote.transportFees.map((fee) => ({ ...fee })), options: form.quote.options.map((option) => ({ ...option })) },
+    quote: {
+      ...form.quote,
+      transportFees: form.quote.transportFees.map((fee) => ({ ...fee })),
+      options: form.quote.options.map((option) => ({ ...option })),
+    },
     dailyPlans: [],
   });
 }
@@ -223,7 +246,11 @@ function syncEndDate() {
 </script>
 
 <style scoped lang="scss">
-.itinerary-plan-dialog__form :deep(.el-form-item__label) { white-space: nowrap; }
+.itinerary-plan-dialog__form :deep(.el-form-item__label) {
+  white-space: nowrap;
+}
 
-.itinerary-plan-dialog__form :deep(.el-input-number) { width: 100%; }
+.itinerary-plan-dialog__form :deep(.el-input-number) {
+  width: 100%;
+}
 </style>

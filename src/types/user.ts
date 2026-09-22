@@ -82,6 +82,22 @@ export interface ProfileSecurity {
   recentLogins: Array<{ id: string; time: string; ip: string; userAgent: string }>;
 }
 
-export interface UserIdentity { id?: string; scope: LoginScope; deptId?: number | null; deptName?: string; roleIds: string[]; roleNames?: string }
-export interface IdentityRoleOption { value: string; label: string; code: string; scopes: LoginScope[] }
-export interface DepartmentOption { value: number; label: string; scope: LoginScope }
+export interface UserIdentity {
+  id?: string;
+  scope: LoginScope;
+  deptId?: number | null;
+  deptName?: string;
+  roleIds: string[];
+  roleNames?: string;
+}
+export interface IdentityRoleOption {
+  value: string;
+  label: string;
+  code: string;
+  scopes: LoginScope[];
+}
+export interface DepartmentOption {
+  value: number;
+  label: string;
+  scope: LoginScope;
+}

@@ -54,15 +54,30 @@ const loadingRestaurantPriceIds = reactive(new Set<string>());
 
 function createEmptyRestaurant(): RestaurantRecord {
   return {
-    id: "", code: "", name: "", city: "", cuisine: "", contact: "", phone: "", address: "",
-    remark: "", unit: "personMeal", status: "enabled", prices: [],
+    id: "",
+    code: "",
+    name: "",
+    city: "",
+    cuisine: "",
+    contact: "",
+    phone: "",
+    address: "",
+    remark: "",
+    unit: "personMeal",
+    status: "enabled",
+    prices: [],
   };
 }
 
 function createEmptyPrice(): RestaurantPriceRecord {
   return {
-    id: "", menuName: "", dishDetails: "", unit: "personMeal", price: 0, dinerCount: 10, remark: "",
-
+    id: "",
+    menuName: "",
+    dishDetails: "",
+    unit: "personMeal",
+    price: 0,
+    dinerCount: 10,
+    remark: "",
   };
 }
 
@@ -143,7 +158,9 @@ async function savePrice(price: RestaurantPriceRecord) {
 
 async function deletePrice(record: RestaurantRecord, price: RestaurantPriceRecord) {
   try {
-    await ElMessageBox.confirm(t("restaurant.deletePriceConfirm"), t("common.tip"), { type: "warning" });
+    await ElMessageBox.confirm(t("restaurant.deletePriceConfirm"), t("common.tip"), {
+      type: "warning",
+    });
   } catch {
     return;
   }

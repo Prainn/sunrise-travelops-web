@@ -1,9 +1,5 @@
 <template>
-  <component
-    :is="linkType"
-    v-bind="linkProps(to)"
-    @click="handleClick"
-  >
+  <component :is="linkType" v-bind="linkProps(to)" @click="handleClick">
     <slot />
   </component>
 </template>

@@ -32,16 +32,17 @@ async function checkForNewVersion() {
 
     const html = await response.text();
     const documentSnapshot = new DOMParser().parseFromString(html, "text/html");
-    const latestVersion = documentSnapshot
-      .querySelector<HTMLMetaElement>('meta[name="app-version"]')
-      ?.content;
+    const latestVersion = documentSnapshot.querySelector<HTMLMetaElement>(
+      'meta[name="app-version"]',
+    )?.content;
 
     if (
-      !latestVersion
-      || latestVersion === currentVersion
-      || latestVersion === dismissedVersion
-      || latestVersion === notifiedVersion
-    ) return;
+      !latestVersion ||
+      latestVersion === currentVersion ||
+      latestVersion === dismissedVersion ||
+      latestVersion === notifiedVersion
+    )
+      return;
 
     notification?.close();
     notifiedVersion = latestVersion;
@@ -49,12 +50,16 @@ async function checkForNewVersion() {
       title: t("appVersion.title"),
       message: h("div", [
         h("div", t("appVersion.message")),
-        h(ElButton, {
-          class: "mt-3",
-          size: "small",
-          type: "primary",
-          onClick: reloadPageWithoutConfirmation,
-        }, () => t("appVersion.refresh")),
+        h(
+          ElButton,
+          {
+            class: "mt-3",
+            size: "small",
+            type: "primary",
+            onClick: reloadPageWithoutConfirmation,
+          },
+          () => t("appVersion.refresh"),
+        ),
       ]),
       duration: 0,
       position: "top-right",

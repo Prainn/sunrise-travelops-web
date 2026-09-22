@@ -132,7 +132,7 @@ watch(
   () => expandedMenuIndexes.value,
   () => {
     syncActiveParentMenus();
-  }
+  },
 );
 
 /**
@@ -144,7 +144,7 @@ watch(
     if (newMode === "horizontal" && menuRef.value) {
       expandedMenuIndexes.value.forEach((item) => menuRef.value!.close(item));
     }
-  }
+  },
 );
 
 /**
@@ -157,7 +157,7 @@ watch(
       syncActiveParentMenus();
     });
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 /**
@@ -169,7 +169,7 @@ watch(
     nextTick(() => {
       syncActiveParentMenus();
     });
-  }
+  },
 );
 
 /**

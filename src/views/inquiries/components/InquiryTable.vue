@@ -1,24 +1,12 @@
 <template>
-  <el-card
-    class="page-content"
-    shadow="never"
-  >
+  <el-card class="page-content" shadow="never">
     <TableToolbar @refresh="emit('refresh')">
-      <el-button
-        v-hasPerm="'inquiry:create'"
-        type="primary"
-        @click="emit('create')"
-      >
+      <el-button v-hasPerm="'inquiry:create'" type="primary" @click="emit('create')">
         {{ $t("inquiry.createInquiry") }}
       </el-button>
     </TableToolbar>
     <div class="page-table-wrapper">
-      <el-table
-        :data="rows"
-        border
-        height="100%"
-        row-key="id"
-      >
+      <el-table :data="rows" border height="100%" row-key="id">
         <el-table-column
           v-if="userStore.userInfo.scope === 'headquarters'"
           :label="$t('identity.businessUnit')"
@@ -28,37 +16,21 @@
             <el-tag>{{ $t(`identity.scopes.${row.businessUnit}`) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column
-          prop="code"
-          :label="$t('inquiry.code')"
-          width="180"
-        />
+        <el-table-column prop="code" :label="$t('inquiry.code')" width="180" />
         <el-table-column
           prop="agencyName"
           :label="$t('inquiry.agencyName')"
           min-width="190"
           show-overflow-tooltip
         />
-        <el-table-column
-          prop="contactName"
-          :label="$t('inquiry.contactName')"
-          width="120"
-        />
+        <el-table-column prop="contactName" :label="$t('inquiry.contactName')" width="120" />
         <el-table-column
           prop="countryOrRegion"
           :label="$t('inquiry.countryOrRegion')"
           width="110"
         />
-        <el-table-column
-          prop="sourceChannel"
-          :label="$t('inquiry.sourceChannel')"
-          width="110"
-        />
-        <el-table-column
-          prop="owner"
-          :label="$t('inquiry.owner')"
-          width="100"
-        />
+        <el-table-column prop="sourceChannel" :label="$t('inquiry.sourceChannel')" width="110" />
+        <el-table-column prop="owner" :label="$t('inquiry.owner')" width="100" />
         <el-table-column
           prop="plannedDays"
           :label="$t('inquiry.plannedDays')"
@@ -66,16 +38,17 @@
           align="center"
         >
           <template #default="scope">
-            {{ $t('itinerary.duration', plannedDuration(scope.row.plannedDays)) }}
+            {{ $t("itinerary.duration", plannedDuration(scope.row.plannedDays)) }}
           </template>
         </el-table-column>
-        <el-table-column
-          :label="$t('inquiry.nextFollowUpAt')"
-          width="210"
-        >
+        <el-table-column :label="$t('inquiry.nextFollowUpAt')" width="210">
           <template #default="scope">
             <span :class="{ 'inquiry-table__overdue': isOverdue(scope.row as InquiryRecord) }">
-              {{ formatDateTime(scope.row.nextFollowUpAt) === "-" ? $t("common.notSet") : formatDateTime(scope.row.nextFollowUpAt) }}
+              {{
+                formatDateTime(scope.row.nextFollowUpAt) === "-"
+                  ? $t("common.notSet")
+                  : formatDateTime(scope.row.nextFollowUpAt)
+              }}
             </span>
           </template>
         </el-table-column>
@@ -85,28 +58,16 @@
           :label="$t('common.createdAt')"
           width="210"
         />
-        <el-table-column
-          :label="$t('common.status')"
-          align="center"
-        >
+        <el-table-column :label="$t('common.status')" align="center">
           <template #default="scope">
             <el-tag :type="INQUIRY_STATUS_TAG_TYPES[scope.row.status as InquiryStatus]">
               {{ $t(`inquiry.statuses.${scope.row.status}`) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column
-          :label="$t('common.actions')"
-          width="240"
-          fixed="right"
-          align="center"
-        >
+        <el-table-column :label="$t('common.actions')" width="240" fixed="right" align="center">
           <template #default="scope">
-            <el-button
-              type="primary"
-              link
-              @click="emit('view', scope.row as InquiryRecord)"
-            >
+            <el-button type="primary" link @click="emit('view', scope.row as InquiryRecord)">
               {{ $t("common.view") }}
             </el-button>
             <InquiryTransferButton
@@ -133,12 +94,7 @@
             </el-button>
           </template>
         </el-table-column>
-        <el-table-column
-          :label="$t('inquiry.itinerary')"
-          width="360"
-          fixed="right"
-          align="center"
-        >
+        <el-table-column :label="$t('inquiry.itinerary')" width="360" fixed="right" align="center">
           <template #default="scope">
             <el-button
               v-hasPerm="'itinerary:list'"
@@ -148,11 +104,7 @@
             >
               {{ $t("inquiry.itineraryManagement") }}
             </el-button>
-            <el-button
-              type="primary"
-              link
-              @click="emit('view-logs', scope.row as InquiryRecord)"
-            >
+            <el-button type="primary" link @click="emit('view-logs', scope.row as InquiryRecord)">
               {{ $t("inquiry.log.title") }}
             </el-button>
           </template>

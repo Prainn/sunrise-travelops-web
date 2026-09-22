@@ -7,10 +7,7 @@
       @reset="resetQuery"
     />
 
-    <el-card
-      class="page-content"
-      shadow="never"
-    >
+    <el-card class="page-content" shadow="never">
       <TableToolbar @refresh="refreshRows">
         <el-button
           v-has-perm="RESOURCE_PERMISSIONS.attraction.create"
@@ -29,18 +26,12 @@
           row-key="id"
           @expand-change="changeExpand"
         >
-          <el-table-column
-            :label="$t('identity.library')"
-            min-width="200"
-          >
+          <el-table-column :label="$t('identity.library')" min-width="200">
             <template #default="{ row }">
               <ResourceLibraryTag :library="row.library" />
             </template>
           </el-table-column>
-          <el-table-column
-            type="expand"
-            width="48"
-          >
+          <el-table-column type="expand" width="48">
             <template #default="scope">
               <div class="attraction-table__prices">
                 <div class="attraction-table__price-header">
@@ -60,12 +51,15 @@
                   border
                   size="small"
                 >
-                  <el-table-column
-                    :label="$t('attraction.itemType')"
-                    width="100"
-                  >
+                  <el-table-column :label="$t('attraction.itemType')" width="100">
                     <template #default="priceScope">
-                      {{ $t(attractionItemTypeLabelKeys[priceScope.row.itemType as AttractionPriceItemType]) }}
+                      {{
+                        $t(
+                          attractionItemTypeLabelKeys[
+                            priceScope.row.itemType as AttractionPriceItemType
+                          ],
+                        )
+                      }}
                     </template>
                   </el-table-column>
                   <el-table-column
@@ -73,29 +67,18 @@
                     :label="$t('attraction.itemName')"
                     min-width="130"
                   />
-                  <el-table-column
-                    prop="audience"
-                    :label="$t('attraction.audience')"
-                    width="90"
-                  />
+                  <el-table-column prop="audience" :label="$t('attraction.audience')" width="90" />
                   <el-table-column
                     prop="periodName"
                     :label="$t('attraction.pricePeriod')"
                     width="90"
                   />
-                  <el-table-column
-                    :label="$t('attraction.effectivePeriod')"
-                    min-width="180"
-                  >
+                  <el-table-column :label="$t('attraction.effectivePeriod')" min-width="180">
                     <template #default="priceScope">
                       {{ formatPeriod(priceScope.row as AttractionPriceRecord) }}
                     </template>
                   </el-table-column>
-                  <el-table-column
-                    :label="$t('attraction.rackPrice')"
-                    width="100"
-                    align="right"
-                  >
+                  <el-table-column :label="$t('attraction.rackPrice')" width="100" align="right">
                     <template #default="priceScope">
                       {{ formatPrice(priceScope.row as AttractionPriceRecord, "rackPrice") }}
                     </template>
@@ -115,17 +98,19 @@
                     min-width="180"
                     show-overflow-tooltip
                   />
-                  <el-table-column
-                    :label="$t('common.actions')"
-                    width="120"
-                    align="center"
-                  >
+                  <el-table-column :label="$t('common.actions')" width="120" align="center">
                     <template #default="priceScope">
                       <el-button
                         v-has-perm="RESOURCE_PERMISSIONS.attraction.update"
                         type="primary"
                         link
-                        @click="emit('edit-price', scope.row as AttractionRecord, priceScope.row as AttractionPriceRecord)"
+                        @click="
+                          emit(
+                            'edit-price',
+                            scope.row as AttractionRecord,
+                            priceScope.row as AttractionPriceRecord,
+                          )
+                        "
                       >
                         {{ $t("common.edit") }}
                       </el-button>
@@ -133,7 +118,13 @@
                         v-has-perm="RESOURCE_PERMISSIONS.attraction.delete"
                         type="danger"
                         link
-                        @click="emit('delete-price', scope.row as AttractionRecord, priceScope.row as AttractionPriceRecord)"
+                        @click="
+                          emit(
+                            'delete-price',
+                            scope.row as AttractionRecord,
+                            priceScope.row as AttractionPriceRecord,
+                          )
+                        "
                       >
                         {{ $t("common.delete") }}
                       </el-button>
@@ -143,34 +134,15 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column
-            prop="code"
-            :label="$t('resource.code')"
-            width="200"
-          />
-          <el-table-column
-            prop="name"
-            :label="$t('resource.attractionName')"
-            min-width="180"
-          />
-          <el-table-column
-            prop="area"
-            :label="$t('attraction.area')"
-            width="100"
-          />
-          <el-table-column
-            :label="$t('attraction.category')"
-            width="100"
-          >
+          <el-table-column prop="code" :label="$t('resource.code')" width="200" />
+          <el-table-column prop="name" :label="$t('resource.attractionName')" min-width="180" />
+          <el-table-column prop="area" :label="$t('attraction.area')" width="100" />
+          <el-table-column :label="$t('attraction.category')" width="100">
             <template #default="scope">
               {{ $t(attractionCategoryLabelKeys[scope.row.category as AttractionCategory]) }}
             </template>
           </el-table-column>
-          <el-table-column
-            :label="$t('attraction.priceCount')"
-            width="100"
-            align="center"
-          >
+          <el-table-column :label="$t('attraction.priceCount')" width="100" align="center">
             <template #default="scope">
               {{ scope.row.priceCount ?? scope.row.prices.length }}
             </template>
@@ -181,23 +153,14 @@
             min-width="220"
             show-overflow-tooltip
           />
-          <el-table-column
-            :label="$t('common.status')"
-            width="90"
-            align="center"
-          >
+          <el-table-column :label="$t('common.status')" width="90" align="center">
             <template #default="scope">
               <el-tag :type="scope.row.status === 'enabled' ? 'success' : 'info'">
                 {{ $t(`common.${scope.row.status}`) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column
-            :label="$t('common.actions')"
-            width="220"
-            fixed="right"
-            align="center"
-          >
+          <el-table-column :label="$t('common.actions')" width="220" fixed="right" align="center">
             <template #default="scope">
               <el-button
                 v-has-perm="RESOURCE_PERMISSIONS.attraction.update"
@@ -260,7 +223,10 @@ import { attractionCategoryLabelKeys, attractionItemTypeLabelKeys } from "../opt
 
 defineProps<{
   loadingPriceIds?: Set<string>;
-  loading?: boolean; rows: AttractionRecord[]; total: number }>();
+  loading?: boolean;
+  rows: AttractionRecord[];
+  total: number;
+}>();
 const emit = defineEmits<{
   refresh: [query: ResourceListQuery];
   "query-change": [query: ResourceListQuery];
@@ -287,7 +253,12 @@ watch([keywords, area, category], () => {
 });
 
 function currentQuery(): ResourceListQuery {
-  return { ...paginationQuery(), keyword: keywords.value, area: area.value, category: category.value || undefined };
+  return {
+    ...paginationQuery(),
+    keyword: keywords.value,
+    area: area.value,
+    category: category.value || undefined,
+  };
 }
 
 function resetQuery() {
@@ -308,7 +279,9 @@ function changeExpand(record: AttractionRecord, expanded: AttractionRecord[] | b
   if (isExpanded) emit("expand", record);
 }
 function formatPeriod(price: AttractionPriceRecord) {
-  return price.startDate && price.endDate ? `${price.startDate} — ${price.endDate}` : t("common.notSet");
+  return price.startDate && price.endDate
+    ? `${price.startDate} — ${price.endDate}`
+    : t("common.notSet");
 }
 function formatPrice(price: AttractionPriceRecord, field: "rackPrice" | "settlementPrice") {
   if (price.isFree) return "免费";
@@ -318,7 +291,11 @@ function formatPrice(price: AttractionPriceRecord, field: "rackPrice" | "settlem
 
 <style scoped lang="scss">
 .attraction-table {
-  &__prices { @apply 'p-[16px_48px] [background:var(--el-fill-color-lighter)]'; }
-  &__price-header { @apply 'flex items-center justify-between mb-[12px]'; }
+  &__prices {
+    @apply 'p-[16px_48px] [background:var(--el-fill-color-lighter)]';
+  }
+  &__price-header {
+    @apply 'flex items-center justify-between mb-[12px]';
+  }
 }
 </style>

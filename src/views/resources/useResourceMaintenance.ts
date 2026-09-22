@@ -28,7 +28,9 @@ interface ResourceMaintenanceOptions<T extends ResourceMaintenanceRecord> {
   deleteConfirmKey?: string;
 }
 
-export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(options: ResourceMaintenanceOptions<T>) {
+export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
+  options: ResourceMaintenanceOptions<T>,
+) {
   const { t } = useI18n();
   const rows = reactive(options.paginated === false ? options.records : []) as unknown as T[];
   const isDialogVisible = ref(false);
@@ -37,7 +39,8 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
   const isEditing = computed(() => Boolean(editingId.value));
   const total = ref(0);
   const isLoading = ref(false);
-  let activeQuery: ResourceListQuery | undefined = options.paginated === false ? undefined : { page: 1, pageSize: RESOURCE_PAGE_SIZE };
+  let activeQuery: ResourceListQuery | undefined =
+    options.paginated === false ? undefined : { page: 1, pageSize: RESOURCE_PAGE_SIZE };
 
   async function loadRecords(query?: ResourceListQuery) {
     if (query !== undefined) activeQuery = { ...activeQuery, ...query };
@@ -117,7 +120,7 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
       await ElMessageBox.confirm(
         t(options.deleteConfirmKey ?? "common.deleteConfirm"),
         t("common.tip"),
-        { type: "warning" }
+        { type: "warning" },
       );
     } catch {
       return;
@@ -137,7 +140,17 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(opti
   onMounted(loadRecords);
 
   return {
-    rows, total, isLoading, record, isDialogVisible, isEditing,
-    loadRecords, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord,
+    rows,
+    total,
+    isLoading,
+    record,
+    isDialogVisible,
+    isEditing,
+    loadRecords,
+    openCreateDialog,
+    openEditDialog,
+    toggleStatus,
+    saveRecord,
+    deleteRecord,
   };
 }

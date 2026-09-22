@@ -40,9 +40,11 @@ interface ApiErrorOptions {
 const API_BASE_URL = (import.meta.env.VITE_APP_BASE_API || "/api").replace(/\/$/, "");
 
 function getErrorMessage(code: string, status?: number): string {
-  return translateIfExists(`apiErrors.${code}`)
-    ?? (status ? translateIfExists(`apiErrors.HTTP_${status}`) : undefined)
-    ?? translate("apiErrors.REQUEST_FAILED");
+  return (
+    translateIfExists(`apiErrors.${code}`) ??
+    (status ? translateIfExists(`apiErrors.HTTP_${status}`) : undefined) ??
+    translate("apiErrors.REQUEST_FAILED")
+  );
 }
 
 export class ApiError extends Error {
@@ -72,9 +74,8 @@ let refreshPromise: Promise<void> | null = null;
 function appendParams(url: string, params?: RequestParams): string {
   if (!params) return url;
 
-  const searchParams = params instanceof URLSearchParams
-    ? new URLSearchParams(params)
-    : new URLSearchParams();
+  const searchParams =
+    params instanceof URLSearchParams ? new URLSearchParams(params) : new URLSearchParams();
 
   if (!(params instanceof URLSearchParams)) {
     Object.entries(params).forEach(([key, value]) => {
@@ -111,7 +112,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 async function parseError(response: Response): Promise<ApiError> {
-  const body = await response.json().catch(() => null) as Partial<ApiErrorResponse> | null;
+  const body = (await response.json().catch(() => null)) as Partial<ApiErrorResponse> | null;
   const code = typeof body?.code === "string" ? body.code : `HTTP_${response.status}`;
 
   return new ApiError(getErrorMessage(code, response.status), {
@@ -126,13 +127,13 @@ async function parseError(response: Response): Promise<ApiError> {
 async function parseJsonData<T>(response: Response): Promise<T> {
   if (response.status === 204) return undefined as T;
 
-  const body = await response.json().catch((error: unknown) => {
+  const body = (await response.json().catch((error: unknown) => {
     throw new ApiError(getErrorMessage(ApiErrorCode.INVALID_API_RESPONSE, response.status), {
       code: ApiErrorCode.INVALID_API_RESPONSE,
       status: response.status,
       cause: error,
     });
-  }) as unknown;
+  })) as unknown;
 
   if (!isRecord(body) || body.code !== "SUCCESS" || !("data" in body)) {
     throw new ApiError(getErrorMessage(ApiErrorCode.INVALID_API_RESPONSE, response.status), {
@@ -174,13 +175,9 @@ async function rotateTokens(): Promise<void> {
     "POST",
     "/auth/refresh",
     { refreshToken },
-    { requiresAuth: false, retryAfterRefresh: false }
+    { requiresAuth: false, retryAfterRefresh: false },
   );
-  AuthStorage.setTokens(
-    tokens.accessToken,
-    tokens.refreshToken,
-    AuthStorage.getRememberMe()
-  );
+  AuthStorage.setTokens(tokens.accessToken, tokens.refreshToken, AuthStorage.getRememberMe());
 }
 
 async function refreshTokensOnce(): Promise<void> {
@@ -202,7 +199,7 @@ async function sendRequest(
   method: string,
   path: string,
   body: unknown,
-  options: RequestOptions
+  options: RequestOptions,
 ): Promise<Response> {
   const {
     params,
@@ -231,7 +228,7 @@ async function sendJsonRequest<T>(
   method: string,
   path: string,
   body: unknown,
-  options: RequestOptions
+  options: RequestOptions,
 ): Promise<T> {
   const response = await sendRequest(method, path, body, options);
   const canRefresh = options.requiresAuth !== false && options.retryAfterRefresh !== false;

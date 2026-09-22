@@ -6,12 +6,7 @@
     destroy-on-close
     @closed="resetForm"
   >
-    <el-form
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      label-width="auto"
-    >
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="auto">
       <el-form-item
         v-if="isHeadquarters && !isEditing"
         :label="$t('identity.businessUnit')"
@@ -30,20 +25,11 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item
-        v-else
-        :label="$t('identity.library')"
-      >
+      <el-form-item v-else :label="$t('identity.library')">
         <ResourceLibraryTag :library="form.library" />
       </el-form-item>
-      <el-form-item
-        v-if="isEditing"
-        :label="$t('resource.code')"
-      >
-        <el-input
-          v-model="form.code"
-          disabled
-        />
+      <el-form-item v-if="isEditing" :label="$t('resource.code')">
+        <el-input v-model="form.code" disabled />
       </el-form-item>
       <el-form-item
         v-for="field in fields"
@@ -64,10 +50,7 @@
           controls-position="right"
           @update:model-value="form[field.prop] = $event ?? 0"
         />
-        <el-select
-          v-else-if="field.type === 'select'"
-          v-model="form[field.prop]"
-        >
+        <el-select v-else-if="field.type === 'select'" v-model="form[field.prop]">
           <el-option
             v-for="option in field.options"
             :key="option.value"
@@ -98,10 +81,7 @@
       <el-button @click="isVisible = false">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button
-        type="primary"
-        @click="handleSubmit"
-      >
+      <el-button type="primary" @click="handleSubmit">
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -137,24 +117,42 @@ const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters
 const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const formRef = ref<FormInstance>();
 const form = reactive<ResourceRow>({ ...props.record });
-const isVisible = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) });
+const isVisible = computed({
+  get: () => props.modelValue,
+  set: (value) => emit("update:modelValue", value),
+});
 const rules = computed<FormRules>(() => ({
-  ...Object.fromEntries(props.fields.filter((field) => field.required).map((field) => [field.prop, [{
-    required: true,
-    message: t("resource.fieldRequired", { field: t(field.labelKey) }),
-    trigger: field.type === "select" ? "change" : "blur",
-  }]])),
-  library: [{ required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" }],
+  ...Object.fromEntries(
+    props.fields
+      .filter((field) => field.required)
+      .map((field) => [
+        field.prop,
+        [
+          {
+            required: true,
+            message: t("resource.fieldRequired", { field: t(field.labelKey) }),
+            trigger: field.type === "select" ? "change" : "blur",
+          },
+        ],
+      ]),
+  ),
+  library: [
+    { required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" },
+  ],
 }));
 
-watch(() => [props.modelValue, props.record] as const, ([visible, record]) => {
-  if (!visible) return;
-  Object.assign(form, record);
-  if (isHeadquarters.value && !props.isEditing) {
-    selectedBusinessUnit.value = "";
-    form.library = undefined;
-  }
-}, { deep: true });
+watch(
+  () => [props.modelValue, props.record] as const,
+  ([visible, record]) => {
+    if (!visible) return;
+    Object.assign(form, record);
+    if (isHeadquarters.value && !props.isEditing) {
+      selectedBusinessUnit.value = "";
+      form.library = undefined;
+    }
+  },
+  { deep: true },
+);
 
 function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
   form.library = unit === "shengxu" ? "shengxu" : "shared";

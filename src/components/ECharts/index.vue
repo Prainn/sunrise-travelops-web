@@ -10,10 +10,7 @@
  -->
 
 <template>
-  <div
-    ref="chartRef"
-    :style="{ width, height }"
-  ></div>
+  <div ref="chartRef" :style="{ width, height }"></div>
 </template>
 
 <script setup lang="ts">
@@ -71,7 +68,7 @@ watch(
       chartInstance.setOption(newOptions);
     }
   },
-  { deep: true }
+  { deep: true },
 );
 
 onMounted(() => {

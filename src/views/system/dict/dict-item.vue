@@ -1,18 +1,8 @@
 <template>
   <div class="page-container">
-    <el-card
-      class="page-search"
-      shadow="never"
-    >
-      <el-form
-        ref="queryFormRef"
-        :model="params"
-        :inline="true"
-      >
-        <el-form-item
-          :label="$t('common.keywords')"
-          prop="keyword"
-        >
+    <el-card class="page-search" shadow="never">
+      <el-form ref="queryFormRef" :model="params" :inline="true">
+        <el-form-item :label="$t('common.keywords')" prop="keyword">
           <el-input
             v-model="params.keyword"
             :placeholder="$t('dictionary.optionSearchPlaceholder')"
@@ -23,10 +13,7 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button
-            type="primary"
-            @click="handleQuery"
-          >
+          <el-button type="primary" @click="handleQuery">
             {{ $t("common.search") }}
           </el-button>
           <el-button @click="handleResetQuery">
@@ -36,16 +23,9 @@
       </el-form>
     </el-card>
 
-    <el-card
-      class="page-content"
-      shadow="never"
-    >
+    <el-card class="page-content" shadow="never">
       <TableToolbar @refresh="fetchData">
-        <el-button
-          v-has-perm="'sys:dict-item:create'"
-          type="primary"
-          @click="handleCreateClick()"
-        >
+        <el-button v-has-perm="'sys:dict-item:create'" type="primary" @click="handleCreateClick()">
           {{ $t("common.create") }}
         </el-button>
         <el-button
@@ -68,23 +48,10 @@
           height="100%"
           @selection-change="handleSelectionChange"
         >
-          <el-table-column
-            type="selection"
-            width="55"
-            align="center"
-          />
-          <el-table-column
-            :label="$t('dictionary.optionName')"
-            prop="label"
-          />
-          <el-table-column
-            :label="$t('dictionary.optionValue')"
-            prop="value"
-          />
-          <el-table-column
-            :label="$t('common.sort')"
-            prop="sort"
-          />
+          <el-table-column type="selection" width="55" align="center" />
+          <el-table-column :label="$t('dictionary.optionName')" prop="label" />
+          <el-table-column :label="$t('dictionary.optionValue')" prop="value" />
+          <el-table-column :label="$t('common.sort')" prop="sort" />
           <el-table-column :label="$t('common.status')">
             <template #default="scope">
               <el-tag :type="scope.row.status === CommonStatus.ENABLED ? 'success' : 'info'">
@@ -97,12 +64,7 @@
             </template>
           </el-table-column>
 
-          <el-table-column
-            fixed="right"
-            :label="$t('common.actions')"
-            align="center"
-            width="220"
-          >
+          <el-table-column fixed="right" :label="$t('common.actions')" align="center" width="220">
             <template #default="scope">
               <el-button
                 v-has-perm="'sys:dict-item:update'"
@@ -143,25 +105,14 @@
       destroy-on-close
       @close="closeDialog"
     >
-      <el-form
-        ref="dictItemFormRef"
-        :model="formData"
-        :rules="rules"
-        label-width="100px"
-      >
-        <el-form-item
-          :label="$t('dictionary.optionName')"
-          prop="label"
-        >
+      <el-form ref="dictItemFormRef" :model="formData" :rules="rules" label-width="100px">
+        <el-form-item :label="$t('dictionary.optionName')" prop="label">
           <el-input
             v-model="formData.label"
             :placeholder="$t('dictionary.optionNamePlaceholder')"
           />
         </el-form-item>
-        <el-form-item
-          :label="$t('dictionary.optionValue')"
-          prop="value"
-        >
+        <el-form-item :label="$t('dictionary.optionValue')" prop="value">
           <el-input
             v-model="formData.value"
             :placeholder="$t('dictionary.optionValuePlaceholder')"
@@ -178,10 +129,7 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item :label="$t('common.sort')">
-          <el-input-number
-            v-model="formData.sort"
-            controls-position="right"
-          />
+          <el-input-number v-model="formData.sort" controls-position="right" />
         </el-form-item>
         <el-form-item>
           <template #label>
@@ -194,23 +142,12 @@
             @clear="formData.tagType = ''"
           >
             <template #label="{ value }">
-              <el-tag
-                v-if="value"
-                :type="value"
-              >
+              <el-tag v-if="value" :type="value">
                 {{ formData.label ? formData.label : $t("dictionary.optionName") }}
               </el-tag>
             </template>
-            <el-option
-              v-for="type in tagTypeOptions"
-              :key="type"
-              :label="type"
-              :value="type"
-            >
-              <div
-                flex-y-center
-                gap-10px
-              >
+            <el-option v-for="type in tagTypeOptions" :key="type" :label="type" :value="type">
+              <div flex-y-center gap-10px>
                 <el-tag :type="type as any">
                   {{ formData.label ?? $t("dictionary.optionName") }}
                 </el-tag>
@@ -223,10 +160,7 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button
-            type="primary"
-            @click="handleSubmit"
-          >
+          <el-button type="primary" @click="handleSubmit">
             {{ $t("common.confirm") }}
           </el-button>
           <el-button @click="closeDialog">
@@ -362,7 +296,7 @@ async function handleEditClick(row: DictItem): Promise<void> {
 async function handleSubmit(): Promise<void> {
   const valid = await dictItemFormRef.value?.validate().then(
     () => true,
-    () => false
+    () => false,
   );
   if (!valid) return;
 

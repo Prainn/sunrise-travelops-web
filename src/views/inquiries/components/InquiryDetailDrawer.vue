@@ -8,21 +8,18 @@
     <template v-if="record">
       <div class="inquiry-detail__header">
         <div>
-          <h3>{{ record.agencyName }} <el-tag>{{ $t(`identity.scopes.${record.businessUnit}`) }}</el-tag></h3>
+          <h3>
+            {{ record.agencyName }}
+            <el-tag>{{ $t(`identity.scopes.${record.businessUnit}`) }}</el-tag>
+          </h3>
           <span>{{ record.code }}</span>
         </div>
         <el-tag :type="INQUIRY_STATUS_TAG_TYPES[record.status]">
           {{ $t(`inquiry.statuses.${record.status}`) }}
         </el-tag>
       </div>
-      <el-descriptions
-        :column="1"
-        border
-      >
-        <el-descriptions-item
-          width="80"
-          :label="$t('inquiry.agencyCode')"
-        >
+      <el-descriptions :column="1" border>
+        <el-descriptions-item width="80" :label="$t('inquiry.agencyCode')">
           {{ valueOrDash(record.agencyCode) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.owner')">
@@ -55,16 +52,10 @@
         <el-descriptions-item :label="$t('inquiry.creator')">
           {{ record.creator }}
         </el-descriptions-item>
-        <el-descriptions-item
-          :label="$t('inquiry.originalMessage')"
-          :span="2"
-        >
+        <el-descriptions-item :label="$t('inquiry.originalMessage')" :span="2">
           {{ record.originalMessage }}
         </el-descriptions-item>
-        <el-descriptions-item
-          :label="$t('inquiry.internalRemark')"
-          :span="2"
-        >
+        <el-descriptions-item :label="$t('inquiry.internalRemark')" :span="2">
           {{ valueOrDash(record.internalRemark) }}
         </el-descriptions-item>
         <el-descriptions-item

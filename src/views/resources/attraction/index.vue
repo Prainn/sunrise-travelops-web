@@ -53,10 +53,34 @@ const loadedAttractionPriceIds = new Set<string>();
 const loadingAttractionPriceIds = reactive(new Set<string>());
 
 function createEmptyAttraction(): AttractionRecord {
-  return { id: "", code: "", name: "", area: "", category: "scenic", restroomLocation: "", remark: "", unit: "personVisit", status: "enabled", prices: [] };
+  return {
+    id: "",
+    code: "",
+    name: "",
+    area: "",
+    category: "scenic",
+    restroomLocation: "",
+    remark: "",
+    unit: "personVisit",
+    status: "enabled",
+    prices: [],
+  };
 }
 function createEmptyPrice(): AttractionPriceRecord {
-  return { id: "", itemType: "ticket", itemName: "景区门票", audience: "成人", periodName: "常规期", startDate: "", endDate: "", rackPrice: 0, settlementPrice: 0, unit: "personVisit", isFree: false, priceNote: "", };
+  return {
+    id: "",
+    itemType: "ticket",
+    itemName: "景区门票",
+    audience: "成人",
+    periodName: "常规期",
+    startDate: "",
+    endDate: "",
+    rackPrice: 0,
+    settlementPrice: 0,
+    unit: "personVisit",
+    isFree: false,
+    priceNote: "",
+  };
 }
 const {
   isLoading,
@@ -81,7 +105,9 @@ const {
   createRecord: (record, id) => ({ ...record, id, prices: [] }),
   updateRecord: (current, record) => {
     Object.assign(current, record, { prices: current.prices });
-    current.prices.forEach((price) => { price.unit = current.unit; });
+    current.prices.forEach((price) => {
+      price.unit = current.unit;
+    });
   },
 });
 
@@ -135,7 +161,9 @@ async function savePrice(price: AttractionPriceRecord) {
 }
 async function deletePrice(record: AttractionRecord, price: AttractionPriceRecord) {
   try {
-    await ElMessageBox.confirm(t("attraction.deletePriceConfirm"), t("common.tip"), { type: "warning" });
+    await ElMessageBox.confirm(t("attraction.deletePriceConfirm"), t("common.tip"), {
+      type: "warning",
+    });
   } catch {
     return;
   }

@@ -55,8 +55,15 @@ const loadingContactAgencyIds = reactive(new Set<string>());
 
 function createEmptyAgencyRecord(): AgencyRecord {
   return {
-    id: "", code: "", name: "", city: "", countryOrRegion: "", email: "",
-    status: "enabled", remark: "", contacts: [],
+    id: "",
+    code: "",
+    name: "",
+    city: "",
+    countryOrRegion: "",
+    email: "",
+    status: "enabled",
+    remark: "",
+    contacts: [],
   };
 }
 
@@ -79,11 +86,19 @@ const {
   loadRecords: loadAgencies,
   createEmpty: createEmptyAgencyRecord,
   selectLibraryInDialog: true,
-  cloneForEdit: (agency) => ({ ...agency, contacts: agency.contacts.map((contact) => ({ ...contact })) }),
-  createRecord: (agency, id) => ({ ...agency, id, contacts: agency.contacts.map((contact) => ({ ...contact })) }),
-  updateRecord: (current, agency) => Object.assign(current, agency, {
+  cloneForEdit: (agency) => ({
+    ...agency,
     contacts: agency.contacts.map((contact) => ({ ...contact })),
   }),
+  createRecord: (agency, id) => ({
+    ...agency,
+    id,
+    contacts: agency.contacts.map((contact) => ({ ...contact })),
+  }),
+  updateRecord: (current, agency) =>
+    Object.assign(current, agency, {
+      contacts: agency.contacts.map((contact) => ({ ...contact })),
+    }),
   deleteConfirmKey: "resource.deleteAgencyConfirm",
 });
 
@@ -94,9 +109,12 @@ const editingContactId = ref("");
 const contactRecord = ref<AgencyContactRecord>(createEmptyContact());
 const isContactEditing = computed(() => Boolean(editingContactId.value));
 
-watch(() => rows.map((agency) => agency.id), (ids) => {
-  if (!ids.includes(selectedAgencyId.value)) selectedAgencyId.value = ids[0] ?? "";
-});
+watch(
+  () => rows.map((agency) => agency.id),
+  (ids) => {
+    if (!ids.includes(selectedAgencyId.value)) selectedAgencyId.value = ids[0] ?? "";
+  },
+);
 watch(selectedAgencyId, loadAgencyContacts, { immediate: true });
 
 async function loadAgencies(query?: ResourceListQuery) {
@@ -104,14 +122,15 @@ async function loadAgencies(query?: ResourceListQuery) {
   const agencies = await resourceService.loadAgencies(query);
   const nextAgencyId = agencies.some((agency) => agency.id === selectedAgencyId.value)
     ? selectedAgencyId.value
-    : agencies[0]?.id ?? "";
+    : (agencies[0]?.id ?? "");
   if (selectedAgencyId.value === nextAgencyId) await loadAgencyContacts(nextAgencyId);
   else selectedAgencyId.value = nextAgencyId;
   return agencies;
 }
 
 async function loadAgencyContacts(agencyId: string) {
-  if (!agencyId || loadedContactAgencyIds.has(agencyId) || loadingContactAgencyIds.has(agencyId)) return;
+  if (!agencyId || loadedContactAgencyIds.has(agencyId) || loadingContactAgencyIds.has(agencyId))
+    return;
   loadingContactAgencyIds.add(agencyId);
   try {
     await resourceService.loadAgencyContacts(agencyId);
@@ -149,9 +168,10 @@ function openEditContactDialog(contact: AgencyContactRecord) {
 async function saveContact(contact: AgencyContactRecord) {
   const agency = selectedAgency.value;
   if (!agency) return;
-  const isDuplicate = agency.contacts.some((item) => (
-    item.id !== editingContactId.value && item.name.toLowerCase() === contact.name.toLowerCase()
-  ));
+  const isDuplicate = agency.contacts.some(
+    (item) =>
+      item.id !== editingContactId.value && item.name.toLowerCase() === contact.name.toLowerCase(),
+  );
   if (isDuplicate) {
     ElMessage.warning(t("resource.contactExists"));
     return;
@@ -175,7 +195,9 @@ async function deleteContact(contact: AgencyContactRecord) {
   const agency = selectedAgency.value;
   if (!agency) return;
   try {
-    await ElMessageBox.confirm(t("resource.deleteContactConfirm"), t("common.tip"), { type: "warning" });
+    await ElMessageBox.confirm(t("resource.deleteContactConfirm"), t("common.tip"), {
+      type: "warning",
+    });
   } catch {
     return;
   }

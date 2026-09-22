@@ -6,16 +6,8 @@
     destroy-on-close
     @closed="resetForm"
   >
-    <el-form
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      label-width="auto"
-    >
-      <el-form-item
-        :label="$t('resource.personName')"
-        prop="name"
-      >
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="auto">
+      <el-form-item :label="$t('resource.personName')" prop="name">
         <el-input v-model.trim="form.name" />
       </el-form-item>
       <el-form-item :label="$t('resource.phone')">
@@ -26,10 +18,7 @@
       <el-button @click="isVisible = false">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button
-        type="primary"
-        @click="handleSubmit"
-      >
+      <el-button type="primary" @click="handleSubmit">
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -56,12 +45,24 @@ const emit = defineEmits<{
 const { t } = useI18n();
 const formRef = ref<FormInstance>();
 const form = reactive<AgencyContactRecord>({ ...props.record });
-const isVisible = computed({ get: () => props.modelValue, set: (value) => emit("update:modelValue", value) });
+const isVisible = computed({
+  get: () => props.modelValue,
+  set: (value) => emit("update:modelValue", value),
+});
 const rules = computed<FormRules>(() => ({
-  name: [{ required: true, message: t("resource.fieldRequired", { field: t("resource.personName") }), trigger: "blur" }],
+  name: [
+    {
+      required: true,
+      message: t("resource.fieldRequired", { field: t("resource.personName") }),
+      trigger: "blur",
+    },
+  ],
 }));
 
-watch(() => props.record, (record) => Object.assign(form, record));
+watch(
+  () => props.record,
+  (record) => Object.assign(form, record),
+);
 
 function resetForm() {
   formRef.value?.clearValidate();

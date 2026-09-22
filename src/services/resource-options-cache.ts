@@ -6,12 +6,21 @@ export function clearResourceOptionsCache() {
 }
 
 /** 仅缓存资源下拉分页结果，同条件并发请求共用一个 Promise。 */
-export function loadResourceOptions<T>(path: string, params: Record<string, unknown>, fetcher: () => Promise<T>): Promise<T> {
+export function loadResourceOptions<T>(
+  path: string,
+  params: Record<string, unknown>,
+  fetcher: () => Promise<T>,
+): Promise<T> {
   const now = Date.now();
   for (const [key, entry] of entries) {
     if (entry.expiresAt <= now) entries.delete(key);
   }
-  const key = JSON.stringify([path, Object.entries(params).filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b))]);
+  const key = JSON.stringify([
+    path,
+    Object.entries(params)
+      .filter(([, value]) => value !== undefined)
+      .sort(([a], [b]) => a.localeCompare(b)),
+  ]);
   const cached = entries.get(key);
   if (cached) return cached.promise as Promise<T>;
   const promise = fetcher();

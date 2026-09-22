@@ -8,14 +8,19 @@
     <template #header>
       <div class="day-card__header flex items-center justify-between">
         <div class="day-card__identity flex items-center gap-[12px]">
-          <span class="day-card__number grid w-[44px] h-[44px] place-items-center rounded-[10px] [background:var(--el-color-primary)] [color:#fff] font-bold">D{{ day.dayNumber }}</span>
+          <span
+            class="day-card__number grid w-[44px] h-[44px] place-items-center rounded-[10px] [background:var(--el-color-primary)] [color:#fff] font-bold"
+            >D{{ day.dayNumber }}</span
+          >
           <div>
             <div class="day-card__route flex items-center gap-[6px] text-[16px] font-semibold">
               {{ day.departure || $t("itinerary.departure") }}
               <el-icon><Right /></el-icon>
               {{ day.destination || $t("itinerary.destination") }}
             </div>
-            <span class="day-card__date text-[14px] text-[var(--el-text-color-secondary)]">{{ day.date }}</span>
+            <span class="day-card__date text-[14px] text-[var(--el-text-color-secondary)]">{{
+              day.date
+            }}</span>
           </div>
         </div>
         <div class="day-card__actions flex items-center">
@@ -25,16 +30,13 @@
             :aria-controls="`day-body-${day.id}`"
             @click="expanded = !expanded"
           >
-            {{ $t(expanded ? 'itinerary.collapseDay' : 'itinerary.expandDay') }}
+            {{ $t(expanded ? "itinerary.collapseDay" : "itinerary.expandDay") }}
           </el-button>
         </div>
       </div>
     </template>
 
-    <div
-      v-show="expanded"
-      :id="`day-body-${day.id}`"
-    >
+    <div v-show="expanded" :id="`day-body-${day.id}`">
       <ItineraryDayForm
         :allow-custom-destination="isLast && day.dayNumber >= plannedDays"
         :is-last="isLast"
@@ -46,21 +48,38 @@
 
       <div class="day-card__resources-header m-[20px_0_10px] flex items-center justify-between">
         <strong>{{ $t("itinerary.dailyResources") }}</strong>
-        <el-button
-          v-if="contentEditable"
-          type="primary"
-          plain
-          @click="emit('add-item')"
-        >
+        <el-button v-if="contentEditable" type="primary" plain @click="emit('add-item')">
           {{ $t("itinerary.addResource") }}
         </el-button>
       </div>
       <div class="day-card__meals flex flex-wrap items-center gap-[16px] mb-[12px]">
         <el-tag
-          :type="breakfastStatus === 'included' ? 'success' : breakfastStatus === 'excluded' ? 'info' : 'warning'"
-          :title="$t(breakfastStatus === 'pending' ? 'itinerary.breakfastPending' : breakfastStatus === 'included' ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded')"
+          :type="
+            breakfastStatus === 'included'
+              ? 'success'
+              : breakfastStatus === 'excluded'
+                ? 'info'
+                : 'warning'
+          "
+          :title="
+            $t(
+              breakfastStatus === 'pending'
+                ? 'itinerary.breakfastPending'
+                : breakfastStatus === 'included'
+                  ? 'itinerary.breakfastIncluded'
+                  : 'itinerary.breakfastExcluded',
+            )
+          "
         >
-          {{ $t(breakfastStatus === 'pending' ? 'itinerary.breakfastPending' : breakfastStatus === 'included' ? 'itinerary.breakfastIncluded' : 'itinerary.breakfastExcluded') }}
+          {{
+            $t(
+              breakfastStatus === "pending"
+                ? "itinerary.breakfastPending"
+                : breakfastStatus === "included"
+                  ? "itinerary.breakfastIncluded"
+                  : "itinerary.breakfastExcluded",
+            )
+          }}
         </el-tag>
         <div
           v-for="slot in ['lunch', 'dinner'] as const"
@@ -85,34 +104,21 @@
           </el-button>
         </div>
       </div>
-      <el-table
-        v-if="day.items.length"
-        :data="day.items"
-        border
-        size="small"
-      >
-        <el-table-column
-          :label="$t('itinerary.resource')"
-          min-width="120"
-        >
+      <el-table v-if="day.items.length" :data="day.items" border size="small">
+        <el-table-column :label="$t('itinerary.resource')" min-width="120">
           <template #default="scope">
             <div class="day-card__resource-name font-medium">
-              <el-tag
-                v-if="scope.row.mealSlot"
-                size="small"
-              >
+              <el-tag v-if="scope.row.mealSlot" size="small">
                 {{ $t(`itinerary.meals.${scope.row.mealSlot}`) }}
               </el-tag>
               {{ scope.row.resourceName }}
             </div>
-            <small class="text-[14px] text-[var(--el-text-color-secondary)]">{{ scope.row.priceName }}</small>
+            <small class="text-[14px] text-[var(--el-text-color-secondary)]">{{
+              scope.row.priceName
+            }}</small>
           </template>
         </el-table-column>
-        <el-table-column
-          :label="$t('itinerary.perPersonQuantity')"
-          width="160"
-          align="right"
-        >
+        <el-table-column :label="$t('itinerary.perPersonQuantity')" width="160" align="right">
           <template #default="scope">
             <el-input-number
               v-if="contentEditable"
@@ -126,26 +132,16 @@
             <template v-else>
               {{ scope.row.quantity }}
             </template>
-            <small class="text-[14px] text-[var(--el-text-color-secondary)]">{{ $t("itinerary.usageCount") }}</small>
+            <small class="text-[14px] text-[var(--el-text-color-secondary)]">{{
+              $t("itinerary.usageCount")
+            }}</small>
           </template>
         </el-table-column>
-        <el-table-column
-          :label="$t('itinerary.unitCost')"
-          width="190"
-          align="right"
-        >
-          <template #default="scope">
-            ¥{{ formatMoney(scope.row.unitCost) }}
-          </template>
+        <el-table-column :label="$t('itinerary.unitCost')" width="190" align="right">
+          <template #default="scope"> ¥{{ formatMoney(scope.row.unitCost) }} </template>
         </el-table-column>
-        <el-table-column
-          :label="$t('itinerary.resourceCostPerPerson')"
-          width="100"
-          align="right"
-        >
-          <template #default="scope">
-            ¥{{ formatMoney(scope.row.totalCost) }}
-          </template>
+        <el-table-column :label="$t('itinerary.resourceCostPerPerson')" width="100" align="right">
+          <template #default="scope"> ¥{{ formatMoney(scope.row.totalCost) }} </template>
         </el-table-column>
         <el-table-column
           v-if="contentEditable"
@@ -154,22 +150,16 @@
           align="center"
         >
           <template #default="scope">
-            <el-button
-              type="danger"
-              link
-              @click="emit('remove-item', scope.$index)"
-            >
+            <el-button type="danger" link @click="emit('remove-item', scope.$index)">
               {{ $t("common.delete") }}
             </el-button>
           </template>
         </el-table-column>
       </el-table>
-      <el-empty
-        v-else
-        :description="$t('itinerary.noDailyResources')"
-        :image-size="52"
-      />
-      <div class="day-card__subtotal mt-[12px] flex items-center justify-between text-[var(--el-text-color-secondary)]">
+      <el-empty v-else :description="$t('itinerary.noDailyResources')" :image-size="52" />
+      <div
+        class="day-card__subtotal mt-[12px] flex items-center justify-between text-[var(--el-text-color-secondary)]"
+      >
         <span>{{ $t("itinerary.dayCost") }} ¥{{ formatMoney(dayCost) }}</span>
       </div>
     </div>
@@ -184,7 +174,8 @@ import type { ItineraryDayRecord, MealSlot } from "@/types/itinerary";
 import { formatMoney, sumMoney } from "@/utils";
 import ItineraryDayForm from "./ItineraryDayForm.vue";
 
-type EditableDayField = "departure" | "destination" | "overnightDestination" | "transport" | "description";
+type EditableDayField =
+  "departure" | "destination" | "overnightDestination" | "transport" | "description";
 const props = defineProps<{
   day: ItineraryDayRecord;
   breakfastStatus: "included" | "excluded" | "pending";
@@ -202,7 +193,11 @@ const emit = defineEmits<{
   "update-item-quantity": [index: number, quantity: number];
 }>();
 const expanded = ref(true);
-defineExpose({ expand: () => { expanded.value = true; } });
+defineExpose({
+  expand: () => {
+    expanded.value = true;
+  },
+});
 const dayCost = computed(() => sumMoney(props.day.items.map((item) => item.totalCost)));
 const { t } = useI18n();
 
@@ -210,10 +205,16 @@ function mealLabel(slot: MealSlot) {
   const item = props.day.items.find((item) => item.type === "restaurant" && item.mealSlot === slot);
   return item ? `${item.resourceName} · ${item.priceName}` : t("itinerary.selectMealResource");
 }
-function updateField(field: EditableDayField, value: string | null) { emit("update-field", field, value); }
+function updateField(field: EditableDayField, value: string | null) {
+  emit("update-field", field, value);
+}
 </script>
 
 <style scoped lang="scss">
-.day-card.is-collapsed :deep(.el-card__body) { display: none; }
-.day-card.is-collapsed :deep(.el-card__header) { border-bottom: 0; }
+.day-card.is-collapsed :deep(.el-card__body) {
+  display: none;
+}
+.day-card.is-collapsed :deep(.el-card__header) {
+  border-bottom: 0;
+}
 </style>

@@ -1,9 +1,6 @@
 <template>
   <div class="hotel-page page-container">
-    <el-card
-      class="page-search"
-      shadow="never"
-    >
+    <el-card class="page-search" shadow="never">
       <el-form :inline="true">
         <ResourceBusinessFilter />
         <el-form-item :label="$t('common.keywords')">
@@ -40,10 +37,7 @@
               :label="$t('hotel.ratings.international_five_star')"
               value="international_five_star"
             />
-            <el-option
-              :label="$t('hotel.ratings.ctrip_preferred')"
-              value="ctrip_preferred"
-            />
+            <el-option :label="$t('hotel.ratings.ctrip_preferred')" value="ctrip_preferred" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -74,12 +68,7 @@
       width="680px"
       destroy-on-close
     >
-      <el-form
-        ref="hotelFormRef"
-        :model="hotelForm"
-        :rules="hotelRules"
-        label-width="auto"
-      >
+      <el-form ref="hotelFormRef" :model="hotelForm" :rules="hotelRules" label-width="auto">
         <el-form-item
           v-if="isHeadquarters && !isEditing"
           :label="$t('identity.businessUnit')"
@@ -98,40 +87,19 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item
-          v-else
-          :label="$t('identity.library')"
-        >
+        <el-form-item v-else :label="$t('identity.library')">
           <ResourceLibraryTag :library="hotelForm.library" />
         </el-form-item>
-        <el-form-item
-          v-if="isEditing"
-          :label="$t('resource.code')"
-        >
-          <el-input
-            v-model="hotelForm.code"
-            disabled
-          />
+        <el-form-item v-if="isEditing" :label="$t('resource.code')">
+          <el-input v-model="hotelForm.code" disabled />
         </el-form-item>
-        <el-form-item
-          :label="$t('resource.hotelName')"
-          prop="name"
-        >
+        <el-form-item :label="$t('resource.hotelName')" prop="name">
           <el-input v-model.trim="hotelForm.name" />
         </el-form-item>
-        <el-form-item
-          :label="$t('resource.city')"
-          prop="city"
-        >
-          <CitySelect
-            v-model="hotelForm.city"
-            :library="hotelForm.library"
-          />
+        <el-form-item :label="$t('resource.city')" prop="city">
+          <CitySelect v-model="hotelForm.city" :library="hotelForm.library" />
         </el-form-item>
-        <el-form-item
-          :label="$t('resource.priceUnit')"
-          prop="unit"
-        >
+        <el-form-item :label="$t('resource.priceUnit')" prop="unit">
           <el-select v-model="hotelForm.unit">
             <el-option
               v-for="option in hotelUnitOptions"
@@ -141,29 +109,14 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item
-          :label="$t('hotel.individualPrice')"
-          prop="individualPrice"
-        >
-          <el-input-number
-            v-model="hotelForm.individualPrice"
-            :min="0"
-            :precision="2"
-          />
+        <el-form-item :label="$t('hotel.individualPrice')" prop="individualPrice">
+          <el-input-number v-model="hotelForm.individualPrice" :min="0" :precision="2" />
         </el-form-item>
         <el-form-item :label="$t('hotel.groupPrice')">
-          <el-input-number
-            v-model="hotelForm.groupPrice"
-            :min="0"
-            :precision="2"
-          />
+          <el-input-number v-model="hotelForm.groupPrice" :min="0" :precision="2" />
         </el-form-item>
         <el-form-item :label="$t('hotel.minimumGroupSize')">
-          <el-input-number
-            v-model="hotelForm.minimumGroupSize"
-            :min="1"
-            :precision="0"
-          />
+          <el-input-number v-model="hotelForm.minimumGroupSize" :min="1" :precision="0" />
         </el-form-item>
         <el-form-item :label="$t('resource.starRating')">
           <el-radio-group v-model="hotelForm.rating">
@@ -182,35 +135,20 @@
           <el-input v-model.trim="hotelForm.phone" />
         </el-form-item>
         <el-form-item :label="$t('hotel.facilities')">
-          <el-input
-            v-model.trim="hotelForm.facilities"
-            type="textarea"
-            :rows="2"
-          />
+          <el-input v-model.trim="hotelForm.facilities" type="textarea" :rows="2" />
         </el-form-item>
         <el-form-item :label="$t('hotel.breakfast')">
-          <el-input
-            v-model.trim="hotelForm.breakfast"
-            type="textarea"
-            :rows="2"
-          />
+          <el-input v-model.trim="hotelForm.breakfast" type="textarea" :rows="2" />
         </el-form-item>
         <el-form-item :label="$t('hotel.nearby')">
-          <el-input
-            v-model.trim="hotelForm.nearby"
-            type="textarea"
-            :rows="2"
-          />
+          <el-input v-model.trim="hotelForm.nearby" type="textarea" :rows="2" />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="isHotelDialogVisible = false">
           {{ $t("common.cancel") }}
         </el-button>
-        <el-button
-          type="primary"
-          @click="saveHotel"
-        >
+        <el-button type="primary" @click="saveHotel">
           {{ $t("common.confirm") }}
         </el-button>
       </template>
@@ -261,10 +199,14 @@ const total = ref(0);
 const hotelUnitOptions = computed(() => getResourceUnitOptions("hotel", locale.value));
 const requestHotels = useDebounceFn(() => loadHotels(currentQuery()), 300);
 const hotelRules: FormRules = {
-  library: [{ required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" }],
+  library: [
+    { required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" },
+  ],
   name: [{ required: true, message: t("hotel.nameRequired"), trigger: "blur" }],
   city: [{ required: true, message: t("hotel.cityRequired"), trigger: "change" }],
-  individualPrice: [{ required: true, message: t("hotel.individualPriceRequired"), trigger: "change" }],
+  individualPrice: [
+    { required: true, message: t("hotel.individualPriceRequired"), trigger: "change" },
+  ],
   unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
 };
 
@@ -383,7 +325,13 @@ async function deleteHotel(hotel: HotelRecord) {
 }
 async function saveHotel() {
   if (!(await hotelFormRef.value?.validate().catch(() => false))) return;
-  const formValue = { ...hotelForm, province: resourceService.cityOptions.find((city) => city.name === hotelForm.city && city.library === hotelForm.library)?.province ?? hotelForm.province };
+  const formValue = {
+    ...hotelForm,
+    province:
+      resourceService.cityOptions.find(
+        (city) => city.name === hotelForm.city && city.library === hotelForm.library,
+      )?.province ?? hotelForm.province,
+  };
   const current = hotelStore.find((hotel) => hotel.id === editingId.value);
   try {
     const saved = editingId.value
@@ -410,7 +358,11 @@ async function confirmDelete(messageKey: string) {
 
 <style scoped lang="scss">
 .hotel-page {
-  &__city-select { @apply 'w-[150px]'; }
-  &__rating-select { @apply 'w-[150px]'; }
+  &__city-select {
+    @apply 'w-[150px]';
+  }
+  &__rating-select {
+    @apply 'w-[150px]';
+  }
 }
 </style>

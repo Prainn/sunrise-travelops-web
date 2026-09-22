@@ -1,8 +1,5 @@
 <template>
-  <el-card
-    class="agency-contacts-panel"
-    shadow="never"
-  >
+  <el-card class="agency-contacts-panel" shadow="never">
     <template #header>
       <div class="agency-contacts-panel__header">
         <div v-if="agency">
@@ -33,30 +30,14 @@
       height="100%"
       :empty-text="$t('resource.noContacts')"
     >
-      <el-table-column
-        type="index"
-        width="64"
-        align="center"
-      />
-      <el-table-column
-        prop="name"
-        :label="$t('resource.personName')"
-        min-width="180"
-      />
-      <el-table-column
-        prop="phone"
-        :label="$t('resource.phone')"
-        min-width="180"
-      >
+      <el-table-column type="index" width="64" align="center" />
+      <el-table-column prop="name" :label="$t('resource.personName')" min-width="180" />
+      <el-table-column prop="phone" :label="$t('resource.phone')" min-width="180">
         <template #default="scope">
           {{ scope.row.phone || "-" }}
         </template>
       </el-table-column>
-      <el-table-column
-        :label="$t('common.actions')"
-        width="160"
-        align="center"
-      >
+      <el-table-column :label="$t('common.actions')" width="160" align="center">
         <template #default="scope">
           <el-button
             v-has-perm="permissions.update"
@@ -77,10 +58,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-empty
-      v-else
-      :description="$t('resource.selectAgencyFirst')"
-    />
+    <el-empty v-else :description="$t('resource.selectAgencyFirst')" />
   </el-card>
 </template>
 

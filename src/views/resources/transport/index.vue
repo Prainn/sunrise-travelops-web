@@ -28,14 +28,8 @@
             clearable
             class="transport-page__service-level-select"
           >
-            <el-option
-              :label="$t('resource.vehicleServiceLevels.standard')"
-              value="standard"
-            />
-            <el-option
-              :label="$t('resource.vehicleServiceLevels.vip')"
-              value="vip"
-            />
+            <el-option :label="$t('resource.vehicleServiceLevels.standard')" value="standard" />
+            <el-option :label="$t('resource.vehicleServiceLevels.vip')" value="vip" />
           </el-select>
         </el-form-item>
       </template>
@@ -73,75 +67,97 @@ const queryFilters = computed<ResourceListQuery>(() => ({
 
 const columns: ResourceColumn[] = [
   {
-    "prop": "code",
-    "labelKey": "resource.code"
+    prop: "code",
+    labelKey: "resource.code",
   },
   {
-    "prop": "name",
-    "labelKey": "resource.vehicleModel",
-    "minWidth": 180
+    prop: "name",
+    labelKey: "resource.vehicleModel",
+    minWidth: 180,
   },
   {
-    "prop": "serviceLevelLabel",
-    "labelKey": "resource.vehicleServiceLevel"
+    prop: "serviceLevelLabel",
+    labelKey: "resource.vehicleServiceLevel",
   },
   {
-    "prop": "seats",
-    "labelKey": "resource.seats"
+    prop: "seats",
+    labelKey: "resource.seats",
   },
 ];
 const fields = computed<ResourceFormField[]>(() => [
   {
-    "prop": "name",
-    "labelKey": "resource.vehicleModel",
-    "required": true
+    prop: "name",
+    labelKey: "resource.vehicleModel",
+    required: true,
   },
   {
-    "prop": "serviceLevel",
-    "labelKey": "resource.vehicleServiceLevel",
-    "required": true,
-    "type": "select",
-    "options": [
+    prop: "serviceLevel",
+    labelKey: "resource.vehicleServiceLevel",
+    required: true,
+    type: "select",
+    options: [
       { label: t("resource.vehicleServiceLevels.standard"), value: "standard" },
       { label: t("resource.vehicleServiceLevels.vip"), value: "vip" },
-    ]
+    ],
   },
   {
-    "prop": "seats",
-    "labelKey": "resource.seats",
-    "type": "number"
+    prop: "seats",
+    labelKey: "resource.seats",
+    type: "number",
   },
   {
-    "prop": "unit",
-    "labelKey": "resource.priceUnit",
-    "required": true,
-    "type": "select",
-    "options": getResourceUnitOptions("vehicle", locale.value)
+    prop: "unit",
+    labelKey: "resource.priceUnit",
+    required: true,
+    type: "select",
+    options: getResourceUnitOptions("vehicle", locale.value),
   },
   {
-    "prop": "phone",
-    "labelKey": "resource.phone"
+    prop: "phone",
+    labelKey: "resource.phone",
   },
   {
-    "prop": "remark",
-    "labelKey": "common.remark",
-    "type": "textarea"
-  }
+    prop: "remark",
+    labelKey: "common.remark",
+    type: "textarea",
+  },
 ]);
-const { isLoading, rows, total, record, isDialogVisible, isEditing, loadRecords, openCreateDialog, openEditDialog, toggleStatus, saveRecord, deleteRecord } = useResourceMaintenance<TransportRecord>({
+const {
+  isLoading,
+  rows,
+  total,
+  record,
+  isDialogVisible,
+  isEditing,
+  loadRecords,
+  openCreateDialog,
+  openEditDialog,
+  toggleStatus,
+  saveRecord,
+  deleteRecord,
+} = useResourceMaintenance<TransportRecord>({
   records: resourceService.transports,
   api: resourceService.transportApi,
   loadRecords: (query) => resourceService.loadTransports(query),
   createEmpty: () => ({
-    id: "", code: "", name: "", serviceLevel: "standard", seats: 1,
-    unit: "vehicleDay", phone: "", status: "enabled", remark: "",
+    id: "",
+    code: "",
+    name: "",
+    serviceLevel: "standard",
+    seats: 1,
+    unit: "vehicleDay",
+    phone: "",
+    status: "enabled",
+    remark: "",
   }),
   selectLibraryInDialog: true,
 });
-const tableRows = computed(() => rows.map((row) => ({
-  ...row,
-  serviceLevelLabel: t(`resource.vehicleServiceLevels.${row.serviceLevel}`),
-})));
+const tableRows = computed(() =>
+  rows.map((row) => ({
+    ...row,
+    serviceLevelLabel: t(`resource.vehicleServiceLevels.${row.serviceLevel}`),
+  })),
+);
 
 function editTransport(record: ResourceRow) {
   return openEditDialog(record as TransportRecord);

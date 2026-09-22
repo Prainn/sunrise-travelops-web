@@ -12,7 +12,7 @@ export const attractionCategoryOptions: Array<{
 ];
 
 export const attractionCategoryLabelKeys = Object.fromEntries(
-  attractionCategoryOptions.map((option) => [option.value, option.labelKey])
+  attractionCategoryOptions.map((option) => [option.value, option.labelKey]),
 ) as Record<AttractionCategory, string>;
 
 export const attractionItemTypeLabelKeys: Record<AttractionPriceItemType, string> = {

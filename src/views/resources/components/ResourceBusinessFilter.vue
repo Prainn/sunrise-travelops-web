@@ -3,15 +3,8 @@
     v-if="userStore.userInfo.scope === 'headquarters'"
     :label="$t('identity.businessUnit')"
   >
-    <el-select
-      v-model="businessUnit"
-      :empty-values="[null, undefined]"
-      class="!w-[180px]"
-    >
-      <el-option
-        value=""
-        :label="$t('identity.allBusinesses')"
-      />
+    <el-select v-model="businessUnit" :empty-values="[null, undefined]" class="!w-[180px]">
+      <el-option value="" :label="$t('identity.allBusinesses')" />
       <el-option
         v-for="unit in ['shengxu', 'linxi', 'website']"
         :key="unit"

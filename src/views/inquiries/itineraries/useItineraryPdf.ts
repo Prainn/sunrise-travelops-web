@@ -2,7 +2,11 @@ import { computed, onBeforeUnmount, ref, watch, type ComputedRef, type Ref } fro
 import type { InquiryRecord } from "@/types/inquiry";
 import type { ItineraryRecord } from "@/types/itinerary";
 import { inquiryService, type PdfData } from "@/services/inquiry.service";
-import { printItineraryDocument, generateItineraryPrintDocument, type ItineraryPrintDocument } from "./pdf";
+import {
+  printItineraryDocument,
+  generateItineraryPrintDocument,
+  type ItineraryPrintDocument,
+} from "./pdf";
 import { getDayCountMismatch, getItineraryValidationIssues } from "./workflow";
 
 interface ItineraryPdfOptions {
@@ -20,7 +24,9 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
   let previewSource = "";
   let previewData: PdfData | undefined;
   const isDownloadingPdf = ref(false);
-  const canDownloadOriginal = computed(() => options.canDownload() && options.selectedItinerary.value?.status === "quoted");
+  const canDownloadOriginal = computed(
+    () => options.canDownload() && options.selectedItinerary.value?.status === "quoted",
+  );
 
   function validatePdf() {
     const plan = options.selectedItinerary.value;
@@ -61,17 +67,28 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
   async function confirmPdfDownload(): Promise<boolean> {
     const plan = options.selectedItinerary.value;
     const inquiry = options.inquiry.value;
-    if (isDownloadingPdf.value || !plan || !inquiry || !pdfPreviewFile.value || !previewData || !options.canGenerate() || JSON.stringify(plan) !== previewSource) return false;
+    if (
+      isDownloadingPdf.value ||
+      !plan ||
+      !inquiry ||
+      !pdfPreviewFile.value ||
+      !previewData ||
+      !options.canGenerate() ||
+      JSON.stringify(plan) !== previewSource
+    )
+      return false;
     isDownloadingPdf.value = true;
     try {
       const data = await inquiryService.confirmPdf(previewData);
       Object.assign(plan, await inquiryService.itinerary(plan.id));
       Object.assign(inquiry, await inquiryService.detail(inquiry.id));
-      const file = await generateItineraryPrintDocument(data.itinerary,data.inquiry,data);
+      const file = await generateItineraryPrintDocument(data.itinerary, data.inquiry, data);
       await printItineraryDocument(file);
       closePdfPreview();
       return true;
-    } finally { isDownloadingPdf.value = false; }
+    } finally {
+      isDownloadingPdf.value = false;
+    }
   }
   async function downloadOriginal() {
     const id = options.selectedItinerary.value?.id;
@@ -79,8 +96,12 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     isGeneratingPdf.value = true;
     try {
       const data = await inquiryService.pdfData(id);
-      await printItineraryDocument(await generateItineraryPrintDocument(data.itinerary,data.inquiry,data));
-    } finally { isGeneratingPdf.value = false; }
+      await printItineraryDocument(
+        await generateItineraryPrintDocument(data.itinerary, data.inquiry, data),
+      );
+    } finally {
+      isGeneratingPdf.value = false;
+    }
   }
 
   function closePdfPreview() {
@@ -96,7 +117,15 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
   onBeforeUnmount(closePdfPreview);
 
   return {
-    isDownloadingPdf, canDownloadOriginal, downloadOriginal, closePdfPreview, confirmPdfDownload, generatePreview, isGeneratingPdf,
-    isPdfPreviewVisible, pdfPreviewUrl, validatePdf,
+    isDownloadingPdf,
+    canDownloadOriginal,
+    downloadOriginal,
+    closePdfPreview,
+    confirmPdfDownload,
+    generatePreview,
+    isGeneratingPdf,
+    isPdfPreviewVisible,
+    pdfPreviewUrl,
+    validatePdf,
   };
 }

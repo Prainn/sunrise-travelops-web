@@ -1,17 +1,9 @@
 <template>
-  <el-card
-    v-loading="loading"
-    class="agency-sidebar"
-    shadow="never"
-  >
+  <el-card v-loading="loading" class="agency-sidebar" shadow="never">
     <template #header>
       <div class="agency-sidebar__header">
         <span>{{ $t("resource.agencyList") }}</span>
-        <el-button
-          v-has-perm="permissions.create"
-          type="primary"
-          @click="emit('create')"
-        >
+        <el-button v-has-perm="permissions.create" type="primary" @click="emit('create')">
           {{ $t("resource.addAgency") }}
         </el-button>
       </div>
@@ -19,10 +11,7 @@
 
     <el-form :inline="true">
       <ResourceBusinessFilter />
-      <el-form-item
-        :label="$t('common.keywords')"
-        class="w-full pr-2"
-      >
+      <el-form-item :label="$t('common.keywords')" class="w-full pr-2">
         <el-input
           v-model.trim="keywords"
           :placeholder="$t('resource.agencySearchPlaceholder')"
@@ -52,18 +41,12 @@
 
           <div class="agency-sidebar__item-heading mt-2">
             <strong>{{ agency.name }}</strong>
-            <el-tag
-              :type="agency.status === 'enabled' ? 'success' : 'info'"
-              size="small"
-            >
+            <el-tag :type="agency.status === 'enabled' ? 'success' : 'info'" size="small">
               {{ $t(`common.${agency.status}`) }}
             </el-tag>
           </div>
           <small>{{ agency.code }} · {{ agency.countryOrRegion }}</small>
-          <div
-            class="agency-sidebar__actions"
-            @click.stop
-          >
+          <div class="agency-sidebar__actions" @click.stop>
             <el-button
               v-has-perm="permissions.update"
               type="primary"
@@ -90,11 +73,7 @@
             </el-button>
           </div>
         </div>
-        <el-empty
-          v-if="!rows.length"
-          :description="$t('resource.noAgencies')"
-          :image-size="64"
-        />
+        <el-empty v-if="!rows.length" :description="$t('resource.noAgencies')" :image-size="64" />
       </div>
     </el-scrollbar>
   </el-card>

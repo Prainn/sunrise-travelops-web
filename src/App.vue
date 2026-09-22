@@ -1,9 +1,5 @@
 <template>
-  <el-config-provider
-    :locale="locale"
-    :size="size"
-    :table="tableConfig"
-  >
+  <el-config-provider :locale="locale" :size="size" :table="tableConfig">
     <AppVersionNotifier />
     <el-watermark
       :font="{ color: fontColor }"

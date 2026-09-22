@@ -26,7 +26,7 @@
           @change="changeBusinessUnit"
         >
           <el-option
-            v-for="scope in ['shengxu','linxi','website']"
+            v-for="scope in ['shengxu', 'linxi', 'website']"
             :key="scope"
             :value="scope"
             :label="$t(`identity.scopes.${scope}`)"
@@ -35,26 +35,14 @@
       </el-form-item>
 
       <el-row :gutter="16">
-        <el-col
-          v-if="isEditing"
-          :span="12"
-        >
+        <el-col v-if="isEditing" :span="12">
           <el-form-item :label="$t('inquiry.code')">
-            <el-input
-              v-model="form.code"
-              disabled
-            />
+            <el-input v-model="form.code" disabled />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item
-            :label="$t('common.status')"
-            prop="status"
-          >
-            <el-select
-              v-model="form.status"
-              :disabled="!isEditing"
-            >
+          <el-form-item :label="$t('common.status')" prop="status">
+            <el-select v-model="form.status" :disabled="!isEditing">
               <el-option
                 v-for="option in editableStatusOptions"
                 :key="option.value"
@@ -76,10 +64,7 @@
           @update-phone="form.phone = $event"
         />
         <el-col :span="24">
-          <el-form-item
-            :label="$t('inquiry.originalMessage')"
-            prop="originalMessage"
-          >
+          <el-form-item :label="$t('inquiry.originalMessage')" prop="originalMessage">
             <InquiryMessageInput
               v-if="modelValue"
               v-model="form.originalMessage"
@@ -88,15 +73,8 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item
-            :label="$t('inquiry.sourceChannel')"
-            prop="sourceChannel"
-          >
-            <el-select
-              v-model="form.sourceChannel"
-              allow-create
-              filterable
-            >
+          <el-form-item :label="$t('inquiry.sourceChannel')" prop="sourceChannel">
+            <el-select v-model="form.sourceChannel" allow-create filterable>
               <el-option
                 v-for="option in sourceOptions"
                 :key="option"
@@ -107,10 +85,7 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item
-            :label="$t('inquiry.plannedDays')"
-            prop="plannedDays"
-          >
+          <el-form-item :label="$t('inquiry.plannedDays')" prop="plannedDays">
             <el-input-number
               v-model="form.plannedDays"
               :min="1"
@@ -118,16 +93,13 @@
               :precision="0"
               controls-position="right"
             />
-            <span
-              class="ml-4 text-[var(--el-text-color-secondary)]"
-            >{{ $t('itinerary.duration', plannedDuration(form.plannedDays)) }}</span>
+            <span class="ml-4 text-[var(--el-text-color-secondary)]">{{
+              $t("itinerary.duration", plannedDuration(form.plannedDays))
+            }}</span>
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item
-            :label="$t('inquiry.owner')"
-            prop="ownerId"
-          >
+          <el-form-item :label="$t('inquiry.owner')" prop="ownerId">
             <el-select
               v-model="form.ownerId"
               :disabled="isEditing || userStore.userInfo.scope !== 'headquarters' || loadingOwners"
@@ -143,26 +115,14 @@
             </el-select>
           </el-form-item>
         </el-col>
-        <el-col
-          v-if="form.status === 'lost'"
-          :span="12"
-        >
-          <el-form-item
-            :label="$t('inquiry.lostReason')"
-            prop="lostReason"
-          >
+        <el-col v-if="form.status === 'lost'" :span="12">
+          <el-form-item :label="$t('inquiry.lostReason')" prop="lostReason">
             <el-input v-model.trim="form.lostReason" />
           </el-form-item>
         </el-col>
         <el-col :span="24">
-          <el-collapse
-            v-model="expandedDetails"
-            class="inquiry-followup"
-          >
-            <el-collapse-item
-              name="followup"
-              :title="$t('inquiry.followupDetails')"
-            >
+          <el-collapse v-model="expandedDetails" class="inquiry-followup">
+            <el-collapse-item name="followup" :title="$t('inquiry.followupDetails')">
               <el-row :gutter="16">
                 <el-col :span="12">
                   <el-form-item :label="$t('inquiry.nextFollowUpAt')">
@@ -176,11 +136,7 @@
                 </el-col>
                 <el-col :span="24">
                   <el-form-item :label="$t('inquiry.internalRemark')">
-                    <el-input
-                      v-model.trim="form.internalRemark"
-                      type="textarea"
-                      :rows="2"
-                    />
+                    <el-input v-model.trim="form.internalRemark" type="textarea" :rows="2" />
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -243,22 +199,35 @@ const expandedDetails = ref<string[]>([]);
 const creatingContact = ref(false);
 const isParsingDocument = ref(false);
 const form = reactive<InquiryRecord>({ ...props.record });
-const selectedAgency = computed(() => props.agencyOptions.find((agency) => agency.id === form.agencyId));
+const selectedAgency = computed(() =>
+  props.agencyOptions.find((agency) => agency.id === form.agencyId),
+);
 const editableStatusOptions = computed(() => {
   if (!props.isEditing) return INQUIRY_STATUS_OPTIONS.filter((item) => item.value === "new");
-  const allowedStatuses = props.record.status === "quoted"
-    ? ["quoted", "lost"]
-    : [props.record.status, "lost"];
+  const allowedStatuses =
+    props.record.status === "quoted" ? ["quoted", "lost"] : [props.record.status, "lost"];
   return INQUIRY_STATUS_OPTIONS.filter((item) => allowedStatuses.includes(item.value));
 });
 const rules = computed<FormRules>(() => ({
-  ownerId: [{ required: !props.isEditing && userStore.userInfo.scope === "headquarters", message: t("common.selectPlaceholder"), trigger: "change" }],
+  ownerId: [
+    {
+      required: !props.isEditing && userStore.userInfo.scope === "headquarters",
+      message: t("common.selectPlaceholder"),
+      trigger: "change",
+    },
+  ],
   agencyId: [{ required: true, message: t("inquiry.agencyRequired"), trigger: "change" }],
   contactName: [{ required: true, message: t("inquiry.contactNameRequired"), trigger: "change" }],
-  sourceChannel: [{ required: true, message: t("inquiry.sourceChannelRequired"), trigger: "change" }],
+  sourceChannel: [
+    { required: true, message: t("inquiry.sourceChannelRequired"), trigger: "change" },
+  ],
   plannedDays: [{ required: true, message: t("inquiry.plannedDaysRequired"), trigger: "change" }],
-  originalMessage: [{ required: true, message: t("inquiry.originalMessageRequired"), trigger: "blur" }],
-  lostReason: [{ required: form.status === "lost", message: t("inquiry.lostReasonRequired"), trigger: "blur" }],
+  originalMessage: [
+    { required: true, message: t("inquiry.originalMessageRequired"), trigger: "blur" },
+  ],
+  lostReason: [
+    { required: form.status === "lost", message: t("inquiry.lostReasonRequired"), trigger: "blur" },
+  ],
 }));
 
 function resetForm() {
@@ -280,19 +249,29 @@ async function refreshOwners() {
     if (version !== ownerRequestVersion) return;
     scopedOwners.value = owners;
     const user = userStore.userInfo;
-    if (!props.isEditing && user.scope !== "headquarters" && user.userId && user.username && user.nickname && !owners.some(person => person.id === user.userId)) {
+    if (
+      !props.isEditing &&
+      user.scope !== "headquarters" &&
+      user.userId &&
+      user.username &&
+      user.nickname &&
+      !owners.some((person) => person.id === user.userId)
+    ) {
       scopedOwners.value.push({ id: user.userId, username: user.username, name: user.nickname });
     }
   } catch (error) {
-    if (version === ownerRequestVersion) ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+    if (version === ownerRequestVersion)
+      ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
   } finally {
     if (version === ownerRequestVersion) loadingOwners.value = false;
   }
 }
 async function changeBusinessUnit() {
-  selectedResourceLibrary.value = form.businessUnit === 'shengxu' ? 'shengxu' : 'shared';
-  form.agencyId='';form.contactId='';form.ownerId='';
-  await Promise.all([resourceService.loadAgencies(),refreshOwners()]);
+  selectedResourceLibrary.value = form.businessUnit === "shengxu" ? "shengxu" : "shared";
+  form.agencyId = "";
+  form.contactId = "";
+  form.ownerId = "";
+  await Promise.all([resourceService.loadAgencies(), refreshOwners()]);
 }
 function syncAgencyDetails() {
   const agency = selectedAgency.value;
@@ -311,24 +290,40 @@ function syncAgencyDetails() {
 let agencySelectionVersion = 0;
 async function selectAgency(agencyId: string) {
   const version = ++agencySelectionVersion;
-  if (!agencyId) { Object.assign(form, { agencyId: "", agencyCode: "", agencyName: "", contactId: "", contactName: "", email: "", phone: "", countryOrRegion: "" }); return; }
+  if (!agencyId) {
+    Object.assign(form, {
+      agencyId: "",
+      agencyCode: "",
+      agencyName: "",
+      contactId: "",
+      contactName: "",
+      email: "",
+      phone: "",
+      countryOrRegion: "",
+    });
+    return;
+  }
   let agency: AgencyRecord;
-  try { agency = await resourceService.agencyApi.getDetail(agencyId); }
-  catch { if (version === agencySelectionVersion) ElMessage.error(t("request.failed")); return; }
+  try {
+    agency = await resourceService.agencyApi.getDetail(agencyId);
+  } catch {
+    if (version === agencySelectionVersion) ElMessage.error(t("request.failed"));
+    return;
+  }
   if (version !== agencySelectionVersion) return;
-  const index = resourceService.agencies.findIndex(item => item.id === agencyId);
+  const index = resourceService.agencies.findIndex((item) => item.id === agencyId);
   if (index >= 0) resourceService.agencies.splice(index, 1, agency);
   else resourceService.agencies.push(agency);
   Object.assign(form, {
     agencyId: agency.id,
     agencyCode: agency.code,
     agencyName: agency.name,
-    contactId: "", contactName: "",
+    contactId: "",
+    contactName: "",
     email: agency.email,
     phone: "",
     countryOrRegion: agency.countryOrRegion,
   });
-
 }
 
 function selectContact(contact: AgencyContactRecord) {

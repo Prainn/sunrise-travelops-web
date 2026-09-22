@@ -1,9 +1,6 @@
 <template>
   <div class="page-container">
-    <el-card
-      class="page-search"
-      shadow="never"
-    >
+    <el-card class="page-search" shadow="never">
       <el-form :inline="true">
         <ResourceBusinessFilter />
         <el-form-item :label="$t('common.keywords')">
@@ -23,30 +20,15 @@
       </el-form>
     </el-card>
 
-    <el-card
-      class="page-content"
-      shadow="never"
-    >
+    <el-card class="page-content" shadow="never">
       <TableToolbar @refresh="refreshRows">
-        <el-button
-          v-has-perm="permissions.create"
-          type="primary"
-          @click="emit('create')"
-        >
+        <el-button v-has-perm="permissions.create" type="primary" @click="emit('create')">
           {{ $t("common.create") }}
         </el-button>
       </TableToolbar>
       <div class="page-table-wrapper">
-        <el-table
-          v-loading="loading"
-          :data="rows"
-          border
-          height="100%"
-        >
-          <el-table-column
-            :label="$t('identity.library')"
-            min-width="200"
-          >
+        <el-table v-loading="loading" :data="rows" border height="100%">
+          <el-table-column :label="$t('identity.library')" min-width="200">
             <template #default="{ row }">
               <ResourceLibraryTag :library="row.library" />
             </template>
@@ -59,31 +41,19 @@
             :min-width="column.minWidth ?? 120"
           >
             <template #default="{ row }">
-              <slot
-                :name="`column-${column.prop}`"
-                :row="row"
-              >
+              <slot :name="`column-${column.prop}`" :row="row">
                 {{ row[column.prop] }}
               </slot>
             </template>
           </el-table-column>
-          <el-table-column
-            :label="$t('common.status')"
-            width="100"
-            align="center"
-          >
+          <el-table-column :label="$t('common.status')" width="100" align="center">
             <template #default="scope">
               <el-tag :type="scope.row.status === 'enabled' ? 'success' : 'info'">
                 {{ $t(`common.${scope.row.status}`) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column
-            :label="$t('common.actions')"
-            width="220"
-            align="center"
-            fixed="right"
-          >
+          <el-table-column :label="$t('common.actions')" width="220" align="center" fixed="right">
             <template #default="scope">
               <el-button
                 v-has-perm="permissions.update"
@@ -164,10 +134,14 @@ watch(keywords, () => {
   requestRows();
 });
 
-watch(() => props.filters, () => {
-  pageNum.value = 1;
-  requestRows();
-}, { deep: true });
+watch(
+  () => props.filters,
+  () => {
+    pageNum.value = 1;
+    requestRows();
+  },
+  { deep: true },
+);
 
 function currentQuery(): ResourceListQuery {
   return { ...paginationQuery(), keyword: keywords.value, ...props.filters };
