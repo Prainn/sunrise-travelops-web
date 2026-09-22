@@ -369,8 +369,8 @@
     },
     "selectMealResource": "Choose meal resource",
     "extraFees": "Items not included in the tour price",
-    "chineseTip": "Chinese guide tips (person / RMB)",
-    "englishTip": "English / second-language tip (per person, whole trip)",
+    "chineseTip": "Chinese guide tips (per person)",
+    "englishTip": "English / second-language tip (per person)",
     "noExtraQuote": "Leave empty to omit",
     "cabin": "Cabin / seat class",
     "cabins": {

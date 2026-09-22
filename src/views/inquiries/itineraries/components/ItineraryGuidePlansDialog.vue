@@ -8,7 +8,7 @@
   >
     <section id="itinerary-guides">
       <el-form label-position="left">
-        <div class="grid grid-cols-1 gap-x-6 md:grid-cols-[2fr_1fr]">
+        <div class="grid grid-cols-1 gap-x-6 md:grid-cols-2">
           <el-form-item :label="$t('planning.secondLanguage')">
             <el-select
               class="w-full"

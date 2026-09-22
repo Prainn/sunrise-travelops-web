@@ -369,8 +369,8 @@
     },
     "selectMealResource": "选择对应餐食",
     "extraFees": "团费不含项目",
-    "chineseTip": "中文小费（每人／元）",
-    "englishTip": "英文／第二语言小费（全程每人）",
+    "chineseTip": "中文小费（每人）",
+    "englishTip": "英文／第二语言小费（每人）",
     "noExtraQuote": "留空不展示",
     "cabin": "舱位／席别",
     "cabins": {
