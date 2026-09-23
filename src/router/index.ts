@@ -120,6 +120,17 @@ export const constantRoutes: RouteRecordRaw[] = [
           perms: ["sys:user:list"],
         },
       },
+      {
+        path: "operation-logs",
+        name: "OperationLogs",
+        component: () => import("@/views/system/operation-logs/index.vue"),
+        meta: {
+          title: "operationLogs",
+          icon: "el-icon-Document",
+          keepAlive: true,
+          perms: ["sys:operation-log:list"],
+        },
+      },
     ],
   },
   {

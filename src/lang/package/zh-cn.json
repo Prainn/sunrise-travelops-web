@@ -1,4 +1,20 @@
 {
+  "operationLog": {
+    "category": "分类",
+    "all": "全部",
+    "time": "时间",
+    "actor": "操作人",
+    "action": "操作",
+    "result": "结果",
+    "success": "成功",
+    "failed": "失败",
+    "detail": "详情",
+    "login": "登录",
+    "user": "用户",
+    "systemCategory": "系统分类",
+    "businessCategory": "业务分类",
+    "resource": "旅游资源库"
+  },
   "remoteSelect": {
     "loading": "加载中",
     "empty": "无匹配选项"
@@ -11,6 +27,7 @@
     "businessCategories": "业务分类",
     "dictionaryOptions": "分类选项",
     "userList": "用户管理",
+    "operationLogs": "操作日志",
     "inquiries": "询盘",
     "inquiryList": "询盘列表",
     "inquiryLogs": "询盘日志",

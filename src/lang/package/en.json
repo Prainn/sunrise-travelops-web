@@ -1,4 +1,20 @@
 {
+  "operationLog": {
+    "category": "Category",
+    "all": "All",
+    "time": "Time",
+    "actor": "Operator",
+    "action": "Action",
+    "result": "Result",
+    "success": "Success",
+    "failed": "Failed",
+    "detail": "Details",
+    "login": "Login",
+    "user": "Users",
+    "systemCategory": "System Categories",
+    "businessCategory": "Business Categories",
+    "resource": "Tourism Resources"
+  },
   "remoteSelect": {
     "loading": "Loading",
     "empty": "No matching options"
@@ -11,6 +27,7 @@
     "businessCategories": "Business Categories",
     "dictionaryOptions": "Category Options",
     "userList": "Users",
+    "operationLogs": "Operation Logs",
     "inquiries": "Inquiries",
     "inquiryList": "Inquiry List",
     "inquiryLogs": "Inquiry Logs",
