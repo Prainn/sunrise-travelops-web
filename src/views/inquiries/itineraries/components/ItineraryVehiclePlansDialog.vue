@@ -19,7 +19,7 @@
             <div class="flex justify-between items-center">
               <strong>{{ $t(`itinerary.vehicleServiceLevels.${plan.tier}`) }}</strong>
               <el-button :disabled="!editable" @click="addArrangement(plan)">
-                {{ $t("planning.addArrangement") }}
+                {{ $t(mode === "stage" ? "planning.addStage" : "planning.addArrangement") }}
               </el-button>
             </div>
           </template>
@@ -60,46 +60,48 @@
               </el-form-item>
 
               <template v-if="arrangement.startDate && arrangement.endDate">
-                <div
-                  v-for="vehicle in arrangement.vehicles"
-                  :key="vehicle.vehicleId"
-                  class="mb-[8px] flex items-center gap-[8px]"
-                >
-                  <span class="flex-1"
-                    >{{ vehicle.vehicleName }} · {{ vehicle.seats }}
-                    {{ $t("planning.seats") }}</span
+                <template v-if="mode === 'itinerary'">
+                  <div
+                    v-for="vehicle in arrangement.vehicles"
+                    :key="vehicle.vehicleId"
+                    class="mb-[8px] flex items-center gap-[8px]"
                   >
-                  <el-input-number
-                    :model-value="vehicle.quantity"
-                    :min="1"
-                    :precision="0"
-                    :disabled="!editable"
-                    class="!w-[100px]"
-                    controls-position="right"
-                    @change="
-                      changeQuantity(plan, arrangement.id, vehicle.vehicleId, Number($event ?? 1))
-                    "
-                  />
-                  <span>{{ $t("planning.vehicles") }}</span>
-                  <el-button
-                    :disabled="!editable"
-                    link
-                    type="danger"
-                    @click="removeVehicle(plan, arrangement.id, vehicle.vehicleId)"
-                  >
-                    {{ $t("planning.delete") }}
-                  </el-button>
-                </div>
+                    <span class="flex-1"
+                      >{{ vehicle.vehicleName }} · {{ vehicle.seats }}
+                      {{ $t("planning.seats") }}</span
+                    >
+                    <el-input-number
+                      :model-value="vehicle.quantity"
+                      :min="1"
+                      :precision="0"
+                      :disabled="!editable"
+                      class="!w-[100px]"
+                      controls-position="right"
+                      @change="
+                        changeQuantity(plan, arrangement.id, vehicle.vehicleId, Number($event ?? 1))
+                      "
+                    />
+                    <span>{{ $t("planning.vehicles") }}</span>
+                    <el-button
+                      :disabled="!editable"
+                      link
+                      type="danger"
+                      @click="removeVehicle(plan, arrangement.id, vehicle.vehicleId)"
+                    >
+                      {{ $t("planning.delete") }}
+                    </el-button>
+                  </div>
+                </template>
 
                 <div
-                  v-if="!isAddingNewVehicle"
+                  v-if="mode === 'itinerary' && !isAddingNewVehicle"
                   class="flex items-center justify-center w-full mb-4"
                 >
                   <el-button @click="isAddingNewVehicle = true">
                     {{ $t("planning.addNewVehicle") }}
                   </el-button>
                 </div>
-                <template v-else>
+                <template v-else-if="mode === 'itinerary'">
                   <el-form-item
                     :label="$t('planning.arrangementVehicles')"
                     class="w-full items-center justify-center"
@@ -123,19 +125,21 @@
                   </el-form-item>
                 </template>
 
-                <el-form-item :label="$t('planning.arrangementVehiclePrice')">
+                <el-form-item
+                  :label="$t(mode === 'stage' ? 'planning.stageTotal' : 'planning.arrangementVehiclePrice')"
+                >
                   <el-input-number
                     class="!w-full"
                     :model-value="arrangement.totalPrice"
                     :min="0"
                     :precision="2"
                     :disabled="!editable"
-                    :placeholder="$t('planning.optionalPrice')"
+                    :placeholder="$t(mode === 'stage' ? 'planning.stageTotal' : 'planning.optionalPrice')"
                     controls-position="right"
                     @change="changeArrangementPrice(plan, arrangement.id, $event ?? null)"
                   />
                 </el-form-item>
-                <el-text type="info" size="small">
+                <el-text v-if="mode === 'itinerary'" type="info" size="small">
                   {{
                     $t("planning.capacityHint", {
                       seats: arrangement.vehicles.reduce(
@@ -155,13 +159,14 @@
                 :model-value="plan.totalPrice ?? calculateVehiclePlanAutomaticTotal(plan)"
                 :min="0"
                 :precision="2"
-                :disabled="!editable"
+                :disabled="!editable || mode === 'stage'"
                 controls-position="right"
                 @change="changePlanTotal(plan, $event ?? null)"
               />
             </el-form-item>
             <el-form-item
               v-if="
+                mode === 'itinerary' &&
                 vehiclePriceNeedsReason(
                   plan,
                   savedPlans.find((saved) => saved.tier === plan.tier),
@@ -181,7 +186,7 @@
               />
             </el-form-item>
             <el-alert
-              v-if="isVehiclePlanTotalOverridden(plan)"
+              v-if="mode === 'itinerary' && isVehiclePlanTotalOverridden(plan)"
               type="info"
               show-icon
               :closable="false"
@@ -231,6 +236,7 @@ import {
   isVehiclePlanTotalOverridden,
   withVehiclePlanArrangements,
 } from "../vehicle-plans";
+import type { VehicleMaintenanceMode } from "../vehicle-plans";
 
 const props = defineProps<{
   plans: ItineraryVehiclePlan[];
@@ -241,6 +247,7 @@ const props = defineProps<{
   editable: boolean;
   modelValue: boolean;
   saving: boolean;
+  mode: VehicleMaintenanceMode;
 }>();
 const emit = defineEmits<{
   "update-plan": [tier: ItineraryVehicleTier, plan: ItineraryVehiclePlan];
@@ -254,7 +261,9 @@ const canSave = computed(
     !getIncompleteVehiclePlanTiers({
       paxTiers: [props.passengerCount],
       vehiclePlans: props.plans,
-    }).length,
+    }).length &&
+    (props.mode === "stage" ||
+      props.plans.every((plan) => plan.arrangements.every((arrangement) => arrangement.vehicles.length))),
 );
 const isAddingNewVehicle = ref(false);
 
@@ -262,6 +271,14 @@ function updateArrangements(
   plan: ItineraryVehiclePlan,
   arrangements: ItineraryVehiclePlan["arrangements"],
 ) {
+  if (props.mode === "stage") {
+    const nextPlan = { ...plan, arrangements, pricingMode: "automatic" as const };
+    emit("update-plan", plan.tier, {
+      ...nextPlan,
+      totalPrice: calculateVehiclePlanAutomaticTotal(nextPlan),
+    });
+    return;
+  }
   emit("update-plan", plan.tier, withVehiclePlanArrangements(plan, arrangements));
 }
 

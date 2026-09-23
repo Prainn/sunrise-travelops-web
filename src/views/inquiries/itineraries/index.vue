@@ -94,12 +94,18 @@
             >
           </div>
           <div v-if="selectedItinerary" class="flex flex-wrap gap-[10px] mt-[12px]">
-            <el-button
-              :type="hasVehiclePlans ? 'primary' : ''"
-              @click="openSectionDialog('vehicle')"
-            >
-              {{ $t("planning.vehiclePlans") }}
-            </el-button>
+            <el-dropdown trigger="click" @command="openVehiclePlans">
+              <el-button :type="hasVehiclePlans ? 'primary' : ''">
+                {{ $t("planning.vehiclePlans") }}
+                <el-icon class="ml-[6px]"><ArrowDown /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="itinerary">{{ $t("planning.byItinerary") }}</el-dropdown-item>
+                  <el-dropdown-item command="stage">{{ $t("planning.byStage") }}</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
             <el-button :type="hasGuidePlans ? 'primary' : ''" @click="openSectionDialog('guide')">
               {{ $t("planning.guideService") }}
             </el-button>
@@ -195,6 +201,7 @@
         :passenger-count="passengerCount"
         :editable="contentEditable"
         :saving="isSaving"
+        :mode="vehicleMaintenanceMode"
         @update-plan="updateVehiclePlan"
         @save="saveSectionDialog('vehicle')"
         @cancel="cancelSectionDialog('vehicle')"
@@ -363,6 +370,7 @@
 </template>
 
 <script setup lang="ts">
+import { ArrowDown } from "@element-plus/icons-vue";
 import { plannedDuration, itineraryDuration } from "@/views/inquiries/itineraries/duration";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -381,6 +389,8 @@ import ItineraryPriceAdjustments from "./components/ItineraryPriceAdjustments.vu
 import ItineraryQuotePanel from "./components/ItineraryQuotePanel.vue";
 import ItineraryResourceDialog from "./components/ItineraryResourceDialog.vue";
 import { ITINERARY_STATUS_TAG_TYPES } from "./options";
+import { calculateVehiclePlanAutomaticTotal } from "./vehicle-plans";
+import type { VehicleMaintenanceMode } from "./vehicle-plans";
 import { useItineraryWorkspace } from "./useItineraryWorkspace";
 
 defineOptions({ name: "InquiryItineraries" });
@@ -392,6 +402,7 @@ const isHotelPlansDialogVisible = ref(false);
 const isPriceAdjustmentsDialogVisible = ref(false);
 type SectionDialog = "vehicle" | "guide" | "hotel" | "price";
 const activeSectionDialog = ref<SectionDialog>();
+const vehicleMaintenanceMode = ref<VehicleMaintenanceMode>("itinerary");
 
 async function confirmAction(key: string, params: Record<string, unknown> = {}) {
   try {
@@ -546,7 +557,38 @@ function openSectionDialog(section: SectionDialog) {
   if (!plan) return;
   activeSectionDialog.value = section;
   sectionDialogSnapshot.value = cloneItinerary(plan);
+  if (section === "vehicle") {
+    vehicleMaintenanceMode.value = plan.vehiclePlans.some((vehicle) =>
+      vehicle.arrangements.some((arrangement) => arrangement.vehicles.length),
+    )
+      ? "itinerary"
+      : plan.vehiclePlans.some((vehicle) => vehicle.arrangements.length)
+        ? "stage"
+        : "itinerary";
+  }
   setSectionDialogVisible(section, true);
+}
+
+function openVehiclePlans(command: string | number | object) {
+  if (command !== "itinerary" && command !== "stage") return;
+  openSectionDialog("vehicle");
+  vehicleMaintenanceMode.value = command;
+  if (command !== "stage") return;
+  const plan = selectedItinerary.value;
+  if (!plan) return;
+  for (const vehicle of plan.vehiclePlans) {
+    const arrangements = vehicle.arrangements.map((arrangement) => ({
+      ...arrangement,
+      vehicles: [],
+    }));
+    const stagePlan = { ...vehicle, arrangements };
+    updateVehiclePlan(vehicle.tier, {
+      ...stagePlan,
+      totalPrice: calculateVehiclePlanAutomaticTotal(stagePlan),
+      pricingMode: "automatic",
+      adjustmentReason: "",
+    });
+  }
 }
 
 function cancelSectionDialog(section: SectionDialog) {

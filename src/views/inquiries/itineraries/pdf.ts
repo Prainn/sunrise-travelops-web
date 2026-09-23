@@ -291,7 +291,8 @@ function getVehicleQuoteLabel(
   const seats = [
     ...new Set(plan?.arrangements.flatMap((a) => a.vehicles.map((v) => v.seats)) ?? []),
   ];
-  return `${seats.length ? `${seats.join("/")}座` : ""}${tier === "vip" ? "VIP" : "普通"}巴士`;
+  if (!seats.length) return `${tier === "vip" ? "VIP" : "普通"}用车`;
+  return `${seats.join("/")}座${tier === "vip" ? "VIP" : "普通"}巴士`;
 }
 
 function quoteHeaderStyle() {

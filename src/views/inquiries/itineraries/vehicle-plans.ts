@@ -6,6 +6,7 @@ import type {
 import { roundMoney, sumMoney } from "@/utils";
 export const VEHICLE_PLAN_TIER_LABELS = { standard: "普通车型", vip: "VIP车型" };
 export const VEHICLE_PLAN_TIERS: ItineraryVehicleTier[] = ["standard", "vip"];
+export type VehicleMaintenanceMode = "itinerary" | "stage";
 export function createDefaultVehiclePlans(): ItineraryVehiclePlan[] {
   return VEHICLE_PLAN_TIERS.map((tier) => ({ tier, arrangements: [], totalPrice: null }));
 }
@@ -60,7 +61,9 @@ export function getIncompleteVehiclePlanTiers(
         plan.totalPrice === null ||
         plan.arrangements.some(
           (arrangement) =>
-            !arrangement.startDate || !arrangement.endDate || !arrangement.vehicles.length,
+            !arrangement.startDate ||
+            !arrangement.endDate ||
+            (!arrangement.vehicles.length && arrangement.totalPrice == null),
         )
       )
         return true;
@@ -73,8 +76,9 @@ export function getIncompleteVehiclePlanTiers(
         return true;
       return plan.arrangements.some(
         (arrangement) =>
+          arrangement.vehicles.length > 0 &&
           arrangement.vehicles.reduce((sum, vehicle) => sum + vehicle.seats * vehicle.quantity, 0) <
-          passengers,
+            passengers,
       );
     })
     .map((plan) => plan.tier);
