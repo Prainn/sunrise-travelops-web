@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 """SSH forced command, installed root-owned; executed as sunrise-deploy."""
+from contextlib import contextmanager
+import select
+import signal
 import fcntl
 from datetime import datetime, timezone
 import json
@@ -10,12 +13,82 @@ import shutil
 import sys
 import tarfile
 import tempfile
+import time
 import urllib.request
 
 BASE = Path('/opt/sunrise-travelops-dev/frontend')
 SITE = 'https://ops-dev.sunrisevacation.cn'
 SHARED_DIRS = ('js', 'css', 'img', 'fonts', 'media', 'assets')
 RELEASE_ID = re.compile(r'(?:[0-9a-f]{40}-[0-9]+-[0-9]+|bootstrap-[0-9]{14})')
+
+
+# Uploads are cancellable and do not hold the activation lock. Once activation
+# starts, finish the bounded operation (or its rollback) even if SSH disconnects.
+def upload_signal(signum, _frame):
+    raise RuntimeError('Upload cancelled by signal ' + str(signum))
+
+
+def receive(stream, output, expected, limit, total_timeout=300, idle_timeout=30):
+    if not 0 < expected <= limit:
+        raise ValueError('Invalid upload size')
+    started = last_data = last_report = time.monotonic()
+    total = 0
+    fd = stream.fileno()
+    print(f'Upload: expected {expected} bytes; deadline {total_timeout}s, idle {idle_timeout}s',
+          file=sys.stderr, flush=True)
+    while True:
+        now = time.monotonic()
+        if now - started >= total_timeout or now - last_data >= idle_timeout:
+            raise TimeoutError(f'Upload timed out: {total}/{expected} bytes; application unchanged')
+        if now - last_report >= 10:
+            rate = total / max(now - started, 0.001)
+            print(f'Upload: {total}/{expected} bytes ({total * 100 / expected:.1f}%), '
+                  f'average {rate / 1024:.1f} KiB/s', file=sys.stderr, flush=True)
+            last_report = now
+        if not select.select([fd], [], [], min(1, total_timeout - (now - started),
+                                              idle_timeout - (now - last_data)))[0]:
+            continue
+        block = os.read(fd, 64 * 1024)
+        if not block:
+            if total != expected:
+                raise ValueError(f'Incomplete upload: {total}/{expected} bytes; application unchanged')
+            break
+        total += len(block)
+        if total > expected:
+            raise ValueError('Upload exceeds declared size')
+        output.write(block)
+        last_data = time.monotonic()
+    output.seek(0)
+    print(f'Upload complete: {total} bytes in {time.monotonic() - started:.1f}s',
+          file=sys.stderr, flush=True)
+
+
+@contextmanager
+def deployment_lock():
+    with (BASE / '.deploy.lock').open('a') as lock:
+        deadline = time.monotonic() + 60
+        while True:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError('Another deployment holds the activation lock for over 60s')
+                time.sleep(0.2)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+def finish_activation():
+    for signum in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):
+        signal.signal(signum, signal.SIG_IGN)
+    try:
+        print('Activation: lock acquired; completing deployment or rollback after disconnect',
+              file=sys.stderr, flush=True)
+    except OSError:
+        pass
 
 
 def cleanup_plan():
@@ -160,8 +233,8 @@ def publish(release_id, stream):
 def main():
     os.umask(0o022)
     if sys.argv[1:] in [['cleanup-plan'], ['cleanup']] and os.geteuid() == 0:
-        with (BASE / '.deploy.lock').open('a') as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX)
+        with deployment_lock():
+            finish_activation()
             verify((BASE / 'current').resolve(strict=True))
             print(json.dumps(cleanup_plan() if sys.argv[1] == 'cleanup-plan' else cleanup()))
         return
@@ -169,12 +242,21 @@ def main():
     if command == 'status':
         print(json.dumps({'current': os.readlink(BASE / 'current')}))
         return
-    match = re.fullmatch(r'deploy (\S+)', command)
+    match = re.fullmatch(r'deploy (\S+) ([0-9]{1,10})', command)
     if not match:
         raise ValueError('Only deploy <release-id> and status are permitted')
-    with (BASE / '.deploy.lock').open('a') as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        print(json.dumps(publish(match[1], sys.stdin.buffer)))
+    if not RELEASE_ID.fullmatch(match[1]):
+        raise ValueError('Invalid release ID')
+    for signum in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):
+        signal.signal(signum, upload_signal)
+    previous_release = os.readlink(BASE / 'current')
+    with tempfile.TemporaryFile(dir=BASE) as compressed:
+        receive(sys.stdin.buffer, compressed, int(match[2]), 200 * 1024 * 1024, total_timeout=180)
+        with deployment_lock():
+            if os.readlink(BASE / 'current') != previous_release:
+                raise ValueError('Current release changed during upload; retry')
+            finish_activation()
+            print(json.dumps(publish(match[1], compressed)))
 
 
 if __name__ == '__main__':
