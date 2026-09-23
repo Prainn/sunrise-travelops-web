@@ -18,6 +18,7 @@ type BusinessDictionaryTypeForm = Pick<
   "code" | "name" | "englishName"
 > & {
   id?: string;
+  builtIn?: boolean;
 };
 
 interface BusinessDictionaryItemQuery {
@@ -78,6 +79,7 @@ function toTypeInput(data: BusinessDictionaryTypeForm) {
     code: data.code.trim(),
     name: data.name.trim(),
     englishName: data.englishName.trim(),
+    builtIn: data.builtIn,
   };
 }
 

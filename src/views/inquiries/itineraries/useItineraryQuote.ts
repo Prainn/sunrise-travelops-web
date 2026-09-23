@@ -1,5 +1,6 @@
 import { getCurrentScope, onScopeDispose, ref, watch, type Ref } from "vue";
 import { inquiryService, itineraryInput } from "@/services/inquiry.service";
+import { isApiError } from "@/api/request";
 import type { ItineraryQuoteCalculation, ItineraryRecord } from "@/types/itinerary";
 
 export function useItineraryQuote(
@@ -9,6 +10,7 @@ export function useItineraryQuote(
   const calculation = ref<ItineraryQuoteCalculation | null>(null);
   const pending = ref(false);
   const error = ref(false);
+  const errorReason = ref("");
   const retryCount = ref(0);
   let lastId: string | undefined;
 
@@ -60,6 +62,7 @@ export function useItineraryQuote(
       if (lastId !== plan?.id) calculation.value = null;
       lastId = plan?.id;
       error.value = false;
+      errorReason.value = "";
       const request = JSON.parse(serialized) as {
         id: string;
         input?: ReturnType<typeof itineraryInput>;
@@ -79,8 +82,11 @@ export function useItineraryQuote(
               : await inquiryService.quoteCalculation(request.id);
             if (cancelled) return;
             calculation.value = result;
-          } catch {
-            if (!cancelled) error.value = true;
+          } catch (caught) {
+            if (!cancelled) {
+              error.value = true;
+              errorReason.value = isApiError(caught) ? (caught.serverMessage ?? "") : "";
+            }
           } finally {
             if (!cancelled) pending.value = false;
           }
@@ -99,6 +105,7 @@ export function useItineraryQuote(
     calculation,
     pending,
     error,
+    errorReason,
     retry: () => {
       retryCount.value++;
     },

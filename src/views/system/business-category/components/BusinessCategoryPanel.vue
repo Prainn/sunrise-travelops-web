@@ -75,8 +75,8 @@
       </div>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="$t(dialogTitleKey)" width="560px" destroy-on-close>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
+    <el-dialog v-model="dialogVisible" :title="$t(dialogTitleKey)" width="600px" destroy-on-close>
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="180px">
         <el-form-item :label="$t(labelKeys.name)" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>

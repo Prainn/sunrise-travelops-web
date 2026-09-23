@@ -17,7 +17,7 @@
               v-for="unit in ['shengxu', 'linxi', 'website']"
               :key="unit"
               :value="unit"
-              :label="$t(`identity.scopes.${unit}`)"
+              :label="businessUnitName(unit)"
             />
           </el-select>
         </el-form-item>
@@ -216,6 +216,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { businessUnitName } from "@/constants/identity";
 import { useUserStore } from "@/stores/user";
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";

@@ -75,7 +75,7 @@
                       v-for="scope in ['headquarters', 'shengxu', 'linxi', 'website']"
                       :key="scope"
                       :value="scope"
-                      :label="$t(`identity.scopes.${scope}`)"
+                      :label="loginScopeName(scope)"
                     />
                   </el-select>
                 </el-form-item>
@@ -128,6 +128,7 @@
 </template>
 
 <script setup lang="ts">
+import { loginScopeName } from "@/constants/identity";
 defineOptions({ name: "LoginPage", inheritAttrs: false });
 
 import { Clock, Lock, User } from "@element-plus/icons-vue";

@@ -21,7 +21,7 @@
             v-for="unit in ['shengxu', 'linxi', 'website']"
             :key="unit"
             :value="unit"
-            :label="$t(`identity.scopes.${unit}`)"
+            :label="businessUnitName(unit)"
           />
         </el-select>
       </el-form-item>
@@ -50,7 +50,12 @@
           controls-position="right"
           @update:model-value="form[field.prop] = $event ?? 0"
         />
-        <el-select v-else-if="field.type === 'select'" v-model="form[field.prop]">
+        <el-select
+          v-else-if="field.type === 'select'"
+          v-model="form[field.prop]"
+          :clearable="field.clearable"
+          @clear="form[field.prop] = ''"
+        >
           <el-option
             v-for="option in field.options"
             :key="option.value"
@@ -89,6 +94,7 @@
 </template>
 
 <script setup lang="ts">
+import { businessUnitName } from "@/constants/identity";
 import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import CitySelect from "@/components/CitySelect.vue";
 import { computed, reactive, ref, watch } from "vue";

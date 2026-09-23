@@ -58,7 +58,7 @@
               {{ row.contact ?? $t("common.notSet") }}
             </template>
           </el-table-column>
-          <el-table-column :label="$t('guide.employmentType')" min-width="110">
+          <el-table-column :label="$t('guide.employmentType')" width="140">
             <template #default="{ row }">
               {{
                 row.employmentType
@@ -67,7 +67,7 @@
               }}
             </template>
           </el-table-column>
-          <el-table-column :label="$t('guide.hasLaborContract')" min-width="110">
+          <el-table-column :label="$t('guide.hasLaborContract')" width="140">
             <template #default="{ row }">
               {{
                 row.hasLaborContract === null

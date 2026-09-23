@@ -22,7 +22,7 @@
             v-for="scope in scopes"
             :key="scope"
             :value="scope"
-            :label="$t(`identity.scopes.${scope}`)"
+            :label="loginScopeName(scope)"
             :disabled="model.some((i, other) => other !== index && i.scope === scope)"
           />
         </el-select>
@@ -68,6 +68,7 @@
   </section>
 </template>
 <script setup lang="ts">
+import { loginScopeName } from "@/constants/identity";
 import type { UserIdentity, IdentityRoleOption, DepartmentOption } from "@/types/user";
 const model = defineModel<UserIdentity[]>({ required: true });
 const props = defineProps<{ roles: IdentityRoleOption[]; departments: DepartmentOption[] }>();

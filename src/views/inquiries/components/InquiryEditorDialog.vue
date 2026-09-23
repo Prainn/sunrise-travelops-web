@@ -17,19 +17,19 @@
     >
       <el-form-item
         v-if="userStore.userInfo.scope === 'headquarters'"
-        :label="$t('identity.scope')"
+        :label="$t('identity.businessUnit')"
       >
         <el-select
           v-model="form.businessUnit"
           :disabled="isEditing"
-          :placeholder="$t('identity.chooseScope')"
+          :placeholder="$t('identity.selectBusinessUnitToCreate')"
           @change="changeBusinessUnit"
         >
           <el-option
             v-for="scope in ['shengxu', 'linxi', 'website']"
             :key="scope"
             :value="scope"
-            :label="$t(`identity.scopes.${scope}`)"
+            :label="businessUnitName(scope)"
           />
         </el-select>
       </el-form-item>
@@ -162,6 +162,7 @@
 </template>
 
 <script setup lang="ts">
+import { businessUnitName } from "@/constants/identity";
 import { selectedResourceLibrary } from "@/services/resource-library";
 import { useUserStore } from "@/stores/user";
 import { inquiryService } from "@/services/inquiry.service";

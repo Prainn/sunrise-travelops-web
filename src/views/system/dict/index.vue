@@ -113,13 +113,16 @@
       destroy-on-close
       @close="closeDialog"
     >
-      <el-form ref="dictFormRef" :model="formData" :rules="rules" label-width="80px">
+      <el-form ref="dictFormRef" :model="formData" :rules="rules" label-width="180px">
         <el-form-item :label="$t('dictionary.name')" prop="name">
           <el-input v-model="formData.name" :placeholder="$t('dictionary.namePlaceholder')" />
         </el-form-item>
 
         <el-form-item :label="$t('dictionary.code')" prop="dictCode">
-          <el-input v-model="formData.dictCode" :placeholder="$t('dictionary.codePlaceholder')" />
+          <el-input
+            v-model.trim="formData.dictCode"
+            :placeholder="$t('dictionary.codePlaceholder')"
+          />
         </el-form-item>
 
         <el-form-item :label="$t('common.status')">
@@ -206,7 +209,14 @@ const formData = reactive<DictTypeForm>({ ...initialFormData });
 
 const rules = computed<FormRules<DictTypeForm>>(() => ({
   name: [{ required: true, message: t("dictionary.namePlaceholder"), trigger: "blur" }],
-  dictCode: [{ required: true, message: t("dictionary.codePlaceholder"), trigger: "blur" }],
+  dictCode: [
+    { required: true, message: t("dictionary.codePlaceholder"), trigger: "blur" },
+    {
+      pattern: /^(?=.{1,100}$)[a-z][a-z0-9_]*$/,
+      message: t("dictionary.codeFormat"),
+      trigger: "blur",
+    },
+  ],
 }));
 
 /**

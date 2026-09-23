@@ -9,12 +9,13 @@
         v-for="unit in ['shengxu', 'linxi', 'website']"
         :key="unit"
         :value="unit"
-        :label="$t(`identity.scopes.${unit}`)"
+        :label="businessUnitName(unit)"
       />
     </el-select>
   </el-form-item>
 </template>
 <script setup lang="ts">
+import { businessUnitName } from "@/constants/identity";
 import { computed } from "vue";
 import { useUserStore } from "@/stores/user";
 import { selectedResourceBusinessUnit, selectedResourceLibrary } from "@/services/resource-library";

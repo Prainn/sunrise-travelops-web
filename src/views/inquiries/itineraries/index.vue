@@ -14,7 +14,7 @@
           <el-page-header @back="router.push('/inquiries/list')">
             <template #content>
               <el-tag class="mr-[10px]">
-                {{ $t(`identity.scopes.${inquiry.businessUnit}`) }}
+                {{ businessUnitName(inquiry.businessUnit) }}
               </el-tag>
               <el-select
                 v-if="selectedItinerary"
@@ -101,7 +101,9 @@
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="itinerary">{{ $t("planning.byItinerary") }}</el-dropdown-item>
+                  <el-dropdown-item command="itinerary">{{
+                    $t("planning.byItinerary")
+                  }}</el-dropdown-item>
                   <el-dropdown-item command="stage">{{ $t("planning.byStage") }}</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -306,6 +308,7 @@
           <el-button link type="primary" @click="retryQuote">
             {{ $t("itinerary.retryQuoteCalculation") }}
           </el-button>
+          <span v-if="quoteErrorReason" class="ml-2">[{{ quoteErrorReason }}]</span>
         </el-alert>
         <el-switch
           v-model="showChildPrice"
@@ -370,6 +373,7 @@
 </template>
 
 <script setup lang="ts">
+import { businessUnitName } from "@/constants/identity";
 import { ArrowDown } from "@element-plus/icons-vue";
 import { plannedDuration, itineraryDuration } from "@/views/inquiries/itineraries/duration";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
@@ -459,6 +463,7 @@ const {
   quoteCalculation,
   quotePending,
   quoteError,
+  quoteErrorReason,
   retryQuote,
   openEditDialog,
   pdfPreviewUrl,

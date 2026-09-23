@@ -30,6 +30,7 @@ interface RequestOptions extends Omit<RequestInit, "body" | "method"> {
 
 interface ApiErrorOptions {
   code: string;
+  serverMessage?: string;
   status?: number;
   details?: Record<string, unknown>;
   path?: string;
@@ -49,6 +50,7 @@ function getErrorMessage(code: string, status?: number): string {
 
 export class ApiError extends Error {
   readonly code: string;
+  readonly serverMessage?: string;
   readonly status?: number;
   readonly details?: Record<string, unknown>;
   readonly path?: string;
@@ -58,6 +60,7 @@ export class ApiError extends Error {
     super(message, { cause: options.cause });
     this.name = "ApiError";
     this.code = options.code;
+    this.serverMessage = options.serverMessage;
     this.status = options.status;
     this.details = options.details;
     this.path = options.path;
@@ -117,6 +120,7 @@ async function parseError(response: Response): Promise<ApiError> {
 
   return new ApiError(getErrorMessage(code, response.status), {
     code,
+    serverMessage: typeof body?.message === "string" ? body.message : undefined,
     status: response.status,
     details: isRecord(body?.details) ? body.details : undefined,
     path: typeof body?.path === "string" ? body.path : undefined,

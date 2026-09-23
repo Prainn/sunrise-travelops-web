@@ -83,7 +83,7 @@
               v-for="unit in ['shengxu', 'linxi', 'website']"
               :key="unit"
               :value="unit"
-              :label="$t(`identity.scopes.${unit}`)"
+              :label="businessUnitName(unit)"
             />
           </el-select>
         </el-form-item>
@@ -157,6 +157,7 @@
 </template>
 
 <script setup lang="ts">
+import { businessUnitName } from "@/constants/identity";
 import { resetResourceBusinessFilter } from "@/services/resource-library";
 import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
 import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";

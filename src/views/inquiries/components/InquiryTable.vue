@@ -13,7 +13,7 @@
           width="120"
         >
           <template #default="{ row }">
-            <el-tag>{{ $t(`identity.scopes.${row.businessUnit}`) }}</el-tag>
+            <el-tag>{{ businessUnitName(row.businessUnit) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="code" :label="$t('inquiry.code')" width="180" />
@@ -123,6 +123,7 @@
 </template>
 
 <script setup lang="ts">
+import { businessUnitName } from "@/constants/identity";
 import { useUserStore } from "@/stores/user";
 const userStore = useUserStore();
 import InquiryTransferButton from "./InquiryTransferButton.vue";

@@ -443,10 +443,15 @@
     "typeName": "分类名称",
     "typeEnglishName": "英文名称",
     "typeCode": "分类编码",
+    "typeBuiltIn": "是否为内置分类",
+    "typeBuiltInDescription": "内置分类不可被删除",
     "typeNameRequired": "请输入分类名称",
     "typeEnglishNameRequired": "请输入英文名称",
     "typeCodeRequired": "请输入分类编码",
+    "typeCodeFormat": "以小写字母开头，仅可使用字母、数字和连字符，最多100字符",
     "typeCodeDuplicate": "分类编码已存在",
+    "deleteType": "删除业务分类{name}",
+    "deleteTypeConfirm": "确定删除业务分类“{name}”及其所有选项吗？",
     "optionName": "选项名称",
     "optionCode": "选项编码",
     "optionNameRequired": "请输入选项名称",
@@ -610,6 +615,7 @@
   "dictionary": {
     "code": "分类编码",
     "codePlaceholder": "请输入分类编码",
+    "codeFormat": "以小写字母开头，仅可使用小写字母、数字和下划线，最多100字符",
     "createOptionTitle": "新增分类选项",
     "createTitle": "新增系统分类",
     "displayStyle": "展示样式",
@@ -662,7 +668,11 @@
     "temporaryPasswordTitle": "初始密码",
     "updateSuccess": "用户更新成功",
     "username": "用户名",
-    "usernamePlaceholder": "请输入用户名"
+    "usernamePlaceholder": "请输入用户名",
+    "usernameInvalid": "以小写字母开头，长度为3至80位，仅可包含小写字母、数字、下划线、点和连字符",
+    "copyPassword": "复制初始密码",
+    "passwordCopied": "初始密码已复制",
+    "passwordCopyFailed": "复制失败，请手动复制"
   },
   "resource": {
     "description": "描述",
@@ -992,12 +1002,6 @@
   "identity": {
     "scope": "登录范围",
     "chooseScope": "请选择登录范围",
-    "scopes": {
-      "headquarters": "总部",
-      "shengxu": "盛旭",
-      "linxi": "霖熹",
-      "website": "独立站"
-    },
     "superuser": "超级管理员",
     "identities": "身份授权",
     "impact": "名下 {total} 个询盘，其中 {unfinished} 个未完成",

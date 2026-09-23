@@ -163,7 +163,7 @@
                   class="flex items-center gap-2"
                 >
                   <el-tag size="small">
-                    {{ $t(`identity.scopes.${identity.scope}`) }}
+                    {{ loginScopeName(identity.scope) }}
                   </el-tag>
                   <span>{{ identity.deptName }}</span>
                 </div>
@@ -257,7 +257,7 @@
         </h4>
         <el-form-item :label="$t('user.username')" prop="username">
           <el-input
-            v-model="formData.username"
+            v-model.trim="formData.username"
             :readonly="!!formData.id"
             :placeholder="$t('user.usernamePlaceholder')"
           />
@@ -339,7 +339,7 @@
         :rules="resetPasswordRules"
         label-width="84px"
       >
-        <el-form-item :label="$t('identity.businessUnit')">
+        <el-form-item :label="$t('identity.scope')">
           <div class="flex flex-col gap-2">
             <div
               v-for="identity in resetPasswordDialog.identities"
@@ -347,7 +347,7 @@
               class="flex items-center gap-2"
             >
               <el-tag size="small">
-                {{ $t(`identity.scopes.${identity.scope}`) }}
+                {{ loginScopeName(identity.scope) }}
               </el-tag>
               <span>{{ identity.deptName }}</span>
             </div>
@@ -391,10 +391,11 @@
 </template>
 
 <script setup lang="ts">
+import { loginScopeName } from "@/constants/identity";
 import { formatDateTime } from "@/utils";
 import { h } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
-import { Female, Male } from "@element-plus/icons-vue";
+import { CopyDocument, Female, Male } from "@element-plus/icons-vue";
 
 import UserIdentityFields from "./components/UserIdentityFields.vue";
 import type {
@@ -487,7 +488,7 @@ const departmentTree = computed<DepartmentTreeNode[]>(() => [
     label: t("common.all"),
     children: [...new Set(departmentOptions.value.map((dept) => dept.scope))].map((scope) => ({
       key: scope,
-      label: t(`identity.scopes.${scope}`),
+      label: loginScopeName(scope),
       children: departmentOptions.value
         .filter((dept) => dept.scope === scope)
         .map((dept) => ({
@@ -512,7 +513,14 @@ const resetPasswordDialogWidth = computed(() =>
 );
 
 const rules = computed<FormRules<UserForm>>(() => ({
-  username: [{ required: true, message: t("user.usernamePlaceholder"), trigger: "blur" }],
+  username: [
+    { required: true, message: t("user.usernamePlaceholder"), trigger: "blur" },
+    {
+      pattern: /^[a-z][a-z0-9_.-]{2,79}$/,
+      message: t("user.usernameInvalid"),
+      trigger: "blur",
+    },
+  ],
   nickname: [{ required: true, message: t("user.nicknamePlaceholder"), trigger: "blur" }],
   email: [{ type: "email", message: t("user.emailInvalid"), trigger: "blur" }],
   mobile: [{ pattern: /^1[3-9]\d{9}$/, message: t("user.mobileInvalid"), trigger: "blur" }],
@@ -539,7 +547,27 @@ async function showTemporaryPassword(password: string): Promise<void> {
   await ElMessageBox.alert(
     h("div", { class: "temporary-password-message" }, [
       h("div", { class: "temporary-password-message__tip" }, t("user.temporaryPasswordTip")),
-      h("div", { class: "temporary-password-message__value" }, password),
+      h("div", { class: "temporary-password-message__value" }, [
+        h("span", password),
+        h(
+          "button",
+          {
+            class: "temporary-password-message__copy",
+            type: "button",
+            title: t("user.copyPassword"),
+            "aria-label": t("user.copyPassword"),
+            onClick: async () => {
+              try {
+                await navigator.clipboard.writeText(password);
+                ElMessage.success(t("user.passwordCopied"));
+              } catch {
+                ElMessage.error(t("user.passwordCopyFailed"));
+              }
+            },
+          },
+          [h(CopyDocument)],
+        ),
+      ]),
     ]),
     t("user.temporaryPasswordTitle"),
     {
@@ -792,10 +820,11 @@ onMounted(() => {
 }
 
 :global(.temporary-password-message__value) {
+  position: relative;
   display: flex;
   justify-content: center;
   margin-top: 12px;
-  padding: 12px 16px;
+  padding: 12px 48px;
   color: var(--el-text-color-primary);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 16px;
@@ -805,5 +834,30 @@ onMounted(() => {
   overflow-wrap: anywhere;
   background: var(--el-fill-color-light);
   border-radius: var(--el-border-radius-base);
+}
+
+:global(.temporary-password-message__copy) {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: var(--el-text-color-regular);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+:global(.temporary-password-message__copy:hover) {
+  color: var(--el-color-primary);
+}
+
+:global(.temporary-password-message__copy svg) {
+  width: 16px;
+  height: 16px;
 }
 </style>

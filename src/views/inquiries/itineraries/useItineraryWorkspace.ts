@@ -521,6 +521,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     quoteCalculation,
     quotePending: quote.pending,
     quoteError: quote.error,
+    quoteErrorReason: quote.errorReason,
     retryQuote: quote.retry,
     removeItem: editor.removeItem,
     router: selection.router,

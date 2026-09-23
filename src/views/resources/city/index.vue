@@ -24,8 +24,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { ElMessage } from "element-plus";
 import { RESOURCE_PERMISSIONS } from "@/constants";
+import { businessDictionaryService } from "@/services/business-dictionary.service";
 import { resourceService } from "@/services/resource.service";
 import type { CityRecord } from "@/types/resource";
 import ResourceEditorDialog from "../components/ResourceEditorDialog.vue";
@@ -38,6 +40,7 @@ const columns: ResourceColumn[] = [
   { prop: "name", labelKey: "resource.city" },
   { prop: "province", labelKey: "city.province" },
 ];
+const provinceOptions = ref<Array<{ label: string; value: string }>>([]);
 const maintenance = useResourceMaintenance<CityRecord>({
   records: resourceService.cities,
   api: resourceService.cityApi,
@@ -45,21 +48,33 @@ const maintenance = useResourceMaintenance<CityRecord>({
   createEmpty: () => ({ id: "", code: "", name: "", province: "", status: "enabled" }),
   selectLibraryInDialog: true,
 });
-const {
-  isLoading,
-  rows,
-  total,
-  record,
-  isDialogVisible,
-  isEditing,
-  loadRecords,
-  openCreateDialog,
-} = maintenance;
+const { isLoading, rows, total, record, isDialogVisible, isEditing, loadRecords } = maintenance;
 const fields = computed<ResourceFormField[]>(() => [
   { prop: "name", labelKey: "resource.city", required: true, disabled: isEditing.value },
-  { prop: "province", labelKey: "city.province" },
+  {
+    prop: "province",
+    labelKey: "city.province",
+    type: "select",
+    clearable: true,
+    options: provinceOptions.value,
+  },
 ]);
-const openEditDialog = (row: ResourceRow) => maintenance.openEditDialog(row as CityRecord);
+async function loadProvinceOptions() {
+  try {
+    const items = await businessDictionaryService.getItems("province", { status: "enabled" });
+    provinceOptions.value = items.map((item) => ({ label: item.name, value: item.name }));
+    return true;
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+    return false;
+  }
+}
+async function openCreateDialog() {
+  if (await loadProvinceOptions()) maintenance.openCreateDialog();
+}
+async function openEditDialog(row: ResourceRow) {
+  if (await loadProvinceOptions()) await maintenance.openEditDialog(row as CityRecord);
+}
 const toggleStatus = (row: ResourceRow) => maintenance.toggleStatus(row as CityRecord);
 const deleteRecord = (row: ResourceRow) => maintenance.deleteRecord(row as CityRecord);
 const saveRecord = (row: ResourceRow) => maintenance.saveRecord(row as CityRecord);

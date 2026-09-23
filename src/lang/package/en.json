@@ -443,10 +443,15 @@
     "typeName": "Category Name",
     "typeEnglishName": "English Name",
     "typeCode": "Category Code",
+    "typeBuiltIn": "Built-in category",
+    "typeBuiltInDescription": "Built-in categories cannot be deleted",
     "typeNameRequired": "Enter a category name",
     "typeEnglishNameRequired": "Enter an English name",
     "typeCodeRequired": "Enter a category code",
+    "typeCodeFormat": "Start with a lowercase letter; use letters, numbers or hyphens (max 100 characters)",
     "typeCodeDuplicate": "The category code already exists",
+    "deleteType": "Delete business category {name}",
+    "deleteTypeConfirm": "Delete business category “{name}” and all its options?",
     "optionName": "Option Name",
     "optionCode": "Option Code",
     "optionNameRequired": "Enter an option name",
@@ -610,6 +615,7 @@
   "dictionary": {
     "code": "Category Code",
     "codePlaceholder": "Enter a category code",
+    "codeFormat": "Start with a lowercase letter; use lowercase letters, numbers or underscores (max 100 characters)",
     "createOptionTitle": "Create Category Option",
     "createTitle": "Create System Category",
     "displayStyle": "Display Style",
@@ -662,7 +668,11 @@
     "temporaryPasswordTitle": "Initial Password",
     "updateSuccess": "User updated",
     "username": "Username",
-    "usernamePlaceholder": "Enter a username"
+    "usernamePlaceholder": "Enter a username",
+    "usernameInvalid": "Username is invalid",
+    "copyPassword": "Copy initial password",
+    "passwordCopied": "Initial password copied",
+    "passwordCopyFailed": "Copy failed. Please copy the password manually"
   },
   "resource": {
     "description": "Description",
@@ -992,12 +1002,6 @@
   "identity": {
     "scope": "Login scope",
     "chooseScope": "Select login scope",
-    "scopes": {
-      "headquarters": "Headquarters",
-      "shengxu": "Shengxu",
-      "linxi": "Linxi",
-      "website": "Website"
-    },
     "superuser": "Super administrator",
     "identities": "Authorized identities",
     "impact": "{total} assigned inquiries, {unfinished} unfinished",

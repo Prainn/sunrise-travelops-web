@@ -10,7 +10,7 @@
         <div>
           <h3>
             {{ record.agencyName }}
-            <el-tag>{{ $t(`identity.scopes.${record.businessUnit}`) }}</el-tag>
+            <el-tag>{{ businessUnitName(record.businessUnit) }}</el-tag>
           </h3>
           <span>{{ record.code }}</span>
         </div>
@@ -71,6 +71,7 @@
 </template>
 
 <script setup lang="ts">
+import { businessUnitName } from "@/constants/identity";
 import { formatDateTime } from "@/utils";
 import { plannedDuration } from "@/views/inquiries/itineraries/duration";
 import { useI18n } from "vue-i18n";

@@ -80,4 +80,25 @@ describe("request session recovery", () => {
     });
     expect(auth.clearAuth).toHaveBeenCalledOnce();
   });
+
+  it("keeps the server error reason alongside the localized message", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            code: "ITINERARY_RESOURCE_DUPLICATE",
+            message: "行程中不可重复使用非标准价景点或餐食",
+            data: null,
+          }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        ),
+      ),
+    );
+
+    await expect(request.post("/itineraries/id/quote-calculation", {})).rejects.toMatchObject({
+      code: "ITINERARY_RESOURCE_DUPLICATE",
+      serverMessage: "行程中不可重复使用非标准价景点或餐食",
+    });
+  });
 });

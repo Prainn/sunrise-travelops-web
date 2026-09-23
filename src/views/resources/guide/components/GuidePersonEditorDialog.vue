@@ -21,7 +21,7 @@
             v-for="unit in ['shengxu', 'linxi', 'website']"
             :key="unit"
             :value="unit"
-            :label="$t(`identity.scopes.${unit}`)"
+            :label="businessUnitName(unit)"
           />
         </el-select>
       </el-form-item>
@@ -99,6 +99,7 @@
 </template>
 
 <script setup lang="ts">
+import { businessUnitName } from "@/constants/identity";
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";

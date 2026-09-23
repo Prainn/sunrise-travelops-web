@@ -122,13 +122,13 @@
         <el-table-column :label="$t('itinerary.unitCost')" width="190" align="right">
           <template #default="scope"> ¥{{ formatMoney(scope.row.unitCost) }} </template>
         </el-table-column>
-        <el-table-column :label="$t('itinerary.resourceCostPerPerson')" width="100" align="right">
+        <el-table-column :label="$t('itinerary.resourceCostPerPerson')" width="120" align="right">
           <template #default="scope"> ¥{{ formatMoney(scope.row.totalCost) }} </template>
         </el-table-column>
         <el-table-column
           v-if="contentEditable"
           :label="$t('common.actions')"
-          width="62"
+          width="72"
           align="center"
         >
           <template #default="scope">

@@ -25,20 +25,34 @@
           class="business-category-page__type-list p-[8px] overflow-y-auto [background:var(--el-fill-color-extra-light)] [border-right:1px_solid_var(--el-border-color-light)]"
           :aria-label="$t('businessCategory.typeManagement')"
         >
-          <button
+          <div
             v-for="category in categoryTypes"
             :key="category.id"
-            class="business-category-page__type-button"
-            :class="{ 'is-active': activeCategory === category.code }"
-            type="button"
-            @click="activeCategory = category.code"
+            class="business-category-page__type-item flex items-center"
           >
-            <span>{{ categoryName(category) }}</span>
-            <span
-              class="business-category-page__type-code mt-[2px] text-[var(--el-text-color-secondary)] text-[14px]"
-              >{{ category.code }}</span
+            <button
+              class="business-category-page__type-button"
+              :class="{ 'is-active': activeCategory === category.code }"
+              type="button"
+              @click="activeCategory = category.code"
             >
-          </button>
+              <span>{{ categoryName(category) }}</span>
+              <span
+                class="business-category-page__type-code mt-[2px] text-[var(--el-text-color-secondary)] text-[14px]"
+                >{{ category.code }}</span
+              >
+            </button>
+            <el-button
+              v-if="!category.builtIn"
+              v-hasPerm="'sys:business-dictionary:delete'"
+              :icon="Delete"
+              :aria-label="$t('businessCategory.deleteType', { name: categoryName(category) })"
+              :title="$t('common.delete')"
+              type="danger"
+              link
+              @click="removeCategoryType(category)"
+            />
+          </div>
         </nav>
 
         <main class="business-category-page__content min-h-0 p-[12px] overflow-hidden">
@@ -57,7 +71,7 @@
       width="520px"
       destroy-on-close
     >
-      <el-form ref="typeFormRef" :model="typeForm" :rules="typeRules" label-width="110px">
+      <el-form ref="typeFormRef" :model="typeForm" :rules="typeRules" label-width="160px">
         <el-form-item :label="$t('businessCategory.typeName')" prop="name">
           <el-input v-model="typeForm.name" />
         </el-form-item>
@@ -65,7 +79,15 @@
           <el-input v-model="typeForm.englishName" />
         </el-form-item>
         <el-form-item :label="$t('businessCategory.typeCode')" prop="code">
-          <el-input v-model="typeForm.code" />
+          <el-input v-model.trim="typeForm.code" />
+        </el-form-item>
+        <el-form-item :label="$t('businessCategory.typeBuiltIn')" prop="builtIn">
+          <div>
+            <el-switch v-model="typeForm.builtIn" />
+            <div class="text-[var(--el-text-color-secondary)] text-[12px] leading-[18px]">
+              {{ $t("businessCategory.typeBuiltInDescription") }}
+            </div>
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -82,7 +104,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
-import { ElMessage, type FormInstance, type FormRules } from "element-plus";
+import { Delete } from "@element-plus/icons-vue";
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { BusinessCategoryTypeRecord } from "@/types/resource";
 import { businessDictionaryService } from "@/services";
@@ -91,7 +114,10 @@ import BusinessCategoryPanel from "./components/BusinessCategoryPanel.vue";
 
 defineOptions({ name: "BusinessCategory" });
 
-type CategoryTypeForm = Pick<BusinessCategoryTypeRecord, "code" | "name" | "englishName">;
+type CategoryTypeForm = Pick<
+  BusinessCategoryTypeRecord,
+  "code" | "name" | "englishName" | "builtIn"
+>;
 
 const { locale, t } = useI18n();
 const categoryTypes = businessCategoryTypeStore;
@@ -108,11 +134,18 @@ const typeRules: FormRules<CategoryTypeForm> = {
   englishName: [
     { required: true, message: t("businessCategory.typeEnglishNameRequired"), trigger: "blur" },
   ],
-  code: [{ required: true, message: t("businessCategory.typeCodeRequired"), trigger: "blur" }],
+  code: [
+    { required: true, message: t("businessCategory.typeCodeRequired"), trigger: "blur" },
+    {
+      pattern: /^(?=.{1,100}$)[a-z][a-zA-Z0-9-]*$/,
+      message: t("businessCategory.typeCodeFormat"),
+      trigger: "blur",
+    },
+  ],
 };
 
 function emptyTypeForm(): CategoryTypeForm {
-  return { code: "", name: "", englishName: "" };
+  return { code: "", name: "", englishName: "", builtIn: false };
 }
 
 function categoryName(category: BusinessCategoryTypeRecord) {
@@ -143,7 +176,7 @@ async function loadCategoryTypes() {
 }
 
 async function createCategoryType() {
-  await typeFormRef.value?.validate();
+  if (!(await typeFormRef.value?.validate().catch(() => false))) return;
   const code = typeForm.code.trim();
   if (categoryTypes.some((category) => category.code === code)) {
     ElMessage.warning(t("businessCategory.typeCodeDuplicate"));
@@ -154,11 +187,31 @@ async function createCategoryType() {
       code,
       name: typeForm.name.trim(),
       englishName: typeForm.englishName.trim(),
+      builtIn: typeForm.builtIn,
     });
     await loadCategoryTypes();
     activeCategory.value = code;
     typeDialogVisible.value = false;
     ElMessage.success(t("common.createSuccess"));
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  }
+}
+
+async function removeCategoryType(category: BusinessCategoryTypeRecord) {
+  try {
+    await ElMessageBox.confirm(
+      t("businessCategory.deleteTypeConfirm", { name: categoryName(category) }),
+      t("common.warning"),
+      { type: "warning" },
+    );
+  } catch {
+    return;
+  }
+  try {
+    await businessDictionaryService.deleteTypes(category.id);
+    await loadCategoryTypes();
+    ElMessage.success(t("common.deleteSuccess"));
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
   }
@@ -181,11 +234,7 @@ onMounted(loadCategoryTypes);
 }
 
 .business-category-page__type-button {
-  @apply 'flex w-full p-[10px_12px] text-[var(--el-text-color-regular)] text-left cursor-pointer [background:transparent] [border:0] rounded-[var(--el-border-radius-base)] flex-col';
-
-  & + & {
-    margin-top: 4px;
-  }
+  @apply 'flex flex-1 min-w-0 p-[10px_12px] text-[var(--el-text-color-regular)] text-left cursor-pointer [background:transparent] [border:0] rounded-[var(--el-border-radius-base)] flex-col';
 
   &:hover {
     background: var(--el-fill-color-light);
@@ -195,6 +244,10 @@ onMounted(loadCategoryTypes);
     color: var(--el-color-primary);
     background: var(--el-color-primary-light-9);
   }
+}
+
+.business-category-page__type-item + .business-category-page__type-item {
+  margin-top: 4px;
 }
 
 @media (width <= 900px) {

@@ -6,7 +6,7 @@
     destroy-on-close
     @close="emit('update:modelValue', false)"
   >
-    <el-form label-width="100px">
+    <el-form label-width="140px">
       <el-form-item v-if="mealSlot" :label="$t('itinerary.mealSource')">
         <el-radio-group v-model="source">
           <el-radio-button value="library">

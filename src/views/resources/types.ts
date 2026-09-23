@@ -8,6 +8,7 @@ export interface ResourceColumn {
 
 export interface ResourceFormField extends ResourceColumn {
   disabled?: boolean;
+  clearable?: boolean;
   required?: boolean;
   type?: "text" | "number" | "textarea" | "select";
   options?: Array<{ label: string; value: string }>;

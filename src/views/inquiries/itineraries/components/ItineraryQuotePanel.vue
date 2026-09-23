@@ -64,7 +64,7 @@
         </template>
         <el-row :gutter="16">
           <el-col v-for="field in tipFields" :key="field" :span="12">
-            <el-form-item :label="$t(`itinerary.${field}`)">
+            <el-form-item class="quote-panel__tip-field" :label="$t(`itinerary.${field}`)">
               <el-input-number
                 :model-value="quote[field] ?? undefined"
                 :min="0"
@@ -264,6 +264,9 @@ th:first-child {
 .quote-panel__settings :deep(.el-input-number),
 .quote-panel__settings :deep(.el-select) {
   width: 100%;
+}
+.quote-panel__settings :deep(.quote-panel__tip-field > .el-form-item__label) {
+  max-width: 100%;
 }
 @media (width <= 720px) {
   .quote-panel__two-columns,
