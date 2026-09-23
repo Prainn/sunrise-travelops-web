@@ -19,24 +19,22 @@
       <el-form-item :label="$t('itinerary.title')" prop="title">
         <el-input v-model.trim="form.title" />
       </el-form-item>
-      <el-row :gutter="24">
-        <el-col :span="12">
-          <el-form-item :label="$t('itinerary.paxTiers')" prop="paxTiers">
-            <el-select
-              :model-value="form.paxTiers"
-              multiple
-              filterable
-              allow-create
-              default-first-option
-              :multiple-limit="20"
-              class="w-full"
-              :placeholder="$t('itinerary.paxPlaceholder')"
-              @change="updatePaxTiers"
-            >
-              <el-option v-for="pax in paxOptions" :key="pax" :label="`${pax} PAX`" :value="pax" />
-            </el-select>
-          </el-form-item>
-        </el-col>
+      <el-form-item :label="$t('itinerary.paxTiers')" prop="paxTiers">
+        <el-select
+          :model-value="form.paxTiers"
+          multiple
+          filterable
+          allow-create
+          default-first-option
+          :multiple-limit="20"
+          class="w-full"
+          :placeholder="$t('itinerary.paxPlaceholder')"
+          @change="updatePaxTiers"
+        >
+          <el-option v-for="pax in paxOptions" :key="pax" :label="`${pax} PAX`" :value="pax" />
+        </el-select>
+      </el-form-item>
+      <el-row :gutter="16">
         <el-col :span="12">
           <el-form-item :label="$t('itinerary.childRate')" prop="childRate">
             <el-input-number v-model="form.childRate" :min="0" :max="100" :precision="2">

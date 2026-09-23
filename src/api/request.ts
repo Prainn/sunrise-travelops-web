@@ -185,7 +185,13 @@ async function refreshTokensOnce(): Promise<void> {
 
   refreshPromise = rotateTokens()
     .catch(async (error: unknown) => {
-      await expireSession();
+      if (
+        isApiError(error) &&
+        error.status === 401 &&
+        error.code === ApiErrorCode.AUTH_REFRESH_TOKEN_INVALID
+      ) {
+        await expireSession();
+      }
       throw error;
     })
     .finally(() => {

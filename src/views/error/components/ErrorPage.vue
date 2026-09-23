@@ -94,24 +94,36 @@
 
 <script setup lang="ts">
 import { computed, type Component } from "vue";
-import { Lock, Search } from "@element-plus/icons-vue";
+import { Lock, Search, WarningFilled } from "@element-plus/icons-vue";
 
 interface ErrorPageProps {
   statusCode: string;
   label: string;
   title: string;
   description: string;
-  variant: "locked" | "missing";
+  variant: "locked" | "missing" | "unavailable";
 }
 
 const props = defineProps<ErrorPageProps>();
 const { t } = useI18n();
 
 // 使用系统色生成异常页视觉，避免固定插画破坏主题一致性
-const visualIcon = computed<Component>(() => (props.variant === "locked" ? Lock : Search));
-const visualName = computed(() => (props.variant === "locked" ? "ACCESS CONTROL" : "ROUTE TRACE"));
+const visualIcon = computed<Component>(() =>
+  props.variant === "locked" ? Lock : props.variant === "missing" ? Search : WarningFilled,
+);
+const visualName = computed(() =>
+  props.variant === "locked"
+    ? "ACCESS CONTROL"
+    : props.variant === "missing"
+      ? "ROUTE TRACE"
+      : "SERVICE STATUS",
+);
 const visualMeta = computed(() =>
-  props.variant === "locked" ? t("error.unauthorized.signal") : t("error.notFound.signal"),
+  props.variant === "locked"
+    ? t("error.unauthorized.signal")
+    : props.variant === "missing"
+      ? t("error.notFound.signal")
+      : t("error.unavailable.signal"),
 );
 </script>
 

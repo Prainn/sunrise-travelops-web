@@ -835,6 +835,12 @@
       "label": "访问受限",
       "signal": "权限不足",
       "title": "无法访问"
+    },
+    "unavailable": {
+      "description": "服务暂时无法连接。登录状态已保留，请稍后重试。",
+      "label": "服务暂不可用",
+      "signal": "等待服务恢复",
+      "title": "暂时无法加载页面"
     }
   },
   "service": {

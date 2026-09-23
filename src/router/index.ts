@@ -22,6 +22,11 @@ export const constantRoutes: RouteRecordRaw[] = [
     component: () => import("@/views/login/index.vue"),
     meta: { hidden: true },
   },
+  {
+    path: "/unavailable",
+    component: () => import("@/views/error/503.vue"),
+    meta: { hidden: true },
+  },
 
   {
     path: "/",

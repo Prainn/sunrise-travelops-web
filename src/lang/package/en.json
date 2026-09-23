@@ -835,6 +835,12 @@
       "label": "Restricted Access",
       "signal": "Permission denied",
       "title": "Access Denied"
+    },
+    "unavailable": {
+      "description": "The service is temporarily unavailable. Your sign-in has been kept. Please try again shortly.",
+      "label": "Service Unavailable",
+      "signal": "Waiting for service",
+      "title": "Unable to load this page"
     }
   },
   "service": {

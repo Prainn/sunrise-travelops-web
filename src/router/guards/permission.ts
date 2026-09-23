@@ -32,6 +32,9 @@ export function setupPermissionGuard() {
         return { path: "/" };
       }
 
+      // 服务暂不可用时允许展示重试页，避免再次请求用户资料。
+      if (to.path === "/unavailable") return;
+
       const permissionStore = usePermissionStore();
       const userStore = useUserStore();
 
@@ -58,9 +61,9 @@ export function setupPermissionGuard() {
       }
     } catch (error) {
       console.error("Route guard error:", error);
-      await useUserStore().resetAllState();
       NProgress.done();
-      return "/login";
+      if (!useUserStore().isLoggedIn()) return "/login";
+      return { path: "/unavailable", query: { redirect: to.fullPath }, replace: true };
     }
   });
 

@@ -173,13 +173,18 @@ async function handleLoginSubmit() {
   if (!valid) return;
 
   loading.value = true;
+  let loggedIn = false;
   try {
     await userStore.login(loginFormData.value);
+    loggedIn = true;
     await userStore.getUserInfo();
     await router.push("/");
   } catch (error) {
-    userStore.resetAllState();
+    if (!loggedIn) userStore.resetAllState();
     ElMessage.error(error instanceof Error ? error.message : t("login.failed"));
+    if (loggedIn && userStore.isLoggedIn()) {
+      await router.replace({ path: "/unavailable", query: { redirect: "/" } });
+    }
   } finally {
     loading.value = false;
   }
