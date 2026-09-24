@@ -211,6 +211,7 @@ function guidePersonInput(data: GuidePersonRecord) {
     name: data.name.trim(),
     gender: data.gender,
     age: data.age,
+    language: data.language === "" ? null : data.language,
     contact: data.contact === "" ? null : data.contact,
     employmentType: data.employmentType,
     hasLaborContract: data.hasLaborContract,

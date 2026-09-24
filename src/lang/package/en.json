@@ -813,6 +813,7 @@
       "2": "Female"
     },
     "age": "Age",
+    "language": "Language",
     "certificateNo": "Guide License No.",
     "createGuide": "Create Guide",
     "editGuide": "Edit Guide",

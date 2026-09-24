@@ -48,6 +48,11 @@
               {{ row.age ?? $t("common.notSet") }}
             </template>
           </el-table-column>
+          <el-table-column :label="$t('guide.language')" min-width="110">
+            <template #default="{ row }">
+              {{ row.language ?? $t("common.notSet") }}
+            </template>
+          </el-table-column>
           <el-table-column
             prop="contact"
             :label="$t('guide.contact')"

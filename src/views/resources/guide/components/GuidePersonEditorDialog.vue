@@ -50,6 +50,9 @@
           class="w-full"
         />
       </el-form-item>
+      <el-form-item :label="$t('guide.language')">
+        <el-input v-model="form.language" />
+      </el-form-item>
       <el-form-item :label="$t('guide.contact')">
         <el-input v-model="form.contact" />
       </el-form-item>
@@ -127,6 +130,7 @@ watch(
   ([visible, record]) => {
     if (!visible) return;
     Object.assign(form, record, {
+      language: record.language ?? "",
       contact: record.contact ?? "",
       remark: record.remark ?? "",
       certificateNo: record.certificateNo ?? "",
@@ -149,6 +153,7 @@ async function handleSubmit() {
   emit("submit", {
     ...form,
     name: form.name.trim(),
+    language: form.language === "" ? null : form.language,
     contact: form.contact === "" ? null : form.contact,
     remark: form.remark === "" ? null : form.remark,
     certificateNo: form.certificateNo === "" ? null : form.certificateNo,

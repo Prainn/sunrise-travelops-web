@@ -107,6 +107,7 @@ function createEmptyPerson(): GuidePersonRecord {
     name: "",
     gender: 0,
     age: null,
+    language: null,
     contact: null,
     employmentType: null,
     hasLaborContract: null,

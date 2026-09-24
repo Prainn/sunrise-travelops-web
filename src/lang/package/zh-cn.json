@@ -813,6 +813,7 @@
       "2": "女"
     },
     "age": "年龄",
+    "language": "语种",
     "certificateNo": "导游证号",
     "createGuide": "新增导游",
     "editGuide": "编辑导游",
