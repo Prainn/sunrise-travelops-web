@@ -42,18 +42,20 @@
           @click="emit('update:selectedId', agency.id)"
           @keydown.enter="emit('update:selectedId', agency.id)"
         >
-          <div class="agency-sidebar__tags">
-            <ResourceLibraryTag :library="agency.library" />
-            <el-tag v-if="agency.coordinatorName" type="info" size="small">
-              {{ $t("resource.agencyCoordinator") }}：{{ agency.coordinatorName }}
+          <div class="flex justify-between">
+            <div class="flex items-center gap-2">
+              <ResourceLibraryTag :library="agency.library" />
+              <el-tag v-if="agency.coordinatorName" type="info" size="small">
+                {{ $t("resource.agencyCoordinator") }}：{{ agency.coordinatorName }}
+              </el-tag>
+            </div>
+            <el-tag :type="agency.status === 'enabled' ? 'success' : 'info'" size="small">
+              {{ $t(`common.${agency.status}`) }}
             </el-tag>
           </div>
 
           <div class="agency-sidebar__item-heading mt-2">
             <strong>{{ agency.name }}</strong>
-            <el-tag :type="agency.status === 'enabled' ? 'success' : 'info'" size="small">
-              {{ $t(`common.${agency.status}`) }}
-            </el-tag>
           </div>
           <small>{{ agency.code }} · {{ agency.countryOrRegion }}</small>
           <div class="agency-sidebar__actions" @click.stop>
