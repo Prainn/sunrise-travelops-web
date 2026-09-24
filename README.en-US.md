@@ -27,3 +27,7 @@ VITE_APP_TITLE=Sunrise TravelOps
 VITE_APP_BASE_API=/api
 VITE_APP_API_URL=https://api-dev.sunrisevacation.cn
 ```
+
+## Deployment
+
+Daily development uses `dev`; pushes deploy dev through the ECS self-hosted runner. `main` requires a verified PR and a manual production deployment. Root `node deploy-web` only dispatches dev Actions. See [deployment guide](../docs/deployment/前端自动部署.md) for rollback and cutover prerequisites.
