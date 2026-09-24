@@ -14,6 +14,25 @@ spec.loader.exec_module(release)
 
 
 class FrontendReleaseSafety(unittest.TestCase):
+    def test_private_build_output_is_readable_by_nginx_after_publication(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            (base / 'releases').mkdir()
+            source = base / 'dist'
+            (source / 'js').mkdir(parents=True, mode=0o700)
+            (source / 'index.html').write_text('<html>new</html>')
+            (source / 'index.html').chmod(0o600)
+            (source / 'js/app.js').write_text('app')
+            (source / 'js/app.js').chmod(0o600)
+            def verify(directory):
+                for path in directory.rglob('*'):
+                    self.assertTrue(path.stat().st_mode & 0o004, str(path))
+                    if path.is_dir():
+                        self.assertTrue(path.stat().st_mode & 0o001, str(path))
+            with patch.object(release, 'BASE', base), patch.object(release, 'verify', side_effect=verify), \
+                 patch.object(release, 'cleanup_after_success'):
+                self.assertTrue(release.publish('a' * 40 + '-1-1', source)['verified'])
+
     def test_failed_verification_restores_current_and_keeps_old_assets(self):
         with tempfile.TemporaryDirectory() as temporary:
             base = Path(temporary)
