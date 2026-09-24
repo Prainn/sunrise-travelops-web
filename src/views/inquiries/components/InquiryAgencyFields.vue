@@ -3,6 +3,7 @@
     <el-form-item :label="$t('inquiry.agencyName')" prop="agencyId">
       <ResourceSelect
         kind="agencies"
+        :filters="record.businessUnit ? { businessUnit: record.businessUnit } : {}"
         :model-value="record.agencyId"
         :selected-label="record.agencyName"
         :placeholder="$t('common.selectPlaceholder')"

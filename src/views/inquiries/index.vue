@@ -157,7 +157,7 @@ function createEmptyInquiry(): InquiryRecord {
     originalMessage: "",
     internalRemark: "",
     owner: user.userInfo.nickname ?? "",
-    ownerId: user.userInfo.scope === "headquarters" ? "" : (user.userInfo.userId ?? ""),
+    ownerId: "",
     nextFollowUpAt: "",
     plannedDays: 1,
     lostReason: "",

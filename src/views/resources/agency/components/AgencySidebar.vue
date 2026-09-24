@@ -10,18 +10,23 @@
     </template>
 
     <el-form :inline="true">
-      <ResourceBusinessFilter />
+      <el-row :gutter="24">
+        <el-col :span="16">
+          <ResourceBusinessFilter />
+        </el-col>
+        <el-col :span="8">
+          <el-button @click="resetQuery">
+            {{ $t("common.reset") }}
+          </el-button>
+        </el-col>
+      </el-row>
+
       <el-form-item :label="$t('common.keywords')" class="w-full pr-2">
         <el-input
           v-model.trim="keywords"
           :placeholder="$t('resource.agencySearchPlaceholder')"
           clearable
         />
-      </el-form-item>
-      <el-form-item>
-        <el-button @click="resetQuery">
-          {{ $t("common.reset") }}
-        </el-button>
       </el-form-item>
     </el-form>
 

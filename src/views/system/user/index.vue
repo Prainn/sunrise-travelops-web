@@ -432,7 +432,7 @@ const { loading, list, total, params, fetchData, handleQuery, handleResetQuery }
 >({
   initialParams: {
     page: 1,
-    pageSize: 10,
+    pageSize: 20,
     deptId: undefined,
   },
   request: userService.getPage,

@@ -115,6 +115,8 @@ function createCrud<T extends { code: string; library?: ResourceLibrary }>(
 
 function agencyInput(data: AgencyRecord) {
   return {
+    businessUnit: data.businessUnit || undefined,
+    coordinatorId: data.coordinatorId,
     id: data.id || undefined,
     code: data.code.trim(),
     name: data.name.trim(),
@@ -425,6 +427,12 @@ export const resourceService = {
   guidePeople,
   agencyApi: {
     ...agencyApi,
+    getCoordinators(businessUnit: "shengxu" | "linxi" | "website") {
+      return request.get<{ id: string; name: string; username: string }[]>(
+        `${RESOURCE_BASE_URL}/agencies/coordinators`,
+        { params: { businessUnit } },
+      );
+    },
     getContacts(agencyId: string) {
       return request.get<AgencyContactRecord[]>(
         `${RESOURCE_BASE_URL}/agencies/${encodeURIComponent(agencyId)}/contacts`,

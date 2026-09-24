@@ -187,7 +187,7 @@ const { loading, list, total, params, fetchData, handleQuery, handleResetQuery }
 >({
   initialParams: {
     page: 1,
-    pageSize: 10,
+    pageSize: 20,
     keyword: "",
   },
   request: dictionaryService.getPage,

@@ -102,7 +102,7 @@
           <el-form-item :label="$t('inquiry.owner')" prop="ownerId">
             <el-select
               v-model="form.ownerId"
-              :disabled="isEditing || userStore.userInfo.scope !== 'headquarters' || loadingOwners"
+              disabled
               :loading="loadingOwners"
               :placeholder="$t('common.selectPlaceholder')"
             >
@@ -212,7 +212,7 @@ const editableStatusOptions = computed(() => {
 const rules = computed<FormRules>(() => ({
   ownerId: [
     {
-      required: !props.isEditing && userStore.userInfo.scope === "headquarters",
+      required: !props.isEditing,
       message: t("common.selectPlaceholder"),
       trigger: "change",
     },
@@ -294,6 +294,7 @@ async function selectAgency(agencyId: string) {
   if (!agencyId) {
     Object.assign(form, {
       agencyId: "",
+      ownerId: "",
       agencyCode: "",
       agencyName: "",
       contactId: "",
@@ -312,11 +313,16 @@ async function selectAgency(agencyId: string) {
     return;
   }
   if (version !== agencySelectionVersion) return;
+  if (agency.businessUnit !== form.businessUnit || !agency.coordinatorId) {
+    ElMessage.error(t("inquiry.agencyCoordinatorUnavailable"));
+    return;
+  }
   const index = resourceService.agencies.findIndex((item) => item.id === agencyId);
   if (index >= 0) resourceService.agencies.splice(index, 1, agency);
   else resourceService.agencies.push(agency);
   Object.assign(form, {
     agencyId: agency.id,
+    ownerId: agency.coordinatorId,
     agencyCode: agency.code,
     agencyName: agency.name,
     contactId: "",

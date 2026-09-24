@@ -55,6 +55,8 @@ const loadingContactAgencyIds = reactive(new Set<string>());
 
 function createEmptyAgencyRecord(): AgencyRecord {
   return {
+    businessUnit: null,
+    coordinatorId: null,
     id: "",
     code: "",
     name: "",
