@@ -28,7 +28,7 @@ def upload_signal(signum, _frame):
     raise RuntimeError('Upload cancelled by signal ' + str(signum))
 
 
-def receive(stream, output, expected, limit, total_timeout=300, idle_timeout=30):
+def receive(stream, output, expected, limit, total_timeout=480, idle_timeout=30):
     if not 0 < expected <= limit:
         raise ValueError('Invalid upload size')
     started = last_data = last_report = time.monotonic()
@@ -251,7 +251,7 @@ def main():
         signal.signal(signum, upload_signal)
     previous_release = os.readlink(BASE / 'current')
     with tempfile.TemporaryFile(dir=BASE) as compressed:
-        receive(sys.stdin.buffer, compressed, int(match[2]), 200 * 1024 * 1024, total_timeout=180)
+        receive(sys.stdin.buffer, compressed, int(match[2]), 200 * 1024 * 1024)
         with deployment_lock():
             if os.readlink(BASE / 'current') != previous_release:
                 raise ValueError('Current release changed during upload; retry')
