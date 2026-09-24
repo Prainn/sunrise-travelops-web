@@ -41,4 +41,4 @@
 - 优先调整现有相关测试，不新增只复述实现的断言；只运行本次相关检查。
 - 命令：`pnpm type-check`；`pnpm exec eslint <受影响文件>`；`pnpm test <测试文件>`。`pnpm lint` / `pnpm test` 是全量入口；`pnpm build` 包含类型检查和构建，`build-only` 不含类型检查。
 - 本地联调用 `pnpm dev:local`（localhost:4000）；`pnpm dev` 默认代理远程开发 API，勿把远程结果当成本地后端验证。
-- CI [deploy-dev.yml](.github/workflows/deploy-dev.yml) 运行 `pnpm build:server-dev`（不再运行已删除的发布脚本测试），不运行全量 lint/Vitest。发布步骤与验收见 [前端自动部署](../docs/deployment/前端自动部署.md)。
+- PR 的 [ci.yml](.github/workflows/ci.yml) 在 GitHub-hosted 运行类型检查、构建和发布恢复定向检查；[deploy.yml](.github/workflows/deploy.yml) 在 ECS runner 串行构建发布。dev push 发布 dev，main 仅经 PR 更新后手动发布 prod；根命令只发布 dev。步骤与验收见 [前端自动部署](../docs/deployment/前端自动部署.md)。
