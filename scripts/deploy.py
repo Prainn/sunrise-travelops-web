@@ -116,6 +116,9 @@ def publish(release_id, source_directory):
     with tempfile.TemporaryDirectory(prefix='.upload-', dir=BASE) as temp:
         stage = Path(temp)
         shutil.copytree(source_directory, stage, dirs_exist_ok=True)
+        # Runner's private umask must not make public static files unreadable to Nginx.
+        for path in stage.rglob('*'):
+            path.chmod(0o755 if path.is_dir() else 0o644)
         if not (stage / 'index.html').is_file() or not (stage / 'js').is_dir():
             raise ValueError('Missing index.html or js')
         (stage / '__deploy.json').write_text(json.dumps({'release': release_id}) + '\n')
