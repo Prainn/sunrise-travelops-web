@@ -17,10 +17,6 @@
 
         <div class="login-brand__hero">
           <div class="login-brand__main">
-            <el-tag class="login-brand__tag" type="primary" effect="plain" round>
-              <span class="login-brand__tag-dot" />
-              Enterprise Ready
-            </el-tag>
             <h1 class="login-brand__title">
               {{ $t("login.heroTitle") }}
             </h1>
