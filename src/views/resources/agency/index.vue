@@ -57,6 +57,7 @@ function createEmptyAgencyRecord(): AgencyRecord {
   return {
     businessUnit: null,
     coordinatorId: null,
+    coordinatorName: null,
     id: "",
     code: "",
     name: "",

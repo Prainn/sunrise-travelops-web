@@ -148,13 +148,6 @@ const rules = computed<FormRules>(() => ({
       trigger: "blur",
     },
   ],
-  email: [
-    {
-      required: true,
-      message: t("resource.fieldRequired", { field: t("resource.agencyEmail") }),
-      trigger: "blur",
-    },
-  ],
 }));
 
 watch(
@@ -167,7 +160,8 @@ watch(
       form.library = undefined;
       form.businessUnit = null;
     }
-    if (!isHeadquarters.value) form.businessUnit = userStore.userInfo.scope as AgencyRecord["businessUnit"];
+    if (!isHeadquarters.value)
+      form.businessUnit = userStore.userInfo.scope as AgencyRecord["businessUnit"];
     selectedBusinessUnit.value = form.businessUnit || "";
     void loadCoordinators();
   },

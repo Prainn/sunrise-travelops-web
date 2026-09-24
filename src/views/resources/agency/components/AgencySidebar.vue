@@ -42,7 +42,12 @@
           @click="emit('update:selectedId', agency.id)"
           @keydown.enter="emit('update:selectedId', agency.id)"
         >
-          <ResourceLibraryTag :library="agency.library" />
+          <div class="agency-sidebar__tags">
+            <ResourceLibraryTag :library="agency.library" />
+            <el-tag v-if="agency.coordinatorName" type="info" size="small">
+              {{ $t("resource.agencyCoordinator") }}：{{ agency.coordinatorName }}
+            </el-tag>
+          </div>
 
           <div class="agency-sidebar__item-heading mt-2">
             <strong>{{ agency.name }}</strong>
@@ -134,6 +139,7 @@ function resetQuery() {
   }
 
   &__header,
+  &__tags,
   &__item-heading,
   &__actions {
     display: flex;
@@ -148,6 +154,10 @@ function resetQuery() {
 
   &__header {
     @apply 'font-semibold';
+  }
+
+  &__tags {
+    gap: 8px;
   }
 
   &__scrollbar {

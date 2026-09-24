@@ -42,6 +42,7 @@ export interface AgencyContactRecord extends ResourceAuditRecord {
 export interface AgencyRecord extends ResourceAuditRecord {
   businessUnit: "shengxu" | "linxi" | "website" | null;
   coordinatorId: string | null;
+  coordinatorName: string | null;
   id: string;
   code: string;
   name: string;
