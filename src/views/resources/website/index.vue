@@ -2,9 +2,18 @@
   <div v-loading="loading || saving" :inert="saving" class="page-container">
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
     <el-card v-if="config" class="page-content" shadow="never">
-      <TableToolbar @refresh="refreshConfig" />
-      <el-tabs v-model="activeTab" class="website-config-tabs">
-        <el-tab-pane label="城市" name="cities">
+      <TableToolbar class="website-config-toolbar" @refresh="refreshConfig">
+        <el-tabs v-model="activeTab" class="website-config-tabs min-w-0 w-full">
+          <el-tab-pane label="城市" name="cities" />
+          <el-tab-pane label="景点／组件／季节" name="attractions" />
+          <el-tab-pane label="跨城路线" name="routes" />
+          <el-tab-pane label="Day Pattern" name="patterns" />
+          <el-tab-pane label="城市骨架" name="skeletons" />
+          <el-tab-pane label="双语标准文案" name="templates" />
+        </el-tabs>
+      </TableToolbar>
+      <div class="min-h-0 overflow-hidden">
+        <div v-show="activeTab === 'cities'" class="h-full">
           <WebsiteConfigCities
             :config="config"
             :editable="editable"
@@ -12,8 +21,8 @@
             :save-config="saveConfig"
             :delete-config="deleteConfig"
           />
-        </el-tab-pane>
-        <el-tab-pane label="景点／组件／季节" name="attractions">
+        </div>
+        <div v-show="activeTab === 'attractions'" class="h-full">
           <WebsiteConfigAttractions
             :config="config"
             :editable="editable"
@@ -21,8 +30,8 @@
             :save-config="saveConfig"
             :delete-config="deleteConfig"
           />
-        </el-tab-pane>
-        <el-tab-pane label="跨城路线" name="routes">
+        </div>
+        <div v-show="activeTab === 'routes'" class="h-full">
           <WebsiteConfigRoutes
             :config="config"
             :editable="editable"
@@ -30,8 +39,8 @@
             :save-config="saveConfig"
             :delete-config="deleteConfig"
           />
-        </el-tab-pane>
-        <el-tab-pane label="Day Pattern" name="patterns">
+        </div>
+        <div v-show="activeTab === 'patterns'" class="h-full">
           <WebsiteConfigPatterns
             :config="config"
             :editable="editable"
@@ -39,8 +48,8 @@
             :save-config="saveConfig"
             :delete-config="deleteConfig"
           />
-        </el-tab-pane>
-        <el-tab-pane label="城市骨架" name="skeletons">
+        </div>
+        <div v-show="activeTab === 'skeletons'" class="h-full">
           <WebsiteConfigSkeletons
             :config="config"
             :editable="editable"
@@ -48,8 +57,8 @@
             :save-config="saveConfig"
             :delete-config="deleteConfig"
           />
-        </el-tab-pane>
-        <el-tab-pane label="双语标准文案" name="templates">
+        </div>
+        <div v-show="activeTab === 'templates'" class="h-full">
           <WebsiteConfigTemplates
             :config="config"
             :editable="editable"
@@ -57,8 +66,8 @@
             :save-config="saveConfig"
             :delete-config="deleteConfig"
           />
-        </el-tab-pane>
-      </el-tabs>
+        </div>
+      </div>
     </el-card>
   </div>
 </template>
@@ -135,15 +144,23 @@ onBeforeRouteLeave(() => !saving.value);
 </script>
 
 <style scoped lang="scss">
-.website-config-tabs {
-  @apply 'flex flex-col min-h-0';
-
-  :deep(.el-tabs__content) {
-    @apply '[flex:1] min-h-0 overflow-hidden';
+.website-config-toolbar {
+  :deep(.page-toolbar__left) {
+    @apply 'flex-1 min-w-0';
   }
 
-  :deep(.el-tab-pane) {
-    @apply 'h-full';
+  :deep(.page-toolbar__right) {
+    @apply 'shrink-0';
+  }
+}
+
+.website-config-tabs {
+  :deep(.el-tabs__header) {
+    @apply 'm-0';
+  }
+
+  :deep(.el-tabs__content) {
+    @apply 'hidden';
   }
 }
 </style>

@@ -310,11 +310,6 @@
           </el-button>
           <span v-if="quoteErrorReason" class="ml-2">[{{ quoteErrorReason }}]</span>
         </el-alert>
-        <el-switch
-          v-model="showChildPrice"
-          :active-text="$t('itinerary.showChildPriceInPdf')"
-          class="mb-3"
-        />
         <ItineraryQuotePanel
           v-if="selectedItinerary"
           :inert="isSaving || quotePending"
@@ -330,30 +325,38 @@
           @update-settings="updateQuoteSettings"
         />
         <template #footer>
-          <el-button
-            v-if="canDownloadOriginal"
-            :loading="isGeneratingPdf"
-            @click="downloadOriginal"
-          >
-            {{ $t("itinerary.downloadOriginal") }}
-          </el-button>
-          <el-button v-if="!isDraft && canCreateItinerary" @click="copyItinerary">
-            {{ $t("itinerary.copyForRevision") }}
-          </el-button>
-          <el-button v-if="canSaveItinerary" @click="saveItinerary">
-            {{ $t("itinerary.save") }}
-          </el-button>
-          <el-button @click="isQuoteDrawerVisible = false">
-            {{ $t("common.close") }}
-          </el-button>
-          <el-button
-            v-if="isDraft && canGeneratePdf"
-            type="primary"
-            :loading="isGeneratingPdf"
-            @click="handleGeneratePdf"
-          >
-            {{ $t("itinerary.generatePdf") }}
-          </el-button>
+          <div class="flex flex-wrap items-center gap-3">
+            <el-switch
+              v-model="showChildPrice"
+              :active-text="$t('itinerary.showChildPriceInPdf')"
+            />
+            <div class="ml-auto">
+              <el-button
+                v-if="canDownloadOriginal"
+                :loading="isGeneratingPdf"
+                @click="downloadOriginal"
+              >
+                {{ $t("itinerary.downloadOriginal") }}
+              </el-button>
+              <el-button v-if="!isDraft && canCreateItinerary" @click="copyItinerary">
+                {{ $t("itinerary.copyForRevision") }}
+              </el-button>
+              <el-button v-if="canSaveItinerary" @click="saveItinerary">
+                {{ $t("itinerary.save") }}
+              </el-button>
+              <el-button @click="isQuoteDrawerVisible = false">
+                {{ $t("common.close") }}
+              </el-button>
+              <el-button
+                v-if="isDraft && canGeneratePdf"
+                type="primary"
+                :loading="isGeneratingPdf"
+                @click="handleGeneratePdf"
+              >
+                {{ $t("itinerary.generatePdf") }}
+              </el-button>
+            </div>
+          </div>
         </template>
       </el-drawer>
     </template>
