@@ -76,7 +76,7 @@
             v-model="skeletonId"
             filterable
             clearable
-            placeholder="可选：选择已维护城市骨架"
+            placeholder="选择已维护城市骨架"
             class="w-[300px]!"
           >
             <el-option

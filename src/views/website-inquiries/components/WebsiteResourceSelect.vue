@@ -7,7 +7,7 @@
     :remote-method="search"
     :loading="loading"
     :disabled="disabled"
-    placeholder="搜索共用基础资料（可不选）"
+    placeholder="搜索共用基础资料"
     class="w-full"
     @update:model-value="emit('update:modelValue', $event || null)"
     @change="select"

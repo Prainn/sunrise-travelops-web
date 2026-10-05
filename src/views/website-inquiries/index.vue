@@ -1,105 +1,60 @@
 <template>
-  <div class="page-container">
-    <el-alert v-if="error" :title="error" type="error" :closable="false" class="mb-4" />
-    <el-form inline @submit.prevent="search">
-      <el-form-item label="客户／编号／需求">
-        <el-input v-model="query.keyword" clearable @keyup.enter="search" />
-      </el-form-item>
-      <el-form-item label="状态">
-        <el-select v-model="query.status" clearable class="w-[140px]!">
-          <el-option
-            v-for="(label, value) in INQUIRY_STATUS_LABELS"
-            :key="value"
-            :value="value"
-            :label="label"
+  <div v-loading="loading" class="page-container">
+    <el-alert v-if="error" :title="error" type="error" :closable="false" />
+    <el-card class="page-search" shadow="never">
+      <el-form inline @submit.prevent="search">
+        <el-form-item label="关键词">
+          <el-input
+            v-model.trim="query.keyword"
+            placeholder="客户／编号／需求"
+            class="page-search__keywords"
+            clearable
           />
-        </el-select>
-      </el-form-item>
-      <el-form-item v-if="allowAssign || user.userInfo.scope === 'headquarters'" label="计调">
-        <el-select v-model="query.ownerId" clearable filterable class="w-[160px]!">
-          <el-option
-            v-for="owner in owners"
-            :key="owner.id"
-            :value="owner.id"
-            :label="owner.name"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="search">查询</el-button>
-        <el-button @click="reset">重置</el-button>
-        <el-button v-if="can('website:inquiry:create')" @click="openEditor()"
-          >新增独立站询盘</el-button
-        >
-      </el-form-item>
-    </el-form>
-    <el-table v-loading="loading" :data="rows" stripe>
-      <el-table-column prop="code" label="编号" width="150" />
-      <el-table-column prop="customerName" label="客户" min-width="150" />
-      <el-table-column prop="plannedDays" label="天数" width="75" />
-      <el-table-column label="日期" width="120">
-        <template #default="{ row }">{{ row.startDate || "未确认" }}</template>
-      </el-table-column>
-      <el-table-column label="人数" width="75">
-        <template #default="{ row }">{{ row.pax ?? "未确认" }}</template>
-      </el-table-column>
-      <el-table-column prop="owner" label="负责计调" width="110" />
-      <el-table-column label="状态" width="100">
-        <template #default="{ row }">{{
-          INQUIRY_STATUS_LABELS[row.status as keyof typeof INQUIRY_STATUS_LABELS]
-        }}</template>
-      </el-table-column>
-      <el-table-column prop="requirements" label="需求说明" min-width="220" show-overflow-tooltip />
-      <!-- @vue-generic {WebsiteInquiry} -->
-      <el-table-column label="操作" fixed="right" width="330">
-        <template #default="{ row }">
-          <el-button link @click="openEditor(row, true)">详情</el-button>
-          <el-button
-            v-if="can('website:itinerary:list')"
-            link
-            type="primary"
-            @click="openItineraries(row)"
-            >行程与报价</el-button
-          >
-          <el-button
-            v-if="can('website:inquiry:update') && !ended(row)"
-            link
-            @click="openEditor(row)"
-            >编辑</el-button
-          >
-          <el-button
-            v-if="can('website:inquiry:transfer') && !ended(row)"
-            link
-            @click="
-              transferRecord = row;
-              transferVisible = true;
-            "
-            >转交</el-button
-          >
-          <el-button v-if="can('website:inquiry:archive') && !ended(row)" link @click="archive(row)"
-            >归档</el-button
-          >
-          <el-button v-if="can('website:inquiry:update') && !ended(row)" link @click="markLost(row)"
-            >流失</el-button
-          >
-          <el-button
-            link
-            @click="
-              historyRecord = row;
-              historyVisible = true;
-            "
-            >日志</el-button
-          >
-        </template>
-      </el-table-column>
-    </el-table>
-    <el-pagination
-      v-model:current-page="query.page"
-      class="mt-5"
-      :page-size="query.pageSize"
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="query.status" clearable>
+            <el-option
+              v-for="(label, value) in INQUIRY_STATUS_LABELS"
+              :key="value"
+              :value="value"
+              :label="label"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="allowAssign || user.userInfo.scope === 'headquarters'" label="负责计调">
+          <el-select v-model="query.ownerId" clearable filterable>
+            <el-option
+              v-for="owner in owners"
+              :key="owner.id"
+              :value="owner.id"
+              :label="owner.name"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item><el-button @click="reset">重置</el-button></el-form-item>
+      </el-form>
+    </el-card>
+    <WebsiteInquiryTable
+      v-model:page="query.page"
+      v-model:page-size="query.pageSize"
+      :rows="rows"
       :total="total"
-      layout="prev, pager, next, total"
-      @current-change="load"
+      :can="can"
+      @refresh="load"
+      @create="openEditor()"
+      @view="openEditor($event, true)"
+      @edit="openEditor($event)"
+      @transfer="
+        transferRecord = $event;
+        transferVisible = true;
+      "
+      @archive="archive"
+      @lost="markLost"
+      @itineraries="openItineraries"
+      @history="
+        historyRecord = $event;
+        historyVisible = true;
+      "
     />
     <WebsiteInquiryEditor
       v-model="editorVisible"
@@ -121,7 +76,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useUserStore } from "@/stores/user";
@@ -135,6 +90,7 @@ import {
 } from "@/services/website.service";
 import type { WebsiteCity, WebsiteInquiry, WebsiteInquiryInput } from "@/types/website";
 import { INQUIRY_STATUS_LABELS } from "./options";
+import WebsiteInquiryTable from "./components/WebsiteInquiryTable.vue";
 import WebsiteInquiryEditor from "./components/WebsiteInquiryEditor.vue";
 import WebsiteInquiryTransfer from "./components/WebsiteInquiryTransfer.vue";
 import WebsiteInquiryHistory from "./components/WebsiteInquiryHistory.vue";
@@ -143,7 +99,7 @@ const user = useUserStore();
 const router = useRouter();
 const query = reactive<WebsiteInquiryQuery>({
   page: 1,
-  pageSize: 20,
+  pageSize: 10,
   keyword: "",
   status: "",
   ownerId: "",
@@ -166,9 +122,6 @@ const allowAssign = computed(() => can("website:inquiry:transfer"));
 function can(permission: string) {
   return hasUserPermission(user.userInfo, permission);
 }
-function ended(record: WebsiteInquiry) {
-  return record.status === "lost" || record.status === "archived";
-}
 let generation = 0;
 async function load() {
   const current = ++generation;
@@ -190,9 +143,11 @@ function search() {
   query.page = 1;
   void load();
 }
+watch([() => query.keyword, () => query.status, () => query.ownerId], search);
 function reset() {
-  Object.assign(query, { page: 1, keyword: "", status: "", ownerId: "" });
-  void load();
+  const hasFilter = Boolean(query.keyword || query.status || query.ownerId);
+  Object.assign(query, { keyword: "", status: "", ownerId: "" });
+  if (!hasFilter) search();
 }
 function openEditor(record?: WebsiteInquiry, readOnly = false) {
   editingRecord.value = record;

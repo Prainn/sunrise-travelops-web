@@ -6,7 +6,7 @@
         <el-form-item :label="`${MEAL_LABELS[meal.slot]}费用`">
           <FeeStateSelect v-model="meal.feeState" />
         </el-form-item>
-        <el-form-item label="共用餐厅（可空）">
+        <el-form-item label="共用餐厅">
           <WebsiteResourceSelect
             v-model="meal.resourceId"
             kind="restaurant"

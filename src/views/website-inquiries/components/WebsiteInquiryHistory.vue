@@ -6,24 +6,27 @@
     @update:model-value="emit('update:modelValue', $event)"
   >
     <el-alert v-if="error" :title="error" type="error" :closable="false" />
-    <el-table v-loading="loading" :data="rows">
-      <el-table-column prop="occurredAt" label="时间" width="180" />
+    <el-table v-loading="loading" :data="rows" border row-key="id">
+      <el-table-column label="时间" width="210">
+        <template #default="{ row }">{{ formatDateTime(row.occurredAt) }}</template>
+      </el-table-column>
       <el-table-column prop="actorName" label="操作人" width="100" />
       <el-table-column prop="action" label="操作" width="140" />
       <el-table-column prop="detail" label="详情" />
     </el-table>
-    <el-pagination
-      v-model:current-page="page"
-      class="mt-4"
-      :page-size="20"
+    <Pagination
+      v-if="total"
+      v-model:page="page"
+      v-model:limit="pageSize"
       :total="total"
-      layout="prev, pager, next, total"
-      @current-change="load"
+      @pagination="load"
     />
   </el-drawer>
 </template>
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import Pagination from "@/components/Pagination/index.vue";
+import { formatDateTime } from "@/utils";
 import { websiteErrorMessage, websiteService } from "@/services/website.service";
 import type { WebsiteInquiry, WebsiteLog } from "@/types/website";
 const props = defineProps<{ modelValue: boolean; record?: WebsiteInquiry }>();
@@ -31,6 +34,7 @@ const emit = defineEmits<{ "update:modelValue": [value: boolean] }>();
 const rows = ref<WebsiteLog[]>([]);
 const total = ref(0);
 const page = ref(1);
+const pageSize = ref(20);
 const loading = ref(false);
 const error = ref("");
 let generation = 0;
@@ -40,7 +44,7 @@ async function load() {
   loading.value = true;
   error.value = "";
   try {
-    const result = await websiteService.logs(props.record.id, page.value, 20);
+    const result = await websiteService.logs(props.record.id, page.value, pageSize.value);
     if (current === generation) {
       rows.value = result.list;
       total.value = result.total;

@@ -34,7 +34,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="住宿城市（无需住宿可空）">
+        <el-form-item label="住宿城市">
           <el-select
             v-model="day.overnightCityId"
             filterable

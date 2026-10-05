@@ -6,7 +6,7 @@
     :close-on-click-modal="false"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <el-form ref="formRef" :model="form" label-position="top" :disabled="saving">
+    <el-form ref="formRef" :model="form" label-width="auto" :disabled="saving">
       <el-form-item
         label="接收计调"
         prop="ownerId"

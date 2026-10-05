@@ -126,7 +126,11 @@
                 </template>
 
                 <el-form-item
-                  :label="$t(mode === 'stage' ? 'planning.stageTotal' : 'planning.arrangementVehiclePrice')"
+                  :label="
+                    $t(
+                      mode === 'stage' ? 'planning.stageTotal' : 'planning.arrangementVehiclePrice',
+                    )
+                  "
                 >
                   <el-input-number
                     class="!w-full"
@@ -134,7 +138,7 @@
                     :min="0"
                     :precision="2"
                     :disabled="!editable"
-                    :placeholder="$t(mode === 'stage' ? 'planning.stageTotal' : 'planning.optionalPrice')"
+                    :placeholder="mode === 'stage' ? $t('planning.stageTotal') : undefined"
                     controls-position="right"
                     @change="changeArrangementPrice(plan, arrangement.id, $event ?? null)"
                   />
@@ -263,7 +267,9 @@ const canSave = computed(
       vehiclePlans: props.plans,
     }).length &&
     (props.mode === "stage" ||
-      props.plans.every((plan) => plan.arrangements.every((arrangement) => arrangement.vehicles.length))),
+      props.plans.every((plan) =>
+        plan.arrangements.every((arrangement) => arrangement.vehicles.length),
+      )),
 );
 const isAddingNewVehicle = ref(false);
 

@@ -29,7 +29,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="选择共用酒店（可空）">
+        <el-form-item label="选择共用酒店">
           <WebsiteResourceSelect
             v-model="hotel.resourceId"
             kind="hotel"

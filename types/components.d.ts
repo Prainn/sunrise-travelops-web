@@ -148,6 +148,7 @@ declare module 'vue' {
     WebsiteDayTransport: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteDayTransport.vue')['default']
     WebsiteInquiryEditor: typeof import('./../src/views/website-inquiries/components/WebsiteInquiryEditor.vue')['default']
     WebsiteInquiryHistory: typeof import('./../src/views/website-inquiries/components/WebsiteInquiryHistory.vue')['default']
+    WebsiteInquiryTable: typeof import('./../src/views/website-inquiries/components/WebsiteInquiryTable.vue')['default']
     WebsiteInquiryTransfer: typeof import('./../src/views/website-inquiries/components/WebsiteInquiryTransfer.vue')['default']
     WebsiteItineraryBasics: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteItineraryBasics.vue')['default']
     WebsiteQuotationPreview: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteQuotationPreview.vue')['default']
