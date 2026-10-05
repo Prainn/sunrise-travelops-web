@@ -158,11 +158,11 @@ export const constantRoutes: RouteRecordRaw[] = [
       {
         path: ":inquiryId/itineraries",
         name: "InquiryItineraries",
-        component: () => import("@/views/inquiries/itineraries/index.vue"),
+        component: () => import("@/views/inquiries/itineraries/entry.vue"),
         meta: {
           title: "itineraryManagement",
           hidden: true,
-          perms: ["itinerary:list"],
+          perms: ["itinerary:list", "website:itinerary:list"],
         },
       },
       {
@@ -188,6 +188,29 @@ export const constantRoutes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: "/website-inquiries",
+    name: "WebsiteInquiries",
+    component: Layout,
+    meta: {
+      title: "websiteInquiries",
+      icon: "el-icon-ChatLineSquare",
+      scopes: ["website", "headquarters"],
+    },
+    children: [
+      {
+        path: "",
+        name: "WebsiteInquiryList",
+        component: () => import("@/views/website-inquiries/index.vue"),
+        meta: {
+          title: "websiteInquiries",
+          icon: "el-icon-ChatLineSquare",
+          keepAlive: true,
+          perms: ["website:inquiry:list"],
+        },
+      },
+    ],
+  },
+  {
     path: "/resources",
     name: "TourismResources",
     component: Layout,
@@ -198,6 +221,18 @@ export const constantRoutes: RouteRecordRaw[] = [
       alwaysShow: true,
     },
     children: [
+      {
+        path: "website",
+        name: "WebsiteResources",
+        component: () => import("@/views/resources/website/index.vue"),
+        meta: {
+          title: "websiteResources",
+          icon: "el-icon-Collection",
+          keepAlive: true,
+          scopes: ["website", "headquarters"],
+          perms: ["website:config:list"],
+        },
+      },
       {
         path: "agency",
         name: "Agency",

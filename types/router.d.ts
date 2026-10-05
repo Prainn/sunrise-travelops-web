@@ -1,4 +1,5 @@
 import "vue-router";
+import type { LoginScope } from "../src/types/auth";
 
 declare module "vue-router" {
   /**
@@ -18,5 +19,6 @@ declare module "vue-router" {
     externalUrl?: string;
     roles?: string[];
     perms?: string[];
+    scopes?: LoginScope[];
   }
 }

@@ -1,7 +1,9 @@
 import type { RouteMeta, RouteRecordRaw } from "vue-router";
+import type { LoginScope } from "@/types/auth";
 import { ROLE_ROOT } from "@/constants";
 
 interface RouteAccessContext {
+  scope?: LoginScope;
   roles?: string[];
   perms?: string[];
 }
@@ -11,6 +13,7 @@ export function hasRouteAccess(meta: RouteMeta, context: RouteAccessContext): bo
   const roles = context.roles ?? [];
   const perms = context.perms ?? [];
 
+  if (meta.scopes?.length && (!context.scope || !meta.scopes.includes(context.scope))) return false;
   if (roles.includes(ROLE_ROOT)) return true;
 
   const matchesRoles = !meta.roles?.length || meta.roles.some((role) => roles.includes(role));
