@@ -91,12 +91,14 @@
     >
       <el-form
         v-if="record"
+        ref="formRef"
         :model="record"
+        :rules="rules"
         :disabled="!editable || saving"
         label-width="auto"
       >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
-          <el-form-item :label="$t('websiteConfig.routes.fromCity')" required>
+          <el-form-item :label="$t('websiteConfig.routes.fromCity')" prop="fromCityId">
             <el-select v-model="record.fromCityId" filterable>
               <el-option
                 v-for="city in config.cities"
@@ -106,7 +108,7 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.routes.toCity')" required>
+          <el-form-item :label="$t('websiteConfig.routes.toCity')" prop="toCityId">
             <el-select v-model="record.toCityId" filterable>
               <el-option
                 v-for="city in config.cities"
@@ -116,10 +118,10 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.routes.nameZh')" required>
+          <el-form-item :label="$t('websiteConfig.routes.nameZh')" prop="nameZh">
             <el-input v-model="record.nameZh" maxlength="150" />
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.routes.nameEn')" required>
+          <el-form-item :label="$t('websiteConfig.routes.nameEn')" prop="nameEn">
             <el-input v-model="record.nameEn" maxlength="150" />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.routes.transport')">
@@ -167,6 +169,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
+import type { FormInstance } from "element-plus";
 import type { WebsiteConfig, WebsiteRoute } from "@/types/website";
 import {
   cloneWebsiteDraft,
@@ -174,6 +177,7 @@ import {
   TRANSPORT_OPTIONS,
 } from "@/views/website-inquiries/options";
 import FeeStateSelect from "@/views/website-inquiries/components/FeeStateSelect.vue";
+import { useWebsiteRouteRules } from "../useWebsiteConfigRules";
 
 const props = defineProps<{
   config: WebsiteConfig;
@@ -185,6 +189,8 @@ const props = defineProps<{
 const visible = ref(false);
 const isNew = ref(false);
 const record = ref<WebsiteRoute>();
+const formRef = ref<FormInstance>();
+const rules = useWebsiteRouteRules(() => props.config, record);
 const { t } = useI18n();
 
 function getOptionLabel(options: Array<{ value: string; labelKey: string }>, value: string) {
@@ -211,6 +217,7 @@ function openEditor(route?: WebsiteRoute) {
 
 async function applyEdit() {
   if (!record.value || !props.editable || props.saving) return;
+  if (!(await formRef.value?.validate().catch(() => false))) return;
   const next = cloneWebsiteDraft(props.config);
   const result = cloneWebsiteDraft(record.value);
   const index = next.routes.findIndex((row) => row.id === result.id);

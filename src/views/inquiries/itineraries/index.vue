@@ -311,10 +311,15 @@
           v-if="quoteError"
           type="error"
           :closable="false"
-          class="mb-3"
+          class="mb-3!"
         >
-          {{ $t("itinerary.quoteCalculationFailed") }}
-          <el-button link type="primary" @click="retryQuote">
+          {{ $t(quoteMaxRetriesReached ? "itinerary.quoteMaxRetriesReached" : "itinerary.quoteCalculationFailed") }}
+          <el-button
+            v-if="quoteError === 'retriable' && !quoteMaxRetriesReached"
+            link
+            type="primary"
+            @click="retryQuote"
+          >
             {{ $t("itinerary.retryQuoteCalculation") }}
           </el-button>
           <span v-if="quoteErrorReason" class="ml-2">[{{ quoteErrorReason }}]</span>
@@ -476,6 +481,7 @@ const {
   quotePending,
   quoteError,
   quoteErrorReason,
+  quoteMaxRetriesReached,
   retryQuote,
   openEditDialog,
   pdfPreviewUrl,

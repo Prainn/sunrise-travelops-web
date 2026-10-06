@@ -105,6 +105,19 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     if (!options.canEditContent()) return null;
     const plan = options.selectedItinerary.value;
     if (!plan) return null;
+    const destinationsChanged =
+      plan.destinations.length !== record.destinations.length ||
+      plan.destinations.some((destination, index) => destination !== record.destinations[index]);
+    const plannedDays = options.inquiry.value?.plannedDays ?? plan.dailyPlans.length;
+    const breakfastChanged =
+      plan.dailyPlans.length < plannedDays ||
+      (destinationsChanged &&
+        (plan.dailyPlans.some(
+          (day) => day.overnightDestination && !record.destinations.includes(day.overnightDestination),
+        ) ||
+        plan.hotelPlans.some((hotelPlan) =>
+          hotelPlan.hotels.some((hotel) => !record.destinations.includes(hotel.destination)),
+        )));
     Object.assign(plan, {
       title: record.title,
       startDate: record.startDate,
@@ -113,10 +126,10 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       childWithoutBedRate: record.childWithoutBedRate,
       destinations: [...record.destinations],
     });
-    ensurePlannedDays(plan, options.inquiry.value?.plannedDays ?? plan.dailyPlans.length);
+    ensurePlannedDays(plan, plannedDays);
     syncPlanDates(plan);
-    syncDestinations(plan);
-    syncBreakfast(plan);
+    syncDestinations(plan, destinationsChanged);
+    syncBreakfast(plan, breakfastChanged);
     syncQuoteOptions(plan);
     return plan;
   }
@@ -164,7 +177,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       (!next.departure || next.departure === oldOvernight)
     )
       next.departure = day.overnightDestination ?? "";
-    touchSelectedItinerary();
+    touchSelectedItinerary(day.overnightDestination !== oldOvernight);
   }
 
   function addResourceItem(
@@ -322,7 +335,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     if (!hotelId) {
       if (selectionIndex >= 0) hotelPlan.hotels.splice(selectionIndex, 1);
       syncQuoteOptions(plan);
-      touchSelectedItinerary();
+      touchSelectedItinerary(selectionIndex >= 0);
       return;
     }
     const hotel = options.findHotel(hotelId);
@@ -348,7 +361,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     if (selectionIndex >= 0) hotelPlan.hotels.splice(selectionIndex, 1, selection);
     else hotelPlan.hotels.push(selection);
     syncQuoteOptions(plan);
-    touchSelectedItinerary();
+    touchSelectedItinerary(true);
   }
 
   function updateHotelRate(
@@ -378,9 +391,10 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     const plan = options.selectedItinerary.value;
     const hotelPlan = plan ? getHotelPlan(plan, tier) : undefined;
     if (!plan || !hotelPlan) return;
+    const breakfastChanged = hotelPlan.hotels.length > 0;
     hotelPlan.hotels = [];
     syncQuoteOptions(plan);
-    touchSelectedItinerary();
+    touchSelectedItinerary(breakfastChanged);
   }
 
   function updateVehiclePlan(tier: ItineraryVehicleTier, value: ItineraryVehiclePlan) {
@@ -401,26 +415,30 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       day.dayNumber = index + 1;
       day.date = addDays(plan.startDate, index);
     });
-    syncBreakfast(plan);
+    // 日期始终按日序校正并更新时间；早餐在目的地清理后按需同步，避免重复执行。
     plan.days = plan.dailyPlans.length;
     plan.endDate = plan.days ? addDays(plan.startDate, plan.days - 1) : plan.startDate;
     plan.updatedAt = formatDateTime(new Date());
   }
 
-  function syncBreakfast(plan: ItineraryRecord) {
+  function syncBreakfast(plan: ItineraryRecord, breakfastChanged: boolean) {
+    // 仅酒店方案、住宿城市或新增日程影响早餐；其他字段更新直接退出。
+    if (!breakfastChanged) return;
     plan.dailyPlans.forEach((day, index) => {
       day.meals.breakfast = getDayBreakfastStatus(plan, index) === "included";
     });
   }
 
-  function touchSelectedItinerary() {
+  function touchSelectedItinerary(breakfastChanged = false) {
     if (options.selectedItinerary.value) {
-      syncBreakfast(options.selectedItinerary.value);
+      syncBreakfast(options.selectedItinerary.value, breakfastChanged);
       options.selectedItinerary.value.updatedAt = formatDateTime(new Date());
     }
   }
 
-  function syncDestinations(plan: ItineraryRecord) {
+  function syncDestinations(plan: ItineraryRecord, destinationsChanged: boolean) {
+    // 表单会复制目的地数组；内容和顺序未变时，无需清理住宿与酒店或同步导游城市。
+    if (!destinationsChanged) return;
     const destinationSet = new Set(plan.destinations);
     if (plan.guidePlans[0]) plan.guidePlans[0].destination = plan.destinations[0] ?? "";
     plan.dailyPlans.forEach((day) => {
@@ -433,27 +451,58 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   }
 
   function syncQuoteOptions(plan: ItineraryRecord) {
-    plan.quote.paxOtherCosts = plan.paxTiers.map((pax) => ({
-      pax,
-      guideOtherCost:
-        plan.quote.paxOtherCosts.find((cost) => cost.pax === pax)?.guideOtherCost ?? null,
-      guideOtherReason:
-        plan.quote.paxOtherCosts.find((cost) => cost.pax === pax)?.guideOtherReason ?? "",
-      staffRoomOtherCost:
-        plan.quote.paxOtherCosts.find((cost) => cost.pax === pax)?.staffRoomOtherCost ?? null,
-      staffRoomOtherReason:
-        plan.quote.paxOtherCosts.find((cost) => cost.pax === pax)?.staffRoomOtherReason ?? "",
-    }));
-    plan.quote.staffRoomCosts = plan.destinations.map((destination) => ({
-      destination,
-      total:
-        plan.quote.staffRoomCosts.find((cost) => cost.destination === destination)?.total ?? null,
-    }));
+    // PAX 内容和顺序未变时，保留已有费用对象。
+    if (
+      plan.quote.paxOtherCosts.length !== plan.paxTiers.length ||
+      plan.paxTiers.some((pax, index) => plan.quote.paxOtherCosts[index]?.pax !== pax)
+    ) {
+      plan.quote.paxOtherCosts = plan.paxTiers.map((pax) => ({
+        pax,
+        guideOtherCost:
+          plan.quote.paxOtherCosts.find((cost) => cost.pax === pax)?.guideOtherCost ?? null,
+        guideOtherReason:
+          plan.quote.paxOtherCosts.find((cost) => cost.pax === pax)?.guideOtherReason ?? "",
+        staffRoomOtherCost:
+          plan.quote.paxOtherCosts.find((cost) => cost.pax === pax)?.staffRoomOtherCost ?? null,
+        staffRoomOtherReason:
+          plan.quote.paxOtherCosts.find((cost) => cost.pax === pax)?.staffRoomOtherReason ?? "",
+      }));
+    }
+    // 司陪房费用按目的地同步，与酒店/车型组合是否变化无关。
+    if (
+      plan.quote.staffRoomCosts.length !== plan.destinations.length ||
+      plan.destinations.some(
+        (destination, index) => plan.quote.staffRoomCosts[index]?.destination !== destination,
+      )
+    ) {
+      plan.quote.staffRoomCosts = plan.destinations.map((destination) => ({
+        destination,
+        total:
+          plan.quote.staffRoomCosts.find((cost) => cost.destination === destination)?.total ?? null,
+      }));
+    }
+    let optionIndex = 0;
+    // 只比较启用档位与 PAX；组合未变时不重建选项或各档售价。
+    const optionsUnchanged = HOTEL_PLAN_TIERS.every((hotelTier) => {
+      if (!getHotelPlan(plan, hotelTier)?.hotels.length) return true;
+      return VEHICLE_PLAN_TIERS.every((vehicleTier) => {
+        if (!getVehiclePlan(plan, vehicleTier)?.arrangements.length) return true;
+        const option = plan.quote.options[optionIndex++];
+        return (
+          option?.hotelTier === hotelTier &&
+          option.vehicleTier === vehicleTier &&
+          option.paxPrices.length === plan.paxTiers.length &&
+          plan.paxTiers.every((pax, index) => option.paxPrices[index].pax === pax)
+        );
+      });
+    });
+    if (optionsUnchanged && optionIndex === plan.quote.options.length) return;
     const existing = new Map(
       plan.quote.options.map((option) => [`${option.hotelTier}:${option.vehicleTier}`, option]),
     );
     plan.quote.options = HOTEL_PLAN_TIERS.flatMap((hotelTier) => {
       const hotelPlan = getHotelPlan(plan, hotelTier);
+      // 原有逐档退出路径：未启用酒店或车型方案时不生成该组合。
       if (!hotelPlan?.hotels.length) return [];
       return VEHICLE_PLAN_TIERS.flatMap((vehicleTier) => {
         const vehiclePlan = getVehiclePlan(plan, vehicleTier);

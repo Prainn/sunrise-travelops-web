@@ -86,12 +86,14 @@
     >
       <el-form
         v-if="record"
+        ref="formRef"
         :model="record"
+        :rules="rules"
         :disabled="!editable || saving"
         label-width="auto"
       >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
-          <el-form-item :label="$t('websiteConfig.belongsToCity')" required>
+          <el-form-item :label="$t('websiteConfig.belongsToCity')" prop="cityId">
             <el-select v-model="record.cityId" filterable>
               <el-option
                 v-for="city in config.cities"
@@ -111,14 +113,14 @@
               </el-radio>
             </el-radio-group>
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.nameZh')" required>
+          <el-form-item :label="$t('websiteConfig.nameZh')" prop="nameZh">
             <el-input v-model="record.nameZh" maxlength="150" />
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.nameEn')" required>
+          <el-form-item :label="$t('websiteConfig.nameEn')" prop="nameEn">
             <el-input v-model="record.nameEn" maxlength="150" />
           </el-form-item>
         </div>
-        <el-form-item :label="$t('websiteConfig.patterns.attractions')">
+        <el-form-item :label="$t('websiteConfig.patterns.attractions')" prop="attractionIds">
           <el-select v-model="record.attractionIds" multiple filterable>
             <el-option
               v-for="item in config.attractions.filter((row) => row.cityId === record?.cityId)"
@@ -190,8 +192,10 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import type { FormInstance } from "element-plus";
 import type { WebsiteConfig, WebsitePattern } from "@/types/website";
 import { cloneWebsiteDraft } from "@/views/website-inquiries/options";
+import { useWebsitePatternRules } from "../useWebsiteConfigRules";
 
 const props = defineProps<{
   config: WebsiteConfig;
@@ -203,6 +207,8 @@ const props = defineProps<{
 const visible = ref(false);
 const isNew = ref(false);
 const record = ref<WebsitePattern>();
+const formRef = ref<FormInstance>();
+const rules = useWebsitePatternRules(() => props.config, record);
 
 function openEditor(pattern?: WebsitePattern) {
   isNew.value = !pattern;
@@ -221,6 +227,7 @@ function openEditor(pattern?: WebsitePattern) {
 
 async function applyEdit() {
   if (!record.value || !props.editable || props.saving) return;
+  if (!(await formRef.value?.validate().catch(() => false))) return;
   const next = cloneWebsiteDraft(props.config);
   const result = cloneWebsiteDraft(record.value);
   const index = next.patterns.findIndex((row) => row.id === result.id);

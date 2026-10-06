@@ -106,7 +106,7 @@
             maxlength="150"
           />
         </el-form-item>
-        <el-form-item :label="$t('websiteConfig.templates.code')" required>
+        <el-form-item :label="$t('websiteConfig.templates.code')" prop="code">
           <el-select
             v-model="record.code"
             filterable
@@ -148,7 +148,7 @@
           class="mb-[20px]"
         />
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1 mt-3">
-          <el-form-item :label="$t('websiteConfig.templates.zh')" required>
+          <el-form-item :label="$t('websiteConfig.templates.zh')" prop="zh">
             <el-input
               v-model="record.zh"
               type="textarea"
@@ -156,7 +156,7 @@
               maxlength="20000"
             />
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.templates.en')" required>
+          <el-form-item :label="$t('websiteConfig.templates.en')" prop="en">
             <el-input
               v-model="record.en"
               type="textarea"
@@ -184,11 +184,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { useI18n } from "vue-i18n";
-import type { FormInstance, FormRules } from "element-plus";
+import { ref } from "vue";
+import type { FormInstance } from "element-plus";
 import type { WebsiteConfig, WebsiteTemplate } from "@/types/website";
 import { cloneWebsiteDraft } from "@/views/website-inquiries/options";
+import { useWebsiteTemplateRules } from "../useWebsiteConfigRules";
 
 const props = defineProps<{
   config: WebsiteConfig;
@@ -197,21 +197,11 @@ const props = defineProps<{
   saveConfig: (next: WebsiteConfig) => Promise<boolean>;
   deleteConfig: (next: WebsiteConfig) => Promise<boolean>;
 }>();
-const { t } = useI18n();
 const visible = ref(false);
 const isNew = ref(false);
 const record = ref<WebsiteTemplate>();
 const formRef = ref<FormInstance>();
-const rules = computed<FormRules<WebsiteTemplate>>(() => ({
-  name: [
-    {
-      required: true,
-      whitespace: true,
-      message: t("websiteConfig.templates.namePlaceholder"),
-      trigger: "blur",
-    },
-  ],
-}));
+const rules = useWebsiteTemplateRules(() => props.config, record);
 const TEMPLATE_VARIABLES = [
   "{city}",
   "{attraction}",

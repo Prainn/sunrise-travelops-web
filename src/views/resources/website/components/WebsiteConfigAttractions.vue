@@ -110,12 +110,14 @@
     >
       <el-form
         v-if="record"
+        ref="formRef"
         :model="record"
+        :rules="rules"
         :disabled="!editable || saving"
         label-width="auto"
       >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
-          <el-form-item :label="$t('websiteConfig.belongsToCity')" required>
+          <el-form-item :label="$t('websiteConfig.belongsToCity')" prop="cityId">
             <el-select v-model="record.cityId" filterable>
               <el-option
                 v-for="city in config.cities"
@@ -131,13 +133,13 @@
               <el-option value="component" :label="$t('websiteConfig.attractions.component')" />
             </el-select>
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.nameZh')" required>
+          <el-form-item :label="$t('websiteConfig.nameZh')" prop="nameZh">
             <el-input v-model="record.nameZh" maxlength="150" />
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.nameEn')" required>
+          <el-form-item :label="$t('websiteConfig.nameEn')" prop="nameEn">
             <el-input v-model="record.nameEn" maxlength="150" />
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.attractions.parent')">
+          <el-form-item :label="$t('websiteConfig.attractions.parent')" prop="parentId">
             <el-select
               v-model="record.parentId"
               filterable
@@ -155,7 +157,7 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.attractions.copyKey')" required>
+          <el-form-item :label="$t('websiteConfig.attractions.copyKey')" prop="copyKey">
             <el-select v-model="record.copyKey" filterable>
               <el-option
                 v-for="template in config.templates"
@@ -216,9 +218,11 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import type { FormInstance } from "element-plus";
 import type { WebsiteAttraction, WebsiteConfig } from "@/types/website";
 import { cloneWebsiteDraft } from "@/views/website-inquiries/options";
 import WebsiteResourceSelect from "@/views/website-inquiries/components/WebsiteResourceSelect.vue";
+import { useWebsiteAttractionRules } from "../useWebsiteConfigRules";
 
 const props = defineProps<{
   config: WebsiteConfig;
@@ -230,6 +234,8 @@ const props = defineProps<{
 const visible = ref(false);
 const isNew = ref(false);
 const record = ref<WebsiteAttraction>();
+const formRef = ref<FormInstance>();
+const rules = useWebsiteAttractionRules(() => props.config, record);
 
 function openEditor(item?: WebsiteAttraction) {
   isNew.value = !item;
@@ -253,6 +259,7 @@ function openEditor(item?: WebsiteAttraction) {
 
 async function applyEdit() {
   if (!record.value || !props.editable || props.saving) return;
+  if (!(await formRef.value?.validate().catch(() => false))) return;
   const next = cloneWebsiteDraft(props.config);
   const result = cloneWebsiteDraft(record.value);
   const index = next.attractions.findIndex((row) => row.id === result.id);

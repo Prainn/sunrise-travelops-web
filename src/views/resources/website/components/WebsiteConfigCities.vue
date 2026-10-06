@@ -75,14 +75,16 @@
     >
       <el-form
         v-if="record"
+        ref="formRef"
         :model="record"
+        :rules="rules"
         :disabled="!editable || saving"
         label-width="auto"
       >
-        <el-form-item :label="$t('websiteConfig.nameZh')" required>
+        <el-form-item :label="$t('websiteConfig.nameZh')" prop="nameZh">
           <el-input v-model="record.nameZh" maxlength="150" />
         </el-form-item>
-        <el-form-item :label="$t('websiteConfig.nameEn')" required>
+        <el-form-item :label="$t('websiteConfig.nameEn')" prop="nameEn">
           <el-input v-model="record.nameEn" maxlength="150" />
         </el-form-item>
         <el-form-item :label="$t('websiteConfig.cities.linkCity')">
@@ -122,9 +124,11 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import type { FormInstance } from "element-plus";
 import type { WebsiteCity, WebsiteConfig } from "@/types/website";
 import { cloneWebsiteDraft } from "@/views/website-inquiries/options";
 import WebsiteResourceSelect from "@/views/website-inquiries/components/WebsiteResourceSelect.vue";
+import { useWebsiteCityRules } from "../useWebsiteConfigRules";
 
 const props = defineProps<{
   config: WebsiteConfig;
@@ -136,6 +140,8 @@ const props = defineProps<{
 const visible = ref(false);
 const isNew = ref(false);
 const record = ref<WebsiteCity>();
+const formRef = ref<FormInstance>();
+const rules = useWebsiteCityRules();
 
 function openEditor(city?: WebsiteCity) {
   isNew.value = !city;
@@ -153,6 +159,7 @@ function openEditor(city?: WebsiteCity) {
 
 async function applyEdit() {
   if (!record.value || !props.editable || props.saving) return;
+  if (!(await formRef.value?.validate().catch(() => false))) return;
   const next = cloneWebsiteDraft(props.config);
   const result = cloneWebsiteDraft(record.value);
   const index = next.cities.findIndex((row) => row.id === result.id);
