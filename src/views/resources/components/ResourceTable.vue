@@ -27,7 +27,12 @@
         </el-button>
       </TableToolbar>
       <div class="page-table-wrapper">
-        <el-table v-loading="loading" :data="rows" border height="100%">
+        <el-table
+          v-loading="loading"
+          :data="rows"
+          border
+          height="100%"
+        >
           <el-table-column :label="$t('identity.library')" min-width="200">
             <template #default="{ row }">
               <ResourceLibraryTag :library="row.library" />
@@ -53,7 +58,12 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column :label="$t('common.actions')" width="220" align="center" fixed="right">
+          <el-table-column
+            :label="$t('common.actions')"
+            width="220"
+            align="center"
+            fixed="right"
+          >
             <template #default="scope">
               <el-button
                 v-has-perm="permissions.update"

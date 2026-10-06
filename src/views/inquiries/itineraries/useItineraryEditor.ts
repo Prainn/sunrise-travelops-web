@@ -231,9 +231,9 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
           const newPaxCost = changes.paxOtherCosts?.find((cost) => cost.pax === price.pax);
           const paxDelta = newPaxCost
             ? sumMoney([
-                (newPaxCost.guideOtherCost ?? 0) - (oldPaxCost?.guideOtherCost ?? 0),
-                (newPaxCost.staffRoomOtherCost ?? 0) - (oldPaxCost?.staffRoomOtherCost ?? 0),
-              ])
+              (newPaxCost.guideOtherCost ?? 0) - (oldPaxCost?.guideOtherCost ?? 0),
+              (newPaxCost.staffRoomOtherCost ?? 0) - (oldPaxCost?.staffRoomOtherCost ?? 0),
+            ])
             : 0;
           price.adultUnitPrice = Math.max(
             0,

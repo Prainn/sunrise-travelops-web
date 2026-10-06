@@ -11,7 +11,13 @@
     </TableToolbar>
 
     <div class="page-table-wrapper">
-      <el-table v-loading="loading" :data="rows" border height="100%" row-key="id">
+      <el-table
+        v-loading="loading"
+        :data="rows"
+        border
+        height="100%"
+        row-key="id"
+      >
         <el-table-column :label="$t('identity.library')" width="160">
           <template #default="{ row }">
             <ResourceLibraryTag :library="row.library" />

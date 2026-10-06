@@ -1,16 +1,21 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    title="转交独立站询盘"
+    :title="$t('websiteInquiry.transferTitle')"
     width="min(500px, 94vw)"
     :close-on-click-modal="false"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <el-form ref="formRef" :model="form" label-width="auto" :disabled="saving">
+    <el-form
+      ref="formRef"
+      :model="form"
+      label-width="auto"
+      :disabled="saving"
+    >
       <el-form-item
-        label="接收计调"
+        :label="$t('websiteInquiry.receivingOwner')"
         prop="ownerId"
-        :rules="[{ required: true, message: '请选择接收计调' }]"
+        :rules="[{ required: true, message: $t('websiteInquiry.receivingOwnerRequired') }]"
       >
         <el-select v-model="form.ownerId" filterable>
           <el-option
@@ -22,21 +27,37 @@
         </el-select>
       </el-form-item>
       <el-form-item
-        label="转交原因"
+        :label="$t('websiteInquiry.transferReason')"
         prop="reason"
-        :rules="[{ required: true, whitespace: true, message: '请填写转交原因' }]"
+        :rules="[
+          {
+            required: true,
+            whitespace: true,
+            message: $t('websiteInquiry.transferReasonRequired'),
+          },
+        ]"
       >
-        <el-input v-model="form.reason" type="textarea" :rows="3" maxlength="2000" />
+        <el-input
+          v-model="form.reason"
+          type="textarea"
+          :rows="3"
+          maxlength="2000"
+        />
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button :disabled="saving" @click="emit('update:modelValue', false)">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="submit">确认转交</el-button>
+      <el-button :disabled="saving" @click="emit('update:modelValue', false)">
+        {{ $t("common.cancel") }}
+      </el-button>
+      <el-button type="primary" :loading="saving" @click="submit">
+        {{ $t("websiteInquiry.confirmTransfer") }}
+      </el-button>
     </template>
   </el-dialog>
 </template>
 <script setup lang="ts">
 import { reactive, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { ElMessage, type FormInstance } from "element-plus";
 import {
   websiteErrorMessage,
@@ -50,6 +71,7 @@ const props = defineProps<{
   owners: WebsiteOwnerOption[];
 }>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; saved: [] }>();
+const { t } = useI18n();
 const formRef = ref<FormInstance>();
 const form = reactive({ ownerId: "", reason: "" });
 const saving = ref(false);
@@ -71,7 +93,7 @@ async function submit() {
     await websiteService.transfer(props.record.id, props.record.version, form.ownerId, form.reason);
     emit("saved");
     emit("update:modelValue", false);
-    ElMessage.success("已转交");
+    ElMessage.success(t("websiteInquiry.transferred"));
   } catch (error) {
     ElMessage.error(websiteErrorMessage(error));
   } finally {

@@ -1,27 +1,35 @@
 <template>
   <div v-loading="loading" class="page-container">
-    <el-alert v-if="error" :title="error" type="error" :closable="false" />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+    />
     <el-card class="page-search" shadow="never">
       <el-form inline @submit.prevent="search">
-        <el-form-item label="关键词">
+        <el-form-item :label="$t('common.keywords')">
           <el-input
             v-model.trim="query.keyword"
-            placeholder="客户／编号／需求"
+            :placeholder="$t('websiteInquiry.keywordPlaceholder')"
             class="page-search__keywords"
             clearable
           />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item :label="$t('common.status')">
           <el-select v-model="query.status" clearable>
             <el-option
-              v-for="(label, value) in INQUIRY_STATUS_LABELS"
+              v-for="(labelKey, value) in INQUIRY_STATUS_LABEL_KEYS"
               :key="value"
               :value="value"
-              :label="label"
+              :label="$t(labelKey)"
             />
           </el-select>
         </el-form-item>
-        <el-form-item v-if="allowAssign || user.userInfo.scope === 'headquarters'" label="负责计调">
+        <el-form-item
+          v-if="allowAssign || user.userInfo.scope === 'headquarters'"
+          :label="$t('websiteInquiry.owner')"
+        >
           <el-select v-model="query.ownerId" clearable filterable>
             <el-option
               v-for="owner in owners"
@@ -31,7 +39,11 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item><el-button @click="reset">重置</el-button></el-form-item>
+        <el-form-item>
+          <el-button @click="reset">
+            {{ $t("common.reset") }}
+          </el-button>
+        </el-form-item>
       </el-form>
     </el-card>
     <WebsiteInquiryTable
@@ -78,6 +90,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useUserStore } from "@/stores/user";
 import { hasUserPermission } from "@/utils/permission";
@@ -89,12 +102,13 @@ import {
   type WebsiteOwnerOption,
 } from "@/services/website.service";
 import type { WebsiteCity, WebsiteInquiry, WebsiteInquiryInput } from "@/types/website";
-import { INQUIRY_STATUS_LABELS } from "./options";
+import { INQUIRY_STATUS_LABEL_KEYS } from "./options";
 import WebsiteInquiryTable from "./components/WebsiteInquiryTable.vue";
 import WebsiteInquiryEditor from "./components/WebsiteInquiryEditor.vue";
 import WebsiteInquiryTransfer from "./components/WebsiteInquiryTransfer.vue";
 import WebsiteInquiryHistory from "./components/WebsiteInquiryHistory.vue";
 defineOptions({ name: "WebsiteInquiryList" });
+const { t } = useI18n();
 const user = useUserStore();
 const router = useRouter();
 const query = reactive<WebsiteInquiryQuery>({
@@ -173,7 +187,7 @@ async function save(input: WebsiteInquiryInput) {
       );
     else await websiteService.createInquiry(input);
     editorVisible.value = false;
-    ElMessage.success("已保存");
+    ElMessage.success(t("websiteInquiry.saved"));
     await load();
   } catch (cause) {
     ElMessage.error(websiteErrorMessage(cause));
@@ -183,18 +197,22 @@ async function save(input: WebsiteInquiryInput) {
 }
 async function archive(record: WebsiteInquiry) {
   try {
-    await ElMessageBox.confirm(`归档 ${record.code} 后仅可查看，是否继续？`, "归档询盘", {
-      type: "warning",
-      confirmButtonText: "归档",
-      cancelButtonText: "取消",
-    });
+    await ElMessageBox.confirm(
+      t("websiteInquiry.archiveConfirm", { code: record.code }),
+      t("websiteInquiry.archiveTitle"),
+      {
+        type: "warning",
+        confirmButtonText: t("websiteInquiry.archive"),
+        cancelButtonText: t("common.cancel"),
+      },
+    );
   } catch {
     return;
   }
   try {
     await websiteService.archive(record.id, record.version);
     await load();
-    ElMessage.success("已归档");
+    ElMessage.success(t("websiteInquiry.archived"));
   } catch (cause) {
     ElMessage.error(websiteErrorMessage(cause));
   }
@@ -202,11 +220,15 @@ async function archive(record: WebsiteInquiry) {
 async function markLost(record: WebsiteInquiry) {
   let reason: string;
   try {
-    const result = await ElMessageBox.prompt("请填写流失原因", "标记流失", {
-      inputValidator: (value) => Boolean(value?.trim()) || "请填写原因",
-      confirmButtonText: "确认",
-      cancelButtonText: "取消",
-    });
+    const result = await ElMessageBox.prompt(
+      t("websiteInquiry.lostReasonRequired"),
+      t("websiteInquiry.markLost"),
+      {
+        inputValidator: (value) => Boolean(value?.trim()) || t("websiteInquiry.reasonRequired"),
+        confirmButtonText: t("common.confirm"),
+        cancelButtonText: t("common.cancel"),
+      },
+    );
     reason = result.value;
   } catch {
     return;

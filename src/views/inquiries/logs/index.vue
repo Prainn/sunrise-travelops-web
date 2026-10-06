@@ -34,7 +34,12 @@
           <el-date-picker v-model="dates" type="daterange" value-format="YYYY-MM-DD" />
         </el-form-item>
         <el-form-item :label="$t('inquiry.log.operator')">
-          <el-select v-model="operatorId" clearable filterable class="w-[220px]">
+          <el-select
+            v-model="operatorId"
+            clearable
+            filterable
+            class="w-[220px]"
+          >
             <el-option
               v-for="person in operators"
               :key="person.id"
@@ -63,22 +68,30 @@
         </el-button>
       </el-form>
       <div class="log-totals mt-[12px] flex flex-wrap gap-[16px]">
-        <span
-          >{{ $t("inquiry.log.totalOperations") }}
-          <strong class="ml-[8px] text-[18px]">{{ report.totalOperations }}</strong></span
-        >
-        <span
-          >{{ $t("inquiry.log.inquiryCount") }}
-          <strong class="ml-[8px] text-[18px]">{{ report.inquiryCount }}</strong></span
-        >
-        <span
-          >{{ $t("inquiry.log.operatorCount") }}
-          <strong class="ml-[8px] text-[18px]">{{ report.operatorCount }}</strong></span
-        >
-        <span
-          >{{ $t("inquiry.log.changedFields") }}
-          <strong class="ml-[8px] text-[18px]">{{ report.changedFields }}</strong></span
-        >
+        <span>
+          {{ $t("inquiry.log.totalOperations") }}
+          <strong class="ml-[8px] text-[18px]">
+            {{ report.totalOperations }}
+          </strong>
+        </span>
+        <span>
+          {{ $t("inquiry.log.inquiryCount") }}
+          <strong class="ml-[8px] text-[18px]">
+            {{ report.inquiryCount }}
+          </strong>
+        </span>
+        <span>
+          {{ $t("inquiry.log.operatorCount") }}
+          <strong class="ml-[8px] text-[18px]">
+            {{ report.operatorCount }}
+          </strong>
+        </span>
+        <span>
+          {{ $t("inquiry.log.changedFields") }}
+          <strong class="ml-[8px] text-[18px]">
+            {{ report.changedFields }}
+          </strong>
+        </span>
       </div>
       <div class="log-actions mt-[12px] flex flex-wrap gap-[16px]">
         <el-tag v-for="item in report.byAction" :key="item.action" size="large">
@@ -88,7 +101,12 @@
     </el-card>
     <el-card class="page-content" shadow="never">
       <div class="log-table-feedback">
-        <el-alert v-if="error" :title="error" type="error" :closable="false" />
+        <el-alert
+          v-if="error"
+          :title="error"
+          type="error"
+          :closable="false"
+        />
       </div>
       <div class="page-table-wrapper">
         <el-table
@@ -126,28 +144,28 @@
                     <template #default="scope">
                       <pre
                         class="m-0 max-h-[360px] overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere] [font:inherit]"
-                        >{{
+                      >{{
                           displayValue(
                             scope.row.before,
                             scope.row.path,
                             row.targetType,
                             row.targetId,
                           )
-                        }}</pre>
+                      }}</pre>
                     </template>
                   </el-table-column>
                   <el-table-column :label="$t('inquiry.log.after')" min-width="280">
                     <template #default="scope">
                       <pre
                         class="m-0 max-h-[360px] overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere] [font:inherit]"
-                        >{{
+                      >{{
                           displayValue(
                             scope.row.after,
                             scope.row.path,
                             row.targetType,
                             row.targetId,
                           )
-                        }}</pre>
+                      }}</pre>
                     </template>
                   </el-table-column>
                 </el-table>

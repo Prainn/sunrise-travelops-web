@@ -28,16 +28,16 @@ function createPlan({ hotel = true, vehicle = true } = {}): ValidationPlan {
         tier: "international_five_star",
         hotels: hotel
           ? [
-              {
-                destination: "大理",
-                hotelId: "hotel-1",
-                hotelName: "测试酒店",
-                rating: "international_five_star",
-                breakfast: "含早",
-                unit: "room_night",
-                unitCost: 500,
-              },
-            ]
+            {
+              destination: "大理",
+              hotelId: "hotel-1",
+              hotelName: "测试酒店",
+              rating: "international_five_star",
+              breakfast: "含早",
+              unit: "room_night",
+              unitCost: 500,
+            },
+          ]
           : [],
       },
       { tier: "preferred_non_five_star", hotels: [] },
@@ -47,14 +47,14 @@ function createPlan({ hotel = true, vehicle = true } = {}): ValidationPlan {
         tier: "standard",
         arrangements: vehicle
           ? [
-              {
-                id: "arrangement-1",
-                startDate: "2026-12-23",
-                endDate: "2026-12-23",
-                vehicles: [{ vehicleId: "vehicle-1", vehicleName: "巴士", seats: 20, quantity: 1 }],
-                totalPrice: 1000,
-              },
-            ]
+            {
+              id: "arrangement-1",
+              startDate: "2026-12-23",
+              endDate: "2026-12-23",
+              vehicles: [{ vehicleId: "vehicle-1", vehicleName: "巴士", seats: 20, quantity: 1 }],
+              totalPrice: 1000,
+            },
+          ]
           : [],
         totalPrice: vehicle ? 1000 : null,
       },

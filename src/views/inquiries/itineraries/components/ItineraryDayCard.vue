@@ -10,8 +10,7 @@
         <div class="day-card__identity flex items-center gap-[12px]">
           <span
             class="day-card__number grid w-[44px] h-[44px] place-items-center rounded-[10px] [background:var(--el-color-primary)] [color:#fff] font-bold"
-            >D{{ day.dayNumber }}</span
-          >
+          >D{{ day.dayNumber }}</span>
           <div>
             <div class="day-card__route flex items-center gap-[6px] text-[16px] font-semibold">
               {{ day.departure || $t("itinerary.departure") }}
@@ -48,7 +47,12 @@
 
       <div class="day-card__resources-header m-[20px_0_10px] flex items-center justify-between">
         <strong>{{ $t("itinerary.dailyResources") }}</strong>
-        <el-button v-if="contentEditable" type="primary" plain @click="emit('add-item')">
+        <el-button
+          v-if="contentEditable"
+          type="primary"
+          plain
+          @click="emit('add-item')"
+        >
           {{ $t("itinerary.addResource") }}
         </el-button>
       </div>
@@ -104,7 +108,12 @@
           </el-button>
         </div>
       </div>
-      <el-table v-if="day.items.length" :data="day.items" border size="small">
+      <el-table
+        v-if="day.items.length"
+        :data="day.items"
+        border
+        size="small"
+      >
         <el-table-column :label="$t('itinerary.resource')" min-width="120">
           <template #default="scope">
             <div class="day-card__resource-name font-medium">
@@ -120,10 +129,14 @@
         </el-table-column>
 
         <el-table-column :label="$t('itinerary.unitCost')" width="190" align="right">
-          <template #default="scope"> ¥{{ formatMoney(scope.row.unitCost) }} </template>
+          <template #default="scope">
+            ¥{{ formatMoney(scope.row.unitCost) }}
+          </template>
         </el-table-column>
         <el-table-column :label="$t('itinerary.resourceCostPerPerson')" width="120" align="right">
-          <template #default="scope"> ¥{{ formatMoney(scope.row.totalCost) }} </template>
+          <template #default="scope">
+            ¥{{ formatMoney(scope.row.totalCost) }}
+          </template>
         </el-table-column>
         <el-table-column
           v-if="contentEditable"

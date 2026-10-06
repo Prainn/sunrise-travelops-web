@@ -62,7 +62,12 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column fixed="right" :label="$t('common.actions')" align="center" width="220">
+          <el-table-column
+            fixed="right"
+            :label="$t('common.actions')"
+            align="center"
+            width="220"
+          >
             <template #default="scope">
               <el-button
                 v-has-perm="'sys:dict-item:list'"
@@ -113,7 +118,12 @@
       destroy-on-close
       @close="closeDialog"
     >
-      <el-form ref="dictFormRef" :model="formData" :rules="rules" label-width="180px">
+      <el-form
+        ref="dictFormRef"
+        :model="formData"
+        :rules="rules"
+        label-width="180px"
+      >
         <el-form-item :label="$t('dictionary.name')" prop="name">
           <el-input v-model="formData.name" :placeholder="$t('dictionary.namePlaceholder')" />
         </el-form-item>

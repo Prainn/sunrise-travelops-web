@@ -116,7 +116,12 @@
       <el-button @click="emit('cancel')">
         {{ $t(editable ? "common.cancel" : "common.close") }}
       </el-button>
-      <el-button v-if="editable" type="primary" :loading="saving" @click="emit('save')">
+      <el-button
+        v-if="editable"
+        type="primary"
+        :loading="saving"
+        @click="emit('save')"
+      >
         {{ $t("itinerary.save") }}
       </el-button>
     </template>

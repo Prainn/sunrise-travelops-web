@@ -49,8 +49,8 @@ export function useItineraryQuote(
           input,
           transportPrices: input
             ? plan.quote.transportFees
-                .filter((fee) => fee.unitPrice !== null)
-                .map(({ id, type, unitPrice }) => ({ id, type, unitPrice }))
+              .filter((fee) => fee.unitPrice !== null)
+              .map(({ id, type, unitPrice }) => ({ id, type, unitPrice }))
             : undefined,
           version: preview ? undefined : plan.version,
         });

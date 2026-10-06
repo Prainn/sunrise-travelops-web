@@ -29,6 +29,9 @@
 
 ## State Management / UI
 
+- 所有前端代码及格式遵守 [eslint.config.ts](eslint.config.ts)，统一使用 ESLint 检查和自动修复，不使用 Prettier。
+- 所有新增或修改的静态用户界面文案必须使用现有 vue-i18n（`$t` / `useI18n`），包括标签、正文、占位、提示、校验消息、按钮、选项和可访问性文案；同步维护 [zh-cn.json](src/lang/package/zh-cn.json) 与 [en.json](src/lang/package/en.json)，优先复用已有键，禁止先硬编码后补翻译。
+- 文案与选项标签须随 locale 切换响应式更新，不在模块加载或初始化时固定译文；不翻译或改写管理员录入内容、服务端业务数据，以及已明确指定语言的打印内容。
 - 当前 Pinia 管身份、权限菜单、字典与全局界面；行程未保存编辑由页面 composable 持有。沿用对应状态所有者，不为单页编辑新增全局业务 store。
 - Store 使用 Setup Store、扁平目录；组件外调用现有 `useXxxStoreHook()`。生成的根 `types/*.d.ts` 是工具声明，不能代替 `src/types` 领域合同。
 - 复用现有组件及页面布局。UnoCSS 优先，不能等价表达的 Element Plus 覆盖/复杂选择器保留 SCSS；不为默认间距刻度改变现有尺寸，不动态拼接 UnoCSS 类名。详细规则见前端技能。

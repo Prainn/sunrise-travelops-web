@@ -6,7 +6,12 @@
     destroy-on-close
     @closed="resetForm"
   >
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="auto">
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      label-width="auto"
+    >
       <el-form-item
         v-if="isHeadquarters && (!isEditing || !form.businessUnit)"
         :label="$t('identity.businessUnit')"

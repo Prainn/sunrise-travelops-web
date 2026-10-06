@@ -8,7 +8,12 @@
     <div class="login-layout flex [flex:1] min-h-full">
       <div class="login-brand">
         <div class="login-brand__header">
-          <el-image :src="logo" class="login-brand__logo" fit="contain" alt="Sunrise TravelOps" />
+          <el-image
+            :src="logo"
+            class="login-brand__logo"
+            fit="contain"
+            alt="Sunrise TravelOps"
+          />
           <div class="login-brand__identity">
             <span class="login-brand__name">{{ appConfig.title }}</span>
             <span class="login-brand__version">v{{ appConfig.version }}</span>
@@ -117,7 +122,9 @@
           </transition>
         </div>
 
-        <div class="login-footer">Copyright © 2021-2026 youlai.tech</div>
+        <div class="login-footer">
+          Copyright © 2021-2026 youlai.tech
+        </div>
       </div>
     </div>
   </div>

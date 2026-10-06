@@ -66,10 +66,8 @@
                     :key="vehicle.vehicleId"
                     class="mb-[8px] flex items-center gap-[8px]"
                   >
-                    <span class="flex-1"
-                      >{{ vehicle.vehicleName }} · {{ vehicle.seats }}
-                      {{ $t("planning.seats") }}</span
-                    >
+                    <span class="flex-1">{{ vehicle.vehicleName }} · {{ vehicle.seats }}
+                      {{ $t("planning.seats") }}</span>
                     <el-input-number
                       :model-value="vehicle.quantity"
                       :min="1"
@@ -171,10 +169,10 @@
             <el-form-item
               v-if="
                 mode === 'itinerary' &&
-                vehiclePriceNeedsReason(
-                  plan,
-                  savedPlans.find((saved) => saved.tier === plan.tier),
-                )
+                  vehiclePriceNeedsReason(
+                    plan,
+                    savedPlans.find((saved) => saved.tier === plan.tier),
+                  )
               "
               :label="$t('identity.reason')"
             >
@@ -404,11 +402,11 @@ function changeQuantity(
     plan.arrangements.map((arrangement) =>
       arrangement.id === id
         ? {
-            ...arrangement,
-            vehicles: arrangement.vehicles.map((vehicle) =>
-              vehicle.vehicleId === vehicleId ? { ...vehicle, quantity } : vehicle,
-            ),
-          }
+          ...arrangement,
+          vehicles: arrangement.vehicles.map((vehicle) =>
+            vehicle.vehicleId === vehicleId ? { ...vehicle, quantity } : vehicle,
+          ),
+        }
         : arrangement,
     ),
   );
@@ -420,9 +418,9 @@ function removeVehicle(plan: ItineraryVehiclePlan, id: string, vehicleId: string
     plan.arrangements.map((arrangement) =>
       arrangement.id === id
         ? {
-            ...arrangement,
-            vehicles: arrangement.vehicles.filter((vehicle) => vehicle.vehicleId !== vehicleId),
-          }
+          ...arrangement,
+          vehicles: arrangement.vehicles.filter((vehicle) => vehicle.vehicleId !== vehicleId),
+        }
         : arrangement,
     ),
   );
@@ -448,12 +446,12 @@ async function addVehicle(tier: ItineraryVehicleTier, id: string, vehicleId: str
       plan.arrangements.map((arrangement) =>
         arrangement.id === id
           ? {
-              ...arrangement,
-              vehicles: [
-                ...arrangement.vehicles,
-                { vehicleId, vehicleName: resource.name, seats: resource.seats, quantity: 1 },
-              ],
-            }
+            ...arrangement,
+            vehicles: [
+              ...arrangement.vehicles,
+              { vehicleId, vehicleName: resource.name, seats: resource.seats, quantity: 1 },
+            ],
+          }
           : arrangement,
       ),
     );

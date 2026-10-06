@@ -19,7 +19,12 @@
         clearable
         @update:model-value="updateField('departure', $event)"
       >
-        <el-option v-for="city in destinations" :key="city" :label="city" :value="city" />
+        <el-option
+          v-for="city in destinations"
+          :key="city"
+          :label="city"
+          :value="city"
+        />
       </el-select>
     </el-form-item>
     <el-form-item :label="$t('itinerary.destination')">
@@ -31,7 +36,12 @@
         clearable
         @update:model-value="updateField('destination', $event)"
       >
-        <el-option v-for="city in destinations" :key="city" :label="city" :value="city" />
+        <el-option
+          v-for="city in destinations"
+          :key="city"
+          :label="city"
+          :value="city"
+        />
       </el-select>
     </el-form-item>
     <el-form-item :label="$t('itinerary.overnightDestination')">

@@ -19,7 +19,12 @@
     </aside>
     <div class="page-main">
       <el-card class="page-search" shadow="never">
-        <el-form ref="queryFormRef" :model="params" :inline="true" label-width="auto">
+        <el-form
+          ref="queryFormRef"
+          :model="params"
+          :inline="true"
+          label-width="auto"
+        >
           <el-form-item :label="$t('common.keywords')" prop="keyword">
             <el-input
               v-model="params.keyword"
@@ -103,7 +108,12 @@
             row-key="id"
             @selection-change="handleSelectionChange"
           >
-            <el-table-column type="selection" width="42" fixed="left" align="center" />
+            <el-table-column
+              type="selection"
+              width="42"
+              fixed="left"
+              align="center"
+            />
             <el-table-column :label="$t('user.nickname')" min-width="140" fixed="left">
               <template #default="scope">
                 <div class="user-name-cell">
@@ -251,7 +261,12 @@
       destroy-on-close
       @close="closeDialog"
     >
-      <el-form ref="userFormRef" :model="formData" :rules="rules" label-width="auto">
+      <el-form
+        ref="userFormRef"
+        :model="formData"
+        :rules="rules"
+        label-width="auto"
+      >
         <h4 class="mt-0 mb-5 text-base font-semibold leading-6">
           {{ $t("user.basicInfo") }}
         </h4>

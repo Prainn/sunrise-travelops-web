@@ -7,11 +7,12 @@
           type="primary"
           :disabled="!config.cities.length"
           @click="openEditor()"
-          >新增城市骨架</el-button
         >
-        <span class="text-[var(--el-text-color-secondary)] text-[13px]"
-          >按天维护城市及可选 Day Pattern。</span
-        >
+          {{ $t("websiteConfig.skeletons.create") }}
+        </el-button>
+        <span class="text-[var(--el-text-color-secondary)] text-[13px]">
+          {{ $t("websiteConfig.skeletons.help") }}
+        </span>
       </div>
     </div>
     <div class="page-table-wrapper">
@@ -19,60 +20,93 @@
         :data="config.skeletons"
         border
         height="100%"
-        empty-text="尚未维护城市骨架；仍可手工逐日编排行程"
+        :empty-text="$t('websiteConfig.skeletons.empty')"
       >
-        <el-table-column prop="nameZh" label="中文名称" min-width="160" />
-        <el-table-column prop="nameEn" label="英文名称" min-width="180" />
-        <el-table-column label="天数" width="90" align="center">
-          <template #default="{ row }">{{ row.days.length }}</template>
-        </el-table-column>
-        <!-- @vue-generic {WebsiteSkeleton} -->
-        <el-table-column label="城市顺序" min-width="280" show-overflow-tooltip>
-          <template #default="{ row }">{{ citySequence(row) || "尚未添加天数" }}</template>
-        </el-table-column>
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
+        <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
+        <el-table-column :label="$t('websiteConfig.days')" width="90" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">{{
-              row.status === "enabled" ? "启用" : "停用"
-            }}</el-tag>
+            {{ row.days.length }}
           </template>
         </el-table-column>
         <!-- @vue-generic {WebsiteSkeleton} -->
-        <el-table-column label="操作" width="150" align="center" fixed="right">
+        <el-table-column
+          :label="$t('websiteConfig.skeletons.cityOrder')"
+          min-width="280"
+          show-overflow-tooltip
+        >
+          <template #default="{ row }">
+            {{ citySequence(row) || $t("websiteConfig.skeletons.noDays") }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('common.status')" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
+              {{ row.status === "enabled" ? $t("common.enabled") : $t("websiteConfig.disabled") }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <!-- @vue-generic {WebsiteSkeleton} -->
+        <el-table-column
+          :label="$t('common.actions')"
+          width="150"
+          align="center"
+          fixed="right"
+        >
           <template #default="{ row, $index }">
-            <el-button type="primary" link @click="openEditor(row)">{{
-              editable ? "编辑" : "查看"
-            }}</el-button>
-            <el-button v-if="editable" type="danger" link @click="deleteRecord($index)"
-              >删除</el-button
+            <el-button type="primary" link @click="openEditor(row)">
+              {{ editable ? $t("common.edit") : $t("common.view") }}
+            </el-button>
+            <el-button
+              v-if="editable"
+              type="danger"
+              link
+              @click="deleteRecord($index)"
             >
+              {{ $t("common.delete") }}
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
     <el-dialog
       v-model="visible"
-      :title="isNew ? '新增城市骨架' : editable ? '编辑城市骨架' : '城市骨架详情'"
+      :title="
+        isNew
+          ? $t('websiteConfig.skeletons.create')
+          : editable
+            ? $t('websiteConfig.skeletons.edit')
+            : $t('websiteConfig.skeletons.detail')
+      "
       width="min(960px, 94vw)"
       destroy-on-close
       :show-close="!saving"
       :close-on-click-modal="!saving"
       :close-on-press-escape="!saving"
     >
-      <el-form v-if="record" :model="record" :disabled="!editable || saving" label-width="auto">
+      <el-form
+        v-if="record"
+        :model="record"
+        :disabled="!editable || saving"
+        label-width="auto"
+      >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
-          <el-form-item label="中文名称" required
-            ><el-input v-model="record.nameZh" maxlength="150"
-          /></el-form-item>
-          <el-form-item label="英文名称" required
-            ><el-input v-model="record.nameEn" maxlength="150"
-          /></el-form-item>
+          <el-form-item :label="$t('websiteConfig.nameZh')" required>
+            <el-input v-model="record.nameZh" maxlength="150" />
+          </el-form-item>
+          <el-form-item :label="$t('websiteConfig.nameEn')" required>
+            <el-input v-model="record.nameEn" maxlength="150" />
+          </el-form-item>
         </div>
-        <el-form-item label="状态">
-          <el-radio-group v-model="record.status"
-            ><el-radio value="enabled">启用</el-radio
-            ><el-radio value="disabled">停用</el-radio></el-radio-group
-          >
+        <el-form-item :label="$t('common.status')">
+          <el-radio-group v-model="record.status">
+            <el-radio value="enabled">
+              {{ $t("common.enabled") }}
+            </el-radio>
+            <el-radio value="disabled">
+              {{ $t("websiteConfig.disabled") }}
+            </el-radio>
+          </el-radio-group>
         </el-form-item>
         <div class="page-toolbar">
           <el-button
@@ -80,14 +114,17 @@
             type="primary"
             plain
             @click="record.days.push({ cityId: '', patternId: null })"
-            >添加一天</el-button
           >
+            {{ $t("websiteConfig.skeletons.addDay") }}
+          </el-button>
         </div>
-        <el-table :data="record.days" border empty-text="请添加天数，按天维护城市与 Day Pattern">
-          <el-table-column label="天数" width="70" align="center">
-            <template #default="{ $index }">D{{ $index + 1 }}</template>
+        <el-table :data="record.days" border :empty-text="$t('websiteConfig.skeletons.daysEmpty')">
+          <el-table-column :label="$t('websiteConfig.days')" width="70" align="center">
+            <template #default="{ $index }">
+              D{{ $index + 1 }}
+            </template>
           </el-table-column>
-          <el-table-column label="城市" min-width="160">
+          <el-table-column :label="$t('websiteConfig.city')" min-width="160">
             <template #default="{ row }">
               <el-select v-model="row.cityId" filterable>
                 <el-option
@@ -99,7 +136,7 @@
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column label="Day Pattern" min-width="200">
+          <el-table-column :label="$t('websiteConfig.tabs.patterns')" min-width="200">
             <template #default="{ row }">
               <el-select
                 v-model="row.patternId"
@@ -117,30 +154,48 @@
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column v-if="editable" label="操作" width="210" align="center">
+          <el-table-column
+            v-if="editable"
+            :label="$t('common.actions')"
+            width="210"
+            align="center"
+          >
             <template #default="{ $index }">
-              <el-button :disabled="$index === 0" type="primary" link @click="move($index, -1)"
-                >上移</el-button
+              <el-button
+                :disabled="$index === 0"
+                type="primary"
+                link
+                @click="move($index, -1)"
               >
+                {{ $t("websiteConfig.moveUp") }}
+              </el-button>
               <el-button
                 :disabled="$index === record.days.length - 1"
                 type="primary"
                 link
                 @click="move($index, 1)"
-                >下移</el-button
               >
-              <el-button type="danger" link @click="record.days.splice($index, 1)">移除</el-button>
+                {{ $t("websiteConfig.moveDown") }}
+              </el-button>
+              <el-button type="danger" link @click="record.days.splice($index, 1)">
+                {{ $t("websiteConfig.remove") }}
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
       </el-form>
       <template #footer>
-        <el-button :disabled="saving" @click="visible = false">{{
-          editable ? "取消" : "关闭"
-        }}</el-button>
-        <el-button v-if="editable" type="primary" :loading="saving" @click="applyEdit"
-          >确认</el-button
+        <el-button :disabled="saving" @click="visible = false">
+          {{ editable ? $t("common.cancel") : $t("common.close") }}
+        </el-button>
+        <el-button
+          v-if="editable"
+          type="primary"
+          :loading="saving"
+          @click="applyEdit"
         >
+          {{ $t("common.confirm") }}
+        </el-button>
       </template>
     </el-dialog>
   </section>
@@ -167,12 +222,12 @@ function openEditor(skeleton?: WebsiteSkeleton) {
   record.value = skeleton
     ? cloneWebsiteDraft(skeleton)
     : {
-        id: crypto.randomUUID(),
-        status: "enabled",
-        nameZh: "",
-        nameEn: "",
-        days: [],
-      };
+      id: crypto.randomUUID(),
+      status: "enabled",
+      nameZh: "",
+      nameEn: "",
+      days: [],
+    };
   visible.value = true;
 }
 

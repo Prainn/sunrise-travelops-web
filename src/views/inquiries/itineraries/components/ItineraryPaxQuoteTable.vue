@@ -2,10 +2,8 @@
   <el-card shadow="never">
     <template #header>
       <div class="flex flex-wrap items-center justify-between gap-3">
-        <span
-          >{{ $t(`itinerary.hotelTiers.${option.hotelTier}`) }} ·
-          {{ $t(`itinerary.vehicleServiceLevels.${option.vehicleTier}`) }}</span
-        >
+        <span>{{ $t(`itinerary.hotelTiers.${option.hotelTier}`) }} ·
+          {{ $t(`itinerary.vehicleServiceLevels.${option.vehicleTier}`) }}</span>
         <el-popover trigger="click" :width="520" placement="bottom-end">
           <template #reference>
             <el-button size="small" :disabled="!calculation?.hotelCityCosts">
@@ -40,7 +38,12 @@
       </div>
     </template>
     <el-table :data="rows" border class="w-full mt-4">
-      <el-table-column label="PAX" prop="pax" width="75" fixed />
+      <el-table-column
+        label="PAX"
+        prop="pax"
+        width="75"
+        fixed
+      />
       <el-table-column :label="$t('itinerary.vehiclePerPerson')" min-width="120">
         <template #default="{ row }">
           {{ money(row.vehicleUnitCost) }}

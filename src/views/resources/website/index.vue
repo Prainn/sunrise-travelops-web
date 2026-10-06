@@ -1,15 +1,20 @@
 <template>
   <div v-loading="loading || saving" :inert="saving" class="page-container">
-    <el-alert v-if="error" :title="error" type="error" :closable="false" />
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+    />
     <el-card v-if="config" class="page-content" shadow="never">
       <TableToolbar class="website-config-toolbar" @refresh="refreshConfig">
         <el-tabs v-model="activeTab" class="website-config-tabs min-w-0 w-full">
-          <el-tab-pane label="城市" name="cities" />
-          <el-tab-pane label="景点／组件／季节" name="attractions" />
-          <el-tab-pane label="跨城路线" name="routes" />
-          <el-tab-pane label="Day Pattern" name="patterns" />
-          <el-tab-pane label="城市骨架" name="skeletons" />
-          <el-tab-pane label="双语标准文案" name="templates" />
+          <el-tab-pane :label="$t('websiteConfig.tabs.cities')" name="cities" />
+          <el-tab-pane :label="$t('websiteConfig.tabs.attractions')" name="attractions" />
+          <el-tab-pane :label="$t('websiteConfig.tabs.routes')" name="routes" />
+          <el-tab-pane :label="$t('websiteConfig.tabs.patterns')" name="patterns" />
+          <el-tab-pane :label="$t('websiteConfig.tabs.skeletons')" name="skeletons" />
+          <el-tab-pane :label="$t('websiteConfig.tabs.templates')" name="templates" />
         </el-tabs>
       </TableToolbar>
       <div class="min-h-0 overflow-hidden">
@@ -111,7 +116,7 @@ async function persistConfig(next: WebsiteConfig): Promise<boolean> {
 }
 async function saveConfig(next: WebsiteConfig): Promise<boolean> {
   const saved = await persistConfig(next);
-  if (saved) ElMessage.success("保存成功");
+  if (saved) ElMessage.success(t("websiteConfig.saveSuccess"));
   return saved;
 }
 async function deleteConfig(next: WebsiteConfig): Promise<boolean> {

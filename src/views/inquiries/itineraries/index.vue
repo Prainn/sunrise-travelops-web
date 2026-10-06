@@ -5,7 +5,12 @@
     :inert="isSaving"
     class="page-container itinerary-page h-auto min-h-full overflow-visible p-0"
   >
-    <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" />
+    <el-alert
+      v-if="loadError"
+      :title="loadError"
+      type="error"
+      :closable="false"
+    />
     <template v-if="inquiry">
       <header
         class="itinerary-page__sticky-header sticky z-[10] top-0 [background:var(--page-bg)] [box-shadow:var(--el-box-shadow-light)]"
@@ -21,7 +26,12 @@
                 v-model="selectedItineraryId"
                 class="itinerary-page__plan-select w-[min(360px,_45vw)]!"
               >
-                <el-option v-for="row in rows" :key="row.id" :label="row.title" :value="row.id" />
+                <el-option
+                  v-for="row in rows"
+                  :key="row.id"
+                  :label="row.title"
+                  :value="row.id"
+                />
               </el-select>
             </template>
             <template #extra>
@@ -68,43 +78,37 @@
           <div
             class="itinerary-page__inquiry-summary grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] items-center gap-[18px] mt-[10px] text-[14px]"
           >
-            <span class="min-w-0 flex gap-[6px]"
-              ><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-                $t("inquiry.code")
-              }}</small
-              >{{ inquiry.code }}</span
-            >
-            <span class="min-w-0 flex gap-[6px]"
-              ><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-                $t("inquiry.agencyName")
-              }}</small
-              >{{ inquiry.agencyName }}</span
-            >
-            <span class="min-w-0 flex gap-[6px]"
-              ><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-                $t("inquiry.contactName")
-              }}</small
-              >{{ inquiry.contactName }}</span
-            >
-            <span class="min-w-0 flex gap-[6px]"
-              ><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-                $t("inquiry.plannedDays")
-              }}</small
-              >{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span
-            >
+            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+              $t("inquiry.code")
+            }}</small>{{ inquiry.code }}</span>
+            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+              $t("inquiry.agencyName")
+            }}</small>{{ inquiry.agencyName }}</span>
+            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+              $t("inquiry.contactName")
+            }}</small>{{ inquiry.contactName }}</span>
+            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+              $t("inquiry.plannedDays")
+            }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
           </div>
           <div v-if="selectedItinerary" class="flex flex-wrap gap-[10px] mt-[12px]">
             <el-dropdown trigger="click" @command="openVehiclePlans">
               <el-button :type="hasVehiclePlans ? 'primary' : ''">
                 {{ $t("planning.vehiclePlans") }}
-                <el-icon class="ml-[6px]"><ArrowDown /></el-icon>
+                <el-icon class="ml-[6px]">
+                  <ArrowDown />
+                </el-icon>
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="itinerary">{{
-                    $t("planning.byItinerary")
-                  }}</el-dropdown-item>
-                  <el-dropdown-item command="stage">{{ $t("planning.byStage") }}</el-dropdown-item>
+                  <el-dropdown-item command="itinerary">
+                    {{
+                      $t("planning.byItinerary")
+                    }}
+                  </el-dropdown-item>
+                  <el-dropdown-item command="stage">
+                    {{ $t("planning.byStage") }}
+                  </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -303,7 +307,12 @@
           role="status"
           :aria-label="$t('itinerary.quoteCalculating')"
         />
-        <el-alert v-if="quoteError" type="error" :closable="false" class="mb-3">
+        <el-alert
+          v-if="quoteError"
+          type="error"
+          :closable="false"
+          class="mb-3"
+        >
           {{ $t("itinerary.quoteCalculationFailed") }}
           <el-button link type="primary" @click="retryQuote">
             {{ $t("itinerary.retryQuoteCalculation") }}

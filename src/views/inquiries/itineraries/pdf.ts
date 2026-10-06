@@ -224,10 +224,10 @@ function buildQuoteTable(
   const childRow =
     showChildPrice && itinerary.childrenCount
       ? buildQuoteRow(
-          "儿童团费",
-          options,
-          ({ calculation }) => `RMB ${formatMoney(calculation.childUnitPrice)} PP`,
-        )
+        "儿童团费",
+        options,
+        ({ calculation }) => `RMB ${formatMoney(calculation.childUnitPrice)} PP`,
+      )
       : "";
 
   return `
@@ -236,26 +236,26 @@ function buildQuoteTable(
         <tr style="background:#f3f4f6;">
           <th style="${quoteHeaderStyle()};width:18%;"></th>
           ${options
-            .map(
-              ({ option }) => `
+    .map(
+      ({ option }) => `
             <th style="${quoteHeaderStyle()}">
               ${new Set(itinerary.quote.options.map((option) => option.hotelTier)).size > 1 ? `<div>${escapeHtml(HOTEL_PLAN_TIER_LABELS[option.hotelTier])}</div>` : ""}
               <div style="margin-top:3px;">${guestCount}PAX【${escapeHtml(getVehicleQuoteLabel(itinerary, option.vehicleTier))}】</div>
             </th>`,
-            )
-            .join("")}
+    )
+    .join("")}
         </tr>
       </thead>
       <tbody>
         ${buildQuoteRow(
-          "成人团费",
-          options,
-          ({ option, calculation }) => `
+    "成人团费",
+    options,
+    ({ option, calculation }) => `
           <strong>RMB ${formatMoney(calculation.adultUnitPrice)} PP</strong>
           <div style="display:inline;margin-left:4px;color:${option.leaderFocEnabled && itinerary.leaderCount > 0 ? "#15803d" : "#606266"};font-size:10px;">
             ${option.leaderFocEnabled && itinerary.leaderCount > 0 ? `${guestCount}+${itinerary.leaderCount} FOC` : "NO FOC"}
           </div>`,
-        )}
+  )}
         ${childRow}
         ${buildExtraFeeRows(itinerary, options.length)}
         ${buildQuoteRow("单房差", options, ({ calculation }) => `RMB ${formatMoney(calculation.singleSupplementUnitCost)}`)}

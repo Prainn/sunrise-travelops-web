@@ -8,9 +8,9 @@
               :is="currentComponent(Component, route)"
               :key="
                 route.fullPath +
-                (route.path.startsWith('/resources')
-                  ? `${selectedResourceBusinessUnit ?? ''}:${selectedResourceLibrary ?? ''}`
-                  : '')
+                  (route.path.startsWith('/resources')
+                    ? `${selectedResourceBusinessUnit ?? ''}:${selectedResourceLibrary ?? ''}`
+                    : '')
               "
             />
           </keep-alive>

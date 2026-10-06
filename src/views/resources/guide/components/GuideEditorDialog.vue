@@ -38,8 +38,8 @@
     </el-form>
     <template #footer>
       <el-button @click="emit('update:modelValue', false)">
-        {{ $t("common.cancel") }} </el-button
-      ><el-button type="primary" @click="emit('submit', { ...form })">
+        {{ $t("common.cancel") }}
+      </el-button><el-button type="primary" @click="emit('submit', { ...form })">
         {{ $t("common.confirm") }}
       </el-button>
     </template>

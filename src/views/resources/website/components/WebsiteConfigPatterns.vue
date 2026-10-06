@@ -7,80 +7,118 @@
           type="primary"
           :disabled="!config.cities.length"
           @click="openEditor()"
-          >新增 Day Pattern</el-button
         >
-        <span class="text-[var(--el-text-color-secondary)] text-[13px]"
-          >生成每日草案，景点顺序由人工维护。</span
-        >
+          {{ $t("websiteConfig.patterns.create") }}
+        </el-button>
+        <span class="text-[var(--el-text-color-secondary)] text-[13px]">
+          {{ $t("websiteConfig.patterns.help") }}
+        </span>
       </div>
     </div>
     <div class="page-table-wrapper">
-      <el-table :data="config.patterns" border height="100%" empty-text="尚未维护 Day Pattern">
-        <el-table-column prop="nameZh" label="中文名称" min-width="160" />
-        <el-table-column prop="nameEn" label="英文名称" min-width="180" />
-        <el-table-column label="所属城市" min-width="120">
-          <template #default="{ row }">{{
-            config.cities.find((city) => city.id === row.cityId)?.nameZh ?? row.cityId
-          }}</template>
-        </el-table-column>
-        <!-- @vue-generic {WebsitePattern} -->
-        <el-table-column label="景点顺序" min-width="280" show-overflow-tooltip>
-          <template #default="{ row }">{{ attractionNames(row) || "尚未选择景点" }}</template>
-        </el-table-column>
-        <el-table-column label="状态" width="100" align="center">
+      <el-table
+        :data="config.patterns"
+        border
+        height="100%"
+        :empty-text="$t('websiteConfig.patterns.empty')"
+      >
+        <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
+        <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
+        <el-table-column :label="$t('websiteConfig.belongsToCity')" min-width="120">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">{{
-              row.status === "enabled" ? "启用" : "停用"
-            }}</el-tag>
+            {{ config.cities.find((city) => city.id === row.cityId)?.nameZh ?? row.cityId }}
           </template>
         </el-table-column>
         <!-- @vue-generic {WebsitePattern} -->
-        <el-table-column label="操作" width="150" align="center" fixed="right">
+        <el-table-column
+          :label="$t('websiteConfig.patterns.attractionOrder')"
+          min-width="280"
+          show-overflow-tooltip
+        >
+          <template #default="{ row }">
+            {{ attractionNames(row) || $t("websiteConfig.patterns.noAttractions") }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('common.status')" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
+              {{ row.status === "enabled" ? $t("common.enabled") : $t("websiteConfig.disabled") }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <!-- @vue-generic {WebsitePattern} -->
+        <el-table-column
+          :label="$t('common.actions')"
+          width="150"
+          align="center"
+          fixed="right"
+        >
           <template #default="{ row, $index }">
-            <el-button type="primary" link @click="openEditor(row)">{{
-              editable ? "编辑" : "查看"
-            }}</el-button>
-            <el-button v-if="editable" type="danger" link @click="deleteRecord($index)"
-              >删除</el-button
+            <el-button type="primary" link @click="openEditor(row)">
+              {{ editable ? $t("common.edit") : $t("common.view") }}
+            </el-button>
+            <el-button
+              v-if="editable"
+              type="danger"
+              link
+              @click="deleteRecord($index)"
             >
+              {{ $t("common.delete") }}
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
     <el-dialog
       v-model="visible"
-      :title="isNew ? '新增 Day Pattern' : editable ? '编辑 Day Pattern' : 'Day Pattern 详情'"
+      :title="
+        isNew
+          ? $t('websiteConfig.patterns.create')
+          : editable
+            ? $t('websiteConfig.patterns.edit')
+            : $t('websiteConfig.patterns.detail')
+      "
       width="min(800px, 94vw)"
       destroy-on-close
       :show-close="!saving"
       :close-on-click-modal="!saving"
       :close-on-press-escape="!saving"
     >
-      <el-form v-if="record" :model="record" :disabled="!editable || saving" label-width="auto">
+      <el-form
+        v-if="record"
+        :model="record"
+        :disabled="!editable || saving"
+        label-width="auto"
+      >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
-          <el-form-item label="所属城市" required>
-            <el-select v-model="record.cityId" filterable
-              ><el-option
+          <el-form-item :label="$t('websiteConfig.belongsToCity')" required>
+            <el-select v-model="record.cityId" filterable>
+              <el-option
                 v-for="city in config.cities"
                 :key="city.id"
                 :value="city.id"
                 :label="city.nameZh"
-            /></el-select>
+              />
+            </el-select>
           </el-form-item>
-          <el-form-item label="状态">
-            <el-radio-group v-model="record.status"
-              ><el-radio value="enabled">启用</el-radio
-              ><el-radio value="disabled">停用</el-radio></el-radio-group
-            >
+          <el-form-item :label="$t('common.status')">
+            <el-radio-group v-model="record.status">
+              <el-radio value="enabled">
+                {{ $t("common.enabled") }}
+              </el-radio>
+              <el-radio value="disabled">
+                {{ $t("websiteConfig.disabled") }}
+              </el-radio>
+            </el-radio-group>
           </el-form-item>
-          <el-form-item label="中文名称" required
-            ><el-input v-model="record.nameZh" maxlength="150"
-          /></el-form-item>
-          <el-form-item label="英文名称" required
-            ><el-input v-model="record.nameEn" maxlength="150"
-          /></el-form-item>
+          <el-form-item :label="$t('websiteConfig.nameZh')" required>
+            <el-input v-model="record.nameZh" maxlength="150" />
+          </el-form-item>
+          <el-form-item :label="$t('websiteConfig.nameEn')" required>
+            <el-input v-model="record.nameEn" maxlength="150" />
+          </el-form-item>
         </div>
-        <el-form-item label="景点／组件">
+        <el-form-item :label="$t('websiteConfig.patterns.attractions')">
           <el-select v-model="record.attractionIds" multiple filterable>
             <el-option
               v-for="item in config.attractions.filter((row) => row.cityId === record?.cityId)"
@@ -93,37 +131,58 @@
         <el-table
           :data="record.attractionIds.map((id) => ({ id }))"
           border
-          empty-text="尚未选择景点"
+          :empty-text="$t('websiteConfig.patterns.noAttractions')"
         >
-          <el-table-column type="index" label="顺序" width="70" align="center" />
-          <el-table-column label="景点／组件" min-width="180">
-            <template #default="{ row }">{{
-              config.attractions.find((item) => item.id === row.id)?.nameZh ?? row.id
-            }}</template>
+          <el-table-column
+            type="index"
+            :label="$t('websiteConfig.patterns.order')"
+            width="70"
+            align="center"
+          />
+          <el-table-column :label="$t('websiteConfig.patterns.attractions')" min-width="180">
+            <template #default="{ row }">
+              {{ config.attractions.find((item) => item.id === row.id)?.nameZh ?? row.id }}
+            </template>
           </el-table-column>
-          <el-table-column v-if="editable" label="调整顺序" width="150" align="center">
+          <el-table-column
+            v-if="editable"
+            :label="$t('websiteConfig.patterns.reorder')"
+            width="150"
+            align="center"
+          >
             <template #default="{ $index }">
-              <el-button :disabled="$index === 0" type="primary" link @click="move($index, -1)"
-                >上移</el-button
+              <el-button
+                :disabled="$index === 0"
+                type="primary"
+                link
+                @click="move($index, -1)"
               >
+                {{ $t("websiteConfig.moveUp") }}
+              </el-button>
               <el-button
                 :disabled="$index === record.attractionIds.length - 1"
                 type="primary"
                 link
                 @click="move($index, 1)"
-                >下移</el-button
               >
+                {{ $t("websiteConfig.moveDown") }}
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
       </el-form>
       <template #footer>
-        <el-button :disabled="saving" @click="visible = false">{{
-          editable ? "取消" : "关闭"
-        }}</el-button>
-        <el-button v-if="editable" type="primary" :loading="saving" @click="applyEdit"
-          >确认</el-button
+        <el-button :disabled="saving" @click="visible = false">
+          {{ editable ? $t("common.cancel") : $t("common.close") }}
+        </el-button>
+        <el-button
+          v-if="editable"
+          type="primary"
+          :loading="saving"
+          @click="applyEdit"
         >
+          {{ $t("common.confirm") }}
+        </el-button>
       </template>
     </el-dialog>
   </section>
@@ -150,13 +209,13 @@ function openEditor(pattern?: WebsitePattern) {
   record.value = pattern
     ? cloneWebsiteDraft(pattern)
     : {
-        id: crypto.randomUUID(),
-        status: "enabled",
-        cityId: "",
-        nameZh: "",
-        nameEn: "",
-        attractionIds: [],
-      };
+      id: crypto.randomUUID(),
+      status: "enabled",
+      cityId: "",
+      nameZh: "",
+      nameEn: "",
+      attractionIds: [],
+    };
   visible.value = true;
 }
 

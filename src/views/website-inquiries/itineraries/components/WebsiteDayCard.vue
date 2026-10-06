@@ -2,19 +2,26 @@
   <el-card shadow="never" class="mb-4">
     <template #header>
       <div class="flex justify-between items-center">
-        <strong
-          >D{{ day.dayNumber }}<span v-if="date" class="ml-3">{{ date }}</span>
+        <strong>
+          D{{ day.dayNumber }}
+          <span v-if="date" class="ml-3">{{ date }}</span>
         </strong>
         <div v-if="editable">
-          <el-button :disabled="index === 0" link @click="emit('move', -1)">上移</el-button>
-          <el-button :disabled="last" link @click="emit('move', 1)">下移</el-button>
-          <el-button link type="danger" @click="emit('remove')">移除本日</el-button>
+          <el-button :disabled="index === 0" link @click="emit('move', -1)">
+            {{ $t("websiteItineraryUi.moveUp") }}
+          </el-button>
+          <el-button :disabled="last" link @click="emit('move', 1)">
+            {{ $t("websiteItineraryUi.moveDown") }}
+          </el-button>
+          <el-button link type="danger" @click="emit('remove')">
+            {{ $t("websiteItineraryUi.removeDay") }}
+          </el-button>
         </div>
       </div>
     </template>
     <el-form label-position="top" :disabled="!editable">
       <div class="grid grid-cols-3 gap-x-4 max-[650px]:grid-cols-1">
-        <el-form-item label="出发城市" required>
+        <el-form-item :label="$t('websiteItineraryUi.departureCity')" required>
           <el-select v-model="day.departCityId" filterable>
             <el-option
               v-for="city in config.cities"
@@ -24,7 +31,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="结束城市" required>
+        <el-form-item :label="$t('websiteItineraryUi.endCity')" required>
           <el-select v-model="day.endCityId" filterable>
             <el-option
               v-for="city in config.cities"
@@ -34,7 +41,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="住宿城市">
+        <el-form-item :label="$t('websiteItineraryUi.overnightCity')">
           <el-select
             v-model="day.overnightCityId"
             filterable
@@ -52,27 +59,35 @@
         </el-form-item>
       </div>
       <div class="grid grid-cols-3 gap-x-4 max-[650px]:grid-cols-1">
-        <el-form-item label="当天安排导游">
+        <el-form-item :label="$t('websiteItineraryUi.guideArranged')">
           <el-switch :model-value="Boolean(day.guideLanguage)" @update:model-value="toggleGuide" />
         </el-form-item>
-        <el-form-item v-if="day.guideLanguage" label="导游语言">
-          <el-input v-model="day.guideLanguage" placeholder="English" maxlength="100" />
+        <el-form-item v-if="day.guideLanguage" :label="$t('websiteItineraryUi.guideLanguage')">
+          <el-input
+            v-model="day.guideLanguage"
+            :placeholder="$t('websiteItineraryUi.guideLanguagePlaceholder')"
+            maxlength="100"
+          />
         </el-form-item>
-        <el-form-item v-if="day.guideLanguage" label="当天导游服务范围">
-          <el-input v-model="day.guideScope" placeholder="例如 Full day" maxlength="1000" />
+        <el-form-item v-if="day.guideLanguage" :label="$t('websiteItineraryUi.guideScope')">
+          <el-input
+            v-model="day.guideScope"
+            :placeholder="$t('websiteItineraryUi.guideScopePlaceholder')"
+            maxlength="1000"
+          />
         </el-form-item>
       </div>
       <el-collapse>
-        <el-collapse-item title="景点与组件" name="attractions">
+        <el-collapse-item :title="$t('websiteItineraryUi.attractions')" name="attractions">
           <WebsiteDayAttractions :day="day" :config="config" :editable="editable" />
         </el-collapse-item>
-        <el-collapse-item title="交通段" name="transport">
+        <el-collapse-item :title="$t('websiteItineraryUi.transportLegs')" name="transport">
           <WebsiteDayTransport :day="day" :config="config" :editable="editable" />
         </el-collapse-item>
-        <el-collapse-item title="酒店方案" name="hotels">
+        <el-collapse-item :title="$t('websiteItineraryUi.hotelPlans')" name="hotels">
           <WebsiteDayHotels :day="day" :config="config" :editable="editable" />
         </el-collapse-item>
-        <el-collapse-item title="餐食与其他服务" name="services">
+        <el-collapse-item :title="$t('websiteItineraryUi.mealsAndOtherServices')" name="services">
           <WebsiteDayMealsServices :day="day" :editable="editable" />
         </el-collapse-item>
       </el-collapse>

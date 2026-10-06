@@ -36,14 +36,22 @@
         </el-button>
       </TableToolbar>
       <div class="page-table-wrapper">
-        <el-table v-loading="loading" :data="rows" border height="100%" row-key="id">
+        <el-table
+          v-loading="loading"
+          :data="rows"
+          border
+          height="100%"
+          row-key="id"
+        >
           <el-table-column :label="$t('identity.library')" min-width="200">
             <template #default="{ row }">
               <ResourceLibraryTag :library="row.library" />
             </template>
           </el-table-column>
           <el-table-column :label="$t('guide.referenceDailyPrice')">
-            <template #default="{ row }"> ¥{{ formatMoney(row.dailyPrice) }} </template>
+            <template #default="{ row }">
+              ¥{{ formatMoney(row.dailyPrice) }}
+            </template>
           </el-table-column>
           <el-table-column :label="$t('planning.secondLanguage')">
             <template #default="{ row }">
@@ -76,16 +84,16 @@
                 type="primary"
                 @click="emit('edit', row as GuideRecord)"
               >
-                {{ $t("common.edit") }} </el-button
-              ><el-button
+                {{ $t("common.edit") }}
+              </el-button><el-button
                 v-has-perm="RESOURCE_PERMISSIONS.guide.update"
                 link
                 @click="emit('toggle-status', row as GuideRecord)"
               >
                 {{
                   $t(row.status === "enabled" ? "common.disabled" : "common.enabled")
-                }} </el-button
-              ><el-button
+                }}
+              </el-button><el-button
                 v-has-perm="RESOURCE_PERMISSIONS.guide.delete"
                 link
                 type="danger"

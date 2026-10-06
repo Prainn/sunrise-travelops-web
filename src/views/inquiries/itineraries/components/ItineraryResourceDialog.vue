@@ -20,7 +20,8 @@
       <template v-if="mealSlot && source === 'custom'">
         <el-form-item :label="$t('itinerary.customRestaurantName')" required>
           <div class="flex gap-2 w-300px">
-            <el-input v-model="customName" :maxlength="500"> </el-input>
+            <el-input v-model="customName" :maxlength="500">
+            </el-input>
             <el-button type="primary" @click="customName = $t('itinerary.pending')">
               {{ $t("itinerary.pending") }}
             </el-button>

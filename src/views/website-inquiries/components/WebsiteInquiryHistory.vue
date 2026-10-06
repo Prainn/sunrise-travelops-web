@@ -1,18 +1,30 @@
 <template>
   <el-drawer
     :model-value="modelValue"
-    :title="`${record?.code ?? ''} 询盘日志`"
+    :title="$t('websiteInquiry.historyTitle', { code: record?.code ?? '' })"
     size="min(700px, 94vw)"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <el-alert v-if="error" :title="error" type="error" :closable="false" />
-    <el-table v-loading="loading" :data="rows" border row-key="id">
-      <el-table-column label="时间" width="210">
-        <template #default="{ row }">{{ formatDateTime(row.occurredAt) }}</template>
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      :closable="false"
+    />
+    <el-table
+      v-loading="loading"
+      :data="rows"
+      border
+      row-key="id"
+    >
+      <el-table-column :label="$t('websiteInquiry.time')" width="210">
+        <template #default="{ row }">
+          {{ formatDateTime(row.occurredAt) }}
+        </template>
       </el-table-column>
-      <el-table-column prop="actorName" label="操作人" width="100" />
-      <el-table-column prop="action" label="操作" width="140" />
-      <el-table-column prop="detail" label="详情" />
+      <el-table-column prop="actorName" :label="$t('websiteInquiry.actor')" width="100" />
+      <el-table-column prop="action" :label="$t('common.actions')" width="140" />
+      <el-table-column prop="detail" :label="$t('websiteInquiry.details')" />
     </el-table>
     <Pagination
       v-if="total"

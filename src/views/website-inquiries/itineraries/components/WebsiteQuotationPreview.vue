@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    title="双语行程与报价"
+    :title="$t('websiteItineraryUi.quotationTitle')"
     width="94vw"
     top="3vh"
     :close-on-click-modal="false"
@@ -21,38 +21,52 @@
         v-model="acknowledged"
         class="mb-4"
       >
-        <el-checkbox v-for="code in warningCodes" :key="code" :value="code"
-          >已确认 {{ code }} 全部提示</el-checkbox
-        >
+        <el-checkbox v-for="code in warningCodes" :key="code" :value="code">
+          {{ $t("websiteItineraryUi.acknowledgeWarnings", { code }) }}
+        </el-checkbox>
       </el-checkbox-group>
       <el-radio-group v-model="language" class="mb-3">
-        <el-radio-button value="en">英文客户版</el-radio-button>
-        <el-radio-button value="zh">中文内部版</el-radio-button>
+        <el-radio-button value="en">
+          {{ $t("websiteItineraryUi.englishCustomerVersion") }}
+        </el-radio-button>
+        <el-radio-button value="zh">
+          {{ $t("websiteItineraryUi.chineseInternalVersion") }}
+        </el-radio-button>
       </el-radio-group>
       <iframe
         v-if="previewUrl"
         :src="previewUrl"
-        :title="language === 'en' ? '英文报价预览' : '中文报价预览'"
+        :title="
+          $t(
+            language === 'en'
+              ? 'websiteItineraryUi.englishPreview'
+              : 'websiteItineraryUi.chinesePreview',
+          )
+        "
         class="block w-full h-[64vh] [border:1px_solid_var(--el-border-color)]"
       />
     </template>
     <template #footer>
-      <el-button :disabled="loading" @click="emit('update:modelValue', false)">关闭</el-button>
+      <el-button :disabled="loading" @click="emit('update:modelValue', false)">
+        {{ $t("common.close") }}
+      </el-button>
       <el-button
         v-if="confirmed && canDownload"
         type="primary"
         :loading="loading"
         @click="emit('print', language)"
-        >打印／另存 PDF</el-button
       >
+        {{ $t("websiteItineraryUi.printPdf") }}
+      </el-button>
       <el-button
         v-if="!confirmed && canConfirm"
         type="primary"
         :loading="loading"
         :disabled="hasErrors || acknowledged.length !== warningCodes.length"
         @click="emit('confirm', acknowledged)"
-        >确认报价并锁定行程</el-button
       >
+        {{ $t("websiteItineraryUi.confirmQuotation") }}
+      </el-button>
     </template>
   </el-dialog>
 </template>

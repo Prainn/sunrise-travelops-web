@@ -8,7 +8,7 @@
       v-for="option in FEE_OPTIONS"
       :key="option.value"
       :value="option.value"
-      :label="option.label"
+      :label="$t(option.labelKey)"
     />
   </el-select>
 </template>

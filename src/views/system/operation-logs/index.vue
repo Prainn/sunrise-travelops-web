@@ -18,27 +18,43 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="search">{{ $t("common.search") }}</el-button>
-          <el-button @click="reset">{{ $t("common.reset") }}</el-button>
+          <el-button type="primary" @click="search">
+            {{ $t("common.search") }}
+          </el-button>
+          <el-button @click="reset">
+            {{ $t("common.reset") }}
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
     <el-card class="page-content" shadow="never">
       <div class="page-table-wrapper">
-        <el-table v-loading="loading" :data="list" class="page-table" border height="100%">
+        <el-table
+          v-loading="loading"
+          :data="list"
+          class="page-table"
+          border
+          height="100%"
+        >
           <el-table-column :label="$t('operationLog.time')" min-width="190">
-            <template #default="{ row }">{{ beijingTime(row.time) }}</template>
+            <template #default="{ row }">
+              {{ beijingTime(row.time) }}
+            </template>
           </el-table-column>
           <el-table-column :label="$t('operationLog.category')" min-width="120">
-            <template #default="{ row }">{{ categoryLabel(row.category) }}</template>
+            <template #default="{ row }">
+              {{ categoryLabel(row.category) }}
+            </template>
           </el-table-column>
           <el-table-column :label="$t('operationLog.actor')" prop="actorName" min-width="130" />
           <el-table-column :label="$t('operationLog.action')" prop="action" min-width="180" />
           <el-table-column :label="$t('operationLog.result')" min-width="90">
-            <template #default="{ row }">{{
-              row.success ? $t("operationLog.success") : $t("operationLog.failed")
-            }}</template>
+            <template #default="{ row }">
+              {{
+                row.success ? $t("operationLog.success") : $t("operationLog.failed")
+              }}
+            </template>
           </el-table-column>
           <el-table-column
             :label="$t('operationLog.detail')"

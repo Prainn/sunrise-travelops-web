@@ -58,9 +58,9 @@ export function useResourcePriceSelection(
     source.value === "custom"
       ? isDuplicate(null, false, customName.value)
       : Boolean(
-          selectedOption.value &&
+        selectedOption.value &&
           isDuplicate(selectedOption.value.resourceId, selectedOption.value.isStandardPrice),
-        ),
+      ),
   );
   const baseCanSubmit = computed(() =>
     props.mealSlot && source.value === "custom"

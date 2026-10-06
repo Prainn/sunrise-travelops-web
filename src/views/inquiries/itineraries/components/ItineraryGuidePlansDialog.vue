@@ -63,12 +63,19 @@
           <div class="flex items-center">
             <el-form-item :label="$t('planning.guideTotalPrice')" label-width="160px">
               <el-input :model-value="formatMoney(totalPrice)" readonly>
-                <template #prepend> ¥ </template>
+                <template #prepend>
+                  ¥
+                </template>
               </el-input>
               <el-text type="info" size="small">
                 ¥{{ formatMoney(plan.dailyPrice) }} × {{ plan.serviceDays }}
               </el-text>
-              <el-tag type="info" effect="plain" size="small" class="ml-2">
+              <el-tag
+                type="info"
+                effect="plain"
+                size="small"
+                class="ml-2"
+              >
                 {{ $t("planning.serviceDays") }}：{{ plan.serviceDays }}
               </el-tag>
             </el-form-item>
@@ -79,7 +86,12 @@
         <el-text type="danger">
           {{ $t("planning.noMatchingGuide") }}
         </el-text>
-        <el-button v-if="canCreate" type="primary" link @click="emit('create-guide')">
+        <el-button
+          v-if="canCreate"
+          type="primary"
+          link
+          @click="emit('create-guide')"
+        >
           {{ $t("common.create") }}
         </el-button>
       </div>
@@ -88,7 +100,12 @@
       <el-button @click="emit('cancel')">
         {{ $t(editable ? "common.cancel" : "common.close") }}
       </el-button>
-      <el-button v-if="editable" type="primary" :loading="saving" @click="emit('save')">
+      <el-button
+        v-if="editable"
+        type="primary"
+        :loading="saving"
+        @click="emit('save')"
+      >
         {{ $t("itinerary.save") }}
       </el-button>
     </template>

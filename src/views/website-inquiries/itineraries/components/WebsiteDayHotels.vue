@@ -1,25 +1,32 @@
 <template>
   <section>
     <div class="flex justify-between items-center mb-3">
-      <strong>酒店方案</strong>
-      <el-button v-if="editable" @click="addHotel">添加酒店</el-button>
+      <strong>{{ $t("websiteItineraryUi.hotelPlans") }}</strong>
+      <el-button v-if="editable" @click="addHotel">
+        {{ $t("websiteItineraryUi.addHotel") }}
+      </el-button>
     </div>
     <el-alert
       v-if="day.overnightCityId && !day.hotels.length"
-      title="本日需要住宿，请至少填写一个酒店名。A／B 档由人工选择，与共用库酒店评级无自动映射。"
+      :title="$t('websiteItineraryUi.hotelRequiredHint')"
       type="info"
       :closable="false"
       class="mb-3"
     />
-    <el-card v-for="(hotel, index) in day.hotels" :key="hotel.id" shadow="never" class="mb-3">
+    <el-card
+      v-for="(hotel, index) in day.hotels"
+      :key="hotel.id"
+      shadow="never"
+      class="mb-3"
+    >
       <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
-        <el-form-item label="酒店档次">
+        <el-form-item :label="$t('websiteItineraryUi.hotelTier')">
           <el-select v-model="hotel.tier">
-            <el-option value="A" label="A 高端五星" />
-            <el-option value="B" label="B 舒适四星" />
+            <el-option value="A" :label="$t('websiteItineraryUi.hotelTierA')" />
+            <el-option value="B" :label="$t('websiteItineraryUi.hotelTierB')" />
           </el-select>
         </el-form-item>
-        <el-form-item label="住宿城市">
+        <el-form-item :label="$t('websiteItineraryUi.overnightCity')">
           <el-select v-model="hotel.cityId" filterable>
             <el-option
               v-for="city in config.cities"
@@ -29,7 +36,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="选择共用酒店">
+        <el-form-item :label="$t('websiteItineraryUi.selectSharedHotel')">
           <WebsiteResourceSelect
             v-model="hotel.resourceId"
             kind="hotel"
@@ -41,22 +48,31 @@
             "
           />
         </el-form-item>
-        <el-form-item label="该酒店方案含早">
+        <el-form-item :label="$t('websiteItineraryUi.hotelBreakfastIncluded')">
           <el-switch v-model="hotel.breakfastIncluded" />
         </el-form-item>
-        <el-form-item label="酒店中文名称">
+        <el-form-item :label="$t('websiteItineraryUi.hotelNameZh')">
           <el-input v-model="hotel.nameZh" maxlength="150" />
         </el-form-item>
-        <el-form-item label="酒店英文名称">
+        <el-form-item :label="$t('websiteItineraryUi.hotelNameEn')">
           <el-input v-model="hotel.nameEn" maxlength="150" />
         </el-form-item>
-        <el-form-item label="房型">
-          <el-input v-model="hotel.roomType" placeholder="例如 Twin Room" maxlength="200" />
+        <el-form-item :label="$t('websiteItineraryUi.roomType')">
+          <el-input
+            v-model="hotel.roomType"
+            :placeholder="$t('websiteItineraryUi.roomTypePlaceholder')"
+            maxlength="200"
+          />
         </el-form-item>
       </div>
-      <el-button v-if="editable" link type="danger" @click="day.hotels.splice(index, 1)"
-        >移除酒店</el-button
+      <el-button
+        v-if="editable"
+        link
+        type="danger"
+        @click="day.hotels.splice(index, 1)"
       >
+        {{ $t("websiteItineraryUi.removeHotel") }}
+      </el-button>
     </el-card>
   </section>
 </template>

@@ -68,7 +68,12 @@
       width="680px"
       destroy-on-close
     >
-      <el-form ref="hotelFormRef" :model="hotelForm" :rules="hotelRules" label-width="auto">
+      <el-form
+        ref="hotelFormRef"
+        :model="hotelForm"
+        :rules="hotelRules"
+        label-width="auto"
+      >
         <el-form-item
           v-if="isHeadquarters && !isEditing"
           :label="$t('identity.businessUnit')"

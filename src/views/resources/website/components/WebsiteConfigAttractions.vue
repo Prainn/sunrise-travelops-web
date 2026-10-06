@@ -7,11 +7,12 @@
           type="primary"
           :disabled="!config.cities.length"
           @click="openEditor()"
-          >新增景点／组件</el-button
         >
-        <span class="text-[var(--el-text-color-secondary)] text-[13px]"
-          >维护景点、父子关系与季节推荐。</span
-        >
+          {{ $t("websiteConfig.attractions.create") }}
+        </el-button>
+        <span class="text-[var(--el-text-color-secondary)] text-[13px]">
+          {{ $t("websiteConfig.attractions.help") }}
+        </span>
       </div>
     </div>
     <div class="page-table-wrapper">
@@ -19,61 +20,102 @@
         :data="config.attractions"
         border
         height="100%"
-        empty-text="先维护城市和双语文案，再添加景点与组件"
+        :empty-text="$t('websiteConfig.attractions.empty')"
       >
-        <el-table-column prop="nameZh" label="中文名称" min-width="160" />
-        <el-table-column prop="nameEn" label="英文名称" min-width="180" />
-        <el-table-column label="城市" min-width="120">
-          <template #default="{ row }">{{
-            config.cities.find((city) => city.id === row.cityId)?.nameZh ?? row.cityId
-          }}</template>
-        </el-table-column>
-        <el-table-column label="类型" width="110">
-          <template #default="{ row }">{{
-            row.kind === "attraction" ? "景点" : "景点内组件"
-          }}</template>
-        </el-table-column>
-        <el-table-column prop="copyKey" label="核心文案编码" min-width="180" />
-        <el-table-column label="推荐月份" min-width="160">
-          <template #default="{ row }">{{
-            row.recommendedMonths.length ? row.recommendedMonths.join("、") + " 月" : "不限定"
-          }}</template>
-        </el-table-column>
-        <el-table-column label="收费" width="80" align="center">
-          <template #default="{ row }">{{ row.chargeable ? "是" : "否" }}</template>
-        </el-table-column>
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
+        <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
+        <el-table-column :label="$t('websiteConfig.city')" min-width="120">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">{{
-              row.status === "enabled" ? "启用" : "停用"
-            }}</el-tag>
+            {{ config.cities.find((city) => city.id === row.cityId)?.nameZh ?? row.cityId }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('websiteConfig.attractions.kind')" width="110">
+          <template #default="{ row }">
+            {{
+              row.kind === "attraction"
+                ? $t("websiteConfig.attractions.attraction")
+                : $t("websiteConfig.attractions.component")
+            }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="copyKey"
+          :label="$t('websiteConfig.attractions.copyKey')"
+          min-width="180"
+        />
+        <el-table-column :label="$t('websiteConfig.attractions.recommendedMonths')" min-width="160">
+          <template #default="{ row }">
+            {{
+              row.recommendedMonths.length
+                ? $t("websiteConfig.attractions.months", {
+                  months: row.recommendedMonths.join($t("websiteConfig.listSeparator")),
+                })
+                : $t("websiteConfig.attractions.anyMonth")
+            }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          :label="$t('websiteConfig.attractions.chargeable')"
+          width="80"
+          align="center"
+        >
+          <template #default="{ row }">
+            {{ row.chargeable ? $t("common.yes") : $t("common.no") }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('common.status')" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
+              {{ row.status === "enabled" ? $t("common.enabled") : $t("websiteConfig.disabled") }}
+            </el-tag>
           </template>
         </el-table-column>
         <!-- @vue-generic {WebsiteAttraction} -->
-        <el-table-column label="操作" width="150" align="center" fixed="right">
+        <el-table-column
+          :label="$t('common.actions')"
+          width="150"
+          align="center"
+          fixed="right"
+        >
           <template #default="{ row, $index }">
-            <el-button type="primary" link @click="openEditor(row)">{{
-              editable ? "编辑" : "查看"
-            }}</el-button>
-            <el-button v-if="editable" type="danger" link @click="deleteRecord($index)"
-              >删除</el-button
+            <el-button type="primary" link @click="openEditor(row)">
+              {{ editable ? $t("common.edit") : $t("common.view") }}
+            </el-button>
+            <el-button
+              v-if="editable"
+              type="danger"
+              link
+              @click="deleteRecord($index)"
             >
+              {{ $t("common.delete") }}
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
     <el-dialog
       v-model="visible"
-      :title="isNew ? '新增景点／组件' : editable ? '编辑景点／组件' : '景点／组件详情'"
+      :title="
+        isNew
+          ? $t('websiteConfig.attractions.create')
+          : editable
+            ? $t('websiteConfig.attractions.edit')
+            : $t('websiteConfig.attractions.detail')
+      "
       width="min(800px, 94vw)"
       destroy-on-close
       :show-close="!saving"
       :close-on-click-modal="!saving"
       :close-on-press-escape="!saving"
     >
-      <el-form v-if="record" :model="record" :disabled="!editable || saving" label-width="auto">
+      <el-form
+        v-if="record"
+        :model="record"
+        :disabled="!editable || saving"
+        label-width="auto"
+      >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
-          <el-form-item label="所属城市" required>
+          <el-form-item :label="$t('websiteConfig.belongsToCity')" required>
             <el-select v-model="record.cityId" filterable>
               <el-option
                 v-for="city in config.cities"
@@ -83,19 +125,19 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="类型">
+          <el-form-item :label="$t('websiteConfig.attractions.kind')">
             <el-select v-model="record.kind">
-              <el-option value="attraction" label="景点" />
-              <el-option value="component" label="景点内组件" />
+              <el-option value="attraction" :label="$t('websiteConfig.attractions.attraction')" />
+              <el-option value="component" :label="$t('websiteConfig.attractions.component')" />
             </el-select>
           </el-form-item>
-          <el-form-item label="中文名称" required
-            ><el-input v-model="record.nameZh" maxlength="150"
-          /></el-form-item>
-          <el-form-item label="英文名称" required
-            ><el-input v-model="record.nameEn" maxlength="150"
-          /></el-form-item>
-          <el-form-item label="父景点">
+          <el-form-item :label="$t('websiteConfig.nameZh')" required>
+            <el-input v-model="record.nameZh" maxlength="150" />
+          </el-form-item>
+          <el-form-item :label="$t('websiteConfig.nameEn')" required>
+            <el-input v-model="record.nameEn" maxlength="150" />
+          </el-form-item>
+          <el-form-item :label="$t('websiteConfig.attractions.parent')">
             <el-select
               v-model="record.parentId"
               filterable
@@ -113,7 +155,7 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="核心文案编码" required>
+          <el-form-item :label="$t('websiteConfig.attractions.copyKey')" required>
             <el-select v-model="record.copyKey" filterable>
               <el-option
                 v-for="template in config.templates"
@@ -123,34 +165,50 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="关联共用基础景点">
+          <el-form-item :label="$t('websiteConfig.attractions.linkAttraction')">
             <WebsiteResourceSelect
               v-model="record.resourceId"
               kind="attraction"
               :selected-name="record.nameZh"
             />
           </el-form-item>
-          <el-form-item label="推荐月份（空表示不限定）">
+          <el-form-item :label="$t('websiteConfig.attractions.recommendedMonthsHint')">
             <el-select v-model="record.recommendedMonths" multiple>
-              <el-option v-for="month in 12" :key="month" :value="month" :label="`${month} 月`" />
+              <el-option
+                v-for="month in 12"
+                :key="month"
+                :value="month"
+                :label="$t('websiteConfig.attractions.month', { month })"
+              />
             </el-select>
           </el-form-item>
-          <el-form-item label="收费景点"><el-switch v-model="record.chargeable" /></el-form-item>
-          <el-form-item label="状态">
-            <el-radio-group v-model="record.status"
-              ><el-radio value="enabled">启用</el-radio
-              ><el-radio value="disabled">停用</el-radio></el-radio-group
-            >
+          <el-form-item :label="$t('websiteConfig.attractions.chargeableAttraction')">
+            <el-switch v-model="record.chargeable" />
+          </el-form-item>
+          <el-form-item :label="$t('common.status')">
+            <el-radio-group v-model="record.status">
+              <el-radio value="enabled">
+                {{ $t("common.enabled") }}
+              </el-radio>
+              <el-radio value="disabled">
+                {{ $t("websiteConfig.disabled") }}
+              </el-radio>
+            </el-radio-group>
           </el-form-item>
         </div>
       </el-form>
       <template #footer>
-        <el-button :disabled="saving" @click="visible = false">{{
-          editable ? "取消" : "关闭"
-        }}</el-button>
-        <el-button v-if="editable" type="primary" :loading="saving" @click="applyEdit"
-          >确认</el-button
+        <el-button :disabled="saving" @click="visible = false">
+          {{ editable ? $t("common.cancel") : $t("common.close") }}
+        </el-button>
+        <el-button
+          v-if="editable"
+          type="primary"
+          :loading="saving"
+          @click="applyEdit"
         >
+          {{ $t("common.confirm") }}
+        </el-button>
       </template>
     </el-dialog>
   </section>
@@ -178,18 +236,18 @@ function openEditor(item?: WebsiteAttraction) {
   record.value = item
     ? cloneWebsiteDraft(item)
     : {
-        id: crypto.randomUUID(),
-        status: "enabled",
-        cityId: "",
-        parentId: null,
-        nameZh: "",
-        nameEn: "",
-        resourceId: null,
-        kind: "attraction",
-        chargeable: true,
-        copyKey: "",
-        recommendedMonths: [],
-      };
+      id: crypto.randomUUID(),
+      status: "enabled",
+      cityId: "",
+      parentId: null,
+      nameZh: "",
+      nameEn: "",
+      resourceId: null,
+      kind: "attraction",
+      chargeable: true,
+      copyKey: "",
+      recommendedMonths: [],
+    };
   visible.value = true;
 }
 

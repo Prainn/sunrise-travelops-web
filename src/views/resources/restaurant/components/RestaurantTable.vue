@@ -161,7 +161,12 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column :label="$t('common.actions')" width="220" fixed="right" align="center">
+          <el-table-column
+            :label="$t('common.actions')"
+            width="220"
+            fixed="right"
+            align="center"
+          >
             <template #default="scope">
               <el-button
                 v-has-perm="RESOURCE_PERMISSIONS.restaurant.update"

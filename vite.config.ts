@@ -66,11 +66,11 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       },
       ...(["development", "dev-local"].includes(mode)
         ? [
-            VueDevTools({
-              componentInspector: true,
-              launchEditor: "code",
-            }),
-          ]
+          VueDevTools({
+            componentInspector: true,
+            launchEditor: "code",
+          }),
+        ]
         : []),
       UnoCSS(),
       // API 自动导入

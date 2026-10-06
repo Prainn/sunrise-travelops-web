@@ -7,7 +7,7 @@
     :remote-method="search"
     :loading="loading"
     :disabled="disabled"
-    placeholder="搜索共用基础资料"
+    :placeholder="$t('websiteInquiry.searchSharedResources')"
     class="w-full"
     @update:model-value="emit('update:modelValue', $event || null)"
     @change="select"
@@ -17,7 +17,12 @@
       }
     "
   >
-    <el-option v-for="option in options" :key="option.id" :value="option.id" :label="option.name" />
+    <el-option
+      v-for="option in options"
+      :key="option.id"
+      :value="option.id"
+      :label="option.name"
+    />
   </el-select>
 </template>
 <script setup lang="ts">

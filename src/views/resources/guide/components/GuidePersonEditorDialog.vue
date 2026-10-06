@@ -5,7 +5,13 @@
     width="520px"
     @close="emit('update:modelValue', false)"
   >
-    <el-form ref="formRef" :model="form" :rules="rules" label-position="left" label-width="100px">
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      label-position="left"
+      label-width="100px"
+    >
       <el-form-item
         v-if="isHeadquarters && !isEditing"
         :label="$t('identity.businessUnit')"

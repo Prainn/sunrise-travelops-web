@@ -1,13 +1,13 @@
 <template>
   <section>
     <div class="flex justify-between items-center mb-3">
-      <strong>交通段</strong>
+      <strong>{{ $t("websiteItineraryUi.transportLegs") }}</strong>
       <div v-if="editable" class="flex gap-2">
         <el-select
           v-model="selectedId"
           filterable
           clearable
-          placeholder="选择专属路线"
+          :placeholder="$t('websiteItineraryUi.selectRoute')"
           class="w-[240px]!"
         >
           <el-option
@@ -17,13 +17,22 @@
             :label="route.nameZh"
           />
         </el-select>
-        <el-button @click="addRoute">添加所选</el-button>
-        <el-button @click="addManual">手填交通段</el-button>
+        <el-button @click="addRoute">
+          {{ $t("websiteItineraryUi.addSelected") }}
+        </el-button>
+        <el-button @click="addManual">
+          {{ $t("websiteItineraryUi.manualTransportLeg") }}
+        </el-button>
       </div>
     </div>
-    <el-card v-for="(leg, index) in day.legs" :key="leg.id" shadow="never" class="mb-3">
+    <el-card
+      v-for="(leg, index) in day.legs"
+      :key="leg.id"
+      shadow="never"
+      class="mb-3"
+    >
       <div class="grid grid-cols-3 gap-x-4 max-[650px]:grid-cols-1">
-        <el-form-item label="出发城市">
+        <el-form-item :label="$t('websiteItineraryUi.departureCity')">
           <el-select v-model="leg.fromCityId" filterable>
             <el-option
               v-for="city in config.cities"
@@ -33,7 +42,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="抵达城市">
+        <el-form-item :label="$t('websiteItineraryUi.arrivalCity')">
           <el-select v-model="leg.toCityId" filterable>
             <el-option
               v-for="city in config.cities"
@@ -43,29 +52,34 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="交通方式">
+        <el-form-item :label="$t('websiteItineraryUi.transportMode')">
           <el-select v-model="leg.mode">
             <el-option
               v-for="option in TRANSPORT_OPTIONS"
               :key="option.value"
               :value="option.value"
-              :label="option.label"
+              :label="$t(option.labelKey)"
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="交通段中文说明">
+        <el-form-item :label="$t('websiteItineraryUi.transportNameZh')">
           <el-input v-model="leg.nameZh" maxlength="150" />
         </el-form-item>
-        <el-form-item label="交通段英文说明">
+        <el-form-item :label="$t('websiteItineraryUi.transportNameEn')">
           <el-input v-model="leg.nameEn" maxlength="150" />
         </el-form-item>
-        <el-form-item label="费用状态">
+        <el-form-item :label="$t('websiteItineraryUi.feeState')">
           <FeeStateSelect v-model="leg.feeState" />
         </el-form-item>
       </div>
-      <el-button v-if="editable" link type="danger" @click="day.legs.splice(index, 1)"
-        >移除交通段</el-button
+      <el-button
+        v-if="editable"
+        link
+        type="danger"
+        @click="day.legs.splice(index, 1)"
       >
+        {{ $t("websiteItineraryUi.removeTransportLeg") }}
+      </el-button>
     </el-card>
   </section>
 </template>

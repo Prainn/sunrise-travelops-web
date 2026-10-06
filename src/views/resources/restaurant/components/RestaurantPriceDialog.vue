@@ -5,7 +5,12 @@
     width="620px"
     destroy-on-close
   >
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="auto">
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      label-width="auto"
+    >
       <el-form-item :label="$t('restaurant.menuName')" prop="menuName">
         <el-input v-model.trim="form.menuName" />
       </el-form-item>
@@ -20,13 +25,28 @@
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('restaurant.dishDetails')" prop="dishDetails">
-        <el-input v-model.trim="form.dishDetails" type="textarea" :rows="6" resize="vertical" />
+        <el-input
+          v-model.trim="form.dishDetails"
+          type="textarea"
+          :rows="6"
+          resize="vertical"
+        />
       </el-form-item>
       <el-form-item :label="$t('restaurant.price')" prop="price">
-        <el-input-number v-model="form.price" :min="0" :precision="2" controls-position="right" />
+        <el-input-number
+          v-model="form.price"
+          :min="0"
+          :precision="2"
+          controls-position="right"
+        />
       </el-form-item>
       <el-form-item v-if="form.unit === 'table'" :label="$t('restaurant.dinerCount')">
-        <el-input-number v-model="form.dinerCount" :min="1" :max="30" controls-position="right" />
+        <el-input-number
+          v-model="form.dinerCount"
+          :min="1"
+          :max="30"
+          controls-position="right"
+        />
       </el-form-item>
       <el-form-item :label="$t('common.remark')">
         <el-input v-model.trim="form.remark" type="textarea" :rows="3" />

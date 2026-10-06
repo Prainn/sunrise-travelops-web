@@ -12,7 +12,12 @@
       </el-form-item>
       <el-form-item :label="$t('resource.city')">
         <el-select v-model="city" clearable filterable>
-          <el-option v-for="option in cityOptions" :key="option" :label="option" :value="option" />
+          <el-option
+            v-for="option in cityOptions"
+            :key="option"
+            :label="option"
+            :value="option"
+          />
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('restaurant.priceUnit')">

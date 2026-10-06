@@ -14,7 +14,13 @@
         </el-button>
       </TableToolbar>
       <div class="page-table-wrapper">
-        <el-table v-loading="loading" :data="rows" height="100%" border row-key="id">
+        <el-table
+          v-loading="loading"
+          :data="rows"
+          height="100%"
+          border
+          row-key="id"
+        >
           <el-table-column prop="name" :label="$t(labelKeys.name)" min-width="130" />
           <el-table-column
             prop="englishName"
@@ -51,7 +57,12 @@
             min-width="180"
             show-overflow-tooltip
           />
-          <el-table-column :label="$t('common.actions')" width="130" fixed="right" align="center">
+          <el-table-column
+            :label="$t('common.actions')"
+            width="130"
+            fixed="right"
+            align="center"
+          >
             <template #default="scope">
               <el-button
                 v-hasPerm="'sys:business-dictionary:update'"
@@ -75,8 +86,18 @@
       </div>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="$t(dialogTitleKey)" width="600px" destroy-on-close>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="180px">
+    <el-dialog
+      v-model="dialogVisible"
+      :title="$t(dialogTitleKey)"
+      width="600px"
+      destroy-on-close
+    >
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="180px"
+      >
         <el-form-item :label="$t(labelKeys.name)" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>

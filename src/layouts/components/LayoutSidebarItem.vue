@@ -5,7 +5,7 @@
         (hasOneShowingChild(item.children, item) &&
           !item.meta?.alwaysShow &&
           (!onlyOneChild.children || onlyOneChild.noShowingChildren)) ||
-        (item.meta?.alwaysShow && !item.children)
+          (item.meta?.alwaysShow && !item.children)
       "
     >
       <AppLink
@@ -34,7 +34,12 @@
       </AppLink>
     </template>
 
-    <el-sub-menu v-else :index="resolvePath(item.path)" :data-path="item.path" teleported>
+    <el-sub-menu
+      v-else
+      :index="resolvePath(item.path)"
+      :data-path="item.path"
+      teleported
+    >
       <template #title>
         <template v-if="item.meta">
           <LayoutMenuIcon :icon="item.meta.icon" />

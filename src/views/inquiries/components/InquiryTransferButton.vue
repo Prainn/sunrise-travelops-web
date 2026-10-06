@@ -1,8 +1,18 @@
 <template>
-  <el-button v-has-perm="'inquiry:transfer'" link type="primary" @click="open">
+  <el-button
+    v-has-perm="'inquiry:transfer'"
+    link
+    type="primary"
+    @click="open"
+  >
     {{ $t("identity.transfer") }}
   </el-button>
-  <el-dialog v-model="visible" :title="$t('identity.transfer')" width="480px" append-to-body>
+  <el-dialog
+    v-model="visible"
+    :title="$t('identity.transfer')"
+    width="480px"
+    append-to-body
+  >
     <el-form ref="form" :model="data" label-position="top">
       <el-form-item
         :label="$t('identity.owner')"
@@ -32,8 +42,8 @@
     </el-form>
     <template #footer>
       <el-button @click="visible = false">
-        {{ $t("common.cancel") }} </el-button
-      ><el-button type="primary" :loading="saving" @click="submit">
+        {{ $t("common.cancel") }}
+      </el-button><el-button type="primary" :loading="saving" @click="submit">
         {{ $t("common.confirm") }}
       </el-button>
     </template>

@@ -5,7 +5,12 @@
     width="640px"
     destroy-on-close
   >
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="auto">
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      label-width="auto"
+    >
       <el-form-item :label="$t('attraction.itemType')" prop="itemType">
         <el-select v-model="form.itemType">
           <el-option
@@ -29,13 +34,23 @@
         <el-input v-model.trim="form.periodName" />
       </el-form-item>
       <el-form-item :label="$t('attraction.effectivePeriod')">
-        <el-date-picker v-model="form.dates" type="daterange" value-format="YYYY-MM-DD" clearable />
+        <el-date-picker
+          v-model="form.dates"
+          type="daterange"
+          value-format="YYYY-MM-DD"
+          clearable
+        />
       </el-form-item>
       <el-form-item :label="$t('attraction.freeTicket')">
         <el-switch v-model="form.isFree" />
       </el-form-item>
       <el-form-item :label="$t('attraction.rackPrice')">
-        <el-input-number v-model="form.rackPrice" :disabled="form.isFree" :min="0" :precision="2" />
+        <el-input-number
+          v-model="form.rackPrice"
+          :disabled="form.isFree"
+          :min="0"
+          :precision="2"
+        />
       </el-form-item>
       <el-form-item :label="$t('attraction.settlementPrice')">
         <el-input-number

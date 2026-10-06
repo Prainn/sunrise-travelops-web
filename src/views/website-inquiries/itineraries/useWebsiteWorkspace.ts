@@ -1,4 +1,5 @@
 import { computed, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
@@ -20,6 +21,7 @@ import { printWebsiteQuotation } from "./print";
 
 export function useWebsiteWorkspace() {
   const route = useRoute();
+  const { t } = useI18n();
   const user = useUserStore();
   const inquiry = ref<WebsiteInquiry>();
   const plans = ref<WebsiteItinerary[]>([]);
@@ -56,11 +58,15 @@ export function useWebsiteWorkspace() {
   async function allowDiscard() {
     if (!dirty.value) return true;
     try {
-      await ElMessageBox.confirm("当前行程有未保存修改，继续将丢弃这些修改。", "未保存修改", {
-        confirmButtonText: "丢弃并继续",
-        cancelButtonText: "继续编辑",
-        type: "warning",
-      });
+      await ElMessageBox.confirm(
+        t("websiteWorkspace.discardWarning"),
+        t("websiteWorkspace.unsavedChangesTitle"),
+        {
+          confirmButtonText: t("websiteWorkspace.discardAndContinue"),
+          cancelButtonText: t("websiteWorkspace.keepEditing"),
+          type: "warning",
+        },
+      );
       return true;
     } catch {
       return false;
@@ -135,7 +141,7 @@ export function useWebsiteWorkspace() {
   async function save() {
     if (!plan.value || !editable.value || saving.value) return false;
     if (!plan.value.title.trim()) {
-      ElMessage.error("请填写行程标题");
+      ElMessage.error(t("websiteWorkspace.titleRequired"));
       return false;
     }
     if (
@@ -147,13 +153,13 @@ export function useWebsiteWorkspace() {
           day.hotels.some((hotel) => !hotel.cityId),
       )
     ) {
-      ElMessage.error("请补齐每日起止城市、交通段城市和酒店城市后保存");
+      ElMessage.error(t("websiteWorkspace.citiesRequired"));
       return false;
     }
     saving.value = true;
     try {
       await storeResult(await websiteService.saveItinerary(plan.value));
-      ElMessage.success("已保存行程草稿");
+      ElMessage.success(t("websiteWorkspace.draftSaved"));
       return true;
     } catch (cause) {
       showError(cause);
@@ -166,12 +172,16 @@ export function useWebsiteWorkspace() {
     if (!inquiry.value || !canCreate.value || saving.value || !(await allowDiscard())) return;
     let title: string;
     try {
-      const result = await ElMessageBox.prompt("请输入新行程标题", "新增独立站行程", {
-        inputValue: `${inquiry.value.customerName}行程`,
-        inputValidator: (value) => Boolean(value?.trim()) || "请填写标题",
-        confirmButtonText: "创建",
-        cancelButtonText: "取消",
-      });
+      const result = await ElMessageBox.prompt(
+        t("websiteWorkspace.newTitlePrompt"),
+        t("websiteWorkspace.newItineraryTitle"),
+        {
+          inputValue: t("websiteWorkspace.defaultTitle", { name: inquiry.value.customerName }),
+          inputValidator: (value) => Boolean(value?.trim()) || t("websiteWorkspace.titleRequired"),
+          confirmButtonText: t("common.create"),
+          cancelButtonText: t("common.cancel"),
+        },
+      );
       title = result.value;
     } catch {
       return;
@@ -182,13 +192,12 @@ export function useWebsiteWorkspace() {
       currentConfig.value = latest;
       await storeResult(
         await websiteService.createItinerary(inquiry.value.id, {
-          ...emptyItinerary(inquiry.value, latest.version),
-          title,
+          ...emptyItinerary(inquiry.value, latest.version, title),
           inquiryVersion: inquiry.value.version,
         }),
         true,
       );
-      ElMessage.success("已创建草稿，请手工添加每日安排或选择已维护的城市骨架");
+      ElMessage.success(t("websiteWorkspace.draftCreated"));
     } catch (cause) {
       showError(cause);
     } finally {
@@ -203,7 +212,7 @@ export function useWebsiteWorkspace() {
         await websiteService.copyItinerary(plan.value.id, plan.value.version),
         true,
       );
-      ElMessage.success("已复制为独立草稿，原报价保持锁定");
+      ElMessage.success(t("websiteWorkspace.draftCopied"));
     } catch (cause) {
       showError(cause);
     } finally {
@@ -223,7 +232,7 @@ export function useWebsiteWorkspace() {
       config.value = latest;
       plan.value.configVersion = latest.version;
       preview.value = undefined;
-      ElMessage.info("已切换编辑配置，请核对景点、城市与路线后保存；失效引用须人工改选");
+      ElMessage.info(t("websiteWorkspace.configSwitched"));
     } catch (cause) {
       showError(cause);
     }
@@ -231,15 +240,19 @@ export function useWebsiteWorkspace() {
   async function generate() {
     if (!plan.value || !editable.value || !skeletonId.value || saving.value) return;
     if (dirty.value) {
-      ElMessage.warning("请先保存行程，再生成草案");
+      ElMessage.warning(t("websiteWorkspace.saveBeforeGenerate"));
       return;
     }
     try {
-      await ElMessageBox.confirm("生成将替换当前草稿的每日安排，是否继续？", "按城市骨架生成", {
-        confirmButtonText: "生成",
-        cancelButtonText: "取消",
-        type: "warning",
-      });
+      await ElMessageBox.confirm(
+        t("websiteWorkspace.generateWarning"),
+        t("websiteWorkspace.generateTitle"),
+        {
+          confirmButtonText: t("websiteWorkspace.generate"),
+          cancelButtonText: t("common.cancel"),
+          type: "warning",
+        },
+      );
     } catch {
       return;
     }
@@ -257,7 +270,7 @@ export function useWebsiteWorkspace() {
   async function openPreview() {
     if (!plan.value || saving.value) return;
     if (dirty.value) {
-      ElMessage.warning("请先保存行程，再预览已保存版本");
+      ElMessage.warning(t("websiteWorkspace.saveBeforePreview"));
       return;
     }
     saving.value = true;
@@ -284,7 +297,7 @@ export function useWebsiteWorkspace() {
       }
       quotation.value = confirmed;
       preview.value = confirmed;
-      ElMessage.success("已冻结英文客户版与中文内部版");
+      ElMessage.success(t("websiteWorkspace.quotationConfirmed"));
     } catch (cause) {
       showError(cause);
     } finally {

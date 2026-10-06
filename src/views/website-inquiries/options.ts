@@ -6,34 +6,34 @@ import type {
   WebsiteItineraryInput,
 } from "@/types/website";
 
-export const FEE_OPTIONS: Array<{ value: FeeState; label: string }> = [
-  { value: "INCLUDED", label: "包含" },
-  { value: "EXCLUDED", label: "不含" },
-  { value: "OPTIONAL", label: "可选自费" },
-  { value: "RECOMMENDED", label: "仅推荐" },
-  { value: "ARRANGED", label: "已安排（不代表包含）" },
-  { value: "SELF_PAY", label: "自理" },
-  { value: "UNKNOWN", label: "待确认" },
+export const FEE_OPTIONS: Array<{ value: FeeState; labelKey: string }> = [
+  { value: "INCLUDED", labelKey: "websiteInquiry.feeStates.INCLUDED" },
+  { value: "EXCLUDED", labelKey: "websiteInquiry.feeStates.EXCLUDED" },
+  { value: "OPTIONAL", labelKey: "websiteInquiry.feeStates.OPTIONAL" },
+  { value: "RECOMMENDED", labelKey: "websiteInquiry.feeStates.RECOMMENDED" },
+  { value: "ARRANGED", labelKey: "websiteInquiry.feeStates.ARRANGED" },
+  { value: "SELF_PAY", labelKey: "websiteInquiry.feeStates.SELF_PAY" },
+  { value: "UNKNOWN", labelKey: "websiteInquiry.feeStates.UNKNOWN" },
 ];
-export const VEHICLE_OPTIONS: Array<{ value: VehicleType; label: string; seats: number }> = [
-  { value: "5_seat", label: "5-seat vehicle", seats: 5 },
-  { value: "7_seat", label: "7-seat vehicle", seats: 7 },
-  { value: "9_seat", label: "9-seat vehicle", seats: 9 },
-  { value: "14_seat", label: "14-seat vehicle", seats: 14 },
-  { value: "18_seat", label: "18-seat vehicle", seats: 18 },
+export const VEHICLE_OPTIONS: Array<{ value: VehicleType; labelKey: string; seats: number }> = [
+  { value: "5_seat", labelKey: "websiteInquiry.vehicleTypes.5_seat", seats: 5 },
+  { value: "7_seat", labelKey: "websiteInquiry.vehicleTypes.7_seat", seats: 7 },
+  { value: "9_seat", labelKey: "websiteInquiry.vehicleTypes.9_seat", seats: 9 },
+  { value: "14_seat", labelKey: "websiteInquiry.vehicleTypes.14_seat", seats: 14 },
+  { value: "18_seat", labelKey: "websiteInquiry.vehicleTypes.18_seat", seats: 18 },
 ];
 export const TRANSPORT_OPTIONS = [
-  { value: "hsr", label: "高铁" },
-  { value: "private_vehicle", label: "专车" },
-  { value: "flight", label: "飞机" },
-  { value: "other", label: "其他" },
+  { value: "hsr", labelKey: "websiteInquiry.transportModes.hsr" },
+  { value: "private_vehicle", labelKey: "websiteInquiry.transportModes.private_vehicle" },
+  { value: "flight", labelKey: "websiteInquiry.transportModes.flight" },
+  { value: "other", labelKey: "websiteInquiry.transportModes.other" },
 ];
-export const INQUIRY_STATUS_LABELS = {
-  new: "新询盘",
-  planning: "规划中",
-  quoted: "已报价",
-  lost: "已流失",
-  archived: "已归档",
+export const INQUIRY_STATUS_LABEL_KEYS = {
+  new: "websiteInquiry.statuses.new",
+  planning: "websiteInquiry.statuses.planning",
+  quoted: "websiteInquiry.statuses.quoted",
+  lost: "websiteInquiry.statuses.lost",
+  archived: "websiteInquiry.statuses.archived",
 };
 export function cloneWebsiteDraft<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -80,9 +80,10 @@ export function emptyDay(dayNumber: number): WebsiteDay {
 export function emptyItinerary(
   inquiry: WebsiteInquiryInput,
   configVersion: number,
+  title: string,
 ): WebsiteItineraryInput {
   return {
-    title: `${inquiry.customerName}行程`,
+    title,
     duration: inquiry.plannedDays,
     startDate: inquiry.startDate,
     pax: inquiry.pax,

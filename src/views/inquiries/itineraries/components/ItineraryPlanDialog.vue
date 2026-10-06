@@ -31,13 +31,23 @@
           :placeholder="$t('itinerary.paxPlaceholder')"
           @change="updatePaxTiers"
         >
-          <el-option v-for="pax in paxOptions" :key="pax" :label="`${pax} PAX`" :value="pax" />
+          <el-option
+            v-for="pax in paxOptions"
+            :key="pax"
+            :label="`${pax} PAX`"
+            :value="pax"
+          />
         </el-select>
       </el-form-item>
       <el-row :gutter="16">
         <el-col :span="12">
           <el-form-item :label="$t('itinerary.childRate')" prop="childRate">
-            <el-input-number v-model="form.childRate" :min="0" :max="100" :precision="2">
+            <el-input-number
+              v-model="form.childRate"
+              :min="0"
+              :max="100"
+              :precision="2"
+            >
               <template #suffix>
                 <span class="text-[var(--el-text-color-secondary)]">%</span>
               </template>
@@ -46,7 +56,12 @@
         </el-col>
         <el-col :span="12">
           <el-form-item :label="$t('itinerary.childWithoutBedRate')" prop="childWithoutBedRate">
-            <el-input-number v-model="form.childWithoutBedRate" :min="0" :max="100" :precision="2">
+            <el-input-number
+              v-model="form.childWithoutBedRate"
+              :min="0"
+              :max="100"
+              :precision="2"
+            >
               <template #suffix>
                 <span class="text-[var(--el-text-color-secondary)]">%</span>
               </template>

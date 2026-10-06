@@ -13,13 +13,11 @@
         <div class="i-svg:search" />
         <span
           class="command-palette-trigger__text overflow-hidden text-ellipsis text-[14px] text-[var(--el-text-color-secondary)] whitespace-nowrap"
-          >{{ $t("commandPalette.searchMenu") }}</span
-        >
+        >{{ $t("commandPalette.searchMenu") }}</span>
       </div>
       <kbd
         class="command-palette-trigger__kbd inline-flex items-center justify-center h-[18px] p-[0_6px] text-[14px] leading-[1] text-[var(--el-text-color-placeholder)] whitespace-nowrap [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color)] rounded-[4px]"
-        >Ctrl K</kbd
-      >
+      >Ctrl K</kbd>
     </div>
 
     <el-dialog
@@ -100,8 +98,7 @@
             </div>
             <span
               class="command-palette-hint__text text-[14px] text-[var(--el-text-color-secondary)]"
-              >{{ $t("commandPalette.navigate") }}</span
-            >
+            >{{ $t("commandPalette.navigate") }}</span>
           </div>
           <div class="command-palette-hint inline-flex gap-[6px] items-center">
             <div
@@ -111,8 +108,7 @@
             </div>
             <span
               class="command-palette-hint__text text-[14px] text-[var(--el-text-color-secondary)]"
-              >{{ $t("common.select") }}</span
-            >
+            >{{ $t("common.select") }}</span>
           </div>
           <div class="command-palette-hint inline-flex gap-[6px] items-center">
             <div
@@ -122,8 +118,7 @@
             </div>
             <span
               class="command-palette-hint__text text-[14px] text-[var(--el-text-color-secondary)]"
-              >{{ $t("common.close") }}</span
-            >
+            >{{ $t("common.close") }}</span>
           </div>
         </div>
       </div>
