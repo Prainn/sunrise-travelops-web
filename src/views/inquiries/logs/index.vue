@@ -70,25 +70,25 @@
       <div class="log-totals mt-[12px] flex flex-wrap gap-[16px]">
         <span>
           {{ $t("inquiry.log.totalOperations") }}
-          <strong class="ml-[8px] text-[18px]">
+          <strong class="ml-[8px] text-[14px]">
             {{ report.totalOperations }}
           </strong>
         </span>
         <span>
           {{ $t("inquiry.log.inquiryCount") }}
-          <strong class="ml-[8px] text-[18px]">
+          <strong class="ml-[8px] text-[14px]">
             {{ report.inquiryCount }}
           </strong>
         </span>
         <span>
           {{ $t("inquiry.log.operatorCount") }}
-          <strong class="ml-[8px] text-[18px]">
+          <strong class="ml-[8px] text-[14px]">
             {{ report.operatorCount }}
           </strong>
         </span>
         <span>
           {{ $t("inquiry.log.changedFields") }}
-          <strong class="ml-[8px] text-[18px]">
+          <strong class="ml-[8px] text-[14px]">
             {{ report.changedFields }}
           </strong>
         </span>

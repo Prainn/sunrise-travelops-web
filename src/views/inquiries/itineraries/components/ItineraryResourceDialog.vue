@@ -89,7 +89,7 @@
               {{ formatDetail(detail) }}
             </el-descriptions-item>
           </el-descriptions>
-          <el-form-item :label="$t('identity.reference')" class="mt-4">
+          <el-form-item :label="$t('identity.reference')" class="mt-3">
             <el-input-number :model-value="referencePrice == null ? 0 : referencePrice" readonly />
           </el-form-item>
           <el-form-item :label="$t('identity.actual')">

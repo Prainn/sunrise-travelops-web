@@ -37,7 +37,7 @@
         </el-popover>
       </div>
     </template>
-    <el-table :data="rows" border class="w-full mt-4">
+    <el-table :data="rows" border class="w-full mt-3">
       <el-table-column
         label="PAX"
         prop="pax"
