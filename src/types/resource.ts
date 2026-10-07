@@ -21,6 +21,16 @@ export interface ResourceQueryParams {
   status?: ResourceStatus;
 }
 
+export interface FlightRecord extends ResourceAuditRecord {
+  id: string;
+  departureCity: string;
+  arrivalCity: string;
+  flightNumber: string;
+  departureTime: string;
+  arrivalTime: string;
+  status: ResourceStatus;
+}
+
 export interface ResourceListQuery extends Partial<ResourceQueryParams> {
   secondLanguage?: string;
   shopping?: string;

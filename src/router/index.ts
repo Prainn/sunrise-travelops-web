@@ -306,6 +306,17 @@ export const constantRoutes: RouteRecordRaw[] = [
           perms: ["resource:guide:list"],
         },
       },
+      {
+        path: "flight",
+        name: "FlightResource",
+        component: () => import("@/views/resources/flight/index.vue"),
+        meta: {
+          title: "flights",
+          icon: "el-icon-Position",
+          keepAlive: true,
+          perms: ["resource:flight:list"],
+        },
+      },
     ],
   },
   {

@@ -42,7 +42,8 @@
     "vehicleModels": "Vehicle Models",
     "guides": "Guide Management",
     "cities": "Cities",
-    "inquiryLogReport": "Inquiry summary"
+    "inquiryLogReport": "Inquiry summary",
+    "flights": "Flight Information"
   },
   "appVersion": {
     "title": "New Version Available",
@@ -1365,5 +1366,19 @@
     "generate": "Generate",
     "saveBeforePreview": "Save the itinerary before previewing the saved version",
     "quotationConfirmed": "The English customer version and Chinese internal version have been frozen"
+  },
+  "flight": {
+    "createTitle": "Add Flight",
+    "editTitle": "Edit Flight",
+    "departureCity": "Departure City",
+    "arrivalCity": "Arrival City",
+    "flightNumber": "Flight Number",
+    "departureTime": "Departure Time",
+    "arrivalTime": "Arrival Time",
+    "searchPlaceholder": "Search departure city, arrival city or flight number",
+    "selectTime": "Select a time",
+    "timeInvalid": "Enter a valid 24-hour time (HH:mm)",
+    "flightNumberInvalid": "Use 1–20 letters or digits for the flight number",
+    "allStatuses": "All statuses"
   }
 }

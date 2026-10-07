@@ -8,14 +8,10 @@
             :placeholder="$t('dictionary.searchPlaceholder')"
             class="page-search__keywords"
             clearable
-            @keyup.enter="handleQuery"
           />
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" @click="handleQuery">
-            {{ $t("common.search") }}
-          </el-button>
           <el-button @click="handleResetQuery">
             {{ $t("common.reset") }}
           </el-button>
@@ -170,6 +166,7 @@
 </template>
 
 <script setup lang="ts">
+import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 
 import router from "@/router";
@@ -191,7 +188,7 @@ const dictStore = useDictStore();
 const { t } = useI18n();
 
 /** 分页表格数据管理 */
-const { loading, list, total, params, fetchData, handleQuery, handleResetQuery } = usePageTable<
+const { loading, list, total, params, fetchData, handleQuery, resetParams } = usePageTable<
   DictTypeItem,
   DictTypeQueryParams
 >({
@@ -201,8 +198,20 @@ const { loading, list, total, params, fetchData, handleQuery, handleResetQuery }
     keyword: "",
   },
   request: dictionaryService.getPage,
-  onBeforeReset: () => queryFormRef.value?.resetFields(),
 });
+
+const requestRows = useDebounceFn(handleQuery, 300);
+
+watch(() => params.keyword, () => {
+  params.page = 1;
+  requestRows();
+});
+
+function handleResetQuery(): void {
+  queryFormRef.value?.resetFields();
+  resetParams();
+  requestRows();
+}
 
 const { selectedIds, hasSelection, handleSelectionChange } = useTableSelection<DictTypeItem>();
 

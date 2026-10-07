@@ -6,6 +6,7 @@ export const RESOURCE_PERMISSIONS = {
   attraction: createResourcePermissions("attraction"),
   transport: createResourcePermissions("transport"),
   guide: createResourcePermissions("guide"),
+  flight: createResourcePermissions("flight"),
 } as const;
 
 export type ResourcePermissionSet = {

@@ -64,7 +64,7 @@
         </el-descriptions-item>
       </el-descriptions>
     </el-drawer>
-    <el-drawer v-model="isPriceDrawerVisible" :title="$t('guide.priceSettings')" size="80%">
+    <el-drawer v-model="isPriceDrawerVisible" :title="$t('guide.priceSettings')" size="50%">
       <GuideTable
         :loading="isPriceLoading"
         :total="priceTotal"

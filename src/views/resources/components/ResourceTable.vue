@@ -6,7 +6,7 @@
         <el-form-item :label="$t('common.keywords')">
           <el-input
             v-model.trim="keywords"
-            :placeholder="$t('resource.searchPlaceholder')"
+            :placeholder="$t(searchPlaceholderKey ?? 'resource.searchPlaceholder')"
             class="page-search__keywords"
             clearable
           />
@@ -30,6 +30,7 @@
         <el-table
           v-loading="loading"
           :data="rows"
+          row-key="id"
           border
           height="100%"
         >
@@ -104,7 +105,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends ResourceTableRecord">
 import { resetResourceBusinessFilter } from "@/services/resource-library";
 import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
 import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
@@ -114,24 +115,25 @@ import { useDebounceFn } from "@vueuse/core";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import type { ResourcePermissionSet } from "@/constants";
 import type { ResourceListQuery } from "@/types/resource";
-import type { ResourceColumn, ResourceRow } from "../types";
+import type { ResourceColumn, ResourceTableRecord } from "../types";
 
 const props = defineProps<{
   loading?: boolean;
-  rows: ResourceRow[];
+  rows: T[];
   total: number;
   columns: ResourceColumn[];
   permissions: ResourcePermissionSet;
   filters?: ResourceListQuery;
+  searchPlaceholderKey?: string;
 }>();
 
 const emit = defineEmits<{
   refresh: [query: ResourceListQuery];
   "query-change": [query: ResourceListQuery];
   create: [];
-  edit: [row: ResourceRow];
-  delete: [row: ResourceRow];
-  "toggle-status": [row: ResourceRow];
+  edit: [row: T];
+  delete: [row: T];
+  "toggle-status": [row: T];
   "reset-query": [];
 }>();
 
@@ -169,15 +171,15 @@ function refreshRows() {
   emit("refresh", currentQuery());
 }
 
-function editRow(row: unknown) {
-  emit("edit", row as ResourceRow);
+function editRow(row: T) {
+  emit("edit", row);
 }
 
-function toggleRowStatus(row: unknown) {
-  emit("toggle-status", row as ResourceRow);
+function toggleRowStatus(row: T) {
+  emit("toggle-status", row);
 }
 
-function deleteRow(row: unknown) {
-  emit("delete", row as ResourceRow);
+function deleteRow(row: T) {
+  emit("delete", row);
 }
 </script>

@@ -173,29 +173,7 @@
             <el-input v-model="form.email" maxlength="254" />
           </el-form-item>
         </el-col>
-      </el-row>
-      <el-row :gutter="16">
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('websiteInquiry.arrivalTime')">
-            <el-input
-              v-model="form.arrivalTime"
-              :placeholder="$t('websiteInquiry.timeExample', { time: '10:30' })"
-              maxlength="100"
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('websiteInquiry.departureTime')">
-            <el-input
-              v-model="form.departureTime"
-              :placeholder="$t('websiteInquiry.timeExample', { time: '18:00' })"
-              maxlength="100"
-            />
-          </el-form-item>
-        </el-col>
-      </el-row>
-      <el-row :gutter="16">
-        <el-col :span="24">
           <el-form-item :label="$t('websiteInquiry.destinations')">
             <el-select v-model="form.destinations" multiple filterable>
               <el-option
@@ -207,6 +185,36 @@
             </el-select>
           </el-form-item>
         </el-col>
+      </el-row>
+      <el-row :gutter="16">
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('websiteInquiry.arrivalTime')">
+            <el-time-picker
+              v-model="form.arrivalTime"
+              format="HH:mm"
+              value-format="HH:mm"
+              value-on-clear=""
+              :placeholder="$t('websiteInquiry.timeExample', { time: '10:30' })"
+              clearable
+              class="w-full"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('websiteInquiry.departureTime')">
+            <el-time-picker
+              v-model="form.departureTime"
+              format="HH:mm"
+              value-format="HH:mm"
+              value-on-clear=""
+              :placeholder="$t('websiteInquiry.timeExample', { time: '18:00' })"
+              clearable
+              class="w-full"
+            />
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row :gutter="16">
         <el-col :span="24">
           <el-form-item :label="$t('inquiry.originalMessage')" prop="requirements">
             <el-input

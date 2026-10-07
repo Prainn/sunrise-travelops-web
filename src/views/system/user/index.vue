@@ -31,7 +31,6 @@
               :placeholder="$t('user.searchPlaceholder')"
               class="page-search__keywords w-[180px]"
               clearable
-              @keyup.enter="handleQuery"
             />
           </el-form-item>
 
@@ -72,9 +71,6 @@
           </el-form-item>
 
           <el-form-item>
-            <el-button type="primary" @click="handleQuery">
-              {{ $t("common.search") }}
-            </el-button>
             <el-button @click="handleResetQuery">
               {{ $t("common.reset") }}
             </el-button>
@@ -441,7 +437,7 @@ const userFormRef = ref<FormInstance>();
 const resetPasswordFormRef = ref<FormInstance>();
 
 /** 分页表格数据管理 */
-const { loading, list, total, params, fetchData, handleQuery, handleResetQuery } = usePageTable<
+const { loading, list, total, params, fetchData, handleQuery, resetParams } = usePageTable<
   UserItem,
   UserQueryParams
 >({
@@ -451,8 +447,29 @@ const { loading, list, total, params, fetchData, handleQuery, handleResetQuery }
     deptId: undefined,
   },
   request: userService.getPage,
-  onBeforeReset: () => queryFormRef.value?.resetFields(),
 });
+
+const requestRows = useDebounceFn(handleQuery, 300);
+
+watch(
+  [
+    () => params.keyword,
+    () => params.status,
+    () => params.roleId,
+    () => params.createTime,
+    () => params.deptId,
+  ],
+  () => {
+    params.page = 1;
+    requestRows();
+  },
+);
+
+function handleResetQuery(): void {
+  queryFormRef.value?.resetFields();
+  resetParams();
+  requestRows();
+}
 
 const { selectedIds, hasSelection, handleSelectionChange } = useTableSelection<UserItem>();
 
@@ -518,7 +535,6 @@ const departmentTree = computed<DepartmentTreeNode[]>(() => [
 function handleDepartmentClick(node: DepartmentTreeNode): void {
   if (node.key !== "all" && node.deptId === undefined) return;
   params.deptId = node.deptId;
-  handleQuery();
 }
 
 const drawerSize = computed(() => (appStore.device === DeviceEnum.DESKTOP ? "600px" : "90%"));

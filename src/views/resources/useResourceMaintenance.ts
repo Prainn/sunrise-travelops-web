@@ -11,7 +11,6 @@ import { RESOURCE_PAGE_SIZE } from "./useResourcePagination";
 interface ResourceMaintenanceRecord {
   library?: ResourceLibrary;
   id: string;
-  code: string;
   status: ResourceStatus;
 }
 
@@ -65,7 +64,6 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
     record.value = {
       ...options.createEmpty(),
       library: selectedResourceLibrary.value,
-      code: "",
     };
     isDialogVisible.value = true;
   }

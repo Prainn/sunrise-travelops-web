@@ -19,9 +19,6 @@
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="search">
-              {{ $t("common.search") }}
-            </el-button>
             <el-button @click="reset">
               {{ $t("common.reset") }}
             </el-button>
@@ -79,7 +76,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
+import { useDebounceFn } from "@vueuse/core";
 import { useI18n } from "vue-i18n";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { operationLogService } from "@/services/operation-log.service";
@@ -99,6 +97,12 @@ const pageSize = ref(20);
 const total = ref(0);
 const loading = ref(false);
 const list = ref<OperationLog[]>([]);
+const requestRows = useDebounceFn(fetchData, 300);
+
+watch(category, () => {
+  page.value = 1;
+  requestRows();
+});
 
 function categoryLabel(value: OperationCategory) {
   const option = categories.find((item) => item.value === value);
@@ -132,13 +136,10 @@ async function fetchData() {
     loading.value = false;
   }
 }
-function search() {
-  page.value = 1;
-  void fetchData();
-}
 function reset() {
   category.value = "";
-  search();
+  page.value = 1;
+  requestRows();
 }
 onMounted(() => {
   void fetchData();

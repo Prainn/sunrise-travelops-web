@@ -11,6 +11,7 @@ import type {
   AttractionPriceRecord,
   AttractionRecord,
   CityRecord,
+  FlightRecord,
   GuidePersonRecord,
   GuideRecord,
   HotelRecord,
@@ -58,7 +59,7 @@ function normalizeMoney(value: string | number | null | undefined): number {
   return value === null || value === undefined ? 0 : Number(value);
 }
 
-function createCrud<T extends { code: string; library?: ResourceLibrary }>(
+function createCrud<T extends { code?: string; library?: ResourceLibrary }>(
   resourceName: string,
   toInput: (data: T) => Record<string, unknown>,
   fromResponse: (data: ApiRecord<T>) => T = (data) => data as T,
@@ -85,9 +86,9 @@ function createCrud<T extends { code: string; library?: ResourceLibrary }>(
         .post<ApiRecord<T>>(baseUrl, {
           library: data.library ?? selectedResourceLibrary.value,
           ...toInput(data),
-          ...(["guides", "guide-people"].includes(resourceName)
+          ...(["guides", "guide-people", "flights"].includes(resourceName)
             ? {}
-            : { code: data.code.trim() || undefined }),
+            : { code: data.code?.trim() || undefined }),
         })
         .then((result) => {
           clearResourceOptionsCache();
@@ -339,6 +340,14 @@ const attractionApi = createCrud<AttractionRecord>(
 const transportApi = createCrud<TransportRecord>("transports", transportInput, normalizeTransport);
 const guideApi = createCrud<GuideRecord>("guides", guideInput, normalizeGuide);
 const guidePersonApi = createCrud<GuidePersonRecord>("guide-people", guidePersonInput);
+const flightApi = createCrud<FlightRecord>("flights", (data) => ({
+  departureCity: data.departureCity.trim(),
+  arrivalCity: data.arrivalCity.trim(),
+  flightNumber: data.flightNumber.trim().toUpperCase(),
+  departureTime: data.departureTime,
+  arrivalTime: data.arrivalTime,
+  status: data.status,
+}));
 const agencies = reactive<AgencyRecord[]>([]);
 const hotels = reactive<HotelRecord[]>([]);
 const restaurants = reactive<RestaurantRecord[]>([]);
@@ -346,6 +355,7 @@ const attractions = reactive<AttractionRecord[]>([]);
 const transports = reactive<TransportRecord[]>([]);
 const guides = reactive<GuideRecord[]>([]);
 const guidePeople = reactive<GuidePersonRecord[]>([]);
+const flights = reactive<FlightRecord[]>([]);
 
 async function fetchAll<T>(api: ResourceCrud<T>, query: ResourceListQuery = {}): Promise<T[]> {
   const firstPage = await api.getPage({ ...query, page: 1, pageSize: 100 });
@@ -425,6 +435,8 @@ export const resourceService = {
   attractions,
   guides,
   guidePeople,
+  flights,
+  flightApi,
   agencyApi: {
     ...agencyApi,
     getCoordinators(businessUnit: "shengxu" | "linxi" | "website") {
@@ -508,6 +520,9 @@ export const resourceService = {
   },
   async loadGuidePeople(query: ResourceListQuery = {}) {
     return loadResourceRecords(guidePeople, guidePersonApi, query);
+  },
+  async loadFlights(query: ResourceListQuery = {}) {
+    return loadResourceRecords(flights, flightApi, query);
   },
   async getSelectionOptions(
     kind: "hotels" | "transports" | "guides" | "agencies",

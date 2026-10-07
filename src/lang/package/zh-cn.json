@@ -42,7 +42,8 @@
     "vehicleModels": "车型",
     "guides": "导游管理",
     "cities": "城市",
-    "inquiryLogReport": "询盘汇总"
+    "inquiryLogReport": "询盘汇总",
+    "flights": "航班信息"
   },
   "appVersion": {
     "title": "发现新版本",
@@ -1365,5 +1366,19 @@
     "generate": "生成",
     "saveBeforePreview": "请先保存行程，再预览已保存版本",
     "quotationConfirmed": "已冻结英文客户版与中文内部版"
+  },
+  "flight": {
+    "createTitle": "新增航班信息",
+    "editTitle": "编辑航班信息",
+    "departureCity": "出发城市",
+    "arrivalCity": "抵达城市",
+    "flightNumber": "航班号",
+    "departureTime": "起飞时间",
+    "arrivalTime": "抵达时间",
+    "searchPlaceholder": "搜索出发城市、抵达城市或航班号",
+    "selectTime": "请选择时间",
+    "timeInvalid": "请输入有效的 24 小时制时间（HH:mm）",
+    "flightNumberInvalid": "航班号只能包含 1–20 位英文字母或数字",
+    "allStatuses": "全部状态"
   }
 }

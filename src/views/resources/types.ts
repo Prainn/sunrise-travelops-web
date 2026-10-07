@@ -1,4 +1,9 @@
-import type { ResourceRecord } from "@/types/resource";
+import type { ResourceAuditRecord, ResourceRecord, ResourceStatus } from "@/types/resource";
+
+export interface ResourceTableRecord extends ResourceAuditRecord {
+  id: string;
+  status: ResourceStatus;
+}
 
 export interface ResourceColumn {
   prop: string;
