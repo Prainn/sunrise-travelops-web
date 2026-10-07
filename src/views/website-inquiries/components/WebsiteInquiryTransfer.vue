@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    :title="$t('websiteInquiry.transferTitle')"
+    :title="$t('identity.transfer')"
     width="min(500px, 94vw)"
     :close-on-click-modal="false"
     @update:model-value="emit('update:modelValue', $event)"
@@ -13,9 +13,9 @@
       :disabled="saving"
     >
       <el-form-item
-        :label="$t('websiteInquiry.receivingOwner')"
+        :label="$t('identity.owner')"
         prop="ownerId"
-        :rules="[{ required: true, message: $t('websiteInquiry.receivingOwnerRequired') }]"
+        :rules="[{ required: true, message: $t('common.selectPlaceholder') }]"
       >
         <el-select v-model="form.ownerId" filterable>
           <el-option
@@ -27,7 +27,7 @@
         </el-select>
       </el-form-item>
       <el-form-item
-        :label="$t('websiteInquiry.transferReason')"
+        :label="$t('identity.reason')"
         prop="reason"
         :rules="[
           {
@@ -50,7 +50,7 @@
         {{ $t("common.cancel") }}
       </el-button>
       <el-button type="primary" :loading="saving" @click="submit">
-        {{ $t("websiteInquiry.confirmTransfer") }}
+        {{ $t("common.confirm") }}
       </el-button>
     </template>
   </el-dialog>

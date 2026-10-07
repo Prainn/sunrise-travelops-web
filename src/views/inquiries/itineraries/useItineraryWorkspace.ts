@@ -1,7 +1,7 @@
 import { missingPriceReasons } from "./price-adjustments";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
 import { itineraryDuration } from "./duration";
-import { computed, ref, watch } from "vue";
+import { computed, ref, toRaw, watch } from "vue";
 import { inquiryService } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
 import { useUserStore } from "@/stores/user";
@@ -41,7 +41,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     () => [selectedItinerary.value?.id, selectedItinerary.value?.version],
     () => {
       const plan = selectedItinerary.value;
-      if (plan) savedPrices.value.set(plan.id, JSON.parse(JSON.stringify(plan)) as ItineraryRecord);
+      if (plan) savedPrices.value.set(plan.id, structuredClone(toRaw(plan)));
     },
     { immediate: true, flush: "post" },
   );

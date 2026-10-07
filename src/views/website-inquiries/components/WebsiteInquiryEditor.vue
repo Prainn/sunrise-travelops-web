@@ -2,7 +2,7 @@
   <el-drawer
     v-if="readOnly"
     :model-value="modelValue"
-    :title="$t('websiteInquiry.detailTitle')"
+    :title="$t('inquiry.inquiryDetail')"
     size="min(680px, 94vw)"
     @update:model-value="emit('update:modelValue', $event)"
   >
@@ -15,14 +15,14 @@
           <span class="text-[var(--el-text-color-secondary)]">{{ record.code }}</span>
         </div>
         <el-tag :type="INQUIRY_STATUS_TAG_TYPES[record.status]">
-          {{ $t(INQUIRY_STATUS_LABEL_KEYS[record.status]) }}
+          {{ $t(`inquiry.statuses.${record.status}`) }}
         </el-tag>
       </div>
       <el-descriptions :column="1" border>
-        <el-descriptions-item :label="$t('websiteInquiry.owner')">
+        <el-descriptions-item :label="$t('inquiry.owner')">
           {{ record.owner }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('websiteInquiry.plannedDays')">
+        <el-descriptions-item :label="$t('inquiry.plannedDays')">
           {{ $t("websiteInquiry.dayCount", { days: record.plannedDays }, record.plannedDays) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('common.startDate')">
@@ -31,10 +31,10 @@
         <el-descriptions-item :label="$t('websiteInquiry.pax')">
           {{ record.pax ?? $t("websiteInquiry.unconfirmed") }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('websiteInquiry.phone')">
+        <el-descriptions-item :label="$t('inquiry.phone')">
           {{ record.phone || $t("common.notSet") }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('websiteInquiry.email')">
+        <el-descriptions-item :label="$t('inquiry.email')">
           {{ record.email || $t("common.notSet") }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('websiteInquiry.arrivalTime')">
@@ -52,19 +52,19 @@
         <el-descriptions-item :label="$t('common.createdAt')">
           {{ formatDateTime(record.createdAt) }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('websiteInquiry.originalRequirements')">
+        <el-descriptions-item :label="$t('inquiry.originalMessage')">
           <div class="whitespace-pre-wrap">
             {{ record.requirements }}
           </div>
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('websiteInquiry.internalRemark')">
+        <el-descriptions-item :label="$t('inquiry.internalRemark')">
           <div class="whitespace-pre-wrap">
             {{ record.internalRemark || $t("common.notSet") }}
           </div>
         </el-descriptions-item>
         <el-descriptions-item
           v-if="record.status === 'lost'"
-          :label="$t('websiteInquiry.lostReason')"
+          :label="$t('inquiry.lostReason')"
         >
           {{ record.lostReason }}
         </el-descriptions-item>
@@ -74,7 +74,7 @@
   <el-dialog
     v-else
     :model-value="modelValue"
-    :title="$t(record ? 'websiteInquiry.editTitle' : 'websiteInquiry.createTitle')"
+    :title="$t(record ? 'inquiry.editInquiry' : 'inquiry.createInquiry')"
     width="min(820px, 94vw)"
     :close-on-click-modal="false"
     @update:model-value="emit('update:modelValue', $event)"
@@ -87,8 +87,27 @@
       :disabled="saving"
     >
       <el-row :gutter="16">
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('common.status')" prop="status">
+            <el-select v-model="form.status" :disabled="!record">
+              <el-option
+                v-for="option in editableStatusOptions"
+                :key="option.value"
+                :value="option.value"
+                :label="$t(option.labelKey)"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col v-if="form.status === 'lost'" :xs="24" :sm="12">
+          <el-form-item :label="$t('inquiry.lostReason')" prop="lostReason">
+            <el-input v-model.trim="form.lostReason" maxlength="2000" />
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row :gutter="16">
         <el-col v-if="record" :xs="24" :sm="12">
-          <el-form-item :label="$t('websiteInquiry.code')">
+          <el-form-item :label="$t('inquiry.code')">
             <el-input :model-value="record.code" disabled />
           </el-form-item>
         </el-col>
@@ -98,7 +117,7 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('websiteInquiry.plannedDays')" prop="plannedDays">
+          <el-form-item :label="$t('inquiry.plannedDays')" prop="plannedDays">
             <el-input-number
               v-model="form.plannedDays"
               :min="1"
@@ -108,12 +127,12 @@
           </el-form-item>
         </el-col>
         <el-col v-if="record" :xs="24" :sm="12">
-          <el-form-item :label="$t('websiteInquiry.owner')">
+          <el-form-item :label="$t('inquiry.owner')">
             <el-input :model-value="record.owner" disabled />
           </el-form-item>
         </el-col>
         <el-col v-else-if="allowAssign" :xs="24" :sm="12">
-          <el-form-item :label="$t('websiteInquiry.owner')" prop="ownerId">
+          <el-form-item :label="$t('inquiry.owner')" prop="ownerId">
             <el-select v-model="form.ownerId" filterable>
               <el-option
                 v-for="owner in owners"
@@ -145,12 +164,12 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('websiteInquiry.phone')">
+          <el-form-item :label="$t('inquiry.phone')">
             <el-input v-model="form.phone" maxlength="50" />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('websiteInquiry.email')" prop="email">
+          <el-form-item :label="$t('inquiry.email')" prop="email">
             <el-input v-model="form.email" maxlength="254" />
           </el-form-item>
         </el-col>
@@ -189,7 +208,7 @@
           </el-form-item>
         </el-col>
         <el-col :span="24">
-          <el-form-item :label="$t('websiteInquiry.originalRequirements')" prop="requirements">
+          <el-form-item :label="$t('inquiry.originalMessage')" prop="requirements">
             <el-input
               v-model="form.requirements"
               type="textarea"
@@ -199,7 +218,7 @@
           </el-form-item>
         </el-col>
         <el-col :span="24">
-          <el-form-item :label="$t('websiteInquiry.internalRemark')">
+          <el-form-item :label="$t('inquiry.internalRemark')">
             <el-input
               v-model="form.internalRemark"
               type="textarea"
@@ -215,7 +234,7 @@
         {{ $t("common.cancel") }}
       </el-button>
       <el-button type="primary" :loading="saving" @click="submit">
-        {{ $t("websiteInquiry.save") }}
+        {{ $t("common.confirm") }}
       </el-button>
     </template>
   </el-dialog>
@@ -226,8 +245,8 @@ import { useI18n } from "vue-i18n";
 import type { FormInstance, FormRules } from "element-plus";
 import { websiteInquiryInput, type WebsiteOwnerOption } from "@/services/website.service";
 import type { WebsiteCity, WebsiteInquiry, WebsiteInquiryInput } from "@/types/website";
-import { cloneWebsiteDraft, emptyInquiry, INQUIRY_STATUS_LABEL_KEYS } from "../options";
-import { INQUIRY_STATUS_TAG_TYPES } from "@/views/inquiries/options";
+import { cloneWebsiteDraft, emptyInquiry } from "../options";
+import { INQUIRY_STATUS_OPTIONS, INQUIRY_STATUS_TAG_TYPES } from "@/views/inquiries/options";
 import { formatDateTime } from "@/utils";
 const props = defineProps<{
   modelValue: boolean;
@@ -245,6 +264,10 @@ const emit = defineEmits<{
 const { t } = useI18n();
 const formRef = ref<FormInstance>();
 const form = ref<WebsiteInquiryInput>(emptyInquiry());
+const editableStatusOptions = computed(() => {
+  const allowedStatuses = props.record ? [props.record.status, "lost"] : ["new"];
+  return INQUIRY_STATUS_OPTIONS.filter((option) => allowedStatuses.includes(option.value));
+});
 const rules = computed<FormRules>(() => ({
   customerName: [
     {
@@ -268,7 +291,7 @@ const rules = computed<FormRules>(() => ({
     {
       required: true,
       whitespace: true,
-      message: t("websiteInquiry.requirementsRequired"),
+      message: t("inquiry.originalMessageRequired"),
       trigger: "blur",
     },
   ],
@@ -278,6 +301,14 @@ const rules = computed<FormRules>(() => ({
       required: props.allowAssign && !props.record,
       message: t("websiteInquiry.ownerRequired"),
       trigger: "change",
+    },
+  ],
+  lostReason: [
+    {
+      required: form.value.status === "lost",
+      whitespace: true,
+      message: t("inquiry.lostReasonRequired"),
+      trigger: "blur",
     },
   ],
 }));
@@ -297,6 +328,9 @@ function cityName(id: string) {
 }
 async function submit() {
   if (await formRef.value?.validate().catch(() => false))
-    emit("save", cloneWebsiteDraft(form.value));
+    emit("save", {
+      ...cloneWebsiteDraft(form.value),
+      lostReason: form.value.status === "lost" ? form.value.lostReason : "",
+    });
 }
 </script>

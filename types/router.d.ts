@@ -1,4 +1,4 @@
-import "vue-router";
+import type { LocationQueryRaw } from "vue-router";
 import type { LoginScope } from "../src/types/auth";
 
 declare module "vue-router" {
@@ -15,7 +15,8 @@ declare module "vue-router" {
     keepAlive?: boolean;
     breadcrumb?: boolean;
     activeMenu?: string;
-    params?: Record<string, unknown>;
+    /** 菜单导航使用的 query 参数。 */
+    params?: LocationQueryRaw;
     externalUrl?: string;
     roles?: string[];
     perms?: string[];

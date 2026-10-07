@@ -2,7 +2,7 @@
   <el-card class="page-content" shadow="never">
     <TableToolbar @refresh="emit('refresh')">
       <el-button v-if="can('website:inquiry:create')" type="primary" @click="emit('create')">
-        {{ $t("websiteInquiry.createTitle") }}
+        {{ $t("inquiry.createInquiry") }}
       </el-button>
     </TableToolbar>
     <div class="page-table-wrapper">
@@ -12,15 +12,15 @@
         height="100%"
         row-key="id"
       >
-        <el-table-column prop="code" :label="$t('websiteInquiry.code')" width="180" />
+        <el-table-column prop="code" :label="$t('inquiry.code')" width="180" />
         <el-table-column
           prop="customerName"
           :label="$t('websiteInquiry.customer')"
           min-width="190"
           show-overflow-tooltip
         />
-        <el-table-column prop="owner" :label="$t('websiteInquiry.owner')" width="110" />
-        <el-table-column :label="$t('websiteInquiry.plannedDays')" width="100" align="center">
+        <el-table-column prop="owner" :label="$t('inquiry.owner')" width="110" />
+        <el-table-column :label="$t('inquiry.plannedDays')" width="100" align="center">
           <template #default="{ row }">
             {{ $t("websiteInquiry.dayCount", { days: row.plannedDays }, row.plannedDays) }}
           </template>
@@ -37,7 +37,7 @@
         </el-table-column>
         <el-table-column
           prop="requirements"
-          :label="$t('websiteInquiry.requirements')"
+          :label="$t('inquiry.originalMessage')"
           min-width="220"
           show-overflow-tooltip
         />
@@ -49,7 +49,7 @@
         <el-table-column :label="$t('common.status')" width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="INQUIRY_STATUS_TAG_TYPES[row.status as WebsiteInquiry['status']]">
-              {{ $t(INQUIRY_STATUS_LABEL_KEYS[row.status as WebsiteInquiry["status"]]) }}
+              {{ $t(`inquiry.statuses.${row.status}`) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -62,7 +62,7 @@
         >
           <template #default="{ row }">
             <el-button type="primary" link @click="emit('view', row)">
-              {{ $t("websiteInquiry.details") }}
+              {{ $t("common.view") }}
             </el-button>
             <el-button
               v-if="can('website:inquiry:transfer') && !ended(row)"
@@ -70,7 +70,7 @@
               link
               @click="emit('transfer', row)"
             >
-              {{ $t("websiteInquiry.transfer") }}
+              {{ $t("identity.transfer") }}
             </el-button>
             <el-button
               v-if="can('website:inquiry:update') && !ended(row)"
@@ -86,23 +86,15 @@
               link
               @click="emit('archive', row)"
             >
-              {{ $t("websiteInquiry.archive") }}
-            </el-button>
-            <el-button
-              v-if="can('website:inquiry:update') && !ended(row)"
-              type="danger"
-              link
-              @click="emit('lost', row)"
-            >
-              {{ $t("websiteInquiry.lost") }}
+              {{ $t("inquiry.archive") }}
             </el-button>
           </template>
         </el-table-column>
         <!-- @vue-generic {WebsiteInquiry} -->
         <el-table-column
-          :label="$t('websiteInquiry.itinerary')"
+          :label="$t('inquiry.itinerary')"
           fixed="right"
-          width="240"
+          width="360"
           align="center"
         >
           <template #default="{ row }">
@@ -112,10 +104,7 @@
               link
               @click="emit('itineraries', row)"
             >
-              {{ $t("websiteInquiry.itineraryAndQuote") }}
-            </el-button>
-            <el-button type="primary" link @click="emit('history', row)">
-              {{ $t("websiteInquiry.history") }}
+              {{ $t("inquiry.itineraryManagement") }}
             </el-button>
           </template>
         </el-table-column>
@@ -138,7 +127,6 @@ import Pagination from "@/components/Pagination/index.vue";
 import { formatDateTime } from "@/utils";
 import type { WebsiteInquiry } from "@/types/website";
 import { INQUIRY_STATUS_TAG_TYPES } from "@/views/inquiries/options";
-import { INQUIRY_STATUS_LABEL_KEYS } from "../options";
 defineProps<{
   rows: WebsiteInquiry[];
   total: number;
@@ -155,7 +143,6 @@ const emit = defineEmits<{
   archive: [record: WebsiteInquiry];
   lost: [record: WebsiteInquiry];
   itineraries: [record: WebsiteInquiry];
-  history: [record: WebsiteInquiry];
   "update:page": [value: number];
   "update:pageSize": [value: number];
 }>();

@@ -1,3 +1,4 @@
+import { toRaw } from "vue";
 import type {
   FeeState,
   VehicleType,
@@ -28,15 +29,8 @@ export const TRANSPORT_OPTIONS = [
   { value: "flight", labelKey: "websiteInquiry.transportModes.flight" },
   { value: "other", labelKey: "websiteInquiry.transportModes.other" },
 ];
-export const INQUIRY_STATUS_LABEL_KEYS = {
-  new: "websiteInquiry.statuses.new",
-  planning: "websiteInquiry.statuses.planning",
-  quoted: "websiteInquiry.statuses.quoted",
-  lost: "websiteInquiry.statuses.lost",
-  archived: "websiteInquiry.statuses.archived",
-};
 export function cloneWebsiteDraft<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
+  return structuredClone(toRaw(value));
 }
 export function emptyInquiry(): WebsiteInquiryInput {
   return {
@@ -51,6 +45,7 @@ export function emptyInquiry(): WebsiteInquiryInput {
     departureTime: "",
     destinations: [],
     internalRemark: "",
+    status: "new",
     lostReason: "",
   };
 }

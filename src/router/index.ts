@@ -194,6 +194,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     meta: {
       title: "websiteInquiries",
       icon: "el-icon-ChatLineSquare",
+      alwaysShow: true,
       scopes: ["website", "headquarters"],
     },
     children: [
@@ -202,8 +203,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "WebsiteInquiryList",
         component: () => import("@/views/website-inquiries/index.vue"),
         meta: {
-          title: "websiteInquiries",
-          icon: "el-icon-ChatLineSquare",
+          title: "inquiryList",
+          icon: "el-icon-Document",
           keepAlive: true,
           perms: ["website:inquiry:list"],
         },

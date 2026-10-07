@@ -10,7 +10,6 @@ import { AuthStorage } from "@/utils/auth-storage";
 import { usePermissionStoreHook } from "@/stores/permission";
 import { useDictStoreHook } from "@/stores/dict";
 import { useTagsViewStore } from "./tags-view";
-import { translate } from "@/lang/utils";
 
 export const useUserStore = defineStore("user", () => {
   // 用户信息
@@ -25,23 +24,6 @@ export const useUserStore = defineStore("user", () => {
     const { accessToken, refreshToken } = await authService.login(loginRequest);
     rememberMe.value = loginRequest.rememberMe ?? false;
     AuthStorage.setTokens(accessToken, refreshToken, rememberMe.value);
-  }
-
-  let refreshPromise: Promise<void> | null = null;
-
-  /**
-   * 刷新 token（单飞模式）
-   *
-   * 多个并发请求遇到 token 过期时，共享同一次 refresh 请求。
-   */
-  function refreshTokenOnce(): Promise<void> {
-    if (refreshPromise) return refreshPromise;
-
-    refreshPromise = doRefreshToken().finally(() => {
-      refreshPromise = null;
-    });
-
-    return refreshPromise;
   }
 
   /**
@@ -97,21 +79,6 @@ export const useUserStore = defineStore("user", () => {
     userInfo.value = { roles: [], perms: [] };
   }
 
-  /**
-   * 刷新 token
-   */
-  async function doRefreshToken(): Promise<void> {
-    const currentRefreshToken = AuthStorage.getRefreshToken();
-
-    if (!currentRefreshToken) {
-      throw new Error(translate("service.auth.missingRefreshToken"));
-    }
-
-    const { accessToken, refreshToken: newRefreshToken } =
-      await authService.refreshToken(currentRefreshToken);
-    AuthStorage.setTokens(accessToken, newRefreshToken, AuthStorage.getRememberMe());
-  }
-
   return {
     userInfo,
     rememberMe,
@@ -121,8 +88,6 @@ export const useUserStore = defineStore("user", () => {
     getUserInfo,
     resetAllState,
     resetUserState,
-    refreshToken: doRefreshToken,
-    refreshTokenOnce,
   };
 });
 

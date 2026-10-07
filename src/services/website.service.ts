@@ -51,7 +51,7 @@ export function websiteInquiryInput(record: WebsiteInquiryInput): WebsiteInquiry
     pax: record.pax,
     arrivalTime: record.arrivalTime,
     departureTime: record.departureTime,
-    destinations: record.destinations,
+    destinations: [...record.destinations],
     internalRemark: record.internalRemark,
     status: record.status,
     lostReason: record.lostReason,

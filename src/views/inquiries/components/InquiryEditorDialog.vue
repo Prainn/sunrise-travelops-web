@@ -15,31 +15,35 @@
       :rules="rules"
       label-width="auto"
     >
-      <el-form-item
-        v-if="userStore.userInfo.scope === 'headquarters'"
-        :label="$t('identity.businessUnit')"
-      >
-        <el-select
-          v-model="form.businessUnit"
-          :disabled="isEditing"
-          :placeholder="$t('identity.selectBusinessUnitToCreate')"
-          @change="changeBusinessUnit"
-        >
-          <el-option
-            v-for="scope in ['shengxu', 'linxi', 'website']"
-            :key="scope"
-            :value="scope"
-            :label="businessUnitName(scope)"
-          />
-        </el-select>
-      </el-form-item>
-
       <el-row :gutter="16">
+        <el-col :span="12">
+          <el-form-item
+            v-if="userStore.userInfo.scope === 'headquarters'"
+            :label="$t('identity.businessUnit')"
+          >
+            <el-select
+              v-model="form.businessUnit"
+              :disabled="isEditing"
+              :placeholder="$t('identity.selectBusinessUnitToCreate')"
+              @change="changeBusinessUnit"
+            >
+              <el-option
+                v-for="scope in ['shengxu', 'linxi', 'website']"
+                :key="scope"
+                :value="scope"
+                :label="businessUnitName(scope)"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
         <el-col v-if="isEditing" :span="12">
           <el-form-item :label="$t('inquiry.code')">
             <el-input v-model="form.code" disabled />
           </el-form-item>
         </el-col>
+      </el-row>
+
+      <el-row :gutter="16">
         <el-col :span="12">
           <el-form-item :label="$t('common.status')" prop="status">
             <el-select v-model="form.status" :disabled="!isEditing">
@@ -50,6 +54,11 @@
                 :value="option.value"
               />
             </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col v-if="form.status === 'lost'" :span="12">
+          <el-form-item :label="$t('inquiry.lostReason')" prop="lostReason">
+            <el-input v-model.trim="form.lostReason" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -115,11 +124,7 @@
             </el-select>
           </el-form-item>
         </el-col>
-        <el-col v-if="form.status === 'lost'" :span="12">
-          <el-form-item :label="$t('inquiry.lostReason')" prop="lostReason">
-            <el-input v-model.trim="form.lostReason" />
-          </el-form-item>
-        </el-col>
+
         <el-col :span="24">
           <el-collapse v-model="expandedDetails" class="inquiry-followup">
             <el-collapse-item name="followup" :title="$t('inquiry.followupDetails')">

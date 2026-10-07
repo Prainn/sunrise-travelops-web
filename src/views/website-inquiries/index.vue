@@ -19,16 +19,16 @@
         <el-form-item :label="$t('common.status')">
           <el-select v-model="query.status" clearable>
             <el-option
-              v-for="(labelKey, value) in INQUIRY_STATUS_LABEL_KEYS"
-              :key="value"
-              :value="value"
-              :label="$t(labelKey)"
+              v-for="option in INQUIRY_STATUS_OPTIONS"
+              :key="option.value"
+              :value="option.value"
+              :label="$t(option.labelKey)"
             />
           </el-select>
         </el-form-item>
         <el-form-item
           v-if="allowAssign || user.userInfo.scope === 'headquarters'"
-          :label="$t('websiteInquiry.owner')"
+          :label="$t('inquiry.owner')"
         >
           <el-select v-model="query.ownerId" clearable filterable>
             <el-option
@@ -63,10 +63,6 @@
       @archive="archive"
       @lost="markLost"
       @itineraries="openItineraries"
-      @history="
-        historyRecord = $event;
-        historyVisible = true;
-      "
     />
     <WebsiteInquiryEditor
       v-model="editorVisible"
@@ -84,7 +80,6 @@
       :owners="owners"
       @saved="load"
     />
-    <WebsiteInquiryHistory v-model="historyVisible" :record="historyRecord" />
   </div>
 </template>
 <script setup lang="ts">
@@ -102,11 +97,10 @@ import {
   type WebsiteOwnerOption,
 } from "@/services/website.service";
 import type { WebsiteCity, WebsiteInquiry, WebsiteInquiryInput } from "@/types/website";
-import { INQUIRY_STATUS_LABEL_KEYS } from "./options";
+import { INQUIRY_STATUS_OPTIONS } from "@/views/inquiries/options";
 import WebsiteInquiryTable from "./components/WebsiteInquiryTable.vue";
 import WebsiteInquiryEditor from "./components/WebsiteInquiryEditor.vue";
 import WebsiteInquiryTransfer from "./components/WebsiteInquiryTransfer.vue";
-import WebsiteInquiryHistory from "./components/WebsiteInquiryHistory.vue";
 defineOptions({ name: "WebsiteInquiryList" });
 const { t } = useI18n();
 const user = useUserStore();
@@ -128,8 +122,6 @@ const editorVisible = ref(false);
 const editingRecord = ref<WebsiteInquiry>();
 const editorReadOnly = ref(false);
 const saving = ref(false);
-const historyVisible = ref(false);
-const historyRecord = ref<WebsiteInquiry>();
 const transferVisible = ref(false);
 const transferRecord = ref<WebsiteInquiry>();
 const allowAssign = computed(() => can("website:inquiry:transfer"));
@@ -187,7 +179,7 @@ async function save(input: WebsiteInquiryInput) {
       );
     else await websiteService.createInquiry(input);
     editorVisible.value = false;
-    ElMessage.success(t("websiteInquiry.saved"));
+    ElMessage.success(t(editingRecord.value ? "common.updateSuccess" : "common.createSuccess"));
     await load();
   } catch (cause) {
     ElMessage.error(websiteErrorMessage(cause));
@@ -198,11 +190,11 @@ async function save(input: WebsiteInquiryInput) {
 async function archive(record: WebsiteInquiry) {
   try {
     await ElMessageBox.confirm(
-      t("websiteInquiry.archiveConfirm", { code: record.code }),
-      t("websiteInquiry.archiveTitle"),
+      t("inquiry.archiveConfirm"),
+      t("common.tip"),
       {
         type: "warning",
-        confirmButtonText: t("websiteInquiry.archive"),
+        confirmButtonText: t("common.confirm"),
         cancelButtonText: t("common.cancel"),
       },
     );
@@ -212,7 +204,7 @@ async function archive(record: WebsiteInquiry) {
   try {
     await websiteService.archive(record.id, record.version);
     await load();
-    ElMessage.success(t("websiteInquiry.archived"));
+    ElMessage.success(t("inquiry.archiveSuccess"));
   } catch (cause) {
     ElMessage.error(websiteErrorMessage(cause));
   }
@@ -221,15 +213,15 @@ async function markLost(record: WebsiteInquiry) {
   let reason: string;
   try {
     const result = await ElMessageBox.prompt(
-      t("websiteInquiry.lostReasonRequired"),
-      t("websiteInquiry.markLost"),
+      t("inquiry.lostReasonRequired"),
+      t("inquiry.markLost"),
       {
-        inputValidator: (value) => Boolean(value?.trim()) || t("websiteInquiry.reasonRequired"),
+        inputValidator: (value) => Boolean(value?.trim()) || t("inquiry.lostReasonRequired"),
         confirmButtonText: t("common.confirm"),
         cancelButtonText: t("common.cancel"),
       },
     );
-    reason = result.value;
+    reason = result.value.trim();
   } catch {
     return;
   }
@@ -240,6 +232,7 @@ async function markLost(record: WebsiteInquiry) {
       record.version,
     );
     await load();
+    ElMessage.success(t("common.updateSuccess"));
   } catch (cause) {
     ElMessage.error(websiteErrorMessage(cause));
   }
