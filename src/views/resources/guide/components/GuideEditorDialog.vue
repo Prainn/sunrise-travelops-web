@@ -3,16 +3,25 @@
     :model-value="modelValue"
     :title="$t(isEditing ? 'guide.editPrice' : 'guide.createPrice')"
     width="460px"
+    :show-close="!isSubmitting"
+    :close-on-click-modal="!isSubmitting"
+    :close-on-press-escape="!isSubmitting"
     @close="emit('update:modelValue', false)"
   >
-    <el-form label-position="top">
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      :disabled="isSubmitting"
+      label-position="top"
+    >
       <el-form-item :label="$t('identity.library')">
         <ResourceLibraryTag :library="form.library" />
       </el-form-item>
-      <el-form-item :label="$t('guide.referenceDailyPrice')">
+      <el-form-item :label="$t('guide.referenceDailyPrice')" prop="dailyPrice">
         <el-input-number v-model="form.dailyPrice" :min="0" :precision="2" />
       </el-form-item>
-      <el-form-item :label="$t('planning.secondLanguage')">
+      <el-form-item :label="$t('planning.secondLanguage')" prop="secondLanguage">
         <el-select v-model="form.secondLanguage">
           <el-option
             v-for="item in GUIDE_LANGUAGE_OPTIONS"
@@ -37,9 +46,15 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="emit('update:modelValue', false)">
+      <el-button :disabled="isSubmitting" @click="emit('update:modelValue', false)">
         {{ $t("common.cancel") }}
-      </el-button><el-button type="primary" @click="emit('submit', { ...form })">
+      </el-button>
+      <el-button
+        type="primary"
+        :loading="isSaving"
+        :disabled="isSubmitting"
+        @click="handleSubmit"
+      >
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -47,15 +62,50 @@
 </template>
 <script setup lang="ts">
 import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
-import { reactive, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
+import type { FormInstance, FormRules } from "element-plus";
+import { useI18n } from "vue-i18n";
 import { GUIDE_LANGUAGE_OPTIONS, type GuideRecord } from "@/types/resource";
-const props = defineProps<{ modelValue: boolean; record: GuideRecord; isEditing: boolean }>();
-const emit = defineEmits<{ "update:modelValue": [boolean]; submit: [GuideRecord] }>();
+import { useResourceFormSubmit } from "../../useResourceFormSubmit";
+
+const props = defineProps<{
+  modelValue: boolean;
+  record: GuideRecord;
+  isEditing: boolean;
+  submit: (record: GuideRecord) => Promise<void>;
+}>();
+const emit = defineEmits<{ "update:modelValue": [boolean] }>();
+const { t } = useI18n();
+const formRef = ref<FormInstance>();
+const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
 const form = reactive({ ...props.record });
+const rules = computed<FormRules>(() => ({
+  dailyPrice: [
+    {
+      required: true,
+      message: t("resource.fieldRequired", { field: t("guide.referenceDailyPrice") }),
+      trigger: "change",
+    },
+  ],
+  secondLanguage: [
+    {
+      required: true,
+      message: t("resource.fieldRequired", { field: t("planning.secondLanguage") }),
+      trigger: "change",
+    },
+  ],
+}));
 watch(
   () => [props.modelValue, props.record] as const,
   ([visible, record]) => {
-    if (visible) Object.assign(form, record);
+    if (visible) {
+      Object.assign(form, record);
+      formRef.value?.clearValidate();
+    }
   },
 );
+
+async function handleSubmit() {
+  await submitForm(() => props.submit({ ...form }));
+}
 </script>

@@ -23,13 +23,13 @@
       v-model="isDialogVisible"
       :record="record"
       :is-editing="isEditing"
-      @submit="saveAgency"
+      :submit="saveAgency"
     />
     <AgencyContactDialog
       v-model="isContactDialogVisible"
       :record="contactRecord"
       :is-editing="isContactEditing"
-      @submit="saveContact"
+      :submit="saveContact"
     />
   </div>
 </template>

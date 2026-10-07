@@ -3,12 +3,16 @@
     :model-value="modelValue"
     :title="$t(isEditing ? 'guide.editGuide' : 'guide.createGuide')"
     width="520px"
+    :show-close="!isSubmitting"
+    :close-on-click-modal="!isSubmitting"
+    :close-on-press-escape="!isSubmitting"
     @close="emit('update:modelValue', false)"
   >
     <el-form
       ref="formRef"
       :model="form"
       :rules="rules"
+      :disabled="isSubmitting"
       label-position="left"
       label-width="100px"
     >
@@ -97,10 +101,15 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="emit('update:modelValue', false)">
+      <el-button :disabled="isSubmitting" @click="emit('update:modelValue', false)">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button type="primary" @click="handleSubmit">
+      <el-button
+        type="primary"
+        :loading="isSaving"
+        :disabled="isSubmitting"
+        @click="handleSubmit"
+      >
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -116,14 +125,21 @@ import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { useUserStore } from "@/stores/user";
 import type { LoginScope } from "@/types/auth";
 import type { GuidePersonRecord } from "@/types/resource";
+import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
-const props = defineProps<{ modelValue: boolean; record: GuidePersonRecord; isEditing: boolean }>();
-const emit = defineEmits<{ "update:modelValue": [boolean]; submit: [GuidePersonRecord] }>();
+const props = defineProps<{
+  modelValue: boolean;
+  record: GuidePersonRecord;
+  isEditing: boolean;
+  submit: (record: GuidePersonRecord) => Promise<void>;
+}>();
+const emit = defineEmits<{ "update:modelValue": [boolean] }>();
 const { t } = useI18n();
 const userStore = useUserStore();
 const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters");
 const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const formRef = ref<FormInstance>();
+const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
 const form = reactive<GuidePersonRecord>({ ...props.record });
 const rules: FormRules = {
   name: [{ required: true, whitespace: true, message: t("guide.nameRequired"), trigger: "blur" }],
@@ -154,16 +170,16 @@ function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
   formRef.value?.validateField("library");
 }
 async function handleSubmit() {
-  const valid = await formRef.value?.validate().catch(() => false);
-  if (!valid) return;
-  emit("submit", {
-    ...form,
-    name: form.name.trim(),
-    language: form.language === "" ? null : form.language,
-    contact: form.contact === "" ? null : form.contact,
-    remark: form.remark === "" ? null : form.remark,
-    certificateNo: form.certificateNo === "" ? null : form.certificateNo,
-    identityNumber: form.identityNumber === "" ? null : form.identityNumber,
+  await submitForm(async () => {
+    await props.submit({
+      ...form,
+      name: form.name.trim(),
+      language: form.language === "" ? null : form.language,
+      contact: form.contact === "" ? null : form.contact,
+      remark: form.remark === "" ? null : form.remark,
+      certificateNo: form.certificateNo === "" ? null : form.certificateNo,
+      identityNumber: form.identityNumber === "" ? null : form.identityNumber,
+    });
   });
 }
 </script>

@@ -3,12 +3,16 @@
     v-model="isVisible"
     :title="$t(isEditing ? 'restaurant.editRestaurant' : 'restaurant.createRestaurant')"
     width="680px"
+    :show-close="!isSubmitting"
+    :close-on-click-modal="!isSubmitting"
+    :close-on-press-escape="!isSubmitting"
     destroy-on-close
   >
     <el-form
       ref="formRef"
       :model="form"
       :rules="rules"
+      :disabled="isSubmitting"
       label-width="auto"
     >
       <el-form-item
@@ -84,10 +88,15 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="isVisible = false">
+      <el-button :disabled="isSubmitting" @click="isVisible = false">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button type="primary" @click="handleSubmit">
+      <el-button
+        type="primary"
+        :loading="isSaving"
+        :disabled="isSubmitting"
+        @click="handleSubmit"
+      >
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -105,11 +114,16 @@ import type { LoginScope } from "@/types/auth";
 import CitySelect from "@/components/CitySelect.vue";
 import type { RestaurantRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
+import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
-const props = defineProps<{ modelValue: boolean; record: RestaurantRecord; isEditing: boolean }>();
+const props = defineProps<{
+  modelValue: boolean;
+  record: RestaurantRecord;
+  isEditing: boolean;
+  submit: (record: RestaurantRecord) => Promise<void>;
+}>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [record: RestaurantRecord];
 }>();
 
 const { t, locale } = useI18n();
@@ -117,6 +131,7 @@ const userStore = useUserStore();
 const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters");
 const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const formRef = ref<FormInstance>();
+const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
 const form = reactive<RestaurantRecord>({ ...props.record });
 const isVisible = computed({
   get: () => props.modelValue,
@@ -153,7 +168,6 @@ function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
 }
 
 async function handleSubmit() {
-  if (!(await formRef.value?.validate().catch(() => false))) return;
-  emit("submit", { ...form, prices: props.record.prices });
+  await submitForm(() => props.submit({ ...form, prices: props.record.prices }));
 }
 </script>

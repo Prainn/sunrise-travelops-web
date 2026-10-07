@@ -80,16 +80,16 @@
       "
       width="min(960px, 94vw)"
       destroy-on-close
-      :show-close="!saving"
-      :close-on-click-modal="!saving"
-      :close-on-press-escape="!saving"
+      :show-close="!saving && !isSubmitting"
+      :close-on-click-modal="!saving && !isSubmitting"
+      :close-on-press-escape="!saving && !isSubmitting"
     >
       <el-form
         v-if="record"
         ref="formRef"
         :model="record"
         :rules="rules"
-        :disabled="!editable || saving"
+        :disabled="!editable || saving || isSubmitting"
         label-width="auto"
       >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
@@ -195,13 +195,14 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button :disabled="saving" @click="visible = false">
+        <el-button :disabled="saving || isSubmitting" @click="visible = false">
           {{ editable ? $t("common.cancel") : $t("common.close") }}
         </el-button>
         <el-button
           v-if="editable"
           type="primary"
-          :loading="saving"
+          :loading="saving || isSaving"
+          :disabled="isSubmitting"
           @click="applyEdit"
         >
           {{ $t("common.confirm") }}
@@ -217,6 +218,7 @@ import type { FormInstance } from "element-plus";
 import type { WebsiteConfig, WebsiteSkeleton } from "@/types/website";
 import { cloneWebsiteDraft } from "@/views/website-inquiries/options";
 import { useWebsiteSkeletonRules } from "../useWebsiteConfigRules";
+import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
 const props = defineProps<{
   config: WebsiteConfig;
@@ -229,6 +231,7 @@ const visible = ref(false);
 const isNew = ref(false);
 const record = ref<WebsiteSkeleton>();
 const formRef = ref<FormInstance>();
+const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
 const rules = useWebsiteSkeletonRules(() => props.config, record);
 
 function openEditor(skeleton?: WebsiteSkeleton) {
@@ -247,13 +250,15 @@ function openEditor(skeleton?: WebsiteSkeleton) {
 
 async function applyEdit() {
   if (!record.value || !props.editable || props.saving) return;
-  if (!(await formRef.value?.validate().catch(() => false))) return;
-  const next = cloneWebsiteDraft(props.config);
-  const result = cloneWebsiteDraft(record.value);
-  const index = next.skeletons.findIndex((row) => row.id === result.id);
-  if (index < 0) next.skeletons.push(result);
-  else next.skeletons.splice(index, 1, result);
-  if (await props.saveConfig(next)) visible.value = false;
+  await submitForm(async () => {
+    if (!record.value || !props.editable || props.saving) return;
+    const next = cloneWebsiteDraft(props.config);
+    const result = cloneWebsiteDraft(record.value);
+    const index = next.skeletons.findIndex((row) => row.id === result.id);
+    if (index < 0) next.skeletons.push(result);
+    else next.skeletons.splice(index, 1, result);
+    if (await props.saveConfig(next)) visible.value = false;
+  });
 }
 
 async function deleteRecord(index: number) {

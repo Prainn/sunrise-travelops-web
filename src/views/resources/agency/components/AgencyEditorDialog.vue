@@ -3,6 +3,9 @@
     v-model="isVisible"
     :title="$t(isEditing ? 'resource.editAgencyTitle' : 'resource.createAgencyTitle')"
     width="600px"
+    :show-close="!isSubmitting"
+    :close-on-click-modal="!isSubmitting"
+    :close-on-press-escape="!isSubmitting"
     destroy-on-close
     @closed="resetForm"
   >
@@ -10,6 +13,7 @@
       ref="formRef"
       :model="form"
       :rules="rules"
+      :disabled="isSubmitting"
       label-width="auto"
     >
       <el-form-item
@@ -79,10 +83,15 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="isVisible = false">
+      <el-button :disabled="isSubmitting" @click="isVisible = false">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button type="primary" @click="handleSubmit">
+      <el-button
+        type="primary"
+        :loading="isSaving"
+        :disabled="isSubmitting"
+        @click="handleSubmit"
+      >
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -100,16 +109,17 @@ import { useUserStore } from "@/stores/user";
 import type { LoginScope } from "@/types/auth";
 import type { AgencyRecord } from "@/types/resource";
 import { resourceService } from "@/services/resource.service";
+import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
 const props = defineProps<{
   modelValue: boolean;
   record: AgencyRecord;
+  submit: (record: AgencyRecord) => Promise<void>;
   isEditing: boolean;
 }>();
 
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [record: AgencyRecord];
 }>();
 
 const { t } = useI18n();
@@ -124,6 +134,7 @@ const availableBusinessUnits = computed(() =>
 );
 const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const formRef = ref<FormInstance>();
+const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
 const form = reactive<AgencyRecord>(cloneRecord(props.record));
 const coordinators = ref<{ id: string; name: string; username: string }[]>([]);
 const loadingCoordinators = ref(false);
@@ -210,7 +221,6 @@ function resetForm() {
 }
 
 async function handleSubmit() {
-  if (!(await formRef.value?.validate().catch(() => false))) return;
-  emit("submit", cloneRecord(form));
+  await submitForm(() => props.submit(cloneRecord(form)));
 }
 </script>

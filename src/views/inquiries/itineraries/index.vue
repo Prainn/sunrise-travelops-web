@@ -260,7 +260,7 @@
         v-model="isGuideDialogVisible"
         :record="guideForm"
         :is-editing="false"
-        @submit="createGuide"
+        :submit="createGuide"
       />
       <ItineraryResourceDialog
         v-model="isResourceDialogVisible"

@@ -66,12 +66,16 @@
       v-model="isHotelDialogVisible"
       :title="$t(isEditing ? 'hotel.editHotel' : 'hotel.createHotel')"
       width="680px"
+      :show-close="!isSubmitting"
+      :close-on-click-modal="!isSubmitting"
+      :close-on-press-escape="!isSubmitting"
       destroy-on-close
     >
       <el-form
         ref="hotelFormRef"
         :model="hotelForm"
         :rules="hotelRules"
+        :disabled="isSubmitting"
         label-width="auto"
       >
         <el-form-item
@@ -150,10 +154,15 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="isHotelDialogVisible = false">
+        <el-button :disabled="isSubmitting" @click="isHotelDialogVisible = false">
           {{ $t("common.cancel") }}
         </el-button>
-        <el-button type="primary" @click="saveHotel">
+        <el-button
+          type="primary"
+          :loading="isSaving"
+          :disabled="isSubmitting"
+          @click="saveHotel"
+        >
           {{ $t("common.confirm") }}
         </el-button>
       </template>
@@ -181,6 +190,7 @@ import { resourceService } from "@/services/resource.service";
 import type { HotelRating, HotelRecord, ResourceListQuery } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 import HotelTable from "./components/HotelTable.vue";
+import { useResourceFormSubmit } from "../useResourceFormSubmit";
 
 type HotelForm = HotelRecord;
 
@@ -197,6 +207,7 @@ const rating = ref<HotelRating | "">("");
 const isHotelDialogVisible = ref(false);
 const editingId = ref("");
 const hotelFormRef = ref<FormInstance>();
+const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(hotelFormRef);
 const hotelForm = reactive<HotelForm>(createEmptyHotel());
 const isEditing = computed(() => Boolean(editingId.value));
 const cityOptions = useCityOptions();
@@ -330,27 +341,28 @@ async function deleteHotel(hotel: HotelRecord) {
   }
 }
 async function saveHotel() {
-  if (!(await hotelFormRef.value?.validate().catch(() => false))) return;
-  const formValue = {
-    ...hotelForm,
-    province:
-      resourceService.cityOptions.find(
-        (city) => city.name === hotelForm.city && city.library === hotelForm.library,
-      )?.province ?? hotelForm.province,
-  };
-  const current = hotelStore.find((hotel) => hotel.id === editingId.value);
-  try {
-    const saved = editingId.value
-      ? await resourceService.hotelApi.update(editingId.value, formValue)
-      : await resourceService.hotelApi.create(formValue);
-    if (current) Object.assign(current, saved);
-    else if (!editingId.value) hotelStore.push(saved);
-    await loadHotels(currentQuery());
-    isHotelDialogVisible.value = false;
-    ElMessage.success(t(editingId.value ? "common.updateSuccess" : "common.createSuccess"));
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : String(error));
-  }
+  await submitForm(async () => {
+    const formValue = {
+      ...hotelForm,
+      province:
+        resourceService.cityOptions.find(
+          (city) => city.name === hotelForm.city && city.library === hotelForm.library,
+        )?.province ?? hotelForm.province,
+    };
+    const current = hotelStore.find((hotel) => hotel.id === editingId.value);
+    try {
+      const saved = editingId.value
+        ? await resourceService.hotelApi.update(editingId.value, formValue)
+        : await resourceService.hotelApi.create(formValue);
+      if (current) Object.assign(current, saved);
+      else if (!editingId.value) hotelStore.push(saved);
+      await loadHotels(currentQuery());
+      isHotelDialogVisible.value = false;
+      ElMessage.success(t(editingId.value ? "common.updateSuccess" : "common.createSuccess"));
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : String(error));
+    }
+  });
 }
 async function confirmDelete(messageKey: string) {
   try {

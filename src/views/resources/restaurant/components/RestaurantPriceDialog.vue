@@ -3,12 +3,16 @@
     v-model="isVisible"
     :title="$t(isEditing ? 'restaurant.editPrice' : 'restaurant.createPrice')"
     width="620px"
+    :show-close="!isSubmitting"
+    :close-on-click-modal="!isSubmitting"
+    :close-on-press-escape="!isSubmitting"
     destroy-on-close
   >
     <el-form
       ref="formRef"
       :model="form"
       :rules="rules"
+      :disabled="isSubmitting"
       label-width="auto"
     >
       <el-form-item :label="$t('restaurant.menuName')" prop="menuName">
@@ -53,10 +57,15 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="isVisible = false">
+      <el-button :disabled="isSubmitting" @click="isVisible = false">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button type="primary" @click="handleSubmit">
+      <el-button
+        type="primary"
+        :loading="isSaving"
+        :disabled="isSubmitting"
+        @click="handleSubmit"
+      >
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -69,19 +78,21 @@ import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { RestaurantPriceRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
+import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
 const props = defineProps<{
   modelValue: boolean;
   record: RestaurantPriceRecord;
+  submit: (record: RestaurantPriceRecord) => Promise<void>;
   isEditing: boolean;
 }>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [record: RestaurantPriceRecord];
 }>();
 
 const { t, locale } = useI18n();
 const formRef = ref<FormInstance>();
+const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
 const form = reactive<RestaurantPriceRecord>({ ...props.record });
 const isVisible = computed({
   get: () => props.modelValue,
@@ -105,7 +116,6 @@ function changePriceUnit(value: string | number | boolean | undefined) {
 }
 
 async function handleSubmit() {
-  if (!(await formRef.value?.validate().catch(() => false))) return;
-  emit("submit", { ...form });
+  await submitForm(() => props.submit({ ...form }));
 }
 </script>

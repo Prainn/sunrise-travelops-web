@@ -87,16 +87,16 @@
       "
       width="min(900px, 94vw)"
       destroy-on-close
-      :show-close="!saving"
-      :close-on-click-modal="!saving"
-      :close-on-press-escape="!saving"
+      :show-close="!saving && !isSubmitting"
+      :close-on-click-modal="!saving && !isSubmitting"
+      :close-on-press-escape="!saving && !isSubmitting"
     >
       <el-form
         v-if="record"
         ref="formRef"
         :model="record"
         :rules="rules"
-        :disabled="!editable || saving"
+        :disabled="!editable || saving || isSubmitting"
         label-width="auto"
       >
         <el-form-item :label="$t('websiteConfig.templates.name')" prop="name">
@@ -169,13 +169,14 @@
         </div>
       </el-form>
       <template #footer>
-        <el-button :disabled="saving" @click="visible = false">
+        <el-button :disabled="saving || isSubmitting" @click="visible = false">
           {{ editable ? $t("common.cancel") : $t("common.close") }}
         </el-button>
         <el-button
           v-if="editable"
           type="primary"
-          :loading="saving"
+          :loading="saving || isSaving"
+          :disabled="isSubmitting"
           @click="applyEdit"
         >
           {{ $t("common.confirm") }}
@@ -191,6 +192,7 @@ import type { FormInstance } from "element-plus";
 import type { WebsiteConfig, WebsiteTemplate } from "@/types/website";
 import { cloneWebsiteDraft } from "@/views/website-inquiries/options";
 import { getWebsiteTemplateVariables, useWebsiteTemplateRules } from "../useWebsiteConfigRules";
+import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
 const props = defineProps<{
   config: WebsiteConfig;
@@ -203,6 +205,7 @@ const visible = ref(false);
 const isNew = ref(false);
 const record = ref<WebsiteTemplate>();
 const formRef = ref<FormInstance>();
+const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
 const rules = useWebsiteTemplateRules(() => props.config, record);
 const templateVariables = computed(() =>
   getWebsiteTemplateVariables(record.value?.code ?? "").map((variable) => `{${variable}}`),
@@ -247,14 +250,16 @@ function openEditor(template?: WebsiteTemplate) {
 
 async function applyEdit() {
   if (!record.value || !props.editable || props.saving) return;
-  if (!(await formRef.value?.validate().catch(() => false))) return;
-  const next = cloneWebsiteDraft(props.config);
-  const result = cloneWebsiteDraft(record.value);
-  result.name = result.name.trim();
-  const index = next.templates.findIndex((row) => row.id === result.id);
-  if (index < 0) next.templates.push(result);
-  else next.templates.splice(index, 1, result);
-  if (await props.saveConfig(next)) visible.value = false;
+  await submitForm(async () => {
+    if (!record.value || !props.editable || props.saving) return;
+    const next = cloneWebsiteDraft(props.config);
+    const result = cloneWebsiteDraft(record.value);
+    result.name = result.name.trim();
+    const index = next.templates.findIndex((row) => row.id === result.id);
+    if (index < 0) next.templates.push(result);
+    else next.templates.splice(index, 1, result);
+    if (await props.saveConfig(next)) visible.value = false;
+  });
 }
 
 async function deleteRecord(index: number) {

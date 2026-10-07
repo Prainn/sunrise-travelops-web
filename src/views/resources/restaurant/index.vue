@@ -20,13 +20,13 @@
       v-model="isRestaurantDialogVisible"
       :record="restaurantForm"
       :is-editing="isEditing"
-      @submit="saveRestaurant"
+      :submit="saveRestaurant"
     />
     <RestaurantPriceDialog
       v-model="isPriceDialogVisible"
       :record="priceForm"
       :is-editing="Boolean(editingPriceId)"
-      @submit="savePrice"
+      :submit="savePrice"
     />
   </div>
 </template>

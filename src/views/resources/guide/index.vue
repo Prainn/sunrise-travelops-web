@@ -17,7 +17,7 @@
       v-model="isPersonDialogVisible"
       :record="personForm"
       :is-editing="isPersonEditing"
-      @submit="savePerson"
+      :submit="savePerson"
     />
     <el-drawer v-model="isPersonDetailVisible" :title="$t('guide.detail')" size="520px">
       <el-descriptions v-if="personDetail" :column="1" border>
@@ -81,7 +81,7 @@
       v-model="isPriceDialogVisible"
       :record="priceForm"
       :is-editing="isPriceEditing"
-      @submit="savePrice"
+      :submit="savePrice"
     />
   </div>
 </template>
