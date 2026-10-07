@@ -1,31 +1,34 @@
 <template>
   <div class="page-container">
     <el-card class="page-search" shadow="never">
-      <el-form :inline="true">
-        <el-form-item :label="$t('operationLog.category')">
-          <el-select
-            v-model="category"
-            clearable
-            :placeholder="$t('operationLog.all')"
-            style="width: 180px"
-          >
-            <el-option
-              v-for="option in categories"
-              :key="option.value"
-              :label="$t(option.label)"
-              :value="option.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="search">
-            {{ $t("common.search") }}
-          </el-button>
-          <el-button @click="reset">
-            {{ $t("common.reset") }}
-          </el-button>
-        </el-form-item>
-      </el-form>
+      <div class="flex items-center justify-between gap-[12px]">
+        <el-form :inline="true">
+          <el-form-item :label="$t('operationLog.category')">
+            <el-select
+              v-model="category"
+              clearable
+              :placeholder="$t('operationLog.all')"
+              style="width: 180px"
+            >
+              <el-option
+                v-for="option in categories"
+                :key="option.value"
+                :label="$t(option.label)"
+                :value="option.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="search">
+              {{ $t("common.search") }}
+            </el-button>
+            <el-button @click="reset">
+              {{ $t("common.reset") }}
+            </el-button>
+          </el-form-item>
+        </el-form>
+        <TableToolbar class="mb-0!" @refresh="fetchData" />
+      </div>
     </el-card>
 
     <el-card class="page-content" shadow="never">
@@ -78,6 +81,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import TableToolbar from "@/components/TableToolbar/index.vue";
 import { operationLogService } from "@/services/operation-log.service";
 import type { OperationCategory, OperationLog } from "@/types/operation-log";
 
