@@ -13,6 +13,30 @@ import type {
 
 type Translate = Composer["t"];
 
+const TEMPLATE_VARIABLES = new Map<string, readonly string[]>([
+  ["arrival-basic", ["city"]],
+  ["departure-basic", ["city"]],
+  ["overnight", ["city"]],
+  ["guide", ["language", "service_scope"]],
+  ["private-driver", []],
+  ["hsr-second-class", ["city"]],
+  ["hotel-breakfast", ["hotel"]],
+  ["first-entry-ticket", ["attraction"]],
+  ["included-service", ["service"]],
+  ["restaurant-recommendation", ["restaurant_or_meal"]],
+  ["optional-not-included", ["component"]],
+  ["hotel-substitution", []],
+  ["peak-season", []],
+  ["no-shopping", []],
+]);
+
+/**
+ * 返回所选服务用途或自定义景点正文的可用变量。
+ */
+export function getWebsiteTemplateVariables(code: string): readonly string[] {
+  return TEMPLATE_VARIABLES.get(code) ?? ["city", "attraction"];
+}
+
 function requiredText(t: Translate, field: string, max = 150): FormItemRule[] {
   return [
     {
@@ -153,14 +177,15 @@ export function useWebsiteSkeletonRules(config: () => WebsiteConfig, record: Ref
 
 export function useWebsiteTemplateRules(config: () => WebsiteConfig, record: Ref<WebsiteTemplate | undefined>) {
   const { t } = useI18n();
-  const variables = ["city", "attraction", "language", "service_scope", "hotel", "service", "restaurant_or_meal", "component"];
   const copyRules = (field: string): FormItemRule[] => [
     ...requiredText(t, field, 20000),
     {
       validator: (_rule, value: string, callback) => {
+        const code = record.value?.code ?? "";
+        const variables = getWebsiteTemplateVariables(code);
         for (const match of value.matchAll(/\{([^{}]+)\}/g)) {
           if (!variables.includes(match[1])) {
-            return callback(new Error(t("websiteConfig.validation.templateVariable", { variable: match[1] })));
+            return callback(new Error(t("websiteConfig.validation.templateVariable", { code, variable: match[1] })));
           }
         }
         callback();

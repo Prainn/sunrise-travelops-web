@@ -139,9 +139,11 @@
         </el-form-item>
         <el-alert
           :title="
-            $t('websiteConfig.templates.variablesHint', {
-              variables: TEMPLATE_VARIABLES.join($t('websiteConfig.listSeparator')),
-            })
+            templateVariables.length
+              ? $t('websiteConfig.templates.variablesHint', {
+                variables: templateVariables.join($t('websiteConfig.listSeparator')),
+              })
+              : $t('websiteConfig.templates.noVariablesHint')
           "
           type="info"
           :closable="false"
@@ -184,11 +186,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import type { FormInstance } from "element-plus";
 import type { WebsiteConfig, WebsiteTemplate } from "@/types/website";
 import { cloneWebsiteDraft } from "@/views/website-inquiries/options";
-import { useWebsiteTemplateRules } from "../useWebsiteConfigRules";
+import { getWebsiteTemplateVariables, useWebsiteTemplateRules } from "../useWebsiteConfigRules";
 
 const props = defineProps<{
   config: WebsiteConfig;
@@ -202,16 +204,9 @@ const isNew = ref(false);
 const record = ref<WebsiteTemplate>();
 const formRef = ref<FormInstance>();
 const rules = useWebsiteTemplateRules(() => props.config, record);
-const TEMPLATE_VARIABLES = [
-  "{city}",
-  "{attraction}",
-  "{language}",
-  "{service_scope}",
-  "{hotel}",
-  "{service}",
-  "{restaurant_or_meal}",
-  "{component}",
-];
+const templateVariables = computed(() =>
+  getWebsiteTemplateVariables(record.value?.code ?? "").map((variable) => `{${variable}}`),
+);
 const SYSTEM_TEMPLATES = [
   { code: "arrival-basic", labelKey: "websiteConfig.templates.purposes.arrival" },
   { code: "departure-basic", labelKey: "websiteConfig.templates.purposes.departure" },

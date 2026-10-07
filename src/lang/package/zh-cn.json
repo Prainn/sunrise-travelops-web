@@ -1125,7 +1125,7 @@
       "skeletonDays": "城市骨架需添加1至365天",
       "patternCity": "Day Pattern 必须属于当天城市",
       "templateCodeDuplicate": "标准文案编码不可重复",
-      "templateVariable": "文案使用了未支持的变量：{variable}"
+      "templateVariable": "文案 {code} 不支持变量：{variable}"
     },
     "tabs": {
       "cities": "城市",
@@ -1217,7 +1217,8 @@
       "en": "英文文案",
       "codePlaceholder": "选择服务用途或输入景点文案编码",
       "purposeCode": "{purpose}（{code}）",
-      "variablesHint": "只支持 {variables} 变量。中英文包含项的含义需保持一致。",
+      "variablesHint": "当前用途只支持 {variables} 变量。中英文包含项的含义需保持一致。",
+      "noVariablesHint": "当前用途不使用变量，请填写完整双语文案。中英文包含项的含义需保持一致。",
       "purposes": {
         "arrival": "抵达安排",
         "departure": "离开安排",

@@ -1125,7 +1125,7 @@
       "skeletonDays": "Add between 1 and 365 days to the city skeleton",
       "patternCity": "The day pattern must belong to the day's city",
       "templateCodeDuplicate": "Standard copy codes must be unique",
-      "templateVariable": "The copy uses an unsupported variable: {variable}"
+      "templateVariable": "Template {code} does not support the variable: {variable}"
     },
     "tabs": {
       "cities": "Cities",
@@ -1217,7 +1217,8 @@
       "en": "English copy",
       "codePlaceholder": "Select a service purpose or enter an attraction copy code",
       "purposeCode": "{purpose} ({code})",
-      "variablesHint": "Only {variables} variables are supported. Chinese and English inclusions must have the same meaning.",
+      "variablesHint": "This purpose supports only {variables} variables. Chinese and English inclusions must have the same meaning.",
+      "noVariablesHint": "This purpose uses no variables. Enter complete bilingual copy. Chinese and English inclusions must have the same meaning.",
       "purposes": {
         "arrival": "Arrival arrangements",
         "departure": "Departure arrangements",
