@@ -122,6 +122,12 @@
               </template>
             </el-table-column>
             <el-table-column
+              prop="englishName"
+              :label="$t('user.englishName')"
+              min-width="120"
+            />
+            <el-table-column prop="tourCode" :label="$t('user.tourCode')" width="110" />
+            <el-table-column
               :label="$t('user.username')"
               min-width="120"
               prop="username"
@@ -276,6 +282,14 @@
 
         <el-form-item :label="$t('user.nickname')" prop="nickname">
           <el-input v-model="formData.nickname" :placeholder="$t('user.nicknamePlaceholder')" />
+        </el-form-item>
+
+        <el-form-item :label="$t('user.englishName')" prop="englishName">
+          <el-input v-model="formData.englishName" maxlength="100" />
+        </el-form-item>
+
+        <el-form-item :label="$t('user.tourCode')" prop="tourCode">
+          <el-input v-model="formData.tourCode" maxlength="10" :placeholder="$t('user.tourCodeHint')" />
         </el-form-item>
 
         <el-form-item :label="$t('user.gender')" prop="gender">
@@ -553,6 +567,11 @@ const rules = computed<FormRules<UserForm>>(() => ({
     },
   ],
   nickname: [{ required: true, message: t("user.nicknamePlaceholder"), trigger: "blur" }],
+  englishName: [{ required: true, whitespace: true, message: t("user.englishNameRequired"), trigger: "blur" }],
+  tourCode: [
+    { required: true, message: t("user.tourCodeRequired"), trigger: "blur" },
+    { pattern: /^[A-Za-z0-9]{1,10}$/, message: t("user.tourCodeInvalid"), trigger: "blur" },
+  ],
   email: [{ type: "email", message: t("user.emailInvalid"), trigger: "blur" }],
   mobile: [{ pattern: /^1[3-9]\d{9}$/, message: t("user.mobileInvalid"), trigger: "blur" }],
 }));

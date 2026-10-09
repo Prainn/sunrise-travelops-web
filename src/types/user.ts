@@ -33,6 +33,8 @@ export interface UserItem {
   gender?: number;
   mobile?: string;
   nickname?: string;
+  englishName?: string;
+  tourCode?: string | null;
   roleNames?: string;
   status?: number;
   username?: string;
@@ -46,6 +48,8 @@ export interface UserForm {
   gender?: number;
   mobile?: string;
   nickname?: string;
+  englishName?: string;
+  tourCode?: string | null;
   status?: number;
   username?: string;
   password?: string;

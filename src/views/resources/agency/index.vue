@@ -81,6 +81,7 @@ function createEmptyAgencyRecord(): AgencyRecord {
     code: "",
     name: "",
     city: "",
+    countryItemId: null,
     countryOrRegion: "",
     email: "",
     status: "enabled",

@@ -152,6 +152,7 @@ function createEmptyInquiry(): InquiryRecord {
     contactName: "",
     email: "",
     phone: "",
+    countryItemId: "",
     countryOrRegion: "",
     sourceChannel: "",
     originalMessage: "",

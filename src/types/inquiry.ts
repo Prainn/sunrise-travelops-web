@@ -11,6 +11,7 @@ export interface InquiryRecord {
   contactName: string;
   email: string;
   phone: string;
+  countryItemId: string;
   countryOrRegion: string;
   sourceChannel: string;
   originalMessage: string;

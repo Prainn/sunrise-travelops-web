@@ -482,7 +482,9 @@
     "optionCodeDuplicate": "The option code already exists",
     "optionSearchPlaceholder": "Search option name or code",
     "createOptionTitle": "Create Category Option",
-    "editOptionTitle": "Edit Category Option"
+    "editOptionTitle": "Edit Category Option",
+    "catalogEntry": "Standard catalog",
+    "catalogPlaceholder": "Search the standard catalog by name or code"
   },
   "common": {
     "actions": "Actions",
@@ -695,7 +697,13 @@
     "usernameInvalid": "Username is invalid",
     "copyPassword": "Copy initial password",
     "passwordCopied": "Initial password copied",
-    "passwordCopyFailed": "Copy failed. Please copy the password manually"
+    "passwordCopyFailed": "Copy failed. Please copy the password manually",
+    "englishName": "English name",
+    "englishNameRequired": "Enter an English name",
+    "tourCode": "Tour code",
+    "tourCodeHint": "1-10 letters or digits, uppercased automatically",
+    "tourCodeRequired": "Enter a tour code",
+    "tourCodeInvalid": "Use 1-10 letters or digits for the tour code"
   },
   "resource": {
     "description": "Description",
@@ -1386,6 +1394,9 @@
     "selectTime": "Select a time",
     "timeInvalid": "Enter a valid 24-hour time (HH:mm)",
     "flightNumberInvalid": "Use 1–20 letters or digits for the flight number",
-    "allStatuses": "All statuses"
+    "allStatuses": "All statuses",
+    "departureAirport": "Departure airport",
+    "arrivalAirport": "Arrival airport",
+    "pendingAirport": "{city} (airport association needed)"
   }
 }

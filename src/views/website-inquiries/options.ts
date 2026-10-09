@@ -34,6 +34,7 @@ export function cloneWebsiteDraft<T>(value: T): T {
 }
 export function emptyInquiry(): WebsiteInquiryInput {
   return {
+    countryItemId: "",
     customerName: "",
     plannedDays: 1,
     requirements: "",

@@ -123,7 +123,7 @@ function agencyInput(data: AgencyRecord) {
     code: data.code.trim(),
     name: data.shortName.trim(),
     city: data.city.trim(),
-    countryOrRegion: data.countryOrRegion.trim(),
+    countryItemId: data.countryItemId,
     email: data.email.trim(),
     status: data.status,
     remark: data.remark.trim(),
@@ -342,8 +342,8 @@ const transportApi = createCrud<TransportRecord>("transports", transportInput, n
 const guideApi = createCrud<GuideRecord>("guides", guideInput, normalizeGuide);
 const guidePersonApi = createCrud<GuidePersonRecord>("guide-people", guidePersonInput);
 const flightApi = createCrud<FlightRecord>("flights", (data) => ({
-  departureCity: data.departureCity.trim(),
-  arrivalCity: data.arrivalCity.trim(),
+  departureAirportId: data.departureAirportId,
+  arrivalAirportId: data.arrivalAirportId,
   flightNumber: data.flightNumber.trim().toUpperCase(),
   departureTime: data.departureTime,
   arrivalTime: data.arrivalTime,

@@ -21,10 +21,20 @@ export interface ResourceQueryParams {
   status?: ResourceStatus;
 }
 
+export interface AirportLabel {
+  code: string;
+  name: string;
+  englishName: string;
+}
+
 export interface FlightRecord extends ResourceAuditRecord {
   id: string;
-  departureCity: string;
-  arrivalCity: string;
+  departureAirportId: string | null;
+  arrivalAirportId: string | null;
+  departureCity?: string;
+  arrivalCity?: string;
+  departureAirport?: AirportLabel | null;
+  arrivalAirport?: AirportLabel | null;
   flightNumber: string;
   departureTime: string;
   arrivalTime: string;
@@ -32,6 +42,8 @@ export interface FlightRecord extends ResourceAuditRecord {
 }
 
 export interface ResourceListQuery extends Partial<ResourceQueryParams> {
+  departureAirportId?: string;
+  arrivalAirportId?: string;
   secondLanguage?: string;
   shopping?: string;
   city?: string;
@@ -61,6 +73,7 @@ export interface AgencyRecord extends ResourceAuditRecord {
   code: string;
   name: string;
   city: string;
+  countryItemId: string | null;
   countryOrRegion: string;
   email: string;
   status: ResourceStatus;

@@ -112,6 +112,15 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('inquiry.countryOrRegion')" prop="countryItemId">
+            <BusinessItemSelect
+              v-model="form.countryItemId"
+              type-code="country-region"
+              :selected-label="record?.countryOrRegion"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.customerName')" prop="customerName">
             <el-input v-model="form.customerName" maxlength="100" />
           </el-form-item>
@@ -251,6 +260,7 @@
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { FormInstance, FormRules } from "element-plus";
+import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
 import { websiteInquiryInput, type WebsiteOwnerOption } from "@/services/website.service";
 import type { WebsiteCity, WebsiteInquiry, WebsiteInquiryInput } from "@/types/website";
 import { cloneWebsiteDraft, emptyInquiry } from "../options";
@@ -277,6 +287,9 @@ const editableStatusOptions = computed(() => {
   return INQUIRY_STATUS_OPTIONS.filter((option) => allowedStatuses.includes(option.value));
 });
 const rules = computed<FormRules>(() => ({
+  countryItemId: [
+    { required: true, message: t("common.selectPlaceholder"), trigger: "change" },
+  ],
   customerName: [
     {
       required: true,

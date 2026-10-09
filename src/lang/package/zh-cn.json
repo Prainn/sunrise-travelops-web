@@ -482,7 +482,9 @@
     "optionCodeDuplicate": "选项编码已存在",
     "optionSearchPlaceholder": "搜索分类选项名称或编码",
     "createOptionTitle": "新增分类选项",
-    "editOptionTitle": "编辑分类选项"
+    "editOptionTitle": "编辑分类选项",
+    "catalogEntry": "标准目录",
+    "catalogPlaceholder": "输入名称或代码搜索标准目录"
   },
   "common": {
     "actions": "操作",
@@ -695,7 +697,13 @@
     "usernameInvalid": "以小写字母开头，长度为3至80位，仅可包含小写字母、数字、下划线、点和连字符",
     "copyPassword": "复制初始密码",
     "passwordCopied": "初始密码已复制",
-    "passwordCopyFailed": "复制失败，请手动复制"
+    "passwordCopyFailed": "复制失败，请手动复制",
+    "englishName": "英文名",
+    "englishNameRequired": "请输入英文名",
+    "tourCode": "团号标识",
+    "tourCodeHint": "1-10 位字母或数字，自动大写",
+    "tourCodeRequired": "请输入团号标识",
+    "tourCodeInvalid": "团号标识只能包含 1-10 位字母或数字"
   },
   "resource": {
     "description": "描述",
@@ -1386,6 +1394,9 @@
     "selectTime": "请选择时间",
     "timeInvalid": "请输入有效的 24 小时制时间（HH:mm）",
     "flightNumberInvalid": "航班号只能包含 1–20 位英文字母或数字",
-    "allStatuses": "全部状态"
+    "allStatuses": "全部状态",
+    "departureAirport": "出发机场",
+    "arrivalAirport": "抵达机场",
+    "pendingAirport": "{city}（待关联机场）"
   }
 }

@@ -37,11 +37,21 @@
       <el-form-item v-else :label="$t('identity.library')">
         <ResourceLibraryTag :library="form.library" />
       </el-form-item>
-      <el-form-item :label="$t('flight.departureCity')" prop="departureCity">
-        <el-input v-model.trim="form.departureCity" maxlength="150" />
+      <el-form-item :label="$t('flight.departureAirport')" prop="departureAirportId">
+        <BusinessItemSelect
+          :model-value="form.departureAirportId ?? ''"
+          type-code="city-airport"
+          :selected-label="form.departureAirport?.name"
+          @update:model-value="form.departureAirportId = $event"
+        />
       </el-form-item>
-      <el-form-item :label="$t('flight.arrivalCity')" prop="arrivalCity">
-        <el-input v-model.trim="form.arrivalCity" maxlength="150" />
+      <el-form-item :label="$t('flight.arrivalAirport')" prop="arrivalAirportId">
+        <BusinessItemSelect
+          :model-value="form.arrivalAirportId ?? ''"
+          type-code="city-airport"
+          :selected-label="form.arrivalAirport?.name"
+          @update:model-value="form.arrivalAirportId = $event"
+        />
       </el-form-item>
       <el-form-item :label="$t('flight.flightNumber')" prop="flightNumber">
         <el-input v-model.trim="form.flightNumber" maxlength="20" />
@@ -95,6 +105,7 @@
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
+import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
 import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { businessUnitName } from "@/constants/identity";
 import { useUserStore } from "@/stores/user";
@@ -124,11 +135,11 @@ const rules = computed<FormRules<FlightRecord>>(() => ({
   library: [
     { required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" },
   ],
-  departureCity: [
-    { required: true, whitespace: true, message: t("resource.fieldRequired", { field: t("flight.departureCity") }), trigger: "blur" },
+  departureAirportId: [
+    { required: true, message: t("resource.fieldRequired", { field: t("flight.departureAirport") }), trigger: "change" },
   ],
-  arrivalCity: [
-    { required: true, whitespace: true, message: t("resource.fieldRequired", { field: t("flight.arrivalCity") }), trigger: "blur" },
+  arrivalAirportId: [
+    { required: true, message: t("resource.fieldRequired", { field: t("flight.arrivalAirport") }), trigger: "change" },
   ],
   flightNumber: [
     { required: true, message: t("resource.fieldRequired", { field: t("flight.flightNumber") }), trigger: "blur" },

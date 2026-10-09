@@ -74,8 +74,14 @@
           </template>
         </el-input>
       </el-form-item>
-      <el-form-item :label="$t('resource.countryOrRegion')" prop="countryOrRegion">
-        <el-input v-model.trim="form.countryOrRegion" />
+      <el-form-item :label="$t('resource.countryOrRegion')" prop="countryItemId">
+        <BusinessItemSelect
+          :model-value="form.countryItemId ?? ''"
+          type-code="country-region"
+          clearable
+          :selected-label="form.countryOrRegion"
+          @update:model-value="form.countryItemId = $event || null"
+        />
       </el-form-item>
       <el-form-item :label="$t('resource.city')">
         <CitySelect v-model="form.city" :library="form.library" />
@@ -116,6 +122,7 @@
 <script setup lang="ts">
 import { businessUnitName } from "@/constants/identity";
 import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
+import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
 import CitySelect from "@/components/CitySelect.vue";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import { computed, reactive, ref, watch } from "vue";
@@ -178,13 +185,6 @@ const rules = computed<FormRules>(() => ({
     {
       required: true,
       message: t("resource.fieldRequired", { field: t("resource.agencyName") }),
-      trigger: "blur",
-    },
-  ],
-  countryOrRegion: [
-    {
-      required: true,
-      message: t("resource.fieldRequired", { field: t("resource.countryOrRegion") }),
       trigger: "blur",
     },
   ],

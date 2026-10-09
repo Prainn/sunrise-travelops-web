@@ -87,6 +87,7 @@ function inquiryInput(record: InquiryRecord) {
   return {
     businessUnit: record.businessUnit,
     agencyId: record.agencyId,
+    countryItemId: record.countryItemId,
     contactId: record.contactId,
     ownerId: record.ownerId || undefined,
     sourceChannel: record.sourceChannel,

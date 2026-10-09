@@ -53,6 +53,8 @@ function toUserInput(
   const input: Record<string, unknown> = {
     id: data.id,
     nickname: data.nickname?.trim() ?? "",
+    englishName: data.englishName?.trim() ?? "",
+    tourCode: data.tourCode?.trim().toUpperCase() ?? "",
     avatar: data.avatar ?? "",
     gender: data.gender ?? 0,
     mobile: data.mobile?.trim() ?? "",

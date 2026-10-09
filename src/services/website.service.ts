@@ -41,6 +41,7 @@ export interface WebsiteInquiryQuery {
 
 export function websiteInquiryInput(record: WebsiteInquiryInput): WebsiteInquiryInput {
   return {
+    countryItemId: record.countryItemId,
     customerName: record.customerName,
     plannedDays: record.plannedDays,
     requirements: record.requirements,

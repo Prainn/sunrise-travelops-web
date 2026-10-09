@@ -98,14 +98,33 @@
         :rules="rules"
         label-width="180px"
       >
+        <el-form-item v-if="isCatalog && !editingId" :label="$t('businessCategory.catalogEntry')">
+          <el-select
+            v-model="catalogCode"
+            filterable
+            remote
+            :remote-method="searchCatalog"
+            :loading="catalogLoading"
+            :placeholder="$t('businessCategory.catalogPlaceholder')"
+            class="w-full"
+            @change="applyCatalogEntry"
+          >
+            <el-option
+              v-for="entry in catalogEntries"
+              :key="entry.code"
+              :value="entry.code"
+              :label="`${entry.name} / ${entry.englishName} (${entry.code})`"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item :label="$t(labelKeys.name)" prop="name">
-          <el-input v-model="form.name" />
+          <el-input v-model="form.name" :disabled="isCatalog" />
         </el-form-item>
         <el-form-item :label="$t('businessCategory.englishName')" prop="englishName">
-          <el-input v-model="form.englishName" />
+          <el-input v-model="form.englishName" :disabled="isCatalog" />
         </el-form-item>
         <el-form-item :label="$t(labelKeys.code)" prop="code">
-          <el-input v-model="form.code" :disabled="Boolean(editingId)" />
+          <el-input v-model="form.code" :disabled="Boolean(editingId) || isCatalog" />
         </el-form-item>
         <el-form-item
           v-if="isResourceUnit"
@@ -144,7 +163,7 @@
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { businessDictionaryService } from "@/services";
+import { businessDictionaryService, type CatalogEntry } from "@/services/business-dictionary.service";
 import type { ItineraryItemType } from "@/types/itinerary";
 import type { BusinessCategoryOptionRecord, BusinessCategoryTypeRecord } from "@/types/resource";
 import TableToolbar from "@/components/TableToolbar/index.vue";
@@ -174,6 +193,10 @@ const formRef = ref<FormInstance>();
 const form = reactive<CategoryItem>(emptyItem());
 const isResourceUnit = computed(() => props.category.code === "resource-unit");
 const isTransportMethod = computed(() => props.category.code === "transport-method");
+const isCatalog = computed(() => ["country-region", "city-airport"].includes(props.category.code));
+const catalogEntries = ref<CatalogEntry[]>([]);
+const catalogCode = ref("");
+const catalogLoading = ref(false);
 const labelKeys = computed(() => {
   if (isResourceUnit.value)
     return {
@@ -272,8 +295,25 @@ function resetQuery() {
 }
 function openCreate() {
   editingId.value = "";
+  catalogCode.value = "";
+  if (isCatalog.value) void searchCatalog();
   Object.assign(form, emptyItem());
   dialogVisible.value = true;
+}
+async function searchCatalog(keyword = "") {
+  catalogLoading.value = true;
+  try {
+    const type = props.category.code as "country-region" | "city-airport";
+    catalogEntries.value = (await businessDictionaryService.getCatalog(type, keyword)).slice(0, 100);
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  } finally {
+    catalogLoading.value = false;
+  }
+}
+function applyCatalogEntry(code: string) {
+  const entry = catalogEntries.value.find((item) => item.code === code);
+  if (entry) Object.assign(form, entry);
 }
 function openEdit(row: CategoryItem) {
   editingId.value = row.id;

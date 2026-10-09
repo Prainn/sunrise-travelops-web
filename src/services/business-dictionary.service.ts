@@ -21,12 +21,19 @@ type BusinessDictionaryTypeForm = Pick<
   builtIn?: boolean;
 };
 
+export interface CatalogEntry {
+  code: string;
+  name: string;
+  englishName: string;
+}
+
 interface BusinessDictionaryItemQuery {
   keyword?: string;
   status?: string;
 }
 
 const BUSINESS_DICTIONARY_BASE_URL = "/system/business-dictionaries";
+const catalogCache = new Map<string, Promise<CatalogEntry[]>>();
 let builtInTypesLoaded = false;
 let builtInTypesPromise: Promise<BusinessCategoryTypeRecord[]> | null = null;
 
@@ -115,6 +122,22 @@ export const businessDictionaryService = {
         builtInTypesPromise = null;
       });
     return builtInTypesPromise;
+  },
+
+  async getCatalog(
+    typeCode: "country-region" | "city-airport",
+    keyword?: string,
+  ): Promise<CatalogEntry[]> {
+    let pending = catalogCache.get(typeCode);
+    if (!pending) {
+      pending = request.get<CatalogEntry[]>(`${BUSINESS_DICTIONARY_BASE_URL}/catalogs/${encodeURIComponent(typeCode)}`)
+        .catch((error: unknown) => { catalogCache.delete(typeCode); throw error; });
+      catalogCache.set(typeCode, pending);
+    }
+    const entries = await pending;
+    const word = keyword?.trim().toLowerCase();
+    return word ? entries.filter((item) => [item.code, item.name, item.englishName]
+      .some((value) => value.toLowerCase().includes(word))) : entries;
   },
 
   async createType(data: BusinessDictionaryTypeForm): Promise<BusinessCategoryTypeRecord> {

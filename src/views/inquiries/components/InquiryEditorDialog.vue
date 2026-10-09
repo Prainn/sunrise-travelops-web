@@ -71,6 +71,7 @@
           @select-contact="selectContact"
           @update-contact-name="form.contactName = $event"
           @update-phone="form.phone = $event"
+          @update-country="form.countryItemId = $event"
         />
         <el-col :span="24">
           <el-form-item :label="$t('inquiry.originalMessage')" prop="originalMessage">
@@ -223,6 +224,7 @@ const rules = computed<FormRules>(() => ({
     },
   ],
   agencyId: [{ required: true, message: t("inquiry.agencyRequired"), trigger: "change" }],
+  countryItemId: [{ required: true, message: t("common.selectPlaceholder"), trigger: "change" }],
   contactName: [{ required: true, message: t("inquiry.contactNameRequired"), trigger: "change" }],
   sourceChannel: [
     { required: true, message: t("inquiry.sourceChannelRequired"), trigger: "change" },
@@ -289,6 +291,7 @@ function syncAgencyDetails() {
     email: agency.email,
     contactId: contact?.id ?? form.contactId,
     phone: contact?.phone ?? form.phone,
+    countryItemId: agency.countryItemId ?? form.countryItemId,
     countryOrRegion: agency.countryOrRegion,
   });
 }
@@ -306,6 +309,7 @@ async function selectAgency(agencyId: string) {
       contactName: "",
       email: "",
       phone: "",
+      countryItemId: "",
       countryOrRegion: "",
     });
     return;
@@ -334,6 +338,7 @@ async function selectAgency(agencyId: string) {
     contactName: "",
     email: agency.email,
     phone: "",
+    countryItemId: agency.countryItemId ?? "",
     countryOrRegion: agency.countryOrRegion,
   });
 }
