@@ -116,11 +116,12 @@ function createCrud<T extends { code?: string; library?: ResourceLibrary }>(
 
 function agencyInput(data: AgencyRecord) {
   return {
+    parentId: data.parentId,
     businessUnit: data.businessUnit || undefined,
     coordinatorId: data.coordinatorId,
     id: data.id || undefined,
     code: data.code.trim(),
-    name: data.name.trim(),
+    name: data.shortName.trim(),
     city: data.city.trim(),
     countryOrRegion: data.countryOrRegion.trim(),
     email: data.email.trim(),

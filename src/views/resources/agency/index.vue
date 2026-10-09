@@ -1,18 +1,27 @@
 <template>
   <div class="page-container agency-page">
     <AgencySidebar
-      v-model:selected-id="selectedAgencyId"
-      :loading="isLoading"
-      :rows="rows"
+      :selected-id="selectedAgency?.id ?? ''"
+      :loading="loading"
+      :rows="treeRows"
+      :expanded-ids="expandedIds"
+      :searching="searching"
+      :page="page"
+      :total="total"
       :permissions="RESOURCE_PERMISSIONS.agency"
       @create="openCreateDialog"
       @edit="openEditDialog"
       @toggle-status="toggleStatus"
       @delete="deleteRecord"
-      @query-change="loadRecords"
+      @select="selectAgency"
+      @expand="expandNode"
+      @collapse="collapseNode"
+      @load-more="loadBranch"
+      @query-change="changeQuery"
+      @page-change="changePage"
     />
     <AgencyContactsPanel
-      :loading="isLoading || loadingContactAgencyIds.has(selectedAgencyId)"
+      :loading="contactsLoading"
       :agency="selectedAgency"
       :permissions="RESOURCE_PERMISSIONS.agency"
       @create="openCreateContactDialog"
@@ -35,26 +44,36 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import { resourceService } from "@/services/resource.service";
-import type { AgencyContactRecord, AgencyRecord, ResourceListQuery } from "@/types/resource";
+import { selectedResourceLibrary } from "@/services/resource-library";
+import type { AgencyContactRecord, AgencyRecord } from "@/types/resource";
 import AgencyContactDialog from "./components/AgencyContactDialog.vue";
 import AgencyContactsPanel from "./components/AgencyContactsPanel.vue";
 import AgencyEditorDialog from "./components/AgencyEditorDialog.vue";
 import AgencySidebar from "./components/AgencySidebar.vue";
-import { useResourceMaintenance } from "../useResourceMaintenance";
+import { useAgencyTree } from "./useAgencyTree";
 
 defineOptions({ name: "Agency" });
 
 const { t } = useI18n();
-const loadedContactAgencyIds = new Set<string>();
-const loadingContactAgencyIds = reactive(new Set<string>());
+const {
+  treeRows, expandedIds, searching, page, total, loading, selectedAgency, contactsLoading,
+  selectAgency, expandNode, collapseNode, loadBranch, changeQuery, changePage, refreshAfterChange,
+} = useAgencyTree();
+const record = ref<AgencyRecord>(createEmptyAgencyRecord());
+const isDialogVisible = ref(false);
+const isEditing = computed(() => Boolean(record.value.id));
 
 function createEmptyAgencyRecord(): AgencyRecord {
   return {
+    childCount: 0,
+    parentId: null,
+    parentName: null,
+    shortName: "",
     businessUnit: null,
     coordinatorId: null,
     coordinatorName: null,
@@ -70,78 +89,22 @@ function createEmptyAgencyRecord(): AgencyRecord {
   };
 }
 
-const {
-  isLoading,
-  rows,
-  record,
-  isDialogVisible,
-  isEditing,
-  loadRecords,
-  openCreateDialog,
-  openEditDialog,
-  toggleStatus,
-  saveRecord: saveAgencyRecord,
-  deleteRecord,
-} = useResourceMaintenance<AgencyRecord>({
-  paginated: false,
-  records: resourceService.agencies,
-  api: resourceService.agencyApi,
-  loadRecords: loadAgencies,
-  createEmpty: createEmptyAgencyRecord,
-  selectLibraryInDialog: true,
-  cloneForEdit: (agency) => ({
-    ...agency,
-    contacts: agency.contacts.map((contact) => ({ ...contact })),
-  }),
-  createRecord: (agency, id) => ({
-    ...agency,
-    id,
-    contacts: agency.contacts.map((contact) => ({ ...contact })),
-  }),
-  updateRecord: (current, agency) =>
-    Object.assign(current, agency, {
-      contacts: agency.contacts.map((contact) => ({ ...contact })),
-    }),
-  deleteConfirmKey: "resource.deleteAgencyConfirm",
-});
-
-const selectedAgencyId = ref(rows[0]?.id ?? "");
-const selectedAgency = computed(() => rows.find((agency) => agency.id === selectedAgencyId.value));
 const isContactDialogVisible = ref(false);
 const editingContactId = ref("");
 const contactRecord = ref<AgencyContactRecord>(createEmptyContact());
 const isContactEditing = computed(() => Boolean(editingContactId.value));
 
-watch(
-  () => rows.map((agency) => agency.id),
-  (ids) => {
-    if (!ids.includes(selectedAgencyId.value)) selectedAgencyId.value = ids[0] ?? "";
-  },
-);
-watch(selectedAgencyId, loadAgencyContacts, { immediate: true });
-
-async function loadAgencies(query?: ResourceListQuery) {
-  loadedContactAgencyIds.clear();
-  const agencies = await resourceService.loadAgencies(query);
-  const nextAgencyId = agencies.some((agency) => agency.id === selectedAgencyId.value)
-    ? selectedAgencyId.value
-    : (agencies[0]?.id ?? "");
-  if (selectedAgencyId.value === nextAgencyId) await loadAgencyContacts(nextAgencyId);
-  else selectedAgencyId.value = nextAgencyId;
-  return agencies;
+function openCreateDialog() {
+  record.value = { ...createEmptyAgencyRecord(), library: selectedResourceLibrary.value };
+  isDialogVisible.value = true;
 }
 
-async function loadAgencyContacts(agencyId: string) {
-  if (!agencyId || loadedContactAgencyIds.has(agencyId) || loadingContactAgencyIds.has(agencyId))
-    return;
-  loadingContactAgencyIds.add(agencyId);
+async function openEditDialog(agency: AgencyRecord) {
   try {
-    await resourceService.loadAgencyContacts(agencyId);
-    loadedContactAgencyIds.add(agencyId);
+    record.value = await resourceService.agencyApi.getDetail(agency.id);
+    isDialogVisible.value = true;
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : String(error));
-  } finally {
-    loadingContactAgencyIds.delete(agencyId);
   }
 }
 
@@ -150,9 +113,43 @@ function createEmptyContact(): AgencyContactRecord {
 }
 
 async function saveAgency(agency: AgencyRecord) {
-  await saveAgencyRecord(agency);
-  const savedAgency = rows.find((item) => item.code === agency.code);
-  if (savedAgency) selectedAgencyId.value = savedAgency.id;
+  const previous = isEditing.value ? record.value : undefined;
+  try {
+    const saved = previous
+      ? await resourceService.agencyApi.update(previous.id, agency)
+      : await resourceService.agencyApi.create(agency);
+    isDialogVisible.value = false;
+    await refreshAfterChange(saved, previous);
+    ElMessage.success(t(previous ? "common.updateSuccess" : "common.createSuccess"));
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+  }
+}
+
+async function toggleStatus(agency: AgencyRecord) {
+  try {
+    const saved = await resourceService.agencyApi.update(agency.id, {
+      ...agency,
+      status: agency.status === "enabled" ? "disabled" : "enabled",
+    });
+    await refreshAfterChange(saved, agency);
+    ElMessage.success(t("common.updateSuccess"));
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+  }
+}
+
+async function deleteRecord(agency: AgencyRecord) {
+  try {
+    await ElMessageBox.confirm(t("resource.deleteAgencyConfirm"), t("common.tip"), { type: "warning" });
+  } catch { return; }
+  try {
+    await resourceService.agencyApi.deleteByIds(agency.id);
+    await refreshAfterChange(undefined, agency);
+    ElMessage.success(t("common.deleteSuccess"));
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+  }
 }
 
 function openCreateContactDialog() {

@@ -1,14 +1,13 @@
 <template>
   <el-card v-loading="loading" class="agency-sidebar" shadow="never">
     <template #header>
-      <div class="agency-sidebar__header">
+      <div class="flex items-center justify-between gap-2 font-semibold">
         <span>{{ $t("resource.agencyList") }}</span>
         <el-button v-has-perm="permissions.create" type="primary" @click="emit('create')">
           {{ $t("resource.addAgency") }}
         </el-button>
       </div>
     </template>
-
     <el-form :inline="true">
       <el-row :gutter="24">
         <el-col :span="16">
@@ -20,107 +19,103 @@
           </el-button>
         </el-col>
       </el-row>
-
       <el-form-item :label="$t('common.keywords')" class="w-full pr-2">
-        <el-input
-          v-model.trim="keywords"
-          :placeholder="$t('resource.agencySearchPlaceholder')"
-          clearable
-        />
+        <el-input v-model.trim="keywords" :placeholder="$t('resource.agencySearchPlaceholder')" clearable />
       </el-form-item>
     </el-form>
-
-    <el-scrollbar class="agency-sidebar__scrollbar">
-      <div class="agency-sidebar__list">
-        <div
-          v-for="agency in rows"
-          :key="agency.id"
-          class="agency-sidebar__item"
-          :class="{ 'is-active': agency.id === selectedId }"
-          role="button"
-          tabindex="0"
-          @click="emit('update:selectedId', agency.id)"
-          @keydown.enter="emit('update:selectedId', agency.id)"
-        >
-          <div class="flex justify-between">
-            <div class="flex items-center gap-2">
-              <ResourceLibraryTag :library="agency.library" />
-              <el-tag v-if="agency.coordinatorName" type="info" size="small">
-                {{ $t("resource.agencyCoordinator") }}：{{ agency.coordinatorName }}
-              </el-tag>
-            </div>
-            <el-tag :type="agency.status === 'enabled' ? 'success' : 'info'" size="small">
-              {{ $t(`common.${agency.status}`) }}
-            </el-tag>
-          </div>
-
-          <div class="agency-sidebar__item-heading mt-2">
-            <strong>{{ agency.name }}</strong>
-          </div>
-          <small>{{ agency.code }} · {{ agency.countryOrRegion }}</small>
-          <div class="agency-sidebar__actions" @click.stop>
-            <el-button
-              v-has-perm="permissions.update"
-              type="primary"
-              link
-              @click="emit('edit', agency)"
-            >
-              {{ $t("common.edit") }}
-            </el-button>
-            <el-button
-              v-has-perm="permissions.update"
-              :type="agency.status === 'enabled' ? 'warning' : 'success'"
-              link
-              @click="emit('toggle-status', agency)"
-            >
-              {{ $t(agency.status === "enabled" ? "common.disabled" : "common.enabled") }}
-            </el-button>
-            <el-button
-              v-has-perm="permissions.delete"
-              type="danger"
-              link
-              @click="emit('delete', agency)"
-            >
-              {{ $t("common.delete") }}
-            </el-button>
-          </div>
-        </div>
-        <el-empty v-if="!rows.length" :description="$t('resource.noAgencies')" :image-size="64" />
-      </div>
+    <el-scrollbar class="min-h-0 flex-1">
+      <el-tree
+        :data="rows"
+        node-key="id"
+        :current-node-key="selectedId"
+        :default-expanded-keys="searching ? [] : expandedIds"
+        :auto-expand-parent="false"
+        :expand-on-click-node="false"
+        :indent="20"
+        highlight-current
+        :empty-text="$t('resource.noAgencies')"
+        @node-click="selectNode"
+        @node-expand="emit('expand', $event)"
+        @node-collapse="emit('collapse', $event)"
+      >
+        <template #default="{ data }">
+          <AgencyTreeRow
+            v-if="data.agency"
+            :agency="data.agency"
+            :searching="searching"
+            :permissions="permissions"
+            @edit="emit('edit', $event)"
+            @toggle-status="emit('toggle-status', $event)"
+            @delete="emit('delete', $event)"
+          />
+          <el-button
+            v-else
+            class="my-2"
+            type="primary"
+            link
+            :loading="data.loading"
+            @click.stop="emit('load-more', data.parentId)"
+            @keydown.stop
+          >
+            {{ $t("resource.agencyLoadMore") }}
+          </el-button>
+        </template>
+      </el-tree>
     </el-scrollbar>
+    <el-pagination
+      :current-page="page"
+      :page-size="RESOURCE_PAGE_SIZE"
+      :total="total"
+      :pager-count="5"
+      layout="prev, pager, next, total"
+      size="small"
+      background
+      class="justify-end"
+      @current-change="emit('page-change', $event)"
+    />
   </el-card>
 </template>
 
 <script setup lang="ts">
-import { resetResourceBusinessFilter } from "@/services/resource-library";
-import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
+import { resetResourceBusinessFilter } from "@/services/resource-library";
+import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
 import type { ResourcePermissionSet } from "@/constants";
-import type { AgencyRecord, ResourceListQuery } from "@/types/resource";
+import type { AgencyRecord } from "@/types/resource";
+import { RESOURCE_PAGE_SIZE } from "../../useResourcePagination";
+import type { AgencyTreeNode } from "../useAgencyTree";
+import AgencyTreeRow from "./AgencyTreeRow.vue";
 
 defineProps<{
-  loading?: boolean;
-  rows: AgencyRecord[];
+  loading: boolean;
+  rows: AgencyTreeNode[];
   selectedId: string;
   permissions: ResourcePermissionSet;
+  expandedIds: string[];
+  searching: boolean;
+  page: number;
+  total: number;
 }>();
-
 const emit = defineEmits<{
-  "update:selectedId": [id: string];
+  select: [agency: AgencyRecord];
   create: [];
   edit: [agency: AgencyRecord];
   delete: [agency: AgencyRecord];
   "toggle-status": [agency: AgencyRecord];
-  "query-change": [query: ResourceListQuery];
+  expand: [node: AgencyTreeNode];
+  collapse: [node: AgencyTreeNode];
+  "load-more": [parentId: string];
+  "query-change": [keyword: string];
+  "page-change": [page: number];
 }>();
-
 const keywords = ref("");
-const requestRows = useDebounceFn(() => emit("query-change", { keyword: keywords.value }), 300);
-
+const requestRows = useDebounceFn(() => emit("query-change", keywords.value), 300);
 watch(keywords, () => requestRows());
 
+function selectNode(node: AgencyTreeNode) {
+  if ("agency" in node) emit("select", node.agency);
+}
 function resetQuery() {
   keywords.value = "";
   resetResourceBusinessFilter();
@@ -131,65 +126,14 @@ function resetQuery() {
 <style scoped lang="scss">
 .agency-sidebar {
   @apply 'min-w-0';
-
   :deep(.el-card__body) {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    height: calc(100% - 61px);
-    box-sizing: border-box;
+    @apply 'flex flex-col gap-3 [height:calc(100%_-_61px)] box-border';
   }
-
-  &__header,
-  &__tags,
-  &__item-heading,
-  &__actions {
-    display: flex;
-    align-items: center;
+  :deep(.el-tree-node__content) {
+    @apply 'h-auto items-start';
   }
-
-  &__header,
-  &__item-heading {
-    justify-content: space-between;
-    gap: 8px;
-  }
-
-  &__header {
-    @apply 'font-semibold';
-  }
-
-  &__tags {
-    gap: 8px;
-  }
-
-  &__scrollbar {
-    @apply '[flex:1] min-h-0';
-  }
-
-  &__list {
-    @apply 'grid gap-[10px] pr-[8px]';
-  }
-
-  &__item {
-    @apply 'p-[12px] cursor-pointer [border:1px_solid_var(--el-border-color-lighter)] rounded-[var(--el-border-radius-base)] [transition:border-color_var(--el-transition-duration),_background-color_var(--el-transition-duration)]';
-
-    &:hover,
-    &.is-active {
-      background: var(--el-color-primary-light-9);
-      border-color: var(--el-color-primary-light-5);
-    }
-
-    strong {
-      @apply 'min-w-0 overflow-hidden text-ellipsis whitespace-nowrap';
-    }
-
-    small {
-      @apply 'block mt-[6px] text-[var(--el-text-color-secondary)]';
-    }
-  }
-
-  &__actions {
-    @apply 'gap-[4px] mt-[8px]';
+  :deep(.el-tree-node__expand-icon) {
+    @apply 'mt-2';
   }
 }
 </style>

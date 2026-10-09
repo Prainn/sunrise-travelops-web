@@ -16,6 +16,7 @@ declare module 'vue' {
     AgencyContactsPanel: typeof import('./../src/views/resources/agency/components/AgencyContactsPanel.vue')['default']
     AgencyEditorDialog: typeof import('./../src/views/resources/agency/components/AgencyEditorDialog.vue')['default']
     AgencySidebar: typeof import('./../src/views/resources/agency/components/AgencySidebar.vue')['default']
+    AgencyTreeRow: typeof import('./../src/views/resources/agency/components/AgencyTreeRow.vue')['default']
     AppLink: typeof import('./../src/components/AppLink/index.vue')['default']
     AppVersionNotifier: typeof import('./../src/components/AppVersionNotifier.vue')['default']
     AttractionEditorDialog: typeof import('./../src/views/resources/attraction/components/AttractionEditorDialog.vue')['default']

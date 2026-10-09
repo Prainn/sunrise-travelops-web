@@ -50,6 +50,10 @@ export interface AgencyContactRecord extends ResourceAuditRecord {
 }
 
 export interface AgencyRecord extends ResourceAuditRecord {
+  childCount: number;
+  parentId: string | null;
+  parentName: string | null;
+  shortName: string;
   businessUnit: "shengxu" | "linxi" | "website" | null;
   coordinatorId: string | null;
   coordinatorName: string | null;

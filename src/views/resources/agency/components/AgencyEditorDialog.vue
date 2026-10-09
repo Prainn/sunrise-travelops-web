@@ -13,7 +13,7 @@
       ref="formRef"
       :model="form"
       :rules="rules"
-      :disabled="isSubmitting"
+      :disabled="isSubmitting || loadingParent"
       label-width="auto"
     >
       <el-form-item
@@ -40,6 +40,17 @@
       <el-form-item v-if="isEditing" :label="$t('resource.code')">
         <el-input v-model="form.code" disabled />
       </el-form-item>
+      <el-form-item :label="$t('resource.agencyParent')">
+        <ResourceSelect
+          kind="agencies"
+          :model-value="form.parentId || ''"
+          :selected-label="form.parentName || ''"
+          :filters="parentFilters"
+          :disabled="!form.businessUnit || isSubmitting || loadingParent"
+          :placeholder="$t('resource.agencyParentPlaceholder')"
+          @update:model-value="selectParent"
+        />
+      </el-form-item>
       <el-form-item :label="$t('resource.agencyCoordinator')" prop="coordinatorId">
         <el-select
           v-model="form.coordinatorId"
@@ -56,8 +67,12 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item :label="$t('resource.agencyName')" prop="name">
-        <el-input v-model.trim="form.name" />
+      <el-form-item :label="$t('resource.agencyName')" prop="shortName">
+        <el-input v-model.trim="form.shortName">
+          <template v-if="form.parentId" #prepend>
+            {{ form.parentName }}-
+          </template>
+        </el-input>
       </el-form-item>
       <el-form-item :label="$t('resource.countryOrRegion')" prop="countryOrRegion">
         <el-input v-model.trim="form.countryOrRegion" />
@@ -89,7 +104,7 @@
       <el-button
         type="primary"
         :loading="isSaving"
-        :disabled="isSubmitting"
+        :disabled="isSubmitting || loadingParent"
         @click="handleSubmit"
       >
         {{ $t("common.confirm") }}
@@ -102,6 +117,7 @@
 import { businessUnitName } from "@/constants/identity";
 import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import CitySelect from "@/components/CitySelect.vue";
+import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -136,6 +152,14 @@ const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const formRef = ref<FormInstance>();
 const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
 const form = reactive<AgencyRecord>(cloneRecord(props.record));
+const loadingParent = ref(false);
+let parentRequestVersion = 0;
+const parentFilters = computed<Record<string, string>>(() => ({
+  parentOnly: "true",
+  ...(form.id ? { excludeId: form.id } : {}),
+  ...(form.businessUnit ? { businessUnit: form.businessUnit } : {}),
+  ...(form.library ? { library: form.library } : {}),
+}));
 const coordinators = ref<{ id: string; name: string; username: string }[]>([]);
 const loadingCoordinators = ref(false);
 let coordinatorRequestVersion = 0;
@@ -150,7 +174,7 @@ const rules = computed<FormRules>(() => ({
   coordinatorId: [
     { required: true, message: t("resource.agencyCoordinatorRequired"), trigger: "change" },
   ],
-  name: [
+  shortName: [
     {
       required: true,
       message: t("resource.fieldRequired", { field: t("resource.agencyName") }),
@@ -169,6 +193,8 @@ const rules = computed<FormRules>(() => ({
 watch(
   () => [props.modelValue, props.record] as const,
   ([visible, record]) => {
+    ++parentRequestVersion;
+    loadingParent.value = false;
     if (!visible) return;
     Object.assign(form, cloneRecord(record));
     if (isHeadquarters.value && !props.isEditing) {
@@ -191,9 +217,35 @@ function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
     form.library = library;
   }
   form.businessUnit = unit;
+  form.parentId = null;
+  form.parentName = null;
+  ++parentRequestVersion;
+  loadingParent.value = false;
   form.coordinatorId = null;
   void loadCoordinators();
   formRef.value?.validateField("library");
+}
+
+async function selectParent(parentId: string) {
+  const version = ++parentRequestVersion;
+  if (!parentId) {
+    form.parentId = null;
+    form.parentName = null;
+    return;
+  }
+  loadingParent.value = true;
+  try {
+    const parent = await resourceService.agencyApi.getDetail(parentId);
+    if (version === parentRequestVersion) {
+      form.parentId = parent.id;
+      form.parentName = parent.name;
+    }
+  } catch (error) {
+    if (version === parentRequestVersion)
+      ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  } finally {
+    if (version === parentRequestVersion) loadingParent.value = false;
+  }
 }
 
 async function loadCoordinators() {
