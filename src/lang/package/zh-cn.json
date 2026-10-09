@@ -43,7 +43,12 @@
     "guides": "导游管理",
     "cities": "城市",
     "inquiryLogReport": "询盘汇总",
-    "flights": "航班信息"
+    "flights": "航班信息",
+    "guideManagement": "导游管理",
+    "guideList": "导游列表",
+    "guideLeaves": "导游请假表",
+    "guideRatings": "导游评分",
+    "tours": "成团表"
   },
   "appVersion": {
     "title": "发现新版本",
@@ -1398,5 +1403,78 @@
     "departureAirport": "出发机场",
     "arrivalAirport": "抵达机场",
     "pendingAirport": "{city}（待关联机场）"
+  },
+  "guideLeave": {
+    "searchPlaceholder": "搜索导游、代码或原因",
+    "guide": "导游",
+    "startDate": "开始日期",
+    "endDate": "结束日期",
+    "period": "请假日期",
+    "periodRequired": "请选择请假日期",
+    "reason": "请假原因",
+    "createTitle": "新增请假",
+    "editTitle": "编辑请假"
+  },
+  "guideRating": {
+    "searchPlaceholder": "搜索团号或导游",
+    "guide": "导游",
+    "max": "最高分",
+    "min": "最低分",
+    "average": "平均分",
+    "total": "总分",
+    "unrated": "未评分",
+    "fields": {
+      "selfScore": "导游自评",
+      "managerScore": "业务部门负责人",
+      "collectScore": "收客计调",
+      "operatorScore": "操作计调",
+      "carPurchase": "车购",
+      "recommendedSelfPay": "推荐自费",
+      "praise": "表扬",
+      "designated": "指定",
+      "incident": "突发事件"
+    }
+  },
+  "tour": {
+    "tourNo": "团号",
+    "create": "创建旅行团",
+    "edit": "编辑旅行团",
+    "cancel": "撤销团",
+    "cancelled": "旅行团已撤销",
+    "cancelConfirm": "撤销后不可恢复，将释放导游并解除询盘锁定。",
+    "cancelReason": "撤销原因（选填）",
+    "searchPlaceholder": "搜索团号、询盘、组团社或联系人",
+    "source": "来源",
+    "sourceModule": {
+      "standard": "普通业务",
+      "website": "独立站"
+    },
+    "inquiry": "询盘",
+    "inquiryCode": "询盘编号",
+    "quoteCode": "报价编号",
+    "itineraryCode": "行程编号",
+    "days": "天数",
+    "agency": "组团社/平台",
+    "collectCoordinator": "收客计调",
+    "operator": "操作计调",
+    "adults": "成人",
+    "children": "儿童",
+    "leaders": "领队",
+    "totalPeople": "人数总计",
+    "language": "语种",
+    "shopping": "进店",
+    "pickupFlight": "接团航班",
+    "dropFlight": "送团航班",
+    "pickupAt": "接团时间",
+    "dropAt": "送团时间",
+    "guide": "导游",
+    "unassigned": "待分配",
+    "notDownloaded": "该询盘最新冻结报价尚未点击下载，不能成团。",
+    "noStartDate": "行程缺少开始日期，不能成团。",
+    "noCountry": "询盘缺少国家和地区，请先补齐。",
+    "status": {
+      "active": "有效",
+      "cancelled": "已撤销"
+    }
   }
 }

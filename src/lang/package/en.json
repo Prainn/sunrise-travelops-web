@@ -43,7 +43,12 @@
     "guides": "Guide Management",
     "cities": "Cities",
     "inquiryLogReport": "Inquiry summary",
-    "flights": "Flight Information"
+    "flights": "Flight Information",
+    "guideManagement": "Guide Management",
+    "guideList": "Guides",
+    "guideLeaves": "Guide Leave",
+    "guideRatings": "Guide Ratings",
+    "tours": "Tours"
   },
   "appVersion": {
     "title": "New Version Available",
@@ -1398,5 +1403,78 @@
     "departureAirport": "Departure airport",
     "arrivalAirport": "Arrival airport",
     "pendingAirport": "{city} (airport association needed)"
+  },
+  "guideLeave": {
+    "searchPlaceholder": "Search guide, code or reason",
+    "guide": "Guide",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "period": "Leave dates",
+    "periodRequired": "Select the leave dates",
+    "reason": "Reason",
+    "createTitle": "Add Leave",
+    "editTitle": "Edit Leave"
+  },
+  "guideRating": {
+    "searchPlaceholder": "Search tour number or guide",
+    "guide": "Guide",
+    "max": "Highest",
+    "min": "Lowest",
+    "average": "Average",
+    "total": "Total",
+    "unrated": "Not rated",
+    "fields": {
+      "selfScore": "Guide self-rating",
+      "managerScore": "Business head",
+      "collectScore": "Sales coordinator",
+      "operatorScore": "Operations coordinator",
+      "carPurchase": "Vehicle purchase",
+      "recommendedSelfPay": "Recommended self-pay",
+      "praise": "Praise",
+      "designated": "Requested",
+      "incident": "Incident"
+    }
+  },
+  "tour": {
+    "tourNo": "Tour number",
+    "create": "Create Tour",
+    "edit": "Edit Tour",
+    "cancel": "Cancel tour",
+    "cancelled": "Tour cancelled",
+    "cancelConfirm": "A cancelled tour cannot be restored. The guide is released and the inquiry unlocked.",
+    "cancelReason": "Reason (optional)",
+    "searchPlaceholder": "Search tour number, inquiry, agency or contact",
+    "source": "Source",
+    "sourceModule": {
+      "standard": "Standard",
+      "website": "Website"
+    },
+    "inquiry": "Inquiry",
+    "inquiryCode": "Inquiry",
+    "quoteCode": "Quote",
+    "itineraryCode": "Itinerary",
+    "days": "Days",
+    "agency": "Agency / platform",
+    "collectCoordinator": "Sales coordinator",
+    "operator": "Operations coordinator",
+    "adults": "Adults",
+    "children": "Children",
+    "leaders": "Leaders",
+    "totalPeople": "Total",
+    "language": "Language",
+    "shopping": "Shopping",
+    "pickupFlight": "Pickup flight",
+    "dropFlight": "Drop-off flight",
+    "pickupAt": "Pickup time",
+    "dropAt": "Drop-off time",
+    "guide": "Guide",
+    "unassigned": "Unassigned",
+    "notDownloaded": "The latest frozen quote has not been downloaded, so a tour cannot be created.",
+    "noStartDate": "The itinerary has no start date, so a tour cannot be created.",
+    "noCountry": "The inquiry has no country or region. Complete it first.",
+    "status": {
+      "active": "Active",
+      "cancelled": "Cancelled"
+    }
   }
 }

@@ -155,6 +155,9 @@ export const websiteService = {
       },
     );
   },
+  async recordDownload(id: string) {
+    await request.post(`/website/itineraries/${encodeURIComponent(id)}/download-click`);
+  },
   quotation(id: string) {
     return request.get<WebsiteQuotation>(
       `/website/itineraries/${encodeURIComponent(id)}/quotation`,

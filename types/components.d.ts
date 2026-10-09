@@ -138,6 +138,7 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     TableToolbar: typeof import('./../src/components/TableToolbar/index.vue')['default']
     ThemeSwitch: typeof import('./../src/components/ThemeSwitch/index.vue')['default']
+    TourEditorDialog: typeof import('./../src/views/tours/components/TourEditorDialog.vue')['default']
     UserIdentityFields: typeof import('./../src/views/system/user/components/UserIdentityFields.vue')['default']
     WebsiteConfigAttractions: typeof import('./../src/views/resources/website/components/WebsiteConfigAttractions.vue')['default']
     WebsiteConfigCities: typeof import('./../src/views/resources/website/components/WebsiteConfigCities.vue')['default']

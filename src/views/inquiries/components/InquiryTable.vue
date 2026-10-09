@@ -81,11 +81,12 @@
               {{ $t("common.view") }}
             </el-button>
             <InquiryTransferButton
+              v-if="!scope.row.hasActiveTour"
               :inquiry="scope.row as InquiryRecord"
               @transferred="emit('refresh')"
             />
             <el-button
-              v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus)"
+              v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus, scope.row.hasActiveTour)"
               v-hasPerm="'inquiry:update'"
               type="primary"
               link
@@ -94,7 +95,7 @@
               {{ $t("common.edit") }}
             </el-button>
             <el-button
-              v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus)"
+              v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus, scope.row.hasActiveTour)"
               v-hasPerm="'inquiry:archive'"
               type="warning"
               link

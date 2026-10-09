@@ -96,6 +96,8 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
         data,
         previewShowChildPrice,
       );
+      // 下载点击先于打印落库，打印被取消也算已点击。
+      await inquiryService.recordDownload(plan.id);
       await printItineraryDocument(file);
       closePdfPreview();
       return true;
@@ -109,6 +111,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     isGeneratingPdf.value = true;
     try {
       const data = await inquiryService.pdfData(id);
+      await inquiryService.recordDownload(id);
       await printItineraryDocument(
         await generateItineraryPrintDocument(
           data.itinerary,

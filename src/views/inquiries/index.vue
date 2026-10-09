@@ -152,6 +152,7 @@ function createEmptyInquiry(): InquiryRecord {
     contactName: "",
     email: "",
     phone: "",
+    hasActiveTour: false,
     countryItemId: "",
     countryOrRegion: "",
     sourceChannel: "",
@@ -185,10 +186,10 @@ function openCreateDialog() {
   isEditorVisible.value = true;
 }
 async function openEditDialog(record: InquiryRecord) {
-  if (isInquiryReadOnly(record.status)) return;
+  if (isInquiryReadOnly(record.status, record.hasActiveTour)) return;
   try {
     const detail = await inquiryService.detail(record.id);
-    if (isInquiryReadOnly(detail.status)) {
+    if (isInquiryReadOnly(detail.status, detail.hasActiveTour)) {
       await fetchInquiries();
       return;
     }
@@ -234,7 +235,7 @@ async function saveInquiry(record: InquiryRecord) {
   }
 }
 async function archiveInquiry(record: InquiryRecord) {
-  if (isInquiryReadOnly(record.status)) return;
+  if (isInquiryReadOnly(record.status, record.hasActiveTour)) return;
   try {
     await ElMessageBox.confirm(t("inquiry.archiveConfirm"), t("common.tip"), { type: "warning" });
   } catch {

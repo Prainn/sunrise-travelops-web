@@ -147,6 +147,6 @@ const emit = defineEmits<{
   "update:pageSize": [value: number];
 }>();
 function ended(record: WebsiteInquiry) {
-  return record.status === "lost" || record.status === "archived";
+  return record.hasActiveTour || record.status === "lost" || record.status === "archived";
 }
 </script>

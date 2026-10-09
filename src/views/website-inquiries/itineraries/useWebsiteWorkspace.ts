@@ -38,7 +38,7 @@ export function useWebsiteWorkspace() {
   const skeletonId = ref("");
   let generation = 0;
   const ended = computed(
-    () => inquiry.value?.status === "lost" || inquiry.value?.status === "archived",
+    () => inquiry.value?.hasActiveTour || inquiry.value?.status === "lost" || inquiry.value?.status === "archived",
   );
   const can = (permission: string) => hasUserPermission(user.userInfo, permission);
   const editable = computed(
@@ -308,6 +308,7 @@ export function useWebsiteWorkspace() {
     if (!quotation.value || !canDownload.value || saving.value) return;
     saving.value = true;
     try {
+      await websiteService.recordDownload(quotation.value.itineraryId);
       await printWebsiteQuotation(quotation.value, language);
     } catch (cause) {
       showError(cause);

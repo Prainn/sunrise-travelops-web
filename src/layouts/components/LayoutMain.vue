@@ -3,12 +3,12 @@
     <router-view>
       <template #default="{ Component, route }">
         <transition :name="transitionName" mode="out-in">
-          <keep-alive :include="cachedViews.filter((path) => !path.startsWith('/resources'))">
+          <keep-alive :include="cachedViews.filter((path) => !isLibraryPath(path))">
             <component
               :is="currentComponent(Component, route)"
               :key="
                 route.fullPath +
-                  (route.path.startsWith('/resources')
+                  (isLibraryPath(route.path)
                     ? `${selectedResourceBusinessUnit ?? ''}:${selectedResourceLibrary ?? ''}`
                     : '')
               "
@@ -35,14 +35,19 @@ const { cachedViews } = toRefs(useTagsViewStore());
 const settingsStore = useSettingsStore();
 const activeRoute = useRoute();
 const userStore = useUserStore();
+// 资源库上下文页面：旅游资源库及导游列表/请假表。
+const LIBRARY_PREFIXES = ["/resources", "/guides/list", "/guides/leaves"];
+function isLibraryPath(path?: string) {
+  return LIBRARY_PREFIXES.some((prefix) => path?.startsWith(prefix));
+}
 watch(
   () => activeRoute.path,
   (path, previous) => {
-    if (path.startsWith("/resources") && !previous?.startsWith("/resources")) {
+    if (isLibraryPath(path) && !isLibraryPath(previous)) {
       selectedResourceBusinessUnit.value = undefined;
       selectedResourceLibrary.value = userStore.userInfo.resourceLibrary ?? undefined;
     }
-    if (!path.startsWith("/resources")) selectedResourceBusinessUnit.value = undefined;
+    if (!isLibraryPath(path)) selectedResourceBusinessUnit.value = undefined;
   },
   { immediate: true, flush: "sync" },
 );

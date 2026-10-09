@@ -74,7 +74,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   );
   const validationIssues = ref<PdfValidationIssue[]>([]);
   const inquiryReadOnly = computed(() =>
-    inquiry.value ? isInquiryReadOnly(inquiry.value.status) : true,
+    inquiry.value ? isInquiryReadOnly(inquiry.value.status, inquiry.value.hasActiveTour) : true,
   );
   const isDraft = computed(() => selectedItinerary.value?.status === "draft");
   const canCreateItinerary = computed(

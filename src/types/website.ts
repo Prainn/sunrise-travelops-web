@@ -75,6 +75,7 @@ export interface WebsiteInquiryInput {
   lostReason: string;
 }
 export interface WebsiteInquiry extends WebsiteInquiryInput {
+  hasActiveTour: boolean;
   countryCode: string | null;
   countryOrRegion: string;
   id: string;
