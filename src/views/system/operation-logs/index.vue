@@ -51,9 +51,9 @@
           <el-table-column :label="$t('operationLog.action')" prop="action" min-width="180" />
           <el-table-column :label="$t('operationLog.result')" min-width="90">
             <template #default="{ row }">
-              {{
-                row.success ? $t("operationLog.success") : $t("operationLog.failed")
-              }}
+              <el-tag :type="row.success ? 'success' : 'danger'">
+                {{ row.success ? $t("operationLog.success") : $t("operationLog.failed") }}
+              </el-tag>
             </template>
           </el-table-column>
           <el-table-column
@@ -90,6 +90,13 @@ const categories: { value: OperationCategory; label: string }[] = [
   { value: "system-category", label: "operationLog.systemCategory" },
   { value: "business-category", label: "operationLog.businessCategory" },
   { value: "resource", label: "operationLog.resource" },
+  { value: "inquiry", label: "operationLog.inquiry" },
+  { value: "itinerary", label: "operationLog.itinerary" },
+  { value: "quotation", label: "operationLog.quotation" },
+  { value: "tour", label: "operationLog.tour" },
+  { value: "guide-leave", label: "operationLog.guideLeave" },
+  { value: "guide-rating", label: "operationLog.guideRating" },
+  { value: "website-config", label: "operationLog.websiteConfig" },
 ];
 const category = ref<OperationCategory | "">("");
 const page = ref(1);

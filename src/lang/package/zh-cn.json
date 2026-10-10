@@ -13,7 +13,14 @@
     "user": "用户",
     "systemCategory": "系统分类",
     "businessCategory": "业务分类",
-    "resource": "旅游资源库"
+    "resource": "旅游资源库",
+    "inquiry": "询盘",
+    "itinerary": "行程",
+    "quotation": "报价",
+    "tour": "旅行团",
+    "guideLeave": "导游请假",
+    "guideRating": "导游评分",
+    "websiteConfig": "独立站配置"
   },
   "remoteSelect": {
     "loading": "加载中",

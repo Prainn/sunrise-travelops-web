@@ -13,7 +13,14 @@
     "user": "Users",
     "systemCategory": "System Categories",
     "businessCategory": "Business Categories",
-    "resource": "Tourism Resources"
+    "resource": "Tourism Resources",
+    "inquiry": "Inquiries",
+    "itinerary": "Itineraries",
+    "quotation": "Quotations",
+    "tour": "Tours",
+    "guideLeave": "Guide Leave",
+    "guideRating": "Guide Ratings",
+    "websiteConfig": "Website Configuration"
   },
   "remoteSelect": {
     "loading": "Loading",
