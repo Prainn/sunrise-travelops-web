@@ -8,7 +8,7 @@
     />
 
     <el-card class="page-content" shadow="never">
-      <TableToolbar @refresh="resetQuery">
+      <TableToolbar @refresh="loadItems">
         <el-button v-hasPerm="'sys:business-dictionary:create'" type="primary" @click="openCreate">
           {{ $t("common.create") }}
         </el-button>
@@ -16,7 +16,7 @@
       <div class="page-table-wrapper">
         <el-table
           v-loading="loading"
-          :data="rows"
+          :data="pageRows"
           height="100%"
           border
           row-key="id"
@@ -84,6 +84,11 @@
           </el-table-column>
         </el-table>
       </div>
+      <pagination
+        v-model:page="page"
+        v-model:limit="pageSize"
+        :total="rows.length"
+      />
     </el-card>
 
     <el-dialog
@@ -187,6 +192,13 @@ const keyword = ref("");
 const status = ref("");
 const loading = ref(false);
 const rows = ref<CategoryItem[]>([]);
+let loadVersion = 0;
+const page = ref(1);
+const pageSize = ref(20);
+const pageRows = computed(() => rows.value.slice(
+  (page.value - 1) * pageSize.value,
+  page.value * pageSize.value,
+));
 const dialogVisible = ref(false);
 const editingId = ref("");
 const formRef = ref<FormInstance>();
@@ -276,7 +288,10 @@ watch(
     loadItems();
   },
 );
-watch([keyword, status], () => loadItems(), { flush: "post" });
+watch([keyword, status], () => {
+  page.value = 1;
+  loadItems();
+}, { flush: "post" });
 
 function emptyItem(): CategoryItem {
   return {
@@ -290,6 +305,7 @@ function emptyItem(): CategoryItem {
   };
 }
 function resetQuery() {
+  page.value = 1;
   keyword.value = "";
   status.value = "";
 }
@@ -322,21 +338,26 @@ function openEdit(row: CategoryItem) {
 }
 
 async function loadItems() {
+  const version = ++loadVersion;
+  const category = props.category;
   loading.value = true;
   try {
-    const items = await businessDictionaryService.getItems(props.category.code, {
+    const items = await businessDictionaryService.getItems(category.code, {
       keyword: keyword.value,
       status: status.value,
     });
+    if (version !== loadVersion || category.code !== props.category.code) return;
     rows.value = items.map((item) => ({
       ...item,
       resourceTypes: "resourceTypes" in item ? (item.resourceTypes as ItineraryItemType[]) : [],
     }));
-    props.category.items.splice(0, props.category.items.length, ...items);
+    page.value = Math.min(page.value, Math.max(1, Math.ceil(rows.value.length / pageSize.value)));
+    category.items.splice(0, category.items.length, ...items);
   } catch (error) {
+    if (version !== loadVersion) return;
     ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
   } finally {
-    loading.value = false;
+    if (version === loadVersion) loading.value = false;
   }
 }
 

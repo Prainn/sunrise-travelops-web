@@ -180,5 +180,6 @@ const {
   api: resourceService.guideApi,
   loadRecords: (query) => resourceService.loadGuides(query),
   createEmpty: createEmptyPrice,
+  selectLibraryInDialog: true,
 });
 </script>

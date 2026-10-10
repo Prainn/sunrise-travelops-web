@@ -15,7 +15,26 @@
       :disabled="isSubmitting"
       label-position="top"
     >
-      <el-form-item :label="$t('identity.library')">
+      <el-form-item
+        v-if="isHeadquarters && !isEditing"
+        :label="$t('identity.businessUnit')"
+        prop="library"
+      >
+        <el-select
+          v-model="selectedBusinessUnit"
+          class="w-full"
+          :placeholder="$t('identity.selectBusinessUnitToCreate')"
+          @change="setBusinessUnit"
+        >
+          <el-option
+            v-for="unit in ['shengxu', 'linxi', 'website']"
+            :key="unit"
+            :value="unit"
+            :label="businessUnitName(unit)"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item v-else :label="$t('identity.library')">
         <ResourceLibraryTag :library="form.library" />
       </el-form-item>
       <el-form-item :label="$t('guide.referenceDailyPrice')" prop="dailyPrice">
@@ -65,6 +84,10 @@ import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
+import { businessUnitName } from "@/constants/identity";
+import { selectedResourceBusinessUnit } from "@/services/resource-library";
+import { useUserStore } from "@/stores/user";
+import type { LoginScope } from "@/types/auth";
 import { GUIDE_LANGUAGE_OPTIONS, type GuideRecord } from "@/types/resource";
 import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
@@ -76,10 +99,16 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ "update:modelValue": [boolean] }>();
 const { t } = useI18n();
+const userStore = useUserStore();
+const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters");
+const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const formRef = ref<FormInstance>();
 const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
 const form = reactive({ ...props.record });
 const rules = computed<FormRules>(() => ({
+  library: [
+    { required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" },
+  ],
   dailyPrice: [
     {
       required: true,
@@ -100,10 +129,27 @@ watch(
   ([visible, record]) => {
     if (visible) {
       Object.assign(form, record);
+      if (!props.isEditing) {
+        if (isHeadquarters.value) {
+          selectedBusinessUnit.value = selectedResourceBusinessUnit.value ?? "";
+          if (selectedBusinessUnit.value) {
+            form.library = selectedBusinessUnit.value === "shengxu" ? "shengxu" : "shared";
+          } else {
+            form.library = undefined;
+          }
+        } else {
+          form.library = userStore.userInfo.resourceLibrary ?? undefined;
+        }
+      }
       formRef.value?.clearValidate();
     }
   },
 );
+
+function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
+  form.library = unit === "shengxu" ? "shengxu" : "shared";
+  formRef.value?.validateField("library");
+}
 
 async function handleSubmit() {
   await submitForm(() => props.submit({ ...form }));
