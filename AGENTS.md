@@ -1,6 +1,6 @@
 # Sunrise TravelOps Web
 
-先读 [workspace AGENTS](../AGENTS.md) 的事实来源与全局流程；详细导航见 [架构 §3、§12](../docs/architecture/overview.md)。命名、样式和组件规范按需读 [前端技能](.agents/skills/sunrise-travelops-frontend/SKILL.md)，此处不复制示例代码。
+先读 [workspace AGENTS](../AGENTS.md) 的事实来源与任务分级；详细导航见 [架构 §3、§12](../docs/architecture/overview.md)。新增页面先按 [前端技能的页面参考导航](.agents/skills/sunrise-travelops-frontend/SKILL.md#页面参考导航) 选同类页面；局部修改只读对应命名、样式或组件章节。
 
 ## Stack
 
@@ -16,8 +16,11 @@
 | 状态与组合函数 | `src/stores`、`src/composables`；业务 composables 就近放在 views 下 |
 | Inquiry | `src/views/inquiries`、`src/services/inquiry.service.ts`、`src/types/inquiry.ts` |
 | Itinerary / Quotation | `src/views/inquiries/itineraries` 的 Workspace/Editor/Quote/Pdf composables、`pdf.ts`；同一个 inquiry service、`src/types/itinerary.ts` |
+| 独立站询盘 / 行程 / 配置 | `src/views/website-inquiries`、`src/views/resources/website`；业务合同见根 `docs/api/独立站行程与报价V1.md` |
+| 成团 / 导游请假与评分 | `src/views/tours`、`src/views/guides`；根成团专题及共享 API 成团章节 |
+| 系统操作日志 | `src/views/system/operation-logs`、`src/services/operation-log.service.ts` |
 
-修改业务按 Page → Service → Type → backend endpoint 核对实际链路；Inquiry/Itinerary/Quotation 先读根 P0、P0.1 和 API 对应章节。报价没有独立 quotations 页面。类型变化同时检查表单、列表、详情、保存映射和冻结数据/PDF 消费者，只修改受影响部分。
+修改业务按 Page → Service → Type → backend endpoint 核对实际链路；Inquiry/Itinerary/Quotation 读根 P0、P0.1 和 API 的受影响主题。局部样式/文案无需走接口链；简单接口改动只因实际共享依赖扩大阅读，不因跨端而全量 AOCI。报价没有独立 quotations 页面。类型变化同时检查表单、列表、详情、保存映射和冻结数据/PDF 消费者，只修改受影响部分。
 
 ## API Rules
 

@@ -7,6 +7,23 @@ description: Sunrise TravelOps frontend development standards for this Vue 3 and
 
 遵守 workspace 根目录 `AGENTS.md` 中的需求、API contract 和范围约束。
 
+按任务选读本文件：样式修改读 CSS 边界及目标使用的共享样式；新增页面读下面的页面参考导航和组件规范；请求/状态变化再读 API、Store 或 Composables。自查只覆盖本次涉及的部分。
+
+## 页面参考导航
+
+以下链接相对本 Skill。新增页面先选择一个最接近的现有页面，读取其相关布局、直接使用的组件及样式；只有缺少所需模式时再扩大搜索。样式一致性不要求全量 AOCI。
+
+| 页面或交互 | 参考入口 | 复用边界 |
+|---|---|---|
+| 简单资源列表与表单 | [城市资源页](../../../src/views/resources/city/index.vue)、[ResourceTable](../../../src/views/resources/components/ResourceTable.vue)、[ResourceEditorDialog](../../../src/views/resources/components/ResourceEditorDialog.vue) | 带资源库、状态、版本及资源权限语义；适用于相同资源业务，不作为所有页面的通用外壳 |
+| 资源列表配专用表单 | [航班资源页](../../../src/views/resources/flight/index.vue) | 复用列表结构，字段与关联校验由对应业务表单承担 |
+| 左侧分类、右侧列表 | [用户页](../../../src/views/system/user/index.vue) 的布局与 [page.scss](../../../src/styles/page.scss) | 复用 `page-container--split/page-aside/page-main`；账号权限和数据加载按新页面合同实现 |
+| 搜索、列表、表格、弹窗底部 | [page.scss](../../../src/styles/page.scss)、[theme.scss](../../../src/styles/theme.scss)、[UnoCSS](../../../uno.config.ts) | 复用 `page-search/page-content/page-table-wrapper/dialog-footer` 和现有主题变量，不另造默认间距或颜色体系 |
+| 工具栏与分页 | [TableToolbar](../../../src/components/TableToolbar/index.vue)、[Pagination](../../../src/components/Pagination/index.vue) | 核对 props/events 和同类消费者，沿用重置、刷新、分页交互 |
+| 远程选项 | [RemoteSelect](../../../src/components/RemoteSelect/index.vue)、[ResourceSelect](../../../src/components/ResourceSelect/index.vue) | 按数据来源选择；保留搜索、分页、回填和资源范围语义，不为下拉加载全库 |
+
+页面参考负责布局和交互模式；业务字段、权限及保存行为由根需求/API 决定。新页面同时沿用现有 i18n、loading/空态/错误反馈和表单提交方式。只读取参考页的相关部分，不因它较大而复制整页或顺带重构。
+
 ## 技术栈
 
 Vue 3 (Composition API) · TypeScript · Vite · Pinia · Vue Router · UnoCSS · SCSS
@@ -99,7 +116,7 @@ async function handleSubmit() {
 - SFC 块顺序：`template` → `script setup` → `style scoped`
 - script 内部顺序：导入（Vue → 第三方 → 类型 → 内部 → 相对路径）→ Props/Emits → 状态 → 计算属性 → 监听器 → 生命周期 → 方法 → defineExpose
 - Props 优先 TypeScript 类型声明 + `withDefaults`，不与运行时声明混用
-- 组件 ≤ 300 行，使用 `<script setup>`
+- 使用 `<script setup>`；组件较大时按清晰职责考虑拆分，300 行只作为检查可读性的提示。局部修改不为行数限制顺带拆分已有组件。
 - 优先使用 Element Plus 已有组件及其标准结构；表单字段使用 `<el-form>`、`<el-form-item>` 和对应的 Element Plus 输入组件，不使用 `<label><el-input /></label>` 这类原生标签包裹组件的写法
 
 ## 类型与 API 约定
@@ -262,7 +279,7 @@ const date = `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, 
 - [ ] 页面无重复的日期、金额等基础格式化实现
 - [ ] 抽象来自真实重复，没有复杂泛型、配置驱动或多层包装
 - [ ] 业务流程可顺序阅读，长链式表达式和嵌套三元已拆开
-- [ ] 组件 ≤ 300 行，使用 `<script setup>`
+- [ ] 使用 `<script setup>`，职责清晰；拆分有本次需求或真实复用依据
 
 ## 测试范围
 
