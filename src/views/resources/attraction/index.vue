@@ -102,7 +102,6 @@ const {
   api: resourceService.attractionApi,
   loadRecords: loadAttractions,
   createEmpty: createEmptyAttraction,
-  selectLibraryInDialog: true,
   cloneForEdit: (record) => ({ ...record, prices: record.prices }),
   createRecord: (record, id) => ({ ...record, id, prices: [] }),
   updateRecord: (current, record) => {

@@ -18,11 +18,6 @@
         height="100%"
         row-key="id"
       >
-        <el-table-column :label="$t('identity.library')" width="160">
-          <template #default="{ row }">
-            <ResourceLibraryTag :library="row.library" />
-          </template>
-        </el-table-column>
         <el-table-column prop="code" :label="$t('resource.code')" width="200" />
         <el-table-column prop="name" :label="$t('resource.hotelName')" min-width="190" />
         <el-table-column prop="city" :label="$t('resource.city')" width="100" />
@@ -111,7 +106,6 @@
 </template>
 
 <script setup lang="ts">
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { useI18n } from "vue-i18n";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { RESOURCE_PERMISSIONS } from "@/constants";

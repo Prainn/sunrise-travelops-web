@@ -13,7 +13,6 @@ import type {
   TourSource,
   TourSourceModule,
 } from "@/types/tour";
-import { selectedResourceBusinessUnit, selectedResourceLibrary } from "./resource-library";
 
 export interface TourListQuery {
   page: number;
@@ -36,13 +35,6 @@ function clean<T extends object>(query: T) {
       typeof value === "string" ? value.trim() || undefined : value,
     ]),
   );
-}
-
-/** 请假表沿用资源库隔离：总部选择业务后改传 businessUnit。 */
-function leaveScope() {
-  return selectedResourceBusinessUnit.value
-    ? { businessUnit: selectedResourceBusinessUnit.value }
-    : { library: selectedResourceLibrary.value };
 }
 
 export const tourService = {
@@ -108,19 +100,17 @@ export const tourService = {
   },
   leaves(query: PagedKeywordQuery) {
     return request.get<PageResult<GuideLeaveRecord>>("/resources/guide-leaves", {
-      params: clean({ ...query, ...leaveScope() }),
+      params: clean(query),
     });
   },
   createLeave(input: GuideLeaveInput) {
     return request.post<GuideLeaveRecord>("/resources/guide-leaves", {
       ...input,
-      library: selectedResourceLibrary.value,
     });
   },
-  updateLeave(id: string, version: number, library: GuideLeaveRecord["library"], input: GuideLeaveInput) {
+  updateLeave(id: string, version: number, input: GuideLeaveInput) {
     return request.put<GuideLeaveRecord>(`/resources/guide-leaves/${encodeURIComponent(id)}`, {
       ...input,
-      library,
       version,
     });
   },

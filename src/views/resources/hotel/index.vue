@@ -2,7 +2,6 @@
   <div class="hotel-page page-container">
     <el-card class="page-search" shadow="never">
       <el-form :inline="true">
-        <ResourceBusinessFilter />
         <el-form-item :label="$t('common.keywords')">
           <el-input
             v-model.trim="keywords"
@@ -78,27 +77,6 @@
         :disabled="isSubmitting"
         label-width="auto"
       >
-        <el-form-item
-          v-if="isHeadquarters && !isEditing"
-          :label="$t('identity.businessUnit')"
-          prop="library"
-        >
-          <el-select
-            v-model="selectedBusinessUnit"
-            :placeholder="$t('identity.selectBusinessUnitToCreate')"
-            @change="setBusinessUnit"
-          >
-            <el-option
-              v-for="unit in ['shengxu', 'linxi', 'website']"
-              :key="unit"
-              :value="unit"
-              :label="businessUnitName(unit)"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item v-else :label="$t('identity.library')">
-          <ResourceLibraryTag :library="hotelForm.library" />
-        </el-form-item>
         <el-form-item v-if="isEditing" :label="$t('resource.code')">
           <el-input v-model="hotelForm.code" disabled />
         </el-form-item>
@@ -106,7 +84,7 @@
           <el-input v-model.trim="hotelForm.name" />
         </el-form-item>
         <el-form-item :label="$t('resource.city')" prop="city">
-          <CitySelect v-model="hotelForm.city" :library="hotelForm.library" />
+          <CitySelect v-model="hotelForm.city" />
         </el-form-item>
         <el-form-item :label="$t('resource.priceUnit')" prop="unit">
           <el-select v-model="hotelForm.unit">
@@ -171,19 +149,12 @@
 </template>
 
 <script setup lang="ts">
-import { businessUnitName } from "@/constants/identity";
-import { resetResourceBusinessFilter } from "@/services/resource-library";
-import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { useResourcePagination } from "../useResourcePagination";
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import type { FormInstance, FormRules } from "element-plus";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { selectedResourceLibrary } from "@/services/resource-library";
-import { useUserStore } from "@/stores/user";
-import type { LoginScope } from "@/types/auth";
 import CitySelect from "@/components/CitySelect.vue";
 import { useCityOptions } from "@/composables/useCityOptions";
 import { resourceService } from "@/services/resource.service";
@@ -197,9 +168,6 @@ type HotelForm = HotelRecord;
 defineOptions({ name: "Hotel" });
 
 const { t, locale } = useI18n();
-const userStore = useUserStore();
-const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters");
-const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const hotelStore = reactive<HotelRecord[]>([]);
 const keywords = ref("");
 const city = ref("");
@@ -216,9 +184,6 @@ const total = ref(0);
 const hotelUnitOptions = computed(() => getResourceUnitOptions("hotel", locale.value));
 const requestHotels = useDebounceFn(() => loadHotels(currentQuery()), 300);
 const hotelRules: FormRules = {
-  library: [
-    { required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" },
-  ],
   name: [{ required: true, message: t("hotel.nameRequired"), trigger: "blur" }],
   city: [{ required: true, message: t("hotel.cityRequired"), trigger: "change" }],
   individualPrice: [
@@ -283,7 +248,6 @@ function createEmptyHotel(): HotelForm {
   };
 }
 function resetQuery() {
-  resetResourceBusinessFilter();
   pageNum.value = 1;
   keywords.value = "";
   city.value = "";
@@ -292,18 +256,8 @@ function resetQuery() {
 }
 function openCreateDialog() {
   editingId.value = "";
-  Object.assign(hotelForm, createEmptyHotel(), { library: selectedResourceLibrary.value });
-  if (isHeadquarters.value) {
-    selectedBusinessUnit.value = "";
-    hotelForm.library = undefined;
-  }
+  Object.assign(hotelForm, createEmptyHotel());
   isHotelDialogVisible.value = true;
-}
-function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
-  const library = unit === "shengxu" ? "shengxu" : "shared";
-  if (hotelForm.library !== library) hotelForm.city = "";
-  hotelForm.library = library;
-  hotelFormRef.value?.validateField("library");
 }
 async function openEditDialog(hotel: HotelRecord) {
   try {
@@ -346,7 +300,7 @@ async function saveHotel() {
       ...hotelForm,
       province:
         resourceService.cityOptions.find(
-          (city) => city.name === hotelForm.city && city.library === hotelForm.library,
+          (city) => city.name === hotelForm.city,
         )?.province ?? hotelForm.province,
     };
     const current = hotelStore.find((hotel) => hotel.id === editingId.value);

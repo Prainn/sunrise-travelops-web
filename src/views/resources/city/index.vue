@@ -46,7 +46,6 @@ const maintenance = useResourceMaintenance<CityRecord>({
   api: resourceService.cityApi,
   loadRecords: (query) => resourceService.loadCities(query),
   createEmpty: () => ({ id: "", code: "", name: "", province: "", status: "enabled" }),
-  selectLibraryInDialog: true,
 });
 const { isLoading, rows, total, record, isDialogVisible, isEditing, loadRecords } = maintenance;
 const fields = computed<ResourceFormField[]>(() => [

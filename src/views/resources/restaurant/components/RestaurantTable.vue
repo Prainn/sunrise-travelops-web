@@ -33,11 +33,6 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column :label="$t('identity.library')" min-width="200">
-            <template #default="{ row }">
-              <ResourceLibraryTag :library="row.library" />
-            </template>
-          </el-table-column>
           <el-table-column type="expand" width="48">
             <template #default="scope">
               <div class="restaurant-table__prices">
@@ -208,8 +203,6 @@
 </template>
 
 <script setup lang="ts">
-import { resetResourceBusinessFilter } from "@/services/resource-library";
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 import { useCityOptions } from "@/composables/useCityOptions";
 import { ref, watch } from "vue";
@@ -261,7 +254,6 @@ function currentQuery(): ResourceListQuery {
 }
 
 function resetQuery() {
-  resetResourceBusinessFilter();
   keywords.value = "";
   city.value = "";
   priceUnit.value = "";

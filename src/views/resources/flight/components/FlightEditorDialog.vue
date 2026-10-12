@@ -16,27 +16,6 @@
       :disabled="isSubmitting"
       label-width="auto"
     >
-      <el-form-item
-        v-if="isHeadquarters && !isEditing"
-        :label="$t('identity.businessUnit')"
-        prop="library"
-      >
-        <el-select
-          v-model="selectedBusinessUnit"
-          :placeholder="$t('identity.selectBusinessUnitToCreate')"
-          @change="setBusinessUnit"
-        >
-          <el-option
-            v-for="unit in ['shengxu', 'linxi', 'website']"
-            :key="unit"
-            :value="unit"
-            :label="businessUnitName(unit)"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item v-else :label="$t('identity.library')">
-        <ResourceLibraryTag :library="form.library" />
-      </el-form-item>
       <el-form-item :label="$t('flight.departureAirport')" prop="departureAirportId">
         <BusinessItemSelect
           :model-value="form.departureAirportId ?? ''"
@@ -102,14 +81,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
-import { businessUnitName } from "@/constants/identity";
-import { useUserStore } from "@/stores/user";
-import type { LoginScope } from "@/types/auth";
 import type { FlightRecord } from "@/types/resource";
 import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
@@ -121,9 +96,6 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean] }>();
 const { t } = useI18n();
-const userStore = useUserStore();
-const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters");
-const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const formRef = ref<FormInstance>();
 const form = reactive<FlightRecord>({ ...props.record });
 const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
@@ -132,9 +104,6 @@ const isVisible = computed({
   set: (value) => emit("update:modelValue", value),
 });
 const rules = computed<FormRules<FlightRecord>>(() => ({
-  library: [
-    { required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" },
-  ],
   departureAirportId: [
     { required: true, message: t("resource.fieldRequired", { field: t("flight.departureAirport") }), trigger: "change" },
   ],
@@ -160,17 +129,8 @@ watch(
   (visible) => {
     if (!visible) return;
     Object.assign(form, props.record);
-    if (isHeadquarters.value && !props.isEditing) {
-      selectedBusinessUnit.value = "";
-      form.library = undefined;
-    }
   },
 );
-
-function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
-  form.library = unit === "shengxu" ? "shengxu" : "shared";
-  formRef.value?.validateField("library");
-}
 
 async function handleSubmit() {
   await submitForm(() => props.submit({ ...form, flightNumber: form.flightNumber.toUpperCase() }));

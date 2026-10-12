@@ -3,15 +3,10 @@
     <router-view>
       <template #default="{ Component, route }">
         <transition :name="transitionName" mode="out-in">
-          <keep-alive :include="cachedViews.filter((path) => !isLibraryPath(path))">
+          <keep-alive :include="cachedViews">
             <component
               :is="currentComponent(Component, route)"
-              :key="
-                route.fullPath +
-                  (isLibraryPath(route.path)
-                    ? `${selectedResourceBusinessUnit ?? ''}:${selectedResourceLibrary ?? ''}`
-                    : '')
-              "
+              :key="route.fullPath"
             />
           </keep-alive>
         </transition>
@@ -21,9 +16,6 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from "@/stores/user";
-import { useRoute } from "vue-router";
-import { selectedResourceBusinessUnit, selectedResourceLibrary } from "@/services/resource-library";
 import { type RouteLocationNormalized } from "vue-router";
 import { useSettingsStore } from "@/stores/settings";
 import { useTagsViewStore } from "@/stores/tags-view";
@@ -33,25 +25,6 @@ import Error404 from "@/views/error/404.vue";
 const { cachedViews } = toRefs(useTagsViewStore());
 
 const settingsStore = useSettingsStore();
-const activeRoute = useRoute();
-const userStore = useUserStore();
-// 资源库上下文页面：旅游资源库及导游列表/请假表。
-const LIBRARY_PREFIXES = ["/resources", "/guides/list", "/guides/leaves"];
-function isLibraryPath(path?: string) {
-  return LIBRARY_PREFIXES.some((prefix) => path?.startsWith(prefix));
-}
-watch(
-  () => activeRoute.path,
-  (path, previous) => {
-    if (isLibraryPath(path) && !isLibraryPath(previous)) {
-      selectedResourceBusinessUnit.value = undefined;
-      selectedResourceLibrary.value = userStore.userInfo.resourceLibrary ?? undefined;
-    }
-    if (!isLibraryPath(path)) selectedResourceBusinessUnit.value = undefined;
-  },
-  { immediate: true, flush: "sync" },
-);
-
 const wrapperMap = new Map<string, Component>();
 const currentComponent = (component: Component, route: RouteLocationNormalized) => {
   if (!component) return;

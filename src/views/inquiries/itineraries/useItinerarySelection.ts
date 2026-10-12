@@ -1,4 +1,3 @@
-import { selectedResourceLibrary } from "@/services/resource-library";
 import { resourceService } from "@/services/resource.service";
 import { computed, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -32,7 +31,6 @@ export function useItinerarySelection() {
         inquiryService.listItineraries(inquiryId.value),
       ]);
       if (version !== requestVersion) return;
-      selectedResourceLibrary.value = record.businessUnit === "shengxu" ? "shengxu" : "shared";
       await resourceService.loadCityOptions();
       if (version !== requestVersion) return;
       inquiry.value = record;

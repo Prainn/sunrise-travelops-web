@@ -43,11 +43,6 @@
           height="100%"
           row-key="id"
         >
-          <el-table-column :label="$t('identity.library')" min-width="200">
-            <template #default="{ row }">
-              <ResourceLibraryTag :library="row.library" />
-            </template>
-          </el-table-column>
           <el-table-column :label="$t('guide.referenceDailyPrice')">
             <template #default="{ row }">
               ¥{{ formatMoney(row.dailyPrice) }}
@@ -116,7 +111,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";

@@ -12,6 +12,13 @@ export interface WebsiteCity extends ConfigBase {
   nameEn: string;
   resourceId: string | null;
 }
+export interface WebsiteConfigHotel extends ConfigBase {
+  cityId: string;
+  nameZh: string;
+  nameEn: string;
+  resourceId: string | null;
+  price: string;
+}
 export interface WebsiteAttraction extends ConfigBase {
   cityId: string;
   parentId: string | null;
@@ -52,6 +59,7 @@ export interface WebsiteConfig {
   version: number;
   cities: WebsiteCity[];
   attractions: WebsiteAttraction[];
+  hotels: WebsiteConfigHotel[];
   routes: WebsiteRoute[];
   patterns: WebsitePattern[];
   skeletons: WebsiteSkeleton[];
@@ -111,6 +119,7 @@ export interface WebsiteHotelStay {
   id: string;
   tier: "A" | "B";
   cityId: string;
+  configHotelId: string | null;
   resourceId: string | null;
   nameZh: string;
   nameEn: string;

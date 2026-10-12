@@ -49,7 +49,6 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import { resourceService } from "@/services/resource.service";
-import { selectedResourceLibrary } from "@/services/resource-library";
 import type { AgencyContactRecord, AgencyRecord } from "@/types/resource";
 import AgencyContactDialog from "./components/AgencyContactDialog.vue";
 import AgencyContactsPanel from "./components/AgencyContactsPanel.vue";
@@ -96,7 +95,7 @@ const contactRecord = ref<AgencyContactRecord>(createEmptyContact());
 const isContactEditing = computed(() => Boolean(editingContactId.value));
 
 function openCreateDialog() {
-  record.value = { ...createEmptyAgencyRecord(), library: selectedResourceLibrary.value };
+  record.value = createEmptyAgencyRecord();
   isDialogVisible.value = true;
 }
 

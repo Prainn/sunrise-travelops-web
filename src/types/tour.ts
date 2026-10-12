@@ -134,7 +134,6 @@ export type TourRatingRow = {
 
 export interface GuideLeaveRecord {
   id: string;
-  library: "shengxu" | "shared";
   guidePersonId: string;
   guideName: string;
   guideCode: string;

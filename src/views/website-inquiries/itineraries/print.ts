@@ -55,7 +55,7 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh"): 
         tr { break-inside: avoid; }
         li { margin: 6px 0; white-space: pre-wrap; }
         .quote-price { font-size: 15px; }
-        @media print { body { padding: 0; } }
+        @media print { body { padding: 1px; } }
       </style>
     </head>
     <body>

@@ -5,6 +5,7 @@ import type {
   WebsiteAttraction,
   WebsiteCity,
   WebsiteConfig,
+  WebsiteConfigHotel,
   WebsitePattern,
   WebsiteRoute,
   WebsiteSkeleton,
@@ -81,6 +82,22 @@ function cityRules(t: Translate, config: () => WebsiteConfig, field = "websiteCo
 export function useWebsiteCityRules() {
   const { t } = useI18n();
   return computed<FormRules<WebsiteCity>>(() => nameRules(t));
+}
+
+export function useWebsiteHotelRules(config: () => WebsiteConfig) {
+  const { t } = useI18n();
+  return computed<FormRules<WebsiteConfigHotel>>(() => ({
+    ...nameRules(t),
+    cityId: cityRules(t, config, "websiteConfig.belongsToCity"),
+    price: [{
+      validator: (_rule, value: string, callback) => {
+        callback(typeof value === "string" && /^(0|[1-9]\d{0,9})(\.\d{1,2})?$/.test(value)
+          ? undefined
+          : new Error(t("websiteConfig.hotels.priceInvalid")));
+      },
+      trigger: "blur",
+    }],
+  }));
 }
 
 export function useWebsiteAttractionRules(config: () => WebsiteConfig, record: Ref<WebsiteAttraction | undefined>) {

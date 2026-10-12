@@ -19,7 +19,6 @@
       {{ agency.parentName ? $t("resource.agencyParentContext", { name: agency.parentName }) : $t("resource.agencyPrimary") }}
     </div>
     <div class="mt-2 flex items-center gap-2" @click.stop @keydown.stop>
-      <ResourceLibraryTag :library="agency.library" />
       <el-button
         v-has-perm="permissions.update"
         type="primary"
@@ -49,7 +48,6 @@
 </template>
 
 <script setup lang="ts">
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import type { ResourcePermissionSet } from "@/constants";
 import type { AgencyRecord } from "@/types/resource";
 

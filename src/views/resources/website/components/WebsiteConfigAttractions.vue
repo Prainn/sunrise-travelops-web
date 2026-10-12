@@ -174,7 +174,7 @@
               :selected-name="record.nameZh"
             />
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.attractions.recommendedMonthsHint')">
+          <el-form-item :label="$t('websiteConfig.attractions.recommendedMonths')">
             <el-select v-model="record.recommendedMonths" multiple>
               <el-option
                 v-for="month in 12"

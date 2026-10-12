@@ -1,4 +1,3 @@
-import type { ResourceLibrary } from "./auth";
 import type { ItineraryItemType, ItineraryPriceUnit } from "./itinerary";
 
 export type ResourceStatus = "enabled" | "disabled";
@@ -6,7 +5,6 @@ export type HotelRating = "international_five_star" | "ctrip_preferred";
 export type VehicleServiceLevel = "standard" | "vip";
 
 export interface ResourceAuditRecord {
-  library?: ResourceLibrary;
   version?: number;
   createdAt?: string;
   createdBy?: string | null;
@@ -45,6 +43,7 @@ export interface ResourceListQuery extends Partial<ResourceQueryParams> {
   departureAirportId?: string;
   arrivalAirportId?: string;
   secondLanguage?: string;
+  businessUnit?: string;
   shopping?: string;
   city?: string;
   rating?: HotelRating;

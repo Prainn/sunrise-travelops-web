@@ -16,26 +16,19 @@
       :disabled="isSubmitting || loadingParent"
       label-width="auto"
     >
-      <el-form-item
-        v-if="isHeadquarters && (!isEditing || !form.businessUnit)"
-        :label="$t('identity.businessUnit')"
-        prop="library"
-      >
+      <el-form-item :label="$t('resource.agencyBusinessUnit')" prop="businessUnit">
         <el-select
           v-model="selectedBusinessUnit"
           :placeholder="$t('identity.selectBusinessUnitToCreate')"
           @change="setBusinessUnit"
         >
           <el-option
-            v-for="unit in availableBusinessUnits"
+            v-for="unit in BUSINESS_UNITS"
             :key="unit"
             :value="unit"
             :label="businessUnitName(unit)"
           />
         </el-select>
-      </el-form-item>
-      <el-form-item v-else :label="$t('identity.library')">
-        <ResourceLibraryTag :library="form.library" />
       </el-form-item>
       <el-form-item v-if="isEditing" :label="$t('resource.code')">
         <el-input v-model="form.code" disabled />
@@ -46,7 +39,7 @@
           :model-value="form.parentId || ''"
           :selected-label="form.parentName || ''"
           :filters="parentFilters"
-          :disabled="!form.businessUnit || isSubmitting || loadingParent"
+          :disabled="isSubmitting || loadingParent"
           :placeholder="$t('resource.agencyParentPlaceholder')"
           @update:model-value="selectParent"
         />
@@ -84,7 +77,7 @@
         />
       </el-form-item>
       <el-form-item :label="$t('resource.city')">
-        <CitySelect v-model="form.city" :library="form.library" />
+        <CitySelect v-model="form.city" />
       </el-form-item>
       <el-form-item :label="$t('resource.agencyEmail')" prop="email">
         <el-input v-model.trim="form.email" />
@@ -121,14 +114,12 @@
 
 <script setup lang="ts">
 import { businessUnitName } from "@/constants/identity";
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
 import CitySelect from "@/components/CitySelect.vue";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { useUserStore } from "@/stores/user";
 import type { LoginScope } from "@/types/auth";
 import type { AgencyRecord } from "@/types/resource";
 import { resourceService } from "@/services/resource.service";
@@ -146,15 +137,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const userStore = useUserStore();
-const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters");
-const availableBusinessUnits = computed(() =>
-  props.isEditing && form.library
-    ? form.library === "shengxu"
-      ? (["shengxu"] as const)
-      : (["linxi", "website"] as const)
-    : (["shengxu", "linxi", "website"] as const),
-);
+const BUSINESS_UNITS = ["shengxu", "linxi", "website"] as const;
 const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const formRef = ref<FormInstance>();
 const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
@@ -164,8 +147,6 @@ let parentRequestVersion = 0;
 const parentFilters = computed<Record<string, string>>(() => ({
   parentOnly: "true",
   ...(form.id ? { excludeId: form.id } : {}),
-  ...(form.businessUnit ? { businessUnit: form.businessUnit } : {}),
-  ...(form.library ? { library: form.library } : {}),
 }));
 const coordinators = ref<{ id: string; name: string; username: string }[]>([]);
 const loadingCoordinators = ref(false);
@@ -175,7 +156,7 @@ const isVisible = computed({
   set: (value) => emit("update:modelValue", value),
 });
 const rules = computed<FormRules>(() => ({
-  library: [
+  businessUnit: [
     { required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" },
   ],
   coordinatorId: [
@@ -197,13 +178,6 @@ watch(
     loadingParent.value = false;
     if (!visible) return;
     Object.assign(form, cloneRecord(record));
-    if (isHeadquarters.value && !props.isEditing) {
-      selectedBusinessUnit.value = "";
-      form.library = undefined;
-      form.businessUnit = null;
-    }
-    if (!isHeadquarters.value)
-      form.businessUnit = userStore.userInfo.scope as AgencyRecord["businessUnit"];
     selectedBusinessUnit.value = form.businessUnit || "";
     void loadCoordinators();
   },
@@ -211,19 +185,10 @@ watch(
 );
 
 function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
-  const library = unit === "shengxu" ? "shengxu" : "shared";
-  if (!props.isEditing) {
-    if (form.library !== library) form.city = "";
-    form.library = library;
-  }
   form.businessUnit = unit;
-  form.parentId = null;
-  form.parentName = null;
-  ++parentRequestVersion;
-  loadingParent.value = false;
   form.coordinatorId = null;
   void loadCoordinators();
-  formRef.value?.validateField("library");
+  formRef.value?.validateField("businessUnit");
 }
 
 async function selectParent(parentId: string) {

@@ -152,7 +152,6 @@ export const userService = {
       scope: currentUser.scope,
       scopeName: currentUser.scopeName,
       deptName: currentUser.deptName,
-      resourceLibrary: currentUser.resourceLibrary,
     };
   },
   async getRoleOptions(): Promise<IdentityRoleOption[]> {

@@ -150,7 +150,6 @@ const {
     status: "enabled",
     remark: "",
   }),
-  selectLibraryInDialog: true,
 });
 const tableRows = computed(() =>
   rows.map((row) => ({

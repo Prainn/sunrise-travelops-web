@@ -125,6 +125,5 @@ const {
     arrivalTime: "",
     status: "enabled",
   }),
-  selectLibraryInDialog: true,
 });
 </script>

@@ -1,4 +1,4 @@
-import type { LoginScope, ResourceLibrary } from "./auth";
+import type { LoginScope } from "./auth";
 import type { BaseQueryParams } from "@/types/common";
 
 export interface UserInfo {
@@ -6,7 +6,6 @@ export interface UserInfo {
   scope?: LoginScope;
   scopeName?: string;
   deptName?: string;
-  resourceLibrary?: ResourceLibrary | null;
   userId?: string;
   username?: string;
   nickname?: string;

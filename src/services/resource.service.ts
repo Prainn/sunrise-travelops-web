@@ -1,9 +1,7 @@
-import { selectedResourceBusinessUnit, selectedResourceLibrary } from "./resource-library";
 import { clearResourceOptionsCache, loadResourceOptions } from "./resource-options-cache";
-import { reactive, watch } from "vue";
+import { reactive } from "vue";
 import { request } from "@/api/request";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
-import type { ResourceLibrary } from "@/types/auth";
 import type { PageResult } from "@/types/common";
 import type {
   AgencyContactRecord,
@@ -48,7 +46,7 @@ const RESOURCE_BASE_URL = "/resources";
 
 function buildParams(query: ResourceQuery): ResourceQuery {
   return Object.fromEntries(
-    Object.entries({ library: selectedResourceLibrary.value, ...query }).map(([key, value]) => {
+    Object.entries(query).map(([key, value]) => {
       const normalizedValue = typeof value === "string" ? value.trim() : value;
       return [key, normalizedValue || normalizedValue === 0 ? normalizedValue : undefined];
     }),
@@ -59,7 +57,7 @@ function normalizeMoney(value: string | number | null | undefined): number {
   return value === null || value === undefined ? 0 : Number(value);
 }
 
-function createCrud<T extends { code?: string; library?: ResourceLibrary }>(
+function createCrud<T extends { id: string; code?: string }>(
   resourceName: string,
   toInput: (data: T) => Record<string, unknown>,
   fromResponse: (data: ApiRecord<T>) => T = (data) => data as T,
@@ -68,12 +66,7 @@ function createCrud<T extends { code?: string; library?: ResourceLibrary }>(
   return {
     async getPage(query) {
       const result = await request.get<PageResult<ApiRecord<T>>>(baseUrl, {
-        params: buildParams({
-          ...query,
-          ...(selectedResourceBusinessUnit.value
-            ? { businessUnit: selectedResourceBusinessUnit.value, library: undefined }
-            : {}),
-        }),
+        params: buildParams(query),
       });
       return { ...result, list: result.list.map(fromResponse) };
     },
@@ -84,7 +77,6 @@ function createCrud<T extends { code?: string; library?: ResourceLibrary }>(
     create(data) {
       return request
         .post<ApiRecord<T>>(baseUrl, {
-          library: data.library ?? selectedResourceLibrary.value,
           ...toInput(data),
           ...(["guides", "guide-people", "flights"].includes(resourceName)
             ? {}
@@ -393,15 +385,6 @@ async function loadResourceRecords<T>(
   return target;
 }
 
-watch(
-  selectedResourceLibrary,
-  () => {
-    cityOptionsRequest = null;
-    cityOptions.splice(0);
-    clearResourceOptionsCache();
-  },
-  { flush: "sync" },
-);
 export const resourceService = {
   getTotal(records: object) {
     return resourceTotals.get(records) ?? 0;
@@ -413,19 +396,12 @@ export const resourceService = {
     return loadResourceRecords(cities, cityApi, query);
   },
   loadCityOptions(): Promise<CityRecord[]> {
-    const library = selectedResourceLibrary.value;
     if (!cityOptionsRequest)
       cityOptionsRequest = request
-        .get<CityRecord[]>(`${RESOURCE_BASE_URL}/cities/options`, {
-          params: { library: selectedResourceLibrary.value },
-        })
-        .then((records) =>
-          library === selectedResourceLibrary.value
-            ? replaceRecords(cityOptions, records)
-            : cityOptions,
-        )
+        .get<CityRecord[]>(`${RESOURCE_BASE_URL}/cities/options`)
+        .then((records) => replaceRecords(cityOptions, records))
         .finally(() => {
-          if (library === selectedResourceLibrary.value) cityOptionsRequest = null;
+          cityOptionsRequest = null;
         });
     return cityOptionsRequest;
   },

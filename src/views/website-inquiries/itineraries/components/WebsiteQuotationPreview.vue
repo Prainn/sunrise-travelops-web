@@ -14,7 +14,7 @@
         :type="issue.severity === 'ERROR' ? 'error' : 'warning'"
         :title="`${issue.code}${issue.dayNumber ? ` · D${issue.dayNumber}` : ''}：${issue.message}`"
         :closable="false"
-        class="mb-2"
+        class="mb-2!"
       />
       <el-checkbox-group
         v-if="!confirmed && warningCodes.length"

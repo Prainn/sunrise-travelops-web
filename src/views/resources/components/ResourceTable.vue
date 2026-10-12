@@ -2,7 +2,6 @@
   <div class="page-container">
     <el-card class="page-search" shadow="never">
       <el-form :inline="true">
-        <ResourceBusinessFilter />
         <el-form-item :label="$t('common.keywords')">
           <el-input
             v-model.trim="keywords"
@@ -34,11 +33,6 @@
           border
           height="100%"
         >
-          <el-table-column :label="$t('identity.library')" min-width="200">
-            <template #default="{ row }">
-              <ResourceLibraryTag :library="row.library" />
-            </template>
-          </el-table-column>
           <el-table-column
             v-for="column in columns"
             :key="column.prop"
@@ -106,9 +100,6 @@
 </template>
 
 <script setup lang="ts" generic="T extends ResourceTableRecord">
-import { resetResourceBusinessFilter } from "@/services/resource-library";
-import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 import { ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
@@ -160,7 +151,6 @@ function currentQuery(): ResourceListQuery {
 }
 
 function resetQuery() {
-  resetResourceBusinessFilter();
   keywords.value = "";
   pageNum.value = 1;
   emit("reset-query");

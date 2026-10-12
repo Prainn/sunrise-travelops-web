@@ -169,7 +169,6 @@
 
 <script setup lang="ts">
 import { businessUnitName } from "@/constants/identity";
-import { selectedResourceLibrary } from "@/services/resource-library";
 import { useUserStore } from "@/stores/user";
 import { inquiryService } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
@@ -241,7 +240,6 @@ const rules = computed<FormRules>(() => ({
 function resetForm() {
   ++agencySelectionVersion;
   Object.assign(form, props.record);
-  selectedResourceLibrary.value = form.businessUnit === "shengxu" ? "shengxu" : "shared";
   void refreshOwners();
   expandedDetails.value = props.isEditing ? ["followup"] : [];
   syncAgencyDetails();
@@ -275,11 +273,10 @@ async function refreshOwners() {
   }
 }
 async function changeBusinessUnit() {
-  selectedResourceLibrary.value = form.businessUnit === "shengxu" ? "shengxu" : "shared";
   form.agencyId = "";
   form.contactId = "";
   form.ownerId = "";
-  await Promise.all([resourceService.loadAgencies(), refreshOwners()]);
+  await Promise.all([resourceService.loadAgencies({ businessUnit: form.businessUnit }), refreshOwners()]);
 }
 function syncAgencyDetails() {
   const agency = selectedAgency.value;

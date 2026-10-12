@@ -725,9 +725,10 @@
     "agencyList": "组团社",
     "agencyName": "组团社名称",
     "agencyCoordinator": "关联计调",
+    "agencyBusinessUnit": "计调绑定业务部",
     "agencyCoordinatorRequired": "请选择关联计调",
     "agencyParent": "父级组团社",
-    "agencyParentPlaceholder": "可选，留空为一级组团社",
+    "agencyParentPlaceholder": "请选择父级组团社",
     "agencyPrimary": "一级",
     "agencyChildCount": "二级 {count}",
     "agencyParentContext": "父级：{name}",
@@ -995,7 +996,7 @@
     "ITINERARY_INVALID": "行程数据不符合要求，请检查填写内容",
     "PDF_NOT_READY": "请完善行程及报价后生成 PDF",
     "ITINERARY_RESOURCE_DUPLICATE": "行程中不可重复使用非标准价景点或餐食",
-    "RESOURCE_STANDARD_PRICE_EXISTS": "该资源库城市已有标准价资源，请先取消原资源的标准价标记"
+    "RESOURCE_STANDARD_PRICE_EXISTS": "该城市已有标准价资源，请先取消原资源的标准价标记"
   },
   "request": {
     "failed": "请求失败",
@@ -1040,7 +1041,7 @@
     "hotelPriceUnit": "元/间/晚（含早餐）",
     "hotelPrice": "实际每间每晚价格",
     "languages": {
-      "none": "无（仅中文）",
+      "none": "无",
       "en": "英文",
       "th": "泰语",
       "vi": "越南语",
@@ -1069,18 +1070,12 @@
     "prices": "行程价格与调价原因",
     "history": "调价历史",
     "automatic": "恢复自动合计",
-    "library": "资源库",
     "time": "操作时间",
     "operator": "操作人",
     "noReference": "无资源库参考价",
     "noPriceItems": "暂无可维护的行程价格",
     "businessUnit": "所属业务部",
     "allBusinesses": "全部业务部",
-    "libraries": {
-      "shengxu": "盛旭资源库",
-      "shared": "霖熹／独立站共享库"
-    },
-    "selectLibraryToCreate": "请先选择所属业务部，再新增资源",
     "selectBusinessUnitToCreate": "请选择所属业务部"
   },
   "websiteInquiry": {
@@ -1111,7 +1106,7 @@
       "EXCLUDED": "不含",
       "OPTIONAL": "可选自费",
       "RECOMMENDED": "仅推荐",
-      "ARRANGED": "已安排（不代表包含）",
+      "ARRANGED": "已安排",
       "SELF_PAY": "自理",
       "UNKNOWN": "待确认"
     },
@@ -1157,11 +1152,24 @@
     },
     "tabs": {
       "cities": "城市",
+      "hotels": "酒店",
       "attractions": "景点／组件／季节",
       "routes": "跨城路线",
       "patterns": "Day Pattern",
       "skeletons": "城市骨架",
       "templates": "双语标准文案"
+    },
+    "hotels": {
+      "create": "新增酒店",
+      "edit": "编辑酒店",
+      "detail": "酒店详情",
+      "help": "维护独立站酒店及其价格（元/间/晚），价格仅供内部参考，不进入报价、PDF 或客户输出。",
+      "empty": "尚未维护独立站酒店",
+      "city": "城市",
+      "publicHotel": "公共酒店",
+      "linkHotel": "关联酒店",
+      "price": "价格（元/间/晚）",
+      "priceInvalid": "请填写不小于 0 的价格，最多两位小数"
     },
     "cities": {
       "create": "新增城市",
@@ -1190,7 +1198,6 @@
       "chargeableAttraction": "收费景点",
       "parent": "父景点",
       "linkAttraction": "关联共用基础景点",
-      "recommendedMonthsHint": "推荐月份（空表示不限定）",
       "month": "{month} 月",
       "months": "{months} 月"
     },
@@ -1301,6 +1308,8 @@
     "hotelTierA": "A 高端五星",
     "hotelTierB": "B 舒适四星",
     "selectSharedHotel": "选择共用酒店",
+    "selectConfigHotel": "选择独立站酒店",
+    "configHotelPrice": "独立站价格（内部参考）：{price} 元/间/晚",
     "hotelBreakfastIncluded": "该酒店方案含早",
     "hotelNameZh": "酒店中文名称",
     "hotelNameEn": "酒店英文名称",
@@ -1449,7 +1458,7 @@
     "cancel": "撤销团",
     "cancelled": "旅行团已撤销",
     "cancelConfirm": "撤销后不可恢复，将释放导游并解除询盘锁定。",
-    "cancelReason": "撤销原因（选填）",
+    "cancelReason": "撤销原因",
     "searchPlaceholder": "搜索团号、询盘、组团社或联系人",
     "source": "来源",
     "sourceModule": {

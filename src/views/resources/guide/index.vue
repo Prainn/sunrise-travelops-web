@@ -21,9 +21,6 @@
     />
     <el-drawer v-model="isPersonDetailVisible" :title="$t('guide.detail')" size="520px">
       <el-descriptions v-if="personDetail" :column="1" border>
-        <el-descriptions-item :label="$t('identity.library')">
-          <ResourceLibraryTag :library="personDetail.library" />
-        </el-descriptions-item>
         <el-descriptions-item :label="$t('guide.name')">
           {{ personDetail.name }}
         </el-descriptions-item>
@@ -89,7 +86,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { ElMessage } from "element-plus";
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { resourceService } from "@/services/resource.service";
 import type { GuidePersonRecord, GuideRecord } from "@/types/resource";
 import { useResourceMaintenance } from "../useResourceMaintenance";
@@ -147,7 +143,6 @@ const {
   api: resourceService.guidePersonApi,
   loadRecords: (query) => resourceService.loadGuidePeople(query),
   createEmpty: createEmptyPerson,
-  selectLibraryInDialog: true,
 });
 
 const isPersonDetailVisible = ref(false);
@@ -180,6 +175,5 @@ const {
   api: resourceService.guideApi,
   loadRecords: (query) => resourceService.loadGuides(query),
   createEmpty: createEmptyPrice,
-  selectLibraryInDialog: true,
 });
 </script>

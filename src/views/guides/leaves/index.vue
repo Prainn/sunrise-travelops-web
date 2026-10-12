@@ -1,7 +1,6 @@
 <template>
   <div class="page-container">
     <el-form inline class="page-search">
-      <ResourceBusinessFilter />
       <el-form-item>
         <el-input v-model="keyword" :placeholder="$t('guideLeave.searchPlaceholder')" clearable />
       </el-form-item>
@@ -25,11 +24,6 @@
           height="100%"
           row-key="id"
         >
-          <el-table-column :label="$t('identity.library')" min-width="190">
-            <template #default="{ row }">
-              <ResourceLibraryTag :library="row.library" />
-            </template>
-          </el-table-column>
           <el-table-column prop="guideName" :label="$t('guideLeave.guide')" min-width="140" />
           <el-table-column prop="startDate" :label="$t('guideLeave.startDate')" min-width="120" />
           <el-table-column prop="endDate" :label="$t('guideLeave.endDate')" min-width="120" />
@@ -153,15 +147,12 @@ import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import { resourceService } from "@/services/resource.service";
-import { resetResourceBusinessFilter, selectedResourceLibrary } from "@/services/resource-library";
 import { tourService } from "@/services/tour.service";
 import type { GuidePersonRecord } from "@/types/resource";
 import type { GuideLeaveInput, GuideLeaveRecord } from "@/types/tour";
-import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 
 defineOptions({ name: "GuideLeaves" });
@@ -220,7 +211,6 @@ const reload = useDebounceFn(() => {
 watch(keyword, reload);
 function resetQuery() {
   keyword.value = "";
-  resetResourceBusinessFilter();
   pageNum.value = 1;
   void load();
 }
@@ -234,7 +224,6 @@ async function loadGuides(keyword = "") {
   }
 }
 async function openCreate() {
-  if (!selectedResourceLibrary.value) return void ElMessage.info(t("identity.selectLibraryToCreate"));
   editing.value = null;
   Object.assign(form, emptyForm());
   await loadGuides();
@@ -264,7 +253,7 @@ async function save() {
     requesting.value = true;
     validating.value = false;
     const current = editing.value;
-    if (current) await tourService.updateLeave(current.id, current.version, current.library, form);
+    if (current) await tourService.updateLeave(current.id, current.version, form);
     else await tourService.createLeave(form);
     dialogVisible.value = false;
     ElMessage.success(t(current ? "common.updateSuccess" : "common.createSuccess"));

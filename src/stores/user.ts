@@ -1,4 +1,3 @@
-import { selectedResourceBusinessUnit, selectedResourceLibrary } from "@/services/resource-library";
 import { clearResourceOptionsCache } from "@/services/resource-options-cache";
 import { store } from "./store";
 
@@ -34,8 +33,6 @@ export const useUserStore = defineStore("user", () => {
     if (!data) {
       throw new Error("Verification failed, please Login again.");
     }
-    if (userInfo.value.userId !== data.userId || userInfo.value.scope !== data.scope)
-      selectedResourceLibrary.value = data.resourceLibrary ?? undefined;
     Object.assign(userInfo.value, data);
     return data;
   }
@@ -59,8 +56,6 @@ export const useUserStore = defineStore("user", () => {
   function resetAllState(): void {
     // 1. 重置用户状态
     resetUserState();
-    selectedResourceLibrary.value = undefined;
-    selectedResourceBusinessUnit.value = undefined;
 
     // 2. 重置其他模块状态
     usePermissionStoreHook().resetRouter();

@@ -11,7 +11,6 @@
     <el-form :inline="true">
       <el-row :gutter="24">
         <el-col :span="16">
-          <ResourceBusinessFilter />
         </el-col>
         <el-col :span="8">
           <el-button @click="resetQuery">
@@ -79,8 +78,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
-import { resetResourceBusinessFilter } from "@/services/resource-library";
-import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
 import type { ResourcePermissionSet } from "@/constants";
 import type { AgencyRecord } from "@/types/resource";
 import { RESOURCE_PAGE_SIZE } from "../../useResourcePagination";
@@ -118,7 +115,6 @@ function selectNode(node: AgencyTreeNode) {
 }
 function resetQuery() {
   keywords.value = "";
-  resetResourceBusinessFilter();
   requestRows();
 }
 </script>

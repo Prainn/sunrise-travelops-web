@@ -16,12 +16,10 @@
 </template>
 <script setup lang="ts">
 import { useCityOptions } from "@/composables/useCityOptions";
-import type { ResourceLibrary } from "@/types/auth";
-const props = defineProps<{
+defineProps<{
   modelValue: string;
   disabledCity?: string;
-  library?: ResourceLibrary;
 }>();
 const emit = defineEmits<{ "update:modelValue": [value: string] }>();
-const cityOptions = useCityOptions(() => props.library);
+const cityOptions = useCityOptions();
 </script>

@@ -11,6 +11,7 @@
         <el-tabs v-model="activeTab" class="website-config-tabs min-w-0 w-full">
           <el-tab-pane :label="$t('websiteConfig.tabs.cities')" name="cities" />
           <el-tab-pane :label="$t('websiteConfig.tabs.attractions')" name="attractions" />
+          <el-tab-pane :label="$t('websiteConfig.tabs.hotels')" name="hotels" />
           <el-tab-pane :label="$t('websiteConfig.tabs.routes')" name="routes" />
           <el-tab-pane :label="$t('websiteConfig.tabs.patterns')" name="patterns" />
           <el-tab-pane :label="$t('websiteConfig.tabs.skeletons')" name="skeletons" />
@@ -29,6 +30,15 @@
         </div>
         <div v-show="activeTab === 'attractions'" class="h-full">
           <WebsiteConfigAttractions
+            :config="config"
+            :editable="editable"
+            :saving="saving"
+            :save-config="saveConfig"
+            :delete-config="deleteConfig"
+          />
+        </div>
+        <div v-show="activeTab === 'hotels'" class="h-full">
+          <WebsiteConfigHotels
             :config="config"
             :editable="editable"
             :saving="saving"
@@ -88,6 +98,7 @@ import { hasUserPermission } from "@/utils/permission";
 import type { WebsiteConfig } from "@/types/website";
 import WebsiteConfigCities from "./components/WebsiteConfigCities.vue";
 import WebsiteConfigAttractions from "./components/WebsiteConfigAttractions.vue";
+import WebsiteConfigHotels from "./components/WebsiteConfigHotels.vue";
 import WebsiteConfigRoutes from "./components/WebsiteConfigRoutes.vue";
 import WebsiteConfigPatterns from "./components/WebsiteConfigPatterns.vue";
 import WebsiteConfigSkeletons from "./components/WebsiteConfigSkeletons.vue";

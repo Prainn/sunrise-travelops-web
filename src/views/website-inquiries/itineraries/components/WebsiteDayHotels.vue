@@ -36,6 +36,24 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item :label="$t('websiteItineraryUi.selectConfigHotel')">
+          <el-select
+            :model-value="hotel.configHotelId"
+            clearable
+            filterable
+            @update:model-value="(id: string | null) => pickConfigHotel(hotel, id)"
+          >
+            <el-option
+              v-for="item in hotelsOf(hotel.cityId)"
+              :key="item.id"
+              :value="item.id"
+              :label="item.nameZh"
+            />
+          </el-select>
+          <div v-if="configHotel(hotel)" class="text-[12px] text-[var(--el-text-color-secondary)]">
+            {{ $t("websiteItineraryUi.configHotelPrice", { price: configHotel(hotel)?.price }) }}
+          </div>
+        </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.selectSharedHotel')">
           <WebsiteResourceSelect
             v-model="hotel.resourceId"
@@ -77,14 +95,29 @@
   </section>
 </template>
 <script setup lang="ts">
-import type { WebsiteConfig, WebsiteDay } from "@/types/website";
+import type { WebsiteConfig, WebsiteDay, WebsiteHotelStay } from "@/types/website";
 import WebsiteResourceSelect from "../../components/WebsiteResourceSelect.vue";
 const props = defineProps<{ day: WebsiteDay; config: WebsiteConfig; editable: boolean }>();
+function hotelsOf(cityId: string) {
+  return props.config.hotels.filter((item) => item.status === "enabled" && item.cityId === cityId);
+}
+function configHotel(hotel: WebsiteHotelStay) {
+  return props.config.hotels.find((item) => item.id === hotel.configHotelId);
+}
+function pickConfigHotel(hotel: WebsiteHotelStay, id: string | null) {
+  const item = id ? props.config.hotels.find((row) => row.id === id) : undefined;
+  hotel.configHotelId = item?.id ?? null;
+  if (!item) return;
+  hotel.nameZh = item.nameZh;
+  hotel.nameEn = item.nameEn;
+  hotel.resourceId = item.resourceId;
+}
 function addHotel() {
   props.day.hotels.push({
     id: crypto.randomUUID(),
     tier: "A",
     cityId: props.day.overnightCityId ?? props.day.endCityId,
+    configHotelId: null,
     resourceId: null,
     nameZh: "",
     nameEn: "",
