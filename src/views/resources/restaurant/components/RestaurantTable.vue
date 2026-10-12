@@ -44,7 +44,7 @@
                 <div class="restaurant-table__price-header">
                   <strong>{{ $t("restaurant.priceItems") }}</strong>
                   <el-button
-                    v-has-perm="RESOURCE_PERMISSIONS.restaurant.update"
+                    v-has-perm="RESOURCE_PERMISSIONS.restaurant.create"
                     type="primary"
                     link
                     @click="emit('create-price', scope.row as RestaurantRecord)"

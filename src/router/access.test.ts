@@ -1,6 +1,34 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { RouteMeta, RouteRecordRaw } from "vue-router";
 import { filterRoutesByAccess, hasRouteAccess, hasRouteChainAccess } from "./access";
+import { constantRoutes } from "./index";
+
+vi.mock("vue-router", () => ({
+  createRouter: vi.fn(() => ({})),
+  createWebHistory: vi.fn(),
+}));
+
+describe("实际询盘菜单的读取权限", () => {
+  it.each(["EXECUTIVE", "ADMIN", "COORDINATOR"])(
+    "%s 无归档权限时仍可进入询盘汇总",
+    (role) => {
+      const context = { roles: [role], perms: ["inquiry:list"] };
+      const inquiry = filterRoutesByAccess(constantRoutes, context).find(
+        (route) => route.name === "Inquiries",
+      );
+      const summary = inquiry?.children?.find((route) => route.name === "InquiryLogReport");
+      expect(summary).toBeDefined();
+      expect(hasRouteChainAccess([inquiry!.meta!, summary!.meta!], context)).toBe(true);
+    },
+  );
+
+  it("资源管理员没有询盘读取权限时不能看到询盘汇总", () => {
+    const context = { roles: ["RESOURCE_MANAGER"], perms: ["resource:guide:list"] };
+    expect(
+      filterRoutesByAccess(constantRoutes, context).some((route) => route.name === "Inquiries"),
+    ).toBe(false);
+  });
+});
 
 const websiteMeta: RouteMeta = {
   scopes: ["website", "headquarters"],

@@ -12,7 +12,7 @@
         </div>
         <span v-else>{{ $t("resource.contacts") }}</span>
         <el-button
-          v-has-perm="permissions.update"
+          v-has-perm="permissions.create"
           type="primary"
           :disabled="!agency"
           @click="emit('create')"

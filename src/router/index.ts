@@ -172,7 +172,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: {
           title: "inquiryLogReport",
           icon: "el-icon-DataAnalysis",
-          perms: ["inquiry:archive"],
+          perms: ["inquiry:list"],
         },
       },
       {

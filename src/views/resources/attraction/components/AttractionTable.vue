@@ -44,7 +44,7 @@
                 <div class="attraction-table__price-header">
                   <strong>{{ $t("attraction.priceItems") }}</strong>
                   <el-button
-                    v-has-perm="RESOURCE_PERMISSIONS.attraction.update"
+                    v-has-perm="RESOURCE_PERMISSIONS.attraction.create"
                     type="primary"
                     link
                     @click="emit('create-price', scope.row as AttractionRecord)"
