@@ -321,7 +321,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/resources/guide/index.vue"),
         meta: {
           title: "guideList",
-          icon: "el-icon-List",
+          icon: "el-icon-Document",
           keepAlive: true,
           perms: ["resource:guide:list"],
         },
@@ -361,7 +361,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/tours/index.vue"),
         meta: {
           title: "tours",
-          icon: "el-icon-Collection",
+          icon: "el-icon-Document",
           keepAlive: true,
           perms: ["tour:list"],
         },
