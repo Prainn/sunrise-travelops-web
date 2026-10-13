@@ -1,159 +1,210 @@
 <template>
-  <div class="login-page">
-    <div class="login-toolbar">
-      <ThemeSwitch />
-      <LangSelect size="text-18px" />
+  <div
+    class="login-page relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-[var(--login-sky)] text-[var(--login-ink)] transition-colors duration-500"
+    :class="{ 'login-page--lynxtour': activeBrand.scope !== 'shengxu', 'login-page--website': activeBrand.scope === 'website' }"
+  >
+    <div class="pointer-events-none absolute inset-0 z-[-1] overflow-hidden" aria-hidden="true">
+      <div class="login-sun absolute right-[-70px] top-[120px] h-[340px] w-[340px] rounded-full transition-all duration-500" />
+      <div class="login-orbit absolute right-[-230px] top-[80px] h-[650px] w-[650px] rounded-full rotate-[-25deg] scale-x-75" />
+      <div class="login-orbit absolute right-[-145px] top-[85px] h-[650px] w-[650px] rounded-full rotate-[28deg] scale-x-[0.63]" />
+      <div class="login-ridge absolute bottom-0 left-[-5%] right-[-5%] top-[36%] bg-[var(--login-land)] opacity-12 transition-transform duration-500" />
+      <div class="login-ridge login-ridge--near absolute bottom-0 left-[-5%] right-[-5%] top-[53%] scale-x-[-1] bg-[var(--login-land)] opacity-20 transition-transform duration-500" />
+      <div class="login-mist absolute inset-x-0 bottom-0 h-[30%]" />
     </div>
 
-    <div class="login-layout flex [flex:1] min-h-full">
-      <div class="login-brand">
-        <div class="login-brand__header">
-          <el-image
-            :src="logo"
-            class="login-brand__logo"
-            fit="contain"
-            alt="Sunrise TravelOps"
-          />
-          <div class="login-brand__identity">
-            <span class="login-brand__name">{{ appConfig.title }}</span>
-            <span class="login-brand__version">v{{ appConfig.version }}</span>
-          </div>
-        </div>
-
-        <div class="login-brand__hero">
-          <div class="login-brand__main">
-            <h1 class="login-brand__title">
-              {{ $t("login.heroTitle") }}
-            </h1>
-            <p class="login-brand__desc">
-              {{ $t("login.heroDescription") }}
-            </p>
-          </div>
-          <div class="login-brand__features">
-            <div class="login-brand__feature">
-              <span class="login-brand__feature-mark">
-                <span class="login-brand__feature-icon i-svg:security" />
-              </span>
-              <span class="login-brand__feature-text">{{ $t("login.secure") }}</span>
-            </div>
-            <div class="login-brand__feature">
-              <span class="login-brand__feature-mark">
-                <el-icon class="login-brand__feature-icon"><Clock /></el-icon>
-              </span>
-              <span class="login-brand__feature-text">{{ $t("login.efficient") }}</span>
-            </div>
-            <div class="login-brand__feature">
-              <span class="login-brand__feature-mark">
-                <span class="login-brand__feature-icon i-svg:flexible" />
-              </span>
-              <span class="login-brand__feature-text">{{ $t("login.flexible") }}</span>
-            </div>
-          </div>
+    <header class="mx-auto flex h-[112px] w-full shrink-0 max-w-[1536px] items-center justify-between gap-[16px] px-[20px] py-[22px] sm:px-[38px]">
+      <div class="flex min-w-0 items-center gap-[16px]">
+        <img
+          :src="activeBrand.logo"
+          :alt="activeBrand.name"
+          class="shrink-0 object-contain dark:rounded-[8px] dark:bg-[var(--login-haze)] dark:p-[6px]"
+          :class="activeBrand.scope === 'shengxu' ? 'h-[68px] w-[84px]' : 'h-[54px] w-[160px] sm:w-[195px]'"
+        />
+        <div class="hidden border-l border-l-[var(--login-line)] border-l-solid pl-[16px] text-[14px] tracking-[2px] sm:block">
+          {{ activeBrand.name }}
+          <span class="mt-[7px] block text-[10px] tracking-[2.5px] text-[var(--login-muted)]">
+            {{ activeBrand.scope === "website" ? $t("login.brandDesign.websiteDomain") : $t("login.brandDesign.product") }}
+          </span>
         </div>
       </div>
-
-      <div class="login-card">
-        <div class="login-card__inner">
-          <transition name="fade-slide" mode="out-in">
-            <div v-if="true" key="login" class="login-card__form">
-              <h2 class="login-card__title">
-                {{ $t("login.welcomeBack") }}
-              </h2>
-              <el-form
-                ref="loginFormRef"
-                :model="loginFormData"
-                :rules="loginRules"
-                size="large"
-                :validate-on-rule-change="false"
-              >
-                <el-form-item prop="scope">
-                  <el-select
-                    v-model="loginFormData.scope"
-                    :placeholder="$t('identity.chooseScope')"
-                    class="w-full"
-                  >
-                    <el-option
-                      v-for="scope in ['headquarters', 'shengxu', 'linxi', 'website']"
-                      :key="scope"
-                      :value="scope"
-                      :label="loginScopeName(scope)"
-                    />
-                  </el-select>
-                </el-form-item>
-                <el-form-item class="login-form__username" prop="username">
-                  <el-input
-                    v-model.trim="loginFormData.username"
-                    :placeholder="$t('login.username')"
-                    :prefix-icon="UserIcon"
-                  />
-                </el-form-item>
-
-                <el-tooltip :visible="isCapsLock" :content="$t('login.capsLock')" placement="right">
-                  <el-form-item prop="password">
-                    <el-input
-                      v-model="loginFormData.password"
-                      :placeholder="$t('login.password')"
-                      type="password"
-                      show-password
-                      :prefix-icon="LockIcon"
-                      @keyup="checkCapsLock"
-                      @keyup.enter="handleLoginSubmit"
-                    />
-                  </el-form-item>
-                </el-tooltip>
-
-                <div class="login-options">
-                  <el-checkbox v-model="loginFormData.rememberMe">
-                    {{ $t("login.rememberMe") }}
-                  </el-checkbox>
-                </div>
-
-                <el-button
-                  :loading="loading"
-                  type="primary"
-                  size="large"
-                  class="login-btn"
-                  @click="handleLoginSubmit"
-                >
-                  {{ $t("login.login") }}
-                </el-button>
-              </el-form>
-            </div>
-          </transition>
-        </div>
-
-        <div class="login-footer">
-          Copyright © 2021-2026 youlai.tech
-        </div>
+      <div class="login-toolbar flex shrink-0 items-center gap-[20px] rounded-full bg-[var(--login-paper)] px-[17px] py-[13px]">
+        <ThemeSwitch />
+        <LangSelect size="text-18px" />
       </div>
-    </div>
+    </header>
+
+    <main class="mx-auto grid w-full max-w-[1536px] grid-cols-1 items-center gap-[28px] px-[20px] py-[20px] sm:px-[38px] lg:min-h-[520px] lg:flex-1 lg:grid-cols-[minmax(0,1fr)_380px_minmax(0,1fr)] lg:gap-[30px] lg:py-[30px]">
+      <!-- 叠放的品牌文案共同撑起最大高度，切换可见项时不挤动表单。 -->
+      <div class="grid min-w-0 lg:self-start lg:pt-[65px]">
+        <section
+          v-for="brand in brands"
+          :key="brand.scope"
+          class="col-start-1 row-start-1 min-w-0 text-center lg:text-left"
+          :class="{ invisible: activeBrand.scope !== brand.scope }"
+          :aria-hidden="activeBrand.scope !== brand.scope"
+          :aria-label="brand.name"
+        >
+          <div class="flex items-center justify-center gap-[12px] text-[11px] font-semibold leading-[1.7] tracking-[2px] text-[var(--login-accent)] lg:justify-start">
+            <span class="h-px w-[26px] shrink-0 bg-[var(--login-accent)]" aria-hidden="true" />
+            <span>{{ brand.englishName }}</span>
+          </div>
+          <h1
+            class="login-hero-title my-[20px] whitespace-pre-line font-normal text-[var(--login-heading)]"
+            :class="brand.scope === 'shengxu' ? 'text-[38px] leading-[1.3] tracking-[3px] xl:text-[48px]' : 'text-[24px] leading-[1.5] tracking-[0.2px] xl:text-[30px]'"
+          >
+            {{ brand.scope === "shengxu" ? $t("login.brandDesign.sunriseTitle") : $t("login.brandDesign.slogan") }}
+          </h1>
+          <p class="m-0 text-[12px] leading-[1.8] tracking-[1px] text-[var(--login-muted)]">
+            {{ brand.description }}
+          </p>
+          <a
+            v-if="brand.scope === 'website'"
+            href="https://lynxtour.cn/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mt-[20px] inline-flex items-center gap-[12px] border-b border-b-[var(--login-accent)] border-b-solid pb-[5px] text-[12px] text-[var(--login-accent)]"
+          >
+            {{ $t("login.brandDesign.websiteDomain") }}
+            <el-icon aria-hidden="true"><TopRight /></el-icon>
+          </a>
+        </section>
+      </div>
+
+      <section class="login-card mx-auto w-full max-w-[380px] rounded-[22px] bg-[var(--login-paper)] px-[26px] pb-[28px] pt-[30px] sm:px-[34px]" :aria-label="$t('login.login')">
+        <div class="mb-[14px] flex items-center gap-[8px] text-[11px] font-semibold tracking-[1.5px] text-[var(--login-accent)]" aria-live="polite">
+          <span class="h-[5px] w-[5px] shrink-0 rounded-full bg-[var(--login-accent)]" aria-hidden="true" />
+          {{ $t("login.brandDesign.workspace", { name: selectedScopeName }) }}
+        </div>
+        <h2 class="m-0 text-[28px] font-semibold leading-[1.4] tracking-[1px]">
+          {{ $t("login.welcomeBack") }}
+        </h2>
+        <p class="mb-[24px] mt-[8px] text-[12px] leading-[1.7] text-[var(--login-muted)]">
+          {{ $t("login.brandDesign.welcome") }}
+        </p>
+        <el-form
+          ref="loginFormRef"
+          :model="loginFormData"
+          :rules="loginRules"
+          size="large"
+          label-position="top"
+          :validate-on-rule-change="false"
+          @submit.prevent="handleLoginSubmit"
+        >
+          <el-form-item prop="scope" :label="$t('identity.scope')">
+            <el-select
+              v-model="loginFormData.scope"
+              :placeholder="$t('identity.chooseScope')"
+              :aria-label="$t('identity.scope')"
+              :disabled="loading"
+              class="w-full"
+            >
+              <el-option value="headquarters" :label="$t('login.brandDesign.headquarters')" />
+              <el-option
+                v-for="brand in brands"
+                :key="brand.scope"
+                :value="brand.scope"
+                :label="brand.optionLabel"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item prop="username">
+            <el-input
+              v-model.trim="loginFormData.username"
+              :placeholder="$t('login.username')"
+              :aria-label="$t('login.username')"
+              :prefix-icon="UserIcon"
+              autocomplete="username"
+            />
+          </el-form-item>
+          <el-tooltip :visible="isCapsLock" :content="$t('login.capsLock')" placement="right">
+            <el-form-item prop="password">
+              <el-input
+                v-model="loginFormData.password"
+                :placeholder="$t('login.password')"
+                :aria-label="$t('login.password')"
+                type="password"
+                show-password
+                autocomplete="current-password"
+                :prefix-icon="LockIcon"
+                @keyup="checkCapsLock"
+              />
+            </el-form-item>
+          </el-tooltip>
+          <div class="mb-[20px] mt-[3px] flex items-center text-[var(--login-muted)]">
+            <el-checkbox v-model="loginFormData.rememberMe">
+              {{ $t("login.rememberMe") }}
+            </el-checkbox>
+          </div>
+          <el-button
+            :loading="loading"
+            type="primary"
+            native-type="submit"
+            size="large"
+            class="login-submit min-h-[44px] w-full whitespace-normal rounded-[7px] py-[11px]"
+          >
+            <span class="min-w-0 whitespace-normal leading-[1.4]">{{ $t("login.brandDesign.signIn", { name: selectedScopeName }) }}</span>
+            <el-icon class="ml-[12px]" aria-hidden="true">
+              <Right />
+            </el-icon>
+          </el-button>
+        </el-form>
+        <div class="mt-[22px] text-center text-[10px] leading-[1.6] tracking-[1.8px] text-[var(--login-muted)]">
+          {{ activeBrand.workspaceLabel }}
+        </div>
+      </section>
+
+      <div class="hidden justify-self-end text-[10px] tracking-[5px] text-[var(--login-muted)] [writing-mode:vertical-rl] lg:block" aria-hidden="true">
+        {{ $t("login.brandDesign.journey") }}
+      </div>
+    </main>
+
+    <nav class="mx-auto grid w-full max-w-[1536px] grid-cols-1 gap-[12px] px-[20px] pt-[16px] sm:grid-cols-3 sm:px-[38px]" :aria-label="$t('login.brandDesign.switchBrand')">
+      <button
+        v-for="(brand, index) in brands"
+        :key="brand.scope"
+        type="button"
+        class="login-brand-option flex min-h-[80px] w-full items-center gap-[15px] rounded-[11px] border border-[var(--login-line)] border-solid bg-[var(--login-paper)] px-[20px] py-[16px] text-left text-[var(--login-ink)] transition-transform duration-200 enabled:hover:translate-y-[-2px] disabled:cursor-wait"
+        :aria-pressed="loginFormData.scope === brand.scope"
+        :disabled="loading"
+        @click="loginFormData.scope = brand.scope"
+      >
+        <span class="login-brand-number shrink-0 text-[23px] italic text-[var(--login-muted)]" aria-hidden="true">{{ String(index + 1).padStart(2, "0") }}</span>
+        <span class="min-w-0">
+          <span class="block text-[13px] font-medium leading-[1.6]">{{ brand.optionLabel }}</span>
+          <span class="mt-[5px] block text-[10px] leading-[1.7] tracking-[1px] text-[var(--login-muted)]">{{ brand.englishName }}</span>
+        </span>
+        <el-icon class="ml-auto shrink-0 text-[var(--login-muted)]" aria-hidden="true">
+          <TopRight />
+        </el-icon>
+      </button>
+    </nav>
+    <footer class="mx-auto flex w-full max-w-[1536px] flex-wrap items-center justify-between gap-[12px] px-[20px] py-[24px] text-[10px] leading-[1.6] tracking-[1px] text-[var(--login-muted)] sm:px-[38px]">
+      <span>{{ $t("login.brandDesign.platform") }}</span>
+      <span>{{ activeBrand.englishName }}</span>
+    </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { loginScopeName } from "@/constants/identity";
-defineOptions({ name: "LoginPage", inheritAttrs: false });
-
-import { Clock, Lock, User } from "@element-plus/icons-vue";
+import { Lock, Right, TopRight, User } from "@element-plus/icons-vue";
 import type { FormInstance } from "element-plus";
+import type { LoginRequest } from "@/types/auth";
 import router from "@/router";
 import { useUserStore } from "@/stores/user";
-import type { LoginRequest } from "@/types/auth";
 import { AuthStorage } from "@/utils/auth-storage";
-import { appConfig } from "@/settings";
 import ThemeSwitch from "@/components/ThemeSwitch/index.vue";
-import logo from "@/assets/images/logo.png";
+import sunriseLogo from "@/assets/images/login/sunrise-logo.png";
+import lynxtourLogo from "@/assets/images/login/lynxtour-logo.svg";
+
+defineOptions({ name: "LoginPage", inheritAttrs: false });
 
 const userStore = useUserStore();
 const { t } = useI18n();
-
 const loginFormRef = ref<FormInstance>();
 const loading = ref(false);
 const isCapsLock = ref(false);
-
 const UserIcon = markRaw(User);
 const LockIcon = markRaw(Lock);
-
 const loginFormData = ref<LoginRequest>({
   scope: "headquarters",
   username: "",
@@ -161,6 +212,40 @@ const loginFormData = ref<LoginRequest>({
   rememberMe: AuthStorage.getRememberMe(),
 });
 
+const brands = computed(() => [
+  {
+    scope: "shengxu" as const,
+    logo: sunriseLogo,
+    name: t("login.brandDesign.sunriseName"),
+    optionLabel: t("login.brandDesign.sunriseOption"),
+    englishName: t("login.brandDesign.sunriseEnglish"),
+    description: t("login.brandDesign.sunriseDescription"),
+    workspaceLabel: t("login.brandDesign.sunriseWorkspace"),
+  },
+  {
+    scope: "linxi" as const,
+    logo: lynxtourLogo,
+    name: t("login.brandDesign.linxiName"),
+    optionLabel: t("login.brandDesign.linxiOption"),
+    englishName: t("login.brandDesign.linxiEnglish"),
+    description: t("login.brandDesign.linxiDescription"),
+    workspaceLabel: t("login.brandDesign.linxiWorkspace"),
+  },
+  {
+    scope: "website" as const,
+    logo: lynxtourLogo,
+    name: t("login.brandDesign.websiteName"),
+    optionLabel: t("login.brandDesign.websiteOption"),
+    englishName: t("login.brandDesign.websiteEnglish"),
+    description: t("login.brandDesign.websiteDescription"),
+    workspaceLabel: t("login.brandDesign.websiteWorkspace"),
+  },
+]);
+// 总部是独立登录范围，仅复用盛旭视觉，不改变实际提交的 scope。
+const activeBrand = computed(() => brands.value.find(brand => brand.scope === loginFormData.value.scope) ?? brands.value[0]!);
+const selectedScopeName = computed(() => loginFormData.value.scope === "headquarters"
+  ? t("login.brandDesign.headquarters")
+  : activeBrand.value.name);
 const loginRules = computed(() => ({
   username: [{ required: true, trigger: "blur", message: t("login.message.username.required") }],
   password: [
@@ -168,8 +253,8 @@ const loginRules = computed(() => ({
     { min: 6, message: t("login.message.password.min"), trigger: "blur" },
   ],
 }));
-
 async function handleLoginSubmit() {
+  if (loading.value) return;
   const valid = await loginFormRef.value?.validate().then(
     () => true,
     () => false,
@@ -202,317 +287,118 @@ function checkCapsLock(event: KeyboardEvent) {
 </script>
 
 <style lang="scss" scoped>
-$primary: #5d87ff;
-$bg: #f8fafc;
-$text-primary: #273248;
-$text-secondary: #667085;
-$text-muted: #98a2b3;
-$input-h: 44px;
-
 .login-page {
-  @apply 'relative flex min-h-[100vh] overflow-auto';
-  background: $bg;
-}
+  --login-accent: #086eaa;
+  --login-heading: #17445c;
+  --login-land: #538782;
+  --login-haze: #dfeccf;
+  --login-sky: #eef5f5;
+  --login-paper: #fff;
+  --login-ink: #223944;
+  --login-muted: #657a82;
+  --login-line: #dce5e8;
+  --login-field: #fbfcfc;
+  --el-color-primary: var(--login-accent);
+  --el-color-primary-light-3: color-mix(in srgb, var(--login-accent) 75%, var(--login-paper));
+  --el-color-primary-light-5: color-mix(in srgb, var(--login-accent) 55%, var(--login-paper));
+  --el-color-primary-light-7: color-mix(in srgb, var(--login-accent) 30%, var(--login-paper));
+  --el-color-primary-light-9: color-mix(in srgb, var(--login-accent) 10%, var(--login-paper));
+  --el-color-primary-dark-2: color-mix(in srgb, var(--login-accent) 85%, #000);
 
-.login-toolbar {
-  @apply 'fixed top-[28px] right-[32px] z-[10] flex gap-[12px] items-center';
-
-  :deep(*) {
-    cursor: pointer;
+  &--lynxtour {
+    --login-accent: #811e21;
+    --login-heading: #622f2d;
+    --login-land: #9e7063;
+    --login-haze: #ecd2a9;
+    --login-sky: #f5eee4;
+    --login-paper: #fffdf9;
+    --login-ink: #492f2c;
+    --login-muted: #896e65;
+    --login-line: #e9ddd0;
+    --login-field: #fdfbf7;
   }
-}
-
-.login-brand {
-  @apply 'relative flex [flex:0_0_65%] flex-col min-h-[100vh] p-[28px_64px_48px] overflow-hidden';
-  background: url("@/assets/images/login/bg.svg") center / cover no-repeat;
-  animation: login-pane-in 0.36s ease-out both;
-
-  &__header,
-  &__hero {
-    position: relative;
-    z-index: 1;
-  }
-
-  &__header {
-    @apply 'flex gap-[14px] items-center';
-  }
-
-  &__logo {
-    @apply 'w-[82px] h-[82px]';
-  }
-
-  &__identity {
-    @apply 'inline-flex gap-[10px] items-center min-w-0';
-  }
-
-  &__name {
-    @apply 'text-[24px] font-semibold leading-[1]';
-    color: $text-primary;
-  }
-
-  &__version {
-    @apply 'inline-flex items-center h-[22px] p-[0_8px] text-[14px] font-semibold leading-[1]';
-    color: rgba($primary, 0.88);
-    background: rgba($primary, 0.07);
-    border: 1px solid rgba($primary, 0.13);
-    @apply 'rounded-[999px]';
-  }
-
-  &__hero {
-    @apply 'flex [flex:1] flex-col justify-center w-[min(720px,_100%)] p-[20px_0_88px]';
-  }
-
-  &__main {
-    @apply 'w-full';
-  }
-
-  &__tag {
-    @apply 'gap-[8px] h-[28px] p-[0_13px_0_11px] mb-[18px] font-bold';
-    color: $primary;
-    background: rgba($primary, 0.035);
-    border-color: rgba($primary, 0.14);
-
-    :deep(.el-tag__content) {
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-    }
-  }
-
-  &__tag-dot {
-    @apply 'inline-block shrink-0 w-[7px] h-[7px]';
-    background: $primary;
-    @apply 'rounded-[50%]';
-    box-shadow: 0 0 0 3px rgba($primary, 0.12);
-  }
-
-  &__title {
-    @apply 'm-[0_0_18px] text-[46px] [font-weight:800] leading-[1.18] [color:#222b3a] [letter-spacing:0]';
-  }
-
-  &__desc {
-    @apply 'max-w-[560px] m-0 text-[16px] leading-[1.75]';
-    color: $text-secondary;
-  }
-
-  &__features {
-    @apply 'inline-flex items-center w-[fit-content] max-w-full mt-[28px]';
-  }
-
-  &__feature {
-    @apply 'relative inline-flex gap-[8px] items-center h-[28px] p-[0_13px] text-[14px] font-semibold';
-    color: $text-primary;
-    @apply '[background:transparent]';
-
-    &:first-child {
-      padding-left: 0;
-    }
-
-    &:not(:last-child)::after {
-      position: absolute;
-      top: 7px;
-      right: 0;
-      width: 1px;
-      height: 14px;
-      content: "";
-      background: rgba(39 50 72 / 12%);
-    }
-  }
-
-  &__feature-mark {
-    @apply 'inline-flex items-center justify-center w-[20px] h-[20px]';
-    color: $primary;
-    background: rgba($primary, 0.08);
-    border: 1px solid rgba($primary, 0.1);
-    @apply 'rounded-[6px]';
-  }
-
-  &__feature-icon {
-    @apply 'inline-flex items-center justify-center w-[13px] h-[13px]';
-    color: $primary;
-  }
-
-  &__feature-text {
-    @apply 'leading-[1] whitespace-nowrap';
-  }
-}
-
-.login-card {
-  @apply 'relative z-[1] flex [flex:0_0_35%] flex-col items-center p-[0_0_32px] [background:#fff]';
-  animation: login-pane-in 0.36s ease-out 0.04s both;
-
-  &__inner {
-    @apply '[box-sizing:border-box] flex [flex:1] flex-col justify-center w-full max-w-[430px] p-[0_20px]';
-  }
-
-  &__form {
-    @apply 'w-full';
-  }
-
-  &__title {
-    @apply 'm-[0_0_24px] text-[34px] [font-weight:750] leading-[1.1]';
-    color: $text-primary;
-    @apply '[letter-spacing:0]';
-  }
-}
-
-:deep(.el-form-item) {
-  margin-bottom: 14px;
-}
-
-:deep(.login-form__username) {
-  margin-bottom: 24px;
-}
-
-:deep(.el-input__wrapper) {
-  height: $input-h;
-}
-
-.login-options {
-  @apply 'flex items-center justify-between mb-[22px] text-[14px]';
-  color: $text-secondary;
-}
-
-.login-btn {
-  @apply 'w-full h-[44px] text-[16px] font-semibold rounded-[8px]';
-  box-shadow: 0 12px 24px rgba($primary, 0.18);
-
-  &:hover {
-    box-shadow: 0 14px 28px rgba($primary, 0.22);
-  }
-
-  &:focus,
-  &:focus-visible {
-    outline: none;
-  }
-}
-
-.login-footer {
-  @apply 'shrink-0 text-[14px]';
-  color: $text-muted;
 }
 
 .dark .login-page {
-  background: #0b1020;
+  --login-accent: #78c8ec;
+  --login-heading: #d4e9ec;
+  --login-sky: #162b34;
+  --login-paper: #20343c;
+  --login-ink: #ecf3f4;
+  --login-muted: #b2c3c9;
+  --login-line: #496068;
+  --login-field: #293f49;
+
+  &--lynxtour {
+    --login-accent: #e9b090;
+    --login-heading: #f0d0ba;
+    --login-sky: #302423;
+    --login-paper: #3a2c2a;
+    --login-ink: #f6eae0;
+    --login-muted: #ceb5a6;
+    --login-line: #67504a;
+    --login-field: #45332f;
+  }
+
+  .login-sun { opacity: 0.18; }
+  .login-submit { --el-color-white: var(--login-sky); }
 }
 
-.dark .login-brand {
-  background-image: url("@/assets/images/login/bg-dark.svg");
-
-  &__name {
-    color: rgb(255 255 255 / 86%);
-  }
-
-  &__version {
-    color: rgb(167 190 255 / 92%);
-    background: rgba($primary, 0.12);
-    border-color: rgba($primary, 0.2);
-  }
-
-  &__tag {
-    color: rgba($primary, 0.95);
-    background: rgba($primary, 0.08);
-    border-color: rgba($primary, 0.18);
-  }
-
-  &__title {
-    color: rgb(255 255 255 / 90%);
-  }
-
-  &__desc {
-    color: rgb(226 232 240 / 62%);
-  }
-
-  &__feature {
-    color: rgb(255 255 255 / 76%);
-
-    &:not(:last-child)::after {
-      background: rgba(255 255 255 / 12%);
-    }
-  }
-
-  &__feature-mark {
-    background: rgba($primary, 0.15);
-    border-color: rgba($primary, 0.18);
-  }
+.login-sun {
+  background: radial-gradient(circle at 40% 30%, #fdf6d3 0%, var(--login-haze) 60%, transparent 71%);
 }
 
-.dark .login-card {
-  background: #0b1020;
-
-  &__title {
-    color: rgb(255 255 255 / 85%);
-  }
+.login-page--website .login-sun {
+  @apply 'right-[15px] top-[130px] h-[295px] w-[295px]';
+  background: radial-gradient(circle, #f9e6be 0%, #dcb176 68%, transparent 69%);
+  opacity: 0.45;
 }
 
-.dark .login-footer {
-  color: rgb(255 255 255 / 15%);
-}
+.login-orbit { border: 1px solid color-mix(in srgb, var(--login-accent) 14%, transparent); }
+.login-ridge { clip-path: polygon(0 48%, 9% 40%, 15% 45%, 28% 14%, 33% 22%, 42% 0, 49% 20%, 56% 13%, 70% 44%, 79% 23%, 88% 35%, 100% 10%, 100% 100%, 0 100%); }
+.login-ridge--near { clip-path: polygon(0 42%, 10% 27%, 23% 53%, 34% 19%, 47% 36%, 60% 12%, 76% 48%, 89% 25%, 100% 40%, 100% 100%, 0 100%); }
+.login-page--website .login-ridge { translate: 0 36px; }
+.login-page--website .login-ridge--near { translate: 0 -30px; }
+.login-mist { background: linear-gradient(transparent, var(--login-sky) 75%); }
+.login-hero-title, .login-brand-number { font-family: Georgia, "Songti SC", serif; }
+.login-card {
+  border-top: 3px solid var(--login-accent);
+  box-shadow: 0 20px 70px rgb(36 56 50 / 7%);
 
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-  @apply '[transition:all_0.2s_ease]';
-}
-
-.fade-slide-enter-from,
-.fade-slide-leave-to {
-  @apply 'opacity-0 [transform:translateY(6px)]';
-}
-
-@keyframes login-pane-in {
-  from {
-    opacity: 0;
-    filter: blur(4px);
+  :deep(.el-form-item) { margin-bottom: 18px; }
+  :deep(.el-form-item__label) {
+    height: auto;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--login-muted);
+    line-height: 1.5;
   }
-
-  to {
-    opacity: 1;
-    filter: blur(0);
+  :deep(.el-input__wrapper), :deep(.el-select__wrapper) {
+    min-height: 44px;
+    background: var(--login-field);
+    --el-fill-color-blank: var(--login-field);
+    --el-border-color: var(--login-line);
+    --el-text-color-regular: var(--login-ink);
+    --el-text-color-placeholder: var(--login-muted);
   }
-}
-
-@media (max-width: 1024px) {
-  .login-layout {
-    @apply 'flex-col';
-  }
-
-  .login-toolbar {
-    @apply 'absolute top-[37px]';
-  }
-
-  .login-brand {
-    @apply '[flex:none] h-auto min-h-auto p-[28px_40px_0] [background:#fff]';
-
-    &__hero {
-      display: none;
-    }
-  }
-
-  .dark .login-brand {
-    background: #0b1020;
-  }
-
-  .login-card {
-    @apply '[flex:1] justify-start p-[96px_48px_0]';
+  :deep(.el-checkbox) {
+    --el-checkbox-text-color: var(--login-muted);
+    --el-checkbox-input-border: 1px solid var(--login-line);
+    --el-checkbox-bg-color: var(--login-field);
   }
 }
-
-@media (max-width: 640px) {
-  .login-toolbar {
-    @apply 'top-[33px] right-[20px]';
-  }
-
-  .login-brand {
-    @apply 'p-[24px_0_0_24px]';
-  }
-
-  .login-card {
-    @apply 'p-[72px_24px_0]';
-
-    &__inner {
-      width: 100%;
-      padding: 0;
-    }
-  }
+.login-submit.el-button {
+  height: auto;
+  :deep(> span) { min-width: 0; }
+  box-shadow: 0 6px 15px color-mix(in srgb, var(--login-accent) 12%, transparent);
+}
+.login-brand-option[aria-pressed="true"] {
+  border-color: var(--login-accent);
+  box-shadow: inset 0 -3px var(--login-accent);
+  .login-brand-number, .el-icon { color: var(--login-accent); }
+}
+.login-toolbar :deep(.el-dropdown) { color: var(--login-ink); }
+@media (prefers-reduced-motion: reduce) {
+  .login-page, .login-page * { transition: none !important; }
 }
 </style>
