@@ -1,14 +1,20 @@
 <template>
   <div class="layout-logo">
     <transition enter-active-class="animate__animated animate__fadeInLeft">
-      <router-link :key="+collapse" class="wh-full flex-center" to="/">
+      <router-link
+        :key="+collapse"
+        class="wh-full flex-center gap-[10px] px-[8px]"
+        to="/"
+        :aria-label="brandTitle"
+        :title="brandTitle"
+      >
         <img
-          v-if="userStore.userInfo.scope === 'shengxu'"
-          :src="logo"
-          class="layout-logo__image"
-          alt="Sunrise"
+          :src="brandLogo"
+          class="h-[38px] shrink-0 object-contain"
+          :class="!collapse && isLynxtour ? 'w-[72px]' : 'w-[38px]'"
+          :alt="brandTitle"
         />
-        <span v-if="!collapse || userStore.userInfo.scope !== 'shengxu'" class="layout-logo__title">
+        <span v-if="!collapse" class="layout-logo__title min-w-0 truncate text-[14px] font-bold">
           {{ brandTitle }}
         </span>
       </router-link>
@@ -18,28 +24,22 @@
 
 <script lang="ts" setup>
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { useUserStore } from "@/stores/user";
-import logo from "@/assets/images/logo-emblem.png";
-const userStore = useUserStore();
-const brandTitle = computed(() => {
-  switch (userStore.userInfo.scope) {
-    case "shengxu":
-      return "Sunrise";
-    case "linxi":
-      return "Ttrip";
-    case "website":
-      return "Lynx";
-    default:
-      return "总部";
-  }
-});
+import sunriseLogo from "@/assets/images/login/sunrise-logo.png";
+import lynxtourLogo from "@/assets/images/login/lynxtour-logo.svg";
 
-defineProps({
-  collapse: {
-    type: Boolean,
-    required: true,
-  },
-});
+defineProps<{ collapse: boolean }>();
+
+const { t } = useI18n();
+const userStore = useUserStore();
+const isLynxtour = computed(
+  () => userStore.userInfo.scope === "linxi" || userStore.userInfo.scope === "website"
+);
+const brandLogo = computed(() => (isLynxtour.value ? lynxtourLogo : sunriseLogo));
+const brandTitle = computed(() =>
+  t(isLynxtour.value ? "login.brandDesign.linxiName" : "login.brandDesign.sunriseName")
+);
 </script>
 
 <style lang="scss" scoped>
@@ -48,12 +48,7 @@ defineProps({
   height: $navbar-height;
   background-color: $sidebar-logo-background;
 
-  &__image {
-    @apply 'w-[38px] h-[38px] object-contain';
-  }
-
   &__title {
-    @apply 'shrink-0 ml-[10px] text-[14px] [font-weight:bold]';
     color: $sidebar-logo-text-color;
   }
 }
@@ -82,10 +77,6 @@ defineProps({
   &.layout--top .layout-header__left .layout-logo,
   &.layout--mix .layout-header__logo .layout-logo {
     width: $sidebar-width-collapsed;
-  }
-
-  .layout-logo__title {
-    @apply 'ml-0';
   }
 }
 </style>

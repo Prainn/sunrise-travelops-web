@@ -24,7 +24,7 @@
             <LayoutMenuIcon :icon="onlyOneChild.meta.icon || item.meta?.icon" />
             <span
               v-if="onlyOneChild.meta.title"
-              class="ml-1"
+              class="ml-1 min-w-0 truncate"
               :title="translateRouteTitle(onlyOneChild.meta.title)"
             >
               {{ translateRouteTitle(onlyOneChild.meta.title) }}
@@ -43,7 +43,7 @@
       <template #title>
         <template v-if="item.meta">
           <LayoutMenuIcon :icon="item.meta.icon" />
-          <span v-if="item.meta.title" class="ml-1" :title="translateRouteTitle(item.meta.title)">
+          <span v-if="item.meta.title" class="ml-1 min-w-0 truncate" :title="translateRouteTitle(item.meta.title)">
             {{ translateRouteTitle(item.meta.title) }}
           </span>
         </template>
