@@ -35,12 +35,6 @@
             {{ row.pax ?? $t("websiteInquiry.unconfirmed") }}
           </template>
         </el-table-column>
-        <el-table-column
-          prop="requirements"
-          :label="$t('inquiry.originalMessage')"
-          min-width="220"
-          show-overflow-tooltip
-        />
         <el-table-column :label="$t('common.createdAt')" width="210">
           <template #default="{ row }">
             {{ formatDateTime(row.createdAt) }}
