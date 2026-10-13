@@ -39,6 +39,28 @@
 - Store 使用 Setup Store、扁平目录；组件外调用现有 `useXxxStoreHook()`。生成的根 `types/*.d.ts` 是工具声明，不能代替 `src/types` 领域合同。
 - 复用现有组件及页面布局。UnoCSS 优先，不能等价表达的 Element Plus 覆盖/复杂选择器保留 SCSS；不为默认间距刻度改变现有尺寸，不动态拼接 UnoCSS 类名。详细规则见前端技能。
 
+## 普通表格页布局
+
+适用于资源列表、成团表、导游列表/请假/评分等“筛选 + 表格 + 分页”页面。以 [ResourceTable](src/views/resources/components/ResourceTable.vue) 和 [page.scss](src/styles/page.scss) 为结构与样式参考；业务字段、权限、查询和保存逻辑仍由各页面负责。
+
+```text
+.page-container
+├─ el-card.page-search（shadow="never"）
+│  └─ el-form（inline）→ el-form-item → 筛选控件、查询/重置按钮
+└─ el-card.page-content（shadow="never"）
+   ├─ TableToolbar → 新增等列表操作、刷新
+   ├─ .page-table-wrapper → el-table（border、height="100%"、稳定 row-key）
+   └─ Pagination → 页码、每页条数、总数
+```
+
+- **筛选区域**：必须使用独立的 `el-card.page-search`，内放 `el-form`；不能只给裸 `el-form` 加 `page-search`，也不能把筛选控件直接放在页面背景上。每个字段用 `el-form-item` 包裹，查询/重置按钮放在同一表单的操作项中。
+- **表格区域**：使用独立的 `el-card.page-content`，依次放工具栏、表格容器、分页。复用 `TableToolbar` 和 `Pagination`；表格容器使用 `page-table-wrapper`，保留 `page-content` 的高度与滚动布局，不另造固定视口高度、卡片边框或间距。
+- **组件选择**：符合公共资源维护语义的页面优先复用 `ResourceTable` 及其筛选/列插槽；成团、请假、评分等专用业务页面复用上述布局和共享组件，不强套资源 CRUD、状态或权限语义。远程选项沿用 `RemoteSelect`、`ResourceSelect` 或现有业务选择器，避免为筛选加载全库。
+- **label**：每个筛选字段必须有可见的 `el-form-item :label`，关键词统一复用 `$t('common.keywords')`，其他字段使用准确的业务名称；只有按钮操作项可以不带 label。placeholder 不能代替 label。
+- **placeholder**：关键词说明实际支持搜索的字段；选择器说明“请选择”“全部状态”等真实筛选含义，日期范围分别说明开始/结束日期。label、placeholder 和按钮文案均使用响应式 i18n，优先复用已有键，新增键同步中英文；不能提示接口不支持的筛选条件。
+- **宽度与换行**：关键词输入框使用 `page-search__keywords`，选择器等普通控件沿用 `page-search` 的公共宽度。不要让长搜索提示落到默认窄输入框，也不要每页另写随意的宽度；字段确需特殊尺寸时按内容局部调整。窄屏允许字段及按钮换行，不能挤压 label 或把 placeholder 的截断当作正常布局；应在中英文下考虑提示长度。
+- 新增或修改这类页面时，对照参考组件检查卡片层级、字段 label、placeholder、宽度及分页位置；ESLint 和类型检查通过不代表布局已符合规范。既有同类组件有遗漏时不能直接照抄遗漏。
+
 ## Testing / Verification
 
 - 测试以当前业务风险和可观察行为为依据，避免为了测试而测试。

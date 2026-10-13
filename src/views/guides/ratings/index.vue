@@ -1,15 +1,22 @@
 <template>
   <div class="page-container">
-    <el-form inline class="page-search">
-      <el-form-item>
-        <el-input v-model="keyword" :placeholder="$t('guideRating.searchPlaceholder')" clearable />
-      </el-form-item>
-      <el-form-item>
-        <el-button @click="keyword = ''">
-          {{ $t("common.reset") }}
-        </el-button>
-      </el-form-item>
-    </el-form>
+    <el-card class="page-search" shadow="never">
+      <el-form inline>
+        <el-form-item :label="$t('common.keywords')">
+          <el-input
+            v-model="keyword"
+            class="page-search__keywords"
+            :placeholder="$t('guideRating.searchPlaceholder')"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button @click="keyword = ''">
+            {{ $t("common.reset") }}
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
     <el-card class="page-content" shadow="never">
       <TableToolbar @refresh="load" />
       <div class="page-table-wrapper">

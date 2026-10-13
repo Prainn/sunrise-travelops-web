@@ -1,30 +1,32 @@
 <template>
   <div class="page-container">
-    <el-form inline class="page-search">
-      <el-form-item :label="$t('planning.secondLanguage')">
-        <el-select v-model="secondLanguage" clearable class="w-[180px]">
-          <el-option
-            v-for="item in GUIDE_LANGUAGE_OPTIONS"
-            :key="item.value"
-            :value="item.value"
-            :label="$t(`planning.languages.${item.value}`)"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="$t('planning.shopping')">
-        <el-select v-model="shopping" clearable class="w-[140px]">
-          <el-option :label="$t('planning.withShopping')" value="true" /><el-option
-            :label="$t('planning.withoutShopping')"
-            value="false"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button @click="resetQuery">
-          {{ $t("common.reset") }}
-        </el-button>
-      </el-form-item>
-    </el-form>
+    <el-card class="page-search" shadow="never">
+      <el-form inline>
+        <el-form-item :label="$t('planning.secondLanguage')">
+          <el-select v-model="secondLanguage" clearable>
+            <el-option
+              v-for="item in GUIDE_LANGUAGE_OPTIONS"
+              :key="item.value"
+              :value="item.value"
+              :label="$t(`planning.languages.${item.value}`)"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label="$t('planning.shopping')">
+          <el-select v-model="shopping" clearable>
+            <el-option :label="$t('planning.withShopping')" value="true" /><el-option
+              :label="$t('planning.withoutShopping')"
+              value="false"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button @click="resetQuery">
+            {{ $t("common.reset") }}
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
     <el-card class="page-content" shadow="never">
       <TableToolbar @refresh="refreshRows">
         <el-button

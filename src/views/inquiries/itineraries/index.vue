@@ -1,9 +1,10 @@
 <template>
   <div
+    ref="pageElement"
     v-loading.fullscreen="isLoading || isSaving"
     element-loading-background="rgba(0, 0, 0, 0.2)"
     :inert="isSaving"
-    class="page-container itinerary-page h-auto min-h-full overflow-visible p-0"
+    class="page-container itinerary-page h-auto min-h-full overflow-visible p-0 [overflow-anchor:none]"
   >
     <el-alert
       v-if="loadError"
@@ -75,52 +76,54 @@
               </el-button>
             </div>
           </div>
-          <div
-            class="itinerary-page__inquiry-summary grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] items-center gap-[18px] mt-[10px] text-[14px]"
-          >
-            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-              $t("inquiry.code")
-            }}</small>{{ inquiry.code }}</span>
-            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-              $t("inquiry.agencyName")
-            }}</small>{{ inquiry.agencyName }}</span>
-            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-              $t("inquiry.contactName")
-            }}</small>{{ inquiry.contactName }}</span>
-            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-              $t("inquiry.plannedDays")
-            }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
-          </div>
-          <div v-if="selectedItinerary" class="flex flex-wrap gap-[10px] mt-[12px]">
-            <el-dropdown trigger="click" @command="openVehiclePlans">
-              <el-button :type="hasVehiclePlans ? 'primary' : ''">
-                {{ $t("planning.vehiclePlans") }}
-                <el-icon class="ml-[6px]">
-                  <ArrowDown />
-                </el-icon>
+          <div v-show="!isOverviewCollapsed">
+            <div
+              class="itinerary-page__inquiry-summary grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] items-center gap-[18px] mt-[10px] text-[14px]"
+            >
+              <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+                $t("inquiry.code")
+              }}</small>{{ inquiry.code }}</span>
+              <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+                $t("inquiry.agencyName")
+              }}</small>{{ inquiry.agencyName }}</span>
+              <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+                $t("inquiry.contactName")
+              }}</small>{{ inquiry.contactName }}</span>
+              <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+                $t("inquiry.plannedDays")
+              }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
+            </div>
+            <div v-if="selectedItinerary" class="flex flex-wrap gap-[10px] mt-[12px]">
+              <el-dropdown trigger="click" @command="openVehiclePlans">
+                <el-button :type="hasVehiclePlans ? 'primary' : ''">
+                  {{ $t("planning.vehiclePlans") }}
+                  <el-icon class="ml-[6px]">
+                    <ArrowDown />
+                  </el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="itinerary">
+                      {{
+                        $t("planning.byItinerary")
+                      }}
+                    </el-dropdown-item>
+                    <el-dropdown-item command="stage">
+                      {{ $t("planning.byStage") }}
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+              <el-button :type="hasGuidePlans ? 'primary' : ''" @click="openSectionDialog('guide')">
+                {{ $t("planning.guideService") }}
               </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="itinerary">
-                    {{
-                      $t("planning.byItinerary")
-                    }}
-                  </el-dropdown-item>
-                  <el-dropdown-item command="stage">
-                    {{ $t("planning.byStage") }}
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-            <el-button :type="hasGuidePlans ? 'primary' : ''" @click="openSectionDialog('guide')">
-              {{ $t("planning.guideService") }}
-            </el-button>
-            <el-button :type="hasHotelPlans ? 'primary' : ''" @click="openSectionDialog('hotel')">
-              {{ $t("itinerary.hotelPlans") }}
-            </el-button>
-            <el-button :type="hasPriceItems ? 'primary' : ''" @click="openSectionDialog('price')">
-              {{ $t("identity.prices") }}
-            </el-button>
+              <el-button :type="hasHotelPlans ? 'primary' : ''" @click="openSectionDialog('hotel')">
+                {{ $t("itinerary.hotelPlans") }}
+              </el-button>
+              <el-button :type="hasPriceItems ? 'primary' : ''" @click="openSectionDialog('price')">
+                {{ $t("identity.prices") }}
+              </el-button>
+            </div>
           </div>
         </el-card>
       </header>
@@ -393,7 +396,8 @@
 import { businessUnitName } from "@/constants/identity";
 import { ArrowDown } from "@element-plus/icons-vue";
 import { plannedDuration, itineraryDuration } from "@/views/inquiries/itineraries/duration";
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onActivated, onDeactivated, onMounted, ref, watch } from "vue";
+import { useEventListener } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { ItineraryHotelTier, ItineraryRecord } from "@/types/itinerary";
@@ -416,6 +420,38 @@ import { useItineraryWorkspace } from "./useItineraryWorkspace";
 
 defineOptions({ name: "InquiryItineraries" });
 const { t } = useI18n();
+const pageElement = ref<HTMLElement>();
+const scrollContainer = ref<HTMLElement>();
+const isOverviewCollapsed = ref(false);
+let scrollAnchor = 0;
+let isHeaderUpdating = false;
+
+function attachScrollContainer() {
+  scrollContainer.value = pageElement.value?.closest<HTMLElement>(".layout-content") ?? undefined;
+  scrollAnchor = scrollContainer.value?.scrollTop ?? 0;
+}
+
+useEventListener(scrollContainer, "scroll", () => {
+  const container = scrollContainer.value;
+  if (!container || isHeaderUpdating) return;
+  const position = Math.max(0, container.scrollTop);
+  const delta = position - scrollAnchor;
+  if (position > 24 && Math.abs(delta) < 16) return;
+  scrollAnchor = position;
+  const shouldCollapse = position > 96 && delta > 0;
+  if (position > 24 && delta >= 0 && !shouldCollapse) return;
+  if (isOverviewCollapsed.value === shouldCollapse) return;
+  isHeaderUpdating = true;
+  isOverviewCollapsed.value = shouldCollapse;
+  // Header resizing can move the scroll position; it is not a change in user direction.
+  void nextTick(() => {
+    scrollAnchor = container.scrollTop;
+    isHeaderUpdating = false;
+  });
+});
+onMounted(attachScrollContainer);
+onActivated(attachScrollContainer);
+onDeactivated(() => { scrollContainer.value = undefined; });
 const isQuoteDrawerVisible = ref(false);
 const isVehiclePlansDialogVisible = ref(false);
 const isGuidePlansDialogVisible = ref(false);

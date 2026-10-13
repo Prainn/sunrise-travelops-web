@@ -1,21 +1,28 @@
 <template>
   <div class="page-container">
-    <el-form inline class="page-search">
-      <el-form-item class="w-300px">
-        <el-input v-model="keyword" :placeholder="$t('guide.searchPeople')" clearable />
-      </el-form-item>
-      <el-form-item :label="$t('common.status')">
-        <el-select v-model="status" clearable class="w-[140px]">
-          <el-option :label="$t('common.enabled')" value="enabled" />
-          <el-option :label="$t('common.disabled')" value="disabled" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button @click="resetQuery">
-          {{ $t("common.reset") }}
-        </el-button>
-      </el-form-item>
-    </el-form>
+    <el-card class="page-search" shadow="never">
+      <el-form inline>
+        <el-form-item :label="$t('common.keywords')">
+          <el-input
+            v-model="keyword"
+            class="page-search__keywords"
+            :placeholder="$t('guide.searchPeople')"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item :label="$t('common.status')">
+          <el-select v-model="status" clearable>
+            <el-option :label="$t('common.enabled')" value="enabled" />
+            <el-option :label="$t('common.disabled')" value="disabled" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button @click="resetQuery">
+            {{ $t("common.reset") }}
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
     <el-card class="page-content" shadow="never">
       <TableToolbar @refresh="refreshRows">
         <el-button

@@ -1,31 +1,38 @@
 <template>
   <div class="page-container">
-    <el-form inline class="page-search">
-      <el-form-item v-if="isHeadquarters" :label="$t('identity.businessUnit')">
-        <el-select v-model="businessUnit" clearable class="!w-[160px]">
-          <el-option
-            v-for="unit in UNITS"
-            :key="unit"
-            :value="unit"
-            :label="businessUnitName(unit)"
+    <el-card class="page-search" shadow="never">
+      <el-form inline>
+        <el-form-item v-if="isHeadquarters" :label="$t('identity.businessUnit')">
+          <el-select v-model="businessUnit" clearable>
+            <el-option
+              v-for="unit in UNITS"
+              :key="unit"
+              :value="unit"
+              :label="businessUnitName(unit)"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label="$t('common.status')">
+          <el-select v-model="status" clearable>
+            <el-option value="active" :label="$t('tour.status.active')" />
+            <el-option value="cancelled" :label="$t('tour.status.cancelled')" />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label="$t('common.keywords')">
+          <el-input
+            v-model="keyword"
+            class="page-search__keywords"
+            :placeholder="$t('tour.searchPlaceholder')"
+            clearable
           />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="$t('common.status')">
-        <el-select v-model="status" clearable class="!w-[140px]">
-          <el-option value="active" :label="$t('tour.status.active')" />
-          <el-option value="cancelled" :label="$t('tour.status.cancelled')" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-input v-model="keyword" :placeholder="$t('tour.searchPlaceholder')" clearable />
-      </el-form-item>
-      <el-form-item>
-        <el-button @click="resetQuery">
-          {{ $t("common.reset") }}
-        </el-button>
-      </el-form-item>
-    </el-form>
+        </el-form-item>
+        <el-form-item>
+          <el-button @click="resetQuery">
+            {{ $t("common.reset") }}
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
     <el-card class="page-content" shadow="never">
       <TableToolbar @refresh="load">
         <el-button v-has-perm="'tour:create'" type="primary" @click="openCreate">
