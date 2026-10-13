@@ -56,11 +56,7 @@
                   <el-table-column :label="$t('attraction.itemType')" width="100">
                     <template #default="priceScope">
                       {{
-                        $t(
-                          attractionItemTypeLabelKeys[
-                            priceScope.row.itemType as AttractionPriceItemType
-                          ],
-                        )
+                        getAttractionItemTypeName(priceScope.row.itemType, locale)
                       }}
                     </template>
                   </el-table-column>
@@ -216,7 +212,6 @@ import { useI18n } from "vue-i18n";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import type {
   AttractionCategory,
-  AttractionPriceItemType,
   AttractionPriceRecord,
   AttractionRecord,
   ResourceListQuery,
@@ -224,7 +219,7 @@ import type {
 import { formatMoney } from "@/utils";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import AttractionSearchForm from "./AttractionSearchForm.vue";
-import { attractionCategoryLabelKeys, attractionItemTypeLabelKeys } from "../options";
+import { attractionCategoryLabelKeys, getAttractionItemTypeName } from "../options";
 
 defineProps<{
   loadingPriceIds?: Set<string>;
@@ -245,7 +240,7 @@ const emit = defineEmits<{
   "delete-price": [record: AttractionRecord, price: AttractionPriceRecord];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const keywords = ref("");
 const area = ref("");
 const category = ref<AttractionCategory | "">("");

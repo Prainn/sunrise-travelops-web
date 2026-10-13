@@ -159,7 +159,7 @@ export interface HotelRecord extends ResourceAuditRecord {
 }
 
 export type AttractionCategory = "scenic" | "performance" | "experience" | "transport" | "package";
-export type AttractionPriceItemType = "ticket" | "transport" | "guide" | "activity" | "package";
+export type AttractionPriceItemType = string;
 
 export interface AttractionPriceRecord extends ResourceAuditRecord {
   id: string;

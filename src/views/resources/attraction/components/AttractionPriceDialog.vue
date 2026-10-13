@@ -20,7 +20,7 @@
           <el-option
             v-for="option in itemTypeOptions"
             :key="option.value"
-            :label="$t(option.labelKey)"
+            :label="option.label"
             :value="option.value"
           />
         </el-select>
@@ -98,7 +98,8 @@
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import type { AttractionPriceItemType, AttractionPriceRecord } from "@/types/resource";
+import type { AttractionPriceRecord } from "@/types/resource";
+import { attractionItemTypeStore, getAttractionItemTypeName } from "../options";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
@@ -123,13 +124,9 @@ const isVisible = computed({
   get: () => props.modelValue,
   set: (value) => emit("update:modelValue", value),
 });
-const itemTypeOptions: Array<{ value: AttractionPriceItemType; labelKey: string }> = [
-  { value: "ticket", labelKey: "attraction.itemTicket" },
-  { value: "transport", labelKey: "attraction.itemTransport" },
-  { value: "guide", labelKey: "attraction.itemGuide" },
-  { value: "activity", labelKey: "attraction.itemActivity" },
-  { value: "package", labelKey: "attraction.itemPackage" },
-];
+const itemTypeOptions = computed(() => attractionItemTypeStore
+  .filter((item) => item.status === "enabled" || (props.isEditing && item.code === props.record.itemType))
+  .map((item) => ({ value: item.code, label: getAttractionItemTypeName(item.code, locale.value) })));
 const unitOptions = computed(() => getResourceUnitOptions("attraction", locale.value));
 const rules = computed<FormRules>(() => ({
   itemType: [{ required: true, message: t("attraction.itemTypeRequired"), trigger: "change" }],

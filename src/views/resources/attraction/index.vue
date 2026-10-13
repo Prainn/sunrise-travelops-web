@@ -36,6 +36,8 @@ import { ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { resourceService } from "@/services/resource.service";
+import { businessDictionaryService } from "@/services/business-dictionary.service";
+import { attractionItemTypeStore } from "./options";
 import type { AttractionPriceRecord, AttractionRecord, ResourceListQuery } from "@/types/resource";
 import { useResourceMaintenance } from "../useResourceMaintenance";
 import AttractionEditorDialog from "./components/AttractionEditorDialog.vue";
@@ -71,7 +73,7 @@ function createEmptyAttraction(): AttractionRecord {
 function createEmptyPrice(): AttractionPriceRecord {
   return {
     id: "",
-    itemType: "ticket",
+    itemType: "",
     itemName: "景区门票",
     audience: "成人",
     periodName: "常规期",
@@ -114,7 +116,23 @@ const {
 
 async function loadAttractions(query?: ResourceListQuery) {
   loadedAttractionPriceIds.clear();
+  await loadItemTypes();
   return resourceService.loadAttractions(query);
+}
+
+async function loadItemTypes() {
+  const items = await businessDictionaryService.getItems("attraction-price-item-type");
+  attractionItemTypeStore.splice(0, attractionItemTypeStore.length, ...items);
+}
+
+async function preparePriceDialog() {
+  try {
+    await loadItemTypes();
+    return true;
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+    return false;
+  }
 }
 
 async function loadAttractionPrices(record: AttractionRecord) {
@@ -132,12 +150,18 @@ async function loadAttractionPrices(record: AttractionRecord) {
 }
 
 async function openCreatePriceDialog(record: AttractionRecord) {
+  if (!(await preparePriceDialog())) return;
   selectedAttraction.value = record;
   editingPriceId.value = "";
-  priceForm.value = { ...createEmptyPrice(), unit: record.unit };
+  priceForm.value = {
+    ...createEmptyPrice(),
+    itemType: attractionItemTypeStore.find((item) => item.status === "enabled")?.code ?? "",
+    unit: record.unit,
+  };
   isPriceDialogVisible.value = true;
 }
 async function openEditPriceDialog(record: AttractionRecord, price: AttractionPriceRecord) {
+  if (!(await preparePriceDialog())) return;
   selectedAttraction.value = record;
   editingPriceId.value = price.id;
   priceForm.value = { ...price };

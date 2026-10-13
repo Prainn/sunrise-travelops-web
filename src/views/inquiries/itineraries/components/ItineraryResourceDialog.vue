@@ -148,6 +148,7 @@ import { useI18n } from "vue-i18n";
 import type { ItineraryResourceItem, MealSlot } from "@/types/itinerary";
 import { formatMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
+import { getAttractionItemTypeName } from "@/views/resources/attraction/options";
 import type { ResourcePriceDetail } from "../pricing";
 
 const props = defineProps<{
@@ -202,6 +203,7 @@ function formatDetail(detail: ResourcePriceDetail) {
   if (detail.format === "money") return `¥${formatMoney(Number(detail.value ?? 0))}`;
   if (detail.format === "translation") return t(String(detail.value));
   if (detail.format === "unit") return resourceUnitName(String(detail.value));
+  if (detail.format === "attraction-item-type") return getAttractionItemTypeName(String(detail.value), locale.value);
   return detail.value === "" ? "-" : String(detail.value);
 }
 function submit() {

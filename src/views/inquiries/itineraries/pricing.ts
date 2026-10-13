@@ -32,7 +32,7 @@ export interface ResourcePriceOption {
 export interface ResourcePriceDetail {
   labelKey: string;
   value: string | number;
-  format?: "money" | "translation" | "unit";
+  format?: "money" | "translation" | "unit" | "attraction-item-type";
 }
 
 export interface PricingResources {
@@ -49,14 +49,6 @@ const attractionCategoryLabelKeys = {
   experience: "attraction.categoryExperience",
   transport: "attraction.categoryTransport",
   package: "attraction.categoryPackage",
-} as const;
-
-const attractionItemTypeLabelKeys = {
-  ticket: "attraction.itemTicket",
-  transport: "attraction.itemTransport",
-  guide: "attraction.itemGuide",
-  activity: "attraction.itemActivity",
-  package: "attraction.itemPackage",
 } as const;
 
 export function getHotelUnitCost(
@@ -148,8 +140,8 @@ export function getResourcePriceOptions(
             { labelKey: "itinerary.resourceRemark", value: attraction.remark },
             {
               labelKey: "attraction.itemType",
-              value: attractionItemTypeLabelKeys[price.itemType],
-              format: "translation" as const,
+              value: price.itemType,
+              format: "attraction-item-type" as const,
             },
             { labelKey: "attraction.itemName", value: price.itemName },
             { labelKey: "attraction.audience", value: price.audience },
