@@ -724,7 +724,7 @@
     "rolePlaceholder": "请选择角色",
     "roles": {
       "coordinator": "计调",
-      "resourceManager": "资源主管",
+      "resourceManager": "资源管理员",
       "systemAdministrator": "系统管理员"
     },
     "rolesLabel": "角色",
@@ -963,7 +963,7 @@
     "USERNAME_IMMUTABLE": "用户名不能修改",
     "CURRENT_USER_CANNOT_BE_DISABLED": "不能停用当前登录用户",
     "CURRENT_USER_CANNOT_BE_DELETED": "不能删除当前登录用户",
-    "ROOT_USER_CANNOT_BE_DELETED": "不能删除系统管理员账号",
+    "ROOT_USER_CANNOT_BE_DELETED": "不能删除超级管理员账号",
     "ROLES_NOT_FOUND_OR_NOT_ASSIGNABLE": "所选角色不存在或不能分配",
     "DEPARTMENT_NOT_FOUND": "未找到所选部门",
     "RESOURCE_NOT_FOUND": "未找到该资源",

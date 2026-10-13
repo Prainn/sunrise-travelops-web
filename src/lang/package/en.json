@@ -963,7 +963,7 @@
     "USERNAME_IMMUTABLE": "The username cannot be changed",
     "CURRENT_USER_CANNOT_BE_DISABLED": "You cannot disable your own account",
     "CURRENT_USER_CANNOT_BE_DELETED": "You cannot delete your own account",
-    "ROOT_USER_CANNOT_BE_DELETED": "The system administrator account cannot be deleted",
+    "ROOT_USER_CANNOT_BE_DELETED": "The super administrator account cannot be deleted",
     "ROLES_NOT_FOUND_OR_NOT_ASSIGNABLE": "One or more selected roles do not exist or cannot be assigned",
     "DEPARTMENT_NOT_FOUND": "The selected department was not found",
     "RESOURCE_NOT_FOUND": "Resource not found",

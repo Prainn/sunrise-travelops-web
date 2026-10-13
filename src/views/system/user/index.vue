@@ -51,7 +51,7 @@
               <el-option
                 v-for="item in roleOptions"
                 :key="item.value"
-                :label="item.label"
+                :label="userRoleLabel(item.label, item.code)"
                 :value="item.value"
               />
             </el-select>
@@ -184,7 +184,7 @@
             <el-table-column :label="$t('user.rolesLabel')" prop="roleNames" width="400">
               <template #default="scope">
                 <el-tag
-                  v-for="role in scope.row.roleNames.split(',')"
+                  v-for="role in userRoleLabels(scope.row.roleNames, roleOptions)"
                   :key="role"
                   size="small"
                   class="mr-2"
@@ -418,6 +418,7 @@
 <script setup lang="ts">
 import { loginScopeName } from "@/constants/identity";
 import { formatDateTime } from "@/utils";
+import { userRoleLabel, userRoleLabels } from "@/utils/user-role";
 import { h } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { CopyDocument, Female, Male } from "@element-plus/icons-vue";
@@ -444,7 +445,7 @@ defineOptions({
 
 const appStore = useAppStore();
 const userStore = useUserStore();
-const { locale, t } = useI18n();
+const { t } = useI18n();
 
 const queryFormRef = ref<FormInstance>();
 const userFormRef = ref<FormInstance>();
@@ -636,10 +637,6 @@ async function loadFormOptions(): Promise<void> {
     userService.getDepartmentOptions(),
   ]);
 }
-
-watch(locale, () => {
-  loadFormOptions();
-});
 
 /**
  * 打开用户表单弹窗。

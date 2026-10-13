@@ -50,7 +50,12 @@
         :prop="`identities.${index}.roleIds`"
         :rules="{ required: true, type: 'array', min: 1, message: $t('user.rolePlaceholder') }"
       >
-        <el-select v-model="identity.roleIds" multiple :placeholder="$t('user.rolePlaceholder')">
+        <el-select
+          :model-value="sortUserRoleIds(identity.roleIds, roles)"
+          multiple
+          :placeholder="$t('user.rolePlaceholder')"
+          @update:model-value="identity.roleIds = sortUserRoleIds($event, roles)"
+        >
           <el-option
             v-for="role in roles.filter(
               (r) =>
@@ -60,7 +65,7 @@
             )"
             :key="role.value"
             :value="role.value"
-            :label="role.label"
+            :label="userRoleLabel(role.label, role.code)"
           />
         </el-select>
       </el-form-item>
@@ -69,6 +74,7 @@
 </template>
 <script setup lang="ts">
 import { loginScopeName } from "@/constants/identity";
+import { sortUserRoleIds, userRoleLabel } from "@/utils/user-role";
 import type { UserIdentity, IdentityRoleOption, DepartmentOption } from "@/types/user";
 const model = defineModel<UserIdentity[]>({ required: true });
 const props = defineProps<{ roles: IdentityRoleOption[]; departments: DepartmentOption[] }>();

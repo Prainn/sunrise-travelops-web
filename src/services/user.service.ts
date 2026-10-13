@@ -1,6 +1,5 @@
 import type { PageResult } from "@/types/common";
 import { request } from "@/api/request";
-import { translate } from "@/lang/utils";
 import type {
   ProfileSecurity,
   PasswordChangeForm,
@@ -17,21 +16,6 @@ import { authService } from "./auth.service";
 
 type UserCreateResult = UserForm & { temporaryPassword?: string };
 const USER_BASE_URL = "/users";
-
-const ROLE_LABEL_KEYS: Record<string, string> = {
-  ADMIN: "user.roles.systemAdministrator",
-  COORDINATOR: "user.roles.coordinator",
-  RESOURCE_MANAGER: "user.roles.resourceManager",
-};
-
-const ROLE_NAME_LABEL_KEYS: Record<string, string> = {
-  coordinator: "user.roles.coordinator",
-  resourcemanager: "user.roles.resourceManager",
-  systemadministrator: "user.roles.systemAdministrator",
-  计调: "user.roles.coordinator",
-  资源主管: "user.roles.resourceManager",
-  系统管理员: "user.roles.systemAdministrator",
-};
 
 function buildUserParams(query: UserQueryParams) {
   const keyword = query.keyword?.trim();
@@ -71,25 +55,6 @@ function toUserInput(
   return input;
 }
 
-function normalizeRoleName(value: string): string {
-  return value.replace(/[\s_-]+/g, "").toLowerCase();
-}
-
-function localizeRoleName(value: string, code?: string): string {
-  const labelKey =
-    ROLE_LABEL_KEYS[code ?? ""] ??
-    ROLE_LABEL_KEYS[value] ??
-    ROLE_NAME_LABEL_KEYS[normalizeRoleName(value)];
-  return labelKey ? translate(labelKey) : value;
-}
-
-function localizeRoleNames(value?: string): string | undefined {
-  return value
-    ?.split(",")
-    .map((role) => localizeRoleName(role.trim()))
-    .join(",");
-}
-
 export const userService = {
   getProfileSecurity(): Promise<ProfileSecurity> {
     return request.get<ProfileSecurity>("/auth/me/security");
@@ -104,7 +69,7 @@ export const userService = {
       list: result.list.map((user) => ({
         ...user,
         deptName: user.identities.map((i) => i.deptName).join(" / "),
-        roleNames: user.identities.map((i) => localizeRoleNames(i.roleNames)).join(","),
+        roleNames: user.identities.map((i) => i.roleNames).join(","),
       })),
     };
   },
@@ -155,10 +120,7 @@ export const userService = {
   },
   async getRoleOptions(): Promise<IdentityRoleOption[]> {
     const options = await request.get<IdentityRoleOption[]>(`${USER_BASE_URL}/options/roles`);
-    return options.map((option) => ({
-      ...option,
-      label: localizeRoleName(option.label, option.code),
-    }));
+    return options.sort((a, b) => a.code.localeCompare(b.code));
   },
   async getDepartmentOptions(): Promise<DepartmentOption[]> {
     return request.get<DepartmentOption[]>(`${USER_BASE_URL}/options/departments`);
