@@ -963,8 +963,6 @@
     "DICTIONARY_ITEMS_NOT_FOUND": "One or more category options were not found",
     "DICTIONARY_CODE_EXISTS": "This system category code is already in use",
     "DICTIONARY_ITEM_VALUE_EXISTS": "This category option value is already in use",
-    "DICTIONARY_ID_MISMATCH": "The system category does not match the request URL",
-    "DICTIONARY_CODE_MISMATCH": "The system category code does not match the request URL",
     "BUSINESS_DICTIONARY_TYPE_NOT_FOUND": "Business category not found",
     "BUSINESS_DICTIONARY_TYPES_NOT_FOUND": "One or more business categories were not found",
     "BUSINESS_DICTIONARY_ITEM_NOT_FOUND": "Business category item not found",

@@ -282,6 +282,13 @@ function syncAgencyDetails() {
   const agency = selectedAgency.value;
   if (!agency) return;
   const contact = agency.contacts.find((item) => item.id === form.contactId);
+  if (props.isEditing && form.agencyId === props.record.agencyId) {
+    if (contact && form.contactId !== props.record.contactId) {
+      form.contactName = contact.name;
+      form.phone = contact.phone;
+    }
+    return;
+  }
   Object.assign(form, {
     agencyCode: agency.code,
     agencyName: agency.name,
@@ -319,16 +326,33 @@ async function selectAgency(agencyId: string) {
     return;
   }
   if (version !== agencySelectionVersion) return;
-  if (agency.businessUnit !== form.businessUnit || !agency.coordinatorId) {
+  const retainedAgency = props.isEditing && agencyId === props.record.agencyId;
+  if (!retainedAgency && (agency.businessUnit !== form.businessUnit || !agency.coordinatorId)) {
     ElMessage.error(t("inquiry.agencyCoordinatorUnavailable"));
     return;
   }
   const index = resourceService.agencies.findIndex((item) => item.id === agencyId);
   if (index >= 0) resourceService.agencies.splice(index, 1, agency);
   else resourceService.agencies.push(agency);
+  if (retainedAgency) {
+    const original = props.record;
+    Object.assign(form, {
+      agencyId: original.agencyId,
+      ownerId: original.ownerId,
+      agencyCode: original.agencyCode,
+      agencyName: original.agencyName,
+      contactId: original.contactId,
+      contactName: original.contactName,
+      email: original.email,
+      phone: original.phone,
+      countryItemId: original.countryItemId,
+      countryOrRegion: original.countryOrRegion,
+    });
+    return;
+  }
   Object.assign(form, {
     agencyId: agency.id,
-    ownerId: agency.coordinatorId,
+    ownerId: props.isEditing ? props.record.ownerId : agency.coordinatorId,
     agencyCode: agency.code,
     agencyName: agency.name,
     contactId: "",

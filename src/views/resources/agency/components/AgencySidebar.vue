@@ -10,17 +10,17 @@
     </template>
     <el-form :inline="true">
       <el-row :gutter="24">
-        <el-col :span="16">
+        <el-col :span="20">
+          <el-form-item :label="$t('common.keywords')" class="w-full pr-2">
+            <el-input v-model.trim="keywords" :placeholder="$t('resource.agencySearchPlaceholder')" clearable />
+          </el-form-item>
         </el-col>
-        <el-col :span="8">
+        <el-col :span="4">
           <el-button @click="resetQuery">
             {{ $t("common.reset") }}
           </el-button>
         </el-col>
       </el-row>
-      <el-form-item :label="$t('common.keywords')" class="w-full pr-2">
-        <el-input v-model.trim="keywords" :placeholder="$t('resource.agencySearchPlaceholder')" clearable />
-      </el-form-item>
     </el-form>
     <el-scrollbar class="min-h-0 flex-1">
       <el-tree

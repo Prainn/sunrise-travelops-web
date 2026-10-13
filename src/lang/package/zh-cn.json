@@ -963,8 +963,6 @@
     "DICTIONARY_ITEMS_NOT_FOUND": "未找到一个或多个分类选项",
     "DICTIONARY_CODE_EXISTS": "该系统分类编码已存在",
     "DICTIONARY_ITEM_VALUE_EXISTS": "该分类选项值已存在",
-    "DICTIONARY_ID_MISMATCH": "系统分类记录与请求地址不一致",
-    "DICTIONARY_CODE_MISMATCH": "系统分类编码与请求地址不一致",
     "BUSINESS_DICTIONARY_TYPE_NOT_FOUND": "未找到该业务分类",
     "BUSINESS_DICTIONARY_TYPES_NOT_FOUND": "未找到一个或多个业务分类",
     "BUSINESS_DICTIONARY_ITEM_NOT_FOUND": "未找到该业务分类项",

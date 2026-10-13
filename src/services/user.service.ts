@@ -51,7 +51,6 @@ function toUserInput(
   options: { includeUsername?: boolean; includePassword?: boolean } = {},
 ) {
   const input: Record<string, unknown> = {
-    id: data.id,
     nickname: data.nickname?.trim() ?? "",
     englishName: data.englishName?.trim() ?? "",
     tourCode: data.tourCode?.trim().toUpperCase() ?? "",
@@ -124,7 +123,7 @@ export const userService = {
   async update(userId: string, data: UserForm): Promise<void> {
     await request.put<UserForm>(
       `${USER_BASE_URL}/${encodeURIComponent(userId)}`,
-      toUserInput({ ...data, id: userId }),
+      toUserInput(data),
     );
   },
 
