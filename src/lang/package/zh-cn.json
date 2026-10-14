@@ -332,6 +332,8 @@
     "editItinerary": "编辑行程信息",
     "editTitle": "编辑行程",
     "hotelCost": "酒店成本",
+    "clearCurrentHotelTier": "清空当前档次",
+    "hotelUnitPrice": "单价（元/间/晚）",
     "hotelPlans": "酒店搭配",
     "vehiclePlans": "用车方案",
     "adultTourPricePerPerson": "成人团费",

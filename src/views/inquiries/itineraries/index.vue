@@ -94,7 +94,10 @@
                 $t("inquiry.plannedDays")
               }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
             </div>
-            <div v-if="selectedItinerary" class="flex flex-wrap gap-[10px] mt-[12px]">
+            <div
+              v-if="selectedItinerary"
+              class="itinerary-page__section-actions flex flex-wrap gap-[10px] mt-[12px]"
+            >
               <el-dropdown trigger="click" @command="openVehiclePlans">
                 <el-button :type="hasVehiclePlans ? 'primary' : ''">
                   {{ $t("planning.vehiclePlans") }}
@@ -721,6 +724,10 @@ onMounted(loadDestinationResourceOptions);
 </script>
 
 <style scoped>
+.itinerary-page__section-actions > :deep(.el-button) {
+  margin-left: 0;
+}
+
 .itinerary-page__overview :deep(.el-card__body) {
   padding: 14px 18px 12px;
 }

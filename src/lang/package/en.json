@@ -332,6 +332,8 @@
     "editItinerary": "Edit itinerary information",
     "editTitle": "Edit Itinerary",
     "hotelCost": "Hotel cost",
+    "clearCurrentHotelTier": "Clear current tier",
+    "hotelUnitPrice": "Unit price (CNY/room/night)",
     "hotelPlans": "Hotel selection",
     "vehiclePlans": "Vehicle Plans",
     "adultTourPricePerPerson": "Adult tour price",
