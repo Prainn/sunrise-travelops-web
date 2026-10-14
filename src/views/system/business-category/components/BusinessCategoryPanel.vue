@@ -8,13 +8,19 @@
     />
 
     <el-card class="page-content" shadow="never">
-      <TableToolbar @refresh="resetQuery">
+      <TableToolbar @refresh="loadItems">
         <el-button v-hasPerm="'sys:business-dictionary:create'" type="primary" @click="openCreate">
           {{ $t("common.create") }}
         </el-button>
       </TableToolbar>
       <div class="page-table-wrapper">
-        <el-table v-loading="loading" :data="rows" height="100%" border row-key="id">
+        <el-table
+          v-loading="loading"
+          :data="pageRows"
+          height="100%"
+          border
+          row-key="id"
+        >
           <el-table-column prop="name" :label="$t(labelKeys.name)" min-width="130" />
           <el-table-column
             prop="englishName"
@@ -51,7 +57,12 @@
             min-width="180"
             show-overflow-tooltip
           />
-          <el-table-column :label="$t('common.actions')" width="130" fixed="right" align="center">
+          <el-table-column
+            :label="$t('common.actions')"
+            width="130"
+            fixed="right"
+            align="center"
+          >
             <template #default="scope">
               <el-button
                 v-hasPerm="'sys:business-dictionary:update'"
@@ -73,25 +84,65 @@
           </el-table-column>
         </el-table>
       </div>
+      <pagination
+        v-model:page="page"
+        v-model:limit="pageSize"
+        :total="rows.length"
+      />
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="$t(dialogTitleKey)" width="600px" destroy-on-close>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="180px">
+    <el-dialog
+      v-model="dialogVisible"
+      :title="$t(dialogTitleKey)"
+      width="600px"
+      destroy-on-close
+    >
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="180px"
+      >
+        <el-form-item v-if="isCatalog && !editingId" :label="$t('businessCategory.catalogEntry')">
+          <el-select
+            v-model="catalogCode"
+            autocomplete="new-password"
+            filterable
+            remote
+            :remote-method="searchCatalog"
+            :loading="catalogLoading"
+            :placeholder="$t('businessCategory.catalogPlaceholder')"
+            class="w-full"
+            @change="applyCatalogEntry"
+          >
+            <el-option
+              v-for="entry in catalogEntries"
+              :key="entry.code"
+              :value="entry.code"
+              :label="`${entry.name} / ${entry.englishName} (${entry.code})`"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item :label="$t(labelKeys.name)" prop="name">
-          <el-input v-model="form.name" />
+          <el-input v-model="form.name" :disabled="isCatalog" />
         </el-form-item>
         <el-form-item :label="$t('businessCategory.englishName')" prop="englishName">
-          <el-input v-model="form.englishName" />
+          <el-input v-model="form.englishName" :disabled="isCatalog" />
         </el-form-item>
         <el-form-item :label="$t(labelKeys.code)" prop="code">
-          <el-input v-model="form.code" :disabled="Boolean(editingId)" />
+          <el-input v-model="form.code" :disabled="Boolean(editingId) || isCatalog" />
         </el-form-item>
         <el-form-item
           v-if="isResourceUnit"
           :label="$t('businessCategory.applicableResources')"
           prop="resourceTypes"
         >
-          <el-select v-model="form.resourceTypes" multiple class="w-full">
+          <el-select
+            v-model="form.resourceTypes"
+            autocomplete="new-password"
+            multiple
+            class="w-full"
+          >
             <el-option
               v-for="type in resourceTypes"
               :key="type"
@@ -123,7 +174,7 @@
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { businessDictionaryService } from "@/services";
+import { businessDictionaryService, type CatalogEntry } from "@/services/business-dictionary.service";
 import type { ItineraryItemType } from "@/types/itinerary";
 import type { BusinessCategoryOptionRecord, BusinessCategoryTypeRecord } from "@/types/resource";
 import TableToolbar from "@/components/TableToolbar/index.vue";
@@ -147,12 +198,23 @@ const keyword = ref("");
 const status = ref("");
 const loading = ref(false);
 const rows = ref<CategoryItem[]>([]);
+let loadVersion = 0;
+const page = ref(1);
+const pageSize = ref(20);
+const pageRows = computed(() => rows.value.slice(
+  (page.value - 1) * pageSize.value,
+  page.value * pageSize.value,
+));
 const dialogVisible = ref(false);
 const editingId = ref("");
 const formRef = ref<FormInstance>();
 const form = reactive<CategoryItem>(emptyItem());
 const isResourceUnit = computed(() => props.category.code === "resource-unit");
 const isTransportMethod = computed(() => props.category.code === "transport-method");
+const isCatalog = computed(() => ["country-region", "city-airport"].includes(props.category.code));
+const catalogEntries = ref<CatalogEntry[]>([]);
+const catalogCode = ref("");
+const catalogLoading = ref(false);
 const labelKeys = computed(() => {
   if (isResourceUnit.value)
     return {
@@ -232,7 +294,10 @@ watch(
     loadItems();
   },
 );
-watch([keyword, status], () => loadItems(), { flush: "post" });
+watch([keyword, status], () => {
+  page.value = 1;
+  loadItems();
+}, { flush: "post" });
 
 function emptyItem(): CategoryItem {
   return {
@@ -246,13 +311,31 @@ function emptyItem(): CategoryItem {
   };
 }
 function resetQuery() {
+  page.value = 1;
   keyword.value = "";
   status.value = "";
 }
 function openCreate() {
   editingId.value = "";
+  catalogCode.value = "";
+  if (isCatalog.value) void searchCatalog();
   Object.assign(form, emptyItem());
   dialogVisible.value = true;
+}
+async function searchCatalog(keyword = "") {
+  catalogLoading.value = true;
+  try {
+    const type = props.category.code as "country-region" | "city-airport";
+    catalogEntries.value = (await businessDictionaryService.getCatalog(type, keyword)).slice(0, 100);
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  } finally {
+    catalogLoading.value = false;
+  }
+}
+function applyCatalogEntry(code: string) {
+  const entry = catalogEntries.value.find((item) => item.code === code);
+  if (entry) Object.assign(form, entry);
 }
 function openEdit(row: CategoryItem) {
   editingId.value = row.id;
@@ -261,21 +344,26 @@ function openEdit(row: CategoryItem) {
 }
 
 async function loadItems() {
+  const version = ++loadVersion;
+  const category = props.category;
   loading.value = true;
   try {
-    const items = await businessDictionaryService.getItems(props.category.code, {
+    const items = await businessDictionaryService.getItems(category.code, {
       keyword: keyword.value,
       status: status.value,
     });
+    if (version !== loadVersion || category.code !== props.category.code) return;
     rows.value = items.map((item) => ({
       ...item,
       resourceTypes: "resourceTypes" in item ? (item.resourceTypes as ItineraryItemType[]) : [],
     }));
-    props.category.items.splice(0, props.category.items.length, ...items);
+    page.value = Math.min(page.value, Math.max(1, Math.ceil(rows.value.length / pageSize.value)));
+    category.items.splice(0, category.items.length, ...items);
   } catch (error) {
+    if (version !== loadVersion) return;
     ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
   } finally {
-    loading.value = false;
+    if (version === loadVersion) loading.value = false;
   }
 }
 

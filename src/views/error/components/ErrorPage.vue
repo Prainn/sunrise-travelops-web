@@ -65,8 +65,22 @@
                 class="error-visual__route-line [fill:none] [stroke:var(--el-color-primary-light-5)] [stroke-width:4] [stroke-linecap:round] [stroke-dasharray:8_10]"
                 d="M56 48 H148 C174 48 174 88 200 88 H302"
               />
-              <rect class="error-visual__node" x="24" y="30" width="64" height="36" rx="6" />
-              <rect class="error-visual__node" x="136" y="30" width="64" height="36" rx="6" />
+              <rect
+                class="error-visual__node"
+                x="24"
+                y="30"
+                width="64"
+                height="36"
+                rx="6"
+              />
+              <rect
+                class="error-visual__node"
+                x="136"
+                y="30"
+                width="64"
+                height="36"
+                rx="6"
+              />
               <rect
                 class="error-visual__node error-visual__node--muted"
                 x="272"

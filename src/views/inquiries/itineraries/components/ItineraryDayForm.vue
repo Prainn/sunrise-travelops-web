@@ -13,17 +13,24 @@
       />
       <el-select
         v-else
+        autocomplete="new-password"
         :model-value="day.departure"
         :disabled="!editable"
         filterable
         clearable
         @update:model-value="updateField('departure', $event)"
       >
-        <el-option v-for="city in destinations" :key="city" :label="city" :value="city" />
+        <el-option
+          v-for="city in destinations"
+          :key="city"
+          :label="city"
+          :value="city"
+        />
       </el-select>
     </el-form-item>
     <el-form-item :label="$t('itinerary.destination')">
       <el-select
+        autocomplete="new-password"
         :allow-create="allowCustomDestination"
         :model-value="day.destination"
         :disabled="!editable"
@@ -31,11 +38,17 @@
         clearable
         @update:model-value="updateField('destination', $event)"
       >
-        <el-option v-for="city in destinations" :key="city" :label="city" :value="city" />
+        <el-option
+          v-for="city in destinations"
+          :key="city"
+          :label="city"
+          :value="city"
+        />
       </el-select>
     </el-form-item>
     <el-form-item :label="$t('itinerary.overnightDestination')">
       <el-select
+        autocomplete="new-password"
         :model-value="day.overnightDestination"
         :disabled="!editable || !isLast"
         :placeholder="$t('itinerary.overnightPending')"
@@ -52,6 +65,7 @@
     </el-form-item>
     <el-form-item :label="$t('itinerary.transport')">
       <el-select
+        autocomplete="new-password"
         :model-value="transportCodes"
         :disabled="!editable"
         multiple

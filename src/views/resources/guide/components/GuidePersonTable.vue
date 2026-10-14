@@ -1,22 +1,28 @@
 <template>
   <div class="page-container">
-    <el-form inline class="page-search">
-      <ResourceBusinessFilter />
-      <el-form-item class="w-300px">
-        <el-input v-model="keyword" :placeholder="$t('guide.searchPeople')" clearable />
-      </el-form-item>
-      <el-form-item :label="$t('common.status')">
-        <el-select v-model="status" clearable class="w-[140px]">
-          <el-option :label="$t('common.enabled')" value="enabled" />
-          <el-option :label="$t('common.disabled')" value="disabled" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button @click="resetQuery">
-          {{ $t("common.reset") }}
-        </el-button>
-      </el-form-item>
-    </el-form>
+    <el-card class="page-search" shadow="never">
+      <el-form inline>
+        <el-form-item :label="$t('common.keywords')">
+          <el-input
+            v-model="keyword"
+            class="page-search__keywords"
+            :placeholder="$t('guide.searchPeople')"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item :label="$t('common.status')">
+          <el-select v-model="status" autocomplete="new-password" clearable>
+            <el-option :label="$t('common.enabled')" value="enabled" />
+            <el-option :label="$t('common.disabled')" value="disabled" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button @click="resetQuery">
+            {{ $t("common.reset") }}
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
     <el-card class="page-content" shadow="never">
       <TableToolbar @refresh="refreshRows">
         <el-button
@@ -31,12 +37,13 @@
         </el-button>
       </TableToolbar>
       <div class="page-table-wrapper">
-        <el-table v-loading="loading" :data="rows" border height="100%" row-key="id">
-          <el-table-column :label="$t('identity.library')" min-width="190">
-            <template #default="{ row }">
-              <ResourceLibraryTag :library="row.library" />
-            </template>
-          </el-table-column>
+        <el-table
+          v-loading="loading"
+          :data="rows"
+          border
+          height="100%"
+          row-key="id"
+        >
           <el-table-column prop="name" :label="$t('guide.name')" min-width="160" />
           <el-table-column :label="$t('guide.gender')" min-width="100">
             <template #default="{ row }">
@@ -155,11 +162,8 @@
 import { ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { RESOURCE_PERMISSIONS } from "@/constants";
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
-import { resetResourceBusinessFilter } from "@/services/resource-library";
 import type { GuidePersonRecord, ResourceListQuery, ResourceStatus } from "@/types/resource";
-import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 
 defineProps<{ loading?: boolean; rows: GuidePersonRecord[]; total: number }>();
@@ -195,7 +199,6 @@ function resetQuery() {
   keyword.value = "";
   status.value = "";
   pageNum.value = 1;
-  resetResourceBusinessFilter();
   requestRows();
 }
 </script>

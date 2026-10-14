@@ -111,7 +111,7 @@ function createHeaders(options: RequestOptions, body?: unknown): Headers {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 async function parseError(response: Response): Promise<ApiError> {
@@ -167,6 +167,7 @@ async function expireSession(): Promise<void> {
 }
 
 async function rotateTokens(): Promise<void> {
+  const accessToken = AuthStorage.getAccessToken();
   const refreshToken = AuthStorage.getRefreshToken();
   if (!refreshToken) {
     throw new ApiError(getErrorMessage(ApiErrorCode.MISSING_REFRESH_TOKEN, 401), {
@@ -181,6 +182,8 @@ async function rotateTokens(): Promise<void> {
     { refreshToken },
     { requiresAuth: false, retryAfterRefresh: false },
   );
+  if (AuthStorage.getAccessToken() !== accessToken) return;
+
   AuthStorage.setTokens(tokens.accessToken, tokens.refreshToken, AuthStorage.getRememberMe());
 }
 

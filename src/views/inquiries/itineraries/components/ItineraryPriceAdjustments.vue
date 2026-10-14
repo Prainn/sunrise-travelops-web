@@ -116,7 +116,12 @@
       <el-button @click="emit('cancel')">
         {{ $t(editable ? "common.cancel" : "common.close") }}
       </el-button>
-      <el-button v-if="editable" type="primary" :loading="saving" @click="emit('save')">
+      <el-button
+        v-if="editable"
+        type="primary"
+        :loading="saving"
+        @click="emit('save')"
+      >
         {{ $t("itinerary.save") }}
       </el-button>
     </template>
@@ -132,7 +137,7 @@ import {
 } from "../price-adjustments";
 import { calculateVehiclePlanAutomaticTotal } from "../vehicle-plans";
 import { inquiryService } from "@/services/inquiry.service";
-import { formatMoney, formatDateTime } from "@/utils";
+import { formatMoney, formatDateTime, roundMoney } from "@/utils";
 const props = defineProps<{
   plan: ItineraryRecord;
   savedPlan?: ItineraryRecord;
@@ -158,7 +163,11 @@ const savedRows = computed(
 );
 function changePrice(row: ReturnType<typeof itineraryPriceRows>[number], value: number) {
   row.set(value);
-  row.fields.adjustmentReason = "";
+  const saved = savedRows.value.get(row.key);
+  const unchanged =
+    saved?.source === row.source && roundMoney(saved.get() ?? 0) === roundMoney(value);
+  // Returning to the saved price keeps the existing reason; any other change needs a new one.
+  row.fields.adjustmentReason = unchanged ? (saved.fields.adjustmentReason ?? "") : "";
 }
 function needsReason(row: ReturnType<typeof itineraryPriceRows>[number]) {
   return resourcePriceNeedsReason(row, savedRows.value.get(row.key));

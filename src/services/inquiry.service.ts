@@ -87,6 +87,7 @@ function inquiryInput(record: InquiryRecord) {
   return {
     businessUnit: record.businessUnit,
     agencyId: record.agencyId,
+    countryItemId: record.countryItemId,
     contactId: record.contactId,
     ownerId: record.ownerId || undefined,
     sourceChannel: record.sourceChannel,
@@ -213,6 +214,9 @@ export const inquiryService = {
   },
   async pdfData(id: string) {
     return normalizeInquiryMoney<PdfData>(await request.get(`/itineraries/${id}/pdf-data`));
+  },
+  async recordDownload(id: string) {
+    await request.post(`/itineraries/${encodeURIComponent(id)}/download-click`);
   },
   async confirmPdf(data: PdfData) {
     return normalizeInquiryMoney<PdfData>(

@@ -1,26 +1,23 @@
-import { selectedResourceBusinessUnit, selectedResourceLibrary } from "./resource-library";
 import { clearResourceOptionsCache, loadResourceOptions } from "./resource-options-cache";
-import { reactive, watch } from "vue";
+import { reactive } from "vue";
 import { request } from "@/api/request";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
-import type { ResourceLibrary } from "@/types/auth";
 import type { PageResult } from "@/types/common";
 import type {
   AgencyContactRecord,
   AgencyRecord,
-  AttractionPriceRecord,
   AttractionRecord,
   CityRecord,
+  FlightRecord,
   GuidePersonRecord,
   GuideRecord,
   HotelRecord,
   ResourceListQuery,
-  RestaurantPriceRecord,
   RestaurantRecord,
   TransportRecord,
 } from "@/types/resource";
 
-type ResourceQuery = ResourceListQuery & Record<string, string | number | undefined>;
+type ResourceQuery = ResourceListQuery & Record<string, string | number | boolean | undefined>;
 
 interface ResourceCrud<T> {
   getPage(query: ResourceQuery): Promise<PageResult<T>>;
@@ -34,9 +31,7 @@ interface ApiMoneyFields {
   individualPrice?: string;
   groupPrice?: string | null;
   dailyPrice?: string;
-  price?: string;
-  rackPrice?: string;
-  settlementPrice?: string;
+  price?: string | null;
 }
 
 type ApiRecord<T> = {
@@ -47,9 +42,9 @@ const RESOURCE_BASE_URL = "/resources";
 
 function buildParams(query: ResourceQuery): ResourceQuery {
   return Object.fromEntries(
-    Object.entries({ library: selectedResourceLibrary.value, ...query }).map(([key, value]) => {
+    Object.entries(query).map(([key, value]) => {
       const normalizedValue = typeof value === "string" ? value.trim() : value;
-      return [key, normalizedValue || normalizedValue === 0 ? normalizedValue : undefined];
+      return [key, normalizedValue === "" ? undefined : normalizedValue];
     }),
   ) as ResourceQuery;
 }
@@ -58,7 +53,7 @@ function normalizeMoney(value: string | number | null | undefined): number {
   return value === null || value === undefined ? 0 : Number(value);
 }
 
-function createCrud<T extends { code: string; library?: ResourceLibrary }>(
+function createCrud<T extends { id: string; code?: string }>(
   resourceName: string,
   toInput: (data: T) => Record<string, unknown>,
   fromResponse: (data: ApiRecord<T>) => T = (data) => data as T,
@@ -67,12 +62,7 @@ function createCrud<T extends { code: string; library?: ResourceLibrary }>(
   return {
     async getPage(query) {
       const result = await request.get<PageResult<ApiRecord<T>>>(baseUrl, {
-        params: buildParams({
-          ...query,
-          ...(selectedResourceBusinessUnit.value
-            ? { businessUnit: selectedResourceBusinessUnit.value, library: undefined }
-            : {}),
-        }),
+        params: buildParams(query),
       });
       return { ...result, list: result.list.map(fromResponse) };
     },
@@ -83,11 +73,10 @@ function createCrud<T extends { code: string; library?: ResourceLibrary }>(
     create(data) {
       return request
         .post<ApiRecord<T>>(baseUrl, {
-          library: data.library ?? selectedResourceLibrary.value,
           ...toInput(data),
-          ...(["guides", "guide-people"].includes(resourceName)
+          ...(["guides", "guide-people", "flights"].includes(resourceName)
             ? {}
-            : { code: data.code.trim() || undefined }),
+            : { code: data.code?.trim() || undefined }),
         })
         .then((result) => {
           clearResourceOptionsCache();
@@ -115,13 +104,14 @@ function createCrud<T extends { code: string; library?: ResourceLibrary }>(
 
 function agencyInput(data: AgencyRecord) {
   return {
+    parentId: data.parentId,
     businessUnit: data.businessUnit || undefined,
     coordinatorId: data.coordinatorId,
     id: data.id || undefined,
     code: data.code.trim(),
-    name: data.name.trim(),
+    name: data.shortName.trim(),
     city: data.city.trim(),
-    countryOrRegion: data.countryOrRegion.trim(),
+    countryItemId: data.countryItemId,
     email: data.email.trim(),
     status: data.status,
     remark: data.remark.trim(),
@@ -135,7 +125,7 @@ function hotelInput(data: HotelRecord) {
     name: data.name.trim(),
     province: data.province.trim(),
     city: data.city.trim(),
-    rating: data.rating.trim(),
+    rating: data.rating,
     facilities: data.facilities.trim(),
     breakfast: data.breakfast.trim(),
     address: data.address.trim(),
@@ -163,6 +153,8 @@ function restaurantInput(data: RestaurantRecord) {
     isStandardPrice: data.isStandardPrice,
     remark: data.remark.trim(),
     unit: data.unit,
+    price: data.price,
+    dinerCount: data.unit === "table" ? data.dinerCount : null,
     status: data.status,
   };
 }
@@ -173,12 +165,13 @@ function attractionInput(data: AttractionRecord) {
     code: data.code.trim(),
     name: data.name.trim(),
     area: data.area.trim(),
-    category: data.category,
+    category: data.category || null,
     restroomLocation: data.restroomLocation.trim(),
     description: data.description.trim(),
     isStandardPrice: data.isStandardPrice,
     remark: data.remark.trim(),
     unit: data.unit,
+    price: data.price,
     status: data.status,
   };
 }
@@ -232,36 +225,12 @@ function normalizeHotel(data: ApiRecord<HotelRecord>): HotelRecord {
   };
 }
 
-function normalizeRestaurantPrice(data: ApiRecord<RestaurantPriceRecord>): RestaurantPriceRecord {
-  return { ...data, price: normalizeMoney(data.price), dinerCount: data.dinerCount ?? 0 };
+function normalizeRestaurant(data: ApiRecord<RestaurantRecord>): RestaurantRecord {
+  return { ...data, price: data.price === null ? null : normalizeMoney(data.price) };
 }
 
-function normalizeRestaurant(data: RestaurantRecord): RestaurantRecord {
-  return {
-    ...data,
-    prices: (data.prices ?? []).map((price) =>
-      normalizeRestaurantPrice(price as unknown as ApiRecord<RestaurantPriceRecord>),
-    ),
-  };
-}
-
-function normalizeAttractionPrice(data: ApiRecord<AttractionPriceRecord>): AttractionPriceRecord {
-  return {
-    ...data,
-    startDate: data.startDate ?? "",
-    endDate: data.endDate ?? "",
-    rackPrice: normalizeMoney(data.rackPrice),
-    settlementPrice: normalizeMoney(data.settlementPrice),
-  };
-}
-
-function normalizeAttraction(data: AttractionRecord): AttractionRecord {
-  return {
-    ...data,
-    prices: (data.prices ?? []).map((price) =>
-      normalizeAttractionPrice(price as unknown as ApiRecord<AttractionPriceRecord>),
-    ),
-  };
+function normalizeAttraction(data: ApiRecord<AttractionRecord>): AttractionRecord {
+  return { ...data, price: data.price === null ? null : normalizeMoney(data.price) };
 }
 
 function normalizeTransport(data: ApiRecord<TransportRecord>): TransportRecord {
@@ -277,37 +246,6 @@ function contactInput(data: AgencyContactRecord) {
     id: data.id || undefined,
     name: data.name.trim(),
     phone: data.phone.trim(),
-    version: data.version,
-  };
-}
-
-function restaurantPriceInput(data: RestaurantPriceRecord) {
-  return {
-    id: data.id || undefined,
-    menuName: data.menuName.trim(),
-    dishDetails: data.dishDetails?.trim() ?? "",
-    unit: data.unit,
-    price: data.price,
-    dinerCount: data.dinerCount || null,
-    remark: data.remark.trim(),
-    version: data.version,
-  };
-}
-
-function attractionPriceInput(data: AttractionPriceRecord) {
-  return {
-    id: data.id || undefined,
-    itemType: data.itemType,
-    itemName: data.itemName.trim(),
-    audience: data.audience.trim(),
-    periodName: data.periodName.trim(),
-    startDate: data.startDate || null,
-    endDate: data.endDate || null,
-    rackPrice: data.rackPrice,
-    settlementPrice: data.settlementPrice,
-    unit: data.unit,
-    isFree: data.isFree,
-    priceNote: data.priceNote.trim(),
     version: data.version,
   };
 }
@@ -339,6 +277,14 @@ const attractionApi = createCrud<AttractionRecord>(
 const transportApi = createCrud<TransportRecord>("transports", transportInput, normalizeTransport);
 const guideApi = createCrud<GuideRecord>("guides", guideInput, normalizeGuide);
 const guidePersonApi = createCrud<GuidePersonRecord>("guide-people", guidePersonInput);
+const flightApi = createCrud<FlightRecord>("flights", (data) => ({
+  departureAirportId: data.departureAirportId,
+  arrivalAirportId: data.arrivalAirportId,
+  flightNumber: data.flightNumber.trim().toUpperCase(),
+  departureTime: data.departureTime,
+  arrivalTime: data.arrivalTime,
+  status: data.status,
+}));
 const agencies = reactive<AgencyRecord[]>([]);
 const hotels = reactive<HotelRecord[]>([]);
 const restaurants = reactive<RestaurantRecord[]>([]);
@@ -346,6 +292,7 @@ const attractions = reactive<AttractionRecord[]>([]);
 const transports = reactive<TransportRecord[]>([]);
 const guides = reactive<GuideRecord[]>([]);
 const guidePeople = reactive<GuidePersonRecord[]>([]);
+const flights = reactive<FlightRecord[]>([]);
 
 async function fetchAll<T>(api: ResourceCrud<T>, query: ResourceListQuery = {}): Promise<T[]> {
   const firstPage = await api.getPage({ ...query, page: 1, pageSize: 100 });
@@ -382,15 +329,6 @@ async function loadResourceRecords<T>(
   return target;
 }
 
-watch(
-  selectedResourceLibrary,
-  () => {
-    cityOptionsRequest = null;
-    cityOptions.splice(0);
-    clearResourceOptionsCache();
-  },
-  { flush: "sync" },
-);
 export const resourceService = {
   getTotal(records: object) {
     return resourceTotals.get(records) ?? 0;
@@ -402,19 +340,12 @@ export const resourceService = {
     return loadResourceRecords(cities, cityApi, query);
   },
   loadCityOptions(): Promise<CityRecord[]> {
-    const library = selectedResourceLibrary.value;
     if (!cityOptionsRequest)
       cityOptionsRequest = request
-        .get<CityRecord[]>(`${RESOURCE_BASE_URL}/cities/options`, {
-          params: { library: selectedResourceLibrary.value },
-        })
-        .then((records) =>
-          library === selectedResourceLibrary.value
-            ? replaceRecords(cityOptions, records)
-            : cityOptions,
-        )
+        .get<CityRecord[]>(`${RESOURCE_BASE_URL}/cities/options`)
+        .then((records) => replaceRecords(cityOptions, records))
         .finally(() => {
-          if (library === selectedResourceLibrary.value) cityOptionsRequest = null;
+          cityOptionsRequest = null;
         });
     return cityOptionsRequest;
   },
@@ -425,6 +356,8 @@ export const resourceService = {
   attractions,
   guides,
   guidePeople,
+  flights,
+  flightApi,
   agencyApi: {
     ...agencyApi,
     getCoordinators(businessUnit: "shengxu" | "linxi" | "website") {
@@ -476,27 +409,9 @@ export const resourceService = {
     await businessDictionaryService.ensureBuiltInTypesLoaded();
     return loadResourceRecords(restaurants, restaurantApi, query);
   },
-  async loadRestaurantPrices(restaurantId: string) {
-    const prices = await this.restaurantApi.getPrices(restaurantId);
-    const restaurant = restaurants.find((item) => item.id === restaurantId);
-    if (restaurant) {
-      restaurant.prices = prices;
-      restaurant.priceCount = prices.length;
-    }
-    return prices;
-  },
   async loadAttractions(query: ResourceListQuery = {}) {
     await businessDictionaryService.ensureBuiltInTypesLoaded();
     return loadResourceRecords(attractions, attractionApi, query);
-  },
-  async loadAttractionPrices(attractionId: string) {
-    const prices = await this.attractionApi.getPrices(attractionId);
-    const attraction = attractions.find((item) => item.id === attractionId);
-    if (attraction) {
-      attraction.prices = prices;
-      attraction.priceCount = prices.length;
-    }
-    return prices;
   },
   async loadTransports(query: ResourceListQuery = {}) {
     await businessDictionaryService.ensureBuiltInTypesLoaded();
@@ -508,6 +423,9 @@ export const resourceService = {
   },
   async loadGuidePeople(query: ResourceListQuery = {}) {
     return loadResourceRecords(guidePeople, guidePersonApi, query);
+  },
+  async loadFlights(query: ResourceListQuery = {}) {
+    return loadResourceRecords(flights, flightApi, query);
   },
   async getSelectionOptions(
     kind: "hotels" | "transports" | "guides" | "agencies",
@@ -531,7 +449,7 @@ export const resourceService = {
     );
   },
   async getPriceOptions(type: "restaurant" | "attraction", query: ResourceListQuery) {
-    const path = `/resources/selections/${type}-prices`;
+    const path = `/resources/selections/${type === "restaurant" ? "restaurants" : "attractions"}`;
     const params = buildParams({ ...query });
     const result = await loadResourceOptions(path, params, () =>
       request.get<PageResult<Omit<PriceSelectionItem, "unitCost"> & { unitCost: string }>>(path, {
@@ -544,117 +462,18 @@ export const resourceService = {
     };
   },
   async getPriceSelection(type: "restaurant" | "attraction", id: string) {
-    const path = `/resources/selections/${type}-prices/${encodeURIComponent(id)}`;
+    const path = `/resources/selections/${type === "restaurant" ? "restaurants" : "attractions"}/${encodeURIComponent(id)}`;
+    const empty = { hotels: [], transports: [], guides: [] };
     if (type === "restaurant") {
-      const data = await request.get<{
-        resource: Omit<RestaurantRecord, "prices" | "priceCount">;
-        price: ApiRecord<RestaurantPriceRecord>;
-      }>(path);
-      return {
-        restaurants: [
-          normalizeRestaurant({
-            ...data.resource,
-            priceCount: 1,
-            prices: [normalizeRestaurantPrice(data.price)],
-          }),
-        ],
-        attractions: [],
-        hotels: [],
-        transports: [],
-        guides: [],
-      };
+      const data = await request.get<ApiRecord<RestaurantRecord>>(path);
+      return { ...empty, restaurants: [normalizeRestaurant(data)], attractions: [] };
     }
-    const data = await request.get<{
-      resource: Omit<AttractionRecord, "prices" | "priceCount">;
-      price: ApiRecord<AttractionPriceRecord>;
-    }>(path);
-    return {
-      attractions: [
-        normalizeAttraction({
-          ...data.resource,
-          priceCount: 1,
-          prices: [normalizeAttractionPrice(data.price)],
-        }),
-      ],
-      restaurants: [],
-      hotels: [],
-      transports: [],
-      guides: [],
-    };
+    const data = await request.get<ApiRecord<AttractionRecord>>(path);
+    return { ...empty, attractions: [normalizeAttraction(data)], restaurants: [] };
   },
   hotelApi,
-  restaurantApi: {
-    ...restaurantApi,
-    async getPrices(restaurantId: string) {
-      const data = await request.get<ApiRecord<RestaurantPriceRecord>[]>(
-        `${RESOURCE_BASE_URL}/restaurants/${encodeURIComponent(restaurantId)}/prices`,
-      );
-      return data.map(normalizeRestaurantPrice);
-    },
-    createPrice(restaurantId: string, data: RestaurantPriceRecord) {
-      return request
-        .post<ApiRecord<RestaurantPriceRecord>>(
-          `${RESOURCE_BASE_URL}/restaurants/${encodeURIComponent(restaurantId)}/prices`,
-          restaurantPriceInput(data),
-        )
-        .then((result) => {
-          clearResourceOptionsCache();
-          return normalizeRestaurantPrice(result);
-        });
-    },
-    updatePrice(restaurantId: string, priceId: string, data: RestaurantPriceRecord) {
-      return request
-        .put<ApiRecord<RestaurantPriceRecord>>(
-          `${RESOURCE_BASE_URL}/restaurants/${encodeURIComponent(restaurantId)}/prices/${encodeURIComponent(priceId)}`,
-          { ...restaurantPriceInput(data), id: priceId },
-        )
-        .then((result) => {
-          clearResourceOptionsCache();
-          return normalizeRestaurantPrice(result);
-        });
-    },
-    async deletePrices(restaurantId: string, ids: string) {
-      const baseUrl = `${RESOURCE_BASE_URL}/restaurants/${encodeURIComponent(restaurantId)}/prices`;
-      await request.delete<void>(baseUrl, { params: { ids } });
-      clearResourceOptionsCache();
-    },
-  },
-  attractionApi: {
-    ...attractionApi,
-    async getPrices(attractionId: string) {
-      const data = await request.get<ApiRecord<AttractionPriceRecord>[]>(
-        `${RESOURCE_BASE_URL}/attractions/${encodeURIComponent(attractionId)}/prices`,
-      );
-      return data.map(normalizeAttractionPrice);
-    },
-    createPrice(attractionId: string, data: AttractionPriceRecord) {
-      return request
-        .post<ApiRecord<AttractionPriceRecord>>(
-          `${RESOURCE_BASE_URL}/attractions/${encodeURIComponent(attractionId)}/prices`,
-          attractionPriceInput(data),
-        )
-        .then((result) => {
-          clearResourceOptionsCache();
-          return normalizeAttractionPrice(result);
-        });
-    },
-    updatePrice(attractionId: string, priceId: string, data: AttractionPriceRecord) {
-      return request
-        .put<ApiRecord<AttractionPriceRecord>>(
-          `${RESOURCE_BASE_URL}/attractions/${encodeURIComponent(attractionId)}/prices/${encodeURIComponent(priceId)}`,
-          { ...attractionPriceInput(data), id: priceId },
-        )
-        .then((result) => {
-          clearResourceOptionsCache();
-          return normalizeAttractionPrice(result);
-        });
-    },
-    async deletePrices(attractionId: string, ids: string) {
-      const baseUrl = `${RESOURCE_BASE_URL}/attractions/${encodeURIComponent(attractionId)}/prices`;
-      await request.delete<void>(baseUrl, { params: { ids } });
-      clearResourceOptionsCache();
-    },
-  },
+  restaurantApi,
+  attractionApi,
   transportApi,
   guideApi,
   guidePersonApi,
@@ -667,8 +486,8 @@ export interface PriceSelectionItem {
   id: string;
   resourceId: string;
   resourceName: string;
-  priceName: string;
   city: string;
   unit: string;
   unitCost: number;
+  dinerCount: number | null;
 }

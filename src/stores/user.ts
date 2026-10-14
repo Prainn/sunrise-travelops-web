@@ -1,4 +1,3 @@
-import { selectedResourceBusinessUnit, selectedResourceLibrary } from "@/services/resource-library";
 import { clearResourceOptionsCache } from "@/services/resource-options-cache";
 import { store } from "./store";
 
@@ -10,7 +9,6 @@ import { AuthStorage } from "@/utils/auth-storage";
 import { usePermissionStoreHook } from "@/stores/permission";
 import { useDictStoreHook } from "@/stores/dict";
 import { useTagsViewStore } from "./tags-view";
-import { translate } from "@/lang/utils";
 
 export const useUserStore = defineStore("user", () => {
   // 用户信息
@@ -27,23 +25,6 @@ export const useUserStore = defineStore("user", () => {
     AuthStorage.setTokens(accessToken, refreshToken, rememberMe.value);
   }
 
-  let refreshPromise: Promise<void> | null = null;
-
-  /**
-   * 刷新 token（单飞模式）
-   *
-   * 多个并发请求遇到 token 过期时，共享同一次 refresh 请求。
-   */
-  function refreshTokenOnce(): Promise<void> {
-    if (refreshPromise) return refreshPromise;
-
-    refreshPromise = doRefreshToken().finally(() => {
-      refreshPromise = null;
-    });
-
-    return refreshPromise;
-  }
-
   /**
    * 获取用户信息
    */
@@ -52,8 +33,6 @@ export const useUserStore = defineStore("user", () => {
     if (!data) {
       throw new Error("Verification failed, please Login again.");
     }
-    if (userInfo.value.userId !== data.userId || userInfo.value.scope !== data.scope)
-      selectedResourceLibrary.value = data.resourceLibrary ?? undefined;
     Object.assign(userInfo.value, data);
     return data;
   }
@@ -77,8 +56,6 @@ export const useUserStore = defineStore("user", () => {
   function resetAllState(): void {
     // 1. 重置用户状态
     resetUserState();
-    selectedResourceLibrary.value = undefined;
-    selectedResourceBusinessUnit.value = undefined;
 
     // 2. 重置其他模块状态
     usePermissionStoreHook().resetRouter();
@@ -97,21 +74,6 @@ export const useUserStore = defineStore("user", () => {
     userInfo.value = { roles: [], perms: [] };
   }
 
-  /**
-   * 刷新 token
-   */
-  async function doRefreshToken(): Promise<void> {
-    const currentRefreshToken = AuthStorage.getRefreshToken();
-
-    if (!currentRefreshToken) {
-      throw new Error(translate("service.auth.missingRefreshToken"));
-    }
-
-    const { accessToken, refreshToken: newRefreshToken } =
-      await authService.refreshToken(currentRefreshToken);
-    AuthStorage.setTokens(accessToken, newRefreshToken, AuthStorage.getRememberMe());
-  }
-
   return {
     userInfo,
     rememberMe,
@@ -121,8 +83,6 @@ export const useUserStore = defineStore("user", () => {
     getUserInfo,
     resetAllState,
     resetUserState,
-    refreshToken: doRefreshToken,
-    refreshTokenOnce,
   };
 });
 

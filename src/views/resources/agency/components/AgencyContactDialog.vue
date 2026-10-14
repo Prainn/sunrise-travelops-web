@@ -3,10 +3,19 @@
     v-model="isVisible"
     :title="$t(isEditing ? 'resource.editContactTitle' : 'resource.createContactTitle')"
     width="480px"
+    :show-close="!isSubmitting"
+    :close-on-click-modal="!isSubmitting"
+    :close-on-press-escape="!isSubmitting"
     destroy-on-close
     @closed="resetForm"
   >
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="auto">
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      :disabled="isSubmitting"
+      label-width="auto"
+    >
       <el-form-item :label="$t('resource.personName')" prop="name">
         <el-input v-model.trim="form.name" />
       </el-form-item>
@@ -15,10 +24,15 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="isVisible = false">
+      <el-button :disabled="isSubmitting" @click="isVisible = false">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button type="primary" @click="handleSubmit">
+      <el-button
+        type="primary"
+        :loading="isSaving"
+        :disabled="isSubmitting"
+        @click="handleSubmit"
+      >
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -30,20 +44,22 @@ import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { AgencyContactRecord } from "@/types/resource";
+import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
 const props = defineProps<{
   modelValue: boolean;
   record: AgencyContactRecord;
+  submit: (record: AgencyContactRecord) => Promise<void>;
   isEditing: boolean;
 }>();
 
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [record: AgencyContactRecord];
 }>();
 
 const { t } = useI18n();
 const formRef = ref<FormInstance>();
+const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
 const form = reactive<AgencyContactRecord>({ ...props.record });
 const isVisible = computed({
   get: () => props.modelValue,
@@ -69,7 +85,6 @@ function resetForm() {
 }
 
 async function handleSubmit() {
-  if (!(await formRef.value?.validate().catch(() => false))) return;
-  emit("submit", { ...form });
+  await submitForm(() => props.submit({ ...form }));
 }
 </script>

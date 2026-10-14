@@ -11,18 +11,19 @@
     </TableToolbar>
 
     <div class="page-table-wrapper">
-      <el-table v-loading="loading" :data="rows" border height="100%" row-key="id">
-        <el-table-column :label="$t('identity.library')" width="160">
-          <template #default="{ row }">
-            <ResourceLibraryTag :library="row.library" />
-          </template>
-        </el-table-column>
+      <el-table
+        v-loading="loading"
+        :data="rows"
+        border
+        height="100%"
+        row-key="id"
+      >
         <el-table-column prop="code" :label="$t('resource.code')" width="200" />
         <el-table-column prop="name" :label="$t('resource.hotelName')" min-width="190" />
         <el-table-column prop="city" :label="$t('resource.city')" width="100" />
         <el-table-column prop="rating" :label="$t('resource.starRating')" width="130">
           <template #default="scope">
-            <el-tag :type="scope.row.rating === 'international_five_star' ? 'success' : 'info'">
+            <el-tag :type="scope.row.rating === 5 ? 'success' : scope.row.rating === 4 ? 'primary' : 'info'">
               {{ $t(`hotel.ratings.${scope.row.rating}`) }}
             </el-tag>
           </template>
@@ -105,7 +106,6 @@
 </template>
 
 <script setup lang="ts">
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { useI18n } from "vue-i18n";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { RESOURCE_PERMISSIONS } from "@/constants";

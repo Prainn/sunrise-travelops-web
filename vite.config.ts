@@ -53,22 +53,24 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       vue(),
       {
         name: "app-version-meta",
-        transformIndexHtml: () => [{
-          tag: "meta",
-          attrs: {
-            name: "app-version",
-            content: String(__APP_INFO__.buildTimestamp),
+        transformIndexHtml: () => [
+          {
+            tag: "meta",
+            attrs: {
+              name: "app-version",
+              content: String(__APP_INFO__.buildTimestamp),
+            },
+            injectTo: "head",
           },
-          injectTo: "head",
-        }],
+        ],
       },
       ...(["development", "dev-local"].includes(mode)
         ? [
-            VueDevTools({
-              componentInspector: true,
-              launchEditor: "code",
-            }),
-          ]
+          VueDevTools({
+            componentInspector: true,
+            launchEditor: "code",
+          }),
+        ]
         : []),
       UnoCSS(),
       // API 自动导入
@@ -135,6 +137,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           "checkbox-group",
           "checkbox-button",
           "col",
+          "collapse",
+          "collapse-item",
           "color-picker",
           "config-provider",
           "collapse-transition",

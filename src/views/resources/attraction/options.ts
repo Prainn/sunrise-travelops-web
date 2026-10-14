@@ -1,4 +1,4 @@
-import type { AttractionCategory, AttractionPriceItemType } from "@/types/resource";
+import type { AttractionCategory } from "@/types/resource";
 
 export const attractionCategoryOptions: Array<{
   value: AttractionCategory;
@@ -14,11 +14,3 @@ export const attractionCategoryOptions: Array<{
 export const attractionCategoryLabelKeys = Object.fromEntries(
   attractionCategoryOptions.map((option) => [option.value, option.labelKey]),
 ) as Record<AttractionCategory, string>;
-
-export const attractionItemTypeLabelKeys: Record<AttractionPriceItemType, string> = {
-  ticket: "attraction.itemTicket",
-  transport: "attraction.itemTransport",
-  guide: "attraction.itemGuide",
-  activity: "attraction.itemActivity",
-  package: "attraction.itemPackage",
-};

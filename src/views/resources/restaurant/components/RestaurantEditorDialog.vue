@@ -3,30 +3,18 @@
     v-model="isVisible"
     :title="$t(isEditing ? 'restaurant.editRestaurant' : 'restaurant.createRestaurant')"
     width="680px"
+    :show-close="!isSubmitting"
+    :close-on-click-modal="!isSubmitting"
+    :close-on-press-escape="!isSubmitting"
     destroy-on-close
   >
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="auto">
-      <el-form-item
-        v-if="isHeadquarters && !isEditing"
-        :label="$t('identity.businessUnit')"
-        prop="library"
-      >
-        <el-select
-          v-model="selectedBusinessUnit"
-          :placeholder="$t('identity.selectBusinessUnitToCreate')"
-          @change="setBusinessUnit"
-        >
-          <el-option
-            v-for="unit in ['shengxu', 'linxi', 'website']"
-            :key="unit"
-            :value="unit"
-            :label="businessUnitName(unit)"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item v-else :label="$t('identity.library')">
-        <ResourceLibraryTag :library="form.library" />
-      </el-form-item>
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      :disabled="isSubmitting"
+      label-width="auto"
+    >
       <el-form-item v-if="isEditing" :label="$t('resource.code')">
         <el-input v-model="form.code" disabled />
       </el-form-item>
@@ -34,13 +22,13 @@
         <el-input v-model.trim="form.name" />
       </el-form-item>
       <el-form-item :label="$t('resource.city')" prop="city">
-        <CitySelect v-model="form.city" :library="form.library" />
+        <CitySelect v-model="form.city" />
       </el-form-item>
-      <el-form-item :label="$t('resource.cuisine')">
-        <el-input v-model.trim="form.cuisine" />
+      <el-form-item :label="$t('resource.description')" prop="description">
+        <el-input v-model.trim="form.description" type="textarea" :rows="3" />
       </el-form-item>
       <el-form-item :label="$t('resource.priceUnit')" prop="unit">
-        <el-select v-model="form.unit">
+        <el-select v-model="form.unit" autocomplete="new-password">
           <el-option
             v-for="option in unitOptions"
             :key="option.value"
@@ -48,6 +36,29 @@
             :value="option.value"
           />
         </el-select>
+      </el-form-item>
+      <el-form-item :label="$t('restaurant.price')" prop="price">
+        <el-input-number
+          v-model="form.price"
+          :min="0"
+          :precision="2"
+          :controls="false"
+        />
+      </el-form-item>
+      <el-form-item
+        v-if="form.unit === 'table'"
+        :label="$t('restaurant.dinerCount')"
+        prop="dinerCount"
+      >
+        <el-input-number
+          v-model="form.dinerCount"
+          :min="1"
+          :precision="0"
+          :controls="false"
+        />
+      </el-form-item>
+      <el-form-item :label="$t('resource.cuisine')">
+        <el-input v-model.trim="form.cuisine" />
       </el-form-item>
       <el-form-item :label="$t('resource.contact')">
         <el-input v-model.trim="form.contact" />
@@ -60,9 +71,6 @@
       </el-form-item>
       <el-form-item :label="$t('resource.isStandardPrice')">
         <el-switch v-model="form.isStandardPrice" />
-      </el-form-item>
-      <el-form-item :label="$t('resource.description')">
-        <el-input v-model.trim="form.description" type="textarea" :rows="3" />
       </el-form-item>
       <el-form-item :label="$t('common.remark')">
         <el-input v-model.trim="form.remark" type="textarea" :rows="3" />
@@ -79,10 +87,15 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="isVisible = false">
+      <el-button :disabled="isSubmitting" @click="isVisible = false">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button type="primary" @click="handleSubmit">
+      <el-button
+        type="primary"
+        :loading="isSaving"
+        :disabled="isSubmitting"
+        @click="handleSubmit"
+      >
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -90,28 +103,27 @@
 </template>
 
 <script setup lang="ts">
-import { businessUnitName } from "@/constants/identity";
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { useUserStore } from "@/stores/user";
-import type { LoginScope } from "@/types/auth";
 import CitySelect from "@/components/CitySelect.vue";
 import type { RestaurantRecord } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
+import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
-const props = defineProps<{ modelValue: boolean; record: RestaurantRecord; isEditing: boolean }>();
+const props = defineProps<{
+  modelValue: boolean;
+  record: RestaurantRecord;
+  isEditing: boolean;
+  submit: (record: RestaurantRecord) => Promise<void>;
+}>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [record: RestaurantRecord];
 }>();
 
 const { t, locale } = useI18n();
-const userStore = useUserStore();
-const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters");
-const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const formRef = ref<FormInstance>();
+const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
 const form = reactive<RestaurantRecord>({ ...props.record });
 const isVisible = computed({
   get: () => props.modelValue,
@@ -119,12 +131,22 @@ const isVisible = computed({
 });
 const unitOptions = computed(() => getResourceUnitOptions("restaurant", locale.value));
 const rules = computed<FormRules>(() => ({
-  library: [
-    { required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" },
-  ],
   name: [{ required: true, message: t("restaurant.nameRequired"), trigger: "blur" }],
   city: [{ required: true, message: t("restaurant.cityRequired"), trigger: "change" }],
+  description: [{ required: true, message: t("resource.descriptionRequired"), trigger: "blur" }],
+  price: [{ required: true, message: t("restaurant.priceRequired"), trigger: "blur" }],
   unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
+  dinerCount: [
+    {
+      validator: (_rule, value: number | null, callback) =>
+        callback(
+          form.unit !== "table" || (Number.isInteger(value) && Number(value) > 0)
+            ? undefined
+            : new Error(t("restaurant.dinerCountRequired")),
+        ),
+      trigger: "blur",
+    },
+  ],
 }));
 
 watch(
@@ -132,23 +154,11 @@ watch(
   ([visible, record]) => {
     if (!visible) return;
     Object.assign(form, record);
-    if (isHeadquarters.value && !props.isEditing) {
-      selectedBusinessUnit.value = "";
-      form.library = undefined;
-    }
   },
   { deep: true },
 );
 
-function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
-  const library = unit === "shengxu" ? "shengxu" : "shared";
-  if (form.library !== library) form.city = "";
-  form.library = library;
-  formRef.value?.validateField("library");
-}
-
 async function handleSubmit() {
-  if (!(await formRef.value?.validate().catch(() => false))) return;
-  emit("submit", { ...form, prices: props.record.prices });
+  await submitForm(() => props.submit({ ...form }));
 }
 </script>

@@ -19,20 +19,25 @@
     </aside>
     <div class="page-main">
       <el-card class="page-search" shadow="never">
-        <el-form ref="queryFormRef" :model="params" :inline="true" label-width="auto">
+        <el-form
+          ref="queryFormRef"
+          :model="params"
+          :inline="true"
+          label-width="auto"
+        >
           <el-form-item :label="$t('common.keywords')" prop="keyword">
             <el-input
               v-model="params.keyword"
               :placeholder="$t('user.searchPlaceholder')"
               class="page-search__keywords w-[180px]"
               clearable
-              @keyup.enter="handleQuery"
             />
           </el-form-item>
 
           <el-form-item :label="$t('common.status')" prop="status">
             <el-select
               v-model="params.status"
+              autocomplete="new-password"
               :placeholder="$t('common.all')"
               clearable
               class="w-[112px]"
@@ -43,11 +48,16 @@
           </el-form-item>
 
           <el-form-item :label="$t('user.rolesLabel')" prop="roleId">
-            <el-select v-model="params.roleId" :placeholder="$t('common.all')" clearable>
+            <el-select
+              v-model="params.roleId"
+              autocomplete="new-password"
+              :placeholder="$t('common.all')"
+              clearable
+            >
               <el-option
                 v-for="item in roleOptions"
                 :key="item.value"
-                :label="item.label"
+                :label="userRoleLabel(item.label, item.code)"
                 :value="item.value"
               />
             </el-select>
@@ -67,9 +77,6 @@
           </el-form-item>
 
           <el-form-item>
-            <el-button type="primary" @click="handleQuery">
-              {{ $t("common.search") }}
-            </el-button>
             <el-button @click="handleResetQuery">
               {{ $t("common.reset") }}
             </el-button>
@@ -103,7 +110,12 @@
             row-key="id"
             @selection-change="handleSelectionChange"
           >
-            <el-table-column type="selection" width="42" fixed="left" align="center" />
+            <el-table-column
+              type="selection"
+              width="42"
+              fixed="left"
+              align="center"
+            />
             <el-table-column :label="$t('user.nickname')" min-width="140" fixed="left">
               <template #default="scope">
                 <div class="user-name-cell">
@@ -115,6 +127,12 @@
                 </div>
               </template>
             </el-table-column>
+            <el-table-column
+              prop="englishName"
+              :label="$t('user.englishName')"
+              min-width="120"
+            />
+            <el-table-column prop="tourCode" :label="$t('user.tourCode')" width="110" />
             <el-table-column
               :label="$t('user.username')"
               min-width="120"
@@ -172,7 +190,7 @@
             <el-table-column :label="$t('user.rolesLabel')" prop="roleNames" width="400">
               <template #default="scope">
                 <el-tag
-                  v-for="role in scope.row.roleNames.split(',')"
+                  v-for="role in userRoleLabels(scope.row.roleNames, roleOptions)"
                   :key="role"
                   size="small"
                   class="mr-2"
@@ -251,7 +269,12 @@
       destroy-on-close
       @close="closeDialog"
     >
-      <el-form ref="userFormRef" :model="formData" :rules="rules" label-width="auto">
+      <el-form
+        ref="userFormRef"
+        :model="formData"
+        :rules="rules"
+        label-width="auto"
+      >
         <h4 class="mt-0 mb-5 text-base font-semibold leading-6">
           {{ $t("user.basicInfo") }}
         </h4>
@@ -265,6 +288,14 @@
 
         <el-form-item :label="$t('user.nickname')" prop="nickname">
           <el-input v-model="formData.nickname" :placeholder="$t('user.nicknamePlaceholder')" />
+        </el-form-item>
+
+        <el-form-item :label="$t('user.englishName')" prop="englishName">
+          <el-input v-model="formData.englishName" maxlength="100" />
+        </el-form-item>
+
+        <el-form-item :label="$t('user.tourCode')" prop="tourCode">
+          <el-input v-model="formData.tourCode" maxlength="10" :placeholder="$t('user.tourCodeHint')" />
         </el-form-item>
 
         <el-form-item :label="$t('user.gender')" prop="gender">
@@ -393,6 +424,7 @@
 <script setup lang="ts">
 import { loginScopeName } from "@/constants/identity";
 import { formatDateTime } from "@/utils";
+import { userRoleLabel, userRoleLabels } from "@/utils/user-role";
 import { h } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { CopyDocument, Female, Male } from "@element-plus/icons-vue";
@@ -419,14 +451,14 @@ defineOptions({
 
 const appStore = useAppStore();
 const userStore = useUserStore();
-const { locale, t } = useI18n();
+const { t } = useI18n();
 
 const queryFormRef = ref<FormInstance>();
 const userFormRef = ref<FormInstance>();
 const resetPasswordFormRef = ref<FormInstance>();
 
 /** 分页表格数据管理 */
-const { loading, list, total, params, fetchData, handleQuery, handleResetQuery } = usePageTable<
+const { loading, list, total, params, fetchData, handleQuery, resetParams } = usePageTable<
   UserItem,
   UserQueryParams
 >({
@@ -436,8 +468,29 @@ const { loading, list, total, params, fetchData, handleQuery, handleResetQuery }
     deptId: undefined,
   },
   request: userService.getPage,
-  onBeforeReset: () => queryFormRef.value?.resetFields(),
 });
+
+const requestRows = useDebounceFn(handleQuery, 300);
+
+watch(
+  [
+    () => params.keyword,
+    () => params.status,
+    () => params.roleId,
+    () => params.createTime,
+    () => params.deptId,
+  ],
+  () => {
+    params.page = 1;
+    requestRows();
+  },
+);
+
+function handleResetQuery(): void {
+  queryFormRef.value?.resetFields();
+  resetParams();
+  requestRows();
+}
 
 const { selectedIds, hasSelection, handleSelectionChange } = useTableSelection<UserItem>();
 
@@ -503,7 +556,6 @@ const departmentTree = computed<DepartmentTreeNode[]>(() => [
 function handleDepartmentClick(node: DepartmentTreeNode): void {
   if (node.key !== "all" && node.deptId === undefined) return;
   params.deptId = node.deptId;
-  handleQuery();
 }
 
 const drawerSize = computed(() => (appStore.device === DeviceEnum.DESKTOP ? "600px" : "90%"));
@@ -522,6 +574,11 @@ const rules = computed<FormRules<UserForm>>(() => ({
     },
   ],
   nickname: [{ required: true, message: t("user.nicknamePlaceholder"), trigger: "blur" }],
+  englishName: [{ required: true, whitespace: true, message: t("user.englishNameRequired"), trigger: "blur" }],
+  tourCode: [
+    { required: true, message: t("user.tourCodeRequired"), trigger: "blur" },
+    { pattern: /^[A-Za-z0-9]{1,10}$/, message: t("user.tourCodeInvalid"), trigger: "blur" },
+  ],
   email: [{ type: "email", message: t("user.emailInvalid"), trigger: "blur" }],
   mobile: [{ pattern: /^1[3-9]\d{9}$/, message: t("user.mobileInvalid"), trigger: "blur" }],
 }));
@@ -586,10 +643,6 @@ async function loadFormOptions(): Promise<void> {
     userService.getDepartmentOptions(),
   ]);
 }
-
-watch(locale, () => {
-  loadFormOptions();
-});
 
 /**
  * 打开用户表单弹窗。

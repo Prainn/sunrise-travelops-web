@@ -1,12 +1,10 @@
-import type { ResourceLibrary } from "./auth";
 import type { ItineraryItemType, ItineraryPriceUnit } from "./itinerary";
 
 export type ResourceStatus = "enabled" | "disabled";
-export type HotelRating = "international_five_star" | "ctrip_preferred";
+export type HotelRating = 3 | 4 | 5;
 export type VehicleServiceLevel = "standard" | "vip";
 
 export interface ResourceAuditRecord {
-  library?: ResourceLibrary;
   version?: number;
   createdAt?: string;
   createdBy?: string | null;
@@ -21,8 +19,31 @@ export interface ResourceQueryParams {
   status?: ResourceStatus;
 }
 
+export interface AirportLabel {
+  code: string;
+  name: string;
+  englishName: string;
+}
+
+export interface FlightRecord extends ResourceAuditRecord {
+  id: string;
+  departureAirportId: string | null;
+  arrivalAirportId: string | null;
+  departureCity?: string;
+  arrivalCity?: string;
+  departureAirport?: AirportLabel | null;
+  arrivalAirport?: AirportLabel | null;
+  flightNumber: string;
+  departureTime: string;
+  arrivalTime: string;
+  status: ResourceStatus;
+}
+
 export interface ResourceListQuery extends Partial<ResourceQueryParams> {
+  departureAirportId?: string;
+  arrivalAirportId?: string;
   secondLanguage?: string;
+  businessUnit?: string;
   shopping?: string;
   city?: string;
   rating?: HotelRating;
@@ -30,6 +51,7 @@ export interface ResourceListQuery extends Partial<ResourceQueryParams> {
   unit?: string;
   area?: string;
   category?: AttractionCategory;
+  isStandardPrice?: boolean;
 }
 
 export interface AgencyContactRecord extends ResourceAuditRecord {
@@ -40,6 +62,10 @@ export interface AgencyContactRecord extends ResourceAuditRecord {
 }
 
 export interface AgencyRecord extends ResourceAuditRecord {
+  childCount: number;
+  parentId: string | null;
+  parentName: string | null;
+  shortName: string;
   businessUnit: "shengxu" | "linxi" | "website" | null;
   coordinatorId: string | null;
   coordinatorName: string | null;
@@ -47,6 +73,7 @@ export interface AgencyRecord extends ResourceAuditRecord {
   code: string;
   name: string;
   city: string;
+  countryItemId: string | null;
   countryOrRegion: string;
   email: string;
   status: ResourceStatus;
@@ -133,38 +160,20 @@ export interface HotelRecord extends ResourceAuditRecord {
 }
 
 export type AttractionCategory = "scenic" | "performance" | "experience" | "transport" | "package";
-export type AttractionPriceItemType = "ticket" | "transport" | "guide" | "activity" | "package";
-
-export interface AttractionPriceRecord extends ResourceAuditRecord {
-  id: string;
-  attractionId?: string;
-  itemType: AttractionPriceItemType;
-  itemName: string;
-  audience: string;
-  periodName: string;
-  startDate: string;
-  endDate: string;
-  rackPrice: number;
-  settlementPrice: number;
-  unit: ItineraryPriceUnit;
-  isFree: boolean;
-  priceNote: string;
-}
-
 export interface AttractionRecord extends ResourceAuditRecord {
   isStandardPrice: boolean;
   id: string;
   code: string;
   name: string;
   area: string;
-  category: AttractionCategory;
+  category: AttractionCategory | null;
   restroomLocation: string;
   description: string;
   remark: string;
   unit: ItineraryPriceUnit;
+  /** Null only for migrated legacy records still waiting for a price. */
+  price: number | null;
   status: ResourceStatus;
-  prices: AttractionPriceRecord[];
-  priceCount?: number;
 }
 
 export const GUIDE_LANGUAGE_OPTIONS = [
@@ -206,17 +215,6 @@ export interface GuidePersonRecord extends ResourceAuditRecord {
 
 export type RestaurantPriceUnit = string;
 
-export interface RestaurantPriceRecord extends ResourceAuditRecord {
-  id: string;
-  restaurantId?: string;
-  menuName: string;
-  dishDetails?: string;
-  unit: RestaurantPriceUnit;
-  price: number;
-  dinerCount: number;
-  remark: string;
-}
-
 export interface RestaurantRecord extends ResourceAuditRecord {
   isStandardPrice: boolean;
   id: string;
@@ -230,7 +228,8 @@ export interface RestaurantRecord extends ResourceAuditRecord {
   description: string;
   remark: string;
   unit: RestaurantPriceUnit;
+  /** Null only for migrated legacy records still waiting for a price. */
+  price: number | null;
+  dinerCount: number | null;
   status: ResourceStatus;
-  prices: RestaurantPriceRecord[];
-  priceCount?: number;
 }

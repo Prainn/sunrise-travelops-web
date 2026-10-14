@@ -3,37 +3,53 @@
     v-model="isVisible"
     :title="$t(isEditing ? 'resource.editAgencyTitle' : 'resource.createAgencyTitle')"
     width="600px"
+    :show-close="!isSubmitting"
+    :close-on-click-modal="!isSubmitting"
+    :close-on-press-escape="!isSubmitting"
     destroy-on-close
     @closed="resetForm"
   >
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="auto">
-      <el-form-item
-        v-if="isHeadquarters && (!isEditing || !form.businessUnit)"
-        :label="$t('identity.businessUnit')"
-        prop="library"
-      >
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      :disabled="isSubmitting || loadingParent"
+      label-width="auto"
+      autocomplete="off"
+    >
+      <el-form-item :label="$t('resource.agencyBusinessUnit')" prop="businessUnit">
         <el-select
           v-model="selectedBusinessUnit"
+          autocomplete="new-password"
           :placeholder="$t('identity.selectBusinessUnitToCreate')"
           @change="setBusinessUnit"
         >
           <el-option
-            v-for="unit in availableBusinessUnits"
+            v-for="unit in BUSINESS_UNITS"
             :key="unit"
             :value="unit"
             :label="businessUnitName(unit)"
           />
         </el-select>
       </el-form-item>
-      <el-form-item v-else :label="$t('identity.library')">
-        <ResourceLibraryTag :library="form.library" />
-      </el-form-item>
       <el-form-item v-if="isEditing" :label="$t('resource.code')">
         <el-input v-model="form.code" disabled />
+      </el-form-item>
+      <el-form-item :label="$t('resource.agencyParent')">
+        <ResourceSelect
+          kind="agencies"
+          :model-value="form.parentId || ''"
+          :selected-label="form.parentName || ''"
+          :filters="parentFilters"
+          :disabled="isSubmitting || loadingParent"
+          :placeholder="$t('resource.agencyParentPlaceholder')"
+          @update:model-value="selectParent"
+        />
       </el-form-item>
       <el-form-item :label="$t('resource.agencyCoordinator')" prop="coordinatorId">
         <el-select
           v-model="form.coordinatorId"
+          autocomplete="new-password"
           filterable
           :loading="loadingCoordinators"
           :disabled="!form.businessUnit || loadingCoordinators"
@@ -47,14 +63,24 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item :label="$t('resource.agencyName')" prop="name">
-        <el-input v-model.trim="form.name" />
+      <el-form-item :label="$t('resource.agencyName')" prop="shortName">
+        <el-input v-model.trim="form.shortName">
+          <template v-if="form.parentId" #prepend>
+            {{ form.parentName }}-
+          </template>
+        </el-input>
       </el-form-item>
-      <el-form-item :label="$t('resource.countryOrRegion')" prop="countryOrRegion">
-        <el-input v-model.trim="form.countryOrRegion" />
+      <el-form-item :label="$t('resource.countryOrRegion')" prop="countryItemId">
+        <BusinessItemSelect
+          :model-value="form.countryItemId ?? ''"
+          type-code="country-region"
+          clearable
+          :selected-label="form.countryOrRegion"
+          @update:model-value="form.countryItemId = $event || null"
+        />
       </el-form-item>
       <el-form-item :label="$t('resource.city')">
-        <CitySelect v-model="form.city" :library="form.library" />
+        <el-input v-model.trim="form.city" autocomplete="new-password" :maxlength="100" />
       </el-form-item>
       <el-form-item :label="$t('resource.agencyEmail')" prop="email">
         <el-input v-model.trim="form.email" />
@@ -74,10 +100,15 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="isVisible = false">
+      <el-button :disabled="isSubmitting" @click="isVisible = false">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button type="primary" @click="handleSubmit">
+      <el-button
+        type="primary"
+        :loading="isSaving"
+        :disabled="isSubmitting || loadingParent"
+        @click="handleSubmit"
+      >
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -86,40 +117,39 @@
 
 <script setup lang="ts">
 import { businessUnitName } from "@/constants/identity";
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
-import CitySelect from "@/components/CitySelect.vue";
+import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
+import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { useUserStore } from "@/stores/user";
 import type { LoginScope } from "@/types/auth";
 import type { AgencyRecord } from "@/types/resource";
 import { resourceService } from "@/services/resource.service";
+import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
 const props = defineProps<{
   modelValue: boolean;
   record: AgencyRecord;
+  submit: (record: AgencyRecord) => Promise<void>;
   isEditing: boolean;
 }>();
 
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [record: AgencyRecord];
 }>();
 
 const { t } = useI18n();
-const userStore = useUserStore();
-const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters");
-const availableBusinessUnits = computed(() =>
-  props.isEditing && form.library
-    ? form.library === "shengxu"
-      ? (["shengxu"] as const)
-      : (["linxi", "website"] as const)
-    : (["shengxu", "linxi", "website"] as const),
-);
+const BUSINESS_UNITS = ["shengxu", "linxi", "website"] as const;
 const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const formRef = ref<FormInstance>();
+const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
 const form = reactive<AgencyRecord>(cloneRecord(props.record));
+const loadingParent = ref(false);
+let parentRequestVersion = 0;
+const parentFilters = computed<Record<string, string>>(() => ({
+  parentOnly: "true",
+  ...(form.id ? { excludeId: form.id } : {}),
+}));
 const coordinators = ref<{ id: string; name: string; username: string }[]>([]);
 const loadingCoordinators = ref(false);
 let coordinatorRequestVersion = 0;
@@ -128,23 +158,16 @@ const isVisible = computed({
   set: (value) => emit("update:modelValue", value),
 });
 const rules = computed<FormRules>(() => ({
-  library: [
+  businessUnit: [
     { required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" },
   ],
   coordinatorId: [
     { required: true, message: t("resource.agencyCoordinatorRequired"), trigger: "change" },
   ],
-  name: [
+  shortName: [
     {
       required: true,
       message: t("resource.fieldRequired", { field: t("resource.agencyName") }),
-      trigger: "blur",
-    },
-  ],
-  countryOrRegion: [
-    {
-      required: true,
-      message: t("resource.fieldRequired", { field: t("resource.countryOrRegion") }),
       trigger: "blur",
     },
   ],
@@ -153,15 +176,10 @@ const rules = computed<FormRules>(() => ({
 watch(
   () => [props.modelValue, props.record] as const,
   ([visible, record]) => {
+    ++parentRequestVersion;
+    loadingParent.value = false;
     if (!visible) return;
     Object.assign(form, cloneRecord(record));
-    if (isHeadquarters.value && !props.isEditing) {
-      selectedBusinessUnit.value = "";
-      form.library = undefined;
-      form.businessUnit = null;
-    }
-    if (!isHeadquarters.value)
-      form.businessUnit = userStore.userInfo.scope as AgencyRecord["businessUnit"];
     selectedBusinessUnit.value = form.businessUnit || "";
     void loadCoordinators();
   },
@@ -169,15 +187,32 @@ watch(
 );
 
 function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
-  const library = unit === "shengxu" ? "shengxu" : "shared";
-  if (!props.isEditing) {
-    if (form.library !== library) form.city = "";
-    form.library = library;
-  }
   form.businessUnit = unit;
   form.coordinatorId = null;
   void loadCoordinators();
-  formRef.value?.validateField("library");
+  formRef.value?.validateField("businessUnit");
+}
+
+async function selectParent(parentId: string) {
+  const version = ++parentRequestVersion;
+  if (!parentId) {
+    form.parentId = null;
+    form.parentName = null;
+    return;
+  }
+  loadingParent.value = true;
+  try {
+    const parent = await resourceService.agencyApi.getDetail(parentId);
+    if (version === parentRequestVersion) {
+      form.parentId = parent.id;
+      form.parentName = parent.name;
+    }
+  } catch (error) {
+    if (version === parentRequestVersion)
+      ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  } finally {
+    if (version === parentRequestVersion) loadingParent.value = false;
+  }
 }
 
 async function loadCoordinators() {
@@ -205,7 +240,6 @@ function resetForm() {
 }
 
 async function handleSubmit() {
-  if (!(await formRef.value?.validate().catch(() => false))) return;
-  emit("submit", cloneRecord(form));
+  await submitForm(() => props.submit(cloneRecord(form)));
 }
 </script>

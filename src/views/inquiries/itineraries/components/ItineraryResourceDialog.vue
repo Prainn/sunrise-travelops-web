@@ -20,14 +20,15 @@
       <template v-if="mealSlot && source === 'custom'">
         <el-form-item :label="$t('itinerary.customRestaurantName')" required>
           <div class="flex gap-2 w-300px">
-            <el-input v-model="customName" :maxlength="500"> </el-input>
+            <el-input v-model="customName" :maxlength="500">
+            </el-input>
             <el-button type="primary" @click="customName = $t('itinerary.pending')">
               {{ $t("itinerary.pending") }}
             </el-button>
           </div>
         </el-form-item>
         <el-form-item :label="$t('itinerary.customMealUnit')">
-          <el-select v-model="customUnit" class="w-300px!">
+          <el-select v-model="customUnit" autocomplete="new-password" class="w-300px!">
             <el-option value="personMeal" :label="$t('itinerary.customMealPerPerson')" />
             <el-option value="table" :label="$t('itinerary.customMealPerTable')" />
           </el-select>
@@ -48,6 +49,7 @@
         <el-form-item :label="$t('resource.city')">
           <el-select
             v-model="city"
+            autocomplete="new-password"
             clearable
             :placeholder="$t('itinerary.allCities')"
             class="w-full"
@@ -65,7 +67,7 @@
             v-model="selectedId"
             :selected-label="
               selectedOption
-                ? `${selectedOption.resourceName}｜${selectedOption.priceName}`
+                ? selectedOption.resourceName
                 : undefined
             "
             :query-key="JSON.stringify([city, mealSlot, locale])"
@@ -88,7 +90,7 @@
               {{ formatDetail(detail) }}
             </el-descriptions-item>
           </el-descriptions>
-          <el-form-item :label="$t('identity.reference')" class="mt-4">
+          <el-form-item :label="$t('identity.reference')" class="mt-3">
             <el-input-number :model-value="referencePrice == null ? 0 : referencePrice" readonly />
           </el-form-item>
           <el-form-item :label="$t('identity.actual')">
@@ -188,7 +190,7 @@ async function loadPriceOptions(query: RemoteOptionsQuery) {
     total: result.total,
     list: result.list.map((option) => ({
       id: option.id,
-      label: `${option.isStandardPrice ? `[${t("resource.standardPrice")}] ` : ""}${option.resourceName}｜${option.priceName}`,
+      label: `${option.isStandardPrice ? `[${t("resource.standardPrice")}] ` : ""}${option.resourceName}`,
       disabled: isDuplicate(option.resourceId, option.isStandardPrice),
       description: `¥${formatMoney(option.unitCost)}/${resourceUnitName(option.unit)}`,
     })),

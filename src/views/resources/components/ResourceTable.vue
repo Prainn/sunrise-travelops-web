@@ -2,11 +2,10 @@
   <div class="page-container">
     <el-card class="page-search" shadow="never">
       <el-form :inline="true">
-        <ResourceBusinessFilter />
         <el-form-item :label="$t('common.keywords')">
           <el-input
             v-model.trim="keywords"
-            :placeholder="$t('resource.searchPlaceholder')"
+            :placeholder="$t(searchPlaceholderKey ?? 'resource.searchPlaceholder')"
             class="page-search__keywords"
             clearable
           />
@@ -27,12 +26,13 @@
         </el-button>
       </TableToolbar>
       <div class="page-table-wrapper">
-        <el-table v-loading="loading" :data="rows" border height="100%">
-          <el-table-column :label="$t('identity.library')" min-width="200">
-            <template #default="{ row }">
-              <ResourceLibraryTag :library="row.library" />
-            </template>
-          </el-table-column>
+        <el-table
+          v-loading="loading"
+          :data="rows"
+          row-key="id"
+          border
+          height="100%"
+        >
           <el-table-column
             v-for="column in columns"
             :key="column.prop"
@@ -53,7 +53,12 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column :label="$t('common.actions')" width="220" align="center" fixed="right">
+          <el-table-column
+            :label="$t('common.actions')"
+            width="220"
+            align="center"
+            fixed="right"
+          >
             <template #default="scope">
               <el-button
                 v-has-perm="permissions.update"
@@ -94,34 +99,32 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { resetResourceBusinessFilter } from "@/services/resource-library";
-import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
+<script setup lang="ts" generic="T extends ResourceTableRecord">
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 import { ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import type { ResourcePermissionSet } from "@/constants";
 import type { ResourceListQuery } from "@/types/resource";
-import type { ResourceColumn, ResourceRow } from "../types";
+import type { ResourceColumn, ResourceTableRecord } from "../types";
 
 const props = defineProps<{
   loading?: boolean;
-  rows: ResourceRow[];
+  rows: T[];
   total: number;
   columns: ResourceColumn[];
   permissions: ResourcePermissionSet;
   filters?: ResourceListQuery;
+  searchPlaceholderKey?: string;
 }>();
 
 const emit = defineEmits<{
   refresh: [query: ResourceListQuery];
   "query-change": [query: ResourceListQuery];
   create: [];
-  edit: [row: ResourceRow];
-  delete: [row: ResourceRow];
-  "toggle-status": [row: ResourceRow];
+  edit: [row: T];
+  delete: [row: T];
+  "toggle-status": [row: T];
   "reset-query": [];
 }>();
 
@@ -148,7 +151,6 @@ function currentQuery(): ResourceListQuery {
 }
 
 function resetQuery() {
-  resetResourceBusinessFilter();
   keywords.value = "";
   pageNum.value = 1;
   emit("reset-query");
@@ -159,15 +161,15 @@ function refreshRows() {
   emit("refresh", currentQuery());
 }
 
-function editRow(row: unknown) {
-  emit("edit", row as ResourceRow);
+function editRow(row: T) {
+  emit("edit", row);
 }
 
-function toggleRowStatus(row: unknown) {
-  emit("toggle-status", row as ResourceRow);
+function toggleRowStatus(row: T) {
+  emit("toggle-status", row);
 }
 
-function deleteRow(row: unknown) {
-  emit("delete", row as ResourceRow);
+function deleteRow(row: T) {
+  emit("delete", row);
 }
 </script>

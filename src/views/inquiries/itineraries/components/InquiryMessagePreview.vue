@@ -28,20 +28,6 @@
       >
         {{ text }}
       </div>
-      <button
-        v-else
-        type="button"
-        :aria-label="$t('inquiry.expandDocument')"
-        class="min-h-0 flex-1 cursor-zoom-in overflow-hidden border-0 bg-[var(--el-fill-color-light)] p-3 text-left text-inherit"
-        @click="isExpanded = true"
-      >
-        <div
-          class="h-full overflow-hidden whitespace-pre-wrap break-words rounded bg-[var(--el-bg-color)] p-2 text-[7px] leading-[10px]"
-          aria-hidden="true"
-        >
-          {{ text.slice(0, 1800) }}
-        </div>
-      </button>
     </section>
   </Teleport>
 </template>
@@ -56,7 +42,7 @@ const handle = ref<HTMLElement>();
 const isExpanded = ref(false);
 const { width: viewportWidth, height: viewportHeight } = useWindowSize();
 const width = computed(() => Math.min(isExpanded.value ? 520 : 210, viewportWidth.value - 16));
-const height = computed(() => Math.min(isExpanded.value ? 600 : 240, viewportHeight.value - 32));
+const height = computed(() => Math.min(isExpanded.value ? 600 : 42, viewportHeight.value - 32));
 const { x, y } = useDraggable(panel, {
   handle,
   initialValue: { x: Math.max(8, window.innerWidth - 234), y: 160 },

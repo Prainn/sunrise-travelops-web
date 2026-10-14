@@ -158,11 +158,11 @@ export const constantRoutes: RouteRecordRaw[] = [
       {
         path: ":inquiryId/itineraries",
         name: "InquiryItineraries",
-        component: () => import("@/views/inquiries/itineraries/index.vue"),
+        component: () => import("@/views/inquiries/itineraries/entry.vue"),
         meta: {
           title: "itineraryManagement",
           hidden: true,
-          perms: ["itinerary:list"],
+          perms: ["itinerary:list", "website:itinerary:list"],
         },
       },
       {
@@ -172,7 +172,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: {
           title: "inquiryLogReport",
           icon: "el-icon-DataAnalysis",
-          perms: ["inquiry:archive"],
+          perms: ["inquiry:list"],
         },
       },
       {
@@ -188,6 +188,30 @@ export const constantRoutes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: "/website-inquiries",
+    name: "WebsiteInquiries",
+    component: Layout,
+    meta: {
+      title: "websiteInquiries",
+      icon: "el-icon-ChatLineSquare",
+      alwaysShow: true,
+      scopes: ["website", "headquarters"],
+    },
+    children: [
+      {
+        path: "",
+        name: "WebsiteInquiryList",
+        component: () => import("@/views/website-inquiries/index.vue"),
+        meta: {
+          title: "inquiryList",
+          icon: "el-icon-Document",
+          keepAlive: true,
+          perms: ["website:inquiry:list"],
+        },
+      },
+    ],
+  },
+  {
     path: "/resources",
     name: "TourismResources",
     component: Layout,
@@ -198,6 +222,18 @@ export const constantRoutes: RouteRecordRaw[] = [
       alwaysShow: true,
     },
     children: [
+      {
+        path: "website",
+        name: "WebsiteResources",
+        component: () => import("@/views/resources/website/index.vue"),
+        meta: {
+          title: "websiteResources",
+          icon: "el-icon-Collection",
+          keepAlive: true,
+          scopes: ["website", "headquarters"],
+          perms: ["website:config:list"],
+        },
+      },
       {
         path: "agency",
         name: "Agency",
@@ -260,14 +296,74 @@ export const constantRoutes: RouteRecordRaw[] = [
         },
       },
       {
-        path: "guide",
+        path: "flight",
+        name: "FlightResource",
+        component: () => import("@/views/resources/flight/index.vue"),
+        meta: {
+          title: "flights",
+          icon: "el-icon-Position",
+          keepAlive: true,
+          perms: ["resource:flight:list"],
+        },
+      },
+    ],
+  },
+  {
+    path: "/guides",
+    name: "GuideManagement",
+    component: Layout,
+    redirect: "/guides/list",
+    meta: { title: "guideManagement", icon: "el-icon-UserFilled", alwaysShow: true },
+    children: [
+      {
+        path: "list",
         name: "Guide",
         component: () => import("@/views/resources/guide/index.vue"),
         meta: {
-          title: "guides",
-          icon: "el-icon-UserFilled",
+          title: "guideList",
+          icon: "el-icon-Document",
           keepAlive: true,
           perms: ["resource:guide:list"],
+        },
+      },
+      {
+        path: "leaves",
+        name: "GuideLeaves",
+        component: () => import("@/views/guides/leaves/index.vue"),
+        meta: {
+          title: "guideLeaves",
+          icon: "el-icon-Calendar",
+          perms: ["resource:guide:list"],
+        },
+      },
+      {
+        path: "ratings",
+        name: "GuideRatings",
+        component: () => import("@/views/guides/ratings/index.vue"),
+        meta: {
+          title: "guideRatings",
+          icon: "el-icon-Star",
+          perms: ["tour:list"],
+        },
+      },
+    ],
+  },
+  {
+    path: "/tours",
+    name: "Tours",
+    component: Layout,
+    redirect: "/tours/list",
+    meta: { title: "tours", icon: "el-icon-Collection", alwaysShow: true },
+    children: [
+      {
+        path: "list",
+        name: "TourList",
+        component: () => import("@/views/tours/index.vue"),
+        meta: {
+          title: "tours",
+          icon: "el-icon-Document",
+          keepAlive: true,
+          perms: ["tour:list"],
         },
       },
     ],

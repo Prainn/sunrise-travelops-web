@@ -64,7 +64,12 @@
             </template>
           </el-table-column>
 
-          <el-table-column fixed="right" :label="$t('common.actions')" align="center" width="220">
+          <el-table-column
+            fixed="right"
+            :label="$t('common.actions')"
+            align="center"
+            width="220"
+          >
             <template #default="scope">
               <el-button
                 v-has-perm="'sys:dict-item:update'"
@@ -105,7 +110,12 @@
       destroy-on-close
       @close="closeDialog"
     >
-      <el-form ref="dictItemFormRef" :model="formData" :rules="rules" label-width="100px">
+      <el-form
+        ref="dictItemFormRef"
+        :model="formData"
+        :rules="rules"
+        label-width="100px"
+      >
         <el-form-item :label="$t('dictionary.optionName')" prop="label">
           <el-input
             v-model="formData.label"
@@ -137,6 +147,7 @@
           </template>
           <el-select
             v-model="formData.tagType"
+            autocomplete="new-password"
             :placeholder="$t('dictionary.tagTypePlaceholder')"
             clearable
             @clear="formData.tagType = ''"
@@ -146,7 +157,12 @@
                 {{ formData.label ? formData.label : $t("dictionary.optionName") }}
               </el-tag>
             </template>
-            <el-option v-for="type in tagTypeOptions" :key="type" :label="type" :value="type">
+            <el-option
+              v-for="type in tagTypeOptions"
+              :key="type"
+              :label="type"
+              :value="type"
+            >
               <div flex-y-center gap-10px>
                 <el-tag :type="type as any">
                   {{ formData.label ?? $t("dictionary.optionName") }}

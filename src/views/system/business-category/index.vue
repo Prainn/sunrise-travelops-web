@@ -39,8 +39,7 @@
               <span>{{ categoryName(category) }}</span>
               <span
                 class="business-category-page__type-code mt-[2px] text-[var(--el-text-color-secondary)] text-[14px]"
-                >{{ category.code }}</span
-              >
+              >{{ category.code }}</span>
             </button>
             <el-button
               v-if="!category.builtIn"
@@ -71,7 +70,12 @@
       width="520px"
       destroy-on-close
     >
-      <el-form ref="typeFormRef" :model="typeForm" :rules="typeRules" label-width="160px">
+      <el-form
+        ref="typeFormRef"
+        :model="typeForm"
+        :rules="typeRules"
+        label-width="160px"
+      >
         <el-form-item :label="$t('businessCategory.typeName')" prop="name">
           <el-input v-model="typeForm.name" />
         </el-form-item>

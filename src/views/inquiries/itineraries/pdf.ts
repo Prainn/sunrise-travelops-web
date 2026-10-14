@@ -224,10 +224,10 @@ function buildQuoteTable(
   const childRow =
     showChildPrice && itinerary.childrenCount
       ? buildQuoteRow(
-          "儿童团费",
-          options,
-          ({ calculation }) => `RMB ${formatMoney(calculation.childUnitPrice)} PP`,
-        )
+        "儿童团费",
+        options,
+        ({ calculation }) => `RMB ${formatMoney(calculation.childUnitPrice)} PP`,
+      )
       : "";
 
   return `
@@ -236,26 +236,26 @@ function buildQuoteTable(
         <tr style="background:#f3f4f6;">
           <th style="${quoteHeaderStyle()};width:18%;"></th>
           ${options
-            .map(
-              ({ option }) => `
+    .map(
+      ({ option }) => `
             <th style="${quoteHeaderStyle()}">
               ${new Set(itinerary.quote.options.map((option) => option.hotelTier)).size > 1 ? `<div>${escapeHtml(HOTEL_PLAN_TIER_LABELS[option.hotelTier])}</div>` : ""}
               <div style="margin-top:3px;">${guestCount}PAX【${escapeHtml(getVehicleQuoteLabel(itinerary, option.vehicleTier))}】</div>
             </th>`,
-            )
-            .join("")}
+    )
+    .join("")}
         </tr>
       </thead>
       <tbody>
         ${buildQuoteRow(
-          "成人团费",
-          options,
-          ({ option, calculation }) => `
+    "成人团费",
+    options,
+    ({ option, calculation }) => `
           <strong>RMB ${formatMoney(calculation.adultUnitPrice)} PP</strong>
           <div style="display:inline;margin-left:4px;color:${option.leaderFocEnabled && itinerary.leaderCount > 0 ? "#15803d" : "#606266"};font-size:10px;">
             ${option.leaderFocEnabled && itinerary.leaderCount > 0 ? `${guestCount}+${itinerary.leaderCount} FOC` : "NO FOC"}
           </div>`,
-        )}
+  )}
         ${childRow}
         ${buildExtraFeeRows(itinerary, options.length)}
         ${buildQuoteRow("单房差", options, ({ calculation }) => `RMB ${formatMoney(calculation.singleSupplementUnitCost)}`)}
@@ -283,7 +283,7 @@ function chunkQuoteOptions(options: QuoteDisplayOption[]) {
   );
 }
 
-function getVehicleQuoteLabel(
+export function getVehicleQuoteLabel(
   itinerary: Pick<ItineraryRecord, "vehiclePlans">,
   tier: ItineraryQuoteOption["vehicleTier"],
 ) {
@@ -351,12 +351,12 @@ function scheduleColgroup() {
   </colgroup>`;
 }
 
-function formatScheduleDate(value: string) {
+export function formatScheduleDate(value: string) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   return match ? `${match[3]}/${match[2]}` : value;
 }
 
-function formatScheduleRoute(day: ItineraryDayRecord) {
+export function formatScheduleRoute(day: ItineraryDayRecord) {
   if (!day.departure) return day.destination || "-";
   if (!day.destination || day.departure === day.destination) return day.departure;
   return `${day.departure} / ${day.destination}`;
@@ -377,15 +377,19 @@ export function getDailyMealCodes(
     .join(", ");
 }
 
+export function getExtraFeeLines(itinerary: { quote: Pick<ItineraryQuoteSettings, "transportFees"> }) {
+  const cabins = { economy: "经济舱", business: "商务舱", first: "一等座", second: "二等座" };
+  return itinerary.quote.transportFees.map((fee): [string, string] => [
+    fee.type === "flight" ? "机票" : "动车票",
+    `${fee.departureCity} → ${fee.arrivalCity} · ${cabins[fee.cabin]} · RMB ${formatMoney(fee.unitPrice ?? 0)} PP`,
+  ]);
+}
+
 function buildExtraFeeRows(
   itinerary: { quote: Pick<ItineraryQuoteSettings, "transportFees"> },
   columnCount: number,
 ) {
-  const cabins = { economy: "经济舱", business: "商务舱", first: "一等座", second: "二等座" };
-  const rows: Array<[string, string]> = itinerary.quote.transportFees.map((fee) => [
-    fee.type === "flight" ? "机票" : "动车票",
-    `${fee.departureCity} → ${fee.arrivalCity} · ${cabins[fee.cabin]} · RMB ${formatMoney(fee.unitPrice ?? 0)} PP`,
-  ]);
+  const rows = getExtraFeeLines(itinerary);
   return rows
     .map(
       ([label, value]) =>
@@ -394,7 +398,18 @@ function buildExtraFeeRows(
     .join("");
 }
 
+export const CUSTOMER_EXCLUSIONS = ["任何段机票、机场税及燃油费、动车票；", "任何客人保险；"];
+
 function buildCustomerTerms(itinerary: ItineraryRecord) {
+  const rows = getCustomerTermRows(itinerary);
+  return `<section data-pdf-block data-pdf-keep-with-next><h2 style="margin:0;font-size:13px;">二、团队标准</h2></section>
+    <table data-pdf-block data-pdf-gap-mm="0" style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;">
+      ${rows.map(([label, value], index) => `<tr>${index === 0 ? `<th rowspan="${rows.length}" style="${quoteLabelStyle()};width:10%;">团费包含</th>` : ""}<th style="${quoteLabelStyle()};width:10%;">${label}</th><td style="${quoteCellStyle()};text-align:left;">${escapeHtml(value)}</td></tr>`).join("")}
+      <tr><th colspan="2" style="${quoteLabelStyle()}">团费不含</th><td style="${quoteCellStyle()};text-align:left;">[1] 任何段机票、机场税及燃油费、动车票；<br>[2] 任何客人保险；</td></tr>
+    </table>`;
+}
+
+export function getCustomerTermRows(itinerary: ItineraryRecord): Array<[string, string]> {
   const hasMeals = itinerary.dailyPlans.some((day) => day.meals.lunch || day.meals.dinner);
   const rows: Array<[string, string]> = [
     ["酒店", "行程中所标注或同级酒店，双标间两人入住，含早餐。"],
@@ -408,19 +423,19 @@ function buildCustomerTerms(itinerary: ItineraryRecord) {
     ...(itinerary.guidePlans.length ? [["导游", "行程安排的导游服务。"] as [string, string]] : []),
     ["交通", "行程中所列巴士服务。"],
   ];
-  return `<section data-pdf-block data-pdf-keep-with-next><h2 style="margin:0;font-size:13px;">二、团队标准</h2></section>
-    <table data-pdf-block data-pdf-gap-mm="0" style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;">
-      ${rows.map(([label, value], index) => `<tr>${index === 0 ? `<th rowspan="${rows.length}" style="${quoteLabelStyle()};width:10%;">团费包含</th>` : ""}<th style="${quoteLabelStyle()};width:10%;">${label}</th><td style="${quoteCellStyle()};text-align:left;">${escapeHtml(value)}</td></tr>`).join("")}
-      <tr><th colspan="2" style="${quoteLabelStyle()}">团费不含</th><td style="${quoteCellStyle()};text-align:left;">1] 任何段机票、机场税及燃油费、动车票；<br>2] 任何客人保险；</td></tr>
-    </table>`;
+  return rows;
 }
 
-function buildCustomerNotes(itinerary: ItineraryRecord) {
-  const notes = [
+export function getCustomerNotes(itinerary: ItineraryRecord) {
+  return [
     itinerary.quote.holidayRestrictions,
     itinerary.quote.hotelReplacementTerms,
     itinerary.quote.customerNotes,
   ].filter((value) => value.trim());
+}
+
+function buildCustomerNotes(itinerary: ItineraryRecord) {
+  const notes = getCustomerNotes(itinerary);
   if (!notes.length) return "";
   return (
     `<section data-pdf-block data-pdf-keep-with-next><h2 style="margin:0;font-size:13px;">四、备注</h2></section>` +

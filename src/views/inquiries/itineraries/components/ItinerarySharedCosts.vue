@@ -315,15 +315,15 @@ function applyOtherCost() {
         const draft = paxOtherDrafts.value.find((item) => item.pax === pax);
         return kind === "guide"
           ? {
-              ...current,
-              guideOtherCost: draft?.amount ?? null,
-              guideOtherReason: draft?.reason.trim() ?? "",
-            }
+            ...current,
+            guideOtherCost: draft?.amount ?? null,
+            guideOtherReason: draft?.reason.trim() ?? "",
+          }
           : {
-              ...current,
-              staffRoomOtherCost: draft?.amount ?? null,
-              staffRoomOtherReason: draft?.reason.trim() ?? "",
-            };
+            ...current,
+            staffRoomOtherCost: draft?.amount ?? null,
+            staffRoomOtherReason: draft?.reason.trim() ?? "",
+          };
       }),
     });
     otherCostVisible.value = false;

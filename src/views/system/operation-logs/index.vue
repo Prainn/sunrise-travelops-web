@@ -1,44 +1,61 @@
 <template>
   <div class="page-container">
     <el-card class="page-search" shadow="never">
-      <el-form :inline="true">
-        <el-form-item :label="$t('operationLog.category')">
-          <el-select
-            v-model="category"
-            clearable
-            :placeholder="$t('operationLog.all')"
-            style="width: 180px"
-          >
-            <el-option
-              v-for="option in categories"
-              :key="option.value"
-              :label="$t(option.label)"
-              :value="option.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="search">{{ $t("common.search") }}</el-button>
-          <el-button @click="reset">{{ $t("common.reset") }}</el-button>
-        </el-form-item>
-      </el-form>
+      <div class="flex items-center justify-between gap-[12px]">
+        <el-form :inline="true">
+          <el-form-item :label="$t('operationLog.category')">
+            <el-select
+              v-model="category"
+              autocomplete="new-password"
+              clearable
+              :placeholder="$t('operationLog.all')"
+              style="width: 180px"
+            >
+              <el-option
+                v-for="option in categories"
+                :key="option.value"
+                :label="$t(option.label)"
+                :value="option.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button @click="reset">
+              {{ $t("common.reset") }}
+            </el-button>
+          </el-form-item>
+        </el-form>
+        <TableToolbar class="mb-0!" @refresh="fetchData" />
+      </div>
     </el-card>
 
     <el-card class="page-content" shadow="never">
       <div class="page-table-wrapper">
-        <el-table v-loading="loading" :data="list" class="page-table" border height="100%">
+        <el-table
+          v-loading="loading"
+          :data="list"
+          class="page-table"
+          border
+          height="100%"
+        >
           <el-table-column :label="$t('operationLog.time')" min-width="190">
-            <template #default="{ row }">{{ beijingTime(row.time) }}</template>
+            <template #default="{ row }">
+              {{ beijingTime(row.time) }}
+            </template>
           </el-table-column>
           <el-table-column :label="$t('operationLog.category')" min-width="120">
-            <template #default="{ row }">{{ categoryLabel(row.category) }}</template>
+            <template #default="{ row }">
+              {{ categoryLabel(row.category) }}
+            </template>
           </el-table-column>
           <el-table-column :label="$t('operationLog.actor')" prop="actorName" min-width="130" />
           <el-table-column :label="$t('operationLog.action')" prop="action" min-width="180" />
           <el-table-column :label="$t('operationLog.result')" min-width="90">
-            <template #default="{ row }">{{
-              row.success ? $t("operationLog.success") : $t("operationLog.failed")
-            }}</template>
+            <template #default="{ row }">
+              <el-tag :type="row.success ? 'success' : 'danger'">
+                {{ row.success ? $t("operationLog.success") : $t("operationLog.failed") }}
+              </el-tag>
+            </template>
           </el-table-column>
           <el-table-column
             :label="$t('operationLog.detail')"
@@ -60,8 +77,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
+import { useDebounceFn } from "@vueuse/core";
 import { useI18n } from "vue-i18n";
+import TableToolbar from "@/components/TableToolbar/index.vue";
 import { operationLogService } from "@/services/operation-log.service";
 import type { OperationCategory, OperationLog } from "@/types/operation-log";
 
@@ -72,6 +91,13 @@ const categories: { value: OperationCategory; label: string }[] = [
   { value: "system-category", label: "operationLog.systemCategory" },
   { value: "business-category", label: "operationLog.businessCategory" },
   { value: "resource", label: "operationLog.resource" },
+  { value: "inquiry", label: "operationLog.inquiry" },
+  { value: "itinerary", label: "operationLog.itinerary" },
+  { value: "quotation", label: "operationLog.quotation" },
+  { value: "tour", label: "operationLog.tour" },
+  { value: "guide-leave", label: "operationLog.guideLeave" },
+  { value: "guide-rating", label: "operationLog.guideRating" },
+  { value: "website-config", label: "operationLog.websiteConfig" },
 ];
 const category = ref<OperationCategory | "">("");
 const page = ref(1);
@@ -79,6 +105,12 @@ const pageSize = ref(20);
 const total = ref(0);
 const loading = ref(false);
 const list = ref<OperationLog[]>([]);
+const requestRows = useDebounceFn(fetchData, 300);
+
+watch(category, () => {
+  page.value = 1;
+  requestRows();
+});
 
 function categoryLabel(value: OperationCategory) {
   const option = categories.find((item) => item.value === value);
@@ -112,13 +144,10 @@ async function fetchData() {
     loading.value = false;
   }
 }
-function search() {
-  page.value = 1;
-  void fetchData();
-}
 function reset() {
   category.value = "";
-  search();
+  page.value = 1;
+  requestRows();
 }
 onMounted(() => {
   void fetchData();

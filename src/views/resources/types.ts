@@ -1,4 +1,9 @@
-import type { ResourceRecord } from "@/types/resource";
+import type { ResourceAuditRecord, ResourceRecord, ResourceStatus } from "@/types/resource";
+
+export interface ResourceTableRecord extends ResourceAuditRecord {
+  id: string;
+  status: ResourceStatus;
+}
 
 export interface ResourceColumn {
   prop: string;
@@ -10,6 +15,8 @@ export interface ResourceFormField extends ResourceColumn {
   disabled?: boolean;
   clearable?: boolean;
   required?: boolean;
+  min?: number;
+  precision?: number;
   type?: "text" | "number" | "textarea" | "select";
   options?: Array<{ label: string; value: string }>;
 }

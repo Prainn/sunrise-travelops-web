@@ -1,7 +1,6 @@
 <template>
   <el-card class="page-search" shadow="never">
     <el-form :inline="true">
-      <ResourceBusinessFilter />
       <el-form-item :label="$t('common.keywords')">
         <el-input
           v-model.trim="keywords"
@@ -14,13 +13,20 @@
         <CitySelect v-model="area" />
       </el-form-item>
       <el-form-item :label="$t('attraction.category')">
-        <el-select v-model="category" clearable>
+        <el-select v-model="category" autocomplete="new-password" clearable>
           <el-option
             v-for="option in attractionCategoryOptions"
             :key="option.value"
             :label="$t(option.labelKey)"
             :value="option.value"
           />
+        </el-select>
+      </el-form-item>
+      <el-form-item :label="$t('resource.isStandardPrice')">
+        <el-select v-model="isStandardPrice" autocomplete="new-password" :placeholder="$t('common.all')">
+          <el-option :label="$t('common.all')" value="" />
+          <el-option :label="$t('common.yes')" :value="true" />
+          <el-option :label="$t('common.no')" :value="false" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -33,7 +39,6 @@
 </template>
 
 <script setup lang="ts">
-import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
 import { computed } from "vue";
 import CitySelect from "@/components/CitySelect.vue";
 import type { AttractionCategory } from "@/types/resource";
@@ -43,12 +48,14 @@ const props = defineProps<{
   keywords: string;
   area: string;
   category: AttractionCategory | "";
+  isStandardPrice: boolean | "";
 }>();
 
 const emit = defineEmits<{
   "update:keywords": [value: string];
   "update:area": [value: string];
   "update:category": [value: AttractionCategory | ""];
+  "update:isStandardPrice": [value: boolean | ""];
   reset: [];
 }>();
 
@@ -63,5 +70,9 @@ const area = computed({
 const category = computed({
   get: () => props.category,
   set: (value) => emit("update:category", value),
+});
+const isStandardPrice = computed({
+  get: () => props.isStandardPrice,
+  set: (value) => emit("update:isStandardPrice", value),
 });
 </script>

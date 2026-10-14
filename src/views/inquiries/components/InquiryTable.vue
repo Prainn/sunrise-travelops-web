@@ -6,7 +6,12 @@
       </el-button>
     </TableToolbar>
     <div class="page-table-wrapper">
-      <el-table :data="rows" border height="100%" row-key="id">
+      <el-table
+        :data="rows"
+        border
+        height="100%"
+        row-key="id"
+      >
         <el-table-column
           v-if="userStore.userInfo.scope === 'headquarters'"
           :label="$t('identity.businessUnit')"
@@ -65,17 +70,23 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('common.actions')" width="240" fixed="right" align="center">
+        <el-table-column
+          :label="$t('common.actions')"
+          width="240"
+          fixed="right"
+          align="center"
+        >
           <template #default="scope">
             <el-button type="primary" link @click="emit('view', scope.row as InquiryRecord)">
               {{ $t("common.view") }}
             </el-button>
             <InquiryTransferButton
+              v-if="!scope.row.hasActiveTour"
               :inquiry="scope.row as InquiryRecord"
               @transferred="emit('refresh')"
             />
             <el-button
-              v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus)"
+              v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus, scope.row.hasActiveTour)"
               v-hasPerm="'inquiry:update'"
               type="primary"
               link
@@ -84,7 +95,7 @@
               {{ $t("common.edit") }}
             </el-button>
             <el-button
-              v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus)"
+              v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus, scope.row.hasActiveTour)"
               v-hasPerm="'inquiry:archive'"
               type="warning"
               link
@@ -94,7 +105,12 @@
             </el-button>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('inquiry.itinerary')" width="360" fixed="right" align="center">
+        <el-table-column
+          :label="$t('inquiry.itinerary')"
+          width="360"
+          fixed="right"
+          align="center"
+        >
           <template #default="scope">
             <el-button
               v-hasPerm="'itinerary:list'"

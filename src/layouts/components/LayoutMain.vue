@@ -3,15 +3,10 @@
     <router-view>
       <template #default="{ Component, route }">
         <transition :name="transitionName" mode="out-in">
-          <keep-alive :include="cachedViews.filter((path) => !path.startsWith('/resources'))">
+          <keep-alive :include="cachedViews">
             <component
               :is="currentComponent(Component, route)"
-              :key="
-                route.fullPath +
-                (route.path.startsWith('/resources')
-                  ? `${selectedResourceBusinessUnit ?? ''}:${selectedResourceLibrary ?? ''}`
-                  : '')
-              "
+              :key="route.fullPath"
             />
           </keep-alive>
         </transition>
@@ -21,9 +16,6 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from "@/stores/user";
-import { useRoute } from "vue-router";
-import { selectedResourceBusinessUnit, selectedResourceLibrary } from "@/services/resource-library";
 import { type RouteLocationNormalized } from "vue-router";
 import { useSettingsStore } from "@/stores/settings";
 import { useTagsViewStore } from "@/stores/tags-view";
@@ -33,20 +25,6 @@ import Error404 from "@/views/error/404.vue";
 const { cachedViews } = toRefs(useTagsViewStore());
 
 const settingsStore = useSettingsStore();
-const activeRoute = useRoute();
-const userStore = useUserStore();
-watch(
-  () => activeRoute.path,
-  (path, previous) => {
-    if (path.startsWith("/resources") && !previous?.startsWith("/resources")) {
-      selectedResourceBusinessUnit.value = undefined;
-      selectedResourceLibrary.value = userStore.userInfo.resourceLibrary ?? undefined;
-    }
-    if (!path.startsWith("/resources")) selectedResourceBusinessUnit.value = undefined;
-  },
-  { immediate: true, flush: "sync" },
-);
-
 const wrapperMap = new Map<string, Component>();
 const currentComponent = (component: Component, route: RouteLocationNormalized) => {
   if (!component) return;

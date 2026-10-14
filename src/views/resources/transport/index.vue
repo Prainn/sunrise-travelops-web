@@ -24,6 +24,7 @@
         <el-form-item :label="$t('resource.vehicleServiceLevel')">
           <el-select
             v-model="serviceLevel"
+            autocomplete="new-password"
             :placeholder="$t('common.all')"
             clearable
             class="transport-page__service-level-select"
@@ -40,7 +41,7 @@
       :fields="fields"
       :title-key="isEditing ? 'resource.editTitle' : 'resource.createTitle'"
       :is-editing="isEditing"
-      @submit="saveTransport"
+      :submit="saveTransport"
     />
   </div>
 </template>
@@ -104,6 +105,9 @@ const fields = computed<ResourceFormField[]>(() => [
     prop: "seats",
     labelKey: "resource.seats",
     type: "number",
+    required: true,
+    min: 1,
+    precision: 0,
   },
   {
     prop: "unit",
@@ -150,7 +154,6 @@ const {
     status: "enabled",
     remark: "",
   }),
-  selectLibraryInDialog: true,
 });
 const tableRows = computed(() =>
   rows.map((row) => ({

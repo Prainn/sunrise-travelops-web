@@ -43,13 +43,20 @@
     </el-form-item>
   </el-col>
   <el-col :span="12">
-    <el-form-item :label="$t('inquiry.countryOrRegion')">
-      <el-input :model-value="record.countryOrRegion" disabled />
+    <el-form-item :label="$t('inquiry.countryOrRegion')" prop="countryItemId">
+      <BusinessItemSelect
+        :model-value="record.countryItemId"
+        type-code="country-region"
+        :selected-label="record.countryOrRegion"
+        :disabled="!record.agencyId"
+        @update:model-value="emit('update-country', $event)"
+      />
     </el-form-item>
   </el-col>
 </template>
 
 <script setup lang="ts">
+import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import { computed } from "vue";
 import type { InquiryRecord } from "@/types/inquiry";
@@ -67,6 +74,7 @@ const emit = defineEmits<{
   "create-contact": [name: string];
   "update-contact-name": [name: string];
   "update-phone": [phone: string];
+  "update-country": [countryItemId: string];
 }>();
 
 const selectedAgency = computed(() =>

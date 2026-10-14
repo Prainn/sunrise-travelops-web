@@ -1,5 +1,4 @@
 import eslint from "@eslint/js";
-import prettierRecommended from "eslint-plugin-prettier/recommended";
 import globals from "globals";
 import * as typescriptEslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
@@ -61,6 +60,9 @@ export default [
       eqeqeq: ["error", "always", { null: "ignore" }],
       "no-multi-spaces": "error",
       "no-multiple-empty-lines": ["error", { max: 1, maxBOF: 0, maxEOF: 0 }],
+      indent: ["error", 2, { SwitchCase: 1 }],
+      quotes: ["error", "double", { avoidEscape: true, allowTemplateLiterals: true }],
+      semi: ["error", "always"],
 
       // 禁用与 TypeScript 冲突的规则
       "no-unused-vars": "off",
@@ -99,6 +101,19 @@ export default [
         },
       ],
       "vue/html-self-closing": "off",
+      "vue/html-indent": ["error", 2],
+      "vue/first-attribute-linebreak": [
+        "error",
+        { singleline: "ignore", multiline: "below" },
+      ],
+      "vue/max-attributes-per-line": ["error", { singleline: 3, multiline: 1 }],
+      "vue/html-closing-bracket-newline": [
+        "error",
+        { singleline: "never", multiline: "always" },
+      ],
+      "vue/html-closing-bracket-spacing": "error",
+      "vue/multiline-html-element-content-newline": "error",
+      "vue/singleline-html-element-content-newline": "error",
       "vue/component-name-in-template-casing": ["error", "PascalCase"],
       "@typescript-eslint/no-explicit-any": "off",
     },
@@ -157,5 +172,4 @@ export default [
       "@typescript-eslint/no-explicit-any": "off",
     },
   },
-  prettierRecommended,
 ];

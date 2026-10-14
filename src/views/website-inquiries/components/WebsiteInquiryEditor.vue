@@ -1,0 +1,362 @@
+<template>
+  <el-drawer
+    v-if="readOnly"
+    :model-value="modelValue"
+    :title="$t('inquiry.inquiryDetail')"
+    size="min(680px, 94vw)"
+    @update:model-value="emit('update:modelValue', $event)"
+  >
+    <template v-if="record">
+      <div class="flex items-start justify-between mb-[20px]">
+        <div>
+          <h3 class="m-[0_0_4px] text-[18px]">
+            {{ record.customerName }}
+          </h3>
+          <span class="text-[var(--el-text-color-secondary)]">{{ record.code }}</span>
+        </div>
+        <el-tag :type="INQUIRY_STATUS_TAG_TYPES[record.status]">
+          {{ $t(`inquiry.statuses.${record.status}`) }}
+        </el-tag>
+      </div>
+      <el-descriptions :column="1" border>
+        <el-descriptions-item :label="$t('inquiry.owner')">
+          {{ record.owner }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('inquiry.plannedDays')">
+          {{ $t("websiteInquiry.dayCount", { days: record.plannedDays }, record.plannedDays) }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('common.startDate')">
+          {{ record.startDate || $t("websiteInquiry.unconfirmed") }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('websiteInquiry.pax')">
+          {{ record.pax ?? $t("websiteInquiry.unconfirmed") }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('inquiry.phone')">
+          {{ record.phone || $t("common.notSet") }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('inquiry.email')">
+          {{ record.email || $t("common.notSet") }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('websiteInquiry.arrivalTime')">
+          {{ record.arrivalTime || $t("websiteInquiry.unconfirmed") }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('websiteInquiry.departureTime')">
+          {{ record.departureTime || $t("websiteInquiry.unconfirmed") }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('websiteInquiry.destinations')">
+          {{
+            record.destinations.map(cityName).join($t("websiteInquiry.listSeparator")) ||
+              $t("common.notSet")
+          }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('common.createdAt')">
+          {{ formatDateTime(record.createdAt) }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('inquiry.originalMessage')">
+          <div class="whitespace-pre-wrap">
+            {{ record.requirements }}
+          </div>
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('inquiry.internalRemark')">
+          <div class="whitespace-pre-wrap">
+            {{ record.internalRemark || $t("common.notSet") }}
+          </div>
+        </el-descriptions-item>
+        <el-descriptions-item
+          v-if="record.status === 'lost'"
+          :label="$t('inquiry.lostReason')"
+        >
+          {{ record.lostReason }}
+        </el-descriptions-item>
+      </el-descriptions>
+    </template>
+  </el-drawer>
+  <el-dialog
+    v-else
+    :model-value="modelValue"
+    :title="$t(record ? 'inquiry.editInquiry' : 'inquiry.createInquiry')"
+    width="min(820px, 94vw)"
+    :close-on-click-modal="false"
+    @update:model-value="emit('update:modelValue', $event)"
+  >
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      label-width="auto"
+      :disabled="saving"
+    >
+      <el-row :gutter="16">
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('common.status')" prop="status">
+            <el-select v-model="form.status" autocomplete="new-password" :disabled="!record">
+              <el-option
+                v-for="option in editableStatusOptions"
+                :key="option.value"
+                :value="option.value"
+                :label="$t(option.labelKey)"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col v-if="form.status === 'lost'" :xs="24" :sm="12">
+          <el-form-item :label="$t('inquiry.lostReason')" prop="lostReason">
+            <el-input v-model.trim="form.lostReason" maxlength="2000" />
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row :gutter="16">
+        <el-col v-if="record" :xs="24" :sm="12">
+          <el-form-item :label="$t('inquiry.code')">
+            <el-input :model-value="record.code" disabled />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('inquiry.countryOrRegion')" prop="countryItemId">
+            <BusinessItemSelect
+              v-model="form.countryItemId"
+              type-code="country-region"
+              :selected-label="record?.countryOrRegion"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('websiteInquiry.customerName')" prop="customerName">
+            <el-input v-model="form.customerName" maxlength="100" />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('inquiry.plannedDays')" prop="plannedDays">
+            <el-input-number
+              v-model="form.plannedDays"
+              :min="1"
+              :max="365"
+              controls-position="right"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col v-if="record" :xs="24" :sm="12">
+          <el-form-item :label="$t('inquiry.owner')">
+            <el-input :model-value="record.owner" disabled />
+          </el-form-item>
+        </el-col>
+        <el-col v-else-if="allowAssign" :xs="24" :sm="12">
+          <el-form-item :label="$t('inquiry.owner')" prop="ownerId">
+            <el-select v-model="form.ownerId" autocomplete="new-password" filterable>
+              <el-option
+                v-for="owner in owners"
+                :key="owner.id"
+                :value="owner.id"
+                :label="owner.name"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('common.startDate')">
+            <el-date-picker
+              v-model="form.startDate"
+              value-format="YYYY-MM-DD"
+              clearable
+              class="w-full"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('websiteInquiry.pax')">
+            <el-input-number
+              v-model="form.pax"
+              :min="1"
+              :max="10000"
+              controls-position="right"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('inquiry.phone')">
+            <el-input v-model="form.phone" maxlength="50" />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('inquiry.email')" prop="email">
+            <el-input v-model="form.email" maxlength="254" />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('websiteInquiry.destinations')">
+            <el-select
+              v-model="form.destinations"
+              autocomplete="new-password"
+              multiple
+              filterable
+            >
+              <el-option
+                v-for="city in cities"
+                :key="city.id"
+                :value="city.id"
+                :label="city.nameZh"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row :gutter="16">
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('websiteInquiry.arrivalTime')">
+            <el-time-picker
+              v-model="form.arrivalTime"
+              format="HH:mm"
+              value-format="HH:mm"
+              value-on-clear=""
+              :placeholder="$t('websiteInquiry.timeExample', { time: '10:30' })"
+              clearable
+              class="w-full"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('websiteInquiry.departureTime')">
+            <el-time-picker
+              v-model="form.departureTime"
+              format="HH:mm"
+              value-format="HH:mm"
+              value-on-clear=""
+              :placeholder="$t('websiteInquiry.timeExample', { time: '18:00' })"
+              clearable
+              class="w-full"
+            />
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row :gutter="16">
+        <el-col :span="24">
+          <el-form-item :label="$t('inquiry.originalMessage')" prop="requirements">
+            <el-input
+              v-model="form.requirements"
+              type="textarea"
+              :rows="5"
+              maxlength="200000"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :span="24">
+          <el-form-item :label="$t('inquiry.internalRemark')">
+            <el-input
+              v-model="form.internalRemark"
+              type="textarea"
+              :rows="2"
+              maxlength="20000"
+            />
+          </el-form-item>
+        </el-col>
+      </el-row>
+    </el-form>
+    <template #footer>
+      <el-button :disabled="saving" @click="emit('update:modelValue', false)">
+        {{ $t("common.cancel") }}
+      </el-button>
+      <el-button type="primary" :loading="saving" @click="submit">
+        {{ $t("common.confirm") }}
+      </el-button>
+    </template>
+  </el-dialog>
+</template>
+<script setup lang="ts">
+import { computed, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
+import type { FormInstance, FormRules } from "element-plus";
+import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
+import { websiteInquiryInput, type WebsiteOwnerOption } from "@/services/website.service";
+import type { WebsiteCity, WebsiteInquiry, WebsiteInquiryInput } from "@/types/website";
+import { cloneWebsiteDraft, emptyInquiry } from "../options";
+import { INQUIRY_STATUS_OPTIONS, INQUIRY_STATUS_TAG_TYPES } from "@/views/inquiries/options";
+import { formatDateTime } from "@/utils";
+const props = defineProps<{
+  modelValue: boolean;
+  record?: WebsiteInquiry;
+  owners: WebsiteOwnerOption[];
+  cities: WebsiteCity[];
+  allowAssign: boolean;
+  saving: boolean;
+  readOnly: boolean;
+}>();
+const emit = defineEmits<{
+  "update:modelValue": [value: boolean];
+  save: [input: WebsiteInquiryInput];
+}>();
+const { t } = useI18n();
+const formRef = ref<FormInstance>();
+const form = ref<WebsiteInquiryInput>(emptyInquiry());
+const editableStatusOptions = computed(() => {
+  const allowedStatuses = props.record ? [props.record.status, "lost"] : ["new"];
+  return INQUIRY_STATUS_OPTIONS.filter((option) => allowedStatuses.includes(option.value));
+});
+const rules = computed<FormRules>(() => ({
+  countryItemId: [
+    { required: true, message: t("common.selectPlaceholder"), trigger: "change" },
+  ],
+  customerName: [
+    {
+      required: true,
+      whitespace: true,
+      message: t("websiteInquiry.customerNameRequired"),
+      trigger: "blur",
+    },
+  ],
+  plannedDays: [
+    {
+      required: true,
+      type: "number",
+      min: 1,
+      max: 365,
+      message: t("websiteInquiry.plannedDaysRange"),
+      trigger: "change",
+    },
+  ],
+  requirements: [
+    {
+      required: true,
+      whitespace: true,
+      message: t("inquiry.originalMessageRequired"),
+      trigger: "blur",
+    },
+  ],
+  email: [{ type: "email", message: t("websiteInquiry.validEmailRequired"), trigger: "blur" }],
+  ownerId: [
+    {
+      required: props.allowAssign && !props.record,
+      message: t("websiteInquiry.ownerRequired"),
+      trigger: "change",
+    },
+  ],
+  lostReason: [
+    {
+      required: form.value.status === "lost",
+      whitespace: true,
+      message: t("inquiry.lostReasonRequired"),
+      trigger: "blur",
+    },
+  ],
+}));
+watch(
+  () => props.modelValue,
+  (visible) => {
+    if (visible) {
+      form.value = props.record
+        ? cloneWebsiteDraft(websiteInquiryInput(props.record))
+        : emptyInquiry();
+      formRef.value?.clearValidate();
+    }
+  },
+);
+function cityName(id: string) {
+  return props.cities.find((city) => city.id === id)?.nameZh ?? id;
+}
+async function submit() {
+  if (await formRef.value?.validate().catch(() => false))
+    emit("save", {
+      ...cloneWebsiteDraft(form.value),
+      lostReason: form.value.status === "lost" ? form.value.lostReason : "",
+    });
+}
+</script>

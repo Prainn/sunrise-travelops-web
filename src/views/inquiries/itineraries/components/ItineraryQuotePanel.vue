@@ -73,7 +73,7 @@
                 controls-position="right"
                 :disabled="
                   quote[field] === null &&
-                  quote[field === 'chineseTip' ? 'englishTip' : 'chineseTip'] !== null
+                    quote[field === 'chineseTip' ? 'englishTip' : 'chineseTip'] !== null
                 "
                 @update:model-value="emit('update-settings', { [field]: $event ?? null })"
               />
@@ -120,6 +120,7 @@
           </div>
           <el-form-item :label="$t('itinerary.cabin')">
             <el-select
+              autocomplete="new-password"
               :model-value="fee.cabin"
               @update:model-value="updateFee(fee.id, { cabin: $event })"
             >
@@ -140,7 +141,12 @@
               @update:model-value="updateFee(fee.id, { unitPrice: $event ?? null })"
             />
           </el-form-item>
-          <el-button class="mb-[26px]" type="danger" link @click="removeFee(fee.id)">
+          <el-button
+            class="mb-[26px]"
+            type="danger"
+            link
+            @click="removeFee(fee.id)"
+          >
             {{ $t("common.delete") }}
           </el-button>
         </div>

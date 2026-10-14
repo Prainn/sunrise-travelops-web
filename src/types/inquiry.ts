@@ -1,6 +1,7 @@
 export type InquiryStatus = "new" | "planning" | "quoted" | "lost" | "archived";
 
 export interface InquiryRecord {
+  hasActiveTour: boolean;
   businessUnit?: "shengxu" | "linxi" | "website";
   version: number;
   id: string;
@@ -11,6 +12,7 @@ export interface InquiryRecord {
   contactName: string;
   email: string;
   phone: string;
+  countryItemId: string;
   countryOrRegion: string;
   sourceChannel: string;
   originalMessage: string;

@@ -32,7 +32,7 @@ export function useResourcePriceSelection(
   const adjustmentReason = ref("");
   const selectedOption = ref<ResourcePriceOption>();
   const referencePrice = computed(() =>
-    props.currentItem && props.currentItem.resourcePriceId === selectedOption.value?.resourcePriceId
+    props.currentItem && props.currentItem.resourceId === selectedOption.value?.resourceId
       ? (props.currentItem.referencePrice ?? null)
       : (selectedOption.value?.unitCost ?? null),
   );
@@ -43,7 +43,7 @@ export function useResourcePriceSelection(
   const customQuantity = ref(1);
   const dinerCount = ref<number>();
   function isDuplicate(resourceId: string | null, isStandardPrice = false, name = "") {
-    if (isStandardPrice) return false;
+    if (isStandardPrice || (!resourceId && name.trim().toLowerCase() === "待定")) return false;
     return props.itineraryItems.some(
       (item) =>
         item.id !== props.currentItem?.id &&
@@ -58,9 +58,9 @@ export function useResourcePriceSelection(
     source.value === "custom"
       ? isDuplicate(null, false, customName.value)
       : Boolean(
-          selectedOption.value &&
+        selectedOption.value &&
           isDuplicate(selectedOption.value.resourceId, selectedOption.value.isStandardPrice),
-        ),
+      ),
   );
   const baseCanSubmit = computed(() =>
     props.mealSlot && source.value === "custom"
@@ -77,9 +77,7 @@ export function useResourcePriceSelection(
     const option = selectedOption.value;
     if (!option) return false;
     const current = props.currentItem;
-    const sameSource =
-      current?.resourceId === option.resourceId &&
-      current.resourcePriceId === option.resourcePriceId;
+    const sameSource = current?.resourceId === option.resourceId;
     const comparison = sameSource ? current.unitCost : referencePrice.value;
     return comparison == null || roundMoney(actualPrice.value) !== roundMoney(comparison);
   });
@@ -151,19 +149,18 @@ export function useResourcePriceSelection(
         dinerCount.value = item?.dinerCount ?? undefined;
         adjustmentReason.value = item?.adjustmentReason ?? "";
         const custom =
-          item?.type === "restaurant" && item.resourceId === null && item.resourcePriceId === null;
+          item?.type === "restaurant" && item.resourceId === null;
         source.value = custom ? "custom" : "library";
         customName.value = custom ? item.resourceName : "";
         customPrice.value = custom ? item.unitCost : undefined;
         customUnit.value = custom && item.unit === "table" ? "table" : "personMeal";
         customQuantity.value = 1;
-        if (item && !custom && item.resourceId && item.resourcePriceId) {
-          selectedId.value = item.resourcePriceId;
+        if (item && !custom && item.resourceId) {
+          selectedId.value = item.resourceId;
           selectedOption.value = {
-            id: item.resourcePriceId,
+            id: item.resourceId,
             type: item.type,
             resourceId: item.resourceId,
-            resourcePriceId: item.resourcePriceId,
             resourceName: item.resourceName,
             priceName: item.priceName,
             dinerCount: item.dinerCount ?? undefined,
@@ -177,7 +174,7 @@ export function useResourcePriceSelection(
           };
           const version = detailVersion;
           void resourceService
-            .getPriceSelection(item.type as ItineraryDailyItemType, item.resourcePriceId)
+            .getPriceSelection(item.type as ItineraryDailyItemType, item.resourceId)
             .then((resources) => {
               if (version !== detailVersion || !selectedOption.value) return;
               selectedOption.value.isStandardPrice = getResourcePriceOptions(
@@ -210,7 +207,6 @@ export function useResourcePriceSelection(
         type: "restaurant",
         mealSlot: props.mealSlot,
         resourceId: null,
-        resourcePriceId: null,
         resourceName: customName.value.trim(),
         priceName: "",
         unit: customUnit.value,
@@ -228,7 +224,7 @@ export function useResourcePriceSelection(
     }
     const option = selectedOption.value;
     if (!option) return;
-    if (current && current.resourcePriceId === option.resourcePriceId) {
+    if (current && current.resourceId === option.resourceId) {
       const item = {
         ...current,
         unitCost: actualPrice.value,

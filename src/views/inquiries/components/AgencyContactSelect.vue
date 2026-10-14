@@ -1,5 +1,6 @@
 <template>
   <el-select
+    autocomplete="new-password"
     :model-value="modelValue"
     allow-create
     default-first-option
@@ -16,8 +17,7 @@
       <span>{{ contact.name }}</span>
       <small
         class="agency-contact-select__phone [float:right] text-[var(--el-text-color-secondary)]"
-        >{{ contact.phone || "-" }}</small
-      >
+      >{{ contact.phone || "-" }}</small>
     </el-option>
   </el-select>
 </template>

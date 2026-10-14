@@ -1,6 +1,6 @@
 <template>
   <el-breadcrumb class="flex-y-center">
-    <el-breadcrumb-item v-for="(item, index) in breadcrumbs" :key="item.path">
+    <el-breadcrumb-item v-for="(item, index) in breadcrumbs" :key="`${item.path}:${index}`">
       <!-- 末级或不可跳转的节点显示为纯文本，其余可点击 -->
       <span
         v-if="item.redirect === 'noredirect' || index === breadcrumbs.length - 1"

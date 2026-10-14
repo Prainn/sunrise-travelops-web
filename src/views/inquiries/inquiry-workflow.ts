@@ -20,8 +20,8 @@ const INQUIRY_TRANSITIONS: Record<InquiryStatus, Partial<Record<InquiryAction, I
   archived: {},
 };
 
-export function isInquiryReadOnly(status: InquiryStatus): boolean {
-  return status === "lost" || status === "archived";
+export function isInquiryReadOnly(status: InquiryStatus, hasActiveTour = false): boolean {
+  return hasActiveTour || status === "lost" || status === "archived";
 }
 
 export function canTransitionInquiry(status: InquiryStatus, action: InquiryAction): boolean {

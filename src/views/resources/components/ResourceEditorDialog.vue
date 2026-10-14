@@ -3,31 +3,19 @@
     v-model="isVisible"
     :title="$t(titleKey)"
     width="560px"
+    :show-close="!isSubmitting"
+    :close-on-click-modal="!isSubmitting"
+    :close-on-press-escape="!isSubmitting"
     destroy-on-close
     @closed="resetForm"
   >
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="auto">
-      <el-form-item
-        v-if="isHeadquarters && !isEditing"
-        :label="$t('identity.businessUnit')"
-        prop="library"
-      >
-        <el-select
-          v-model="selectedBusinessUnit"
-          :placeholder="$t('identity.selectBusinessUnitToCreate')"
-          @change="setBusinessUnit"
-        >
-          <el-option
-            v-for="unit in ['shengxu', 'linxi', 'website']"
-            :key="unit"
-            :value="unit"
-            :label="businessUnitName(unit)"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item v-else :label="$t('identity.library')">
-        <ResourceLibraryTag :library="form.library" />
-      </el-form-item>
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      :disabled="isSubmitting"
+      label-width="auto"
+    >
       <el-form-item v-if="isEditing" :label="$t('resource.code')">
         <el-input v-model="form.code" disabled />
       </el-form-item>
@@ -39,20 +27,22 @@
       >
         <CitySelect
           v-if="field.prop === 'city'"
-          :library="form.library"
           :model-value="String(form[field.prop] ?? '')"
           @update:model-value="form[field.prop] = $event"
         />
         <el-input-number
           v-else-if="field.type === 'number'"
-          :model-value="Number(form[field.prop] ?? 0)"
-          :min="0"
+          :model-value="form[field.prop] == null ? null : Number(form[field.prop])"
+          :min="field.min ?? 0"
+          :precision="field.precision"
+          :value-on-clear="null"
           controls-position="right"
-          @update:model-value="form[field.prop] = $event ?? 0"
+          @update:model-value="form[field.prop] = $event"
         />
         <el-select
           v-else-if="field.type === 'select'"
           v-model="form[field.prop]"
+          autocomplete="new-password"
           :clearable="field.clearable"
           @clear="form[field.prop] = ''"
         >
@@ -83,10 +73,15 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="isVisible = false">
+      <el-button :disabled="isSubmitting" @click="isVisible = false">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button type="primary" @click="handleSubmit">
+      <el-button
+        type="primary"
+        :loading="isSaving"
+        :disabled="isSubmitting"
+        @click="handleSubmit"
+      >
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -94,19 +89,17 @@
 </template>
 
 <script setup lang="ts">
-import { businessUnitName } from "@/constants/identity";
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import CitySelect from "@/components/CitySelect.vue";
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { useUserStore } from "@/stores/user";
-import type { LoginScope } from "@/types/auth";
 import type { ResourceFormField, ResourceRow } from "../types";
+import { useResourceFormSubmit } from "../useResourceFormSubmit";
 
 const props = defineProps<{
   modelValue: boolean;
   record: ResourceRow;
+  submit: (record: ResourceRow) => Promise<void>;
   fields: ResourceFormField[];
   titleKey: string;
   isEditing: boolean;
@@ -114,14 +107,11 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [record: ResourceRow];
 }>();
 
 const { t } = useI18n();
-const userStore = useUserStore();
-const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters");
-const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const formRef = ref<FormInstance>();
+const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
 const form = reactive<ResourceRow>({ ...props.record });
 const isVisible = computed({
   get: () => props.modelValue,
@@ -136,15 +126,13 @@ const rules = computed<FormRules>(() => ({
         [
           {
             required: true,
+            ...(field.type === "number" ? { type: "number" as const, min: field.min } : {}),
             message: t("resource.fieldRequired", { field: t(field.labelKey) }),
             trigger: field.type === "select" ? "change" : "blur",
           },
         ],
       ]),
   ),
-  library: [
-    { required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" },
-  ],
 }));
 
 watch(
@@ -152,25 +140,15 @@ watch(
   ([visible, record]) => {
     if (!visible) return;
     Object.assign(form, record);
-    if (isHeadquarters.value && !props.isEditing) {
-      selectedBusinessUnit.value = "";
-      form.library = undefined;
-    }
   },
   { deep: true },
 );
-
-function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
-  form.library = unit === "shengxu" ? "shengxu" : "shared";
-  formRef.value?.validateField("library");
-}
 
 function resetForm() {
   formRef.value?.clearValidate();
 }
 
 async function handleSubmit() {
-  if (!(await formRef.value?.validate().catch(() => false))) return;
-  emit("submit", { ...form });
+  await submitForm(() => props.submit({ ...form }));
 }
 </script>

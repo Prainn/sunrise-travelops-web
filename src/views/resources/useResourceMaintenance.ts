@@ -1,5 +1,3 @@
-import { selectedResourceLibrary } from "@/services/resource-library";
-import type { ResourceLibrary } from "@/types/auth";
 import { computed, onMounted, reactive, ref, type Ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -9,9 +7,7 @@ import type { ResourceCrud } from "@/services/resource.service";
 import { RESOURCE_PAGE_SIZE } from "./useResourcePagination";
 
 interface ResourceMaintenanceRecord {
-  library?: ResourceLibrary;
   id: string;
-  code: string;
   status: ResourceStatus;
 }
 
@@ -19,7 +15,6 @@ interface ResourceMaintenanceOptions<T extends ResourceMaintenanceRecord> {
   records: T[];
   paginated?: boolean;
   createEmpty: () => T;
-  selectLibraryInDialog?: boolean;
   api: ResourceCrud<T>;
   loadRecords: (query?: ResourceListQuery) => Promise<T[]>;
   cloneForEdit?: (record: T) => T;
@@ -57,16 +52,8 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
   }
 
   function openCreateDialog() {
-    if (!selectedResourceLibrary.value && !options.selectLibraryInDialog) {
-      ElMessage.info(t("identity.selectLibraryToCreate"));
-      return;
-    }
     editingId.value = "";
-    record.value = {
-      ...options.createEmpty(),
-      library: selectedResourceLibrary.value,
-      code: "",
-    };
+    record.value = options.createEmpty();
     isDialogVisible.value = true;
   }
 

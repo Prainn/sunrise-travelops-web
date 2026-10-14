@@ -17,13 +17,10 @@
       v-model="isPersonDialogVisible"
       :record="personForm"
       :is-editing="isPersonEditing"
-      @submit="savePerson"
+      :submit="savePerson"
     />
     <el-drawer v-model="isPersonDetailVisible" :title="$t('guide.detail')" size="520px">
       <el-descriptions v-if="personDetail" :column="1" border>
-        <el-descriptions-item :label="$t('identity.library')">
-          <ResourceLibraryTag :library="personDetail.library" />
-        </el-descriptions-item>
         <el-descriptions-item :label="$t('guide.name')">
           {{ personDetail.name }}
         </el-descriptions-item>
@@ -64,7 +61,7 @@
         </el-descriptions-item>
       </el-descriptions>
     </el-drawer>
-    <el-drawer v-model="isPriceDrawerVisible" :title="$t('guide.priceSettings')" size="80%">
+    <el-drawer v-model="isPriceDrawerVisible" :title="$t('guide.priceSettings')" size="50%">
       <GuideTable
         :loading="isPriceLoading"
         :total="priceTotal"
@@ -81,7 +78,7 @@
       v-model="isPriceDialogVisible"
       :record="priceForm"
       :is-editing="isPriceEditing"
-      @submit="savePrice"
+      :submit="savePrice"
     />
   </div>
 </template>
@@ -89,7 +86,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { ElMessage } from "element-plus";
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { resourceService } from "@/services/resource.service";
 import type { GuidePersonRecord, GuideRecord } from "@/types/resource";
 import { useResourceMaintenance } from "../useResourceMaintenance";
@@ -147,7 +143,6 @@ const {
   api: resourceService.guidePersonApi,
   loadRecords: (query) => resourceService.loadGuidePeople(query),
   createEmpty: createEmptyPerson,
-  selectLibraryInDialog: true,
 });
 
 const isPersonDetailVisible = ref(false);

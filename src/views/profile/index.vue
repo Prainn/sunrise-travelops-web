@@ -143,8 +143,7 @@
               <div class="profile-login__body min-w-0">
                 <strong
                   class="profile-login__device break-all text-[14px] text-[var(--el-text-color-primary)]"
-                  >{{ record.userAgent || $t("profile.unknownClient") }}</strong
-                >
+                >{{ record.userAgent || $t("profile.unknownClient") }}</strong>
                 <span class="profile-login__meta">{{ record.ip || "-" }}</span>
               </div>
               <time class="profile-login__time">{{ formatDateTime(record.time) }}</time>
@@ -170,7 +169,13 @@
         v-if="!securityLoadFailed && !isSecurityLoading"
         class="profile-tags flex flex-wrap gap-[8px]"
       >
-        <el-tag v-for="role in roleList" :key="role.code" class="m-0" size="small" effect="light">
+        <el-tag
+          v-for="role in roleList"
+          :key="role.code"
+          class="m-0"
+          size="small"
+          effect="light"
+        >
           {{ role.name }}
         </el-tag>
         <span v-if="!roleList.length" class="profile-empty">{{ $t("profile.noRoles") }}</span>

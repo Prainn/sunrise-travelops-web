@@ -2,7 +2,6 @@
   <div class="hotel-page page-container">
     <el-card class="page-search" shadow="never">
       <el-form :inline="true">
-        <ResourceBusinessFilter />
         <el-form-item :label="$t('common.keywords')">
           <el-input
             v-model.trim="keywords"
@@ -14,6 +13,7 @@
         <el-form-item :label="$t('resource.city')">
           <el-select
             v-model="city"
+            autocomplete="new-password"
             :placeholder="$t('common.all')"
             clearable
             class="hotel-page__city-select"
@@ -29,15 +29,17 @@
         <el-form-item :label="$t('resource.starRating')">
           <el-select
             v-model="rating"
+            autocomplete="new-password"
             :placeholder="$t('common.all')"
             clearable
             class="hotel-page__rating-select"
           >
             <el-option
-              :label="$t('hotel.ratings.international_five_star')"
-              value="international_five_star"
+              v-for="value in [3, 4, 5]"
+              :key="value"
+              :label="$t(`hotel.ratings.${value}`)"
+              :value="value"
             />
-            <el-option :label="$t('hotel.ratings.ctrip_preferred')" value="ctrip_preferred" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -66,30 +68,18 @@
       v-model="isHotelDialogVisible"
       :title="$t(isEditing ? 'hotel.editHotel' : 'hotel.createHotel')"
       width="680px"
+      :show-close="!isSubmitting"
+      :close-on-click-modal="!isSubmitting"
+      :close-on-press-escape="!isSubmitting"
       destroy-on-close
     >
-      <el-form ref="hotelFormRef" :model="hotelForm" :rules="hotelRules" label-width="auto">
-        <el-form-item
-          v-if="isHeadquarters && !isEditing"
-          :label="$t('identity.businessUnit')"
-          prop="library"
-        >
-          <el-select
-            v-model="selectedBusinessUnit"
-            :placeholder="$t('identity.selectBusinessUnitToCreate')"
-            @change="setBusinessUnit"
-          >
-            <el-option
-              v-for="unit in ['shengxu', 'linxi', 'website']"
-              :key="unit"
-              :value="unit"
-              :label="businessUnitName(unit)"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item v-else :label="$t('identity.library')">
-          <ResourceLibraryTag :library="hotelForm.library" />
-        </el-form-item>
+      <el-form
+        ref="hotelFormRef"
+        :model="hotelForm"
+        :rules="hotelRules"
+        :disabled="isSubmitting"
+        label-width="auto"
+      >
         <el-form-item v-if="isEditing" :label="$t('resource.code')">
           <el-input v-model="hotelForm.code" disabled />
         </el-form-item>
@@ -97,10 +87,10 @@
           <el-input v-model.trim="hotelForm.name" />
         </el-form-item>
         <el-form-item :label="$t('resource.city')" prop="city">
-          <CitySelect v-model="hotelForm.city" :library="hotelForm.library" />
+          <CitySelect v-model="hotelForm.city" />
         </el-form-item>
         <el-form-item :label="$t('resource.priceUnit')" prop="unit">
-          <el-select v-model="hotelForm.unit">
+          <el-select v-model="hotelForm.unit" autocomplete="new-password">
             <el-option
               v-for="option in hotelUnitOptions"
               :key="option.value"
@@ -120,11 +110,8 @@
         </el-form-item>
         <el-form-item :label="$t('resource.starRating')">
           <el-radio-group v-model="hotelForm.rating">
-            <el-radio value="international_five_star">
-              {{ $t("hotel.ratings.international_five_star") }}
-            </el-radio>
-            <el-radio value="ctrip_preferred">
-              {{ $t("hotel.ratings.ctrip_preferred") }}
+            <el-radio v-for="value in [3, 4, 5]" :key="value" :value="value">
+              {{ $t(`hotel.ratings.${value}`) }}
             </el-radio>
           </el-radio-group>
         </el-form-item>
@@ -145,10 +132,15 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="isHotelDialogVisible = false">
+        <el-button :disabled="isSubmitting" @click="isHotelDialogVisible = false">
           {{ $t("common.cancel") }}
         </el-button>
-        <el-button type="primary" @click="saveHotel">
+        <el-button
+          type="primary"
+          :loading="isSaving"
+          :disabled="isSubmitting"
+          @click="saveHotel"
+        >
           {{ $t("common.confirm") }}
         </el-button>
       </template>
@@ -157,34 +149,25 @@
 </template>
 
 <script setup lang="ts">
-import { businessUnitName } from "@/constants/identity";
-import { resetResourceBusinessFilter } from "@/services/resource-library";
-import ResourceBusinessFilter from "@/views/resources/components/ResourceBusinessFilter.vue";
-import ResourceLibraryTag from "@/components/ResourceLibraryTag.vue";
 import { useResourcePagination } from "../useResourcePagination";
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import type { FormInstance, FormRules } from "element-plus";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { selectedResourceLibrary } from "@/services/resource-library";
-import { useUserStore } from "@/stores/user";
-import type { LoginScope } from "@/types/auth";
 import CitySelect from "@/components/CitySelect.vue";
 import { useCityOptions } from "@/composables/useCityOptions";
 import { resourceService } from "@/services/resource.service";
 import type { HotelRating, HotelRecord, ResourceListQuery } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 import HotelTable from "./components/HotelTable.vue";
+import { useResourceFormSubmit } from "../useResourceFormSubmit";
 
 type HotelForm = HotelRecord;
 
 defineOptions({ name: "Hotel" });
 
 const { t, locale } = useI18n();
-const userStore = useUserStore();
-const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters");
-const selectedBusinessUnit = ref<Exclude<LoginScope, "headquarters"> | "">("");
 const hotelStore = reactive<HotelRecord[]>([]);
 const keywords = ref("");
 const city = ref("");
@@ -192,6 +175,7 @@ const rating = ref<HotelRating | "">("");
 const isHotelDialogVisible = ref(false);
 const editingId = ref("");
 const hotelFormRef = ref<FormInstance>();
+const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(hotelFormRef);
 const hotelForm = reactive<HotelForm>(createEmptyHotel());
 const isEditing = computed(() => Boolean(editingId.value));
 const cityOptions = useCityOptions();
@@ -200,9 +184,6 @@ const total = ref(0);
 const hotelUnitOptions = computed(() => getResourceUnitOptions("hotel", locale.value));
 const requestHotels = useDebounceFn(() => loadHotels(currentQuery()), 300);
 const hotelRules: FormRules = {
-  library: [
-    { required: true, message: t("identity.selectBusinessUnitToCreate"), trigger: "change" },
-  ],
   name: [{ required: true, message: t("hotel.nameRequired"), trigger: "blur" }],
   city: [{ required: true, message: t("hotel.cityRequired"), trigger: "change" }],
   individualPrice: [
@@ -253,7 +234,7 @@ function createEmptyHotel(): HotelForm {
     name: "",
     province: "",
     city: "",
-    rating: "international_five_star",
+    rating: 5,
     facilities: "",
     breakfast: "",
     address: "",
@@ -267,7 +248,6 @@ function createEmptyHotel(): HotelForm {
   };
 }
 function resetQuery() {
-  resetResourceBusinessFilter();
   pageNum.value = 1;
   keywords.value = "";
   city.value = "";
@@ -276,18 +256,8 @@ function resetQuery() {
 }
 function openCreateDialog() {
   editingId.value = "";
-  Object.assign(hotelForm, createEmptyHotel(), { library: selectedResourceLibrary.value });
-  if (isHeadquarters.value) {
-    selectedBusinessUnit.value = "";
-    hotelForm.library = undefined;
-  }
+  Object.assign(hotelForm, createEmptyHotel());
   isHotelDialogVisible.value = true;
-}
-function setBusinessUnit(unit: Exclude<LoginScope, "headquarters">) {
-  const library = unit === "shengxu" ? "shengxu" : "shared";
-  if (hotelForm.library !== library) hotelForm.city = "";
-  hotelForm.library = library;
-  hotelFormRef.value?.validateField("library");
 }
 async function openEditDialog(hotel: HotelRecord) {
   try {
@@ -325,27 +295,28 @@ async function deleteHotel(hotel: HotelRecord) {
   }
 }
 async function saveHotel() {
-  if (!(await hotelFormRef.value?.validate().catch(() => false))) return;
-  const formValue = {
-    ...hotelForm,
-    province:
-      resourceService.cityOptions.find(
-        (city) => city.name === hotelForm.city && city.library === hotelForm.library,
-      )?.province ?? hotelForm.province,
-  };
-  const current = hotelStore.find((hotel) => hotel.id === editingId.value);
-  try {
-    const saved = editingId.value
-      ? await resourceService.hotelApi.update(editingId.value, formValue)
-      : await resourceService.hotelApi.create(formValue);
-    if (current) Object.assign(current, saved);
-    else if (!editingId.value) hotelStore.push(saved);
-    await loadHotels(currentQuery());
-    isHotelDialogVisible.value = false;
-    ElMessage.success(t(editingId.value ? "common.updateSuccess" : "common.createSuccess"));
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : String(error));
-  }
+  await submitForm(async () => {
+    const formValue = {
+      ...hotelForm,
+      province:
+        resourceService.cityOptions.find(
+          (city) => city.name === hotelForm.city,
+        )?.province ?? hotelForm.province,
+    };
+    const current = hotelStore.find((hotel) => hotel.id === editingId.value);
+    try {
+      const saved = editingId.value
+        ? await resourceService.hotelApi.update(editingId.value, formValue)
+        : await resourceService.hotelApi.create(formValue);
+      if (current) Object.assign(current, saved);
+      else if (!editingId.value) hotelStore.push(saved);
+      await loadHotels(currentQuery());
+      isHotelDialogVisible.value = false;
+      ElMessage.success(t(editingId.value ? "common.updateSuccess" : "common.createSuccess"));
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : String(error));
+    }
+  });
 }
 async function confirmDelete(messageKey: string) {
   try {

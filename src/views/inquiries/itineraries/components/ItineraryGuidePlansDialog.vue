@@ -11,6 +11,7 @@
         <div class="grid grid-cols-1 gap-x-6 md:grid-cols-2">
           <el-form-item :label="$t('planning.secondLanguage')">
             <el-select
+              autocomplete="new-password"
               class="w-full"
               :model-value="secondLanguage"
               :disabled="!editable"
@@ -50,7 +51,12 @@
               @update:model-value="emit('update-price', Number($event ?? 0))"
             />
           </el-form-item>
-          <el-form-item :label="$t('identity.reason')" label-width="160px">
+          <el-form-item
+            v-if="needsReason"
+            :label="$t('identity.reason')"
+            label-width="160px"
+            required
+          >
             <el-input
               :model-value="plan.adjustmentReason ?? ''"
               :disabled="!editable"
@@ -63,12 +69,19 @@
           <div class="flex items-center">
             <el-form-item :label="$t('planning.guideTotalPrice')" label-width="160px">
               <el-input :model-value="formatMoney(totalPrice)" readonly>
-                <template #prepend> ¥ </template>
+                <template #prepend>
+                  ¥
+                </template>
               </el-input>
               <el-text type="info" size="small">
                 ¥{{ formatMoney(plan.dailyPrice) }} × {{ plan.serviceDays }}
               </el-text>
-              <el-tag type="info" effect="plain" size="small" class="ml-2">
+              <el-tag
+                type="info"
+                effect="plain"
+                size="small"
+                class="ml-2"
+              >
                 {{ $t("planning.serviceDays") }}：{{ plan.serviceDays }}
               </el-tag>
             </el-form-item>
@@ -79,7 +92,12 @@
         <el-text type="danger">
           {{ $t("planning.noMatchingGuide") }}
         </el-text>
-        <el-button v-if="canCreate" type="primary" link @click="emit('create-guide')">
+        <el-button
+          v-if="canCreate"
+          type="primary"
+          link
+          @click="emit('create-guide')"
+        >
           {{ $t("common.create") }}
         </el-button>
       </div>
@@ -88,7 +106,12 @@
       <el-button @click="emit('cancel')">
         {{ $t(editable ? "common.cancel" : "common.close") }}
       </el-button>
-      <el-button v-if="editable" type="primary" :loading="saving" @click="emit('save')">
+      <el-button
+        v-if="editable"
+        type="primary"
+        :loading="saving"
+        @click="emit('save')"
+      >
         {{ $t("itinerary.save") }}
       </el-button>
     </template>
@@ -99,9 +122,11 @@ import { computed } from "vue";
 import type { ItineraryGuidePlan } from "@/types/itinerary";
 import { GUIDE_LANGUAGE_OPTIONS } from "@/types/resource";
 import { formatMoney, multiplyMoney } from "@/utils";
+import { selectionPriceNeedsReason } from "../price-adjustments";
 
 const props = defineProps<{
   plans: ItineraryGuidePlan[];
+  savedPlans: ItineraryGuidePlan[];
   secondLanguage: string;
   shopping: boolean;
   editable: boolean;
@@ -120,6 +145,12 @@ const emit = defineEmits<{
   cancel: [];
 }>();
 const plan = computed(() => props.plans[0]);
+const needsReason = computed(() => {
+  const guide = plan.value;
+  if (!guide) return false;
+  const saved = props.savedPlans.find((item) => item.guideId === guide.guideId);
+  return selectionPriceNeedsReason(guide.dailyPrice, guide, saved?.dailyPrice);
+});
 const totalPrice = computed(() =>
   plan.value ? multiplyMoney(plan.value.dailyPrice, plan.value.serviceDays) : 0,
 );

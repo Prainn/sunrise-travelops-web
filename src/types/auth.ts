@@ -1,5 +1,4 @@
 export type LoginScope = "headquarters" | "shengxu" | "linxi" | "website";
-export type ResourceLibrary = "shengxu" | "shared";
 /** 登录表单数据。 */
 export interface LoginRequest {
   scope: LoginScope;
@@ -25,7 +24,6 @@ export interface CurrentUserResult {
   deptId: number | null;
   deptName: string;
   roles: string[];
-  resourceLibrary: ResourceLibrary | null;
   id: string;
   username: string;
   permissions: string[];
