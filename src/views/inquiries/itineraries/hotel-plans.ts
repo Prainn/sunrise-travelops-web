@@ -80,7 +80,8 @@ export function getDayBreakfastStatus(
   const previous = itinerary.dailyPlans[dayIndex - 1];
   if (!previous || previous.overnightDestination === "") return "excluded";
   if (previous.overnightDestination === null) return "pending";
-  const plans = getEnabledHotelPlans(itinerary);
+  // 冻结报价可能保留旧档位，早餐按保存的酒店计划判断，不受当前可选档位限制。
+  const plans = itinerary.hotelPlans.filter((plan) => plan.hotels.length);
   if (
     !plans.length ||
     plans.some(

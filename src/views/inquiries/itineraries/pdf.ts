@@ -405,7 +405,7 @@ function buildCustomerTerms(itinerary: ItineraryRecord) {
   return `<section data-pdf-block data-pdf-keep-with-next><h2 style="margin:0;font-size:13px;">二、团队标准</h2></section>
     <table data-pdf-block data-pdf-gap-mm="0" style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;">
       ${rows.map(([label, value], index) => `<tr>${index === 0 ? `<th rowspan="${rows.length}" style="${quoteLabelStyle()};width:10%;">团费包含</th>` : ""}<th style="${quoteLabelStyle()};width:10%;">${label}</th><td style="${quoteCellStyle()};text-align:left;">${escapeHtml(value)}</td></tr>`).join("")}
-      <tr><th colspan="2" style="${quoteLabelStyle()}">团费不含</th><td style="${quoteCellStyle()};text-align:left;">1] 任何段机票、机场税及燃油费、动车票；<br>2] 任何客人保险；</td></tr>
+      <tr><th colspan="2" style="${quoteLabelStyle()}">团费不含</th><td style="${quoteCellStyle()};text-align:left;">[1] 任何段机票、机场税及燃油费、动车票；<br>[2] 任何客人保险；</td></tr>
     </table>`;
 }
 

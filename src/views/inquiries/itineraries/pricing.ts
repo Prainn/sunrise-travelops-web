@@ -110,7 +110,9 @@ export function getResourcePriceOptions(
         searchText: `${hotel.name} ${hotel.city}`,
       })),
     ...resources.attractions
-      .filter((attraction) => attraction.status === "enabled" && attraction.price !== null)
+      .filter((attraction) =>
+        attraction.status === "enabled" && attraction.price !== null && attraction.description.trim(),
+      )
       .map((attraction) => ({
         id: `attraction:${attraction.id}`,
         type: "attraction" as const,
@@ -140,7 +142,9 @@ export function getResourcePriceOptions(
         searchText: `${attraction.name} ${attraction.area} ${attraction.description}`,
       })),
     ...resources.restaurants
-      .filter((restaurant) => restaurant.status === "enabled" && restaurant.price !== null)
+      .filter((restaurant) =>
+        restaurant.status === "enabled" && restaurant.price !== null && restaurant.description.trim(),
+      )
       .map((restaurant) => ({
         id: `restaurant:${restaurant.id}`,
         type: "restaurant" as const,
