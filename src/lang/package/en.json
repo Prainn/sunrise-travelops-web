@@ -813,6 +813,7 @@
     },
     "isStandardPrice": "Standard price",
     "standardPrice": "Standard price",
+    "priceRequired": "Please enter a price",
     "priceMissing": "Price to be added",
     "descriptionRequired": "Please enter a description"
   },

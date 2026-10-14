@@ -17,7 +17,7 @@ import type {
   TransportRecord,
 } from "@/types/resource";
 
-type ResourceQuery = ResourceListQuery & Record<string, string | number | undefined>;
+type ResourceQuery = ResourceListQuery & Record<string, string | number | boolean | undefined>;
 
 interface ResourceCrud<T> {
   getPage(query: ResourceQuery): Promise<PageResult<T>>;
@@ -44,7 +44,7 @@ function buildParams(query: ResourceQuery): ResourceQuery {
   return Object.fromEntries(
     Object.entries(query).map(([key, value]) => {
       const normalizedValue = typeof value === "string" ? value.trim() : value;
-      return [key, normalizedValue || normalizedValue === 0 ? normalizedValue : undefined];
+      return [key, normalizedValue === "" ? undefined : normalizedValue];
     }),
   ) as ResourceQuery;
 }

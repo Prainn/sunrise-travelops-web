@@ -813,6 +813,7 @@
     },
     "isStandardPrice": "是否为标准价",
     "standardPrice": "标准价",
+    "priceRequired": "请输入价格",
     "priceMissing": "待补价",
     "descriptionRequired": "请输入描述"
   },

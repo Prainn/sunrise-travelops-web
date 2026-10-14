@@ -4,6 +4,7 @@
       v-model:keywords="keywords"
       v-model:city="city"
       v-model:price-unit="priceUnit"
+      v-model:is-standard-price="isStandardPrice"
       :city-options="cityOptions"
       @reset="resetQuery"
     />
@@ -25,6 +26,13 @@
           height="100%"
           row-key="id"
         >
+          <el-table-column :label="$t('resource.isStandardPrice')" width="110" align="center">
+            <template #default="{ row }">
+              <el-tag :type="row.isStandardPrice ? 'success' : 'info'">
+                {{ $t(row.isStandardPrice ? "common.yes" : "common.no") }}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column prop="name" :label="$t('resource.restaurantName')" min-width="200" />
           <el-table-column prop="city" :label="$t('resource.city')" width="100" />
           <el-table-column
@@ -45,13 +53,6 @@
                   ? `${$t("restaurant.perTable")} / ${scope.row.dinerCount}`
                   : $t("restaurant.perPerson")
               }}
-            </template>
-          </el-table-column>
-          <el-table-column :label="$t('resource.isStandardPrice')" width="110" align="center">
-            <template #default="{ row }">
-              <el-tag :type="row.isStandardPrice ? 'success' : 'info'">
-                {{ $t(row.isStandardPrice ? "common.yes" : "common.no") }}
-              </el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="code" :label="$t('resource.code')" width="170" />
@@ -142,23 +143,31 @@ const emit = defineEmits<{
 const keywords = ref("");
 const city = ref("");
 const priceUnit = ref<RestaurantPriceUnit | "">("");
+const isStandardPrice = ref<boolean | "">("");
 const { pageNum, pageSize, paginationQuery } = useResourcePagination();
 const cityOptions = useCityOptions();
 const requestRows = useDebounceFn(() => emit("query-change", currentQuery()), 300);
 
-watch([keywords, city, priceUnit], () => {
+watch([keywords, city, priceUnit, isStandardPrice], () => {
   pageNum.value = 1;
   requestRows();
 });
 
 function currentQuery(): ResourceListQuery {
-  return { ...paginationQuery(), keyword: keywords.value, city: city.value, unit: priceUnit.value };
+  return {
+    ...paginationQuery(),
+    keyword: keywords.value,
+    city: city.value,
+    unit: priceUnit.value,
+    isStandardPrice: isStandardPrice.value === "" ? undefined : isStandardPrice.value,
+  };
 }
 
 function resetQuery() {
   keywords.value = "";
   city.value = "";
   priceUnit.value = "";
+  isStandardPrice.value = "";
   pageNum.value = 1;
   requestRows();
 }

@@ -22,6 +22,13 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item :label="$t('resource.isStandardPrice')">
+        <el-select v-model="isStandardPrice" :placeholder="$t('common.all')">
+          <el-option :label="$t('common.all')" value="" />
+          <el-option :label="$t('common.yes')" :value="true" />
+          <el-option :label="$t('common.no')" :value="false" />
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button @click="emit('reset')">
           {{ $t("common.reset") }}
@@ -41,12 +48,14 @@ const props = defineProps<{
   keywords: string;
   area: string;
   category: AttractionCategory | "";
+  isStandardPrice: boolean | "";
 }>();
 
 const emit = defineEmits<{
   "update:keywords": [value: string];
   "update:area": [value: string];
   "update:category": [value: AttractionCategory | ""];
+  "update:isStandardPrice": [value: boolean | ""];
   reset: [];
 }>();
 
@@ -61,5 +70,9 @@ const area = computed({
 const category = computed({
   get: () => props.category,
   set: (value) => emit("update:category", value),
+});
+const isStandardPrice = computed({
+  get: () => props.isStandardPrice,
+  set: (value) => emit("update:isStandardPrice", value),
 });
 </script>

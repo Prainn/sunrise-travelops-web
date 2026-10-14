@@ -29,6 +29,13 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item :label="$t('resource.isStandardPrice')">
+        <el-select v-model="isStandardPrice" :placeholder="$t('common.all')">
+          <el-option :label="$t('common.all')" value="" />
+          <el-option :label="$t('common.yes')" :value="true" />
+          <el-option :label="$t('common.no')" :value="false" />
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button @click="emit('reset')">
           {{ $t("common.reset") }}
@@ -48,12 +55,14 @@ const props = defineProps<{
   keywords: string;
   city: string;
   priceUnit: RestaurantPriceUnit | "";
+  isStandardPrice: boolean | "";
   cityOptions: string[];
 }>();
 const emit = defineEmits<{
   "update:keywords": [value: string];
   "update:city": [value: string];
   "update:priceUnit": [value: RestaurantPriceUnit | ""];
+  "update:isStandardPrice": [value: boolean | ""];
   reset: [];
 }>();
 const { locale } = useI18n();
@@ -70,5 +79,9 @@ const city = computed({
 const priceUnit = computed({
   get: () => props.priceUnit,
   set: (value) => emit("update:priceUnit", value),
+});
+const isStandardPrice = computed({
+  get: () => props.isStandardPrice,
+  set: (value) => emit("update:isStandardPrice", value),
 });
 </script>

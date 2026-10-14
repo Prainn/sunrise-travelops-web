@@ -51,6 +51,7 @@ export interface ResourceListQuery extends Partial<ResourceQueryParams> {
   unit?: string;
   area?: string;
   category?: AttractionCategory;
+  isStandardPrice?: boolean;
 }
 
 export interface AgencyContactRecord extends ResourceAuditRecord {

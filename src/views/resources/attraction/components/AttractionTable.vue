@@ -4,6 +4,7 @@
       v-model:keywords="keywords"
       v-model:area="area"
       v-model:category="category"
+      v-model:is-standard-price="isStandardPrice"
       @reset="resetQuery"
     />
 
@@ -25,6 +26,13 @@
           height="100%"
           row-key="id"
         >
+          <el-table-column :label="$t('resource.isStandardPrice')" width="110" align="center">
+            <template #default="{ row }">
+              <el-tag :type="row.isStandardPrice ? 'success' : 'info'">
+                {{ $t(row.isStandardPrice ? "common.yes" : "common.no") }}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column prop="name" :label="$t('resource.attractionName')" min-width="200" />
           <el-table-column prop="area" :label="$t('attraction.area')" width="100" />
           <el-table-column
@@ -36,13 +44,6 @@
           <el-table-column :label="$t('attraction.price')" width="110" align="right">
             <template #default="scope">
               {{ scope.row.price === null ? $t('resource.priceMissing') : formatMoney(scope.row.price) }}
-            </template>
-          </el-table-column>
-          <el-table-column :label="$t('resource.isStandardPrice')" width="110" align="center">
-            <template #default="{ row }">
-              <el-tag :type="row.isStandardPrice ? 'success' : 'info'">
-                {{ $t(row.isStandardPrice ? "common.yes" : "common.no") }}
-              </el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="code" :label="$t('resource.code')" width="170" />
@@ -130,10 +131,11 @@ const emit = defineEmits<{
 const keywords = ref("");
 const area = ref("");
 const category = ref<AttractionCategory | "">("");
+const isStandardPrice = ref<boolean | "">("");
 const { pageNum, pageSize, paginationQuery } = useResourcePagination();
 const requestRows = useDebounceFn(() => emit("query-change", currentQuery()), 300);
 
-watch([keywords, area, category], () => {
+watch([keywords, area, category, isStandardPrice], () => {
   pageNum.value = 1;
   requestRows();
 });
@@ -144,6 +146,7 @@ function currentQuery(): ResourceListQuery {
     keyword: keywords.value,
     area: area.value,
     category: category.value || undefined,
+    isStandardPrice: isStandardPrice.value === "" ? undefined : isStandardPrice.value,
   };
 }
 
@@ -151,6 +154,7 @@ function resetQuery() {
   keywords.value = "";
   area.value = "";
   category.value = "";
+  isStandardPrice.value = "";
   pageNum.value = 1;
   requestRows();
 }
