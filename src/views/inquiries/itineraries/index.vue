@@ -25,6 +25,7 @@
               <el-select
                 v-if="selectedItinerary"
                 v-model="selectedItineraryId"
+                autocomplete="new-password"
                 class="itinerary-page__plan-select w-[min(360px,_45vw)]!"
               >
                 <el-option

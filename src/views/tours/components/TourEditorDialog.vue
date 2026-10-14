@@ -30,6 +30,7 @@
         <el-form-item :label="$t('tour.inquiry')" prop="inquiryId">
           <el-select
             v-model="form.inquiryId"
+            autocomplete="new-password"
             filterable
             remote
             :remote-method="loadSources"
@@ -93,7 +94,12 @@
       />
 
       <el-form-item :label="$t('tour.operator')" prop="operatorId">
-        <el-select v-model="form.operatorId" filterable class="w-full">
+        <el-select
+          v-model="form.operatorId"
+          autocomplete="new-password"
+          filterable
+          class="w-full"
+        >
           <el-option
             v-for="item in operators"
             :key="item.id"
@@ -155,6 +161,7 @@
       <el-form-item :label="$t('tour.pickupFlight')" prop="pickupFlightId">
         <el-select
           v-model="form.pickupFlightId"
+          autocomplete="new-password"
           filterable
           class="w-full"
           @change="loadGuides"
@@ -170,6 +177,7 @@
       <el-form-item :label="$t('tour.dropFlight')" prop="dropFlightId">
         <el-select
           v-model="form.dropFlightId"
+          autocomplete="new-password"
           filterable
           class="w-full"
           @change="loadGuides"
@@ -185,6 +193,7 @@
       <el-form-item :label="$t('tour.guide')">
         <el-select
           v-model="form.guideId"
+          autocomplete="new-password"
           clearable
           filterable
           :placeholder="$t('tour.unassigned')"

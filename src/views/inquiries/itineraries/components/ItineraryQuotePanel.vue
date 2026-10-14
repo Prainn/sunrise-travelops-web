@@ -120,6 +120,7 @@
           </div>
           <el-form-item :label="$t('itinerary.cabin')">
             <el-select
+              autocomplete="new-password"
               :model-value="fee.cabin"
               @update:model-value="updateFee(fee.id, { cabin: $event })"
             >

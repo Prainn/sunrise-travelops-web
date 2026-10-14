@@ -131,7 +131,7 @@
               <el-table-column :label="$t('websiteConfig.city')" min-width="160">
                 <template #default="{ row, $index }">
                   <el-form-item :prop="`days.${$index}.cityId`" inline-message class="my-[8px]">
-                    <el-select v-model="row.cityId" filterable>
+                    <el-select v-model="row.cityId" autocomplete="new-password" filterable>
                       <el-option
                         v-for="city in config.cities"
                         :key="city.id"
@@ -147,6 +147,7 @@
                   <el-form-item :prop="`days.${$index}.patternId`" inline-message class="my-[8px]">
                     <el-select
                       v-model="row.patternId"
+                      autocomplete="new-password"
                       filterable
                       clearable
                       :value-on-clear="null"

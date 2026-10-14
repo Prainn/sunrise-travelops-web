@@ -106,6 +106,7 @@
         <el-form-item v-if="isCatalog && !editingId" :label="$t('businessCategory.catalogEntry')">
           <el-select
             v-model="catalogCode"
+            autocomplete="new-password"
             filterable
             remote
             :remote-method="searchCatalog"
@@ -136,7 +137,12 @@
           :label="$t('businessCategory.applicableResources')"
           prop="resourceTypes"
         >
-          <el-select v-model="form.resourceTypes" multiple class="w-full">
+          <el-select
+            v-model="form.resourceTypes"
+            autocomplete="new-password"
+            multiple
+            class="w-full"
+          >
             <el-option
               v-for="type in resourceTypes"
               :key="type"

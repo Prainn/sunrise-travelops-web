@@ -11,6 +11,7 @@
         <div class="grid grid-cols-1 gap-x-6 md:grid-cols-2">
           <el-form-item :label="$t('planning.secondLanguage')">
             <el-select
+              autocomplete="new-password"
               class="w-full"
               :model-value="secondLanguage"
               :disabled="!editable"

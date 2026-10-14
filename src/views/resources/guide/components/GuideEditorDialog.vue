@@ -19,7 +19,7 @@
         <el-input-number v-model="form.dailyPrice" :min="0" :precision="2" />
       </el-form-item>
       <el-form-item :label="$t('planning.secondLanguage')" prop="secondLanguage">
-        <el-select v-model="form.secondLanguage">
+        <el-select v-model="form.secondLanguage" autocomplete="new-password">
           <el-option
             v-for="item in GUIDE_LANGUAGE_OPTIONS"
             :key="item.value"
@@ -36,7 +36,7 @@
         />
       </el-form-item>
       <el-form-item :label="$t('common.status')">
-        <el-select v-model="form.status" class="w-full">
+        <el-select v-model="form.status" autocomplete="new-password" class="w-full">
           <el-option :label="$t('common.enabled')" value="enabled" />
           <el-option :label="$t('common.disabled')" value="disabled" />
         </el-select>

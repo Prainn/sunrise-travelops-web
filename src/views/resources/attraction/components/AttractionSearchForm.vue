@@ -13,7 +13,7 @@
         <CitySelect v-model="area" />
       </el-form-item>
       <el-form-item :label="$t('attraction.category')">
-        <el-select v-model="category" clearable>
+        <el-select v-model="category" autocomplete="new-password" clearable>
           <el-option
             v-for="option in attractionCategoryOptions"
             :key="option.value"
@@ -23,7 +23,7 @@
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('resource.isStandardPrice')">
-        <el-select v-model="isStandardPrice" :placeholder="$t('common.all')">
+        <el-select v-model="isStandardPrice" autocomplete="new-password" :placeholder="$t('common.all')">
           <el-option :label="$t('common.all')" value="" />
           <el-option :label="$t('common.yes')" :value="true" />
           <el-option :label="$t('common.no')" :value="false" />

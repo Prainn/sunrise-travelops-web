@@ -42,6 +42,7 @@
         <el-form-item :label="$t('common.status')">
           <el-select
             v-model="status"
+            autocomplete="new-password"
             :placeholder="$t('flight.allStatuses')"
             class="!w-[150px]"
             clearable

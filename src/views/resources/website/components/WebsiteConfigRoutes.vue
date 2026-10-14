@@ -99,7 +99,7 @@
       >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
           <el-form-item :label="$t('websiteConfig.routes.fromCity')" prop="fromCityId">
-            <el-select v-model="record.fromCityId" filterable>
+            <el-select v-model="record.fromCityId" autocomplete="new-password" filterable>
               <el-option
                 v-for="city in config.cities"
                 :key="city.id"
@@ -109,7 +109,7 @@
             </el-select>
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.routes.toCity')" prop="toCityId">
-            <el-select v-model="record.toCityId" filterable>
+            <el-select v-model="record.toCityId" autocomplete="new-password" filterable>
               <el-option
                 v-for="city in config.cities"
                 :key="city.id"
@@ -125,7 +125,7 @@
             <el-input v-model="record.nameEn" maxlength="150" />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.routes.transport')">
-            <el-select v-model="record.mode">
+            <el-select v-model="record.mode" autocomplete="new-password">
               <el-option
                 v-for="option in TRANSPORT_OPTIONS"
                 :key="option.value"

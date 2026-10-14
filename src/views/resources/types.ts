@@ -15,6 +15,8 @@ export interface ResourceFormField extends ResourceColumn {
   disabled?: boolean;
   clearable?: boolean;
   required?: boolean;
+  min?: number;
+  precision?: number;
   type?: "text" | "number" | "textarea" | "select";
   options?: Array<{ label: string; value: string }>;
 }

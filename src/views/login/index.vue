@@ -93,6 +93,7 @@
           <el-form-item prop="scope" :label="$t('identity.scope')">
             <el-select
               v-model="loginFormData.scope"
+              autocomplete="new-password"
               :placeholder="$t('identity.chooseScope')"
               :aria-label="$t('identity.scope')"
               :disabled="loading"

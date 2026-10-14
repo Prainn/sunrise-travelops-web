@@ -8,19 +8,19 @@
         </el-button>
       </div>
     </template>
-    <el-form :inline="true">
-      <el-row :gutter="24">
-        <el-col :span="20">
-          <el-form-item :label="$t('common.keywords')" class="w-full pr-2">
-            <el-input v-model.trim="keywords" :placeholder="$t('resource.agencySearchPlaceholder')" clearable />
-          </el-form-item>
-        </el-col>
-        <el-col :span="4">
-          <el-button @click="resetQuery">
-            {{ $t("common.reset") }}
-          </el-button>
-        </el-col>
-      </el-row>
+    <el-form :inline="true" class="agency-sidebar__search flex w-full gap-2">
+      <el-form-item :label="$t('common.keywords')" class="min-w-0 flex-1">
+        <el-input
+          v-model.trim="keywords"
+          :placeholder="$t('resource.agencySearchPlaceholder')"
+          clearable
+        />
+      </el-form-item>
+      <el-form-item class="shrink-0">
+        <el-button @click="resetQuery">
+          {{ $t("common.reset") }}
+        </el-button>
+      </el-form-item>
     </el-form>
     <el-scrollbar class="min-h-0 flex-1">
       <el-tree
@@ -122,6 +122,17 @@ function resetQuery() {
 <style scoped lang="scss">
 .agency-sidebar {
   @apply 'min-w-0';
+  &__search {
+    :deep(.el-form-item) {
+      @apply 'm-0';
+    }
+    :deep(.el-form-item__content) {
+      @apply 'min-w-0';
+    }
+    :deep(.el-form-item__label) {
+      @apply 'shrink-0';
+    }
+  }
   :deep(.el-card__body) {
     @apply 'flex flex-col gap-3 [height:calc(100%_-_61px)] box-border';
   }

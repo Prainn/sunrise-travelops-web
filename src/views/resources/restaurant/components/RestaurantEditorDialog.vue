@@ -31,7 +31,7 @@
         <el-input v-model.trim="form.cuisine" />
       </el-form-item>
       <el-form-item :label="$t('resource.priceUnit')" prop="unit">
-        <el-select v-model="form.unit">
+        <el-select v-model="form.unit" autocomplete="new-password">
           <el-option
             v-for="option in unitOptions"
             :key="option.value"

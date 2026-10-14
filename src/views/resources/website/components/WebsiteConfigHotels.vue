@@ -89,7 +89,7 @@
         label-width="auto"
       >
         <el-form-item :label="$t('websiteConfig.hotels.city')" prop="cityId">
-          <el-select v-model="record.cityId" filterable>
+          <el-select v-model="record.cityId" autocomplete="new-password" filterable>
             <el-option
               v-for="city in config.cities"
               :key="city.id"

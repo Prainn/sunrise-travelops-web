@@ -21,6 +21,7 @@
               <div class="flex items-center gap-3">
                 <el-tag>{{ $t("websiteWorkspace.businessLabel") }}</el-tag>
                 <el-select
+                  autocomplete="new-password"
                   :model-value="plan?.id"
                   :placeholder="$t('websiteWorkspace.selectItinerary')"
                   class="w-[min(380px,50vw)]!"
@@ -130,6 +131,7 @@
             <div v-if="editable" class="flex flex-wrap gap-3">
               <el-select
                 v-model="skeletonId"
+                autocomplete="new-password"
                 filterable
                 clearable
                 :placeholder="$t('websiteWorkspace.selectSkeleton')"

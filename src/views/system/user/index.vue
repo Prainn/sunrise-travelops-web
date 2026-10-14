@@ -37,6 +37,7 @@
           <el-form-item :label="$t('common.status')" prop="status">
             <el-select
               v-model="params.status"
+              autocomplete="new-password"
               :placeholder="$t('common.all')"
               clearable
               class="w-[112px]"
@@ -47,7 +48,12 @@
           </el-form-item>
 
           <el-form-item :label="$t('user.rolesLabel')" prop="roleId">
-            <el-select v-model="params.roleId" :placeholder="$t('common.all')" clearable>
+            <el-select
+              v-model="params.roleId"
+              autocomplete="new-password"
+              :placeholder="$t('common.all')"
+              clearable
+            >
               <el-option
                 v-for="item in roleOptions"
                 :key="item.value"

@@ -89,7 +89,7 @@
       <el-row :gutter="16">
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('common.status')" prop="status">
-            <el-select v-model="form.status" :disabled="!record">
+            <el-select v-model="form.status" autocomplete="new-password" :disabled="!record">
               <el-option
                 v-for="option in editableStatusOptions"
                 :key="option.value"
@@ -142,7 +142,7 @@
         </el-col>
         <el-col v-else-if="allowAssign" :xs="24" :sm="12">
           <el-form-item :label="$t('inquiry.owner')" prop="ownerId">
-            <el-select v-model="form.ownerId" filterable>
+            <el-select v-model="form.ownerId" autocomplete="new-password" filterable>
               <el-option
                 v-for="owner in owners"
                 :key="owner.id"
@@ -184,7 +184,12 @@
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.destinations')">
-            <el-select v-model="form.destinations" multiple filterable>
+            <el-select
+              v-model="form.destinations"
+              autocomplete="new-password"
+              multiple
+              filterable
+            >
               <el-option
                 v-for="city in cities"
                 :key="city.id"

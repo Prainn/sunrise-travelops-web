@@ -80,6 +80,7 @@
               class="col-start-2 flex items-center flex-wrap gap-[8px]"
             >
               <el-select
+                autocomplete="new-password"
                 class="!w-[210px]"
                 :disabled="!editable || !hotelResource(tier, destination)"
                 :model-value="

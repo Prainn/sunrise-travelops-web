@@ -28,7 +28,7 @@
           </div>
         </el-form-item>
         <el-form-item :label="$t('itinerary.customMealUnit')">
-          <el-select v-model="customUnit" class="w-300px!">
+          <el-select v-model="customUnit" autocomplete="new-password" class="w-300px!">
             <el-option value="personMeal" :label="$t('itinerary.customMealPerPerson')" />
             <el-option value="table" :label="$t('itinerary.customMealPerTable')" />
           </el-select>
@@ -49,6 +49,7 @@
         <el-form-item :label="$t('resource.city')">
           <el-select
             v-model="city"
+            autocomplete="new-password"
             clearable
             :placeholder="$t('itinerary.allCities')"
             class="w-full"

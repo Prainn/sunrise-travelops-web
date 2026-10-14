@@ -10,7 +10,12 @@
         />
       </el-form-item>
       <el-form-item :label="$t('common.status')">
-        <el-select v-model="status" clearable :placeholder="$t('common.all')">
+        <el-select
+          v-model="status"
+          autocomplete="new-password"
+          clearable
+          :placeholder="$t('common.all')"
+        >
           <el-option :label="$t('common.normal')" value="enabled" />
           <el-option :label="$t('common.disabled')" value="disabled" />
         </el-select>

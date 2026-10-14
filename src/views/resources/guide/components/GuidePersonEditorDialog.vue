@@ -20,7 +20,7 @@
         <el-input v-model="form.name" />
       </el-form-item>
       <el-form-item :label="$t('guide.gender')">
-        <el-select v-model="form.gender" class="w-full">
+        <el-select v-model="form.gender" autocomplete="new-password" class="w-full">
           <el-option
             v-for="item in [0, 1, 2]"
             :key="item"
@@ -45,7 +45,12 @@
         <el-input v-model="form.contact" />
       </el-form-item>
       <el-form-item :label="$t('guide.employmentType')">
-        <el-select v-model="form.employmentType" clearable class="w-full">
+        <el-select
+          v-model="form.employmentType"
+          autocomplete="new-password"
+          clearable
+          class="w-full"
+        >
           <el-option :label="$t('guide.fullTime')" value="full_time" />
           <el-option :label="$t('guide.partTime')" value="part_time" />
         </el-select>
@@ -53,6 +58,7 @@
       <el-form-item :label="$t('guide.hasLaborContract')">
         <el-select
           v-model="form.hasLaborContract"
+          autocomplete="new-password"
           :empty-values="[null, undefined]"
           clearable
           class="w-full"
@@ -69,7 +75,7 @@
         <el-input v-model="form.identityNumber" />
       </el-form-item>
       <el-form-item :label="$t('common.status')">
-        <el-select v-model="form.status" class="w-full">
+        <el-select v-model="form.status" autocomplete="new-password" class="w-full">
           <el-option :label="$t('common.enabled')" value="enabled" />
           <el-option :label="$t('common.disabled')" value="disabled" />
         </el-select>

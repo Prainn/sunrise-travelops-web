@@ -21,13 +21,13 @@
     >
       <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
         <el-form-item :label="$t('websiteItineraryUi.hotelTier')">
-          <el-select v-model="hotel.tier">
+          <el-select v-model="hotel.tier" autocomplete="new-password">
             <el-option value="A" :label="$t('websiteItineraryUi.hotelTierA')" />
             <el-option value="B" :label="$t('websiteItineraryUi.hotelTierB')" />
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.overnightCity')">
-          <el-select v-model="hotel.cityId" filterable>
+          <el-select v-model="hotel.cityId" autocomplete="new-password" filterable>
             <el-option
               v-for="city in config.cities"
               :key="city.id"
@@ -38,6 +38,7 @@
         </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.selectConfigHotel')">
           <el-select
+            autocomplete="new-password"
             :model-value="hotel.configHotelId"
             clearable
             filterable

@@ -94,7 +94,7 @@
       >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
           <el-form-item :label="$t('websiteConfig.belongsToCity')" prop="cityId">
-            <el-select v-model="record.cityId" filterable>
+            <el-select v-model="record.cityId" autocomplete="new-password" filterable>
               <el-option
                 v-for="city in config.cities"
                 :key="city.id"
@@ -121,7 +121,12 @@
           </el-form-item>
         </div>
         <el-form-item :label="$t('websiteConfig.patterns.attractions')" prop="attractionIds">
-          <el-select v-model="record.attractionIds" multiple filterable>
+          <el-select
+            v-model="record.attractionIds"
+            autocomplete="new-password"
+            multiple
+            filterable
+          >
             <el-option
               v-for="item in config.attractions.filter((row) => row.cityId === record?.cityId)"
               :key="item.id"

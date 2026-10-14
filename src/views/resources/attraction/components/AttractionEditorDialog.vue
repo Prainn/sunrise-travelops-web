@@ -36,7 +36,7 @@
         />
       </el-form-item>
       <el-form-item :label="$t('attraction.category')" prop="category">
-        <el-select v-model="form.category" clearable>
+        <el-select v-model="form.category" autocomplete="new-password" clearable>
           <el-option
             v-for="option in attractionCategoryOptions"
             :key="option.value"
@@ -46,7 +46,7 @@
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('resource.priceUnit')" prop="unit">
-        <el-select v-model="form.unit">
+        <el-select v-model="form.unit" autocomplete="new-password">
           <el-option
             v-for="option in unitOptions"
             :key="option.value"

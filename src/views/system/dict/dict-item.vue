@@ -147,6 +147,7 @@
           </template>
           <el-select
             v-model="formData.tagType"
+            autocomplete="new-password"
             :placeholder="$t('dictionary.tagTypePlaceholder')"
             clearable
             @clear="formData.tagType = ''"

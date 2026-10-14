@@ -5,6 +5,7 @@
       <div v-if="editable" class="flex gap-2">
         <el-select
           v-model="selectedId"
+          autocomplete="new-password"
           filterable
           clearable
           :placeholder="$t('websiteItineraryUi.selectRoute')"
@@ -33,7 +34,7 @@
     >
       <div class="grid grid-cols-3 gap-x-4 max-[650px]:grid-cols-1">
         <el-form-item :label="$t('websiteItineraryUi.departureCity')">
-          <el-select v-model="leg.fromCityId" filterable>
+          <el-select v-model="leg.fromCityId" autocomplete="new-password" filterable>
             <el-option
               v-for="city in config.cities"
               :key="city.id"
@@ -43,7 +44,7 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.arrivalCity')">
-          <el-select v-model="leg.toCityId" filterable>
+          <el-select v-model="leg.toCityId" autocomplete="new-password" filterable>
             <el-option
               v-for="city in config.cities"
               :key="city.id"
@@ -53,7 +54,7 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.transportMode')">
-          <el-select v-model="leg.mode">
+          <el-select v-model="leg.mode" autocomplete="new-password">
             <el-option
               v-for="option in TRANSPORT_OPTIONS"
               :key="option.value"

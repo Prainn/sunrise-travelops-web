@@ -51,7 +51,7 @@
       <div class="p-[16px] mb-[20px] rounded-[8px] [background:var(--el-fill-color-extra-light)] [border:1px_solid_var(--el-border-color-lighter)]">
         <div class="grid grid-cols-3 gap-x-4 max-[650px]:grid-cols-1">
           <el-form-item :label="$t('websiteItineraryUi.departureCity')" required>
-            <el-select v-model="day.departCityId" filterable>
+            <el-select v-model="day.departCityId" autocomplete="new-password" filterable>
               <el-option
                 v-for="city in config.cities"
                 :key="city.id"
@@ -61,7 +61,7 @@
             </el-select>
           </el-form-item>
           <el-form-item :label="$t('websiteItineraryUi.endCity')" required>
-            <el-select v-model="day.endCityId" filterable>
+            <el-select v-model="day.endCityId" autocomplete="new-password" filterable>
               <el-option
                 v-for="city in config.cities"
                 :key="city.id"
@@ -73,6 +73,7 @@
           <el-form-item :label="$t('websiteItineraryUi.overnightCity')">
             <el-select
               v-model="day.overnightCityId"
+              autocomplete="new-password"
               filterable
               clearable
               :empty-values="[null, undefined]"

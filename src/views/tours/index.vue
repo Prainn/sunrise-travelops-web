@@ -3,7 +3,7 @@
     <el-card class="page-search" shadow="never">
       <el-form inline>
         <el-form-item v-if="isHeadquarters" :label="$t('identity.businessUnit')">
-          <el-select v-model="businessUnit" clearable>
+          <el-select v-model="businessUnit" autocomplete="new-password" clearable>
             <el-option
               v-for="unit in UNITS"
               :key="unit"
@@ -13,7 +13,7 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('common.status')">
-          <el-select v-model="status" clearable>
+          <el-select v-model="status" autocomplete="new-password" clearable>
             <el-option value="active" :label="$t('tour.status.active')" />
             <el-option value="cancelled" :label="$t('tour.status.cancelled')" />
           </el-select>

@@ -2,6 +2,7 @@
   <el-select
     v-if="type === 'select'"
     v-model="selectedValue"
+    autocomplete="new-password"
     :placeholder="resolvedPlaceholder"
     :disabled="disabled"
     clearable

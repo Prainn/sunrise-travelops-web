@@ -109,6 +109,7 @@
         <el-form-item :label="$t('websiteConfig.templates.code')" prop="code">
           <el-select
             v-model="record.code"
+            autocomplete="new-password"
             filterable
             allow-create
             default-first-option

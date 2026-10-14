@@ -54,6 +54,7 @@ const fields = computed<ResourceFormField[]>(() => [
     prop: "province",
     labelKey: "city.province",
     type: "select",
+    required: true,
     clearable: true,
     options: provinceOptions.value,
   },

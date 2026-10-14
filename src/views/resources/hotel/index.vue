@@ -13,6 +13,7 @@
         <el-form-item :label="$t('resource.city')">
           <el-select
             v-model="city"
+            autocomplete="new-password"
             :placeholder="$t('common.all')"
             clearable
             class="hotel-page__city-select"
@@ -28,6 +29,7 @@
         <el-form-item :label="$t('resource.starRating')">
           <el-select
             v-model="rating"
+            autocomplete="new-password"
             :placeholder="$t('common.all')"
             clearable
             class="hotel-page__rating-select"
@@ -88,7 +90,7 @@
           <CitySelect v-model="hotelForm.city" />
         </el-form-item>
         <el-form-item :label="$t('resource.priceUnit')" prop="unit">
-          <el-select v-model="hotelForm.unit">
+          <el-select v-model="hotelForm.unit" autocomplete="new-password">
             <el-option
               v-for="option in hotelUnitOptions"
               :key="option.value"

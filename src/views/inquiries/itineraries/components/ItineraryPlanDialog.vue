@@ -21,6 +21,7 @@
       </el-form-item>
       <el-form-item :label="$t('itinerary.paxTiers')" prop="paxTiers">
         <el-select
+          autocomplete="new-password"
           :model-value="form.paxTiers"
           multiple
           filterable
@@ -102,6 +103,7 @@
       <el-form-item :label="$t('itinerary.destinations')" prop="destinations">
         <el-select
           v-model="form.destinations"
+          autocomplete="new-password"
           multiple
           filterable
           :placeholder="$t('itinerary.destinationsPlaceholder')"

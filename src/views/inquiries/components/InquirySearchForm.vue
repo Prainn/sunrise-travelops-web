@@ -5,7 +5,7 @@
         v-if="userStore.userInfo.scope === 'headquarters'"
         :label="$t('identity.businessUnit')"
       >
-        <el-select v-model="businessUnit" class="!w-[180px]">
+        <el-select v-model="businessUnit" autocomplete="new-password" class="!w-[180px]">
           <el-option value="" :label="$t('identity.allBusinesses')" />
           <el-option
             v-for="unit in ['shengxu', 'linxi', 'website']"
@@ -24,7 +24,7 @@
         />
       </el-form-item>
       <el-form-item :label="$t('common.status')">
-        <el-select v-model="status" clearable>
+        <el-select v-model="status" autocomplete="new-password" clearable>
           <el-option
             v-for="option in statusOptions"
             :key="option.value"
@@ -34,7 +34,7 @@
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('inquiry.owner')">
-        <el-select v-model="owner" clearable>
+        <el-select v-model="owner" autocomplete="new-password" clearable>
           <el-option
             v-for="option in ownerOptions"
             :key="option.id"
@@ -44,7 +44,7 @@
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('inquiry.sourceChannel')">
-        <el-select v-model="sourceChannel" clearable>
+        <el-select v-model="sourceChannel" autocomplete="new-password" clearable>
           <el-option
             v-for="option in sourceOptions"
             :key="option"

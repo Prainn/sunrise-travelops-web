@@ -3,7 +3,7 @@
     <el-card class="page-search" shadow="never">
       <el-form inline>
         <el-form-item :label="$t('planning.secondLanguage')">
-          <el-select v-model="secondLanguage" clearable>
+          <el-select v-model="secondLanguage" autocomplete="new-password" clearable>
             <el-option
               v-for="item in GUIDE_LANGUAGE_OPTIONS"
               :key="item.value"
@@ -13,7 +13,7 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('planning.shopping')">
-          <el-select v-model="shopping" clearable>
+          <el-select v-model="shopping" autocomplete="new-password" clearable>
             <el-option :label="$t('planning.withShopping')" value="true" /><el-option
               :label="$t('planning.withoutShopping')"
               value="false"

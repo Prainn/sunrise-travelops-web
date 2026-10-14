@@ -15,10 +15,12 @@
       :rules="rules"
       :disabled="isSubmitting || loadingParent"
       label-width="auto"
+      autocomplete="off"
     >
       <el-form-item :label="$t('resource.agencyBusinessUnit')" prop="businessUnit">
         <el-select
           v-model="selectedBusinessUnit"
+          autocomplete="new-password"
           :placeholder="$t('identity.selectBusinessUnitToCreate')"
           @change="setBusinessUnit"
         >
@@ -47,6 +49,7 @@
       <el-form-item :label="$t('resource.agencyCoordinator')" prop="coordinatorId">
         <el-select
           v-model="form.coordinatorId"
+          autocomplete="new-password"
           filterable
           :loading="loadingCoordinators"
           :disabled="!form.businessUnit || loadingCoordinators"
@@ -77,7 +80,7 @@
         />
       </el-form-item>
       <el-form-item :label="$t('resource.city')">
-        <CitySelect v-model="form.city" />
+        <el-input v-model.trim="form.city" autocomplete="new-password" :maxlength="100" />
       </el-form-item>
       <el-form-item :label="$t('resource.agencyEmail')" prop="email">
         <el-input v-model.trim="form.email" />
@@ -115,7 +118,6 @@
 <script setup lang="ts">
 import { businessUnitName } from "@/constants/identity";
 import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
-import CitySelect from "@/components/CitySelect.vue";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";

@@ -17,7 +17,7 @@
           />
         </el-form-item>
         <el-form-item :label="$t('common.status')">
-          <el-select v-model="query.status" clearable>
+          <el-select v-model="query.status" autocomplete="new-password" clearable>
             <el-option
               v-for="option in INQUIRY_STATUS_OPTIONS"
               :key="option.value"
@@ -30,7 +30,12 @@
           v-if="allowAssign || user.userInfo.scope === 'headquarters'"
           :label="$t('inquiry.owner')"
         >
-          <el-select v-model="query.ownerId" clearable filterable>
+          <el-select
+            v-model="query.ownerId"
+            autocomplete="new-password"
+            clearable
+            filterable
+          >
             <el-option
               v-for="owner in owners"
               :key="owner.id"

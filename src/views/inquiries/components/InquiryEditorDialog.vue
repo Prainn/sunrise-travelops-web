@@ -23,6 +23,7 @@
           >
             <el-select
               v-model="form.businessUnit"
+              autocomplete="new-password"
               :disabled="isEditing"
               :placeholder="$t('identity.selectBusinessUnitToCreate')"
               @change="changeBusinessUnit"
@@ -46,7 +47,7 @@
       <el-row :gutter="16">
         <el-col :span="12">
           <el-form-item :label="$t('common.status')" prop="status">
-            <el-select v-model="form.status" :disabled="!isEditing">
+            <el-select v-model="form.status" autocomplete="new-password" :disabled="!isEditing">
               <el-option
                 v-for="option in editableStatusOptions"
                 :key="option.value"
@@ -84,7 +85,12 @@
         </el-col>
         <el-col :span="12">
           <el-form-item :label="$t('inquiry.sourceChannel')" prop="sourceChannel">
-            <el-select v-model="form.sourceChannel" allow-create filterable>
+            <el-select
+              v-model="form.sourceChannel"
+              autocomplete="new-password"
+              allow-create
+              filterable
+            >
               <el-option
                 v-for="option in sourceOptions"
                 :key="option"
@@ -112,6 +118,7 @@
           <el-form-item :label="$t('inquiry.owner')" prop="ownerId">
             <el-select
               v-model="form.ownerId"
+              autocomplete="new-password"
               disabled
               :loading="loadingOwners"
               :placeholder="$t('common.selectPlaceholder')"

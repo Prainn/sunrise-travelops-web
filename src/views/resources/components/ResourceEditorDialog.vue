@@ -32,14 +32,17 @@
         />
         <el-input-number
           v-else-if="field.type === 'number'"
-          :model-value="Number(form[field.prop] ?? 0)"
-          :min="0"
+          :model-value="form[field.prop] == null ? null : Number(form[field.prop])"
+          :min="field.min ?? 0"
+          :precision="field.precision"
+          :value-on-clear="null"
           controls-position="right"
-          @update:model-value="form[field.prop] = $event ?? 0"
+          @update:model-value="form[field.prop] = $event"
         />
         <el-select
           v-else-if="field.type === 'select'"
           v-model="form[field.prop]"
+          autocomplete="new-password"
           :clearable="field.clearable"
           @clear="form[field.prop] = ''"
         >
@@ -123,6 +126,7 @@ const rules = computed<FormRules>(() => ({
         [
           {
             required: true,
+            ...(field.type === "number" ? { type: "number" as const, min: field.min } : {}),
             message: t("resource.fieldRequired", { field: t(field.labelKey) }),
             trigger: field.type === "select" ? "change" : "blur",
           },

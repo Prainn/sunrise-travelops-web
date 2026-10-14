@@ -17,7 +17,7 @@
         prop="ownerId"
         :rules="[{ required: true, message: $t('common.selectPlaceholder') }]"
       >
-        <el-select v-model="form.ownerId" filterable>
+        <el-select v-model="form.ownerId" autocomplete="new-password" filterable>
           <el-option
             v-for="owner in owners.filter((item) => item.id !== record?.ownerId)"
             :key="owner.id"

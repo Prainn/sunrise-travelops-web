@@ -1,5 +1,6 @@
 <template>
   <el-select
+    autocomplete="new-password"
     :model-value="modelValue"
     class="w-full"
     @update:model-value="emit('update:modelValue', $event)"

@@ -11,7 +11,12 @@
           v-if="userStore.userInfo.scope === 'headquarters' && !inquiryId"
           :label="$t('identity.businessUnit')"
         >
-          <el-select v-model="businessUnit" class="!w-[180px]" @change="search">
+          <el-select
+            v-model="businessUnit"
+            autocomplete="new-password"
+            class="!w-[180px]"
+            @change="search"
+          >
             <el-option value="" :label="$t('identity.allBusinesses')" />
             <el-option
               v-for="unit in ['shengxu', 'linxi', 'website']"
@@ -36,6 +41,7 @@
         <el-form-item :label="$t('inquiry.log.operator')">
           <el-select
             v-model="operatorId"
+            autocomplete="new-password"
             clearable
             filterable
             class="w-[220px]"
@@ -51,6 +57,7 @@
         <el-form-item :label="$t('inquiry.log.action')">
           <el-select
             v-model="action"
+            autocomplete="new-password"
             :placeholder="$t('common.selectPlaceholder')"
             clearable
             class="!w-[200px]"

@@ -6,6 +6,7 @@
           <el-form-item :label="$t('operationLog.category')">
             <el-select
               v-model="category"
+              autocomplete="new-password"
               clearable
               :placeholder="$t('operationLog.all')"
               style="width: 180px"

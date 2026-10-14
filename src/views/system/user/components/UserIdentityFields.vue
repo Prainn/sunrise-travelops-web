@@ -11,6 +11,7 @@
       >
         <el-select
           v-model="identity.scope"
+          autocomplete="new-password"
           :disabled="Boolean(identity.id)"
           :placeholder="$t('identity.chooseScope')"
           @change="
@@ -34,6 +35,7 @@
       >
         <el-select
           v-model="identity.deptId"
+          autocomplete="new-password"
           :placeholder="$t('user.departmentPlaceholder')"
           @change="identity.roleIds = []"
         >
@@ -51,6 +53,7 @@
         :rules="{ required: true, type: 'array', min: 1, message: $t('user.rolePlaceholder') }"
       >
         <el-select
+          autocomplete="new-password"
           :model-value="sortUserRoleIds(identity.roleIds, roles)"
           multiple
           :placeholder="$t('user.rolePlaceholder')"

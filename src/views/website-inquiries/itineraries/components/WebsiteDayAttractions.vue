@@ -5,6 +5,7 @@
       <div v-if="editable" class="flex gap-2">
         <el-select
           v-model="selectedId"
+          autocomplete="new-password"
           filterable
           clearable
           :placeholder="$t('websiteItineraryUi.selectAttraction')"

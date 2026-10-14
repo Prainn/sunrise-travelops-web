@@ -96,6 +96,7 @@
         <el-form-item :label="$t('guideLeave.guide')" prop="guidePersonId">
           <el-select
             v-model="form.guidePersonId"
+            autocomplete="new-password"
             filterable
             remote
             :remote-method="loadGuides"

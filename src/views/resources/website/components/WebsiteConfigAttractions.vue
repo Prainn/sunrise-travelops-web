@@ -118,7 +118,7 @@
       >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
           <el-form-item :label="$t('websiteConfig.belongsToCity')" prop="cityId">
-            <el-select v-model="record.cityId" filterable>
+            <el-select v-model="record.cityId" autocomplete="new-password" filterable>
               <el-option
                 v-for="city in config.cities"
                 :key="city.id"
@@ -128,7 +128,7 @@
             </el-select>
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.attractions.kind')">
-            <el-select v-model="record.kind">
+            <el-select v-model="record.kind" autocomplete="new-password">
               <el-option value="attraction" :label="$t('websiteConfig.attractions.attraction')" />
               <el-option value="component" :label="$t('websiteConfig.attractions.component')" />
             </el-select>
@@ -142,6 +142,7 @@
           <el-form-item :label="$t('websiteConfig.attractions.parent')" prop="parentId">
             <el-select
               v-model="record.parentId"
+              autocomplete="new-password"
               filterable
               clearable
               :value-on-clear="null"
@@ -158,7 +159,7 @@
             </el-select>
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.attractions.copyKey')" prop="copyKey">
-            <el-select v-model="record.copyKey" filterable>
+            <el-select v-model="record.copyKey" autocomplete="new-password" filterable>
               <el-option
                 v-for="template in config.templates"
                 :key="template.id"
@@ -175,7 +176,7 @@
             />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.attractions.recommendedMonths')">
-            <el-select v-model="record.recommendedMonths" multiple>
+            <el-select v-model="record.recommendedMonths" autocomplete="new-password" multiple>
               <el-option
                 v-for="month in 12"
                 :key="month"

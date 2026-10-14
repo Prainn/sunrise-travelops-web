@@ -10,7 +10,12 @@
         />
       </el-form-item>
       <el-form-item :label="$t('resource.city')">
-        <el-select v-model="city" clearable filterable>
+        <el-select
+          v-model="city"
+          autocomplete="new-password"
+          clearable
+          filterable
+        >
           <el-option
             v-for="option in cityOptions"
             :key="option"
@@ -20,7 +25,7 @@
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('restaurant.priceUnit')">
-        <el-select v-model="priceUnit" clearable>
+        <el-select v-model="priceUnit" autocomplete="new-password" clearable>
           <el-option
             v-for="option in unitOptions"
             :key="option.value"
@@ -30,7 +35,7 @@
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('resource.isStandardPrice')">
-        <el-select v-model="isStandardPrice" :placeholder="$t('common.all')">
+        <el-select v-model="isStandardPrice" autocomplete="new-password" :placeholder="$t('common.all')">
           <el-option :label="$t('common.all')" value="" />
           <el-option :label="$t('common.yes')" :value="true" />
           <el-option :label="$t('common.no')" :value="false" />

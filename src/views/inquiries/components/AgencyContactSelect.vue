@@ -1,5 +1,6 @@
 <template>
   <el-select
+    autocomplete="new-password"
     :model-value="modelValue"
     allow-create
     default-first-option
