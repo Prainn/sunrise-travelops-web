@@ -27,9 +27,6 @@
       <el-form-item :label="$t('resource.description')" prop="description">
         <el-input v-model.trim="form.description" type="textarea" :rows="3" />
       </el-form-item>
-      <el-form-item :label="$t('resource.cuisine')">
-        <el-input v-model.trim="form.cuisine" />
-      </el-form-item>
       <el-form-item :label="$t('resource.priceUnit')" prop="unit">
         <el-select v-model="form.unit" autocomplete="new-password">
           <el-option
@@ -59,6 +56,9 @@
           :precision="0"
           :controls="false"
         />
+      </el-form-item>
+      <el-form-item :label="$t('resource.cuisine')">
+        <el-input v-model.trim="form.cuisine" />
       </el-form-item>
       <el-form-item :label="$t('resource.contact')">
         <el-input v-model.trim="form.contact" />

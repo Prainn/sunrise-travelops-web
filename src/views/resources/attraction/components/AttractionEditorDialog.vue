@@ -18,6 +18,16 @@
       <el-form-item v-if="isEditing" :label="$t('resource.code')">
         <el-input v-model="form.code" disabled />
       </el-form-item>
+      <el-form-item :label="$t('attraction.category')" prop="category">
+        <el-select v-model="form.category" autocomplete="new-password" clearable>
+          <el-option
+            v-for="option in attractionCategoryOptions"
+            :key="option.value"
+            :label="$t(option.labelKey)"
+            :value="option.value"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item :label="$t('resource.attractionName')" prop="name">
         <el-input v-model.trim="form.name" />
       </el-form-item>
@@ -34,16 +44,6 @@
           :precision="2"
           :controls="false"
         />
-      </el-form-item>
-      <el-form-item :label="$t('attraction.category')" prop="category">
-        <el-select v-model="form.category" autocomplete="new-password" clearable>
-          <el-option
-            v-for="option in attractionCategoryOptions"
-            :key="option.value"
-            :label="$t(option.labelKey)"
-            :value="option.value"
-          />
-        </el-select>
       </el-form-item>
       <el-form-item :label="$t('resource.priceUnit')" prop="unit">
         <el-select v-model="form.unit" autocomplete="new-password">
