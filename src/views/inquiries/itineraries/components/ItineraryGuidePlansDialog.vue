@@ -50,7 +50,12 @@
               @update:model-value="emit('update-price', Number($event ?? 0))"
             />
           </el-form-item>
-          <el-form-item :label="$t('identity.reason')" label-width="160px">
+          <el-form-item
+            v-if="needsReason"
+            :label="$t('identity.reason')"
+            label-width="160px"
+            required
+          >
             <el-input
               :model-value="plan.adjustmentReason ?? ''"
               :disabled="!editable"
@@ -116,9 +121,11 @@ import { computed } from "vue";
 import type { ItineraryGuidePlan } from "@/types/itinerary";
 import { GUIDE_LANGUAGE_OPTIONS } from "@/types/resource";
 import { formatMoney, multiplyMoney } from "@/utils";
+import { selectionPriceNeedsReason } from "../price-adjustments";
 
 const props = defineProps<{
   plans: ItineraryGuidePlan[];
+  savedPlans: ItineraryGuidePlan[];
   secondLanguage: string;
   shopping: boolean;
   editable: boolean;
@@ -137,6 +144,12 @@ const emit = defineEmits<{
   cancel: [];
 }>();
 const plan = computed(() => props.plans[0]);
+const needsReason = computed(() => {
+  const guide = plan.value;
+  if (!guide) return false;
+  const saved = props.savedPlans.find((item) => item.guideId === guide.guideId);
+  return selectionPriceNeedsReason(guide.dailyPrice, guide, saved?.dailyPrice);
+});
 const totalPrice = computed(() =>
   plan.value ? multiplyMoney(plan.value.dailyPrice, plan.value.serviceDays) : 0,
 );

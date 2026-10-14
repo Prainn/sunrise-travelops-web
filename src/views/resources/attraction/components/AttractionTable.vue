@@ -24,133 +24,28 @@
           border
           height="100%"
           row-key="id"
-          @expand-change="changeExpand"
         >
-          <el-table-column :label="$t('resource.isStandardPrice')" width="125">
+          <el-table-column prop="name" :label="$t('resource.attractionName')" min-width="200" />
+          <el-table-column prop="area" :label="$t('attraction.area')" width="100" />
+          <el-table-column
+            prop="description"
+            :label="$t('resource.description')"
+            min-width="240"
+            show-overflow-tooltip
+          />
+          <el-table-column :label="$t('attraction.price')" width="110" align="right">
+            <template #default="scope">
+              {{ scope.row.price === null ? $t('resource.priceMissing') : formatMoney(scope.row.price) }}
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('resource.isStandardPrice')" width="110" align="center">
             <template #default="{ row }">
               <el-tag :type="row.isStandardPrice ? 'success' : 'info'">
                 {{ $t(row.isStandardPrice ? "common.yes" : "common.no") }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column type="expand" width="48">
-            <template #default="scope">
-              <div class="attraction-table__prices">
-                <div class="attraction-table__price-header">
-                  <strong>{{ $t("attraction.priceItems") }}</strong>
-                  <el-button
-                    v-has-perm="RESOURCE_PERMISSIONS.attraction.create"
-                    type="primary"
-                    link
-                    @click="emit('create-price', scope.row as AttractionRecord)"
-                  >
-                    {{ $t("attraction.createPrice") }}
-                  </el-button>
-                </div>
-                <el-table
-                  v-loading="loadingPriceIds?.has(scope.row.id) === true"
-                  :data="scope.row.prices"
-                  border
-                  size="small"
-                >
-                  <el-table-column :label="$t('attraction.itemType')" width="100">
-                    <template #default="priceScope">
-                      {{
-                        getAttractionItemTypeName(priceScope.row.itemType, locale)
-                      }}
-                    </template>
-                  </el-table-column>
-                  <el-table-column
-                    prop="itemName"
-                    :label="$t('attraction.itemName')"
-                    min-width="130"
-                  />
-                  <el-table-column prop="audience" :label="$t('attraction.audience')" width="90" />
-                  <el-table-column
-                    prop="periodName"
-                    :label="$t('attraction.pricePeriod')"
-                    width="90"
-                  />
-                  <el-table-column :label="$t('attraction.effectivePeriod')" min-width="180">
-                    <template #default="priceScope">
-                      {{ formatPeriod(priceScope.row as AttractionPriceRecord) }}
-                    </template>
-                  </el-table-column>
-                  <el-table-column :label="$t('attraction.rackPrice')" width="100" align="right">
-                    <template #default="priceScope">
-                      {{ formatPrice(priceScope.row as AttractionPriceRecord, "rackPrice") }}
-                    </template>
-                  </el-table-column>
-                  <el-table-column
-                    :label="$t('attraction.settlementPrice')"
-                    width="100"
-                    align="right"
-                  >
-                    <template #default="priceScope">
-                      {{ formatPrice(priceScope.row as AttractionPriceRecord, "settlementPrice") }}
-                    </template>
-                  </el-table-column>
-                  <el-table-column
-                    prop="priceNote"
-                    :label="$t('attraction.priceNote')"
-                    min-width="180"
-                    show-overflow-tooltip
-                  />
-                  <el-table-column :label="$t('common.actions')" width="120" align="center">
-                    <template #default="priceScope">
-                      <el-button
-                        v-has-perm="RESOURCE_PERMISSIONS.attraction.update"
-                        type="primary"
-                        link
-                        @click="
-                          emit(
-                            'edit-price',
-                            scope.row as AttractionRecord,
-                            priceScope.row as AttractionPriceRecord,
-                          )
-                        "
-                      >
-                        {{ $t("common.edit") }}
-                      </el-button>
-                      <el-button
-                        v-has-perm="RESOURCE_PERMISSIONS.attraction.delete"
-                        type="danger"
-                        link
-                        @click="
-                          emit(
-                            'delete-price',
-                            scope.row as AttractionRecord,
-                            priceScope.row as AttractionPriceRecord,
-                          )
-                        "
-                      >
-                        {{ $t("common.delete") }}
-                      </el-button>
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </div>
-            </template>
-          </el-table-column>
-          <el-table-column prop="code" :label="$t('resource.code')" width="200" />
-          <el-table-column prop="name" :label="$t('resource.attractionName')" min-width="180" />
-          <el-table-column prop="area" :label="$t('attraction.area')" width="100" />
-          <el-table-column :label="$t('attraction.category')" width="100">
-            <template #default="scope">
-              {{ $t(attractionCategoryLabelKeys[scope.row.category as AttractionCategory]) }}
-            </template>
-          </el-table-column>
-          <el-table-column :label="$t('attraction.priceCount')" width="100" align="center">
-            <template #default="scope">
-              {{ scope.row.priceCount ?? scope.row.prices.length }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="restroomLocation"
-            :label="$t('attraction.restroomLocation')"
-            min-width="220"
-            show-overflow-tooltip
-          />
+          <el-table-column prop="code" :label="$t('resource.code')" width="170" />
           <el-table-column :label="$t('common.status')" width="90" align="center">
             <template #default="scope">
               <el-tag :type="scope.row.status === 'enabled' ? 'success' : 'info'">
@@ -208,21 +103,17 @@
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 import { ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
-import { useI18n } from "vue-i18n";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import type {
   AttractionCategory,
-  AttractionPriceRecord,
   AttractionRecord,
   ResourceListQuery,
 } from "@/types/resource";
 import { formatMoney } from "@/utils";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import AttractionSearchForm from "./AttractionSearchForm.vue";
-import { attractionCategoryLabelKeys, getAttractionItemTypeName } from "../options";
 
 defineProps<{
-  loadingPriceIds?: Set<string>;
   loading?: boolean;
   rows: AttractionRecord[];
   total: number;
@@ -234,13 +125,8 @@ const emit = defineEmits<{
   edit: [record: AttractionRecord];
   delete: [record: AttractionRecord];
   "toggle-status": [record: AttractionRecord];
-  expand: [record: AttractionRecord];
-  "create-price": [record: AttractionRecord];
-  "edit-price": [record: AttractionRecord, price: AttractionPriceRecord];
-  "delete-price": [record: AttractionRecord, price: AttractionPriceRecord];
 }>();
 
-const { t, locale } = useI18n();
 const keywords = ref("");
 const area = ref("");
 const category = ref<AttractionCategory | "">("");
@@ -271,30 +157,4 @@ function resetQuery() {
 function refreshRows() {
   emit("refresh", currentQuery());
 }
-function changeExpand(record: AttractionRecord, expanded: AttractionRecord[] | boolean) {
-  const isExpanded = Array.isArray(expanded)
-    ? expanded.some((item) => item.id === record.id)
-    : expanded;
-  if (isExpanded) emit("expand", record);
-}
-function formatPeriod(price: AttractionPriceRecord) {
-  return price.startDate && price.endDate
-    ? `${price.startDate} — ${price.endDate}`
-    : t("common.notSet");
-}
-function formatPrice(price: AttractionPriceRecord, field: "rackPrice" | "settlementPrice") {
-  if (price.isFree) return "免费";
-  return formatMoney(price[field]);
-}
 </script>
-
-<style scoped lang="scss">
-.attraction-table {
-  &__prices {
-    @apply 'p-[16px_48px] [background:var(--el-fill-color-lighter)]';
-  }
-  &__price-header {
-    @apply 'flex items-center justify-between mb-[12px]';
-  }
-}
-</style>

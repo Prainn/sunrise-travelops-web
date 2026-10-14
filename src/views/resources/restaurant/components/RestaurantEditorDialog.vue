@@ -24,6 +24,9 @@
       <el-form-item :label="$t('resource.city')" prop="city">
         <CitySelect v-model="form.city" />
       </el-form-item>
+      <el-form-item :label="$t('resource.description')" prop="description">
+        <el-input v-model.trim="form.description" type="textarea" :rows="3" />
+      </el-form-item>
       <el-form-item :label="$t('resource.cuisine')">
         <el-input v-model.trim="form.cuisine" />
       </el-form-item>
@@ -37,6 +40,26 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item :label="$t('restaurant.price')" prop="price">
+        <el-input-number
+          v-model="form.price"
+          :min="0"
+          :precision="2"
+          :controls="false"
+        />
+      </el-form-item>
+      <el-form-item
+        v-if="form.unit === 'table'"
+        :label="$t('restaurant.dinerCount')"
+        prop="dinerCount"
+      >
+        <el-input-number
+          v-model="form.dinerCount"
+          :min="1"
+          :precision="0"
+          :controls="false"
+        />
+      </el-form-item>
       <el-form-item :label="$t('resource.contact')">
         <el-input v-model.trim="form.contact" />
       </el-form-item>
@@ -48,9 +71,6 @@
       </el-form-item>
       <el-form-item :label="$t('resource.isStandardPrice')">
         <el-switch v-model="form.isStandardPrice" />
-      </el-form-item>
-      <el-form-item :label="$t('resource.description')">
-        <el-input v-model.trim="form.description" type="textarea" :rows="3" />
       </el-form-item>
       <el-form-item :label="$t('common.remark')">
         <el-input v-model.trim="form.remark" type="textarea" :rows="3" />
@@ -113,7 +133,20 @@ const unitOptions = computed(() => getResourceUnitOptions("restaurant", locale.v
 const rules = computed<FormRules>(() => ({
   name: [{ required: true, message: t("restaurant.nameRequired"), trigger: "blur" }],
   city: [{ required: true, message: t("restaurant.cityRequired"), trigger: "change" }],
+  description: [{ required: true, message: t("resource.descriptionRequired"), trigger: "blur" }],
+  price: [{ required: true, message: t("restaurant.priceRequired"), trigger: "blur" }],
   unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
+  dinerCount: [
+    {
+      validator: (_rule, value: number | null, callback) =>
+        callback(
+          form.unit !== "table" || (Number.isInteger(value) && Number(value) > 0)
+            ? undefined
+            : new Error(t("restaurant.dinerCountRequired")),
+        ),
+      trigger: "blur",
+    },
+  ],
 }));
 
 watch(
@@ -126,6 +159,6 @@ watch(
 );
 
 async function handleSubmit() {
-  await submitForm(() => props.submit({ ...form, prices: props.record.prices }));
+  await submitForm(() => props.submit({ ...form }));
 }
 </script>

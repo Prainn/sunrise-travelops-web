@@ -7,6 +7,7 @@ import {
   generateItineraryPrintDocument,
   type ItineraryPrintDocument,
 } from "./pdf";
+import { downloadWordDocument, generateItineraryWordDocument, loadQuoteImages } from "./docx";
 import { getDayCountMismatch, getItineraryValidationIssues } from "./workflow";
 
 interface ItineraryPdfOptions {
@@ -21,6 +22,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
   let previewShowChildPrice = false;
   const isPdfPreviewVisible = ref(false);
   const isGeneratingPdf = ref(false);
+  const isGeneratingWord = ref(false);
   const pdfPreviewFile = ref<ItineraryPrintDocument>();
   const pdfPreviewUrl = ref("");
   let previewSource = "";
@@ -125,6 +127,34 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     }
   }
 
+  // Word and PDF share one frozen quote: a draft is confirmed and frozen on first export, a quoted itinerary reads the frozen data.
+  async function exportWord(): Promise<boolean> {
+    const plan = options.selectedItinerary.value;
+    const inquiry = options.inquiry.value;
+    if (!plan || !inquiry || isGeneratingWord.value) return false;
+    isGeneratingWord.value = true;
+    try {
+      let data = await inquiryService.pdfData(plan.id);
+      if (plan.status === "draft") {
+        if (data.itinerary.version !== plan.version) return false;
+        data = await inquiryService.confirmPdf(data);
+        Object.assign(plan, await inquiryService.itinerary(plan.id));
+        Object.assign(inquiry, await inquiryService.detail(inquiry.id));
+      }
+      const file = await generateItineraryWordDocument(
+        data.itinerary,
+        data,
+        showChildPrice.value,
+        await loadQuoteImages(),
+      );
+      await inquiryService.recordDownload(plan.id);
+      downloadWordDocument(file);
+      return true;
+    } finally {
+      isGeneratingWord.value = false;
+    }
+  }
+
   function closePdfPreview() {
     isPdfPreviewVisible.value = false;
     if (pdfPreviewUrl.value) URL.revokeObjectURL(pdfPreviewUrl.value);
@@ -152,6 +182,8 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     confirmPdfDownload,
     generatePreview,
     isGeneratingPdf,
+    isGeneratingWord,
+    exportWord,
     isPdfPreviewVisible,
     pdfPreviewUrl,
     validatePdf,

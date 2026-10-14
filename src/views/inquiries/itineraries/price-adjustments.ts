@@ -25,7 +25,7 @@ export function itineraryPriceRows(plan: ItineraryRecord) {
             recalculateItem(i);
           },
           i.resourceId === null,
-          `${i.resourceId}:${i.resourcePriceId}`,
+          `${i.resourceId}`,
         ),
       ),
     ),
@@ -88,14 +88,28 @@ export function vehiclePriceNeedsReason(
   );
 }
 
+/** Mirrors backend requirePriceReason: saved same-source items compare with the saved price; new or replaced ones with the stored reference. */
+export function selectionPriceNeedsReason(
+  actual: number | null,
+  fields: PriceReference,
+  savedPrice?: number,
+  custom = false,
+): boolean {
+  if (actual == null) return false;
+  if (savedPrice !== undefined) return roundMoney(savedPrice) !== roundMoney(actual);
+  const reference = fields.referencePrice;
+  return custom || reference == null || roundMoney(reference) !== roundMoney(actual);
+}
+
 export function resourcePriceNeedsReason(
   item: ReturnType<typeof itineraryPriceRows>[number],
   saved?: ReturnType<typeof itineraryPriceRows>[number],
 ): boolean {
-  const actual = item.get();
-  if (actual == null) return false;
   const before = saved?.source === item.source ? saved : undefined;
-  if (before) return roundMoney(before.get() ?? 0) !== roundMoney(actual);
-  const reference = item.fields.referencePrice;
-  return item.custom || reference == null || roundMoney(reference) !== roundMoney(actual);
+  return selectionPriceNeedsReason(
+    item.get(),
+    item.fields,
+    before ? (before.get() ?? 0) : undefined,
+    item.custom,
+  );
 }

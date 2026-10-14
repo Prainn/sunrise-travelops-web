@@ -7,7 +7,6 @@ import type {
 } from "@/types/resource";
 import { resourceUnitStore } from "@/utils/resource-unit";
 import { transportMethodStore } from "@/utils/transport-method";
-import { attractionItemTypeStore } from "@/views/resources/attraction/options";
 
 type BusinessDictionaryItemForm = Omit<BusinessCategoryOptionRecord, "id"> & {
   id?: string;
@@ -48,8 +47,6 @@ function buildItemParams(query: BusinessDictionaryItemQuery) {
 }
 
 function syncBuiltInStores(types: BusinessCategoryTypeRecord[]): void {
-  const attractionItemType = types.find((type) => type.code === "attraction-price-item-type");
-  attractionItemTypeStore.splice(0, attractionItemTypeStore.length, ...(attractionItemType?.items ?? []));
   const resourceUnitType = types.find((type) => type.code === "resource-unit");
   const transportMethodType = types.find((type) => type.code === "transport-method");
 

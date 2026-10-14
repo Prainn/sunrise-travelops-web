@@ -29,7 +29,7 @@
       </div>
     </template>
     <section id="itinerary-hotels">
-      <div v-if="overnightDestinations.length" class="grid gap-[16px] lg:grid-cols-2">
+      <div v-if="overnightDestinations.length" class="grid gap-[16px] lg:grid-cols-2 xl:grid-cols-3">
         <el-card
           v-for="tier in HOTEL_PLAN_TIERS"
           :key="tier"
@@ -68,7 +68,7 @@
                 "
                 :filters="{
                   city: destination,
-                  rating: tier === 'international_five_star' ? tier : 'ctrip_preferred',
+                  rating: tier,
                 }"
                 :disabled="!editable"
                 :placeholder="$t('itinerary.selectDestinationHotel')"
@@ -112,6 +112,7 @@
               />
               <small>{{ $t("planning.hotelPriceUnit") }}</small>
               <el-input
+                v-if="hotelNeedsReason(tier, destination)"
                 :model-value="
                   getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)
                     ?.adjustmentReason ?? ''
@@ -157,6 +158,7 @@
 
 <script setup lang="ts">
 import { computed, watch } from "vue";
+import { selectionPriceNeedsReason } from "../price-adjustments";
 import { resourceService } from "@/services/resource.service";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import type { ItineraryDayRecord, ItineraryHotelPlan, ItineraryHotelTier } from "@/types/itinerary";
@@ -172,6 +174,7 @@ const props = defineProps<{
   destinations: string[];
   dailyPlans: ItineraryDayRecord[];
   hotelPlans: ItineraryHotelPlan[];
+  savedHotelPlans: ItineraryHotelPlan[];
   editable: boolean;
   modelValue: boolean;
   saving: boolean;
@@ -227,6 +230,17 @@ const canSave = computed(
       hotelPlans: props.hotelPlans,
     }).length,
 );
+
+function hotelNeedsReason(tier: ItineraryHotelTier, destination: string) {
+  const hotel = getPlan(tier)?.hotels.find((item) => item.destination === destination);
+  if (!hotel) return false;
+  const saved = props.savedHotelPlans
+    .find((plan) => plan.tier === tier)
+    ?.hotels.find((item) => item.destination === destination);
+  const sameSource =
+    saved?.hotelId === hotel.hotelId && saved.referenceBasis === hotel.referenceBasis;
+  return selectionPriceNeedsReason(hotel.unitCost, hotel, sameSource ? saved.unitCost : undefined);
+}
 
 function getPlan(tier: ItineraryHotelTier) {
   return getHotelPlan({ hotelPlans: props.hotelPlans }, tier);

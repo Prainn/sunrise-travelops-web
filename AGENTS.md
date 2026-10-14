@@ -4,7 +4,7 @@
 
 ## Stack
 
-以 [package.json](package.json) 和 lockfile 为准：Vue 3、TypeScript 6、Vite 8、Vue Router 5、Pinia 4、Element Plus 2、UnoCSS/SCSS、VueUse、vue-i18n；请求使用原生 fetch 封装。客户 PDF 当前为 HTML + 浏览器打印。
+以 [package.json](package.json) 和 lockfile 为准：Vue 3、TypeScript 6、Vite 8、Vue Router 5、Pinia 4、Element Plus 2、UnoCSS/SCSS、VueUse、vue-i18n；请求使用原生 fetch 封装。客户 PDF 使用 HTML + 浏览器打印，普通询盘 Word 使用 docx 生成可编辑文件。
 
 ## Architecture / Feature Navigation
 
@@ -15,7 +15,7 @@
 | 请求与领域类型 | `src/api/request.ts` → `src/services/*.service.ts`；`src/types`，分页在 `common.ts` |
 | 状态与组合函数 | `src/stores`、`src/composables`；业务 composables 就近放在 views 下 |
 | Inquiry | `src/views/inquiries`、`src/services/inquiry.service.ts`、`src/types/inquiry.ts` |
-| Itinerary / Quotation | `src/views/inquiries/itineraries` 的 Workspace/Editor/Quote/Pdf composables、`pdf.ts`；同一个 inquiry service、`src/types/itinerary.ts` |
+| Itinerary / Quotation | `src/views/inquiries/itineraries` 的 Workspace/Editor/Quote/Pdf composables、`pdf.ts` / `docx.ts`；同一个 inquiry service、`src/types/itinerary.ts` |
 | 独立站询盘 / 行程 / 配置 | `src/views/website-inquiries`、`src/views/resources/website`；业务合同见根 `docs/api/独立站行程与报价V1.md` |
 | 成团 / 导游请假与评分 | `src/views/tours`、`src/views/guides`；根成团专题及共享 API 成团章节 |
 | 系统操作日志 | `src/views/system/operation-logs`、`src/services/operation-log.service.ts` |

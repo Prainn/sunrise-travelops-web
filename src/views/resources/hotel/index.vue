@@ -33,10 +33,11 @@
             class="hotel-page__rating-select"
           >
             <el-option
-              :label="$t('hotel.ratings.international_five_star')"
-              value="international_five_star"
+              v-for="value in [3, 4, 5]"
+              :key="value"
+              :label="$t(`hotel.ratings.${value}`)"
+              :value="value"
             />
-            <el-option :label="$t('hotel.ratings.ctrip_preferred')" value="ctrip_preferred" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -107,11 +108,8 @@
         </el-form-item>
         <el-form-item :label="$t('resource.starRating')">
           <el-radio-group v-model="hotelForm.rating">
-            <el-radio value="international_five_star">
-              {{ $t("hotel.ratings.international_five_star") }}
-            </el-radio>
-            <el-radio value="ctrip_preferred">
-              {{ $t("hotel.ratings.ctrip_preferred") }}
+            <el-radio v-for="value in [3, 4, 5]" :key="value" :value="value">
+              {{ $t(`hotel.ratings.${value}`) }}
             </el-radio>
           </el-radio-group>
         </el-form-item>
@@ -234,7 +232,7 @@ function createEmptyHotel(): HotelForm {
     name: "",
     province: "",
     city: "",
-    rating: "international_five_star",
+    rating: 5,
     facilities: "",
     breakfast: "",
     address: "",

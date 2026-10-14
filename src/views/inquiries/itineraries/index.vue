@@ -219,6 +219,7 @@
         v-if="selectedItinerary"
         :model-value="isGuidePlansDialogVisible"
         :plans="selectedItinerary.guidePlans"
+        :saved-plans="savedItinerary?.guidePlans ?? []"
         :second-language="guideLanguage"
         :shopping="guideShopping"
         :editable="contentEditable"
@@ -239,6 +240,7 @@
         :destinations="selectedItinerary.destinations"
         :daily-plans="selectedItinerary.dailyPlans"
         :hotel-plans="selectedItinerary.hotelPlans"
+        :saved-hotel-plans="savedItinerary?.hotelPlans ?? []"
         :editable="contentEditable"
         :saving="isSaving"
         @clear-plan="clearHotelPlan"
@@ -348,6 +350,13 @@
               :active-text="$t('itinerary.showChildPriceInPdf')"
             />
             <div class="ml-auto">
+              <el-button
+                v-if="canDownloadOriginal || (isDraft && canGeneratePdf)"
+                :loading="isGeneratingWord"
+                @click="handleGenerateWord"
+              >
+                {{ $t("itinerary.exportWord") }}
+              </el-button>
               <el-button
                 v-if="canDownloadOriginal"
                 :loading="isGeneratingPdf"
@@ -497,6 +506,8 @@ const {
   destinationOptions,
   guestCount,
   handleGeneratePdf,
+  handleGenerateWord,
+  isGeneratingWord,
   inquiry,
   isGeneratingPdf,
   isEditingPlan,
@@ -558,7 +569,7 @@ const {
   showChildPrice,
 } = useItineraryWorkspace({
   confirm: confirmAction,
-  error: (key) => ElMessage.error(t(key)),
+  error: (key, params) => ElMessage.error(t(key, params ?? {})),
   success: (key) => ElMessage.success(t(key)),
   warning: (key, params) => ElMessage.warning(t(key, params)),
   translate: t,

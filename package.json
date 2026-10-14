@@ -33,6 +33,7 @@
     "@element-plus/icons-vue": "^2.3.2",
     "@vueuse/core": "^14.4.0",
     "animate.css": "^4.1.1",
+    "docx": "^9.10.0",
     "echarts": "^6.1.0",
     "element-plus": "^2.14.4",
     "nprogress": "^0.2.0",

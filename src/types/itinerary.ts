@@ -3,14 +3,14 @@ export type ItineraryStatus = "draft" | "quoted";
 export type ItineraryItemType = "hotel" | "attraction" | "restaurant" | "vehicle" | "guide";
 export type ItineraryDailyItemType = Extract<ItineraryItemType, "attraction" | "restaurant">;
 export type ItineraryPriceUnit = string;
-export type ItineraryHotelTier = "international_five_star" | "preferred_non_five_star";
+export type ItineraryHotelTier = 3 | 4 | 5;
 export type ItineraryVehicleTier = VehicleServiceLevel;
 
 export interface ItineraryHotelSelection extends PriceReference {
   destination: string;
   hotelId: string;
   hotelName: string;
-  rating: string;
+  rating: number;
   breakfast: string;
   unit: ItineraryPriceUnit;
   unitCost: number;
@@ -194,7 +194,6 @@ export interface ItineraryResourceItem extends PriceReference {
   type: ItineraryItemType;
   /** Both IDs are null for an itinerary-only custom restaurant. */
   resourceId: string | null;
-  resourcePriceId: string | null;
   resourceName: string;
   priceName: string;
   quantity: number;

@@ -66,7 +66,7 @@
             v-model="selectedId"
             :selected-label="
               selectedOption
-                ? `${selectedOption.resourceName}｜${selectedOption.priceName}`
+                ? selectedOption.resourceName
                 : undefined
             "
             :query-key="JSON.stringify([city, mealSlot, locale])"
@@ -148,7 +148,6 @@ import { useI18n } from "vue-i18n";
 import type { ItineraryResourceItem, MealSlot } from "@/types/itinerary";
 import { formatMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
-import { getAttractionItemTypeName } from "@/views/resources/attraction/options";
 import type { ResourcePriceDetail } from "../pricing";
 
 const props = defineProps<{
@@ -190,7 +189,7 @@ async function loadPriceOptions(query: RemoteOptionsQuery) {
     total: result.total,
     list: result.list.map((option) => ({
       id: option.id,
-      label: `${option.isStandardPrice ? `[${t("resource.standardPrice")}] ` : ""}${option.resourceName}｜${option.priceName}`,
+      label: `${option.isStandardPrice ? `[${t("resource.standardPrice")}] ` : ""}${option.resourceName}`,
       disabled: isDuplicate(option.resourceId, option.isStandardPrice),
       description: `¥${formatMoney(option.unitCost)}/${resourceUnitName(option.unit)}`,
     })),
@@ -203,7 +202,6 @@ function formatDetail(detail: ResourcePriceDetail) {
   if (detail.format === "money") return `¥${formatMoney(Number(detail.value ?? 0))}`;
   if (detail.format === "translation") return t(String(detail.value));
   if (detail.format === "unit") return resourceUnitName(String(detail.value));
-  if (detail.format === "attraction-item-type") return getAttractionItemTypeName(String(detail.value), locale.value);
   return detail.value === "" ? "-" : String(detail.value);
 }
 function submit() {

@@ -25,14 +25,14 @@ function createPlan({ hotel = true, vehicle = true } = {}): ValidationPlan {
     ],
     hotelPlans: [
       {
-        tier: "international_five_star",
+        tier: 5,
         hotels: hotel
           ? [
             {
               destination: "大理",
               hotelId: "hotel-1",
               hotelName: "测试酒店",
-              rating: "international_five_star",
+              rating: 5,
               breakfast: "含早",
               unit: "room_night",
               unitCost: 500,
@@ -40,7 +40,7 @@ function createPlan({ hotel = true, vehicle = true } = {}): ValidationPlan {
           ]
           : [],
       },
-      { tier: "preferred_non_five_star", hotels: [] },
+      { tier: 4, hotels: [] },
     ],
     vehiclePlans: [
       {

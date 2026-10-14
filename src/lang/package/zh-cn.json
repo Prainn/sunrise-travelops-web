@@ -64,7 +64,8 @@
   },
   "inquiry": {
     "uploadDocument": "拖拽 Word 文档到此处，或点击上传",
-    "documentHint": "支持 .doc / .docx，最大 2 MiB；提取文字及换行，最多 200,000 字符。",
+    "pdfScannedUnsupported": "不支持扫描件或图片型 PDF",
+    "documentHint": "支持 .doc / .docx / 文字型 PDF，最大 2 MiB；提取文字及换行，最多 200,000 字符，成功后替换现有内容。",
     "documentParseFailed": "文档解析失败，请检查文件是否损坏、加密、没有文字或超过 200,000 字符。",
     "expandDocument": "放大",
     "collapseDocument": "缩小",
@@ -218,6 +219,9 @@
       },
       "day": "第 {day} 天",
       "tiers": {
+        "3": "三钻",
+        "4": "四钻",
+        "5": "五钻",
         "international_five_star": "国际五星",
         "preferred_non_five_star": "携程优选",
         "standard": "普通车型",
@@ -369,6 +373,9 @@
       "vip": "VIP 车型"
     },
     "hotelTiers": {
+      "3": "三钻",
+      "4": "四钻",
+      "5": "五钻",
       "international_five_star": "国际五星",
       "preferred_non_five_star": "携程优选"
     },
@@ -424,8 +431,13 @@
     "hotelReplacementTerms": "同级酒店替换条款",
     "copyForRevision": "复制为新方案",
     "downloadOriginal": "导出报价 PDF",
+    "exportWord": "导出 Word",
+    "confirmFreezeWord": "首次导出将确认报价并锁定行程，后续 PDF 与 Word 均使用该冻结报价。是否继续？",
+    "wordGenerated": "报价已确认，Word 已导出",
+    "wordDownloaded": "Word 已导出",
     "previewChanged": "行程已变更，请重新生成预览后下载。",
     "validation": {
+      "toast": "报价还有 {count} 项未完成，首项：{first}",
       "title": "请补全以下信息，点击可定位",
       "noDays": "请添加逐日行程",
       "schedule": "D{day}：请填写当日行程安排",
@@ -800,7 +812,9 @@
       "vip": "VIP 车型"
     },
     "isStandardPrice": "是否为标准价",
-    "standardPrice": "标准价"
+    "standardPrice": "标准价",
+    "priceMissing": "待补价",
+    "descriptionRequired": "请输入描述"
   },
   "hotel": {
     "address": "地址",
@@ -817,8 +831,9 @@
     "nameRequired": "请输入酒店名称",
     "nearby": "周边配置",
     "ratings": {
-      "international_five_star": "国际五星",
-      "ctrip_preferred": "携程优选"
+      "3": "三钻",
+      "4": "四钻",
+      "5": "五钻"
     },
     "searchPlaceholder": "搜索酒店编号、名称或地址",
     "breakfastIncluded": "含早餐"
@@ -861,7 +876,8 @@
     "restroomLocation": "厕所位置/环境",
     "searchPlaceholder": "搜索编号、景点名称或备注",
     "settlementPrice": "结算价",
-    "periodRequired": "请输入价格时段名称"
+    "periodRequired": "请输入价格时段名称",
+    "price": "价格"
   },
   "guide": {
     "name": "导游姓名",
@@ -913,7 +929,8 @@
     "priceRequired": "请输入价格",
     "priceUnit": "计价方式",
     "priceUnitRequired": "请选择计价方式",
-    "searchPlaceholder": "搜索餐厅编号、名称、城市或菜系"
+    "searchPlaceholder": "搜索餐厅编号、名称、城市或菜系",
+    "dinerCountRequired": "按桌计价时请填写正整数的每桌人数"
   },
   "error": {
     "notFound": {

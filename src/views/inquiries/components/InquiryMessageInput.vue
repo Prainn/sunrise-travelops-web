@@ -2,7 +2,7 @@
   <div class="w-full">
     <el-upload
       drag
-      accept=".doc,.docx"
+      accept=".doc,.docx,.pdf"
       :auto-upload="false"
       :show-file-list="false"
       :disabled="isParsing"
@@ -33,6 +33,7 @@
 import { onBeforeUnmount, ref } from "vue";
 import { ElMessage, type UploadFile } from "element-plus";
 import { useI18n } from "vue-i18n";
+import { isApiError } from "@/api/request";
 import { inquiryService } from "@/services/inquiry.service";
 
 defineProps<{ modelValue: string }>();
@@ -51,7 +52,7 @@ onBeforeUnmount(() => {
 async function importDocument(upload: UploadFile) {
   const file = upload.raw;
   if (!file || isParsing.value) return;
-  if (!/\.docx?$/i.test(file.name) || file.size > 2 * 1024 * 1024) {
+  if (!/\.(docx?|pdf)$/i.test(file.name) || file.size > 2 * 1024 * 1024) {
     ElMessage.error(t("inquiry.documentHint"));
     return;
   }
@@ -60,8 +61,10 @@ async function importDocument(upload: UploadFile) {
   try {
     const { text } = await inquiryService.parseDocument(file);
     if (isActive) emit("update:modelValue", text);
-  } catch {
-    if (isActive) ElMessage.error(t("inquiry.documentParseFailed"));
+  } catch (error) {
+    const scanned = isApiError(error) && error.serverMessage?.includes("扫描件");
+    if (isActive)
+      ElMessage.error(t(scanned ? "inquiry.pdfScannedUnsupported" : "inquiry.documentParseFailed"));
   } finally {
     if (isActive) {
       isParsing.value = false;

@@ -1,7 +1,7 @@
 import type { ItineraryItemType, ItineraryPriceUnit } from "./itinerary";
 
 export type ResourceStatus = "enabled" | "disabled";
-export type HotelRating = "international_five_star" | "ctrip_preferred";
+export type HotelRating = 3 | 4 | 5;
 export type VehicleServiceLevel = "standard" | "vip";
 
 export interface ResourceAuditRecord {
@@ -159,38 +159,20 @@ export interface HotelRecord extends ResourceAuditRecord {
 }
 
 export type AttractionCategory = "scenic" | "performance" | "experience" | "transport" | "package";
-export type AttractionPriceItemType = string;
-
-export interface AttractionPriceRecord extends ResourceAuditRecord {
-  id: string;
-  attractionId?: string;
-  itemType: AttractionPriceItemType;
-  itemName: string;
-  audience: string;
-  periodName: string;
-  startDate: string;
-  endDate: string;
-  rackPrice: number;
-  settlementPrice: number;
-  unit: ItineraryPriceUnit;
-  isFree: boolean;
-  priceNote: string;
-}
-
 export interface AttractionRecord extends ResourceAuditRecord {
   isStandardPrice: boolean;
   id: string;
   code: string;
   name: string;
   area: string;
-  category: AttractionCategory;
+  category: AttractionCategory | null;
   restroomLocation: string;
   description: string;
   remark: string;
   unit: ItineraryPriceUnit;
+  /** Null only for migrated legacy records still waiting for a price. */
+  price: number | null;
   status: ResourceStatus;
-  prices: AttractionPriceRecord[];
-  priceCount?: number;
 }
 
 export const GUIDE_LANGUAGE_OPTIONS = [
@@ -232,17 +214,6 @@ export interface GuidePersonRecord extends ResourceAuditRecord {
 
 export type RestaurantPriceUnit = string;
 
-export interface RestaurantPriceRecord extends ResourceAuditRecord {
-  id: string;
-  restaurantId?: string;
-  menuName: string;
-  dishDetails?: string;
-  unit: RestaurantPriceUnit;
-  price: number;
-  dinerCount: number;
-  remark: string;
-}
-
 export interface RestaurantRecord extends ResourceAuditRecord {
   isStandardPrice: boolean;
   id: string;
@@ -256,7 +227,8 @@ export interface RestaurantRecord extends ResourceAuditRecord {
   description: string;
   remark: string;
   unit: RestaurantPriceUnit;
+  /** Null only for migrated legacy records still waiting for a price. */
+  price: number | null;
+  dinerCount: number | null;
   status: ResourceStatus;
-  prices: RestaurantPriceRecord[];
-  priceCount?: number;
 }

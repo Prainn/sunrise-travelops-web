@@ -23,10 +23,10 @@ import { useItinerarySelection } from "./useItinerarySelection";
 
 interface WorkspaceMessages {
   confirm: (key: string, params?: Record<string, unknown>) => Promise<boolean>;
-  error: (key: string) => void;
+  error: (key: string, params?: Record<string, unknown>) => void;
   success: (key: string) => void;
   warning: (key: string, params: Record<string, unknown>) => void;
-  translate: (key: string) => string;
+  translate: (key: string, params?: Record<string, unknown>) => string;
 }
 
 export function useItineraryWorkspace(messages: WorkspaceMessages) {
@@ -408,29 +408,61 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   }
 
   const isPreparingPdf = ref(false);
+  // PDF and Word share the completeness check: the full list stays at the top and a toast shows immediately.
+  async function prepareExport(): Promise<boolean> {
+    const validation = pdf.validatePdf();
+    if (!validation) return false;
+    validationIssues.value = validation.issues;
+    if (validation.issues.length) {
+      const first = validation.issues[0];
+      messages.error("itinerary.validation.toast", {
+        count: validation.issues.length,
+        first: messages.translate(first.key, first.params),
+      });
+      return false;
+    }
+    if (validation.dayCountMismatch) {
+      const confirmed = await messages.confirm("itinerary.dayCountMismatch", {
+        planned: validation.plannedDays,
+        plannedNights: Math.max(validation.plannedDays - 1, 0),
+        actualNights: itineraryDuration(selectedItinerary.value!.dailyPlans).nights,
+        actual: validation.actualDays,
+      });
+      if (!confirmed) return false;
+    }
+    return saveItinerary();
+  }
+
   async function handleGeneratePdf() {
     if (isPreparingPdf.value || pdf.isGeneratingPdf.value) return;
     isPreparingPdf.value = true;
     try {
-      const validation = pdf.validatePdf();
-      if (!validation) return;
-      validationIssues.value = validation.issues;
-      if (validation.issues.length) return;
-      if (validation.dayCountMismatch) {
-        const confirmed = await messages.confirm("itinerary.dayCountMismatch", {
-          planned: validation.plannedDays,
-          plannedNights: Math.max(validation.plannedDays - 1, 0),
-          actualNights: itineraryDuration(selectedItinerary.value!.dailyPlans).nights,
-          actual: validation.actualDays,
-        });
-        if (!confirmed) return;
-      }
       try {
-        if (!(await saveItinerary())) return;
+        if (!(await prepareExport())) return;
         await pdf.generatePreview();
       } catch {
         messages.error("itinerary.pdfGenerationFailed");
       }
+    } finally {
+      isPreparingPdf.value = false;
+    }
+  }
+
+  async function handleGenerateWord() {
+    if (isPreparingPdf.value || pdf.isGeneratingWord.value) return;
+    isPreparingPdf.value = true;
+    try {
+      const draft = selectedItinerary.value?.status === "draft";
+      if (draft) {
+        if (!(await prepareExport())) return;
+        if (!(await messages.confirm("itinerary.confirmFreezeWord"))) return;
+      }
+      if (await pdf.exportWord()) {
+        await refreshInquiry();
+        messages.success(draft ? "itinerary.wordGenerated" : "itinerary.wordDownloaded");
+      } else messages.error("itinerary.previewChanged");
+    } catch (error) {
+      reportError(error);
     } finally {
       isPreparingPdf.value = false;
     }
@@ -494,6 +526,8 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
           ?.destination ?? "",
     ),
     handleGeneratePdf,
+    handleGenerateWord,
+    isGeneratingWord: pdf.isGeneratingWord,
     inquiry,
     isEditingPlan,
     isDraft,

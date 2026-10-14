@@ -64,7 +64,8 @@
   },
   "inquiry": {
     "uploadDocument": "Drop a Word document here, or click to upload",
-    "documentHint": "Accepts .doc / .docx, up to 2 MiB. Extracts text and line breaks, up to 200,000 characters.",
+    "pdfScannedUnsupported": "Scanned or image-based PDFs are not supported",
+    "documentHint": "Accepts .doc / .docx / text-based PDF, up to 2 MiB. Extracts text and line breaks, up to 200,000 characters; replaces the current content.",
     "documentParseFailed": "Unable to read the document. Check whether it is damaged, encrypted, empty or over 200,000 characters.",
     "expandDocument": "Expand",
     "collapseDocument": "Minimize",
@@ -218,6 +219,9 @@
       },
       "day": "Day {day}",
       "tiers": {
+        "3": "3-Diamond",
+        "4": "4-Diamond",
+        "5": "5-Diamond",
         "international_five_star": "International five-star",
         "preferred_non_five_star": "Ctrip preferred",
         "standard": "Standard vehicle",
@@ -369,6 +373,9 @@
       "vip": "VIP Vehicle"
     },
     "hotelTiers": {
+      "3": "3-Diamond",
+      "4": "4-Diamond",
+      "5": "5-Diamond",
       "international_five_star": "International Five-Star",
       "preferred_non_five_star": "Ctrip Preferred"
     },
@@ -424,8 +431,13 @@
     "hotelReplacementTerms": "Equivalent hotel replacement terms",
     "copyForRevision": "Copy as new plan",
     "downloadOriginal": "Export quote PDF",
+    "exportWord": "Export Word",
+    "confirmFreezeWord": "The first export confirms the quote and locks the itinerary; later PDF and Word exports use the same frozen quote. Continue?",
+    "wordGenerated": "Quote confirmed and Word exported",
+    "wordDownloaded": "Word exported",
     "previewChanged": "The itinerary has changed. Generate a new preview before downloading.",
     "validation": {
+      "toast": "{count} item(s) still incomplete. First: {first}",
       "title": "Complete these details; click to locate",
       "noDays": "Add at least one itinerary day",
       "schedule": "D{day}: complete the day plan",
@@ -800,7 +812,9 @@
       "vip": "VIP Vehicle"
     },
     "isStandardPrice": "Standard price",
-    "standardPrice": "Standard price"
+    "standardPrice": "Standard price",
+    "priceMissing": "Price to be added",
+    "descriptionRequired": "Please enter a description"
   },
   "hotel": {
     "address": "Address",
@@ -817,8 +831,9 @@
     "nameRequired": "Enter a hotel name",
     "nearby": "Nearby",
     "ratings": {
-      "international_five_star": "International Five-Star",
-      "ctrip_preferred": "Ctrip Preferred"
+      "3": "3-Diamond",
+      "4": "4-Diamond",
+      "5": "5-Diamond"
     },
     "searchPlaceholder": "Search hotel code, name, or address",
     "breakfastIncluded": "Breakfast included"
@@ -861,7 +876,8 @@
     "restroomLocation": "Restroom Location / Condition",
     "searchPlaceholder": "Search code, attraction, or notes",
     "settlementPrice": "Settlement Price",
-    "periodRequired": "Enter a pricing period name"
+    "periodRequired": "Enter a pricing period name",
+    "price": "Price"
   },
   "guide": {
     "name": "Guide name",
@@ -913,7 +929,8 @@
     "priceRequired": "Enter a price",
     "priceUnit": "Price Unit",
     "priceUnitRequired": "Select a price unit",
-    "searchPlaceholder": "Search restaurant code, name, city, or cuisine"
+    "searchPlaceholder": "Search restaurant code, name, city, or cuisine",
+    "dinerCountRequired": "Enter a positive whole number of diners per table"
   },
   "error": {
     "notFound": {

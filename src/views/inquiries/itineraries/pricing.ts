@@ -16,7 +16,6 @@ export interface ResourcePriceOption {
   id: string;
   type: ItineraryItemType;
   resourceId: string;
-  resourcePriceId: string;
   resourceName: string;
   description?: string;
   isStandardPrice?: boolean;
@@ -32,7 +31,7 @@ export interface ResourcePriceOption {
 export interface ResourcePriceDetail {
   labelKey: string;
   value: string | number;
-  format?: "money" | "translation" | "unit" | "attraction-item-type";
+  format?: "money" | "translation" | "unit";
 }
 
 export interface PricingResources {
@@ -75,7 +74,6 @@ export function getResourcePriceOptions(
         id: `hotel:${hotel.id}`,
         type: "hotel" as const,
         resourceId: hotel.id,
-        resourcePriceId: hotel.id,
         resourceName: hotel.name,
         priceName: hotel.name,
         city: hotel.city,
@@ -112,98 +110,65 @@ export function getResourcePriceOptions(
         searchText: `${hotel.name} ${hotel.city}`,
       })),
     ...resources.attractions
-      .filter((attraction) => attraction.status === "enabled")
-      .flatMap((attraction) =>
-        attraction.prices.map((price) => ({
-          id: `attraction:${price.id}`,
-          type: "attraction" as const,
-          resourceId: attraction.id,
-          resourcePriceId: price.id,
-          resourceName: attraction.name,
-          description: attraction.description,
-          isStandardPrice: attraction.isStandardPrice,
-          priceName: `${price.itemName} · ${price.audience} · ${price.periodName}`,
-          city: attraction.area,
-          unit: price.unit,
-          unitCost: price.settlementPrice,
-          details: [
-            { labelKey: "resource.code", value: attraction.code },
-            { labelKey: "resource.attractionName", value: attraction.name },
-            { labelKey: "attraction.area", value: attraction.area },
-            {
-              labelKey: "attraction.category",
-              value: attractionCategoryLabelKeys[attraction.category],
-              format: "translation" as const,
-            },
-            { labelKey: "attraction.restroomLocation", value: attraction.restroomLocation },
-            { labelKey: "resource.description", value: attraction.description },
-            { labelKey: "itinerary.resourceRemark", value: attraction.remark },
-            {
-              labelKey: "attraction.itemType",
-              value: price.itemType,
-              format: "attraction-item-type" as const,
-            },
-            { labelKey: "attraction.itemName", value: price.itemName },
-            { labelKey: "attraction.audience", value: price.audience },
-            { labelKey: "attraction.pricePeriod", value: price.periodName },
-            {
-              labelKey: "attraction.effectivePeriod",
-              value:
-                price.startDate && price.endDate ? `${price.startDate} — ${price.endDate}` : "",
-            },
-            { labelKey: "attraction.rackPrice", value: price.rackPrice, format: "money" as const },
-            {
-              labelKey: "attraction.settlementPrice",
-              value: price.settlementPrice,
-              format: "money" as const,
-            },
-            {
-              labelKey: "attraction.freeTicket",
-              value: price.isFree ? "common.yes" : "common.no",
-              format: "translation" as const,
-            },
-            { labelKey: "attraction.priceNote", value: price.priceNote },
-            { labelKey: "itinerary.priceUnit", value: price.unit, format: "unit" as const },
-          ],
-          searchText: `${attraction.name} ${attraction.area} ${price.itemName} ${price.audience}`,
-        })),
-      ),
+      .filter((attraction) => attraction.status === "enabled" && attraction.price !== null)
+      .map((attraction) => ({
+        id: `attraction:${attraction.id}`,
+        type: "attraction" as const,
+        resourceId: attraction.id,
+        resourceName: attraction.name,
+        description: attraction.description,
+        isStandardPrice: attraction.isStandardPrice,
+        priceName: "",
+        city: attraction.area,
+        unit: attraction.unit,
+        unitCost: attraction.price!,
+        details: [
+          { labelKey: "resource.code", value: attraction.code },
+          { labelKey: "resource.attractionName", value: attraction.name },
+          { labelKey: "attraction.area", value: attraction.area },
+          {
+            labelKey: "attraction.category",
+            value: attraction.category ? attractionCategoryLabelKeys[attraction.category] : "",
+            format: attraction.category ? ("translation" as const) : undefined,
+          },
+          { labelKey: "attraction.restroomLocation", value: attraction.restroomLocation },
+          { labelKey: "resource.description", value: attraction.description },
+          { labelKey: "itinerary.resourceRemark", value: attraction.remark },
+          { labelKey: "attraction.price", value: attraction.price!, format: "money" as const },
+          { labelKey: "itinerary.priceUnit", value: attraction.unit, format: "unit" as const },
+        ],
+        searchText: `${attraction.name} ${attraction.area} ${attraction.description}`,
+      })),
     ...resources.restaurants
-      .filter((restaurant) => restaurant.status === "enabled")
-      .flatMap((restaurant) =>
-        restaurant.prices.map((price) => ({
-          id: `restaurant:${price.id}`,
-          type: "restaurant" as const,
-          resourceId: restaurant.id,
-          resourcePriceId: price.id,
-          resourceName: restaurant.name,
-          description: restaurant.description,
-          isStandardPrice: restaurant.isStandardPrice,
-          priceName: price.menuName,
-          city: restaurant.city,
-          unit: price.unit,
-          unitCost: price.price,
-          dinerCount: price.dinerCount,
-          details: [
-            { labelKey: "resource.code", value: restaurant.code },
-            { labelKey: "resource.restaurantName", value: restaurant.name },
-            { labelKey: "resource.city", value: restaurant.city },
-            { labelKey: "resource.cuisine", value: restaurant.cuisine },
-            { labelKey: "restaurant.address", value: restaurant.address },
-            { labelKey: "resource.contact", value: restaurant.contact },
-            { labelKey: "resource.phone", value: restaurant.phone },
-            { labelKey: "resource.description", value: restaurant.description },
-            { labelKey: "itinerary.resourceRemark", value: restaurant.remark },
-            { labelKey: "restaurant.menuName", value: price.menuName },
-            { labelKey: "restaurant.dishDetails", value: price.dishDetails ?? "" },
-            { labelKey: "restaurant.priceUnit", value: price.unit, format: "unit" as const },
-            { labelKey: "restaurant.dinerCount", value: price.dinerCount },
-            { labelKey: "restaurant.price", value: price.price, format: "money" as const },
-            { labelKey: "itinerary.priceRemark", value: price.remark },
-          ],
-          searchText: `${restaurant.name} ${restaurant.city} ${restaurant.cuisine} ${price.menuName}`,
-        })),
-      ),
+      .filter((restaurant) => restaurant.status === "enabled" && restaurant.price !== null)
+      .map((restaurant) => ({
+        id: `restaurant:${restaurant.id}`,
+        type: "restaurant" as const,
+        resourceId: restaurant.id,
+        resourceName: restaurant.name,
+        description: restaurant.description,
+        isStandardPrice: restaurant.isStandardPrice,
+        priceName: "",
+        city: restaurant.city,
+        unit: restaurant.unit,
+        unitCost: restaurant.price!,
+        dinerCount: restaurant.dinerCount ?? undefined,
+        details: [
+          { labelKey: "resource.code", value: restaurant.code },
+          { labelKey: "resource.restaurantName", value: restaurant.name },
+          { labelKey: "resource.city", value: restaurant.city },
+          { labelKey: "resource.cuisine", value: restaurant.cuisine },
+          { labelKey: "restaurant.address", value: restaurant.address },
+          { labelKey: "resource.contact", value: restaurant.contact },
+          { labelKey: "resource.phone", value: restaurant.phone },
+          { labelKey: "resource.description", value: restaurant.description },
+          { labelKey: "itinerary.resourceRemark", value: restaurant.remark },
+          { labelKey: "restaurant.priceUnit", value: restaurant.unit, format: "unit" as const },
+          { labelKey: "restaurant.dinerCount", value: restaurant.dinerCount ?? "" },
+          { labelKey: "restaurant.price", value: restaurant.price!, format: "money" as const },
+        ],
+        searchText: `${restaurant.name} ${restaurant.city} ${restaurant.cuisine} ${restaurant.description}`,
+      })),
   ];
 }
 
@@ -216,7 +181,6 @@ export function calculateItem(
     id: createId("item"),
     type: option.type,
     resourceId: option.resourceId,
-    resourcePriceId: option.resourcePriceId,
     resourceName: option.resourceName,
     priceName: option.priceName,
     quantity,

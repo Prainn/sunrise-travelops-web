@@ -24,8 +24,19 @@
       <el-form-item :label="$t('attraction.area')" prop="area">
         <CitySelect v-model="form.area" />
       </el-form-item>
+      <el-form-item :label="$t('resource.description')" prop="description">
+        <el-input v-model.trim="form.description" type="textarea" :rows="3" />
+      </el-form-item>
+      <el-form-item :label="$t('attraction.price')" prop="price">
+        <el-input-number
+          v-model="form.price"
+          :min="0"
+          :precision="2"
+          :controls="false"
+        />
+      </el-form-item>
       <el-form-item :label="$t('attraction.category')" prop="category">
-        <el-select v-model="form.category">
+        <el-select v-model="form.category" clearable>
           <el-option
             v-for="option in attractionCategoryOptions"
             :key="option.value"
@@ -49,9 +60,6 @@
       </el-form-item>
       <el-form-item :label="$t('resource.isStandardPrice')">
         <el-switch v-model="form.isStandardPrice" />
-      </el-form-item>
-      <el-form-item :label="$t('resource.description')">
-        <el-input v-model.trim="form.description" type="textarea" :rows="3" />
       </el-form-item>
       <el-form-item :label="$t('common.remark')">
         <el-input v-model.trim="form.remark" type="textarea" :rows="3" />
@@ -116,7 +124,8 @@ const unitOptions = computed(() => getResourceUnitOptions("attraction", locale.v
 const rules = computed<FormRules>(() => ({
   name: [{ required: true, message: t("attraction.nameRequired"), trigger: "blur" }],
   area: [{ required: true, message: t("attraction.areaRequired"), trigger: "change" }],
-  category: [{ required: true, message: t("attraction.categoryRequired"), trigger: "change" }],
+  description: [{ required: true, message: t("resource.descriptionRequired"), trigger: "blur" }],
+  price: [{ required: true, message: t("resource.priceRequired"), trigger: "blur" }],
   unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
 }));
 
@@ -130,6 +139,6 @@ watch(
 );
 
 async function handleSubmit() {
-  await submitForm(() => props.submit({ ...form, prices: props.record.prices }));
+  await submitForm(() => props.submit({ ...form }));
 }
 </script>

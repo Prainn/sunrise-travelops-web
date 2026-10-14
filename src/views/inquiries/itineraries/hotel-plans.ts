@@ -1,12 +1,13 @@
 import type { ItineraryHotelPlan, ItineraryHotelTier, ItineraryRecord } from "@/types/itinerary";
 import type { HotelRecord } from "@/types/resource";
 
-export const HOTEL_PLAN_TIERS: ItineraryHotelTier[] = [
-  "international_five_star",
-  "preferred_non_five_star",
-];
+export const HOTEL_PLAN_TIERS: ItineraryHotelTier[] = [3, 4, 5];
 
-export const HOTEL_PLAN_TIER_LABELS: Record<ItineraryHotelTier, string> = {
+// 已冻结报价保留旧档位名称，因此标签表同时覆盖旧值。
+export const HOTEL_PLAN_TIER_LABELS: Record<string, string> = {
+  3: "三钻",
+  4: "四钻",
+  5: "五钻",
   international_five_star: "国际五星",
   preferred_non_five_star: "携程优选",
 };
@@ -19,9 +20,7 @@ export function isHotelEligibleForTier(
   hotel: Pick<HotelRecord, "rating">,
   tier: ItineraryHotelTier,
 ) {
-  return tier === "international_five_star"
-    ? hotel.rating === "international_five_star"
-    : hotel.rating === "ctrip_preferred";
+  return hotel.rating === tier;
 }
 
 export function getHotelPlan(

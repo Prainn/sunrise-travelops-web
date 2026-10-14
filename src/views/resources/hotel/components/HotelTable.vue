@@ -23,7 +23,7 @@
         <el-table-column prop="city" :label="$t('resource.city')" width="100" />
         <el-table-column prop="rating" :label="$t('resource.starRating')" width="130">
           <template #default="scope">
-            <el-tag :type="scope.row.rating === 'international_five_star' ? 'success' : 'info'">
+            <el-tag :type="scope.row.rating === 5 ? 'success' : scope.row.rating === 4 ? 'primary' : 'info'">
               {{ $t(`hotel.ratings.${scope.row.rating}`) }}
             </el-tag>
           </template>
