@@ -29,6 +29,7 @@
 - request 抛本地化 `ApiError`，错误码在 `src/api/error-code.ts`；页面/composable 负责适当提示，不把请求失败变成成功空数据。
 - Bearer、401 合并刷新及单次重试由 request 处理；token 存取走 `utils/auth-storage.ts`，身份状态走 user store，不绕过现有认证层。
 - 菜单/按钮使用现有路由权限、指令和业务 workflow；隐藏 UI 不能替代后端数据范围校验。
+- 新增页面后，静态检查菜单图标是否已注册：路由 `meta.icon` 使用 `el-icon-*` 时，核对 `src/main.ts` 中对应图标的导入及 `routeIcons` 全局注册。此项只检查注册，不要求浏览器验证。
 
 ## State Management / UI
 
