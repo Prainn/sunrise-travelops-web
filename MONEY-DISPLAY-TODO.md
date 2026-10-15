@@ -38,8 +38,10 @@
 ## 发布（2026-10-15）
 
 - [x] 审查本次修改并核对发布基线，运行受影响 ESLint/类型检查（已通过）。
-- [~] 按用户最新要求：提交前端全部未发布内容，并合并 origin/main；不提取、不丢弃本地已有提交。
-- [ ] 推送远端 dev，等待 Actions 并核对开发公网版本。
+- [x] 按用户最新要求：提交前端全部未发布内容，并合并 origin/main；不提取、不丢弃本地已有提交。金额提交 8e57807，合并提交 dd3b185，无冲突。
+- [~] 推送远端 dev，等待 Actions 并核对开发公网版本。
 - [ ] 创建 dev → main PR，等待 verify-frontend，通过后合并、触发 prod 部署并核对生产公网版本。
 
 基线：本地 dev=2556cf7（含其他未发布提交），origin/dev=f2af9ef，origin/main=aaa920b；公网 dev=f2af9ef，prod=aaa920b。无后端/数据库操作。
+
+合并后检查：pnpm type-check、相对 origin/main 的受影响 ESLint、双语 JSON 解析、git diff --check 全部通过。仅前端发布，无 migration。
