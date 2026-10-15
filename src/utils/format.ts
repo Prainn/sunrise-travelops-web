@@ -33,9 +33,18 @@ export function addDays(date: string, days: number): string {
   return formatDate(value);
 }
 
-/** 将金额格式化为两位小数，不包含货币符号。 */
-export function formatMoney(value: number | null | undefined): string {
-  return (value ?? 0).toLocaleString("zh-CN", {
+/** 读取金额；未填或无效值保留为空，不能视为零元。 */
+export function parseMoney(value: string | number | null | undefined): number | null {
+  if (value == null || (typeof value === "string" && value.trim() === "")) return null;
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount : null;
+}
+
+/** 金额统一显示两位小数，未填显示占位符，不包含货币符号。 */
+export function formatMoney(value: string | number | null | undefined): string {
+  const amount = parseMoney(value);
+  if (amount === null) return "—";
+  return amount.toLocaleString("zh-CN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

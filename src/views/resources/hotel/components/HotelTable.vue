@@ -39,13 +39,21 @@
           :label="$t('hotel.individualPrice')"
           width="120"
           align="right"
-        />
+        >
+          <template #default="{ row }">
+            {{ formatMoney(row.individualPrice) }}
+          </template>
+        </el-table-column>
         <el-table-column
           prop="groupPrice"
           :label="$t('hotel.groupPrice')"
           width="120"
           align="right"
-        />
+        >
+          <template #default="{ row }">
+            {{ formatMoney(row.groupPrice) }}
+          </template>
+        </el-table-column>
         <el-table-column
           prop="minimumGroupSize"
           :label="$t('hotel.minimumGroupSize')"
@@ -112,6 +120,7 @@
 </template>
 
 <script setup lang="ts">
+import { formatMoney } from "@/utils";
 import { useI18n } from "vue-i18n";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { RESOURCE_PERMISSIONS } from "@/constants";

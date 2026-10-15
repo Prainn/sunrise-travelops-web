@@ -98,7 +98,7 @@
             <el-table-column prop="itemName" :label="$t('identity.actual')" />
             <el-table-column :label="$t('identity.actual')">
               <template #default="{ row }">
-                {{ row.beforePrice ?? "0" }} → {{ row.afterPrice }}
+                {{ formatMoney(row.beforePrice) }} → {{ formatMoney(row.afterPrice) }}
               </template>
             </el-table-column>
             <el-table-column prop="reason" :label="$t('identity.reason')" />

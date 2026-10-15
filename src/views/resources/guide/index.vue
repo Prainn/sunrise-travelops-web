@@ -120,7 +120,7 @@ function createEmptyPrice(): GuideRecord {
     name: "",
     secondLanguage: "none",
     shopping: false,
-    dailyPrice: 0,
+    dailyPrice: null,
     status: "enabled",
   };
 }

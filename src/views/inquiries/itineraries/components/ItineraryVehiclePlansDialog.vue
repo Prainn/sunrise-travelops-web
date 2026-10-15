@@ -194,7 +194,7 @@
               :closable="false"
               :title="
                 $t('planning.vehicleTotalOverrideHint', {
-                  total: formatMoney(calculateVehiclePlanAutomaticTotal(plan) ?? 0),
+                  total: formatMoney(calculateVehiclePlanAutomaticTotal(plan)),
                 })
               "
             />

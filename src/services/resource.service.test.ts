@@ -20,3 +20,22 @@ describe("standard price resource filtering", () => {
     },
   );
 });
+
+describe("resource money normalization", () => {
+  it.each(["hotelApi", "attractionApi", "restaurantApi", "guideApi"] as const)(
+    "%s preserves missing prices and real zero prices",
+    async (api) => {
+      const fields = api === "hotelApi" ? ["individualPrice", "groupPrice"]
+        : api === "guideApi" ? ["dailyPrice"] : ["price"];
+      for (const value of [null, undefined, "", " ", "0", "12.30"]) {
+        get.mockResolvedValue({
+          list: [{ id: "resource", ...Object.fromEntries(fields.map((field) => [field, value])) }],
+        });
+        const result = await resourceService[api].getPage({});
+        for (const field of fields) {
+          expect(result.list[0]).toHaveProperty(field, value === "0" ? 0 : value === "12.30" ? 12.3 : null);
+        }
+      }
+    },
+  );
+});

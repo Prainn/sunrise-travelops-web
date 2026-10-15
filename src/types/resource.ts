@@ -153,7 +153,7 @@ export interface HotelRecord extends ResourceAuditRecord {
   address: string;
   phone: string;
   nearby: string;
-  individualPrice: number;
+  individualPrice: number | null;
   groupPrice: number | null;
   minimumGroupSize: number | null;
   unit: ItineraryPriceUnit;
@@ -197,7 +197,7 @@ export interface GuideRecord extends ResourceAuditRecord {
   status: ResourceStatus;
   secondLanguage: string;
   shopping: boolean;
-  dailyPrice: number;
+  dailyPrice: number | null;
 }
 
 export interface GuidePersonRecord extends ResourceAuditRecord {

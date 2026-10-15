@@ -6,7 +6,7 @@
 export { isExternal } from "./validate";
 
 // 数据格式化
-export { addDays, formatDate, formatDateTime, formatGrowthRate, formatMoney } from "./format";
+export { addDays, formatDate, formatDateTime, formatGrowthRate, formatMoney, parseMoney } from "./format";
 export { fromCents, multiplyMoney, roundMoney, sumMoney, toCents } from "./money";
 export { createId } from "./create-id";
 export { hasUserPermission } from "./permission";

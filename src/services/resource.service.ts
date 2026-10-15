@@ -1,5 +1,6 @@
 import { clearResourceOptionsCache, loadResourceOptions } from "./resource-options-cache";
 import { reactive } from "vue";
+import { parseMoney } from "@/utils/format";
 import { request } from "@/api/request";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
 import type { PageResult } from "@/types/common";
@@ -47,10 +48,6 @@ function buildParams(query: ResourceQuery): ResourceQuery {
       return [key, normalizedValue === "" ? undefined : normalizedValue];
     }),
   ) as ResourceQuery;
-}
-
-function normalizeMoney(value: string | number | null | undefined): number {
-  return value === null || value === undefined ? 0 : Number(value);
 }
 
 function createCrud<T extends { id: string; code?: string }>(
@@ -225,17 +222,17 @@ function guidePersonInput(data: GuidePersonRecord) {
 function normalizeHotel(data: ApiRecord<HotelRecord>): HotelRecord {
   return {
     ...data,
-    individualPrice: normalizeMoney(data.individualPrice),
-    groupPrice: data.groupPrice === null ? null : normalizeMoney(data.groupPrice),
+    individualPrice: parseMoney(data.individualPrice),
+    groupPrice: parseMoney(data.groupPrice),
   };
 }
 
 function normalizeRestaurant(data: ApiRecord<RestaurantRecord>): RestaurantRecord {
-  return { ...data, price: data.price === null ? null : normalizeMoney(data.price) };
+  return { ...data, price: parseMoney(data.price) };
 }
 
 function normalizeAttraction(data: ApiRecord<AttractionRecord>): AttractionRecord {
-  return { ...data, price: data.price === null ? null : normalizeMoney(data.price) };
+  return { ...data, price: parseMoney(data.price) };
 }
 
 function normalizeTransport(data: ApiRecord<TransportRecord>): TransportRecord {
@@ -243,7 +240,7 @@ function normalizeTransport(data: ApiRecord<TransportRecord>): TransportRecord {
 }
 
 function normalizeGuide(data: ApiRecord<GuideRecord>): GuideRecord {
-  return { ...data, dailyPrice: normalizeMoney(data.dailyPrice) };
+  return { ...data, dailyPrice: parseMoney(data.dailyPrice) };
 }
 
 function contactInput(data: AgencyContactRecord) {
@@ -463,7 +460,7 @@ export const resourceService = {
     );
     return {
       ...result,
-      list: result.list.map((item) => ({ ...item, unitCost: Number(item.unitCost) })),
+      list: result.list.map((item) => ({ ...item, unitCost: parseMoney(item.unitCost) })),
     };
   },
   async getPriceSelection(type: "restaurant" | "attraction", id: string) {
@@ -493,6 +490,6 @@ export interface PriceSelectionItem {
   resourceName: string;
   city: string;
   unit: string;
-  unitCost: number;
+  unitCost: number | null;
   dinerCount: number | null;
 }

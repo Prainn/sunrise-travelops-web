@@ -11,7 +11,7 @@
           :label="$t(option.labelKey)"
         >
           <el-input
-            :model-value="price(option.value) ?? ''"
+            :model-value="editable ? (price(option.value) ?? '') : formatMoney(price(option.value))"
             :placeholder="$t('websiteItineraryUi.pricePlaceholder')"
             @update:model-value="setPrice(option.value, $event)"
           >
@@ -40,6 +40,7 @@
   </el-card>
 </template>
 <script setup lang="ts">
+import { formatMoney } from "@/utils";
 import type { VehicleType, WebsiteItinerary } from "@/types/website";
 import { VEHICLE_OPTIONS } from "../../options";
 const props = defineProps<{ plan: WebsiteItinerary; editable: boolean }>();

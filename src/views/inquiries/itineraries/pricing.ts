@@ -30,7 +30,7 @@ export interface ResourcePriceOption {
 
 export interface ResourcePriceDetail {
   labelKey: string;
-  value: string | number;
+  value: string | number | null;
   format?: "money" | "translation" | "unit";
 }
 
@@ -53,7 +53,7 @@ const attractionCategoryLabelKeys = {
 export function getHotelUnitCost(
   hotel: Pick<HotelRecord, "individualPrice" | "groupPrice" | "minimumGroupSize">,
   guestCount: number,
-): number {
+): number | null {
   const { groupPrice, minimumGroupSize } = hotel;
   const hasGroupPrice = groupPrice !== null && groupPrice > 0;
   const hasMinimumGroupSize = minimumGroupSize !== null && minimumGroupSize > 0;
@@ -69,7 +69,7 @@ export function getResourcePriceOptions(
 ): ResourcePriceOption[] {
   return [
     ...resources.hotels
-      .filter((hotel) => hotel.status === "enabled")
+      .filter((hotel) => hotel.status === "enabled" && getHotelUnitCost(hotel, guestCount) !== null)
       .map((hotel) => ({
         id: `hotel:${hotel.id}`,
         type: "hotel" as const,
@@ -78,7 +78,7 @@ export function getResourcePriceOptions(
         priceName: hotel.name,
         city: hotel.city,
         unit: hotel.unit,
-        unitCost: getHotelUnitCost(hotel, guestCount),
+        unitCost: getHotelUnitCost(hotel, guestCount)!,
         details: [
           { labelKey: "resource.code", value: hotel.code },
           { labelKey: "resource.hotelName", value: hotel.name },
@@ -101,8 +101,8 @@ export function getResourcePriceOptions(
           },
           {
             labelKey: "hotel.groupPrice",
-            value: hotel.groupPrice ?? "",
-            format: hotel.groupPrice === null ? undefined : ("money" as const),
+            value: hotel.groupPrice,
+            format: "money" as const,
           },
           { labelKey: "hotel.minimumGroupSize", value: hotel.minimumGroupSize ?? "" },
           { labelKey: "itinerary.priceUnit", value: hotel.unit, format: "unit" as const },

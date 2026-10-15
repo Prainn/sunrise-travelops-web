@@ -29,7 +29,11 @@
           :label="$t('websiteConfig.hotels.price')"
           width="190"
           align="right"
-        />
+        >
+          <template #default="{ row }">
+            {{ formatMoney(row.price) }}
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('websiteConfig.hotels.publicHotel')" width="120">
           <template #default="{ row }">
             {{ row.resourceId ? $t("websiteConfig.cities.linked") : $t("websiteConfig.cities.unlinked") }}
@@ -140,6 +144,7 @@
 </template>
 
 <script setup lang="ts">
+import { formatMoney } from "@/utils";
 import { ref } from "vue";
 import type { FormInstance } from "element-plus";
 import type { WebsiteConfig, WebsiteConfigHotel } from "@/types/website";

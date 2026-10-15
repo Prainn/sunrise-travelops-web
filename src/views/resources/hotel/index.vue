@@ -244,7 +244,7 @@ function createEmptyHotel(): HotelForm {
     address: "",
     phone: "",
     nearby: "",
-    individualPrice: 0,
+    individualPrice: null,
     groupPrice: null,
     minimumGroupSize: null,
     unit: "roomNight",
