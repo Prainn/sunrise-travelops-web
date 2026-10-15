@@ -259,7 +259,7 @@ function buildQuoteTable(
         ${childRow}
         ${buildExtraFeeRows(itinerary, options.length)}
         ${buildQuoteRow("单房差", options, ({ calculation }) => `RMB ${formatMoney(calculation.singleSupplementUnitCost)}`)}
-        ${(itinerary.quote.otherExpenses ?? 0) > 0 ? `<tr><th style="${quoteLabelStyle()}">司陪费及其他支出</th><td colspan="${options.length}" style="${quoteCellStyle()}">RMB ${formatMoney(itinerary.quote.otherExpenses ?? 0)}（整团）</td></tr>` : ""}
+        ${(itinerary.quote.otherExpenses ?? 0) > 0 ? `<tr><th style="${quoteLabelStyle()}">司陪费及其他支出</th><td colspan="${options.length}" style="${quoteCellStyle()}">RMB ${formatMoney(itinerary.quote.otherExpenses)}（整团）</td></tr>` : ""}
       </tbody>
     </table>`;
 }
@@ -381,7 +381,7 @@ export function getExtraFeeLines(itinerary: { quote: Pick<ItineraryQuoteSettings
   const cabins = { economy: "经济舱", business: "商务舱", first: "一等座", second: "二等座" };
   return itinerary.quote.transportFees.map((fee): [string, string] => [
     fee.type === "flight" ? "机票" : "动车票",
-    `${fee.departureCity} → ${fee.arrivalCity} · ${cabins[fee.cabin]} · RMB ${formatMoney(fee.unitPrice ?? 0)} PP`,
+    `${fee.departureCity} → ${fee.arrivalCity} · ${cabins[fee.cabin]} · RMB ${formatMoney(fee.unitPrice)} PP`,
   ]);
 }
 

@@ -43,7 +43,7 @@
           />
           <el-table-column :label="$t('restaurant.price')" width="110" align="right">
             <template #default="scope">
-              {{ scope.row.price === null ? $t('resource.priceMissing') : formatMoney(scope.row.price) }}
+              {{ formatMoney(scope.row.price) }}
             </template>
           </el-table-column>
           <el-table-column :label="$t('restaurant.priceUnit')" width="130">

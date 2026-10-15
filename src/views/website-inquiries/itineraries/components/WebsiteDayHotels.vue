@@ -52,7 +52,7 @@
             />
           </el-select>
           <div v-if="configHotel(hotel)" class="text-[12px] text-[var(--el-text-color-secondary)]">
-            {{ $t("websiteItineraryUi.configHotelPrice", { price: configHotel(hotel)?.price }) }}
+            {{ $t("websiteItineraryUi.configHotelPrice", { price: formatMoney(configHotel(hotel)?.price) }) }}
           </div>
         </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.selectSharedHotel')">
@@ -96,6 +96,7 @@
   </section>
 </template>
 <script setup lang="ts">
+import { formatMoney } from "@/utils";
 import type { WebsiteConfig, WebsiteDay, WebsiteHotelStay } from "@/types/website";
 import WebsiteResourceSelect from "../../components/WebsiteResourceSelect.vue";
 const props = defineProps<{ day: WebsiteDay; config: WebsiteConfig; editable: boolean }>();

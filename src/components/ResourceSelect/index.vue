@@ -31,7 +31,7 @@ function label(item: Item) {
   if (props.kind === "agencies") return `${item.name} (${item.code})`;
   if (props.kind === "transports") return `${item.name}｜${item.seats}座`;
   const extra = props.kind === "hotels" ? t("itinerary.breakfastIncluded") : "";
-  return `${item.name}${extra ? `｜${extra}` : ""}｜¥${formatMoney(Number(item.unitCost))}`;
+  return `${item.name}${extra ? `｜${extra}` : ""}｜¥${formatMoney(item.unitCost)}`;
 }
 async function loadOptions(query: RemoteOptionsQuery) {
   const result = await resourceService.getSelectionOptions(props.kind, {

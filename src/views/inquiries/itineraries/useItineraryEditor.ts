@@ -284,7 +284,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       touchSelectedItinerary();
       return;
     }
-    if (!guide || guide.status !== "enabled") return;
+    if (guide.status !== "enabled" || guide.dailyPrice === null) return;
     plan.guidePlans = [
       {
         destination: plan.destinations[0] ?? "",
@@ -342,6 +342,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     if (
       !hotel ||
       hotel.status !== "enabled" ||
+      hotel.individualPrice === null ||
       hotel.city !== destination ||
       !isHotelEligibleForTier(hotel, tier)
     )

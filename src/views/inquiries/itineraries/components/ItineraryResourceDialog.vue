@@ -200,7 +200,7 @@ function resourceUnitName(code: string) {
   return getResourceUnitName(code, locale.value);
 }
 function formatDetail(detail: ResourcePriceDetail) {
-  if (detail.format === "money") return `¥${formatMoney(Number(detail.value ?? 0))}`;
+  if (detail.format === "money") return `¥${formatMoney(detail.value)}`;
   if (detail.format === "translation") return t(String(detail.value));
   if (detail.format === "unit") return resourceUnitName(String(detail.value));
   return detail.value === "" ? "-" : String(detail.value);

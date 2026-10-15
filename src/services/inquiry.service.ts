@@ -1,3 +1,4 @@
+import { parseMoney } from "@/utils/format";
 import { request } from "@/api/request";
 import type { PageResult } from "@/types/common";
 import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";
@@ -75,7 +76,7 @@ const MONEY_FIELDS = new Set([
   "otherExpenses",
 ]);
 export function normalizeInquiryMoney<T>(value: unknown, field = ""): T {
-  if (typeof value === "string" && MONEY_FIELDS.has(field)) return Number(value) as T;
+  if (typeof value === "string" && MONEY_FIELDS.has(field)) return parseMoney(value) as T;
   if (Array.isArray(value)) return value.map((item) => normalizeInquiryMoney(item)) as T;
   if (value !== null && typeof value === "object")
     return Object.fromEntries(
