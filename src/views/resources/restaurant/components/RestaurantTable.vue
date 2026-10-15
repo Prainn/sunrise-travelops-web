@@ -35,6 +35,12 @@
           </el-table-column>
           <el-table-column prop="code" :label="$t('resource.code')" width="170" />
           <el-table-column prop="name" :label="$t('resource.restaurantName')" min-width="200" />
+          <el-table-column
+            prop="englishName"
+            :label="$t('resource.englishName')"
+            min-width="200"
+            show-overflow-tooltip
+          />
           <el-table-column :label="$t('restaurant.price')" width="110" align="right">
             <template #default="scope">
               {{ scope.row.price === null ? $t('resource.priceMissing') : formatMoney(scope.row.price) }}
@@ -55,6 +61,12 @@
           <el-table-column
             prop="description"
             :label="$t('resource.description')"
+            min-width="240"
+            show-overflow-tooltip
+          />
+          <el-table-column
+            prop="englishDescription"
+            :label="$t('resource.englishDescription')"
             min-width="240"
             show-overflow-tooltip
           />

@@ -762,6 +762,8 @@
     "tourCodeInvalid": "团号标识只能包含 1-10 位字母或数字"
   },
   "resource": {
+    "englishName": "英文名",
+    "englishDescription": "英文描述",
     "description": "描述",
     "addContact": "新增联系人",
     "addAgency": "新增组团社",

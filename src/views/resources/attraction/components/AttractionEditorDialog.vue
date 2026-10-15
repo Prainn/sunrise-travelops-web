@@ -31,11 +31,17 @@
       <el-form-item :label="$t('resource.attractionName')" prop="name">
         <el-input v-model.trim="form.name" />
       </el-form-item>
+      <el-form-item :label="$t('resource.englishName')">
+        <el-input v-model.trim="form.englishName" :maxlength="150" />
+      </el-form-item>
       <el-form-item :label="$t('attraction.area')" prop="area">
         <CitySelect v-model="form.area" />
       </el-form-item>
       <el-form-item :label="$t('resource.description')" prop="description">
         <el-input v-model.trim="form.description" type="textarea" :rows="3" />
+      </el-form-item>
+      <el-form-item :label="$t('resource.englishDescription')">
+        <el-input v-model.trim="form.englishDescription" type="textarea" :rows="3" />
       </el-form-item>
       <el-form-item :label="$t('attraction.price')" prop="price">
         <el-input-number
