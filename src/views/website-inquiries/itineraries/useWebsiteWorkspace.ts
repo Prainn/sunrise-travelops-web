@@ -76,7 +76,7 @@ export function useWebsiteWorkspace() {
     const versionConfig =
       record.configVersion === currentConfig.value?.version
         ? currentConfig.value
-        : await websiteService.config(record.configVersion);
+        : await websiteService.config(record.configVersion, record.businessUnit);
     if (currentGeneration !== generation) return;
     config.value = versionConfig;
     plan.value = cloneWebsiteDraft(record);
@@ -94,10 +94,10 @@ export function useWebsiteWorkspace() {
     baseline.value = "";
     try {
       const id = String(route.params.inquiryId);
-      const [record, records, latestConfig] = await Promise.all([
-        websiteService.inquiry(id),
+      const record = await websiteService.inquiry(id);
+      const [records, latestConfig] = await Promise.all([
         websiteService.itineraries(id),
-        websiteService.config(),
+        websiteService.config(undefined, record.businessUnit),
       ]);
       if (current !== generation) return;
       inquiry.value = record;
@@ -188,7 +188,7 @@ export function useWebsiteWorkspace() {
     }
     saving.value = true;
     try {
-      const latest = await websiteService.config();
+      const latest = await websiteService.config(undefined, inquiry.value!.businessUnit);
       currentConfig.value = latest;
       await storeResult(
         await websiteService.createItinerary(inquiry.value.id, {
@@ -227,7 +227,7 @@ export function useWebsiteWorkspace() {
   async function useCurrentConfig() {
     if (!plan.value || !editable.value || saving.value) return;
     try {
-      const latest = await websiteService.config();
+      const latest = await websiteService.config(undefined, inquiry.value!.businessUnit);
       currentConfig.value = latest;
       config.value = latest;
       plan.value.configVersion = latest.version;

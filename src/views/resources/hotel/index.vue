@@ -86,6 +86,9 @@
         <el-form-item :label="$t('resource.hotelName')" prop="name">
           <el-input v-model.trim="hotelForm.name" />
         </el-form-item>
+        <el-form-item :label="$t('resource.englishName')">
+          <el-input v-model.trim="hotelForm.englishName" :maxlength="150" />
+        </el-form-item>
         <el-form-item :label="$t('resource.city')" prop="city">
           <CitySelect v-model="hotelForm.city" />
         </el-form-item>
@@ -232,6 +235,7 @@ function createEmptyHotel(): HotelForm {
     id: "",
     code: "",
     name: "",
+    englishName: "",
     province: "",
     city: "",
     rating: 5,

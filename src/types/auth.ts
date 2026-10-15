@@ -27,4 +27,5 @@ export interface CurrentUserResult {
   id: string;
   username: string;
   permissions: string[];
+  menuKeys: string[];
 }

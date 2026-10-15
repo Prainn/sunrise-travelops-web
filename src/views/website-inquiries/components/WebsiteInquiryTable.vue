@@ -12,6 +12,11 @@
         height="100%"
         row-key="id"
       >
+        <el-table-column v-if="showBusiness" :label="$t('websiteInquiry.businessUnit')" width="120">
+          <template #default="{ row }">
+            {{ $t(`websiteInquiry.businessUnits.${row.businessUnit}`) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="code" :label="$t('inquiry.code')" width="180" />
         <el-table-column
           prop="customerName"
@@ -123,6 +128,7 @@ import type { WebsiteInquiry } from "@/types/website";
 import { INQUIRY_STATUS_TAG_TYPES } from "@/views/inquiries/options";
 defineProps<{
   rows: WebsiteInquiry[];
+  showBusiness: boolean;
   total: number;
   page: number;
   pageSize: number;

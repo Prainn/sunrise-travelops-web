@@ -8,6 +8,21 @@
     />
     <el-card class="page-search" shadow="never">
       <el-form inline @submit.prevent="search">
+        <el-form-item v-if="user.userInfo.scope === 'headquarters'" :label="$t('websiteInquiry.businessUnit')">
+          <el-select
+            v-model="query.businessUnit"
+            autocomplete="new-password"
+            clearable
+            :placeholder="$t('common.all')"
+          >
+            <el-option
+              v-for="unit in ['linxi', 'website']"
+              :key="unit"
+              :value="unit"
+              :label="$t(`websiteInquiry.businessUnits.${unit}`)"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item :label="$t('common.keywords')">
           <el-input
             v-model.trim="query.keyword"
@@ -27,7 +42,7 @@
           </el-select>
         </el-form-item>
         <el-form-item
-          v-if="allowAssign || user.userInfo.scope === 'headquarters'"
+          v-if="(allowAssign || user.userInfo.scope === 'headquarters') && (user.userInfo.scope !== 'headquarters' || query.businessUnit)"
           :label="$t('inquiry.owner')"
         >
           <el-select
@@ -37,7 +52,7 @@
             filterable
           >
             <el-option
-              v-for="owner in owners"
+              v-for="owner in filterOwners"
               :key="owner.id"
               :value="owner.id"
               :label="owner.name"
@@ -55,16 +70,14 @@
       v-model:page="query.page"
       v-model:page-size="query.pageSize"
       :rows="rows"
+      :show-business="user.userInfo.scope === 'headquarters'"
       :total="total"
       :can="can"
       @refresh="load"
       @create="openEditor()"
       @view="openEditor($event, true)"
       @edit="openEditor($event)"
-      @transfer="
-        transferRecord = $event;
-        transferVisible = true;
-      "
+      @transfer="openTransfer"
       @archive="archive"
       @lost="markLost"
       @itineraries="openItineraries"
@@ -73,10 +86,13 @@
       v-model="editorVisible"
       :record="editingRecord"
       :cities="cities"
+      :business-unit="query.businessUnit"
+      :show-business="user.userInfo.scope === 'headquarters'"
       :owners="owners"
       :allow-assign="allowAssign"
-      :saving="saving"
+      :saving="saving || optionsLoading"
       :read-only="editorReadOnly"
+      @business-change="loadOptions"
       @save="save"
     />
     <WebsiteInquiryTransfer
@@ -101,7 +117,7 @@ import {
   type WebsiteInquiryQuery,
   type WebsiteOwnerOption,
 } from "@/services/website.service";
-import type { WebsiteCity, WebsiteInquiry, WebsiteInquiryInput } from "@/types/website";
+import type { WebsiteBusinessUnit, WebsiteCity, WebsiteInquiry, WebsiteInquiryInput } from "@/types/website";
 import { INQUIRY_STATUS_OPTIONS } from "@/views/inquiries/options";
 import WebsiteInquiryTable from "./components/WebsiteInquiryTable.vue";
 import WebsiteInquiryEditor from "./components/WebsiteInquiryEditor.vue";
@@ -122,11 +138,13 @@ const total = ref(0);
 const loading = ref(false);
 const error = ref("");
 const owners = ref<WebsiteOwnerOption[]>([]);
+const filterOwners = ref<WebsiteOwnerOption[]>([]);
 const cities = ref<WebsiteCity[]>([]);
 const editorVisible = ref(false);
 const editingRecord = ref<WebsiteInquiry>();
 const editorReadOnly = ref(false);
 const saving = ref(false);
+const optionsLoading = ref(false);
 const transferVisible = ref(false);
 const transferRecord = ref<WebsiteInquiry>();
 const allowAssign = computed(() => can("website:inquiry:transfer"));
@@ -155,12 +173,14 @@ function search() {
   void load();
 }
 watch([() => query.keyword, () => query.status, () => query.ownerId], search);
+watch(() => query.businessUnit, () => { query.ownerId = ""; void loadFilterOwners(); search(); });
 function reset() {
-  const hasFilter = Boolean(query.keyword || query.status || query.ownerId);
-  Object.assign(query, { keyword: "", status: "", ownerId: "" });
+  const hasFilter = Boolean(query.keyword || query.status || query.ownerId || query.businessUnit);
+  Object.assign(query, { keyword: "", status: "", ownerId: "", businessUnit: undefined });
   if (!hasFilter) search();
 }
-function openEditor(record?: WebsiteInquiry, readOnly = false) {
+async function openEditor(record?: WebsiteInquiry, readOnly = false) {
+  await loadOptions(record?.businessUnit ?? query.businessUnit);
   editingRecord.value = record;
   editorReadOnly.value = readOnly;
   editorVisible.value = true;
@@ -242,15 +262,41 @@ async function markLost(record: WebsiteInquiry) {
     ElMessage.error(websiteErrorMessage(cause));
   }
 }
-onMounted(async () => {
-  void load();
-  try {
-    const config = await websiteService.config();
-    cities.value = config.cities.filter((city) => city.status === "enabled");
-    if (allowAssign.value || user.userInfo.scope === "headquarters")
-      owners.value = await websiteService.owners();
-  } catch (cause) {
-    ElMessage.error(websiteErrorMessage(cause));
+let optionsGeneration = 0;
+async function loadOptions(businessUnit?: WebsiteBusinessUnit) {
+  const current = ++optionsGeneration;
+  cities.value = [];
+  owners.value = [];
+  if (user.userInfo.scope === "headquarters" && !businessUnit) {
+    optionsLoading.value = false;
+    return;
   }
-});
+  optionsLoading.value = true;
+  try {
+    const [config, candidates] = await Promise.all([
+      websiteService.config(undefined, businessUnit),
+      websiteService.owners(businessUnit),
+    ]);
+    if (current !== optionsGeneration) return;
+    cities.value = config.cities.filter((city) => city.status === "enabled");
+    owners.value = candidates;
+  } catch (cause) { ElMessage.error(websiteErrorMessage(cause)); }
+  finally { if (current === optionsGeneration) optionsLoading.value = false; }
+}
+async function openTransfer(record: WebsiteInquiry) {
+  await loadOptions(record.businessUnit);
+  transferRecord.value = record;
+  transferVisible.value = true;
+}
+let filterGeneration = 0;
+async function loadFilterOwners() {
+  const current = ++filterGeneration;
+  filterOwners.value = [];
+  if (user.userInfo.scope === "headquarters" && !query.businessUnit) return;
+  try {
+    const result = await websiteService.owners(query.businessUnit);
+    if (current === filterGeneration) filterOwners.value = result;
+  } catch (cause) { ElMessage.error(websiteErrorMessage(cause)); }
+}
+onMounted(() => { void load(); void loadFilterOwners(); });
 </script>

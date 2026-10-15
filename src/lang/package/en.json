@@ -55,7 +55,8 @@
     "guideList": "Guides",
     "guideLeaves": "Guide Leave",
     "guideRatings": "Guide Ratings",
-    "tours": "Tours"
+    "tours": "Tours",
+    "menuPermissions": "Menu permissions"
   },
   "appVersion": {
     "title": "New Version Available",
@@ -599,6 +600,7 @@
       "switchBrand": "Switch brand workspace",
       "sunriseName": "Sunrise Vacation",
       "sunriseTitle": "Sunrise Vacation",
+      "sunriseSlogan": "Rediscover the essence of travel, go beyond imagination",
       "sunriseOption": "Sunrise Vacation",
       "sunriseDescription": "Sunrise Vacation · Travel operations",
       "linxiName": "Lynxtour Travel Agency",
@@ -760,6 +762,8 @@
     "tourCodeInvalid": "Use 1-10 letters or digits for the tour code"
   },
   "resource": {
+    "englishName": "English name",
+    "englishDescription": "English description",
     "description": "Description",
     "addContact": "Add Contact",
     "addAgency": "Add Organizing Agency",
@@ -1168,6 +1172,11 @@
       "private_vehicle": "Private vehicle",
       "flight": "Flight",
       "other": "Other"
+    },
+    "businessUnit": "Business unit",
+    "businessUnits": {
+      "linxi": "Linxi",
+      "website": "Website"
     }
   },
   "websiteConfig": {
@@ -1537,6 +1546,25 @@
     "status": {
       "active": "Active",
       "cancelled": "Cancelled"
+    }
+  },
+  "menuPermission": {
+    "rolesTitle": "Roles",
+    "expand": "Expand all",
+    "collapse": "Collapse all",
+    "loginNotice": "Changes apply when the user logs in again.",
+    "scopeNotice": "Shared menus are configured by role. Shengxu uses inquiries; Linxi and Website use website inquiries. Home and Profile remain available.",
+    "rootLocked": "Super administrator menus remain available and cannot be changed.",
+    "unavailable": "This role cannot access this page",
+    "discard": "Discard unsaved menu changes?",
+    "saved": "Saved. Changes apply on the next login.",
+    "roles": {
+      "ROOT": "Super administrator",
+      "ADMIN": "System administrator",
+      "EXECUTIVE": "Executive office",
+      "BUSINESS_MANAGER": "Business manager",
+      "COORDINATOR": "Coordinator",
+      "RESOURCE_MANAGER": "Resource manager"
     }
   }
 }

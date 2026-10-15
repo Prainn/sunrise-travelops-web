@@ -20,6 +20,12 @@
       >
         <el-table-column prop="code" :label="$t('resource.code')" width="200" />
         <el-table-column prop="name" :label="$t('resource.hotelName')" min-width="190" />
+        <el-table-column
+          prop="englishName"
+          :label="$t('resource.englishName')"
+          min-width="200"
+          show-overflow-tooltip
+        />
         <el-table-column prop="city" :label="$t('resource.city')" width="100" />
         <el-table-column prop="rating" :label="$t('resource.starRating')" width="130">
           <template #default="scope">

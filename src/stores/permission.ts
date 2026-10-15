@@ -11,8 +11,8 @@ export const usePermissionStore = defineStore("permission", () => {
 
   /** 根据当前用户权限过滤前端静态路由并生成菜单。 */
   async function generateRoutes(): Promise<RouteRecordRaw[]> {
-    const { scope, roles, perms } = useUserStoreHook().userInfo;
-    routes.value = filterRoutesByAccess(constantRoutes, { scope, roles, perms });
+    const { scope, roles, perms, menuKeys } = useUserStoreHook().userInfo;
+    routes.value = filterRoutesByAccess(constantRoutes, { scope, roles, perms, menuKeys });
     isRouteGenerated.value = true;
     return routes.value;
   }

@@ -6,6 +6,7 @@ interface RouteAccessContext {
   scope?: LoginScope;
   roles?: string[];
   perms?: string[];
+  menuKeys?: string[];
 }
 
 /** 判断当前用户是否满足路由声明的角色与权限要求。 */
@@ -19,7 +20,8 @@ export function hasRouteAccess(meta: RouteMeta, context: RouteAccessContext): bo
   const matchesRoles = !meta.roles?.length || meta.roles.some((role) => roles.includes(role));
   const matchesPerms = !meta.perms?.length || meta.perms.some((perm) => perms.includes(perm));
 
-  return matchesRoles && matchesPerms;
+  const matchesMenu = !meta.menuKey || Boolean(context.menuKeys?.includes(meta.menuKey));
+  return matchesRoles && matchesPerms && matchesMenu;
 }
 
 /** 判断当前用户是否可以访问路由匹配链中的所有层级。 */
@@ -48,7 +50,22 @@ export function filterRoutesByAccess(
       ...route,
       ...(children ? { children } : {}),
     } as RouteRecordRaw;
+    if (children && typeof route.redirect === "string") {
+      const visible = children.filter((child) => !child.meta?.hidden);
+      const path = (child: RouteRecordRaw) => child.path.startsWith("/") ? child.path : `${route.path}/${child.path}`.replace(/\/+/g, "/");
+      if (visible.length && !visible.some((child) => path(child) === route.redirect)) accessibleRoute.redirect = path(visible[0]!);
+    }
     accessibleRoutes.push(accessibleRoute);
     return accessibleRoutes;
   }, []);
+}
+
+/** 共用行程 URL 以显式模块匹配范围和菜单入口。 */
+export function hasWorkspaceAccess(context: RouteAccessContext, module: unknown): boolean {
+  if (module !== undefined && module !== "website") return false;
+  return hasRouteAccess({
+    menuKey: "inquiries",
+    scopes: module === "website" ? ["linxi", "website", "headquarters"] : ["shengxu", "headquarters"],
+    perms: [module === "website" ? "website:itinerary:list" : "itinerary:list"],
+  }, context);
 }

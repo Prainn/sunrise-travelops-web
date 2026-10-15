@@ -54,6 +54,12 @@
           >
             {{ brand.scope === "shengxu" ? $t("login.brandDesign.sunriseTitle") : $t("login.brandDesign.slogan") }}
           </h1>
+          <p
+            v-if="brand.scope === 'shengxu'"
+            class="mb-[12px] mt-0 text-[16px] leading-[1.8] tracking-[1px] text-[var(--login-heading)]"
+          >
+            {{ $t("login.brandDesign.sunriseSlogan") }}
+          </p>
           <p class="m-0 text-[12px] leading-[1.8] tracking-[1px] text-[var(--login-muted)]">
             {{ brand.description }}
           </p>
@@ -164,7 +170,7 @@
         v-for="(brand, index) in brands"
         :key="brand.scope"
         type="button"
-        class="login-brand-option flex min-h-[80px] w-full items-center gap-[15px] rounded-[11px] border border-[var(--login-line)] border-solid bg-[var(--login-paper)] px-[20px] py-[16px] text-left text-[var(--login-ink)] transition-transform duration-200 enabled:hover:translate-y-[-2px] disabled:cursor-wait"
+        class="login-brand-option flex min-h-[80px] w-full cursor-pointer items-center gap-[15px] rounded-[11px] border border-[var(--login-line)] border-solid bg-[var(--login-paper)] px-[20px] py-[16px] text-left text-[var(--login-ink)] transition-transform duration-200 enabled:hover:translate-y-[-2px] disabled:cursor-wait"
         :aria-pressed="loginFormData.scope === brand.scope"
         :disabled="loading"
         @click="loginFormData.scope = brand.scope"

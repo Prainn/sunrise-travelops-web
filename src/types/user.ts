@@ -12,6 +12,7 @@ export interface UserInfo {
   avatar?: string;
   roles: string[];
   perms: string[];
+  menuKeys?: string[];
 }
 
 export interface UserQueryParams extends BaseQueryParams {

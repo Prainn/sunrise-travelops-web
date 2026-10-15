@@ -21,11 +21,17 @@
       <el-form-item :label="$t('resource.restaurantName')" prop="name">
         <el-input v-model.trim="form.name" />
       </el-form-item>
+      <el-form-item :label="$t('resource.englishName')">
+        <el-input v-model.trim="form.englishName" :maxlength="150" />
+      </el-form-item>
       <el-form-item :label="$t('resource.city')" prop="city">
         <CitySelect v-model="form.city" />
       </el-form-item>
       <el-form-item :label="$t('resource.description')" prop="description">
         <el-input v-model.trim="form.description" type="textarea" :rows="3" />
+      </el-form-item>
+      <el-form-item :label="$t('resource.englishDescription')">
+        <el-input v-model.trim="form.englishDescription" type="textarea" :rows="3" />
       </el-form-item>
       <el-form-item :label="$t('resource.priceUnit')" prop="unit">
         <el-select v-model="form.unit" autocomplete="new-password">

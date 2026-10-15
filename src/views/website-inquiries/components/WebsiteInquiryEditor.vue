@@ -19,6 +19,9 @@
         </el-tag>
       </div>
       <el-descriptions :column="1" border>
+        <el-descriptions-item :label="$t('websiteInquiry.businessUnit')">
+          {{ $t(`websiteInquiry.businessUnits.${record.businessUnit}`) }}
+        </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.owner')">
           {{ record.owner }}
         </el-descriptions-item>
@@ -86,6 +89,21 @@
       label-width="auto"
       :disabled="saving"
     >
+      <el-form-item v-if="showBusiness" :label="$t('websiteInquiry.businessUnit')" prop="businessUnit">
+        <el-select
+          v-model="form.businessUnit"
+          autocomplete="new-password"
+          :disabled="Boolean(record)"
+          @change="changeBusiness"
+        >
+          <el-option
+            v-for="unit in ['linxi', 'website']"
+            :key="unit"
+            :value="unit"
+            :label="$t(`websiteInquiry.businessUnits.${unit}`)"
+          />
+        </el-select>
+      </el-form-item>
       <el-row :gutter="16">
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('common.status')" prop="status">
@@ -267,12 +285,14 @@ import { useI18n } from "vue-i18n";
 import type { FormInstance, FormRules } from "element-plus";
 import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
 import { websiteInquiryInput, type WebsiteOwnerOption } from "@/services/website.service";
-import type { WebsiteCity, WebsiteInquiry, WebsiteInquiryInput } from "@/types/website";
+import type { WebsiteBusinessUnit, WebsiteCity, WebsiteInquiry, WebsiteInquiryInput } from "@/types/website";
 import { cloneWebsiteDraft, emptyInquiry } from "../options";
 import { INQUIRY_STATUS_OPTIONS, INQUIRY_STATUS_TAG_TYPES } from "@/views/inquiries/options";
 import { formatDateTime } from "@/utils";
 const props = defineProps<{
   modelValue: boolean;
+  businessUnit?: WebsiteBusinessUnit;
+  showBusiness: boolean;
   record?: WebsiteInquiry;
   owners: WebsiteOwnerOption[];
   cities: WebsiteCity[];
@@ -283,6 +303,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
   save: [input: WebsiteInquiryInput];
+  "business-change": [businessUnit?: WebsiteBusinessUnit];
 }>();
 const { t } = useI18n();
 const formRef = ref<FormInstance>();
@@ -292,6 +313,7 @@ const editableStatusOptions = computed(() => {
   return INQUIRY_STATUS_OPTIONS.filter((option) => allowedStatuses.includes(option.value));
 });
 const rules = computed<FormRules>(() => ({
+  businessUnit: [{ required: props.showBusiness, message: t("common.selectPlaceholder"), trigger: "change" }],
   countryItemId: [
     { required: true, message: t("common.selectPlaceholder"), trigger: "change" },
   ],
@@ -344,11 +366,16 @@ watch(
     if (visible) {
       form.value = props.record
         ? cloneWebsiteDraft(websiteInquiryInput(props.record))
-        : emptyInquiry();
+        : { ...emptyInquiry(), businessUnit: props.businessUnit };
       formRef.value?.clearValidate();
     }
   },
 );
+function changeBusiness() {
+  form.value.ownerId = undefined;
+  form.value.destinations = [];
+  emit("business-change", form.value.businessUnit);
+}
 function cityName(id: string) {
   return props.cities.find((city) => city.id === id)?.nameZh ?? id;
 }
