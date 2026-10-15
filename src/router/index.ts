@@ -77,10 +77,24 @@ export const constantRoutes: RouteRecordRaw[] = [
     },
     children: [
       {
+        path: "menu-permissions",
+        name: "MenuPermissions",
+        component: () => import("@/views/system/menu-permissions/index.vue"),
+        meta: {
+          title: "menuPermissions",
+          icon: "el-icon-Lock",
+          scopes: ["headquarters"],
+          roles: ["ROOT"],
+          perms: ["sys:menu-permission:list"],
+          menuKey: "menu-permissions",
+        },
+      },
+      {
         path: "dict",
         name: "Dict",
         component: () => import("@/views/system/dict/index.vue"),
         meta: {
+          menuKey: "dict",
           title: "systemDictionary",
           icon: "el-icon-Collection",
           keepAlive: true,
@@ -92,6 +106,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "DictItem",
         component: () => import("@/views/system/dict/dict-item.vue"),
         meta: {
+          menuKey: "dict",
           title: "dictionaryOptions",
           hidden: true,
           keepAlive: true,
@@ -103,6 +118,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "BusinessCategory",
         component: () => import("@/views/system/business-category/index.vue"),
         meta: {
+          menuKey: "business-dict",
           title: "businessCategories",
           icon: "el-icon-Grid",
           keepAlive: true,
@@ -114,6 +130,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "User",
         component: () => import("@/views/system/user/index.vue"),
         meta: {
+          menuKey: "users",
           title: "userList",
           icon: "el-icon-User",
           keepAlive: true,
@@ -125,6 +142,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "OperationLogs",
         component: () => import("@/views/system/operation-logs/index.vue"),
         meta: {
+          menuKey: "operations",
           title: "operationLogs",
           icon: "el-icon-Document",
           keepAlive: true,
@@ -149,6 +167,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "InquiryList",
         component: () => import("@/views/inquiries/index.vue"),
         meta: {
+          scopes: ["shengxu", "headquarters"],
+          menuKey: "inquiries",
           title: "inquiryList",
           icon: "el-icon-Document",
           keepAlive: true,
@@ -160,6 +180,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "InquiryItineraries",
         component: () => import("@/views/inquiries/itineraries/entry.vue"),
         meta: {
+          menuKey: "inquiries", inquiryWorkspace: true,
           title: "itineraryManagement",
           hidden: true,
           perms: ["itinerary:list", "website:itinerary:list"],
@@ -170,6 +191,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "InquiryLogReport",
         component: () => import("@/views/inquiries/logs/index.vue"),
         meta: {
+          scopes: ["shengxu", "headquarters"],
+          menuKey: "inquiry-summary",
           title: "inquiryLogReport",
           icon: "el-icon-DataAnalysis",
           perms: ["inquiry:list"],
@@ -180,6 +203,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "InquiryLogs",
         component: () => import("@/views/inquiries/logs/index.vue"),
         meta: {
+          scopes: ["shengxu", "headquarters"],
+          menuKey: "inquiries",
           title: "inquiryLogs",
           hidden: true,
           perms: ["inquiry:list"],
@@ -195,7 +220,7 @@ export const constantRoutes: RouteRecordRaw[] = [
       title: "websiteInquiries",
       icon: "el-icon-ChatLineSquare",
       alwaysShow: true,
-      scopes: ["website", "headquarters"],
+      scopes: ["linxi", "website", "headquarters"],
     },
     children: [
       {
@@ -203,6 +228,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "WebsiteInquiryList",
         component: () => import("@/views/website-inquiries/index.vue"),
         meta: {
+          menuKey: "inquiries",
           title: "inquiryList",
           icon: "el-icon-Document",
           keepAlive: true,
@@ -227,10 +253,11 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "WebsiteResources",
         component: () => import("@/views/resources/website/index.vue"),
         meta: {
+          menuKey: "website-config",
           title: "websiteResources",
           icon: "el-icon-Collection",
           keepAlive: true,
-          scopes: ["website", "headquarters"],
+          scopes: ["linxi", "website", "headquarters"],
           perms: ["website:config:list"],
         },
       },
@@ -239,6 +266,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "Agency",
         component: () => import("@/views/resources/agency/index.vue"),
         meta: {
+          menuKey: "agency",
           title: "travelAgencies",
           icon: "el-icon-Promotion",
           keepAlive: true,
@@ -249,13 +277,15 @@ export const constantRoutes: RouteRecordRaw[] = [
         path: "city",
         name: "CityResource",
         component: () => import("@/views/resources/city/index.vue"),
-        meta: { title: "cities", icon: "el-icon-Location", perms: ["resource:city:list"] },
+        meta: {
+          menuKey: "city", title: "cities", icon: "el-icon-Location", perms: ["resource:city:list"] },
       },
       {
         path: "hotel",
         name: "Hotel",
         component: () => import("@/views/resources/hotel/index.vue"),
         meta: {
+          menuKey: "hotel",
           title: "hotels",
           icon: "el-icon-House",
           keepAlive: true,
@@ -267,6 +297,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "Restaurant",
         component: () => import("@/views/resources/restaurant/index.vue"),
         meta: {
+          menuKey: "restaurant",
           title: "restaurants",
           icon: "el-icon-Food",
           keepAlive: true,
@@ -278,6 +309,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "Attraction",
         component: () => import("@/views/resources/attraction/index.vue"),
         meta: {
+          menuKey: "attraction",
           title: "attractions",
           icon: "el-icon-Place",
           keepAlive: true,
@@ -289,6 +321,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "TransportResource",
         component: () => import("@/views/resources/transport/index.vue"),
         meta: {
+          menuKey: "transport",
           title: "vehicleModels",
           icon: "el-icon-Van",
           keepAlive: true,
@@ -300,6 +333,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "FlightResource",
         component: () => import("@/views/resources/flight/index.vue"),
         meta: {
+          menuKey: "flight",
           title: "flights",
           icon: "el-icon-Position",
           keepAlive: true,
@@ -320,6 +354,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "Guide",
         component: () => import("@/views/resources/guide/index.vue"),
         meta: {
+          menuKey: "guide-people",
           title: "guideList",
           icon: "el-icon-Document",
           keepAlive: true,
@@ -331,6 +366,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "GuideLeaves",
         component: () => import("@/views/guides/leaves/index.vue"),
         meta: {
+          menuKey: "guide-leaves",
           title: "guideLeaves",
           icon: "el-icon-Calendar",
           perms: ["resource:guide:list"],
@@ -341,6 +377,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "GuideRatings",
         component: () => import("@/views/guides/ratings/index.vue"),
         meta: {
+          menuKey: "guide-ratings",
           title: "guideRatings",
           icon: "el-icon-Star",
           perms: ["tour:list"],
@@ -360,6 +397,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "TourList",
         component: () => import("@/views/tours/index.vue"),
         meta: {
+          menuKey: "tours",
           title: "tours",
           icon: "el-icon-Document",
           keepAlive: true,

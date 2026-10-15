@@ -6,6 +6,25 @@
       type="error"
       :closable="false"
     />
+    <el-card v-if="user.userInfo.scope === 'headquarters'" class="page-search" shadow="never">
+      <el-form inline>
+        <el-form-item :label="$t('websiteInquiry.businessUnit')">
+          <el-select
+            v-model="businessUnit"
+            autocomplete="new-password"
+            :disabled="saving || loading"
+            @change="loadConfig"
+          >
+            <el-option
+              v-for="unit in ['linxi', 'website']"
+              :key="unit"
+              :value="unit"
+              :label="$t(`websiteInquiry.businessUnits.${unit}`)"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+    </el-card>
     <el-card v-if="config" class="page-content" shadow="never">
       <TableToolbar class="website-config-toolbar" @refresh="refreshConfig">
         <el-tabs v-model="activeTab" class="website-config-tabs min-w-0 w-full">
@@ -95,7 +114,7 @@ import { useI18n } from "vue-i18n";
 import { websiteErrorMessage, websiteService } from "@/services/website.service";
 import { useUserStore } from "@/stores/user";
 import { hasUserPermission } from "@/utils/permission";
-import type { WebsiteConfig } from "@/types/website";
+import type { WebsiteBusinessUnit, WebsiteConfig } from "@/types/website";
 import WebsiteConfigCities from "./components/WebsiteConfigCities.vue";
 import WebsiteConfigAttractions from "./components/WebsiteConfigAttractions.vue";
 import WebsiteConfigHotels from "./components/WebsiteConfigHotels.vue";
@@ -106,6 +125,7 @@ import WebsiteConfigTemplates from "./components/WebsiteConfigTemplates.vue";
 defineOptions({ name: "WebsiteResources" });
 const user = useUserStore();
 const { t } = useI18n();
+const businessUnit = ref<WebsiteBusinessUnit>(user.userInfo.scope === "linxi" ? "linxi" : "website");
 const config = ref<WebsiteConfig>();
 const loading = ref(false);
 const saving = ref(false);
@@ -116,7 +136,7 @@ async function persistConfig(next: WebsiteConfig): Promise<boolean> {
   if (!config.value || !editable.value || loading.value || saving.value) return false;
   saving.value = true;
   try {
-    config.value = await websiteService.saveConfig(next);
+    config.value = await websiteService.saveConfig(next, businessUnit.value);
     return true;
   } catch (cause) {
     ElMessage.error(websiteErrorMessage(cause));
@@ -145,7 +165,8 @@ async function loadConfig() {
   loading.value = true;
   error.value = "";
   try {
-    config.value = await websiteService.config();
+    config.value = undefined;
+    config.value = await websiteService.config(undefined, businessUnit.value);
   } catch (cause) {
     error.value = websiteErrorMessage(cause);
   } finally {

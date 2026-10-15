@@ -112,6 +112,7 @@ export const userService = {
       avatar: "/favicon.ico",
       roles: currentUser.roles,
       perms: [...currentUser.permissions],
+      menuKeys: [...currentUser.menuKeys],
       identityId: currentUser.identityId,
       scope: currentUser.scope,
       scopeName: currentUser.scopeName,

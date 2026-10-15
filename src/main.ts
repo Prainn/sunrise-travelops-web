@@ -34,10 +34,12 @@ import {
 } from "@element-plus/icons-vue";
 import { setupPermissionGuard } from "@/router/guards/permission";
 import { setupPageUnloadConfirmation } from "@/utils/page-lifecycle";
+import { setupAuthSessionSync } from "@/utils/auth-storage";
 
 const app = createApp(App);
 
 setupPageUnloadConfirmation();
+setupAuthSessionSync();
 
 setupDirective(app);
 setupStore(app);

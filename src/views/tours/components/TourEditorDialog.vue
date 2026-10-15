@@ -404,7 +404,7 @@ async function onOpen() {
     await loadGuides();
     return;
   }
-  sourceModule.value = user.userInfo.scope === "website" ? "website" : "standard";
+  sourceModule.value = ["linxi", "website"].includes(user.userInfo.scope ?? "") ? "website" : "standard";
   await loadSources();
 }
 

@@ -55,7 +55,8 @@
     "guideList": "导游列表",
     "guideLeaves": "导游请假表",
     "guideRatings": "导游评分",
-    "tours": "成团表"
+    "tours": "成团表",
+    "menuPermissions": "菜单权限"
   },
   "appVersion": {
     "title": "发现新版本",
@@ -1169,6 +1170,11 @@
       "private_vehicle": "专车",
       "flight": "飞机",
       "other": "其他"
+    },
+    "businessUnit": "所属业务部",
+    "businessUnits": {
+      "linxi": "霖熹",
+      "website": "独立站"
     }
   },
   "websiteConfig": {
@@ -1538,6 +1544,25 @@
     "status": {
       "active": "有效",
       "cancelled": "已撤销"
+    }
+  },
+  "menuPermission": {
+    "rolesTitle": "角色",
+    "expand": "展开全部",
+    "collapse": "收起全部",
+    "loginNotice": "修改后的菜单权限在用户重新登录后生效。",
+    "scopeNotice": "公共菜单按角色配置。询盘入口按登录范围匹配：盛旭使用询盘，霖熹和独立站使用独立站询盘。首页和个人中心固定保留。",
+    "rootLocked": "超级管理员菜单固定开放，不可修改。",
+    "unavailable": "该角色没有此页面的业务权限",
+    "discard": "有未保存的菜单修改，是否放弃？",
+    "saved": "已保存，用户重新登录后生效。",
+    "roles": {
+      "ROOT": "超级管理员",
+      "ADMIN": "系统管理员",
+      "EXECUTIVE": "总经办",
+      "BUSINESS_MANAGER": "业务部门负责人",
+      "COORDINATOR": "计调",
+      "RESOURCE_MANAGER": "资源管理员"
     }
   }
 }

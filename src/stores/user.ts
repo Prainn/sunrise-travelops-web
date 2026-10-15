@@ -22,7 +22,7 @@ export const useUserStore = defineStore("user", () => {
   async function login(loginRequest: LoginRequest): Promise<void> {
     const { accessToken, refreshToken } = await authService.login(loginRequest);
     rememberMe.value = loginRequest.rememberMe ?? false;
-    AuthStorage.setTokens(accessToken, refreshToken, rememberMe.value);
+    AuthStorage.setLoginTokens(accessToken, refreshToken, rememberMe.value);
   }
 
   /**

@@ -1,6 +1,6 @@
 import NProgress from "@/plugins/nprogress";
 import router from "@/router";
-import { hasRouteChainAccess } from "@/router/access";
+import { hasRouteChainAccess, hasWorkspaceAccess } from "@/router/access";
 import { usePermissionStore } from "@/stores/permission";
 import { useUserStore } from "@/stores/user";
 
@@ -50,7 +50,11 @@ export function setupPermissionGuard() {
         to.matched.map((record) => record.meta),
         userStore.userInfo,
       );
-      if (!canAccessRoute) {
+      const canAccessWorkspace = !to.matched.some((record) => record.meta.inquiryWorkspace) || hasWorkspaceAccess(userStore.userInfo, to.query.module);
+      if (!canAccessRoute || !canAccessWorkspace) {
+        const group = permissionStore.routes.find((record) => record.path === to.redirectedFrom?.path);
+        const child = group?.children?.find((record) => !record.meta?.hidden);
+        if (group && child) return { path: child.path.startsWith("/") ? child.path : `${group.path}/${child.path}`.replace(/\/+/g, "/"), replace: true };
         return { path: "/401", replace: true };
       }
 

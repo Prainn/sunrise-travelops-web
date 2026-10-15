@@ -21,5 +21,7 @@ declare module "vue-router" {
     roles?: string[];
     perms?: string[];
     scopes?: LoginScope[];
+    menuKey?: string;
+    inquiryWorkspace?: boolean;
   }
 }

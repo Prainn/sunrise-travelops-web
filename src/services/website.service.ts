@@ -1,6 +1,7 @@
 import { ApiError, request } from "@/api/request";
 import type { PageResult } from "@/types/common";
 import type {
+  WebsiteBusinessUnit,
   WebsiteConfig,
   WebsiteInquiry,
   WebsiteInquiryInput,
@@ -37,10 +38,12 @@ export interface WebsiteInquiryQuery {
   keyword?: string;
   status?: WebsiteInquiry["status"] | "";
   ownerId?: string;
+  businessUnit?: WebsiteBusinessUnit;
 }
 
 export function websiteInquiryInput(record: WebsiteInquiryInput): WebsiteInquiryInput {
   return {
+    businessUnit: record.businessUnit,
     countryItemId: record.countryItemId,
     customerName: record.customerName,
     plannedDays: record.plannedDays,
@@ -87,11 +90,12 @@ export const websiteService = {
     return request.put<WebsiteInquiry>(`/website/inquiries/${encodeURIComponent(id)}`, {
       ...websiteInquiryInput(input),
       ownerId: undefined,
+      businessUnit: undefined,
       version,
     });
   },
-  owners() {
-    return request.get<WebsiteOwnerOption[]>("/website/owners");
+  owners(businessUnit?: WebsiteBusinessUnit) {
+    return request.get<WebsiteOwnerOption[]>("/website/owners", {params: {businessUnit}});
   },
   transfer(id: string, version: number, ownerId: string, reason: string) {
     return request.post<WebsiteInquiry>(`/website/inquiries/${encodeURIComponent(id)}/transfer`, {
@@ -163,11 +167,11 @@ export const websiteService = {
       `/website/itineraries/${encodeURIComponent(id)}/quotation`,
     );
   },
-  config(version?: number) {
-    return request.get<WebsiteConfig>("/website/config", { params: { version } });
+  config(version?: number, businessUnit?: WebsiteBusinessUnit) {
+    return request.get<WebsiteConfig>("/website/config", { params: { version, businessUnit } });
   },
-  saveConfig(config: WebsiteConfig) {
-    return request.put<WebsiteConfig>("/website/config", config);
+  saveConfig(config: WebsiteConfig, businessUnit?: WebsiteBusinessUnit) {
+    return request.put<WebsiteConfig>("/website/config", config, {params: {businessUnit}});
   },
   resources(kind: WebsiteResourceKind, keyword = "", page = 1) {
     return request.get<PageResult<WebsiteResourceOption>>(`/website/resources/${kind}`, {
