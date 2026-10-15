@@ -762,6 +762,8 @@
     "tourCodeInvalid": "Use 1-10 letters or digits for the tour code"
   },
   "resource": {
+    "englishName": "English name",
+    "englishDescription": "English description",
     "description": "Description",
     "addContact": "Add Contact",
     "addAgency": "Add Organizing Agency",

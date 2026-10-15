@@ -144,6 +144,7 @@ export interface HotelRecord extends ResourceAuditRecord {
   id: string;
   code: string;
   name: string;
+  englishName: string;
   province: string;
   city: string;
   rating: HotelRating;
@@ -165,10 +166,12 @@ export interface AttractionRecord extends ResourceAuditRecord {
   id: string;
   code: string;
   name: string;
+  englishName: string;
   area: string;
   category: AttractionCategory | null;
   restroomLocation: string;
   description: string;
+  englishDescription: string;
   remark: string;
   unit: ItineraryPriceUnit;
   /** Null only for migrated legacy records still waiting for a price. */
@@ -220,12 +223,14 @@ export interface RestaurantRecord extends ResourceAuditRecord {
   id: string;
   code: string;
   name: string;
+  englishName: string;
   city: string;
   cuisine: string;
   contact: string;
   phone: string;
   address: string;
   description: string;
+  englishDescription: string;
   remark: string;
   unit: RestaurantPriceUnit;
   /** Null only for migrated legacy records still waiting for a price. */
