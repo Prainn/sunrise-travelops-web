@@ -111,7 +111,7 @@ export function getResourcePriceOptions(
       })),
     ...resources.attractions
       .filter((attraction) =>
-        attraction.status === "enabled" && attraction.price !== null && attraction.description.trim(),
+        attraction.status === "enabled" && attraction.price !== null,
       )
       .map((attraction) => ({
         id: `attraction:${attraction.id}`,
