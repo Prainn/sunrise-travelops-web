@@ -33,7 +33,13 @@
               </el-tag>
             </template>
           </el-table-column>
+          <el-table-column prop="code" :label="$t('resource.code')" width="170" />
           <el-table-column prop="name" :label="$t('resource.attractionName')" min-width="200" />
+          <el-table-column :label="$t('attraction.price')" width="110" align="right">
+            <template #default="scope">
+              {{ scope.row.price === null ? $t('resource.priceMissing') : formatMoney(scope.row.price) }}
+            </template>
+          </el-table-column>
           <el-table-column prop="area" :label="$t('attraction.area')" width="100" />
           <el-table-column
             prop="description"
@@ -41,12 +47,6 @@
             min-width="240"
             show-overflow-tooltip
           />
-          <el-table-column :label="$t('attraction.price')" width="110" align="right">
-            <template #default="scope">
-              {{ scope.row.price === null ? $t('resource.priceMissing') : formatMoney(scope.row.price) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="code" :label="$t('resource.code')" width="170" />
           <el-table-column :label="$t('common.status')" width="90" align="center">
             <template #default="scope">
               <el-tag :type="scope.row.status === 'enabled' ? 'success' : 'info'">

@@ -33,14 +33,8 @@
               </el-tag>
             </template>
           </el-table-column>
+          <el-table-column prop="code" :label="$t('resource.code')" width="170" />
           <el-table-column prop="name" :label="$t('resource.restaurantName')" min-width="200" />
-          <el-table-column prop="city" :label="$t('resource.city')" width="100" />
-          <el-table-column
-            prop="description"
-            :label="$t('resource.description')"
-            min-width="240"
-            show-overflow-tooltip
-          />
           <el-table-column :label="$t('restaurant.price')" width="110" align="right">
             <template #default="scope">
               {{ scope.row.price === null ? $t('resource.priceMissing') : formatMoney(scope.row.price) }}
@@ -55,9 +49,15 @@
               }}
             </template>
           </el-table-column>
-          <el-table-column prop="code" :label="$t('resource.code')" width="170" />
           <el-table-column prop="contact" :label="$t('resource.contact')" min-width="110" />
           <el-table-column prop="phone" :label="$t('resource.phone')" min-width="130" />
+          <el-table-column prop="city" :label="$t('resource.city')" width="100" />
+          <el-table-column
+            prop="description"
+            :label="$t('resource.description')"
+            min-width="240"
+            show-overflow-tooltip
+          />
           <el-table-column :label="$t('common.status')" width="90" align="center">
             <template #default="scope">
               <el-tag :type="scope.row.status === 'enabled' ? 'success' : 'info'">
