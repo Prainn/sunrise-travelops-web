@@ -29,7 +29,7 @@
     >
       <div class="command-palette-dialog flex flex-col gap-[14px]">
         <el-input
-          ref="inputRef"
+          :ref="setInputRef"
           v-model="keyword"
           class="command-palette-input"
           :placeholder="$t('commandPalette.searchMenu')"
@@ -136,7 +136,7 @@ const {
   results,
   history,
   activeIndex,
-  inputRef,
+  setInputRef,
   open,
   close,
   onSearch,

@@ -27,6 +27,9 @@ export function useCommandPalette() {
   const keyword = ref("");
   const activeIndex = ref(-1);
   const inputRef = ref<HTMLInputElement>();
+  function setInputRef(el: unknown) {
+    inputRef.value = el as HTMLInputElement | undefined;
+  }
 
   // 菜单数据
   const menuItems = ref<SearchItem[]>([]);
@@ -191,7 +194,7 @@ export function useCommandPalette() {
     results,
     history,
     activeIndex,
-    inputRef,
+    setInputRef,
     open,
     close,
     onSearch,

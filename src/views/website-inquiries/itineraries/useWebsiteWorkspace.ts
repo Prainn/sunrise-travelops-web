@@ -1,5 +1,6 @@
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { isValidVehiclePrice } from "./vehicle-price";
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
@@ -156,14 +157,30 @@ export function useWebsiteWorkspace() {
       ElMessage.error(t("websiteWorkspace.citiesRequired"));
       return false;
     }
+    if (plan.value.vehiclePrices.some((item) => item.unitPrice != null && !isValidVehiclePrice(item.unitPrice))) {
+      ElMessage.error(t("websiteWorkspace.vehiclePriceInvalid"));
+      return false;
+    }
     saving.value = true;
+    let saved: WebsiteItinerary;
     try {
-      await storeResult(await websiteService.saveItinerary(plan.value));
-      ElMessage.success(t("websiteWorkspace.draftSaved"));
-      return true;
+      saved = await websiteService.saveItinerary(plan.value);
     } catch (cause) {
       showError(cause);
+      saving.value = false;
       return false;
+    }
+    try {
+      ElMessage.success(t("websiteWorkspace.draftSaved"));
+      try {
+        await storeResult(saved);
+      } catch (cause) {
+        // 保存已成功：用返回的新版本更新当前草稿，避免再次保存时版本冲突。
+        plan.value = cloneWebsiteDraft(saved);
+        baseline.value = JSON.stringify(websiteItineraryInput(saved));
+        showError(cause);
+      }
+      return true;
     } finally {
       saving.value = false;
     }

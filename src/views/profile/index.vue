@@ -483,21 +483,27 @@ const triggerFileUpload = () => {
 const handleFileChange = async (event: Event) => {
   const target = event.target as HTMLInputElement;
   const file = target.files ? target.files[0] : null;
-  if (file) {
-    const avatar = await readFileAsDataUrl(file);
-    await userService.updateProfile({ avatar });
-    userProfile.value.avatar = avatar;
-    userStore.userInfo.avatar = avatar;
-    ElMessage.success(t("profile.avatarUpdatedSuccess"));
+  try {
+    if (file) {
+      const avatar = await readFileAsDataUrl(file);
+      await userService.updateProfile({ avatar });
+      userProfile.value.avatar = avatar;
+      userStore.userInfo.avatar = avatar;
+      ElMessage.success(t("profile.avatarUpdatedSuccess"));
+    }
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("apiErrors.REQUEST_FAILED"));
+  } finally {
+    target.value = "";
   }
-  target.value = "";
 };
 
 const loadUserProfile = async () => {
   try {
     userProfile.value = await userService.getProfile();
-  } catch {
-    userProfile.value = {};
+  } catch (error) {
+    // 加载失败不当作空资料展示，保留已有内容并提示
+    ElMessage.error(error instanceof Error ? error.message : t("apiErrors.REQUEST_FAILED"));
   }
 };
 

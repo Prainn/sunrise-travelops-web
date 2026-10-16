@@ -28,7 +28,7 @@ export function useResourcePriceSelection(
   const city = ref("");
   const selectedId = ref("");
   const quantity = ref(1);
-  const actualPrice = ref(0);
+  const actualPrice = ref<number | null>(0);
   const adjustmentReason = ref("");
   const selectedOption = ref<ResourcePriceOption>();
   const referencePrice = computed(() =>
@@ -38,7 +38,7 @@ export function useResourcePriceSelection(
   );
   const source = ref<"library" | "custom">("library");
   const customName = ref("");
-  const customPrice = ref<number>();
+  const customPrice = ref<number | null>(null);
   const customUnit = ref<"personMeal" | "table">("personMeal");
   const customQuantity = ref(1);
   const dinerCount = ref<number>();
@@ -62,23 +62,26 @@ export function useResourcePriceSelection(
           isDuplicate(selectedOption.value.resourceId, selectedOption.value.isStandardPrice),
       ),
   );
+  // 空价允许保存为 Draft（冻结前再补）；填写后必须是非负有限数。
+  function isEmptyOrValidPrice(price: number | null | undefined) {
+    return price == null || (Number.isFinite(price) && price >= 0);
+  }
   const baseCanSubmit = computed(() =>
     props.mealSlot && source.value === "custom"
       ? Boolean(customName.value.trim()) &&
-        customPrice.value != null &&
-        Number.isFinite(customPrice.value) &&
-        customPrice.value >= 0 &&
+        isEmptyOrValidPrice(customPrice.value) &&
         Number.isInteger(customQuantity.value) &&
         customQuantity.value > 0
-      : Boolean(selectedOption.value),
+      : Boolean(selectedOption.value) && isEmptyOrValidPrice(actualPrice.value),
   );
   const reasonRequired = computed(() => {
-    if (props.mealSlot && source.value === "custom") return true;
+    if (props.mealSlot && source.value === "custom") return customPrice.value != null;
     const option = selectedOption.value;
-    if (!option) return false;
+    if (!option || actualPrice.value == null) return false;
     const current = props.currentItem;
     const sameSource = current?.resourceId === option.resourceId;
-    const comparison = sameSource ? current.unitCost : referencePrice.value;
+    // 从空价补价视为首次定价，按参考价比较。
+    const comparison = sameSource && current.unitCost != null ? current.unitCost : referencePrice.value;
     return comparison == null || roundMoney(actualPrice.value) !== roundMoney(comparison);
   });
   const canSubmitWithDiners = computed(
@@ -152,7 +155,7 @@ export function useResourcePriceSelection(
           item?.type === "restaurant" && item.resourceId === null;
         source.value = custom ? "custom" : "library";
         customName.value = custom ? item.resourceName : "";
-        customPrice.value = custom ? item.unitCost : undefined;
+        customPrice.value = custom ? item.unitCost : null;
         customUnit.value = custom && item.unit === "table" ? "table" : "personMeal";
         customQuantity.value = 1;
         if (item && !custom && item.resourceId) {
@@ -166,7 +169,7 @@ export function useResourcePriceSelection(
             dinerCount: item.dinerCount ?? undefined,
             city: city.value,
             unit: item.unit,
-            unitCost: item.unitCost,
+            unitCost: item.unitCost ?? item.referencePrice ?? 0,
             searchText: "",
             details: [
               { labelKey: "itinerary.customMealPrice", value: item.unitCost, format: "money" },
@@ -198,7 +201,8 @@ export function useResourcePriceSelection(
   function createItem(): ItineraryResourceItem | undefined {
     if (!canSubmitWithDiners.value) return;
     const current = props.currentItem;
-    if (props.mealSlot && source.value === "custom" && customPrice.value != null) {
+    if (props.mealSlot && source.value === "custom") {
+      const price = customPrice.value;
       return {
         referencePrice: null,
         referenceBasis: "unknown",
@@ -210,24 +214,28 @@ export function useResourcePriceSelection(
         resourceName: customName.value.trim(),
         priceName: "",
         unit: customUnit.value,
-        unitCost: customPrice.value,
+        unitCost: price,
         quantity: customQuantity.value,
         dinerCount: customUnit.value === "table" ? dinerCount.value! : null,
-        totalCost: multiplyMoney(
-          customUnit.value === "table"
-            ? roundMoney(customPrice.value / dinerCount.value!)
-            : customPrice.value,
-          customQuantity.value,
-        ),
+        totalCost:
+          price === null
+            ? null
+            : multiplyMoney(
+              customUnit.value === "table"
+                ? roundMoney(price / dinerCount.value!)
+                : price,
+              customQuantity.value,
+            ),
         remark: current?.remark ?? "",
       };
     }
     const option = selectedOption.value;
+    const price = actualPrice.value;
     if (!option) return;
     if (current && current.resourceId === option.resourceId) {
       const item = {
         ...current,
-        unitCost: actualPrice.value,
+        unitCost: price,
         adjustmentReason: adjustmentReason.value,
         quantity: quantity.value,
         dinerCount: current.unit === "table" ? dinerCount.value! : null,
@@ -238,7 +246,7 @@ export function useResourcePriceSelection(
     const item = calculateItem(
       { ...option, dinerCount: dinerCount.value },
       quantity.value,
-      actualPrice.value,
+      price,
     );
     item.adjustmentReason = adjustmentReason.value;
     return {

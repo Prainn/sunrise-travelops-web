@@ -201,8 +201,9 @@ export function useWebsiteTemplateRules(config: () => WebsiteConfig, record: Ref
         const code = record.value?.code ?? "";
         const variables = getWebsiteTemplateVariables(code);
         for (const match of value.matchAll(/\{([^{}]+)\}/g)) {
-          if (!variables.includes(match[1])) {
-            return callback(new Error(t("websiteConfig.validation.templateVariable", { code, variable: match[1] })));
+          const variable = match[1] ?? "";
+          if (!variables.includes(variable)) {
+            return callback(new Error(t("websiteConfig.validation.templateVariable", { code, variable })));
           }
         }
         callback();

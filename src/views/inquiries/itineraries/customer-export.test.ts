@@ -115,7 +115,7 @@ describe("customer quotation exports", () => {
     const { itinerary } = fixture();
     itinerary.hotelPlans = [];
     expect(getDayBreakfastStatus(itinerary, 1)).toBe("pending");
-    itinerary.dailyPlans[0].overnightDestination = "";
+    itinerary.dailyPlans[0]!.overnightDestination = "";
     expect(getDayBreakfastStatus(itinerary, 1)).toBe("excluded");
   });
 });

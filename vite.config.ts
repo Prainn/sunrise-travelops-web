@@ -21,8 +21,13 @@ const __APP_INFO__ = {
 const pathSrc = resolve(import.meta.dirname, "src");
 
 // Vite配置  https://cn.vitejs.dev/config
-export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
+export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
   const env = loadEnv(mode, process.cwd());
+  const requireEnv = (key: string) => {
+    const value = env[key];
+    if (!value) throw new Error(`Missing environment variable ${key}`);
+    return value;
+  };
 
   return {
     resolve: {
@@ -38,17 +43,20 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         },
       },
     },
-    server: {
-      host: "0.0.0.0",
-      port: +env.VITE_APP_PORT,
-      open: true,
-      proxy: {
-        [env.VITE_APP_BASE_API]: {
-          changeOrigin: true,
-          target: env.VITE_APP_API_URL,
+    // 仅开发服务需要端口与代理变量；构建和单元测试没有对应 env。
+    server: command !== "serve" || process.env.VITEST
+      ? undefined
+      : {
+        host: "0.0.0.0",
+        port: +requireEnv("VITE_APP_PORT"),
+        open: true,
+        proxy: {
+          [requireEnv("VITE_APP_BASE_API")]: {
+            changeOrigin: true,
+            target: env.VITE_APP_API_URL,
+          },
         },
       },
-    },
     plugins: [
       vue(),
       {
@@ -81,13 +89,14 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           // 导入 Element Plus函数，如：ElMessage, ElMessageBox 等
           ElementPlusResolver({ importStyle: "sass" }),
         ],
+        // 单元测试不改写已提交的自动导入声明文件
         eslintrc: {
-          enabled: true,
+          enabled: !process.env.VITEST,
           filepath: "./.eslintrc-auto-import.json",
           globalsPropValue: true,
         },
         vueTemplate: true,
-        dts: "types/auto-imports.d.ts",
+        dts: process.env.VITEST ? false : "types/auto-imports.d.ts",
       }),
       // 组件自动导入
       Components({
@@ -97,7 +106,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         ],
         // 指定自定义组件位置(默认:src/components)
         dirs: ["src/components", "src/**/components"],
-        dts: "types/components.d.ts",
+        dts: process.env.VITEST ? false : "types/components.d.ts",
       }),
     ] as PluginOption[],
     // 预加载项目必需的依赖

@@ -202,12 +202,13 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       const previous = day.items.findIndex(
         (record) => record.type === "restaurant" && record.mealSlot === item.mealSlot,
       );
-      if (previous >= 0) {
-        if (day.items[previous].resourceId !== item.resourceId) appendDescription();
+      const previousItem = previous >= 0 ? day.items[previous] : undefined;
+      if (previousItem) {
+        if (previousItem.resourceId !== item.resourceId) appendDescription();
         day.items[previous] = {
           ...item,
-          id: day.items[previous].id,
-          remark: day.items[previous].remark,
+          id: previousItem.id,
+          remark: previousItem.remark,
         };
         touchSelectedItinerary();
         return true;
@@ -301,22 +302,22 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     ];
     touchSelectedItinerary();
   }
-  function updateGuidePrice(dailyPrice: number) {
+  function updateGuidePrice(dailyPrice: number | null) {
     if (!options.canEditContent()) return;
     const guide = options.selectedItinerary.value?.guidePlans[0];
     if (guide) {
-      guide.dailyPrice = normalizeQuoteValue(dailyPrice);
+      guide.dailyPrice = dailyPrice === null ? null : normalizeQuoteValue(dailyPrice);
       guide.adjustmentReason = "";
       touchSelectedItinerary();
     }
   }
-  function updateHotelCost(tier: ItineraryHotelTier, destination: string, price: number) {
+  function updateHotelCost(tier: ItineraryHotelTier, destination: string, price: number | null) {
     if (!options.canEditContent()) return;
     const hotel = options.selectedItinerary.value?.hotelPlans
       .find((p) => p.tier === tier)
       ?.hotels.find((h) => h.destination === destination);
     if (hotel) {
-      hotel.unitCost = normalizeQuoteValue(price);
+      hotel.unitCost = price === null ? null : normalizeQuoteValue(price);
       hotel.adjustmentReason = "";
       touchSelectedItinerary();
     }
@@ -493,7 +494,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
           option?.hotelTier === hotelTier &&
           option.vehicleTier === vehicleTier &&
           option.paxPrices.length === plan.paxTiers.length &&
-          plan.paxTiers.every((pax, index) => option.paxPrices[index].pax === pax)
+          plan.paxTiers.every((pax, index) => option.paxPrices[index]?.pax === pax)
         );
       });
     });

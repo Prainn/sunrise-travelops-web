@@ -48,7 +48,7 @@
               :precision="2"
               :disabled="!editable"
               controls-position="right"
-              @update:model-value="emit('update-price', Number($event ?? 0))"
+              @update:model-value="emit('update-price', $event ?? null)"
             />
           </el-form-item>
           <el-form-item
@@ -138,7 +138,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   "update-type": [secondLanguage: string, shopping: boolean];
-  "update-price": [price: number];
+  "update-price": [price: number | null];
   "update-reason": [reason: string];
   "create-guide": [];
   save: [];
@@ -149,10 +149,12 @@ const needsReason = computed(() => {
   const guide = plan.value;
   if (!guide) return false;
   const saved = props.savedPlans.find((item) => item.guideId === guide.guideId);
-  return selectionPriceNeedsReason(guide.dailyPrice, guide, saved?.dailyPrice);
+  return selectionPriceNeedsReason(guide.dailyPrice, guide, saved?.dailyPrice ?? undefined);
 });
 const totalPrice = computed(() =>
-  plan.value ? multiplyMoney(plan.value.dailyPrice, plan.value.serviceDays) : 0,
+  plan.value?.dailyPrice != null
+    ? multiplyMoney(plan.value.dailyPrice, plan.value.serviceDays)
+    : null,
 );
 
 function updateLanguage(value: string) {

@@ -29,7 +29,7 @@ const { t, locale } = useI18n();
 type Item = Awaited<ReturnType<typeof resourceService.getSelectionOptions>>["list"][number];
 function label(item: Item) {
   if (props.kind === "agencies") return `${item.name} (${item.code})`;
-  if (props.kind === "transports") return `${item.name}｜${item.seats}座`;
+  if (props.kind === "transports") return `${item.name}｜${t("resource.seatsCount", { count: item.seats })}`;
   const extra = props.kind === "hotels" ? t("itinerary.breakfastIncluded") : "";
   return `${item.name}${extra ? `｜${extra}` : ""}｜¥${formatMoney(item.unitCost)}`;
 }

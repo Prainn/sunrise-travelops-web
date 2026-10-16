@@ -85,6 +85,8 @@ const resolvedPlaceholder = computed(() => props.placeholder || t("common.select
 
 const options = ref<Array<{ label: string; value: string | number }>>([]);
 
+// Element Plus 的 select/radio/checkbox 值类型各不相同，此处统一承接。
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const selectedValue = ref<any>(
   typeof props.modelValue === "string" || typeof props.modelValue === "number"
     ? props.modelValue
@@ -114,6 +116,7 @@ watch(
 );
 
 // 监听 selectedValue 的变化并触发 update:modelValue
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function handleChange(val: any) {
   emit("update:modelValue", val);
 }

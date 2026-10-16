@@ -99,7 +99,8 @@
 import { formatMoney } from "@/utils";
 import type { WebsiteConfig, WebsiteDay, WebsiteHotelStay } from "@/types/website";
 import WebsiteResourceSelect from "../../components/WebsiteResourceSelect.vue";
-const props = defineProps<{ day: WebsiteDay; config: WebsiteConfig; editable: boolean }>();
+const day = defineModel<WebsiteDay>("day", { required: true });
+const props = defineProps<{ config: WebsiteConfig; editable: boolean }>();
 function hotelsOf(cityId: string) {
   return props.config.hotels.filter((item) => item.status === "enabled" && item.cityId === cityId);
 }
@@ -115,10 +116,10 @@ function pickConfigHotel(hotel: WebsiteHotelStay, id: string | null) {
   hotel.resourceId = item.resourceId;
 }
 function addHotel() {
-  props.day.hotels.push({
+  day.value.hotels.push({
     id: crypto.randomUUID(),
     tier: "A",
-    cityId: props.day.overnightCityId ?? props.day.endCityId,
+    cityId: day.value.overnightCityId ?? day.value.endCityId,
     configHotelId: null,
     resourceId: null,
     nameZh: "",

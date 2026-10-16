@@ -49,6 +49,7 @@
     "@commitlint/config-conventional": "^21.2.0",
     "@eslint/js": "^10.0.1",
     "@iconify/utils": "^3.1.4",
+    "@stylistic/eslint-plugin": "^5.10.0",
     "@types/node": "^26.2.0",
     "@types/nprogress": "^0.2.3",
     "@types/path-browserify": "^1.0.3",

@@ -650,6 +650,12 @@ function openVehiclePlans(command: string | number | object) {
   if (command !== "stage") return;
   const plan = selectedItinerary.value;
   if (!plan) return;
+  // 已是按段形态时只切换模式，不重置已维护的日期段和手填价格。
+  const hasArrangements = plan.vehiclePlans.some((vehicle) => vehicle.arrangements.length);
+  const hasVehicles = plan.vehiclePlans.some((vehicle) =>
+    vehicle.arrangements.some((arrangement) => arrangement.vehicles.length),
+  );
+  if (hasArrangements && !hasVehicles) return;
   for (const vehicle of plan.vehiclePlans) {
     const arrangements = vehicle.arrangements.map((arrangement) => ({
       ...arrangement,

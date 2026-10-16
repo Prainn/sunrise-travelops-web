@@ -1,6 +1,12 @@
 <template>
   <div class="quote-panel grid gap-[20px] text-[14px]">
     <template v-if="!legacyCalculation">
+      <el-alert
+        v-if="paxCalculation?.pricingComplete === false"
+        type="warning"
+        :closable="false"
+        :title="$t('itinerary.pricingIncomplete', { count: paxCalculation.missingPrices?.length ?? 0 })"
+      />
       <ItinerarySharedCosts
         :quote="quote"
         :guide-plans="guidePlans"

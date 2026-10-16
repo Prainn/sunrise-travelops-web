@@ -16,6 +16,7 @@ export function usePageTable<T, Q extends BaseQueryParams = BaseQueryParams>(
   const list = ref<T[]>([]) as Ref<T[]>;
   const total = ref(0);
   const params = reactive({ ...initialParams }) as Q;
+  let requestVersion = 0;
 
   /**
    * 拉取当前查询参数对应的分页数据
@@ -23,15 +24,18 @@ export function usePageTable<T, Q extends BaseQueryParams = BaseQueryParams>(
    * 只负责请求和回填，不处理弹窗、路由或消息提示
    */
   async function fetchData(): Promise<void> {
+    const version = ++requestVersion;
     loading.value = true;
     try {
       const data = await request(params);
+      // 丢弃被后发请求取代的旧响应，避免覆盖最新查询结果
+      if (version !== requestVersion) return;
       list.value = data.list;
       total.value = data.total;
       params.page = data.page;
       params.pageSize = data.pageSize;
     } finally {
-      loading.value = false;
+      if (version === requestVersion) loading.value = false;
     }
   }
 

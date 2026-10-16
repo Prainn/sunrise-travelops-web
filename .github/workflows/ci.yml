@@ -24,4 +24,6 @@ jobs:
           cache: pnpm
       - run: python3 scripts/test_deploy.py
       - run: pnpm install --frozen-lockfile
+      - run: pnpm lint:eslint
+      - run: pnpm test
       - run: pnpm build:server-dev

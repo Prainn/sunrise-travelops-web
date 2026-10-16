@@ -89,12 +89,13 @@ import { ref } from "vue";
 import type { WebsiteConfig, WebsiteDay } from "@/types/website";
 import { TRANSPORT_OPTIONS } from "../../options";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
-const props = defineProps<{ day: WebsiteDay; config: WebsiteConfig; editable: boolean }>();
+const day = defineModel<WebsiteDay>("day", { required: true });
+const props = defineProps<{ config: WebsiteConfig; editable: boolean }>();
 const selectedId = ref("");
 function addRoute() {
   const route = props.config.routes.find((item) => item.id === selectedId.value);
   if (!route) return;
-  props.day.legs.push({
+  day.value.legs.push({
     id: crypto.randomUUID(),
     routeId: route.id,
     fromCityId: route.fromCityId,
@@ -107,11 +108,11 @@ function addRoute() {
   selectedId.value = "";
 }
 function addManual() {
-  props.day.legs.push({
+  day.value.legs.push({
     id: crypto.randomUUID(),
     routeId: null,
-    fromCityId: props.day.departCityId,
-    toCityId: props.day.endCityId,
+    fromCityId: day.value.departCityId,
+    toCityId: day.value.endCityId,
     mode: "private_vehicle",
     nameZh: "",
     nameEn: "",

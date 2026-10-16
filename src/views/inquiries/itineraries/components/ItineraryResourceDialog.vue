@@ -33,7 +33,7 @@
             <el-option value="table" :label="$t('itinerary.customMealPerTable')" />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$t('itinerary.customMealPrice')" required>
+        <el-form-item :label="$t('itinerary.customMealPrice')">
           <el-input-number
             v-model="customPrice"
             :min="0"

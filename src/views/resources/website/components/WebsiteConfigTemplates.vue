@@ -13,6 +13,7 @@
     <div class="page-table-wrapper">
       <el-table
         :data="config.templates"
+        row-key="id"
         border
         height="100%"
         :empty-text="$t('websiteConfig.templates.empty')"

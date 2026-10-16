@@ -162,7 +162,7 @@
         <el-button @click="dialogVisible = false">
           {{ $t("common.cancel") }}
         </el-button>
-        <el-button type="primary" @click="saveItem">
+        <el-button type="primary" :loading="isSubmitting" @click="saveItem">
           {{ $t("common.confirm") }}
         </el-button>
       </template>
@@ -179,6 +179,7 @@ import type { ItineraryItemType } from "@/types/itinerary";
 import type { BusinessCategoryOptionRecord, BusinessCategoryTypeRecord } from "@/types/resource";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import BusinessCategorySearch from "./BusinessCategorySearch.vue";
+import { useResourceFormSubmit } from "@/views/resources/useResourceFormSubmit";
 
 interface CategoryItem extends BusinessCategoryOptionRecord {
   resourceTypes: ItineraryItemType[];
@@ -208,6 +209,7 @@ const pageRows = computed(() => rows.value.slice(
 const dialogVisible = ref(false);
 const editingId = ref("");
 const formRef = ref<FormInstance>();
+const { isSubmitting, submitForm } = useResourceFormSubmit(formRef);
 const form = reactive<CategoryItem>(emptyItem());
 const isResourceUnit = computed(() => props.category.code === "resource-unit");
 const isTransportMethod = computed(() => props.category.code === "transport-method");
@@ -367,38 +369,39 @@ async function loadItems() {
   }
 }
 
-async function saveItem() {
-  await formRef.value?.validate();
-  const duplicate = rows.value.some(
-    (item) => item.code === form.code.trim() && item.id !== editingId.value,
-  );
-  if (duplicate) {
-    const key = isResourceUnit.value
-      ? "businessCategory.codeDuplicate"
-      : isTransportMethod.value
-        ? "businessCategory.transportCodeDuplicate"
-        : "businessCategory.optionCodeDuplicate";
-    return void ElMessage.warning(t(key));
-  }
-  const value = {
-    code: form.code.trim(),
-    name: form.name.trim(),
-    englishName: form.englishName.trim(),
-    resourceTypes: [...form.resourceTypes],
-    status: form.status,
-    remark: form.remark,
-  };
-  try {
-    if (editingId.value)
-      await businessDictionaryService.updateItem(props.category.code, editingId.value, value);
-    else await businessDictionaryService.createItem(props.category.code, value);
-    await loadItems();
-    emit("changed");
-    dialogVisible.value = false;
-    ElMessage.success(t("businessCategory.saveSuccess"));
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
-  }
+function saveItem(): Promise<void> {
+  return submitForm(async () => {
+    const duplicate = rows.value.some(
+      (item) => item.code === form.code.trim() && item.id !== editingId.value,
+    );
+    if (duplicate) {
+      const key = isResourceUnit.value
+        ? "businessCategory.codeDuplicate"
+        : isTransportMethod.value
+          ? "businessCategory.transportCodeDuplicate"
+          : "businessCategory.optionCodeDuplicate";
+      return void ElMessage.warning(t(key));
+    }
+    const value = {
+      code: form.code.trim(),
+      name: form.name.trim(),
+      englishName: form.englishName.trim(),
+      resourceTypes: [...form.resourceTypes],
+      status: form.status,
+      remark: form.remark,
+    };
+    try {
+      if (editingId.value)
+        await businessDictionaryService.updateItem(props.category.code, editingId.value, value);
+      else await businessDictionaryService.createItem(props.category.code, value);
+      await loadItems();
+      emit("changed");
+      dialogVisible.value = false;
+      ElMessage.success(t("businessCategory.saveSuccess"));
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+    }
+  });
 }
 
 async function removeItem(row: CategoryItem) {

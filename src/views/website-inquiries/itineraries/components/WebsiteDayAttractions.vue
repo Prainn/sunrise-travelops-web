@@ -97,7 +97,8 @@ import { useI18n } from "vue-i18n";
 import { ElMessage } from "element-plus";
 import type { WebsiteConfig, WebsiteDay } from "@/types/website";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
-const props = defineProps<{ day: WebsiteDay; config: WebsiteConfig; editable: boolean }>();
+const day = defineModel<WebsiteDay>("day", { required: true });
+const props = defineProps<{ config: WebsiteConfig; editable: boolean }>();
 const { t } = useI18n();
 const selectedId = ref("");
 function addSelected() {
@@ -110,7 +111,7 @@ function addSelected() {
     ElMessage.error(t("websiteItineraryUi.attractionCopyMissing"));
     return;
   }
-  props.day.items.push({
+  day.value.items.push({
     id: crypto.randomUUID(),
     attractionId: attraction.id,
     nameZh: attraction.nameZh,
@@ -123,7 +124,7 @@ function addSelected() {
   selectedId.value = "";
 }
 function addManual() {
-  props.day.items.push({
+  day.value.items.push({
     id: crypto.randomUUID(),
     attractionId: null,
     nameZh: "",
@@ -135,7 +136,7 @@ function addManual() {
   });
 }
 function move(index: number, direction: number) {
-  const item = props.day.items.splice(index, 1)[0];
-  if (item) props.day.items.splice(index + direction, 0, item);
+  const item = day.value.items.splice(index, 1)[0];
+  if (item) day.value.items.splice(index + direction, 0, item);
 }
 </script>
