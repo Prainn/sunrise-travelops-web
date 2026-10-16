@@ -73,6 +73,42 @@ describe("独立站路由范围", () => {
 });
 
 describe("角色菜单准入", () => {
+  const resources = constantRoutes.find((route) => route.name === "TourismResources")!;
+  const websiteConfig = resources.children!.find((route) => route.name === "WebsiteResources")!;
+  const configChain = [resources.meta!, websiteConfig.meta!];
+
+  it.each([
+    { scope: "shengxu" as const, roles: ["RESOURCE_MANAGER"] },
+    { scope: "linxi" as const, roles: ["RESOURCE_MANAGER"] },
+  ])("$scope/$roles 即使旧快照包含配置菜单也不能显示或直接进入", ({ scope, roles }) => {
+    const context = { scope, roles, perms: ["website:config:list"], menuKeys: ["website-config"] };
+    expect(hasRouteChainAccess(configChain, context)).toBe(false);
+    const menu = filterRoutesByAccess(constantRoutes, context).find((route) => route.name === "TourismResources");
+    expect(menu?.children?.some((route) => route.name === "WebsiteResources") ?? false).toBe(false);
+  });
+
+  it.each([
+    { scope: "website" as const, role: "BUSINESS_MANAGER" },
+    { scope: "website" as const, role: "COORDINATOR" },
+    { scope: "website" as const, role: "RESOURCE_MANAGER" },
+    { scope: "headquarters" as const, role: "ADMIN" },
+    { scope: "headquarters" as const, role: "EXECUTIVE" },
+  ])("$scope/$role 仍须同时获得菜单与读取权限", ({ scope, role }) => {
+    const context = { scope, roles: [role], perms: ["website:config:list"], menuKeys: ["website-config"] };
+    expect(hasRouteChainAccess(configChain, context)).toBe(true);
+    const menu = filterRoutesByAccess(constantRoutes, context).find((route) => route.name === "TourismResources");
+    expect(menu?.children?.some((route) => route.name === "WebsiteResources")).toBe(true);
+    expect(hasRouteChainAccess(configChain, { ...context, menuKeys: [] })).toBe(false);
+    expect(hasRouteChainAccess(configChain, { ...context, perms: [] })).toBe(false);
+  });
+
+  it("保留总部 ROOT 固定可用的配置菜单和页面", () => {
+    const context = { scope: "headquarters" as const, roles: ["ROOT"], perms: [], menuKeys: [] };
+    expect(hasRouteChainAccess(configChain, context)).toBe(true);
+    const menu = filterRoutesByAccess(constantRoutes, context).find((route) => route.name === "TourismResources");
+    expect(menu?.children?.some((route) => route.name === "WebsiteResources")).toBe(true);
+  });
+
   it("独立控制共用读取权限的导游菜单并保留原 API 权限", () => {
     const context = { scope: "linxi" as const, roles: ["COORDINATOR"], perms: ["resource:guide:list"], menuKeys: ["guide-people"] };
     expect(hasRouteAccess({ perms: ["resource:guide:list"], menuKey: "guide-people" }, context)).toBe(true);

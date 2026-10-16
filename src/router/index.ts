@@ -257,7 +257,7 @@ export const constantRoutes: RouteRecordRaw[] = [
           title: "websiteResources",
           icon: "el-icon-Collection",
           keepAlive: true,
-          scopes: ["linxi", "website", "headquarters"],
+          scopes: ["website", "headquarters"],
           perms: ["website:config:list"],
         },
       },
