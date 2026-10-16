@@ -167,7 +167,8 @@ const metrics = computed(
       { field: "singleSupplementUnitCost", label: "itinerary.quoteLineTypes.single_supplement" },
     ] as const,
 );
-function money(value: number | undefined) {
+function money(value: number | null | undefined) {
+  if (value === null) return "—";
   return `¥${formatMoney(value)}`;
 }
 function adultPrice(pax: number, calculatedPrice?: number) {

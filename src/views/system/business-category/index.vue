@@ -98,7 +98,7 @@
         <el-button @click="typeDialogVisible = false">
           {{ $t("common.cancel") }}
         </el-button>
-        <el-button type="primary" @click="createCategoryType">
+        <el-button type="primary" :loading="isTypeSubmitting" @click="createCategoryType">
           {{ $t("common.confirm") }}
         </el-button>
       </template>
@@ -115,6 +115,7 @@ import type { BusinessCategoryTypeRecord } from "@/types/resource";
 import { businessDictionaryService } from "@/services";
 import { businessCategoryTypeStore, getBusinessCategoryTypeName } from "@/utils/business-category";
 import BusinessCategoryPanel from "./components/BusinessCategoryPanel.vue";
+import { useResourceFormSubmit } from "@/views/resources/useResourceFormSubmit";
 
 defineOptions({ name: "BusinessCategory" });
 
@@ -132,6 +133,8 @@ const selectedCategory = computed(() =>
 const loading = ref(false);
 const typeDialogVisible = ref(false);
 const typeFormRef = ref<FormInstance>();
+const { isSubmitting: isTypeSubmitting, submitForm: submitTypeForm } =
+  useResourceFormSubmit(typeFormRef);
 const typeForm = reactive<CategoryTypeForm>(emptyTypeForm());
 const typeRules: FormRules<CategoryTypeForm> = {
   name: [{ required: true, message: t("businessCategory.typeNameRequired"), trigger: "blur" }],
@@ -179,27 +182,28 @@ async function loadCategoryTypes() {
   }
 }
 
-async function createCategoryType() {
-  if (!(await typeFormRef.value?.validate().catch(() => false))) return;
-  const code = typeForm.code.trim();
-  if (categoryTypes.some((category) => category.code === code)) {
-    ElMessage.warning(t("businessCategory.typeCodeDuplicate"));
-    return;
-  }
-  try {
-    await businessDictionaryService.createType({
-      code,
-      name: typeForm.name.trim(),
-      englishName: typeForm.englishName.trim(),
-      builtIn: typeForm.builtIn,
-    });
-    await loadCategoryTypes();
-    activeCategory.value = code;
-    typeDialogVisible.value = false;
-    ElMessage.success(t("common.createSuccess"));
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
-  }
+function createCategoryType(): Promise<void> {
+  return submitTypeForm(async () => {
+    const code = typeForm.code.trim();
+    if (categoryTypes.some((category) => category.code === code)) {
+      ElMessage.warning(t("businessCategory.typeCodeDuplicate"));
+      return;
+    }
+    try {
+      await businessDictionaryService.createType({
+        code,
+        name: typeForm.name.trim(),
+        englishName: typeForm.englishName.trim(),
+        builtIn: typeForm.builtIn,
+      });
+      await loadCategoryTypes();
+      activeCategory.value = code;
+      typeDialogVisible.value = false;
+      ElMessage.success(t("common.createSuccess"));
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+    }
+  });
 }
 
 async function removeCategoryType(category: BusinessCategoryTypeRecord) {

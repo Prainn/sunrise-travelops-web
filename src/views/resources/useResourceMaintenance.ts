@@ -68,7 +68,12 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
     }
   }
 
+  // Row-level mutations in flight; repeated clicks would hit a stale version.
+  const busyIds = new Set<string>();
+
   async function toggleStatus(row: T) {
+    if (busyIds.has(row.id)) return;
+    busyIds.add(row.id);
     try {
       const updated = await options.api.update(row.id, {
         ...row,
@@ -79,6 +84,8 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
       ElMessage.success(t("common.updateSuccess"));
     } catch (error) {
       ElMessage.error(error instanceof Error ? error.message : String(error));
+    } finally {
+      busyIds.delete(row.id);
     }
   }
 
@@ -113,6 +120,8 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
       return;
     }
 
+    if (busyIds.has(row.id)) return;
+    busyIds.add(row.id);
     try {
       await options.api.deleteByIds(row.id);
       const index = rows.findIndex((item) => item.id === row.id);

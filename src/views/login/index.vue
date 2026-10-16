@@ -260,6 +260,17 @@ const loginRules = computed(() => ({
     { min: 6, message: t("login.message.password.min"), trigger: "blur" },
   ],
 }));
+/** 只接受站内路径，防止开放重定向。 */
+function loginRedirectTarget(): string {
+  const redirect = router.currentRoute.value.query.redirect;
+  return typeof redirect === "string" &&
+    redirect.startsWith("/") &&
+    !redirect.startsWith("//") &&
+    !redirect.startsWith("/\\") &&
+    !/^\/login(?:[/?#]|$)/.test(redirect)
+    ? redirect
+    : "/";
+}
 async function handleLoginSubmit() {
   if (loading.value) return;
   const valid = await loginFormRef.value?.validate().then(
@@ -274,7 +285,7 @@ async function handleLoginSubmit() {
     await userStore.login(loginFormData.value);
     loggedIn = true;
     await userStore.getUserInfo();
-    await router.push("/");
+    await router.push(loginRedirectTarget());
   } catch (error) {
     if (!loggedIn) userStore.resetAllState();
     ElMessage.error(error instanceof Error ? error.message : t("login.failed"));

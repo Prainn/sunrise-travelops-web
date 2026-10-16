@@ -13,7 +13,8 @@ export interface ItineraryHotelSelection extends PriceReference {
   rating: number;
   breakfast: string;
   unit: ItineraryPriceUnit;
-  unitCost: number;
+  /** null: actual price not entered yet (Draft only). */
+  unitCost: number | null;
 }
 
 export interface ItineraryHotelPlan {
@@ -157,7 +158,12 @@ export interface ItineraryQuoteOptionCalculation {
   optionId: string;
   hotelTier: ItineraryHotelTier;
   vehicleTier: ItineraryVehicleTier;
-  hotelCityCosts?: { destination: string; nights: number; unitCost: number; totalCost: number }[];
+  hotelCityCosts?: {
+    destination: string;
+    nights: number;
+    unitCost: number | null;
+    totalCost: number | null;
+  }[];
   hotelUnitCost: number;
   vehicleTotal: number;
   staffRoomTotal: number;
@@ -166,20 +172,23 @@ export interface ItineraryQuoteOptionCalculation {
 
 export interface PaxQuoteCalculation {
   pricingVersion: 2;
+  /** Only the three Draft actual-price fields; historical snapshots may omit these. */
+  pricingComplete?: boolean;
+  missingPrices?: string[];
   dailyResourceCost: number;
   mealDetails?: {
     dayNumber: number;
     resourceName: string;
-    unitCost: number;
+    unitCost: number | null;
     quantity: number;
-    totalCost: number;
+    totalCost: number | null;
   }[];
   attractionDetails?: {
     dayNumber: number;
     resourceName: string;
-    unitCost: number;
+    unitCost: number | null;
     quantity: number;
-    totalCost: number;
+    totalCost: number | null;
   }[];
   mealCost?: number;
   attractionCost?: number;
@@ -199,8 +208,9 @@ export interface ItineraryResourceItem extends PriceReference {
   quantity: number;
   dinerCount: number | null;
   unit: ItineraryPriceUnit;
-  unitCost: number;
-  totalCost: number;
+  /** null: actual price not entered yet (Draft only). */
+  unitCost: number | null;
+  totalCost: number | null;
   remark: string;
   mealSlot?: MealSlot;
 }
@@ -224,7 +234,8 @@ export interface ItineraryGuidePlan extends PriceReference {
   guideName: string;
   secondLanguage: string;
   shopping: boolean;
-  dailyPrice: number;
+  /** null: actual price not entered yet (Draft only). */
+  dailyPrice: number | null;
   serviceDays: number;
 }
 

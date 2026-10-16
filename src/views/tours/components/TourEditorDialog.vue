@@ -144,7 +144,7 @@
         </el-col>
       </el-row>
       <el-form-item :label="$t('tour.totalPeople')">
-        {{ form.adults + form.children + form.leaders }}
+        {{ (form.adults ?? 0) + (form.children ?? 0) + (form.leaders ?? 0) }}
       </el-form-item>
       <el-row :gutter="12">
         <el-col :xs="24" :sm="12">
@@ -164,7 +164,7 @@
           autocomplete="new-password"
           filterable
           class="w-full"
-          @change="loadGuides"
+          @change="loadGuides(true)"
         >
           <el-option
             v-for="item in flights"
@@ -180,7 +180,7 @@
           autocomplete="new-password"
           filterable
           class="w-full"
-          @change="loadGuides"
+          @change="loadGuides(true)"
         >
           <el-option
             v-for="item in flights"
@@ -279,7 +279,17 @@ const unit = computed<TourBusinessUnit | null>(() => {
   if (props.tour) return props.tour.businessUnit;
   return source.value?.businessUnit ?? null;
 });
+const headcountRule = computed(() => ({
+  validator: (_rule: unknown, value: unknown, callback: (error?: Error) => void) =>
+    typeof value === "number" && Number.isInteger(value) && value >= 0
+      ? callback()
+      : callback(new Error(t("tour.headcountRequired"))),
+  trigger: "change",
+}));
 const rules = computed<FormRules>(() => ({
+  adults: [headcountRule.value],
+  children: [headcountRule.value],
+  leaders: [headcountRule.value],
   inquiryId: [{ required: !props.tour, message: t("common.selectPlaceholder"), trigger: "change" }],
   operatorId: [{ required: true, message: t("common.selectPlaceholder"), trigger: "change" }],
   pickupFlightId: [{ required: true, message: t("common.selectPlaceholder"), trigger: "change" }],
@@ -360,9 +370,11 @@ async function loadChoices(businessUnit: TourBusinessUnit) {
     fail(error);
   }
 }
-async function loadGuides() {
+/** @param clearUnavailable 改航班后，已选导游不在可用列表时清空。 */
+async function loadGuides(clearUnavailable = false) {
   const generation = ++guidesGeneration;
   guides.value = [];
+  if (clearUnavailable) form.guideId = null;
   const businessUnit = unit.value;
   const startDate = props.tour?.startDate ?? source.value?.startDate;
   const days = props.tour?.days ?? source.value?.days;
@@ -376,7 +388,8 @@ async function loadGuides() {
       dropFlightId: form.dropFlightId,
       excludeTourId: props.tour?.id,
     });
-    if (generation === guidesGeneration) guides.value = result;
+    if (generation !== guidesGeneration) return;
+    guides.value = result;
   } catch (error) {
     fail(error);
   }
@@ -412,11 +425,19 @@ async function onOpen() {
 watch(
   () => form.inquiryId,
   async () => {
-    if (props.tour || !unit.value) return;
+    if (props.tour) return;
     form.operatorId = "";
     form.pickupFlightId = "";
     form.dropFlightId = "";
     form.guideId = null;
+    guides.value = [];
+    guidesGeneration++;
+    if (!unit.value) {
+      choicesGeneration++;
+      operators.value = [];
+      flights.value = [];
+      return;
+    }
     await loadChoices(unit.value);
   },
 );

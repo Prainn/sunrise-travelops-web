@@ -186,14 +186,14 @@ const { pageNum, pageSize, paginationQuery } = useResourcePagination();
 const total = ref(0);
 const hotelUnitOptions = computed(() => getResourceUnitOptions("hotel", locale.value));
 const requestHotels = useDebounceFn(() => loadHotels(currentQuery()), 300);
-const hotelRules: FormRules = {
+const hotelRules = computed<FormRules>(() => ({
   name: [{ required: true, message: t("hotel.nameRequired"), trigger: "blur" }],
   city: [{ required: true, message: t("hotel.cityRequired"), trigger: "change" }],
   individualPrice: [
     { required: true, message: t("hotel.individualPriceRequired"), trigger: "change" },
   ],
   unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],
-};
+}));
 
 onMounted(loadHotels);
 
@@ -273,7 +273,11 @@ async function openEditDialog(hotel: HotelRecord) {
     ElMessage.error(error instanceof Error ? error.message : String(error));
   }
 }
+// Row-level mutations in flight; repeated clicks would hit a stale version.
+const busyHotelIds = new Set<string>();
 async function toggleStatus(hotel: HotelRecord) {
+  if (busyHotelIds.has(hotel.id)) return;
+  busyHotelIds.add(hotel.id);
   try {
     const updated = await resourceService.hotelApi.update(hotel.id, {
       ...hotel,
@@ -284,10 +288,14 @@ async function toggleStatus(hotel: HotelRecord) {
     ElMessage.success(t("common.updateSuccess"));
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : String(error));
+  } finally {
+    busyHotelIds.delete(hotel.id);
   }
 }
 async function deleteHotel(hotel: HotelRecord) {
   if (!(await confirmDelete("hotel.deleteHotelConfirm"))) return;
+  if (busyHotelIds.has(hotel.id)) return;
+  busyHotelIds.add(hotel.id);
   try {
     await resourceService.hotelApi.deleteByIds(hotel.id);
     const index = hotelStore.findIndex((item) => item.id === hotel.id);
@@ -296,6 +304,8 @@ async function deleteHotel(hotel: HotelRecord) {
     ElMessage.success(t("common.deleteSuccess"));
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : String(error));
+  } finally {
+    busyHotelIds.delete(hotel.id);
   }
 }
 async function saveHotel() {

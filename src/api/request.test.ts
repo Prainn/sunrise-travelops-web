@@ -223,7 +223,7 @@ describe("request session recovery", () => {
     expect(auth.setTokens).not.toHaveBeenCalled();
     expect(auth.accessToken).toBe("");
     expect(auth.refreshToken).toBe("");
-    expect(new Headers(fetch.mock.calls[2][1].headers).has("Authorization")).toBe(false);
+    expect(new Headers(fetch.mock.calls[2]?.[1]?.headers).has("Authorization")).toBe(false);
   });
 
   it("keeps a new session when the previous session's refresh completes", async () => {
@@ -247,6 +247,50 @@ describe("request session recovery", () => {
     expect(auth.setTokens).not.toHaveBeenCalled();
     expect(auth.accessToken).toBe("other-access");
     expect(auth.refreshToken).toBe("other-refresh");
-    expect(new Headers(fetch.mock.calls[2][1].headers).get("Authorization")).toBe("Bearer other-access");
+    expect(new Headers(fetch.mock.calls[2]?.[1]?.headers).get("Authorization")).toBe("Bearer other-access");
+  });
+
+  it("retries with tokens already rotated by another tab instead of refreshing again", async () => {
+    let release!: () => void;
+    const lockHeld = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    vi.stubGlobal("navigator", {
+      locks: { request: async (_name: string, task: () => Promise<void>) => (await lockHeld, task()) },
+    });
+    const fetch = vi.fn(async (_url: string, options?: RequestInit) =>
+      new Headers(options?.headers).get("Authorization") === "Bearer old-access"
+        ? response(401, "AUTH_TOKEN_EXPIRED")
+        : response(200, "SUCCESS", { id: "user-1" }),
+    );
+    vi.stubGlobal("fetch", fetch);
+
+    const pending = request.get("/auth/me");
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    auth.accessToken = "tab-b-access";
+    auth.refreshToken = "tab-b-refresh";
+    release();
+
+    await expect(pending).resolves.toEqual({ id: "user-1" });
+    expect(fetch.mock.calls.some(([url]) => url.endsWith("/auth/refresh"))).toBe(false);
+    expect(auth.clearAuth).not.toHaveBeenCalled();
+  });
+
+  it("keeps the session when another tab replaced the refresh token that was rejected", async () => {
+    const refresh = deferredResponse();
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(response(401, "AUTH_TOKEN_EXPIRED"))
+      .mockImplementationOnce(() => refresh.promise)
+      .mockResolvedValueOnce(response(200, "SUCCESS", { id: "user-1" }));
+    vi.stubGlobal("fetch", fetch);
+
+    const pending = request.get("/auth/me");
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    auth.refreshToken = "tab-b-refresh";
+    refresh.resolve(response(401, "AUTH_REFRESH_TOKEN_INVALID"));
+
+    await expect(pending).resolves.toEqual({ id: "user-1" });
+    expect(auth.clearAuth).not.toHaveBeenCalled();
   });
 });

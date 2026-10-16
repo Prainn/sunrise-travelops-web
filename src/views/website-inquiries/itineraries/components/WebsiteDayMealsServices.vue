@@ -72,9 +72,10 @@
 import type { WebsiteDay } from "@/types/website";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
 import WebsiteResourceSelect from "../../components/WebsiteResourceSelect.vue";
-const props = defineProps<{ day: WebsiteDay; editable: boolean }>();
+const day = defineModel<WebsiteDay>("day", { required: true });
+defineProps<{ editable: boolean }>();
 function addService() {
-  props.day.services.push({
+  day.value.services.push({
     id: crypto.randomUUID(),
     nameZh: "",
     nameEn: "",

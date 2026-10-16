@@ -1,39 +1,37 @@
 <template>
   <div class="page-container">
     <el-card class="page-search" shadow="never">
-      <div class="flex items-center justify-between gap-[12px]">
-        <el-form :inline="true">
-          <el-form-item :label="$t('operationLog.category')">
-            <el-select
-              v-model="category"
-              autocomplete="new-password"
-              clearable
-              :placeholder="$t('operationLog.all')"
-              style="width: 180px"
-            >
-              <el-option
-                v-for="option in categories"
-                :key="option.value"
-                :label="$t(option.label)"
-                :value="option.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-            <el-button @click="reset">
-              {{ $t("common.reset") }}
-            </el-button>
-          </el-form-item>
-        </el-form>
-        <TableToolbar class="mb-0!" @refresh="fetchData" />
-      </div>
+      <el-form :inline="true">
+        <el-form-item :label="$t('operationLog.category')">
+          <el-select
+            v-model="category"
+            autocomplete="new-password"
+            clearable
+            :placeholder="$t('operationLog.all')"
+          >
+            <el-option
+              v-for="option in categories"
+              :key="option.value"
+              :label="$t(option.label)"
+              :value="option.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button @click="reset">
+            {{ $t("common.reset") }}
+          </el-button>
+        </el-form-item>
+      </el-form>
     </el-card>
 
     <el-card class="page-content" shadow="never">
+      <TableToolbar @refresh="fetchData" />
       <div class="page-table-wrapper">
         <el-table
           v-loading="loading"
           :data="list"
+          row-key="id"
           class="page-table"
           border
           height="100%"

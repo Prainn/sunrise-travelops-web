@@ -79,17 +79,25 @@ const toolbarToneClass = computed(() => {
 /**
  * 退出登录
  */
-function logout() {
-  ElMessageBox.confirm(t("navbar.logoutConfirm"), t("common.tip"), {
-    confirmButtonText: t("common.confirm"),
-    cancelButtonText: t("common.cancel"),
-    type: "warning",
-    lockScroll: false,
-  }).then(() => {
-    userStore.logout().then(() => {
-      router.push("/login");
+async function logout() {
+  try {
+    await ElMessageBox.confirm(t("navbar.logoutConfirm"), t("common.tip"), {
+      confirmButtonText: t("common.confirm"),
+      cancelButtonText: t("common.cancel"),
+      type: "warning",
+      lockScroll: false,
     });
-  });
+  } catch {
+    return;
+  }
+
+  try {
+    await userStore.logout();
+  } catch {
+    // The store clears local credentials even when the server call fails.
+  } finally {
+    await router.push("/login");
+  }
 }
 </script>
 

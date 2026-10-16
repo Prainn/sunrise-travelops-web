@@ -169,11 +169,12 @@
             :start-date="plan.startDate"
             :index="index"
             :last="index === plan.days.length - 1"
+            @update:day="plan.days.splice(index, 1, $event)"
             @remove="removeDay(index)"
             @move="moveDay(index, $event)"
           />
           <el-empty v-if="!plan.days.length" :description="$t('websiteWorkspace.noDays')" />
-          <WebsiteVehiclePrices :plan="plan" :editable="editable" class="rounded-[10px]" />
+          <WebsiteVehiclePrices v-model:plan="plan" :editable="editable" class="rounded-[10px]" />
         </template>
         <el-empty v-else :description="$t('websiteWorkspace.noItineraries')" />
       </main>

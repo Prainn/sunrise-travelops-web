@@ -110,16 +110,16 @@
       </div>
       <el-collapse>
         <el-collapse-item :title="$t('websiteItineraryUi.attractions')" name="attractions">
-          <WebsiteDayAttractions :day="day" :config="config" :editable="editable" />
+          <WebsiteDayAttractions v-model:day="day" :config="config" :editable="editable" />
         </el-collapse-item>
         <el-collapse-item :title="$t('websiteItineraryUi.transportLegs')" name="transport">
-          <WebsiteDayTransport :day="day" :config="config" :editable="editable" />
+          <WebsiteDayTransport v-model:day="day" :config="config" :editable="editable" />
         </el-collapse-item>
         <el-collapse-item :title="$t('websiteItineraryUi.hotelPlans')" name="hotels">
-          <WebsiteDayHotels :day="day" :config="config" :editable="editable" />
+          <WebsiteDayHotels v-model:day="day" :config="config" :editable="editable" />
         </el-collapse-item>
         <el-collapse-item :title="$t('websiteItineraryUi.mealsAndOtherServices')" name="services">
-          <WebsiteDayMealsServices :day="day" :editable="editable" />
+          <WebsiteDayMealsServices v-model:day="day" :editable="editable" />
         </el-collapse-item>
       </el-collapse>
     </el-form>
@@ -135,8 +135,8 @@ import WebsiteDayAttractions from "./WebsiteDayAttractions.vue";
 import WebsiteDayTransport from "./WebsiteDayTransport.vue";
 import WebsiteDayHotels from "./WebsiteDayHotels.vue";
 import WebsiteDayMealsServices from "./WebsiteDayMealsServices.vue";
+const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{
-  day: WebsiteDay;
   config: WebsiteConfig;
   editable: boolean;
   startDate: string | null;
@@ -146,18 +146,18 @@ const props = defineProps<{
 const emit = defineEmits<{ move: [direction: number]; remove: [] }>();
 const { locale } = useI18n();
 const expanded = ref(true);
-const departureName = computed(() => cityName(props.day.departCityId));
-const destinationName = computed(() => cityName(props.day.endCityId));
+const departureName = computed(() => cityName(day.value.departCityId));
+const destinationName = computed(() => cityName(day.value.endCityId));
 const date = computed(() =>
-  props.startDate ? addDays(props.startDate, props.day.dayNumber - 1) : "",
+  props.startDate ? addDays(props.startDate, day.value.dayNumber - 1) : "",
 );
 function cityName(id: string) {
   const city = props.config.cities.find((item) => item.id === id);
   return city ? (locale.value === "en" ? city.nameEn : city.nameZh) : "";
 }
 function toggleGuide(selected: string | number | boolean) {
-  props.day.guideLanguage = selected ? "English" : "";
-  props.day.guideScope = selected ? "Full day" : "";
+  day.value.guideLanguage = selected ? "English" : "";
+  day.value.guideScope = selected ? "Full day" : "";
 }
 </script>
 <style scoped lang="scss">

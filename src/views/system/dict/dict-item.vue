@@ -43,6 +43,7 @@
           v-loading="loading"
           highlight-current-row
           :data="list"
+          row-key="id"
           class="page-table"
           border
           height="100%"
@@ -176,7 +177,7 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="handleSubmit">
+          <el-button type="primary" :loading="isSubmitting" @click="handleSubmit">
             {{ $t("common.confirm") }}
           </el-button>
           <el-button @click="closeDialog">
@@ -197,6 +198,7 @@ import { CommonStatus } from "@/enums";
 import { dictionaryService } from "@/services";
 import { useDictStore } from "@/stores/dict";
 import type { DictItem, DictItemForm, DictItemQueryParams } from "@/types/dictionary";
+import { useResourceFormSubmit } from "@/views/resources/useResourceFormSubmit";
 
 defineOptions({
   name: "DictItem",
@@ -210,6 +212,7 @@ const dictCode = ref(String(route.query.dictCode ?? ""));
 
 const queryFormRef = ref<FormInstance>();
 const dictItemFormRef = ref<FormInstance>();
+const { isSubmitting, submitForm } = useResourceFormSubmit(dictItemFormRef);
 const dictStore = useDictStore();
 const { t } = useI18n();
 
@@ -301,41 +304,41 @@ function handleCreateClick(): void {
 async function handleEditClick(row: DictItem): Promise<void> {
   if (!row.id) return;
   dialogState.titleKey = "dictionary.editOptionTitle";
-  const data = await dictionaryService.getDictItemFormData(dictCode.value, row.id);
-  Object.assign(formData, data);
-  openDialog();
+  try {
+    const data = await dictionaryService.getDictItemFormData(dictCode.value, row.id);
+    Object.assign(formData, data);
+    openDialog();
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  }
 }
 
 /**
  * 校验并提交字典项表单。
  */
-async function handleSubmit(): Promise<void> {
-  const valid = await dictItemFormRef.value?.validate().then(
-    () => true,
-    () => false,
-  );
-  if (!valid) return;
+function handleSubmit(): Promise<void> {
+  return submitForm(async () => {
+    formData.dictCode = dictCode.value;
+    const id = formData.id;
 
-  formData.dictCode = dictCode.value;
-  const id = formData.id;
-
-  loading.value = true;
-  try {
-    if (id) {
-      await dictionaryService.updateDictItem(dictCode.value, id, formData);
-      ElMessage.success(t("common.updateSuccess"));
-    } else {
-      await dictionaryService.createDictItem(dictCode.value, formData);
-      ElMessage.success(t("common.createSuccess"));
+    loading.value = true;
+    try {
+      if (id) {
+        await dictionaryService.updateDictItem(dictCode.value, id, formData);
+        ElMessage.success(t("common.updateSuccess"));
+      } else {
+        await dictionaryService.createDictItem(dictCode.value, formData);
+        ElMessage.success(t("common.createSuccess"));
+      }
+      dictStore.removeDictItem(dictCode.value);
+      closeDialog();
+      handleQuery();
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : t("common.saveFailed"));
+    } finally {
+      loading.value = false;
     }
-    dictStore.removeDictItem(dictCode.value);
-    closeDialog();
-    handleQuery();
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : t("common.saveFailed"));
-  } finally {
-    loading.value = false;
-  }
+  });
 }
 
 /**

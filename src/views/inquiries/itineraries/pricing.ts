@@ -91,7 +91,6 @@ export function getResourcePriceOptions(
           { labelKey: "hotel.address", value: hotel.address },
           { labelKey: "resource.phone", value: hotel.phone },
           { labelKey: "hotel.facilities", value: hotel.facilities },
-          { labelKey: "hotel.breakfastIncluded", value: "含早餐" },
           { labelKey: "hotel.breakfast", value: hotel.breakfast },
           { labelKey: "hotel.nearby", value: hotel.nearby },
           {
@@ -179,7 +178,7 @@ export function getResourcePriceOptions(
 export function calculateItem(
   option: ResourcePriceOption,
   quantity: number,
-  unitCost = option.unitCost,
+  unitCost: number | null = option.unitCost,
 ): ItineraryResourceItem {
   return {
     id: createId("item"),
@@ -194,17 +193,24 @@ export function calculateItem(
     referenceBasis: "resource_price",
     adjustmentReason: "",
     unitCost,
-    totalCost: multiplyMoney(
-      option.unit === "table" && option.dinerCount
-        ? roundMoney(unitCost / option.dinerCount)
-        : unitCost,
-      quantity,
-    ),
+    totalCost:
+      unitCost === null
+        ? null
+        : multiplyMoney(
+          option.unit === "table" && option.dinerCount
+            ? roundMoney(unitCost / option.dinerCount)
+            : unitCost,
+          quantity,
+        ),
     remark: "",
   };
 }
 
 export function recalculateItem(item: ItineraryResourceItem) {
+  if (item.unitCost === null) {
+    item.totalCost = null;
+    return;
+  }
   item.totalCost = multiplyMoney(
     item.unit === "table" && item.dinerCount
       ? roundMoney(item.unitCost / item.dinerCount)

@@ -26,6 +26,7 @@ export function useMixMenu() {
 
       if (visibleChildren.length === 1) {
         const child = visibleChildren[0];
+        if (!child) return route;
         return {
           ...route,
           meta: {
@@ -81,6 +82,7 @@ export function useMixMenu() {
     if (!menus.length) return;
 
     const [first] = menus;
+    if (!first) return;
     if (first.children?.length) {
       navigateToFirstMenu(first.children as RouteRecordRaw[]);
     } else if (first.name) {

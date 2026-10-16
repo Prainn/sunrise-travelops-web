@@ -9,6 +9,7 @@
           v-for="option in VEHICLE_OPTIONS"
           :key="option.value"
           :label="$t(option.labelKey)"
+          :error="invalid(option.value) ? $t('websiteWorkspace.vehiclePriceInvalid') : ''"
         >
           <el-input
             :model-value="editable ? (price(option.value) ?? '') : formatMoney(price(option.value))"
@@ -41,16 +42,22 @@
 </template>
 <script setup lang="ts">
 import { formatMoney } from "@/utils";
+import { isValidVehiclePrice } from "../vehicle-price";
 import type { VehicleType, WebsiteItinerary } from "@/types/website";
 import { VEHICLE_OPTIONS } from "../../options";
-const props = defineProps<{ plan: WebsiteItinerary; editable: boolean }>();
+const plan = defineModel<WebsiteItinerary>("plan", { required: true });
+defineProps<{ editable: boolean }>();
 function price(type: VehicleType) {
-  return props.plan.vehiclePrices.find((item) => item.vehicleType === type)?.unitPrice;
+  return plan.value.vehiclePrices.find((item) => item.vehicleType === type)?.unitPrice;
+}
+function invalid(type: VehicleType) {
+  const value = price(type);
+  return value != null && !isValidVehiclePrice(value);
 }
 function setPrice(type: VehicleType, value: string) {
-  const existing = props.plan.vehiclePrices.find((item) => item.vehicleType === type);
+  const existing = plan.value.vehiclePrices.find((item) => item.vehicleType === type);
   const unitPrice = value.trim() || null;
   if (existing) existing.unitPrice = unitPrice;
-  else props.plan.vehiclePrices.push({ vehicleType: type, unitPrice });
+  else plan.value.vehiclePrices.push({ vehicleType: type, unitPrice });
 }
 </script>

@@ -345,7 +345,7 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="handleSubmit">
+          <el-button type="primary" :loading="isSubmitting" @click="handleSubmit">
             {{ $t("common.confirm") }}
           </el-button>
           <el-button @click="closeDialog">
@@ -443,6 +443,7 @@ import { useUserStore } from "@/stores/user";
 import { usePageTable, useTableSelection } from "@/composables";
 import { CommonStatus, DeviceEnum, DialogMode, UserGender } from "@/enums";
 import TableToolbar from "@/components/TableToolbar/index.vue";
+import { useResourceFormSubmit } from "@/views/resources/useResourceFormSubmit";
 
 defineOptions({
   name: "User",
@@ -455,6 +456,7 @@ const { t } = useI18n();
 
 const queryFormRef = ref<FormInstance>();
 const userFormRef = ref<FormInstance>();
+const { isSubmitting, submitForm } = useResourceFormSubmit(userFormRef);
 const resetPasswordFormRef = ref<FormInstance>();
 
 /** 分页表格数据管理 */
@@ -678,7 +680,12 @@ function resetForm(): void {
 async function handleCreateClick(): Promise<void> {
   dialogState.titleKey = "user.createTitle";
   dialogState.mode = DialogMode.CREATE;
-  await loadFormOptions();
+  try {
+    await loadFormOptions();
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+    return;
+  }
   const department = departmentOptions.value.find((dept) => dept.value === params.deptId);
   if (department)
     formData.identities = [{ scope: department.scope, deptId: department.value, roleIds: [] }];
@@ -691,43 +698,43 @@ async function handleCreateClick(): Promise<void> {
 async function handleEditClick(id: string): Promise<void> {
   dialogState.titleKey = "user.editTitle";
   dialogState.mode = DialogMode.EDIT;
-  await loadFormOptions();
-  const data = await userService.getFormData(id);
-  Object.assign(formData, data);
-  impact.value = await userService.inquiryImpact(id);
-  openDialog();
+  try {
+    await loadFormOptions();
+    const data = await userService.getFormData(id);
+    Object.assign(formData, data);
+    impact.value = await userService.inquiryImpact(id);
+    openDialog();
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  }
 }
 
 /**
  * 校验并提交用户表单。
  */
-const handleSubmit = useDebounceFn(async () => {
-  const valid = await userFormRef.value?.validate().then(
-    () => true,
-    () => false,
-  );
-  if (!valid) return;
-
-  loading.value = true;
-  try {
-    if (formData.id) {
-      await userService.update(formData.id, formData);
-      ElMessage.success(t("user.updateSuccess"));
-    } else {
-      const created = await userService.create(formData);
-      ElMessage.success(t("user.createSuccess"));
-      if (created.temporaryPassword) {
-        await showTemporaryPassword(created.temporaryPassword);
+function handleSubmit(): Promise<void> {
+  return submitForm(async () => {
+    loading.value = true;
+    try {
+      if (formData.id) {
+        await userService.update(formData.id, formData);
+        ElMessage.success(t("user.updateSuccess"));
+      } else {
+        const created = await userService.create(formData);
+        ElMessage.success(t("user.createSuccess"));
+        if (created.temporaryPassword) {
+          await showTemporaryPassword(created.temporaryPassword);
+        }
       }
+      closeDialog();
+      handleQuery();
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+    } finally {
+      loading.value = false;
     }
-    closeDialog();
-    handleQuery();
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
-  } finally {
-    loading.value = false;
-  }
-}, 300);
+  });
+}
 
 /**
  * 删除单个或批量用户。
@@ -826,6 +833,7 @@ function resetResetPasswordForm(): void {
  * 提交重置密码。
  */
 const handleResetPasswordSubmit = useDebounceFn(async () => {
+  if (resetPasswordSubmitting.value) return;
   const valid = await resetPasswordFormRef.value?.validate().then(
     () => true,
     () => false,

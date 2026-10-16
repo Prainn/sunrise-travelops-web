@@ -67,6 +67,21 @@ export function getItineraryValidationIssues(plan: ItineraryValidationInput): Pd
   if (plan.guidePlans.some((guide) => !guide.serviceDays)) {
     issues.push({ key: "itinerary.guideDatesRequired", target: "itinerary-guides" });
   }
+  // 冻结前三类实际价必须填齐；Draft 允许暂缺（后端同样以 PDF_NOT_READY 拒绝）。
+  const missing: Array<{ name: string; target: string }> = [];
+  for (const day of days)
+    for (const item of day.items)
+      if (item.unitCost === null)
+        missing.push({ name: `D${day.dayNumber} · ${item.resourceName}`, target: `day-${day.id}` });
+  for (const hotelPlan of plan.hotelPlans)
+    for (const hotel of hotelPlan.hotels)
+      if (hotel.unitCost === null)
+        missing.push({ name: hotel.hotelName, target: "itinerary-hotels" });
+  for (const guide of plan.guidePlans)
+    if (guide.dailyPrice === null)
+      missing.push({ name: guide.guideName, target: "itinerary-guides" });
+  for (const { name, target } of missing)
+    issues.push({ key: "itinerary.validation.actualPrice", target, params: { name } });
   plan.quote.transportFees.forEach((fee, index) => {
     if (
       !fee.departureCity.trim() ||

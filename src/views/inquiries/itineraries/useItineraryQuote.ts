@@ -18,40 +18,71 @@ export function useItineraryQuote(
   const maxRetriesReached = ref(false);
   let lastId: string | undefined;
 
+  function previewInput(plan: ItineraryRecord) {
+    const input = itineraryInput(plan);
+    // Keep display-only edits out of the preview payload.
+    input.quote = {
+      ...input.quote,
+      chineseTip: null,
+      englishTip: null,
+      transportFees: [],
+      options: input.quote.options.map((option) => ({
+        ...option,
+        paxPrices: option.paxPrices.map((price) => ({ ...price, adultUnitPrice: null })),
+      })),
+      mealOtherReason: "",
+      attractionOtherReason: "",
+      paxOtherCosts: input.quote.paxOtherCosts.map((cost) => ({
+        ...cost,
+        guideOtherReason: "",
+        staffRoomOtherReason: "",
+      })),
+    };
+    return input;
+  }
+
+  /** Cost-relevant input only: free-text fields never retrigger the preview. */
+  function costInput(plan: ItineraryRecord) {
+    const input = previewInput(plan);
+    return {
+      ...input,
+      title: "",
+      dailyPlans: input.dailyPlans.map((day) => ({
+        ...day,
+        description: "",
+        items: day.items.map((item) => ({ ...item, remark: "", adjustmentReason: null })),
+      })),
+      hotelPlans: input.hotelPlans.map((hotelPlan) => ({
+        ...hotelPlan,
+        hotels: hotelPlan.hotels.map((hotel) => ({ ...hotel, adjustmentReason: null })),
+      })),
+      vehiclePlans: input.vehiclePlans.map((vehiclePlan) => ({
+        ...vehiclePlan,
+        adjustmentReason: null,
+      })),
+      guidePlans: input.guidePlans.map((guidePlan) => ({ ...guidePlan, adjustmentReason: null })),
+      quote: {
+        ...input.quote,
+        customerNotes: "",
+        holidayRestrictions: "",
+        hotelReplacementTerms: "",
+      },
+    };
+  }
+
   const stop = watch(
     [
       () => {
         const plan = selected.value;
         if (!plan || plan.version < 1) return "null";
         const preview = plan.status === "draft" && canPreview();
-        const input = preview ? itineraryInput(plan) : undefined;
-        if (input) {
-          // Keep display-only edits out of the preview trigger.
-          input.quote = {
-            ...input.quote,
-            chineseTip: null,
-            englishTip: null,
-            transportFees: [],
-            options: input.quote.options.map((option) => ({
-              ...option,
-              paxPrices: option.paxPrices.map((price) => ({ ...price, adultUnitPrice: null })),
-            })),
-            mealOtherReason: "",
-            attractionOtherReason: "",
-            paxOtherCosts: input.quote.paxOtherCosts.map((cost) => ({
-              ...cost,
-              guideOtherReason: "",
-              staffRoomOtherReason: "",
-            })),
-          };
-        }
         return JSON.stringify({
           id: plan.id,
           status: plan.status,
           preview,
           // Draft preview depends on submitted content; GET reads a saved version.
-          input,
-          transportPrices: input
+          input: preview ? costInput(plan) : undefined,
+          transportPrices: preview
             ? plan.quote.transportFees
               .filter((fee) => fee.unitPrice !== null)
               .map(({ id, type, unitPrice }) => ({ id, type, unitPrice }))
@@ -76,20 +107,24 @@ export function useItineraryQuote(
       errorReason.value = "";
       const request = JSON.parse(serialized) as {
         id: string;
-        input?: ReturnType<typeof itineraryInput>;
+        preview?: boolean;
       } | null;
       pending.value = false;
       if (!request) return;
+      const input =
+        request.preview && plan
+          ? (JSON.parse(JSON.stringify(previewInput(plan))) as ReturnType<typeof previewInput>)
+          : undefined;
       let cancelled = false;
       const timer = setTimeout(
         async () => {
           pending.value = true;
           try {
-            if (request.input && plan) {
-              request.input.quote.transportFees = itineraryInput(plan).quote.transportFees;
+            if (input && plan) {
+              input.quote.transportFees = itineraryInput(plan).quote.transportFees;
             }
-            const result = request.input
-              ? await inquiryService.previewQuote({ ...request.input, id: request.id })
+            const result = input
+              ? await inquiryService.previewQuote({ ...input, id: request.id })
               : await inquiryService.quoteCalculation(request.id);
             if (cancelled) return;
             calculation.value = result;
@@ -108,7 +143,7 @@ export function useItineraryQuote(
           }
         },
         // 等待用户停止连续编辑
-        request.input ? 800 : 0,
+        input ? 800 : 0,
       );
       onCleanup(() => {
         cancelled = true;

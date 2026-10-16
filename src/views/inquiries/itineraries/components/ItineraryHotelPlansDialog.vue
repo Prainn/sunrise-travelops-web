@@ -146,7 +146,7 @@
                         :disabled="!editable"
                         :controls="false"
                         :aria-label="`${destination} · ${$t('planning.hotelPrice')}`"
-                        @update:model-value="emit('update-cost', activeTier, destination, Number($event ?? 0))"
+                        @update:model-value="emit('update-cost', activeTier, destination, $event ?? null)"
                       />
                       <small class="mt-1 w-full text-[var(--el-text-color-secondary)]">
                         {{ $t("itinerary.breakfastIncluded") }}
@@ -233,7 +233,7 @@ const emit = defineEmits<{
     destination: string,
     basis: "hotel_group" | "hotel_individual",
   ];
-  "update-cost": [tier: ItineraryHotelTier, destination: string, price: number];
+  "update-cost": [tier: ItineraryHotelTier, destination: string, price: number | null];
   "update-reason": [tier: ItineraryHotelTier, destination: string, reason: string];
   save: [];
   cancel: [];
@@ -288,7 +288,7 @@ function hotelNeedsReason(tier: ItineraryHotelTier, destination: string) {
     ?.hotels.find((item) => item.destination === destination);
   const sameSource =
     saved?.hotelId === hotel.hotelId && saved.referenceBasis === hotel.referenceBasis;
-  return selectionPriceNeedsReason(hotel.unitCost, hotel, sameSource ? saved.unitCost : undefined);
+  return selectionPriceNeedsReason(hotel.unitCost, hotel, sameSource ? (saved.unitCost ?? undefined) : undefined);
 }
 
 function getPlan(tier: ItineraryHotelTier) {

@@ -351,6 +351,7 @@ function changeDateRange(plan: ItineraryVehiclePlan, id: string, value: unknown)
     return;
   }
   const [startDate, endDate] = value.map(String);
+  if (startDate === undefined || endDate === undefined) return;
   if (startDate < props.startDate || endDate > tripEndDate.value) {
     ElMessage.warning(t("planning.vehicleDateOutOfRange"));
     return;

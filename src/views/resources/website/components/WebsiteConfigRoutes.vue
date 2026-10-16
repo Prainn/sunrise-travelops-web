@@ -18,6 +18,7 @@
     <div class="page-table-wrapper">
       <el-table
         :data="config.routes"
+        row-key="id"
         border
         height="100%"
         :empty-text="$t('websiteConfig.routes.empty')"

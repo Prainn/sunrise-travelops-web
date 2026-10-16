@@ -101,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from "vue";
+import { computed, reactive, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { GuidePersonRecord } from "@/types/resource";
@@ -118,9 +118,9 @@ const { t } = useI18n();
 const formRef = ref<FormInstance>();
 const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
 const form = reactive<GuidePersonRecord>({ ...props.record });
-const rules: FormRules = {
+const rules = computed<FormRules>(() => ({
   name: [{ required: true, whitespace: true, message: t("guide.nameRequired"), trigger: "blur" }],
-};
+}));
 watch(
   () => [props.modelValue, props.record] as const,
   ([visible, record]) => {

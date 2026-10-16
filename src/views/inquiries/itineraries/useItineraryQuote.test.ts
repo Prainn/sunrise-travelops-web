@@ -13,11 +13,26 @@ vi.mock("@/lang/utils", () => ({
 }));
 
 function itinerary() {
-  const plan: Pick<ItineraryRecord, "id" | "version" | "status" | "dailyPlans" | "quote"> = {
+  const plan: Pick<
+    ItineraryRecord,
+    | "id"
+    | "version"
+    | "status"
+    | "title"
+    | "dailyPlans"
+    | "hotelPlans"
+    | "vehiclePlans"
+    | "guidePlans"
+    | "quote"
+  > = {
     id: "plan-1",
     version: 1,
     status: "draft",
+    title: "",
     dailyPlans: [],
+    hotelPlans: [],
+    vehiclePlans: [],
+    guidePlans: [],
     quote: createDefaultQuoteSettings(),
   };
   return ref(plan as ItineraryRecord);
@@ -54,7 +69,26 @@ describe("itinerary quote retries", () => {
     expect(preview).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(1);
     expect(preview).toHaveBeenCalledOnce();
-    expect(preview.mock.calls[0][0].quote.mealOtherCost).toBe(2);
+    expect(preview.mock.calls[0]![0].quote.mealOtherCost).toBe(2);
+  });
+
+  it("does not preview again when only free-text fields change", async () => {
+    const preview = vi.spyOn(inquiryService, "previewQuote").mockResolvedValue({
+      pricingVersion: 2,
+      dailyResourceCost: 0,
+      guideCost: 0,
+      options: [],
+    });
+    const selected = itinerary();
+    scope.run(() => useItineraryQuote(selected, () => true));
+    await vi.advanceTimersByTimeAsync(800);
+    expect(preview).toHaveBeenCalledOnce();
+
+    selected.value.title = "New title";
+    selected.value.quote.customerNotes = "Notes";
+    selected.value.quote.mealOtherReason = "Reason";
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(preview).toHaveBeenCalledOnce();
   });
 
   it("caps retries at three, blocks duplicate clicks and resets for changed costs", async () => {

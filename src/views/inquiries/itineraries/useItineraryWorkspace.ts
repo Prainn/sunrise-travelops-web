@@ -2,7 +2,8 @@ import { missingPriceReasons } from "./price-adjustments";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
 import { itineraryDuration } from "./duration";
 import { computed, ref, toRaw, watch } from "vue";
-import { inquiryService } from "@/services/inquiry.service";
+import { onBeforeRouteLeave } from "vue-router";
+import { inquiryService, itineraryInput } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
 import { useUserStore } from "@/stores/user";
 import type {
@@ -41,9 +42,25 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     () => [selectedItinerary.value?.id, selectedItinerary.value?.version],
     () => {
       const plan = selectedItinerary.value;
-      if (plan) savedPrices.value.set(plan.id, structuredClone(toRaw(plan)));
+      if (!plan) return;
+      // Only server data may become the baseline; switching back must not capture unsaved edits.
+      if (savedPrices.value.get(plan.id)?.version === plan.version) return;
+      savedPrices.value.set(plan.id, structuredClone(toRaw(plan)));
     },
     { immediate: true, flush: "post" },
+  );
+  const hasUnsavedChanges = computed(() =>
+    itineraryStore.some((plan) => {
+      const saved = savedPrices.value.get(plan.id);
+      return (
+        plan.status === "draft" &&
+        saved !== undefined &&
+        JSON.stringify(itineraryInput(plan)) !== JSON.stringify(itineraryInput(saved))
+      );
+    }),
+  );
+  onBeforeRouteLeave(
+    async () => !hasUnsavedChanges.value || (await messages.confirm("itinerary.unsavedLeaveConfirm")),
   );
   const isPlanDialogVisible = ref(false);
   const isEditingPlan = ref(false);
@@ -417,7 +434,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       const first = validation.issues[0];
       messages.error("itinerary.validation.toast", {
         count: validation.issues.length,
-        first: messages.translate(first.key, first.params),
+        first: first ? messages.translate(first.key, first.params) : "",
       });
       return false;
     }

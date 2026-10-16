@@ -3,6 +3,7 @@ import globals from "globals";
 import * as typescriptEslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
 import vueParser from "vue-eslint-parser";
+import stylistic from "@stylistic/eslint-plugin";
 import fs from "node:fs";
 
 let autoImportGlobals: Record<string, "readonly"> = {};
@@ -36,7 +37,6 @@ export default [
       sourceType: "module",
       globals: {
         ...globals.browser,
-        ...globals.node,
         ...globals.es2022,
         ...autoImportGlobals,
         __APP_INFO__: "readonly",
@@ -45,6 +45,7 @@ export default [
     plugins: {
       vue: pluginVue,
       "@typescript-eslint": typescriptEslint.plugin,
+      "@stylistic": stylistic,
     },
     rules: {
       // 基础规则
@@ -60,15 +61,15 @@ export default [
       eqeqeq: ["error", "always", { null: "ignore" }],
       "no-multi-spaces": "error",
       "no-multiple-empty-lines": ["error", { max: 1, maxBOF: 0, maxEOF: 0 }],
-      indent: ["error", 2, { SwitchCase: 1 }],
-      quotes: ["error", "double", { avoidEscape: true, allowTemplateLiterals: true }],
-      semi: ["error", "always"],
+      "@stylistic/indent": ["error", 2, { SwitchCase: 1 }],
+      "@stylistic/quotes": ["error", "double", { avoidEscape: true, allowTemplateLiterals: "always" }],
+      "@stylistic/semi": ["error", "always"],
 
       // 禁用与 TypeScript 冲突的规则
       "no-unused-vars": "off",
       "no-undef": "off",
       "no-redeclare": "off",
-      "@typescript-eslint/ban-ts-comment": "off",
+      "@typescript-eslint/ban-ts-comment": "error",
     },
   },
 
@@ -86,11 +87,11 @@ export default [
     },
     rules: {
       "vue/multi-word-component-names": "off",
-      "vue/no-v-html": "off",
+      "vue/no-v-html": "error",
       "vue/require-default-prop": "off",
       "vue/require-explicit-emits": "error",
       "vue/no-unused-vars": "error",
-      "vue/no-mutating-props": "off",
+      "vue/no-mutating-props": "error",
       "vue/valid-v-for": "warn",
       "vue/no-template-shadow": "warn",
       "vue/return-in-computed-property": "warn",
@@ -115,7 +116,7 @@ export default [
       "vue/multiline-html-element-content-newline": "error",
       "vue/singleline-html-element-content-newline": "error",
       "vue/component-name-in-template-casing": ["error", "PascalCase"],
-      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-explicit-any": "error",
     },
   },
 
@@ -131,10 +132,10 @@ export default [
       },
     },
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-empty-function": "off",
       "@typescript-eslint/no-empty-object-type": "off",
-      "@typescript-eslint/ban-ts-comment": "off",
+      "@typescript-eslint/ban-ts-comment": "error",
       "@typescript-eslint/no-non-null-assertion": "off",
       "@typescript-eslint/no-unused-vars": [
         "warn",
@@ -164,12 +165,4 @@ export default [
     },
   },
 
-  {
-    files: ["**/components/CURD/**/*.{ts,vue}"],
-    rules: {
-      "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-    },
-  },
 ];

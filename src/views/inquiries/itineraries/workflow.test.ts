@@ -93,4 +93,24 @@ describe("getItineraryValidationIssues", () => {
       expectedKeys,
     );
   });
+
+  it("blocks freezing while any selected actual price is still empty", () => {
+    const plan = createPlan();
+    plan.hotelPlans[0]!.hotels[0]!.unitCost = null;
+    plan.guidePlans = [
+      {
+        destination: "大理",
+        guideId: "guide-1",
+        guideName: "导游",
+        secondLanguage: "none",
+        shopping: false,
+        dailyPrice: null,
+        serviceDays: 1,
+      } as ValidationPlan["guidePlans"][number],
+    ];
+    const issues = getItineraryValidationIssues(plan).filter(
+      (issue) => issue.key === "itinerary.validation.actualPrice",
+    );
+    expect(issues.map((issue) => issue.params?.name)).toEqual(["测试酒店", "导游"]);
+  });
 });

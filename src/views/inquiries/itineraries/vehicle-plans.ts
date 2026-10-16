@@ -70,7 +70,7 @@ export function getIncompleteVehiclePlanTiers(
       const sorted = [...plan.arrangements].sort((a, b) => a.startDate.localeCompare(b.startDate));
       if (
         sorted.some(
-          (arrangement, index) => index > 0 && arrangement.startDate <= sorted[index - 1].endDate,
+          (arrangement, index) => index > 0 && arrangement.startDate <= (sorted[index - 1]?.endDate ?? ""),
         )
       )
         return true;

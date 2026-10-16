@@ -8,7 +8,7 @@ export function itineraryPriceRows(plan: ItineraryRecord) {
     name: string,
     fields: PriceReference,
     get: () => number | null,
-    set: (price: number) => void,
+    set: (price: number | null) => void,
     custom = false,
     source = "",
   ) => ({ key, name, fields, get, set, custom, source });
@@ -109,7 +109,7 @@ export function resourcePriceNeedsReason(
   return selectionPriceNeedsReason(
     item.get(),
     item.fields,
-    before ? (before.get() ?? 0) : undefined,
+    before?.get() ?? undefined,
     item.custom,
   );
 }

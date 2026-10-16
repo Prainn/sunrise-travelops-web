@@ -111,6 +111,7 @@
       <el-table
         v-if="day.items.length"
         :data="day.items"
+        row-key="id"
         border
         size="small"
       >
@@ -192,7 +193,7 @@ defineExpose({
     expanded.value = true;
   },
 });
-const dayCost = computed(() => sumMoney(props.day.items.map((item) => item.totalCost)));
+const dayCost = computed(() => sumMoney(props.day.items.map((item) => item.totalCost ?? 0)));
 const { t } = useI18n();
 
 function mealLabel(slot: MealSlot) {

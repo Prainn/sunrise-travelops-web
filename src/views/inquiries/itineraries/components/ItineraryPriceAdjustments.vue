@@ -19,7 +19,7 @@
               :min="0"
               :precision="2"
               :disabled="!editable"
-              @change="changePrice(row, Number($event))"
+              @change="changePrice(row, $event ?? null)"
             />
           </el-form-item>
           <el-form-item :label="$t('identity.reference')">
@@ -58,7 +58,7 @@
               :precision="2"
               :disabled="!editable"
               @change="
-                vehicle.totalPrice = Number($event);
+                vehicle.totalPrice = $event ?? null;
                 vehicle.pricingMode = 'manual';
                 vehicle.adjustmentReason = '';
               "
@@ -161,11 +161,15 @@ const savedRows = computed(
       props.savedPlan ? itineraryPriceRows(props.savedPlan).map((row) => [row.key, row]) : [],
     ),
 );
-function changePrice(row: ReturnType<typeof itineraryPriceRows>[number], value: number) {
+function changePrice(row: ReturnType<typeof itineraryPriceRows>[number], value: number | null) {
   row.set(value);
   const saved = savedRows.value.get(row.key);
+  const savedPrice = saved?.get() ?? null;
   const unchanged =
-    saved?.source === row.source && roundMoney(saved.get() ?? 0) === roundMoney(value);
+    saved?.source === row.source &&
+    (savedPrice === null || value === null
+      ? savedPrice === value
+      : roundMoney(savedPrice) === roundMoney(value));
   // Returning to the saved price keeps the existing reason; any other change needs a new one.
   row.fields.adjustmentReason = unchanged ? (saved.fields.adjustmentReason ?? "") : "";
 }

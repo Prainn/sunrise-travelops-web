@@ -338,7 +338,8 @@ function applyOtherCost() {
   otherCostVisible.value = false;
 }
 
-function money(value: number | undefined) {
+function money(value: number | null | undefined) {
+  if (value === null) return "—";
   return `¥${formatMoney(value)}`;
 }
 function staffRoomTotalFor(destination: string) {

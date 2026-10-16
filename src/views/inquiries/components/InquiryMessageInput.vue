@@ -62,9 +62,8 @@ async function importDocument(upload: UploadFile) {
     const { text } = await inquiryService.parseDocument(file);
     if (isActive) emit("update:modelValue", text);
   } catch (error) {
-    const scanned = isApiError(error) && error.serverMessage?.includes("扫描件");
     if (isActive)
-      ElMessage.error(t(scanned ? "inquiry.pdfScannedUnsupported" : "inquiry.documentParseFailed"));
+      ElMessage.error(isApiError(error) ? error.message : t("inquiry.documentParseFailed"));
   } finally {
     if (isActive) {
       isParsing.value = false;

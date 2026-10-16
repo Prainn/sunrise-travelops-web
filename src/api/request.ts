@@ -166,44 +166,61 @@ async function expireSession(): Promise<void> {
   await redirectAfterSessionExpiry();
 }
 
-async function rotateTokens(): Promise<void> {
-  const accessToken = AuthStorage.getAccessToken();
-  const refreshToken = AuthStorage.getRefreshToken();
-  if (!refreshToken) {
-    throw new ApiError(getErrorMessage(ApiErrorCode.MISSING_REFRESH_TOKEN, 401), {
-      code: ApiErrorCode.MISSING_REFRESH_TOKEN,
-      status: 401,
-    });
-  }
+const REFRESH_LOCK_NAME = "sunrise-auth-token-refresh";
 
-  const tokens = await sendJsonRequest<LoginResult>(
-    "POST",
-    "/auth/refresh",
-    { refreshToken },
-    { requiresAuth: false, retryAfterRefresh: false },
-  );
-  if (AuthStorage.getAccessToken() !== accessToken) return;
-
-  AuthStorage.setTokens(tokens.accessToken, tokens.refreshToken, AuthStorage.getRememberMe());
+/** 刷新令牌一次性有效，跨标签页串行刷新；不支持 Web Locks 的环境只做单标签页合并。 */
+function runWithRefreshLock<T>(task: () => Promise<T>): Promise<T> {
+  if (typeof navigator === "undefined" || !navigator.locks) return task();
+  return navigator.locks.request(REFRESH_LOCK_NAME, task);
 }
 
-async function refreshTokensOnce(): Promise<void> {
-  if (refreshPromise) return refreshPromise;
+/**
+ * @param staleAccessToken 触发 401 的请求所使用的访问令牌。
+ * 拿到锁后若存储里的令牌已不同，说明其他请求或标签页已完成刷新，直接重试即可。
+ */
+async function rotateTokens(staleAccessToken: string): Promise<void> {
+  await runWithRefreshLock(async () => {
+    if (AuthStorage.getAccessToken() !== staleAccessToken) return;
 
-  refreshPromise = rotateTokens()
-    .catch(async (error: unknown) => {
+    const refreshToken = AuthStorage.getRefreshToken();
+    if (!refreshToken) {
+      throw new ApiError(getErrorMessage(ApiErrorCode.MISSING_REFRESH_TOKEN, 401), {
+        code: ApiErrorCode.MISSING_REFRESH_TOKEN,
+        status: 401,
+      });
+    }
+
+    try {
+      const tokens = await sendJsonRequest<LoginResult>(
+        "POST",
+        "/auth/refresh",
+        { refreshToken },
+        { requiresAuth: false, retryAfterRefresh: false },
+      );
+      // 刷新期间已退出或切换账号时，不把旧会话的新令牌写回存储。
+      if (AuthStorage.getAccessToken() !== staleAccessToken) return;
+      AuthStorage.setTokens(tokens.accessToken, tokens.refreshToken, AuthStorage.getRememberMe());
+    } catch (error) {
       if (
         isApiError(error) &&
         error.status === 401 &&
         error.code === ApiErrorCode.AUTH_REFRESH_TOKEN_INVALID
       ) {
+        // 存储中的刷新令牌已被其他标签页更换时，不清除新会话，交给重试处理。
+        if (AuthStorage.getRefreshToken() !== refreshToken) return;
         await expireSession();
       }
       throw error;
-    })
-    .finally(() => {
-      refreshPromise = null;
-    });
+    }
+  });
+}
+
+async function refreshTokensOnce(staleAccessToken: string): Promise<void> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = rotateTokens(staleAccessToken).finally(() => {
+    refreshPromise = null;
+  });
 
   return refreshPromise;
 }
@@ -243,11 +260,12 @@ async function sendJsonRequest<T>(
   body: unknown,
   options: RequestOptions,
 ): Promise<T> {
+  const sentAccessToken = AuthStorage.getAccessToken();
   const response = await sendRequest(method, path, body, options);
   const canRefresh = options.requiresAuth !== false && options.retryAfterRefresh !== false;
 
   if (response.status === 401 && canRefresh && AuthStorage.getRefreshToken()) {
-    await refreshTokensOnce();
+    await refreshTokensOnce(sentAccessToken);
     return sendJsonRequest<T>(method, path, body, { ...options, retryAfterRefresh: false });
   }
 
@@ -260,11 +278,12 @@ async function sendJsonRequest<T>(
 }
 
 async function sendBlobRequest(path: string, options: RequestOptions): Promise<Blob> {
+  const sentAccessToken = AuthStorage.getAccessToken();
   const response = await sendRequest("GET", path, undefined, options);
   const canRefresh = options.requiresAuth !== false && options.retryAfterRefresh !== false;
 
   if (response.status === 401 && canRefresh && AuthStorage.getRefreshToken()) {
-    await refreshTokensOnce();
+    await refreshTokensOnce(sentAccessToken);
     return sendBlobRequest(path, { ...options, retryAfterRefresh: false });
   }
 
