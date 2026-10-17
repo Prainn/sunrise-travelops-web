@@ -1,103 +1,101 @@
 <template>
-  <div class="dash">
-    <section class="dash-header">
-      <div class="card dash-header__card">
-        <div class="dash-header__start">
-          <div class="dash-avatar">
-            <img v-if="userStore.userInfo.avatar" :src="userStore.userInfo.avatar" alt="" />
-            <el-icon v-else :size="22">
-              <User />
-            </el-icon>
-          </div>
-          <div class="dash-header__text">
-            <h1 class="dash-header__greeting">
-              {{ greetings }}
-            </h1>
-            <p class="dash-header__date">
-              {{ currentDateStr }}
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="dash-stats">
-      <div class="stat-card">
-        <div class="stat-card__icon stat-card__icon--visitor">
-          <el-icon :size="18">
+  <PageShell :fill="false">
+    <SectionCard>
+      <div class="flex items-center gap-3 min-w-0">
+        <div
+          class="flex shrink-0 items-center justify-center w-10 h-10 overflow-hidden rounded-full text-[var(--el-color-primary)] bg-[var(--el-color-primary-light-9)]"
+        >
+          <img
+            v-if="userStore.userInfo.avatar"
+            :src="userStore.userInfo.avatar"
+            alt=""
+            class="w-full h-full object-cover"
+          />
+          <el-icon v-else :size="22">
             <User />
           </el-icon>
         </div>
-        <div class="stat-card__body">
-          <span class="stat-card__label">{{ $t("dashboard.todayVisitors") }}</span>
-          <span class="stat-card__num">{{ displayTransitionUvCount }}</span>
+        <div class="flex flex-col gap-[3px] min-w-0">
+          <h1 class="m-0 text-[18px] font-medium leading-[1.3] text-strong">
+            {{ greetings }}
+          </h1>
+          <p class="m-0 text-[14px] text-muted">
+            {{ currentDateStr }}
+          </p>
         </div>
-        <span
-          v-if="uvGrowthText !== '--'"
-          :class="['stat-card__trend', `stat-card__trend--${uvTrendTone}`]"
-        >
-          <el-icon :size="12">
-            <ArrowUp v-if="uvIsUp" />
-            <ArrowDown v-else />
-          </el-icon>
-          {{ uvGrowthText }}
-        </span>
       </div>
+    </SectionCard>
 
-      <div class="stat-card">
-        <div class="stat-card__icon stat-card__icon--view">
-          <el-icon :size="18">
-            <View />
-          </el-icon>
+    <div class="grid grid-cols-1 gap-[var(--page-gap)] md:grid-cols-2">
+      <SectionCard>
+        <div class="flex items-center gap-[14px]">
+          <div
+            class="flex shrink-0 items-center justify-center w-11 h-11 rounded-[var(--card-radius)] text-[var(--el-color-primary)] bg-[var(--el-color-primary-light-9)]"
+          >
+            <el-icon :size="18">
+              <User />
+            </el-icon>
+          </div>
+          <div class="flex flex-1 flex-col min-w-0">
+            <span class="mb-[3px] text-[14px] text-muted">{{ $t("dashboard.todayVisitors") }}</span>
+            <span class="text-[24px] font-semibold leading-[1.15] text-strong">
+              {{ displayTransitionUvCount }}
+            </span>
+          </div>
+          <span
+            v-if="uvGrowthText !== '--'"
+            class="inline-flex shrink-0 gap-[3px] items-center text-[14px] font-bold"
+            :class="uvIsUp ? 'text-[var(--el-color-success)]' : 'text-[var(--el-color-danger)]'"
+          >
+            <el-icon :size="12">
+              <ArrowUp v-if="uvIsUp" />
+              <ArrowDown v-else />
+            </el-icon>
+            {{ uvGrowthText }}
+          </span>
         </div>
-        <div class="stat-card__body">
-          <span class="stat-card__label">{{ $t("dashboard.todayViews") }}</span>
-          <span class="stat-card__num">{{ displayTransitionPvCount }}</span>
-        </div>
-        <span
-          v-if="pvGrowthText !== '--'"
-          :class="['stat-card__trend', `stat-card__trend--${pvTrendTone}`]"
-        >
-          <el-icon :size="12">
-            <ArrowUp v-if="pvIsUp" />
-            <ArrowDown v-else />
-          </el-icon>
-          {{ pvGrowthText }}
-        </span>
-      </div>
+      </SectionCard>
 
-      <div class="stat-card">
-        <div class="stat-card__icon stat-card__icon--account">
-          <span class="stat-card__svg i-svg:group" />
+      <SectionCard>
+        <div class="flex items-center gap-[14px]">
+          <div
+            class="flex shrink-0 items-center justify-center w-11 h-11 rounded-[var(--card-radius)] text-[var(--el-color-primary)] bg-[var(--el-color-primary-light-9)]"
+          >
+            <el-icon :size="18">
+              <View />
+            </el-icon>
+          </div>
+          <div class="flex flex-1 flex-col min-w-0">
+            <span class="mb-[3px] text-[14px] text-muted">{{ $t("dashboard.todayViews") }}</span>
+            <span class="text-[24px] font-semibold leading-[1.15] text-strong">
+              {{ displayTransitionPvCount }}
+            </span>
+          </div>
+          <span
+            v-if="pvGrowthText !== '--'"
+            class="inline-flex shrink-0 gap-[3px] items-center text-[14px] font-bold"
+            :class="pvIsUp ? 'text-[var(--el-color-success)]' : 'text-[var(--el-color-danger)]'"
+          >
+            <el-icon :size="12">
+              <ArrowUp v-if="pvIsUp" />
+              <ArrowDown v-else />
+            </el-icon>
+            {{ pvGrowthText }}
+          </span>
         </div>
-        <div class="stat-card__body">
-          <span class="stat-card__label">{{ $t("dashboard.systemUsers") }}</span>
-          <span class="stat-card__num">6</span>
-        </div>
-        <span :class="['stat-card__trend', `stat-card__trend--${systemTrendTone}`]">
-          <el-icon :size="12"><ArrowUp /></el-icon>
-          12.5%
-        </span>
-      </div>
-    </section>
+      </SectionCard>
+    </div>
 
-    <section class="dash-chart">
-      <div class="card dash-chart__trend">
-        <div class="card__head">
-          <h3 class="card__title">
-            {{ $t("dashboard.visitTrend") }}
-          </h3>
-          <el-radio-group v-model="visitTrendDateRange" size="small">
-            <el-radio-button :label="$t('dashboard.lastDays', { days: 7 })" :value="7" />
-            <el-radio-button :label="$t('dashboard.lastDays', { days: 30 })" :value="30" />
-          </el-radio-group>
-        </div>
-        <div class="card__body card__body--chart">
-          <ECharts :options="visitTrendChartOptions" height="260px" />
-        </div>
-      </div>
-    </section>
-  </div>
+    <SectionCard :title="$t('dashboard.visitTrend')">
+      <template #actions>
+        <el-radio-group v-model="visitTrendDateRange" size="small">
+          <el-radio-button :label="$t('dashboard.lastDays', { days: 7 })" :value="7" />
+          <el-radio-button :label="$t('dashboard.lastDays', { days: 30 })" :value="30" />
+        </el-radio-group>
+      </template>
+      <ECharts :options="visitTrendChartOptions" height="260px" />
+    </SectionCard>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
@@ -111,6 +109,8 @@ import { useSettingsStore } from "@/stores/settings";
 import { formatGrowthRate } from "@/utils";
 import { useTransition } from "@vueuse/core";
 import { User, View, ArrowUp, ArrowDown } from "@element-plus/icons-vue";
+import PageShell from "@/components/PageShell/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 
 const userStore = useUserStore();
 const settingsStore = useSettingsStore();
@@ -151,9 +151,6 @@ const pvGrowthText = computed(() => {
 });
 const uvIsUp = computed(() => (visitOverviewData.value.uvGrowthRate || 0) > 0);
 const pvIsUp = computed(() => (visitOverviewData.value.pvGrowthRate || 0) > 0);
-const uvTrendTone = computed(() => (uvIsUp.value ? "success" : "danger"));
-const pvTrendTone = computed(() => (pvIsUp.value ? "success" : "danger"));
-const systemTrendTone = "success";
 
 const tUv = useTransition(
   computed(() => visitOverviewData.value.todayUvCount),
@@ -332,186 +329,3 @@ onMounted(() => {
   fetchVisitOverviewData();
 });
 </script>
-
-<style lang="scss" scoped>
-// Tokens
-$gap: 12px;
-$pad: 10px;
-%card {
-  overflow: hidden;
-  background: var(--el-bg-color-overlay);
-  border: 1px solid var(--card-border);
-  border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
-}
-
-// Page
-.dash {
-  @apply 'flex flex-col';
-  gap: $gap;
-  padding: $pad;
-  @apply '[background:var(--page-bg)]';
-}
-
-// Header
-.dash-header {
-  &__card {
-    @apply 'flex flex-wrap gap-[18px] items-center justify-between min-h-[78px] p-[16px_18px]';
-  }
-
-  &__start {
-    @apply 'flex [flex:1] gap-[12px] items-center min-w-[260px]';
-  }
-
-  &__text {
-    @apply 'flex flex-col gap-[3px]';
-  }
-
-  &__greeting {
-    @apply 'm-0 text-[18px] font-medium leading-[1.3] text-[var(--el-text-color-primary)]';
-  }
-
-  &__date {
-    @apply 'm-0 text-[14px] text-[var(--el-text-color-secondary)]';
-  }
-
-  &__end {
-    @apply 'flex flex-wrap gap-[8px] items-center justify-end';
-  }
-}
-
-.dash-avatar {
-  @apply 'flex shrink-0 items-center justify-center w-[40px] h-[40px] overflow-hidden text-[var(--el-color-primary)] [background:color-mix(in_srgb,_var(--el-color-primary)_14%,_var(--el-bg-color-overlay))] [border:1px_solid_color-mix(in_srgb,_var(--el-color-primary)_18%,_transparent)] rounded-[50%]';
-
-  img {
-    @apply 'w-full h-full object-cover';
-  }
-}
-
-// Quick links
-.quick-link {
-  @apply 'inline-flex gap-[6px] items-center justify-center h-[30px] p-[0_10px] text-[14px] text-[var(--el-text-color-secondary)] [text-decoration:none] [background:var(--el-fill-color-extra-light)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[6px] [transition:color_0.15s,_background-color_0.15s,_border-color_0.15s]';
-
-  .el-icon,
-  [class^="i-svg:"] {
-    width: 15px;
-    height: 15px;
-    font-size: 16px;
-    color: currentcolor;
-  }
-
-  &:hover {
-    color: var(--el-color-primary);
-    background: color-mix(in srgb, var(--el-color-primary) 7%, var(--el-bg-color-overlay));
-    border-color: color-mix(in srgb, var(--el-color-primary) 20%, var(--el-border-color-lighter));
-  }
-}
-
-// Stat cards
-.dash-stats {
-  @apply 'grid [grid-template-columns:repeat(3,_1fr)]';
-  gap: $gap;
-}
-
-.stat-card {
-  @apply 'flex gap-[14px] items-center min-h-[84px] p-[18px]';
-  @extend %card;
-
-  &__icon {
-    @apply 'flex shrink-0 items-center justify-center w-[44px] h-[44px] rounded-[10px]';
-
-    &--visitor {
-      @apply 'text-[var(--el-color-primary)] [background:color-mix(in_srgb,_var(--el-color-primary)_8%,_var(--el-bg-color-overlay))]';
-    }
-    &--view {
-      @apply 'text-[var(--el-color-primary)] [background:color-mix(in_srgb,_var(--el-color-primary)_8%,_var(--el-bg-color-overlay))]';
-    }
-    &--account {
-      @apply 'text-[var(--el-color-primary)] [background:color-mix(in_srgb,_var(--el-color-primary)_8%,_var(--el-bg-color-overlay))]';
-    }
-  }
-
-  &__svg {
-    @apply 'w-[20px] h-[20px] text-[20px] text-[currentcolor]';
-  }
-
-  &__body {
-    @apply 'flex [flex:1] flex-col min-w-0';
-  }
-
-  &__num {
-    @apply 'text-[24px] font-semibold leading-[1.15] text-[var(--el-text-color-primary)]';
-  }
-
-  &__label {
-    @apply 'mb-[3px] text-[14px] text-[var(--el-text-color-secondary)]';
-  }
-
-  &__trend {
-    @apply 'inline-flex shrink-0 gap-[3px] items-center text-[14px] font-bold text-[var(--el-text-color-secondary)]';
-
-    &--success {
-      @apply 'text-[var(--el-color-success)]';
-    }
-
-    &--danger {
-      @apply 'text-[var(--el-color-danger)]';
-    }
-  }
-}
-
-// Generic card
-.card {
-  @apply 'flex flex-col';
-  @extend %card;
-
-  &__head {
-    @apply 'flex items-center justify-between min-h-[48px] p-[13px_18px] [border-bottom:1px_solid_var(--card-border)]';
-  }
-
-  &__title {
-    @apply 'm-0 text-[14px] font-semibold text-[var(--el-text-color-primary)]';
-  }
-
-  &__body {
-    @apply 'p-[16px_18px_18px]';
-
-    &--chart {
-      @apply 'p-[14px_18px_16px]';
-    }
-  }
-}
-
-.dash-header__card {
-  @apply 'flex-row';
-}
-
-.dash-chart,
-.dash-chart__trend {
-  @apply 'min-w-0';
-}
-
-// Responsive
-@media (max-width: 1200px) {
-  .dash-stats {
-    @apply '[grid-template-columns:repeat(2,_1fr)]';
-  }
-  .dash-header__card {
-    @apply 'flex-col items-start';
-  }
-
-  .dash-header__end {
-    @apply 'justify-start';
-  }
-}
-
-@media (max-width: 768px) {
-  .dash {
-    @apply 'gap-[10px] p-[10px]';
-  }
-
-  .dash-stats {
-    @apply '[grid-template-columns:1fr]';
-  }
-}
-</style>

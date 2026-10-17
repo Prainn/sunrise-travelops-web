@@ -45,28 +45,27 @@
 - 必填字段在 `el-form-item` 的 `prop` 与表单规则中声明，显示必填标记并阻止空值提交；不能只添加红色星号。数值字段清空后保留空值，不转成 0 或默认值绕过校验；按业务约束设置最小值与整数精度，并与后端 DTO 保持一致。
 - 下拉选择器（含可搜索、远程选择器及共享组件内的 `el-select`）统一设置 `autocomplete="new-password"`，阻止 Chrome 地址自动填充；Element Plus 默认的 `off` 不能可靠阻止地址建议。保留组件自身的筛选、键盘选择与回填；新增下拉也须遵守。普通自由输入与资源选择按需求区分，不能把自由文本擅自限制为资源选项。
 - 新增表单中未要求默认值的地区字段从空值开始，不读取浏览器地址资料或继承上一次表单输入。编辑表单按当前记录回填。
-- 窄侧栏的单行搜索使用弹性布局：标签与操作按钮保持内容宽度，输入区域 `flex: 1; min-width: 0`，清除表单项默认外边距，让整行占满可用宽度；避免固定栅格比例挤压输入框或留下尾部空白。检查中英文及窄屏布局。
+- 窄侧栏或面板内的单行搜索使用 `FilterBar variant="compact"`，让输入区域占满可用宽度；不另写固定栅格比例或表单项外边距。检查中英文及窄屏布局。
 
 ## 普通表格页布局
 
-适用于资源列表、成团表、导游列表/请假/评分等“筛选 + 表格 + 分页”页面。以 [ResourceTable](src/views/resources/components/ResourceTable.vue) 和 [page.scss](src/styles/page.scss) 为结构与样式参考；业务字段、权限、查询和保存逻辑仍由各页面负责。
+适用于资源列表、成团表、导游列表/请假/评分等“筛选 + 表格 + 分页”页面。以 [ResourceTable](src/views/resources/components/ResourceTable.vue) 为结构参考；业务字段、权限、查询和保存逻辑仍由各页面负责。
 
 ```text
-.page-container
-├─ el-card.page-search（shadow="never"）
-│  └─ el-form（inline）→ el-form-item → 筛选控件、查询/重置按钮
-└─ el-card.page-content（shadow="never"）
+PageShell（左侧分类/树用 #aside 插槽）
+├─ FilterBar → el-form-item → 筛选控件；重置内置，其他按钮放 #actions
+└─ SectionCard（fill）
    ├─ TableToolbar → 新增等列表操作、刷新
-   ├─ .page-table-wrapper → el-table（border、height="100%"、稳定 row-key）
+   ├─ DataTable（fill、稳定 row-key）→ el-table-column
    └─ Pagination → 页码、每页条数、总数
 ```
 
-- **筛选区域**：必须使用独立的 `el-card.page-search`，内放 `el-form`；不能只给裸 `el-form` 加 `page-search`，也不能把筛选控件直接放在页面背景上。每个字段用 `el-form-item` 包裹，查询/重置按钮放在同一表单的操作项中。
-- **表格区域**：使用独立的 `el-card.page-content`，依次放工具栏、表格容器、分页。复用 `TableToolbar` 和 `Pagination`；表格容器使用 `page-table-wrapper`，保留 `page-content` 的高度与滚动布局，不另造固定视口高度、卡片边框或间距。
+- **筛选区域**：使用 `FilterBar`，不能把裸 `el-form` 或筛选控件直接放在页面背景上。每个字段用 `el-form-item` 包裹；查询等额外按钮放 `#actions` 插槽。
+- **表格区域**：使用 `SectionCard fill`，依次放 `TableToolbar`、`DataTable fill`、`Pagination`；页面内的卡片、面板统一用 `SectionCard`，表格统一用 `DataTable`，不直接使用 `el-card`/`el-table`，不另造固定视口高度、卡片边框、圆角或间距。
 - **组件选择**：符合公共资源维护语义的页面优先复用 `ResourceTable` 及其筛选/列插槽；成团、请假、评分等专用业务页面复用上述布局和共享组件，不强套资源 CRUD、状态或权限语义。远程选项沿用 `RemoteSelect`、`ResourceSelect` 或现有业务选择器，避免为筛选加载全库。
 - **label**：每个筛选字段必须有可见的 `el-form-item :label`，关键词统一复用 `$t('common.keywords')`，其他字段使用准确的业务名称；只有按钮操作项可以不带 label。placeholder 不能代替 label。
 - **placeholder**：关键词说明实际支持搜索的字段；选择器说明“请选择”“全部状态”等真实筛选含义，日期范围分别说明开始/结束日期。label、placeholder 和按钮文案均使用响应式 i18n，优先复用已有键，新增键同步中英文；不能提示接口不支持的筛选条件。
-- **宽度与换行**：关键词输入框使用 `page-search__keywords`，选择器等普通控件沿用 `page-search` 的公共宽度。不要让长搜索提示落到默认窄输入框，也不要每页另写随意的宽度；字段确需特殊尺寸时按内容局部调整。窄屏允许字段及按钮换行，不能挤压 label 或把 placeholder 的截断当作正常布局；应在中英文下考虑提示长度。
+- **宽度与换行**：关键词等长输入的 `el-form-item` 加 `filter-bar__wide`，选择器等普通控件沿用 `FilterBar` 的公共宽度。不要让长搜索提示落到默认窄输入框，也不要每页另写随意的宽度；字段确需特殊尺寸时按内容局部调整。窄屏允许字段及按钮换行，不能挤压 label 或把 placeholder 的截断当作正常布局；应在中英文下考虑提示长度。
 - 新增或修改这类页面时，对照参考组件检查卡片层级、字段 label、placeholder、宽度及分页位置；ESLint 和类型检查通过不代表布局已符合规范。既有同类组件有遗漏时不能直接照抄遗漏。
 
 ## Testing / Verification

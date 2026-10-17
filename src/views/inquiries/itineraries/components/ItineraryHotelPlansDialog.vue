@@ -1,17 +1,18 @@
 <template>
-  <el-dialog
+  <AppDialog
     :model-value="modelValue"
     class="itinerary-hotel-plans"
-    width="min(1280px, calc(100vw - 32px))"
+    size="xl"
     top="16px"
     :close-on-click-modal="false"
+    :busy="saving"
     @close="emit('cancel')"
   >
     <template #header>
-      <h3 class="m-0 text-6 font-600">
+      <h3 class="m-0 text-[16px] font-600 text-strong">
         {{ $t("itinerary.hotelPlans") }}
       </h3>
-      <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[var(--el-text-color-regular)]">
+      <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[var(--el-text-color-regular)] text-[14px]">
         <template v-for="(destination, index) in overnightDestinations" :key="destination">
           <span v-if="index" aria-hidden="true">/</span>
           <span class="[overflow-wrap:anywhere]">
@@ -52,126 +53,103 @@
             {{ $t("itinerary.clearCurrentHotelTier") }}
           </el-button>
         </div>
-        <el-form class="itinerary-hotel-plans__form" @submit.prevent>
-          <table class="itinerary-hotel-plans__table w-full table-fixed border-collapse text-left">
-            <caption class="sr-only">
-              {{ $t(`itinerary.hotelTiers.${activeTier}`) }}
-            </caption>
-            <colgroup>
-              <col class="w-[12%]" />
-              <col class="w-[8%]" />
-              <col class="w-[38%]" />
-              <col class="w-[24%]" />
-              <col class="w-[18%]" />
-            </colgroup>
-            <thead class="bg-[var(--el-fill-color-extra-light)] text-[var(--el-text-color-secondary)]">
-              <tr>
-                <th scope="col">
-                  {{ $t("itinerary.hotelCostCity") }}
-                </th>
-                <th scope="col">
-                  {{ $t("itinerary.hotelCostNights") }}
-                </th>
-                <th scope="col">
-                  {{ $t("resource.hotelName") }}
-                </th>
-                <th scope="col">
-                  {{ $t("identity.reference") }}
-                </th>
-                <th scope="col">
-                  {{ $t("itinerary.hotelUnitPrice") }}
-                </th>
-              </tr>
-            </thead>
-            <tbody :key="activeTier">
-              <tr v-for="destination in overnightDestinations" :key="destination">
-                <th scope="row" class="font-500 [overflow-wrap:anywhere]">
-                  {{ destination }}
-                </th>
-                <td>
-                  {{ $t("itinerary.nightCount", { count: destinationDuration(dailyPlans, destination).nights }) }}
-                </td>
-                <td>
-                  <el-form-item :label="$t('resource.hotelName')">
-                    <ResourceSelect
-                      class="w-full"
-                      kind="hotels"
-                      :model-value="getHotelSelectionId(activeTier, destination)"
-                      :selected-label="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === destination)?.hotelName"
-                      :filters="{ city: destination, rating: activeTier }"
+        <el-form class="itinerary-hotel-plans__form mt-3" @submit.prevent>
+          <DataTable
+            :key="activeTier"
+            :data="hotelRows"
+            row-key="destination"
+            :aria-label="$t(`itinerary.hotelTiers.${activeTier}`)"
+          >
+            <el-table-column :label="$t('itinerary.hotelCostCity')" min-width="120">
+              <template #default="{ row }">
+                <span class="font-500">{{ row.destination }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column :label="$t('itinerary.hotelCostNights')" min-width="90">
+              <template #default="{ row }">
+                {{ $t("itinerary.nightCount", { count: destinationDuration(dailyPlans, row.destination).nights }) }}
+              </template>
+            </el-table-column>
+            <el-table-column :label="$t('resource.hotelName')" min-width="320">
+              <template #default="{ row }">
+                <el-form-item>
+                  <ResourceSelect
+                    class="w-full"
+                    kind="hotels"
+                    :model-value="getHotelSelectionId(activeTier, row.destination)"
+                    :selected-label="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === row.destination)?.hotelName"
+                    :filters="{ city: row.destination, rating: activeTier }"
+                    :disabled="!editable"
+                    :placeholder="$t('itinerary.selectDestinationHotel')"
+                    :aria-label="`${row.destination} · ${$t('resource.hotelName')}`"
+                    popper-class="itinerary-hotel-plans__options"
+                    :fit-input-width="true"
+                    @update:model-value="emit('update-selection', activeTier, row.destination, $event)"
+                  />
+                </el-form-item>
+              </template>
+            </el-table-column>
+            <el-table-column :label="$t('identity.reference')" min-width="200">
+              <template #default="{ row }">
+                <el-form-item v-if="getHotelSelectionId(activeTier, row.destination)">
+                  <el-select
+                    autocomplete="new-password"
+                    class="w-full"
+                    :disabled="!editable || !hotelResource(activeTier, row.destination)"
+                    :model-value="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === row.destination)?.referenceBasis"
+                    :aria-label="`${row.destination} · ${$t('identity.reference')}`"
+                    popper-class="itinerary-hotel-plans__options"
+                    :fit-input-width="true"
+                    @update:model-value="emit('update-rate', activeTier, row.destination, $event)"
+                  >
+                    <el-option
+                      value="hotel_individual"
+                      :label="`${$t('hotel.individualPrice')} ¥${hotelResource(activeTier, row.destination)?.individualPrice ?? 0}`"
+                    />
+                    <el-option
+                      v-if="hotelResource(activeTier, row.destination)?.groupPrice != null"
+                      value="hotel_group"
+                      :label="`${$t('hotel.groupPrice')} ¥${hotelResource(activeTier, row.destination)?.groupPrice}`"
+                    />
+                  </el-select>
+                </el-form-item>
+              </template>
+            </el-table-column>
+            <el-table-column :label="$t('itinerary.hotelUnitPrice')" min-width="180">
+              <template #default="{ row }">
+                <template v-if="getHotelSelectionId(activeTier, row.destination)">
+                  <el-form-item>
+                    <el-input-number
+                      :model-value="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === row.destination)?.unitCost"
+                      :min="0"
+                      :precision="2"
                       :disabled="!editable"
-                      :placeholder="$t('itinerary.selectDestinationHotel')"
-                      :aria-label="`${destination} · ${$t('resource.hotelName')}`"
-                      popper-class="itinerary-hotel-plans__options"
-                      :fit-input-width="true"
-                      @update:model-value="emit('update-selection', activeTier, destination, $event)"
+                      :controls="false"
+                      :aria-label="`${row.destination} · ${$t('planning.hotelPrice')}`"
+                      @update:model-value="emit('update-cost', activeTier, row.destination, $event ?? null)"
+                    />
+                    <small class="mt-1 w-full text-muted">
+                      {{ $t("itinerary.breakfastIncluded") }}
+                    </small>
+                  </el-form-item>
+                  <el-form-item
+                    v-if="hotelNeedsReason(activeTier, row.destination)"
+                    class="mt-3"
+                  >
+                    <el-input
+                      :model-value="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === row.destination)?.adjustmentReason ?? ''"
+                      :disabled="!editable"
+                      :aria-label="`${row.destination} · ${$t('identity.reason')}`"
+                      :placeholder="$t('identity.reasonPlaceholder')"
+                      type="textarea"
+                      :autosize="{ minRows: 2 }"
+                      @update:model-value="emit('update-reason', activeTier, row.destination, $event)"
                     />
                   </el-form-item>
-                </td>
-                <td>
-                  <el-form-item
-                    v-if="getHotelSelectionId(activeTier, destination)"
-                    :label="$t('identity.reference')"
-                  >
-                    <el-select
-                      autocomplete="new-password"
-                      class="w-full"
-                      :disabled="!editable || !hotelResource(activeTier, destination)"
-                      :model-value="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === destination)?.referenceBasis"
-                      :aria-label="`${destination} · ${$t('identity.reference')}`"
-                      popper-class="itinerary-hotel-plans__options"
-                      :fit-input-width="true"
-                      @update:model-value="emit('update-rate', activeTier, destination, $event)"
-                    >
-                      <el-option
-                        value="hotel_individual"
-                        :label="`${$t('hotel.individualPrice')} ¥${hotelResource(activeTier, destination)?.individualPrice ?? 0}`"
-                      />
-                      <el-option
-                        v-if="hotelResource(activeTier, destination)?.groupPrice != null"
-                        value="hotel_group"
-                        :label="`${$t('hotel.groupPrice')} ¥${hotelResource(activeTier, destination)?.groupPrice}`"
-                      />
-                    </el-select>
-                  </el-form-item>
-                </td>
-                <td>
-                  <template v-if="getHotelSelectionId(activeTier, destination)">
-                    <el-form-item :label="$t('itinerary.hotelUnitPrice')">
-                      <el-input-number
-                        class="!w-full"
-                        :model-value="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === destination)?.unitCost"
-                        :min="0"
-                        :precision="2"
-                        :disabled="!editable"
-                        :controls="false"
-                        :aria-label="`${destination} · ${$t('planning.hotelPrice')}`"
-                        @update:model-value="emit('update-cost', activeTier, destination, $event ?? null)"
-                      />
-                      <small class="mt-1 w-full text-[var(--el-text-color-secondary)]">
-                        {{ $t("itinerary.breakfastIncluded") }}
-                      </small>
-                    </el-form-item>
-                    <el-form-item
-                      v-if="hotelNeedsReason(activeTier, destination)"
-                      class="mt-3"
-                      :label="$t('identity.reason')"
-                    >
-                      <el-input
-                        :model-value="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === destination)?.adjustmentReason ?? ''"
-                        :disabled="!editable"
-                        :aria-label="`${destination} · ${$t('identity.reason')}`"
-                        :placeholder="$t('identity.reasonPlaceholder')"
-                        type="textarea"
-                        :autosize="{ minRows: 2 }"
-                        @update:model-value="emit('update-reason', activeTier, destination, $event)"
-                      />
-                    </el-form-item>
-                  </template>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </template>
+              </template>
+            </el-table-column>
+          </DataTable>
         </el-form>
       </template>
       <el-alert
@@ -199,13 +177,15 @@
         {{ $t("itinerary.save") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { selectionPriceNeedsReason } from "../price-adjustments";
 import { resourceService } from "@/services/resource.service";
+import AppDialog from "@/components/AppDialog/index.vue";
+import DataTable from "@/components/DataTable/index.vue";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import type { ItineraryDayRecord, ItineraryHotelPlan, ItineraryHotelTier } from "@/types/itinerary";
 import {
@@ -269,6 +249,9 @@ const overnightDestinations = computed(() =>
     props.destinations.includes(destination),
   ),
 );
+const hotelRows = computed(() =>
+  overnightDestinations.value.map((destination) => ({ destination })),
+);
 const pendingNights = computed(
   () => props.dailyPlans.filter((day) => day.overnightDestination === null).length,
 );
@@ -301,28 +284,6 @@ function getHotelSelectionId(tier: ItineraryHotelTier, destination: string) {
 </script>
 
 <style scoped lang="scss">
-:global(.itinerary-hotel-plans) {
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100dvh - 32px);
-}
-
-:global(.itinerary-hotel-plans .el-dialog__header),
-:global(.itinerary-hotel-plans .el-dialog__footer) {
-  flex-shrink: 0;
-}
-
-:global(.itinerary-hotel-plans .el-dialog__body) {
-  min-height: 0;
-  overflow-y: auto;
-}
-
-:global(.itinerary-hotel-plans .el-dialog__footer) {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--el-border-color-lighter);
-}
-
 .itinerary-hotel-plans__tabs {
   :deep(.el-tabs__header) {
     margin-bottom: 0;
@@ -334,97 +295,13 @@ function getHotelSelectionId(tier: ItineraryHotelTier, destination: string) {
   }
 }
 
-.itinerary-hotel-plans__table {
-  th,
-  td {
-    padding: 24px 12px;
-    vertical-align: top;
-    overflow-wrap: anywhere;
-  }
-
-  thead th {
-    padding-block: 16px;
-    font-weight: 500;
-  }
-
-  tbody tr {
-    border-bottom: 1px solid var(--el-border-color-lighter);
-  }
-
-  tbody th,
-  tbody td:nth-child(2) {
-    padding-top: 32px;
-  }
-
+.itinerary-hotel-plans__form {
   :deep(.el-form-item) {
-    display: block;
     margin-bottom: 0;
   }
 
-  :deep(.el-form-item__label) {
-    display: none;
-  }
-
-  :deep(.el-form-item__content) {
-    min-width: 0;
-  }
-
-  :deep(.el-select__wrapper),
-  :deep(.el-input__wrapper),
-  :deep(.el-input-number .el-input__wrapper) {
-    min-height: 41px;
-    padding: 8px 4px;
-    line-height: 24px;
-    background: transparent;
-    border-radius: 0;
-    box-shadow: none;
-    border-bottom: 1px solid var(--el-border-color);
-
-    &:hover {
-      border-bottom-color: var(--el-border-color-hover);
-    }
-
-    &.is-focused,
-    &.is-focus {
-      border-bottom-color: var(--el-color-primary);
-    }
-  }
-
-  :deep(.el-select__selection) {
-    display: grid;
-  }
-
-  :deep(.el-select__input-wrapper) {
-    grid-area: 1 / 1;
-    align-self: center;
-    min-width: 0;
-  }
-
-  :deep(.el-select__input),
-  :deep(.el-input-number .el-input__inner) {
-    height: 24px;
-    line-height: 24px;
-  }
-
-  :deep(.el-input-number .el-input) {
-    height: auto;
-  }
-
-  :deep(.el-select__placeholder) {
-    position: static;
-    z-index: auto;
-    grid-area: 1 / 1;
-    transform: none;
-    white-space: normal;
-    overflow: visible;
-    overflow-wrap: anywhere;
-    text-overflow: clip;
-    line-height: 24px;
-    pointer-events: none;
-  }
-
-  :deep(.el-input-number .el-input__inner) {
-    text-align: left;
+  :deep(.el-input-number) {
+    width: 100%;
   }
 }
 
@@ -443,57 +320,5 @@ function getHotelSelectionId(tier: ItineraryHotelTier, destination: string) {
   min-width: 0;
   white-space: normal;
   overflow-wrap: anywhere;
-}
-
-@media (max-width: 767px) {
-  .itinerary-hotel-plans__tabs {
-    flex: 0 0 100%;
-  }
-
-  .itinerary-hotel-plans__form .itinerary-hotel-plans__table {
-    colgroup,
-    thead {
-      display: none;
-    }
-
-    &,
-    tbody {
-      display: block;
-    }
-
-    tbody tr {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 16px;
-      padding: 20px 0;
-    }
-
-    tbody th,
-    tbody td {
-      display: block;
-      min-width: 0;
-      padding: 0;
-    }
-
-    td:nth-child(n + 3) {
-      grid-column: 1 / -1;
-    }
-
-    td:empty {
-      display: none;
-    }
-
-    :deep(.el-form-item > .el-form-item__label) {
-      display: block;
-      max-width: none;
-      width: 100%;
-      text-align: left;
-      height: auto;
-      padding: 0;
-      white-space: normal;
-      line-height: 1.5;
-      color: var(--el-text-color-secondary);
-    }
-  }
 }
 </style>

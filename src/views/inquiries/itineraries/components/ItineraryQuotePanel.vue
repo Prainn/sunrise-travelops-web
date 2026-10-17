@@ -16,10 +16,9 @@
         :editable="editable"
         @update-settings="emit('update-settings', $event)"
       />
-      <el-empty
+      <FeedbackState
         v-if="!displayOptions.length"
-        :description="$t('itinerary.noQuoteOptions')"
-        :image-size="64"
+        :title="$t('itinerary.noQuoteOptions')"
       />
       <ItineraryPaxQuoteTable
         v-for="item in displayOptions"
@@ -35,7 +34,7 @@
     </template>
     <template v-else-if="legacyCalculation">
       <el-alert :title="$t('itinerary.legacyQuote')" type="info" :closable="false" />
-      <el-table :data="legacyCalculation.options" border>
+      <DataTable :data="legacyCalculation.options" border>
         <el-table-column :label="$t('itinerary.quoteConfigurations')" min-width="180">
           <template #default="{ row }">
             {{ $t(`itinerary.hotelTiers.${row.hotelTier}`) }} /
@@ -52,22 +51,23 @@
             {{ formatMoney(row.childUnitPrice) }}
           </template>
         </el-table-column>
-      </el-table>
+      </DataTable>
     </template>
 
     <el-form
       v-if="!legacyCalculation"
-      class="quote-panel__settings [border-top:1px_solid_var(--el-border-color)] [container-type:inline-size]"
+      class="quote-panel__settings [border-top:1px_solid_var(--divider-color)] [container-type:inline-size]"
       label-position="top"
       :disabled="!editable"
     >
       <h3 class="m-[20px_0_12px] text-[18px]">
         {{ $t("itinerary.extraFees") }}
       </h3>
-      <el-card shadow="never" class="quote-panel__fee-card mb-[16px] rounded-[10px]">
-        <template #header>
-          {{ $t("itinerary.feeCards.tips") }}
-        </template>
+      <SectionCard
+        class="quote-panel__fee-card mb-[16px]"
+        :title="$t('itinerary.feeCards.tips')"
+        title-tag="h4"
+      >
         <el-row :gutter="16">
           <el-col v-for="field in tipFields" :key="field" :span="12">
             <el-form-item class="quote-panel__tip-field" :label="$t(`itinerary.${field}`)">
@@ -86,20 +86,18 @@
             </el-form-item>
           </el-col>
         </el-row>
-      </el-card>
-      <el-card
+      </SectionCard>
+      <SectionCard
         v-for="type in transportTypes"
         :key="type"
-        shadow="never"
-        class="quote-panel__fee-card mb-[16px] rounded-[10px]"
+        class="quote-panel__fee-card mb-[16px]"
+        :title="$t(`itinerary.feeCards.${type}`)"
+        title-tag="h4"
       >
-        <template #header>
-          {{ $t(`itinerary.feeCards.${type}`) }}
-        </template>
         <div
           v-for="fee in quote.transportFees.filter((item) => item.type === type)"
           :key="fee.id"
-          class="quote-panel__transport p-[16px] mb-[12px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)] grid [grid-template-columns:minmax(280px,_2fr)_minmax(140px,_1fr)_minmax(160px,_1fr)_auto] [align-items:end] gap-[12px]"
+          class="quote-panel__transport p-[16px] mb-[12px] [border:1px_solid_var(--divider-color)] surface-muted grid [grid-template-columns:minmax(280px,_2fr)_minmax(140px,_1fr)_minmax(160px,_1fr)_auto] [align-items:end] gap-[12px]"
         >
           <div
             class="quote-panel__route grid [grid-template-columns:minmax(0,1fr)_auto_minmax(0,1fr)] gap-[8px] [align-items:end]"
@@ -159,7 +157,7 @@
         <el-button @click="addFee(type)">
           {{ $t(type === "flight" ? "itinerary.addFlightFee" : "itinerary.addTrainFee") }}
         </el-button>
-      </el-card>
+      </SectionCard>
       <h3 class="m-[20px_0_12px] text-[18px]">
         {{ $t("itinerary.customerTerms") }}
       </h3>
@@ -183,6 +181,9 @@
 import ItinerarySharedCosts from "./ItinerarySharedCosts.vue";
 import ItineraryPaxQuoteTable from "./ItineraryPaxQuoteTable.vue";
 import CitySelect from "@/components/CitySelect.vue";
+import DataTable from "@/components/DataTable/index.vue";
+import FeedbackState from "@/components/FeedbackState/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import { computed } from "vue";
 import type {
   ItineraryGuidePlan,
@@ -257,22 +258,6 @@ function removeFee(id: string) {
 </script>
 
 <style scoped lang="scss">
-th,
-td {
-  @apply '[overflow-wrap:anywhere] p-[12px] [border:1px_solid_var(--el-border-color)] text-right [vertical-align:middle]';
-}
-th:first-child {
-  @apply 'text-left';
-}
-.quote-panel__comparison :deep(.el-input-number) {
-  width: 140px;
-}
-
-.quote-panel__fee-card :deep(.el-card__header) {
-  font-weight: 600;
-  background: var(--el-fill-color-extra-light);
-}
-
 .quote-panel__settings :deep(.el-input-number),
 .quote-panel__settings :deep(.el-select) {
   width: 100%;
@@ -281,7 +266,6 @@ th:first-child {
   max-width: 100%;
 }
 @media (width <= 720px) {
-  .quote-panel__two-columns,
   .quote-panel__transport {
     @apply '[grid-template-columns:1fr]';
   }

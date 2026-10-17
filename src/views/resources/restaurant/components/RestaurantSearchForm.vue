@@ -1,58 +1,51 @@
 <template>
-  <el-card class="page-search" shadow="never">
-    <el-form :inline="true">
-      <el-form-item :label="$t('common.keywords')">
-        <el-input
-          v-model.trim="keywords"
-          :placeholder="$t('restaurant.searchPlaceholder')"
-          class="page-search__keywords"
-          clearable
+  <FilterBar @reset="emit('reset')">
+    <el-form-item :label="$t('common.keywords')" class="filter-bar__wide">
+      <el-input
+        v-model.trim="keywords"
+        :placeholder="$t('restaurant.searchPlaceholder')"
+        clearable
+      />
+    </el-form-item>
+    <el-form-item :label="$t('resource.city')">
+      <el-select
+        v-model="city"
+        autocomplete="new-password"
+        clearable
+        filterable
+      >
+        <el-option
+          v-for="option in cityOptions"
+          :key="option"
+          :label="option"
+          :value="option"
         />
-      </el-form-item>
-      <el-form-item :label="$t('resource.city')">
-        <el-select
-          v-model="city"
-          autocomplete="new-password"
-          clearable
-          filterable
-        >
-          <el-option
-            v-for="option in cityOptions"
-            :key="option"
-            :label="option"
-            :value="option"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="$t('restaurant.priceUnit')">
-        <el-select v-model="priceUnit" autocomplete="new-password" clearable>
-          <el-option
-            v-for="option in unitOptions"
-            :key="option.value"
-            :label="option.label"
-            :value="option.value"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="$t('resource.isStandardPrice')">
-        <el-select v-model="isStandardPrice" autocomplete="new-password" :placeholder="$t('common.all')">
-          <el-option :label="$t('common.all')" value="" />
-          <el-option :label="$t('common.yes')" :value="true" />
-          <el-option :label="$t('common.no')" :value="false" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button @click="emit('reset')">
-          {{ $t("common.reset") }}
-        </el-button>
-      </el-form-item>
-    </el-form>
-  </el-card>
+      </el-select>
+    </el-form-item>
+    <el-form-item :label="$t('restaurant.priceUnit')">
+      <el-select v-model="priceUnit" autocomplete="new-password" clearable>
+        <el-option
+          v-for="option in unitOptions"
+          :key="option.value"
+          :label="option.label"
+          :value="option.value"
+        />
+      </el-select>
+    </el-form-item>
+    <el-form-item :label="$t('resource.isStandardPrice')">
+      <el-select v-model="isStandardPrice" autocomplete="new-password" :placeholder="$t('common.all')">
+        <el-option :label="$t('common.all')" value="" />
+        <el-option :label="$t('common.yes')" :value="true" />
+        <el-option :label="$t('common.no')" :value="false" />
+      </el-select>
+    </el-form-item>
+  </FilterBar>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import FilterBar from "@/components/FilterBar/index.vue";
 import type { RestaurantPriceUnit } from "@/types/resource";
 import { getResourceUnitOptions } from "@/utils/resource-unit";
 

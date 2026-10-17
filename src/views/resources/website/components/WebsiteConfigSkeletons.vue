@@ -1,60 +1,57 @@
 <template>
-  <section class="grid [grid-template-rows:auto_minmax(0,_1fr)] h-full min-h-0">
-    <div class="page-toolbar">
-      <div class="page-toolbar__left">
-        <el-button
-          v-if="editable"
-          type="primary"
-          :disabled="!config.cities.length"
-          @click="openEditor()"
-        >
-          {{ $t("websiteConfig.skeletons.create") }}
-        </el-button>
-        <span class="text-[var(--el-text-color-secondary)] text-[13px]">
-          {{ $t("websiteConfig.skeletons.help") }}
-        </span>
-      </div>
-    </div>
-    <div class="page-table-wrapper">
-      <el-table
-        :data="config.skeletons"
-        row-key="id"
-        border
-        height="100%"
-        :empty-text="$t('websiteConfig.skeletons.empty')"
+  <section class="flex flex-col gap-[12px] h-full min-h-0">
+    <TableToolbar :refreshable="false">
+      <el-button
+        v-if="editable"
+        type="primary"
+        :disabled="!config.cities.length"
+        @click="openEditor()"
       >
-        <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
-        <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
-        <el-table-column :label="$t('websiteConfig.days')" width="90" align="center">
-          <template #default="{ row }">
-            {{ row.days.length }}
-          </template>
-        </el-table-column>
-        <!-- @vue-generic {WebsiteSkeleton} -->
-        <el-table-column
-          :label="$t('websiteConfig.skeletons.cityOrder')"
-          min-width="280"
-          show-overflow-tooltip
-        >
-          <template #default="{ row }">
-            {{ citySequence(row) || $t("websiteConfig.skeletons.noDays") }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('common.status')" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
-              {{ row.status === "enabled" ? $t("common.enabled") : $t("websiteConfig.disabled") }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <!-- @vue-generic {WebsiteSkeleton} -->
-        <el-table-column
-          :label="$t('common.actions')"
-          width="150"
-          align="center"
-          fixed="right"
-        >
-          <template #default="{ row, $index }">
+        {{ $t("websiteConfig.skeletons.create") }}
+      </el-button>
+      <span class="text-muted text-[13px]">
+        {{ $t("websiteConfig.skeletons.help") }}
+      </span>
+    </TableToolbar>
+    <DataTable
+      fill
+      :data="config.skeletons"
+      row-key="id"
+      :empty-text="$t('websiteConfig.skeletons.empty')"
+    >
+      <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
+      <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
+      <el-table-column :label="$t('websiteConfig.days')" width="90" align="center">
+        <template #default="{ row }">
+          {{ row.days.length }}
+        </template>
+      </el-table-column>
+      <!-- @vue-generic {WebsiteSkeleton} -->
+      <el-table-column
+        :label="$t('websiteConfig.skeletons.cityOrder')"
+        min-width="280"
+        show-overflow-tooltip
+      >
+        <template #default="{ row }">
+          {{ citySequence(row) || $t("websiteConfig.skeletons.noDays") }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('common.status')" width="100" align="center">
+        <template #default="{ row }">
+          <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
+            {{ row.status === "enabled" ? $t("common.enabled") : $t("websiteConfig.disabled") }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <!-- @vue-generic {WebsiteSkeleton} -->
+      <el-table-column
+        :label="$t('common.actions')"
+        width="150"
+        align="center"
+        fixed="right"
+      >
+        <template #default="{ row, $index }">
+          <RowActions>
             <el-button type="primary" link @click="openEditor(row)">
               {{ editable ? $t("common.edit") : $t("common.view") }}
             </el-button>
@@ -66,11 +63,11 @@
             >
               {{ $t("common.delete") }}
             </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-    <el-dialog
+          </RowActions>
+        </template>
+      </el-table-column>
+    </DataTable>
+    <AppDialog
       v-model="visible"
       :title="
         isNew
@@ -79,11 +76,9 @@
             ? $t('websiteConfig.skeletons.edit')
             : $t('websiteConfig.skeletons.detail')
       "
-      width="min(960px, 94vw)"
+      size="xl"
+      :busy="saving || isSubmitting"
       destroy-on-close
-      :show-close="!saving && !isSubmitting"
-      :close-on-click-modal="!saving && !isSubmitting"
-      :close-on-press-escape="!saving && !isSubmitting"
     >
       <el-form
         v-if="record"
@@ -113,7 +108,7 @@
         </el-form-item>
         <el-form-item prop="days">
           <div class="w-full">
-            <div class="page-toolbar">
+            <TableToolbar v-if="editable" :refreshable="false" class="mb-[8px]">
               <el-button
                 v-if="editable"
                 type="primary"
@@ -122,8 +117,8 @@
               >
                 {{ $t("websiteConfig.skeletons.addDay") }}
               </el-button>
-            </div>
-            <el-table :data="record.days" border :empty-text="$t('websiteConfig.skeletons.daysEmpty')">
+            </TableToolbar>
+            <DataTable :data="record.days" :empty-text="$t('websiteConfig.skeletons.daysEmpty')">
               <el-table-column :label="$t('websiteConfig.days')" width="70" align="center">
                 <template #default="{ $index }">
                   D{{ $index + 1 }}
@@ -171,28 +166,30 @@
                 align="center"
               >
                 <template #default="{ $index }">
-                  <el-button
-                    :disabled="$index === 0"
-                    type="primary"
-                    link
-                    @click="move($index, -1)"
-                  >
-                    {{ $t("websiteConfig.moveUp") }}
-                  </el-button>
-                  <el-button
-                    :disabled="$index === record.days.length - 1"
-                    type="primary"
-                    link
-                    @click="move($index, 1)"
-                  >
-                    {{ $t("websiteConfig.moveDown") }}
-                  </el-button>
-                  <el-button type="danger" link @click="record.days.splice($index, 1)">
-                    {{ $t("websiteConfig.remove") }}
-                  </el-button>
+                  <RowActions>
+                    <el-button
+                      :disabled="$index === 0"
+                      type="primary"
+                      link
+                      @click="move($index, -1)"
+                    >
+                      {{ $t("websiteConfig.moveUp") }}
+                    </el-button>
+                    <el-button
+                      :disabled="$index === record.days.length - 1"
+                      type="primary"
+                      link
+                      @click="move($index, 1)"
+                    >
+                      {{ $t("websiteConfig.moveDown") }}
+                    </el-button>
+                    <el-button type="danger" link @click="record.days.splice($index, 1)">
+                      {{ $t("websiteConfig.remove") }}
+                    </el-button>
+                  </RowActions>
                 </template>
               </el-table-column>
-            </el-table>
+            </DataTable>
           </div>
         </el-form-item>
       </el-form>
@@ -210,11 +207,15 @@
           {{ $t("common.confirm") }}
         </el-button>
       </template>
-    </el-dialog>
+    </AppDialog>
   </section>
 </template>
 
 <script setup lang="ts">
+import AppDialog from "@/components/AppDialog/index.vue";
+import DataTable from "@/components/DataTable/index.vue";
+import RowActions from "@/components/RowActions/index.vue";
+import TableToolbar from "@/components/TableToolbar/index.vue";
 import { ref } from "vue";
 import type { FormInstance } from "element-plus";
 import type { WebsiteConfig, WebsiteSkeleton } from "@/types/website";

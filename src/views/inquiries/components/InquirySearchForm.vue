@@ -1,68 +1,61 @@
 <template>
-  <el-card class="page-search" shadow="never">
-    <el-form :inline="true">
-      <el-form-item
-        v-if="userStore.userInfo.scope === 'headquarters'"
-        :label="$t('identity.businessUnit')"
-      >
-        <el-select v-model="businessUnit" autocomplete="new-password" class="!w-[180px]">
-          <el-option value="" :label="$t('identity.allBusinesses')" />
-          <el-option
-            v-for="unit in ['shengxu', 'linxi', 'website']"
-            :key="unit"
-            :value="unit"
-            :label="businessUnitName(unit)"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="$t('common.keywords')">
-        <el-input
-          v-model.trim="keywords"
-          :placeholder="$t('inquiry.searchPlaceholder')"
-          class="page-search__keywords"
-          clearable
+  <FilterBar @reset="emit('reset')">
+    <el-form-item
+      v-if="userStore.userInfo.scope === 'headquarters'"
+      :label="$t('identity.businessUnit')"
+    >
+      <el-select v-model="businessUnit" autocomplete="new-password">
+        <el-option value="" :label="$t('identity.allBusinesses')" />
+        <el-option
+          v-for="unit in ['shengxu', 'linxi', 'website']"
+          :key="unit"
+          :value="unit"
+          :label="businessUnitName(unit)"
         />
-      </el-form-item>
-      <el-form-item :label="$t('common.status')">
-        <el-select v-model="status" autocomplete="new-password" clearable>
-          <el-option
-            v-for="option in statusOptions"
-            :key="option.value"
-            :label="$t(option.labelKey)"
-            :value="option.value"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="$t('inquiry.owner')">
-        <el-select v-model="owner" autocomplete="new-password" clearable>
-          <el-option
-            v-for="option in ownerOptions"
-            :key="option.id"
-            :label="option.name"
-            :value="option.id"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="$t('inquiry.sourceChannel')">
-        <el-select v-model="sourceChannel" autocomplete="new-password" clearable>
-          <el-option
-            v-for="option in sourceOptions"
-            :key="option"
-            :label="option"
-            :value="option"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button @click="emit('reset')">
-          {{ $t("common.reset") }}
-        </el-button>
-      </el-form-item>
-    </el-form>
-  </el-card>
+      </el-select>
+    </el-form-item>
+    <el-form-item :label="$t('common.keywords')" class="filter-bar__wide">
+      <el-input
+        v-model.trim="keywords"
+        :placeholder="$t('inquiry.searchPlaceholder')"
+        clearable
+      />
+    </el-form-item>
+    <el-form-item :label="$t('common.status')">
+      <el-select v-model="status" autocomplete="new-password" clearable>
+        <el-option
+          v-for="option in statusOptions"
+          :key="option.value"
+          :label="$t(option.labelKey)"
+          :value="option.value"
+        />
+      </el-select>
+    </el-form-item>
+    <el-form-item :label="$t('inquiry.owner')">
+      <el-select v-model="owner" autocomplete="new-password" clearable>
+        <el-option
+          v-for="option in ownerOptions"
+          :key="option.id"
+          :label="option.name"
+          :value="option.id"
+        />
+      </el-select>
+    </el-form-item>
+    <el-form-item :label="$t('inquiry.sourceChannel')">
+      <el-select v-model="sourceChannel" autocomplete="new-password" clearable>
+        <el-option
+          v-for="option in sourceOptions"
+          :key="option"
+          :label="option"
+          :value="option"
+        />
+      </el-select>
+    </el-form-item>
+  </FilterBar>
 </template>
 
 <script setup lang="ts">
+import FilterBar from "@/components/FilterBar/index.vue";
 import { businessUnitName } from "@/constants/identity";
 import { computed } from "vue";
 import { useUserStore } from "@/stores/user";

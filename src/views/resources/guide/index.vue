@@ -1,5 +1,5 @@
 <template>
-  <div class="resource-page">
+  <div class="h-full min-h-0">
     <GuidePersonTable
       :loading="isPeopleLoading"
       :total="peopleTotal"
@@ -19,7 +19,7 @@
       :is-editing="isPersonEditing"
       :submit="savePerson"
     />
-    <el-drawer v-model="isPersonDetailVisible" :title="$t('guide.detail')" size="520px">
+    <AppDrawer v-model="isPersonDetailVisible" :title="$t('guide.detail')" size="sm">
       <el-descriptions v-if="personDetail" :column="1" border>
         <el-descriptions-item :label="$t('guide.name')">
           {{ personDetail.name }}
@@ -60,8 +60,8 @@
           {{ $t(personDetail.status === "enabled" ? "common.enabled" : "common.disabled") }}
         </el-descriptions-item>
       </el-descriptions>
-    </el-drawer>
-    <el-drawer v-model="isPriceDrawerVisible" :title="$t('guide.priceSettings')" size="50%">
+    </AppDrawer>
+    <AppDrawer v-model="isPriceDrawerVisible" :title="$t('guide.priceSettings')" size="lg">
       <GuideTable
         :loading="isPriceLoading"
         :total="priceTotal"
@@ -73,7 +73,7 @@
         @toggle-status="togglePriceStatus"
         @delete="deletePrice"
       />
-    </el-drawer>
+    </AppDrawer>
     <GuideEditorDialog
       v-model="isPriceDialogVisible"
       :record="priceForm"
@@ -86,6 +86,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { ElMessage } from "element-plus";
+import AppDrawer from "@/components/AppDrawer/index.vue";
 import { resourceService } from "@/services/resource.service";
 import type { GuidePersonRecord, GuideRecord } from "@/types/resource";
 import { useResourceMaintenance } from "../useResourceMaintenance";

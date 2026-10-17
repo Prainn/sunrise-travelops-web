@@ -7,10 +7,10 @@
   >
     {{ $t("identity.transfer") }}
   </el-button>
-  <el-dialog
+  <AppDialog
     v-model="visible"
     :title="$t('identity.transfer')"
-    width="480px"
+    size="sm"
     append-to-body
   >
     <el-form ref="form" :model="data" label-position="top">
@@ -52,11 +52,12 @@
         {{ $t("common.confirm") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 <script setup lang="ts">
 import { ElMessage } from "element-plus";
 import type { FormInstance } from "element-plus";
+import AppDialog from "@/components/AppDialog/index.vue";
 import type { InquiryRecord } from "@/types/inquiry";
 import { inquiryService, type PersonOption } from "@/services/inquiry.service";
 const props = defineProps<{ inquiry: InquiryRecord }>();

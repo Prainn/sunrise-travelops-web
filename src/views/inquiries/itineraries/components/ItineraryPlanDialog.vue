@@ -1,8 +1,8 @@
 <template>
-  <el-dialog
+  <AppDialog
     :model-value="modelValue"
     :title="$t(isEditing ? 'itinerary.editTitle' : 'itinerary.createTitle')"
-    width="680px"
+    size="lg"
     destroy-on-close
     @close="emit('update:modelValue', false)"
   >
@@ -50,7 +50,7 @@
               :precision="2"
             >
               <template #suffix>
-                <span class="text-[var(--el-text-color-secondary)]">%</span>
+                <span class="text-muted">%</span>
               </template>
             </el-input-number>
           </el-form-item>
@@ -64,7 +64,7 @@
               :precision="2"
             >
               <template #suffix>
-                <span class="text-[var(--el-text-color-secondary)]">%</span>
+                <span class="text-muted">%</span>
               </template>
             </el-input-number>
           </el-form-item>
@@ -79,7 +79,7 @@
               :min="1"
               controls-position="right"
             />
-            <span class="w-full mt-[4px] text-[var(--el-text-color-secondary)]">{{
+            <span class="w-full mt-[4px] text-muted">{{
               $t("itinerary.duration", plannedDuration(plannedDays))
             }}</span>
           </el-form-item>
@@ -126,7 +126,7 @@
         {{ $t(isEditing ? "common.confirm" : "itinerary.createAndManage") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
@@ -135,6 +135,7 @@ import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { ItineraryRecord } from "@/types/itinerary";
+import AppDialog from "@/components/AppDialog/index.vue";
 
 const props = defineProps<{
   modelValue: boolean;

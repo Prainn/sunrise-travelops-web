@@ -1,45 +1,40 @@
 <template>
-  <div class="page-container business-category-page">
-    <el-card v-loading="loading" class="business-category-page__card" shadow="never">
-      <div
-        class="business-category-page__toolbar flex gap-[16px] items-center justify-between pb-[12px]"
+  <PageShell aside-width="240px">
+    <template #aside>
+      <SectionCard
+        v-loading="loading"
+        fill
+        padding="compact"
+        :title="$t('businessCategory.typeManagement')"
+        body-class="overflow-y-auto"
       >
-        <div>
-          <div class="business-category-page__title font-semibold">
-            {{ $t("businessCategory.typeManagement") }}
-          </div>
-        </div>
-        <el-button
-          v-hasPerm="'sys:business-dictionary:create'"
-          type="primary"
-          @click="openTypeDialog"
-        >
-          {{ $t("businessCategory.createType") }}
-        </el-button>
-      </div>
-
-      <div
-        class="business-category-page__workspace grid [grid-template-columns:208px_minmax(0,_1fr)] min-h-0 overflow-hidden [border:1px_solid_var(--el-border-color-light)] rounded-[var(--el-border-radius-base)]"
-      >
-        <nav
-          class="business-category-page__type-list p-[8px] overflow-y-auto [background:var(--el-fill-color-extra-light)] [border-right:1px_solid_var(--el-border-color-light)]"
-          :aria-label="$t('businessCategory.typeManagement')"
-        >
+        <template #actions>
+          <el-button
+            v-hasPerm="'sys:business-dictionary:create'"
+            type="primary"
+            @click="openTypeDialog"
+          >
+            {{ $t("businessCategory.createType") }}
+          </el-button>
+        </template>
+        <nav class="flex flex-col gap-1" :aria-label="$t('businessCategory.typeManagement')">
           <div
             v-for="category in categoryTypes"
             :key="category.id"
-            class="business-category-page__type-item flex items-center"
+            class="flex items-center"
           >
             <button
-              class="business-category-page__type-button"
-              :class="{ 'is-active': activeCategory === category.code }"
+              :class="
+                activeCategory === category.code
+                  ? 'text-[var(--el-color-primary)] bg-[var(--el-color-primary-light-9)]'
+                  : 'text-[var(--el-text-color-regular)] bg-transparent hover:bg-[var(--surface-hover)]'
+              "
+              class="flex min-w-0 flex-1 cursor-pointer flex-col rounded-[var(--el-border-radius-base)] border-0 px-3 py-[10px] text-left"
               type="button"
               @click="activeCategory = category.code"
             >
               <span>{{ categoryName(category) }}</span>
-              <span
-                class="business-category-page__type-code mt-[2px] text-[var(--el-text-color-secondary)] text-[14px]"
-              >{{ category.code }}</span>
+              <span class="mt-[2px] text-sm text-muted">{{ category.code }}</span>
             </button>
             <el-button
               v-if="!category.builtIn"
@@ -53,21 +48,20 @@
             />
           </div>
         </nav>
+      </SectionCard>
+    </template>
 
-        <main class="business-category-page__content min-h-0 p-[12px] overflow-hidden">
-          <BusinessCategoryPanel
-            v-if="selectedCategory"
-            :category="selectedCategory"
-            @changed="loadCategoryTypes"
-          />
-        </main>
-      </div>
-    </el-card>
+    <BusinessCategoryPanel
+      v-if="selectedCategory"
+      :category="selectedCategory"
+      @changed="loadCategoryTypes"
+    />
 
-    <el-dialog
+    <AppDialog
       v-model="typeDialogVisible"
       :title="$t('businessCategory.createTypeTitle')"
-      width="520px"
+      size="md"
+      :busy="isTypeSubmitting"
       destroy-on-close
     >
       <el-form
@@ -88,22 +82,22 @@
         <el-form-item :label="$t('businessCategory.typeBuiltIn')" prop="builtIn">
           <div>
             <el-switch v-model="typeForm.builtIn" />
-            <div class="text-[var(--el-text-color-secondary)] text-[12px] leading-[18px]">
+            <div class="text-xs leading-[18px] text-muted">
               {{ $t("businessCategory.typeBuiltInDescription") }}
             </div>
           </div>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="typeDialogVisible = false">
+        <el-button :disabled="isTypeSubmitting" @click="typeDialogVisible = false">
           {{ $t("common.cancel") }}
         </el-button>
         <el-button type="primary" :loading="isTypeSubmitting" @click="createCategoryType">
           {{ $t("common.confirm") }}
         </el-button>
       </template>
-    </el-dialog>
-  </div>
+    </AppDialog>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
@@ -114,6 +108,9 @@ import { useI18n } from "vue-i18n";
 import type { BusinessCategoryTypeRecord } from "@/types/resource";
 import { businessDictionaryService } from "@/services";
 import { businessCategoryTypeStore, getBusinessCategoryTypeName } from "@/utils/business-category";
+import AppDialog from "@/components/AppDialog/index.vue";
+import PageShell from "@/components/PageShell/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import BusinessCategoryPanel from "./components/BusinessCategoryPanel.vue";
 import { useResourceFormSubmit } from "@/views/resources/useResourceFormSubmit";
 
@@ -227,40 +224,3 @@ async function removeCategoryType(category: BusinessCategoryTypeRecord) {
 
 onMounted(loadCategoryTypes);
 </script>
-
-<style scoped lang="scss">
-.business-category-page__card {
-  @apply '[flex:1] min-h-0';
-}
-
-.business-category-page :deep(.business-category-page__card > .el-card__body) {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  height: 100%;
-  min-height: 0;
-  box-sizing: border-box;
-}
-
-.business-category-page__type-button {
-  @apply 'flex flex-1 min-w-0 p-[10px_12px] text-[var(--el-text-color-regular)] text-left cursor-pointer [background:transparent] [border:0] rounded-[var(--el-border-radius-base)] flex-col';
-
-  &:hover {
-    background: var(--el-fill-color-light);
-  }
-
-  &.is-active {
-    color: var(--el-color-primary);
-    background: var(--el-color-primary-light-9);
-  }
-}
-
-.business-category-page__type-item + .business-category-page__type-item {
-  margin-top: 4px;
-}
-
-@media (width <= 900px) {
-  .business-category-page__workspace {
-    @apply '[grid-template-columns:168px_minmax(0,_1fr)]';
-  }
-}
-</style>

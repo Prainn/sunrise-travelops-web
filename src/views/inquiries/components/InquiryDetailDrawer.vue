@@ -1,8 +1,8 @@
 <template>
-  <el-drawer
+  <AppDrawer
     :model-value="modelValue"
     :title="$t('inquiry.inquiryDetail')"
-    size="680px"
+    size="md"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <template v-if="record">
@@ -67,10 +67,11 @@
         </el-descriptions-item>
       </el-descriptions>
     </template>
-  </el-drawer>
+  </AppDrawer>
 </template>
 
 <script setup lang="ts">
+import AppDrawer from "@/components/AppDrawer/index.vue";
 import { businessUnitName } from "@/constants/identity";
 import { formatDateTime } from "@/utils";
 import { plannedDuration } from "@/views/inquiries/itineraries/duration";

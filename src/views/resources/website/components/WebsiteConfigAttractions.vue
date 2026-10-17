@@ -1,84 +1,81 @@
 <template>
-  <section class="grid [grid-template-rows:auto_minmax(0,_1fr)] h-full min-h-0">
-    <div class="page-toolbar">
-      <div class="page-toolbar__left">
-        <el-button
-          v-if="editable"
-          type="primary"
-          :disabled="!config.cities.length"
-          @click="openEditor()"
-        >
-          {{ $t("websiteConfig.attractions.create") }}
-        </el-button>
-        <span class="text-[var(--el-text-color-secondary)] text-[13px]">
-          {{ $t("websiteConfig.attractions.help") }}
-        </span>
-      </div>
-    </div>
-    <div class="page-table-wrapper">
-      <el-table
-        :data="config.attractions"
-        row-key="id"
-        border
-        height="100%"
-        :empty-text="$t('websiteConfig.attractions.empty')"
+  <section class="flex flex-col gap-[12px] h-full min-h-0">
+    <TableToolbar :refreshable="false">
+      <el-button
+        v-if="editable"
+        type="primary"
+        :disabled="!config.cities.length"
+        @click="openEditor()"
       >
-        <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
-        <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
-        <el-table-column :label="$t('websiteConfig.city')" min-width="120">
-          <template #default="{ row }">
-            {{ config.cities.find((city) => city.id === row.cityId)?.nameZh ?? row.cityId }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('websiteConfig.attractions.kind')" width="110">
-          <template #default="{ row }">
-            {{
-              row.kind === "attraction"
-                ? $t("websiteConfig.attractions.attraction")
-                : $t("websiteConfig.attractions.component")
-            }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="copyKey"
-          :label="$t('websiteConfig.attractions.copyKey')"
-          min-width="180"
-        />
-        <el-table-column :label="$t('websiteConfig.attractions.recommendedMonths')" min-width="160">
-          <template #default="{ row }">
-            {{
-              row.recommendedMonths.length
-                ? $t("websiteConfig.attractions.months", {
-                  months: row.recommendedMonths.join($t("websiteConfig.listSeparator")),
-                })
-                : $t("websiteConfig.attractions.anyMonth")
-            }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          :label="$t('websiteConfig.attractions.chargeable')"
-          width="80"
-          align="center"
-        >
-          <template #default="{ row }">
-            {{ row.chargeable ? $t("common.yes") : $t("common.no") }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('common.status')" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
-              {{ row.status === "enabled" ? $t("common.enabled") : $t("websiteConfig.disabled") }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <!-- @vue-generic {WebsiteAttraction} -->
-        <el-table-column
-          :label="$t('common.actions')"
-          width="150"
-          align="center"
-          fixed="right"
-        >
-          <template #default="{ row, $index }">
+        {{ $t("websiteConfig.attractions.create") }}
+      </el-button>
+      <span class="text-muted text-[13px]">
+        {{ $t("websiteConfig.attractions.help") }}
+      </span>
+    </TableToolbar>
+    <DataTable
+      fill
+      :data="config.attractions"
+      row-key="id"
+      :empty-text="$t('websiteConfig.attractions.empty')"
+    >
+      <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
+      <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
+      <el-table-column :label="$t('websiteConfig.city')" min-width="120">
+        <template #default="{ row }">
+          {{ config.cities.find((city) => city.id === row.cityId)?.nameZh ?? row.cityId }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('websiteConfig.attractions.kind')" width="110">
+        <template #default="{ row }">
+          {{
+            row.kind === "attraction"
+              ? $t("websiteConfig.attractions.attraction")
+              : $t("websiteConfig.attractions.component")
+          }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="copyKey"
+        :label="$t('websiteConfig.attractions.copyKey')"
+        min-width="180"
+      />
+      <el-table-column :label="$t('websiteConfig.attractions.recommendedMonths')" min-width="160">
+        <template #default="{ row }">
+          {{
+            row.recommendedMonths.length
+              ? $t("websiteConfig.attractions.months", {
+                months: row.recommendedMonths.join($t("websiteConfig.listSeparator")),
+              })
+              : $t("websiteConfig.attractions.anyMonth")
+          }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        :label="$t('websiteConfig.attractions.chargeable')"
+        width="80"
+        align="center"
+      >
+        <template #default="{ row }">
+          {{ row.chargeable ? $t("common.yes") : $t("common.no") }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('common.status')" width="100" align="center">
+        <template #default="{ row }">
+          <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
+            {{ row.status === "enabled" ? $t("common.enabled") : $t("websiteConfig.disabled") }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <!-- @vue-generic {WebsiteAttraction} -->
+      <el-table-column
+        :label="$t('common.actions')"
+        width="150"
+        align="center"
+        fixed="right"
+      >
+        <template #default="{ row, $index }">
+          <RowActions>
             <el-button type="primary" link @click="openEditor(row)">
               {{ editable ? $t("common.edit") : $t("common.view") }}
             </el-button>
@@ -90,11 +87,11 @@
             >
               {{ $t("common.delete") }}
             </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-    <el-dialog
+          </RowActions>
+        </template>
+      </el-table-column>
+    </DataTable>
+    <AppDialog
       v-model="visible"
       :title="
         isNew
@@ -103,11 +100,9 @@
             ? $t('websiteConfig.attractions.edit')
             : $t('websiteConfig.attractions.detail')
       "
-      width="min(800px, 94vw)"
+      size="lg"
+      :busy="saving || isSubmitting"
       destroy-on-close
-      :show-close="!saving && !isSubmitting"
-      :close-on-click-modal="!saving && !isSubmitting"
-      :close-on-press-escape="!saving && !isSubmitting"
     >
       <el-form
         v-if="record"
@@ -215,11 +210,15 @@
           {{ $t("common.confirm") }}
         </el-button>
       </template>
-    </el-dialog>
+    </AppDialog>
   </section>
 </template>
 
 <script setup lang="ts">
+import AppDialog from "@/components/AppDialog/index.vue";
+import DataTable from "@/components/DataTable/index.vue";
+import RowActions from "@/components/RowActions/index.vue";
+import TableToolbar from "@/components/TableToolbar/index.vue";
 import { ref } from "vue";
 import type { FormInstance } from "element-plus";
 import type { WebsiteAttraction, WebsiteConfig } from "@/types/website";

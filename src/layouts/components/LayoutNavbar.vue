@@ -1,7 +1,16 @@
 <template>
   <div class="layout-navbar">
     <div class="flex-y-center">
-      <Hamburger :is-active="sidebarState.opened" @toggle-click="sidebarState.toggle" />
+      <Hamburger
+        role="button"
+        tabindex="0"
+        :aria-label="sidebarState.opened ? $t('navbar.collapseMenu') : $t('navbar.expandMenu')"
+        :aria-expanded="sidebarState.opened"
+        :is-active="sidebarState.opened"
+        @toggle-click="sidebarState.toggle"
+        @keydown.enter.prevent="sidebarState.toggle"
+        @keydown.space.prevent="sidebarState.toggle"
+      />
       <Breadcrumb />
     </div>
 
@@ -41,8 +50,7 @@ const sidebarState = computed(() =>
 .layout-navbar {
   @apply 'flex items-center justify-between';
   height: $navbar-height;
-  @apply 'p-[0_14px_0_6px] bg-[var(--content-bg)] [border-bottom:1px_solid_var(--card-border)]';
-  box-shadow: 0 1px 0 rgb(15 23 42 / 3%);
+  @apply 'p-[0_14px_0_6px] bg-[var(--content-bg)] [border-bottom:1px_solid_var(--divider-color)]';
 
   &__actions {
     @apply 'flex items-center h-full';

@@ -1,90 +1,95 @@
 <template>
-  <el-card class="page-content" shadow="never">
-    <TableToolbar @refresh="emit('refresh')">
+  <SectionCard fill>
+    <TableToolbar :refreshing="loading" @refresh="emit('refresh')">
       <el-button v-hasPerm="'inquiry:create'" type="primary" @click="emit('create')">
         {{ $t("inquiry.createInquiry") }}
       </el-button>
     </TableToolbar>
-    <div class="page-table-wrapper">
-      <el-table
-        :data="rows"
-        border
-        height="100%"
-        row-key="id"
+    <DataTable
+      fill
+      :loading="loading"
+      :data="rows"
+      :error="error"
+      :filtered="filtered"
+      row-key="id"
+      @retry="emit('refresh')"
+    >
+      <el-table-column
+        v-if="userStore.userInfo.scope === 'headquarters'"
+        :label="$t('identity.businessUnit')"
+        width="120"
       >
-        <el-table-column
-          v-if="userStore.userInfo.scope === 'headquarters'"
-          :label="$t('identity.businessUnit')"
-          width="120"
-        >
-          <template #default="{ row }">
-            <el-tag>{{ businessUnitName(row.businessUnit) }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="code" :label="$t('inquiry.code')" width="180" />
-        <el-table-column
-          prop="agencyName"
-          :label="$t('inquiry.agencyName')"
-          min-width="190"
-          show-overflow-tooltip
-        />
-        <el-table-column prop="contactName" :label="$t('inquiry.contactName')" width="120" />
-        <el-table-column
-          prop="countryOrRegion"
-          :label="$t('inquiry.countryOrRegion')"
-          width="110"
-        />
-        <el-table-column prop="sourceChannel" :label="$t('inquiry.sourceChannel')" width="110" />
-        <el-table-column prop="owner" :label="$t('inquiry.owner')" width="100" />
-        <el-table-column
-          prop="plannedDays"
-          :label="$t('inquiry.plannedDays')"
-          min-width="100"
-          align="center"
-        >
-          <template #default="scope">
-            {{ $t("itinerary.duration", plannedDuration(scope.row.plannedDays)) }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('inquiry.nextFollowUpAt')" width="210">
-          <template #default="scope">
-            <span :class="{ 'inquiry-table__overdue': isOverdue(scope.row as InquiryRecord) }">
-              {{
-                formatDateTime(scope.row.nextFollowUpAt) === "-"
-                  ? $t("common.notSet")
-                  : formatDateTime(scope.row.nextFollowUpAt)
-              }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="createdAt"
-          :formatter="(row: InquiryRecord) => formatDateTime(row.createdAt)"
-          :label="$t('common.createdAt')"
-          width="210"
-        />
-        <el-table-column :label="$t('common.status')" align="center">
-          <template #default="scope">
-            <el-tag :type="INQUIRY_STATUS_TAG_TYPES[scope.row.status as InquiryStatus]">
-              {{ $t(`inquiry.statuses.${scope.row.status}`) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column
-          :label="$t('common.actions')"
-          width="240"
-          fixed="right"
-          align="center"
-        >
-          <template #default="scope">
+        <template #default="{ row }">
+          <el-tag>{{ businessUnitName(row.businessUnit) }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="code" :label="$t('inquiry.code')" width="180" />
+      <el-table-column
+        prop="agencyName"
+        :label="$t('inquiry.agencyName')"
+        min-width="190"
+        show-overflow-tooltip
+      />
+      <el-table-column prop="contactName" :label="$t('inquiry.contactName')" width="120" />
+      <el-table-column
+        prop="countryOrRegion"
+        :label="$t('inquiry.countryOrRegion')"
+        width="110"
+      />
+      <el-table-column prop="sourceChannel" :label="$t('inquiry.sourceChannel')" width="110" />
+      <el-table-column prop="owner" :label="$t('inquiry.owner')" width="100" />
+      <el-table-column
+        prop="plannedDays"
+        :label="$t('inquiry.plannedDays')"
+        min-width="100"
+        align="center"
+      >
+        <template #default="scope">
+          {{ $t("itinerary.duration", plannedDuration(scope.row.plannedDays)) }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('inquiry.nextFollowUpAt')" width="210">
+        <template #default="scope">
+          <span
+            :class="{
+              'text-[var(--el-color-danger)] font-semibold': isOverdue(scope.row as InquiryRecord),
+            }"
+          >
+            {{
+              formatDateTime(scope.row.nextFollowUpAt) === "-"
+                ? $t("common.notSet")
+                : formatDateTime(scope.row.nextFollowUpAt)
+            }}
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="createdAt"
+        :formatter="(row: InquiryRecord) => formatDateTime(row.createdAt)"
+        :label="$t('common.createdAt')"
+        width="210"
+      />
+      <el-table-column :label="$t('common.status')" min-width="100" align="center">
+        <template #default="scope">
+          <el-tag :type="INQUIRY_STATUS_TAG_TYPES[scope.row.status as InquiryStatus]">
+            {{ $t(`inquiry.statuses.${scope.row.status}`) }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('common.actions')" width="260" fixed="right">
+        <template #default="scope">
+          <RowActions>
             <el-button type="primary" link @click="emit('view', scope.row as InquiryRecord)">
               {{ $t("common.view") }}
             </el-button>
-            <InquiryTransferButton
-              v-if="!scope.row.hasActiveTour"
-              :inquiry="scope.row as InquiryRecord"
-              @transferred="emit('refresh')"
-            />
+            <el-button
+              v-hasPerm="'itinerary:list'"
+              type="primary"
+              link
+              @click="emit('manage-itineraries', scope.row as InquiryRecord)"
+            >
+              {{ $t("inquiry.itineraryManagement") }}
+            </el-button>
             <el-button
               v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus, scope.row.hasActiveTour)"
               v-hasPerm="'inquiry:update'"
@@ -94,63 +99,67 @@
             >
               {{ $t("common.edit") }}
             </el-button>
-            <el-button
-              v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus, scope.row.hasActiveTour)"
-              v-hasPerm="'inquiry:archive'"
-              type="warning"
-              link
-              @click="emit('archive', scope.row as InquiryRecord)"
-            >
-              {{ $t("inquiry.archive") }}
-            </el-button>
-          </template>
-        </el-table-column>
-        <el-table-column
-          :label="$t('inquiry.itinerary')"
-          width="360"
-          fixed="right"
-          align="center"
-        >
-          <template #default="scope">
-            <el-button
-              v-hasPerm="'itinerary:list'"
-              type="primary"
-              link
-              @click="emit('manage-itineraries', scope.row as InquiryRecord)"
-            >
-              {{ $t("inquiry.itineraryManagement") }}
-            </el-button>
-            <el-button type="primary" link @click="emit('view-logs', scope.row as InquiryRecord)">
-              {{ $t("inquiry.log.title") }}
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-    <pagination
-      v-if="total"
+            <InquiryTransferButton
+              v-if="!scope.row.hasActiveTour"
+              :inquiry="scope.row as InquiryRecord"
+              @transferred="emit('refresh')"
+            />
+            <template #more>
+              <el-dropdown-item @click="emit('view-logs', scope.row as InquiryRecord)">
+                {{ $t("inquiry.log.title") }}
+              </el-dropdown-item>
+              <el-dropdown-item
+                v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus, scope.row.hasActiveTour)"
+                v-hasPerm="'inquiry:archive'"
+                @click="emit('archive', scope.row as InquiryRecord)"
+              >
+                {{ $t("inquiry.archive") }}
+              </el-dropdown-item>
+            </template>
+          </RowActions>
+        </template>
+      </el-table-column>
+    </DataTable>
+    <!-- 页码与条数由父级 watch 统一触发一次加载，这里不再监听 pagination 事件 -->
+    <Pagination
+      v-if="total > 0"
       :page="pageNum"
       :limit="pageSize"
       :total="total"
       @update:page="emit('update:pageNum', $event)"
       @update:limit="emit('update:pageSize', $event)"
     />
-  </el-card>
+  </SectionCard>
 </template>
 
 <script setup lang="ts">
+import DataTable from "@/components/DataTable/index.vue";
+import Pagination from "@/components/Pagination/index.vue";
+import RowActions from "@/components/RowActions/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
+import TableToolbar from "@/components/TableToolbar/index.vue";
 import { businessUnitName } from "@/constants/identity";
 import { useUserStore } from "@/stores/user";
-const userStore = useUserStore();
 import InquiryTransferButton from "./InquiryTransferButton.vue";
 import { formatDateTime } from "@/utils";
 import { plannedDuration } from "@/views/inquiries/itineraries/duration";
 import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";
-import TableToolbar from "@/components/TableToolbar/index.vue";
 import { INQUIRY_STATUS_TAG_TYPES } from "../options";
 import { isInquiryReadOnly } from "../inquiry-workflow";
 
-defineProps<{ rows: InquiryRecord[]; total: number; pageNum: number; pageSize: number }>();
+const userStore = useUserStore();
+
+defineProps<{
+  rows: InquiryRecord[];
+  total: number;
+  pageNum: number;
+  pageSize: number;
+  loading?: boolean;
+  /** 列表加载失败信息 */
+  error?: string;
+  /** 存在生效的筛选条件 */
+  filtered?: boolean;
+}>();
 const emit = defineEmits<{
   refresh: [];
   create: [];
@@ -168,9 +177,3 @@ function isOverdue(record: InquiryRecord) {
   return new Date(record.nextFollowUpAt.replace(" ", "T")).getTime() < Date.now();
 }
 </script>
-
-<style scoped lang="scss">
-.inquiry-table__overdue {
-  @apply 'text-[var(--el-color-danger)] font-semibold';
-}
-</style>

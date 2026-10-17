@@ -1,54 +1,52 @@
 <template>
-  <el-card
-    shadow="never"
-    class="website-day-card mb-4 rounded-[10px]"
+  <SectionCard
+    class="website-day-card"
     :class="{ 'is-collapsed': !expanded }"
   >
     <template #header>
-      <div class="flex flex-wrap justify-between items-center gap-3">
-        <div class="flex items-center gap-[12px] min-w-0">
-          <span class="grid w-[44px] h-[44px] shrink-0 place-items-center rounded-[10px] [background:var(--el-color-primary)] text-white font-bold">
-            D{{ day.dayNumber }}
-          </span>
-          <div class="min-w-0">
-            <div class="flex flex-wrap items-center gap-[6px] text-[16px] font-semibold">
-              {{ departureName || $t("websiteItineraryUi.departureCity") }}
-              <el-icon><Right /></el-icon>
-              {{ destinationName || $t("websiteItineraryUi.endCity") }}
-            </div>
-            <span v-if="date" class="text-sm text-[var(--el-text-color-secondary)]">{{ date }}</span>
-          </div>
-        </div>
-        <div class="flex flex-wrap items-center">
-          <template v-if="editable">
-            <el-button :disabled="index === 0" link @click="emit('move', -1)">
-              {{ $t("websiteItineraryUi.moveUp") }}
-            </el-button>
-            <el-button :disabled="last" link @click="emit('move', 1)">
-              {{ $t("websiteItineraryUi.moveDown") }}
-            </el-button>
-            <el-button link type="danger" @click="emit('remove')">
-              {{ $t("websiteItineraryUi.removeDay") }}
-            </el-button>
-          </template>
-          <el-button
-            link
-            :aria-expanded="expanded"
-            :aria-controls="`website-day-body-${day.id}`"
-            @click="expanded = !expanded"
-          >
-            {{ $t(expanded ? "itinerary.collapseDay" : "itinerary.expandDay") }}
-          </el-button>
+      <div class="flex items-center gap-3 min-w-0">
+        <span class="grid w-[44px] h-[44px] shrink-0 place-items-center rounded-[10px] bg-primary text-white font-bold">
+          D{{ day.dayNumber }}
+        </span>
+        <div class="min-w-0">
+          <h3 class="m-0 flex flex-wrap items-center gap-[6px] text-[16px] text-strong font-600">
+            {{ departureName || $t("websiteItineraryUi.departureCity") }}
+            <el-icon><Right /></el-icon>
+            {{ destinationName || $t("websiteItineraryUi.endCity") }}
+          </h3>
+          <span v-if="date" class="text-sm text-muted">{{ date }}</span>
         </div>
       </div>
+    </template>
+    <template #actions>
+      <template v-if="editable">
+        <el-button :disabled="index === 0" link @click="emit('move', -1)">
+          {{ $t("websiteItineraryUi.moveUp") }}
+        </el-button>
+        <el-button :disabled="last" link @click="emit('move', 1)">
+          {{ $t("websiteItineraryUi.moveDown") }}
+        </el-button>
+        <el-button link type="danger" @click="emit('remove')">
+          {{ $t("websiteItineraryUi.removeDay") }}
+        </el-button>
+      </template>
+      <el-button
+        link
+        :aria-expanded="expanded"
+        :aria-controls="`website-day-body-${day.id}`"
+        @click="expanded = !expanded"
+      >
+        {{ $t(expanded ? "itinerary.collapseDay" : "itinerary.expandDay") }}
+      </el-button>
     </template>
     <el-form
       v-show="expanded"
       :id="`website-day-body-${day.id}`"
       label-position="top"
       :disabled="!editable"
+      class="flex flex-col gap-4"
     >
-      <div class="p-[16px] mb-[20px] rounded-[8px] [background:var(--el-fill-color-extra-light)] [border:1px_solid_var(--el-border-color-lighter)]">
+      <div class="surface-muted p-4">
         <div class="grid grid-cols-3 gap-x-4 max-[650px]:grid-cols-1">
           <el-form-item :label="$t('websiteItineraryUi.departureCity')" required>
             <el-select v-model="day.departCityId" autocomplete="new-password" filterable>
@@ -108,27 +106,18 @@
           </el-form-item>
         </div>
       </div>
-      <el-collapse>
-        <el-collapse-item :title="$t('websiteItineraryUi.attractions')" name="attractions">
-          <WebsiteDayAttractions v-model:day="day" :config="config" :editable="editable" />
-        </el-collapse-item>
-        <el-collapse-item :title="$t('websiteItineraryUi.transportLegs')" name="transport">
-          <WebsiteDayTransport v-model:day="day" :config="config" :editable="editable" />
-        </el-collapse-item>
-        <el-collapse-item :title="$t('websiteItineraryUi.hotelPlans')" name="hotels">
-          <WebsiteDayHotels v-model:day="day" :config="config" :editable="editable" />
-        </el-collapse-item>
-        <el-collapse-item :title="$t('websiteItineraryUi.mealsAndOtherServices')" name="services">
-          <WebsiteDayMealsServices v-model:day="day" :editable="editable" />
-        </el-collapse-item>
-      </el-collapse>
+      <WebsiteDayAttractions v-model:day="day" :config="config" :editable="editable" />
+      <WebsiteDayTransport v-model:day="day" :config="config" :editable="editable" />
+      <WebsiteDayHotels v-model:day="day" :config="config" :editable="editable" />
+      <WebsiteDayMealsServices v-model:day="day" :editable="editable" />
     </el-form>
-  </el-card>
+  </SectionCard>
 </template>
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { Right } from "@element-plus/icons-vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import type { WebsiteConfig, WebsiteDay } from "@/types/website";
 import { addDays } from "@/utils/format";
 import WebsiteDayAttractions from "./WebsiteDayAttractions.vue";
@@ -162,11 +151,11 @@ function toggleGuide(selected: string | number | boolean) {
 </script>
 <style scoped lang="scss">
 .website-day-card.is-collapsed {
-  :deep(.el-card__header) {
+  > :deep(.section-card__header) {
     border-bottom: 0;
   }
 
-  :deep(.el-card__body) {
+  > :deep(.section-card__body) {
     display: none;
   }
 }

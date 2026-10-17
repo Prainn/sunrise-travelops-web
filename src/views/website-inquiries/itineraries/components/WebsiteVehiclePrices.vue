@@ -1,8 +1,5 @@
 <template>
-  <el-card shadow="never" class="mb-4">
-    <template #header>
-      <strong>{{ $t("websiteItineraryUi.finalPrice") }}</strong>
-    </template>
+  <SectionCard :title="$t('websiteItineraryUi.finalPrice')">
     <el-form label-position="top" :disabled="!editable">
       <div class="grid grid-cols-5 gap-4 max-[1000px]:grid-cols-2 max-[550px]:grid-cols-1">
         <el-form-item
@@ -23,7 +20,7 @@
               PP
             </template>
           </el-input>
-          <p class="text-xs m-0 mt-2 [color:var(--el-text-color-secondary)]">
+          <p class="text-xs m-0 mt-2 text-muted">
             {{
               $t("websiteItineraryUi.capacityHint", {
                 comfortable: option.seats - 2,
@@ -38,9 +35,10 @@
         {{ $t("websiteItineraryUi.finalPriceHint") }}
       </p>
     </el-form>
-  </el-card>
+  </SectionCard>
 </template>
 <script setup lang="ts">
+import SectionCard from "@/components/SectionCard/index.vue";
 import { formatMoney } from "@/utils";
 import { isValidVehiclePrice } from "../vehicle-price";
 import type { VehicleType, WebsiteItinerary } from "@/types/website";

@@ -1,5 +1,5 @@
 <template>
-  <div v-loading="isLoading" class="page-container">
+  <PageShell v-loading="isLoading">
     <InquirySearchForm
       v-model:business-unit="businessUnit"
       v-model:keywords="keywords"
@@ -35,12 +35,13 @@
       @submit="saveInquiry"
     />
     <InquiryDetailDrawer v-model="isDetailVisible" :record="selectedInquiry" />
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onActivated, onDeactivated, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import PageShell from "@/components/PageShell/index.vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { inquiryService, type PersonOption } from "@/services/inquiry.service";

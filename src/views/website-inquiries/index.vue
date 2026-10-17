@@ -1,71 +1,63 @@
 <template>
-  <div v-loading="loading" class="page-container">
+  <PageShell v-loading="loading">
     <el-alert
       v-if="error"
       :title="error"
       type="error"
       :closable="false"
     />
-    <el-card class="page-search" shadow="never">
-      <el-form inline @submit.prevent="search">
-        <el-form-item v-if="user.userInfo.scope === 'headquarters'" :label="$t('websiteInquiry.businessUnit')">
-          <el-select
-            v-model="query.businessUnit"
-            autocomplete="new-password"
-            clearable
-            :placeholder="$t('common.all')"
-          >
-            <el-option
-              v-for="unit in ['linxi', 'website']"
-              :key="unit"
-              :value="unit"
-              :label="$t(`websiteInquiry.businessUnits.${unit}`)"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="$t('common.keywords')">
-          <el-input
-            v-model.trim="query.keyword"
-            :placeholder="$t('websiteInquiry.keywordPlaceholder')"
-            class="page-search__keywords"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item :label="$t('common.status')">
-          <el-select v-model="query.status" autocomplete="new-password" clearable>
-            <el-option
-              v-for="option in INQUIRY_STATUS_OPTIONS"
-              :key="option.value"
-              :value="option.value"
-              :label="$t(option.labelKey)"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item
-          v-if="(allowAssign || user.userInfo.scope === 'headquarters') && (user.userInfo.scope !== 'headquarters' || query.businessUnit)"
-          :label="$t('inquiry.owner')"
+    <FilterBar @reset="reset">
+      <el-form-item v-if="user.userInfo.scope === 'headquarters'" :label="$t('websiteInquiry.businessUnit')">
+        <el-select
+          v-model="query.businessUnit"
+          autocomplete="new-password"
+          clearable
+          :placeholder="$t('common.all')"
         >
-          <el-select
-            v-model="query.ownerId"
-            autocomplete="new-password"
-            clearable
-            filterable
-          >
-            <el-option
-              v-for="owner in filterOwners"
-              :key="owner.id"
-              :value="owner.id"
-              :label="owner.name"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button @click="reset">
-            {{ $t("common.reset") }}
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+          <el-option
+            v-for="unit in ['linxi', 'website']"
+            :key="unit"
+            :value="unit"
+            :label="$t(`websiteInquiry.businessUnits.${unit}`)"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item :label="$t('common.keywords')" class="filter-bar__wide">
+        <el-input
+          v-model.trim="query.keyword"
+          :placeholder="$t('websiteInquiry.keywordPlaceholder')"
+          clearable
+        />
+      </el-form-item>
+      <el-form-item :label="$t('common.status')">
+        <el-select v-model="query.status" autocomplete="new-password" clearable>
+          <el-option
+            v-for="option in INQUIRY_STATUS_OPTIONS"
+            :key="option.value"
+            :value="option.value"
+            :label="$t(option.labelKey)"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item
+        v-if="(allowAssign || user.userInfo.scope === 'headquarters') && (user.userInfo.scope !== 'headquarters' || query.businessUnit)"
+        :label="$t('inquiry.owner')"
+      >
+        <el-select
+          v-model="query.ownerId"
+          autocomplete="new-password"
+          clearable
+          filterable
+        >
+          <el-option
+            v-for="owner in filterOwners"
+            :key="owner.id"
+            :value="owner.id"
+            :label="owner.name"
+          />
+        </el-select>
+      </el-form-item>
+    </FilterBar>
     <WebsiteInquiryTable
       v-model:page="query.page"
       v-model:page-size="query.pageSize"
@@ -101,13 +93,15 @@
       :owners="owners"
       @saved="load"
     />
-  </div>
+  </PageShell>
 </template>
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox } from "element-plus";
+import FilterBar from "@/components/FilterBar/index.vue";
+import PageShell from "@/components/PageShell/index.vue";
 import { useUserStore } from "@/stores/user";
 import { hasUserPermission } from "@/utils/permission";
 import {

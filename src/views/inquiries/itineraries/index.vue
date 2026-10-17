@@ -1,10 +1,11 @@
 <template>
-  <div
+  <PageShell
     ref="pageElement"
     v-loading.fullscreen="isLoading || isSaving"
     element-loading-background="rgba(0, 0, 0, 0.2)"
     :inert="isSaving"
-    class="page-container itinerary-page h-auto min-h-full overflow-visible p-0 [overflow-anchor:none]"
+    :fill="false"
+    class="itinerary-page [overflow-anchor:none]"
   >
     <el-alert
       v-if="loadError"
@@ -13,124 +14,122 @@
       :closable="false"
     />
     <template v-if="inquiry">
-      <header
-        class="itinerary-page__sticky-header sticky z-[10] top-0 [background:var(--page-bg)] [box-shadow:var(--el-box-shadow-light)]"
+      <SectionCard
+        class="itinerary-page__sticky-header sticky z-[10] top-0"
       >
-        <el-card class="itinerary-page__overview rounded-0! border-0!" shadow="never">
-          <el-page-header @back="router.push('/inquiries/list')">
-            <template #content>
-              <el-tag class="mr-[10px]">
-                {{ businessUnitName(inquiry.businessUnit) }}
-              </el-tag>
-              <el-select
-                v-if="selectedItinerary"
-                v-model="selectedItineraryId"
-                autocomplete="new-password"
-                class="itinerary-page__plan-select w-[min(360px,_45vw)]!"
+        <el-page-header @back="router.push('/inquiries/list')">
+          <template #content>
+            <el-tag class="mr-[10px]">
+              {{ businessUnitName(inquiry.businessUnit) }}
+            </el-tag>
+            <el-select
+              v-if="selectedItinerary"
+              v-model="selectedItineraryId"
+              autocomplete="new-password"
+              class="itinerary-page__plan-select w-[min(360px,_45vw)]!"
+            >
+              <el-option
+                v-for="row in rows"
+                :key="row.id"
+                :label="row.title"
+                :value="row.id"
+              />
+            </el-select>
+          </template>
+          <template #extra>
+            <el-button v-if="canCreateItinerary" type="primary" @click="openCreateDialog">
+              {{ $t("itinerary.createTitle") }}
+            </el-button>
+          </template>
+        </el-page-header>
+        <div
+          v-if="selectedItinerary"
+          class="itinerary-page__plan-bar flex items-center justify-between mt-[12px] p-[12px_0] [border-top:1px_solid_var(--divider-color)] [border-bottom:1px_solid_var(--divider-color)] max-[1100px]:[grid-template-columns:minmax(260px,_1fr)_auto]"
+        >
+          <div class="itinerary-page__plan-summary w-1/2 flex items-center max-[1100px]:hidden">
+            <h2 class="m-0 overflow-hidden whitespace-nowrap text-ellipsis text-[18px] mr-2">
+              {{ selectedItinerary.title }}
+            </h2>
+            <p
+              class="m-[3px_0_0] flex flex-wrap items-center gap-[6px] text-[14px] text-muted"
+            >
+              <span>{{ selectedItinerary.startDate }} — {{ selectedItinerary.endDate }}</span>
+              <el-tag
+                v-for="pax in selectedItinerary.paxTiers"
+                :key="pax"
+                size="small"
+                effect="plain"
               >
-                <el-option
-                  v-for="row in rows"
-                  :key="row.id"
-                  :label="row.title"
-                  :value="row.id"
-                />
-              </el-select>
-            </template>
-            <template #extra>
-              <el-button v-if="canCreateItinerary" type="primary" @click="openCreateDialog">
-                {{ $t("itinerary.createTitle") }}
-              </el-button>
-            </template>
-          </el-page-header>
+                {{ pax }} PAX
+              </el-tag>
+            </p>
+          </div>
+
+          <div class="itinerary-page__plan-controls flex items-center gap-[10px]">
+            <el-tag :type="ITINERARY_STATUS_TAG_TYPES[selectedItinerary.status]">
+              {{ $t(`itinerary.statuses.${selectedItinerary.status}`) }}
+            </el-tag>
+            <el-button v-if="canEditItineraryBasics" @click="openEditDialog">
+              {{ $t("itinerary.editItinerary") }}
+            </el-button>
+            <el-button v-if="!isDraft && canCreateItinerary" @click="copyItinerary">
+              {{ $t("itinerary.copyForRevision") }}
+            </el-button>
+          </div>
+        </div>
+        <div v-show="!isOverviewCollapsed">
+          <div
+            class="itinerary-page__inquiry-summary grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] items-center gap-[18px] mt-[10px] text-[14px]"
+          >
+            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+              $t("inquiry.code")
+            }}</small>{{ inquiry.code }}</span>
+            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+              $t("inquiry.agencyName")
+            }}</small>{{ inquiry.agencyName }}</span>
+            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+              $t("inquiry.contactName")
+            }}</small>{{ inquiry.contactName }}</span>
+            <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+              $t("inquiry.plannedDays")
+            }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
+          </div>
           <div
             v-if="selectedItinerary"
-            class="itinerary-page__plan-bar flex items-center justify-between mt-[12px] p-[12px_0] [border-top:1px_solid_var(--el-border-color-lighter)] [border-bottom:1px_solid_var(--el-border-color-lighter)] max-[1100px]:[grid-template-columns:minmax(260px,_1fr)_auto]"
+            class="itinerary-page__section-actions flex flex-wrap gap-[10px] mt-[12px]"
           >
-            <div class="itinerary-page__plan-summary w-1/2 flex items-center max-[1100px]:hidden">
-              <h2 class="m-0 overflow-hidden whitespace-nowrap text-ellipsis text-[18px] mr-2">
-                {{ selectedItinerary.title }}
-              </h2>
-              <p
-                class="m-[3px_0_0] flex flex-wrap items-center gap-[6px] text-[14px] text-[var(--el-text-color-secondary)]"
-              >
-                <span>{{ selectedItinerary.startDate }} — {{ selectedItinerary.endDate }}</span>
-                <el-tag
-                  v-for="pax in selectedItinerary.paxTiers"
-                  :key="pax"
-                  size="small"
-                  effect="plain"
-                >
-                  {{ pax }} PAX
-                </el-tag>
-              </p>
-            </div>
-
-            <div class="itinerary-page__plan-controls flex items-center gap-[10px]">
-              <el-tag :type="ITINERARY_STATUS_TAG_TYPES[selectedItinerary.status]">
-                {{ $t(`itinerary.statuses.${selectedItinerary.status}`) }}
-              </el-tag>
-              <el-button v-if="canEditItineraryBasics" @click="openEditDialog">
-                {{ $t("itinerary.editItinerary") }}
+            <el-dropdown trigger="click" @command="openVehiclePlans">
+              <el-button :type="hasVehiclePlans ? 'primary' : ''">
+                {{ $t("planning.vehiclePlans") }}
+                <el-icon class="ml-[6px]">
+                  <ArrowDown />
+                </el-icon>
               </el-button>
-              <el-button v-if="!isDraft && canCreateItinerary" @click="copyItinerary">
-                {{ $t("itinerary.copyForRevision") }}
-              </el-button>
-            </div>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="itinerary">
+                    {{
+                      $t("planning.byItinerary")
+                    }}
+                  </el-dropdown-item>
+                  <el-dropdown-item command="stage">
+                    {{ $t("planning.byStage") }}
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+            <el-button :type="hasGuidePlans ? 'primary' : ''" @click="openSectionDialog('guide')">
+              {{ $t("planning.guideService") }}
+            </el-button>
+            <el-button :type="hasHotelPlans ? 'primary' : ''" @click="openSectionDialog('hotel')">
+              {{ $t("itinerary.hotelPlans") }}
+            </el-button>
+            <el-button :type="hasPriceItems ? 'primary' : ''" @click="openSectionDialog('price')">
+              {{ $t("identity.prices") }}
+            </el-button>
           </div>
-          <div v-show="!isOverviewCollapsed">
-            <div
-              class="itinerary-page__inquiry-summary grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] items-center gap-[18px] mt-[10px] text-[14px]"
-            >
-              <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-                $t("inquiry.code")
-              }}</small>{{ inquiry.code }}</span>
-              <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-                $t("inquiry.agencyName")
-              }}</small>{{ inquiry.agencyName }}</span>
-              <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-                $t("inquiry.contactName")
-              }}</small>{{ inquiry.contactName }}</span>
-              <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-                $t("inquiry.plannedDays")
-              }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
-            </div>
-            <div
-              v-if="selectedItinerary"
-              class="itinerary-page__section-actions flex flex-wrap gap-[10px] mt-[12px]"
-            >
-              <el-dropdown trigger="click" @command="openVehiclePlans">
-                <el-button :type="hasVehiclePlans ? 'primary' : ''">
-                  {{ $t("planning.vehiclePlans") }}
-                  <el-icon class="ml-[6px]">
-                    <ArrowDown />
-                  </el-icon>
-                </el-button>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item command="itinerary">
-                      {{
-                        $t("planning.byItinerary")
-                      }}
-                    </el-dropdown-item>
-                    <el-dropdown-item command="stage">
-                      {{ $t("planning.byStage") }}
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-              <el-button :type="hasGuidePlans ? 'primary' : ''" @click="openSectionDialog('guide')">
-                {{ $t("planning.guideService") }}
-              </el-button>
-              <el-button :type="hasHotelPlans ? 'primary' : ''" @click="openSectionDialog('hotel')">
-                {{ $t("itinerary.hotelPlans") }}
-              </el-button>
-              <el-button :type="hasPriceItems ? 'primary' : ''" @click="openSectionDialog('price')">
-                {{ $t("identity.prices") }}
-              </el-button>
-            </div>
-          </div>
-        </el-card>
-      </header>
+        </div>
+      </SectionCard>
 
       <InquiryMessagePreview
         v-if="inquiry.originalMessage"
@@ -139,10 +138,10 @@
       />
 
       <template v-if="selectedItinerary">
-        <main class="itinerary-page__workspace mx-4">
+        <main class="itinerary-page__workspace">
           <div
             id="itinerary-daily"
-            class="itinerary-page__daily-toolbar h-12 flex items-center min-h-[48px] m-[24px_0_14px]"
+            class="itinerary-page__daily-toolbar h-12 flex items-center min-h-[48px]"
           >
             <div>
               <h3 class="m-0">
@@ -169,10 +168,10 @@
         </main>
 
         <footer
-          class="itinerary-page__sticky-footer border-0! rounded-0! sticky z-[10] bottom-0 flex justify-between items-center min-h-[64px] p-[12px_18px] [background:var(--el-bg-color)] [box-shadow:var(--el-box-shadow-light)]"
+          class="itinerary-page__sticky-footer sticky z-[10] bottom-0 flex justify-between items-center min-h-[64px] p-[12px_18px] [background:var(--content-bg)] [border:1px_solid_var(--card-border)] rounded-[var(--card-radius)] [box-shadow:var(--el-box-shadow-light)]"
         >
           <div
-            class="itinerary-page__footer-summary text-[var(--el-text-color-secondary)] text-[14px]"
+            class="itinerary-page__footer-summary text-muted text-[14px]"
           >
             {{ $t("itinerary.duration", itineraryDuration(selectedItinerary.dailyPlans)) }} ·
             {{ $t("itinerary.resourceItemCount", { count: itemCount }) }}
@@ -188,13 +187,13 @@
         </footer>
       </template>
 
-      <el-card v-else class="page-content" shadow="never">
-        <el-empty :description="$t('itinerary.noPlans')">
+      <SectionCard v-else>
+        <FeedbackState :title="$t('itinerary.noPlans')">
           <el-button v-if="canCreateItinerary" type="primary" @click="openCreateDialog">
             {{ $t("itinerary.createTitle") }}
           </el-button>
-        </el-empty>
-      </el-card>
+        </FeedbackState>
+      </SectionCard>
 
       <ItineraryPlanDialog
         v-model="isPlanDialogVisible"
@@ -287,10 +286,10 @@
         @confirm="confirmPdfDownload"
         @closed="closePdfPreview"
       />
-      <el-drawer
+      <AppDrawer
         v-model="isQuoteDrawerVisible"
         :title="$t('itinerary.quoteSettings')"
-        size="min(1400px, 96vw)"
+        size="xl"
       >
         <section
           v-if="validationIssues.length"
@@ -348,47 +347,46 @@
           @update-settings="updateQuoteSettings"
         />
         <template #footer>
-          <div class="flex flex-wrap items-center gap-3">
-            <el-switch
-              v-model="showChildPrice"
-              :active-text="$t('itinerary.showChildPriceInPdf')"
-            />
-            <div class="ml-auto">
-              <el-button
-                v-if="canDownloadOriginal || (isDraft && canGeneratePdf)"
-                :loading="isGeneratingWord"
-                @click="handleGenerateWord"
-              >
-                {{ $t("itinerary.exportWord") }}
-              </el-button>
-              <el-button
-                v-if="canDownloadOriginal"
-                :loading="isGeneratingPdf"
-                @click="downloadOriginal"
-              >
-                {{ $t("itinerary.downloadOriginal") }}
-              </el-button>
-              <el-button v-if="!isDraft && canCreateItinerary" @click="copyItinerary">
-                {{ $t("itinerary.copyForRevision") }}
-              </el-button>
-              <el-button v-if="canSaveItinerary" @click="saveItinerary">
-                {{ $t("itinerary.save") }}
-              </el-button>
-              <el-button @click="isQuoteDrawerVisible = false">
-                {{ $t("common.close") }}
-              </el-button>
-              <el-button
-                v-if="isDraft && canGeneratePdf"
-                type="primary"
-                :loading="isGeneratingPdf"
-                @click="handleGeneratePdf"
-              >
-                {{ $t("itinerary.generatePdf") }}
-              </el-button>
-            </div>
+          <el-switch
+            v-model="showChildPrice"
+            class="mr-auto"
+            :active-text="$t('itinerary.showChildPriceInPdf')"
+          />
+          <div>
+            <el-button
+              v-if="canDownloadOriginal || (isDraft && canGeneratePdf)"
+              :loading="isGeneratingWord"
+              @click="handleGenerateWord"
+            >
+              {{ $t("itinerary.exportWord") }}
+            </el-button>
+            <el-button
+              v-if="canDownloadOriginal"
+              :loading="isGeneratingPdf"
+              @click="downloadOriginal"
+            >
+              {{ $t("itinerary.downloadOriginal") }}
+            </el-button>
+            <el-button v-if="!isDraft && canCreateItinerary" @click="copyItinerary">
+              {{ $t("itinerary.copyForRevision") }}
+            </el-button>
+            <el-button v-if="canSaveItinerary" @click="saveItinerary">
+              {{ $t("itinerary.save") }}
+            </el-button>
+            <el-button @click="isQuoteDrawerVisible = false">
+              {{ $t("common.close") }}
+            </el-button>
+            <el-button
+              v-if="isDraft && canGeneratePdf"
+              type="primary"
+              :loading="isGeneratingPdf"
+              @click="handleGeneratePdf"
+            >
+              {{ $t("itinerary.generatePdf") }}
+            </el-button>
           </div>
         </template>
-      </el-drawer>
+      </AppDrawer>
     </template>
 
     <el-result
@@ -402,7 +400,7 @@
         </el-button>
       </template>
     </el-result>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
@@ -426,6 +424,10 @@ import ItineraryPlanDialog from "./components/ItineraryPlanDialog.vue";
 import ItineraryPriceAdjustments from "./components/ItineraryPriceAdjustments.vue";
 import ItineraryQuotePanel from "./components/ItineraryQuotePanel.vue";
 import ItineraryResourceDialog from "./components/ItineraryResourceDialog.vue";
+import AppDrawer from "@/components/AppDrawer/index.vue";
+import FeedbackState from "@/components/FeedbackState/index.vue";
+import PageShell from "@/components/PageShell/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import { ITINERARY_STATUS_TAG_TYPES } from "./options";
 import { calculateVehiclePlanAutomaticTotal } from "./vehicle-plans";
 import type { VehicleMaintenanceMode } from "./vehicle-plans";
@@ -433,14 +435,15 @@ import { useItineraryWorkspace } from "./useItineraryWorkspace";
 
 defineOptions({ name: "InquiryItineraries" });
 const { t } = useI18n();
-const pageElement = ref<HTMLElement>();
+const pageElement = ref<InstanceType<typeof PageShell>>();
 const scrollContainer = ref<HTMLElement>();
 const isOverviewCollapsed = ref(false);
 let scrollAnchor = 0;
 let isHeaderUpdating = false;
 
 function attachScrollContainer() {
-  scrollContainer.value = pageElement.value?.closest<HTMLElement>(".layout-content") ?? undefined;
+  const root = pageElement.value?.$el as HTMLElement | undefined;
+  scrollContainer.value = root?.closest<HTMLElement>(".layout-content") ?? undefined;
   scrollAnchor = scrollContainer.value?.scrollTop ?? 0;
 }
 
@@ -732,9 +735,5 @@ onMounted(loadDestinationResourceOptions);
 <style scoped>
 .itinerary-page__section-actions > :deep(.el-button) {
   margin-left: 0;
-}
-
-.itinerary-page__overview :deep(.el-card__body) {
-  padding: 14px 18px 12px;
 }
 </style>

@@ -1,11 +1,8 @@
 <template>
-  <el-dialog
+  <AppDialog
     v-model="isVisible"
     :title="$t(titleKey)"
-    width="560px"
-    :show-close="!isSubmitting"
-    :close-on-click-modal="!isSubmitting"
-    :close-on-press-escape="!isSubmitting"
+    :busy="isSubmitting"
     destroy-on-close
     @closed="resetForm"
   >
@@ -85,10 +82,11 @@
         {{ $t("common.confirm") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
+import AppDialog from "@/components/AppDialog/index.vue";
 import CitySelect from "@/components/CitySelect.vue";
 import { computed, reactive, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";

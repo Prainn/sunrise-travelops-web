@@ -1,9 +1,8 @@
 <template>
-  <el-dialog
+  <AppDialog
     :model-value="modelValue"
     :title="$t('identity.transfer')"
-    width="min(500px, 94vw)"
-    :close-on-click-modal="false"
+    size="sm"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <el-form
@@ -53,12 +52,13 @@
         {{ $t("common.confirm") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 <script setup lang="ts">
 import { reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, type FormInstance } from "element-plus";
+import AppDialog from "@/components/AppDialog/index.vue";
 import {
   websiteErrorMessage,
   websiteService,

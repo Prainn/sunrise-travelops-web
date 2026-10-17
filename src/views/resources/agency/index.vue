@@ -1,25 +1,27 @@
 <template>
-  <div class="page-container agency-page">
-    <AgencySidebar
-      :selected-id="selectedAgency?.id ?? ''"
-      :loading="loading"
-      :rows="treeRows"
-      :expanded-ids="expandedIds"
-      :searching="searching"
-      :page="page"
-      :total="total"
-      :permissions="RESOURCE_PERMISSIONS.agency"
-      @create="openCreateDialog"
-      @edit="openEditDialog"
-      @toggle-status="toggleStatus"
-      @delete="deleteRecord"
-      @select="selectAgency"
-      @expand="expandNode"
-      @collapse="collapseNode"
-      @load-more="loadBranch"
-      @query-change="changeQuery"
-      @page-change="changePage"
-    />
+  <PageShell aside-width="440px">
+    <template #aside>
+      <AgencySidebar
+        :selected-id="selectedAgency?.id ?? ''"
+        :loading="loading"
+        :rows="treeRows"
+        :expanded-ids="expandedIds"
+        :searching="searching"
+        :page="page"
+        :total="total"
+        :permissions="RESOURCE_PERMISSIONS.agency"
+        @create="openCreateDialog"
+        @edit="openEditDialog"
+        @toggle-status="toggleStatus"
+        @delete="deleteRecord"
+        @select="selectAgency"
+        @expand="expandNode"
+        @collapse="collapseNode"
+        @load-more="loadBranch"
+        @query-change="changeQuery"
+        @page-change="changePage"
+      />
+    </template>
     <AgencyContactsPanel
       :loading="contactsLoading"
       :agency="selectedAgency"
@@ -40,13 +42,14 @@
       :is-editing="isContactEditing"
       :submit="saveContact"
     />
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+import PageShell from "@/components/PageShell/index.vue";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import { resourceService } from "@/services/resource.service";
 import type { AgencyContactRecord, AgencyRecord } from "@/types/resource";
@@ -212,9 +215,3 @@ async function deleteContact(contact: AgencyContactRecord) {
   }
 }
 </script>
-
-<style scoped lang="scss">
-.agency-page {
-  @apply 'grid [grid-template-columns:minmax(380px,_440px)_minmax(0,_1fr)] gap-[16px] min-h-[620px]';
-}
-</style>

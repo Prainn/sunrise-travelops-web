@@ -1,11 +1,9 @@
 <template>
-  <el-dialog
+  <AppDialog
     v-model="visible"
     :title="$t(tour ? 'tour.edit' : 'tour.create')"
-    width="min(720px, 96vw)"
-    :close-on-click-modal="!saving"
-    :close-on-press-escape="!saving"
-    :show-close="!saving"
+    size="lg"
+    :busy="saving"
     destroy-on-close
     @open="onOpen"
   >
@@ -234,13 +232,14 @@
         {{ $t("common.confirm") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
+import AppDialog from "@/components/AppDialog/index.vue";
 import { tourService } from "@/services/tour.service";
 import { useUserStore } from "@/stores/user";
 import type {

@@ -559,7 +559,14 @@
     "updateSuccess": "Updated successfully",
     "view": "View",
     "warning": "Warning",
-    "yes": "Yes"
+    "yes": "Yes",
+    "more": "More",
+    "moreActions": "More actions",
+    "retry": "Retry",
+    "loadFailed": "Failed to load",
+    "noData": "No data",
+    "noMatch": "No records match the current filters",
+    "filters": "Filters"
   },
   "login": {
     "auto": "System",

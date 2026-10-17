@@ -1,60 +1,57 @@
 <template>
-  <section class="grid [grid-template-rows:auto_minmax(0,_1fr)] h-full min-h-0">
-    <div class="page-toolbar">
-      <div class="page-toolbar__left">
-        <el-button
-          v-if="editable"
-          type="primary"
-          :disabled="!config.cities.length"
-          @click="openEditor()"
-        >
-          {{ $t("websiteConfig.patterns.create") }}
-        </el-button>
-        <span class="text-[var(--el-text-color-secondary)] text-[13px]">
-          {{ $t("websiteConfig.patterns.help") }}
-        </span>
-      </div>
-    </div>
-    <div class="page-table-wrapper">
-      <el-table
-        :data="config.patterns"
-        row-key="id"
-        border
-        height="100%"
-        :empty-text="$t('websiteConfig.patterns.empty')"
+  <section class="flex flex-col gap-[12px] h-full min-h-0">
+    <TableToolbar :refreshable="false">
+      <el-button
+        v-if="editable"
+        type="primary"
+        :disabled="!config.cities.length"
+        @click="openEditor()"
       >
-        <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
-        <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
-        <el-table-column :label="$t('websiteConfig.belongsToCity')" min-width="120">
-          <template #default="{ row }">
-            {{ config.cities.find((city) => city.id === row.cityId)?.nameZh ?? row.cityId }}
-          </template>
-        </el-table-column>
-        <!-- @vue-generic {WebsitePattern} -->
-        <el-table-column
-          :label="$t('websiteConfig.patterns.attractionOrder')"
-          min-width="280"
-          show-overflow-tooltip
-        >
-          <template #default="{ row }">
-            {{ attractionNames(row) || $t("websiteConfig.patterns.noAttractions") }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('common.status')" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
-              {{ row.status === "enabled" ? $t("common.enabled") : $t("websiteConfig.disabled") }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <!-- @vue-generic {WebsitePattern} -->
-        <el-table-column
-          :label="$t('common.actions')"
-          width="150"
-          align="center"
-          fixed="right"
-        >
-          <template #default="{ row, $index }">
+        {{ $t("websiteConfig.patterns.create") }}
+      </el-button>
+      <span class="text-muted text-[13px]">
+        {{ $t("websiteConfig.patterns.help") }}
+      </span>
+    </TableToolbar>
+    <DataTable
+      fill
+      :data="config.patterns"
+      row-key="id"
+      :empty-text="$t('websiteConfig.patterns.empty')"
+    >
+      <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
+      <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
+      <el-table-column :label="$t('websiteConfig.belongsToCity')" min-width="120">
+        <template #default="{ row }">
+          {{ config.cities.find((city) => city.id === row.cityId)?.nameZh ?? row.cityId }}
+        </template>
+      </el-table-column>
+      <!-- @vue-generic {WebsitePattern} -->
+      <el-table-column
+        :label="$t('websiteConfig.patterns.attractionOrder')"
+        min-width="280"
+        show-overflow-tooltip
+      >
+        <template #default="{ row }">
+          {{ attractionNames(row) || $t("websiteConfig.patterns.noAttractions") }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('common.status')" width="100" align="center">
+        <template #default="{ row }">
+          <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
+            {{ row.status === "enabled" ? $t("common.enabled") : $t("websiteConfig.disabled") }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <!-- @vue-generic {WebsitePattern} -->
+      <el-table-column
+        :label="$t('common.actions')"
+        width="150"
+        align="center"
+        fixed="right"
+      >
+        <template #default="{ row, $index }">
+          <RowActions>
             <el-button type="primary" link @click="openEditor(row)">
               {{ editable ? $t("common.edit") : $t("common.view") }}
             </el-button>
@@ -66,11 +63,11 @@
             >
               {{ $t("common.delete") }}
             </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-    <el-dialog
+          </RowActions>
+        </template>
+      </el-table-column>
+    </DataTable>
+    <AppDialog
       v-model="visible"
       :title="
         isNew
@@ -79,11 +76,9 @@
             ? $t('websiteConfig.patterns.edit')
             : $t('websiteConfig.patterns.detail')
       "
-      width="min(800px, 94vw)"
+      size="lg"
+      :busy="saving || isSubmitting"
       destroy-on-close
-      :show-close="!saving && !isSubmitting"
-      :close-on-click-modal="!saving && !isSubmitting"
-      :close-on-press-escape="!saving && !isSubmitting"
     >
       <el-form
         v-if="record"
@@ -136,9 +131,8 @@
             />
           </el-select>
         </el-form-item>
-        <el-table
+        <DataTable
           :data="record.attractionIds.map((id) => ({ id }))"
-          border
           :empty-text="$t('websiteConfig.patterns.noAttractions')"
         >
           <el-table-column
@@ -159,25 +153,27 @@
             align="center"
           >
             <template #default="{ $index }">
-              <el-button
-                :disabled="$index === 0"
-                type="primary"
-                link
-                @click="move($index, -1)"
-              >
-                {{ $t("websiteConfig.moveUp") }}
-              </el-button>
-              <el-button
-                :disabled="$index === record.attractionIds.length - 1"
-                type="primary"
-                link
-                @click="move($index, 1)"
-              >
-                {{ $t("websiteConfig.moveDown") }}
-              </el-button>
+              <RowActions>
+                <el-button
+                  :disabled="$index === 0"
+                  type="primary"
+                  link
+                  @click="move($index, -1)"
+                >
+                  {{ $t("websiteConfig.moveUp") }}
+                </el-button>
+                <el-button
+                  :disabled="$index === record.attractionIds.length - 1"
+                  type="primary"
+                  link
+                  @click="move($index, 1)"
+                >
+                  {{ $t("websiteConfig.moveDown") }}
+                </el-button>
+              </RowActions>
             </template>
           </el-table-column>
-        </el-table>
+        </DataTable>
       </el-form>
       <template #footer>
         <el-button :disabled="saving || isSubmitting" @click="visible = false">
@@ -193,11 +189,15 @@
           {{ $t("common.confirm") }}
         </el-button>
       </template>
-    </el-dialog>
+    </AppDialog>
   </section>
 </template>
 
 <script setup lang="ts">
+import AppDialog from "@/components/AppDialog/index.vue";
+import DataTable from "@/components/DataTable/index.vue";
+import RowActions from "@/components/RowActions/index.vue";
+import TableToolbar from "@/components/TableToolbar/index.vue";
 import { ref } from "vue";
 import type { FormInstance } from "element-plus";
 import type { WebsiteConfig, WebsitePattern } from "@/types/website";

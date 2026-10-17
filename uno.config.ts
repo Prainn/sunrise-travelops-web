@@ -38,11 +38,22 @@ export default defineConfig({
     "flex-x-between": "flex items-center justify-between",
     "flex-x-end": "flex items-center justify-end",
     "sb": "border-1 border-solid border-red",
+    // 语义文本层级，配合主题变量随深浅色切换
+    "text-strong": "text-[var(--el-text-color-primary)]",
+    "text-muted": "text-[var(--el-text-color-secondary)]",
+    "text-faint": "text-[var(--el-text-color-placeholder)]",
+    // 面板内的弱化信息块，如摘要、提示和分组背景
+    "surface-muted": "bg-[var(--surface-muted)] rounded-[var(--custom-radius)]",
   },
   theme: {
     colors: {
       primary: "var(--el-color-primary)",
       primary_dark: "var(--el-color-primary-light-5)",
+      surface: "var(--content-bg)",
+      line: "var(--card-border)",
+      danger: "var(--el-color-danger)",
+      warning: "var(--el-color-warning)",
+      success: "var(--el-color-success)",
     },
     breakpoints: Object.fromEntries(
       [640, 768, 1024, 1280, 1536, 1920, 2560].map((size, index) => [

@@ -1,46 +1,39 @@
 <template>
-  <el-card class="page-search" shadow="never">
-    <el-form :inline="true">
-      <el-form-item :label="$t('common.keywords')">
-        <el-input
-          v-model.trim="keywords"
-          :placeholder="$t('attraction.searchPlaceholder')"
-          class="page-search__keywords"
-          clearable
+  <FilterBar @reset="emit('reset')">
+    <el-form-item :label="$t('common.keywords')" class="filter-bar__wide">
+      <el-input
+        v-model.trim="keywords"
+        :placeholder="$t('attraction.searchPlaceholder')"
+        clearable
+      />
+    </el-form-item>
+    <el-form-item :label="$t('attraction.area')">
+      <CitySelect v-model="area" />
+    </el-form-item>
+    <el-form-item :label="$t('attraction.category')">
+      <el-select v-model="category" autocomplete="new-password" clearable>
+        <el-option
+          v-for="option in attractionCategoryOptions"
+          :key="option.value"
+          :label="$t(option.labelKey)"
+          :value="option.value"
         />
-      </el-form-item>
-      <el-form-item :label="$t('attraction.area')">
-        <CitySelect v-model="area" />
-      </el-form-item>
-      <el-form-item :label="$t('attraction.category')">
-        <el-select v-model="category" autocomplete="new-password" clearable>
-          <el-option
-            v-for="option in attractionCategoryOptions"
-            :key="option.value"
-            :label="$t(option.labelKey)"
-            :value="option.value"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="$t('resource.isStandardPrice')">
-        <el-select v-model="isStandardPrice" autocomplete="new-password" :placeholder="$t('common.all')">
-          <el-option :label="$t('common.all')" value="" />
-          <el-option :label="$t('common.yes')" :value="true" />
-          <el-option :label="$t('common.no')" :value="false" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button @click="emit('reset')">
-          {{ $t("common.reset") }}
-        </el-button>
-      </el-form-item>
-    </el-form>
-  </el-card>
+      </el-select>
+    </el-form-item>
+    <el-form-item :label="$t('resource.isStandardPrice')">
+      <el-select v-model="isStandardPrice" autocomplete="new-password" :placeholder="$t('common.all')">
+        <el-option :label="$t('common.all')" value="" />
+        <el-option :label="$t('common.yes')" :value="true" />
+        <el-option :label="$t('common.no')" :value="false" />
+      </el-select>
+    </el-form-item>
+  </FilterBar>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
 import CitySelect from "@/components/CitySelect.vue";
+import FilterBar from "@/components/FilterBar/index.vue";
 import type { AttractionCategory } from "@/types/resource";
 import { attractionCategoryOptions } from "../options";
 

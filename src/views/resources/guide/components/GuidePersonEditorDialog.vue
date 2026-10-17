@@ -1,11 +1,9 @@
 <template>
-  <el-dialog
+  <AppDialog
     :model-value="modelValue"
     :title="$t(isEditing ? 'guide.editGuide' : 'guide.createGuide')"
-    width="520px"
-    :show-close="!isSubmitting"
-    :close-on-click-modal="!isSubmitting"
-    :close-on-press-escape="!isSubmitting"
+    size="md"
+    :busy="isSubmitting"
     @close="emit('update:modelValue', false)"
   >
     <el-form
@@ -97,13 +95,14 @@
         {{ $t("common.confirm") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
+import AppDialog from "@/components/AppDialog/index.vue";
 import type { GuidePersonRecord } from "@/types/resource";
 import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 

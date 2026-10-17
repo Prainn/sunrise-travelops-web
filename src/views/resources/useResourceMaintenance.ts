@@ -34,6 +34,8 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
   const isEditing = computed(() => Boolean(editingId.value));
   const total = ref(0);
   const isLoading = ref(false);
+  /** 最近一次列表加载失败的信息，用于表格内的错误态与重试 */
+  const loadError = ref("");
   let activeQuery: ResourceListQuery | undefined =
     options.paginated === false ? undefined : { page: 1, pageSize: RESOURCE_PAGE_SIZE };
 
@@ -44,8 +46,10 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
       const loaded = await options.loadRecords(activeQuery);
       if (options.paginated !== false) rows.splice(0, rows.length, ...loaded);
       total.value = resourceService.getTotal(options.records);
+      loadError.value = "";
     } catch (error) {
-      ElMessage.error(error instanceof Error ? error.message : String(error));
+      loadError.value = error instanceof Error ? error.message : String(error);
+      ElMessage.error(loadError.value);
     } finally {
       isLoading.value = false;
     }
@@ -139,6 +143,7 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
     rows,
     total,
     isLoading,
+    loadError,
     record,
     isDialogVisible,
     isEditing,

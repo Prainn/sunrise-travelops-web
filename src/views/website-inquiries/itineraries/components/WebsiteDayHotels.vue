@@ -1,7 +1,9 @@
 <template>
-  <section>
-    <div class="flex justify-between items-center mb-3">
-      <strong>{{ $t("websiteItineraryUi.hotelPlans") }}</strong>
+  <section class="surface-muted p-4 flex flex-col gap-3">
+    <div class="flex flex-wrap justify-between items-center gap-3">
+      <h4 class="m-0 text-[14px] text-strong font-600">
+        {{ $t("websiteItineraryUi.hotelPlans") }}
+      </h4>
       <el-button v-if="editable" @click="addHotel">
         {{ $t("websiteItineraryUi.addHotel") }}
       </el-button>
@@ -11,13 +13,11 @@
       :title="$t('websiteItineraryUi.hotelRequiredHint')"
       type="info"
       :closable="false"
-      class="mb-3"
     />
-    <el-card
+    <div
       v-for="(hotel, index) in day.hotels"
       :key="hotel.id"
-      shadow="never"
-      class="mb-3"
+      class="p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)]"
     >
       <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
         <el-form-item :label="$t('websiteItineraryUi.hotelTier')">
@@ -51,7 +51,7 @@
               :label="item.nameZh"
             />
           </el-select>
-          <div v-if="configHotel(hotel)" class="text-[12px] text-[var(--el-text-color-secondary)]">
+          <div v-if="configHotel(hotel)" class="text-[12px] text-muted">
             {{ $t("websiteItineraryUi.configHotelPrice", { price: formatMoney(configHotel(hotel)?.price) }) }}
           </div>
         </el-form-item>
@@ -92,7 +92,7 @@
       >
         {{ $t("websiteItineraryUi.removeHotel") }}
       </el-button>
-    </el-card>
+    </div>
   </section>
 </template>
 <script setup lang="ts">

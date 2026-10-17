@@ -15,12 +15,12 @@
           {{ statusCode }}
         </h1>
         <h2
-          class="error-page__title m-[28px_0_0] text-[26px] font-semibold leading-[1.35] text-[var(--el-text-color-primary)] [letter-spacing:0]"
+          class="error-page__title m-[28px_0_0] text-[26px] font-semibold leading-[1.35] text-strong [letter-spacing:0]"
         >
           {{ title }}
         </h2>
         <p
-          class="error-page__description max-w-[440px] m-[12px_0_0] text-[16px] leading-[1.8] text-[var(--el-text-color-secondary)]"
+          class="error-page__description max-w-[440px] m-[12px_0_0] text-[16px] leading-[1.8] text-muted"
         >
           {{ description }}
         </p>
@@ -48,12 +48,12 @@
               </div>
               <div>
                 <div
-                  class="error-visual__status text-[34px] font-bold leading-[1] text-[var(--el-text-color-primary)] [letter-spacing:0]"
+                  class="error-visual__status text-[34px] font-bold leading-[1] text-strong [letter-spacing:0]"
                 >
                   {{ statusCode }}
                 </div>
                 <div
-                  class="error-visual__name mt-[8px] text-[14px] font-medium text-[var(--el-text-color-secondary)] [letter-spacing:0]"
+                  class="error-visual__name mt-[8px] text-[14px] font-medium text-muted [letter-spacing:0]"
                 >
                   {{ visualName }}
                 </div>
@@ -155,12 +155,12 @@ const visualMeta = computed(() =>
 }
 
 .error-visual {
-  @apply 'w-[min(420px,_100%)] overflow-hidden [background:var(--el-bg-color-overlay)] [border:1px_solid_var(--el-border-color-light)] rounded-[8px]';
-  box-shadow: var(--card-shadow, 0 16px 40px rgb(0 0 0 / 8%));
+  @apply 'w-[min(420px,_100%)] overflow-hidden [background:var(--content-bg)] [border:1px_solid_var(--card-border)] rounded-[var(--card-radius)]';
+  box-shadow: var(--card-shadow);
 }
 
 .error-visual__header {
-  @apply 'flex gap-[6px] items-center h-[42px] p-[0_16px] [background:var(--el-fill-color-lighter)] [border-bottom:1px_solid_var(--el-border-color-lighter)]';
+  @apply 'flex gap-[6px] items-center h-[42px] p-[0_16px] [background:var(--surface-muted)] [border-bottom:1px_solid_var(--divider-color)]';
 
   span {
     @apply 'w-[18px] h-[6px] [background:var(--el-fill-color-dark)] rounded-[3px]';
@@ -172,11 +172,11 @@ const visualMeta = computed(() =>
 }
 
 .error-visual__node--muted {
-  @apply '[fill:var(--el-fill-color-lighter)] [stroke:var(--el-border-color)]';
+  @apply '[fill:var(--surface-muted)] [stroke:var(--border-color)]';
 }
 
 .error-visual__meta {
-  @apply 'flex items-center justify-between h-[40px] p-[0_12px] mt-[18px] text-[14px] text-[var(--el-text-color-secondary)] [background:var(--el-fill-color-lighter)] [border:1px_solid_var(--el-border-color-lighter)] rounded-[6px]';
+  @apply 'flex items-center justify-between h-[40px] p-[0_12px] mt-[18px] text-[14px] text-muted [background:var(--surface-muted)] [border:1px_solid_var(--divider-color)] rounded-[var(--control-radius)]';
 
   strong {
     @apply 'text-[14px] font-bold text-[var(--el-color-primary)]';

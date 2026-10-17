@@ -55,7 +55,7 @@ const appStore = useAppStore();
   }
 
   &__inner {
-    @apply 'relative h-full bg-[var(--menu-background)] [border-right:1px_solid_var(--card-border)] [transition:width_0.28s]';
+    @apply 'relative h-full bg-[var(--menu-background)] [border-right:1px_solid_var(--menu-border)] [transition:width_0.28s]';
 
     &.has-logo {
       .el-scrollbar {

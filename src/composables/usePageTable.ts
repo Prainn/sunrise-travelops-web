@@ -15,6 +15,7 @@ export function usePageTable<T, Q extends BaseQueryParams = BaseQueryParams>(
   const loading = ref(false);
   const list = ref<T[]>([]) as Ref<T[]>;
   const total = ref(0);
+  const error = ref("");
   const params = reactive({ ...initialParams }) as Q;
   let requestVersion = 0;
 
@@ -34,6 +35,12 @@ export function usePageTable<T, Q extends BaseQueryParams = BaseQueryParams>(
       total.value = data.total;
       params.page = data.page;
       params.pageSize = data.pageSize;
+      error.value = "";
+    } catch (cause) {
+      if (version === requestVersion) {
+        error.value = cause instanceof Error ? cause.message : String(cause);
+      }
+      throw cause;
     } finally {
       if (version === requestVersion) loading.value = false;
     }
@@ -69,6 +76,7 @@ export function usePageTable<T, Q extends BaseQueryParams = BaseQueryParams>(
     loading,
     list,
     total,
+    error,
     params,
     fetchData,
     handleQuery,
@@ -99,6 +107,8 @@ export interface UsePageTableReturn<T, Q extends BaseQueryParams> {
   list: Ref<T[]>;
   /** 数据总条数 */
   total: Ref<number>;
+  /** 最近一次加载失败的信息，成功后清空 */
+  error: Ref<string>;
   /** 当前查询参数 */
   params: Q;
   /**

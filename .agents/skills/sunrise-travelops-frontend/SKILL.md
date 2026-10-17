@@ -17,8 +17,8 @@ description: Sunrise TravelOps frontend development standards for this Vue 3 and
 |---|---|---|
 | 简单资源列表与表单 | [城市资源页](../../../src/views/resources/city/index.vue)、[ResourceTable](../../../src/views/resources/components/ResourceTable.vue)、[ResourceEditorDialog](../../../src/views/resources/components/ResourceEditorDialog.vue) | 带公共资源、状态、版本及资源权限语义；适用于相同资源业务，不作为所有页面的通用外壳 |
 | 资源列表配专用表单 | [航班资源页](../../../src/views/resources/flight/index.vue) | 复用列表结构，字段与关联校验由对应业务表单承担 |
-| 左侧分类、右侧列表 | [用户页](../../../src/views/system/user/index.vue) 的布局与 [page.scss](../../../src/styles/page.scss) | 复用 `page-container--split/page-aside/page-main`；账号权限和数据加载按新页面合同实现 |
-| 搜索、列表、表格、弹窗底部 | [page.scss](../../../src/styles/page.scss)、[theme.scss](../../../src/styles/theme.scss)、[UnoCSS](../../../uno.config.ts) | 复用 `page-search/page-content/page-table-wrapper/dialog-footer` 和现有主题变量，不另造默认间距或颜色体系 |
+| 左侧分类、右侧列表 | [用户页](../../../src/views/system/user/index.vue)、[PageShell](../../../src/components/PageShell/index.vue) | 复用 `PageShell` 的 `#aside` 插槽与 `SectionCard`；账号权限和数据加载按新页面合同实现 |
+| 搜索、列表、表格、弹窗 | [FilterBar](../../../src/components/FilterBar/index.vue)、[SectionCard](../../../src/components/SectionCard/index.vue)、[DataTable](../../../src/components/DataTable/index.vue)、[AppDialog](../../../src/components/AppDialog/index.vue)、[theme.scss](../../../src/styles/theme.scss)、[UnoCSS](../../../uno.config.ts) | 复用共享组件和现有主题变量，不直接用 `el-card`/`el-table`，不另造默认间距或颜色体系 |
 | 工具栏与分页 | [TableToolbar](../../../src/components/TableToolbar/index.vue)、[Pagination](../../../src/components/Pagination/index.vue) | 核对 props/events 和同类消费者，沿用重置、刷新、分页交互 |
 | 远程选项 | [RemoteSelect](../../../src/components/RemoteSelect/index.vue)、[ResourceSelect](../../../src/components/ResourceSelect/index.vue) | 按数据来源选择；保留搜索、分页、回填和资源范围语义，不为下拉加载全库 |
 

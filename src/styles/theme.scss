@@ -1,57 +1,89 @@
 /**
  * 主题变量定义
+ *
+ * 页面与公共组件只消费这里的语义变量；颜色、圆角、阴影和间距不在业务页面另行定义。
  */
 
 // 浅色主题
 :root {
   --menu-background: #fff;
-  --menu-text: #606266;
+  --menu-text: #4b5563;
   --menu-active-text: var(--el-menu-active-color);
-  --menu-active-bg: #e8f3ff;
-  --menu-hover: #e6f4ff;
+  --menu-active-bg: var(--el-color-primary-light-9);
+  --menu-hover: #f3f5f8;
   --menu-border: var(--card-border);
-  --sidebar-logo-background: #fafafa;
-  --sidebar-logo-text-color: #383853;
-  --page-bg: #f6f8fc;
+  --sidebar-logo-background: #fff;
+  --sidebar-logo-text-color: #1f2937;
+
+  // 表面层级：页面背景 → 内容面板 → 面板内的弱化区域
+  --page-bg: #f3f5f8;
   --content-bg: #ffffff;
-  --border-color: #e3eaf3;
-  --card-border: #dfe7f1;
-  --card-border-hover: #d5dfec;
-  --card-radius: 8px;
-  --card-shadow: 0 1px 2px rgb(15 23 42 / 3%);
-  --card-shadow-hover: 0 10px 24px rgb(15 23 42 / 6%), 0 2px 6px rgb(15 23 42 / 4%);
+  --surface-muted: #f8f9fb;
+  --surface-hover: #f5f7fa;
+
+  // 边框
+  --border-color: #e2e6ec;
+  --card-border: #e5e8ee;
+  --card-border-hover: #d4d9e1;
+  --divider-color: #edf0f4;
+
+  // 圆角与阴影
+  --card-radius: 10px;
+  --control-radius: 6px;
   --custom-radius: 8px;
-  --page-padding: 10px;
-  --page-gap: 10px;
+  --card-shadow: 0 1px 2px rgb(16 24 40 / 4%);
+  --card-shadow-hover: 0 8px 20px rgb(16 24 40 / 8%);
+  --overlay-shadow: 0 24px 48px -12px rgb(16 24 40 / 22%), 0 2px 6px rgb(16 24 40 / 6%);
+
+  // 页面节奏
+  --page-padding: 16px;
+  --page-gap: 12px;
+  --section-padding: 16px;
+}
+
+// 文本层级：覆盖 Element Plus 默认值；提高选择器优先级，避免按需加载的组件样式回写 :root
+html:root {
+  --el-text-color-primary: #1f2937;
+  --el-text-color-regular: #374151;
+  --el-text-color-secondary: #6b7280;
+  --el-text-color-placeholder: #9ca3af;
 }
 
 // 深蓝色侧边栏
 html.sidebar-color-blue {
-  --menu-background: #304156;
-  --menu-text: #bfcbd9;
+  --menu-background: #1e293b;
+  --menu-text: #cbd5e1;
   --menu-active-text: #ffffff;
   --menu-active-bg: rgb(64 158 255 / 22%);
   --menu-hover: rgb(255 255 255 / 7%);
   --menu-border: rgb(15 23 42 / 22%);
-  --sidebar-logo-background: #2d3748;
+  --sidebar-logo-background: #1e293b;
   --sidebar-logo-text-color: #fff;
 }
 
 // 暗黑主题
 html.dark {
-  --menu-background: var(--el-bg-color-overlay);
-  --menu-text: #fff;
+  --menu-background: #15171c;
+  --menu-text: #c9cdd4;
   --menu-active-text: #ffffff;
-  --menu-active-bg: rgb(22 93 255 / 16%);
-  --menu-hover: rgb(0 0 0 / 20%);
+  --menu-active-bg: rgb(22 93 255 / 18%);
+  --menu-hover: rgb(255 255 255 / 6%);
   --menu-border: rgb(255 255 255 / 8%);
-  --sidebar-logo-background: rgb(0 0 0 / 20%);
+  --sidebar-logo-background: #15171c;
   --sidebar-logo-text-color: #fff;
-  --page-bg: #0d1117;
-  --content-bg: #161618;
-  --border-color: rgb(255 255 255 / 10%);
-  --card-border: rgb(255 255 255 / 10%);
+  --page-bg: #0e1013;
+  --content-bg: #16181d;
+  --surface-muted: #1b1e24;
+  --surface-hover: #1f232a;
+  --border-color: rgb(255 255 255 / 11%);
+  --card-border: rgb(255 255 255 / 8%);
   --card-border-hover: rgb(255 255 255 / 14%);
+  --divider-color: rgb(255 255 255 / 7%);
   --card-shadow: none;
   --card-shadow-hover: none;
+  --overlay-shadow: 0 24px 48px -12px rgb(0 0 0 / 60%);
+  --el-text-color-primary: #e5e7eb;
+  --el-text-color-regular: #cfd3da;
+  --el-text-color-secondary: #9aa1ad;
+  --el-text-color-placeholder: #6b7280;
 }

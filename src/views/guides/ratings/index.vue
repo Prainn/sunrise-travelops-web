@@ -1,120 +1,114 @@
 <template>
-  <div class="page-container">
-    <el-card class="page-search" shadow="never">
-      <el-form inline>
-        <el-form-item :label="$t('common.keywords')">
-          <el-input
-            v-model="keyword"
-            class="page-search__keywords"
-            :placeholder="$t('guideRating.searchPlaceholder')"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button @click="keyword = ''">
-            {{ $t("common.reset") }}
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-    <el-card class="page-content" shadow="never">
-      <TableToolbar @refresh="load" />
-      <div class="page-table-wrapper">
-        <el-table
-          v-loading="loading"
-          :data="rows"
-          border
-          height="100%"
-          row-key="tourId"
+  <PageShell>
+    <FilterBar @reset="keyword = ''">
+      <el-form-item :label="$t('common.keywords')" class="filter-bar__wide">
+        <el-input
+          v-model="keyword"
+          :placeholder="$t('guideRating.searchPlaceholder')"
+          clearable
+        />
+      </el-form-item>
+    </FilterBar>
+    <SectionCard fill>
+      <TableToolbar :refreshing="loading" @refresh="load" />
+      <DataTable
+        fill
+        :loading="loading"
+        :data="rows"
+        :error="loadError"
+        :filtered="Boolean(keyword)"
+        row-key="tourId"
+        @retry="load"
+      >
+        <el-table-column
+          prop="tourNo"
+          :label="$t('tour.tourNo')"
+          min-width="210"
+          fixed="left"
+        />
+        <el-table-column prop="guideName" :label="$t('guideRating.guide')" min-width="120" />
+        <el-table-column
+          v-for="field in RATING_FIELDS"
+          :key="field"
+          :label="$t(`guideRating.fields.${field}`)"
+          min-width="120"
+          align="center"
         >
-          <el-table-column
-            prop="tourNo"
-            :label="$t('tour.tourNo')"
-            min-width="210"
-            fixed="left"
-          />
-          <el-table-column prop="guideName" :label="$t('guideRating.guide')" min-width="120" />
-          <el-table-column
-            v-for="field in RATING_FIELDS"
-            :key="field"
-            :label="$t(`guideRating.fields.${field}`)"
-            min-width="120"
-            align="center"
-          >
-            <template #default="{ row }">
-              <el-input-number
-                v-if="isActive(row as TourRatingRow, field)"
-                v-model="draft"
-                :min="0"
-                :max="100"
-                :precision="2"
-                :controls="false"
-                :disabled="savingId === (row as TourRatingRow).tourId"
-                size="small"
-                class="!w-[96px]"
-                @keyup.enter="commit(row as TourRatingRow)"
-                @keyup.esc="cancelEdit"
-                @blur="commit(row as TourRatingRow)"
-              />
-              <span
-                v-else
-                class="rating-cell"
-                :class="{ 'rating-cell--editable': canEdit(row as TourRatingRow) }"
-                @click="startEdit(row as TourRatingRow, field)"
-              >
-                {{ (row as TourRatingRow)[field]?.toFixed(2) ?? "-" }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column
-            :label="$t('guideRating.max')"
-            prop="max"
-            :formatter="scoreText"
-            width="90"
-            align="center"
-          />
-          <el-table-column
-            :label="$t('guideRating.min')"
-            prop="min"
-            :formatter="scoreText"
-            width="90"
-            align="center"
-          />
-          <el-table-column
-            :label="$t('guideRating.average')"
-            prop="average"
-            :formatter="scoreText"
-            width="90"
-            align="center"
-          />
-          <el-table-column
-            :label="$t('guideRating.total')"
-            prop="total"
-            width="90"
-            align="center"
-          >
-            <template #default="{ row }">
-              {{ row.total?.toFixed(2) ?? $t("guideRating.unrated") }}
-            </template>
-          </el-table-column>
-          <el-table-column :label="$t('common.status')" width="100" align="center">
-            <template #default="{ row }">
-              <el-tag :type="row.status === 'active' ? 'success' : 'info'">
-                {{ $t(`tour.status.${row.status}`) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <pagination
+          <template #default="{ row }">
+            <el-input-number
+              v-if="isActive(row as TourRatingRow, field)"
+              v-model="draft"
+              :min="0"
+              :max="100"
+              :precision="2"
+              :controls="false"
+              :disabled="savingId === (row as TourRatingRow).tourId"
+              size="small"
+              @keyup.enter="commit(row as TourRatingRow)"
+              @keyup.esc="cancelEdit"
+              @blur="commit(row as TourRatingRow)"
+            />
+            <span
+              v-else
+              class="inline-block min-w-12"
+              :class="{
+                'cursor-pointer border-b border-dashed border-[var(--el-border-color)]':
+                  canEdit(row as TourRatingRow),
+              }"
+              @click="startEdit(row as TourRatingRow, field)"
+            >
+              {{ (row as TourRatingRow)[field]?.toFixed(2) ?? "-" }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          :label="$t('guideRating.max')"
+          prop="max"
+          :formatter="scoreText"
+          width="90"
+          align="center"
+        />
+        <el-table-column
+          :label="$t('guideRating.min')"
+          prop="min"
+          :formatter="scoreText"
+          width="90"
+          align="center"
+        />
+        <el-table-column
+          :label="$t('guideRating.average')"
+          prop="average"
+          :formatter="scoreText"
+          width="90"
+          align="center"
+        />
+        <el-table-column
+          :label="$t('guideRating.total')"
+          prop="total"
+          width="90"
+          align="center"
+        >
+          <template #default="{ row }">
+            {{ row.total?.toFixed(2) ?? $t("guideRating.unrated") }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('common.status')" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'active' ? 'success' : 'info'">
+              {{ $t(`tour.status.${row.status}`) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+      </DataTable>
+      <Pagination
         v-if="total > 0"
         v-model:page="pageNum"
         v-model:limit="pageSize"
         :total="total"
         @pagination="load"
       />
-    </el-card>
-  </div>
+    </SectionCard>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
@@ -122,6 +116,11 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
+import DataTable from "@/components/DataTable/index.vue";
+import FilterBar from "@/components/FilterBar/index.vue";
+import PageShell from "@/components/PageShell/index.vue";
+import Pagination from "@/components/Pagination/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { tourService } from "@/services/tour.service";
 import { useUserStore } from "@/stores/user";
@@ -136,6 +135,7 @@ const user = useUserStore();
 const canUpdate = computed(() => hasUserPermission(user.userInfo, "tour:rating:update"));
 const keyword = ref("");
 const loading = ref(false);
+const loadError = ref("");
 const total = ref(0);
 const rows = ref<TourRatingRow[]>([]);
 const { pageNum, pageSize, paginationQuery } = useResourcePagination();
@@ -155,8 +155,10 @@ async function load() {
     const result = await tourService.ratings({ ...paginationQuery(), keyword: keyword.value });
     rows.value = result.list;
     total.value = result.total;
+    loadError.value = "";
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : String(error));
+    loadError.value = error instanceof Error ? error.message : String(error);
+    ElMessage.error(loadError.value);
   } finally {
     loading.value = false;
   }
@@ -205,14 +207,3 @@ function scoreText(_row: unknown, _column: unknown, value: number | null) {
 
 onMounted(load);
 </script>
-
-<style scoped lang="scss">
-.rating-cell {
-  display: inline-block;
-  min-width: 48px;
-}
-.rating-cell--editable {
-  cursor: pointer;
-  border-bottom: 1px dashed var(--el-border-color);
-}
-</style>

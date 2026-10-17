@@ -1,8 +1,5 @@
 <template>
-  <el-card shadow="never">
-    <template #header>
-      {{ $t("itinerary.sharedTripCosts") }}
-    </template>
+  <SectionCard :title="$t('itinerary.sharedTripCosts')">
     <el-collapse v-model="expanded" class="mb-5">
       <el-collapse-item v-for="section in sections" :key="section.kind" :name="section.kind">
         <template #title>
@@ -26,7 +23,7 @@
             }}</span>
           </div>
         </template>
-        <el-table :data="calculation?.[section.detailsKey] ?? []" border class="mb-4">
+        <DataTable :data="calculation?.[section.detailsKey] ?? []" border class="mb-4">
           <el-table-column :label="$t('itinerary.costDay')" prop="dayNumber" width="80" />
           <el-table-column :label="$t('itinerary.costItem')" prop="resourceName" min-width="180" />
           <el-table-column :label="$t('itinerary.costUnitPerPerson')" min-width="130">
@@ -40,7 +37,7 @@
               {{ money(row.totalCost) }}
             </template>
           </el-table-column>
-        </el-table>
+        </DataTable>
       </el-collapse-item>
       <el-collapse-item name="guide">
         <template #title>
@@ -88,7 +85,7 @@
             {{ guidePlan.serviceDays }}
           </el-descriptions-item>
         </el-descriptions>
-        <el-empty v-else :description="$t('planning.noMatchingGuide')" :image-size="48" />
+        <FeedbackState v-else :title="$t('planning.noMatchingGuide')" />
       </el-collapse-item>
       <el-collapse-item name="staffRooms">
         <template #title>
@@ -126,10 +123,10 @@
         </el-form>
       </el-collapse-item>
     </el-collapse>
-    <el-dialog
+    <AppDialog
       v-model="otherCostVisible"
       append-to-body
-      width="min(720px, 92vw)"
+      size="lg"
       :title="activeSection ? `${$t(activeSection.titleKey)} · ${$t('itinerary.otherCosts')}` : ''"
     >
       <el-form label-position="top" :disabled="!editable" @submit.prevent="applyOtherCost">
@@ -202,8 +199,8 @@
           {{ $t("common.confirm") }}
         </el-button>
       </template>
-    </el-dialog>
-  </el-card>
+    </AppDialog>
+  </SectionCard>
 </template>
 
 <script setup lang="ts">
@@ -214,6 +211,10 @@ import type {
   PaxQuoteCalculation,
 } from "@/types/itinerary";
 import { formatMoney } from "@/utils";
+import AppDialog from "@/components/AppDialog/index.vue";
+import DataTable from "@/components/DataTable/index.vue";
+import FeedbackState from "@/components/FeedbackState/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 
 const props = defineProps<{
   quote: ItineraryQuoteSettings;

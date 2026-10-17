@@ -1,33 +1,26 @@
 <template>
-  <div class="page-container">
-    <el-card class="page-search" shadow="never">
-      <el-form inline>
-        <el-form-item :label="$t('planning.secondLanguage')">
-          <el-select v-model="secondLanguage" autocomplete="new-password" clearable>
-            <el-option
-              v-for="item in GUIDE_LANGUAGE_OPTIONS"
-              :key="item.value"
-              :value="item.value"
-              :label="$t(`planning.languages.${item.value}`)"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="$t('planning.shopping')">
-          <el-select v-model="shopping" autocomplete="new-password" clearable>
-            <el-option :label="$t('planning.withShopping')" value="true" /><el-option
-              :label="$t('planning.withoutShopping')"
-              value="false"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button @click="resetQuery">
-            {{ $t("common.reset") }}
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-    <el-card class="page-content" shadow="never">
+  <PageShell>
+    <FilterBar @reset="resetQuery">
+      <el-form-item :label="$t('planning.secondLanguage')">
+        <el-select v-model="secondLanguage" autocomplete="new-password" clearable>
+          <el-option
+            v-for="item in GUIDE_LANGUAGE_OPTIONS"
+            :key="item.value"
+            :value="item.value"
+            :label="$t(`planning.languages.${item.value}`)"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item :label="$t('planning.shopping')">
+        <el-select v-model="shopping" autocomplete="new-password" clearable>
+          <el-option :label="$t('planning.withShopping')" value="true" /><el-option
+            :label="$t('planning.withoutShopping')"
+            value="false"
+          />
+        </el-select>
+      </el-form-item>
+    </FilterBar>
+    <SectionCard fill>
       <TableToolbar @refresh="refreshRows">
         <el-button
           v-has-perm="RESOURCE_PERMISSIONS.guide.create"
@@ -37,71 +30,68 @@
           {{ $t("guide.createPrice") }}
         </el-button>
       </TableToolbar>
-      <div class="page-table-wrapper">
-        <el-table
-          v-loading="loading"
-          :data="rows"
-          border
-          height="100%"
-          row-key="id"
-        >
-          <el-table-column :label="$t('guide.referenceDailyPrice')">
-            <template #default="{ row }">
-              ¥{{ formatMoney(row.dailyPrice) }}
-            </template>
-          </el-table-column>
-          <el-table-column :label="$t('planning.secondLanguage')">
-            <template #default="{ row }">
+      <DataTable
+        fill
+        :loading="loading"
+        :data="rows"
+        row-key="id"
+      >
+        <el-table-column :label="$t('guide.referenceDailyPrice')">
+          <template #default="{ row }">
+            ¥{{ formatMoney(row.dailyPrice) }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('planning.secondLanguage')">
+          <template #default="{ row }">
+            {{
+              row.secondLanguage
+                ? $t(`planning.languages.${row.secondLanguage}`)
+                : $t("common.notSet")
+            }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('planning.shopping')">
+          <template #default="{ row }">
+            <el-tag :type="row.shopping ? 'success' : 'info'">
+              {{ $t(row.shopping ? "planning.withShopping" : "planning.withoutShopping") }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('common.status')" min-width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
+              {{ $t(row.status === "enabled" ? "common.enabled" : "common.disabled") }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('common.actions')" width="260">
+          <template #default="{ row }">
+            <el-button
+              v-has-perm="RESOURCE_PERMISSIONS.guide.update"
+              link
+              type="primary"
+              @click="emit('edit', row as GuideRecord)"
+            >
+              {{ $t("common.edit") }}
+            </el-button><el-button
+              v-has-perm="RESOURCE_PERMISSIONS.guide.update"
+              link
+              @click="emit('toggle-status', row as GuideRecord)"
+            >
               {{
-                row.secondLanguage
-                  ? $t(`planning.languages.${row.secondLanguage}`)
-                  : $t("common.notSet")
+                $t(row.status === "enabled" ? "common.disabled" : "common.enabled")
               }}
-            </template>
-          </el-table-column>
-          <el-table-column :label="$t('planning.shopping')">
-            <template #default="{ row }">
-              <el-tag :type="row.shopping ? 'success' : 'info'">
-                {{ $t(row.shopping ? "planning.withShopping" : "planning.withoutShopping") }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column :label="$t('common.status')" min-width="100">
-            <template #default="{ row }">
-              <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
-                {{ $t(row.status === "enabled" ? "common.enabled" : "common.disabled") }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column :label="$t('common.actions')" width="260">
-            <template #default="{ row }">
-              <el-button
-                v-has-perm="RESOURCE_PERMISSIONS.guide.update"
-                link
-                type="primary"
-                @click="emit('edit', row as GuideRecord)"
-              >
-                {{ $t("common.edit") }}
-              </el-button><el-button
-                v-has-perm="RESOURCE_PERMISSIONS.guide.update"
-                link
-                @click="emit('toggle-status', row as GuideRecord)"
-              >
-                {{
-                  $t(row.status === "enabled" ? "common.disabled" : "common.enabled")
-                }}
-              </el-button><el-button
-                v-has-perm="RESOURCE_PERMISSIONS.guide.delete"
-                link
-                type="danger"
-                @click="emit('delete', row as GuideRecord)"
-              >
-                {{ $t("common.delete") }}
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
+            </el-button><el-button
+              v-has-perm="RESOURCE_PERMISSIONS.guide.delete"
+              link
+              type="danger"
+              @click="emit('delete', row as GuideRecord)"
+            >
+              {{ $t("common.delete") }}
+            </el-button>
+          </template>
+        </el-table-column>
+      </DataTable>
       <pagination
         v-if="total > 0"
         v-model:page="pageNum"
@@ -109,8 +99,8 @@
         :total="total"
         @pagination="refreshRows"
       />
-    </el-card>
-  </div>
+    </SectionCard>
+  </PageShell>
 </template>
 <script setup lang="ts">
 import { ref, watch } from "vue";
@@ -119,6 +109,10 @@ import { useResourcePagination } from "@/views/resources/useResourcePagination";
 import { GUIDE_LANGUAGE_OPTIONS, type GuideRecord, type ResourceListQuery } from "@/types/resource";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import { formatMoney } from "@/utils";
+import FilterBar from "@/components/FilterBar/index.vue";
+import PageShell from "@/components/PageShell/index.vue";
+import DataTable from "@/components/DataTable/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 defineProps<{
   loading?: boolean;

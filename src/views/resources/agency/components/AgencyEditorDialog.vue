@@ -1,12 +1,10 @@
 <template>
-  <el-dialog
+  <AppDialog
     v-model="isVisible"
     :title="$t(isEditing ? 'resource.editAgencyTitle' : 'resource.createAgencyTitle')"
-    width="600px"
-    :show-close="!isSubmitting"
-    :close-on-click-modal="!isSubmitting"
-    :close-on-press-escape="!isSubmitting"
+    size="md"
     destroy-on-close
+    :busy="isSubmitting"
     @closed="resetForm"
   >
     <el-form
@@ -112,10 +110,11 @@
         {{ $t("common.confirm") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
+import AppDialog from "@/components/AppDialog/index.vue";
 import { businessUnitName } from "@/constants/identity";
 import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";

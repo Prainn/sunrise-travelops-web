@@ -1,49 +1,46 @@
 <template>
-  <section class="grid [grid-template-rows:auto_minmax(0,_1fr)] h-full min-h-0">
-    <div class="page-toolbar">
-      <div class="page-toolbar__left">
-        <el-button v-if="editable" type="primary" @click="openEditor()">
-          {{ $t("websiteConfig.cities.create") }}
-        </el-button>
-        <span class="text-[var(--el-text-color-secondary)] text-[13px]">
-          {{ $t("websiteConfig.cities.help") }}
-        </span>
-      </div>
-    </div>
-    <div class="page-table-wrapper">
-      <el-table
-        :data="config.cities"
-        row-key="id"
-        border
-        height="100%"
-        :empty-text="$t('websiteConfig.cities.empty')"
+  <section class="flex flex-col gap-[12px] h-full min-h-0">
+    <TableToolbar :refreshable="false">
+      <el-button v-if="editable" type="primary" @click="openEditor()">
+        {{ $t("websiteConfig.cities.create") }}
+      </el-button>
+      <span class="text-muted text-[13px]">
+        {{ $t("websiteConfig.cities.help") }}
+      </span>
+    </TableToolbar>
+    <DataTable
+      fill
+      :data="config.cities"
+      row-key="id"
+      :empty-text="$t('websiteConfig.cities.empty')"
+    >
+      <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
+      <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
+      <el-table-column :label="$t('websiteConfig.cities.sharedCity')" min-width="160">
+        <template #default="{ row }">
+          {{
+            row.resourceId
+              ? $t("websiteConfig.cities.linked")
+              : $t("websiteConfig.cities.unlinked")
+          }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('common.status')" width="100" align="center">
+        <template #default="{ row }">
+          <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
+            {{ row.status === "enabled" ? $t("common.enabled") : $t("websiteConfig.disabled") }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <!-- @vue-generic {WebsiteCity} -->
+      <el-table-column
+        :label="$t('common.actions')"
+        width="150"
+        align="center"
+        fixed="right"
       >
-        <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
-        <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
-        <el-table-column :label="$t('websiteConfig.cities.sharedCity')" min-width="160">
-          <template #default="{ row }">
-            {{
-              row.resourceId
-                ? $t("websiteConfig.cities.linked")
-                : $t("websiteConfig.cities.unlinked")
-            }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('common.status')" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
-              {{ row.status === "enabled" ? $t("common.enabled") : $t("websiteConfig.disabled") }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <!-- @vue-generic {WebsiteCity} -->
-        <el-table-column
-          :label="$t('common.actions')"
-          width="150"
-          align="center"
-          fixed="right"
-        >
-          <template #default="{ row, $index }">
+        <template #default="{ row, $index }">
+          <RowActions>
             <el-button type="primary" link @click="openEditor(row)">
               {{ editable ? $t("common.edit") : $t("common.view") }}
             </el-button>
@@ -55,11 +52,11 @@
             >
               {{ $t("common.delete") }}
             </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-    <el-dialog
+          </RowActions>
+        </template>
+      </el-table-column>
+    </DataTable>
+    <AppDialog
       v-model="visible"
       :title="
         isNew
@@ -68,11 +65,9 @@
             ? $t('websiteConfig.cities.edit')
             : $t('websiteConfig.cities.detail')
       "
-      width="560px"
+      size="md"
+      :busy="saving || isSubmitting"
       destroy-on-close
-      :show-close="!saving && !isSubmitting"
-      :close-on-click-modal="!saving && !isSubmitting"
-      :close-on-press-escape="!saving && !isSubmitting"
     >
       <el-form
         v-if="record"
@@ -120,11 +115,15 @@
           {{ $t("common.confirm") }}
         </el-button>
       </template>
-    </el-dialog>
+    </AppDialog>
   </section>
 </template>
 
 <script setup lang="ts">
+import AppDialog from "@/components/AppDialog/index.vue";
+import DataTable from "@/components/DataTable/index.vue";
+import RowActions from "@/components/RowActions/index.vue";
+import TableToolbar from "@/components/TableToolbar/index.vue";
 import { ref } from "vue";
 import type { FormInstance } from "element-plus";
 import type { WebsiteCity, WebsiteConfig } from "@/types/website";

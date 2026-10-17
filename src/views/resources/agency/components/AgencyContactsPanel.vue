@@ -1,32 +1,30 @@
 <template>
-  <el-card class="agency-contacts-panel" shadow="never">
+  <SectionCard fill class="agency-contacts-panel">
     <template #header>
-      <div class="agency-contacts-panel__header">
-        <div v-if="agency">
-          <div class="agency-contacts-panel__title">
-            <strong>{{ agency.name }}</strong>
-            <span>{{ agency.code }}</span>
-          </div>
-          <small>{{ agency.countryOrRegion }} · {{ agency.email || "-" }}</small>
+      <div v-if="agency">
+        <div class="agency-contacts-panel__title">
+          <strong>{{ agency.name }}</strong>
+          <span>{{ agency.code }}</span>
         </div>
-        <span v-else>{{ $t("resource.contacts") }}</span>
-        <el-button
-          v-has-perm="permissions.create"
-          type="primary"
-          :disabled="!agency"
-          @click="emit('create')"
-        >
-          {{ $t("resource.addContact") }}
-        </el-button>
+        <small>{{ agency.countryOrRegion }} · {{ agency.email || "-" }}</small>
       </div>
+      <span v-else>{{ $t("resource.contacts") }}</span>
     </template>
-
-    <el-table
+    <template #actions>
+      <el-button
+        v-has-perm="permissions.create"
+        type="primary"
+        :disabled="!agency"
+        @click="emit('create')"
+      >
+        {{ $t("resource.addContact") }}
+      </el-button>
+    </template>
+    <DataTable
       v-if="agency"
-      v-loading="loading"
+      :loading="loading"
       :data="agency.contacts"
-      border
-      height="100%"
+      fill
       :empty-text="$t('resource.noContacts')"
     >
       <el-table-column type="index" width="64" align="center" />
@@ -56,12 +54,14 @@
           </el-button>
         </template>
       </el-table-column>
-    </el-table>
+    </DataTable>
     <el-empty v-else :description="$t('resource.selectAgencyFirst')" />
-  </el-card>
+  </SectionCard>
 </template>
 
 <script setup lang="ts">
+import DataTable from "@/components/DataTable/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import type { ResourcePermissionSet } from "@/constants";
 import type { AgencyContactRecord, AgencyRecord } from "@/types/resource";
 
@@ -88,25 +88,8 @@ function deleteContact(contact: unknown) {
 
 <style scoped lang="scss">
 .agency-contacts-panel {
-  @apply 'min-w-0';
-
-  :deep(.el-card__body) {
-    height: calc(100% - 69px);
-    box-sizing: border-box;
-  }
-
-  &__header,
   &__title {
-    display: flex;
-    align-items: center;
-  }
-
-  &__header {
-    @apply 'justify-between gap-[16px]';
-  }
-
-  &__title {
-    @apply 'gap-[10px]';
+    @apply 'flex items-center gap-[10px]';
 
     span {
       @apply 'text-[var(--el-text-color-secondary)] text-[14px]';

@@ -1,33 +1,33 @@
 <template>
-  <div v-loading="loading || saving" :inert="saving" class="page-container">
-    <el-alert
-      v-if="error"
-      :title="error"
-      type="error"
-      :closable="false"
-    />
-    <el-card v-if="user.userInfo.scope === 'headquarters'" class="page-search" shadow="never">
-      <el-form inline>
-        <el-form-item :label="$t('websiteInquiry.businessUnit')">
-          <el-select
-            v-model="businessUnit"
-            autocomplete="new-password"
-            :disabled="saving || loading"
-            @change="loadConfig"
-          >
-            <el-option
-              v-for="unit in ['linxi', 'website']"
-              :key="unit"
-              :value="unit"
-              :label="$t(`websiteInquiry.businessUnits.${unit}`)"
-            />
-          </el-select>
-        </el-form-item>
-      </el-form>
-    </el-card>
-    <el-card v-if="config" class="page-content" shadow="never">
-      <TableToolbar class="website-config-toolbar" @refresh="refreshConfig">
-        <el-tabs v-model="activeTab" class="website-config-tabs min-w-0 w-full">
+  <PageShell v-loading="loading || saving" :inert="saving">
+    <FilterBar v-if="user.userInfo.scope === 'headquarters'" :resettable="false">
+      <el-form-item :label="$t('websiteInquiry.businessUnit')">
+        <el-select
+          v-model="businessUnit"
+          autocomplete="new-password"
+          :disabled="saving || loading"
+          @change="loadConfig"
+        >
+          <el-option
+            v-for="unit in ['linxi', 'website']"
+            :key="unit"
+            :value="unit"
+            :label="$t(`websiteInquiry.businessUnits.${unit}`)"
+          />
+        </el-select>
+      </el-form-item>
+    </FilterBar>
+    <SectionCard v-if="error">
+      <FeedbackState
+        type="error"
+        :description="error"
+        retryable
+        @retry="refreshConfig"
+      />
+    </SectionCard>
+    <SectionCard v-if="config" fill>
+      <TableToolbar :refreshing="loading" @refresh="refreshConfig">
+        <el-tabs v-model="activeTab" class="website-config-tabs flex-1 min-w-0">
           <el-tab-pane :label="$t('websiteConfig.tabs.cities')" name="cities" />
           <el-tab-pane :label="$t('websiteConfig.tabs.attractions')" name="attractions" />
           <el-tab-pane :label="$t('websiteConfig.tabs.hotels')" name="hotels" />
@@ -37,7 +37,7 @@
           <el-tab-pane :label="$t('websiteConfig.tabs.templates')" name="templates" />
         </el-tabs>
       </TableToolbar>
-      <div class="min-h-0 overflow-hidden">
+      <div class="flex-1 min-h-0 overflow-hidden">
         <div v-show="activeTab === 'cities'" class="h-full">
           <WebsiteConfigCities
             :config="config"
@@ -102,11 +102,15 @@
           />
         </div>
       </div>
-    </el-card>
-  </div>
+    </SectionCard>
+  </PageShell>
 </template>
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import FeedbackState from "@/components/FeedbackState/index.vue";
+import FilterBar from "@/components/FilterBar/index.vue";
+import PageShell from "@/components/PageShell/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { onBeforeRouteLeave } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -181,16 +185,6 @@ onBeforeRouteLeave(() => !saving.value);
 </script>
 
 <style scoped lang="scss">
-.website-config-toolbar {
-  :deep(.page-toolbar__left) {
-    @apply 'flex-1 min-w-0';
-  }
-
-  :deep(.page-toolbar__right) {
-    @apply 'shrink-0';
-  }
-}
-
 .website-config-tabs {
   :deep(.el-tabs__header) {
     @apply 'm-0';

@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <PageShell>
     <AttractionSearchForm
       v-model:keywords="keywords"
       v-model:area="area"
@@ -8,8 +8,8 @@
       @reset="resetQuery"
     />
 
-    <el-card class="page-content" shadow="never">
-      <TableToolbar @refresh="refreshRows">
+    <SectionCard fill>
+      <TableToolbar :refreshing="loading" @refresh="refreshRows">
         <el-button
           v-has-perm="RESOURCE_PERMISSIONS.attraction.create"
           type="primary"
@@ -18,61 +18,63 @@
           {{ $t("attraction.createAttraction") }}
         </el-button>
       </TableToolbar>
-      <div class="page-table-wrapper">
-        <el-table
-          v-loading="loading"
-          :data="rows"
-          border
-          height="100%"
-          row-key="id"
+      <DataTable
+        fill
+        :loading="loading"
+        :data="rows"
+        :error="error"
+        :filtered="hasActiveFilters"
+        row-key="id"
+        @retry="refreshRows"
+      >
+        <el-table-column :label="$t('resource.isStandardPrice')" width="110" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.isStandardPrice ? 'success' : 'info'">
+              {{ $t(row.isStandardPrice ? "common.yes" : "common.no") }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="code" :label="$t('resource.code')" width="170" />
+        <el-table-column prop="name" :label="$t('resource.attractionName')" min-width="200" />
+        <el-table-column
+          prop="englishName"
+          :label="$t('resource.englishName')"
+          min-width="200"
+          show-overflow-tooltip
+        />
+        <el-table-column :label="$t('attraction.price')" width="110" align="right">
+          <template #default="scope">
+            {{ formatMoney(scope.row.price) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="area" :label="$t('attraction.area')" width="100" />
+        <el-table-column
+          prop="description"
+          :label="$t('resource.description')"
+          min-width="240"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="englishDescription"
+          :label="$t('resource.englishDescription')"
+          min-width="240"
+          show-overflow-tooltip
+        />
+        <el-table-column :label="$t('common.status')" width="90" align="center">
+          <template #default="scope">
+            <el-tag :type="scope.row.status === 'enabled' ? 'success' : 'info'">
+              {{ $t(`common.${scope.row.status}`) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column
+          :label="$t('common.actions')"
+          width="190"
+          fixed="right"
+          align="center"
         >
-          <el-table-column :label="$t('resource.isStandardPrice')" width="110" align="center">
-            <template #default="{ row }">
-              <el-tag :type="row.isStandardPrice ? 'success' : 'info'">
-                {{ $t(row.isStandardPrice ? "common.yes" : "common.no") }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="code" :label="$t('resource.code')" width="170" />
-          <el-table-column prop="name" :label="$t('resource.attractionName')" min-width="200" />
-          <el-table-column
-            prop="englishName"
-            :label="$t('resource.englishName')"
-            min-width="200"
-            show-overflow-tooltip
-          />
-          <el-table-column :label="$t('attraction.price')" width="110" align="right">
-            <template #default="scope">
-              {{ formatMoney(scope.row.price) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="area" :label="$t('attraction.area')" width="100" />
-          <el-table-column
-            prop="description"
-            :label="$t('resource.description')"
-            min-width="240"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            prop="englishDescription"
-            :label="$t('resource.englishDescription')"
-            min-width="240"
-            show-overflow-tooltip
-          />
-          <el-table-column :label="$t('common.status')" width="90" align="center">
-            <template #default="scope">
-              <el-tag :type="scope.row.status === 'enabled' ? 'success' : 'info'">
-                {{ $t(`common.${scope.row.status}`) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            :label="$t('common.actions')"
-            width="220"
-            fixed="right"
-            align="center"
-          >
-            <template #default="scope">
+          <template #default="scope">
+            <RowActions>
               <el-button
                 v-has-perm="RESOURCE_PERMISSIONS.attraction.update"
                 type="primary"
@@ -97,24 +99,24 @@
               >
                 {{ $t("common.delete") }}
               </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <pagination
+            </RowActions>
+          </template>
+        </el-table-column>
+      </DataTable>
+      <Pagination
         v-if="total > 0"
         v-model:page="pageNum"
         v-model:limit="pageSize"
         :total="total"
         @pagination="refreshRows"
       />
-    </el-card>
-  </div>
+    </SectionCard>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import type {
@@ -123,6 +125,11 @@ import type {
   ResourceListQuery,
 } from "@/types/resource";
 import { formatMoney } from "@/utils";
+import DataTable from "@/components/DataTable/index.vue";
+import PageShell from "@/components/PageShell/index.vue";
+import Pagination from "@/components/Pagination/index.vue";
+import RowActions from "@/components/RowActions/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import AttractionSearchForm from "./AttractionSearchForm.vue";
 
@@ -130,6 +137,8 @@ defineProps<{
   loading?: boolean;
   rows: AttractionRecord[];
   total: number;
+  /** 列表加载失败信息 */
+  error?: string;
 }>();
 const emit = defineEmits<{
   refresh: [query: ResourceListQuery];
@@ -145,6 +154,9 @@ const area = ref("");
 const category = ref<AttractionCategory | "">("");
 const isStandardPrice = ref<boolean | "">("");
 const { pageNum, pageSize, paginationQuery } = useResourcePagination();
+const hasActiveFilters = computed(
+  () => Boolean(keywords.value || area.value || category.value) || isStandardPrice.value !== "",
+);
 const requestRows = useDebounceFn(() => emit("query-change", currentQuery()), 300);
 
 watch([keywords, area, category, isStandardPrice], () => {

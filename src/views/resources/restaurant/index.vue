@@ -1,7 +1,8 @@
 <template>
-  <div class="resource-page">
+  <div class="h-full min-h-0">
     <RestaurantTable
       :loading="isLoading"
+      :error="loadError"
       :total="total"
       :rows="restaurantStore"
       @refresh="loadRecords"
@@ -53,6 +54,7 @@ function createEmptyRestaurant(): RestaurantRecord {
 
 const {
   isLoading,
+  loadError,
   rows: restaurantStore,
   record: restaurantForm,
   isDialogVisible: isRestaurantDialogVisible,

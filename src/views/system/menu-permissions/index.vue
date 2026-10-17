@@ -1,88 +1,88 @@
 <template>
-  <div v-loading="loading" class="page-container page-container--split">
-    <aside class="page-aside">
-      <div class="page-aside__inner p-3 overflow-y-auto!">
-        <h3 class="mb-3 text-sm font-medium">
-          {{ $t('menuPermission.rolesTitle') }}
-        </h3>
-        <el-button
-          v-for="role in roles"
-          :key="role.code"
-          class="w-full ml-0! mb-2"
-          :type="selected?.code === role.code ? 'primary' : 'default'"
-          :disabled="saving"
-          @click="selectRole(role)"
-        >
-          {{ $t(`menuPermission.roles.${role.code}`) }}
-        </el-button>
-      </div>
-    </aside>
-    <div class="page-main">
-      <el-card class="page-content" shadow="never">
-        <TableToolbar @refresh="reload">
-          <span class="font-medium">{{ selected ? $t(`menuPermission.roles.${selected.code}`) : $t('route.menuPermissions') }}</span>
-          <el-button :disabled="!selected" @click="setExpanded(true)">
-            {{ $t('menuPermission.expand') }}
-          </el-button>
-          <el-button :disabled="!selected" @click="setExpanded(false)">
-            {{ $t('menuPermission.collapse') }}
-          </el-button>
-        </TableToolbar>
-        <el-alert
-          :title="$t('menuPermission.loginNotice')"
-          type="info"
-          :closable="false"
-          class="mb-3"
-        />
-        <el-alert
-          v-if="error"
-          :title="error"
-          type="error"
-          :closable="false"
-          class="mb-3"
-        />
-        <el-alert
-          v-if="selected?.locked"
-          :title="$t('menuPermission.rootLocked')"
-          type="info"
-          :closable="false"
-          class="mb-3"
-        />
-        <p class="text-sm text-[var(--el-text-color-secondary)]">
-          {{ $t('menuPermission.scopeNotice') }}
-        </p>
-        <div class="min-h-0 flex-1 overflow-y-auto" :inert="saving">
-          <el-tree
-            ref="tree"
-            :data="nodes"
-            node-key="key"
-            show-checkbox
-            default-expand-all
-            :expand-on-click-node="false"
-            @check="readChecked"
-          >
-            <template #default="{ data }">
-              <span>{{ data.label }}</span>
-              <span v-if="data.unavailable" class="ml-3 text-xs text-[var(--el-text-color-secondary)]">{{ $t('menuPermission.unavailable') }}</span>
-            </template>
-          </el-tree>
-        </div>
-        <div class="flex justify-end gap-3 pt-4">
-          <el-button :disabled="!dirty || saving" @click="cancel">
-            {{ $t('common.cancel') }}
-          </el-button>
+  <PageShell v-loading="loading" aside-width="224px">
+    <template #aside>
+      <SectionCard
+        fill
+        padding="compact"
+        :title="$t('menuPermission.rolesTitle')"
+        body-class="overflow-y-auto"
+      >
+        <div class="flex flex-col gap-2">
           <el-button
-            type="primary"
-            :disabled="!dirty || selected?.locked"
-            :loading="saving"
-            @click="save"
+            v-for="role in roles"
+            :key="role.code"
+            class="ml-0! w-full"
+            :type="selected?.code === role.code ? 'primary' : 'default'"
+            :disabled="saving"
+            @click="selectRole(role)"
           >
-            {{ $t('common.save') }}
+            {{ $t(`menuPermission.roles.${role.code}`) }}
           </el-button>
         </div>
-      </el-card>
-    </div>
-  </div>
+      </SectionCard>
+    </template>
+
+    <SectionCard fill>
+      <TableToolbar :refreshing="loading" @refresh="reload">
+        <span class="font-medium text-strong">{{ selected ? $t(`menuPermission.roles.${selected.code}`) : $t('route.menuPermissions') }}</span>
+        <el-button :disabled="!selected" @click="setExpanded(true)">
+          {{ $t('menuPermission.expand') }}
+        </el-button>
+        <el-button :disabled="!selected" @click="setExpanded(false)">
+          {{ $t('menuPermission.collapse') }}
+        </el-button>
+      </TableToolbar>
+      <el-alert
+        :title="$t('menuPermission.loginNotice')"
+        type="info"
+        :closable="false"
+      />
+      <el-alert
+        v-if="error"
+        :title="error"
+        type="error"
+        :closable="false"
+      />
+      <el-alert
+        v-if="selected?.locked"
+        :title="$t('menuPermission.rootLocked')"
+        type="info"
+        :closable="false"
+      />
+      <p class="m-0 text-sm text-muted">
+        {{ $t('menuPermission.scopeNotice') }}
+      </p>
+      <div class="min-h-0 flex-1 overflow-y-auto" :inert="saving">
+        <el-tree
+          ref="tree"
+          :data="nodes"
+          node-key="key"
+          show-checkbox
+          default-expand-all
+          :expand-on-click-node="false"
+          @check="readChecked"
+        >
+          <template #default="{ data }">
+            <span>{{ data.label }}</span>
+            <span v-if="data.unavailable" class="ml-3 text-xs text-muted">{{ $t('menuPermission.unavailable') }}</span>
+          </template>
+        </el-tree>
+      </div>
+      <template #footer>
+        <el-button :disabled="!dirty || saving" @click="cancel">
+          {{ $t('common.cancel') }}
+        </el-button>
+        <el-button
+          type="primary"
+          :disabled="!dirty || selected?.locked"
+          :loading="saving"
+          @click="save"
+        >
+          {{ $t('common.save') }}
+        </el-button>
+      </template>
+    </SectionCard>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
@@ -90,6 +90,8 @@ import { computed, nextTick, onMounted, ref } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox, type ElTree } from "element-plus";
+import PageShell from "@/components/PageShell/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { menuPermissionsService } from "@/services/menu-permissions.service";
 import type { MenuDefinition, RoleMenuConfig } from "@/types/menu-permissions";

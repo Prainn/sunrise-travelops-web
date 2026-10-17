@@ -559,7 +559,14 @@
     "updateSuccess": "更新成功",
     "view": "查看",
     "warning": "警告",
-    "yes": "是"
+    "yes": "是",
+    "more": "更多",
+    "moreActions": "更多操作",
+    "retry": "重试",
+    "loadFailed": "加载失败",
+    "noData": "暂无数据",
+    "noMatch": "没有符合当前筛选条件的记录",
+    "filters": "筛选条件"
   },
   "login": {
     "auto": "跟随系统",

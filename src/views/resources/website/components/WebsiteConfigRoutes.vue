@@ -1,65 +1,62 @@
 <template>
-  <section class="grid [grid-template-rows:auto_minmax(0,_1fr)] h-full min-h-0">
-    <div class="page-toolbar">
-      <div class="page-toolbar__left">
-        <el-button
-          v-if="editable"
-          type="primary"
-          :disabled="config.cities.length < 2"
-          @click="openEditor()"
-        >
-          {{ $t("websiteConfig.routes.create") }}
-        </el-button>
-        <span class="text-[var(--el-text-color-secondary)] text-[13px]">
-          {{ $t("websiteConfig.routes.help") }}
-        </span>
-      </div>
-    </div>
-    <div class="page-table-wrapper">
-      <el-table
-        :data="config.routes"
-        row-key="id"
-        border
-        height="100%"
-        :empty-text="$t('websiteConfig.routes.empty')"
+  <section class="flex flex-col gap-[12px] h-full min-h-0">
+    <TableToolbar :refreshable="false">
+      <el-button
+        v-if="editable"
+        type="primary"
+        :disabled="config.cities.length < 2"
+        @click="openEditor()"
       >
-        <el-table-column prop="nameZh" :label="$t('websiteConfig.routes.nameZh')" min-width="160" />
-        <el-table-column prop="nameEn" :label="$t('websiteConfig.routes.nameEn')" min-width="180" />
-        <el-table-column :label="$t('websiteConfig.routes.fromCity')" min-width="120">
-          <template #default="{ row }">
-            {{ config.cities.find((city) => city.id === row.fromCityId)?.nameZh ?? row.fromCityId }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('websiteConfig.routes.toCity')" min-width="120">
-          <template #default="{ row }">
-            {{ config.cities.find((city) => city.id === row.toCityId)?.nameZh ?? row.toCityId }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('websiteConfig.routes.transport')" min-width="120">
-          <template #default="{ row }">
-            {{ getOptionLabel(TRANSPORT_OPTIONS, row.mode) }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('websiteConfig.routes.feeState')" min-width="160">
-          <template #default="{ row }">
-            {{ getOptionLabel(FEE_OPTIONS, row.feeState) }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('common.status')" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
-              {{ row.status === "enabled" ? $t("common.enabled") : $t("websiteConfig.disabled") }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <!-- @vue-generic {WebsiteRoute} -->
-        <el-table-column
-          :label="$t('common.actions')"
-          width="150"
-          align="center"
-          fixed="right"
-        >
-          <template #default="{ row, $index }">
+        {{ $t("websiteConfig.routes.create") }}
+      </el-button>
+      <span class="text-muted text-[13px]">
+        {{ $t("websiteConfig.routes.help") }}
+      </span>
+    </TableToolbar>
+    <DataTable
+      fill
+      :data="config.routes"
+      row-key="id"
+      :empty-text="$t('websiteConfig.routes.empty')"
+    >
+      <el-table-column prop="nameZh" :label="$t('websiteConfig.routes.nameZh')" min-width="160" />
+      <el-table-column prop="nameEn" :label="$t('websiteConfig.routes.nameEn')" min-width="180" />
+      <el-table-column :label="$t('websiteConfig.routes.fromCity')" min-width="120">
+        <template #default="{ row }">
+          {{ config.cities.find((city) => city.id === row.fromCityId)?.nameZh ?? row.fromCityId }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('websiteConfig.routes.toCity')" min-width="120">
+        <template #default="{ row }">
+          {{ config.cities.find((city) => city.id === row.toCityId)?.nameZh ?? row.toCityId }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('websiteConfig.routes.transport')" min-width="120">
+        <template #default="{ row }">
+          {{ getOptionLabel(TRANSPORT_OPTIONS, row.mode) }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('websiteConfig.routes.feeState')" min-width="160">
+        <template #default="{ row }">
+          {{ getOptionLabel(FEE_OPTIONS, row.feeState) }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('common.status')" width="100" align="center">
+        <template #default="{ row }">
+          <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
+            {{ row.status === "enabled" ? $t("common.enabled") : $t("websiteConfig.disabled") }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <!-- @vue-generic {WebsiteRoute} -->
+      <el-table-column
+        :label="$t('common.actions')"
+        width="150"
+        align="center"
+        fixed="right"
+      >
+        <template #default="{ row, $index }">
+          <RowActions>
             <el-button type="primary" link @click="openEditor(row)">
               {{ editable ? $t("common.edit") : $t("common.view") }}
             </el-button>
@@ -71,11 +68,11 @@
             >
               {{ $t("common.delete") }}
             </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-    <el-dialog
+          </RowActions>
+        </template>
+      </el-table-column>
+    </DataTable>
+    <AppDialog
       v-model="visible"
       :title="
         isNew
@@ -84,11 +81,9 @@
             ? $t('websiteConfig.routes.edit')
             : $t('websiteConfig.routes.detail')
       "
-      width="min(800px, 94vw)"
+      size="lg"
+      :busy="saving || isSubmitting"
       destroy-on-close
-      :show-close="!saving && !isSubmitting"
-      :close-on-click-modal="!saving && !isSubmitting"
-      :close-on-press-escape="!saving && !isSubmitting"
     >
       <el-form
         v-if="record"
@@ -164,11 +159,15 @@
           {{ $t("common.confirm") }}
         </el-button>
       </template>
-    </el-dialog>
+    </AppDialog>
   </section>
 </template>
 
 <script setup lang="ts">
+import AppDialog from "@/components/AppDialog/index.vue";
+import DataTable from "@/components/DataTable/index.vue";
+import RowActions from "@/components/RowActions/index.vue";
+import TableToolbar from "@/components/TableToolbar/index.vue";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import type { FormInstance } from "element-plus";

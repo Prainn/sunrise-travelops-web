@@ -1,26 +1,17 @@
 <template>
-  <div class="page-container">
-    <el-card class="page-search" shadow="never">
-      <el-form ref="queryFormRef" :model="params" :inline="true">
-        <el-form-item :label="$t('common.keywords')" prop="keyword">
-          <el-input
-            v-model="params.keyword"
-            :placeholder="$t('dictionary.searchPlaceholder')"
-            class="page-search__keywords"
-            clearable
-          />
-        </el-form-item>
+  <PageShell>
+    <FilterBar ref="filterBarRef" :model="params" @reset="handleResetQuery">
+      <el-form-item :label="$t('common.keywords')" prop="keyword" class="filter-bar__wide">
+        <el-input
+          v-model="params.keyword"
+          :placeholder="$t('dictionary.searchPlaceholder')"
+          clearable
+        />
+      </el-form-item>
+    </FilterBar>
 
-        <el-form-item>
-          <el-button @click="handleResetQuery">
-            {{ $t("common.reset") }}
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
-    <el-card class="page-content" shadow="never">
-      <TableToolbar @refresh="fetchData">
+    <SectionCard fill>
+      <TableToolbar :refreshing="loading" @refresh="fetchData">
         <el-button v-has-perm="'sys:dict:create'" type="primary" @click="handleCreateClick()">
           {{ $t("common.create") }}
         </el-button>
@@ -34,38 +25,39 @@
         </el-button>
       </TableToolbar>
 
-      <div class="page-table-wrapper">
-        <el-table
-          v-loading="loading"
-          highlight-current-row
-          :data="list"
-          row-key="id"
-          class="page-table"
-          border
-          height="100%"
-          @selection-change="handleSelectionChange"
+      <DataTable
+        fill
+        :error="error"
+        :loading="loading"
+        highlight-current-row
+        :data="list"
+        :filtered="Boolean(params.keyword)"
+        row-key="id"
+        @selection-change="handleSelectionChange"
+        @retry="fetchData"
+      >
+        <el-table-column type="selection" width="55" align="center" />
+        <el-table-column :label="$t('dictionary.name')" prop="name" />
+        <el-table-column :label="$t('dictionary.code')" prop="dictCode" />
+        <el-table-column :label="$t('common.status')" prop="status">
+          <template #default="scope">
+            <el-tag :type="scope.row.status === CommonStatus.ENABLED ? 'success' : 'info'">
+              {{
+                scope.row.status === CommonStatus.ENABLED
+                  ? $t("common.enabled")
+                  : $t("common.disabled")
+              }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column
+          fixed="right"
+          :label="$t('common.actions')"
+          align="center"
+          width="220"
         >
-          <el-table-column type="selection" width="55" align="center" />
-          <el-table-column :label="$t('dictionary.name')" prop="name" />
-          <el-table-column :label="$t('dictionary.code')" prop="dictCode" />
-          <el-table-column :label="$t('common.status')" prop="status">
-            <template #default="scope">
-              <el-tag :type="scope.row.status === CommonStatus.ENABLED ? 'success' : 'info'">
-                {{
-                  scope.row.status === CommonStatus.ENABLED
-                    ? $t("common.enabled")
-                    : $t("common.disabled")
-                }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            fixed="right"
-            :label="$t('common.actions')"
-            align="center"
-            width="220"
-          >
-            <template #default="scope">
+          <template #default="scope">
+            <RowActions>
               <el-button
                 v-has-perm="'sys:dict-item:list'"
                 type="primary"
@@ -75,7 +67,6 @@
               >
                 {{ $t("dictionary.manageOptions") }}
               </el-button>
-
               <el-button
                 v-has-perm="'sys:dict:update'"
                 type="primary"
@@ -94,24 +85,25 @@
               >
                 {{ $t("common.delete") }}
               </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
+            </RowActions>
+          </template>
+        </el-table-column>
+      </DataTable>
 
-      <pagination
+      <Pagination
         v-if="total > 0"
         v-model:page="params.page"
         v-model:limit="params.pageSize"
         :total="total"
         @pagination="fetchData"
       />
-    </el-card>
+    </SectionCard>
 
-    <el-dialog
+    <AppDialog
       v-model="dialogState.visible"
       :title="t(dialogState.titleKey)"
-      width="500px"
+      size="md"
+      :busy="isSubmitting"
       destroy-on-close
       @close="closeDialog"
     >
@@ -153,17 +145,15 @@
       </el-form>
 
       <template #footer>
-        <div class="dialog-footer">
-          <el-button type="primary" :loading="isSubmitting" @click="handleSubmit">
-            {{ $t("common.confirm") }}
-          </el-button>
-          <el-button @click="closeDialog">
-            {{ $t("common.cancel") }}
-          </el-button>
-        </div>
+        <el-button :disabled="isSubmitting" @click="closeDialog">
+          {{ $t("common.cancel") }}
+        </el-button>
+        <el-button type="primary" :loading="isSubmitting" @click="handleSubmit">
+          {{ $t("common.confirm") }}
+        </el-button>
       </template>
-    </el-dialog>
-  </div>
+    </AppDialog>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
@@ -171,6 +161,13 @@ import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 
 import router from "@/router";
+import AppDialog from "@/components/AppDialog/index.vue";
+import DataTable from "@/components/DataTable/index.vue";
+import FilterBar from "@/components/FilterBar/index.vue";
+import PageShell from "@/components/PageShell/index.vue";
+import Pagination from "@/components/Pagination/index.vue";
+import RowActions from "@/components/RowActions/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { usePageTable, useTableSelection } from "@/composables";
 import { CommonStatus } from "@/enums";
@@ -184,14 +181,14 @@ defineOptions({
   inheritAttrs: false,
 });
 
-const queryFormRef = ref<FormInstance>();
+const filterBarRef = ref<InstanceType<typeof FilterBar>>();
 const dictFormRef = ref<FormInstance>();
 const { isSubmitting, submitForm } = useResourceFormSubmit(dictFormRef);
 const dictStore = useDictStore();
 const { t } = useI18n();
 
 /** 分页表格数据管理 */
-const { loading, list, total, params, fetchData, handleQuery, resetParams } = usePageTable<
+const { loading, list, total, error, params, fetchData, handleQuery, resetParams } = usePageTable<
   DictTypeItem,
   DictTypeQueryParams
 >({
@@ -203,6 +200,7 @@ const { loading, list, total, params, fetchData, handleQuery, resetParams } = us
   request: dictionaryService.getPage,
 });
 
+// FilterBar 的 resetFields 需要与 params 同一个响应式对象
 const requestRows = useDebounceFn(handleQuery, 300);
 
 watch(() => params.keyword, () => {
@@ -211,7 +209,7 @@ watch(() => params.keyword, () => {
 });
 
 function handleResetQuery(): void {
-  queryFormRef.value?.resetFields();
+  filterBarRef.value?.form?.resetFields();
   resetParams();
   requestRows();
 }
