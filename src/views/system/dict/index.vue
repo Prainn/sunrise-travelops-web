@@ -161,7 +161,6 @@
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 
-import router from "@/router";
 import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
@@ -170,7 +169,7 @@ import Pagination from "@/components/Pagination/index.vue";
 import RowActions from "@/components/RowActions/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
-import { usePageTable, useTableSelection } from "@/composables";
+import { useOpenInNewTab, usePageTable, useTableSelection } from "@/composables";
 import { CommonStatus } from "@/enums";
 import { dictionaryService } from "@/services";
 import { useDictStore } from "@/stores/dict";
@@ -187,6 +186,7 @@ const dictFormRef = ref<FormInstance>();
 const { isSubmitting, submitForm } = useResourceFormSubmit(dictFormRef);
 const dictStore = useDictStore();
 const { t } = useI18n();
+const openInNewTab = useOpenInNewTab();
 
 /** 分页表格数据管理 */
 const { loading, list, total, error, params, fetchData, handleQuery, resetParams } = usePageTable<
@@ -358,7 +358,7 @@ async function handleDelete(id?: string): Promise<void> {
  * @param row 当前字典行
  */
 function openDictData(row: DictTypeItem): void {
-  void router.push({
+  openInNewTab({
     name: "DictItem",
     query: { dictCode: row.dictCode },
   });

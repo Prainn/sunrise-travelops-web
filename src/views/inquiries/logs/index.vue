@@ -216,7 +216,7 @@
             <el-button
               type="primary"
               link
-              @click="router.push({ name: 'InquiryList', query: { code: row.inquiryCode } })"
+              @click="openInNewTab({ name: 'InquiryList', query: { code: row.inquiryCode } })"
             >
               {{ $t("common.view") }}
             </el-button>
@@ -246,6 +246,7 @@ import { businessUnitName } from "@/constants/identity";
 import { useUserStore } from "@/stores/user";
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useOpenInNewTab } from "@/composables";
 import { useI18n } from "vue-i18n";
 import { inquiryService, type PersonOption } from "@/services/inquiry.service";
 import { inquiryLogService, type LogReport } from "@/services/inquiry-log.service";
@@ -259,6 +260,7 @@ defineOptions({ name: "InquiryLogs" });
 const { t, te, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
+const openInNewTab = useOpenInNewTab();
 const inquiryId = computed(() => String(route.params.inquiryId ?? ""));
 const inquiry = ref<InquiryRecord>();
 const logs = ref<InquiryLogRecord[]>([]);
