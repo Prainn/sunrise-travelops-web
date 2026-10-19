@@ -55,6 +55,7 @@
         :label="$t('common.actions')"
         :width="locale === 'en' ? 410 : 300"
         fixed="right"
+        :show-overflow-tooltip="false"
       >
         <template #default="{ row }">
           <RowActions class="flex-nowrap!">

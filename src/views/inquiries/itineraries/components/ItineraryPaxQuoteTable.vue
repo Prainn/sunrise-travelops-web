@@ -43,6 +43,7 @@
         prop="pax"
         width="75"
         fixed
+        :show-overflow-tooltip="false"
       />
       <el-table-column :label="$t('itinerary.vehiclePerPerson')" min-width="120">
         <template #default="{ row }">
@@ -75,7 +76,12 @@
           {{ money(row[metric.field]) }}
         </template>
       </el-table-column>
-      <el-table-column :label="$t('itinerary.tourCostPerPerson')" min-width="130" fixed="right">
+      <el-table-column
+        :label="$t('itinerary.tourCostPerPerson')"
+        min-width="130"
+        fixed="right"
+        :show-overflow-tooltip="false"
+      >
         <template #default="{ row }">
           <el-tooltip :disabled="!calculation" placement="top">
             <template #content>
@@ -98,6 +104,7 @@
         :label="$t('itinerary.adultTourPricePerPerson')"
         min-width="175"
         fixed="right"
+        :show-overflow-tooltip="false"
       >
         <template #default="{ row }">
           <el-input-number
@@ -111,12 +118,22 @@
           />
         </template>
       </el-table-column>
-      <el-table-column :label="$t('itinerary.profitPerPerson')" min-width="130" fixed="right">
+      <el-table-column
+        :label="$t('itinerary.profitPerPerson')"
+        min-width="130"
+        fixed="right"
+        :show-overflow-tooltip="false"
+      >
         <template #default="{ row }">
           {{ money(profitPerPerson(row.pax, row.adultUnitPrice, row.baseCostPerPerson)) }}
         </template>
       </el-table-column>
-      <el-table-column :label="$t('itinerary.actualMarginRate')" min-width="130" fixed="right">
+      <el-table-column
+        :label="$t('itinerary.actualMarginRate')"
+        min-width="130"
+        fixed="right"
+        :show-overflow-tooltip="false"
+      >
         <template #default="{ row }">
           {{ marginRate(row.pax, row.adultUnitPrice, row.baseCostPerPerson) }}
         </template>

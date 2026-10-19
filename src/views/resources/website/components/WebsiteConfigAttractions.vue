@@ -73,6 +73,7 @@
         width="150"
         align="center"
         fixed="right"
+        :show-overflow-tooltip="false"
       >
         <template #default="{ row, $index }">
           <RowActions>

@@ -80,6 +80,7 @@
         :label="$t('common.actions')"
         :width="locale === 'en' ? 500 : 340"
         fixed="right"
+        :show-overflow-tooltip="false"
       >
         <template #default="scope">
           <RowActions class="flex-nowrap!">

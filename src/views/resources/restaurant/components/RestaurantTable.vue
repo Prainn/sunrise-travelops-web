@@ -83,6 +83,7 @@
           width="190"
           fixed="right"
           align="center"
+          :show-overflow-tooltip="false"
         >
           <template #default="scope">
             <RowActions>

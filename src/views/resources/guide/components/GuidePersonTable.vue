@@ -105,7 +105,12 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('common.actions')" min-width="260" fixed="right">
+        <el-table-column
+          :label="$t('common.actions')"
+          min-width="260"
+          fixed="right"
+          :show-overflow-tooltip="false"
+        >
           <template #default="{ row }">
             <el-button link type="primary" @click="emit('detail', row as GuidePersonRecord)">
               {{ $t("guide.detail") }}

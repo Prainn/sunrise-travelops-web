@@ -55,6 +55,7 @@
           :label="$t('common.actions')"
           align="center"
           width="220"
+          :show-overflow-tooltip="false"
         >
           <template #default="scope">
             <RowActions>

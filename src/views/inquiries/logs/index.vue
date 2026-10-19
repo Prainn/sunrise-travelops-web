@@ -206,7 +206,12 @@
           min-width="180"
           show-overflow-tooltip
         />
-        <el-table-column :label="$t('common.actions')" width="100" fixed="right">
+        <el-table-column
+          :label="$t('common.actions')"
+          width="100"
+          fixed="right"
+          :show-overflow-tooltip="false"
+        >
           <template #default="{ row }">
             <el-button
               type="primary"

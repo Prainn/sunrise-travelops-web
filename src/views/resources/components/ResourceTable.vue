@@ -46,7 +46,12 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('common.actions')" width="190" fixed="right">
+        <el-table-column
+          :label="$t('common.actions')"
+          width="190"
+          fixed="right"
+          :show-overflow-tooltip="false"
+        >
           <template #default="scope">
             <RowActions>
               <el-button

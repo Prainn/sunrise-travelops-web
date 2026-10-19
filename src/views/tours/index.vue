@@ -55,6 +55,7 @@
           :label="$t('tour.tourNo')"
           min-width="210"
           fixed="left"
+          :show-overflow-tooltip="false"
         />
         <el-table-column :label="$t('identity.businessUnit')" min-width="110">
           <template #default="{ row }">
@@ -143,7 +144,12 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('common.actions')" width="150" fixed="right">
+        <el-table-column
+          :label="$t('common.actions')"
+          width="150"
+          fixed="right"
+          :show-overflow-tooltip="false"
+        >
           <template #default="{ row }">
             <RowActions v-if="row.status === 'active'">
               <el-button

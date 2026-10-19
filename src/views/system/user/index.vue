@@ -101,8 +101,14 @@
           width="42"
           fixed="left"
           align="center"
+          :show-overflow-tooltip="false"
         />
-        <el-table-column :label="$t('user.nickname')" min-width="140" fixed="left">
+        <el-table-column
+          :label="$t('user.nickname')"
+          min-width="140"
+          fixed="left"
+          :show-overflow-tooltip="false"
+        >
           <template #default="scope">
             <div class="inline-flex items-center gap-2">
               <el-avatar v-if="scope.row.avatar" :src="scope.row.avatar" :size="24" />
@@ -202,7 +208,12 @@
           width="160"
           show-overflow-tooltip
         />
-        <el-table-column :label="$t('common.actions')" fixed="right" width="200">
+        <el-table-column
+          :label="$t('common.actions')"
+          fixed="right"
+          width="200"
+          :show-overflow-tooltip="false"
+        >
           <template #default="scope">
             <RowActions>
               <el-button
