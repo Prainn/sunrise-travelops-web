@@ -1,7 +1,8 @@
 <template>
-  <div class="resource-page">
+  <div class="h-full min-h-0">
     <ResourceTable
       :loading="isLoading"
+      :error="loadError"
       :total="total"
       :rows="tableRows"
       :columns="columns"
@@ -27,7 +28,6 @@
             autocomplete="new-password"
             :placeholder="$t('common.all')"
             clearable
-            class="transport-page__service-level-select"
           >
             <el-option :label="$t('resource.vehicleServiceLevels.standard')" value="standard" />
             <el-option :label="$t('resource.vehicleServiceLevels.vip')" value="vip" />
@@ -128,6 +128,7 @@ const fields = computed<ResourceFormField[]>(() => [
 ]);
 const {
   isLoading,
+  loadError,
   rows,
   total,
   record,
@@ -182,9 +183,3 @@ function resetQuery() {
   serviceLevel.value = "";
 }
 </script>
-
-<style scoped lang="scss">
-.transport-page__service-level-select {
-  @apply 'w-[150px]';
-}
-</style>

@@ -1,34 +1,33 @@
 <template>
-  <el-dialog
+  <AppDialog
     :model-value="modelValue"
     :title="$t('planning.vehiclePlans')"
-    width="min(1200px, 96vw)"
+    size="xl"
     destroy-on-close
     :close-on-click-modal="false"
+    :busy="saving"
     @close="emit('cancel')"
   >
     <section id="itinerary-vehicles">
       <div class="grid gap-[16px] lg:grid-cols-2">
-        <el-card
+        <SectionCard
           v-for="plan in plans"
           :key="plan.tier"
-          shadow="never"
           class="max-h-60vh overflow-y-auto"
+          :title="$t(`itinerary.vehicleServiceLevels.${plan.tier}`)"
+          title-tag="h4"
         >
-          <template #header>
-            <div class="flex justify-between items-center">
-              <strong>{{ $t(`itinerary.vehicleServiceLevels.${plan.tier}`) }}</strong>
-              <el-button :disabled="!editable" @click="addArrangement(plan)">
-                {{ $t(mode === "stage" ? "planning.addStage" : "planning.addArrangement") }}
-              </el-button>
-            </div>
+          <template #actions>
+            <el-button :disabled="!editable" @click="addArrangement(plan)">
+              {{ $t(mode === "stage" ? "planning.addStage" : "planning.addArrangement") }}
+            </el-button>
           </template>
 
           <el-form label-position="left">
             <div
               v-for="(arrangement, index) in plan.arrangements"
               :key="arrangement.id"
-              class="mb-[16px] p-[14px] border border-solid border-[var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)]"
+              class="mb-[16px] p-[14px] border border-solid border-[var(--divider-color)] surface-muted"
             >
               <div class="mb-[12px] flex items-center justify-between gap-[12px]">
                 <strong>{{
@@ -199,7 +198,7 @@
               "
             />
           </el-form>
-        </el-card>
+        </SectionCard>
       </div>
     </section>
     <template #footer>
@@ -216,7 +215,7 @@
         {{ $t("itinerary.save") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
@@ -224,7 +223,9 @@ import { vehiclePriceNeedsReason } from "../price-adjustments";
 import { ElMessage } from "element-plus";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import AppDialog from "@/components/AppDialog/index.vue";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import { resourceService } from "@/services/resource.service";
 import type {
   ItineraryVehicleArrangement,

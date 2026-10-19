@@ -1,5 +1,8 @@
 export type TourBusinessUnit = "shengxu" | "linxi" | "website";
-export type TourSourceModule = "standard" | "website";
+export type TourSourceModule = "standard" | "website" | "manual";
+/** 关联询盘来源；`/tours/sources` 只接受这两类。 */
+export type TourLinkedSourceModule = Exclude<TourSourceModule, "manual">;
+export type TourScheduleMode = "flight" | "manual";
 
 export interface TourFlightSnapshot {
   flightNumber: string;
@@ -14,12 +17,13 @@ export interface TourRecord {
   tourNo: string;
   sourceModule: TourSourceModule;
   businessUnit: TourBusinessUnit;
-  inquiryId: string;
-  quoteId: string;
-  itineraryId: string;
-  inquiryCode: string;
-  itineraryCode: string;
-  quoteCode: string;
+  inquiryId: string | null;
+  quoteId: string | null;
+  itineraryId: string | null;
+  inquiryCode: string | null;
+  itineraryCode: string | null;
+  quoteCode: string | null;
+  itinerarySummary: string;
   agencyName: string;
   contactName: string;
   days: number;
@@ -28,8 +32,12 @@ export interface TourRecord {
   dropAt: string;
   occupyFrom: string;
   occupyTo: string;
+  countryItemId: string | null;
   countryCode: string;
   countryName: string;
+  creatorId: string;
+  creatorTourCode: string;
+  collectCoordinatorId: string;
   collectCoordinatorName: string;
   operatorId: string;
   operatorName: string;
@@ -39,11 +47,13 @@ export interface TourRecord {
   totalPeople: number;
   language: string;
   shopping: boolean;
-  pickupFlightId: string;
-  dropFlightId: string;
-  pickupFlight: TourFlightSnapshot;
-  dropFlight: TourFlightSnapshot;
+  scheduleMode: TourScheduleMode;
+  pickupFlightId: string | null;
+  dropFlightId: string | null;
+  pickupFlight: TourFlightSnapshot | null;
+  dropFlight: TourFlightSnapshot | null;
   guideId: string | null;
+  guideCode: string | null;
   guideName: string | null;
   remark: string;
   status: "active" | "cancelled";
@@ -51,18 +61,51 @@ export interface TourRecord {
   version: number;
 }
 
-export interface TourInput {
+/** 手工建团资料；响应中为扁平字段，编辑时需重新组装。 */
+export interface TourManualSource {
+  businessUnit: TourBusinessUnit;
+  countryItemId: string;
+  collectCoordinatorId: string;
+  agencyName: string;
+  contactName: string;
+  itinerarySummary: string;
+  startDate: string;
+  days: number;
+}
+
+export type TourSchedule =
+  | { scheduleMode: "flight"; pickupFlightId: string; dropFlightId: string }
+  | { scheduleMode: "manual"; pickupAt: string; dropAt: string };
+
+export type TourInput = {
   operatorId: string;
   adults: number;
   children: number;
   leaders: number;
   language: string;
   shopping: boolean;
-  pickupFlightId: string;
-  dropFlightId: string;
   guideId: string | null;
   remark: string;
-}
+} & TourSchedule;
+
+export type TourCreateRequest = TourInput &
+  (
+    | { sourceModule: TourLinkedSourceModule; inquiryId: string; quoteId: string }
+    | { sourceModule: "manual"; manualSource: TourManualSource }
+  );
+
+export type TourUpdateRequest = TourInput & {
+  version: number;
+  /** 仅手工团；省略保留原资料。 */
+  manualSource?: TourManualSource;
+};
+
+export type TourGuideQuery = {
+  businessUnit: TourBusinessUnit;
+  startDate: string;
+  days: number;
+  excludeTourId?: string;
+} & TourSchedule;
 
 export interface TourSource {
   inquiryId: string;

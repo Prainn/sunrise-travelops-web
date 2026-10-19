@@ -1,11 +1,12 @@
 <template>
-  <section>
-    <strong>{{ $t("websiteItineraryUi.mealsAndServices") }}</strong>
-    <el-card
+  <section class="surface-muted p-4 flex flex-col gap-3">
+    <h4 class="m-0 text-[14px] text-strong font-600">
+      {{ $t("websiteItineraryUi.mealsAndServices") }}
+    </h4>
+    <div
       v-for="meal in day.meals"
       :key="meal.id"
-      shadow="never"
-      class="mt-3"
+      class="p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)]"
     >
       <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
         <el-form-item :label="$t(`websiteItineraryUi.mealFees.${meal.slot}`)">
@@ -30,18 +31,19 @@
           <el-input v-model="meal.restaurantEn" maxlength="150" />
         </el-form-item>
       </div>
-    </el-card>
-    <div class="flex justify-between items-center mt-3 mb-2">
-      <strong>{{ $t("websiteItineraryUi.otherServices") }}</strong>
+    </div>
+    <div class="flex flex-wrap justify-between items-center gap-3 mt-1">
+      <h5 class="m-0 text-[13px] text-strong font-600">
+        {{ $t("websiteItineraryUi.otherServices") }}
+      </h5>
       <el-button v-if="editable" @click="addService">
         {{ $t("websiteItineraryUi.addService") }}
       </el-button>
     </div>
-    <el-card
+    <div
       v-for="(service, index) in day.services"
       :key="service.id"
-      shadow="never"
-      class="mb-3"
+      class="p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)]"
     >
       <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
         <el-form-item :label="$t('websiteItineraryUi.serviceNameZh')">
@@ -65,7 +67,7 @@
       >
         {{ $t("websiteItineraryUi.removeService") }}
       </el-button>
-    </el-card>
+    </div>
   </section>
 </template>
 <script setup lang="ts">

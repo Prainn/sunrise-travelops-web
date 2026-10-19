@@ -1,11 +1,13 @@
 <!-- 用户列表 -->
 <template>
-  <div class="page-container page-container--split user-page">
-    <aside class="page-aside">
-      <div class="page-aside__inner p-3 overflow-y-auto!">
-        <h3 class="mb-3 text-sm font-medium">
-          {{ $t("user.department") }}
-        </h3>
+  <PageShell aside-width="224px">
+    <template #aside>
+      <SectionCard
+        fill
+        padding="compact"
+        :title="$t('user.department')"
+        body-class="overflow-y-auto"
+      >
         <el-tree
           :data="departmentTree"
           node-key="key"
@@ -15,257 +17,242 @@
           :expand-on-click-node="false"
           @node-click="handleDepartmentClick"
         />
-      </div>
-    </aside>
-    <div class="page-main">
-      <el-card class="page-search" shadow="never">
-        <el-form
-          ref="queryFormRef"
-          :model="params"
-          :inline="true"
-          label-width="auto"
-        >
-          <el-form-item :label="$t('common.keywords')" prop="keyword">
-            <el-input
-              v-model="params.keyword"
-              :placeholder="$t('user.searchPlaceholder')"
-              class="page-search__keywords w-[180px]"
-              clearable
-            />
-          </el-form-item>
+      </SectionCard>
+    </template>
 
-          <el-form-item :label="$t('common.status')" prop="status">
-            <el-select
-              v-model="params.status"
-              autocomplete="new-password"
-              :placeholder="$t('common.all')"
-              clearable
-              class="w-[112px]"
-            >
-              <el-option :label="$t('common.normal')" :value="CommonStatus.ENABLED" />
-              <el-option :label="$t('common.disabled')" :value="CommonStatus.DISABLED" />
-            </el-select>
-          </el-form-item>
-
-          <el-form-item :label="$t('user.rolesLabel')" prop="roleId">
-            <el-select
-              v-model="params.roleId"
-              autocomplete="new-password"
-              :placeholder="$t('common.all')"
-              clearable
-            >
-              <el-option
-                v-for="item in roleOptions"
-                :key="item.value"
-                :label="userRoleLabel(item.label, item.code)"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-
-          <el-form-item :label="$t('common.createdAt')" prop="createTime">
-            <el-date-picker
-              v-model="params.createTime"
-              :editable="false"
-              type="daterange"
-              range-separator="~"
-              :start-placeholder="$t('common.startDate')"
-              :end-placeholder="$t('common.endDate')"
-              value-format="YYYY-MM-DD"
-              class="w-[240px]"
-            />
-          </el-form-item>
-
-          <el-form-item>
-            <el-button @click="handleResetQuery">
-              {{ $t("common.reset") }}
-            </el-button>
-          </el-form-item>
-        </el-form>
-      </el-card>
-
-      <el-card class="page-content" shadow="never">
-        <TableToolbar @refresh="fetchData">
-          <el-button v-hasPerm="['sys:user:create']" type="primary" @click="handleCreateClick">
-            {{ $t("common.create") }}
-          </el-button>
-          <el-button
-            v-hasPerm="'sys:user:delete'"
-            type="danger"
-            :disabled="!hasSelection"
-            @click="handleDelete()"
-          >
-            {{ $t("common.delete") }}
-          </el-button>
-        </TableToolbar>
-
-        <div class="page-table-wrapper">
-          <el-table
-            v-loading="loading"
-            class="page-table user-table"
-            :data="list"
-            height="100%"
-            border
-            highlight-current-row
-            row-key="id"
-            @selection-change="handleSelectionChange"
-          >
-            <el-table-column
-              type="selection"
-              width="42"
-              fixed="left"
-              align="center"
-            />
-            <el-table-column :label="$t('user.nickname')" min-width="140" fixed="left">
-              <template #default="scope">
-                <div class="user-name-cell">
-                  <el-avatar v-if="scope.row.avatar" :src="scope.row.avatar" :size="24" />
-                  <span v-else class="user-name-cell__text">
-                    {{ getAvatarText(scope.row as UserItem) }}
-                  </span>
-                  <span>{{ scope.row.nickname || "-" }}</span>
-                </div>
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="englishName"
-              :label="$t('user.englishName')"
-              min-width="120"
-            />
-            <el-table-column prop="tourCode" :label="$t('user.tourCode')" width="110" />
-            <el-table-column
-              :label="$t('user.username')"
-              min-width="120"
-              prop="username"
-              show-overflow-tooltip
-            />
-            <el-table-column :label="$t('common.status')" align="center" width="80">
-              <template #default="scope">
-                <el-tag
-                  :type="scope.row.status === CommonStatus.ENABLED ? 'success' : 'danger'"
-                  size="small"
-                >
-                  {{
-                    scope.row.status === CommonStatus.ENABLED
-                      ? $t("common.normal")
-                      : $t("common.disabled")
-                  }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column :label="$t('user.gender')" align="center" width="70">
-              <template #default="scope">
-                <el-tag
-                  v-if="
-                    scope.row.gender === UserGender.MALE || scope.row.gender === UserGender.FEMALE
-                  "
-                  :type="scope.row.gender === UserGender.MALE ? 'primary' : 'danger'"
-                  size="small"
-                >
-                  <el-icon>
-                    <Male v-if="scope.row.gender === UserGender.MALE" />
-                    <Female v-else />
-                  </el-icon>
-                  <span>
-                    {{ scope.row.gender === UserGender.MALE ? $t("user.male") : $t("user.female") }}
-                  </span>
-                </el-tag>
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
-            <el-table-column :label="$t('user.department')" min-width="220">
-              <template #default="{ row }">
-                <div
-                  v-for="identity in row.identities"
-                  :key="identity.scope"
-                  class="flex items-center gap-2"
-                >
-                  <el-tag size="small">
-                    {{ loginScopeName(identity.scope) }}
-                  </el-tag>
-                  <span>{{ identity.deptName }}</span>
-                </div>
-              </template>
-            </el-table-column>
-            <el-table-column :label="$t('user.rolesLabel')" prop="roleNames" width="400">
-              <template #default="scope">
-                <el-tag
-                  v-for="role in userRoleLabels(scope.row.roleNames, roleOptions)"
-                  :key="role"
-                  size="small"
-                  class="mr-2"
-                >
-                  {{ role }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column :label="$t('user.mobile')" prop="mobile" width="130" />
-            <el-table-column
-              :label="$t('user.email')"
-              prop="email"
-              min-width="180"
-              show-overflow-tooltip
-            />
-            <el-table-column
-              :label="$t('common.createdAt')"
-              prop="createTime"
-              :formatter="(row) => formatDateTime(row.createTime)"
-              width="160"
-              show-overflow-tooltip
-            />
-            <el-table-column :label="$t('common.actions')" fixed="right" width="200">
-              <template #default="scope">
-                <div>
-                  <el-button
-                    v-hasPerm="'sys:user:update'"
-                    type="primary"
-                    size="small"
-                    link
-                    @click="handleEditClick(scope.row.id)"
-                  >
-                    {{ $t("common.edit") }}
-                  </el-button>
-                  <el-button
-                    v-hasPerm="'sys:user:delete'"
-                    type="danger"
-                    size="small"
-                    link
-                    @click="handleDelete(scope.row.id)"
-                  >
-                    {{ $t("common.delete") }}
-                  </el-button>
-                  <el-button
-                    v-hasPerm="'sys:user:reset-password'"
-                    type="primary"
-                    size="small"
-                    link
-                    @click="openResetPasswordDialog(scope.row as UserItem)"
-                  >
-                    {{ $t("user.resetPassword") }}
-                  </el-button>
-                </div>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-
-        <pagination
-          v-if="total > 0"
-          v-model:page="params.page"
-          v-model:limit="params.pageSize"
-          :total="total"
-          class="page-pagination"
-          @pagination="fetchData"
+    <FilterBar ref="filterBarRef" :model="params" @reset="handleResetQuery">
+      <el-form-item :label="$t('common.keywords')" prop="keyword" class="filter-bar__wide">
+        <el-input
+          v-model="params.keyword"
+          :placeholder="$t('user.searchPlaceholder')"
+          clearable
         />
-      </el-card>
-    </div>
+      </el-form-item>
+
+      <el-form-item :label="$t('common.status')" prop="status">
+        <el-select
+          v-model="params.status"
+          autocomplete="new-password"
+          :placeholder="$t('common.all')"
+          clearable
+        >
+          <el-option :label="$t('common.normal')" :value="CommonStatus.ENABLED" />
+          <el-option :label="$t('common.disabled')" :value="CommonStatus.DISABLED" />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item :label="$t('user.rolesLabel')" prop="roleId">
+        <el-select
+          v-model="params.roleId"
+          autocomplete="new-password"
+          :placeholder="$t('common.all')"
+          clearable
+        >
+          <el-option
+            v-for="item in roleOptions"
+            :key="item.value"
+            :label="userRoleLabel(item.label, item.code)"
+            :value="item.value"
+          />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item :label="$t('common.createdAt')" prop="createTime" class="filter-bar__wide">
+        <el-date-picker
+          v-model="params.createTime"
+          :editable="false"
+          type="daterange"
+          range-separator="~"
+          :start-placeholder="$t('common.startDate')"
+          :end-placeholder="$t('common.endDate')"
+          value-format="YYYY-MM-DD"
+        />
+      </el-form-item>
+    </FilterBar>
+
+    <SectionCard fill>
+      <TableToolbar :refreshing="loading" @refresh="fetchData">
+        <el-button v-hasPerm="['sys:user:create']" type="primary" @click="handleCreateClick">
+          {{ $t("common.create") }}
+        </el-button>
+        <el-button
+          v-hasPerm="'sys:user:delete'"
+          type="danger"
+          :disabled="!hasSelection"
+          @click="handleDelete()"
+        >
+          {{ $t("common.delete") }}
+        </el-button>
+      </TableToolbar>
+
+      <DataTable
+        fill
+        :error="error"
+        :loading="loading"
+        :data="list"
+        :filtered="hasActiveFilters"
+        highlight-current-row
+        row-key="id"
+        @selection-change="handleSelectionChange"
+        @retry="fetchData"
+      >
+        <el-table-column
+          type="selection"
+          width="42"
+          fixed="left"
+          align="center"
+        />
+        <el-table-column :label="$t('user.nickname')" min-width="140" fixed="left">
+          <template #default="scope">
+            <div class="inline-flex items-center gap-2">
+              <el-avatar v-if="scope.row.avatar" :src="scope.row.avatar" :size="24" />
+              <span
+                v-else
+                class="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-[var(--el-color-primary-light-9)] text-sm font-medium text-[var(--el-color-primary)]"
+              >
+                {{ getAvatarText(scope.row as UserItem) }}
+              </span>
+              <span>{{ scope.row.nickname || "-" }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="englishName"
+          :label="$t('user.englishName')"
+          min-width="120"
+        />
+        <el-table-column prop="tourCode" :label="$t('user.tourCode')" width="110" />
+        <el-table-column
+          :label="$t('user.username')"
+          min-width="120"
+          prop="username"
+          show-overflow-tooltip
+        />
+        <el-table-column :label="$t('common.status')" align="center" width="80">
+          <template #default="scope">
+            <el-tag
+              :type="scope.row.status === CommonStatus.ENABLED ? 'success' : 'danger'"
+              size="small"
+            >
+              {{
+                scope.row.status === CommonStatus.ENABLED
+                  ? $t("common.normal")
+                  : $t("common.disabled")
+              }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('user.gender')" align="center" width="70">
+          <template #default="scope">
+            <el-tag
+              v-if="
+                scope.row.gender === UserGender.MALE || scope.row.gender === UserGender.FEMALE
+              "
+              :type="scope.row.gender === UserGender.MALE ? 'primary' : 'danger'"
+              size="small"
+            >
+              <el-icon>
+                <Male v-if="scope.row.gender === UserGender.MALE" />
+                <Female v-else />
+              </el-icon>
+              <span>
+                {{ scope.row.gender === UserGender.MALE ? $t("user.male") : $t("user.female") }}
+              </span>
+            </el-tag>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('user.department')" min-width="220">
+          <template #default="{ row }">
+            <div
+              v-for="identity in row.identities"
+              :key="identity.scope"
+              class="flex items-center gap-2"
+            >
+              <el-tag size="small">
+                {{ loginScopeName(identity.scope) }}
+              </el-tag>
+              <span>{{ identity.deptName }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('user.rolesLabel')" prop="roleNames" width="400">
+          <template #default="scope">
+            <el-tag
+              v-for="role in userRoleLabels(scope.row.roleNames, roleOptions)"
+              :key="role"
+              size="small"
+              class="mr-2"
+            >
+              {{ role }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('user.mobile')" prop="mobile" width="130" />
+        <el-table-column
+          :label="$t('user.email')"
+          prop="email"
+          min-width="180"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          :label="$t('common.createdAt')"
+          prop="createTime"
+          :formatter="(row) => formatDateTime(row.createTime)"
+          width="160"
+          show-overflow-tooltip
+        />
+        <el-table-column :label="$t('common.actions')" fixed="right" width="200">
+          <template #default="scope">
+            <RowActions>
+              <el-button
+                v-hasPerm="'sys:user:update'"
+                type="primary"
+                size="small"
+                link
+                @click="handleEditClick(scope.row.id)"
+              >
+                {{ $t("common.edit") }}
+              </el-button>
+              <el-button
+                v-hasPerm="'sys:user:delete'"
+                type="danger"
+                size="small"
+                link
+                @click="handleDelete(scope.row.id)"
+              >
+                {{ $t("common.delete") }}
+              </el-button>
+              <el-button
+                v-hasPerm="'sys:user:reset-password'"
+                type="primary"
+                size="small"
+                link
+                @click="openResetPasswordDialog(scope.row as UserItem)"
+              >
+                {{ $t("user.resetPassword") }}
+              </el-button>
+            </RowActions>
+          </template>
+        </el-table-column>
+      </DataTable>
+
+      <Pagination
+        v-if="total > 0"
+        v-model:page="params.page"
+        v-model:limit="params.pageSize"
+        :total="total"
+        @pagination="fetchData"
+      />
+    </SectionCard>
 
     <!-- 用户表单 -->
-    <el-drawer
+    <AppDrawer
       v-model="dialogState.visible"
       :title="t(dialogState.titleKey)"
       append-to-body
       :size="drawerSize"
+      :busy="isSubmitting"
       destroy-on-close
       @close="closeDialog"
     >
@@ -344,22 +331,21 @@
       />
 
       <template #footer>
-        <div class="dialog-footer">
-          <el-button type="primary" :loading="isSubmitting" @click="handleSubmit">
-            {{ $t("common.confirm") }}
-          </el-button>
-          <el-button @click="closeDialog">
-            {{ $t("common.cancel") }}
-          </el-button>
-        </div>
+        <el-button :disabled="isSubmitting" @click="closeDialog">
+          {{ $t("common.cancel") }}
+        </el-button>
+        <el-button type="primary" :loading="isSubmitting" @click="handleSubmit">
+          {{ $t("common.confirm") }}
+        </el-button>
       </template>
-    </el-drawer>
+    </AppDrawer>
 
     <!-- 重置密码 -->
-    <el-dialog
+    <AppDialog
       v-model="resetPasswordDialog.visible"
       :title="$t('user.resetPassword')"
-      :width="resetPasswordDialogWidth"
+      size="sm"
+      :busy="resetPasswordSubmitting"
       append-to-body
       destroy-on-close
       @closed="resetResetPasswordForm"
@@ -404,21 +390,19 @@
       </el-form>
 
       <template #footer>
-        <div class="dialog-footer">
-          <el-button
-            type="primary"
-            :loading="resetPasswordSubmitting"
-            @click="handleResetPasswordSubmit"
-          >
-            {{ $t("common.confirm") }}
-          </el-button>
-          <el-button @click="closeResetPasswordDialog">
-            {{ $t("common.cancel") }}
-          </el-button>
-        </div>
+        <el-button :disabled="resetPasswordSubmitting" @click="closeResetPasswordDialog">
+          {{ $t("common.cancel") }}
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="resetPasswordSubmitting"
+          @click="handleResetPasswordSubmit"
+        >
+          {{ $t("common.confirm") }}
+        </el-button>
       </template>
-    </el-dialog>
-  </div>
+    </AppDialog>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
@@ -442,6 +426,14 @@ import { useAppStore } from "@/stores/app";
 import { useUserStore } from "@/stores/user";
 import { usePageTable, useTableSelection } from "@/composables";
 import { CommonStatus, DeviceEnum, DialogMode, UserGender } from "@/enums";
+import AppDialog from "@/components/AppDialog/index.vue";
+import AppDrawer from "@/components/AppDrawer/index.vue";
+import DataTable from "@/components/DataTable/index.vue";
+import FilterBar from "@/components/FilterBar/index.vue";
+import PageShell from "@/components/PageShell/index.vue";
+import Pagination from "@/components/Pagination/index.vue";
+import RowActions from "@/components/RowActions/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { useResourceFormSubmit } from "@/views/resources/useResourceFormSubmit";
 
@@ -454,13 +446,13 @@ const appStore = useAppStore();
 const userStore = useUserStore();
 const { t } = useI18n();
 
-const queryFormRef = ref<FormInstance>();
+const filterBarRef = ref<InstanceType<typeof FilterBar>>();
 const userFormRef = ref<FormInstance>();
 const { isSubmitting, submitForm } = useResourceFormSubmit(userFormRef);
 const resetPasswordFormRef = ref<FormInstance>();
 
 /** 分页表格数据管理 */
-const { loading, list, total, params, fetchData, handleQuery, resetParams } = usePageTable<
+const { loading, list, total, error, params, fetchData, handleQuery, resetParams } = usePageTable<
   UserItem,
   UserQueryParams
 >({
@@ -472,7 +464,15 @@ const { loading, list, total, params, fetchData, handleQuery, resetParams } = us
   request: userService.getPage,
 });
 
+// FilterBar 的 resetFields 需要与 params 同一个响应式对象
 const requestRows = useDebounceFn(handleQuery, 300);
+const hasActiveFilters = computed(
+  () =>
+    Boolean(params.keyword || params.createTime?.length) ||
+    [params.status, params.roleId, params.deptId].some(
+      (value) => value !== undefined && value !== null && value !== "",
+    ),
+);
 
 watch(
   [
@@ -489,7 +489,7 @@ watch(
 );
 
 function handleResetQuery(): void {
-  queryFormRef.value?.resetFields();
+  filterBarRef.value?.form?.resetFields();
   resetParams();
   requestRows();
 }
@@ -561,10 +561,6 @@ function handleDepartmentClick(node: DepartmentTreeNode): void {
 }
 
 const drawerSize = computed(() => (appStore.device === DeviceEnum.DESKTOP ? "600px" : "90%"));
-
-const resetPasswordDialogWidth = computed(() =>
-  appStore.device === DeviceEnum.DESKTOP ? "420px" : "90%",
-);
 
 const rules = computed<FormRules<UserForm>>(() => ({
   username: [
@@ -859,14 +855,6 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.user-name-cell {
-  @apply 'inline-flex gap-[8px] items-center';
-
-  &__text {
-    @apply 'inline-flex shrink-0 items-center justify-center w-[24px] h-[24px] text-[14px] font-medium text-[var(--el-color-primary)] [background:var(--el-color-primary-light-9)] rounded-[50%]';
-  }
-}
-
 :global(.temporary-password-box .el-message-box__message) {
   width: 100%;
 }

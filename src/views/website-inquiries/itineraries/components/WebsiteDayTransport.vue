@@ -1,8 +1,10 @@
 <template>
-  <section>
-    <div class="flex justify-between items-center mb-3">
-      <strong>{{ $t("websiteItineraryUi.transportLegs") }}</strong>
-      <div v-if="editable" class="flex gap-2">
+  <section class="surface-muted p-4 flex flex-col gap-3">
+    <div class="flex flex-wrap justify-between items-center gap-3">
+      <h4 class="m-0 text-[14px] text-strong font-600">
+        {{ $t("websiteItineraryUi.transportLegs") }}
+      </h4>
+      <div v-if="editable" class="flex flex-wrap gap-2">
         <el-select
           v-model="selectedId"
           autocomplete="new-password"
@@ -26,11 +28,10 @@
         </el-button>
       </div>
     </div>
-    <el-card
+    <div
       v-for="(leg, index) in day.legs"
       :key="leg.id"
-      shadow="never"
-      class="mb-3"
+      class="p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)]"
     >
       <div class="grid grid-cols-3 gap-x-4 max-[650px]:grid-cols-1">
         <el-form-item :label="$t('websiteItineraryUi.departureCity')">
@@ -81,7 +82,7 @@
       >
         {{ $t("websiteItineraryUi.removeTransportLeg") }}
       </el-button>
-    </el-card>
+    </div>
   </section>
 </template>
 <script setup lang="ts">

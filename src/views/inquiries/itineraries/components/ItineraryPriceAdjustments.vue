@@ -1,12 +1,13 @@
 <template>
-  <el-dialog
+  <AppDialog
     :model-value="modelValue"
     :title="$t('identity.prices')"
-    width="min(1200px, 96vw)"
+    size="xl"
     :close-on-click-modal="false"
+    :busy="saving"
     @close="emit('cancel')"
   >
-    <el-card shadow="never" class="max-h-60vh overflow-y-auto">
+    <div class="price-adjustments">
       <el-form v-if="adjustedRows.length || activeVehiclePlans.length" label-position="top">
         <div
           v-for="row in adjustedRows"
@@ -91,10 +92,10 @@
           </el-form-item>
         </div>
       </el-form>
-      <el-empty v-else :description="$t('identity.noPriceItems')" />
+      <FeedbackState v-else :title="$t('identity.noPriceItems')" />
       <el-collapse @change="loadHistory">
         <el-collapse-item :title="$t('identity.history')" name="history">
-          <el-table v-loading="isHistoryLoading" :data="history" size="small">
+          <DataTable :loading="isHistoryLoading" :data="history" size="small">
             <el-table-column prop="itemName" :label="$t('identity.actual')" />
             <el-table-column :label="$t('identity.actual')">
               <template #default="{ row }">
@@ -108,10 +109,10 @@
                 {{ formatDateTime(row.occurredAt) }}
               </template>
             </el-table-column>
-          </el-table>
+          </DataTable>
         </el-collapse-item>
       </el-collapse>
-    </el-card>
+    </div>
     <template #footer>
       <el-button @click="emit('cancel')">
         {{ $t(editable ? "common.cancel" : "common.close") }}
@@ -125,10 +126,13 @@
         {{ $t("itinerary.save") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 <script setup lang="ts">
 import { ElMessage } from "element-plus";
+import AppDialog from "@/components/AppDialog/index.vue";
+import DataTable from "@/components/DataTable/index.vue";
+import FeedbackState from "@/components/FeedbackState/index.vue";
 import type { ItineraryRecord, ItineraryVehiclePlan, PriceAdjustment } from "@/types/itinerary";
 import {
   itineraryPriceRows,
@@ -201,7 +205,7 @@ watch(
 </script>
 
 <style scoped lang="scss">
-:deep(.el-form:not(.el-form--inline) .el-form-item > .el-form-item__label) {
+.price-adjustments :deep(.el-form:not(.el-form--inline) .el-form-item > .el-form-item__label) {
   max-width: 100%;
 }
 </style>

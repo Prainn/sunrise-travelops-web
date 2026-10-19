@@ -1,8 +1,8 @@
 <template>
-  <el-dialog
+  <AppDialog
     :model-value="modelValue"
     :title="mealSlot ? $t(`itinerary.meals.${mealSlot}`) : $t('itinerary.addResource')"
-    width="680px"
+    size="lg"
     destroy-on-close
     @close="emit('update:modelValue', false)"
   >
@@ -136,10 +136,11 @@
         {{ $t("common.confirm") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
+import AppDialog from "@/components/AppDialog/index.vue";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import { useResourcePriceSelection } from "../useResourcePriceSelection";

@@ -56,8 +56,18 @@
             />
           </el-menu>
         </el-scrollbar>
-        <div class="layout-sidebar__toggle" @click="toggleSidebar">
-          <div class="i-svg:arrow-left-right layout-sidebar__toggle-icon" />
+        <div
+          class="layout-sidebar__toggle"
+          role="button"
+          tabindex="0"
+          :title="isSidebarOpen ? $t('navbar.collapseMenu') : $t('navbar.expandMenu')"
+          :aria-label="isSidebarOpen ? $t('navbar.collapseMenu') : $t('navbar.expandMenu')"
+          :aria-expanded="isSidebarOpen"
+          @click="toggleSidebar"
+          @keydown.enter.prevent="toggleSidebar"
+          @keydown.space.prevent="toggleSidebar"
+        >
+          <div class="i-svg:arrow-left-right layout-sidebar__toggle-icon" aria-hidden="true" />
         </div>
       </div>
 

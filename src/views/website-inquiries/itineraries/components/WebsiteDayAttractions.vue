@@ -1,8 +1,10 @@
 <template>
-  <section>
-    <div class="flex justify-between items-center mb-3">
-      <strong>{{ $t("websiteItineraryUi.attractions") }}</strong>
-      <div v-if="editable" class="flex gap-2">
+  <section class="surface-muted p-4 flex flex-col gap-3">
+    <div class="flex flex-wrap justify-between items-center gap-3">
+      <h4 class="m-0 text-[14px] text-strong font-600">
+        {{ $t("websiteItineraryUi.attractions") }}
+      </h4>
+      <div v-if="editable" class="flex flex-wrap gap-2">
         <el-select
           v-model="selectedId"
           autocomplete="new-password"
@@ -26,19 +28,17 @@
         </el-button>
       </div>
     </div>
-    <el-empty
+    <FeedbackState
       v-if="!day.items.length"
-      :description="$t('websiteItineraryUi.noAttractions')"
-      :image-size="40"
+      :title="$t('websiteItineraryUi.noAttractions')"
     />
-    <el-card
+    <div
       v-for="(item, index) in day.items"
       :key="item.id"
-      shadow="never"
-      class="mb-3"
+      class="p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)]"
     >
-      <div class="flex gap-3 justify-between items-center mb-3">
-        <span>
+      <div class="flex flex-wrap gap-3 justify-between items-center mb-3">
+        <span class="text-strong">
           {{ index + 1 }}. {{ item.nameZh || $t("websiteItineraryUi.manualAttractionOrComponent") }}
         </span>
         <div v-if="editable">
@@ -88,13 +88,14 @@
       <el-button v-if="editable && item.attractionId" link @click="item.attractionId = null">
         {{ $t("websiteItineraryUi.convertToManualCopy") }}
       </el-button>
-    </el-card>
+    </div>
   </section>
 </template>
 <script setup lang="ts">
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage } from "element-plus";
+import FeedbackState from "@/components/FeedbackState/index.vue";
 import type { WebsiteConfig, WebsiteDay } from "@/types/website";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
 const day = defineModel<WebsiteDay>("day", { required: true });

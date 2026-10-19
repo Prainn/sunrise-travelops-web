@@ -1,9 +1,9 @@
 <template>
-  <el-dialog
+  <AppDialog
     class="inquiry-editor-dialog"
     :model-value="modelValue"
     :title="$t(isEditing ? 'inquiry.editInquiry' : 'inquiry.createInquiry')"
-    width="820px"
+    size="lg"
     destroy-on-close
     @update:model-value="emit('update:modelValue', $event)"
     @open="resetForm"
@@ -171,10 +171,11 @@
         {{ $t("common.confirm") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
+import AppDialog from "@/components/AppDialog/index.vue";
 import { businessUnitName } from "@/constants/identity";
 import { useUserStore } from "@/stores/user";
 import { inquiryService } from "@/services/inquiry.service";

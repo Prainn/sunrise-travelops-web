@@ -1,9 +1,8 @@
 <template>
-  <el-dialog
+  <AppDialog
     :model-value="modelValue"
     :title="$t('itinerary.editItinerary')"
-    width="min(680px, calc(100vw - 32px))"
-    class="max-[550px]:mt-[16px]!"
+    size="md"
     destroy-on-close
     @open="resetForm"
     @close="emit('update:modelValue', false)"
@@ -60,10 +59,11 @@
         {{ $t("common.confirm") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
+import AppDialog from "@/components/AppDialog/index.vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { WebsiteItinerary } from "@/types/website";

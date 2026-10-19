@@ -1,54 +1,44 @@
 <template>
-  <div class="hotel-page page-container">
-    <el-card class="page-search" shadow="never">
-      <el-form :inline="true">
-        <el-form-item :label="$t('common.keywords')">
-          <el-input
-            v-model.trim="keywords"
-            :placeholder="$t('hotel.searchPlaceholder')"
-            class="page-search__keywords"
-            clearable
+  <PageShell>
+    <FilterBar @reset="resetQuery">
+      <el-form-item :label="$t('common.keywords')" class="filter-bar__wide">
+        <el-input
+          v-model.trim="keywords"
+          :placeholder="$t('hotel.searchPlaceholder')"
+          clearable
+        />
+      </el-form-item>
+      <el-form-item :label="$t('resource.city')">
+        <el-select
+          v-model="city"
+          autocomplete="new-password"
+          :placeholder="$t('common.all')"
+          clearable
+        >
+          <el-option
+            v-for="option in cityOptions"
+            :key="option"
+            :label="option"
+            :value="option"
           />
-        </el-form-item>
-        <el-form-item :label="$t('resource.city')">
-          <el-select
-            v-model="city"
-            autocomplete="new-password"
-            :placeholder="$t('common.all')"
-            clearable
-            class="hotel-page__city-select"
-          >
-            <el-option
-              v-for="option in cityOptions"
-              :key="option"
-              :label="option"
-              :value="option"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="$t('resource.starRating')">
-          <el-select
-            v-model="rating"
-            autocomplete="new-password"
-            :placeholder="$t('common.all')"
-            clearable
-            class="hotel-page__rating-select"
-          >
-            <el-option
-              v-for="value in [3, 4, 5]"
-              :key="value"
-              :label="$t(`hotel.ratings.${value}`)"
-              :value="value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button @click="resetQuery">
-            {{ $t("common.reset") }}
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+        </el-select>
+      </el-form-item>
+      <el-form-item :label="$t('resource.starRating')">
+        <el-select
+          v-model="rating"
+          autocomplete="new-password"
+          :placeholder="$t('common.all')"
+          clearable
+        >
+          <el-option
+            v-for="value in [3, 4, 5]"
+            :key="value"
+            :label="$t(`hotel.ratings.${value}`)"
+            :value="value"
+          />
+        </el-select>
+      </el-form-item>
+    </FilterBar>
 
     <HotelTable
       v-model:page="pageNum"
@@ -56,6 +46,8 @@
       :loading="isLoading"
       :total="total"
       :rows="hotelStore"
+      :error="loadError"
+      :filtered="hasActiveFilters"
       @pagination="refreshHotels"
       @refresh="refreshHotels"
       @create="openCreateDialog"
@@ -64,13 +56,11 @@
       @delete="deleteHotel"
     />
 
-    <el-dialog
+    <AppDialog
       v-model="isHotelDialogVisible"
       :title="$t(isEditing ? 'hotel.editHotel' : 'hotel.createHotel')"
-      width="680px"
-      :show-close="!isSubmitting"
-      :close-on-click-modal="!isSubmitting"
-      :close-on-press-escape="!isSubmitting"
+      size="md"
+      :busy="isSubmitting"
       destroy-on-close
     >
       <el-form
@@ -147,8 +137,8 @@
           {{ $t("common.confirm") }}
         </el-button>
       </template>
-    </el-dialog>
-  </div>
+    </AppDialog>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
@@ -158,7 +148,10 @@ import { useDebounceFn } from "@vueuse/core";
 import type { FormInstance, FormRules } from "element-plus";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+import AppDialog from "@/components/AppDialog/index.vue";
 import CitySelect from "@/components/CitySelect.vue";
+import FilterBar from "@/components/FilterBar/index.vue";
+import PageShell from "@/components/PageShell/index.vue";
 import { useCityOptions } from "@/composables/useCityOptions";
 import { resourceService } from "@/services/resource.service";
 import type { HotelRating, HotelRecord, ResourceListQuery } from "@/types/resource";
@@ -212,6 +205,8 @@ function currentQuery(): ResourceListQuery {
 }
 
 const isLoading = ref(false);
+const loadError = ref("");
+const hasActiveFilters = computed(() => Boolean(keywords.value || city.value || rating.value));
 
 async function loadHotels(query?: ResourceListQuery) {
   isLoading.value = true;
@@ -219,8 +214,10 @@ async function loadHotels(query?: ResourceListQuery) {
     const records = await resourceService.loadHotels(query ?? currentQuery());
     hotelStore.splice(0, hotelStore.length, ...records);
     total.value = resourceService.getTotal(resourceService.hotels);
+    loadError.value = "";
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : String(error));
+    loadError.value = error instanceof Error ? error.message : String(error);
+    ElMessage.error(loadError.value);
   } finally {
     isLoading.value = false;
   }
@@ -341,14 +338,3 @@ async function confirmDelete(messageKey: string) {
   }
 }
 </script>
-
-<style scoped lang="scss">
-.hotel-page {
-  &__city-select {
-    @apply 'w-[150px]';
-  }
-  &__rating-select {
-    @apply 'w-[150px]';
-  }
-}
-</style>

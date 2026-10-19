@@ -1,8 +1,8 @@
 <template>
-  <el-drawer
+  <AppDrawer
     :model-value="modelValue"
     :title="$t('websiteInquiry.historyTitle', { code: record?.code ?? '' })"
-    size="min(700px, 94vw)"
+    size="md"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <el-alert
@@ -11,10 +11,9 @@
       type="error"
       :closable="false"
     />
-    <el-table
-      v-loading="loading"
+    <DataTable
+      :loading="loading"
       :data="rows"
-      border
       row-key="id"
     >
       <el-table-column :label="$t('websiteInquiry.time')" width="210">
@@ -25,7 +24,7 @@
       <el-table-column prop="actorName" :label="$t('websiteInquiry.actor')" width="100" />
       <el-table-column prop="action" :label="$t('common.actions')" width="140" />
       <el-table-column prop="detail" :label="$t('websiteInquiry.details')" />
-    </el-table>
+    </DataTable>
     <Pagination
       v-if="total"
       v-model:page="page"
@@ -33,10 +32,12 @@
       :total="total"
       @pagination="load"
     />
-  </el-drawer>
+  </AppDrawer>
 </template>
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import AppDrawer from "@/components/AppDrawer/index.vue";
+import DataTable from "@/components/DataTable/index.vue";
 import Pagination from "@/components/Pagination/index.vue";
 import { formatDateTime } from "@/utils";
 import { websiteErrorMessage, websiteService } from "@/services/website.service";

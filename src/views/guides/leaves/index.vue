@@ -1,53 +1,47 @@
 <template>
-  <div class="page-container">
-    <el-card class="page-search" shadow="never">
-      <el-form inline>
-        <el-form-item :label="$t('common.keywords')">
-          <el-input
-            v-model="keyword"
-            class="page-search__keywords"
-            :placeholder="$t('guideLeave.searchPlaceholder')"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button @click="resetQuery">
-            {{ $t("common.reset") }}
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-    <el-card class="page-content" shadow="never">
-      <TableToolbar @refresh="load">
+  <PageShell>
+    <FilterBar @reset="resetQuery">
+      <el-form-item :label="$t('common.keywords')" class="filter-bar__wide">
+        <el-input
+          v-model="keyword"
+          :placeholder="$t('guideLeave.searchPlaceholder')"
+          clearable
+        />
+      </el-form-item>
+    </FilterBar>
+    <SectionCard fill>
+      <TableToolbar :refreshing="loading" @refresh="load">
         <el-button v-has-perm="RESOURCE_PERMISSIONS.guide.create" type="primary" @click="openCreate">
           {{ $t("common.create") }}
         </el-button>
       </TableToolbar>
-      <div class="page-table-wrapper">
-        <el-table
-          v-loading="loading"
-          :data="rows"
-          border
-          height="100%"
-          row-key="id"
-        >
-          <el-table-column prop="guideName" :label="$t('guideLeave.guide')" min-width="140" />
-          <el-table-column prop="startDate" :label="$t('guideLeave.startDate')" min-width="120" />
-          <el-table-column prop="endDate" :label="$t('guideLeave.endDate')" min-width="120" />
-          <el-table-column
-            prop="reason"
-            :label="$t('guideLeave.reason')"
-            min-width="160"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            prop="remark"
-            :label="$t('common.remark')"
-            min-width="180"
-            show-overflow-tooltip
-          />
-          <el-table-column :label="$t('common.actions')" width="140" fixed="right">
-            <template #default="{ row }">
+      <DataTable
+        fill
+        :loading="loading"
+        :data="rows"
+        :error="loadError"
+        :filtered="Boolean(keyword)"
+        row-key="id"
+        @retry="load"
+      >
+        <el-table-column prop="guideName" :label="$t('guideLeave.guide')" min-width="140" />
+        <el-table-column prop="startDate" :label="$t('guideLeave.startDate')" min-width="120" />
+        <el-table-column prop="endDate" :label="$t('guideLeave.endDate')" min-width="120" />
+        <el-table-column
+          prop="reason"
+          :label="$t('guideLeave.reason')"
+          min-width="160"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="remark"
+          :label="$t('common.remark')"
+          min-width="180"
+          show-overflow-tooltip
+        />
+        <el-table-column :label="$t('common.actions')" width="140" fixed="right">
+          <template #default="{ row }">
+            <RowActions>
               <el-button
                 v-has-perm="RESOURCE_PERMISSIONS.guide.update"
                 link
@@ -64,27 +58,25 @@
               >
                 {{ $t("common.delete") }}
               </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <pagination
+            </RowActions>
+          </template>
+        </el-table-column>
+      </DataTable>
+      <Pagination
         v-if="total > 0"
         v-model:page="pageNum"
         v-model:limit="pageSize"
         :total="total"
         @pagination="load"
       />
-    </el-card>
+    </SectionCard>
 
-    <el-dialog
+    <AppDialog
       v-model="dialogVisible"
       :title="$t(editing ? 'guideLeave.editTitle' : 'guideLeave.createTitle')"
-      width="520px"
+      size="md"
+      :busy="saving"
       destroy-on-close
-      :close-on-click-modal="!saving"
-      :close-on-press-escape="!saving"
-      :show-close="!saving"
     >
       <el-form
         ref="formRef"
@@ -118,7 +110,7 @@
             value-format="YYYY-MM-DD"
             :start-placeholder="$t('guideLeave.startDate')"
             :end-placeholder="$t('guideLeave.endDate')"
-            class="!w-full"
+            style="width: 100%"
           />
         </el-form-item>
         <el-form-item :label="$t('guideLeave.reason')">
@@ -146,8 +138,8 @@
           {{ $t("common.confirm") }}
         </el-button>
       </template>
-    </el-dialog>
-  </div>
+    </AppDialog>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
@@ -155,6 +147,13 @@ import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
+import AppDialog from "@/components/AppDialog/index.vue";
+import DataTable from "@/components/DataTable/index.vue";
+import FilterBar from "@/components/FilterBar/index.vue";
+import PageShell from "@/components/PageShell/index.vue";
+import Pagination from "@/components/Pagination/index.vue";
+import RowActions from "@/components/RowActions/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import { resourceService } from "@/services/resource.service";
@@ -168,6 +167,7 @@ defineOptions({ name: "GuideLeaves" });
 const { t } = useI18n();
 const keyword = ref("");
 const loading = ref(false);
+const loadError = ref("");
 const validating = ref(false);
 const requesting = ref(false);
 const saving = computed(() => validating.value || requesting.value);
@@ -206,7 +206,9 @@ async function load() {
     });
     rows.value = result.list;
     total.value = result.total;
+    loadError.value = "";
   } catch (error) {
+    loadError.value = error instanceof Error ? error.message : String(error);
     message(error);
   } finally {
     loading.value = false;

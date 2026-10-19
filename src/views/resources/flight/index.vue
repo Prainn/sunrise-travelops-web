@@ -1,7 +1,8 @@
 <template>
-  <div class="resource-page">
+  <div class="h-full min-h-0">
     <ResourceTable
       :loading="isLoading"
+      :error="loadError"
       :rows="rows"
       :total="total"
       :columns="columns"
@@ -102,6 +103,7 @@ const columns: ResourceColumn[] = [
 ];
 const {
   isLoading,
+  loadError,
   rows,
   total,
   record,

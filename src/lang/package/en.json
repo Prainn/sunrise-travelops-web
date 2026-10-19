@@ -20,7 +20,8 @@
     "tour": "Tours",
     "guideLeave": "Guide Leave",
     "guideRating": "Guide Ratings",
-    "websiteConfig": "Website Configuration"
+    "websiteConfig": "Website Configuration",
+    "websiteInitialDataImport": "Website Initial Data Import"
   },
   "remoteSelect": {
     "loading": "Loading",
@@ -559,17 +560,20 @@
     "updateSuccess": "Updated successfully",
     "view": "View",
     "warning": "Warning",
-    "yes": "Yes"
+    "yes": "Yes",
+    "more": "More",
+    "moreActions": "More actions",
+    "retry": "Retry",
+    "loadFailed": "Failed to load",
+    "noData": "No data",
+    "noMatch": "No records match the current filters",
+    "filters": "Filters"
   },
   "login": {
     "auto": "System",
     "capsLock": "Caps Lock is on",
     "dark": "Dark",
-    "efficient": "Efficient",
     "failed": "Login failed. Please try again later.",
-    "flexible": "Flexible",
-    "heroDescription": "Itinerary and quotation collaboration for travel agencies",
-    "heroTitle": "Sunrise Travel Ops",
     "light": "Light",
     "login": "Login",
     "message": {
@@ -583,7 +587,6 @@
     },
     "password": "Password",
     "rememberMe": "Remember me",
-    "secure": "Secure",
     "username": "Username",
     "welcomeBack": "Welcome back",
     "brandDesign": {
@@ -649,6 +652,10 @@
     "searchMenu": "Search menus"
   },
   "dashboard": {
+    "activeTours": "Active Tours",
+    "businessTrend": "Business Trend",
+    "departingThisWeek": "Departing This Week",
+    "departingTours": "Departing Tours",
     "greeting": {
       "afternoon": "Good afternoon",
       "early": "Working late",
@@ -656,13 +663,11 @@
       "late": "Working late",
       "morning": "Good morning"
     },
+    "guideLeaveRecordsToday": "Leave Records Today",
+    "guideLeaves": "Guide Leaves",
     "lastDays": "Last {days} days",
-    "systemUsers": "System Users",
-    "todayViews": "Views Today",
-    "todayVisitors": "Visitors Today",
-    "views": "Views",
-    "visitTrend": "Visit Trend",
-    "visitors": "Visitors"
+    "newInquiries": "New Inquiries",
+    "noAccessibleStats": "No statistics available for your account"
   },
   "profile": {
     "avatarUpdatedSuccess": "Avatar updated",
@@ -782,7 +787,6 @@
     "agencyChildCount": "Secondary {count}",
     "agencyParentContext": "Parent: {name}",
     "agencyLoadMore": "Load more secondary agencies",
-    "agencySecondary": "Secondary",
     "agencySearchPlaceholder": "Search agency name, code, region, or email",
     "attractionName": "Attraction Name",
     "city": "City/Region",
@@ -802,7 +806,6 @@
     "editTitle": "Edit Resource",
     "fieldRequired": "Enter {field}",
     "hotelName": "Hotel Name",
-    "name": "Resource Name",
     "noAgencies": "No travel agencies",
     "noContacts": "No contacts",
     "personName": "Person Name",
@@ -824,7 +827,6 @@
     "isStandardPrice": "Standard price",
     "standardPrice": "Standard price",
     "priceRequired": "Please enter a price",
-    "priceMissing": "Price to be added",
     "descriptionRequired": "Please enter a description"
   },
   "hotel": {
@@ -852,42 +854,17 @@
   "attraction": {
     "area": "Tourism Area",
     "areaRequired": "Select a tourism area",
-    "effectivePeriod": "Effective Period",
-    "audience": "Ticket Type / Audience",
-    "audiencePlaceholder": "For example adult, senior, child, or general",
-    "audienceRequired": "Enter a ticket type or audience",
     "category": "Resource Category",
     "categoryExperience": "Experience",
     "categoryPackage": "Package",
     "categoryPerformance": "Performance",
-    "categoryRequired": "Select a resource category",
     "categoryScenic": "Scenic Attraction",
     "categoryTransport": "Transport",
     "createAttraction": "Create Attraction",
-    "createPrice": "Create Price Item",
-    "deletePriceConfirm": "Delete this price item?",
     "editAttraction": "Edit Attraction",
-    "editPrice": "Edit Price Item",
-    "freeTicket": "Free Ticket",
-    "itemActivity": "Activity",
-    "itemGuide": "Guide Service",
-    "itemName": "Item Name",
-    "itemNameRequired": "Enter an item name",
-    "itemPackage": "Package",
-    "itemTicket": "Admission",
-    "itemTransport": "Local Transport",
-    "itemType": "Item Type",
-    "itemTypeRequired": "Select an item type",
     "nameRequired": "Enter an attraction name",
-    "priceCount": "Price Items",
-    "priceItems": "Ticket Types and Price Items",
-    "priceNote": "Price Notes",
-    "pricePeriod": "Price Period",
-    "rackPrice": "Rack Price",
     "restroomLocation": "Restroom Location / Condition",
     "searchPlaceholder": "Search code, attraction, or notes",
-    "settlementPrice": "Settlement Price",
-    "periodRequired": "Enter a pricing period name",
     "price": "Price"
   },
   "guide": {
@@ -923,23 +900,15 @@
   "restaurant": {
     "address": "Address",
     "cityRequired": "Select a city",
-    "createPrice": "Create Menu Price",
     "createRestaurant": "Create Restaurant",
-    "deletePriceConfirm": "Delete this menu price?",
     "dinerCount": "Diners",
-    "dishDetails": "Dish Details",
-    "editPrice": "Edit Menu Price",
     "editRestaurant": "Edit Restaurant",
-    "menuName": "Menu Name",
-    "menuNameRequired": "Enter a menu name",
     "nameRequired": "Enter a restaurant name",
     "perPerson": "Per Person",
     "perTable": "Per Table",
     "price": "Price",
-    "priceItems": "Menus and Prices",
     "priceRequired": "Enter a price",
     "priceUnit": "Price Unit",
-    "priceUnitRequired": "Select a price unit",
     "searchPlaceholder": "Search restaurant code, name, city, or cuisine",
     "dinerCountRequired": "Enter a positive whole number of diners per table"
   },
@@ -964,9 +933,6 @@
     }
   },
   "service": {
-    "auth": {
-      "missingRefreshToken": "No valid refresh token"
-    },
     "user": {
       "passwordMin": "Password must contain at least 6 characters"
     }
@@ -1098,7 +1064,6 @@
     "totalVehiclePrice": "Total vehicle cost (CNY)",
     "vehicleTotalOverrideHint": "Segment prices total ¥{total}. The manually entered total will be used as the vehicle cost.",
     "capacityHint": "{seats} seats in total for {passengers} passengers",
-    "hotelPriceUnit": "CNY/room/night (breakfast included)",
     "hotelPrice": "Actual price per room per night",
     "languages": {
       "none": "None",
@@ -1366,7 +1331,6 @@
     "guideScopePlaceholder": "e.g. Full day",
     "transportLegs": "Transport legs",
     "hotelPlans": "Hotel options",
-    "mealsAndOtherServices": "Meals and other services",
     "addHotel": "Add hotel",
     "hotelRequiredHint": "Accommodation is required for this day. Enter at least one hotel name. Select tier A or B manually; shared hotel ratings are not mapped automatically.",
     "hotelTier": "Hotel tier",
@@ -1426,11 +1390,7 @@
     "draft": "Draft",
     "confirmed": "Confirmed",
     "addItinerary": "Add itinerary",
-    "customerSummary": "Customer: {name}",
     "plannedDaysSummary": "Planned duration: {days} days",
-    "ownerSummary": "Coordinator: {name}",
-    "requirementsAndRemarks": "Inquiry text and internal remarks",
-    "internalRemarkSummary": "Internal remarks: {remark}",
     "noCityConfig": "No website cities have been configured. Maintain cities, attractions and bilingual templates in Travel Resources → Website Resource Configuration before arranging an itinerary manually or generating a draft.",
     "historicalConfigWarning": "This draft uses a historical configuration. Switch to the current configuration and review invalid references before confirming the quotation.",
     "quotedLocked": "Quotation confirmed; itinerary locked",
@@ -1472,8 +1432,6 @@
   "flight": {
     "createTitle": "Add Flight",
     "editTitle": "Edit Flight",
-    "departureCity": "Departure City",
-    "arrivalCity": "Arrival City",
     "flightNumber": "Flight Number",
     "departureTime": "Departure Time",
     "arrivalTime": "Arrival Time",
@@ -1530,7 +1488,8 @@
     "source": "Source",
     "sourceModule": {
       "standard": "Standard",
-      "website": "Website"
+      "website": "Website",
+      "manual": "Manual tour"
     },
     "inquiry": "Inquiry",
     "inquiryCode": "Inquiry",
@@ -1558,7 +1517,26 @@
     "status": {
       "active": "Active",
       "cancelled": "Cancelled"
-    }
+    },
+    "inputRequired": "This field is required",
+    "daysRequired": "Enter a whole number from 1 to 365",
+    "createMode": "Creation method",
+    "createModes": {
+      "manual": "Manual tour",
+      "linked": "Linked inquiry"
+    },
+    "itinerarySummary": "Itinerary",
+    "itinerarySummaryPlaceholder": "e.g. Kunming–Dali–Lijiang 9N10D",
+    "contact": "Contact / order account",
+    "scheduleModeLabel": "Transfer schedule",
+    "scheduleMode": {
+      "flight": "Calculate from flights",
+      "manual": "Enter transfer times"
+    },
+    "pickupDateMismatch": "Pickup date must equal the start date",
+    "dropBeforePickup": "Drop-off cannot be earlier than pickup",
+    "guideUnavailable": "The selected guide is unavailable for the current schedule. Choose another guide or clear it before saving.",
+    "unlinked": "Not linked"
   },
   "menuPermission": {
     "rolesTitle": "Roles",

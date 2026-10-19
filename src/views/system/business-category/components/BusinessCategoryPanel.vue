@@ -1,5 +1,5 @@
 <template>
-  <div class="business-category-panel h-full min-h-0 flex flex-col gap-[12px]">
+  <div class="flex min-h-0 flex-1 flex-col gap-[var(--page-gap)]">
     <BusinessCategorySearch
       v-model:keyword="keyword"
       v-model:status="status"
@@ -7,63 +7,66 @@
       @reset="resetQuery"
     />
 
-    <el-card class="page-content" shadow="never">
-      <TableToolbar @refresh="loadItems">
+    <SectionCard fill>
+      <TableToolbar :refreshing="loading" @refresh="loadItems">
         <el-button v-hasPerm="'sys:business-dictionary:create'" type="primary" @click="openCreate">
           {{ $t("common.create") }}
         </el-button>
       </TableToolbar>
-      <div class="page-table-wrapper">
-        <el-table
-          v-loading="loading"
-          :data="pageRows"
-          height="100%"
-          border
-          row-key="id"
+      <DataTable
+        fill
+        :loading="loading"
+        :data="pageRows"
+        :error="loadError"
+        :filtered="hasActiveFilters"
+        row-key="id"
+        @retry="loadItems"
+      >
+        <el-table-column prop="name" :label="$t(labelKeys.name)" min-width="130" />
+        <el-table-column
+          prop="englishName"
+          :label="$t('businessCategory.englishName')"
+          min-width="150"
+        />
+        <el-table-column prop="code" :label="$t(labelKeys.code)" min-width="140" />
+        <el-table-column
+          v-if="isResourceUnit"
+          :label="$t('businessCategory.applicableResources')"
+          min-width="240"
         >
-          <el-table-column prop="name" :label="$t(labelKeys.name)" min-width="130" />
-          <el-table-column
-            prop="englishName"
-            :label="$t('businessCategory.englishName')"
-            min-width="150"
-          />
-          <el-table-column prop="code" :label="$t(labelKeys.code)" min-width="140" />
-          <el-table-column
-            v-if="isResourceUnit"
-            :label="$t('businessCategory.applicableResources')"
-            min-width="240"
-          >
-            <template #default="scope">
+          <template #default="scope">
+            <div class="flex flex-wrap gap-[6px]">
               <el-tag
                 v-for="type in scope.row.resourceTypes"
                 :key="type"
-                class="business-category-panel__tag ml-[6px] first:ml-0"
                 effect="plain"
               >
                 {{ $t(`itinerary.resourceTypes.${type}`) }}
               </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column :label="$t('common.status')" width="90" align="center">
-            <template #default="scope">
-              <el-tag :type="scope.row.status === 'enabled' ? 'success' : 'info'">
-                {{ $t(scope.row.status === "enabled" ? "common.normal" : "common.disabled") }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="remark"
-            :label="$t('common.remark')"
-            min-width="180"
-            show-overflow-tooltip
-          />
-          <el-table-column
-            :label="$t('common.actions')"
-            width="130"
-            fixed="right"
-            align="center"
-          >
-            <template #default="scope">
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('common.status')" width="90" align="center">
+          <template #default="scope">
+            <el-tag :type="scope.row.status === 'enabled' ? 'success' : 'info'">
+              {{ $t(scope.row.status === "enabled" ? "common.normal" : "common.disabled") }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="remark"
+          :label="$t('common.remark')"
+          min-width="180"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          :label="$t('common.actions')"
+          width="140"
+          fixed="right"
+          align="center"
+        >
+          <template #default="scope">
+            <RowActions>
               <el-button
                 v-hasPerm="'sys:business-dictionary:update'"
                 link
@@ -80,21 +83,22 @@
               >
                 {{ $t("common.delete") }}
               </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <pagination
+            </RowActions>
+          </template>
+        </el-table-column>
+      </DataTable>
+      <Pagination
         v-model:page="page"
         v-model:limit="pageSize"
         :total="rows.length"
       />
-    </el-card>
+    </SectionCard>
 
-    <el-dialog
+    <AppDialog
       v-model="dialogVisible"
       :title="$t(dialogTitleKey)"
-      width="600px"
+      size="md"
+      :busy="isSubmitting"
       destroy-on-close
     >
       <el-form
@@ -159,14 +163,14 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">
+        <el-button :disabled="isSubmitting" @click="dialogVisible = false">
           {{ $t("common.cancel") }}
         </el-button>
         <el-button type="primary" :loading="isSubmitting" @click="saveItem">
           {{ $t("common.confirm") }}
         </el-button>
       </template>
-    </el-dialog>
+    </AppDialog>
   </div>
 </template>
 
@@ -177,6 +181,11 @@ import { useI18n } from "vue-i18n";
 import { businessDictionaryService, type CatalogEntry } from "@/services/business-dictionary.service";
 import type { ItineraryItemType } from "@/types/itinerary";
 import type { BusinessCategoryOptionRecord, BusinessCategoryTypeRecord } from "@/types/resource";
+import AppDialog from "@/components/AppDialog/index.vue";
+import DataTable from "@/components/DataTable/index.vue";
+import Pagination from "@/components/Pagination/index.vue";
+import RowActions from "@/components/RowActions/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import BusinessCategorySearch from "./BusinessCategorySearch.vue";
 import { useResourceFormSubmit } from "@/views/resources/useResourceFormSubmit";
@@ -198,6 +207,8 @@ const resourceTypes: ItineraryItemType[] = [
 const keyword = ref("");
 const status = ref("");
 const loading = ref(false);
+const loadError = ref("");
+const hasActiveFilters = computed(() => Boolean(keyword.value || status.value));
 const rows = ref<CategoryItem[]>([]);
 let loadVersion = 0;
 const page = ref(1);
@@ -361,9 +372,11 @@ async function loadItems() {
     }));
     page.value = Math.min(page.value, Math.max(1, Math.ceil(rows.value.length / pageSize.value)));
     category.items.splice(0, category.items.length, ...items);
+    loadError.value = "";
   } catch (error) {
     if (version !== loadVersion) return;
-    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+    loadError.value = error instanceof Error ? error.message : t("request.failed");
+    ElMessage.error(loadError.value);
   } finally {
     if (version === loadVersion) loading.value = false;
   }

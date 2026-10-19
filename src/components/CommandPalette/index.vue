@@ -20,9 +20,10 @@
       >Ctrl K</kbd>
     </div>
 
-    <el-dialog
+    <AppDialog
       v-model="visible"
-      width="720px"
+      :title="$t('commandPalette.searchMenu')"
+      width="min(720px, calc(100vw - 24px))"
       :close-on-click-modal="true"
       :show-close="false"
       @close="close"
@@ -83,7 +84,7 @@
         </div>
 
         <div
-          class="command-palette-hints flex gap-[14px] items-center pt-[10px] [border-top:1px_solid_var(--el-border-color-lighter)]"
+          class="command-palette-hints flex gap-[14px] items-center pt-[10px] [border-top:1px_solid_var(--divider-color)]"
         >
           <div class="command-palette-hint inline-flex gap-[6px] items-center">
             <div
@@ -122,12 +123,13 @@
           </div>
         </div>
       </div>
-    </el-dialog>
+    </AppDialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
+import AppDialog from "@/components/AppDialog/index.vue";
 import { useCommandPalette } from "./useCommandPalette";
 
 const {

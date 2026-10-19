@@ -18,6 +18,8 @@
             class="layout-double__primary-item"
             :class="{ 'is-active': item.path === activeTopMenuPath }"
             :title="item.meta?.title ? translateRouteTitle(item.meta.title) : undefined"
+            :aria-label="item.meta?.title ? translateRouteTitle(item.meta.title) : undefined"
+            :aria-current="item.path === activeTopMenuPath ? 'page' : undefined"
             type="button"
             @click="handleTopMenuSelect(item.path)"
           >
@@ -29,10 +31,12 @@
         <button
           class="layout-double__primary-toggle"
           :title="isSidebarOpen ? $t('navbar.collapseMenu') : $t('navbar.expandMenu')"
+          :aria-label="isSidebarOpen ? $t('navbar.collapseMenu') : $t('navbar.expandMenu')"
+          :aria-expanded="isSidebarOpen"
           type="button"
           @click="toggleSidebar"
         >
-          <div class="i-svg:arrow-left-right layout-double__primary-toggle-icon" />
+          <div class="i-svg:arrow-left-right layout-double__primary-toggle-icon" aria-hidden="true" />
         </button>
       </div>
 

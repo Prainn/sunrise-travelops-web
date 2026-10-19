@@ -1,12 +1,10 @@
 <template>
-  <el-dialog
+  <AppDialog
     v-model="isVisible"
     :title="$t(isEditing ? 'resource.editContactTitle' : 'resource.createContactTitle')"
-    width="480px"
-    :show-close="!isSubmitting"
-    :close-on-click-modal="!isSubmitting"
-    :close-on-press-escape="!isSubmitting"
+    size="sm"
     destroy-on-close
+    :busy="isSubmitting"
     @closed="resetForm"
   >
     <el-form
@@ -36,13 +34,14 @@
         {{ $t("common.confirm") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
+import AppDialog from "@/components/AppDialog/index.vue";
 import type { AgencyContactRecord } from "@/types/resource";
 import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 

@@ -20,7 +20,8 @@
     "tour": "旅行团",
     "guideLeave": "导游请假",
     "guideRating": "导游评分",
-    "websiteConfig": "独立站配置"
+    "websiteConfig": "独立站配置",
+    "websiteInitialDataImport": "独立站初始数据导入"
   },
   "remoteSelect": {
     "loading": "加载中",
@@ -559,17 +560,20 @@
     "updateSuccess": "更新成功",
     "view": "查看",
     "warning": "警告",
-    "yes": "是"
+    "yes": "是",
+    "more": "更多",
+    "moreActions": "更多操作",
+    "retry": "重试",
+    "loadFailed": "加载失败",
+    "noData": "暂无数据",
+    "noMatch": "没有符合当前筛选条件的记录",
+    "filters": "筛选条件"
   },
   "login": {
     "auto": "跟随系统",
     "capsLock": "大写锁定已打开",
     "dark": "暗黑",
-    "efficient": "高效",
     "failed": "登录失败，请稍后重试",
-    "flexible": "灵活",
-    "heroDescription": "面向组团社的行程与报价协作平台",
-    "heroTitle": "Sunrise Travel Ops",
     "light": "明亮",
     "login": "登录",
     "message": {
@@ -583,7 +587,6 @@
     },
     "password": "密码",
     "rememberMe": "记住我",
-    "secure": "安全",
     "username": "用户名",
     "welcomeBack": "欢迎回来",
     "brandDesign": {
@@ -649,6 +652,10 @@
     "searchMenu": "搜索菜单"
   },
   "dashboard": {
+    "activeTours": "有效团",
+    "businessTrend": "业务趋势",
+    "departingThisWeek": "本周出发",
+    "departingTours": "出发团数",
     "greeting": {
       "afternoon": "下午好",
       "early": "夜深了",
@@ -656,13 +663,11 @@
       "late": "夜深了",
       "morning": "早上好"
     },
+    "guideLeaveRecordsToday": "今日请假记录",
+    "guideLeaves": "导游请假",
     "lastDays": "最近 {days} 天",
-    "systemUsers": "系统用户",
-    "todayViews": "今日浏览量",
-    "todayVisitors": "今日访客",
-    "views": "浏览量",
-    "visitTrend": "访问趋势",
-    "visitors": "访客数"
+    "newInquiries": "新增询盘",
+    "noAccessibleStats": "当前账号暂无可查看的统计"
   },
   "profile": {
     "avatarUpdatedSuccess": "头像更新成功",
@@ -782,7 +787,6 @@
     "agencyChildCount": "二级 {count}",
     "agencyParentContext": "父级：{name}",
     "agencyLoadMore": "加载更多二级组团社",
-    "agencySecondary": "二级",
     "agencySearchPlaceholder": "搜索组团社名称、编号、地区或邮箱",
     "attractionName": "景点名称",
     "city": "城市/区域",
@@ -802,7 +806,6 @@
     "editTitle": "编辑资源",
     "fieldRequired": "请输入{field}",
     "hotelName": "酒店名称",
-    "name": "资源名称",
     "noAgencies": "暂无组团社",
     "noContacts": "暂无联系人",
     "personName": "人员姓名",
@@ -824,7 +827,6 @@
     "isStandardPrice": "是否为标准价",
     "standardPrice": "标准价",
     "priceRequired": "请输入价格",
-    "priceMissing": "待补价",
     "descriptionRequired": "请输入描述"
   },
   "hotel": {
@@ -852,42 +854,17 @@
   "attraction": {
     "area": "旅游区域",
     "areaRequired": "请选择旅游区域",
-    "effectivePeriod": "有效时间段",
-    "audience": "票型/人群",
-    "audiencePlaceholder": "例如成人、老人、儿童或通用",
-    "audienceRequired": "请输入票型或适用人群",
     "category": "资源类别",
     "categoryExperience": "体验项目",
     "categoryPackage": "组合套票",
     "categoryPerformance": "演出",
-    "categoryRequired": "请选择资源类别",
     "categoryScenic": "景区",
     "categoryTransport": "交通项目",
     "createAttraction": "新增景点",
-    "createPrice": "新增票价项目",
-    "deletePriceConfirm": "确定删除该条票价项目吗？",
     "editAttraction": "编辑景点",
-    "editPrice": "编辑票价项目",
-    "freeTicket": "免费票",
-    "itemActivity": "特色活动",
-    "itemGuide": "讲解服务",
-    "itemName": "项目名称",
-    "itemNameRequired": "请输入项目名称",
-    "itemPackage": "套票",
-    "itemTicket": "门票",
-    "itemTransport": "区间交通",
-    "itemType": "项目类型",
-    "itemTypeRequired": "请选择项目类型",
     "nameRequired": "请输入景点名称",
-    "priceCount": "票价数量",
-    "priceItems": "票型与价格项目",
-    "priceNote": "价格说明",
-    "pricePeriod": "价格时段",
-    "rackPrice": "水牌价",
     "restroomLocation": "厕所位置/环境",
     "searchPlaceholder": "搜索编号、景点名称或备注",
-    "settlementPrice": "结算价",
-    "periodRequired": "请输入价格时段名称",
     "price": "价格"
   },
   "guide": {
@@ -923,23 +900,15 @@
   "restaurant": {
     "address": "地址",
     "cityRequired": "请选择城市",
-    "createPrice": "新增菜单报价",
     "createRestaurant": "新增餐厅",
-    "deletePriceConfirm": "确定删除该条菜单报价吗？",
     "dinerCount": "用餐人数",
-    "dishDetails": "菜品明细",
-    "editPrice": "编辑菜单报价",
     "editRestaurant": "编辑餐厅",
-    "menuName": "菜单名称",
-    "menuNameRequired": "请输入菜单名称",
     "nameRequired": "请输入餐厅名称",
     "perPerson": "单人餐标",
     "perTable": "整桌价格",
     "price": "价格",
-    "priceItems": "菜单与报价",
     "priceRequired": "请输入价格",
     "priceUnit": "计价方式",
-    "priceUnitRequired": "请选择计价方式",
     "searchPlaceholder": "搜索餐厅编号、名称、城市或菜系",
     "dinerCountRequired": "按桌计价时请填写正整数的每桌人数"
   },
@@ -964,9 +933,6 @@
     }
   },
   "service": {
-    "auth": {
-      "missingRefreshToken": "没有有效的刷新令牌"
-    },
     "user": {
       "passwordMin": "密码不能少于 6 位"
     }
@@ -1098,7 +1064,6 @@
     "totalVehiclePrice": "全程用车总价（元）",
     "vehicleTotalOverrideHint": "各段价格合计为 ¥{total}。已手动修改全程总价，将以修改后的金额计入成本。",
     "capacityHint": "座位合计 {seats} 座，需覆盖 {passengers} 人",
-    "hotelPriceUnit": "元/间/晚（含早餐）",
     "hotelPrice": "实际每间每晚价格",
     "languages": {
       "none": "无",
@@ -1366,7 +1331,6 @@
     "guideScopePlaceholder": "例如 Full day",
     "transportLegs": "交通段",
     "hotelPlans": "酒店方案",
-    "mealsAndOtherServices": "餐食与其他服务",
     "addHotel": "添加酒店",
     "hotelRequiredHint": "本日需要住宿，请至少填写一个酒店名。A／B 档由人工选择，与共用库酒店评级无自动映射。",
     "hotelTier": "酒店档次",
@@ -1426,11 +1390,7 @@
     "draft": "草稿",
     "confirmed": "已确认",
     "addItinerary": "新增行程",
-    "customerSummary": "客户：{name}",
     "plannedDaysSummary": "计划 {days} 天",
-    "ownerSummary": "负责计调：{name}",
-    "requirementsAndRemarks": "询盘原文与内部备注",
-    "internalRemarkSummary": "内部备注：{remark}",
     "noCityConfig": "还没有独立站城市配置。请先在“旅游资源库 → 独立站资源配置”维护城市、景点和双语模板，再手工编排或生成草案。",
     "historicalConfigWarning": "当前草稿使用历史配置，确认报价前需明确切换至当前配置并核对失效引用。",
     "quotedLocked": "已确认报价，行程锁定",
@@ -1472,8 +1432,6 @@
   "flight": {
     "createTitle": "新增航班信息",
     "editTitle": "编辑航班信息",
-    "departureCity": "出发城市",
-    "arrivalCity": "抵达城市",
     "flightNumber": "航班号",
     "departureTime": "起飞时间",
     "arrivalTime": "抵达时间",
@@ -1530,7 +1488,8 @@
     "source": "来源",
     "sourceModule": {
       "standard": "普通业务",
-      "website": "独立站"
+      "website": "独立站",
+      "manual": "手工建团"
     },
     "inquiry": "询盘",
     "inquiryCode": "询盘编号",
@@ -1558,7 +1517,26 @@
     "status": {
       "active": "有效",
       "cancelled": "已撤销"
-    }
+    },
+    "inputRequired": "请填写此项",
+    "daysRequired": "请输入 1–365 的整数",
+    "createMode": "建团方式",
+    "createModes": {
+      "manual": "手工建团",
+      "linked": "关联询盘"
+    },
+    "itinerarySummary": "行程",
+    "itinerarySummaryPlaceholder": "例如：昆大丽9N10D",
+    "contact": "联系人/接单账号",
+    "scheduleModeLabel": "接送方式",
+    "scheduleMode": {
+      "flight": "按航班计算",
+      "manual": "手填接送时间"
+    },
+    "pickupDateMismatch": "接团日期必须等于开始日期",
+    "dropBeforePickup": "送团时间不能早于接团时间",
+    "guideUnavailable": "所选导游在当前接送安排下不可用，请更换导游或清空后再保存。",
+    "unlinked": "未关联"
   },
   "menuPermission": {
     "rolesTitle": "角色",

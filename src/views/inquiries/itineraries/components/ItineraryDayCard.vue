@@ -1,38 +1,34 @@
 <template>
-  <el-card
+  <SectionCard
     :id="`day-${day.id}`"
-    class="day-card mt-[16px] scroll-mt-[270px] rounded-[10px]"
+    class="day-card mt-[16px] scroll-mt-[270px]"
     :class="{ 'is-collapsed': !expanded }"
-    shadow="never"
+    :padding="expanded ? 'default' : 'none'"
   >
     <template #header>
-      <div class="day-card__header flex items-center justify-between">
-        <div class="day-card__identity flex items-center gap-[12px]">
-          <span
-            class="day-card__number grid w-[44px] h-[44px] place-items-center rounded-[10px] [background:var(--el-color-primary)] [color:#fff] font-bold"
-          >D{{ day.dayNumber }}</span>
-          <div>
-            <div class="day-card__route flex items-center gap-[6px] text-[16px] font-semibold">
-              {{ day.departure || $t("itinerary.departure") }}
-              <el-icon><Right /></el-icon>
-              {{ day.destination || $t("itinerary.destination") }}
-            </div>
-            <span class="day-card__date text-[14px] text-[var(--el-text-color-secondary)]">{{
-              day.date
-            }}</span>
+      <div class="day-card__identity flex items-center gap-[12px]">
+        <span
+          class="day-card__number grid w-[44px] h-[44px] place-items-center rounded-[10px] [background:var(--el-color-primary)] text-[var(--el-color-white)] font-bold"
+        >D{{ day.dayNumber }}</span>
+        <div>
+          <div class="day-card__route flex items-center gap-[6px] text-[16px] font-semibold text-strong">
+            {{ day.departure || $t("itinerary.departure") }}
+            <el-icon><Right /></el-icon>
+            {{ day.destination || $t("itinerary.destination") }}
           </div>
-        </div>
-        <div class="day-card__actions flex items-center">
-          <el-button
-            link
-            :aria-expanded="expanded"
-            :aria-controls="`day-body-${day.id}`"
-            @click="expanded = !expanded"
-          >
-            {{ $t(expanded ? "itinerary.collapseDay" : "itinerary.expandDay") }}
-          </el-button>
+          <span class="day-card__date text-[14px] text-muted">{{ day.date }}</span>
         </div>
       </div>
+    </template>
+    <template #actions>
+      <el-button
+        link
+        :aria-expanded="expanded"
+        :aria-controls="`day-body-${day.id}`"
+        @click="expanded = !expanded"
+      >
+        {{ $t(expanded ? "itinerary.collapseDay" : "itinerary.expandDay") }}
+      </el-button>
     </template>
 
     <div v-show="expanded" :id="`day-body-${day.id}`">
@@ -108,7 +104,7 @@
           </el-button>
         </div>
       </div>
-      <el-table
+      <DataTable
         v-if="day.items.length"
         :data="day.items"
         row-key="id"
@@ -123,7 +119,7 @@
               </el-tag>
               {{ scope.row.resourceName }}
             </div>
-            <small class="text-[14px] text-[var(--el-text-color-secondary)]">{{
+            <small class="text-[14px] text-muted">{{
               scope.row.priceName
             }}</small>
           </template>
@@ -151,15 +147,15 @@
             </el-button>
           </template>
         </el-table-column>
-      </el-table>
-      <el-empty v-else :description="$t('itinerary.noDailyResources')" :image-size="52" />
+      </DataTable>
+      <FeedbackState v-else :title="$t('itinerary.noDailyResources')" />
       <div
-        class="day-card__subtotal mt-[12px] flex items-center justify-between text-[var(--el-text-color-secondary)]"
+        class="day-card__subtotal mt-[12px] flex items-center justify-between text-muted"
       >
         <span>{{ $t("itinerary.dayCost") }} ¥{{ formatMoney(dayCost) }}</span>
       </div>
     </div>
-  </el-card>
+  </SectionCard>
 </template>
 
 <script setup lang="ts">
@@ -168,6 +164,9 @@ import { useI18n } from "vue-i18n";
 import { Right } from "@element-plus/icons-vue";
 import type { ItineraryDayRecord, MealSlot } from "@/types/itinerary";
 import { formatMoney, sumMoney } from "@/utils";
+import DataTable from "@/components/DataTable/index.vue";
+import FeedbackState from "@/components/FeedbackState/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import ItineraryDayForm from "./ItineraryDayForm.vue";
 
 type EditableDayField =
@@ -208,10 +207,7 @@ function updateField(field: EditableDayField, value: string | null) {
 </script>
 
 <style scoped lang="scss">
-.day-card.is-collapsed :deep(.el-card__body) {
-  display: none;
-}
-.day-card.is-collapsed :deep(.el-card__header) {
+.day-card.is-collapsed > :deep(.section-card__header) {
   border-bottom: 0;
 }
 </style>

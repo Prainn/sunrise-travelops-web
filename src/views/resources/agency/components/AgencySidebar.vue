@@ -1,27 +1,24 @@
 <template>
-  <el-card v-loading="loading" class="agency-sidebar" shadow="never">
-    <template #header>
-      <div class="flex items-center justify-between gap-2 font-semibold">
-        <span>{{ $t("resource.agencyList") }}</span>
-        <el-button v-has-perm="permissions.create" type="primary" @click="emit('create')">
-          {{ $t("resource.addAgency") }}
-        </el-button>
-      </div>
+  <SectionCard
+    v-loading="loading"
+    fill
+    class="agency-sidebar"
+    :title="$t('resource.agencyList')"
+  >
+    <template #actions>
+      <el-button v-has-perm="permissions.create" type="primary" @click="emit('create')">
+        {{ $t("resource.addAgency") }}
+      </el-button>
     </template>
-    <el-form :inline="true" class="agency-sidebar__search flex w-full gap-2">
-      <el-form-item :label="$t('common.keywords')" class="min-w-0 flex-1">
+    <FilterBar variant="compact" @reset="resetQuery">
+      <el-form-item :label="$t('common.keywords')">
         <el-input
           v-model.trim="keywords"
           :placeholder="$t('resource.agencySearchPlaceholder')"
           clearable
         />
       </el-form-item>
-      <el-form-item class="shrink-0">
-        <el-button @click="resetQuery">
-          {{ $t("common.reset") }}
-        </el-button>
-      </el-form-item>
-    </el-form>
+    </FilterBar>
     <el-scrollbar class="min-h-0 flex-1">
       <el-tree
         :data="rows"
@@ -61,23 +58,23 @@
         </template>
       </el-tree>
     </el-scrollbar>
-    <el-pagination
-      :current-page="page"
-      :page-size="RESOURCE_PAGE_SIZE"
+    <Pagination
+      :page="page"
+      :limit="RESOURCE_PAGE_SIZE"
       :total="total"
-      :pager-count="5"
+      variant="compact"
       layout="prev, pager, next, total"
-      size="small"
-      background
-      class="justify-end"
-      @current-change="emit('page-change', $event)"
+      @update:page="emit('page-change', $event)"
     />
-  </el-card>
+  </SectionCard>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
+import FilterBar from "@/components/FilterBar/index.vue";
+import Pagination from "@/components/Pagination/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import type { ResourcePermissionSet } from "@/constants";
 import type { AgencyRecord } from "@/types/resource";
 import { RESOURCE_PAGE_SIZE } from "../../useResourcePagination";
@@ -121,24 +118,10 @@ function resetQuery() {
 
 <style scoped lang="scss">
 .agency-sidebar {
-  @apply 'min-w-0';
-  &__search {
-    :deep(.el-form-item) {
-      @apply 'm-0';
-    }
-    :deep(.el-form-item__content) {
-      @apply 'min-w-0';
-    }
-    :deep(.el-form-item__label) {
-      @apply 'shrink-0';
-    }
-  }
-  :deep(.el-card__body) {
-    @apply 'flex flex-col gap-3 [height:calc(100%_-_61px)] box-border';
-  }
   :deep(.el-tree-node__content) {
     @apply 'h-auto items-start';
   }
+
   :deep(.el-tree-node__expand-icon) {
     @apply 'mt-2';
   }

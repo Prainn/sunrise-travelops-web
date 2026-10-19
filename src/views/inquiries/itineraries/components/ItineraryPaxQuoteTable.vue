@@ -1,43 +1,43 @@
 <template>
-  <el-card shadow="never">
+  <SectionCard>
     <template #header>
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <span>{{ $t(`itinerary.hotelTiers.${option.hotelTier}`) }} ·
-          {{ $t(`itinerary.vehicleServiceLevels.${option.vehicleTier}`) }}</span>
-        <el-popover trigger="click" :width="520" placement="bottom-end">
-          <template #reference>
-            <el-button size="small" :disabled="!calculation?.hotelCityCosts">
-              {{ $t("itinerary.hotelCostDetails") }}
-            </el-button>
-          </template>
-          <h4 class="mt-0">
-            {{ $t("itinerary.hotelCostDetails") }}
-          </h4>
-          <el-table :data="calculation?.hotelCityCosts ?? []" border>
-            <el-table-column
-              prop="destination"
-              :label="$t('itinerary.hotelCostCity')"
-              min-width="100"
-            />
-            <el-table-column prop="nights" :label="$t('itinerary.hotelCostNights')" width="65" />
-            <el-table-column :label="$t('itinerary.hotelRoomNightPrice')" min-width="125">
-              <template #default="{ row }">
-                {{ money(row.unitCost) }}
-              </template>
-            </el-table-column>
-            <el-table-column :label="$t('itinerary.hotelPerPerson')" min-width="125">
-              <template #default="{ row }">
-                {{ money(row.totalCost) }}
-              </template>
-            </el-table-column>
-          </el-table>
-          <div class="mt-3 text-right font-semibold">
-            {{ $t("itinerary.hotelCostTotal") }}：{{ money(calculation?.hotelUnitCost) }}
-          </div>
-        </el-popover>
-      </div>
+      <span class="font-600 text-strong">{{ $t(`itinerary.hotelTiers.${option.hotelTier}`) }} ·
+        {{ $t(`itinerary.vehicleServiceLevels.${option.vehicleTier}`) }}</span>
     </template>
-    <el-table :data="rows" border class="w-full mt-3">
+    <template #actions>
+      <el-popover trigger="click" :width="520" placement="bottom-end">
+        <template #reference>
+          <el-button size="small" :disabled="!calculation?.hotelCityCosts">
+            {{ $t("itinerary.hotelCostDetails") }}
+          </el-button>
+        </template>
+        <h4 class="mt-0">
+          {{ $t("itinerary.hotelCostDetails") }}
+        </h4>
+        <DataTable :data="calculation?.hotelCityCosts ?? []" border>
+          <el-table-column
+            prop="destination"
+            :label="$t('itinerary.hotelCostCity')"
+            min-width="100"
+          />
+          <el-table-column prop="nights" :label="$t('itinerary.hotelCostNights')" width="65" />
+          <el-table-column :label="$t('itinerary.hotelRoomNightPrice')" min-width="125">
+            <template #default="{ row }">
+              {{ money(row.unitCost) }}
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('itinerary.hotelPerPerson')" min-width="125">
+            <template #default="{ row }">
+              {{ money(row.totalCost) }}
+            </template>
+          </el-table-column>
+        </DataTable>
+        <div class="mt-3 text-right font-semibold">
+          {{ $t("itinerary.hotelCostTotal") }}：{{ money(calculation?.hotelUnitCost) }}
+        </div>
+      </el-popover>
+    </template>
+    <DataTable :data="rows" border>
       <el-table-column
         label="PAX"
         prop="pax"
@@ -101,7 +101,6 @@
       >
         <template #default="{ row }">
           <el-input-number
-            class="!w-[145px]"
             :model-value="adultPrice(row.pax, row.adultUnitPrice)"
             :min="0"
             :max="1e9"
@@ -122,8 +121,8 @@
           {{ marginRate(row.pax, row.adultUnitPrice, row.baseCostPerPerson) }}
         </template>
       </el-table-column>
-    </el-table>
-  </el-card>
+    </DataTable>
+  </SectionCard>
 </template>
 
 <script setup lang="ts">
@@ -134,6 +133,8 @@ import type {
   ItineraryQuoteOptionCalculation,
 } from "@/types/itinerary";
 import { formatMoney, sumMoney } from "@/utils";
+import DataTable from "@/components/DataTable/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 
 const props = defineProps<{
   option: ItineraryQuoteOption;

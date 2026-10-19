@@ -1,6 +1,6 @@
 <template>
   <el-form
-    class="day-form grid [grid-template-columns:repeat(4,_minmax(0,_1fr))] gap-[14px_16px] p-[16px] [border:1px_solid_var(--el-border-color-lighter)] rounded-[8px] [background:var(--el-fill-color-extra-light)] max-[900px]:[grid-template-columns:1fr]"
+    class="day-form grid [grid-template-columns:repeat(4,_minmax(0,_1fr))] gap-[14px_16px] p-[16px] [border:1px_solid_var(--divider-color)] surface-muted max-[900px]:[grid-template-columns:1fr]"
     label-position="top"
   >
     <el-form-item :label="$t('itinerary.departure')">

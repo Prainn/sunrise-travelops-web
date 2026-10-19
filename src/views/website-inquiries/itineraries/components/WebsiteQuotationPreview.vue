@@ -1,10 +1,9 @@
 <template>
-  <el-dialog
+  <AppDialog
     :model-value="modelValue"
     :title="$t('websiteItineraryUi.quotationTitle')"
-    width="94vw"
-    top="3vh"
-    :close-on-click-modal="false"
+    size="full"
+    :busy="loading"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <template v-if="preview">
@@ -43,7 +42,7 @@
               : 'websiteItineraryUi.chinesePreview',
           )
         "
-        class="block w-full h-[64vh] [border:1px_solid_var(--el-border-color)]"
+        class="block w-full h-[64vh] border border-solid border-[var(--card-border)] rounded-[var(--custom-radius)]"
       />
     </template>
     <template #footer>
@@ -68,10 +67,11 @@
         {{ $t("websiteItineraryUi.confirmQuotation") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
+import AppDialog from "@/components/AppDialog/index.vue";
 import type { WebsitePreview } from "@/types/website";
 import { websitePrintBlob } from "../print";
 const props = defineProps<{

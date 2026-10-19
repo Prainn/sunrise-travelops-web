@@ -1,9 +1,9 @@
 <template>
-  <el-drawer
+  <AppDrawer
     v-if="readOnly"
     :model-value="modelValue"
     :title="$t('inquiry.inquiryDetail')"
-    size="min(680px, 94vw)"
+    size="md"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <template v-if="record">
@@ -73,13 +73,12 @@
         </el-descriptions-item>
       </el-descriptions>
     </template>
-  </el-drawer>
-  <el-dialog
+  </AppDrawer>
+  <AppDialog
     v-else
     :model-value="modelValue"
     :title="$t(record ? 'inquiry.editInquiry' : 'inquiry.createInquiry')"
-    width="min(820px, 94vw)"
-    :close-on-click-modal="false"
+    size="lg"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <el-form
@@ -277,12 +276,14 @@
         {{ $t("common.confirm") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { FormInstance, FormRules } from "element-plus";
+import AppDrawer from "@/components/AppDrawer/index.vue";
+import AppDialog from "@/components/AppDialog/index.vue";
 import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
 import { websiteInquiryInput, type WebsiteOwnerOption } from "@/services/website.service";
 import type { WebsiteBusinessUnit, WebsiteCity, WebsiteInquiry, WebsiteInquiryInput } from "@/types/website";

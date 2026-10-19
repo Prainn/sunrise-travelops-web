@@ -1,210 +1,194 @@
 <template>
-  <div class="profile-page">
-    <section class="profile-hero flex gap-[16px] items-center justify-between p-[20px_24px]">
-      <div class="profile-hero__body gap-[16px] min-w-0">
-        <div class="profile-avatar relative shrink-0">
-          <el-avatar :src="displayAvatar" :size="72">
-            <el-icon><UserFilled /></el-icon>
-          </el-avatar>
+  <PageShell :fill="false">
+    <SectionCard>
+      <div class="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+        <div class="flex flex-col items-start gap-4 min-w-0 sm:flex-row sm:items-center">
+          <div class="relative shrink-0">
+            <el-avatar :src="displayAvatar" :size="72">
+              <el-icon><UserFilled /></el-icon>
+            </el-avatar>
+            <el-button
+              v-hasPerm="'sys:user:update'"
+              type="info"
+              class="profile-avatar__action"
+              circle
+              :icon="Camera"
+              size="small"
+              :title="$t('profile.changeAvatar')"
+              :aria-label="$t('profile.changeAvatar')"
+              @click="triggerFileUpload"
+            />
+            <input
+              ref="fileInput"
+              class="hidden"
+              type="file"
+              accept="image/*"
+              @change="handleFileChange"
+            />
+          </div>
+
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-[10px]">
+              <h2 class="m-0 text-[22px] font-bold leading-[30px] text-strong">
+                {{ displayName }}
+              </h2>
+              <el-tag type="primary" effect="light" round>
+                {{ primaryRole }}
+              </el-tag>
+            </div>
+            <p class="m-[4px_0_0] text-[14px] text-muted">
+              {{ userProfile.username || "-" }} /
+              {{ userProfile.deptName || $t("profile.unassignedDepartment") }}
+            </p>
+            <div class="flex flex-wrap items-center gap-3 mt-2 text-[14px] text-muted">
+              <span class="flex items-center gap-1">
+                <el-icon><Calendar /></el-icon>
+                {{ $t("profile.joinedAt", { date: formatDateTime(userProfile.createTime) }) }}
+              </span>
+              <span class="flex items-center gap-1">
+                <el-icon><Location /></el-icon>
+                {{ $t("profile.lastLogin", { date: formatDateTime(recentLoginRecords[0]?.time) }) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap shrink-0 items-center gap-2">
           <el-button
             v-hasPerm="'sys:user:update'"
-            type="info"
-            class="profile-avatar__action"
-            circle
-            :icon="Camera"
-            size="small"
-            :title="$t('profile.changeAvatar')"
-            @click="triggerFileUpload"
-          />
-          <input
-            ref="fileInput"
-            class="profile-avatar__input hidden"
-            type="file"
-            accept="image/*"
-            @change="handleFileChange"
-          />
-        </div>
-
-        <div class="profile-hero__info min-w-0">
-          <div class="profile-hero__title flex-wrap gap-[10px]">
-            <h2
-              class="profile-hero__name m-0 text-[22px] font-bold leading-[30px] text-[var(--el-text-color-primary)]"
-            >
-              {{ displayName }}
-            </h2>
-            <el-tag type="primary" effect="light" round>
-              {{ primaryRole }}
-            </el-tag>
-          </div>
-          <p
-            class="profile-hero__desc m-[4px_0_0] text-[14px] text-[var(--el-text-color-secondary)]"
+            :icon="Edit"
+            @click="handleOpenDialog(DialogType.ACCOUNT)"
           >
-            {{ userProfile.username || "-" }} /
-            {{ userProfile.deptName || $t("profile.unassignedDepartment") }}
-          </p>
-          <div
-            class="profile-hero__meta flex-wrap gap-[12px] mt-[8px] text-[14px] text-[var(--el-text-color-secondary)]"
-          >
-            <span class="profile-hero__meta-item gap-[4px]">
-              <el-icon><Calendar /></el-icon>
-              {{ $t("profile.joinedAt", { date: formatDateTime(userProfile.createTime) }) }}
-            </span>
-            <span class="profile-hero__meta-item gap-[4px]">
-              <el-icon><Location /></el-icon>
-              {{ $t("profile.lastLogin", { date: formatDateTime(recentLoginRecords[0]?.time) }) }}
-            </span>
-          </div>
+            {{ $t("profile.editProfile") }}
+          </el-button>
+          <el-button type="primary" :icon="Lock" @click="handleOpenDialog(DialogType.PASSWORD)">
+            {{ $t("profile.changePassword") }}
+          </el-button>
         </div>
       </div>
-
-      <div class="profile-hero__actions shrink-0 gap-[8px]">
-        <el-button
-          v-hasPerm="'sys:user:update'"
-          :icon="Edit"
-          @click="handleOpenDialog(DialogType.ACCOUNT)"
-        >
-          {{ $t("profile.editProfile") }}
-        </el-button>
-        <el-button type="primary" :icon="Lock" @click="handleOpenDialog(DialogType.PASSWORD)">
-          {{ $t("profile.changePassword") }}
-        </el-button>
-      </div>
-    </section>
+    </SectionCard>
 
     <div
       v-loading="isSecurityLoading"
-      class="profile-page__layout grid [grid-template-columns:minmax(280px,_340px)_minmax(0,_1fr)] gap-[16px] [align-items:stretch]"
+      class="grid grid-cols-1 gap-[var(--page-gap)] items-stretch xl:grid-cols-[minmax(280px,340px)_minmax(0,1fr)]"
     >
-      <aside class="profile-page__side">
-        <section class="profile-card p-[18px_20px]">
-          <header
-            class="profile-card__header flex gap-[12px] items-start justify-between mb-[14px]"
-          >
-            <h3
-              class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]"
-            >
-              {{ $t("profile.personalInfo") }}
-            </h3>
-            <el-tag size="small" effect="plain">
-              {{ genderText }}
-            </el-tag>
-          </header>
-
-          <dl class="profile-info grid gap-[10px] m-0">
-            <div
-              v-for="item in profileInfoItems"
-              :key="item.label"
-              class="profile-info__item grid [grid-template-columns:92px_minmax(0,_1fr)] gap-[10px] items-center min-h-[34px] pb-[10px] [border-bottom:1px_solid_var(--el-border-color-extra-light)]"
-            >
-              <dt
-                class="profile-info__label flex gap-[6px] items-center text-[14px] text-[var(--el-text-color-secondary)]"
-              >
-                <el-icon><component :is="item.icon" /></el-icon>
-                {{ item.label }}
-              </dt>
-              <dd class="profile-info__value" :class="{ 'is-muted': item.muted }">
-                {{ item.value }}
-              </dd>
-            </div>
-          </dl>
-        </section>
-      </aside>
-
-      <main class="profile-page__main">
-        <section class="profile-card p-[18px_20px]">
-          <header
-            class="profile-card__header flex gap-[12px] items-start justify-between mb-[14px]"
-          >
-            <h3
-              class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]"
-            >
-              {{ $t("profile.recentLogins") }}
-            </h3>
-            <span v-if="!securityLoadFailed && !isSecurityLoading" class="profile-card__extra">
-              {{ $t("profile.recentCount", { count: recentLoginRecords.length }) }}
-            </span>
-          </header>
-
+      <SectionCard :title="$t('profile.personalInfo')">
+        <template #actions>
+          <el-tag size="small" effect="plain">
+            {{ genderText }}
+          </el-tag>
+        </template>
+        <dl class="grid gap-[10px] m-0">
           <div
-            v-if="!securityLoadFailed && !isSecurityLoading"
-            class="profile-login grid gap-[12px]"
+            v-for="item in profileInfoItems"
+            :key="item.label"
+            class="grid grid-cols-1 gap-1 items-center min-h-[34px] pb-[10px] [border-bottom:1px_solid_var(--divider-color)] last:pb-0 last:[border-bottom:0] sm:grid-cols-[92px_minmax(0,1fr)] sm:gap-[10px]"
           >
-            <el-empty v-if="!recentLoginRecords.length" :description="$t('profile.noLogins')" />
-            <div
-              v-for="record in recentLoginRecords"
-              :key="record.id"
-              class="profile-login__item grid [grid-template-columns:36px_minmax(0,_1fr)_auto] gap-[10px] items-center min-h-[44px]"
+            <dt class="flex items-center gap-[6px] text-[14px] text-muted">
+              <el-icon><component :is="item.icon" /></el-icon>
+              {{ item.label }}
+            </dt>
+            <dd
+              class="min-w-0 m-0 overflow-hidden text-ellipsis whitespace-nowrap text-[14px]"
+              :class="item.muted ? 'text-faint' : 'text-strong'"
             >
-              <span
-                class="profile-icon flex [flex:0_0_36px] items-center justify-center w-[36px] h-[36px] text-[18px] text-[var(--el-color-primary)] [background:var(--el-color-primary-light-9)] rounded-[8px]"
-              >
-                <el-icon><Monitor /></el-icon>
-              </span>
-              <div class="profile-login__body min-w-0">
-                <strong
-                  class="profile-login__device break-all text-[14px] text-[var(--el-text-color-primary)]"
-                >{{ record.userAgent || $t("profile.unknownClient") }}</strong>
-                <span class="profile-login__meta">{{ record.ip || "-" }}</span>
-              </div>
-              <time class="profile-login__time">{{ formatDateTime(record.time) }}</time>
-            </div>
+              {{ item.value }}
+            </dd>
           </div>
-        </section>
-      </main>
+        </dl>
+      </SectionCard>
+
+      <SectionCard :title="$t('profile.recentLogins')">
+        <template v-if="!securityLoadFailed && !isSecurityLoading" #actions>
+          <span class="text-[14px] text-faint">
+            {{ $t("profile.recentCount", { count: recentLoginRecords.length }) }}
+          </span>
+        </template>
+        <FeedbackState
+          v-if="securityLoadFailed"
+          type="error"
+          retryable
+          @retry="loadSecurity"
+        />
+        <div v-else-if="!isSecurityLoading" class="grid gap-3">
+          <FeedbackState v-if="!recentLoginRecords.length" :title="$t('profile.noLogins')" />
+          <div
+            v-for="record in recentLoginRecords"
+            :key="record.id"
+            class="grid grid-cols-[36px_minmax(0,1fr)] gap-[10px] items-center min-h-[44px] md:grid-cols-[36px_minmax(0,1fr)_auto]"
+          >
+            <span
+              class="flex items-center justify-center w-9 h-9 text-[18px] text-[var(--el-color-primary)] bg-[var(--el-color-primary-light-9)] rounded-[var(--custom-radius)]"
+            >
+              <el-icon><Monitor /></el-icon>
+            </span>
+            <div class="min-w-0">
+              <strong class="block overflow-hidden text-ellipsis whitespace-nowrap break-all text-[14px] text-strong">{{
+                record.userAgent || $t("profile.unknownClient")
+              }}</strong>
+              <span class="block overflow-hidden text-ellipsis whitespace-nowrap text-[14px] text-muted">{{
+                record.ip || "-"
+              }}</span>
+            </div>
+            <time
+              class="block col-start-2 justify-self-start overflow-hidden text-ellipsis whitespace-nowrap text-[14px] text-muted md:col-start-auto md:justify-self-auto"
+            >{{ formatDateTime(record.time) }}</time>
+          </div>
+        </div>
+      </SectionCard>
     </div>
 
-    <section class="profile-card p-[18px_20px]">
-      <header class="profile-card__header flex gap-[12px] items-start justify-between mb-[14px]">
-        <h3
-          class="profile-card__title m-0 text-[16px] font-bold leading-[22px] text-[var(--el-text-color-primary)]"
-        >
-          {{ $t("profile.rolesAndPermissions") }}
-        </h3>
-        <span v-if="!securityLoadFailed && !isSecurityLoading" class="profile-card__extra">
+    <SectionCard :title="$t('profile.rolesAndPermissions')">
+      <template v-if="!securityLoadFailed && !isSecurityLoading" #actions>
+        <span class="text-[14px] text-faint">
           {{ $t("profile.permissionCount", { count: permissionCount }) }}
         </span>
-      </header>
+      </template>
+      <FeedbackState
+        v-if="securityLoadFailed"
+        type="error"
+        retryable
+        @retry="loadSecurity"
+      />
+      <template v-else-if="!isSecurityLoading">
+        <div class="flex flex-wrap gap-2">
+          <el-tag
+            v-for="role in roleList"
+            :key="role.code"
+            class="m-0"
+            size="small"
+            effect="light"
+          >
+            {{ role.name }}
+          </el-tag>
+          <span v-if="!roleList.length" class="text-[14px] text-faint">{{ $t("profile.noRoles") }}</span>
+        </div>
+        <div class="grid gap-2 mt-4">
+          <DataTable
+            :data="pagedPermissions"
+            row-key="code"
+            :empty-text="$t('profile.noPermissions')"
+          >
+            <el-table-column prop="name" :label="$t('profile.permissionName')" min-width="180" />
+            <el-table-column prop="code" :label="$t('profile.permissionCode')" min-width="240" />
+          </DataTable>
+          <Pagination
+            v-if="permissionCount > 10"
+            v-model:page="permissionPage"
+            variant="compact"
+            :limit="10"
+            :total="permissionCount"
+            layout="total, prev, pager, next"
+          />
+        </div>
+      </template>
+    </SectionCard>
 
-      <div
-        v-if="!securityLoadFailed && !isSecurityLoading"
-        class="profile-tags flex flex-wrap gap-[8px]"
-      >
-        <el-tag
-          v-for="role in roleList"
-          :key="role.code"
-          class="m-0"
-          size="small"
-          effect="light"
-        >
-          {{ role.name }}
-        </el-tag>
-        <span v-if="!roleList.length" class="profile-empty">{{ $t("profile.noRoles") }}</span>
-      </div>
-      <div v-if="!securityLoadFailed && !isSecurityLoading" class="grid gap-[8px] mt-[16px]">
-        <el-table
-          :data="pagedPermissions"
-          row-key="code"
-          :empty-text="$t('profile.noPermissions')"
-          border
-        >
-          <el-table-column prop="name" :label="$t('profile.permissionName')" min-width="180" />
-          <el-table-column prop="code" :label="$t('profile.permissionCode')" min-width="240" />
-        </el-table>
-        <el-pagination
-          v-if="permissionCount > 10"
-          v-model:current-page="permissionPage"
-          :page-size="10"
-          :total="permissionCount"
-          layout="total, prev, pager, next"
-          class="mt-[16px] justify-end"
-        />
-      </div>
-    </section>
-
-    <el-dialog
+    <AppDialog
       v-model="dialogState.visible"
       :title="t(dialogState.titleKey)"
-      width="520px"
+      :size="dialogState.type === DialogType.PASSWORD ? 'md' : 'sm'"
+      :busy="isSubmitting"
       destroy-on-close
     >
       <el-form
@@ -213,7 +197,6 @@
         :model="userProfileForm"
         :rules="userProfileRules"
         label-width="88px"
-        class="pr-10px"
       >
         <el-form-item :label="$t('user.nickname')" prop="nickname">
           <el-input
@@ -232,7 +215,6 @@
         :model="passwordChangeForm"
         :rules="passwordChangeRules"
         label-width="108px"
-        class="pr-10px"
       >
         <el-form-item :label="$t('profile.oldPassword')" prop="oldPassword">
           <el-input v-model="passwordChangeForm.oldPassword" type="password" show-password />
@@ -246,15 +228,15 @@
       </el-form>
 
       <template #footer>
-        <span class="inline-flex gap-2">
-          <el-button @click="handleCancel">{{ $t("common.cancel") }}</el-button>
-          <el-button type="primary" :loading="isSubmitting" @click="handleSubmit">{{
-            $t("common.confirm")
-          }}</el-button>
-        </span>
+        <el-button :disabled="isSubmitting" @click="handleCancel">
+          {{ $t("common.cancel") }}
+        </el-button>
+        <el-button type="primary" :loading="isSubmitting" @click="handleSubmit">
+          {{ $t("common.confirm") }}
+        </el-button>
       </template>
-    </el-dialog>
-  </div>
+    </AppDialog>
+  </PageShell>
 </template>
 
 <script lang="ts" setup>
@@ -271,6 +253,12 @@ import { userService } from "@/services";
 import { useUserStoreHook } from "@/stores/user";
 import { readFileAsDataUrl, formatDateTime } from "@/utils";
 import { redirectToLogin } from "@/utils/auth";
+import PageShell from "@/components/PageShell/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
+import DataTable from "@/components/DataTable/index.vue";
+import Pagination from "@/components/Pagination/index.vue";
+import AppDialog from "@/components/AppDialog/index.vue";
+import FeedbackState from "@/components/FeedbackState/index.vue";
 
 import {
   Calendar,
@@ -512,106 +500,11 @@ onMounted(loadSecurity);
 </script>
 
 <style lang="scss" scoped>
-.profile-page {
-  @apply 'flex flex-col gap-[16px] min-h-full p-[16px]';
-}
-
-.profile-hero,
-.profile-card {
-  @apply '[background:var(--content-bg)] [border:1px_solid_var(--card-border)] rounded-[var(--card-radius)] [box-shadow:var(--card-shadow)]';
-}
-
-.profile-hero__body,
-.profile-hero__title,
-.profile-hero__meta,
-.profile-hero__actions,
-.profile-hero__meta-item {
-  @apply 'flex items-center';
-}
-
+// 头像角标按钮覆盖 ElButton 自带边框，用内容底色描边与头像分隔
 .profile-avatar__action {
-  @apply 'absolute right-[-2px] bottom-[-2px] [border:2px_solid_var(--content-bg)]';
-}
-
-.profile-page__side,
-.profile-page__main {
-  @apply 'grid gap-[16px] min-w-0';
-}
-
-.profile-card__extra,
-.profile-empty {
-  @apply 'text-[14px] text-[var(--el-text-color-placeholder)]';
-}
-
-.profile-info__item:last-child {
-  @apply 'pb-0 [border-bottom:0]';
-}
-
-.profile-info__value {
-  @apply 'min-w-0 m-0 overflow-hidden text-ellipsis text-[14px] text-[var(--el-text-color-primary)] whitespace-nowrap';
-}
-
-.profile-login__device,
-.profile-login__meta,
-.profile-login__time {
-  @apply 'block overflow-hidden text-ellipsis whitespace-nowrap';
-}
-
-.profile-login__meta,
-.profile-login__time {
-  @apply 'text-[14px] text-[var(--el-text-color-secondary)]';
-}
-
-.is-muted {
-  @apply 'text-[var(--el-text-color-placeholder)]';
-}
-
-@media (width <= 1200px) {
-  .profile-page__layout {
-    @apply '[grid-template-columns:1fr]';
-  }
-}
-
-@media (width <= 768px) {
-  .profile-page {
-    @apply 'p-[12px]';
-  }
-
-  .profile-hero {
-    @apply 'items-start';
-  }
-
-  .profile-hero,
-  .profile-hero__body,
-  .profile-hero__actions {
-    @apply 'flex-col';
-  }
-
-  .profile-hero__actions {
-    @apply 'items-stretch w-full';
-  }
-
-  .profile-hero__actions .el-button {
-    width: 100%;
-    margin-left: 0;
-  }
-
-  .profile-login__item {
-    @apply '[grid-template-columns:40px_minmax(0,_1fr)]';
-  }
-
-  .profile-login__time {
-    @apply '[grid-column:2] [justify-self:start]';
-  }
-}
-
-@media (width <= 520px) {
-  .profile-info__item {
-    @apply '[grid-template-columns:1fr]';
-  }
-
-  .profile-info__item {
-    @apply 'gap-[4px]';
-  }
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid var(--content-bg);
 }
 </style>

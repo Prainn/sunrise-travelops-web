@@ -1,88 +1,93 @@
 <template>
-  <div class="page-container">
-    <el-card class="page-search" shadow="never">
-      <el-form :inline="true">
-        <el-form-item :label="$t('operationLog.category')">
-          <el-select
-            v-model="category"
-            autocomplete="new-password"
-            clearable
-            :placeholder="$t('operationLog.all')"
-          >
-            <el-option
-              v-for="option in categories"
-              :key="option.value"
-              :label="$t(option.label)"
-              :value="option.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button @click="reset">
-            {{ $t("common.reset") }}
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
-    <el-card class="page-content" shadow="never">
-      <TableToolbar @refresh="fetchData" />
-      <div class="page-table-wrapper">
-        <el-table
-          v-loading="loading"
-          :data="list"
-          row-key="id"
-          class="page-table"
-          border
-          height="100%"
+  <PageShell>
+    <FilterBar @reset="reset">
+      <el-form-item :label="$t('operationLog.category')">
+        <el-select
+          v-model="category"
+          autocomplete="new-password"
+          clearable
+          :placeholder="$t('operationLog.all')"
         >
-          <el-table-column :label="$t('operationLog.time')" min-width="190">
-            <template #default="{ row }">
-              {{ beijingTime(row.time) }}
-            </template>
-          </el-table-column>
-          <el-table-column :label="$t('operationLog.category')" min-width="120">
-            <template #default="{ row }">
-              {{ categoryLabel(row.category) }}
-            </template>
-          </el-table-column>
-          <el-table-column :label="$t('operationLog.actor')" prop="actorName" min-width="130" />
-          <el-table-column :label="$t('operationLog.action')" prop="action" min-width="180" />
-          <el-table-column :label="$t('operationLog.result')" min-width="90">
-            <template #default="{ row }">
-              <el-tag :type="row.success ? 'success' : 'danger'">
-                {{ row.success ? $t("operationLog.success") : $t("operationLog.failed") }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            :label="$t('operationLog.detail')"
-            prop="detail"
-            min-width="300"
-            show-overflow-tooltip
+          <el-option
+            v-for="option in categories"
+            :key="option.value"
+            :label="$t(option.label)"
+            :value="option.value"
           />
-        </el-table>
-      </div>
-      <pagination
+        </el-select>
+      </el-form-item>
+    </FilterBar>
+
+    <SectionCard fill>
+      <TableToolbar :refreshing="loading" @refresh="fetchData" />
+      <DataTable
+        fill
+        :loading="loading"
+        :data="list"
+        :error="loadError"
+        :filtered="Boolean(category)"
+        row-key="id"
+        @retry="fetchData"
+      >
+        <el-table-column :label="$t('operationLog.time')" min-width="190">
+          <template #default="{ row }">
+            {{ beijingTime(row.time) }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('operationLog.category')" min-width="120">
+          <template #default="{ row }">
+            {{ categoryLabel(row.category) }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('operationLog.actor')" prop="actorName" min-width="130" />
+        <el-table-column :label="$t('operationLog.action')" min-width="180">
+          <template #default="{ row }">
+            {{ actionLabel(row.action) }}
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('operationLog.result')" min-width="90">
+          <template #default="{ row }">
+            <el-tag :type="row.success ? 'success' : 'danger'">
+              {{ row.success ? $t("operationLog.success") : $t("operationLog.failed") }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column
+          :label="$t('operationLog.detail')"
+          prop="detail"
+          min-width="300"
+          show-overflow-tooltip
+        />
+      </DataTable>
+      <Pagination
         v-if="total > 0"
         v-model:page="page"
         v-model:limit="pageSize"
         :total="total"
         @pagination="fetchData"
       />
-    </el-card>
-  </div>
+    </SectionCard>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { useI18n } from "vue-i18n";
+import DataTable from "@/components/DataTable/index.vue";
+import FilterBar from "@/components/FilterBar/index.vue";
+import PageShell from "@/components/PageShell/index.vue";
+import Pagination from "@/components/Pagination/index.vue";
+import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { operationLogService } from "@/services/operation-log.service";
 import type { OperationCategory, OperationLog } from "@/types/operation-log";
 
 const { t } = useI18n();
+const actionCodeLabels: Record<string, string> = {
+  "website.initial-data.import": "operationLog.websiteInitialDataImport",
+};
+const actionLabel = (action: string) => (actionCodeLabels[action] ? t(actionCodeLabels[action]) : action);
 const categories: { value: OperationCategory; label: string }[] = [
   { value: "login", label: "operationLog.login" },
   { value: "user", label: "operationLog.user" },
@@ -102,6 +107,7 @@ const page = ref(1);
 const pageSize = ref(20);
 const total = ref(0);
 const loading = ref(false);
+const loadError = ref("");
 const list = ref<OperationLog[]>([]);
 const requestRows = useDebounceFn(fetchData, 300);
 
@@ -138,6 +144,9 @@ async function fetchData() {
     });
     list.value = result.list;
     total.value = result.total;
+    loadError.value = "";
+  } catch (error) {
+    loadError.value = error instanceof Error ? error.message : String(error);
   } finally {
     loading.value = false;
   }

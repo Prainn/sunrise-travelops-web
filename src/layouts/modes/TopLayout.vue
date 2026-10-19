@@ -53,7 +53,7 @@ const isLogoCollapsed = computed(() => width.value < 768);
   @apply 'sticky top-0 z-[999] flex items-center justify-between w-full';
   height: $navbar-height;
   background-color: $menu-background;
-  @apply '[border-bottom:1px_solid_var(--card-border)]';
+  @apply '[border-bottom:1px_solid_var(--menu-border)]';
 
   &__left {
     @apply 'flex [flex:1] items-center min-w-0 h-full';

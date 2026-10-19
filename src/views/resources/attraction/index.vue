@@ -1,7 +1,8 @@
 <template>
-  <div class="resource-page">
+  <div class="h-full min-h-0">
     <AttractionTable
       :loading="isLoading"
+      :error="loadError"
       :total="total"
       :rows="attractionStore"
       @refresh="loadRecords"
@@ -49,6 +50,7 @@ function createEmptyAttraction(): AttractionRecord {
 }
 const {
   isLoading,
+  loadError,
   rows: attractionStore,
   record: attractionForm,
   isDialogVisible: isAttractionDialogVisible,

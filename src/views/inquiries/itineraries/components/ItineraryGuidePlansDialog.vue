@@ -1,9 +1,10 @@
 <template>
-  <el-dialog
+  <AppDialog
     :model-value="modelValue"
     :title="$t('planning.guideService')"
-    width="min(600px, 96vw)"
+    size="md"
     :close-on-click-modal="false"
+    :busy="saving"
     @close="emit('cancel')"
   >
     <section id="itinerary-guides">
@@ -115,10 +116,11 @@
         {{ $t("itinerary.save") }}
       </el-button>
     </template>
-  </el-dialog>
+  </AppDialog>
 </template>
 <script setup lang="ts">
 import { computed } from "vue";
+import AppDialog from "@/components/AppDialog/index.vue";
 import type { ItineraryGuidePlan } from "@/types/itinerary";
 import { GUIDE_LANGUAGE_OPTIONS } from "@/types/resource";
 import { formatMoney, multiplyMoney } from "@/utils";
