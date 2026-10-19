@@ -1,4 +1,5 @@
-import { SidebarColor, ThemeMode } from "@/enums";
+import { useWindowSize } from "@vueuse/core";
+import { SidebarColor, ThemeMode, UiDensity } from "@/enums";
 import type { LayoutMode, TagsViewStyle } from "@/enums";
 import {
   applyTheme,
@@ -11,6 +12,10 @@ import {
 import { STORAGE_KEYS } from "@/constants";
 import { defaults } from "@/settings";
 import type { ThemeColorMap } from "@/settings";
+
+// 自动密度在 1366 笔记本等窄屏或矮屏视口下切换为紧凑
+const COMPACT_MAX_WIDTH = 1440;
+const COMPACT_MAX_HEIGHT = 720;
 
 export const useSettingsStore = defineStore("setting", () => {
   // 界面显示
@@ -37,6 +42,20 @@ export const useSettingsStore = defineStore("setting", () => {
   const theme = useStorage<ThemeMode>(STORAGE_KEYS.THEME, defaults.theme);
   const themeColors = useStorage<ThemeColorMap>(STORAGE_KEYS.THEME_COLORS, {
     ...defaults.themeColors,
+  });
+
+  // 界面密度
+  const density = useStorage<UiDensity>(STORAGE_KEYS.UI_DENSITY, defaults.density);
+  const { width: viewportWidth, height: viewportHeight } = useWindowSize();
+  const isCompact = computed(() => {
+    if (density.value === UiDensity.AUTO) {
+      return viewportWidth.value < COMPACT_MAX_WIDTH || viewportHeight.value < COMPACT_MAX_HEIGHT;
+    }
+    return density.value === UiDensity.COMPACT;
+  });
+
+  watch(isCompact, (v) => document.documentElement.classList.toggle("is-compact", v), {
+    immediate: true,
   });
 
   const resolvedTheme = ref<ThemeMode>(resolveThemeMode(theme.value));
@@ -85,5 +104,7 @@ export const useSettingsStore = defineStore("setting", () => {
     themeColors,
     theme,
     resolvedTheme,
+    density,
+    isCompact,
   };
 });

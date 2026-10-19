@@ -166,4 +166,23 @@ const hasHeader = computed(() =>
     }
   }
 }
+
+html.is-compact .section-card {
+  .section-card__header {
+    min-height: 44px;
+    padding-block: 8px;
+  }
+
+  .section-card__title {
+    font-size: 14px;
+  }
+
+  &--compact .section-card__body {
+    padding: 8px;
+  }
+
+  &--fill > .section-card__body {
+    gap: 8px;
+  }
+}
 </style>

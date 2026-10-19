@@ -148,4 +148,27 @@ defineExpose({ form: formRef });
     }
   }
 }
+
+html.is-compact .filter-bar {
+  &--default {
+    padding-block: 8px;
+  }
+
+  .filter-bar__form,
+  .filter-bar__fields {
+    gap: 8px 12px;
+  }
+
+  .filter-bar__fields {
+    > .el-form-item {
+      flex-basis: 200px;
+      min-width: min(100%, 200px);
+    }
+
+    .el-form-item__label {
+      height: var(--el-component-size-small);
+      line-height: var(--el-component-size-small);
+    }
+  }
+}
 </style>

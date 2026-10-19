@@ -23,7 +23,9 @@ const appStore = useAppStore();
 const settingsStore = useSettingsStore();
 
 const locale = computed(() => appStore.locale);
-const size = computed(() => appStore.size as ComponentSize);
+const size = computed(() =>
+  settingsStore.isCompact ? ComponentSize.SMALL : (appStore.size as ComponentSize),
+);
 const showWatermark = computed(() => settingsStore.showWatermark);
 const watermarkContent = appConfig.name;
 const tableConfig = { showOverflowTooltip: true };

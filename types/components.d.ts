@@ -31,6 +31,7 @@ declare module 'vue' {
     CitySelect: typeof import('./../src/components/CitySelect.vue')['default']
     CommandPalette: typeof import('./../src/components/CommandPalette/index.vue')['default']
     DataTable: typeof import('./../src/components/DataTable/index.vue')['default']
+    DensitySelect: typeof import('./../src/components/DensitySelect/index.vue')['default']
     DictSelect: typeof import('./../src/components/DictSelect/index.vue')['default']
     ECharts: typeof import('./../src/components/ECharts/index.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']

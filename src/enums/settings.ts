@@ -114,6 +114,26 @@ export const enum ComponentSize {
 }
 
 /**
+ * 界面密度枚举
+ */
+export const enum UiDensity {
+  /**
+   * 按视口尺寸自动切换
+   */
+  AUTO = "auto",
+
+  /**
+   * 标准
+   */
+  DEFAULT = "default",
+
+  /**
+   * 紧凑
+   */
+  COMPACT = "compact",
+}
+
+/**
  * 语言枚举
  */
 export const enum LanguageEnum {

@@ -79,4 +79,8 @@ const emit = defineEmits<{ refresh: [] }>();
     color: var(--el-text-color-primary);
   }
 }
+
+html.is-compact .table-toolbar__title {
+  font-size: 14px;
+}
 </style>

@@ -9,6 +9,7 @@ import {
   ThemeMode,
   LanguageEnum,
   TagsViewStyle,
+  UiDensity,
 } from "@/enums";
 
 const env = import.meta.env;
@@ -41,6 +42,7 @@ export const defaults = {
   sidebarColorScheme: SidebarColor.MINIMAL_WHITE,
   layout: LayoutMode.LEFT,
   size: ComponentSize.DEFAULT,
+  density: UiDensity.AUTO,
   language: LanguageEnum.ZH_CN,
   showTagsView: true,
   tagsViewStyle: TagsViewStyle.CARD,

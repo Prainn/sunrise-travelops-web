@@ -631,6 +631,12 @@
       "success": "Language changed"
     }
   },
+  "densitySelect": {
+    "label": "Display density",
+    "auto": "Auto",
+    "default": "Standard",
+    "compact": "Compact"
+  },
   "language": {
     "chinese": "中文",
     "english": "English"

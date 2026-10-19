@@ -631,6 +631,12 @@
       "success": "语言切换成功"
     }
   },
+  "densitySelect": {
+    "label": "界面密度",
+    "auto": "自动",
+    "default": "标准",
+    "compact": "紧凑"
+  },
   "language": {
     "chinese": "中文",
     "english": "English"
