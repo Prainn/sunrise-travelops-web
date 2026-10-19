@@ -1488,7 +1488,8 @@
     "source": "来源",
     "sourceModule": {
       "standard": "普通业务",
-      "website": "独立站"
+      "website": "独立站",
+      "manual": "手工建团"
     },
     "inquiry": "询盘",
     "inquiryCode": "询盘编号",
@@ -1516,7 +1517,26 @@
     "status": {
       "active": "有效",
       "cancelled": "已撤销"
-    }
+    },
+    "inputRequired": "请填写此项",
+    "daysRequired": "请输入 1–365 的整数",
+    "createMode": "建团方式",
+    "createModes": {
+      "manual": "手工建团",
+      "linked": "关联询盘"
+    },
+    "itinerarySummary": "行程",
+    "itinerarySummaryPlaceholder": "例如：昆大丽9N10D",
+    "contact": "联系人/接单账号",
+    "scheduleModeLabel": "接送方式",
+    "scheduleMode": {
+      "flight": "按航班计算",
+      "manual": "手填接送时间"
+    },
+    "pickupDateMismatch": "接团日期必须等于开始日期",
+    "dropBeforePickup": "送团时间不能早于接团时间",
+    "guideUnavailable": "所选导游在当前接送安排下不可用，请更换导游或清空后再保存。",
+    "unlinked": "未关联"
   },
   "menuPermission": {
     "rolesTitle": "角色",

@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -123,16 +123,12 @@ import Pagination from "@/components/Pagination/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { tourService } from "@/services/tour.service";
-import { useUserStore } from "@/stores/user";
 import { RATING_FIELDS, type RatingField, type TourRatingRow } from "@/types/tour";
-import { hasUserPermission } from "@/utils/permission";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 
 defineOptions({ name: "GuideRatings" });
 
 const { t } = useI18n();
-const user = useUserStore();
-const canUpdate = computed(() => hasUserPermission(user.userInfo, "tour:rating:update"));
 const keyword = ref("");
 const loading = ref(false);
 const loadError = ref("");
@@ -145,7 +141,8 @@ const active = ref<{ tourId: string; field: RatingField } | null>(null);
 const draft = ref<number | null>(null);
 const savingId = ref("");
 
-const canEdit = (row: TourRatingRow) => canUpdate.value && row.canEdit;
+// 服务端 canEdit 已包含权限、参与人/负责人/总部 ROOT 及撤销状态判断。
+const canEdit = (row: TourRatingRow) => row.canEdit;
 const isActive = (row: TourRatingRow, field: RatingField) =>
   active.value?.tourId === row.tourId && active.value.field === field;
 

@@ -5,13 +5,15 @@ import type {
   GuideLeaveRecord,
   RatingField,
   TourBusinessUnit,
+  TourCreateRequest,
   TourFlightOption,
   TourGuideOption,
-  TourInput,
+  TourGuideQuery,
+  TourLinkedSourceModule,
   TourRatingRow,
   TourRecord,
   TourSource,
-  TourSourceModule,
+  TourUpdateRequest,
 } from "@/types/tour";
 
 export interface TourListQuery {
@@ -41,7 +43,7 @@ export const tourService = {
   list(query: TourListQuery) {
     return request.get<PageResult<TourRecord>>("/tours", { params: clean(query) });
   },
-  sources(sourceModule: TourSourceModule, keyword?: string) {
+  sources(sourceModule: TourLinkedSourceModule, keyword?: string) {
     return request.get<TourSource[]>("/tours/sources", {
       params: clean({ sourceModule, keyword }),
     });
@@ -56,32 +58,14 @@ export const tourService = {
       params: clean({ businessUnit, keyword }),
     });
   },
-  availableGuides(params: {
-    businessUnit: TourBusinessUnit;
-    startDate: string;
-    days: number;
-    pickupFlightId: string;
-    dropFlightId: string;
-    excludeTourId?: string;
-  }) {
+  availableGuides(params: TourGuideQuery) {
     return request.get<TourGuideOption[]>("/tours/available-guides", { params });
   },
-  create(
-    source: { sourceModule: TourSourceModule; inquiryId: string; quoteId: string },
-    input: TourInput,
-  ) {
-    return request.post<TourRecord>("/tours", {
-      ...source,
-      ...input,
-      guideId: input.guideId || undefined,
-    });
+  create(body: TourCreateRequest) {
+    return request.post<TourRecord>("/tours", body);
   },
-  update(id: string, version: number, input: TourInput) {
-    return request.put<TourRecord>(`/tours/${encodeURIComponent(id)}`, {
-      ...input,
-      guideId: input.guideId || null,
-      version,
-    });
+  update(id: string, body: TourUpdateRequest) {
+    return request.put<TourRecord>(`/tours/${encodeURIComponent(id)}`, body);
   },
   cancel(id: string, version: number, reason: string) {
     return request.post<TourRecord>(`/tours/${encodeURIComponent(id)}/cancel`, {

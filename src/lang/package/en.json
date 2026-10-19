@@ -1488,7 +1488,8 @@
     "source": "Source",
     "sourceModule": {
       "standard": "Standard",
-      "website": "Website"
+      "website": "Website",
+      "manual": "Manual tour"
     },
     "inquiry": "Inquiry",
     "inquiryCode": "Inquiry",
@@ -1516,7 +1517,26 @@
     "status": {
       "active": "Active",
       "cancelled": "Cancelled"
-    }
+    },
+    "inputRequired": "This field is required",
+    "daysRequired": "Enter a whole number from 1 to 365",
+    "createMode": "Creation method",
+    "createModes": {
+      "manual": "Manual tour",
+      "linked": "Linked inquiry"
+    },
+    "itinerarySummary": "Itinerary",
+    "itinerarySummaryPlaceholder": "e.g. Kunming–Dali–Lijiang 9N10D",
+    "contact": "Contact / order account",
+    "scheduleModeLabel": "Transfer schedule",
+    "scheduleMode": {
+      "flight": "Calculate from flights",
+      "manual": "Enter transfer times"
+    },
+    "pickupDateMismatch": "Pickup date must equal the start date",
+    "dropBeforePickup": "Drop-off cannot be earlier than pickup",
+    "guideUnavailable": "The selected guide is unavailable for the current schedule. Choose another guide or clear it before saving.",
+    "unlinked": "Not linked"
   },
   "menuPermission": {
     "rolesTitle": "Roles",

@@ -67,9 +67,31 @@
             {{ $t(`tour.sourceModule.${row.sourceModule}`) }}
           </template>
         </el-table-column>
-        <el-table-column prop="inquiryCode" :label="$t('tour.inquiryCode')" min-width="150" />
-        <el-table-column prop="quoteCode" :label="$t('tour.quoteCode')" min-width="150" />
-        <el-table-column prop="itineraryCode" :label="$t('tour.itineraryCode')" min-width="150" />
+        <el-table-column
+          prop="itinerarySummary"
+          :label="$t('tour.itinerarySummary')"
+          min-width="150"
+          show-overflow-tooltip
+          :formatter="textOrDash"
+        />
+        <el-table-column
+          prop="inquiryCode"
+          :label="$t('tour.inquiryCode')"
+          min-width="150"
+          :formatter="sourceCode"
+        />
+        <el-table-column
+          prop="quoteCode"
+          :label="$t('tour.quoteCode')"
+          min-width="150"
+          :formatter="sourceCode"
+        />
+        <el-table-column
+          prop="itineraryCode"
+          :label="$t('tour.itineraryCode')"
+          min-width="150"
+          :formatter="sourceCode"
+        />
         <el-table-column prop="days" :label="$t('tour.days')" width="80" />
         <el-table-column prop="startDate" :label="$t('common.startDate')" min-width="110" />
         <el-table-column
@@ -93,12 +115,12 @@
         </el-table-column>
         <el-table-column :label="$t('tour.pickupFlight')" min-width="150">
           <template #default="{ row }">
-            {{ row.pickupFlight.flightNumber }} {{ row.pickupFlight.arrivalAirport.code }}
+            {{ flightText(row as TourRecord, "pickup") }}
           </template>
         </el-table-column>
         <el-table-column :label="$t('tour.dropFlight')" min-width="150">
           <template #default="{ row }">
-            {{ row.dropFlight.flightNumber }} {{ row.dropFlight.departureAirport.code }}
+            {{ flightText(row as TourRecord, "drop") }}
           </template>
         </el-table-column>
         <el-table-column prop="pickupAt" :label="$t('tour.pickupAt')" min-width="150" />
@@ -224,6 +246,19 @@ function resetQuery() {
   keyword.value = "";
   status.value = "";
   businessUnit.value = "";
+}
+function textOrDash(_row: unknown, _column: unknown, value: string | null) {
+  return value || "-";
+}
+// 手工团没有来源关系；关联团缺编号时显示横线，不生成空链接。
+function sourceCode(row: TourRecord, _column: unknown, value: string | null) {
+  return value || (row.sourceModule === "manual" ? t("tour.unlinked") : "-");
+}
+function flightText(row: TourRecord, kind: "pickup" | "drop") {
+  const flight = kind === "pickup" ? row.pickupFlight : row.dropFlight;
+  if (!flight) return row.scheduleMode === "manual" ? t("tour.scheduleMode.manual") : "-";
+  const airport = kind === "pickup" ? flight.arrivalAirport : flight.departureAirport;
+  return `${flight.flightNumber} ${airport.code}`;
 }
 function openCreate() {
   editing.value = null;
