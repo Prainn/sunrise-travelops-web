@@ -173,9 +173,20 @@ defineExpose({ table: tableRef });
       line-height: normal;
     }
 
+    // 固定列边界用 1px 分隔线代替阴影，与表头列分隔线重合，不叠出双线
     .el-table-fixed-column--left.is-last-column::before,
     .el-table-fixed-column--right.is-first-column::before {
-      box-shadow: var(--el-table-fixed-box-shadow);
+      width: 1px;
+      background: var(--el-table-border-color);
+      box-shadow: none;
+    }
+
+    .el-table-fixed-column--left.is-last-column::before {
+      right: -1px;
+    }
+
+    .el-table-fixed-column--right.is-first-column::before {
+      left: -1px;
     }
 
     &.el-table--small .el-table__body td.el-table__cell {
@@ -187,9 +198,5 @@ defineExpose({ table: tableRef });
       height: 34px;
     }
   }
-}
-
-html.dark .data-table .data-table__table {
-  --el-table-fixed-box-shadow: 0 0 10px rgb(0 0 0 / 40%);
 }
 </style>
