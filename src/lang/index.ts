@@ -12,11 +12,21 @@ const messages = {
   en: enLocale,
 };
 
+// 动态键末段为空值（如 `statuses.${row.status}` 中 status 缺失，或表格列渲染时以空 row 探测插槽）
+const EMPTY_VALUE_KEY = /\.(?:undefined|null|)$/;
+
 const i18n = createI18n({
   legacy: false,
   locale: appStore.language,
   messages,
   globalInjection: true,
+  // 没有数据时不套用文案模板：返回空文本且不告警；其余缺失键保持默认告警并显示键名
+  missing: (locale, key) => {
+    if (EMPTY_VALUE_KEY.test(key)) return "";
+    if (import.meta.env.DEV) {
+      console.warn(`[intlify] Not found '${key}' key in '${locale}' locale messages.`);
+    }
+  },
 });
 
 // 全局注册 i18n

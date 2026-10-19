@@ -407,8 +407,8 @@
 import { businessUnitName } from "@/constants/identity";
 import { ArrowDown } from "@element-plus/icons-vue";
 import { plannedDuration, itineraryDuration } from "@/views/inquiries/itineraries/duration";
-import { computed, nextTick, onActivated, onDeactivated, onMounted, ref, watch } from "vue";
-import { useEventListener } from "@vueuse/core";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { useCollapsibleOverview } from "@/composables/useCollapsibleOverview";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { ItineraryHotelTier, ItineraryRecord } from "@/types/itinerary";
@@ -435,39 +435,7 @@ import { useItineraryWorkspace } from "./useItineraryWorkspace";
 
 defineOptions({ name: "InquiryItineraries" });
 const { t } = useI18n();
-const pageElement = ref<InstanceType<typeof PageShell>>();
-const scrollContainer = ref<HTMLElement>();
-const isOverviewCollapsed = ref(false);
-let scrollAnchor = 0;
-let isHeaderUpdating = false;
-
-function attachScrollContainer() {
-  const root = pageElement.value?.$el as HTMLElement | undefined;
-  scrollContainer.value = root?.closest<HTMLElement>(".layout-content") ?? undefined;
-  scrollAnchor = scrollContainer.value?.scrollTop ?? 0;
-}
-
-useEventListener(scrollContainer, "scroll", () => {
-  const container = scrollContainer.value;
-  if (!container || isHeaderUpdating) return;
-  const position = Math.max(0, container.scrollTop);
-  const delta = position - scrollAnchor;
-  if (position > 24 && Math.abs(delta) < 16) return;
-  scrollAnchor = position;
-  const shouldCollapse = position > 96 && delta > 0;
-  if (position > 24 && delta >= 0 && !shouldCollapse) return;
-  if (isOverviewCollapsed.value === shouldCollapse) return;
-  isHeaderUpdating = true;
-  isOverviewCollapsed.value = shouldCollapse;
-  // Header resizing can move the scroll position; it is not a change in user direction.
-  void nextTick(() => {
-    scrollAnchor = container.scrollTop;
-    isHeaderUpdating = false;
-  });
-});
-onMounted(attachScrollContainer);
-onActivated(attachScrollContainer);
-onDeactivated(() => { scrollContainer.value = undefined; });
+const { isOverviewCollapsed } = useCollapsibleOverview();
 const isQuoteDrawerVisible = ref(false);
 const isVehiclePlansDialogVisible = ref(false);
 const isGuidePlansDialogVisible = ref(false);

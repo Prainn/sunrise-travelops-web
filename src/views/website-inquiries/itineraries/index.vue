@@ -1,5 +1,6 @@
 <template>
   <PageShell
+    ref="pageElement"
     v-loading="loading || saving"
     :fill="false"
     :inert="loading || saving"
@@ -83,7 +84,7 @@
             </el-tag>
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-x-[18px] gap-y-3 mt-3 text-sm max-[650px]:grid-cols-1">
+        <div v-show="!isOverviewCollapsed" class="grid grid-cols-2 gap-x-[18px] gap-y-3 mt-3 text-sm max-[650px]:grid-cols-1">
           <span class="flex flex-wrap items-center gap-[6px]">
             <small class="text-muted">{{ $t("inquiry.code") }}</small>
             {{ inquiry.code }}
@@ -227,6 +228,7 @@ import PageShell from "@/components/PageShell/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import FeedbackState from "@/components/FeedbackState/index.vue";
 import InquiryMessagePreview from "@/views/inquiries/itineraries/components/InquiryMessagePreview.vue";
+import { useCollapsibleOverview } from "@/composables/useCollapsibleOverview";
 import { useWebsiteWorkspace } from "./useWebsiteWorkspace";
 import WebsiteDayCard from "./components/WebsiteDayCard.vue";
 import WebsiteItineraryBasics from "./components/WebsiteItineraryBasics.vue";
@@ -235,6 +237,7 @@ import WebsiteQuotationPreview from "./components/WebsiteQuotationPreview.vue";
 defineOptions({ name: "WebsiteItineraryWorkspace" });
 const router = useRouter();
 const { locale } = useI18n();
+const { isOverviewCollapsed } = useCollapsibleOverview();
 const isBasicsDialogVisible = ref(false);
 const {
   inquiry,

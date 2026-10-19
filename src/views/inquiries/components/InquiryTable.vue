@@ -76,9 +76,13 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('common.actions')" width="260" fixed="right">
+      <el-table-column
+        :label="$t('common.actions')"
+        :width="locale === 'en' ? 500 : 340"
+        fixed="right"
+      >
         <template #default="scope">
-          <RowActions>
+          <RowActions class="flex-nowrap!">
             <el-button type="primary" link @click="emit('view', scope.row as InquiryRecord)">
               {{ $t("common.view") }}
             </el-button>
@@ -109,8 +113,10 @@
                 {{ $t("inquiry.log.title") }}
               </el-dropdown-item>
               <el-dropdown-item
-                v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus, scope.row.hasActiveTour)"
-                v-hasPerm="'inquiry:archive'"
+                v-if="
+                  hasPerm('inquiry:archive')
+                    && !isInquiryReadOnly(scope.row.status as InquiryStatus, scope.row.hasActiveTour)
+                "
                 @click="emit('archive', scope.row as InquiryRecord)"
               >
                 {{ $t("inquiry.archive") }}
@@ -133,6 +139,7 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
 import DataTable from "@/components/DataTable/index.vue";
 import Pagination from "@/components/Pagination/index.vue";
 import RowActions from "@/components/RowActions/index.vue";
@@ -142,12 +149,15 @@ import { businessUnitName } from "@/constants/identity";
 import { useUserStore } from "@/stores/user";
 import InquiryTransferButton from "./InquiryTransferButton.vue";
 import { formatDateTime } from "@/utils";
+import { hasPerm } from "@/utils/auth";
 import { plannedDuration } from "@/views/inquiries/itineraries/duration";
 import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";
 import { INQUIRY_STATUS_TAG_TYPES } from "../options";
 import { isInquiryReadOnly } from "../inquiry-workflow";
 
 const userStore = useUserStore();
+// 常用操作需在一行内展示，英文按钮文案更长
+const { locale } = useI18n();
 
 defineProps<{
   rows: InquiryRecord[];
