@@ -1,16 +1,12 @@
-import { visitOverview, visitTrend } from "@/data/data";
-import type { VisitOverviewDetail, VisitTrendDetail } from "@/types/dashboard";
+import { request } from "@/api/request";
+import type { DashboardSummary, DashboardTrend, DashboardTrendDays } from "@/types/dashboard";
 
 export const dashboardService = {
-  async getVisitOverview(): Promise<VisitOverviewDetail> {
-    return { ...visitOverview };
+  getSummary() {
+    return request.get<DashboardSummary>("/dashboard/summary");
   },
 
-  async getVisitTrend(): Promise<VisitTrendDetail> {
-    return {
-      dates: [...visitTrend.dates],
-      pvList: [...visitTrend.pvList],
-      uvList: [...visitTrend.uvList],
-    };
+  getTrend(days: DashboardTrendDays) {
+    return request.get<DashboardTrend>("/dashboard/trend", { params: { days } });
   },
 };

@@ -16,7 +16,7 @@
 | 状态与组合函数 | `src/stores`、`src/composables`；业务 composables 就近放在 views 下 |
 | Inquiry | `src/views/inquiries`、`src/services/inquiry.service.ts`、`src/types/inquiry.ts` |
 | Itinerary / Quotation | `src/views/inquiries/itineraries` 的 Workspace/Editor/Quote/Pdf composables、`pdf.ts` / `docx.ts`；同一个 inquiry service、`src/types/itinerary.ts` |
-| 独立站询盘 / 行程 / 配置 | `src/views/website-inquiries`、`src/views/resources/website`；业务合同见根 `docs/api/独立站行程与报价V1.md` |
+| 独立站询盘 / 行程 / 配置 | `src/views/website-inquiries`、`src/views/resources/website`；业务合同见根 [统一 API 第 18 节](../docs/api/Sunrise%20TravelOps%20后端说明.md#website-api) |
 | 成团 / 导游请假与评分 | `src/views/tours`、`src/views/guides`；根成团专题及共享 API 成团章节 |
 | 系统操作日志 | `src/views/system/operation-logs`、`src/services/operation-log.service.ts` |
 

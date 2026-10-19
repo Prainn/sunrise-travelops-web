@@ -26,74 +26,39 @@
       </div>
     </SectionCard>
 
-    <div class="grid grid-cols-1 gap-[var(--page-gap)] md:grid-cols-2">
-      <SectionCard>
-        <div class="flex items-center gap-[14px]">
-          <div
-            class="flex shrink-0 items-center justify-center w-11 h-11 rounded-[var(--card-radius)] text-[var(--el-color-primary)] bg-[var(--el-color-primary-light-9)]"
-          >
-            <el-icon :size="18">
-              <User />
-            </el-icon>
-          </div>
-          <div class="flex flex-1 flex-col min-w-0">
-            <span class="mb-[3px] text-[14px] text-muted">{{ $t("dashboard.todayVisitors") }}</span>
+    <div
+      v-if="summary && hasSummaryItems"
+      class="grid grid-cols-1 gap-[var(--page-gap)] md:grid-cols-2 xl:grid-cols-4"
+    >
+      <SectionCard v-for="card in summaryCards" :key="card.key" :title="card.title">
+        <div class="flex flex-wrap gap-x-6 gap-y-3">
+          <div v-for="item in card.items" :key="item.label" class="flex flex-col min-w-0">
+            <span class="mb-[3px] text-[14px] text-muted">{{ item.label }}</span>
             <span class="text-[24px] font-semibold leading-[1.15] text-strong">
-              {{ displayTransitionUvCount }}
+              {{ item.value }}
             </span>
           </div>
-          <span
-            v-if="uvGrowthText !== '--'"
-            class="inline-flex shrink-0 gap-[3px] items-center text-[14px] font-bold"
-            :class="uvIsUp ? 'text-[var(--el-color-success)]' : 'text-[var(--el-color-danger)]'"
-          >
-            <el-icon :size="12">
-              <ArrowUp v-if="uvIsUp" />
-              <ArrowDown v-else />
-            </el-icon>
-            {{ uvGrowthText }}
-          </span>
-        </div>
-      </SectionCard>
-
-      <SectionCard>
-        <div class="flex items-center gap-[14px]">
-          <div
-            class="flex shrink-0 items-center justify-center w-11 h-11 rounded-[var(--card-radius)] text-[var(--el-color-primary)] bg-[var(--el-color-primary-light-9)]"
-          >
-            <el-icon :size="18">
-              <View />
-            </el-icon>
-          </div>
-          <div class="flex flex-1 flex-col min-w-0">
-            <span class="mb-[3px] text-[14px] text-muted">{{ $t("dashboard.todayViews") }}</span>
-            <span class="text-[24px] font-semibold leading-[1.15] text-strong">
-              {{ displayTransitionPvCount }}
-            </span>
-          </div>
-          <span
-            v-if="pvGrowthText !== '--'"
-            class="inline-flex shrink-0 gap-[3px] items-center text-[14px] font-bold"
-            :class="pvIsUp ? 'text-[var(--el-color-success)]' : 'text-[var(--el-color-danger)]'"
-          >
-            <el-icon :size="12">
-              <ArrowUp v-if="pvIsUp" />
-              <ArrowDown v-else />
-            </el-icon>
-            {{ pvGrowthText }}
-          </span>
         </div>
       </SectionCard>
     </div>
+    <SectionCard v-else-if="summary">
+      <el-empty :description="$t('dashboard.noAccessibleStats')" />
+    </SectionCard>
 
-    <SectionCard :title="$t('dashboard.visitTrend')">
+    <SectionCard :title="$t('dashboard.businessTrend')">
       <template #actions>
-        <el-radio-group v-model="visitTrendDateRange" size="small">
+        <el-radio-group v-model="trendDays" size="small">
           <el-radio-button :label="$t('dashboard.lastDays', { days: 7 })" :value="7" />
           <el-radio-button :label="$t('dashboard.lastDays', { days: 30 })" :value="30" />
         </el-radio-group>
       </template>
-      <ECharts :options="visitTrendChartOptions" height="260px" />
+      <div v-loading="trendLoading">
+        <ECharts v-if="hasTrendSeries" :options="trendChartOptions" height="260px" />
+        <el-empty
+          v-else
+          :description="trend ? $t('dashboard.noAccessibleStats') : $t('common.noData')"
+        />
+      </div>
     </SectionCard>
   </PageShell>
 </template>
@@ -103,14 +68,24 @@ defineOptions({ name: "Dashboard", inheritAttrs: false });
 
 import { ref } from "vue";
 import { dashboardService } from "@/services";
-import type { VisitOverviewDetail, VisitTrendDetail } from "@/types/dashboard";
+import type {
+  DashboardInquiryCounts,
+  DashboardSummary,
+  DashboardTrend,
+  DashboardTrendDays,
+} from "@/types/dashboard";
 import { useUserStore } from "@/stores/user";
 import { useSettingsStore } from "@/stores/settings";
-import { formatGrowthRate } from "@/utils";
-import { useTransition } from "@vueuse/core";
-import { User, View, ArrowUp, ArrowDown } from "@element-plus/icons-vue";
+import { ElMessage } from "element-plus";
+import { User } from "@element-plus/icons-vue";
 import PageShell from "@/components/PageShell/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
+
+interface SummaryCard {
+  key: string;
+  title: string;
+  items: Array<{ label: string; value: number }>;
+}
 
 const userStore = useUserStore();
 const settingsStore = useSettingsStore();
@@ -132,46 +107,92 @@ const currentDateStr = computed(() => {
   }).format(new Date());
 });
 
-const visitOverviewData = ref<VisitOverviewDetail>({
-  todayUvCount: 0,
-  uvGrowthRate: 0,
-  totalUvCount: 0,
-  todayPvCount: 0,
-  pvGrowthRate: 0,
-  totalPvCount: 0,
-});
+function showError(error: unknown) {
+  ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+}
 
-const uvGrowthText = computed(() => {
-  const r = visitOverviewData.value.uvGrowthRate;
-  return r == null ? "--" : formatGrowthRate(r);
-});
-const pvGrowthText = computed(() => {
-  const r = visitOverviewData.value.pvGrowthRate;
-  return r == null ? "--" : formatGrowthRate(r);
-});
-const uvIsUp = computed(() => (visitOverviewData.value.uvGrowthRate || 0) > 0);
-const pvIsUp = computed(() => (visitOverviewData.value.pvGrowthRate || 0) > 0);
+const summary = ref<DashboardSummary>();
 
-const tUv = useTransition(
-  computed(() => visitOverviewData.value.todayUvCount),
-  {
-    duration: 800,
-    transition: [0.25, 0.1, 0.25, 1.0],
-  },
+function inquiryItems(counts: DashboardInquiryCounts) {
+  return [
+    { label: t("inquiry.statuses.new"), value: counts.new },
+    { label: t("inquiry.statuses.planning"), value: counts.planning },
+    { label: t("inquiry.statuses.quoted"), value: counts.quoted },
+  ];
+}
+
+// null 为无权读取，整张卡片不显示；0 照常展示。
+const summaryCards = computed<SummaryCard[]>(() => {
+  const data = summary.value;
+  if (!data) return [];
+  const cards: SummaryCard[] = [];
+  if (data.inquiries) {
+    cards.push({
+      key: "inquiries",
+      title: t("route.inquiries"),
+      items: inquiryItems(data.inquiries),
+    });
+  }
+  if (data.websiteInquiries) {
+    cards.push({
+      key: "websiteInquiries",
+      title: t("route.websiteInquiries"),
+      items: inquiryItems(data.websiteInquiries),
+    });
+  }
+  if (data.tours) {
+    cards.push({
+      key: "tours",
+      title: t("route.tours"),
+      items: [
+        { label: t("dashboard.activeTours"), value: data.tours.active },
+        { label: t("dashboard.departingThisWeek"), value: data.tours.departingThisWeek },
+      ],
+    });
+  }
+  if (data.guideLeavesToday !== null) {
+    cards.push({
+      key: "guideLeavesToday",
+      title: t("dashboard.guideLeaves"),
+      items: [{ label: t("dashboard.guideLeaveRecordsToday"), value: data.guideLeavesToday }],
+    });
+  }
+  return cards;
+});
+const hasSummaryItems = computed(() => summaryCards.value.length > 0);
+
+async function fetchSummary() {
+  try {
+    summary.value = await dashboardService.getSummary();
+  } catch (error) {
+    showError(error);
+  }
+}
+
+const trendDays = ref<DashboardTrendDays>(7);
+const trend = ref<DashboardTrend>();
+const trendLoading = ref(false);
+const trendChartOptions = ref({});
+const hasTrendSeries = computed(
+  () => !!trend.value && (trend.value.newInquiries !== null || trend.value.departingTours !== null),
 );
-const tPv = useTransition(
-  computed(() => visitOverviewData.value.todayPvCount),
-  {
-    duration: 800,
-    transition: [0.25, 0.1, 0.25, 1.0],
-  },
-);
-const displayTransitionUvCount = computed(() => Math.round(Number(tUv.value)));
-const displayTransitionPvCount = computed(() => Math.round(Number(tPv.value)));
+let trendVersion = 0;
 
-const visitTrendDateRange = ref(7);
-const visitTrendData = ref<VisitTrendDetail>();
-const visitTrendChartOptions = ref({});
+async function fetchTrend() {
+  const version = ++trendVersion;
+  trendLoading.value = true;
+  trend.value = undefined;
+  try {
+    const result = await dashboardService.getTrend(trendDays.value);
+    if (version !== trendVersion) return;
+    trend.value = result;
+    updateTrendChartOptions(result);
+  } catch (error) {
+    if (version === trendVersion) showError(error);
+  } finally {
+    if (version === trendVersion) trendLoading.value = false;
+  }
+}
 
 function getCssVar(name: string, fallback: string) {
   if (typeof window === "undefined") return fallback;
@@ -203,27 +224,50 @@ function colorWithAlpha(color: string, alpha: number) {
   return value;
 }
 
-function fetchVisitOverviewData() {
-  dashboardService.getVisitOverview().then((d) => {
-    visitOverviewData.value = d;
-  });
+function lineSeries(name: string, data: number[], color: string, areaAlpha: number) {
+  return {
+    name,
+    type: "line",
+    data,
+    smooth: true,
+    symbol: "circle",
+    symbolSize: 5,
+    showSymbol: false,
+    lineStyle: { color, width: 2 },
+    itemStyle: { color },
+    areaStyle: {
+      color: {
+        type: "linear",
+        x: 0,
+        y: 0,
+        x2: 0,
+        y2: 1,
+        colorStops: [
+          { offset: 0, color: colorWithAlpha(color, areaAlpha) },
+          { offset: 1, color: colorWithAlpha(color, 0) },
+        ],
+      },
+    },
+  };
 }
 
-function fetchVisitTrendData() {
-  dashboardService.getVisitTrend().then((d) => {
-    visitTrendData.value = d;
-    updateVisitTrendChartOptions(d);
-  });
-}
-
-function updateVisitTrendChartOptions(d: VisitTrendDetail) {
+function updateTrendChartOptions(d: DashboardTrend) {
   const primary = getCssVar("--el-color-primary", "#409eff");
   const success = getCssVar("--el-color-success", "#67c23a");
   const textSecondary = getCssVar("--el-text-color-secondary", "#909399");
   const borderLighter = getCssVar("--el-border-color-lighter", "#ebeef5");
   const gridLine = colorWithAlpha(borderLighter, 0.72);
 
-  visitTrendChartOptions.value = {
+  // 只绘制有权读取的序列；null 序列不画成全 0。
+  const series = [];
+  if (d.newInquiries) {
+    series.push(lineSeries(t("dashboard.newInquiries"), d.newInquiries, primary, 0.16));
+  }
+  if (d.departingTours) {
+    series.push(lineSeries(t("dashboard.departingTours"), d.departingTours, success, 0.1));
+  }
+
+  trendChartOptions.value = {
     tooltip: {
       trigger: "axis",
       borderWidth: 0,
@@ -231,7 +275,7 @@ function updateVisitTrendChartOptions(d: VisitTrendDetail) {
       extraCssText: "box-shadow: var(--el-box-shadow-light); border-radius: 6px;",
     },
     legend: {
-      data: [t("dashboard.views"), t("dashboard.visitors")],
+      data: series.map((item) => item.name),
       bottom: 0,
       textStyle: { fontSize: 14, color: textSecondary },
       itemWidth: 10,
@@ -249,83 +293,29 @@ function updateVisitTrendChartOptions(d: VisitTrendDetail) {
     },
     yAxis: {
       type: "value",
+      minInterval: 1,
       axisLine: { show: false },
       axisTick: { show: false },
       splitLine: { lineStyle: { type: "dashed", color: gridLine, width: 1 } },
       axisLabel: { fontSize: 14, color: textSecondary },
     },
-    series: [
-      {
-        name: t("dashboard.views"),
-        type: "line",
-        data: d.pvList,
-        smooth: true,
-        symbol: "circle",
-        symbolSize: 5,
-        showSymbol: false,
-        lineStyle: { color: primary, width: 2.2 },
-        itemStyle: { color: primary },
-        areaStyle: {
-          opacity: 1,
-          color: {
-            type: "linear",
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: colorWithAlpha(primary, 0.18) },
-              { offset: 0.52, color: colorWithAlpha(primary, 0.08) },
-              { offset: 1, color: colorWithAlpha(primary, 0.01) },
-            ],
-          },
-        },
-      },
-      {
-        name: t("dashboard.visitors"),
-        type: "line",
-        data: d.uvList,
-        smooth: true,
-        symbol: "circle",
-        symbolSize: 5,
-        showSymbol: false,
-        lineStyle: { color: colorWithAlpha(success, 0.9), width: 1.8, opacity: 0.86 },
-        itemStyle: { color: success },
-        areaStyle: {
-          color: {
-            type: "linear",
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: colorWithAlpha(success, 0.08) },
-              { offset: 1, color: colorWithAlpha(success, 0) },
-            ],
-          },
-        },
-      },
-    ],
+    series,
   };
 }
 
-watch(
-  () => visitTrendDateRange.value,
-  () => fetchVisitTrendData(),
-  { immediate: true },
-);
+watch(trendDays, () => fetchTrend(), { immediate: true });
 watch(
   () => [settingsStore.resolvedTheme, settingsStore.themeColors, locale.value],
   () => {
-    if (!visitTrendData.value) return;
+    if (!trend.value) return;
 
     requestAnimationFrame(() => {
-      if (visitTrendData.value) updateVisitTrendChartOptions(visitTrendData.value);
+      if (trend.value) updateTrendChartOptions(trend.value);
     });
   },
   { deep: true },
 );
 onMounted(() => {
-  fetchVisitOverviewData();
+  fetchSummary();
 });
 </script>

@@ -40,7 +40,11 @@
           </template>
         </el-table-column>
         <el-table-column :label="$t('operationLog.actor')" prop="actorName" min-width="130" />
-        <el-table-column :label="$t('operationLog.action')" prop="action" min-width="180" />
+        <el-table-column :label="$t('operationLog.action')" min-width="180">
+          <template #default="{ row }">
+            {{ actionLabel(row.action) }}
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('operationLog.result')" min-width="90">
           <template #default="{ row }">
             <el-tag :type="row.success ? 'success' : 'danger'">
@@ -80,6 +84,10 @@ import { operationLogService } from "@/services/operation-log.service";
 import type { OperationCategory, OperationLog } from "@/types/operation-log";
 
 const { t } = useI18n();
+const actionCodeLabels: Record<string, string> = {
+  "website.initial-data.import": "operationLog.websiteInitialDataImport",
+};
+const actionLabel = (action: string) => (actionCodeLabels[action] ? t(actionCodeLabels[action]) : action);
 const categories: { value: OperationCategory; label: string }[] = [
   { value: "login", label: "operationLog.login" },
   { value: "user", label: "operationLog.user" },
