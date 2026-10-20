@@ -25,6 +25,8 @@ import {
   isHotelEligibleForTier,
 } from "./hotel-plans";
 import { createDefaultQuoteOption, createDefaultQuoteSettings } from "./quote-pricing";
+import { reorderItineraryDays } from "./day-order";
+import type { DayOrderChange, DayOrderIssue } from "./reorder-board";
 import { createDefaultVehiclePlans, getVehiclePlan, VEHICLE_PLAN_TIERS } from "./vehicle-plans";
 
 type EditableDayField =
@@ -108,9 +110,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     const destinationsChanged =
       plan.destinations.length !== record.destinations.length ||
       plan.destinations.some((destination, index) => destination !== record.destinations[index]);
-    const plannedDays = options.inquiry.value?.plannedDays ?? plan.dailyPlans.length;
     const breakfastChanged =
-      plan.dailyPlans.length < plannedDays ||
       (destinationsChanged &&
         (plan.dailyPlans.some(
           (day) => day.overnightDestination && !record.destinations.includes(day.overnightDestination),
@@ -126,7 +126,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       childWithoutBedRate: record.childWithoutBedRate,
       destinations: [...record.destinations],
     });
-    ensurePlannedDays(plan, plannedDays);
     syncPlanDates(plan);
     syncDestinations(plan, destinationsChanged);
     syncBreakfast(plan, breakfastChanged);
@@ -147,13 +146,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       description: "",
       items: [],
     }));
-  }
-
-  function ensurePlannedDays(plan: ItineraryRecord, plannedDays: number) {
-    if (plan.dailyPlans.length >= plannedDays) return;
-    plan.dailyPlans.push(
-      ...createDailyPlans(plan.startDate, plannedDays).slice(plan.dailyPlans.length),
-    );
   }
 
   function updateDayField(index: number, field: EditableDayField, value: string | null) {
@@ -197,8 +189,19 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
         ? `${existing}${/[；;]$/.test(existing) ? "" : "；"}${text}`
         : text;
     };
+    const editingIndex = item.type === "attraction" ? day.items.findIndex((record) => record.id === item.id) : -1;
+    if (editingIndex >= 0) {
+      // 编辑已有景点：原位替换，只有更换资源时才追加资源描述。
+      const previousItem = day.items[editingIndex]!;
+      if (previousItem.resourceId !== item.resourceId) appendDescription();
+      day.items[editingIndex] = { ...item, remark: previousItem.remark };
+      touchSelectedItinerary();
+      return true;
+    }
     if (item.type === "restaurant") {
-      if (!item.mealSlot || !day.meals[item.mealSlot]) return false;
+      if (!item.mealSlot) return false;
+      // 从当天餐食按钮确认选择时同时勾选该餐；取消弹窗不会留下空餐次。
+      if (!day.meals[item.mealSlot]) day.meals[item.mealSlot] = true;
       const previous = day.items.findIndex(
         (record) => record.type === "restaurant" && record.mealSlot === item.mealSlot,
       );
@@ -297,7 +300,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
         referencePrice: guide.dailyPrice,
         referenceBasis: "resource_price",
         adjustmentReason: "",
-        serviceDays: options.inquiry.value?.plannedDays ?? 1,
+        serviceDays: plan.dailyPlans.length,
       },
     ];
     touchSelectedItinerary();
@@ -412,6 +415,33 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     touchSelectedItinerary();
   }
 
+  /**
+   * 应用顺序调整看板的结果，只改变草稿，仍需保存行程。
+   *
+   * @param change - 看板结果。
+   * @returns 需核对事项；无编辑权限时返回 undefined。
+   */
+  function applyDayOrder(change: DayOrderChange): DayOrderIssue[] | undefined {
+    const plan = options.selectedItinerary.value;
+    if (!options.canEditContent() || !plan) return;
+    const result = reorderItineraryDays(plan, change);
+    plan.dailyPlans = result.dailyPlans;
+    plan.deletedDays = result.deletedDays;
+    syncPlanDates(plan);
+    touchSelectedItinerary(true);
+    return result.issues;
+  }
+
+  function addDay() {
+    const plan = options.selectedItinerary.value;
+    if (!plan || !options.canEditContent() || plan.dailyPlans.length >= 365) return;
+    const formerLast = plan.dailyPlans[plan.dailyPlans.length - 1];
+    if (formerLast) formerLast.overnightDestination = formerLast.destination || null;
+    plan.dailyPlans.push(...createDailyPlans(plan.startDate, 1));
+    syncPlanDates(plan);
+    touchSelectedItinerary(true);
+  }
+
   function syncPlanDates(plan: ItineraryRecord) {
     plan.dailyPlans.forEach((day, index) => {
       day.dayNumber = index + 1;
@@ -419,6 +449,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     });
     // 日期始终按日序校正并更新时间；早餐在目的地清理后按需同步，避免重复执行。
     plan.days = plan.dailyPlans.length;
+    if (plan.guidePlans[0]) plan.guidePlans[0].serviceDays = plan.days;
     plan.endDate = plan.days ? addDays(plan.startDate, plan.days - 1) : plan.startDate;
     plan.updatedAt = formatDateTime(new Date());
   }
@@ -559,6 +590,8 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   }
 
   return {
+    applyDayOrder,
+    addDay,
     updateGuideSelection,
     updateGuidePrice,
     updateHotelCost,

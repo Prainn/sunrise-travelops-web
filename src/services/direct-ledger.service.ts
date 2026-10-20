@@ -1,7 +1,7 @@
 import { request } from "@/api/request";
 import type { PageResult } from "@/types/common";
 import type {
-  DirectLedgerInput,
+  DirectLedgerCreateInput,
   DirectLedgerItem,
   DirectLedgerOperationInput,
   DirectLedgerOperatorOption,
@@ -24,7 +24,7 @@ export const directLedgerService = {
       params: { ...query },
     });
   },
-  create(body: DirectLedgerInput) {
+  create(body: DirectLedgerCreateInput) {
     return request.post<DirectLedgerItem>(BASE_URL, body);
   },
   update(id: string, body: DirectLedgerUpdateInput) {

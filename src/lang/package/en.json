@@ -303,7 +303,6 @@
     "copySuffix": "Copy",
     "dailyResources": "Daily Meals & Attractions",
     "dayCountMismatch": "The inquiry plans {planned} days / {plannedNights} nights; this itinerary has {actual} days / {actualNights} nights. Generate PDF anyway?",
-    "dailySchedule": "Daily Itinerary",
     "dayCost": "Daily Meals & Attractions Cost",
     "dayDescription": "Day plan",
     "dayDescriptionPlaceholder": "Describe the day's sightseeing and activities",
@@ -1283,7 +1282,8 @@
       "empty": "No city skeletons configured; itineraries can still be planned day by day",
       "cityOrder": "City order",
       "noDays": "No days added",
-      "addDay": "Add day",
+      "dayCount": "Itinerary days",
+    "addDay": "Add day",
       "daysEmpty": "Add days and configure each day's city and day pattern"
     },
     "templates": {
@@ -1386,9 +1386,9 @@
     "transportNameEn": "English transport leg description",
     "removeTransportLeg": "Remove transport leg",
     "finalPrice": "Final price per person in RMB",
-    "pricePlaceholder": "Leave blank if not quoted",
+    "pricePlaceholder": "Leave blank if this option is not offered",
     "capacityHint": "Recommended passengers: comfortable {comfortable} / economy {economy} / extra luggage {luggage}",
-    "finalPriceHint": "Enter at least one final price per person. The quote includes the vehicle and driver service.",
+    "finalPriceHint": "At least one option must have a per-person price before the quotation is confirmed; leave options you don't offer blank.",
     "title": "Itinerary title",
     "plannedDays": "Planned days",
     "pax": "Passengers",
@@ -1401,7 +1401,61 @@
     "englishPreview": "English quotation preview",
     "chinesePreview": "Chinese quotation preview",
     "printPdf": "Print / save as PDF",
-    "confirmQuotation": "Confirm quotation and lock itinerary"
+    "confirmQuotation": "Confirm quotation and lock itinerary",
+    "publicCity": "Public city",
+    "publicCityPlaceholder": "Search and select a public city",
+    "publicKeywordPlaceholder": "Search public resource name or code",
+    "publicCityFiltered": "Filtered by the selected public city. This filter only affects this search and does not change the day's overnight city.",
+    "publicCityNotFound": "The public city linked to this day's city was not found in the loaded records. Please select a public city.",
+    "publicCityUnfiltered": "Not filtered by city. Select a public city to narrow the results.",
+    "publicCityNotLinked": "This day's city is not linked to a public city. Please select one; results from all cities are shown until you do.",
+    "publicResourceName": "Name",
+    "resourceSource": "Source",
+    "sourceConfig": "Website attractions / components",
+    "sourceManual": "Manual",
+    "sourceRoute": "Website routes",
+    "sourceConfigHotel": "Website hotels",
+    "sourcePublic": "Public resources",
+    "configCity": "Configured city",
+    "bilingualKeywordPlaceholder": "Search Chinese or English name",
+    "attractionName": "Attraction / component",
+    "attractionKinds": {
+      "attraction": "Attraction",
+      "component": "Component"
+    },
+    "parentAttraction": "Part of: {name}",
+    "usedDays": "Used on",
+    "chargeable": "Charge",
+    "chargeableYes": "Chargeable",
+    "chargeableNo": "Free",
+    "recommendedMonths": "Recommended months",
+    "duplicateAttraction": "This attraction is already used on {days}. You can still add it; please confirm it is not a duplicate.",
+    "manualAttractionHint": "After adding, complete the bilingual copy and fee state on the day card.",
+    "routeCities": "Route",
+    "configHotelPriceColumn": "Internal reference (CNY/room/night)",
+    "publicResourceNote": "Public resources only provide name and city, without bilingual standard copy or prices. Please add the English name manually.",
+    "hotelNameNote": "You can edit the hotel names below.",
+    "mealNameNote": "Enter a recommended restaurant or meal; leave blank if not specified.",
+    "mealSlot": "Meal",
+    "noOvernightStay": "No overnight stay",
+    "hotelAlternativesHint": "Multiple hotels are A/B alternatives, not consecutive stays on the same night.",
+    "hotelNameMissing": "Hotel name not entered",
+    "hotelSources": {
+      "config": "Website hotel",
+      "public": "Public resource",
+      "manual": "Manual"
+    },
+    "breakfastIncludedShort": "Breakfast included",
+    "breakfastExcludedShort": "No breakfast",
+    "noRestaurant": "No restaurant specified",
+    "noOvernightTonight": "No overnight stay tonight",
+    "noOvernightRemoveHotels": "Setting no overnight stay will also remove the {count} hotel(s) arranged for this day. Continue?",
+    "noOvernightConfirm": "No stay and remove hotels",
+    "packagePriceTitle": "Full-trip package price per person",
+    "packagePriceDescription": "Quote separately for each vehicle type: enter the final full-trip price per person. This is not a separate vehicle charge; inclusions follow this itinerary's fee settings.",
+    "vehiclePlanTitle": "Itinerary option using a {vehicle}",
+    "pricePerPerson": "Price per person",
+    "pricePerPersonUnit": "CNY / person"
   },
   "websiteWorkspace": {
     "businessLabel": "Website",
@@ -1497,7 +1551,7 @@
   "tour": {
     "tourNo": "Tour number",
     "headcountRequired": "Enter an integer of 0 or more",
-    "create": "Create Tour",
+    "create": "Create new record",
     "edit": "Edit Tour",
     "cancel": "Cancel tour",
     "cancelled": "Tour cancelled",
@@ -1579,6 +1633,7 @@
   "ledger": {
     "required": "Please enter {field}",
     "shengxu": {
+      "businessUnitName": "Shengxu",
       "create": "New Shengxu Entry",
       "edit": "Edit Shengxu Entry",
       "view": "View Shengxu Entry",
@@ -1647,6 +1702,73 @@
       "unmarkOperatedConfirm": "Remove the operated mark from order {orderNo}?",
       "deleteConfirm": "Delete order {orderNo}?",
       "searchPlaceholder": "Order no., source, designer, receiving account, coordinator, itinerary"
+    }
+  },
+  "itineraryWorkspace": {
+    "pageTitles": {
+      "website": "Website itinerary · {name}",
+      "inquiry": "Inquiry itinerary · {name}"
+    },
+    "dayDirectory": "Day directory",
+    "reorder": "Reorder",
+    "dayResources": "Day resources",
+    "addDay": "+ Day",
+    "deletedDays": "Deleted days",
+    "deletedTitle": "Deleted itinerary days",
+    "deleteDay": "Delete this day",
+    "restoreDay": "Restore",
+    "deleteDayConfirm": "Delete day {day}? You can restore it from Deleted days. Apply the changes and save the itinerary to keep them.",
+    "deletedHint": "Restore to the original date, before its current occupant if occupied. Apply the changes and save the itinerary to keep them.",
+    "reorderTitle": "Reorder itinerary",
+    "reorderHint": "Drag a day card's header or use the arrows to reorder whole days; attractions can be dragged or moved within their own day. Other categories are shown for reference and cannot move across days. Save the itinerary after applying.",
+    "reorderReadonly": "This itinerary is read-only; you can only view the full schedule.",
+    "moveEarlier": "Move one day earlier",
+    "moveLater": "Move one day later",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "notArranged": "Not arranged",
+    "issuesTitle": "Please review after reordering",
+    "applyOrder": "Apply order",
+    "orderApplied": "Applied to the current draft. Remember to save the itinerary.",
+    "locate": "Locate",
+    "resourceDialogTitle": "{day} · {type}",
+    "wholeTripPlans": "Whole-trip plans",
+    "alternativePlans": "Alternatives: {plans}",
+    "actions": {
+      "attraction": "Attractions",
+      "hotel": "Hotel",
+      "vehicle": "Vehicle",
+      "guide": "Guide",
+      "transport": "Transport",
+      "meal": "Meals",
+      "service": "Services"
+    },
+    "scopes": {
+      "byCity": "By overnight city",
+      "byDateRange": "By date range",
+      "wholeTrip": "Whole trip",
+      "thisDay": "This day",
+      "alternatives": "Alternatives"
+    },
+    "hints": {
+      "normalHotel": "Hotels are arranged per tier and overnight city; consecutive nights in a city share one plan",
+      "normalVehicle": "Vehicles are planned for the whole trip or date ranges, not as a separate daily cost",
+      "normalGuide": "The guide is a whole-trip service plan covering all days",
+      "websiteHotelNeedsCity": "No overnight city is set for this day (no overnight stay), so no hotel is needed"
+    },
+    "groups": {
+      "meals": "Meals",
+      "guideAndServices": "Guide & services"
+    },
+    "issues": {
+      "descriptionCheck": "D{day}: attraction order changed. The day's itinerary text is not rewritten automatically; please review it",
+      "formerLastDay": "D{day} was the last day. Now in the middle, its overnight city was set to the destination \"{city}\"; please review stay and hotels",
+      "newLastDay": "D{day} is now the last day; please confirm whether there is an overnight stay",
+      "routeBreak": "D{day}: departure differs from D{previous}'s overnight city; please review the route",
+      "vehicleCheck": "Vehicle plans are saved by date range and are not moved with the days; please review vehicle arrangements",
+      "middleNoOvernight": "D{day} was the last day with no overnight stay and is now a middle day; please add an overnight city and hotel",
+      "cityBreak": "D{day}: departure city differs from D{previous}'s overnight/end city; please review",
+      "legsCheck": "D{day}: its transport legs moved with the day; please review connections and season/first/last-day rules"
     }
   }
 }

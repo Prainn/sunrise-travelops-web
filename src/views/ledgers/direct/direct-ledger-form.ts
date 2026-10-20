@@ -9,12 +9,14 @@ export type TriStateValue = "unset" | "yes" | "no";
 
 /** 直客台账表单；展示用人员姓名快照不提交。 */
 export interface DirectLedgerFormState extends DirectLedgerInput {
+  creatorId: string;
   receivingAccountName: string;
   operatorName: string;
 }
 
 export function emptyDirectLedgerForm(): DirectLedgerFormState {
   return {
+    creatorId: "",
     receivedDate: "",
     source: "",
     receivingAccountId: null,
@@ -41,6 +43,7 @@ export function emptyDirectLedgerForm(): DirectLedgerFormState {
 
 export function directLedgerFormFromItem(item: DirectLedgerItem): DirectLedgerFormState {
   return {
+    creatorId: item.creatorId,
     receivedDate: item.receivedDate,
     source: item.source,
     receivingAccountId: item.receivingAccountId,

@@ -171,10 +171,9 @@ const openingId = ref("");
 const deletingId = ref("");
 let listGeneration = 0;
 
-// 直接读取有效权限，不走 ROOT 通用放行；总部写操作由后端 capability 与此处共同拦截。
-const isHeadquarters = computed(() => user.userInfo.scope === "headquarters");
+// 使用当前身份的有效动作权限；行级操作另结合后端 capabilities。
 const canCreate = computed(
-  () => !isHeadquarters.value && user.userInfo.perms.includes("ledger:shengxu:create"),
+  () => user.userInfo.perms.includes("ledger:shengxu:create"),
 );
 const hasActiveFilters = computed(() => Boolean(keyword.value.trim() || dateRange.value));
 

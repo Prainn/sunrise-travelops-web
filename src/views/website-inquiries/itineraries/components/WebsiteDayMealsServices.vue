@@ -4,39 +4,45 @@
       {{ $t("websiteItineraryUi.mealsAndServices") }}
     </h4>
     <div
-      v-for="meal in day.meals"
+      v-for="meal in day.meals.filter(isMealArranged)"
       :key="meal.id"
-      class="p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)]"
+      class="flex flex-wrap items-center justify-between gap-3 p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)] text-[13px]"
     >
-      <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
-        <el-form-item :label="$t(`websiteItineraryUi.mealFees.${meal.slot}`)">
-          <FeeStateSelect v-model="meal.feeState" />
-        </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.sharedRestaurant')">
-          <WebsiteResourceSelect
-            v-model="meal.resourceId"
-            kind="restaurant"
-            :selected-name="meal.restaurantZh"
-            @select="
-              (resource) => {
-                if (resource) meal.restaurantZh = resource.name;
-              }
-            "
-          />
-        </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.restaurantOrMealNameZh')">
-          <el-input v-model="meal.restaurantZh" maxlength="150" />
-        </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.restaurantOrMealNameEn')">
-          <el-input v-model="meal.restaurantEn" maxlength="150" />
-        </el-form-item>
+      <div class="min-w-0 flex flex-wrap items-center gap-2">
+        <strong class="text-strong">{{ $t(`itinerary.meals.${meal.slot}`) }}</strong>
+        <el-tag size="small" effect="plain">
+          {{ $t(`websiteInquiry.feeStates.${meal.feeState}`) }}
+        </el-tag>
+        <span class="[overflow-wrap:anywhere]">
+          {{ mealName(meal) || $t("websiteItineraryUi.noRestaurant") }}
+        </span>
+        <el-tag
+          v-if="meal.resourceId"
+          size="small"
+          type="info"
+          effect="plain"
+        >
+          {{ $t("websiteItineraryUi.hotelSources.public") }}
+        </el-tag>
       </div>
+      <el-button
+        v-if="editable"
+        link
+        type="primary"
+        @click="emit('edit-meal', meal.slot)"
+      >
+        {{ $t("common.edit") }}
+      </el-button>
     </div>
-    <div class="flex flex-wrap justify-between items-center gap-3 mt-1">
+    <div
+      v-if="day.services.length"
+      :id="`website-day-services-${day.id}`"
+      class="flex flex-wrap justify-between items-center gap-3 mt-1"
+    >
       <h5 class="m-0 text-[13px] text-strong font-600">
         {{ $t("websiteItineraryUi.otherServices") }}
       </h5>
-      <el-button v-if="editable" @click="addService">
+      <el-button v-if="editable" @click="emit('add-service')">
         {{ $t("websiteItineraryUi.addService") }}
       </el-button>
     </div>
@@ -71,18 +77,15 @@
   </section>
 </template>
 <script setup lang="ts">
-import type { WebsiteDay } from "@/types/website";
+import { useI18n } from "vue-i18n";
+import type { WebsiteDay, WebsiteMeal } from "@/types/website";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
-import WebsiteResourceSelect from "../../components/WebsiteResourceSelect.vue";
+import { isMealArranged } from "../../options";
 const day = defineModel<WebsiteDay>("day", { required: true });
 defineProps<{ editable: boolean }>();
-function addService() {
-  day.value.services.push({
-    id: crypto.randomUUID(),
-    nameZh: "",
-    nameEn: "",
-    appears: true,
-    feeState: "UNKNOWN",
-  });
+const emit = defineEmits<{ "edit-meal": [slot: WebsiteMeal["slot"]]; "add-service": [] }>();
+const { locale } = useI18n();
+function mealName(meal: WebsiteMeal) {
+  return (locale.value === "en" ? meal.restaurantEn : meal.restaurantZh) || meal.restaurantZh || meal.restaurantEn;
 }
 </script>

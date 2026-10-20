@@ -86,21 +86,21 @@
           type="warning"
           :closable="false"
           :title="$t('tour.notDownloaded')"
-          class="mb-[16px]"
+          class="mb-3!"
         />
         <el-alert
           v-if="!source.startDate"
           type="warning"
           :closable="false"
           :title="$t('tour.noStartDate')"
-          class="mb-[16px]"
+          class="mb-3!"
         />
         <el-alert
           v-if="!source.countryCode"
           type="warning"
           :closable="false"
           :title="$t('tour.noCountry')"
-          class="mb-[16px]"
+          class="mb-3!"
         />
       </template>
 
@@ -354,7 +354,7 @@
         type="warning"
         :closable="false"
         :title="$t('tour.guideUnavailable')"
-        class="mb-[16px]"
+        class="mb-3!"
       />
       <el-form-item :label="$t('common.remark')">
         <el-input

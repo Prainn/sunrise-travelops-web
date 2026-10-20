@@ -85,7 +85,7 @@
           v-for="field in BOOLEAN_FIELDS"
           :key="field"
           :label="$t(`ledger.direct.${field}`)"
-          min-width="110"
+          :min-width="field === 'effectiveContact' ? 150 : 110"
           align="center"
         >
           <template #default="{ row }">
@@ -115,7 +115,7 @@
           v-for="field in TRI_STATE_FIELDS"
           :key="field"
           :label="$t(`ledger.direct.${field}`)"
-          min-width="120"
+          :min-width="field === 'satisfied' ? 170 : 120"
           align="center"
         >
           <template #default="{ row }">
@@ -268,9 +268,9 @@ const openingId = ref("");
 const actingId = ref("");
 let listGeneration = 0;
 
-// 直接读取有效权限，不走 ROOT 通用放行；总部所有写操作均隐藏。
+// 使用当前身份的有效动作权限；行级操作另结合后端 capabilities。
 const canCreate = computed(
-  () => !isHeadquarters.value && hasPermission("ledger:direct:create"),
+  () => hasPermission("ledger:direct:create"),
 );
 const hasActiveFilters = computed(() =>
   Boolean(keyword.value.trim() || orderStatus.value || dateRange.value),

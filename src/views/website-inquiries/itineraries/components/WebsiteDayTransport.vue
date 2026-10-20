@@ -4,29 +4,14 @@
       <h4 class="m-0 text-[14px] text-strong font-600">
         {{ $t("websiteItineraryUi.transportLegs") }}
       </h4>
-      <div v-if="editable" class="flex flex-wrap gap-2">
-        <el-select
-          v-model="selectedId"
-          autocomplete="new-password"
-          filterable
-          clearable
-          :placeholder="$t('websiteItineraryUi.selectRoute')"
-          class="w-[240px]!"
-        >
-          <el-option
-            v-for="route in config.routes.filter((item) => item.status === 'enabled')"
-            :key="route.id"
-            :value="route.id"
-            :label="route.nameZh"
-          />
-        </el-select>
-        <el-button @click="addRoute">
-          {{ $t("websiteItineraryUi.addSelected") }}
-        </el-button>
-        <el-button @click="addManual">
-          {{ $t("websiteItineraryUi.manualTransportLeg") }}
-        </el-button>
-      </div>
+      <el-button
+        v-if="editable"
+        link
+        type="primary"
+        @click="emit('add')"
+      >
+        {{ $t("itineraryWorkspace.actions.transport") }}
+      </el-button>
     </div>
     <div
       v-for="(leg, index) in day.legs"
@@ -40,7 +25,7 @@
               v-for="city in config.cities"
               :key="city.id"
               :value="city.id"
-              :label="city.nameZh"
+              :label="locale === 'en' ? city.nameEn : city.nameZh"
             />
           </el-select>
         </el-form-item>
@@ -50,7 +35,7 @@
               v-for="city in config.cities"
               :key="city.id"
               :value="city.id"
-              :label="city.nameZh"
+              :label="locale === 'en' ? city.nameEn : city.nameZh"
             />
           </el-select>
         </el-form-item>
@@ -86,38 +71,12 @@
   </section>
 </template>
 <script setup lang="ts">
-import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 import type { WebsiteConfig, WebsiteDay } from "@/types/website";
 import { TRANSPORT_OPTIONS } from "../../options";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
 const day = defineModel<WebsiteDay>("day", { required: true });
-const props = defineProps<{ config: WebsiteConfig; editable: boolean }>();
-const selectedId = ref("");
-function addRoute() {
-  const route = props.config.routes.find((item) => item.id === selectedId.value);
-  if (!route) return;
-  day.value.legs.push({
-    id: crypto.randomUUID(),
-    routeId: route.id,
-    fromCityId: route.fromCityId,
-    toCityId: route.toCityId,
-    mode: route.mode,
-    nameZh: route.nameZh,
-    nameEn: route.nameEn,
-    feeState: route.feeState,
-  });
-  selectedId.value = "";
-}
-function addManual() {
-  day.value.legs.push({
-    id: crypto.randomUUID(),
-    routeId: null,
-    fromCityId: day.value.departCityId,
-    toCityId: day.value.endCityId,
-    mode: "private_vehicle",
-    nameZh: "",
-    nameEn: "",
-    feeState: "INCLUDED",
-  });
-}
+defineProps<{ config: WebsiteConfig; editable: boolean }>();
+const emit = defineEmits<{ add: [] }>();
+const { locale } = useI18n();
 </script>

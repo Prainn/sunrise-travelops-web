@@ -1,102 +1,101 @@
 <template>
-  <el-form
-    class="day-form grid [grid-template-columns:repeat(4,_minmax(0,_1fr))] gap-[14px_16px] p-[16px] [border:1px_solid_var(--divider-color)] surface-muted max-[900px]:[grid-template-columns:1fr]"
-    label-position="top"
-  >
-    <el-form-item :label="$t('itinerary.departure')">
-      <el-input
-        v-if="day.dayNumber === 1"
-        :model-value="day.departure"
-        :disabled="!editable"
-        :placeholder="$t('itinerary.departure')"
-        @update:model-value="updateField('departure', $event)"
-      />
-      <el-select
-        v-else
-        autocomplete="new-password"
-        :model-value="day.departure"
-        :disabled="!editable"
-        filterable
-        clearable
-        @update:model-value="updateField('departure', $event)"
-      >
-        <el-option
-          v-for="city in destinations"
-          :key="city"
-          :label="city"
-          :value="city"
+  <el-form label-position="top" @submit.prevent>
+    <ItineraryDayPanel :columns="4">
+      <el-form-item :label="$t('itinerary.departure')">
+        <el-input
+          v-if="day.dayNumber === 1"
+          :model-value="day.departure"
+          :disabled="!editable"
+          :placeholder="$t('itinerary.departure')"
+          @update:model-value="updateField('departure', $event)"
         />
-      </el-select>
-    </el-form-item>
-    <el-form-item :label="$t('itinerary.destination')">
-      <el-select
-        autocomplete="new-password"
-        :allow-create="allowCustomDestination"
-        :model-value="day.destination"
-        :disabled="!editable"
-        filterable
-        clearable
-        @update:model-value="updateField('destination', $event)"
+        <el-select
+          v-else
+          autocomplete="new-password"
+          :model-value="day.departure"
+          :disabled="!editable"
+          filterable
+          clearable
+          @update:model-value="updateField('departure', $event)"
+        >
+          <el-option
+            v-for="city in destinations"
+            :key="city"
+            :label="city"
+            :value="city"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item :label="$t('itinerary.destination')">
+        <el-select
+          autocomplete="new-password"
+          :allow-create="allowCustomDestination"
+          :model-value="day.destination"
+          :disabled="!editable"
+          filterable
+          clearable
+          @update:model-value="updateField('destination', $event)"
+        >
+          <el-option
+            v-for="city in destinations"
+            :key="city"
+            :label="city"
+            :value="city"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item :label="$t('itinerary.overnightDestination')">
+        <el-select
+          autocomplete="new-password"
+          :model-value="day.overnightDestination"
+          :disabled="!editable || !isLast"
+          :placeholder="$t('itinerary.overnightPending')"
+          @update:model-value="updateField('overnightDestination', $event)"
+        >
+          <el-option :label="$t('itinerary.noOvernightStay')" value="" />
+          <el-option
+            v-for="destination in destinations"
+            :key="destination"
+            :label="destination"
+            :value="destination"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item :label="$t('itinerary.transport')">
+        <el-select
+          autocomplete="new-password"
+          :model-value="transportCodes"
+          :disabled="!editable"
+          multiple
+          collapse-tags
+          collapse-tags-tooltip
+          :max-collapse-tags="2"
+          :placeholder="$t('itinerary.transportPlaceholder')"
+          @update:model-value="updateTransport"
+        >
+          <el-option
+            v-for="option in transportOptions"
+            :key="option.value"
+            :label="option.label"
+            :value="option.value"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item
+        class="day-form__description [grid-column:1_/_-1]"
+        :label="$t('itinerary.dayDescription')"
       >
-        <el-option
-          v-for="city in destinations"
-          :key="city"
-          :label="city"
-          :value="city"
+        <el-input
+          :model-value="day.description"
+          :disabled="!editable"
+          type="textarea"
+          :rows="4"
+          resize="vertical"
+          :placeholder="$t('itinerary.dayDescriptionPlaceholder')"
+          @update:model-value="updateField('description', $event)"
         />
-      </el-select>
-    </el-form-item>
-    <el-form-item :label="$t('itinerary.overnightDestination')">
-      <el-select
-        autocomplete="new-password"
-        :model-value="day.overnightDestination"
-        :disabled="!editable || !isLast"
-        :placeholder="$t('itinerary.overnightPending')"
-        @update:model-value="updateField('overnightDestination', $event)"
-      >
-        <el-option :label="$t('itinerary.noOvernightStay')" value="" />
-        <el-option
-          v-for="destination in destinations"
-          :key="destination"
-          :label="destination"
-          :value="destination"
-        />
-      </el-select>
-    </el-form-item>
-    <el-form-item :label="$t('itinerary.transport')">
-      <el-select
-        autocomplete="new-password"
-        :model-value="transportCodes"
-        :disabled="!editable"
-        multiple
-        collapse-tags
-        collapse-tags-tooltip
-        :max-collapse-tags="2"
-        :placeholder="$t('itinerary.transportPlaceholder')"
-        @update:model-value="updateTransport"
-      >
-        <el-option
-          v-for="option in transportOptions"
-          :key="option.value"
-          :label="option.label"
-          :value="option.value"
-        />
-      </el-select>
-    </el-form-item>
-    <el-form-item
-      class="day-form__description [grid-column:1_/_-1]"
-      :label="$t('itinerary.dayDescription')"
-    >
-      <el-input
-        :model-value="day.description"
-        :disabled="!editable"
-        type="textarea"
-        :rows="4"
-        resize="vertical"
-        :placeholder="$t('itinerary.dayDescriptionPlaceholder')"
-        @update:model-value="updateField('description', $event)"
-      />
-    </el-form-item>
+      </el-form-item>
+    </ItineraryDayPanel>
   </el-form>
 </template>
 
@@ -105,6 +104,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { ItineraryDayRecord } from "@/types/itinerary";
 import { getTransportMethodOptions } from "@/utils/transport-method";
+import ItineraryDayPanel from "./ItineraryDayPanel.vue";
 
 type EditableDayField =
   "departure" | "destination" | "overnightDestination" | "transport" | "description";
@@ -131,20 +131,3 @@ function updateTransport(values: string[]) {
   updateField("transport", values.join(","));
 }
 </script>
-
-<style scoped lang="scss">
-.day-form {
-  :deep(.el-form-item) {
-    margin-bottom: 0;
-  }
-  :deep(.el-form-item__label) {
-    padding-bottom: 6px;
-    color: var(--el-text-color-regular);
-    font-weight: 500;
-    line-height: 20px;
-  }
-  :deep(.el-select) {
-    width: 100%;
-  }
-}
-</style>

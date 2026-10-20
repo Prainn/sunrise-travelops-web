@@ -67,6 +67,9 @@ export interface ShengxuAgencyOption {
   name: string;
   countryOrRegion: string;
   city: string;
+  /** ROOT 代建时由组团社带出的收客计调。 */
+  coordinatorId?: string;
+  coordinatorName?: string;
 }
 
 export interface ShengxuContactOption {

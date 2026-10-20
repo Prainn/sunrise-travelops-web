@@ -32,6 +32,13 @@ export interface WebsiteResourceOption {
   seats?: number;
 }
 export type WebsiteResourceKind = "city" | "attraction" | "hotel" | "restaurant" | "transport";
+/** 公共资源查询；city 为公共城市名称，只适用于 hotel / restaurant / attraction。 */
+export interface WebsiteResourceQuery {
+  page: number;
+  pageSize: number;
+  keyword?: string;
+  city?: string;
+}
 export interface WebsiteInquiryQuery {
   page: number;
   pageSize: number;
@@ -72,6 +79,7 @@ export function websiteItineraryInput(record: WebsiteItineraryInput): WebsiteIti
     departureTime: record.departureTime,
     configVersion: record.configVersion,
     days: record.days,
+    deletedDays: record.deletedDays ?? [],
     vehiclePrices: record.vehiclePrices,
   };
 }
@@ -173,9 +181,15 @@ export const websiteService = {
   saveConfig(config: WebsiteConfig, businessUnit?: WebsiteBusinessUnit) {
     return request.put<WebsiteConfig>("/website/config", config, {params: {businessUnit}});
   },
-  resources(kind: WebsiteResourceKind, keyword = "", page = 1) {
+  resources(kind: WebsiteResourceKind, query: WebsiteResourceQuery) {
+    const city = kind === "city" || kind === "transport" ? undefined : query.city?.trim();
     return request.get<PageResult<WebsiteResourceOption>>(`/website/resources/${kind}`, {
-      params: { page, pageSize: 50, keyword },
+      params: {
+        page: query.page,
+        pageSize: query.pageSize,
+        keyword: query.keyword?.trim() || undefined,
+        city: city || undefined,
+      },
     });
   },
 };

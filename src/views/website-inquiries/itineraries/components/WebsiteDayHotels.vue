@@ -4,7 +4,12 @@
       <h4 class="m-0 text-[14px] text-strong font-600">
         {{ $t("websiteItineraryUi.hotelPlans") }}
       </h4>
-      <el-button v-if="editable" @click="addHotel">
+      <el-button
+        v-if="editable && day.overnightCityId"
+        link
+        type="primary"
+        @click="emit('edit', -1)"
+      >
         {{ $t("websiteItineraryUi.addHotel") }}
       </el-button>
     </div>
@@ -14,118 +19,69 @@
       type="info"
       :closable="false"
     />
+    <p v-if="!day.overnightCityId && !day.hotels.length" class="m-0 text-[13px] text-muted">
+      {{ $t("websiteItineraryUi.noOvernightStay") }}
+    </p>
+    <p v-if="day.hotels.length > 1" class="m-0 text-[12px] text-muted">
+      {{ $t("websiteItineraryUi.hotelAlternativesHint") }}
+    </p>
     <div
       v-for="(hotel, index) in day.hotels"
       :key="hotel.id"
-      class="p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)]"
+      class="flex flex-wrap items-start justify-between gap-3 p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)]"
     >
-      <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
-        <el-form-item :label="$t('websiteItineraryUi.hotelTier')">
-          <el-select v-model="hotel.tier" autocomplete="new-password">
-            <el-option value="A" :label="$t('websiteItineraryUi.hotelTierA')" />
-            <el-option value="B" :label="$t('websiteItineraryUi.hotelTierB')" />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.overnightCity')">
-          <el-select v-model="hotel.cityId" autocomplete="new-password" filterable>
-            <el-option
-              v-for="city in config.cities"
-              :key="city.id"
-              :value="city.id"
-              :label="city.nameZh"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.selectConfigHotel')">
-          <el-select
-            autocomplete="new-password"
-            :model-value="hotel.configHotelId"
-            clearable
-            filterable
-            @update:model-value="(id: string | null) => pickConfigHotel(hotel, id)"
-          >
-            <el-option
-              v-for="item in hotelsOf(hotel.cityId)"
-              :key="item.id"
-              :value="item.id"
-              :label="item.nameZh"
-            />
-          </el-select>
-          <div v-if="configHotel(hotel)" class="text-[12px] text-muted">
-            {{ $t("websiteItineraryUi.configHotelPrice", { price: formatMoney(configHotel(hotel)?.price) }) }}
-          </div>
-        </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.selectSharedHotel')">
-          <WebsiteResourceSelect
-            v-model="hotel.resourceId"
-            kind="hotel"
-            :selected-name="hotel.nameZh"
-            @select="
-              (resource) => {
-                if (resource) hotel.nameZh = resource.name;
-              }
-            "
-          />
-        </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.hotelBreakfastIncluded')">
-          <el-switch v-model="hotel.breakfastIncluded" />
-        </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.hotelNameZh')">
-          <el-input v-model="hotel.nameZh" maxlength="150" />
-        </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.hotelNameEn')">
-          <el-input v-model="hotel.nameEn" maxlength="150" />
-        </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.roomType')">
-          <el-input
-            v-model="hotel.roomType"
-            :placeholder="$t('websiteItineraryUi.roomTypePlaceholder')"
-            maxlength="200"
-          />
-        </el-form-item>
+      <div class="min-w-0 flex flex-col gap-1 text-[13px]">
+        <div class="flex flex-wrap items-center gap-2">
+          <el-tag size="small">
+            {{ $t(hotel.tier === "A" ? "websiteItineraryUi.hotelTierA" : "websiteItineraryUi.hotelTierB") }}
+          </el-tag>
+          <strong class="text-[14px] text-strong [overflow-wrap:anywhere]">
+            {{ hotelName(hotel) || $t("websiteItineraryUi.hotelNameMissing") }}
+          </strong>
+          <el-tag size="small" effect="plain" type="info">
+            {{ $t(`websiteItineraryUi.hotelSources.${hotelSource(hotel)}`) }}
+          </el-tag>
+        </div>
+        <span class="text-muted">
+          {{ cityName(hotel.cityId) }}
+          <template v-if="hotel.roomType"> · {{ hotel.roomType }}</template>
+          · {{ $t(hotel.breakfastIncluded ? "websiteItineraryUi.breakfastIncludedShort" : "websiteItineraryUi.breakfastExcludedShort") }}
+        </span>
+        <span v-if="configHotel(hotel)" class="text-muted">
+          {{ $t("websiteItineraryUi.configHotelPrice", { price: formatMoney(configHotel(hotel)?.price) }) }}
+        </span>
       </div>
-      <el-button
-        v-if="editable"
-        link
-        type="danger"
-        @click="day.hotels.splice(index, 1)"
-      >
-        {{ $t("websiteItineraryUi.removeHotel") }}
-      </el-button>
+      <div v-if="editable" class="flex shrink-0 gap-1">
+        <el-button link type="primary" @click="emit('edit', index)">
+          {{ $t("common.edit") }}
+        </el-button>
+        <el-button link type="danger" @click="day.hotels.splice(index, 1)">
+          {{ $t("websiteItineraryUi.removeHotel") }}
+        </el-button>
+      </div>
     </div>
   </section>
 </template>
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
 import { formatMoney } from "@/utils";
 import type { WebsiteConfig, WebsiteDay, WebsiteHotelStay } from "@/types/website";
-import WebsiteResourceSelect from "../../components/WebsiteResourceSelect.vue";
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{ config: WebsiteConfig; editable: boolean }>();
-function hotelsOf(cityId: string) {
-  return props.config.hotels.filter((item) => item.status === "enabled" && item.cityId === cityId);
+/** index 为 -1 表示新增 */
+const emit = defineEmits<{ edit: [index: number] }>();
+const { locale } = useI18n();
+function hotelName(hotel: WebsiteHotelStay) {
+  return (locale.value === "en" ? hotel.nameEn : hotel.nameZh) || hotel.nameZh || hotel.nameEn;
+}
+function hotelSource(hotel: WebsiteHotelStay) {
+  return hotel.configHotelId ? "config" : hotel.resourceId ? "public" : "manual";
+}
+function cityName(id: string) {
+  const city = props.config.cities.find((item) => item.id === id);
+  return city ? (locale.value === "en" ? city.nameEn : city.nameZh) : "-";
 }
 function configHotel(hotel: WebsiteHotelStay) {
   return props.config.hotels.find((item) => item.id === hotel.configHotelId);
-}
-function pickConfigHotel(hotel: WebsiteHotelStay, id: string | null) {
-  const item = id ? props.config.hotels.find((row) => row.id === id) : undefined;
-  hotel.configHotelId = item?.id ?? null;
-  if (!item) return;
-  hotel.nameZh = item.nameZh;
-  hotel.nameEn = item.nameEn;
-  hotel.resourceId = item.resourceId;
-}
-function addHotel() {
-  day.value.hotels.push({
-    id: crypto.randomUUID(),
-    tier: "A",
-    cityId: day.value.overnightCityId ?? day.value.endCityId,
-    configHotelId: null,
-    resourceId: null,
-    nameZh: "",
-    nameEn: "",
-    roomType: "",
-    breakfastIncluded: true,
-  });
 }
 </script>

@@ -58,6 +58,12 @@ export interface DirectLedgerInput {
   satisfied: boolean | null;
 }
 
+/** 新增时由当前业务决定归属；ROOT 代建必须指定定制师。 */
+export interface DirectLedgerCreateInput extends DirectLedgerInput {
+  businessUnit?: DirectLedgerBusinessUnit;
+  creatorId?: string;
+}
+
 export interface DirectLedgerUpdateInput extends DirectLedgerInput {
   version: number;
 }

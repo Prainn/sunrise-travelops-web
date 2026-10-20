@@ -15,7 +15,7 @@
     </div>
 
     <div class="layout-main">
-      <LayoutTagsView v-if="showTagsView" />
+      <LayoutTagsView v-if="showTagsView && !isWorkspaceChromeless" />
       <LayoutMain />
     </div>
   </BaseLayout>
@@ -33,7 +33,7 @@ import LayoutToolbar from "../components/LayoutToolbar.vue";
 import LayoutTagsView from "../components/LayoutTagsView.vue";
 import LayoutMain from "../components/LayoutMain.vue";
 
-const { showTagsView, showLogo } = useLayout();
+const { showTagsView, showLogo, isWorkspaceChromeless } = useLayout();
 const appStore = useAppStore();
 const { width } = useWindowSize();
 

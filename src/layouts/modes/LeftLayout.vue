@@ -20,8 +20,8 @@
         'is-fullscreen': appStore.contentFullscreen,
       }"
     >
-      <LayoutNavbar v-show="!appStore.contentFullscreen" />
-      <LayoutTagsView v-if="showTagsView" />
+      <LayoutNavbar v-show="!appStore.contentFullscreen && !isWorkspaceNavbarHidden" />
+      <LayoutTagsView v-if="showTagsView && !isWorkspaceChromeless" />
       <LayoutMain />
     </div>
   </BaseLayout>
@@ -37,7 +37,7 @@ import LayoutTagsView from "../components/LayoutTagsView.vue";
 import LayoutMain from "../components/LayoutMain.vue";
 import LayoutSidebar from "../components/LayoutSidebar.vue";
 
-const { showTagsView, showLogo, isSidebarOpen, routes } = useLayout();
+const { showTagsView, showLogo, isSidebarOpen, isWorkspaceChromeless, isWorkspaceNavbarHidden, routes } = useLayout();
 const appStore = useAppStore();
 </script>
 

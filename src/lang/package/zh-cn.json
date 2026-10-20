@@ -303,7 +303,6 @@
     "copySuffix": "副本",
     "dailyResources": "当日餐食与景点",
     "dayCountMismatch": "该询盘计划 {planned}天{plannedNights}晚，当前行程为 {actual}天{actualNights}晚，天数不一致。是否仍生成 PDF？",
-    "dailySchedule": "逐日行程",
     "dayCost": "当日餐食与景点成本",
     "dayDescription": "当日行程安排",
     "dayDescriptionPlaceholder": "请输入当天的观光、活动等安排",
@@ -1283,7 +1282,8 @@
       "empty": "尚未维护城市骨架；仍可手工逐日编排行程",
       "cityOrder": "城市顺序",
       "noDays": "尚未添加天数",
-      "addDay": "添加一天",
+      "dayCount": "行程天数",
+    "addDay": "添加一天",
       "daysEmpty": "请添加天数，按天维护城市与 Day Pattern"
     },
     "templates": {
@@ -1386,9 +1386,9 @@
     "transportNameEn": "交通段英文说明",
     "removeTransportLeg": "移除交通段",
     "finalPrice": "最终人民币人均报价",
-    "pricePlaceholder": "不报价则留空",
+    "pricePlaceholder": "不提供此方案报价则留空",
     "capacityHint": "建议人数：舒适 {comfortable}／经济 {economy}／行李多 {luggage}",
-    "finalPriceHint": "至少填写一项最终人均售价，报价包含车辆与司机服务。",
+    "finalPriceHint": "正式确认报价前至少填写一个方案的每人售价；未提供的方案留空。",
     "title": "行程标题",
     "plannedDays": "计划天数",
     "pax": "人数",
@@ -1401,7 +1401,61 @@
     "englishPreview": "英文报价预览",
     "chinesePreview": "中文报价预览",
     "printPdf": "打印／另存 PDF",
-    "confirmQuotation": "确认报价并锁定行程"
+    "confirmQuotation": "确认报价并锁定行程",
+    "publicCity": "公共城市",
+    "publicCityPlaceholder": "搜索并选择公共城市",
+    "publicKeywordPlaceholder": "搜索公共资源名称或编号",
+    "publicCityFiltered": "已按所选公共城市筛选；城市筛选只影响本次查找，不修改当天住宿城市。",
+    "publicCityNotFound": "当天城市关联的公共城市未在已加载记录中找到，请手动选择公共城市。",
+    "publicCityUnfiltered": "当前未按城市筛选，可选择公共城市缩小范围。",
+    "publicCityNotLinked": "当天城市未关联公共城市，请手动选择公共城市；未选择时显示全部城市的结果。",
+    "publicResourceName": "名称",
+    "resourceSource": "来源",
+    "sourceConfig": "独立站专属景点／组件",
+    "sourceManual": "手填",
+    "sourceRoute": "专属路线",
+    "sourceConfigHotel": "独立站酒店",
+    "sourcePublic": "公共资源",
+    "configCity": "配置城市",
+    "bilingualKeywordPlaceholder": "搜索中文或英文名称",
+    "attractionName": "景点／组件",
+    "attractionKinds": {
+      "attraction": "景点",
+      "component": "组件"
+    },
+    "parentAttraction": "所属景点：{name}",
+    "usedDays": "已用于",
+    "chargeable": "收费",
+    "chargeableYes": "收费",
+    "chargeableNo": "不收费",
+    "recommendedMonths": "推荐月份",
+    "duplicateAttraction": "该景点已用于 {days}，可继续添加，请确认是否重复",
+    "manualAttractionHint": "手填景点加入后可在当天继续补充双语文案与费用状态。",
+    "routeCities": "路线城市",
+    "configHotelPriceColumn": "内部参考价（元/间/晚）",
+    "publicResourceNote": "公共资源只提供名称与城市，不含双语标准文案或价格；英文名请人工补充。",
+    "hotelNameNote": "酒店名称可在下方修改。",
+    "mealNameNote": "填写推荐餐厅或餐食名称，留空表示未指定。",
+    "mealSlot": "餐次",
+    "noOvernightStay": "当晚不住宿",
+    "hotelAlternativesHint": "多家酒店为 A／B 备选方案，不是同晚连住。",
+    "hotelNameMissing": "未填写酒店名称",
+    "hotelSources": {
+      "config": "独立站酒店",
+      "public": "公共资源",
+      "manual": "手填"
+    },
+    "breakfastIncludedShort": "含早",
+    "breakfastExcludedShort": "不含早",
+    "noRestaurant": "未指定餐厅",
+    "noOvernightTonight": "当晚不住宿",
+    "noOvernightRemoveHotels": "设为当晚不住宿将同时移除当天已安排的 {count} 家酒店，是否继续？",
+    "noOvernightConfirm": "不住宿并移除酒店",
+    "packagePriceTitle": "整程套餐人均售价",
+    "packagePriceDescription": "按所用车型分别报价，填写整段行程的每人最终售价。此处不是单独用车费用；包含项目以本行程费用设置为准。",
+    "vehiclePlanTitle": "使用 {vehicle} 的行程方案",
+    "pricePerPerson": "每人售价",
+    "pricePerPersonUnit": "元 / 人"
   },
   "websiteWorkspace": {
     "businessLabel": "独立站",
@@ -1497,7 +1551,7 @@
   "tour": {
     "tourNo": "团号",
     "headcountRequired": "请输入不小于 0 的整数",
-    "create": "创建旅行团",
+    "create": "新增成团记录",
     "edit": "编辑旅行团",
     "cancel": "撤销团",
     "cancelled": "旅行团已撤销",
@@ -1579,6 +1633,7 @@
   "ledger": {
     "required": "请填写{field}",
     "shengxu": {
+      "businessUnitName": "盛旭",
       "create": "新增盛旭台账",
       "edit": "编辑盛旭台账",
       "view": "查看盛旭台账",
@@ -1647,6 +1702,73 @@
       "unmarkOperatedConfirm": "确认取消订单 {orderNo} 的操作标记？",
       "deleteConfirm": "确认删除订单 {orderNo}？",
       "searchPlaceholder": "订单号、来源、定制师、接单账号、操作计调、行程"
+    }
+  },
+  "itineraryWorkspace": {
+    "pageTitles": {
+      "website": "独立站行程 · {name}",
+      "inquiry": "询盘行程 · {name}"
+    },
+    "dayDirectory": "日程目录",
+    "reorder": "顺序调整",
+    "dayResources": "当天资源",
+    "addDay": "+ 天数",
+    "deletedDays": "已删除行程",
+    "deletedTitle": "已删除的行程",
+    "deleteDay": "删除当天行程",
+    "restoreDay": "恢复",
+    "deleteDayConfirm": "确定删除 D{day} 的行程吗？删除后可从“已删除行程”恢复。应用调整后仍需保存行程。",
+    "deletedHint": "点击恢复后按删除前日期插入；该日期已占用时，插入到该行程之前。应用调整后仍需保存。",
+    "reorderTitle": "调整行程顺序",
+    "reorderHint": "拖动日卡片标题或使用左右箭头调整整天顺序；景点可在当天内拖动或上下移动。其他类别仅作缩略展示，不支持跨天移动。应用后仍需保存行程。",
+    "reorderReadonly": "当前行程只读，仅可查看全程安排。",
+    "moveEarlier": "前移一天",
+    "moveLater": "后移一天",
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "notArranged": "未安排",
+    "issuesTitle": "顺序调整后请核对以下事项",
+    "applyOrder": "应用调整",
+    "orderApplied": "已应用到当前草稿，请保存行程",
+    "locate": "定位",
+    "resourceDialogTitle": "{day} · {type}",
+    "wholeTripPlans": "整程方案",
+    "alternativePlans": "备选：{plans}",
+    "actions": {
+      "attraction": "景点",
+      "hotel": "酒店",
+      "vehicle": "用车",
+      "guide": "导游",
+      "transport": "交通",
+      "meal": "餐食",
+      "service": "服务"
+    },
+    "scopes": {
+      "byCity": "按住宿城市",
+      "byDateRange": "按日期段",
+      "wholeTrip": "整程",
+      "thisDay": "当天",
+      "alternatives": "备选方案"
+    },
+    "hints": {
+      "normalHotel": "酒店按档次与住宿城市搭配，同城多晚共用同一方案",
+      "normalVehicle": "用车为全程或日期段方案，不是当天单独费用",
+      "normalGuide": "导游为整程服务方案，作用于全部行程日",
+      "websiteHotelNeedsCity": "当天未设置住宿城市（当晚不住宿），无需安排酒店"
+    },
+    "groups": {
+      "meals": "餐食",
+      "guideAndServices": "导游与服务"
+    },
+    "issues": {
+      "descriptionCheck": "D{day} 景点顺序已调整，“当日行程安排”文案不会自动改写，请核对",
+      "formerLastDay": "D{day} 原为末日，移到中间后住宿城市已按到达地设为「{city}」，请核对住宿与酒店",
+      "newLastDay": "D{day} 现为末日，请确认当晚是否住宿",
+      "routeBreak": "D{day} 的出发地与 D{previous} 的住宿城市不一致，请核对路线",
+      "vehicleCheck": "用车方案按日期段保存，整天顺序变化后不会自动移动，请核对用车安排",
+      "middleNoOvernight": "D{day} 原为末日且当晚不住宿，现位于中间日，请补充住宿城市与酒店",
+      "cityBreak": "D{day} 的出发城市与 D{previous} 的住宿/结束城市不一致，请核对",
+      "legsCheck": "D{day} 的交通段随日移动，请核对交通衔接与季节/首末日规则"
     }
   }
 }

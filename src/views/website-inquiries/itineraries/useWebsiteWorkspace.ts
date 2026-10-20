@@ -1,4 +1,4 @@
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, toRaw } from "vue";
 import { useI18n } from "vue-i18n";
 import { isValidVehiclePrice } from "./vehicle-price";
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute } from "vue-router";
@@ -18,6 +18,7 @@ import type {
   WebsiteQuotation,
 } from "@/types/website";
 import { cloneWebsiteDraft, emptyDay, emptyItinerary } from "../options";
+import { addDays } from "@/utils";
 import { printWebsiteQuotation } from "./print";
 
 export function useWebsiteWorkspace() {
@@ -334,10 +335,23 @@ export function useWebsiteWorkspace() {
     }
   }
   function addDay() {
-    if (plan.value && editable.value) plan.value.days.push(emptyDay(plan.value.days.length + 1));
+    if (plan.value && editable.value && plan.value.days.length < 365) {
+      plan.value.days.push(emptyDay(plan.value.days.length + 1));
+      renumber();
+    }
   }
-  function removeDay(index: number) {
-    plan.value?.days.splice(index, 1);
+  async function removeDay(index: number) {
+    const record = plan.value;
+    const day = record?.days[index];
+    if (!record || !day || !editable.value || record.days.length <= 1) return;
+    try {
+      await ElMessageBox.confirm(t("itineraryWorkspace.deleteDayConfirm", { day: index + 1 }), t("itineraryWorkspace.deleteDay"), {
+        type: "warning", confirmButtonText: t("common.confirm"), cancelButtonText: t("common.cancel"),
+      });
+    } catch { return; }
+    if (plan.value !== record || !editable.value) return;
+    (record.deletedDays ??= []).push({ day: structuredClone(toRaw(day)), originalDate: record.startDate ? addDays(record.startDate, index) : null });
+    record.days.splice(index, 1);
     renumber();
   }
   function moveDay(index: number, direction: number) {
@@ -346,6 +360,7 @@ export function useWebsiteWorkspace() {
     renumber();
   }
   function renumber() {
+    if (plan.value?.days.length) plan.value.duration = plan.value.days.length;
     plan.value?.days.forEach((day, index) => {
       day.dayNumber = index + 1;
     });

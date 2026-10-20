@@ -16,6 +16,11 @@
     >
       <el-row :gutter="12">
         <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('identity.businessUnit')">
+            <el-input :model-value="$t('ledger.shengxu.businessUnitName')" disabled />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('ledger.shengxu.recordDate')" prop="recordDate">
             <el-date-picker
               v-model="form.recordDate"
@@ -180,7 +185,12 @@ const dialogTitle = computed(() => {
   if (!props.ledger) return t("ledger.shengxu.create");
   return t(props.readonly ? "ledger.shengxu.view" : "ledger.shengxu.edit");
 });
-const creatorName = computed(() => props.ledger?.creatorName ?? user.userInfo.nickname ?? "");
+const isDelegate = computed(
+  () => !props.ledger && user.userInfo.scope === "headquarters" && user.userInfo.roles.includes("ROOT"),
+);
+const agencyCoordinatorName = ref("");
+const creatorName = computed(() => props.ledger?.creatorName
+  ?? (isDelegate.value ? agencyCoordinatorName.value : user.userInfo.nickname ?? ""));
 const regionText = computed(() => [form.countryOrRegion, form.city].filter(Boolean).join(" / "));
 const rules = computed<FormRules>(() => {
   const required = (key: string) => ({
@@ -199,6 +209,7 @@ const rules = computed<FormRules>(() => {
 
 function resetForm() {
   agencyOptions.clear();
+  agencyCoordinatorName.value = "";
   Object.assign(
     form,
     props.ledger ? shengxuLedgerFormFromItem(props.ledger) : emptyShengxuLedgerForm(),
@@ -241,6 +252,7 @@ function selectAgency(agencyId: string) {
   const agency = agencyOptions.get(agencyId);
   form.agencyId = agencyId;
   form.agencyName = agency?.name ?? "";
+  agencyCoordinatorName.value = agency?.coordinatorName ?? "";
   form.countryOrRegion = agency?.countryOrRegion ?? "";
   form.city = agency?.city ?? "";
   form.contactId = "";

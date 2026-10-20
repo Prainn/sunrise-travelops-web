@@ -13,7 +13,7 @@
       type="info"
       :closable="false"
       show-icon
-      class="mb-[16px]"
+      class="mb-3!"
     />
     <el-form
       ref="formRef"
@@ -59,8 +59,17 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('ledger.direct.creator')">
-            <el-input :model-value="creatorName" disabled />
+          <el-form-item :label="$t('ledger.direct.creator')" :prop="isDelegate ? 'creatorId' : undefined">
+            <RemoteSelect
+              v-if="isDelegate"
+              v-model="form.creatorId"
+              :load-options="loadOperators"
+              :query-key="businessUnit"
+              :placeholder="$t('ledger.direct.coordinatorPlaceholder')"
+              :clearable="false"
+              class="w-full"
+            />
+            <el-input v-else :model-value="creatorName" disabled />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
@@ -74,6 +83,7 @@
               v-else
               :model-value="form.receivingAccountId ?? ''"
               :load-options="loadOperators"
+              :query-key="businessUnit"
               :selected-label="form.receivingAccountName"
               :placeholder="$t('ledger.direct.coordinatorPlaceholder')"
               :clearable="false"
@@ -87,6 +97,7 @@
             <RemoteSelect
               v-model="form.operatorId"
               :load-options="loadOperators"
+              :query-key="businessUnit"
               :selected-label="form.operatorName"
               :placeholder="$t('ledger.direct.coordinatorPlaceholder')"
               :clearable="false"
@@ -251,6 +262,9 @@ const form = reactive(emptyDirectLedgerForm());
 const saving = ref(false);
 
 const businessUnit = computed(() => props.ledger?.businessUnit ?? props.businessUnit);
+const isDelegate = computed(
+  () => !props.ledger && user.userInfo.scope === "headquarters" && user.userInfo.roles.includes("ROOT"),
+);
 const isWebsite = computed(() => businessUnit.value === "website");
 const dialogTitle = computed(() => {
   if (!props.ledger) return t("ledger.direct.create");
@@ -258,7 +272,7 @@ const dialogTitle = computed(() => {
 });
 const creatorName = computed(() => props.ledger?.creatorName ?? user.userInfo.nickname ?? "");
 const receivedMonth = computed(() => form.receivedDate.slice(0, 7));
-// 新增时定制师即本人；编辑时由后端判断，指定操作计调不能替他人改订单状态。
+// 编辑时由后端判断，指定操作计调不能替他人改订单状态。
 const canChangeStatus = computed(() => !props.ledger || props.ledger.capabilities.canChangeStatus);
 const rules = computed<FormRules>(() => {
   const required = (key: string) => ({
@@ -267,6 +281,7 @@ const rules = computed<FormRules>(() => {
     trigger: "change",
   });
   return {
+    creatorId: isDelegate.value ? [required("ledger.direct.creator")] : [],
     receivedDate: [required("ledger.direct.receivedDate")],
     source: [
       {
@@ -315,7 +330,11 @@ async function handleSubmit() {
         ...body,
         version: props.ledger.version,
       })
-      : await directLedgerService.create(body);
+      : await directLedgerService.create({
+        ...body,
+        businessUnit: businessUnit.value,
+        ...(isDelegate.value ? { creatorId: form.creatorId } : {}),
+      });
     ElMessage.success(t(props.ledger ? "common.updateSuccess" : "common.createSuccess"));
     emit("saved", saved);
     visible.value = false;
