@@ -208,7 +208,6 @@
 import { computed, reactive, ref } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { isApiError } from "@/api/request";
 import AppDialog from "@/components/AppDialog/index.vue";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
@@ -301,14 +300,6 @@ async function loadOperators(query: RemoteOptionsQuery) {
   };
 }
 
-function showSaveError(error: unknown) {
-  if (isApiError(error) && error.status === 409) {
-    ElMessage.error(t("ledger.direct.conflict"));
-    return;
-  }
-  ElMessage.error(error instanceof Error ? error.message : String(error));
-}
-
 async function handleSubmit() {
   if (saving.value) return;
   saving.value = true;
@@ -329,8 +320,8 @@ async function handleSubmit() {
     emit("saved", saved);
     visible.value = false;
   } catch (error) {
-    // 版本或审核状态冲突时保留输入，提示刷新后处理，不自动重试或覆盖。
-    showSaveError(error);
+    // 请求层已按错误码本地化精确原因；保留输入，不自动重试、升级 version 或覆盖。
+    ElMessage.error(error instanceof Error ? error.message : String(error));
   } finally {
     saving.value = false;
   }

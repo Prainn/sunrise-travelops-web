@@ -147,7 +147,6 @@
 import { computed, reactive, ref } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { isApiError } from "@/api/request";
 import AppDialog from "@/components/AppDialog/index.vue";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
@@ -248,14 +247,6 @@ function selectAgency(agencyId: string) {
   form.contactName = "";
 }
 
-function showSaveError(error: unknown) {
-  if (isApiError(error) && error.status === 409) {
-    ElMessage.error(t(props.ledger ? "ledger.shengxu.updateConflict" : "ledger.shengxu.duplicate"));
-    return;
-  }
-  ElMessage.error(error instanceof Error ? error.message : String(error));
-}
-
 async function handleSubmit() {
   if (saving.value) return;
   saving.value = true;
@@ -276,8 +267,8 @@ async function handleSubmit() {
     emit("saved", saved);
     visible.value = false;
   } catch (error) {
-    // 冲突或校验失败时保留草稿，由用户修改已有记录或刷新后再操作，不自动重试。
-    showSaveError(error);
+    // 请求层已按错误码本地化精确原因；保留草稿，由用户修改或刷新后再操作，不自动重试。
+    ElMessage.error(error instanceof Error ? error.message : String(error));
   } finally {
     saving.value = false;
   }

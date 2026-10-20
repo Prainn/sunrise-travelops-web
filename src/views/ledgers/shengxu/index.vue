@@ -140,7 +140,6 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { isApiError } from "@/api/request";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
@@ -266,11 +265,7 @@ async function handleDelete(row: ShengxuLedgerItem) {
     await shengxuLedgerService.delete(row.id, row.version);
     ElMessage.success(t("common.deleteSuccess"));
   } catch (error) {
-    ElMessage.error(
-      isApiError(error) && error.status === 409
-        ? t("ledger.shengxu.deleteConflict")
-        : errorText(error),
-    );
+    ElMessage.error(errorText(error));
   } finally {
     deletingId.value = "";
     void fetchList();

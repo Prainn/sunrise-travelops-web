@@ -214,7 +214,6 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import { isApiError } from "@/api/request";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
@@ -302,13 +301,6 @@ function triStateText(value: boolean | null) {
 function textOrDash(_row: unknown, _column: unknown, value: string | null) {
   return value || "-";
 }
-function showActionError(error: unknown) {
-  if (isApiError(error) && error.status === 409) {
-    ElMessage.error(t("ledger.direct.conflict"));
-    return;
-  }
-  ElMessage.error(error instanceof Error ? error.message : String(error));
-}
 
 async function fetchList() {
   const generation = ++listGeneration;
@@ -393,7 +385,8 @@ async function runRowAction(row: DirectLedgerItem, action: () => Promise<unknown
     await action();
     ElMessage.success(success);
   } catch (error) {
-    showActionError(error);
+    // 请求层已按错误码本地化精确原因（版本、审核、操作或删除限制）。
+    ElMessage.error(error instanceof Error ? error.message : String(error));
   } finally {
     actingId.value = "";
     void fetchList();

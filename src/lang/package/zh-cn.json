@@ -1031,7 +1031,17 @@
     "INQUIRY_DOCUMENT_TOO_LARGE": "文档超过 2 MiB",
     "PDF_NOT_READY": "请完善行程及报价后生成 PDF",
     "ITINERARY_RESOURCE_DUPLICATE": "行程中不可重复使用非标准价景点或餐食",
-    "RESOURCE_STANDARD_PRICE_EXISTS": "该城市已有标准价资源，请先取消原资源的标准价标记"
+    "RESOURCE_STANDARD_PRICE_EXISTS": "该城市已有标准价资源，请先取消原资源的标准价标记",
+    "LEDGER_VERSION_CONFLICT": "记录已更新，请刷新后重试",
+    "SHENGXU_LEDGER_DUPLICATE": "当天该组团社已有台账，请修改已有记录",
+    "SHENGXU_LEDGER_DELETE_CONVERTED": "成团数大于零的台账不能删除",
+    "DIRECT_LEDGER_REVIEWED_READ_ONLY": "已审核台账不能修改普通字段，仅指定操作计调可更新是否操作",
+    "DIRECT_LEDGER_ALREADY_REVIEWED": "台账已审核，无需重复审核",
+    "DIRECT_LEDGER_STATUS_ROLLBACK_FORBIDDEN": "已操作台账不能改回未成团",
+    "DIRECT_LEDGER_NOT_CONVERTED": "已成团后才能更新是否操作",
+    "DIRECT_LEDGER_DELETE_REVIEWED": "已审核台账不能删除",
+    "DIRECT_LEDGER_DELETE_OPERATED": "曾操作的台账不能删除",
+    "DIRECT_LEDGER_DELETE_CONVERTED": "已成团台账不能删除"
   },
   "request": {
     "failed": "请求失败",
@@ -1586,10 +1596,7 @@
       "itinerary": "行程",
       "notConvertedReason": "未成团原因",
       "searchPlaceholder": "组团社、联系人、收客计调、行程",
-      "duplicate": "当天该组团社已有台账，请修改已有记录",
-      "updateConflict": "记录已更新或当天该组团社已有台账，请刷新后修改",
-      "deleteConfirm": "确认删除 {date} {agency} 的台账？",
-      "deleteConflict": "成团数大于 0 或记录已更新，不能删除，请刷新后重试"
+      "deleteConfirm": "确认删除 {date} {agency} 的台账？"
     },
     "direct": {
       "create": "新增霖熹台账",
@@ -1639,7 +1646,6 @@
       "markOperatedConfirm": "确认将订单 {orderNo} 标记为已操作？操作后不能退回未成团。",
       "unmarkOperatedConfirm": "确认取消订单 {orderNo} 的操作标记？",
       "deleteConfirm": "确认删除订单 {orderNo}？",
-      "conflict": "记录状态已变化（可能已更新、已审核或已操作），请刷新后再处理",
       "searchPlaceholder": "订单号、来源、定制师、接单账号、操作计调、行程"
     }
   }
