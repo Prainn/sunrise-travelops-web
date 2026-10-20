@@ -14,6 +14,8 @@
     <template v-if="inquiry">
       <ItineraryWorkspaceLayout
         ref="workspaceLayout"
+        :accent="LYNXTOUR_ACCENT"
+        :stripe="LYNXTOUR_GOLD"
         :days="plan && config ? dayEntries : []"
         :reset-key="plan?.id"
         :can-add="editable && !saving"
@@ -354,6 +356,9 @@ import WebsiteHotelDialog from "./components/WebsiteHotelDialog.vue";
 import WebsiteMealDialog from "./components/WebsiteMealDialog.vue";
 import WebsiteGuideDialog from "./components/WebsiteGuideDialog.vue";
 defineOptions({ name: "WebsiteItineraryWorkspace" });
+/** 霖熹 Lynxtour 品牌色：酒红（取自 logo #811e21，色相略偏梅红以区别危险红）作主色，金色仅作装饰条。 */
+const LYNXTOUR_ACCENT = "#862742";
+const LYNXTOUR_GOLD = "#f1b92e";
 const router = useRouter();
 const { t, locale } = useI18n();
 const isBasicsDialogVisible = ref(false);

@@ -41,6 +41,7 @@
           {{ $t("tour.create") }}
         </el-button>
       </TableToolbar>
+      <!-- 行数据的 children 是儿童人数，改用不存在的字段作树形子行，避免 el-table 当作子行遍历 -->
       <DataTable
         fill
         :loading="loading"
@@ -48,6 +49,7 @@
         :error="loadError"
         :filtered="hasActiveFilters"
         row-key="id"
+        :tree-props="{ children: '__treeChildren' }"
         @retry="load"
       >
         <el-table-column

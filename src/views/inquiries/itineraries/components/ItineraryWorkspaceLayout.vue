@@ -4,7 +4,12 @@
     class="itinerary-workspace flex flex-col gap-4"
     :style="{ '--itinerary-workspace-offset': `${scrollOffset}px` }"
   >
-    <div ref="header" class="itinerary-workspace__header sticky top-0 z-[20]">
+    <div
+      ref="header"
+      class="itinerary-workspace__header sticky top-0 z-[20]"
+      :class="{ 'has-stripe': stripe }"
+      :style="stripe ? { '--itinerary-workspace-stripe': stripe } : undefined"
+    >
       <slot name="header" />
     </div>
     <slot name="notice" />
@@ -79,6 +84,7 @@
 import { computed, nextTick, onActivated, onMounted, ref, watch } from "vue";
 import { useElementSize, useEventListener, useMediaQuery } from "@vueuse/core";
 import { Sort } from "@element-plus/icons-vue";
+import { useWorkspaceAccent } from "../useWorkspaceAccent";
 
 export interface WorkspaceDayEntry {
   id: string;
@@ -96,6 +102,10 @@ const props = defineProps<{
   /** 当前行程标识；变化时目录状态重置，不沿用上份行程的日 ID */
   resetKey?: string;
   canAdd?: boolean;
+  /** 业务强调色 HEX，仅作用于行程页；不传沿用全局主色 */
+  accent?: string;
+  /** 顶部信息区的品牌装饰条颜色 */
+  stripe?: string;
 }>();
 const emit = defineEmits<{
   reorder: [];
@@ -103,6 +113,8 @@ const emit = defineEmits<{
   /** 跳转前通知页面展开目标日 */
   expand: [dayId: string];
 }>();
+
+useWorkspaceAccent(() => props.accent);
 
 const root = ref<HTMLElement>();
 const header = ref<HTMLElement>();
@@ -191,5 +203,25 @@ defineExpose({ scrollToDay });
 .itinerary-workspace__entry.is-active {
   color: var(--el-color-primary);
   background: var(--el-color-primary-light-9);
+}
+</style>
+
+<style lang="scss">
+/* 行程页强调色：只覆盖内容区与弹层，侧边栏菜单弹出层除外。 */
+body.itinerary-accent {
+  .layout-content,
+  .el-overlay,
+  .el-popper:not(.el-menu--popup-container) {
+    --el-color-primary: var(--itinerary-accent-primary);
+    --el-color-primary-dark-2: var(--itinerary-accent-primary-dark-2);
+
+    @for $i from 1 through 9 {
+      --el-color-primary-light-#{$i}: var(--itinerary-accent-primary-light-#{$i});
+    }
+  }
+}
+
+.itinerary-workspace__header.has-stripe > .section-card {
+  border-top: 3px solid var(--itinerary-workspace-stripe);
 }
 </style>
