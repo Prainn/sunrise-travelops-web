@@ -385,15 +385,21 @@ export const constantRoutes: RouteRecordRaw[] = [
       },
     ],
   },
+  // 成团表移入数据台账分组，保留原路径、路由名与菜单键；旧 /tours 入口继续可用。
   {
     path: "/tours",
-    name: "Tours",
+    redirect: "/tours/list",
+    meta: { hidden: true },
+  },
+  {
+    path: "/data-ledgers",
+    name: "DataLedgers",
     component: Layout,
     redirect: "/tours/list",
-    meta: { title: "tours", icon: "el-icon-Collection", alwaysShow: true },
+    meta: { title: "dataLedgers", icon: "el-icon-Collection", alwaysShow: true },
     children: [
       {
-        path: "list",
+        path: "/tours/list",
         name: "TourList",
         component: () => import("@/views/tours/index.vue"),
         meta: {
@@ -402,6 +408,32 @@ export const constantRoutes: RouteRecordRaw[] = [
           icon: "el-icon-Document",
           keepAlive: true,
           perms: ["tour:list"],
+        },
+      },
+      {
+        path: "shengxu",
+        name: "ShengxuLedger",
+        component: () => import("@/views/ledgers/shengxu/index.vue"),
+        meta: {
+          menuKey: "shengxu-ledger",
+          title: "shengxuLedger",
+          icon: "el-icon-List",
+          keepAlive: true,
+          scopes: ["headquarters", "shengxu"],
+          perms: ["ledger:shengxu:list"],
+        },
+      },
+      {
+        path: "direct",
+        name: "DirectLedger",
+        component: () => import("@/views/ledgers/direct/index.vue"),
+        meta: {
+          menuKey: "direct-ledger",
+          title: "directLedger",
+          icon: "el-icon-List",
+          keepAlive: true,
+          scopes: ["headquarters", "linxi", "website"],
+          perms: ["ledger:direct:list"],
         },
       },
     ],
