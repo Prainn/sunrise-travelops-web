@@ -64,6 +64,7 @@
         <el-input
           v-model="keyword"
           :placeholder="$t('tour.searchPlaceholder')"
+          maxlength="200"
           clearable
         />
       </el-form-item>
@@ -229,6 +230,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
 import { usePendingActions } from "@/composables/usePendingActions";
+import { useRefreshOnActivated } from "@/composables";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
@@ -246,8 +248,8 @@ import TourEditorDialog from "./components/TourEditorDialog.vue";
 
 defineOptions({ name: "TourList" });
 
-const CANCEL_REASON_MAX_LENGTH = 500;
 const UNITS: TourBusinessUnit[] = ["shengxu", "linxi", "website"];
+const CANCEL_REASON_MAX_LENGTH = 500;
 const { t } = useI18n();
 const user = useUserStore();
 const isHeadquarters = computed(() => user.userInfo.scope === "headquarters");
@@ -261,7 +263,7 @@ const businessUnit = ref<TourBusinessUnit | "">("");
 const loading = ref(false);
 const loadError = ref("");
 const hasActiveFilters = computed(() =>
-  Boolean(keyword.value || status.value || businessUnit.value || dateRange.value || collectCoordinatorId.value || operatorId.value || agencyName.value),
+  Boolean(keyword.value.trim() || status.value || businessUnit.value || dateRange.value || collectCoordinatorId.value || operatorId.value || agencyName.value),
 );
 const total = ref(0);
 const rows = ref<TourRecord[]>([]);
@@ -287,7 +289,7 @@ async function load() {
       agencyName: agencyName.value || undefined,
       from: dateRange.value?.[0],
       to: dateRange.value?.[1],
-      keyword: keyword.value,
+      keyword: keyword.value.trim() || undefined,
       status: status.value || undefined,
       businessUnit: businessUnit.value || undefined,
     });
@@ -374,4 +376,5 @@ async function cancelTour(row: TourRecord) {
 }
 
 onMounted(load);
+useRefreshOnActivated(load);
 </script>

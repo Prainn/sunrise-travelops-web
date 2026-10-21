@@ -44,6 +44,7 @@
               :title="$t('common.delete')"
               type="danger"
               link
+              :disabled="isPending(category.id)"
               @click="removeCategoryType(category)"
             />
           </div>
@@ -110,6 +111,7 @@ import { businessDictionaryService } from "@/services";
 import { businessCategoryTypeStore, getBusinessCategoryTypeName } from "@/utils/business-category";
 import AppDialog from "@/components/AppDialog/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
+import { usePendingActions } from "@/composables";
 import SectionCard from "@/components/SectionCard/index.vue";
 import BusinessCategoryPanel from "./components/BusinessCategoryPanel.vue";
 import { useResourceFormSubmit } from "@/views/resources/useResourceFormSubmit";
@@ -203,23 +205,27 @@ function createCategoryType(): Promise<void> {
   });
 }
 
-async function removeCategoryType(category: BusinessCategoryTypeRecord) {
-  try {
-    await ElMessageBox.confirm(
-      t("businessCategory.deleteTypeConfirm", { name: categoryName(category) }),
-      t("common.warning"),
-      { type: "warning" },
-    );
-  } catch {
-    return;
-  }
-  try {
-    await businessDictionaryService.deleteTypes(category.id);
-    await loadCategoryTypes();
-    ElMessage.success(t("common.deleteSuccess"));
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
-  }
+// 删除从确认前占用到列表刷新结束，避免重复删除同一类型。
+const { isPending, run } = usePendingActions();
+function removeCategoryType(category: BusinessCategoryTypeRecord) {
+  return run(category.id, async () => {
+    try {
+      await ElMessageBox.confirm(
+        t("businessCategory.deleteTypeConfirm", { name: categoryName(category) }),
+        t("common.warning"),
+        { type: "warning" },
+      );
+    } catch {
+      return;
+    }
+    try {
+      await businessDictionaryService.deleteTypes(category.id);
+      await loadCategoryTypes();
+      ElMessage.success(t("common.deleteSuccess"));
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+    }
+  });
 }
 
 onMounted(loadCategoryTypes);

@@ -4,6 +4,7 @@
     :model-value="modelValue"
     :title="$t(isEditing ? 'common.edit' : 'common.create')"
     size="lg"
+    :busy="saving || creatingContact"
     destroy-on-close
     @update:model-value="emit('update:modelValue', $event)"
     @open="resetForm"
@@ -11,7 +12,7 @@
     <el-form
       ref="formRef"
       :model="form"
-      :disabled="creatingContact"
+      :disabled="creatingContact || saving"
       :rules="rules"
       label-width="auto"
     >
@@ -159,12 +160,12 @@
       </el-row>
     </el-form>
     <template #footer>
-      <el-button @click="emit('update:modelValue', false)">
+      <el-button :disabled="saving || creatingContact" @click="emit('update:modelValue', false)">
         {{ $t("common.cancel") }}
       </el-button>
       <el-button
         type="primary"
-        :loading="creatingContact"
+        :loading="creatingContact || saving"
         :disabled="isParsingDocument || loadingOwners"
         @click="submitForm"
       >
@@ -197,6 +198,8 @@ const props = defineProps<{
   agencyOptions: AgencyRecord[];
   ownerOptions: import("@/services/inquiry.service").PersonOption[];
   sourceOptions: string[];
+  /** 父级保存请求进行中 */
+  saving?: boolean;
 }>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];

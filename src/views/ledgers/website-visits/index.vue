@@ -83,6 +83,7 @@
                 link
                 type="primary"
                 :loading="openingId === row.id"
+                :disabled="saving"
                 @click="viewInquiry(row as WebsiteVisit)"
               >
                 {{ row.inquiry.code }}
@@ -93,6 +94,7 @@
                 link
                 type="primary"
                 :loading="openingId === row.id"
+                :disabled="saving"
                 @click="generateInquiry(row as WebsiteVisit)"
               >
                 {{ $t('websiteVisits.generate') }}
@@ -137,6 +139,7 @@ import TableToolbar from "@/components/TableToolbar/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
 import RowActions from "@/components/RowActions/index.vue";
 import Pagination from "@/components/Pagination/index.vue";
+import { useRefreshOnActivated } from "@/composables";
 import WebsiteInquiryEditor from "@/views/website-inquiries/components/WebsiteInquiryEditor.vue";
 import { websiteVisitService } from "@/services/website-visit.service";
 import { websiteService, websiteErrorMessage, type WebsiteOwnerOption } from "@/services/website.service";
@@ -192,6 +195,7 @@ const search = useDebounceFn(() => {
 }, 300);
 watch([keyword, dateRange], search);
 onMounted(load);
+useRefreshOnActivated(load);
 
 function beijingTime(value: string) {
   return formatter.format(new Date(value));
@@ -224,8 +228,9 @@ function reset() {
   page.value = 1;
   void load();
 }
+// 生成询盘保存后会等待列表刷新才释放 saving，期间不能对访问记录再次生成。
 async function generateInquiry(row: WebsiteVisit) {
-  if (openingId.value) return;
+  if (openingId.value || saving.value) return;
   openingId.value = row.id;
   try {
     const [initial, config, candidates] = await Promise.all([
@@ -247,7 +252,7 @@ async function generateInquiry(row: WebsiteVisit) {
   }
 }
 async function viewInquiry(row: WebsiteVisit) {
-  if (!row.inquiry || openingId.value) return;
+  if (!row.inquiry || openingId.value || saving.value) return;
   openingId.value = row.id;
   try {
     const [detail, config] = await Promise.all([

@@ -1533,6 +1533,10 @@
       "manual": "Manual tour"
     },
     "inquiry": "Inquiry",
+    "inquirySearch": {
+      "standard": "Search inquiry no., agency or contact",
+      "website": "Search inquiry no. or customer name"
+    },
     "inquiryCode": "Inquiry",
     "quoteCode": "Quote",
     "itineraryCode": "Itinerary",
@@ -1601,9 +1605,6 @@
     "required": "enter {field}",
     "shengxu": {
       "businessUnitName": "Shengxu",
-      "create": "Add",
-      "edit": "Edit Shengxu Entry",
-      "view": "View Shengxu Entry",
       "recordDate": "Date",
       "agency": "Agency",
       "agencyPlaceholder": "Select an agency",
@@ -1620,9 +1621,6 @@
       "deleteConfirm": "Delete the entry for {agency} on {date}?"
     },
     "direct": {
-      "create": "Add",
-      "edit": "Edit Linxi Entry",
-      "view": "View Linxi Entry",
       "orderNo": "Order No.",
       "receivedDate": "Received Date",
       "receivedMonth": "Received Month",

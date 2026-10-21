@@ -24,7 +24,7 @@
         <el-button
           v-has-perm="'sys:dict-item:delete'"
           type="danger"
-          :disabled="!hasSelection"
+          :disabled="!hasSelection || deleting"
           @click="handleBatchDelete()"
         >
           {{ $t("common.delete") }}
@@ -80,6 +80,7 @@
                 type="danger"
                 link
                 size="small"
+                :disabled="deleting"
                 @click.stop="handleDelete(scope.row.id)"
               >
                 {{ $t("common.delete") }}
@@ -347,7 +348,18 @@ function handleSubmit(): Promise<void> {
  *
  * @param id 指定时删除单个字典项；不指定时删除表格勾选项
  */
+// 影响检查与确认前即占用，删除结束前工具栏与行内删除都不可再次触发。
+const deleting = ref(false);
 async function handleDelete(id?: string): Promise<void> {
+  if (deleting.value) return;
+  deleting.value = true;
+  try {
+    await confirmAndDelete(id);
+  } finally {
+    deleting.value = false;
+  }
+}
+async function confirmAndDelete(id?: string): Promise<void> {
   const itemIds = id ?? selectedIds.value.join(",");
   if (!itemIds) {
     ElMessage.warning(t("common.selectDeleteItem"));

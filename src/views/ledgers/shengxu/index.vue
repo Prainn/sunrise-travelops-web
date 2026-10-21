@@ -157,6 +157,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
 import { usePendingActions } from "@/composables/usePendingActions";
+import { useRefreshOnActivated } from "@/composables";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
@@ -302,4 +303,5 @@ async function handleDelete(row: ShengxuLedgerItem) {
 }
 
 onMounted(fetchList);
+useRefreshOnActivated(fetchList);
 </script>

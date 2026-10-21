@@ -80,6 +80,7 @@ import PageShell from "@/components/PageShell/index.vue";
 import Pagination from "@/components/Pagination/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
+import { useRefreshOnActivated } from "@/composables";
 import { operationLogService } from "@/services/operation-log.service";
 import type { OperationCategory, OperationLog } from "@/types/operation-log";
 
@@ -159,4 +160,5 @@ function reset() {
 onMounted(() => {
   void fetchData();
 });
+useRefreshOnActivated(fetchData);
 </script>

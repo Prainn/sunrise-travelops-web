@@ -80,6 +80,7 @@
                 v-hasPerm="'sys:business-dictionary:delete'"
                 link
                 type="danger"
+                :disabled="isPending(scope.row.id)"
                 @click="removeItem(scope.row as CategoryItem)"
               >
                 {{ $t("common.delete") }}
@@ -183,6 +184,7 @@ import { businessDictionaryService, type CatalogEntry } from "@/services/busines
 import type { ItineraryItemType } from "@/types/itinerary";
 import type { BusinessCategoryOptionRecord, BusinessCategoryTypeRecord } from "@/types/resource";
 import AppDialog from "@/components/AppDialog/index.vue";
+import { usePendingActions } from "@/composables";
 import DataTable from "@/components/DataTable/index.vue";
 import Pagination from "@/components/Pagination/index.vue";
 import RowActions from "@/components/RowActions/index.vue";
@@ -418,20 +420,24 @@ function saveItem(): Promise<void> {
   });
 }
 
-async function removeItem(row: CategoryItem) {
-  try {
-    await ElMessageBox.confirm(t("common.deleteConfirm"), t("common.warning"), { type: "warning" });
-  } catch {
-    return;
-  }
-  try {
-    await businessDictionaryService.deleteItems(props.category.code, row.id);
-    await loadItems();
-    emit("changed");
-    ElMessage.success(t("common.deleteSuccess"));
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
-  }
+// 删除从确认前占用到列表刷新结束，避免重复删除同一条目。
+const { isPending, run } = usePendingActions();
+function removeItem(row: CategoryItem) {
+  return run(row.id, async () => {
+    try {
+      await ElMessageBox.confirm(t("common.deleteConfirm"), t("common.warning"), { type: "warning" });
+    } catch {
+      return;
+    }
+    try {
+      await businessDictionaryService.deleteItems(props.category.code, row.id);
+      await loadItems();
+      emit("changed");
+      ElMessage.success(t("common.deleteSuccess"));
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+    }
+  });
 }
 
 onMounted(loadItems);

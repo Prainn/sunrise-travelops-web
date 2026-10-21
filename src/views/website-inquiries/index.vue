@@ -65,6 +65,7 @@
       :show-business="user.userInfo.scope === 'headquarters'"
       :total="total"
       :can="can"
+      :is-pending="isPending"
       @refresh="load"
       @create="openEditor()"
       @view="openEditor($event, true)"
@@ -91,13 +92,13 @@
       v-model="transferVisible"
       :record="transferRecord"
       :owners="owners"
-      @saved="load"
+      @saved="reloadAfterTransfer"
     />
   </PageShell>
 </template>
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
-import { useOpenInNewTab } from "@/composables";
+import { useOpenInNewTab, usePendingActions, useRefreshOnActivated } from "@/composables";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox } from "element-plus";
 import FilterBar from "@/components/FilterBar/index.vue";
@@ -189,16 +190,12 @@ function openItineraries(record: WebsiteInquiry) {
 async function save(input: WebsiteInquiryInput) {
   if (saving.value) return;
   saving.value = true;
+  const record = editingRecord.value;
   try {
-    if (editingRecord.value)
-      await websiteService.updateInquiry(
-        editingRecord.value.id,
-        input,
-        editingRecord.value.version,
-      );
+    if (record) await websiteService.updateInquiry(record.id, input, record.version);
     else await websiteService.createInquiry(input);
     editorVisible.value = false;
-    ElMessage.success(t(editingRecord.value ? "common.updateSuccess" : "common.createSuccess"));
+    ElMessage.success(t(record ? "common.updateSuccess" : "common.createSuccess"));
     await load();
   } catch (cause) {
     ElMessage.error(websiteErrorMessage(cause));
@@ -206,7 +203,12 @@ async function save(input: WebsiteInquiryInput) {
     saving.value = false;
   }
 }
-async function archive(record: WebsiteInquiry) {
+// 行操作从确认前占用到请求结束，期间同一行不能再次归档、转交或编辑。
+const { isPending, run } = usePendingActions();
+function archive(record: WebsiteInquiry) {
+  return run(record.id, () => archiveRecord(record));
+}
+async function archiveRecord(record: WebsiteInquiry) {
   try {
     await ElMessageBox.confirm(
       t("inquiry.archiveConfirm"),
@@ -228,7 +230,10 @@ async function archive(record: WebsiteInquiry) {
     ElMessage.error(websiteErrorMessage(cause));
   }
 }
-async function markLost(record: WebsiteInquiry) {
+function markLost(record: WebsiteInquiry) {
+  return run(record.id, () => markRecordLost(record));
+}
+async function markRecordLost(record: WebsiteInquiry) {
   let reason: string;
   try {
     const result = await ElMessageBox.prompt(
@@ -277,6 +282,11 @@ async function loadOptions(businessUnit?: WebsiteBusinessUnit) {
   } catch (cause) { ElMessage.error(websiteErrorMessage(cause)); }
   finally { if (current === optionsGeneration) optionsLoading.value = false; }
 }
+// 转交成功后到列表刷新前，该行仍是旧版本，暂不允许再次操作。
+function reloadAfterTransfer() {
+  const record = transferRecord.value;
+  return record ? run(record.id, load) : load();
+}
 async function openTransfer(record: WebsiteInquiry) {
   await loadOptions(record.businessUnit);
   transferRecord.value = record;
@@ -293,4 +303,5 @@ async function loadFilterOwners() {
   } catch (cause) { ElMessage.error(websiteErrorMessage(cause)); }
 }
 onMounted(() => { void load(); void loadFilterOwners(); });
+useRefreshOnActivated(load);
 </script>

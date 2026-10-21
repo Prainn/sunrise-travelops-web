@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import type { ResourceListQuery, ResourceStatus } from "@/types/resource";
 import { resourceService } from "@/services/resource.service";
 import type { ResourceCrud } from "@/services/resource.service";
+import { usePendingActions } from "@/composables/usePendingActions";
 import { RESOURCE_PAGE_SIZE } from "./useResourcePagination";
 
 interface ResourceMaintenanceRecord {
@@ -72,25 +73,23 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
     }
   }
 
-  // Row-level mutations in flight; repeated clicks would hit a stale version.
-  const busyIds = new Set<string>();
+  // 行内启停、删除从确认前占用到请求结束（含失败），重复点击不会以旧版本再次提交。
+  const { run } = usePendingActions();
 
-  async function toggleStatus(row: T) {
-    if (busyIds.has(row.id)) return;
-    busyIds.add(row.id);
-    try {
-      const updated = await options.api.update(row.id, {
-        ...row,
-        status: row.status === "enabled" ? "disabled" : "enabled",
-      });
-      Object.assign(row, updated);
-      await loadRecords();
-      ElMessage.success(t("common.updateSuccess"));
-    } catch (error) {
-      ElMessage.error(error instanceof Error ? error.message : String(error));
-    } finally {
-      busyIds.delete(row.id);
-    }
+  function toggleStatus(row: T) {
+    return run(row.id, async () => {
+      try {
+        const updated = await options.api.update(row.id, {
+          ...row,
+          status: row.status === "enabled" ? "disabled" : "enabled",
+        });
+        Object.assign(row, updated);
+        await loadRecords();
+        ElMessage.success(t("common.updateSuccess"));
+      } catch (error) {
+        ElMessage.error(error instanceof Error ? error.message : String(error));
+      }
+    });
   }
 
   async function saveRecord(value: T) {
@@ -113,28 +112,27 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
     }
   }
 
-  async function deleteRecord(row: T) {
-    try {
-      await ElMessageBox.confirm(
-        t(options.deleteConfirmKey ?? "common.deleteConfirm"),
-        t("common.tip"),
-        { type: "warning" },
-      );
-    } catch {
-      return;
-    }
-
-    if (busyIds.has(row.id)) return;
-    busyIds.add(row.id);
-    try {
-      await options.api.deleteByIds(row.id);
-      const index = rows.findIndex((item) => item.id === row.id);
-      if (index >= 0) rows.splice(index, 1);
-      await loadRecords();
-      ElMessage.success(t("common.deleteSuccess"));
-    } catch (error) {
-      ElMessage.error(error instanceof Error ? error.message : String(error));
-    }
+  function deleteRecord(row: T) {
+    return run(row.id, async () => {
+      try {
+        await ElMessageBox.confirm(
+          t(options.deleteConfirmKey ?? "common.deleteConfirm"),
+          t("common.tip"),
+          { type: "warning" },
+        );
+      } catch {
+        return;
+      }
+      try {
+        await options.api.deleteByIds(row.id);
+        const index = rows.findIndex((item) => item.id === row.id);
+        if (index >= 0) rows.splice(index, 1);
+        await loadRecords();
+        ElMessage.success(t("common.deleteSuccess"));
+      } catch (error) {
+        ElMessage.error(error instanceof Error ? error.message : String(error));
+      }
+    });
   }
 
   onMounted(loadRecords);

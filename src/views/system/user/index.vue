@@ -78,7 +78,7 @@
         <el-button
           v-hasPerm="'sys:user:delete'"
           type="danger"
-          :disabled="!hasSelection"
+          :disabled="!hasSelection || deleting"
           @click="handleDelete()"
         >
           {{ $t("common.delete") }}
@@ -230,6 +230,7 @@
                 type="danger"
                 size="small"
                 link
+                :disabled="deleting"
                 @click="handleDelete(scope.row.id)"
               >
                 {{ $t("common.delete") }}
@@ -435,10 +436,10 @@ import { formatDateTime } from "@/utils";
 import { userRoleLabel, userRoleLabels } from "@/utils/user-role";
 import { h } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
-import { useTourCodeSuggestion } from "./useTourCodeSuggestion";
 import { CopyDocument, Female, Male } from "@element-plus/icons-vue";
 
 import UserIdentityFields from "./components/UserIdentityFields.vue";
+import { useTourCodeSuggestion } from "./useTourCodeSuggestion";
 import type {
   IdentityRoleOption,
   DepartmentOption,
@@ -778,7 +779,18 @@ function handleSubmit(): Promise<void> {
  *
  * @param id 指定时删除单个用户；不指定时删除表格勾选项
  */
+// 影响检查与确认前即占用，删除结束前工具栏与行内删除都不可再次触发。
+const deleting = ref(false);
 async function handleDelete(id?: string): Promise<void> {
+  if (deleting.value) return;
+  deleting.value = true;
+  try {
+    await confirmAndDelete(id);
+  } finally {
+    deleting.value = false;
+  }
+}
+async function confirmAndDelete(id?: string): Promise<void> {
   const userIds = id ?? selectedIds.value.join(",");
   if (!userIds) {
     ElMessage.warning(t("common.selectDeleteItem"));

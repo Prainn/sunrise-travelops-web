@@ -1533,6 +1533,10 @@
       "manual": "手工建团"
     },
     "inquiry": "询盘",
+    "inquirySearch": {
+      "standard": "搜索询盘编号、组团社或联系人",
+      "website": "搜索询盘编号或客户姓名"
+    },
     "inquiryCode": "询盘编号",
     "quoteCode": "报价编号",
     "itineraryCode": "行程编号",
@@ -1601,9 +1605,6 @@
     "required": "填写{field}",
     "shengxu": {
       "businessUnitName": "盛旭",
-      "create": "新增",
-      "edit": "编辑盛旭台账",
-      "view": "查看盛旭台账",
       "recordDate": "日期",
       "agency": "组团社",
       "agencyPlaceholder": "选择组团社",
@@ -1620,9 +1621,6 @@
       "deleteConfirm": "删除 {date} {agency} 的台账？"
     },
     "direct": {
-      "create": "新增",
-      "edit": "编辑霖熹台账",
-      "view": "查看霖熹台账",
       "orderNo": "订单号",
       "receivedDate": "接单日期",
       "receivedMonth": "接单月份",

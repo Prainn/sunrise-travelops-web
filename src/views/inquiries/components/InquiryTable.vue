@@ -100,6 +100,7 @@
               v-hasPerm="'inquiry:update'"
               type="primary"
               link
+              :disabled="isPending?.(scope.row.id)"
               @click="emit('edit', scope.row as InquiryRecord)"
             >
               {{ $t("common.edit") }}
@@ -118,6 +119,7 @@
                   hasPerm('inquiry:archive')
                     && !isInquiryReadOnly(scope.row.status as InquiryStatus, scope.row.hasActiveTour)
                 "
+                :disabled="isPending?.(scope.row.id)"
                 @click="emit('archive', scope.row as InquiryRecord)"
               >
                 {{ $t("inquiry.archive") }}
@@ -170,6 +172,8 @@ defineProps<{
   error?: string;
   /** 存在生效的筛选条件 */
   filtered?: boolean;
+  /** 行写操作处理中时禁用该行的编辑与归档 */
+  isPending?: (id: string) => boolean;
 }>();
 const emit = defineEmits<{
   refresh: [];

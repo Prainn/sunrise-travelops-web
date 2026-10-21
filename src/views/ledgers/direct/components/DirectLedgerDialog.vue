@@ -240,7 +240,7 @@ import {
   type TriStateValue,
 } from "../direct-ledger-form";
 
-const BOOLEAN_FIELDS = ["effectiveContact", "proposalSent", "priority", "loss"] as const;
+const BOOLEAN_FIELDS = ["effectiveContact", "proposalSent", "loss", "priority"] as const;
 const TRI_STATE_FIELDS = ["complaint", "satisfied"] as const;
 const TEXT_FIELDS = [
   "notConvertedReason",

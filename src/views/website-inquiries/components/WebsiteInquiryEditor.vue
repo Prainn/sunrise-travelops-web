@@ -95,6 +95,7 @@
     :model-value="modelValue"
     :title="$t(record ? 'common.edit' : 'common.create')"
     size="lg"
+    :busy="saving"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <el-form
@@ -233,6 +234,7 @@
           <el-form-item :label="$t('websiteInquiry.receivedAt')">
             <el-input v-if="sourceReadOnly" :model-value="form.receivedAt ?? ''" readonly />
             <el-date-picker
+              v-else
               v-model="form.receivedAt"
               type="datetime"
               format="YYYY-MM-DD HH:mm"

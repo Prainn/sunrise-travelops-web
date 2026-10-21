@@ -3,6 +3,8 @@
     v-has-perm="'inquiry:transfer'"
     link
     type="primary"
+    :loading="opening"
+    :disabled="saving"
     @click="open"
   >
     {{ $t("identity.transfer") }}
@@ -11,6 +13,7 @@
     v-model="visible"
     :title="$t('identity.transfer')"
     size="sm"
+    :busy="saving"
     append-to-body
   >
     <el-form ref="form" :model="data" label-position="top">
@@ -46,7 +49,7 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="visible = false">
+      <el-button :disabled="saving" @click="visible = false">
         {{ $t("common.cancel") }}
       </el-button><el-button type="primary" :loading="saving" @click="submit">
         {{ $t("common.confirm") }}
@@ -64,10 +67,13 @@ const props = defineProps<{ inquiry: InquiryRecord }>();
 const emit = defineEmits<{ transferred: [] }>();
 const visible = ref(false),
   saving = ref(false),
+  opening = ref(false),
   owners = ref<PersonOption[]>([]),
   form = ref<FormInstance>();
 const data = reactive({ ownerId: "", reason: "" });
 async function open() {
+  if (opening.value || saving.value) return;
+  opening.value = true;
   try {
     owners.value = await inquiryService.owners(props.inquiry.businessUnit);
     data.ownerId = "";
@@ -75,12 +81,16 @@ async function open() {
     visible.value = true;
   } catch (e) {
     ElMessage.error(e instanceof Error ? e.message : String(e));
+  } finally {
+    opening.value = false;
   }
 }
+// 校验前即占用，保存期间弹窗不可关闭，避免重复转交或以旧版本再次提交。
 async function submit() {
-  if (!(await form.value?.validate().catch(() => false))) return;
+  if (saving.value) return;
   saving.value = true;
   try {
+    if (!(await form.value?.validate().catch(() => false))) return;
     await inquiryService.transfer(props.inquiry, data.ownerId, data.reason);
     visible.value = false;
     emit("transferred");

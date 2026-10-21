@@ -43,6 +43,8 @@
               filterable
               remote
               :remote-method="loadSources"
+              :loading="sourcesLoading"
+              :placeholder="$t(`tour.inquirySearch.${sourceModule}`)"
               class="w-full"
             >
               <el-option
@@ -181,6 +183,8 @@
                 :max="365"
                 :step="1"
                 step-strictly
+                controls-position="right"
+                class="w-full"
               />
             </el-form-item>
           </el-col>
@@ -233,6 +237,8 @@
               :max="10000"
               :step="1"
               step-strictly
+              controls-position="right"
+              class="w-full"
             />
           </el-form-item>
         </el-col>
@@ -244,6 +250,8 @@
               :max="10000"
               :step="1"
               step-strictly
+              controls-position="right"
+              class="w-full"
             />
           </el-form-item>
         </el-col>
@@ -255,6 +263,8 @@
               :max="10000"
               :step="1"
               step-strictly
+              controls-position="right"
+              class="w-full"
             />
           </el-form-item>
         </el-col>
@@ -381,6 +391,7 @@
           type="textarea"
           :rows="3"
           maxlength="2000"
+          show-word-limit
         />
       </el-form-item>
     </el-form>
@@ -449,6 +460,7 @@ const saving = computed(() => validating.value || requesting.value);
 const createMode = ref<TourCreateMode>("manual");
 const sourceModule = ref<TourLinkedSourceModule>("standard");
 const sources = ref<TourSource[]>([]);
+const sourcesLoading = ref(false);
 const operators = ref<Array<{ id: string; name: string }>>([]);
 const flightSession = ref(0);
 const flightOptions = {
@@ -656,6 +668,7 @@ let guidesKey: string | undefined;
 
 async function loadSources(keyword = "") {
   const generation = ++sourcesGeneration;
+  sourcesLoading.value = true;
   try {
     const selected = source.value;
     const result = await tourService.sources(sourceModule.value, keyword);
@@ -663,7 +676,9 @@ async function loadSources(keyword = "") {
     sources.value = selected && !result.some((item) => item.inquiryId === selected.inquiryId)
       ? [selected, ...result] : result;
   } catch (error) {
-    fail(error);
+    if (generation === sourcesGeneration) fail(error);
+  } finally {
+    if (generation === sourcesGeneration) sourcesLoading.value = false;
   }
 }
 async function loadChoices(businessUnit: TourBusinessUnit | null) {
@@ -719,6 +734,7 @@ async function loadGuides() {
 function resetCreateForm() {
   sourcesGeneration++;
   sources.value = [];
+  sourcesLoading.value = false;
   const manual = createMode.value === "manual";
   Object.assign(form, emptyTourForm(), { scheduleMode: manual ? "manual" : "flight" });
   if (manual) {

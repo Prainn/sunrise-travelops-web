@@ -59,6 +59,7 @@
                 v-has-perm="RESOURCE_PERMISSIONS.guide.delete"
                 link
                 type="danger"
+                :disabled="isPending(row.id)"
                 @click="remove(row as GuideLeaveRecord)"
               >
                 {{ $t("common.delete") }}
@@ -156,6 +157,7 @@ import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
+import { usePendingActions } from "@/composables";
 import Pagination from "@/components/Pagination/index.vue";
 import RowActions from "@/components/RowActions/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
@@ -280,19 +282,23 @@ async function save() {
     validating.value = false;
   }
 }
-async function remove(row: GuideLeaveRecord) {
-  try {
-    await ElMessageBox.confirm(t("common.deleteConfirm"), t("common.tip"), { type: "warning" });
-  } catch {
-    return;
-  }
-  try {
-    await tourService.deleteLeave(row.id);
-    ElMessage.success(t("common.deleteSuccess"));
-    await load();
-  } catch (error) {
-    message(error);
-  }
+// 删除从确认前占用到列表刷新结束，避免重复删除同一条请假。
+const { isPending, run } = usePendingActions();
+function remove(row: GuideLeaveRecord) {
+  return run(row.id, async () => {
+    try {
+      await ElMessageBox.confirm(t("common.deleteConfirm"), t("common.tip"), { type: "warning" });
+    } catch {
+      return;
+    }
+    try {
+      await tourService.deleteLeave(row.id);
+      ElMessage.success(t("common.deleteSuccess"));
+      await load();
+    } catch (error) {
+      message(error);
+    }
+  });
 }
 
 onMounted(load);

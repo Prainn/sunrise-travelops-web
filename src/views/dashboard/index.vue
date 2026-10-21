@@ -80,6 +80,7 @@ import { ElMessage } from "element-plus";
 import { User } from "@element-plus/icons-vue";
 import PageShell from "@/components/PageShell/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
+import { useRefreshOnActivated } from "@/composables";
 
 interface SummaryCard {
   key: string;
@@ -318,4 +319,6 @@ watch(
 onMounted(() => {
   fetchSummary();
 });
+// 趋势按天汇总且刷新会重绘图表，切回时只刷新概览数字。
+useRefreshOnActivated(fetchSummary);
 </script>

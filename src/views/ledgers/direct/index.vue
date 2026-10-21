@@ -243,6 +243,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
 import { usePendingActions } from "@/composables/usePendingActions";
+import { useRefreshOnActivated } from "@/composables";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
@@ -375,15 +376,17 @@ const reload = useDebounceFn(() => {
   void fetchList();
 }, 300);
 watch([keyword, orderStatus, workflowStatus, dateRange, creatorId, operatorId], reload);
+// 切换业务时清空人员筛选，与其触发的筛选重载合并为一次请求；旧业务的在途响应直接作废。
 watch(headquartersUnit, () => {
+  listGeneration++;
   creatorId.value = "";
   operatorId.value = "";
   dialogVisible.value = false;
   editing.value = null;
   rows.value = [];
   total.value = 0;
-  pageNum.value = 1;
-  void fetchList();
+  loading.value = true;
+  void reload();
 });
 
 function resetQuery() {
@@ -467,4 +470,5 @@ async function handleDelete(row: DirectLedgerItem) {
 }
 
 onMounted(fetchList);
+useRefreshOnActivated(fetchList);
 </script>
