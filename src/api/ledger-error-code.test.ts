@@ -42,7 +42,7 @@ describe("ledger conflict error codes", () => {
   });
 
   it.each([
-    ["LEDGER_VERSION_CONFLICT", "记录已更新，请刷新后重试"],
+    ["LEDGER_VERSION_CONFLICT", "记录已更新，请刷新重试"],
     ["DIRECT_LEDGER_DELETE_OPERATED", "曾操作的台账不能删除"],
   ])("localizes 409 %s by code instead of the generic conflict", async (code, message) => {
     vi.stubGlobal(
