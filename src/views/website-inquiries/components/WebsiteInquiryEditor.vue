@@ -231,6 +231,7 @@
       <el-row :gutter="16">
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.receivedAt')">
+            <el-input v-if="sourceReadOnly" :model-value="form.receivedAt ?? ''" readonly />
             <el-date-picker
               v-model="form.receivedAt"
               type="datetime"
@@ -244,27 +245,27 @@
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.contactChannel')">
-            <el-input v-model="form.contactChannel" maxlength="100" />
+            <el-input v-model="form.contactChannel" maxlength="100" :readonly="sourceReadOnly" />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.acquisitionSource')">
-            <el-input v-model="form.acquisitionSource" maxlength="2048" />
+            <el-input v-model="form.acquisitionSource" maxlength="2048" :readonly="sourceReadOnly" />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.whatsappSourceId')">
-            <el-input v-model="form.whatsappSourceId" maxlength="200" />
+            <el-input v-model="form.whatsappSourceId" maxlength="200" :readonly="sourceReadOnly" />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.websiteInquiryNo')">
-            <el-input v-model="form.websiteInquiryNo" maxlength="200" />
+            <el-input v-model="form.websiteInquiryNo" maxlength="200" :readonly="sourceReadOnly" />
           </el-form-item>
         </el-col>
         <el-col :span="24">
           <el-form-item :label="$t('websiteInquiry.landingPage')">
-            <el-input v-model="form.landingPage" maxlength="2048" />
+            <el-input v-model="form.landingPage" maxlength="2048" :readonly="sourceReadOnly" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -319,6 +320,7 @@ const props = defineProps<{
   showBusiness: boolean;
   record?: WebsiteInquiry;
   initialValues?: Partial<WebsiteInquiryInput>;
+  sourceReadOnly?: boolean;
   owners: WebsiteOwnerOption[];
   cities: WebsiteCity[];
   allowAssign: boolean;

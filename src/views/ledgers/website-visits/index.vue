@@ -113,6 +113,7 @@
       v-model="editorVisible"
       :record="record"
       :initial-values="draft"
+      source-read-only
       business-unit="website"
       :show-business="false"
       :owners="owners"
