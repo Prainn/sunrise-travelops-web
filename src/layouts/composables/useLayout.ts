@@ -18,6 +18,12 @@ export function useLayout() {
   const isSidebarOpen = computed(() => appStore.sidebar.opened);
   const showTagsView = computed(() => settingsStore.showTagsView);
   const showLogo = computed(() => settingsStore.showAppLogo);
+  /** 行程工作区在独立浏览器标签页中使用，只保留菜单，隐藏系统顶栏与站内页签。 */
+  const isWorkspaceChromeless = computed(() =>
+    route.matched.some((record) => record.meta.inquiryWorkspace),
+  );
+  /** 移动端菜单入口在顶栏内，工作区仅在桌面端隐藏左侧/双列布局的顶栏。 */
+  const isWorkspaceNavbarHidden = computed(() => isWorkspaceChromeless.value && !isMobile.value);
 
   const layoutClass = computed(() => ({
     "is-sidebar-collapsed": !appStore.sidebar.opened,
@@ -64,6 +70,8 @@ export function useLayout() {
     isSidebarOpen,
     showTagsView,
     showLogo,
+    isWorkspaceChromeless,
+    isWorkspaceNavbarHidden,
     routes,
     sideMenuRoutes,
     activeMenu,

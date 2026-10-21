@@ -199,4 +199,14 @@ defineExpose({ table: tableRef });
     }
   }
 }
+
+// 紧凑密度：表格随全局尺寸进入 small，正文字号与单元格内边距同步收紧
+html.is-compact .data-table .data-table__table {
+  font-size: 12px;
+
+  .el-table__header .el-table__cell > .cell,
+  .el-table__body .el-table__cell > .cell {
+    padding-inline: 10px;
+  }
+}
 </style>

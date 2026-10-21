@@ -63,8 +63,8 @@
         'is-fullscreen': appStore.contentFullscreen,
       }"
     >
-      <LayoutNavbar v-show="!appStore.contentFullscreen" toggle-target="secondary" />
-      <LayoutTagsView v-if="showTagsView" />
+      <LayoutNavbar v-show="!appStore.contentFullscreen && !isWorkspaceNavbarHidden" toggle-target="secondary" />
+      <LayoutTagsView v-if="showTagsView && !isWorkspaceChromeless" />
       <LayoutMain />
     </main>
   </BaseLayout>
@@ -85,7 +85,7 @@ import LayoutSidebar from "../components/LayoutSidebar.vue";
 import LayoutMenuIcon from "../components/LayoutMenuIcon.vue";
 
 const appStore = useAppStore();
-const { showTagsView, showLogo, isSidebarOpen, toggleSidebar } = useLayout();
+const { showTagsView, showLogo, isSidebarOpen, isWorkspaceChromeless, isWorkspaceNavbarHidden, toggleSidebar } = useLayout();
 
 const secondaryExpanded = computed(() => appStore.secondarySidebar?.opened ?? true);
 

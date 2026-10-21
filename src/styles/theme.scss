@@ -39,6 +39,21 @@
   --page-padding: 16px;
   --page-gap: 12px;
   --section-padding: 16px;
+
+  // 布局框架
+  --navbar-height: 48px;
+  --tags-view-height: 38px;
+}
+
+// 紧凑密度：1366 笔记本等小视口下收紧框架高度、页面节奏和基础字号
+html.is-compact {
+  --page-padding: 12px;
+  --page-gap: 8px;
+  --section-padding: 12px;
+  --navbar-height: 40px;
+  --tags-view-height: 32px;
+  --el-font-size-base: 13px;
+  --el-menu-item-height: 40px;
 }
 
 // 文本层级：覆盖 Element Plus 默认值；提高选择器优先级，避免按需加载的组件样式回写 :root

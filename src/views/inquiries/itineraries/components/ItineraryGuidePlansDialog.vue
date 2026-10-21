@@ -8,8 +8,8 @@
     @close="emit('cancel')"
   >
     <section id="itinerary-guides">
-      <el-form label-position="left">
-        <div class="grid grid-cols-1 gap-x-6 md:grid-cols-2">
+      <el-form label-position="top" @submit.prevent>
+        <div class="grid grid-cols-2 gap-x-4 max-[560px]:grid-cols-1">
           <el-form-item :label="$t('planning.secondLanguage')">
             <el-select
               autocomplete="new-password"
@@ -38,24 +38,33 @@
           </el-form-item>
         </div>
 
-        <el-divider v-if="plan" />
-
-        <template v-if="plan">
-          <el-form-item :label="$t('planning.dailyPrice')" label-width="160px">
-            <el-input-number
-              class="w-full"
-              :model-value="plan.dailyPrice"
-              :min="0"
-              :precision="2"
-              :disabled="!editable"
-              controls-position="right"
-              @update:model-value="emit('update-price', $event ?? null)"
-            />
-          </el-form-item>
+        <div
+          v-if="plan"
+          class="mt-1 p-4 rounded-[var(--custom-radius)] surface-muted [border:1px_solid_var(--divider-color)]"
+        >
+          <div class="grid grid-cols-2 gap-x-4 max-[560px]:grid-cols-1">
+            <el-form-item :label="$t('planning.dailyPrice')">
+              <el-input-number
+                class="w-full!"
+                :model-value="plan.dailyPrice"
+                :min="0"
+                :precision="2"
+                :disabled="!editable"
+                controls-position="right"
+                @update:model-value="emit('update-price', $event ?? null)"
+              />
+            </el-form-item>
+            <el-form-item :label="$t('planning.guideTotalPrice')">
+              <el-input :model-value="formatMoney(totalPrice)" readonly>
+                <template #prepend>
+                  ¥
+                </template>
+              </el-input>
+            </el-form-item>
+          </div>
           <el-form-item
             v-if="needsReason"
             :label="$t('identity.reason')"
-            label-width="160px"
             required
           >
             <el-input
@@ -67,27 +76,13 @@
               @update:model-value="emit('update-reason', $event)"
             />
           </el-form-item>
-          <div class="flex items-center">
-            <el-form-item :label="$t('planning.guideTotalPrice')" label-width="160px">
-              <el-input :model-value="formatMoney(totalPrice)" readonly>
-                <template #prepend>
-                  ¥
-                </template>
-              </el-input>
-              <el-text type="info" size="small">
-                ¥{{ formatMoney(plan.dailyPrice) }} × {{ plan.serviceDays }}
-              </el-text>
-              <el-tag
-                type="info"
-                effect="plain"
-                size="small"
-                class="ml-2"
-              >
-                {{ $t("planning.serviceDays") }}：{{ plan.serviceDays }}
-              </el-tag>
-            </el-form-item>
-          </div>
-        </template>
+          <p class="m-0 flex flex-wrap items-center gap-2 text-[12px] text-muted">
+            <span>¥{{ formatMoney(plan.dailyPrice) }} × {{ plan.serviceDays }}</span>
+            <el-tag type="info" effect="plain" size="small">
+              {{ $t("planning.serviceDays") }}：{{ plan.serviceDays }}
+            </el-tag>
+          </p>
+        </div>
       </el-form>
       <div v-if="missing" class="flex items-center gap-[10px] mt-[14px]">
         <el-text type="danger">

@@ -43,7 +43,8 @@ import { computed, nextTick, onActivated, onDeactivated, ref, watch } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus";
 import PageShell from "@/components/PageShell/index.vue";
 import { useI18n } from "vue-i18n";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
+import { useOpenInNewTab } from "@/composables";
 import { inquiryService, type PersonOption } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
 import { useUserStore } from "@/stores/user";
@@ -55,7 +56,7 @@ import InquiryTable from "./components/InquiryTable.vue";
 import { isInquiryReadOnly } from "./inquiry-workflow";
 defineOptions({ name: "InquiryList" });
 const { t } = useI18n();
-const router = useRouter();
+const openInNewTab = useOpenInNewTab();
 const route = useRoute();
 let isActive = false;
 const exactCode = ref("");
@@ -214,10 +215,10 @@ async function openDetailDrawer(record: InquiryRecord) {
   }
 }
 function openItineraryManagement(record: InquiryRecord) {
-  void router.push({ name: "InquiryItineraries", params: { inquiryId: record.id } });
+  openInNewTab({ name: "InquiryItineraries", params: { inquiryId: record.id } });
 }
 function openInquiryLogs(record: InquiryRecord) {
-  void router.push({ name: "InquiryLogs", params: { inquiryId: record.id } });
+  openInNewTab({ name: "InquiryLogs", params: { inquiryId: record.id } });
 }
 let saving = false;
 async function saveInquiry(record: InquiryRecord) {

@@ -25,6 +25,7 @@
           :label="$t('tour.tourNo')"
           min-width="210"
           fixed="left"
+          :show-overflow-tooltip="false"
         />
         <el-table-column prop="guideName" :label="$t('guideRating.guide')" min-width="120" />
         <el-table-column

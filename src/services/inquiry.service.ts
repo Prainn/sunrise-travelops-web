@@ -110,6 +110,7 @@ export function itineraryInput(
     | "childWithoutBedRate"
     | "destinations"
     | "dailyPlans"
+    | "deletedDays"
     | "hotelPlans"
     | "vehiclePlans"
     | "guidePlans"
@@ -127,6 +128,7 @@ export function itineraryInput(
       ...day,
       items: day.items.map((item) => ({ ...item, quantity: 1 })),
     })),
+    deletedDays: record.deletedDays ?? [],
     hotelPlans: record.hotelPlans,
     vehiclePlans: record.vehiclePlans,
     guidePlans: record.guidePlans,

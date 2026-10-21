@@ -32,6 +32,7 @@ import {
   User,
   UserFilled,
   Van,
+  View,
 } from "@element-plus/icons-vue";
 import { setupPermissionGuard } from "@/router/guards/permission";
 import { setupPageUnloadConfirmation } from "@/utils/page-lifecycle";
@@ -69,6 +70,7 @@ const routeIcons = {
   User,
   UserFilled,
   Van,
+  View,
 };
 
 Object.entries(routeIcons).forEach(([name, component]) => app.component(name, component));

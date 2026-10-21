@@ -86,21 +86,21 @@
           type="warning"
           :closable="false"
           :title="$t('tour.notDownloaded')"
-          class="mb-[16px]"
+          class="mb-3!"
         />
         <el-alert
           v-if="!source.startDate"
           type="warning"
           :closable="false"
           :title="$t('tour.noStartDate')"
-          class="mb-[16px]"
+          class="mb-3!"
         />
         <el-alert
           v-if="!source.countryCode"
           type="warning"
           :closable="false"
           :title="$t('tour.noCountry')"
-          class="mb-[16px]"
+          class="mb-3!"
         />
       </template>
 
@@ -143,8 +143,16 @@
         </el-form-item>
         <el-row :gutter="12">
           <el-col :xs="24" :sm="12">
-            <el-form-item :label="$t('tour.agency')" prop="agencyName">
-              <el-input v-model.trim="form.agencyName" maxlength="200" />
+            <el-form-item :label="$t('tour.agency')" prop="agencyId">
+              <ResourceSelect
+                v-if="unit === 'shengxu'"
+                v-model="form.agencyId"
+                kind="agencies"
+                :filters="{ businessUnit: 'shengxu' }"
+                :selected-label="tour?.agencyName"
+                :placeholder="tour && !tour.agencyId ? tour.agencyName : $t('common.selectPlaceholder')"
+              />
+              <el-input v-else :model-value="fixedPlatform" readonly />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :sm="12">
@@ -176,39 +184,45 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item :label="$t('tour.collectCoordinator')" prop="collectCoordinatorId">
-          <el-select
-            v-model="form.collectCoordinatorId"
-            autocomplete="new-password"
-            filterable
-            :disabled="collectOptions.length <= 1"
-            class="w-full"
-          >
-            <el-option
-              v-for="item in collectOptions"
-              :key="item.id"
-              :value="item.id"
-              :label="item.name"
-            />
-          </el-select>
-        </el-form-item>
       </template>
 
-      <el-form-item :label="$t('tour.operator')" prop="operatorId">
-        <el-select
-          v-model="form.operatorId"
-          autocomplete="new-password"
-          filterable
-          class="w-full"
-        >
-          <el-option
-            v-for="item in operators"
-            :key="item.id"
-            :value="item.id"
-            :label="item.name"
-          />
-        </el-select>
-      </el-form-item>
+      <el-row :gutter="12">
+        <el-col v-if="isManual" :xs="24" :sm="12">
+          <el-form-item :label="$t('tour.collectCoordinator')" prop="collectCoordinatorId">
+            <el-select
+              v-model="form.collectCoordinatorId"
+              autocomplete="new-password"
+              filterable
+              :disabled="collectOptions.length <= 1"
+              class="w-full"
+            >
+              <el-option
+                v-for="item in collectOptions"
+                :key="item.id"
+                :value="item.id"
+                :label="item.name"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="isManual ? 12 : 24">
+          <el-form-item :label="$t('tour.operator')" prop="operatorId">
+            <el-select
+              v-model="form.operatorId"
+              autocomplete="new-password"
+              filterable
+              class="w-full"
+            >
+              <el-option
+                v-for="item in operators"
+                :key="item.id"
+                :value="item.id"
+                :label="item.name"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
       <el-row :gutter="12">
         <el-col :xs="24" :sm="8">
           <el-form-item :label="$t('tour.adults')" prop="adults">
@@ -250,7 +264,12 @@
       <el-row :gutter="12">
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('tour.language')">
-            <el-input v-model.trim="form.language" maxlength="100" />
+            <RemoteSelect
+              v-model="form.language"
+              :load-options="loadLanguages"
+              :placeholder="$t('common.selectPlaceholder')"
+              @update:model-value="form.guideId = null"
+            />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
@@ -330,6 +349,7 @@
       <el-form-item :label="$t('tour.guide')">
         <el-select
           v-model="form.guideId"
+          :disabled="!currentGuideQuery || !guidesReady"
           autocomplete="new-password"
           clearable
           filterable
@@ -354,7 +374,7 @@
         type="warning"
         :closable="false"
         :title="$t('tour.guideUnavailable')"
-        class="mb-[16px]"
+        class="mb-3!"
       />
       <el-form-item :label="$t('common.remark')">
         <el-input
@@ -386,6 +406,9 @@ import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
+import RemoteSelect from "@/components/RemoteSelect/index.vue";
+import ResourceSelect from "@/components/ResourceSelect/index.vue";
+import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
 import { ROLE_ROOT } from "@/constants";
 import { businessUnitName } from "@/constants/identity";
@@ -452,6 +475,11 @@ const unit = computed<TourBusinessUnit | null>(() => {
   if (isManual.value) return form.businessUnit || null;
   return source.value?.businessUnit ?? null;
 });
+const fixedPlatform = computed(() =>
+  unit.value === "linxi" || unit.value === "website"
+    ? t(`tour.fixedPlatforms.${unit.value}`)
+    : "",
+);
 // 手工团使用表单内日期/天数；关联团沿用来源或原团日期。
 const period = computed(() => {
   if (isManual.value) return { businessUnit: unit.value, startDate: form.startDate, days: form.days };
@@ -500,7 +528,7 @@ const rules = computed<FormRules>(() => ({
   businessUnit: [selectRule.value],
   countryItemId: [selectRule.value],
   collectCoordinatorId: [selectRule.value],
-  agencyName: [inputRule.value],
+  agencyId: unit.value === "shengxu" && (!props.tour || props.tour.agencyId) ? [selectRule.value] : [],
   itinerarySummary: [inputRule.value],
   startDate: [selectRule.value],
   days: [
@@ -536,6 +564,11 @@ const rules = computed<FormRules>(() => ({
     },
   ],
 }));
+
+async function loadLanguages(query: RemoteOptionsQuery) {
+  const result = await tourService.guideLanguages(query);
+  return { ...result, list: result.list.map((item) => ({ id: item.id, label: item.name })) };
+}
 
 function flightLabel(item: TourFlightOption) {
   const name = (zh: string, en: string) => (locale.value === "en" ? en : zh);
@@ -670,6 +703,7 @@ function onOpen() {
 // 新建时业务随来源或手选业务确定；业务变化后计调、航班和导游都需重新选择。
 watch(unit, (value, previous) => {
   if (props.tour || !visible.value || value === previous) return;
+  form.agencyId = "";
   form.operatorId = "";
   form.pickupFlightId = "";
   form.dropFlightId = "";

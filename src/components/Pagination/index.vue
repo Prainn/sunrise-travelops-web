@@ -11,7 +11,7 @@
       :layout="resolvedLayout"
       :page-sizes="pageSizes"
       :pager-count="isCompact ? 5 : 7"
-      :size="isCompact ? 'small' : 'default'"
+      :size="isCompact ? 'small' : undefined"
       :total="total"
       @size-change="handleSizeChange"
       @current-change="requestChange"

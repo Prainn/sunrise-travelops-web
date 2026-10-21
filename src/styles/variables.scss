@@ -7,8 +7,9 @@ $sidebar-width: 230px;
 $sidebar-width-collapsed: 54px;
 $sidebar-primary-width: 76px;
 $sidebar-secondary-width: 210px;
-$navbar-height: 48px;
-$tags-view-height: 38px;
+// 顶栏与标签栏高度随界面密度变化，取值见 theme.scss
+$navbar-height: var(--navbar-height);
+$tags-view-height: var(--tags-view-height);
 $sidebar-toggle-height: 50px;
 
 // 菜单配色（映射 theme.scss 的 CSS 变量）

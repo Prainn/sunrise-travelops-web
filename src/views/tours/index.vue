@@ -27,6 +27,39 @@
           <el-option value="cancelled" :label="$t('tour.status.cancelled')" />
         </el-select>
       </el-form-item>
+      <el-form-item :label="$t('common.startDate')" class="filter-bar__wide">
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          value-format="YYYY-MM-DD"
+          :start-placeholder="$t('common.startDate')"
+          :end-placeholder="$t('common.endDate')"
+        />
+      </el-form-item>
+      <el-form-item :label="$t('tour.collectCoordinator')">
+        <RemoteSelect
+          v-model="collectCoordinatorId"
+          :query-key="businessUnit"
+          :load-options="(query) => loadFilterOptions('collectCoordinator', query)"
+          :placeholder="$t('common.all')"
+        />
+      </el-form-item>
+      <el-form-item :label="$t('tour.operator')">
+        <RemoteSelect
+          v-model="operatorId"
+          :query-key="businessUnit"
+          :load-options="(query) => loadFilterOptions('operator', query)"
+          :placeholder="$t('common.all')"
+        />
+      </el-form-item>
+      <el-form-item :label="$t('tour.agency')">
+        <RemoteSelect
+          v-model="agencyName"
+          :query-key="businessUnit"
+          :load-options="(query) => loadFilterOptions('agency', query)"
+          :placeholder="$t('common.all')"
+        />
+      </el-form-item>
       <el-form-item :label="$t('common.keywords')" class="filter-bar__wide">
         <el-input
           v-model="keyword"
@@ -41,6 +74,7 @@
           {{ $t("tour.create") }}
         </el-button>
       </TableToolbar>
+      <!-- 行数据的 children 是儿童人数，改用不存在的字段作树形子行，避免 el-table 当作子行遍历 -->
       <DataTable
         fill
         :loading="loading"
@@ -48,6 +82,7 @@
         :error="loadError"
         :filtered="hasActiveFilters"
         row-key="id"
+        :tree-props="{ children: '__treeChildren' }"
         @retry="load"
       >
         <el-table-column
@@ -55,6 +90,7 @@
           :label="$t('tour.tourNo')"
           min-width="210"
           fixed="left"
+          :show-overflow-tooltip="false"
         />
         <el-table-column :label="$t('identity.businessUnit')" min-width="110">
           <template #default="{ row }">
@@ -143,7 +179,12 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('common.actions')" width="150" fixed="right">
+        <el-table-column
+          :label="$t('common.actions')"
+          width="150"
+          fixed="right"
+          :show-overflow-tooltip="false"
+        >
           <template #default="{ row }">
             <RowActions v-if="row.status === 'active'">
               <el-button
@@ -184,6 +225,8 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+import RemoteSelect from "@/components/RemoteSelect/index.vue";
+import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
@@ -204,13 +247,17 @@ const UNITS: TourBusinessUnit[] = ["shengxu", "linxi", "website"];
 const { t } = useI18n();
 const user = useUserStore();
 const isHeadquarters = computed(() => user.userInfo.scope === "headquarters");
+const collectCoordinatorId = ref("");
+const operatorId = ref("");
+const agencyName = ref("");
+const dateRange = ref<[string, string] | null>(null);
 const keyword = ref("");
 const status = ref<"active" | "cancelled" | "">("");
 const businessUnit = ref<TourBusinessUnit | "">("");
 const loading = ref(false);
 const loadError = ref("");
 const hasActiveFilters = computed(() =>
-  Boolean(keyword.value || status.value || businessUnit.value),
+  Boolean(keyword.value || status.value || businessUnit.value || dateRange.value || collectCoordinatorId.value || operatorId.value || agencyName.value),
 );
 const total = ref(0);
 const rows = ref<TourRecord[]>([]);
@@ -218,31 +265,54 @@ const { pageNum, pageSize, paginationQuery } = useResourcePagination();
 const dialogVisible = ref(false);
 const editing = ref<TourRecord | null>(null);
 
+async function loadFilterOptions(kind: "collectCoordinator" | "operator" | "agency", query: RemoteOptionsQuery) {
+  const result = await tourService.filterOptions({ ...query, kind, businessUnit: businessUnit.value || undefined });
+  return { ...result, list: result.list.map((item) => ({ id: item.id, label: item.name })) };
+}
+
+let listGeneration = 0;
 async function load() {
+  const generation = ++listGeneration;
   loading.value = true;
   try {
     const result = await tourService.list({
       ...paginationQuery(),
+      collectCoordinatorId: collectCoordinatorId.value || undefined,
+      operatorId: operatorId.value || undefined,
+      agencyName: agencyName.value || undefined,
+      from: dateRange.value?.[0],
+      to: dateRange.value?.[1],
       keyword: keyword.value,
       status: status.value || undefined,
       businessUnit: businessUnit.value || undefined,
     });
+    if (generation !== listGeneration) return;
     rows.value = result.list;
     total.value = result.total;
     loadError.value = "";
   } catch (error) {
+    if (generation !== listGeneration) return;
     loadError.value = error instanceof Error ? error.message : String(error);
     ElMessage.error(loadError.value);
   } finally {
-    loading.value = false;
+    if (generation === listGeneration) loading.value = false;
   }
 }
 const reload = useDebounceFn(() => {
   pageNum.value = 1;
   void load();
 }, 300);
-watch([keyword, status, businessUnit], reload);
+watch([keyword, status, businessUnit, dateRange, collectCoordinatorId, operatorId, agencyName], reload);
+watch(businessUnit, () => {
+  collectCoordinatorId.value = "";
+  operatorId.value = "";
+  agencyName.value = "";
+});
 function resetQuery() {
+  collectCoordinatorId.value = "";
+  operatorId.value = "";
+  agencyName.value = "";
+  dateRange.value = null;
   keyword.value = "";
   status.value = "";
   businessUnit.value = "";

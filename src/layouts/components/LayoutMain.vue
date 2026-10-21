@@ -21,10 +21,13 @@ import { useSettingsStore } from "@/stores/settings";
 import { useTagsViewStore } from "@/stores/tags-view";
 import variables from "@/styles/variables.module.scss";
 import Error404 from "@/views/error/404.vue";
+import { LayoutMode } from "@/enums/settings";
+import { useLayout } from "../composables/useLayout";
 
 const { cachedViews } = toRefs(useTagsViewStore());
 
 const settingsStore = useSettingsStore();
+const { currentLayout, isWorkspaceChromeless, isWorkspaceNavbarHidden } = useLayout();
 const wrapperMap = new Map<string, Component>();
 const currentComponent = (component: Component, route: RouteLocationNormalized) => {
   if (!component) return;
@@ -58,6 +61,13 @@ const currentComponent = (component: Component, route: RouteLocationNormalized) 
 };
 
 const appMainHeight = computed(() => {
+  if (isWorkspaceChromeless.value) {
+    // 顶部/混合布局的顶栏承载菜单，移动端顶栏承载菜单入口，均需保留。
+    const isMenuHeader = currentLayout.value === LayoutMode.TOP || currentLayout.value === LayoutMode.MIX;
+    return isWorkspaceNavbarHidden.value && !isMenuHeader
+      ? "100vh"
+      : `calc(100vh - ${variables["navbar-height"]})`;
+  }
   if (settingsStore.showTagsView) {
     return `calc(100vh - ${variables["navbar-height"]} - ${variables["tags-view-height"]})`;
   } else {

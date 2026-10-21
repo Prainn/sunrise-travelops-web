@@ -1,7 +1,12 @@
 <template>
   <AppDialog
     :model-value="modelValue"
-    :title="mealSlot ? $t(`itinerary.meals.${mealSlot}`) : $t('itinerary.addResource')"
+    :title="
+      $t('itineraryWorkspace.resourceDialogTitle', {
+        day: dayLabel,
+        type: mealSlot ? $t(`itinerary.meals.${mealSlot}`) : $t('itineraryWorkspace.actions.attraction'),
+      })
+    "
     size="lg"
     destroy-on-close
     @close="emit('update:modelValue', false)"
@@ -154,6 +159,8 @@ import type { ResourcePriceDetail } from "../pricing";
 
 const props = defineProps<{
   modelValue: boolean;
+  /** 当前操作的日序，例如 D3 */
+  dayLabel: string;
   destination?: string;
   guestCount: number;
   mealSlot: MealSlot | null;

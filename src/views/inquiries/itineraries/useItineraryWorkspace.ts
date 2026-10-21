@@ -82,11 +82,14 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   });
   const resourceTargetDayId = ref("");
   const resourceMealSlot = ref<MealSlot | null>(null);
+  const resourceTargetItemId = ref("");
   const resourceCurrentItem = computed(() =>
     selectedItinerary.value?.dailyPlans
       .find((day) => day.id === resourceTargetDayId.value)
-      ?.items.find(
-        (item) => item.type === "restaurant" && item.mealSlot === resourceMealSlot.value,
+      ?.items.find((item) =>
+        resourceTargetItemId.value
+          ? item.id === resourceTargetItemId.value
+          : item.type === "restaurant" && item.mealSlot === resourceMealSlot.value,
       ),
   );
   const validationIssues = ref<PdfValidationIssue[]>([]);
@@ -203,12 +206,12 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     () =>
       [
         selectedItinerary.value?.id,
-        inquiry.value?.plannedDays,
+        selectedItinerary.value?.dailyPlans.length,
         selectedItinerary.value?.guidePlans[0],
       ] as const,
     () => {
       const plan = selectedItinerary.value;
-      const days = inquiry.value?.plannedDays;
+      const days = plan?.dailyPlans.length;
       if (plan?.status === "draft" && days && plan.guidePlans[0])
         plan.guidePlans[0].serviceDays = days;
     },
@@ -371,9 +374,10 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     if (await saveItinerary()) isPlanDialogVisible.value = false;
   }
 
-  async function openResourceDialog(dayId: string, mealSlot: MealSlot | null = null) {
+  async function openResourceDialog(dayId: string, mealSlot: MealSlot | null = null, itemId = "") {
     if (!contentEditable.value) return;
     resourceMealSlot.value = mealSlot;
+    resourceTargetItemId.value = itemId;
     resourceTargetDayId.value = dayId;
     isResourceDialogVisible.value = true;
   }
@@ -506,6 +510,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       return id ? savedPrices.value.get(id) : undefined;
     }),
     showChildPrice: pdf.showChildPrice,
+    hasUnsavedChanges,
     isSaving,
     isLoading: selection.isLoading,
     loadError: selection.loadError,
@@ -537,6 +542,11 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     destinationOptions,
     guestCount,
     passengerCount: computed(() => guestCount.value),
+    resourceDay: computed(() =>
+      selectedItinerary.value?.dailyPlans.find((day) => day.id === resourceTargetDayId.value),
+    ),
+    applyDayOrder: editor.applyDayOrder,
+    addDay: editor.addDay,
     resourceDestination: computed(
       () =>
         selectedItinerary.value?.dailyPlans.find((day) => day.id === resourceTargetDayId.value)

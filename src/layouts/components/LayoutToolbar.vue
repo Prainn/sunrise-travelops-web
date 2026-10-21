@@ -6,6 +6,10 @@
       </div>
 
       <div class="layout-toolbar__item">
+        <DensitySelect />
+      </div>
+
+      <div class="layout-toolbar__item">
         <LangSelect />
       </div>
     </template>
@@ -43,6 +47,7 @@ import { useSettingsStore } from "@/stores/settings";
 import { useUserStore } from "@/stores/user";
 
 import CommandPalette from "@/components/CommandPalette/index.vue";
+import DensitySelect from "@/components/DensitySelect/index.vue";
 import LangSelect from "@/components/LangSelect/index.vue";
 
 const { t } = useI18n();

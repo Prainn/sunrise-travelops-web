@@ -72,7 +72,7 @@
       </div>
 
       <div class="layout-main [flex:1] min-w-0 h-full ml-0 overflow-y-auto">
-        <LayoutTagsView v-if="showTagsView" />
+        <LayoutTagsView v-if="showTagsView && !isWorkspaceChromeless" />
         <LayoutMain />
       </div>
     </div>
@@ -100,7 +100,7 @@ const { width } = useWindowSize();
 const appStore = useAppStore();
 const settingsStore = useSettingsStore();
 
-const { showTagsView, showLogo, isSidebarOpen, toggleSidebar } = useLayout();
+const { showTagsView, showLogo, isSidebarOpen, isWorkspaceChromeless, toggleSidebar } = useLayout();
 
 const {
   topMenuItems,

@@ -1,129 +1,136 @@
 <template>
-  <SectionCard
-    class="website-day-card"
-    :class="{ 'is-collapsed': !expanded }"
+  <ItineraryDayCardFrame
+    ref="frame"
+    :day-number="day.dayNumber"
+    :departure="departureName || $t('websiteItineraryUi.departureCity')"
+    :destination="destinationName || $t('websiteItineraryUi.endCity')"
+    :date="date"
+    :body-id="`website-day-body-${day.id}`"
   >
-    <template #header>
-      <div class="flex items-center gap-3 min-w-0">
-        <span class="grid w-[44px] h-[44px] shrink-0 place-items-center rounded-[10px] bg-primary text-white font-bold">
-          D{{ day.dayNumber }}
-        </span>
-        <div class="min-w-0">
-          <h3 class="m-0 flex flex-wrap items-center gap-[6px] text-[16px] text-strong font-600">
-            {{ departureName || $t("websiteItineraryUi.departureCity") }}
-            <el-icon><Right /></el-icon>
-            {{ destinationName || $t("websiteItineraryUi.endCity") }}
-          </h3>
-          <span v-if="date" class="text-sm text-muted">{{ date }}</span>
-        </div>
-      </div>
-    </template>
-    <template #actions>
-      <template v-if="editable">
-        <el-button :disabled="index === 0" link @click="emit('move', -1)">
-          {{ $t("websiteItineraryUi.moveUp") }}
-        </el-button>
-        <el-button :disabled="last" link @click="emit('move', 1)">
-          {{ $t("websiteItineraryUi.moveDown") }}
-        </el-button>
-        <el-button link type="danger" @click="emit('remove')">
-          {{ $t("websiteItineraryUi.removeDay") }}
-        </el-button>
-      </template>
-      <el-button
-        link
-        :aria-expanded="expanded"
-        :aria-controls="`website-day-body-${day.id}`"
-        @click="expanded = !expanded"
-      >
-        {{ $t(expanded ? "itinerary.collapseDay" : "itinerary.expandDay") }}
+    <template v-if="editable" #actions>
+      <el-button :disabled="index === 0" link @click="emit('move', -1)">
+        {{ $t("websiteItineraryUi.moveUp") }}
+      </el-button>
+      <el-button :disabled="last" link @click="emit('move', 1)">
+        {{ $t("websiteItineraryUi.moveDown") }}
+      </el-button>
+      <el-button link type="danger" @click="emit('remove')">
+        {{ $t("websiteItineraryUi.removeDay") }}
       </el-button>
     </template>
     <el-form
-      v-show="expanded"
-      :id="`website-day-body-${day.id}`"
       label-position="top"
       :disabled="!editable"
       class="flex flex-col gap-4"
+      @submit.prevent
     >
-      <div class="surface-muted p-4">
-        <div class="grid grid-cols-3 gap-x-4 max-[650px]:grid-cols-1">
-          <el-form-item :label="$t('websiteItineraryUi.departureCity')" required>
-            <el-select v-model="day.departCityId" autocomplete="new-password" filterable>
-              <el-option
-                v-for="city in config.cities"
-                :key="city.id"
-                :value="city.id"
-                :label="locale === 'en' ? city.nameEn : city.nameZh"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item :label="$t('websiteItineraryUi.endCity')" required>
-            <el-select v-model="day.endCityId" autocomplete="new-password" filterable>
-              <el-option
-                v-for="city in config.cities"
-                :key="city.id"
-                :value="city.id"
-                :label="locale === 'en' ? city.nameEn : city.nameZh"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item :label="$t('websiteItineraryUi.overnightCity')">
-            <el-select
-              v-model="day.overnightCityId"
-              autocomplete="new-password"
-              filterable
-              clearable
-              :empty-values="[null, undefined]"
-              :value-on-clear="null"
-            >
-              <el-option
-                v-for="city in config.cities"
-                :key="city.id"
-                :value="city.id"
-                :label="locale === 'en' ? city.nameEn : city.nameZh"
-              />
-            </el-select>
-          </el-form-item>
-        </div>
-        <div class="grid grid-cols-3 gap-x-4 max-[650px]:grid-cols-1">
-          <el-form-item :label="$t('websiteItineraryUi.guideArranged')">
-            <el-switch :model-value="Boolean(day.guideLanguage)" @update:model-value="toggleGuide" />
-          </el-form-item>
-          <el-form-item v-if="day.guideLanguage" :label="$t('websiteItineraryUi.guideLanguage')">
-            <el-input
-              v-model="day.guideLanguage"
-              :placeholder="$t('websiteItineraryUi.guideLanguagePlaceholder')"
-              maxlength="100"
+      <ItineraryDayResourceBar
+        v-if="editable || guideSummaries.length"
+        :actions="editable ? resourceActions : []"
+        :summaries="guideSummaries"
+        @select="selectResource"
+      />
+      <ItineraryDayPanel :columns="3">
+        <el-form-item :label="$t('websiteItineraryUi.departureCity')" required>
+          <el-select v-model="day.departCityId" autocomplete="new-password" filterable>
+            <el-option
+              v-for="city in config.cities"
+              :key="city.id"
+              :value="city.id"
+              :label="locale === 'en' ? city.nameEn : city.nameZh"
             />
-          </el-form-item>
-          <el-form-item v-if="day.guideLanguage" :label="$t('websiteItineraryUi.guideScope')">
-            <el-input
-              v-model="day.guideScope"
-              :placeholder="$t('websiteItineraryUi.guideScopePlaceholder')"
-              maxlength="1000"
+          </el-select>
+        </el-form-item>
+        <el-form-item :label="$t('websiteItineraryUi.endCity')" required>
+          <el-select v-model="day.endCityId" autocomplete="new-password" filterable>
+            <el-option
+              v-for="city in config.cities"
+              :key="city.id"
+              :value="city.id"
+              :label="locale === 'en' ? city.nameEn : city.nameZh"
             />
-          </el-form-item>
-        </div>
-      </div>
-      <WebsiteDayAttractions v-model:day="day" :config="config" :editable="editable" />
-      <WebsiteDayTransport v-model:day="day" :config="config" :editable="editable" />
-      <WebsiteDayHotels v-model:day="day" :config="config" :editable="editable" />
-      <WebsiteDayMealsServices v-model:day="day" :editable="editable" />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label="$t('websiteItineraryUi.overnightCity')">
+          <el-select
+            :model-value="day.overnightCityId"
+            autocomplete="new-password"
+            filterable
+            clearable
+            :disabled="!editable || (last && day.overnightCityId === null)"
+            :placeholder="$t('websiteItineraryUi.noOvernightStay')"
+            :empty-values="[null, undefined]"
+            :value-on-clear="null"
+            @update:model-value="setOvernight"
+          >
+            <el-option
+              v-for="city in config.cities"
+              :key="city.id"
+              :value="city.id"
+              :label="locale === 'en' ? city.nameEn : city.nameZh"
+            />
+          </el-select>
+          <el-checkbox
+            v-if="last"
+            class="mt-2"
+            :model-value="day.overnightCityId === null"
+            @update:model-value="toggleNoStay"
+          >
+            {{ $t("websiteItineraryUi.noOvernightTonight") }}
+          </el-checkbox>
+        </el-form-item>
+      </ItineraryDayPanel>
+      <WebsiteDayAttractions
+        v-if="day.items.length"
+        v-model:day="day"
+        :config="config"
+        :editable="editable"
+        @add="emit('open-resource', 'attraction')"
+      />
+      <WebsiteDayTransport
+        v-if="day.legs.length"
+        v-model:day="day"
+        :config="config"
+        :editable="editable"
+        @add="emit('open-resource', 'transport')"
+      />
+      <WebsiteDayHotels
+        v-if="day.hotels.length"
+        v-model:day="day"
+        :config="config"
+        :editable="editable"
+        @edit="(hotelIndex) => emit('open-resource', 'hotel', hotelIndex)"
+      />
+      <WebsiteDayMealsServices
+        v-if="day.services.length || day.meals.some(isMealArranged)"
+        v-model:day="day"
+        :editable="editable"
+        @edit-meal="(slot) => emit('open-resource', 'meal', slot)"
+        @add-service="addService"
+      />
     </el-form>
-  </SectionCard>
+  </ItineraryDayCardFrame>
 </template>
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
-import { Right } from "@element-plus/icons-vue";
-import SectionCard from "@/components/SectionCard/index.vue";
-import type { WebsiteConfig, WebsiteDay } from "@/types/website";
+import { ElMessageBox } from "element-plus";
+import { Bowl, Location, OfficeBuilding, Service, User, Van } from "@element-plus/icons-vue";
+import type { WebsiteConfig, WebsiteDay, WebsiteMeal } from "@/types/website";
 import { addDays } from "@/utils/format";
+import ItineraryDayResourceBar, {
+  type DayResourceAction,
+} from "@/views/inquiries/itineraries/components/ItineraryDayResourceBar.vue";
+import ItineraryDayCardFrame from "@/views/inquiries/itineraries/components/ItineraryDayCardFrame.vue";
+import ItineraryDayPanel from "@/views/inquiries/itineraries/components/ItineraryDayPanel.vue";
 import WebsiteDayAttractions from "./WebsiteDayAttractions.vue";
 import WebsiteDayTransport from "./WebsiteDayTransport.vue";
 import WebsiteDayHotels from "./WebsiteDayHotels.vue";
 import WebsiteDayMealsServices from "./WebsiteDayMealsServices.vue";
+import { isMealArranged } from "../../options";
+
+export type WebsiteResourceDialogKind = "attraction" | "transport" | "hotel" | "meal" | "guide";
+
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{
   config: WebsiteConfig;
@@ -132,31 +139,123 @@ const props = defineProps<{
   index: number;
   last: boolean;
 }>();
-const emit = defineEmits<{ move: [direction: number]; remove: [] }>();
-const { locale } = useI18n();
-const expanded = ref(true);
+const emit = defineEmits<{
+  move: [direction: number];
+  remove: [];
+  /** hotel 传酒店下标（-1 新增），meal 传餐次 */
+  "open-resource": [kind: WebsiteResourceDialogKind, target?: number | WebsiteMeal["slot"]];
+}>();
+const { t, locale } = useI18n();
+const frame = useTemplateRef<InstanceType<typeof ItineraryDayCardFrame>>("frame");
 const departureName = computed(() => cityName(day.value.departCityId));
 const destinationName = computed(() => cityName(day.value.endCityId));
 const date = computed(() =>
   props.startDate ? addDays(props.startDate, day.value.dayNumber - 1) : "",
 );
+const resourceActions = computed<DayResourceAction[]>(() => [
+  {
+    key: "attraction",
+    label: t("itineraryWorkspace.actions.attraction"),
+    icon: Location,
+    active: day.value.items.length > 0,
+  },
+  {
+    key: "transport",
+    label: t("itineraryWorkspace.actions.transport"),
+    icon: Van,
+    active: day.value.legs.length > 0,
+  },
+  {
+    key: "hotel",
+    label: t("itineraryWorkspace.actions.hotel"),
+    icon: OfficeBuilding,
+    active: day.value.hotels.length > 0,
+    disabled: !day.value.overnightCityId,
+    hint: day.value.overnightCityId ? undefined : t("itineraryWorkspace.hints.websiteHotelNeedsCity"),
+  },
+  {
+    key: "meal",
+    label: t("itineraryWorkspace.actions.meal"),
+    icon: Bowl,
+    active: day.value.meals.some(isMealArranged),
+  },
+  {
+    key: "guide",
+    label: t("itineraryWorkspace.actions.guide"),
+    icon: User,
+    scope: t("itineraryWorkspace.scopes.thisDay"),
+    active: Boolean(day.value.guideLanguage),
+  },
+  {
+    key: "service",
+    label: t("itineraryWorkspace.actions.service"),
+    icon: Service,
+    active: day.value.services.length > 0,
+  },
+]);
+
 function cityName(id: string) {
   const city = props.config.cities.find((item) => item.id === id);
   return city ? (locale.value === "en" ? city.nameEn : city.nameZh) : "";
 }
-function toggleGuide(selected: string | number | boolean) {
-  day.value.guideLanguage = selected ? "English" : "";
-  day.value.guideScope = selected ? "Full day" : "";
+const guideSummaries = computed(() =>
+  day.value.guideLanguage
+    ? [{
+      label: t("itineraryWorkspace.actions.guide"),
+      value: [day.value.guideLanguage, day.value.guideScope].filter(Boolean).join(" · "),
+    }]
+    : [],
+);
+function addService() {
+  day.value.services.push({
+    id: crypto.randomUUID(),
+    nameZh: "",
+    nameEn: "",
+    appears: true,
+    feeState: "UNKNOWN",
+  });
 }
-</script>
-<style scoped lang="scss">
-.website-day-card.is-collapsed {
-  > :deep(.section-card__header) {
-    border-bottom: 0;
+async function selectResource(key: string) {
+  if (key === "attraction" || key === "transport") emit("open-resource", key);
+  else if (key === "hotel") emit("open-resource", "hotel", -1);
+  else if (key === "meal") emit("open-resource", "meal", "lunch");
+  else if (key === "guide") emit("open-resource", "guide");
+  else if (key === "service") {
+    addService();
+    await nextTick();
+    document.getElementById(`website-day-services-${day.value.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
+}
 
-  > :deep(.section-card__body) {
-    display: none;
+/**
+ * 修改住宿城市；清空为不住宿（null）时若已有酒店，确认后同时移除酒店，取消保持原数据。
+ * 不改变早餐费用状态、酒店含早等其他字段。
+ */
+async function setOvernight(value: string | null) {
+  if (value === null && day.value.hotels.length) {
+    try {
+      await ElMessageBox.confirm(
+        t("websiteItineraryUi.noOvernightRemoveHotels", { count: day.value.hotels.length }),
+        t("common.warning"),
+        {
+          type: "warning",
+          confirmButtonText: t("websiteItineraryUi.noOvernightConfirm"),
+          cancelButtonText: t("common.cancel"),
+        },
+      );
+    } catch {
+      return;
+    }
+    day.value.hotels = [];
   }
+  day.value.overnightCityId = value;
 }
-</style>
+function toggleNoStay(checked: string | number | boolean) {
+  if (checked) void setOvernight(null);
+  else day.value.overnightCityId = day.value.endCityId || null;
+}
+
+defineExpose({
+  expand: () => frame.value?.expand(),
+});
+</script>

@@ -38,6 +38,7 @@ export const STORAGE_KEYS = {
   SIDEBAR_COLOR_SCHEME: `${APP_PREFIX}:ui:sidebar_color_scheme`,
   THEME: `${APP_PREFIX}:ui:theme`,
   THEME_COLORS: `${APP_PREFIX}:ui:theme_colors`,
+  UI_DENSITY: `${APP_PREFIX}:ui:density`,
 
   // 应用
   DEVICE: `${APP_PREFIX}:app:device`,

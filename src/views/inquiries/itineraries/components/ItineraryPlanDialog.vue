@@ -72,7 +72,7 @@
       </el-row>
       <el-row :gutter="16">
         <el-col :span="8">
-          <el-form-item :label="$t('inquiry.plannedDays')">
+          <el-form-item :label="$t(isEditing ? 'itineraryWorkspace.dayCount' : 'inquiry.plannedDays')">
             <el-input-number
               :model-value="plannedDays"
               disabled

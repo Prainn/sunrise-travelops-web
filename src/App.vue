@@ -18,12 +18,24 @@ import { useAppStore } from "@/stores/app";
 import { useSettingsStore } from "@/stores/settings";
 import { appConfig } from "@/settings";
 import { ThemeMode, ComponentSize } from "@/enums";
+import { translateRouteTitle } from "@/lang/utils";
+import { pageTitle } from "@/composables/usePageTitle";
 
 const appStore = useAppStore();
 const settingsStore = useSettingsStore();
+const route = useRoute();
+
+// 网页标题：页面业务标题优先（如行程页的“独立站行程 · 客户”），否则用当前菜单路由名称；随语言切换更新，无标题路由回退应用名。
+watchEffect(() => {
+  void appStore.locale;
+  const title = route.meta.title;
+  document.title = pageTitle.value || (title ? translateRouteTitle(title) : appConfig.title);
+});
 
 const locale = computed(() => appStore.locale);
-const size = computed(() => appStore.size as ComponentSize);
+const size = computed(() =>
+  settingsStore.isCompact ? ComponentSize.SMALL : (appStore.size as ComponentSize),
+);
 const showWatermark = computed(() => settingsStore.showWatermark);
 const watermarkContent = appConfig.name;
 const tableConfig = { showOverflowTooltip: true };

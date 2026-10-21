@@ -16,8 +16,9 @@ function manualForm(patch: Partial<TourFormState> = {}): TourFormState {
     businessUnit: "shengxu",
     countryItemId: "country-1",
     collectCoordinatorId: "user-1",
-    agencyName: "某组团社",
+    agencyId: "agency-1",
     itinerarySummary: "昆大丽9N10D",
+    language: "英语",
     startDate: "2026-08-01",
     days: 10,
     operatorId: "user-2",
@@ -42,6 +43,7 @@ function manualTour(patch: Partial<TourRecord> = {}): TourRecord {
     itineraryCode: null,
     quoteCode: null,
     itinerarySummary: "昆大丽9N10D",
+    agencyId: "agency-1",
     agencyName: "某组团社",
     contactName: "",
     days: 10,
@@ -63,7 +65,7 @@ function manualTour(patch: Partial<TourRecord> = {}): TourRecord {
     children: 0,
     leaders: 0,
     totalPeople: 0,
-    language: "",
+    language: "英语",
     shopping: false,
     scheduleMode: "manual",
     pickupFlightId: null,
@@ -105,6 +107,17 @@ describe("tour create requests", () => {
     expect(body).toMatchObject({ scheduleMode: "flight", pickupFlightId: "flight-a", dropFlightId: "flight-b" });
     expect(body).not.toHaveProperty("pickupAt");
     expect(body).not.toHaveProperty("dropAt");
+  });
+
+  it("sends a resource ID for Shengxu and never sends an agency or free platform name for direct businesses", () => {
+    const sx = createTourRequest(manualForm(), { sourceModule: "manual" });
+    expect(sx).toHaveProperty("manualSource.agencyId", "agency-1");
+    expect(sx).not.toHaveProperty("manualSource.agencyName");
+    for (const businessUnit of ["linxi", "website"] as const) {
+      const body = createTourRequest(manualForm({ businessUnit }), { sourceModule: "manual" });
+      expect(body).not.toHaveProperty("manualSource.agencyId");
+      expect(body).not.toHaveProperty("manualSource.agencyName");
+    }
   });
 
   it("forces flight mode and omits manualSource for linked inquiries", () => {
@@ -150,11 +163,13 @@ describe("guide availability", () => {
   const period = { businessUnit: "shengxu" as const, startDate: "2026-08-01", days: 10 };
 
   it("skips the request while required or valid manual times are missing", () => {
+    expect(guideQuery(period, manualForm({ language: "" }))).toBeNull();
     expect(guideQuery(period, manualForm({ dropAt: "" }))).toBeNull();
     expect(guideQuery(period, manualForm({ pickupAt: "2026-08-02 09:00" }))).toBeNull();
     expect(guideQuery(period, manualForm({ dropAt: "2026-08-01 08:00" }))).toBeNull();
     expect(guideQuery(period, manualForm(), "tour-1")).toEqual({
       ...period,
+      language: "英语",
       scheduleMode: "manual",
       pickupAt: "2026-08-01 15:20",
       dropAt: "2026-08-10 12:00",
@@ -172,5 +187,6 @@ describe("guide availability", () => {
     const moved = { ...tourFormFromRecord(tour), startDate: "2026-08-02", pickupAt: "2026-08-02 15:20" };
     expect(isGuideUnavailable(moved, candidates, tour)).toBe(false);
     expect(isGuideUnavailable(moved, [], tour)).toBe(true);
+    expect(isGuideUnavailable({ ...tourFormFromRecord(tour), language: "法语" }, [], tour)).toBe(true);
   });
 });

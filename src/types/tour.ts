@@ -24,6 +24,7 @@ export interface TourRecord {
   itineraryCode: string | null;
   quoteCode: string | null;
   itinerarySummary: string;
+  agencyId: string | null;
   agencyName: string;
   contactName: string;
   days: number;
@@ -66,7 +67,7 @@ export interface TourManualSource {
   businessUnit: TourBusinessUnit;
   countryItemId: string;
   collectCoordinatorId: string;
-  agencyName: string;
+  agencyId?: string;
   contactName: string;
   itinerarySummary: string;
   startDate: string;
@@ -101,6 +102,7 @@ export type TourUpdateRequest = TourInput & {
 };
 
 export type TourGuideQuery = {
+  language: string;
   businessUnit: TourBusinessUnit;
   startDate: string;
   days: number;

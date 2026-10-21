@@ -4,29 +4,14 @@
       <h4 class="m-0 text-[14px] text-strong font-600">
         {{ $t("websiteItineraryUi.attractions") }}
       </h4>
-      <div v-if="editable" class="flex flex-wrap gap-2">
-        <el-select
-          v-model="selectedId"
-          autocomplete="new-password"
-          filterable
-          clearable
-          :placeholder="$t('websiteItineraryUi.selectAttraction')"
-          class="w-[240px]!"
-        >
-          <el-option
-            v-for="attraction in config.attractions.filter((item) => item.status === 'enabled')"
-            :key="attraction.id"
-            :value="attraction.id"
-            :label="attraction.nameZh"
-          />
-        </el-select>
-        <el-button @click="addSelected">
-          {{ $t("websiteItineraryUi.addSelected") }}
-        </el-button>
-        <el-button @click="addManual">
-          {{ $t("websiteItineraryUi.manualAttraction") }}
-        </el-button>
-      </div>
+      <el-button
+        v-if="editable"
+        link
+        type="primary"
+        @click="emit('add')"
+      >
+        {{ $t("itineraryWorkspace.actions.attraction") }}
+      </el-button>
     </div>
     <FeedbackState
       v-if="!day.items.length"
@@ -39,7 +24,15 @@
     >
       <div class="flex flex-wrap gap-3 justify-between items-center mb-3">
         <span class="text-strong">
-          {{ index + 1 }}. {{ item.nameZh || $t("websiteItineraryUi.manualAttractionOrComponent") }}
+          {{ index + 1 }}. {{ itemName(item) || $t("websiteItineraryUi.manualAttractionOrComponent") }}
+          <el-tag
+            v-if="configKind(item)"
+            size="small"
+            effect="plain"
+            class="ml-1"
+          >
+            {{ $t(`websiteItineraryUi.attractionKinds.${configKind(item)}`) }}
+          </el-tag>
         </span>
         <div v-if="editable">
           <el-button :disabled="index === 0" link @click="move(index, -1)">
@@ -92,49 +85,19 @@
   </section>
 </template>
 <script setup lang="ts">
-import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage } from "element-plus";
 import FeedbackState from "@/components/FeedbackState/index.vue";
-import type { WebsiteConfig, WebsiteDay } from "@/types/website";
+import type { WebsiteConfig, WebsiteDay, WebsiteItem } from "@/types/website";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{ config: WebsiteConfig; editable: boolean }>();
-const { t } = useI18n();
-const selectedId = ref("");
-function addSelected() {
-  const attraction = props.config.attractions.find((item) => item.id === selectedId.value);
-  if (!attraction) return;
-  const template = props.config.templates.find(
-    (item) => item.code === attraction.copyKey && item.status === "enabled",
-  );
-  if (!template) {
-    ElMessage.error(t("websiteItineraryUi.attractionCopyMissing"));
-    return;
-  }
-  day.value.items.push({
-    id: crypto.randomUUID(),
-    attractionId: attraction.id,
-    nameZh: attraction.nameZh,
-    nameEn: attraction.nameEn,
-    descriptionZh: template.zh,
-    descriptionEn: template.en,
-    appears: true,
-    feeState: attraction.kind === "attraction" && attraction.chargeable ? "INCLUDED" : "UNKNOWN",
-  });
-  selectedId.value = "";
+const emit = defineEmits<{ add: [] }>();
+const { locale } = useI18n();
+function itemName(item: WebsiteItem) {
+  return (locale.value === "en" ? item.nameEn : item.nameZh) || item.nameZh || item.nameEn;
 }
-function addManual() {
-  day.value.items.push({
-    id: crypto.randomUUID(),
-    attractionId: null,
-    nameZh: "",
-    nameEn: "",
-    descriptionZh: "",
-    descriptionEn: "",
-    appears: true,
-    feeState: "UNKNOWN",
-  });
+function configKind(item: WebsiteItem) {
+  return props.config.attractions.find((attraction) => attraction.id === item.attractionId)?.kind;
 }
 function move(index: number, direction: number) {
   const item = day.value.items.splice(index, 1)[0];

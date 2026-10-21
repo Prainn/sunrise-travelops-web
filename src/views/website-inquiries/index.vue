@@ -97,7 +97,7 @@
 </template>
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useOpenInNewTab } from "@/composables";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox } from "element-plus";
 import FilterBar from "@/components/FilterBar/index.vue";
@@ -119,7 +119,7 @@ import WebsiteInquiryTransfer from "./components/WebsiteInquiryTransfer.vue";
 defineOptions({ name: "WebsiteInquiryList" });
 const { t } = useI18n();
 const user = useUserStore();
-const router = useRouter();
+const openInNewTab = useOpenInNewTab();
 const query = reactive<WebsiteInquiryQuery>({
   page: 1,
   pageSize: 10,
@@ -180,7 +180,7 @@ async function openEditor(record?: WebsiteInquiry, readOnly = false) {
   editorVisible.value = true;
 }
 function openItineraries(record: WebsiteInquiry) {
-  void router.push({
+  openInNewTab({
     name: "InquiryItineraries",
     params: { inquiryId: record.id },
     query: { module: "website" },

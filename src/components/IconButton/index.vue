@@ -8,7 +8,10 @@
         :icon="icon"
         v-bind="$attrs"
       >
-        <slot />
+        <!-- 仅在确有文字时传默认插槽：el-button 见到默认插槽就渲染带 margin-left 的 span，纯图标会偏左 -->
+        <template v-if="$slots.default" #default>
+          <slot />
+        </template>
       </el-button>
     </el-tooltip>
   </span>

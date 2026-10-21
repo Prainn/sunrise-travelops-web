@@ -5,6 +5,7 @@ import type {
   WebsiteDay,
   WebsiteInquiryInput,
   WebsiteItineraryInput,
+  WebsiteMeal,
 } from "@/types/website";
 
 export const FEE_OPTIONS: Array<{ value: FeeState; labelKey: string }> = [
@@ -38,12 +39,15 @@ export function emptyInquiry(): WebsiteInquiryInput {
     customerName: "",
     plannedDays: 1,
     requirements: "",
-    phone: "",
-    email: "",
+    contactInfo: "",
+    receivedAt: null,
+    contactChannel: "",
+    whatsappSourceId: "",
+    websiteInquiryNo: "",
+    landingPage: "",
+    acquisitionSource: "",
     startDate: null,
     pax: null,
-    arrivalTime: "",
-    departureTime: "",
     destinations: [],
     internalRemark: "",
     status: "new",
@@ -73,6 +77,10 @@ export function emptyDay(dayNumber: number): WebsiteDay {
     services: [],
   };
 }
+/** 餐次已安排：指定了餐厅，或费用状态不再是新增一天时的默认“自理”；未安排的餐次不在日卡中展示。 */
+export function isMealArranged(meal: WebsiteMeal) {
+  return Boolean(meal.resourceId || meal.restaurantZh || meal.restaurantEn) || meal.feeState !== "SELF_PAY";
+}
 export function emptyItinerary(
   inquiry: WebsiteInquiryInput,
   configVersion: number,
@@ -83,8 +91,8 @@ export function emptyItinerary(
     duration: inquiry.plannedDays,
     startDate: inquiry.startDate,
     pax: inquiry.pax,
-    arrivalTime: inquiry.arrivalTime,
-    departureTime: inquiry.departureTime,
+    arrivalTime: "",
+    departureTime: "",
     configVersion,
     days: [],
     vehiclePrices: VEHICLE_OPTIONS.map((option) => ({

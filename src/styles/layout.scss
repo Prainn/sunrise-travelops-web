@@ -160,3 +160,10 @@ html.sidebar-color-blue .layout-root.layout--mix .layout-sidebar .el-menu {
     background-color: var(--menu-active-bg) !important;
   }
 }
+
+// 紧凑密度下的标签页尺寸；标签栏组件样式为 scoped，在此覆盖
+html.is-compact .layout-tabs .layout-tabs__item {
+  height: 22px;
+  padding: 0 10px;
+  font-size: 13px;
+}
