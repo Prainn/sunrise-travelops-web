@@ -792,6 +792,10 @@
     "englishNameRequired": "输入英文名",
     "tourCode": "团号标识",
     "tourCodeHint": "1-10 位字母或数字，自动大写",
+    "tourCodeAutoHint": "根据英文名和昵称中的中文姓名生成，重复时延长英文名前缀；可手动修改",
+    "tourCodeGenerating": "正在生成团号标识…",
+    "tourCodeManualHint": "无法生成可用标识，请手动填写",
+    "tourCodeGenerateFailed": "生成失败，请调整姓名重试或手动填写",
     "tourCodeRequired": "输入团号标识",
     "tourCodeInvalid": "团号标识只能包含 1-10 位字母或数字"
   },
@@ -980,6 +984,7 @@
     "USER_NOT_FOUND": "未找到该用户",
     "USERS_NOT_FOUND": "未找到一个或多个用户",
     "USERNAME_ALREADY_EXISTS": "该用户名已被使用",
+    "USER_TOUR_CODE_EXISTS": "团号标识已被使用，请修改后保存",
     "USERNAME_IMMUTABLE": "用户名不能修改",
     "CURRENT_USER_CANNOT_BE_DISABLED": "不能停用当前登录用户",
     "CURRENT_USER_CANNOT_BE_DELETED": "不能删除当前登录用户",

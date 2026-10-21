@@ -292,8 +292,16 @@
           <el-input v-model="formData.englishName" maxlength="100" />
         </el-form-item>
 
-        <el-form-item :label="$t('user.tourCode')" prop="tourCode">
-          <el-input v-model="formData.tourCode" maxlength="10" :placeholder="$t('user.tourCodeHint')" />
+        <el-form-item v-if="needsTourCode" :label="$t('user.tourCode')" prop="tourCode">
+          <el-input
+            v-model="formData.tourCode"
+            maxlength="10"
+            :placeholder="$t('user.tourCodeHint')"
+            @input="tourCodeSuggestion.markManual"
+          />
+          <div v-if="dialogState.mode === DialogMode.CREATE" class="text-xs text-[var(--el-text-color-secondary)]">
+            {{ $t(tourCodeSuggestionHint) }}
+          </div>
         </el-form-item>
 
         <el-form-item :label="$t('user.gender')" prop="gender">
@@ -345,7 +353,12 @@
         <el-button :disabled="isSubmitting" @click="closeDialog">
           {{ $t("common.cancel") }}
         </el-button>
-        <el-button type="primary" :loading="isSubmitting" @click="handleSubmit">
+        <el-button
+          type="primary"
+          :loading="isSubmitting"
+          :disabled="tourCodeSuggestion.status.value === 'loading'"
+          @click="handleSubmit"
+        >
           {{ $t("common.confirm") }}
         </el-button>
       </template>
@@ -422,6 +435,7 @@ import { formatDateTime } from "@/utils";
 import { userRoleLabel, userRoleLabels } from "@/utils/user-role";
 import { h } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
+import { useTourCodeSuggestion } from "./useTourCodeSuggestion";
 import { CopyDocument, Female, Male } from "@element-plus/icons-vue";
 
 import UserIdentityFields from "./components/UserIdentityFields.vue";
@@ -522,6 +536,18 @@ const initialFormData: UserForm = {
 };
 
 const formData = reactive<UserForm>(structuredClone(initialFormData));
+const needsTourCode = computed(() => formData.identities?.[0]?.scope !== "headquarters");
+const tourCodeSuggestion = useTourCodeSuggestion({
+  form: formData,
+  enabled: () => dialogState.visible && dialogState.mode === DialogMode.CREATE && needsTourCode.value,
+  suggest: userService.suggestTourCode,
+});
+const tourCodeSuggestionHint = computed(() => ({
+  idle: "user.tourCodeAutoHint",
+  loading: "user.tourCodeGenerating",
+  unavailable: "user.tourCodeManualHint",
+  failed: "user.tourCodeGenerateFailed",
+})[tourCodeSuggestion.status.value]);
 
 type ResetPasswordForm = {
   password: string;
@@ -584,10 +610,10 @@ const rules = computed<FormRules<UserForm>>(() => ({
   ],
   nickname: [{ required: true, message: t("user.nicknamePlaceholder"), trigger: "blur" }],
   englishName: [{ required: true, whitespace: true, message: t("user.englishNameRequired"), trigger: "blur" }],
-  tourCode: [
+  tourCode: needsTourCode.value ? [
     { required: true, message: t("user.tourCodeRequired"), trigger: "blur" },
     { pattern: /^[A-Za-z0-9]{1,10}$/, message: t("user.tourCodeInvalid"), trigger: "blur" },
-  ],
+  ] : [],
   email: [{ type: "email", message: t("user.emailInvalid"), trigger: "blur" }],
   mobile: [{ pattern: /^1[3-9]\d{9}$/, message: t("user.mobileInvalid"), trigger: "blur" }],
 }));
@@ -672,6 +698,7 @@ function closeDialog(): void {
  * 重置表单数据和验证状态。
  */
 function resetForm(): void {
+  tourCodeSuggestion.reset();
   userFormRef.value?.resetFields();
   userFormRef.value?.clearValidate();
   Object.keys(formData).forEach((key) => {
@@ -720,6 +747,7 @@ async function handleEditClick(id: string): Promise<void> {
  * 校验并提交用户表单。
  */
 function handleSubmit(): Promise<void> {
+  if (tourCodeSuggestion.status.value === "loading") return Promise.resolve();
   return submitForm(async () => {
     loading.value = true;
     try {

@@ -792,6 +792,10 @@
     "englishNameRequired": "Enter an English name",
     "tourCode": "Tour code",
     "tourCodeHint": "1–10 letters or digits; auto-uppercase",
+    "tourCodeAutoHint": "Generated from the English name and Chinese surname; more letters are added if taken. You can edit it.",
+    "tourCodeGenerating": "Generating tour code…",
+    "tourCodeManualHint": "No available code could be generated. Enter one manually.",
+    "tourCodeGenerateFailed": "Generation failed. Change the name to retry or enter a code manually.",
     "tourCodeRequired": "Enter a tour code",
     "tourCodeInvalid": "Use 1-10 letters or digits for the tour code"
   },
@@ -980,6 +984,7 @@
     "USER_NOT_FOUND": "User not found",
     "USERS_NOT_FOUND": "One or more users were not found",
     "USERNAME_ALREADY_EXISTS": "Username already in use",
+    "USER_TOUR_CODE_EXISTS": "Tour code already in use. Choose another code before saving.",
     "USERNAME_IMMUTABLE": "Username cannot be changed",
     "CURRENT_USER_CANNOT_BE_DISABLED": "You cannot disable your own account",
     "CURRENT_USER_CANNOT_BE_DELETED": "You cannot delete your own account",

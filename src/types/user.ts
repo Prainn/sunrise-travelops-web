@@ -56,6 +56,15 @@ export interface UserForm {
   temporaryPassword?: string;
 }
 
+export interface TourCodeSuggestionInput {
+  englishName: string;
+  nickname: string;
+}
+
+export interface TourCodeSuggestion {
+  tourCode: string | null;
+}
+
 export interface UserProfileDetail {
   id?: string;
   username?: string;
