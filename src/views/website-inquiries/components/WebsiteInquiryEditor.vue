@@ -39,11 +39,8 @@
             {{ record.contactInfo || $t("common.notSet") }}
           </div>
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('websiteInquiry.receivedDate')">
-          {{ record.receivedDate || $t("common.notSet") }}
-        </el-descriptions-item>
-        <el-descriptions-item :label="$t('websiteInquiry.receivedTime')">
-          {{ record.receivedTime || $t("common.notSet") }}
+        <el-descriptions-item :label="$t('websiteInquiry.receivedAt')">
+          {{ record.receivedAt || $t("common.notSet") }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('websiteInquiry.contactChannel')">
           {{ record.contactChannel || $t("common.notSet") }}
@@ -233,24 +230,13 @@
       </el-row>
       <el-row :gutter="16">
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('websiteInquiry.receivedDate')">
+          <el-form-item :label="$t('websiteInquiry.receivedAt')">
             <el-date-picker
-              v-model="form.receivedDate"
-              value-format="YYYY-MM-DD"
+              v-model="form.receivedAt"
+              type="datetime"
+              format="YYYY-MM-DD HH:mm"
+              value-format="YYYY-MM-DD HH:mm"
               :value-on-clear="null"
-              clearable
-              class="w-full"
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('websiteInquiry.receivedTime')">
-            <el-time-picker
-              v-model="form.receivedTime"
-              format="HH:mm"
-              value-format="HH:mm"
-              value-on-clear=""
-              :placeholder="$t('websiteInquiry.timeExample', { time: '10:30' })"
               clearable
               class="w-full"
             />
@@ -263,7 +249,7 @@
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.acquisitionSource')">
-            <el-input v-model="form.acquisitionSource" maxlength="200" />
+            <el-input v-model="form.acquisitionSource" maxlength="2048" />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
@@ -278,7 +264,7 @@
         </el-col>
         <el-col :span="24">
           <el-form-item :label="$t('websiteInquiry.landingPage')">
-            <el-input v-model="form.landingPage" maxlength="2000" />
+            <el-input v-model="form.landingPage" maxlength="2048" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -332,6 +318,7 @@ const props = defineProps<{
   businessUnit?: WebsiteBusinessUnit;
   showBusiness: boolean;
   record?: WebsiteInquiry;
+  initialValues?: Partial<WebsiteInquiryInput>;
   owners: WebsiteOwnerOption[];
   cities: WebsiteCity[];
   allowAssign: boolean;
@@ -403,7 +390,7 @@ watch(
     if (visible) {
       form.value = props.record
         ? cloneWebsiteDraft(websiteInquiryInput(props.record))
-        : { ...emptyInquiry(), businessUnit: props.businessUnit };
+        : { ...emptyInquiry(), ...props.initialValues, businessUnit: props.businessUnit };
       formRef.value?.clearValidate();
     }
   },

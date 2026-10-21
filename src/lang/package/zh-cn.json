@@ -1,4 +1,20 @@
 {
+  "websiteVisits": {
+    "dateRange": "日期范围（北京时间）",
+    "searchPlaceholder": "WhatsApp来源编号 / 网站询盘编号",
+    "generate": "生成询盘",
+    "converted": "已生成询盘",
+    "chooseRange": "请选择导出的开始和结束日期",
+    "beijingTime": "北京时间",
+    "originalTime": "创建时间（UTC）",
+    "expiresAt": "到期时间（UTC）",
+    "source": "获客来源 / 引荐页",
+    "details": "归因详情",
+    "recordId": "记录ID",
+    "contractVersion": "合同版本",
+    "fingerprint": "数据指纹",
+    "externalReferrer": "外部引荐页"
+  },
   "operationLog": {
     "category": "分类",
     "all": "全部",
@@ -58,6 +74,7 @@
     "guideRatings": "导游评分",
     "tours": "成团表",
     "menuPermissions": "菜单权限",
+    "websiteVisits": "独立站访问记录",
     "dataLedgers": "数据台账",
     "shengxuLedger": "盛旭台账",
     "directLedger": "霖熹台账"
@@ -1127,8 +1144,7 @@
     "dayCount": "{days} 天",
     "pax": "人数",
     "contactInfo": "联系方式",
-    "receivedDate": "收到日期",
-    "receivedTime": "收到时间（北京时间）",
+    "receivedAt": "收到时间（北京时间）",
     "contactChannel": "联系渠道",
     "whatsappSourceId": "WhatsApp 来源编号",
     "websiteInquiryNo": "网站询盘编号",

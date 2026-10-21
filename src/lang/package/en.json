@@ -1,4 +1,20 @@
 {
+  "websiteVisits": {
+    "dateRange": "Export date range (Beijing time)",
+    "searchPlaceholder": "WhatsApp reference / Website inquiry number",
+    "generate": "Create inquiry",
+    "converted": "Inquiry created",
+    "chooseRange": "Select a start and end date to export",
+    "beijingTime": "Beijing time",
+    "originalTime": "Created at (UTC)",
+    "expiresAt": "Expires at (UTC)",
+    "source": "Source / Referrer",
+    "details": "Attribution details",
+    "recordId": "Record ID",
+    "contractVersion": "Contract version",
+    "fingerprint": "Payload fingerprint",
+    "externalReferrer": "External referrer"
+  },
   "operationLog": {
     "category": "Category",
     "all": "All",
@@ -58,6 +74,7 @@
     "guideRatings": "Guide Ratings",
     "tours": "Tours",
     "menuPermissions": "Menu Permissions",
+    "websiteVisits": "Website Visits",
     "dataLedgers": "Data Ledgers",
     "shengxuLedger": "Shengxu Ledger",
     "directLedger": "Linxi Ledger"
@@ -1127,8 +1144,7 @@
     "dayCount": "{days} day | {days} days",
     "pax": "Guests",
     "contactInfo": "Contact details",
-    "receivedDate": "Received date",
-    "receivedTime": "Received (Beijing time)",
+    "receivedAt": "Received at (Beijing time)",
     "contactChannel": "Contact channel",
     "whatsappSourceId": "WhatsApp source ID",
     "websiteInquiryNo": "Website inquiry No.",

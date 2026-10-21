@@ -424,6 +424,12 @@ export const constantRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: "website-visits",
+        name: "WebsiteVisits",
+        component: () => import("@/views/ledgers/website-visits/index.vue"),
+        meta: { menuKey: "website-visits", title: "websiteVisits", icon: "el-icon-View", keepAlive: true, scopes: ["headquarters", "website"], perms: ["website:visit:list"] },
+      },
+      {
         path: "direct",
         name: "DirectLedger",
         component: () => import("@/views/ledgers/direct/index.vue"),
