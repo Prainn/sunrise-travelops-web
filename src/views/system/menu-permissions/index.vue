@@ -63,8 +63,10 @@
           @check="readChecked"
         >
           <template #default="{ data }">
-            <span>{{ data.label }}</span>
-            <span v-if="data.unavailable" class="ml-3 text-xs text-muted">{{ $t('menuPermission.unavailable') }}</span>
+            <span class="inline-flex items-center gap-3">
+              <span class="leading-none">{{ data.label }}</span>
+              <span v-if="data.unavailable" class="text-xs text-muted leading-none">{{ $t('menuPermission.unavailable') }}</span>
+            </span>
           </template>
         </el-tree>
       </div>
