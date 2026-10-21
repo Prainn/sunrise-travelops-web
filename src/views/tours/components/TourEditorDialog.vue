@@ -169,6 +169,7 @@
                 type="date"
                 value-format="YYYY-MM-DD"
                 class="w-full!"
+                @change="handleScheduleDateChange"
               />
             </el-form-item>
           </el-col>
@@ -279,7 +280,7 @@
         </el-col>
       </el-row>
       <el-form-item v-if="isManual" :label="$t('tour.scheduleModeLabel')">
-        <el-radio-group v-model="form.scheduleMode">
+        <el-radio-group v-model="form.scheduleMode" @change="handleScheduleDateChange">
           <el-radio-button value="flight">
             {{ $t("tour.scheduleMode.flight") }}
           </el-radio-button>
@@ -400,7 +401,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import { computed, nextTick, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
@@ -426,6 +427,7 @@ import {
   guideQuery,
   isGuideUnavailable,
   manualScheduleError,
+  syncManualPickupDate,
   tourFormFromRecord,
   updateTourRequest,
   type TourCreateMode,
@@ -551,8 +553,8 @@ const rules = computed<FormRules>(() => ({
   pickupAt: [
     selectRule.value,
     {
-      validator: (_rule: unknown, _value: unknown, callback: (error?: Error) => void) =>
-        manualScheduleError(form.startDate, form.pickupAt, "") === "pickupDate"
+      validator: (_rule: unknown, value: string, callback: (error?: Error) => void) =>
+        manualScheduleError(form.startDate, value, "") === "pickupDate"
           ? callback(new Error(t("tour.pickupDateMismatch")))
           : callback(),
       trigger: "change",
@@ -569,6 +571,15 @@ const rules = computed<FormRules>(() => ({
     },
   ],
 }));
+
+async function handleScheduleDateChange() {
+  if (!isManual.value || form.scheduleMode !== "manual") return;
+  syncManualPickupDate(form);
+  await nextTick();
+  const fields = ["pickupAt", "dropAt"] as const;
+  const filledFields = fields.filter((field) => form[field]);
+  if (filledFields.length) await formRef.value?.validateField(filledFields).catch(() => false);
+}
 
 async function loadLanguages(query: RemoteOptionsQuery) {
   const result = await tourService.guideLanguages(query);

@@ -5,6 +5,8 @@ import {
   emptyTourForm,
   guideQuery,
   isGuideUnavailable,
+  manualScheduleError,
+  syncManualPickupDate,
   tourFormFromRecord,
   updateTourRequest,
   type TourFormState,
@@ -156,6 +158,38 @@ describe("tour edit form", () => {
     const body = updateTourRequest(tour, tourFormFromRecord(tour));
     expect(body).not.toHaveProperty("manualSource");
     expect(body).toMatchObject({ scheduleMode: "flight", pickupFlightId: "flight-a" });
+  });
+});
+
+describe("manual pickup date", () => {
+  it("defaults to midnight and preserves the chosen time when moving the start date", () => {
+    const form = manualForm({ startDate: "2026-10-21", pickupAt: "" });
+    syncManualPickupDate(form);
+    expect(form.pickupAt).toBe("2026-10-21 00:00");
+
+    form.pickupAt = "2026-10-21 11:36";
+    form.startDate = "2026-10-22";
+    syncManualPickupDate(form);
+    expect(form.pickupAt).toBe("2026-10-22 11:36");
+  });
+
+  it("leaves flight schedules and an empty start date unchanged", () => {
+    for (const patch of [{ scheduleMode: "flight" as const }, { startDate: "" }]) {
+      const form = manualForm(patch);
+      const original = form.pickupAt;
+      syncManualPickupDate(form);
+      expect(form.pickupAt).toBe(original);
+    }
+  });
+
+  it.each(["00:00", "11:36", "23:59"])("accepts any time on the start date (%s)", (time) => {
+    expect(manualScheduleError("2026-10-21", `2026-10-21 ${time}`, "")).toBeNull();
+  });
+
+  it("rejects a different pickup day and a drop time before pickup", () => {
+    expect(manualScheduleError("2026-10-21", "2026-10-22 00:00", "")).toBe("pickupDate");
+    expect(manualScheduleError("2026-10-21", "2026-10-21 11:36", "2026-10-21 11:35")).toBe("dropOrder");
+    expect(manualScheduleError("", "2026-10-21 11:36", "")).toBeNull();
   });
 });
 

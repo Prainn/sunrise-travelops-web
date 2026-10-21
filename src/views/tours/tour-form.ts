@@ -156,13 +156,22 @@ export function updateTourRequest(tour: TourRecord, form: TourFormState): TourUp
   };
 }
 
+/**
+ * 开始日期变化时同步手填接团日，保留已填时分；首次默认午夜。
+ */
+export function syncManualPickupDate(form: TourFormState): void {
+  if (form.scheduleMode !== "manual" || !form.startDate) return;
+  const time = form.pickupAt ? form.pickupAt.slice(11) : "00:00";
+  form.pickupAt = `${form.startDate} ${time}`;
+}
+
 /** 手填接送校验：接团日须为开始日期，送团不得早于接团。 */
 export function manualScheduleError(
   startDate: string,
   pickupAt: string,
   dropAt: string,
 ): "pickupDate" | "dropOrder" | null {
-  if (pickupAt && pickupAt.slice(0, 10) !== startDate) return "pickupDate";
+  if (startDate && pickupAt && pickupAt.slice(0, 10) !== startDate) return "pickupDate";
   if (pickupAt && dropAt && dropAt < pickupAt) return "dropOrder";
   return null;
 }
