@@ -1,8 +1,10 @@
-/** 盛旭台账列表查询；creatorId 暂无人员筛选来源，页面不暴露。 */
+/** 盛旭台账列表查询。 */
 export interface ShengxuLedgerQueryParams {
   page: number;
   pageSize: number;
   keyword?: string;
+  creatorId?: string;
+  agencyId?: string;
   from?: string;
   to?: string;
 }

@@ -22,6 +22,11 @@ export interface TourListQuery {
   keyword?: string;
   businessUnit?: TourBusinessUnit;
   status?: "active" | "cancelled";
+  from?: string;
+  to?: string;
+  collectCoordinatorId?: string;
+  operatorId?: string;
+  agencyName?: string;
 }
 
 export interface PagedKeywordQuery {
@@ -41,7 +46,19 @@ function clean<T extends object>(query: T) {
 
 export const tourService = {
   list(query: TourListQuery) {
-    return request.get<PageResult<TourRecord>>("/tours", { params: clean(query) });
+    return request.get<PageResult<TourRecord>>("/tours", {
+      params: { ...clean(query), agencyName: query.agencyName },
+    });
+  },
+  filterOptions(
+    query: PagedKeywordQuery & {
+      businessUnit?: TourBusinessUnit;
+      kind: "collectCoordinator" | "operator" | "agency";
+    },
+  ) {
+    return request.get<PageResult<{ id: string; name: string }>>("/tours/filter-options", {
+      params: clean(query),
+    });
   },
   sources(sourceModule: TourLinkedSourceModule, keyword?: string) {
     return request.get<TourSource[]>("/tours/sources", {
@@ -56,6 +73,11 @@ export const tourService = {
   flights(businessUnit: TourBusinessUnit, keyword?: string) {
     return request.get<TourFlightOption[]>("/tours/flights", {
       params: clean({ businessUnit, keyword }),
+    });
+  },
+  guideLanguages(query: PagedKeywordQuery) {
+    return request.get<PageResult<{ id: string; name: string }>>("/tours/guide-languages", {
+      params: clean(query),
     });
   },
   availableGuides(params: TourGuideQuery) {

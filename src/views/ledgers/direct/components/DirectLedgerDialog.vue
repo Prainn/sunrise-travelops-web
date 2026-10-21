@@ -8,7 +8,7 @@
     @open="resetForm"
   >
     <el-alert
-      v-if="ledger?.reviewedAt"
+      v-if="ledger?.reviewedAt || ledger?.operatedAt"
       :title="$t('ledger.direct.reviewedLocked')"
       type="info"
       :closable="false"
@@ -26,6 +26,11 @@
         <el-col v-if="ledger" :xs="24" :sm="12">
           <el-form-item :label="$t('ledger.direct.orderNo')">
             <el-input :model-value="ledger.orderNo" disabled />
+          </el-form-item>
+        </el-col>
+        <el-col v-if="ledger" :xs="24" :sm="12">
+          <el-form-item :label="$t('ledger.direct.workflowStatus')">
+            <el-input :model-value="$t(`ledger.direct.workflowStatuses.${ledger.workflowStatus}`)" disabled />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
@@ -108,7 +113,7 @@
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('ledger.direct.orderStatus')" prop="orderStatus">
             <el-radio-group v-model="form.orderStatus" :disabled="!canChangeStatus">
-              <el-radio value="unconverted" :disabled="Boolean(ledger?.operatedAt)">
+              <el-radio value="unconverted">
                 {{ $t("ledger.direct.orderStatuses.unconverted") }}
               </el-radio>
               <el-radio value="converted">

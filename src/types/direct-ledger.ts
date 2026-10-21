@@ -1,4 +1,5 @@
 export type DirectLedgerBusinessUnit = "linxi" | "website";
+export type DirectLedgerWorkflowStatus = "pending_confirmation" | "pending_operation" | "operated";
 export type DirectLedgerOrderStatus = "unconverted" | "converted";
 
 /** 霖熹/独立站台账列表查询；总部必须显式传 businessUnit。 */
@@ -6,9 +7,12 @@ export interface DirectLedgerQueryParams {
   page: number;
   pageSize: number;
   keyword?: string;
+  creatorId?: string;
+  operatorId?: string;
   from?: string;
   to?: string;
   orderStatus?: DirectLedgerOrderStatus;
+  workflowStatus?: DirectLedgerWorkflowStatus;
   businessUnit?: DirectLedgerBusinessUnit;
 }
 
@@ -70,7 +74,6 @@ export interface DirectLedgerUpdateInput extends DirectLedgerInput {
 
 export interface DirectLedgerOperationInput {
   version: number;
-  operated: boolean;
 }
 
 /** 直客台账列表项与详情：一个客户一次出游需求。 */
@@ -83,10 +86,11 @@ export interface DirectLedgerItem extends DirectLedgerInput {
   creatorName: string;
   receivingAccountName: string;
   operatorName: string;
+  workflowStatus: DirectLedgerWorkflowStatus;
   reviewedAt: string | null;
   reviewedBy: string | null;
   operated: boolean;
-  /** 首次操作时间，取消勾选不清除，用于禁止退回未成团。 */
+  /** 首次操作时间；曾操作后锁定普通字段。 */
   operatedAt: string | null;
   version: number;
   createdAt: string;

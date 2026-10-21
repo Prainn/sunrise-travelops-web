@@ -20,7 +20,7 @@ export interface TourFormState {
   businessUnit: TourBusinessUnit | "";
   countryItemId: string;
   collectCoordinatorId: string;
-  agencyName: string;
+  agencyId: string;
   contactName: string;
   itinerarySummary: string;
   startDate: string;
@@ -47,7 +47,7 @@ export function emptyTourForm(): TourFormState {
     businessUnit: "",
     countryItemId: "",
     collectCoordinatorId: "",
-    agencyName: "",
+    agencyId: "",
     contactName: "",
     itinerarySummary: "",
     startDate: "",
@@ -76,7 +76,7 @@ export function tourFormFromRecord(tour: TourRecord): TourFormState {
     businessUnit: tour.businessUnit,
     countryItemId: tour.countryItemId ?? "",
     collectCoordinatorId: tour.collectCoordinatorId,
-    agencyName: tour.agencyName,
+    agencyId: tour.agencyId ?? "",
     contactName: tour.contactName,
     itinerarySummary: tour.itinerarySummary,
     startDate: tour.startDate,
@@ -123,7 +123,7 @@ export function manualSourceFromForm(form: TourFormState): TourManualSource | nu
     businessUnit: form.businessUnit,
     countryItemId: form.countryItemId,
     collectCoordinatorId: form.collectCoordinatorId,
-    agencyName: form.agencyName,
+    ...(form.businessUnit === "shengxu" && form.agencyId ? { agencyId: form.agencyId } : {}),
     contactName: form.contactName,
     itinerarySummary: form.itinerarySummary,
     startDate: form.startDate,
@@ -174,7 +174,7 @@ export function guideQuery(
   excludeTourId?: string,
 ): TourGuideQuery | null {
   const { businessUnit, startDate, days } = period;
-  if (!businessUnit || !startDate || !days) return null;
+  if (!businessUnit || !startDate || !days || !form.language) return null;
   const schedule = tourSchedule(form);
   if (schedule.scheduleMode === "manual") {
     if (!schedule.pickupAt || !schedule.dropAt) return null;
@@ -187,6 +187,7 @@ export function guideQuery(
     startDate,
     days,
     ...schedule,
+    language: form.language,
     ...(excludeTourId ? { excludeTourId } : {}),
   };
 }
@@ -203,7 +204,7 @@ export function scheduleChanged(tour: TourRecord, form: TourFormState): boolean 
 
 /**
  * 已选导游确实不在最新候选中时返回 true，由用户自行调整，不自动清空。
- * 原导游且接送未变时，后端允许保留已停用/软删档案，不视为不可用。
+ * 原导游、语种且接送未变时，后端允许保留已停用/软删档案，不视为不可用。
  */
 export function isGuideUnavailable(
   form: TourFormState,
@@ -211,5 +212,5 @@ export function isGuideUnavailable(
   tour: TourRecord | null,
 ): boolean {
   if (!form.guideId || candidates.some((item) => item.id === form.guideId)) return false;
-  return !(tour && form.guideId === tour.guideId && !scheduleChanged(tour, form));
+  return !(tour && form.guideId === tour.guideId && !scheduleChanged(tour, form) && form.language === tour.language);
 }

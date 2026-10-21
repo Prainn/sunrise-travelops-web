@@ -16,6 +16,15 @@ export const shengxuLedgerService = {
   list(query: ShengxuLedgerQueryParams) {
     return request.get<PageResult<ShengxuLedgerItem>>(BASE_URL, { params: { ...query } });
   },
+  filterOptions(
+    query: Pick<ShengxuLedgerQueryParams, "page" | "pageSize" | "keyword"> & {
+      kind: "creator" | "agency";
+    },
+  ) {
+    return request.get<PageResult<{ id: string; name: string }>>(`${BASE_URL}/filter-options`, {
+      params: { ...query },
+    });
+  },
   detail(id: string) {
     return request.get<ShengxuLedgerItem>(`${BASE_URL}/${encodeURIComponent(id)}`);
   },

@@ -32,11 +32,6 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('ledger.shengxu.collectCoordinator')">
-            <el-input :model-value="creatorName" disabled />
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('ledger.shengxu.agency')" prop="agencyId">
             <RemoteSelect
               :model-value="form.agencyId"
@@ -49,6 +44,12 @@
             />
           </el-form-item>
         </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('ledger.shengxu.collectCoordinator')">
+            <el-input :model-value="creatorName" disabled />
+          </el-form-item>
+        </el-col>
+
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('ledger.shengxu.region')">
             <el-input :model-value="regionText" disabled />

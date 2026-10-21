@@ -16,6 +16,11 @@ export const directLedgerService = {
   list(query: DirectLedgerQueryParams) {
     return request.get<PageResult<DirectLedgerItem>>(BASE_URL, { params: { ...query } });
   },
+  filterOptions(query: DirectLedgerOperatorQuery & { kind: "creator" | "operator" }) {
+    return request.get<PageResult<{ id: string; name: string }>>(`${BASE_URL}/filter-options`, {
+      params: { ...query },
+    });
+  },
   detail(id: string) {
     return request.get<DirectLedgerItem>(`${BASE_URL}/${encodeURIComponent(id)}`);
   },

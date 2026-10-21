@@ -35,6 +35,7 @@ const item: DirectLedgerItem = {
   departureDate: "2026-11-01",
   complaint: false,
   satisfied: null,
+  workflowStatus: "operated",
   reviewedAt: null,
   reviewedBy: null,
   operated: true,
@@ -44,10 +45,10 @@ const item: DirectLedgerItem = {
   updatedAt: "2026-10-19T08:00:00.000Z",
   updatedBy: "user-3",
   capabilities: {
-    canEdit: true,
+    canEdit: false,
     canDelete: false,
     canReview: false,
-    canOperate: true,
+    canOperate: false,
     canChangeStatus: false,
   },
 };

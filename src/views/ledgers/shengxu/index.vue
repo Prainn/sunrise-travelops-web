@@ -10,6 +10,20 @@
           :end-placeholder="$t('common.endDate')"
         />
       </el-form-item>
+      <el-form-item :label="$t('ledger.shengxu.collectCoordinator')">
+        <RemoteSelect
+          v-model="creatorId"
+          :load-options="(query) => loadFilterOptions('creator', query)"
+          :placeholder="$t('common.all')"
+        />
+      </el-form-item>
+      <el-form-item :label="$t('ledger.shengxu.agency')">
+        <RemoteSelect
+          v-model="agencyId"
+          :load-options="(query) => loadFilterOptions('agency', query)"
+          :placeholder="$t('common.all')"
+        />
+      </el-form-item>
       <el-form-item :label="$t('common.keywords')" class="filter-bar__wide">
         <el-input
           v-model="keyword"
@@ -140,6 +154,8 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+import RemoteSelect from "@/components/RemoteSelect/index.vue";
+import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
@@ -157,6 +173,8 @@ defineOptions({ name: "ShengxuLedger" });
 
 const { t } = useI18n();
 const user = useUserStore();
+const creatorId = ref("");
+const agencyId = ref("");
 const keyword = ref("");
 const dateRange = ref<[string, string] | null>(null);
 const loading = ref(false);
@@ -175,7 +193,7 @@ let listGeneration = 0;
 const canCreate = computed(
   () => user.userInfo.perms.includes("ledger:shengxu:create"),
 );
-const hasActiveFilters = computed(() => Boolean(keyword.value.trim() || dateRange.value));
+const hasActiveFilters = computed(() => Boolean(keyword.value.trim() || dateRange.value || creatorId.value || agencyId.value));
 
 function canEditRow(row: ShengxuLedgerItem) {
   return row.capabilities.canEdit && user.userInfo.perms.includes("ledger:shengxu:update");
@@ -193,12 +211,19 @@ function errorText(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
+async function loadFilterOptions(kind: "creator" | "agency", query: RemoteOptionsQuery) {
+  const result = await shengxuLedgerService.filterOptions({ ...query, kind });
+  return { ...result, list: result.list.map((item) => ({ id: item.id, label: item.name })) };
+}
+
 async function fetchList() {
   const generation = ++listGeneration;
   loading.value = true;
   try {
     const result = await shengxuLedgerService.list({
       ...paginationQuery(),
+      creatorId: creatorId.value || undefined,
+      agencyId: agencyId.value || undefined,
       keyword: keyword.value.trim() || undefined,
       from: dateRange.value?.[0],
       to: dateRange.value?.[1],
@@ -219,9 +244,11 @@ const reload = useDebounceFn(() => {
   pageNum.value = 1;
   void fetchList();
 }, 300);
-watch([keyword, dateRange], reload);
+watch([keyword, dateRange, creatorId, agencyId], reload);
 
 function resetQuery() {
+  creatorId.value = "";
+  agencyId.value = "";
   keyword.value = "";
   dateRange.value = null;
 }

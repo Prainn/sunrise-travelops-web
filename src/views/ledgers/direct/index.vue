@@ -19,6 +19,21 @@
           <el-option value="converted" :label="$t('ledger.direct.orderStatuses.converted')" />
         </el-select>
       </el-form-item>
+      <el-form-item :label="$t('ledger.direct.workflowStatus')">
+        <el-select
+          v-model="workflowStatus"
+          autocomplete="new-password"
+          :placeholder="$t('common.all')"
+          clearable
+        >
+          <el-option
+            v-for="status in WORKFLOW_STATUSES"
+            :key="status"
+            :value="status"
+            :label="$t(`ledger.direct.workflowStatuses.${status}`)"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item :label="$t('ledger.direct.receivedDate')" class="filter-bar__wide">
         <el-date-picker
           v-model="dateRange"
@@ -26,6 +41,22 @@
           value-format="YYYY-MM-DD"
           :start-placeholder="$t('common.startDate')"
           :end-placeholder="$t('common.endDate')"
+        />
+      </el-form-item>
+      <el-form-item :label="$t('tour.collectCoordinator')">
+        <RemoteSelect
+          v-model="creatorId"
+          :query-key="businessUnit"
+          :load-options="(query) => loadFilterOptions('creator', query)"
+          :placeholder="$t('common.all')"
+        />
+      </el-form-item>
+      <el-form-item :label="$t('ledger.direct.operator')">
+        <RemoteSelect
+          v-model="operatorId"
+          :query-key="businessUnit"
+          :load-options="(query) => loadFilterOptions('operator', query)"
+          :placeholder="$t('common.all')"
         />
       </el-form-item>
       <el-form-item :label="$t('common.keywords')" class="filter-bar__wide">
@@ -131,16 +162,11 @@
           show-overflow-tooltip
           :formatter="textOrDash"
         />
-        <el-table-column :label="$t('ledger.direct.reviewStatus')" min-width="100" align="center">
+        <el-table-column :label="$t('ledger.direct.workflowStatus')" min-width="110" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.reviewedAt ? 'success' : 'info'">
-              {{ $t(row.reviewedAt ? "ledger.direct.reviewed" : "ledger.direct.unreviewed") }}
+            <el-tag :type="row.workflowStatus === 'operated' ? 'success' : row.workflowStatus === 'pending_confirmation' ? 'warning' : 'info'">
+              {{ $t(`ledger.direct.workflowStatuses.${row.workflowStatus}`) }}
             </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('ledger.direct.operated')" min-width="100" align="center">
-          <template #default="{ row }">
-            {{ yesNo(row.operated) }}
           </template>
         </el-table-column>
         <el-table-column
@@ -175,7 +201,7 @@
                 :disabled="actingId === row.id"
                 @click="handleOperation(row as DirectLedgerItem)"
               >
-                {{ $t(row.operated ? "ledger.direct.unmarkOperated" : "ledger.direct.markOperated") }}
+                {{ $t("ledger.direct.markOperated") }}
               </el-button>
               <el-button
                 v-if="canDeleteRow(row as DirectLedgerItem)"
@@ -214,6 +240,8 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+import RemoteSelect from "@/components/RemoteSelect/index.vue";
+import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
@@ -228,12 +256,14 @@ import type {
   DirectLedgerBusinessUnit,
   DirectLedgerItem,
   DirectLedgerOrderStatus,
+  DirectLedgerWorkflowStatus,
 } from "@/types/direct-ledger";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 import DirectLedgerDialog from "./components/DirectLedgerDialog.vue";
 
 defineOptions({ name: "DirectLedger" });
 
+const WORKFLOW_STATUSES: DirectLedgerWorkflowStatus[] = ["pending_confirmation", "pending_operation", "operated"];
 const UNITS: DirectLedgerBusinessUnit[] = ["linxi", "website"];
 const BOOLEAN_FIELDS = ["effectiveContact", "proposalSent", "loss", "priority"] as const;
 const TRI_STATE_FIELDS = ["complaint", "satisfied"] as const;
@@ -253,8 +283,11 @@ const headquartersUnit = ref<DirectLedgerBusinessUnit>("linxi");
 const businessUnit = computed<DirectLedgerBusinessUnit>(() =>
   isHeadquarters.value ? headquartersUnit.value : (user.userInfo.scope as DirectLedgerBusinessUnit),
 );
+const creatorId = ref("");
+const operatorId = ref("");
 const keyword = ref("");
 const orderStatus = ref<DirectLedgerOrderStatus | "">("");
+const workflowStatus = ref<DirectLedgerWorkflowStatus | "">("");
 const dateRange = ref<[string, string] | null>(null);
 const loading = ref(false);
 const loadError = ref("");
@@ -273,7 +306,7 @@ const canCreate = computed(
   () => hasPermission("ledger:direct:create"),
 );
 const hasActiveFilters = computed(() =>
-  Boolean(keyword.value.trim() || orderStatus.value || dateRange.value),
+  Boolean(keyword.value.trim() || orderStatus.value || workflowStatus.value || dateRange.value || creatorId.value || operatorId.value),
 );
 
 function hasPermission(permission: string) {
@@ -302,16 +335,24 @@ function textOrDash(_row: unknown, _column: unknown, value: string | null) {
   return value || "-";
 }
 
+async function loadFilterOptions(kind: "creator" | "operator", query: RemoteOptionsQuery) {
+  const result = await directLedgerService.filterOptions({ ...query, kind, businessUnit: businessUnit.value });
+  return { ...result, list: result.list.map((item) => ({ id: item.id, label: item.name })) };
+}
+
 async function fetchList() {
   const generation = ++listGeneration;
   loading.value = true;
   try {
     const result = await directLedgerService.list({
       ...paginationQuery(),
+      creatorId: creatorId.value || undefined,
+      operatorId: operatorId.value || undefined,
       keyword: keyword.value.trim() || undefined,
       from: dateRange.value?.[0],
       to: dateRange.value?.[1],
       orderStatus: orderStatus.value || undefined,
+      workflowStatus: workflowStatus.value || undefined,
       businessUnit: isHeadquarters.value ? headquartersUnit.value : undefined,
     });
     // 切换业务或筛选后丢弃旧响应，避免两个业务的数据混入同一列表。
@@ -331,8 +372,10 @@ const reload = useDebounceFn(() => {
   pageNum.value = 1;
   void fetchList();
 }, 300);
-watch([keyword, orderStatus, dateRange], reload);
+watch([keyword, orderStatus, workflowStatus, dateRange, creatorId, operatorId], reload);
 watch(headquartersUnit, () => {
+  creatorId.value = "";
+  operatorId.value = "";
   dialogVisible.value = false;
   editing.value = null;
   rows.value = [];
@@ -342,8 +385,11 @@ watch(headquartersUnit, () => {
 });
 
 function resetQuery() {
+  creatorId.value = "";
+  operatorId.value = "";
   keyword.value = "";
   orderStatus.value = "";
+  workflowStatus.value = "";
   dateRange.value = null;
 }
 function openCreate() {
@@ -401,15 +447,11 @@ async function handleReview(row: DirectLedgerItem) {
   );
 }
 async function handleOperation(row: DirectLedgerItem) {
-  const operated = !row.operated;
-  const message = t(
-    operated ? "ledger.direct.markOperatedConfirm" : "ledger.direct.unmarkOperatedConfirm",
-    { orderNo: row.orderNo },
-  );
+  const message = t("ledger.direct.markOperatedConfirm", { orderNo: row.orderNo });
   if (!(await confirmAction(message))) return;
   await runRowAction(
     row,
-    () => directLedgerService.updateOperation(row.id, { version: row.version, operated }),
+    () => directLedgerService.updateOperation(row.id, { version: row.version }),
     t("common.updateSuccess"),
   );
 }
