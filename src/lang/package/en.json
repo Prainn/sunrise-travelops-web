@@ -368,6 +368,7 @@
     "noQuoteOptions": "No quote options",
     "noPlans": "No itineraries for this inquiry yet",
     "pdfGenerated": "Quote confirmed; itinerary locked as quoted",
+    "confirmedRefreshFailed": "Quote confirmed, but page details could not be refreshed. You can still export, or reload the page for the latest details.",
     "pdfGenerationFailed": "PDF failed. Try again",
     "pdfHotelPlanRequired": "Complete at least one hotel selection before generating PDF",
     "pdfPreviewTitle": "Quote Preview",
@@ -1636,6 +1637,7 @@
   },
   "menuPermission": {
     "rolesTitle": "Roles",
+    "navigationConfigurationError": "Menu configuration does not match local route: {route}",
     "expand": "Expand all",
     "collapse": "Collapse all",
     "loginNotice": "Menu changes apply on next login.",

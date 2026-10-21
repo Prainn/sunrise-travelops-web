@@ -305,16 +305,29 @@ export function useWebsiteWorkspace() {
     }
   }
   async function confirm(codes: string[]) {
-    if (!preview.value || !canConfirm.value || saving.value || dirty.value) return;
+    if (!preview.value || !plan.value || !inquiry.value || !canConfirm.value || saving.value || dirty.value) return;
+    const confirmedPlan = plan.value;
+    const confirmedInquiry = inquiry.value;
     saving.value = true;
     try {
       const confirmed = await websiteService.confirm(preview.value, codes);
-      if (plan.value) {
-        const record = await websiteService.itinerary(plan.value.id);
-        await storeResult(record, true);
-      }
+      // 保存冻结结果后再刷新详情；刷新失败不能重新开放草稿或丢失导出入口。
+      confirmedPlan.status = "quoted";
+      confirmedInquiry.status = "quoted";
+      const listedPlan = plans.value.find((item) => item.id === confirmedPlan.id);
+      if (listedPlan) listedPlan.status = "quoted";
       quotation.value = confirmed;
       preview.value = confirmed;
+      const results = await Promise.allSettled([
+        websiteService.itinerary(confirmedPlan.id).then((record) => {
+          Object.assign(confirmedPlan, record);
+          if (listedPlan) Object.assign(listedPlan, record);
+          baseline.value = JSON.stringify(websiteItineraryInput(record));
+        }),
+        websiteService.inquiry(confirmedInquiry.id).then((record) => Object.assign(confirmedInquiry, record)),
+      ]);
+      if (results.some((result) => result.status === "rejected"))
+        ElMessage.warning(t("itinerary.confirmedRefreshFailed"));
       ElMessage.success(t("websiteWorkspace.quotationConfirmed"));
     } catch (cause) {
       showError(cause);

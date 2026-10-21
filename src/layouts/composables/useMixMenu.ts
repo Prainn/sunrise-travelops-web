@@ -53,15 +53,17 @@ export function useMixMenu() {
    */
   function resolvePath(routePath: string): string {
     if (isExternal(routePath)) return routePath;
-    if (routePath.startsWith("/")) return activeTopMenuPath.value + routePath;
-    return `${activeTopMenuPath.value}/${routePath}`;
+    if (routePath.startsWith("/")) return routePath;
+    return `${activeTopMenuPath.value}/${routePath}`.replace(/\/+/g, "/");
   }
 
   /**
    * 从当前路由提取顶部菜单路径
    */
-  function extractTopMenuPath(path: string): string {
-    return path.split("/").filter(Boolean).length > 1 ? path.match(/^\/[^/]+/)?.[0] || "/" : "/";
+  function extractTopMenuPath(): string {
+    const parent = permissionStore.routes.find((menu) => !menu.meta?.hidden
+      && route.matched.some((record) => record.name === menu.name && record.path === menu.path));
+    return parent?.path ?? "/";
   }
 
   /**
@@ -81,7 +83,7 @@ export function useMixMenu() {
   function navigateToFirstMenu(menus: RouteRecordRaw[]) {
     if (!menus.length) return;
 
-    const [first] = menus;
+    const first = menus.find((menu) => !menu.meta?.hidden);
     if (!first) return;
     if (first.children?.length) {
       navigateToFirstMenu(first.children as RouteRecordRaw[]);
@@ -100,9 +102,9 @@ export function useMixMenu() {
    * 路由变化时保持顶部菜单和侧边菜单同步
    */
   watch(
-    () => route.path,
-    (newPath) => {
-      const topMenuPath = extractTopMenuPath(newPath);
+    [() => route.path, () => permissionStore.routes],
+    () => {
+      const topMenuPath = extractTopMenuPath();
       const isTopMenuChanged = topMenuPath !== activeTopMenuPath.value;
 
       if (isTopMenuChanged) {

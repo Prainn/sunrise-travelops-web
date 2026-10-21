@@ -368,6 +368,7 @@
     "noQuoteOptions": "暂无报价方案",
     "noPlans": "此询盘暂无行程",
     "pdfGenerated": "报价已确认，行程已锁定为已报价",
+    "confirmedRefreshFailed": "报价已确认，但页面信息刷新失败。可继续导出，或刷新页面获取最新信息。",
     "pdfGenerationFailed": "PDF 生成失败，请重试",
     "pdfHotelPlanRequired": "至少完成一种酒店搭配后再生成 PDF",
     "pdfPreviewTitle": "报价预览",
@@ -1636,6 +1637,7 @@
   },
   "menuPermission": {
     "rolesTitle": "角色",
+    "navigationConfigurationError": "菜单配置与本地路由不匹配：{route}",
     "expand": "展开全部",
     "collapse": "收起全部",
     "loginNotice": "菜单修改在用户下次登录后生效。",

@@ -191,6 +191,7 @@
                 v-has-perm="'tour:update'"
                 link
                 type="primary"
+                :disabled="isPending(row.id)"
                 @click="openEdit(row as TourRecord)"
               >
                 {{ $t("common.edit") }}
@@ -199,6 +200,7 @@
                 v-has-perm="'tour:cancel'"
                 link
                 type="danger"
+                :disabled="isPending(row.id)"
                 @click="cancelTour(row as TourRecord)"
               >
                 {{ $t("tour.cancel") }}
@@ -226,6 +228,7 @@ import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
+import { usePendingActions } from "@/composables/usePendingActions";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
@@ -243,6 +246,7 @@ import TourEditorDialog from "./components/TourEditorDialog.vue";
 
 defineOptions({ name: "TourList" });
 
+const CANCEL_REASON_MAX_LENGTH = 500;
 const UNITS: TourBusinessUnit[] = ["shengxu", "linxi", "website"];
 const { t } = useI18n();
 const user = useUserStore();
@@ -264,6 +268,7 @@ const rows = ref<TourRecord[]>([]);
 const { pageNum, pageSize, paginationQuery } = useResourcePagination();
 const dialogVisible = ref(false);
 const editing = ref<TourRecord | null>(null);
+const { isPending, run } = usePendingActions();
 
 async function loadFilterOptions(kind: "collectCoordinator" | "operator" | "agency", query: RemoteOptionsQuery) {
   const result = await tourService.filterOptions({ ...query, kind, businessUnit: businessUnit.value || undefined });
@@ -335,27 +340,37 @@ function openCreate() {
   dialogVisible.value = true;
 }
 function openEdit(row: TourRecord) {
+  if (isPending(row.id)) return;
   editing.value = row;
   dialogVisible.value = true;
 }
 async function cancelTour(row: TourRecord) {
-  let reason: string;
-  try {
-    const result = await ElMessageBox.prompt(t("tour.cancelConfirm"), t("tour.cancel"), {
-      type: "warning",
-      inputPlaceholder: t("tour.cancelReason"),
-    });
-    reason = result.value ?? "";
-  } catch {
-    return;
-  }
-  try {
-    await tourService.cancel(row.id, row.version, reason);
-    ElMessage.success(t("tour.cancelled"));
-    await load();
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : String(error));
-  }
+  await run(row.id, async () => {
+    let reason: string;
+    try {
+      const result = await ElMessageBox.prompt(t("tour.cancelConfirm"), t("tour.cancel"), {
+        type: "warning",
+        inputPlaceholder: t("tour.cancelReason"),
+        // 与后端 DTO 一致：去除首尾空白后最多 500 字。
+        inputValidator: (value) => (value ?? "").trim().length <= CANCEL_REASON_MAX_LENGTH,
+        inputErrorMessage: t("websiteConfig.validation.maxLength", {
+          field: t("tour.cancelReason"),
+          max: CANCEL_REASON_MAX_LENGTH,
+        }),
+      });
+      reason = (result.value ?? "").trim();
+    } catch {
+      return;
+    }
+    try {
+      await tourService.cancel(row.id, row.version, reason);
+      ElMessage.success(t("tour.cancelled"));
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : String(error));
+    } finally {
+      await load();
+    }
+  });
 }
 
 onMounted(load);

@@ -176,6 +176,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     selectedItinerary,
     canGenerate: () => canGeneratePdf.value,
     canDownload: () => hasUserPermission(userStore.userInfo, "itinerary:download"),
+    onRefreshError: () => messages.warning("itinerary.confirmedRefreshFailed", {}),
   });
 
   async function loadDestinationResourceOptions() {
@@ -479,7 +480,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
         if (!(await messages.confirm("itinerary.confirmFreezeWord"))) return;
       }
       if (await pdf.exportWord()) {
-        await refreshInquiry();
         messages.success(draft ? "itinerary.wordGenerated" : "itinerary.wordDownloaded");
       } else messages.error("itinerary.previewChanged");
     } catch (error) {
@@ -496,7 +496,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
         messages.error("itinerary.previewChanged");
         return;
       }
-      await refreshInquiry();
       messages.success("itinerary.pdfGenerated");
     } catch (error) {
       reportError(error);

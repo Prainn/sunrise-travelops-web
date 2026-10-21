@@ -23,6 +23,8 @@ export const useUserStore = defineStore("user", () => {
     const { accessToken, refreshToken } = await authService.login(loginRequest);
     rememberMe.value = loginRequest.rememberMe ?? false;
     AuthStorage.setLoginTokens(accessToken, refreshToken, rememberMe.value);
+    userInfo.value = { roles: [], perms: [] };
+    usePermissionStoreHook().resetRouter();
   }
 
   /**
@@ -58,7 +60,6 @@ export const useUserStore = defineStore("user", () => {
     resetUserState();
 
     // 2. 重置其他模块状态
-    usePermissionStoreHook().resetRouter();
     useDictStoreHook().clearDictCache();
     useTagsViewStore().delAllViews();
   }
@@ -72,6 +73,7 @@ export const useUserStore = defineStore("user", () => {
     AuthStorage.clearAuth();
     clearResourceOptionsCache();
     userInfo.value = { roles: [], perms: [] };
+    usePermissionStoreHook().resetRouter();
   }
 
   return {
