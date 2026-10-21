@@ -204,7 +204,7 @@
             :placeholder="$t('profile.nicknamePlaceholder')"
           />
         </el-form-item>
-        <el-form-item :label="$t('user.gender')">
+        <el-form-item :label="$t('common.gender')">
           <DictSelect v-model="userProfileForm.gender" code="gender" />
         </el-form-item>
       </el-form>
@@ -378,7 +378,7 @@ const genderText = computed(() => {
 
 const profileInfoItems = computed<ProfileInfoItem[]>(() => [
   {
-    label: t("user.username"),
+    label: t("common.username"),
     value: userProfile.value.username || "-",
     icon: userProfile.value.gender === 2 ? Female : userProfile.value.gender === 1 ? Male : User,
   },
@@ -389,13 +389,13 @@ const profileInfoItems = computed<ProfileInfoItem[]>(() => [
     muted: !userProfile.value.mobile,
   },
   {
-    label: t("user.email"),
+    label: t("common.email"),
     value: userProfile.value.email || t("profile.unbound"),
     icon: Message,
     muted: !userProfile.value.email,
   },
   {
-    label: t("profile.department"),
+    label: t("common.department"),
     value: userProfile.value.deptName || "-",
     icon: OfficeBuilding,
     muted: !userProfile.value.deptName,

@@ -25,8 +25,8 @@
         @retry="load"
       >
         <el-table-column prop="guideName" :label="$t('guideLeave.guide')" min-width="140" />
-        <el-table-column prop="startDate" :label="$t('guideLeave.startDate')" min-width="120" />
-        <el-table-column prop="endDate" :label="$t('guideLeave.endDate')" min-width="120" />
+        <el-table-column prop="startDate" :label="$t('common.startDate')" min-width="120" />
+        <el-table-column prop="endDate" :label="$t('common.endDate')" min-width="120" />
         <el-table-column
           prop="reason"
           :label="$t('guideLeave.reason')"
@@ -113,8 +113,8 @@
             v-model="range"
             type="daterange"
             value-format="YYYY-MM-DD"
-            :start-placeholder="$t('guideLeave.startDate')"
-            :end-placeholder="$t('guideLeave.endDate')"
+            :start-placeholder="$t('common.startDate')"
+            :end-placeholder="$t('common.endDate')"
             style="width: 100%"
           />
         </el-form-item>

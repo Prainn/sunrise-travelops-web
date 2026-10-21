@@ -47,7 +47,7 @@
               </template>
               <template #extra>
                 <el-button v-if="canCreate" type="primary" @click="create">
-                  {{ $t("websiteWorkspace.addItinerary") }}
+                  {{ $t("common.create") }}
                 </el-button>
               </template>
             </el-page-header>
@@ -473,7 +473,7 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() =>
         scope: day.hotels.length > 1 ? t("itineraryWorkspace.scopes.alternatives") : undefined,
         // 不住宿时仍列出已有酒店，便于移出；占位不可拖动。
         items: [
-          ...(day.overnightCityId ? [] : [{ id: `${day.id}-no-stay`, label: t("websiteItineraryUi.noOvernightStay"), placeholder: true }]),
+          ...(day.overnightCityId ? [] : [{ id: `${day.id}-no-stay`, label: t("itinerary.noOvernightStay"), placeholder: true }]),
           ...day.hotels.map((hotel) => ({
             id: hotel.id,
             label: `${hotel.tier} · ${localName(hotel) || "-"}`,

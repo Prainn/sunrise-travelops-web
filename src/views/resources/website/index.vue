@@ -151,7 +151,7 @@ async function persistConfig(next: WebsiteConfig): Promise<boolean> {
 }
 async function saveConfig(next: WebsiteConfig): Promise<boolean> {
   const saved = await persistConfig(next);
-  if (saved) ElMessage.success(t("websiteConfig.saveSuccess"));
+  if (saved) ElMessage.success(t("common.saveSuccess"));
   return saved;
 }
 async function deleteConfig(next: WebsiteConfig): Promise<boolean> {

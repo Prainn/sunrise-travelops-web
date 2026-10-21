@@ -43,7 +43,7 @@
         {{ $t("websiteItineraryUi.otherServices") }}
       </h5>
       <el-button v-if="editable" @click="emit('add-service')">
-        {{ $t("websiteItineraryUi.addService") }}
+        {{ $t("common.create") }}
       </el-button>
     </div>
     <div
@@ -71,7 +71,7 @@
         type="danger"
         @click="day.services.splice(index, 1)"
       >
-        {{ $t("websiteItineraryUi.removeService") }}
+        {{ $t("common.remove") }}
       </el-button>
     </div>
   </section>

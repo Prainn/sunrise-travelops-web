@@ -103,7 +103,7 @@
               </template>
             </el-table-column>
             <el-table-column prop="reason" :label="$t('identity.reason')" />
-            <el-table-column prop="operatorName" :label="$t('identity.operator')" />
+            <el-table-column prop="operatorName" :label="$t('common.operator')" />
             <el-table-column :label="$t('identity.time')">
               <template #default="{ row }">
                 {{ formatDateTime(row.occurredAt) }}
@@ -123,7 +123,7 @@
         :loading="saving"
         @click="emit('save')"
       >
-        {{ $t("itinerary.save") }}
+        {{ $t("common.save") }}
       </el-button>
     </template>
   </AppDialog>

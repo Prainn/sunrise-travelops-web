@@ -1,7 +1,7 @@
 <template>
   <AppDialog
     v-model="visible"
-    :title="$t(tour ? 'tour.edit' : 'tour.create')"
+    :title="$t(tour ? 'common.edit' : 'common.create')"
     size="lg"
     :busy="saving"
     destroy-on-close
@@ -74,7 +74,7 @@
           <el-descriptions-item :label="$t('tour.days')">
             {{ source.days ?? "-" }}
           </el-descriptions-item>
-          <el-descriptions-item :label="$t('inquiry.countryOrRegion')">
+          <el-descriptions-item :label="$t('common.countryOrRegion')">
             {{ source.countryName || "-" }}
           </el-descriptions-item>
           <el-descriptions-item :label="$t('tour.collectCoordinator')">
@@ -124,7 +124,7 @@
             </el-form-item>
           </el-col>
           <el-col :xs="24" :sm="12">
-            <el-form-item :label="$t('inquiry.countryOrRegion')" prop="countryItemId">
+            <el-form-item :label="$t('common.countryOrRegion')" prop="countryItemId">
               <BusinessItemSelect
                 v-model="form.countryItemId"
                 type-code="country-region"
@@ -263,7 +263,7 @@
       </el-form-item>
       <el-row :gutter="12">
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('tour.language')">
+          <el-form-item :label="$t('common.language')">
             <RemoteSelect
               v-model="form.language"
               :load-options="loadLanguages"
@@ -393,7 +393,7 @@
         :disabled="saving"
         @click="save"
       >
-        {{ $t("common.confirm") }}
+        {{ $t("common.save") }}
       </el-button>
     </template>
   </AppDialog>

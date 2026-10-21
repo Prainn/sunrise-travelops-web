@@ -7,7 +7,7 @@
         :disabled="!config.cities.length"
         @click="openEditor()"
       >
-        {{ $t("websiteConfig.patterns.create") }}
+        {{ $t("common.create") }}
       </el-button>
       <span class="text-muted text-[13px]">
         {{ $t("websiteConfig.patterns.help") }}
@@ -19,8 +19,8 @@
       row-key="id"
       :empty-text="$t('websiteConfig.patterns.empty')"
     >
-      <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
-      <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
+      <el-table-column prop="nameZh" :label="$t('common.nameZh')" min-width="160" />
+      <el-table-column prop="nameEn" :label="$t('common.nameEn')" min-width="180" />
       <el-table-column :label="$t('websiteConfig.belongsToCity')" min-width="120">
         <template #default="{ row }">
           {{ config.cities.find((city) => city.id === row.cityId)?.nameZh ?? row.cityId }}
@@ -110,10 +110,10 @@
               </el-radio>
             </el-radio-group>
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.nameZh')" prop="nameZh">
+          <el-form-item :label="$t('common.nameZh')" prop="nameZh">
             <el-input v-model="record.nameZh" maxlength="150" />
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.nameEn')" prop="nameEn">
+          <el-form-item :label="$t('common.nameEn')" prop="nameEn">
             <el-input v-model="record.nameEn" maxlength="150" />
           </el-form-item>
         </div>
@@ -149,7 +149,7 @@
           </el-table-column>
           <el-table-column
             v-if="editable"
-            :label="$t('websiteConfig.patterns.reorder')"
+            :label="$t('common.reorder')"
             width="150"
             align="center"
           >
@@ -161,7 +161,7 @@
                   link
                   @click="move($index, -1)"
                 >
-                  {{ $t("websiteConfig.moveUp") }}
+                  {{ $t("common.moveUp") }}
                 </el-button>
                 <el-button
                   :disabled="$index === record.attractionIds.length - 1"
@@ -169,7 +169,7 @@
                   link
                   @click="move($index, 1)"
                 >
-                  {{ $t("websiteConfig.moveDown") }}
+                  {{ $t("common.moveDown") }}
                 </el-button>
               </RowActions>
             </template>

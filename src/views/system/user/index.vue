@@ -5,7 +5,7 @@
       <SectionCard
         fill
         padding="compact"
-        :title="$t('user.department')"
+        :title="$t('common.department')"
         body-class="overflow-y-auto"
       >
         <el-tree
@@ -41,7 +41,7 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item :label="$t('user.rolesLabel')" prop="roleId">
+      <el-form-item :label="$t('common.roles')" prop="roleId">
         <el-select
           v-model="params.roleId"
           autocomplete="new-password"
@@ -124,12 +124,12 @@
         </el-table-column>
         <el-table-column
           prop="englishName"
-          :label="$t('user.englishName')"
+          :label="$t('common.englishName')"
           min-width="120"
         />
         <el-table-column prop="tourCode" :label="$t('user.tourCode')" width="110" />
         <el-table-column
-          :label="$t('user.username')"
+          :label="$t('common.username')"
           min-width="120"
           prop="username"
           show-overflow-tooltip
@@ -148,7 +148,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('user.gender')" align="center" width="70">
+        <el-table-column :label="$t('common.gender')" align="center" width="70">
           <template #default="scope">
             <el-tag
               v-if="
@@ -168,7 +168,7 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('user.department')" min-width="220">
+        <el-table-column :label="$t('common.department')" min-width="220">
           <template #default="{ row }">
             <div
               v-for="identity in row.identities"
@@ -182,7 +182,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('user.rolesLabel')" prop="roleNames" width="400">
+        <el-table-column :label="$t('common.roles')" prop="roleNames" width="400">
           <template #default="scope">
             <el-tag
               v-for="role in userRoleLabels(scope.row.roleNames, roleOptions)"
@@ -196,7 +196,7 @@
         </el-table-column>
         <el-table-column :label="$t('user.mobile')" prop="mobile" width="130" />
         <el-table-column
-          :label="$t('user.email')"
+          :label="$t('common.email')"
           prop="email"
           min-width="180"
           show-overflow-tooltip
@@ -276,7 +276,7 @@
         <h4 class="mt-0 mb-5 text-base font-semibold leading-6">
           {{ $t("user.basicInfo") }}
         </h4>
-        <el-form-item :label="$t('user.username')" prop="username">
+        <el-form-item :label="$t('common.username')" prop="username">
           <el-input
             v-model.trim="formData.username"
             :readonly="!!formData.id"
@@ -285,10 +285,10 @@
         </el-form-item>
 
         <el-form-item :label="$t('user.nickname')" prop="nickname">
-          <el-input v-model="formData.nickname" :placeholder="$t('user.nicknamePlaceholder')" />
+          <el-input v-model="formData.nickname" :placeholder="$t('profile.nicknamePlaceholder')" />
         </el-form-item>
 
-        <el-form-item :label="$t('user.englishName')" prop="englishName">
+        <el-form-item :label="$t('common.englishName')" prop="englishName">
           <el-input v-model="formData.englishName" maxlength="100" />
         </el-form-item>
 
@@ -304,7 +304,7 @@
           </div>
         </el-form-item>
 
-        <el-form-item :label="$t('user.gender')" prop="gender">
+        <el-form-item :label="$t('common.gender')" prop="gender">
           <DictSelect v-model="formData.gender" code="gender" :style="{ width: '100%' }" />
         </el-form-item>
 
@@ -322,7 +322,7 @@
           />
         </el-form-item>
 
-        <el-form-item :label="$t('user.email')" prop="email">
+        <el-form-item :label="$t('common.email')" prop="email">
           <el-input
             v-model="formData.email"
             :placeholder="$t('user.emailPlaceholder')"
@@ -397,7 +397,7 @@
         <el-form-item :label="$t('user.nickname')">
           <el-input :model-value="resetPasswordDialog.nickname" readonly />
         </el-form-item>
-        <el-form-item :label="$t('user.username')">
+        <el-form-item :label="$t('common.username')">
           <el-input :model-value="resetPasswordDialog.username" readonly />
         </el-form-item>
 
@@ -608,7 +608,7 @@ const rules = computed<FormRules<UserForm>>(() => ({
       trigger: "blur",
     },
   ],
-  nickname: [{ required: true, message: t("user.nicknamePlaceholder"), trigger: "blur" }],
+  nickname: [{ required: true, message: t("profile.nicknamePlaceholder"), trigger: "blur" }],
   englishName: [{ required: true, whitespace: true, message: t("user.englishNameRequired"), trigger: "blur" }],
   tourCode: needsTourCode.value ? [
     { required: true, message: t("user.tourCodeRequired"), trigger: "blur" },

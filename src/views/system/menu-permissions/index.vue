@@ -4,7 +4,7 @@
       <SectionCard
         fill
         padding="compact"
-        :title="$t('menuPermission.rolesTitle')"
+        :title="$t('common.roles')"
         body-class="overflow-y-auto"
       >
         <div class="flex flex-col gap-2">

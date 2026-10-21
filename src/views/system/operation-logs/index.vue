@@ -6,7 +6,7 @@
           v-model="category"
           autocomplete="new-password"
           clearable
-          :placeholder="$t('operationLog.all')"
+          :placeholder="$t('common.all')"
         >
           <el-option
             v-for="option in categories"
@@ -29,7 +29,7 @@
         row-key="id"
         @retry="fetchData"
       >
-        <el-table-column :label="$t('operationLog.time')" min-width="190">
+        <el-table-column :label="$t('common.time')" min-width="190">
           <template #default="{ row }">
             {{ beijingTime(row.time) }}
           </template>
@@ -39,7 +39,7 @@
             {{ categoryLabel(row.category) }}
           </template>
         </el-table-column>
-        <el-table-column :label="$t('operationLog.actor')" prop="actorName" min-width="130" />
+        <el-table-column :label="$t('common.operator')" prop="actorName" min-width="130" />
         <el-table-column :label="$t('operationLog.action')" min-width="180">
           <template #default="{ row }">
             {{ actionLabel(row.action) }}
@@ -53,7 +53,7 @@
           </template>
         </el-table-column>
         <el-table-column
-          :label="$t('operationLog.detail')"
+          :label="$t('common.details')"
           prop="detail"
           min-width="300"
           show-overflow-tooltip

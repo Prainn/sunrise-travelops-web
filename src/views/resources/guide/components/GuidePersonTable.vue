@@ -22,7 +22,7 @@
           type="primary"
           @click="emit('create')"
         >
-          {{ $t("guide.createGuide") }}
+          {{ $t("common.create") }}
         </el-button>
         <el-button @click="emit('open-prices')">
           {{ $t("guide.priceSettings") }}
@@ -35,7 +35,7 @@
         row-key="id"
       >
         <el-table-column prop="name" :label="$t('guide.name')" min-width="160" />
-        <el-table-column :label="$t('guide.gender')" min-width="100">
+        <el-table-column :label="$t('common.gender')" min-width="100">
           <template #default="{ row }">
             {{ $t(`guide.genderOptions.${row.gender}`) }}
           </template>
@@ -45,7 +45,7 @@
             {{ row.age ?? $t("common.notSet") }}
           </template>
         </el-table-column>
-        <el-table-column :label="$t('guide.language')" min-width="110">
+        <el-table-column :label="$t('common.language')" min-width="110">
           <template #default="{ row }">
             {{ row.language ?? $t("common.notSet") }}
           </template>
@@ -80,7 +80,7 @@
         </el-table-column>
         <el-table-column
           prop="remark"
-          :label="$t('guide.remark')"
+          :label="$t('common.remark')"
           min-width="180"
           show-overflow-tooltip
         >

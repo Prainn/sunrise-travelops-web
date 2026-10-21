@@ -2,7 +2,7 @@
   <section class="flex flex-col gap-[12px] h-full min-h-0">
     <TableToolbar :refreshable="false">
       <el-button v-if="editable" type="primary" @click="openEditor()">
-        {{ $t("websiteConfig.cities.create") }}
+        {{ $t("common.create") }}
       </el-button>
       <span class="text-muted text-[13px]">
         {{ $t("websiteConfig.cities.help") }}
@@ -14,14 +14,14 @@
       row-key="id"
       :empty-text="$t('websiteConfig.cities.empty')"
     >
-      <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
-      <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
+      <el-table-column prop="nameZh" :label="$t('common.nameZh')" min-width="160" />
+      <el-table-column prop="nameEn" :label="$t('common.nameEn')" min-width="180" />
       <el-table-column :label="$t('websiteConfig.cities.sharedCity')" min-width="160">
         <template #default="{ row }">
           {{
             row.resourceId
               ? $t("websiteConfig.cities.linked")
-              : $t("websiteConfig.cities.unlinked")
+              : $t("common.notLinked")
           }}
         </template>
       </el-table-column>
@@ -61,9 +61,9 @@
       v-model="visible"
       :title="
         isNew
-          ? $t('websiteConfig.cities.create')
+          ? $t('city.create')
           : editable
-            ? $t('websiteConfig.cities.edit')
+            ? $t('city.edit')
             : $t('websiteConfig.cities.detail')
       "
       size="md"
@@ -78,10 +78,10 @@
         :disabled="!editable || saving || isSubmitting"
         label-width="auto"
       >
-        <el-form-item :label="$t('websiteConfig.nameZh')" prop="nameZh">
+        <el-form-item :label="$t('common.nameZh')" prop="nameZh">
           <el-input v-model="record.nameZh" maxlength="150" />
         </el-form-item>
-        <el-form-item :label="$t('websiteConfig.nameEn')" prop="nameEn">
+        <el-form-item :label="$t('common.nameEn')" prop="nameEn">
           <el-input v-model="record.nameEn" maxlength="150" />
         </el-form-item>
         <el-form-item :label="$t('websiteConfig.cities.linkCity')">

@@ -58,7 +58,7 @@ async function checkForNewVersion() {
             type: "primary",
             onClick: reloadPageWithoutConfirmation,
           },
-          () => t("appVersion.refresh"),
+          () => t("common.refresh"),
         ),
       ]),
       duration: 0,

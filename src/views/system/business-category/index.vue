@@ -73,7 +73,7 @@
         <el-form-item :label="$t('businessCategory.typeName')" prop="name">
           <el-input v-model="typeForm.name" />
         </el-form-item>
-        <el-form-item :label="$t('businessCategory.typeEnglishName')" prop="englishName">
+        <el-form-item :label="$t('businessCategory.englishName')" prop="englishName">
           <el-input v-model="typeForm.englishName" />
         </el-form-item>
         <el-form-item :label="$t('businessCategory.typeCode')" prop="code">
@@ -136,7 +136,7 @@ const typeForm = reactive<CategoryTypeForm>(emptyTypeForm());
 const typeRules: FormRules<CategoryTypeForm> = {
   name: [{ required: true, message: t("businessCategory.typeNameRequired"), trigger: "blur" }],
   englishName: [
-    { required: true, message: t("businessCategory.typeEnglishNameRequired"), trigger: "blur" },
+    { required: true, message: t("businessCategory.englishNameRequired"), trigger: "blur" },
   ],
   code: [
     { required: true, message: t("businessCategory.typeCodeRequired"), trigger: "blur" },

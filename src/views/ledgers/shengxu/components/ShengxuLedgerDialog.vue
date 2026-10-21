@@ -56,7 +56,7 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('ledger.shengxu.contact')" prop="contactId">
+          <el-form-item :label="$t('common.contact')" prop="contactId">
             <RemoteSelect
               v-model="form.contactId"
               :load-options="loadContacts"
@@ -183,8 +183,8 @@ const saving = ref(false);
 const agencyOptions = new Map<string, ShengxuAgencyOption>();
 
 const dialogTitle = computed(() => {
-  if (!props.ledger) return t("ledger.shengxu.create");
-  return t(props.readonly ? "ledger.shengxu.view" : "ledger.shengxu.edit");
+  if (!props.ledger) return t("common.create");
+  return t(props.readonly ? "common.view" : "common.edit");
 });
 const isDelegate = computed(
   () => !props.ledger && user.userInfo.scope === "headquarters" && user.userInfo.roles.includes("ROOT"),
@@ -202,7 +202,7 @@ const rules = computed<FormRules>(() => {
   return {
     recordDate: [required("ledger.shengxu.recordDate")],
     agencyId: [required("ledger.shengxu.agency")],
-    contactId: [required("ledger.shengxu.contact")],
+    contactId: [required("common.contact")],
     quotedGroups: [required("ledger.shengxu.quotedGroups")],
     convertedGroups: [required("ledger.shengxu.convertedGroups")],
   };

@@ -44,7 +44,7 @@
           <el-select
             v-model="status"
             autocomplete="new-password"
-            :placeholder="$t('flight.allStatuses')"
+            :placeholder="$t('common.allStatuses')"
             class="!w-[150px]"
             clearable
           >

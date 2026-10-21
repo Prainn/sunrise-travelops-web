@@ -38,7 +38,7 @@ import { useResourceMaintenance } from "../useResourceMaintenance";
 defineOptions({ name: "CityResource" });
 const columns: ResourceColumn[] = [
   { prop: "code", labelKey: "resource.code" },
-  { prop: "name", labelKey: "resource.city" },
+  { prop: "name", labelKey: "common.cityRegion" },
   { prop: "province", labelKey: "city.province" },
 ];
 const provinceOptions = ref<Array<{ label: string; value: string }>>([]);
@@ -50,7 +50,7 @@ const maintenance = useResourceMaintenance<CityRecord>({
 });
 const { isLoading, loadError, rows, total, record, isDialogVisible, isEditing, loadRecords } = maintenance;
 const fields = computed<ResourceFormField[]>(() => [
-  { prop: "name", labelKey: "resource.city", required: true, disabled: isEditing.value },
+  { prop: "name", labelKey: "common.cityRegion", required: true, disabled: isEditing.value },
   {
     prop: "province",
     labelKey: "city.province",

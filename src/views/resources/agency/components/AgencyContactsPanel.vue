@@ -17,7 +17,7 @@
         :disabled="!agency"
         @click="emit('create')"
       >
-        {{ $t("resource.addContact") }}
+        {{ $t("common.create") }}
       </el-button>
     </template>
     <DataTable

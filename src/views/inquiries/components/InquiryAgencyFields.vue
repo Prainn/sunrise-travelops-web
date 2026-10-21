@@ -17,7 +17,7 @@
     </el-form-item>
   </el-col>
   <el-col :span="12">
-    <el-form-item :label="$t('inquiry.contactName')" prop="contactName">
+    <el-form-item :label="$t('common.contact')" prop="contactName">
       <AgencyContactSelect
         :model-value="record.contactName"
         :agency="selectedAgency"
@@ -28,7 +28,7 @@
     </el-form-item>
   </el-col>
   <el-col :span="12">
-    <el-form-item :label="$t('inquiry.email')">
+    <el-form-item :label="$t('common.email')">
       <el-input :model-value="record.email" disabled />
     </el-form-item>
   </el-col>
@@ -43,7 +43,7 @@
     </el-form-item>
   </el-col>
   <el-col :span="12">
-    <el-form-item :label="$t('inquiry.countryOrRegion')" prop="countryItemId">
+    <el-form-item :label="$t('common.countryOrRegion')" prop="countryItemId">
       <BusinessItemSelect
         :model-value="record.countryItemId"
         type-code="country-region"

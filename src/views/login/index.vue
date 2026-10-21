@@ -117,8 +117,8 @@
           <el-form-item prop="username">
             <el-input
               v-model.trim="loginFormData.username"
-              :placeholder="$t('login.username')"
-              :aria-label="$t('login.username')"
+              :placeholder="$t('common.username')"
+              :aria-label="$t('common.username')"
               :prefix-icon="UserIcon"
               autocomplete="username"
             />

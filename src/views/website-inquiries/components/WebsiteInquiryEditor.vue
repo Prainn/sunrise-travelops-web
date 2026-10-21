@@ -93,7 +93,7 @@
   <AppDialog
     v-else
     :model-value="modelValue"
-    :title="$t(record ? 'inquiry.editInquiry' : 'inquiry.createInquiry')"
+    :title="$t(record ? 'common.edit' : 'common.create')"
     size="lg"
     @update:model-value="emit('update:modelValue', $event)"
   >
@@ -145,7 +145,7 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('inquiry.countryOrRegion')" prop="countryItemId">
+          <el-form-item :label="$t('common.countryOrRegion')" prop="countryItemId">
             <BusinessItemSelect
               v-model="form.countryItemId"
               type-code="country-region"

@@ -2,7 +2,7 @@
   <SectionCard fill>
     <TableToolbar @refresh="emit('refresh')">
       <el-button v-if="can('website:inquiry:create')" type="primary" @click="emit('create')">
-        {{ $t("inquiry.createInquiry") }}
+        {{ $t("common.create") }}
       </el-button>
     </TableToolbar>
     <DataTable

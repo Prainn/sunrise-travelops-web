@@ -2,7 +2,7 @@
   <SectionCard fill>
     <TableToolbar :refreshing="loading" @refresh="emit('refresh')">
       <el-button v-hasPerm="'inquiry:create'" type="primary" @click="emit('create')">
-        {{ $t("inquiry.createInquiry") }}
+        {{ $t("common.create") }}
       </el-button>
     </TableToolbar>
     <DataTable
@@ -30,10 +30,10 @@
         min-width="190"
         show-overflow-tooltip
       />
-      <el-table-column prop="contactName" :label="$t('inquiry.contactName')" width="120" />
+      <el-table-column prop="contactName" :label="$t('common.contact')" width="120" />
       <el-table-column
         prop="countryOrRegion"
-        :label="$t('inquiry.countryOrRegion')"
+        :label="$t('common.countryOrRegion')"
         width="110"
       />
       <el-table-column prop="sourceChannel" :label="$t('inquiry.sourceChannel')" width="110" />

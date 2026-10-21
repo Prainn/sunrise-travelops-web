@@ -12,7 +12,7 @@
         <el-select
           v-model="orderStatus"
           autocomplete="new-password"
-          :placeholder="$t('ledger.direct.allOrderStatuses')"
+          :placeholder="$t('common.allStatuses')"
           clearable
         >
           <el-option value="unconverted" :label="$t('ledger.direct.orderStatuses.unconverted')" />
@@ -43,7 +43,7 @@
           :end-placeholder="$t('common.endDate')"
         />
       </el-form-item>
-      <el-form-item :label="$t('tour.collectCoordinator')">
+      <el-form-item :label="$t('ledger.direct.creator')">
         <RemoteSelect
           v-model="creatorId"
           :query-key="businessUnit"
@@ -71,7 +71,7 @@
     <SectionCard fill>
       <TableToolbar :refreshing="loading" @refresh="fetchList">
         <el-button v-if="canCreate" type="primary" @click="openCreate">
-          {{ $t("ledger.direct.create") }}
+          {{ $t("common.create") }}
         </el-button>
       </TableToolbar>
       <DataTable

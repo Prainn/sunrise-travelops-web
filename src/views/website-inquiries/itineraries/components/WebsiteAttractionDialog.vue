@@ -88,10 +88,10 @@
             border
             size="small"
           >
-            <el-descriptions-item :label="$t('websiteItineraryUi.nameZh')">
+            <el-descriptions-item :label="$t('common.nameZh')">
               {{ selected.nameZh }}
             </el-descriptions-item>
-            <el-descriptions-item :label="$t('websiteItineraryUi.nameEn')">
+            <el-descriptions-item :label="$t('common.nameEn')">
               {{ selected.nameEn }}
             </el-descriptions-item>
             <el-descriptions-item :label="$t('websiteItineraryUi.chargeable')">
@@ -124,10 +124,10 @@
         </template>
       </template>
       <div v-else class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
-        <el-form-item :label="$t('websiteItineraryUi.nameZh')">
+        <el-form-item :label="$t('common.nameZh')">
           <el-input v-model="manualNameZh" maxlength="150" />
         </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.nameEn')">
+        <el-form-item :label="$t('common.nameEn')">
           <el-input v-model="manualNameEn" maxlength="150" />
         </el-form-item>
         <p class="m-0 text-[12px] text-muted [grid-column:1/-1]">

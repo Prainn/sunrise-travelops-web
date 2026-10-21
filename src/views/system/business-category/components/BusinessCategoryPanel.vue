@@ -411,7 +411,7 @@ function saveItem(): Promise<void> {
       await loadItems();
       emit("changed");
       dialogVisible.value = false;
-      ElMessage.success(t("businessCategory.saveSuccess"));
+      ElMessage.success(t("common.saveSuccess"));
     } catch (error) {
       ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
     }

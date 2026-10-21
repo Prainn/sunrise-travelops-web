@@ -2,7 +2,7 @@
   <AppDialog
     class="inquiry-editor-dialog"
     :model-value="modelValue"
-    :title="$t(isEditing ? 'inquiry.editInquiry' : 'inquiry.createInquiry')"
+    :title="$t(isEditing ? 'common.edit' : 'common.create')"
     size="lg"
     destroy-on-close
     @update:model-value="emit('update:modelValue', $event)"

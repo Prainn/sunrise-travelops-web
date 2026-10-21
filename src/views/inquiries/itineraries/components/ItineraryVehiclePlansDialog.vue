@@ -39,7 +39,7 @@
                   link
                   @click="removeArrangement(plan, arrangement.id)"
                 >
-                  {{ $t("planning.delete") }}
+                  {{ $t("common.delete") }}
                 </el-button>
               </div>
 
@@ -85,7 +85,7 @@
                       type="danger"
                       @click="removeVehicle(plan, arrangement.id, vehicle.vehicleId)"
                     >
-                      {{ $t("planning.delete") }}
+                      {{ $t("common.delete") }}
                     </el-button>
                   </div>
                 </template>
@@ -95,7 +95,7 @@
                   class="flex items-center justify-center w-full mb-4"
                 >
                   <el-button @click="isAddingNewVehicle = true">
-                    {{ $t("planning.addNewVehicle") }}
+                    {{ $t("common.create") }}
                   </el-button>
                 </div>
                 <template v-else-if="mode === 'itinerary'">
@@ -212,7 +212,7 @@
         :disabled="!canSave"
         @click="emit('save')"
       >
-        {{ $t("itinerary.save") }}
+        {{ $t("common.save") }}
       </el-button>
     </template>
   </AppDialog>

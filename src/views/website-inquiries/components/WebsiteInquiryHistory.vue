@@ -16,14 +16,14 @@
       :data="rows"
       row-key="id"
     >
-      <el-table-column :label="$t('websiteInquiry.time')" width="210">
+      <el-table-column :label="$t('common.time')" width="210">
         <template #default="{ row }">
           {{ formatDateTime(row.occurredAt) }}
         </template>
       </el-table-column>
-      <el-table-column prop="actorName" :label="$t('websiteInquiry.actor')" width="100" />
+      <el-table-column prop="actorName" :label="$t('common.operator')" width="100" />
       <el-table-column prop="action" :label="$t('common.actions')" width="140" />
-      <el-table-column prop="detail" :label="$t('websiteInquiry.details')" />
+      <el-table-column prop="detail" :label="$t('common.details')" />
     </DataTable>
     <Pagination
       v-if="total"

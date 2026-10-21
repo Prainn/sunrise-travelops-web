@@ -2,7 +2,7 @@
   <section class="flex flex-col gap-[12px] h-full min-h-0">
     <TableToolbar :refreshable="false">
       <el-button v-if="editable" type="primary" @click="openEditor()">
-        {{ $t("websiteConfig.templates.create") }}
+        {{ $t("common.create") }}
       </el-button>
       <span class="text-muted text-[13px]">
         {{ $t("websiteConfig.templates.help") }}

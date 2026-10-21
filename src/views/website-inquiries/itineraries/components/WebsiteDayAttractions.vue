@@ -36,21 +36,21 @@
         </span>
         <div v-if="editable">
           <el-button :disabled="index === 0" link @click="move(index, -1)">
-            {{ $t("websiteItineraryUi.moveUp") }}
+            {{ $t("common.moveUp") }}
           </el-button>
           <el-button :disabled="index === day.items.length - 1" link @click="move(index, 1)">
-            {{ $t("websiteItineraryUi.moveDown") }}
+            {{ $t("common.moveDown") }}
           </el-button>
           <el-button link type="danger" @click="day.items.splice(index, 1)">
-            {{ $t("websiteItineraryUi.remove") }}
+            {{ $t("common.remove") }}
           </el-button>
         </div>
       </div>
       <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
-        <el-form-item :label="$t('websiteItineraryUi.nameZh')">
+        <el-form-item :label="$t('common.nameZh')">
           <el-input v-model="item.nameZh" :disabled="Boolean(item.attractionId)" maxlength="150" />
         </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.nameEn')">
+        <el-form-item :label="$t('common.nameEn')">
           <el-input v-model="item.nameEn" :disabled="Boolean(item.attractionId)" maxlength="150" />
         </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.coreCopyZh')">

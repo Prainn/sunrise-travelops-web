@@ -53,7 +53,7 @@
           <el-icon class="mr-1">
             <Sort />
           </el-icon>
-          {{ $t("itineraryWorkspace.reorder") }}
+          {{ $t("common.reorder") }}
         </el-button>
       </nav>
       <div class="itinerary-workspace__days min-w-0 flex-1 flex flex-col gap-4">

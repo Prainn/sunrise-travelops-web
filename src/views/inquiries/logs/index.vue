@@ -69,7 +69,7 @@
       <el-form-item :label="$t('inquiry.log.dateRange')" class="filter-bar__wide">
         <el-date-picker v-model="dates" type="daterange" value-format="YYYY-MM-DD" />
       </el-form-item>
-      <el-form-item :label="$t('inquiry.log.operator')">
+      <el-form-item :label="$t('common.operator')">
         <el-select
           v-model="operatorId"
           autocomplete="new-password"
@@ -183,7 +183,7 @@
           min-width="150"
           :formatter="formatAction"
         />
-        <el-table-column :label="$t('inquiry.log.operator')" min-width="150">
+        <el-table-column :label="$t('common.operator')" min-width="150">
           <template #default="{ row }">
             {{ row.operatorName }}（{{ row.operatorUsername }}）
           </template>

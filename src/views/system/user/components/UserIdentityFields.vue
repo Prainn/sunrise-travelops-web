@@ -29,7 +29,7 @@
         </el-select>
       </el-form-item>
       <el-form-item
-        :label="$t('user.department')"
+        :label="$t('common.department')"
         :prop="`identities.${index}.deptId`"
         :rules="{ required: true, message: $t('user.departmentPlaceholder') }"
       >
@@ -48,7 +48,7 @@
         </el-select>
       </el-form-item>
       <el-form-item
-        :label="$t('user.rolesLabel')"
+        :label="$t('common.roles')"
         :prop="`identities.${index}.roleIds`"
         :rules="{ required: true, type: 'array', min: 1, message: $t('user.rolePlaceholder') }"
       >

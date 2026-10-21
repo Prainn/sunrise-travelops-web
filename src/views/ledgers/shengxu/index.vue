@@ -36,7 +36,7 @@
     <SectionCard fill>
       <TableToolbar :refreshing="loading" @refresh="fetchList">
         <el-button v-if="canCreate" type="primary" @click="openCreate">
-          {{ $t("ledger.shengxu.create") }}
+          {{ $t("common.create") }}
         </el-button>
       </TableToolbar>
       <DataTable
@@ -65,7 +65,7 @@
             {{ regionText(row as ShengxuLedgerItem) }}
           </template>
         </el-table-column>
-        <el-table-column prop="contactName" :label="$t('ledger.shengxu.contact')" min-width="110" />
+        <el-table-column prop="contactName" :label="$t('common.contact')" min-width="110" />
         <el-table-column
           prop="creatorName"
           :label="$t('ledger.shengxu.collectCoordinator')"

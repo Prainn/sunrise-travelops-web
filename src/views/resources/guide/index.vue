@@ -24,7 +24,7 @@
         <el-descriptions-item :label="$t('guide.name')">
           {{ personDetail.name }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('guide.gender')">
+        <el-descriptions-item :label="$t('common.gender')">
           {{ $t(`guide.genderOptions.${personDetail.gender}`) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('guide.age')">
@@ -47,7 +47,7 @@
               : $t(personDetail.hasLaborContract ? "guide.contractYes" : "guide.contractNo")
           }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('guide.remark')">
+        <el-descriptions-item :label="$t('common.remark')">
           {{ personDetail.remark ?? $t("common.notSet") }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('guide.certificateNo')">

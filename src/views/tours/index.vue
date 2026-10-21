@@ -71,7 +71,7 @@
     <SectionCard fill>
       <TableToolbar :refreshing="loading" @refresh="load">
         <el-button v-has-perm="'tour:create'" type="primary" @click="openCreate">
-          {{ $t("tour.create") }}
+          {{ $t("common.create") }}
         </el-button>
       </TableToolbar>
       <!-- 行数据的 children 是儿童人数，改用不存在的字段作树形子行，避免 el-table 当作子行遍历 -->
@@ -97,7 +97,7 @@
             {{ businessUnitName(row.businessUnit) }}
           </template>
         </el-table-column>
-        <el-table-column prop="countryName" :label="$t('inquiry.countryOrRegion')" min-width="120" />
+        <el-table-column prop="countryName" :label="$t('common.countryOrRegion')" min-width="120" />
         <el-table-column :label="$t('tour.source')" min-width="100">
           <template #default="{ row }">
             {{ $t(`tour.sourceModule.${row.sourceModule}`) }}
@@ -136,14 +136,14 @@
           min-width="150"
           show-overflow-tooltip
         />
-        <el-table-column prop="contactName" :label="$t('inquiry.contactName')" min-width="110" />
+        <el-table-column prop="contactName" :label="$t('common.contact')" min-width="110" />
         <el-table-column prop="collectCoordinatorName" :label="$t('tour.collectCoordinator')" min-width="110" />
         <el-table-column prop="operatorName" :label="$t('tour.operator')" min-width="110" />
         <el-table-column prop="adults" :label="$t('tour.adults')" width="80" />
         <el-table-column prop="children" :label="$t('tour.children')" width="80" />
         <el-table-column prop="leaders" :label="$t('tour.leaders')" width="80" />
         <el-table-column prop="totalPeople" :label="$t('tour.totalPeople')" width="90" />
-        <el-table-column prop="language" :label="$t('tour.language')" min-width="90" />
+        <el-table-column prop="language" :label="$t('common.language')" min-width="90" />
         <el-table-column :label="$t('tour.shopping')" width="80">
           <template #default="{ row }">
             {{ $t(row.shopping ? "common.yes" : "common.no") }}
@@ -327,7 +327,7 @@ function textOrDash(_row: unknown, _column: unknown, value: string | null) {
 }
 // 手工团没有来源关系；关联团缺编号时显示横线，不生成空链接。
 function sourceCode(row: TourRecord, _column: unknown, value: string | null) {
-  return value || (row.sourceModule === "manual" ? t("tour.unlinked") : "-");
+  return value || (row.sourceModule === "manual" ? t("common.notLinked") : "-");
 }
 function flightText(row: TourRecord, kind: "pickup" | "drop") {
   const flight = kind === "pickup" ? row.pickupFlight : row.dropFlight;

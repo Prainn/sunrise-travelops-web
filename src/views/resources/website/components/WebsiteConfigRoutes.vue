@@ -7,7 +7,7 @@
         :disabled="config.cities.length < 2"
         @click="openEditor()"
       >
-        {{ $t("websiteConfig.routes.create") }}
+        {{ $t("common.create") }}
       </el-button>
       <span class="text-muted text-[13px]">
         {{ $t("websiteConfig.routes.help") }}

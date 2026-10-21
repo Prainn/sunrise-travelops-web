@@ -65,7 +65,7 @@
         type="danger"
         @click="day.legs.splice(index, 1)"
       >
-        {{ $t("websiteItineraryUi.removeTransportLeg") }}
+        {{ $t("common.remove") }}
       </el-button>
     </div>
   </section>
