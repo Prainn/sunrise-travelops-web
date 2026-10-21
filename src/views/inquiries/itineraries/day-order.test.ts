@@ -1,10 +1,27 @@
 import { reactive } from "vue";
 import { describe, expect, it } from "vitest";
 import type { ItineraryDayRecord, ItineraryResourceItem } from "@/types/itinerary";
-import type { WebsiteDay } from "@/types/website";
-import { emptyDay } from "@/views/website-inquiries/options";
-import { reorderWebsiteDays } from "@/views/website-inquiries/itineraries/day-order";
-import { restoredDayIndex } from "./reorder-board";
+import type { WebsiteConfig, WebsiteDay } from "@/types/website";
+import { emptyDay, isMealArranged } from "@/views/website-inquiries/options";
+import {
+  reorderWebsiteDays,
+  websiteGuideBoardId,
+  websiteTransferIssues,
+  type ResourceLookup,
+  type WebsiteTransferContext,
+} from "@/views/website-inquiries/itineraries/day-order";
+import {
+  boardPlacements,
+  boardTransferIssues,
+  copyBoardItem,
+  planBoardTransfer,
+  removeBoardCopy,
+  restoredDayIndex,
+  type BoardState,
+  type DayOrderChange,
+  type ReorderBoardDay,
+  type ReorderBoardItem,
+} from "./reorder-board";
 import { reorderItineraryDays } from "./day-order";
 
 function item(id: string, type: "attraction" | "restaurant", mealSlot?: "lunch" | "dinner"): ItineraryResourceItem {
@@ -135,5 +152,225 @@ describe("day recycle transactions", () => {
     expect(restored.days[1]).toEqual(original);
     expect(restored.deletedDays).toEqual([]);
     expect(removed.day).toEqual(original);
+  });
+});
+
+describe("website cross-day transfer and copy", () => {
+  const config = {
+    version: 3,
+    cities: [
+      { id: "km", nameZh: "昆明", nameEn: "Kunming", resourceId: "pc-km", status: "enabled" },
+      { id: "dl", nameZh: "大理", nameEn: "Dali", resourceId: "pc-dl", status: "enabled" },
+      { id: "lj", nameZh: "丽江", nameEn: "Lijiang", resourceId: null, status: "enabled" },
+    ],
+    attractions: [
+      { id: "att-km", cityId: "km" },
+      { id: "att-dl", cityId: "dl" },
+    ],
+  } as unknown as WebsiteConfig;
+  const ready = <T,>(value: T): ResourceLookup<T> => ({ status: "ready", value });
+  const restaurantCities: Record<string, ResourceLookup<string | null>> = { "r-km": ready("昆明") };
+  const context: WebsiteTransferContext = {
+    config,
+    publicCityName: (id) => ready(({ "pc-km": "昆明", "pc-dl": "大理" } as Record<string, string>)[id] ?? null),
+    restaurantCity: (id) => restaurantCities[id] ?? ready(null),
+  };
+
+  function websiteDays(): WebsiteDay[] {
+    const d1 = { ...emptyDay(1), id: "d1", departCityId: "km", endCityId: "km", overnightCityId: "km", guideLanguage: "English", guideScope: "全天" };
+    d1.items = [{ id: "i-km", attractionId: "att-km", nameZh: "石林", nameEn: "Stone Forest", descriptionZh: "中文", descriptionEn: "EN", appears: false, feeState: "OPTIONAL" }];
+    d1.hotels = [{ id: "h-km", tier: "A", cityId: "km", configHotelId: null, resourceId: "pub-h", nameZh: "昆明酒店", nameEn: "KM Hotel", roomType: "大床", breakfastIncluded: false }];
+    d1.meals[1] = { ...d1.meals[1]!, id: "lunch-km", resourceId: "r-km", restaurantZh: "昆明餐厅", feeState: "INCLUDED" };
+    d1.services = [{ id: "s1", nameZh: "接机", nameEn: "Pickup", appears: true, feeState: "INCLUDED" }];
+    const d2 = { ...emptyDay(2), id: "d2", departCityId: "km", endCityId: "dl", overnightCityId: "dl", guideLanguage: "日语", guideScope: "半天" };
+    d2.items = [{ id: "i-dl", attractionId: "att-dl", nameZh: "洱海", nameEn: "Erhai", descriptionZh: "", descriptionEn: "", appears: true, feeState: "INCLUDED" }];
+    d2.legs = [{ id: "leg", routeId: null, fromCityId: "km", toCityId: "dl", mode: "hsr", nameZh: "", nameEn: "", feeState: "INCLUDED" }];
+    d2.hotels = [{ id: "h-dl", tier: "A", cityId: "dl", configHotelId: null, resourceId: null, nameZh: "大理酒店", nameEn: "DL Hotel", roomType: "", breakfastIncluded: true }];
+    d2.meals[1] = { ...d2.meals[1]!, id: "lunch-manual", restaurantZh: "手填餐馆", feeState: "INCLUDED" };
+    const d3 = { ...emptyDay(3), id: "d3", departCityId: "dl", endCityId: "dl", overnightCityId: null };
+    return [d1, d2, d3];
+  }
+
+  /** 与独立站页面看板相同的 ID/slot/占位约定 */
+  function board(days: WebsiteDay[]): ReorderBoardDay[] {
+    return days.map((day) => ({
+      id: day.id,
+      title: day.id,
+      groups: [
+        { key: "attractions", label: "景点", sortable: true, transferable: true, items: day.items.map((value) => ({ id: value.id, label: value.nameZh })) },
+        { key: "legs", label: "交通", transferable: true, items: day.legs.map((value) => ({ id: value.id, label: value.id })) },
+        {
+          key: "hotels", label: "酒店", transferable: true,
+          items: [
+            ...(day.overnightCityId ? [] : [{ id: `${day.id}-no-stay`, label: "不住宿", placeholder: true }]),
+            ...day.hotels.map((value) => ({ id: value.id, label: value.nameZh, slot: value.tier })),
+          ],
+        },
+        { key: "meals", label: "餐食", transferable: true, items: day.meals.map((value) => ({ id: value.id, label: value.slot, slot: value.slot, placeholder: !isMealArranged(value) })) },
+        {
+          key: "services", label: "导游与服务", transferable: true,
+          items: [
+            ...(day.guideLanguage ? [{ id: websiteGuideBoardId(day.id), label: day.guideLanguage, slot: "guide" }] : []),
+            ...day.services.map((value) => ({ id: value.id, label: value.nameZh })),
+          ],
+        },
+      ],
+    }));
+  }
+
+  function setup() {
+    const days = websiteDays();
+    const boardDays = board(days);
+    const items = new Map(boardDays.flatMap((day) => day.groups.flatMap((group) => group.items.map((value) => [value.id, value] as const))));
+    let state: BoardState = { placements: boardPlacements(boardDays), copies: {} };
+    const item = (id: string): ReorderBoardItem | undefined => {
+      const copy = state.copies[id];
+      const source = items.get(copy?.sourceId ?? id);
+      return source && { ...source, id };
+    };
+    const group = (key: string) => boardDays[0]!.groups.find((value) => value.key === key)!;
+    const change = (): DayOrderChange => ({
+      dayIds: days.map((day) => day.id),
+      itemIds: {},
+      placements: state.placements,
+      copies: Object.fromEntries(Object.entries(state.copies).map(([id, copy]) => [id, copy.sourceId])),
+    });
+    return {
+      days,
+      get state() { return state; },
+      move(key: string, from: string, id: string, to: string, index?: number) {
+        const plan = planBoardTransfer(state, group(key), { dayId: from, itemId: id }, { dayId: to, index }, item);
+        if (plan) state = plan.next;
+        return plan;
+      },
+      copy(key: string, dayId: string, id: string, copyId: string) {
+        state = copyBoardItem(state, dayId, key, id, copyId);
+      },
+      remove(copyId: string) {
+        state = removeBoardCopy(state, copyId);
+      },
+      boardIssues: () => boardTransferIssues(state, boardDays, item),
+      result: () => reorderWebsiteDays(days, change()),
+      blocking: () => websiteTransferIssues(days, change(), [], context).filter((issue) => issue.blocking).map((issue) => [issue.dayId, issue.key.split(".").pop(), issue.itemId]),
+      hints: () => websiteTransferIssues(days, change(), [], context).filter((issue) => !issue.blocking).map((issue) => [issue.dayId, issue.key.split(".").pop(), issue.itemId]),
+    };
+  }
+
+  it("moves a card into another day's empty category, keeping its ID and full content", () => {
+    const board = setup();
+    const service = structuredClone(board.days[0]!.services[0]);
+    expect(board.move("services", "d1", "s1", "d3")?.replaced).toEqual([]);
+    expect(board.move("attractions", "d1", "i-km", "d2", 0)).not.toBeNull();
+    const [d1, d2, d3] = board.result().days;
+    expect(d1!.services).toEqual([]);
+    expect(d3!.services).toEqual([service]);
+    expect(d2!.items.map((value) => value.id)).toEqual(["i-km", "i-dl"]);
+    expect(d2!.items[0]).toMatchObject({ descriptionEn: "EN", appears: false, feeState: "OPTIONAL" });
+    // 昆明景点在 D2 出发城市内，可通过。
+    expect(board.blocking()).toEqual([]);
+    // 草稿未被修改，取消弹窗时直接丢弃。
+    expect(board.days[0]!.services).toHaveLength(1);
+  });
+
+  it("keeps the shared board day-only for non-transferable groups such as Shengxu inquiries", () => {
+    const board = setup();
+    const state = board.state;
+    const plan = planBoardTransfer(state, { key: "attractions" }, { dayId: "d1", itemId: "i-km" }, { dayId: "d2" }, () => ({ id: "i-km", label: "" }));
+    expect(plan).toBeNull();
+    expect(planBoardTransfer(state, { key: "hotels", transferable: true }, { dayId: "d3", itemId: "d3-no-stay" }, { dayId: "d1" }, () => ({ id: "d3-no-stay", label: "", placeholder: true }))).toBeNull();
+  });
+
+  it("blocks attractions outside the day's cities and rechecks when transport legs move", () => {
+    const board = setup();
+    board.move("attractions", "d2", "i-dl", "d1");
+    expect(board.blocking()).toEqual([["d1", "cityMismatch", "i-dl"]]);
+    // 交通段带来大理后城市匹配，但 D1 交通链断开，D2 失去交通段也断链。
+    board.move("legs", "d2", "leg", "d1");
+    expect(board.blocking()).toEqual([["d1", "legChainBroken", undefined], ["d2", "legChainBroken", undefined]]);
+    board.move("legs", "d1", "leg", "d2");
+    expect(board.blocking()).toEqual([["d1", "cityMismatch", "i-dl"]]);
+  });
+
+  it("asks before replacing a same-tier hotel and reports missing or mismatched stays", () => {
+    const board = setup();
+    const before = board.state;
+    const conflict = planBoardTransfer(before, { key: "hotels", transferable: true }, { dayId: "d1", itemId: "h-km" }, { dayId: "d2" }, (id) => ({ id, label: id, slot: "A" }));
+    expect(conflict?.replaced).toEqual(["h-dl"]);
+    // 取消：不采用 next，排布保持拖动前。
+    expect(board.state).toBe(before);
+    board.move("hotels", "d1", "h-km", "d3");
+    expect(board.blocking()).toEqual([["d1", "missingHotel", undefined], ["d3", "hotelNoOvernight", "h-km"]]);
+    board.move("hotels", "d3", "h-km", "d1");
+    expect(board.blocking()).toEqual([]);
+    board.move("hotels", "d1", "h-km", "d2");
+    expect(board.result().days[1]!.hotels.map((value) => value.id)).toEqual(["h-km"]);
+    expect(board.blocking()).toEqual([["d1", "missingHotel", undefined], ["d2", "hotelCityMismatch", "h-km"]]);
+  });
+
+  it("copies into an independent record that must be placed or deleted before applying", () => {
+    const board = setup();
+    const initial = board.state;
+    board.copy("services", "d1", "s1", "copy-s1");
+    expect(board.boardIssues().map((issue) => [issue.dayId, issue.key.split(".").pop()])).toEqual([["d1", "unplacedCopy"]]);
+    board.move("services", "d1", "copy-s1", "d2");
+    expect(board.boardIssues()).toEqual([]);
+    const [d1, d2] = board.result().days;
+    expect(d1!.services.map((value) => value.id)).toEqual(["s1"]);
+    expect(d2!.services).toEqual([{ ...board.days[0]!.services[0], id: "copy-s1" }]);
+    d2!.services[0]!.nameZh = "改名";
+    expect(board.days[0]!.services[0]!.nameZh).toBe("接机");
+    board.remove("copy-s1");
+    expect(board.state).toEqual(initial);
+  });
+
+  it("moves, copies and replaces day guide arrangements with language and scope", () => {
+    const board = setup();
+    board.copy("services", "d1", websiteGuideBoardId("d1"), "copy-guide");
+    expect(board.boardIssues().map((issue) => issue.key.split(".").pop())).toEqual(["unplacedCopy", "duplicateSlot"]);
+    expect(board.move("services", "d1", "copy-guide", "d3")?.replaced).toEqual([]);
+    expect(board.boardIssues()).toEqual([]);
+    expect(board.move("services", "d1", websiteGuideBoardId("d1"), "d2")?.replaced).toEqual([websiteGuideBoardId("d2")]);
+    const [d1, d2, d3] = board.result().days;
+    expect([d1, d2, d3].map((day) => [day!.guideLanguage, day!.guideScope])).toEqual([["", ""], ["English", "全天"], ["English", "全天"]]);
+  });
+
+  it("keeps the meal slot, refills the vacated slot and checks restaurant cities", () => {
+    const board = setup();
+    // D3 午餐为默认自理占位，直接让位，不提示替换。
+    expect(board.move("meals", "d1", "lunch-km", "d3")?.replaced).toEqual([]);
+    const [d1, , d3] = board.result().days;
+    expect(d3!.meals.find((meal) => meal.slot === "lunch")).toMatchObject({ id: "lunch-km", resourceId: "r-km" });
+    expect(d1!.meals.find((meal) => meal.slot === "lunch")).toMatchObject({ feeState: "SELF_PAY", resourceId: null });
+    expect(d1!.meals.find((meal) => meal.slot === "lunch")!.id).not.toBe("lunch-km");
+    expect(board.blocking()).toEqual([["d3", "restaurantCityMismatch", "lunch-km"]]);
+    restaurantCities["r-km"] = { status: "loading" };
+    expect(board.blocking()).toEqual([["d3", "checking", "lunch-km"]]);
+    const retry = () => undefined;
+    restaurantCities["r-km"] = { status: "error", message: "network", retry };
+    expect(websiteTransferIssues(board.days, { dayIds: ["d1", "d2", "d3"], itemIds: {}, placements: board.state.placements }, [], context)
+      .find((issue) => issue.blocking)).toMatchObject({ key: "itineraryWorkspace.transfer.lookupFailed", retry });
+    restaurantCities["r-km"] = ready("昆明");
+  });
+
+  it("only hints manual checks for manual content and keeps historical issues non-blocking", () => {
+    const board = setup();
+    // D2 手填午餐移入 D1，与 D1 已安排午餐冲突 → 替换后仅提示人工核对。
+    expect(board.move("meals", "d2", "lunch-manual", "d1")?.replaced).toEqual(["lunch-km"]);
+    expect(board.hints()).toEqual([["d1", "manualCheck", "lunch-manual"]]);
+    expect(board.blocking()).toEqual([]);
+    // D3 原本就没有交通段（dl→dl 无需交通），改为历史断链：既有问题不因收到服务而阻断。
+    board.days[2]!.endCityId = "lj";
+    board.move("services", "d1", "s1", "d3");
+    expect(board.blocking()).toEqual([]);
+  });
+
+  it("keeps moved cards with a recycled day", () => {
+    const board = setup();
+    board.move("services", "d1", "s1", "d3");
+    const result = reorderWebsiteDays(board.days, {
+      dayIds: ["d1", "d2"], itemIds: {}, placements: board.state.placements, deletedDays: [{ id: "d3", dayNumber: 3, date: null }],
+    });
+    expect(result.days.map((day) => day.id)).toEqual(["d1", "d2"]);
+    expect(result.deletedDays[0]!.day.services.map((value) => value.id)).toEqual(["s1"]);
   });
 });

@@ -432,9 +432,9 @@
 
 <script setup lang="ts">
 import { businessUnitName } from "@/constants/identity";
-import { ArrowDown } from "@element-plus/icons-vue";
+import { ArrowDown, Bowl, Location, OfficeBuilding, User, Van } from "@element-plus/icons-vue";
 import { plannedDuration, itineraryDuration } from "@/views/inquiries/itineraries/duration";
-import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
+import { computed, markRaw, nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { ItineraryDayRecord, ItineraryHotelTier, ItineraryRecord } from "@/types/itinerary";
@@ -637,6 +637,14 @@ const guideSummary = computed(() => {
   const guide = selectedItinerary.value?.guidePlans[0];
   return guide ? `${guide.guideName} · ${t("itineraryWorkspace.scopes.wholeTrip")}` : "";
 });
+/** 顺序看板分组图标，与日卡资源按钮一致 */
+const BOARD_ICONS = {
+  attractions: markRaw(Location),
+  meals: markRaw(Bowl),
+  hotel: markRaw(OfficeBuilding),
+  vehicle: markRaw(Van),
+  guide: markRaw(User),
+};
 const allReorderBoardDays = computed<ReorderBoardDay[]>(() => {
   const plan = selectedItinerary.value;
   if (!plan) return [];
@@ -652,6 +660,7 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() => {
         {
           key: "attractions",
           label: t("itineraryWorkspace.actions.attraction"),
+          icon: BOARD_ICONS.attractions,
           sortable: true,
           items: day.items
             .filter((item) => item.type === "attraction")
@@ -660,6 +669,7 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() => {
         {
           key: "meals",
           label: t("itineraryWorkspace.groups.meals"),
+          icon: BOARD_ICONS.meals,
           items: [
             {
               id: `${day.id}-breakfast`,
@@ -682,6 +692,7 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() => {
         ...(["hotel", "vehicle", "guide"] as const).map((key) => ({
           key,
           label: t(`itineraryWorkspace.actions.${key}`),
+          icon: BOARD_ICONS[key],
           scope: t(
             key === "hotel"
               ? "itineraryWorkspace.scopes.byCity"

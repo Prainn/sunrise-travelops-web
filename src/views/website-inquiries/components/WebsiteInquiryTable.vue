@@ -43,6 +43,11 @@
           {{ formatDateTime(row.createdAt) }}
         </template>
       </el-table-column>
+      <el-table-column :label="$t('websiteInquiry.updatedAt')" min-width="160">
+        <template #default="{ row }">
+          {{ formatDateTime(row.updatedAt) }}
+        </template>
+      </el-table-column>
       <el-table-column :label="$t('common.status')" min-width="140" align="center">
         <template #default="{ row }">
           <el-tag :type="INQUIRY_STATUS_TAG_TYPES[row.status as WebsiteInquiry['status']]">

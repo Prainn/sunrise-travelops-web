@@ -34,17 +34,33 @@
         <el-descriptions-item :label="$t('websiteInquiry.pax')">
           {{ record.pax ?? $t("websiteInquiry.unconfirmed") }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('inquiry.phone')">
-          {{ record.phone || $t("common.notSet") }}
+        <el-descriptions-item :label="$t('websiteInquiry.contactInfo')">
+          <div class="whitespace-pre-wrap break-all">
+            {{ record.contactInfo || $t("common.notSet") }}
+          </div>
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('inquiry.email')">
-          {{ record.email || $t("common.notSet") }}
+        <el-descriptions-item :label="$t('websiteInquiry.receivedDate')">
+          {{ record.receivedDate || $t("common.notSet") }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('websiteInquiry.arrivalTime')">
-          {{ record.arrivalTime || $t("websiteInquiry.unconfirmed") }}
+        <el-descriptions-item :label="$t('websiteInquiry.receivedTime')">
+          {{ record.receivedTime || $t("common.notSet") }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('websiteInquiry.departureTime')">
-          {{ record.departureTime || $t("websiteInquiry.unconfirmed") }}
+        <el-descriptions-item :label="$t('websiteInquiry.contactChannel')">
+          {{ record.contactChannel || $t("common.notSet") }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('websiteInquiry.acquisitionSource')">
+          {{ record.acquisitionSource || $t("common.notSet") }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('websiteInquiry.whatsappSourceId')">
+          {{ record.whatsappSourceId || $t("common.notSet") }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('websiteInquiry.websiteInquiryNo')">
+          {{ record.websiteInquiryNo || $t("common.notSet") }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('websiteInquiry.landingPage')">
+          <div class="break-all">
+            {{ record.landingPage || $t("common.notSet") }}
+          </div>
         </el-descriptions-item>
         <el-descriptions-item :label="$t('websiteInquiry.destinations')">
           {{
@@ -54,6 +70,9 @@
         </el-descriptions-item>
         <el-descriptions-item :label="$t('common.createdAt')">
           {{ formatDateTime(record.createdAt) }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('websiteInquiry.updatedAt')">
+          {{ formatDateTime(record.updatedAt) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.originalMessage')">
           <div class="whitespace-pre-wrap">
@@ -190,13 +209,8 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('inquiry.phone')">
-            <el-input v-model="form.phone" maxlength="50" />
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('inquiry.email')" prop="email">
-            <el-input v-model="form.email" maxlength="254" />
+          <el-form-item :label="$t('websiteInquiry.contactInfo')">
+            <el-input v-model="form.contactInfo" maxlength="500" />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
@@ -219,9 +233,20 @@
       </el-row>
       <el-row :gutter="16">
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('websiteInquiry.arrivalTime')">
+          <el-form-item :label="$t('websiteInquiry.receivedDate')">
+            <el-date-picker
+              v-model="form.receivedDate"
+              value-format="YYYY-MM-DD"
+              :value-on-clear="null"
+              clearable
+              class="w-full"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('websiteInquiry.receivedTime')">
             <el-time-picker
-              v-model="form.arrivalTime"
+              v-model="form.receivedTime"
               format="HH:mm"
               value-format="HH:mm"
               value-on-clear=""
@@ -232,16 +257,28 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('websiteInquiry.departureTime')">
-            <el-time-picker
-              v-model="form.departureTime"
-              format="HH:mm"
-              value-format="HH:mm"
-              value-on-clear=""
-              :placeholder="$t('websiteInquiry.timeExample', { time: '18:00' })"
-              clearable
-              class="w-full"
-            />
+          <el-form-item :label="$t('websiteInquiry.contactChannel')">
+            <el-input v-model="form.contactChannel" maxlength="100" />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('websiteInquiry.acquisitionSource')">
+            <el-input v-model="form.acquisitionSource" maxlength="200" />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('websiteInquiry.whatsappSourceId')">
+            <el-input v-model="form.whatsappSourceId" maxlength="200" />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('websiteInquiry.websiteInquiryNo')">
+            <el-input v-model="form.websiteInquiryNo" maxlength="200" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="24">
+          <el-form-item :label="$t('websiteInquiry.landingPage')">
+            <el-input v-model="form.landingPage" maxlength="2000" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -344,7 +381,6 @@ const rules = computed<FormRules>(() => ({
       trigger: "blur",
     },
   ],
-  email: [{ type: "email", message: t("websiteInquiry.validEmailRequired"), trigger: "blur" }],
   ownerId: [
     {
       required: props.allowAssign && !props.record,

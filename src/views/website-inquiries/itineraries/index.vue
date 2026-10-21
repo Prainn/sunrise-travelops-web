@@ -311,7 +311,8 @@
           :deleted-days="deletedBoardDays"
           :start-date="plan.startDate"
           :readonly="!editable || saving"
-          :validate="(change) => reorderWebsiteDays(plan!.days, change, plan!.deletedDays).issues"
+          transfer
+          :validate="validateReorder"
           @apply="applyReorder"
         />
       </template>
@@ -329,7 +330,8 @@
   </PageShell>
 </template>
 <script setup lang="ts">
-import { computed, ref, useTemplateRef, watch } from "vue";
+import { computed, markRaw, ref, useTemplateRef, watch } from "vue";
+import { Bowl, Location, OfficeBuilding, Service, Van } from "@element-plus/icons-vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { usePageTitle } from "@/composables/usePageTitle";
@@ -343,8 +345,9 @@ import ItineraryWorkspaceLayout from "@/views/inquiries/itineraries/components/I
 import ItineraryWorkspaceFooter from "@/views/inquiries/itineraries/components/ItineraryWorkspaceFooter.vue";
 import ItineraryReorderDialog from "@/views/inquiries/itineraries/components/ItineraryReorderDialog.vue";
 import type { DayOrderChange, DayOrderIssue, ReorderBoardDay } from "@/views/inquiries/itineraries/reorder-board";
-import { TRANSPORT_OPTIONS } from "../options";
-import { reorderWebsiteDays } from "./day-order";
+import { isMealArranged, TRANSPORT_OPTIONS } from "../options";
+import { reorderWebsiteDays, WEBSITE_BOARD_GROUPS, websiteGuideBoardId, websiteTransferIssues } from "./day-order";
+import { useResourceCityLookup } from "./resource-cities";
 import { useWebsiteWorkspace } from "./useWebsiteWorkspace";
 import WebsiteDayCard, { type WebsiteResourceDialogKind } from "./components/WebsiteDayCard.vue";
 import WebsiteItineraryBasics from "./components/WebsiteItineraryBasics.vue";
@@ -359,6 +362,14 @@ defineOptions({ name: "WebsiteItineraryWorkspace" });
 /** 霖熹 Lynxtour 品牌色：酒红（取自 logo #811e21，色相略偏梅红以区别危险红）作主色，金色仅作装饰条。 */
 const LYNXTOUR_ACCENT = "#862742";
 const LYNXTOUR_GOLD = "#f1b92e";
+/** 顺序看板分组图标，与日卡资源按钮一致 */
+const BOARD_ICONS = {
+  attractions: markRaw(Location),
+  legs: markRaw(Van),
+  hotels: markRaw(OfficeBuilding),
+  meals: markRaw(Bowl),
+  services: markRaw(Service),
+};
 const router = useRouter();
 const { t, locale } = useI18n();
 const isBasicsDialogVisible = ref(false);
@@ -432,9 +443,11 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() =>
     date: plan.value?.deletedDays?.find((entry) => entry.day.id === day.id)?.originalDate ?? null,
     groups: [
       {
-        key: "attractions",
+        key: WEBSITE_BOARD_GROUPS.attractions,
         label: t("websiteItineraryUi.attractions"),
+        icon: BOARD_ICONS.attractions,
         sortable: true,
+        transferable: true,
         items: day.items.map((item) => ({
           id: item.id,
           label: localName(item) || t("websiteItineraryUi.manualAttractionOrComponent"),
@@ -442,8 +455,10 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() =>
         })),
       },
       {
-        key: "legs",
+        key: WEBSITE_BOARD_GROUPS.legs,
         label: t("websiteItineraryUi.transportLegs"),
+        icon: BOARD_ICONS.legs,
+        transferable: true,
         items: day.legs.map((leg) => ({
           id: leg.id,
           label: `${cityName(leg.fromCityId)} → ${cityName(leg.toCityId)}`,
@@ -451,32 +466,48 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() =>
         })),
       },
       {
-        key: "hotels",
+        key: WEBSITE_BOARD_GROUPS.hotels,
         label: t("websiteItineraryUi.hotelPlans"),
+        icon: BOARD_ICONS.hotels,
+        transferable: true,
         scope: day.hotels.length > 1 ? t("itineraryWorkspace.scopes.alternatives") : undefined,
-        items: day.overnightCityId
-          ? day.hotels.map((hotel) => ({
+        // 不住宿时仍列出已有酒店，便于移出；占位不可拖动。
+        items: [
+          ...(day.overnightCityId ? [] : [{ id: `${day.id}-no-stay`, label: t("websiteItineraryUi.noOvernightStay"), placeholder: true }]),
+          ...day.hotels.map((hotel) => ({
             id: hotel.id,
             label: `${hotel.tier} · ${localName(hotel) || "-"}`,
             detail: cityName(hotel.cityId),
-          }))
-          : [{ id: `${day.id}-no-stay`, label: t("websiteItineraryUi.noOvernightStay") }],
+            slot: hotel.tier,
+          })),
+        ],
       },
       {
-        key: "meals",
+        key: WEBSITE_BOARD_GROUPS.meals,
         label: t("itineraryWorkspace.groups.meals"),
+        icon: BOARD_ICONS.meals,
+        transferable: true,
         items: day.meals.map((meal) => ({
           id: meal.id,
           label: `${t(`itinerary.meals.${meal.slot}`)} · ${t(`websiteInquiry.feeStates.${meal.feeState}`)}`,
           detail: (locale.value === "en" ? meal.restaurantEn : meal.restaurantZh) || meal.restaurantZh || undefined,
+          slot: meal.slot,
+          placeholder: !isMealArranged(meal),
         })),
       },
       {
-        key: "services",
+        key: WEBSITE_BOARD_GROUPS.services,
         label: t("itineraryWorkspace.groups.guideAndServices"),
+        icon: BOARD_ICONS.services,
+        transferable: true,
         items: [
           ...(day.guideLanguage
-            ? [{ id: `${day.id}-guide`, label: `${t("itineraryWorkspace.actions.guide")} · ${day.guideLanguage}`, detail: day.guideScope }]
+            ? [{
+              id: websiteGuideBoardId(day.id),
+              label: `${t("itineraryWorkspace.actions.guide")} · ${day.guideLanguage}`,
+              detail: day.guideScope,
+              slot: "guide",
+            }]
             : []),
           ...day.services.map((service) => ({ id: service.id, label: localName(service) || "-" })),
         ],
@@ -543,6 +574,17 @@ function submitMeal(changes: Pick<WebsiteMeal, "slot" | "resourceId" | "restaura
 }
 const reorderBoardDays = computed(() => allReorderBoardDays.value.slice(0, plan.value?.days.length ?? 0));
 const deletedBoardDays = computed(() => allReorderBoardDays.value.slice(plan.value?.days.length ?? 0));
+
+const resourceCities = useResourceCityLookup();
+// 城市对应关系取自当前行程绑定的配置版本，切换行程或配置后重新读取。
+watch(() => [plan.value?.id, config.value?.version], () => resourceCities.reset());
+function validateReorder(change: DayOrderChange): DayOrderIssue[] {
+  if (!plan.value || !config.value) return [];
+  return [
+    ...reorderWebsiteDays(plan.value.days, change, plan.value.deletedDays).issues,
+    ...websiteTransferIssues(plan.value.days, change, plan.value.deletedDays ?? [], { config: config.value, ...resourceCities }),
+  ];
+}
 
 function applyReorder(change: DayOrderChange) {
   if (!plan.value || !editable.value) return;

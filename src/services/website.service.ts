@@ -32,6 +32,15 @@ export interface WebsiteResourceOption {
   seats?: number;
 }
 export type WebsiteResourceKind = "city" | "attraction" | "hotel" | "restaurant" | "transport";
+/** 公共资源详情：按公共资源 UUID 精确读取，含已停用主体，供已有引用核对。 */
+export interface WebsiteResourceDetail {
+  id: string;
+  name: string;
+  status: "enabled" | "disabled";
+  /** hotel/restaurant 所在城市名称，attraction 为 area；可能为空 */
+  city?: string | null;
+  seats?: number;
+}
 /** 公共资源查询；city 为公共城市名称，只适用于 hotel / restaurant / attraction。 */
 export interface WebsiteResourceQuery {
   page: number;
@@ -56,12 +65,16 @@ export function websiteInquiryInput(record: WebsiteInquiryInput): WebsiteInquiry
     plannedDays: record.plannedDays,
     requirements: record.requirements,
     ownerId: record.ownerId,
-    phone: record.phone,
-    email: record.email,
+    contactInfo: record.contactInfo,
+    receivedDate: record.receivedDate,
+    receivedTime: record.receivedTime,
+    contactChannel: record.contactChannel,
+    whatsappSourceId: record.whatsappSourceId,
+    websiteInquiryNo: record.websiteInquiryNo,
+    landingPage: record.landingPage,
+    acquisitionSource: record.acquisitionSource,
     startDate: record.startDate,
     pax: record.pax,
-    arrivalTime: record.arrivalTime,
-    departureTime: record.departureTime,
     destinations: [...record.destinations],
     internalRemark: record.internalRemark,
     status: record.status,
@@ -180,6 +193,9 @@ export const websiteService = {
   },
   saveConfig(config: WebsiteConfig, businessUnit?: WebsiteBusinessUnit) {
     return request.put<WebsiteConfig>("/website/config", config, {params: {businessUnit}});
+  },
+  resource(kind: WebsiteResourceKind, id: string) {
+    return request.get<WebsiteResourceDetail>(`/website/resources/${kind}/${encodeURIComponent(id)}`);
   },
   resources(kind: WebsiteResourceKind, query: WebsiteResourceQuery) {
     const city = kind === "city" || kind === "transport" ? undefined : query.city?.trim();
