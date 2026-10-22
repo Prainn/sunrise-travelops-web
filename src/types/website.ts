@@ -236,3 +236,69 @@ export interface WebsiteLog {
   occurredAt: string;
   detail: string;
 }
+
+export type WebsiteInquiryLogAction =
+  | "inquiry_created"
+  | "inquiry_updated"
+  | "inquiry_transferred"
+  | "inquiry_archived"
+  | "inquiry_lost"
+  | "itinerary_created"
+  | "itinerary_saved"
+  | "itinerary_copied"
+  | "itinerary_generated"
+  | "quotation_confirmed";
+export interface WebsiteInquiryLogChange {
+  path: string;
+  kind: "added" | "removed" | "changed";
+  before: unknown;
+  after: unknown;
+  context?: {
+    dayNumber?: number;
+    nameZh?: string;
+    nameEn?: string;
+    hotelTier?: "A" | "B";
+    mealSlot?: string;
+    vehicleType?: string;
+  };
+}
+export interface WebsiteInquiryLog {
+  id: string;
+  inquiryId: string;
+  inquiryCode: string;
+  businessUnit: WebsiteBusinessUnit;
+  /** 十类已知动作外，历史未知值保留原编码 */
+  action: string;
+  occurredAt: string;
+  operatorId: string;
+  operatorName: string;
+  operatorUsername: string | null;
+  targetType: "inquiry" | "itinerary";
+  targetId: string;
+  targetCode: string | null;
+  summary: string | null;
+  detail: string;
+  metadata: {
+    creationMode?: "copy";
+    sourceId?: string;
+    sourceCode?: string;
+    transferReason?: string;
+    lostReason?: string;
+    quotationCode?: string;
+  };
+  /** null 表示历史日志未记录字段差异，[] 表示确无字段差异 */
+  changes: WebsiteInquiryLogChange[] | null;
+}
+export interface WebsiteInquiryLogReport {
+  totalOperations: number;
+  inquiryCount: number;
+  operatorCount: number;
+  changedFields: number;
+  logsWithoutChanges: number;
+  byAction: { action: string; count: number }[];
+}
+export interface WebsiteInquiryLogOperator {
+  id: string;
+  name: string;
+  username: string | null;
+}

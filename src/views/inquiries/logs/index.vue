@@ -246,7 +246,7 @@ import { businessUnitName } from "@/constants/identity";
 import { useUserStore } from "@/stores/user";
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useOpenInNewTab } from "@/composables";
+import { useOpenInNewTab, useRefreshOnActivated } from "@/composables";
 import { useI18n } from "vue-i18n";
 import { inquiryService, type PersonOption } from "@/services/inquiry.service";
 import { inquiryLogService, type LogReport } from "@/services/inquiry-log.service";
@@ -362,6 +362,7 @@ async function fetchLogs() {
     if (version === requestVersion) isLoading.value = false;
   }
 }
+useRefreshOnActivated(fetchLogs);
 function search() {
   if (page.value === 1) void fetchLogs();
   else page.value = 1;

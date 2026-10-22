@@ -100,6 +100,7 @@
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useOpenInNewTab, usePendingActions, useRefreshOnActivated } from "@/composables";
 import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import FilterBar from "@/components/FilterBar/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
@@ -120,6 +121,7 @@ import WebsiteInquiryTransfer from "./components/WebsiteInquiryTransfer.vue";
 defineOptions({ name: "WebsiteInquiryList" });
 const { t } = useI18n();
 const user = useUserStore();
+const route = useRoute();
 const openInNewTab = useOpenInNewTab();
 const query = reactive<WebsiteInquiryQuery>({
   page: 1,
@@ -302,6 +304,16 @@ async function loadFilterOwners() {
     if (current === filterGeneration) filterOwners.value = result;
   } catch (cause) { ElMessage.error(websiteErrorMessage(cause)); }
 }
-onMounted(() => { void load(); void loadFilterOwners(); });
+// 汇总页“查看”通过 query.inquiryId 精确打开只读详情；无权限或记录不存在时按接口错误提示。
+async function openRequestedInquiry() {
+  const id = route.query.inquiryId;
+  if (typeof id !== "string" || !id) return;
+  try {
+    await openEditor(await websiteService.inquiry(id), true);
+  } catch (cause) {
+    ElMessage.error(websiteErrorMessage(cause));
+  }
+}
+onMounted(() => { void load(); void loadFilterOwners(); void openRequestedInquiry(); });
 useRefreshOnActivated(load);
 </script>

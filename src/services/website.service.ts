@@ -5,6 +5,9 @@ import type {
   WebsiteConfig,
   WebsiteInquiry,
   WebsiteInquiryInput,
+  WebsiteInquiryLog,
+  WebsiteInquiryLogOperator,
+  WebsiteInquiryLogReport,
   WebsiteItinerary,
   WebsiteItineraryInput,
   WebsiteLog,
@@ -55,6 +58,19 @@ export interface WebsiteInquiryQuery {
   status?: WebsiteInquiry["status"] | "";
   ownerId?: string;
   businessUnit?: WebsiteBusinessUnit;
+}
+
+/** 独立站询盘汇总查询；可选条件为空时由页面省略，不接受 keyword。 */
+export interface WebsiteInquiryLogQuery {
+  page: number;
+  pageSize: number;
+  businessUnit?: WebsiteBusinessUnit;
+  inquiryId?: string;
+  inquiryCode?: string;
+  operatorId?: string;
+  action?: string;
+  from?: string;
+  to?: string;
 }
 
 export function websiteInquiryInput(record: WebsiteInquiryInput): WebsiteInquiryInput {
@@ -134,6 +150,21 @@ export const websiteService = {
       `/website/inquiries/${encodeURIComponent(id)}/logs`,
       { params: { page, pageSize } },
     );
+  },
+  inquiryLogs(query: WebsiteInquiryLogQuery) {
+    return request.get<PageResult<WebsiteInquiryLog>>("/website/inquiry-logs", {
+      params: { ...query },
+    });
+  },
+  inquiryLogReport(query: WebsiteInquiryLogQuery) {
+    return request.get<WebsiteInquiryLogReport>("/website/inquiry-logs/report", {
+      params: { ...query },
+    });
+  },
+  inquiryLogOperators(query: WebsiteInquiryLogQuery) {
+    return request.get<WebsiteInquiryLogOperator[]>("/website/inquiry-logs/operators", {
+      params: { ...query, operatorId: undefined },
+    });
   },
   itineraries(inquiryId: string) {
     return request.get<WebsiteItinerary[]>(
