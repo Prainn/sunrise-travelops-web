@@ -1,0 +1,11 @@
+[Unit]
+Description=Recover timed-out frontend dev release processes
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/sunrise-ci/frontend-dev-guard/dev_release_guard.py watchdog
+Environment=PYTHONDONTWRITEBYTECODE=1
+TimeoutStartSec=15
+MemoryMax=64M
+CPUQuota=10%
+UMask=0077
