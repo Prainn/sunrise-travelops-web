@@ -939,6 +939,7 @@
       "title": "Access Denied"
     },
     "unavailable": {
+      "stillDown": "The service is still unavailable. Please try again later.",
       "description": "Service unavailable. You are still logged in. Try again later.",
       "label": "Service Unavailable",
       "signal": "Waiting for service",

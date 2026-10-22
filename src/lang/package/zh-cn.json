@@ -939,6 +939,7 @@
       "title": "无法访问"
     },
     "unavailable": {
+      "stillDown": "服务仍不可用，请稍后再试。",
       "description": "服务暂不可用，登录状态已保留，请稍后重试。",
       "label": "服务暂不可用",
       "signal": "等待服务恢复",
