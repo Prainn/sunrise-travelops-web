@@ -1,7 +1,7 @@
 export type OperationCategory =
   "login" | "user" | "system-category" | "business-category" | "resource"
   | "inquiry" | "itinerary" | "quotation" | "tour" | "guide-leave" | "guide-rating"
-  | "website-config";
+  | "website-config" | "ledger" | "website-visit";
 
 export interface OperationLog {
   id: string;

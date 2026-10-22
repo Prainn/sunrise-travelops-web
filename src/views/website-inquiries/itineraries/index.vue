@@ -73,7 +73,7 @@
                 <el-button v-if="editable" class="ml-0!" @click="isBasicsDialogVisible = true">
                   {{ $t("itinerary.editItinerary") }}
                 </el-button>
-                <span>
+                <span v-if="currentConfig && plan.configVersion !== currentConfig.version">
                   {{
                     $t("websiteWorkspace.configVersions", {
                       used: plan.configVersion,

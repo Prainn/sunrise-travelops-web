@@ -16,6 +16,21 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item :label="$t('identity.businessUnit')">
+        <el-select
+          v-model="scope"
+          autocomplete="new-password"
+          clearable
+          :placeholder="$t('identity.allBusinesses')"
+        >
+          <el-option
+            v-for="option in scopes"
+            :key="option.value"
+            :label="$t(option.label)"
+            :value="option.value"
+          />
+        </el-select>
+      </el-form-item>
     </FilterBar>
 
     <SectionCard fill>
@@ -25,7 +40,7 @@
         :loading="loading"
         :data="list"
         :error="loadError"
-        :filtered="Boolean(category)"
+        :filtered="Boolean(category || scope)"
         row-key="id"
         @retry="fetchData"
       >
@@ -82,6 +97,7 @@ import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { useRefreshOnActivated } from "@/composables";
 import { operationLogService } from "@/services/operation-log.service";
+import type { LoginScope } from "@/types/auth";
 import type { OperationCategory, OperationLog } from "@/types/operation-log";
 
 const { t } = useI18n();
@@ -102,7 +118,16 @@ const categories: { value: OperationCategory; label: string }[] = [
   { value: "guide-leave", label: "operationLog.guideLeave" },
   { value: "guide-rating", label: "operationLog.guideRating" },
   { value: "website-config", label: "operationLog.websiteConfig" },
+  { value: "ledger", label: "route.dataLedgers" },
+  { value: "website-visit", label: "route.websiteVisits" },
 ];
+const scopes: { value: LoginScope; label: string }[] = [
+  { value: "headquarters", label: "login.brandDesign.headquarters" },
+  { value: "shengxu", label: "ledger.shengxu.businessUnitName" },
+  { value: "linxi", label: "websiteInquiry.businessUnits.linxi" },
+  { value: "website", label: "websiteInquiry.businessUnits.website" },
+];
+const scope = ref<LoginScope | "">("");
 const category = ref<OperationCategory | "">("");
 const page = ref(1);
 const pageSize = ref(20);
@@ -112,7 +137,7 @@ const loadError = ref("");
 const list = ref<OperationLog[]>([]);
 const requestRows = useDebounceFn(fetchData, 300);
 
-watch(category, () => {
+watch([category, scope], () => {
   page.value = 1;
   requestRows();
 });
@@ -142,6 +167,7 @@ async function fetchData() {
       page: page.value,
       pageSize: pageSize.value,
       category: category.value || undefined,
+      scope: scope.value || undefined,
     });
     list.value = result.list;
     total.value = result.total;
@@ -153,6 +179,7 @@ async function fetchData() {
   }
 }
 function reset() {
+  scope.value = "";
   category.value = "";
   page.value = 1;
   requestRows();

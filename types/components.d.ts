@@ -11,6 +11,8 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AccountLinkEditor: typeof import('./../src/views/system/account-links/components/AccountLinkEditor.vue')['default']
+    AccountLinkUnlink: typeof import('./../src/views/system/account-links/components/AccountLinkUnlink.vue')['default']
     AgencyContactDialog: typeof import('./../src/views/resources/agency/components/AgencyContactDialog.vue')['default']
     AgencyContactSelect: typeof import('./../src/views/inquiries/components/AgencyContactSelect.vue')['default']
     AgencyContactsPanel: typeof import('./../src/views/resources/agency/components/AgencyContactsPanel.vue')['default']
@@ -41,7 +43,6 @@ declare module 'vue' {
     ElBreadcrumb: typeof import('element-plus/es')['ElBreadcrumb']
     ElBreadcrumbItem: typeof import('element-plus/es')['ElBreadcrumbItem']
     ElButton: typeof import('element-plus/es')['ElButton']
-    ElCard: typeof import('element-plus/es')['ElCard']
     ElCheckbox: typeof import('element-plus/es')['ElCheckbox']
     ElCheckboxGroup: typeof import('element-plus/es')['ElCheckboxGroup']
     ElCol: typeof import('element-plus/es')['ElCol']
@@ -52,7 +53,6 @@ declare module 'vue' {
     ElDescriptions: typeof import('element-plus/es')['ElDescriptions']
     ElDescriptionsItem: typeof import('element-plus/es')['ElDescriptionsItem']
     ElDialog: typeof import('element-plus/es')['ElDialog']
-    ElDivider: typeof import('element-plus/es')['ElDivider']
     ElDrawer: typeof import('element-plus/es')['ElDrawer']
     ElDropdown: typeof import('element-plus/es')['ElDropdown']
     ElDropdownItem: typeof import('element-plus/es')['ElDropdownItem']
@@ -150,6 +150,7 @@ declare module 'vue' {
     RowActions: typeof import('./../src/components/RowActions/index.vue')['default']
     SectionCard: typeof import('./../src/components/SectionCard/index.vue')['default']
     ShengxuLedgerDialog: typeof import('./../src/views/ledgers/shengxu/components/ShengxuLedgerDialog.vue')['default']
+    SwitchAccountDialog: typeof import('./../src/layouts/components/SwitchAccountDialog.vue')['default']
     TableToolbar: typeof import('./../src/components/TableToolbar/index.vue')['default']
     ThemeSwitch: typeof import('./../src/components/ThemeSwitch/index.vue')['default']
     TourEditorDialog: typeof import('./../src/views/tours/components/TourEditorDialog.vue')['default']

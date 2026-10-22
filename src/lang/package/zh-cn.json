@@ -74,7 +74,9 @@
     "dataLedgers": "数据台账",
     "shengxuLedger": "盛旭台账",
     "directLedger": "霖熹台账",
-    "businessGroups": "业务组"
+    "websiteLedger": "独立站台账",
+    "businessGroups": "业务组",
+    "accountLinks": "账号关联"
   },
   "appVersion": {
     "title": "有新版本",
@@ -657,7 +659,8 @@
     "expandMenu": "展开菜单",
     "logout": "退出登录",
     "logoutConfirm": "退出当前账号？",
-    "profile": "个人中心"
+    "profile": "个人中心",
+    "switchAccount": "切换账号"
   },
   "langSelect": {
     "message": {
@@ -793,7 +796,9 @@
     "tourCodeManualHint": "无法生成可用标识，请手动填写",
     "tourCodeGenerateFailed": "生成失败，请调整姓名重试或手动填写",
     "tourCodeRequired": "输入团号标识",
-    "tourCodeInvalid": "团号标识只能包含 1-10 位字母或数字"
+    "tourCodeInvalid": "团号标识只能包含 1-10 位字母或数字",
+    "linkedScopeChange": "该账号已关联其他账号，请先调整或解除账号关联，再修改业务范围",
+    "linkedDelete": "所选账号已关联其他账号，请先解除账号关联，再删除账号"
   },
   "resource": {
     "englishDescription": "英文描述",
@@ -962,7 +967,7 @@
     "USER_NOT_FOUND": "未找到该用户",
     "USERS_NOT_FOUND": "未找到一个或多个用户",
     "USERNAME_ALREADY_EXISTS": "该用户名已被使用",
-    "USER_TOUR_CODE_EXISTS": "团号标识已被使用，请修改后保存",
+    "USER_TOUR_CODE_EXISTS": "团号标识已被组外账号使用，请修改后保存",
     "USERNAME_IMMUTABLE": "用户名不能修改",
     "CURRENT_USER_CANNOT_BE_DISABLED": "不能停用当前登录用户",
     "CURRENT_USER_CANNOT_BE_DELETED": "不能删除当前登录用户",
@@ -1041,7 +1046,9 @@
     "DIRECT_LEDGER_NOT_PENDING_OPERATION": "仅待操作的台账可以标记已操作",
     "DIRECT_LEDGER_DELETE_REVIEWED": "已确认台账不能删除",
     "DIRECT_LEDGER_DELETE_OPERATED": "曾操作的台账不能删除",
-    "DIRECT_LEDGER_DELETE_CONVERTED": "已成团台账不能删除"
+    "DIRECT_LEDGER_DELETE_CONVERTED": "已成团台账不能删除",
+    "ACCOUNT_SWITCH_IN_PROGRESS": "正在切换账号，请稍候",
+    "ACCOUNT_SESSION_CHANGED": "当前账号已切换，页面正在刷新"
   },
   "request": {
     "failed": "请求失败",
@@ -1880,5 +1887,57 @@
     "reception": "仅收客",
     "operation": "仅操作",
     "both": "两者兼任"
+  },
+  "accountSwitch": {
+    "title": "切换账号",
+    "current": "当前",
+    "switch": "切换",
+    "empty": "暂无可切换的关联账号",
+    "switching": "正在切换账号…",
+    "unsupported": "当前浏览器不支持多标签页安全切换，请使用新版浏览器",
+    "busy": "已有账号切换正在进行，请稍后再试",
+    "separator": "、",
+    "blockedCurrent": "当前页面{reasons}，请处理后再切换账号",
+    "blockedOther": "同一登录的其他标签页{reasons}，请处理或关闭后再切换账号",
+    "reasons": {
+      "dirty": "有未保存的修改",
+      "saving": "正在保存",
+      "unresponsive": "无响应",
+      "unknown": "账号状态未确认"
+    },
+    "unknownResult": "切换结果未确认，请重新登录"
+  },
+  "accountLink": {
+    "searchPlaceholder": "昵称 / 用户名 / 团号标识",
+    "members": "关联成员",
+    "memberCount": "成员数",
+    "tourCode": "团号标识",
+    "unlink": "解除关联",
+    "unlinkTitle": "解除账号关联",
+    "unlinkConfirm": "解除后这些账号不能再互相切换，已切换的会话不会恢复原身份。",
+    "selected": "已选账号（{count}/3）",
+    "selectHint": "选择 2–3 个账号，每个业务至多一个",
+    "candidates": "可选账号",
+    "candidateSearch": "搜索昵称 / 用户名 / 团号标识",
+    "select": "选择",
+    "scopeTaken": "已选同业务账号",
+    "limitReached": "最多 3 个",
+    "tourCodeMode": "团号标识",
+    "modeKeep": "保留各自标识",
+    "modeUnify": "统一为同一标识",
+    "unifyTourCode": "统一标识",
+    "tourCodePlaceholder": "1–10 位字母或数字",
+    "tourCodeInvalid": "团号标识须为 1–10 位字母或数字",
+    "overrides": "调整标识（可选）",
+    "overridesHint": "移除成员或解除关联后，与组内账号相同的标识会变为组外占用，须同时为其分配新标识。",
+    "newTourCode": "新标识",
+    "removedMember": "将移出",
+    "sharedTourCode": "与其他成员相同",
+    "memberCountInvalid": "请选择 2–3 个账号",
+    "scopeDuplicate": "每个业务至多选择一个账号",
+    "memberTaken": "所选账号已属于其他关联组，请刷新后重新选择",
+    "unlinkSuccess": "已解除关联",
+    "scope": "业务",
+    "alreadySelected": "已选"
   }
 }

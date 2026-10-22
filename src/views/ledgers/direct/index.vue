@@ -1,13 +1,6 @@
 <template>
   <PageShell>
     <FilterBar @reset="resetQuery">
-      <el-form-item v-if="isHeadquarters" :label="$t('identity.businessUnit')">
-        <el-radio-group v-model="headquartersUnit">
-          <el-radio-button v-for="unit in UNITS" :key="unit" :value="unit">
-            {{ businessUnitName(unit) }}
-          </el-radio-button>
-        </el-radio-group>
-      </el-form-item>
       <el-form-item :label="$t('ledger.direct.orderStatus')">
         <el-select
           v-model="orderStatus"
@@ -98,13 +91,13 @@
           min-width="140"
           show-overflow-tooltip
         />
-        <el-table-column prop="creatorName" :label="$t('ledger.direct.creator')" min-width="100" />
+        <el-table-column prop="creatorName" :label="$t('ledger.direct.creator')" min-width="200" />
         <el-table-column
           prop="receivingAccountName"
           :label="$t('ledger.direct.receivingAccount')"
           min-width="100"
         />
-        <el-table-column prop="operatorName" :label="$t('ledger.direct.operator')" min-width="100" />
+        <el-table-column prop="operatorName" :label="$t('ledger.direct.operator')" min-width="200" />
         <el-table-column :label="$t('ledger.direct.orderStatus')" min-width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="row.orderStatus === 'converted' ? 'success' : 'info'">
@@ -252,7 +245,6 @@ import Pagination from "@/components/Pagination/index.vue";
 import RowActions from "@/components/RowActions/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
-import { businessUnitName } from "@/constants/identity";
 import { directLedgerService } from "@/services/direct-ledger.service";
 import { useUserStore } from "@/stores/user";
 import type {
@@ -266,8 +258,9 @@ import DirectLedgerDialog from "./components/DirectLedgerDialog.vue";
 
 defineOptions({ name: "DirectLedger" });
 
+const props = defineProps<{ businessUnit: DirectLedgerBusinessUnit }>();
+
 const WORKFLOW_STATUSES: DirectLedgerWorkflowStatus[] = ["pending_confirmation", "pending_operation", "operated"];
-const UNITS: DirectLedgerBusinessUnit[] = ["linxi", "website"];
 const BOOLEAN_FIELDS = ["effectiveContact", "proposalSent", "loss", "priority"] as const;
 const TRI_STATE_FIELDS = ["complaint", "satisfied"] as const;
 const TEXT_FIELDS = [
@@ -280,12 +273,7 @@ const TEXT_FIELDS = [
 
 const { t } = useI18n();
 const user = useUserStore();
-const isHeadquarters = computed(() => user.userInfo.scope === "headquarters");
-/** 总部须显式选择业务，列表不混合两个业务的分页。 */
-const headquartersUnit = ref<DirectLedgerBusinessUnit>("linxi");
-const businessUnit = computed<DirectLedgerBusinessUnit>(() =>
-  isHeadquarters.value ? headquartersUnit.value : (user.userInfo.scope as DirectLedgerBusinessUnit),
-);
+const businessUnit = computed(() => props.businessUnit);
 const creatorId = ref("");
 const operatorId = ref("");
 const keyword = ref("");
@@ -356,9 +344,9 @@ async function fetchList() {
       to: dateRange.value?.[1],
       orderStatus: orderStatus.value || undefined,
       workflowStatus: workflowStatus.value || undefined,
-      businessUnit: isHeadquarters.value ? headquartersUnit.value : undefined,
+      businessUnit: businessUnit.value,
     });
-    // 切换业务或筛选后丢弃旧响应，避免两个业务的数据混入同一列表。
+    // 筛选后丢弃旧响应，避免旧结果覆盖当前列表。
     if (generation !== listGeneration) return;
     rows.value = result.list;
     total.value = result.total;
@@ -376,18 +364,6 @@ const reload = useDebounceFn(() => {
   void fetchList();
 }, 300);
 watch([keyword, orderStatus, workflowStatus, dateRange, creatorId, operatorId], reload);
-// 切换业务时清空人员筛选，与其触发的筛选重载合并为一次请求；旧业务的在途响应直接作废。
-watch(headquartersUnit, () => {
-  listGeneration++;
-  creatorId.value = "";
-  operatorId.value = "";
-  dialogVisible.value = false;
-  editing.value = null;
-  rows.value = [];
-  total.value = 0;
-  loading.value = true;
-  void reload();
-});
 
 function resetQuery() {
   creatorId.value = "";

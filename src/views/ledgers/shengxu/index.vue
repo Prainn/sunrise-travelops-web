@@ -69,7 +69,7 @@
         <el-table-column
           prop="creatorName"
           :label="$t('ledger.shengxu.collectCoordinator')"
-          min-width="110"
+          min-width="200"
         />
         <el-table-column :label="$t('ledger.shengxu.quoteSent')" min-width="110" align="center">
           <template #default="{ row }">

@@ -144,8 +144,8 @@ export const userService = {
   },
 
   /** 获取后端当前用户，并映射为页面使用的身份与权限结构。 */
-  async getCurrentUser(): Promise<UserInfo> {
-    const currentUser = await authService.getCurrentUser();
+  async getCurrentUser(bypassSessionGate = false): Promise<UserInfo> {
+    const currentUser = await authService.getCurrentUser(bypassSessionGate);
     return {
       userId: currentUser.id,
       username: currentUser.username,
@@ -158,6 +158,8 @@ export const userService = {
       scope: currentUser.scope,
       scopeName: currentUser.scopeName,
       deptName: currentUser.deptName,
+      sessionId: currentUser.sessionId,
+      sessionVersion: currentUser.sessionVersion,
     };
   },
   async getRoleOptions(): Promise<IdentityRoleOption[]> {

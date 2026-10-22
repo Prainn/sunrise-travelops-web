@@ -105,7 +105,7 @@
         />
         <el-table-column
           :label="$t('user.nickname')"
-          min-width="140"
+          min-width="240"
           fixed="left"
           :show-overflow-tooltip="false"
         >
@@ -459,6 +459,8 @@ import { loginScopeName } from "@/constants/identity";
 import { formatDateTime } from "@/utils";
 import { hasUserPermission } from "@/utils/permission";
 import { requestErrorMessage } from "@/utils/version-conflict";
+import { isApiError } from "@/api/request";
+import { ApiErrorCode } from "@/api/error-code";
 import { userRoleLabel, userRoleLabels } from "@/utils/user-role";
 import { h } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
@@ -807,6 +809,13 @@ async function handleDutyChange(row: UserItem, duty: CoordinatorDuty): Promise<v
   }
 }
 
+/** 关联账号改业务范围或删除前须先调整/解除关联；后端以无 details 的 CONFLICT 表示。 */
+function userConflictMessage(error: unknown, linkMessageKey: string): string {
+  if (isApiError(error) && error.code === ApiErrorCode.CONFLICT && !error.details)
+    return t(linkMessageKey);
+  return requestErrorMessage(error);
+}
+
 /**
  * 校验并提交用户表单。
  */
@@ -828,7 +837,7 @@ function handleSubmit(): Promise<void> {
       closeDialog();
       handleQuery();
     } catch (error) {
-      ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+      ElMessage.error(userConflictMessage(error, "user.linkedScopeChange"));
     } finally {
       loading.value = false;
     }
@@ -896,7 +905,7 @@ async function confirmAndDelete(id?: string): Promise<void> {
     ElMessage.success(t("common.deleteSuccess"));
     handleQuery();
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+    ElMessage.error(userConflictMessage(error, "user.linkedDelete"));
   } finally {
     loading.value = false;
   }

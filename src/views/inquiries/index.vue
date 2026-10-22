@@ -47,6 +47,7 @@ import PageShell from "@/components/PageShell/index.vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useOpenInNewTab, usePendingActions, useRefreshOnActivated } from "@/composables";
+import { useAccountSwitchGuard } from "@/composables/useAccountSwitchGuard";
 import { inquiryService, type PersonOption } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
 import { useUserStore } from "@/stores/user";
@@ -227,6 +228,8 @@ function openInquiryLogs(record: InquiryRecord) {
 }
 // 保存期间弹窗不可关闭，避免旧请求返回后关掉新打开的弹窗。
 const saving = ref(false);
+// 打开中的询盘编辑弹窗视为未保存，阻止切换账号。
+useAccountSwitchGuard({ dirty: () => isEditorVisible.value, saving: () => saving.value });
 const { isPending, run } = usePendingActions();
 async function saveInquiry(record: InquiryRecord) {
   if (saving.value) return;

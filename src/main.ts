@@ -15,6 +15,7 @@ import {
   Calendar,
   ChatLineSquare,
   Collection,
+  Connection,
   DataAnalysis,
   Document,
   Food,
@@ -37,6 +38,7 @@ import {
 import { setupPermissionGuard } from "@/router/guards/permission";
 import { setupPageUnloadConfirmation } from "@/utils/page-lifecycle";
 import { setupAuthSessionSync } from "@/utils/auth-storage";
+import { setupAccountSwitchSync } from "@/utils/account-switch-runtime";
 
 const app = createApp(App);
 
@@ -47,12 +49,14 @@ setupDirective(app);
 setupStore(app);
 setupI18n(app);
 setupRouter(app);
+setupAccountSwitchSync();
 
 const routeIcons = {
   Briefcase,
   Calendar,
   ChatLineSquare,
   Collection,
+  Connection,
   DataAnalysis,
   Document,
   Food,

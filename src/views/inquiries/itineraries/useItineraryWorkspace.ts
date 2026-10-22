@@ -3,6 +3,7 @@ import { businessDictionaryService } from "@/services/business-dictionary.servic
 import { itineraryDuration } from "./duration";
 import { computed, ref, toRaw, watch } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
+import { useAccountSwitchGuard } from "@/composables/useAccountSwitchGuard";
 import { inquiryService, itineraryInput } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
 import { useUserStore } from "@/stores/user";
@@ -62,6 +63,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   onBeforeRouteLeave(
     async () => !hasUnsavedChanges.value || (await messages.confirm("itinerary.unsavedLeaveConfirm")),
   );
+  useAccountSwitchGuard({ dirty: () => hasUnsavedChanges.value, saving: () => isSaving.value });
   const isPlanDialogVisible = ref(false);
   const isEditingPlan = ref(false);
   const isResourceDialogVisible = ref(false);

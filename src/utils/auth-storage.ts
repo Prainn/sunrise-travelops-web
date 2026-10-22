@@ -4,6 +4,12 @@ import { reloadPageWithoutConfirmation } from "@/utils/page-lifecycle";
 
 const SESSION_TOKEN_CHANNEL = "sunrise-auth-session-tokens";
 
+/** 后端会话 ID 与版本；切换账号保持 ID、版本递增。与令牌存于同一存储。 */
+export interface SessionState {
+  sessionId: string;
+  version: number;
+}
+
 interface SessionTokenRotation {
   previousRefreshToken: string;
   accessToken: string;
@@ -53,17 +59,64 @@ export const AuthStorage = {
   },
 
   setLoginTokens(accessToken: string, refreshToken: string, rememberMe: boolean): void {
+    // 新登录是新会话，版本由随后的 /auth/me 写入。
+    Storage.remove(STORAGE_KEYS.SESSION_STATE);
+    Storage.sessionRemove(STORAGE_KEYS.SESSION_STATE);
     AuthStorage.setTokens(accessToken, refreshToken, rememberMe);
     // 最后发布登录标识，确保其他标签页重载时已能读取完整的新凭证。
     if (rememberMe) Storage.set(STORAGE_KEYS.LOGIN_SESSION, crypto.randomUUID());
     else Storage.remove(STORAGE_KEYS.LOGIN_SESSION);
   },
 
+  getSessionState(): SessionState | null {
+    return AuthStorage.getRememberMe()
+      ? Storage.get<SessionState | null>(STORAGE_KEYS.SESSION_STATE, null)
+      : Storage.sessionGet<SessionState | null>(STORAGE_KEYS.SESSION_STATE, null);
+  },
+
+  setSessionState(state: SessionState): void {
+    if (AuthStorage.getRememberMe()) Storage.set(STORAGE_KEYS.SESSION_STATE, state);
+    else Storage.sessionSet(STORAGE_KEYS.SESSION_STATE, state);
+  },
+
+  /** 切换账号成功：先发布新会话版本，使同会话旧页面在新令牌可读前即拒绝请求。 */
+  setSwitchedTokens(
+    accessToken: string,
+    refreshToken: string,
+    rememberMe: boolean,
+    state: SessionState,
+  ): void {
+    Storage.set(STORAGE_KEYS.REMEMBER_ME, rememberMe);
+    AuthStorage.setSessionState(state);
+    AuthStorage.setTokens(accessToken, refreshToken, rememberMe);
+  },
+
+  /** 未勾选“记住我”的同会话标签页接收切换结果，直接写入本页副本，不再广播。 */
+  adoptSwitchedSession(accessToken: string, refreshToken: string, state: SessionState): void {
+    Storage.sessionSet(STORAGE_KEYS.SESSION_STATE, state);
+    Storage.sessionSet(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+    Storage.sessionSet(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+  },
+
+  /** 切换结果不明：仅清除本会话凭证，不改登录标识，避免重载其他独立会话的标签页。 */
+  clearSessionCredentials(): void {
+    if (AuthStorage.getRememberMe()) {
+      Storage.remove(STORAGE_KEYS.ACCESS_TOKEN);
+      Storage.remove(STORAGE_KEYS.REFRESH_TOKEN);
+      Storage.remove(STORAGE_KEYS.SESSION_STATE);
+    }
+    Storage.sessionRemove(STORAGE_KEYS.ACCESS_TOKEN);
+    Storage.sessionRemove(STORAGE_KEYS.REFRESH_TOKEN);
+    Storage.sessionRemove(STORAGE_KEYS.SESSION_STATE);
+  },
+
   clearAuth(): void {
     Storage.remove(STORAGE_KEYS.ACCESS_TOKEN);
     Storage.remove(STORAGE_KEYS.REFRESH_TOKEN);
+    Storage.remove(STORAGE_KEYS.SESSION_STATE);
     Storage.sessionRemove(STORAGE_KEYS.ACCESS_TOKEN);
     Storage.sessionRemove(STORAGE_KEYS.REFRESH_TOKEN);
+    Storage.sessionRemove(STORAGE_KEYS.SESSION_STATE);
     Storage.remove(STORAGE_KEYS.LOGIN_SESSION);
   },
 

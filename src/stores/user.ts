@@ -6,6 +6,8 @@ import { authService, userService } from "@/services";
 import type { LoginRequest } from "@/types/auth";
 
 import { AuthStorage } from "@/utils/auth-storage";
+import { reloadPageWithoutConfirmation } from "@/utils/page-lifecycle";
+import { sessionGate } from "@/utils/session-gate";
 import { usePermissionStoreHook } from "@/stores/permission";
 import { useDictStoreHook } from "@/stores/dict";
 import { useTagsViewStore } from "./tags-view";
@@ -35,8 +37,23 @@ export const useUserStore = defineStore("user", () => {
     if (!data) {
       throw new Error("Verification failed, please Login again.");
     }
+    adoptSession(data);
     Object.assign(userInfo.value, data);
     return data;
+  }
+
+  /** 记录本页加载的会话版本；同会话已有更新版本说明本次结果属于切换前身份，整页重载。 */
+  function adoptSession({ sessionId, sessionVersion }: UserInfo): void {
+    if (!sessionId || sessionVersion === undefined) return;
+    const stored = AuthStorage.getSessionState();
+    if (stored?.sessionId === sessionId && stored.version > sessionVersion) {
+      sessionGate.retire();
+      reloadPageWithoutConfirmation();
+      throw new Error("Account session changed.");
+    }
+    const state = { sessionId, version: sessionVersion };
+    AuthStorage.setSessionState(state);
+    sessionGate.setKnown(state);
   }
 
   /**
@@ -72,6 +89,7 @@ export const useUserStore = defineStore("user", () => {
   function resetUserState(): void {
     AuthStorage.clearAuth();
     clearResourceOptionsCache();
+    sessionGate.setKnown(null);
     userInfo.value = { roles: [], perms: [] };
     usePermissionStoreHook().resetRouter();
   }
