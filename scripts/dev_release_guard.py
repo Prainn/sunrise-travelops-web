@@ -151,6 +151,8 @@ class Job:
         # An interrupted activation requires explicit inspection, never an automatic retry.
         for path in JOBS.glob('*.json'):
             value = json.loads(path.read_text())
+            if path != self.path and value.get('status') == 'cleanup-blocked':
+                raise RuntimeError('Previous dev processes have not exited; refusing another release: ' + path.name)
             if path != self.path and value.get('activation_uncertain'):
                 raise RuntimeError('A previous dev activation needs operator review: ' + path.name)
 
