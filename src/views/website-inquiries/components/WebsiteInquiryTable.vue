@@ -58,7 +58,7 @@
       <!-- @vue-generic {WebsiteInquiry} -->
       <el-table-column
         :label="$t('common.actions')"
-        :width="locale === 'en' ? 410 : 300"
+        :width="locale === 'en' ? 500 : 340"
         fixed="right"
         :show-overflow-tooltip="false"
       >
@@ -84,19 +84,21 @@
             >
               {{ $t("common.edit") }}
             </el-button>
-            <template
-              v-if="!ended(row) && (can('website:inquiry:transfer') || can('website:inquiry:archive'))"
-              #more
+            <el-button
+              v-if="can('website:inquiry:transfer') && !ended(row)"
+              type="primary"
+              link
+              :disabled="isPending?.(row.id)"
+              @click="emit('transfer', row)"
             >
-              <el-dropdown-item
-                v-if="can('website:inquiry:transfer')"
-                :disabled="isPending?.(row.id)"
-                @click="emit('transfer', row)"
-              >
-                {{ $t("identity.transfer") }}
+              {{ $t("identity.transfer") }}
+            </el-button>
+            <template #more>
+              <el-dropdown-item @click="emit('view-logs', row)">
+                {{ $t("inquiry.log.title") }}
               </el-dropdown-item>
               <el-dropdown-item
-                v-if="can('website:inquiry:archive')"
+                v-if="can('website:inquiry:archive') && !ended(row)"
                 :disabled="isPending?.(row.id)"
                 @click="emit('archive', row)"
               >
@@ -149,6 +151,7 @@ const emit = defineEmits<{
   archive: [record: WebsiteInquiry];
   lost: [record: WebsiteInquiry];
   itineraries: [record: WebsiteInquiry];
+  "view-logs": [record: WebsiteInquiry];
   "update:page": [value: number];
   "update:pageSize": [value: number];
 }>();

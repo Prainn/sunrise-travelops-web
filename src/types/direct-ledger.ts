@@ -16,7 +16,7 @@ export interface DirectLedgerQueryParams {
   businessUnit?: DirectLedgerBusinessUnit;
 }
 
-/** 接单账号与操作计调共用的人员选项查询。 */
+/** 收客计调、操作计调与接单业务组共用的分页选项查询。 */
 export interface DirectLedgerOperatorQuery {
   page: number;
   pageSize: number;
@@ -24,6 +24,7 @@ export interface DirectLedgerOperatorQuery {
   businessUnit?: DirectLedgerBusinessUnit;
 }
 
+/** 人员或接单业务组选项；业务组名称为管理员录入的完整显示值。 */
 export interface DirectLedgerOperatorOption {
   id: string;
   name: string;
@@ -42,8 +43,8 @@ export interface DirectLedgerCapabilities {
 export interface DirectLedgerInput {
   receivedDate: string;
   source: string;
-  /** 独立站固定为 null，由后端回填“独立站”。 */
-  receivingAccountId: string | null;
+  /** 霖熹必填启用业务组 ID；独立站固定为 null，由后端回填“独立站”。 */
+  receivingGroupId: string | null;
   operatorId: string;
   orderStatus: DirectLedgerOrderStatus;
   effectiveContact: boolean;
@@ -62,7 +63,7 @@ export interface DirectLedgerInput {
   satisfied: boolean | null;
 }
 
-/** 新增时由当前业务决定归属；ROOT 代建必须指定定制师。 */
+/** 新增时由当前业务决定归属；ROOT 代建必须指定收客计调。 */
 export interface DirectLedgerCreateInput extends DirectLedgerInput {
   businessUnit?: DirectLedgerBusinessUnit;
   creatorId?: string;
@@ -82,8 +83,10 @@ export interface DirectLedgerItem extends DirectLedgerInput {
   businessUnit: DirectLedgerBusinessUnit;
   orderNo: string;
   receivedMonth: string;
+  /** 收客计调及其姓名快照。 */
   creatorId: string;
   creatorName: string;
+  /** 接单业务组或“独立站”的名称快照。 */
   receivingAccountName: string;
   operatorName: string;
   workflowStatus: DirectLedgerWorkflowStatus;

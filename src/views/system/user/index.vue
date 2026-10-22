@@ -182,6 +182,29 @@
             </div>
           </template>
         </el-table-column>
+        <el-table-column :label="$t('coordinatorDuty.label')" min-width="130" :show-overflow-tooltip="false">
+          <template #default="{ row }">
+            <!-- 仅单一身份计调可单项设置分工；其他账号只读，不猜测历史混合身份。 -->
+            <el-select
+              v-if="canEditDuty(row as UserItem)"
+              :model-value="row.identities[0].coordinatorDuty ?? undefined"
+              autocomplete="new-password"
+              size="small"
+              :placeholder="$t('coordinatorDuty.selectPlaceholder')"
+              :disabled="dutyUpdatingId === row.id"
+              :loading="dutyUpdatingId === row.id"
+              @update:model-value="handleDutyChange(row as UserItem, $event)"
+            >
+              <el-option
+                v-for="duty in COORDINATOR_DUTIES"
+                :key="duty"
+                :value="duty"
+                :label="$t(`coordinatorDuty.${duty}`)"
+              />
+            </el-select>
+            <span v-else>{{ dutyText(row as UserItem) }}</span>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('common.roles')" prop="roleNames" width="400">
           <template #default="scope">
             <el-tag
@@ -431,8 +454,11 @@
 </template>
 
 <script setup lang="ts">
+import { COORDINATOR_DUTIES, isCoordinatorIdentity } from "@/constants/coordinator-duty";
 import { loginScopeName } from "@/constants/identity";
 import { formatDateTime } from "@/utils";
+import { hasUserPermission } from "@/utils/permission";
+import { requestErrorMessage } from "@/utils/version-conflict";
 import { userRoleLabel, userRoleLabels } from "@/utils/user-role";
 import { h } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
@@ -441,6 +467,7 @@ import { CopyDocument, Female, Male } from "@element-plus/icons-vue";
 import UserIdentityFields from "./components/UserIdentityFields.vue";
 import { useTourCodeSuggestion } from "./useTourCodeSuggestion";
 import type {
+  CoordinatorDuty,
   IdentityRoleOption,
   DepartmentOption,
   UserForm,
@@ -741,6 +768,42 @@ async function handleEditClick(id: string): Promise<void> {
     openDialog();
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  }
+}
+
+const dutyUpdatingId = ref("");
+
+function canEditDuty(row: UserItem): boolean {
+  return (
+    row.identities.length === 1 &&
+    isCoordinatorIdentity(row.identities[0]!, roleOptions.value) &&
+    hasUserPermission(userStore.userInfo, "sys:user:update")
+  );
+}
+
+function dutyText(row: UserItem): string {
+  const duties = row.identities
+    .map((identity) => identity.coordinatorDuty)
+    .filter((duty): duty is CoordinatorDuty => Boolean(duty));
+  return duties.length ? duties.map((duty) => t(`coordinatorDuty.${duty}`)).join(" / ") : "—";
+}
+
+/** 单项更新分工，只提交 version 与分工；冲突提示刷新，不自动重试。 */
+async function handleDutyChange(row: UserItem, duty: CoordinatorDuty): Promise<void> {
+  if (dutyUpdatingId.value || duty === row.identities[0]?.coordinatorDuty) return;
+  dutyUpdatingId.value = row.id;
+  try {
+    const updated = await userService.updateCoordinatorDuty(row.id, {
+      version: row.version,
+      coordinatorDuty: duty,
+    });
+    const index = list.value.findIndex((item) => item.id === row.id);
+    if (index >= 0) list.value[index] = updated;
+    ElMessage.success(t("user.updateSuccess"));
+  } catch (error) {
+    ElMessage.error(requestErrorMessage(error));
+  } finally {
+    dutyUpdatingId.value = "";
   }
 }
 

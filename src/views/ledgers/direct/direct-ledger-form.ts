@@ -19,7 +19,7 @@ export function emptyDirectLedgerForm(): DirectLedgerFormState {
     creatorId: "",
     receivedDate: "",
     source: "",
-    receivingAccountId: null,
+    receivingGroupId: null,
     operatorId: "",
     orderStatus: "unconverted",
     effectiveContact: false,
@@ -46,7 +46,7 @@ export function directLedgerFormFromItem(item: DirectLedgerItem): DirectLedgerFo
     creatorId: item.creatorId,
     receivedDate: item.receivedDate,
     source: item.source,
-    receivingAccountId: item.receivingAccountId,
+    receivingGroupId: item.receivingGroupId,
     operatorId: item.operatorId,
     orderStatus: item.orderStatus,
     effectiveContact: item.effectiveContact,
@@ -72,7 +72,7 @@ export function directLedgerFormFromItem(item: DirectLedgerItem): DirectLedgerFo
  * 生成完整表单请求体；只映射合同字段，可空日期与三态保持 null。
  *
  * @param form - 已通过表单校验的状态。
- * @param businessUnit - 记录所属业务；独立站接单账号固定提交 null。
+ * @param businessUnit - 记录所属业务；独立站接单业务组固定提交 null。
  * @returns 直客台账写入请求体（PUT 另需合并 version）。
  */
 export function directLedgerInput(
@@ -82,7 +82,7 @@ export function directLedgerInput(
   return {
     receivedDate: form.receivedDate,
     source: form.source.trim(),
-    receivingAccountId: businessUnit === "website" ? null : form.receivingAccountId,
+    receivingGroupId: businessUnit === "website" ? null : form.receivingGroupId,
     operatorId: form.operatorId,
     orderStatus: form.orderStatus,
     effectiveContact: form.effectiveContact,

@@ -1,6 +1,11 @@
 <template>
   <PageShell v-loading="isLoading" class="website-inquiry-log-page">
     <SectionCard>
+      <el-page-header v-if="inquiryId" class="mb-[16px]" @back="router.push({ name: 'WebsiteInquiryList' })">
+        <template #content>
+          {{ inquiry ? `${inquiry.code} · ${inquiry.customerName}` : $t("inquiry.log.title") }}
+        </template>
+      </el-page-header>
       <div class="flex flex-wrap gap-[16px]">
         <span>
           {{ $t("inquiry.log.totalOperations") }}
@@ -29,7 +34,7 @@
       </div>
     </SectionCard>
     <FilterBar :resettable="false">
-      <el-form-item v-if="isHeadquarters" :label="$t('identity.businessUnit')">
+      <el-form-item v-if="isHeadquarters && !inquiryId" :label="$t('identity.businessUnit')">
         <el-select
           v-model="form.businessUnit"
           autocomplete="new-password"
@@ -235,6 +240,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRoute, useRouter } from "vue-router";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
@@ -249,6 +255,7 @@ import {
 import { useUserStore } from "@/stores/user";
 import type {
   WebsiteBusinessUnit,
+  WebsiteInquiry,
   WebsiteInquiryLog,
   WebsiteInquiryLogChange,
   WebsiteInquiryLogOperator,
@@ -268,6 +275,11 @@ defineOptions({ name: "WebsiteInquiryLogReport" });
 const { t, te, locale } = useI18n();
 const userStore = useUserStore();
 const openInNewTab = useOpenInNewTab();
+const route = useRoute();
+const router = useRouter();
+// 从询盘列表进入时限定单个询盘，汇总菜单进入时为空；页面按 fullPath 缓存，不随路由变化
+const inquiryId = String(route.params.inquiryId ?? "");
+const inquiry = ref<WebsiteInquiry>();
 const isHeadquarters = computed(() => userStore.userInfo.scope === "headquarters");
 const displayContext = computed(() => ({ t, te, locale: locale.value }));
 function actionName(action: string) {
@@ -301,7 +313,9 @@ let applied: Omit<WebsiteInquiryLogQuery, "page" | "pageSize"> = {};
 let requestVersion = 0;
 function snapshot(): typeof applied {
   return {
-    businessUnit: isHeadquarters.value ? form.businessUnit || undefined : undefined,
+    businessUnit:
+      isHeadquarters.value && !inquiryId ? form.businessUnit || undefined : undefined,
+    inquiryId: inquiryId || undefined,
     inquiryCode: form.inquiryCode || undefined,
     operatorId: form.operatorId || undefined,
     action: form.action || undefined,
@@ -315,12 +329,14 @@ async function fetchLogs(withSummary: boolean) {
   error.value = "";
   const query = { ...applied, page: page.value, pageSize: pageSize.value };
   try {
-    const [details, summary, people] = await Promise.all([
+    const [details, summary, people, record] = await Promise.all([
       websiteService.inquiryLogs(query),
       withSummary ? websiteService.inquiryLogReport(query) : undefined,
       withSummary ? websiteService.inquiryLogOperators(query) : undefined,
+      withSummary && inquiryId ? websiteService.inquiry(inquiryId) : undefined,
     ]);
     if (version !== requestVersion) return;
+    if (record) inquiry.value = record;
     logs.value = details.list;
     total.value = details.total;
     if (summary) report.value = summary;

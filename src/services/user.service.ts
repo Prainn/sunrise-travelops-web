@@ -11,6 +11,7 @@ import type {
   UserProfileDetail,
   UserProfileForm,
   UserQueryParams,
+  CoordinatorDuty,
   TourCodeSuggestion,
   TourCodeSuggestionInput,
 } from "@/types/user";
@@ -18,6 +19,14 @@ import { authService } from "./auth.service";
 
 type UserCreateResult = UserForm & { temporaryPassword?: string };
 const USER_BASE_URL = "/users";
+
+function withUserSummary(user: UserItem): UserItem {
+  return {
+    ...user,
+    deptName: user.identities.map((i) => i.deptName).join(" / "),
+    roleNames: user.identities.map((i) => i.roleNames).join(","),
+  };
+}
 
 function buildUserParams(query: UserQueryParams) {
   const keyword = query.keyword?.trim();
@@ -29,6 +38,8 @@ function buildUserParams(query: UserQueryParams) {
     deptId: query.deptId,
     roleId: query.roleId,
     createTime: query.createTime,
+    scope: query.scope,
+    businessGroupId: query.businessGroupId,
   };
 }
 
@@ -43,12 +54,17 @@ function toUserInput(
     gender: data.gender ?? 0,
     mobile: data.mobile?.trim() ?? "",
     email: data.email?.trim() ?? "",
-    identities: data.identities.map(({ id, scope, deptId, roleIds }) => ({
-      id,
-      scope,
-      deptId,
-      roleIds,
-    })),
+    identities: data.identities.map(
+      ({ id, scope, deptId, roleIds, coordinatorDuty, businessGroupId }) => ({
+        id,
+        scope,
+        deptId,
+        roleIds,
+        // 非计调/非霖熹由表单清空为 null；编辑计调保留实际分工。
+        coordinatorDuty: coordinatorDuty ?? null,
+        businessGroupId: scope === "linxi" ? (businessGroupId ?? null) : null,
+      }),
+    ),
     status: data.status ?? 1,
   };
   if (data.identities[0]?.scope !== "headquarters")
@@ -72,14 +88,7 @@ export const userService = {
     const result = await request.get<PageResult<UserItem>>(USER_BASE_URL, {
       params: buildUserParams(query),
     });
-    return {
-      ...result,
-      list: result.list.map((user) => ({
-        ...user,
-        deptName: user.identities.map((i) => i.deptName).join(" / "),
-        roleNames: user.identities.map((i) => i.roleNames).join(","),
-      })),
-    };
+    return { ...result, list: result.list.map(withUserSummary) };
   },
 
   async getFormData(userId: string): Promise<UserForm> {
@@ -98,6 +107,30 @@ export const userService = {
       `${USER_BASE_URL}/${encodeURIComponent(userId)}`,
       toUserInput(data),
     );
+  },
+
+  /** 仅更新计调分工，不提交整份用户表单；返回最新 User（含新 version）。 */
+  async updateCoordinatorDuty(
+    userId: string,
+    body: { version: number; coordinatorDuty: CoordinatorDuty },
+  ): Promise<UserItem> {
+    const user = await request.put<UserItem>(
+      `${USER_BASE_URL}/${encodeURIComponent(userId)}/coordinator-duty`,
+      body,
+    );
+    return withUserSummary(user);
+  },
+
+  /** 仅调整霖熹成员所属业务组；返回最新 User。 */
+  async updateBusinessGroup(
+    userId: string,
+    body: { version: number; businessGroupId: string },
+  ): Promise<UserItem> {
+    const user = await request.put<UserItem>(
+      `${USER_BASE_URL}/${encodeURIComponent(userId)}/business-group`,
+      body,
+    );
+    return withUserSummary(user);
   },
 
   async deleteByIds(ids: string): Promise<void> {

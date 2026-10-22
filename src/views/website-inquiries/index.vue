@@ -74,6 +74,7 @@
       @archive="archive"
       @lost="markLost"
       @itineraries="openItineraries"
+      @view-logs="openInquiryLogs"
     />
     <WebsiteInquiryEditor
       v-model="editorVisible"
@@ -188,6 +189,9 @@ function openItineraries(record: WebsiteInquiry) {
     params: { inquiryId: record.id },
     query: { module: "website" },
   });
+}
+function openInquiryLogs(record: WebsiteInquiry) {
+  openInNewTab({ name: "WebsiteInquiryLogs", params: { inquiryId: record.id } });
 }
 async function save(input: WebsiteInquiryInput) {
   if (saving.value) return;

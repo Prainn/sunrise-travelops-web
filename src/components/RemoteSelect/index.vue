@@ -11,7 +11,7 @@
     :debounce="300"
     :remote-method="search"
     :loading-text="$t('remoteSelect.loading')"
-    :no-match-text="$t('remoteSelect.empty')"
+    :no-match-text="emptyText || $t('remoteSelect.empty')"
     :loading="loading && !items.length"
     @visible-change="handleVisibleChange"
     @end-reached="loadNextPage"
@@ -41,7 +41,7 @@
 
     <template #empty>
       <p class="el-select-dropdown__empty">
-        {{ loading ? $t("remoteSelect.loading") : $t("remoteSelect.empty") }}
+        {{ loading ? $t("remoteSelect.loading") : emptyText || $t("remoteSelect.empty") }}
       </p>
     </template>
   </el-select>
@@ -67,6 +67,8 @@ const props = withDefaults(
     disabled?: boolean;
     placeholder?: string;
     clearable?: boolean;
+    /** 无选项时的业务提示，默认“无匹配选项”。 */
+    emptyText?: string;
   }>(),
   {
     clearable: true,

@@ -58,7 +58,7 @@
           <el-form-item :label="$t('ledger.direct.source')" prop="source">
             <el-input
               v-model="form.source"
-              :placeholder="$t('ledger.direct.sourcePlaceholder')"
+              :placeholder="$t(`ledger.direct.sourcePlaceholders.${businessUnit}`)"
               maxlength="200"
             />
           </el-form-item>
@@ -68,9 +68,9 @@
             <RemoteSelect
               v-if="isDelegate"
               v-model="form.creatorId"
-              :load-options="loadOperators"
+              :load-options="loadCollectors"
               :query-key="businessUnit"
-              :placeholder="$t('ledger.direct.coordinatorPlaceholder')"
+              :placeholder="$t('ledger.direct.collectorPlaceholder')"
               :clearable="false"
               class="w-full"
             />
@@ -80,20 +80,21 @@
         <el-col :xs="24" :sm="12">
           <el-form-item
             :label="$t('ledger.direct.receivingAccount')"
-            :prop="isWebsite ? undefined : 'receivingAccountId'"
+            :prop="isWebsite ? undefined : 'receivingGroupId'"
             :required="!isWebsite"
           >
+            <!-- 独立站固定接单账号，不选择人员或业务组。 -->
             <el-input v-if="isWebsite" :model-value="$t('ledger.direct.websiteAccount')" disabled />
             <RemoteSelect
               v-else
-              :model-value="form.receivingAccountId ?? ''"
-              :load-options="loadOperators"
+              :model-value="form.receivingGroupId ?? ''"
+              :load-options="loadReceivingGroups"
               :query-key="businessUnit"
               :selected-label="form.receivingAccountName"
-              :placeholder="$t('ledger.direct.coordinatorPlaceholder')"
+              :placeholder="$t('ledger.direct.receivingGroupPlaceholder')"
               :clearable="false"
               class="w-full"
-              @update:model-value="form.receivingAccountId = $event || null"
+              @update:model-value="form.receivingGroupId = $event || null"
             />
           </el-form-item>
         </el-col>
@@ -104,7 +105,8 @@
               :load-options="loadOperators"
               :query-key="businessUnit"
               :selected-label="form.operatorName"
-              :placeholder="$t('ledger.direct.coordinatorPlaceholder')"
+              :placeholder="$t('ledger.direct.operatorPlaceholder')"
+              :empty-text="$t('ledger.direct.noOperators')"
               :clearable="false"
               class="w-full"
             />
@@ -296,7 +298,7 @@ const rules = computed<FormRules>(() => {
         trigger: "blur",
       },
     ],
-    receivingAccountId: isWebsite.value ? [] : [required("ledger.direct.receivingAccount")],
+    receivingGroupId: isWebsite.value ? [] : [required("ledger.direct.receivingAccount")],
     operatorId: [required("ledger.direct.operator")],
   };
 });
@@ -309,16 +311,24 @@ function resetForm() {
   formRef.value?.clearValidate();
 }
 
-async function loadOperators(query: RemoteOptionsQuery) {
-  const result = await directLedgerService.operators({
-    ...query,
-    businessUnit: user.userInfo.scope === "headquarters" ? businessUnit.value : undefined,
-  });
-  return {
-    total: result.total,
-    list: result.list.map((person) => ({ id: person.id, label: person.name })),
+type OptionLoader = typeof directLedgerService.operators;
+
+// 选项均按当前合法分工/启用状态分页；总部须显式传业务。旧记录回显使用详情快照。
+function optionsLoader(load: OptionLoader) {
+  return async (query: RemoteOptionsQuery) => {
+    const result = await load({
+      ...query,
+      businessUnit: user.userInfo.scope === "headquarters" ? businessUnit.value : undefined,
+    });
+    return {
+      total: result.total,
+      list: result.list.map((option) => ({ id: option.id, label: option.name })),
+    };
   };
 }
+const loadCollectors = optionsLoader(directLedgerService.collectors);
+const loadOperators = optionsLoader(directLedgerService.operators);
+const loadReceivingGroups = optionsLoader(directLedgerService.receivingGroups);
 
 async function handleSubmit() {
   if (saving.value) return;

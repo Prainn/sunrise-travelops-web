@@ -138,6 +138,19 @@ export const constantRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: "business-groups",
+        name: "BusinessGroups",
+        component: () => import("@/views/system/business-groups/index.vue"),
+        meta: {
+          menuKey: "business-groups",
+          title: "businessGroups",
+          icon: "el-icon-UserFilled",
+          keepAlive: true,
+          scopes: ["headquarters", "linxi"],
+          perms: ["sys:business-group:list"],
+        },
+      },
+      {
         path: "operation-logs",
         name: "OperationLogs",
         component: () => import("@/views/system/operation-logs/index.vue"),
@@ -245,6 +258,17 @@ export const constantRoutes: RouteRecordRaw[] = [
           title: "inquiryLogReport",
           icon: "el-icon-DataAnalysis",
           keepAlive: true,
+          perms: ["website:inquiry:list"],
+        },
+      },
+      {
+        path: ":inquiryId/logs",
+        name: "WebsiteInquiryLogs",
+        component: () => import("@/views/website-inquiries/logs/index.vue"),
+        meta: {
+          menuKey: "inquiries",
+          title: "inquiryLogs",
+          hidden: true,
           perms: ["website:inquiry:list"],
         },
       },
