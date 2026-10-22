@@ -1,5 +1,5 @@
 <template>
-  <div class="layout-logo">
+  <div v-if="userStore.userInfo.scope !== 'headquarters'" class="layout-logo">
     <transition enter-active-class="animate__animated animate__fadeInLeft">
       <router-link
         :key="+collapse"

@@ -112,7 +112,7 @@ export interface UserIdentity {
   deptName?: string;
   roleIds: string[];
   roleNames?: string;
-  /** 仅 COORDINATOR 角色可设置；非计调为 null。 */
+  /** 仅霖熹/独立站 COORDINATOR 可设置；盛旭历史值不参与台账授权。 */
   coordinatorDuty?: CoordinatorDuty | null;
   /** 仅霖熹身份必填；其他范围为 null。 */
   businessGroupId?: string | null;

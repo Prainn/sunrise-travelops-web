@@ -1,6 +1,6 @@
 import { toRaw } from "vue";
 import type { WebsiteConfig, WebsiteDay, WebsiteMeal } from "@/types/website";
-import { isMealArranged } from "../options";
+import { emptyDay, isMealArranged } from "../options";
 import {
   applyDayChanges,
   createAdjacencyCheck,
@@ -28,7 +28,7 @@ export function websiteGuideBoardId(dayId: string) {
  * 按看板跨天排布重建各天内容（就地修改已克隆的日）。
  *
  * 移动的明细保留原 ID 与全部字段；副本按原明细深拷贝并使用看板生成的新 ID；
- * 导游按标识读取原日的语言与范围。被移走的餐次补回默认自理的空餐次，保持三餐可编辑。
+ * 导游按标识读取原日的语言。被移走的餐次补回默认自理的空餐次，保持三餐可编辑。
  */
 function placeWebsiteDays(days: WebsiteDay[], change: DayOrderChange) {
   const placements = change.placements;
@@ -40,9 +40,7 @@ function placeWebsiteDays(days: WebsiteDay[], change: DayOrderChange) {
     hotels: new Map(days.flatMap((day) => day.hotels.map((hotel) => [hotel.id, hotel] as const))),
     meals: new Map(days.flatMap((day) => day.meals.map((meal) => [meal.id, meal] as const))),
     services: new Map(days.flatMap((day) => day.services.map((service) => [service.id, service] as const))),
-    guides: new Map(
-      days.map((day) => [websiteGuideBoardId(day.id), { guideLanguage: day.guideLanguage, guideScope: day.guideScope }] as const),
-    ),
+    guides: new Map(days.map(day => [websiteGuideBoardId(day.id), { guideLanguage: day.guideLanguage }])),
   };
   function resolve<T extends { id: string }>(records: Map<string, T>, ids: string[] = []): T[] {
     return ids.flatMap((id) => {
@@ -53,8 +51,14 @@ function placeWebsiteDays(days: WebsiteDay[], change: DayOrderChange) {
     });
   }
   days.forEach((day) => {
-    const groups = placements[day.id];
-    if (!groups) return;
+    if (change.overnight?.[day.id]) day.overnightCityId = change.overnight[day.id]!;
+    if (!placements[day.id]) return;
+    const groups = { ...placements[day.id] };
+    const events = groups.events;
+    if (events) {
+      for (const key of Object.values(WEBSITE_BOARD_GROUPS)) groups[key] = events;
+      day.eventOrder = [...events];
+    }
     day.items = resolve(pool.items, groups[WEBSITE_BOARD_GROUPS.attractions]);
     day.legs = resolve(pool.legs, groups[WEBSITE_BOARD_GROUPS.legs]);
     day.hotels = resolve(pool.hotels, groups[WEBSITE_BOARD_GROUPS.hotels]);
@@ -66,8 +70,10 @@ function placeWebsiteDays(days: WebsiteDay[], change: DayOrderChange) {
     const serviceIds = groups[WEBSITE_BOARD_GROUPS.services] ?? [];
     const guide = serviceIds.map((id) => pool.guides.get(copies[id] ?? id)).find(Boolean);
     day.guideLanguage = guide?.guideLanguage ?? "";
-    day.guideScope = guide?.guideScope ?? "";
     day.services = resolve(pool.services, serviceIds);
+    const guideId = serviceIds.find(id => pool.guides.has(copies[id] ?? id));
+    const retained = new Set([...day.items, ...day.legs, ...day.hotels, ...day.meals, ...day.services].map(item => item.id));
+    day.eventOrder = (day.eventOrder ?? []).flatMap(id => id === guideId ? [websiteGuideBoardId(day.id)] : retained.has(id) ? [id] : []);
   });
 }
 
@@ -95,6 +101,9 @@ export function reorderWebsiteDays(
   const previousLastId = previousIds[previousIds.length - 1];
   const isNewAdjacency = createAdjacencyCheck(previousIds);
   const activeDays = days.map((day) => structuredClone(toRaw(day)));
+  for (const id of change.addedDayIds ?? []) {
+    if (!activeDays.some(day => day.id === id) && !deletedDays.some(entry => entry.day.id === id)) activeDays.push({ ...emptyDay(activeDays.length + 1), id });
+  }
   const recycled = deletedDays.map((entry) => ({ ...entry, day: structuredClone(toRaw(entry.day)) }));
   placeWebsiteDays([...activeDays, ...recycled.map((entry) => entry.day)], change);
   const result = applyDayChanges(activeDays, recycled, change);
@@ -157,23 +166,10 @@ interface TransferCheck extends DayOrderIssue {
   lookup?: boolean;
 }
 
-function detailKey(day: WebsiteDay) {
-  const ids = (records: { id: string }[]) => records.map((record) => record.id).sort();
-  return JSON.stringify([
-    ids(day.items),
-    day.legs.map((leg) => leg.id),
-    ids(day.hotels),
-    ids(day.meals.filter(isMealArranged)),
-    ids(day.services),
-    day.guideLanguage,
-    day.guideScope,
-  ]);
-}
-
 /**
- * 校验跨天移动/复制的必要影响，只返回本次调整新产生的问题。
+ * 校验调整后的全部活动日。
  *
- * 只检查内容发生变化的日（含来源日与目标日），并与这些日调整前的结果比较，历史遗留问题不阻断；
+ * 包括未修改日期已有的问题；
  * 景点/组件与餐厅城市须在当天出发、结束及交通段起终点城市内，酒店城市须等于住宿城市，
  * 需要住宿的日须有酒店，交通段须从出发城市连续到结束城市。手填或缺少城市信息只提示人工核对。
  *
@@ -190,29 +186,9 @@ export function websiteTransferIssues(
   context: WebsiteTransferContext,
 ): DayOrderIssue[] {
   if (!change.placements) return [];
-  const original = new Map([...days, ...deletedDays.map((entry) => entry.day)].map((day) => [day.id, day]));
-  const origin = new Map<string, string>();
-  original.forEach((day) =>
-    [...day.items, ...day.legs, ...day.hotels, ...day.meals, ...day.services].forEach((record) => origin.set(record.id, day.id)),
+  return reorderWebsiteDays(days, change, deletedDays).days.flatMap((day, index) =>
+    checkWebsiteDay(day, index + 1, () => true, context).map(({ lookup: _lookup, ...issue }) => issue),
   );
-  const next = reorderWebsiteDays(days, change, deletedDays).days;
-  return next.flatMap((day, index) => {
-    const before = original.get(day.id);
-    if (before && detailKey(before) === detailKey(day)) return [];
-    const isMoved = (id: string) => Boolean(change.copies?.[id]) || origin.get(id) !== day.id;
-    const checks = checkWebsiteDay(day, index + 1, isMoved, context);
-    if (!before || !checks.some((issue) => issue.blocking && !issue.lookup)) return checks.map(({ lookup: _lookup, ...issue }) => issue);
-    // 调整前结果只用于排除历史问题；已离开当天的餐食无需再读取资源。
-    const remaining = new Set(day.meals.map((meal) => meal.id));
-    const previous = new Set(
-      checkWebsiteDay(before, index + 1, () => false, context, (meal) => remaining.has(meal.id))
-        .filter((issue) => issue.blocking && !issue.lookup)
-        .map((issue) => `${issue.key}|${issue.itemId ?? ""}`),
-    );
-    return checks
-      .filter((issue) => issue.lookup || !issue.blocking || !previous.has(`${issue.key}|${issue.itemId ?? ""}`))
-      .map(({ lookup: _lookup, ...issue }) => issue);
-  });
 }
 
 function checkWebsiteDay(

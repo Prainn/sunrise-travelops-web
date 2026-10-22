@@ -1,3 +1,4 @@
+import { useUserStore } from "@/stores/user";
 import { useRoute } from "vue-router";
 import { useAppStore } from "@/stores/app";
 import { usePermissionStore } from "@/stores/permission";
@@ -10,6 +11,7 @@ import { DeviceEnum } from "@/enums/settings";
 export function useLayout() {
   const route = useRoute();
   const appStore = useAppStore();
+  const userStore = useUserStore();
   const settingsStore = useSettingsStore();
   const permissionStore = usePermissionStore();
 
@@ -17,7 +19,7 @@ export function useLayout() {
   const currentLayout = computed(() => settingsStore.layout);
   const isSidebarOpen = computed(() => appStore.sidebar.opened);
   const showTagsView = computed(() => settingsStore.showTagsView);
-  const showLogo = computed(() => settingsStore.showAppLogo);
+  const showLogo = computed(() => settingsStore.showAppLogo && userStore.userInfo.scope !== "headquarters");
   /** 行程工作区在独立浏览器标签页中使用，只保留菜单，隐藏系统顶栏与站内页签。 */
   const isWorkspaceChromeless = computed(() =>
     route.matched.some((record) => record.meta.inquiryWorkspace),

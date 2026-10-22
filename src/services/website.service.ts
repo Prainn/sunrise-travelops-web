@@ -99,6 +99,7 @@ export function websiteInquiryInput(record: WebsiteInquiryInput): WebsiteInquiry
 export function websiteItineraryInput(record: WebsiteItineraryInput): WebsiteItineraryInput {
   return {
     title: record.title,
+    reorderDraft: record.reorderDraft ?? null,
     duration: record.duration,
     startDate: record.startDate,
     pax: record.pax,
@@ -112,6 +113,12 @@ export function websiteItineraryInput(record: WebsiteItineraryInput): WebsiteIti
 }
 
 export const websiteService = {
+  validateItinerary(record: WebsiteItinerary) {
+    return request.post<WebsitePreview>(`/website/itineraries/${encodeURIComponent(record.id)}/validate`, { ...websiteItineraryInput(record), version: record.version });
+  },
+  guideLanguages(query: { page: number; pageSize: number; keyword?: string }) {
+    return request.get<PageResult<{ id: string; name: string }>>("/website/guide-languages", { params: { ...query } });
+  },
   inquiries(query: WebsiteInquiryQuery) {
     return request.get<PageResult<WebsiteInquiry>>("/website/inquiries", { params: { ...query } });
   },

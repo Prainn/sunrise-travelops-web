@@ -30,6 +30,14 @@
         :summaries="guideSummaries"
         @select="selectResource"
       />
+      <div v-if="sequence?.length" class="text-sm">
+        <span class="text-muted">{{ $t('itineraryWorkspace.eventOrder') }}</span>
+        <ol class="flex flex-wrap gap-2 list-none p-0 m-0 mt-2">
+          <li v-for="(item, position) in sequence" :key="item.id">
+            {{ position + 1 }}. {{ item.label }}
+          </li>
+        </ol>
+      </div>
       <ItineraryDayPanel :columns="3">
         <el-form-item :label="$t('websiteItineraryUi.departureCity')" required>
           <el-select v-model="day.departCityId" autocomplete="new-password" filterable>
@@ -133,6 +141,7 @@ export type WebsiteResourceDialogKind = "attraction" | "transport" | "hotel" | "
 
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{
+  sequence?: { id: string; label: string }[];
   config: WebsiteConfig;
   editable: boolean;
   startDate: string | null;
@@ -202,7 +211,7 @@ const guideSummaries = computed(() =>
   day.value.guideLanguage
     ? [{
       label: t("itineraryWorkspace.actions.guide"),
-      value: [day.value.guideLanguage, day.value.guideScope].filter(Boolean).join(" · "),
+      value: day.value.guideLanguage,
     }]
     : [],
 );

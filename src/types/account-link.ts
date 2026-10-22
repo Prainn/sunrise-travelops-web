@@ -30,6 +30,7 @@ export interface AccountLinkQueryParams extends BaseQueryParams {
 }
 
 export interface AccountLinkCandidateQuery extends AccountLinkQueryParams {
+  scope?: LinkedAccountScope;
   /** 编辑时传入，候选包含该组现有成员。 */
   groupId?: string;
 }

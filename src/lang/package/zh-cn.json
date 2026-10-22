@@ -1152,11 +1152,11 @@
     "transferred": "已转交",
     "searchSharedResources": "搜索共用资料",
     "feeStates": {
+      "ARRANGED": "已安排",
       "INCLUDED": "包含",
       "EXCLUDED": "不含",
       "OPTIONAL": "可选自费",
       "RECOMMENDED": "仅推荐",
-      "ARRANGED": "已安排",
       "SELF_PAY": "自理",
       "UNKNOWN": "待确认"
     },
@@ -1282,10 +1282,10 @@
       "parentSameCity": "父景点须存在且属于同一城市",
       "parentCycle": "景点父子关系不能成环",
       "routeDistinct": "起点与终点城市须不同",
-      "maxAttractions": "Day Pattern 最多含 200 个景点或组件",
-      "patternAttractions": "Day Pattern 须引用同城景点或组件",
+      "maxAttractions": "单日行程模板最多含 200 个景点或组件",
+      "patternAttractions": "单日行程模板须引用同城景点或组件",
       "skeletonDays": "城市骨架须有 1–365 天",
-      "patternCity": "Day Pattern 须属于当天城市",
+      "patternCity": "单日行程模板须属于当天城市",
       "templateCodeDuplicate": "标准文案编码不可重复",
       "templateVariable": "文案 {code} 不支持变量：{variable}"
     },
@@ -1293,8 +1293,8 @@
       "cities": "城市",
       "hotels": "酒店",
       "attractions": "景点／组件／季节",
-      "routes": "跨城路线",
-      "patterns": "Day Pattern",
+      "routes": "交通段",
+      "patterns": "单日行程模板",
       "skeletons": "城市骨架",
       "templates": "双语标准文案"
     },
@@ -1337,24 +1337,24 @@
       "months": "{months} 月"
     },
     "routes": {
-      "create": "新增路线",
-      "edit": "编辑路线",
-      "detail": "跨城路线详情",
+      "create": "新增交通段",
+      "edit": "编辑交通段",
+      "detail": "交通段详情",
       "help": "设置默认交通方式和费用状态，行程中可修改。",
-      "empty": "尚未维护跨城路线",
-      "nameZh": "路线中文名",
-      "nameEn": "路线英文名",
+      "empty": "尚未维护交通段",
+      "nameZh": "交通段中文名",
+      "nameEn": "交通段英文名",
       "fromCity": "起点城市",
       "toCity": "终点城市",
       "transport": "默认交通方式",
       "feeState": "默认费用状态"
     },
     "patterns": {
-      "create": "新增 Day Pattern",
-      "edit": "编辑 Day Pattern",
-      "detail": "Day Pattern 详情",
+      "create": "新增单日行程模板",
+      "edit": "编辑单日行程模板",
+      "detail": "单日行程模板详情",
       "help": "生成每日草案，手动设置景点顺序。",
-      "empty": "尚未维护 Day Pattern",
+      "empty": "尚未维护单日行程模板",
       "attractionOrder": "景点顺序",
       "noAttractions": "尚未选择景点",
       "attractions": "景点／组件",
@@ -1364,13 +1364,13 @@
       "create": "新增城市骨架",
       "edit": "编辑城市骨架",
       "detail": "城市骨架详情",
-      "help": "按天维护城市及可选 Day Pattern。",
+      "help": "按天维护城市及可选单日行程模板。",
       "empty": "暂无城市骨架，仍可手动编排每日行程",
       "cityOrder": "城市顺序",
       "noDays": "尚未添加天数",
       "dayCount": "行程天数",
       "addDay": "添加一天",
-      "daysEmpty": "添加天数，设置每天的城市与 Day Pattern"
+      "daysEmpty": "添加天数，设置每天的城市与单日行程模板"
     },
     "templates": {
       "create": "新增双语模板",
@@ -1426,9 +1426,8 @@
     "overnightCity": "住宿城市",
     "guideArranged": "当天安排导游",
     "guideLanguage": "导游语言",
+    "guideLanguageRequired": "请选择或填写导游语言",
     "guideLanguagePlaceholder": "例如 English",
-    "guideScope": "当天服务范围",
-    "guideScopePlaceholder": "例如 Full day",
     "transportLegs": "交通段",
     "hotelPlans": "酒店方案",
     "hotelRequiredHint": "当天需住宿，至少填写一个酒店名。手动选择 A/B 档，不自动映射共用库酒店评级。",
@@ -1771,10 +1770,10 @@
         "linxi": "携程单号",
         "website": "客户姓名"
       },
-      "collectorPlaceholder": "选择本业务收客计调",
-      "operatorPlaceholder": "选择本业务操作计调",
+      "collectorPlaceholder": "修改收客计调",
+      "operatorPlaceholder": "修改操作计调",
       "receivingGroupPlaceholder": "选择业务组",
-      "noOperators": "暂无操作计调，请负责人先在用户管理设置计调分工"
+      "noOperators": "无匹配选项"
     }
   },
   "itineraryWorkspace": {
@@ -1840,7 +1839,7 @@
       "legsCheck": "D{day} 交通段随日移动，请核对衔接、季节及首末日规则"
     },
     "transfer": {
-      "hint": "拖动日卡标题或用左右箭头调整天数顺序，当天景点可排序。景点、交通、酒店、餐食、导游与服务卡片可跨天拖动，自动归入同类分组。悬浮卡片可复制临时副本，应用前须移至其他日期或删除。应用后仍须保存行程。",
+      "hint": "拖动日卡调整天数顺序，拖动卡片调整当天先后顺序或跨天移动。复制后请先移动副本；暂存可保存未完成的调整，应用调整时统一校验。",
       "copy": "复制临时副本",
       "copyTag": "副本",
       "removeCopy": "删除副本",
@@ -1861,7 +1860,14 @@
       "hotelCityMismatch": "D{day} 酒店「{name}」与当天住宿城市{city}不一致",
       "missingHotel": "D{day} 需要住宿但没有酒店",
       "legChainBroken": "D{day} 的交通段未从出发城市连续连接到结束城市"
-    }
+    },
+    "stash": "暂存",
+    "eventOrder": "当天行程顺序",
+    "arrangeOvernight": "当天未安排住宿，是否安排住宿？",
+    "applyDespiteWarnings": "确认并应用调整",
+    "serverIssue": "{code} · {day}{message}",
+    "collapseMenu": "收起菜单",
+    "expandMenu": "展开菜单"
   },
   "businessGroup": {
     "label": "业务组",
@@ -1917,6 +1923,9 @@
     "unlinkTitle": "解除账号关联",
     "unlinkConfirm": "解除后这些账号不能再互相切换，已切换的会话不会恢复原身份。",
     "selected": "已选账号（{count}/3）",
+    "selectedEmpty": "请从下方选择要关联的账号",
+    "replace": "替换",
+    "replaceHint": "每个业务至多一个账号，点击“替换”可更换该业务已选账号；保存后生效。",
     "selectHint": "选择 2–3 个账号，每个业务至多一个",
     "candidates": "可选账号",
     "candidateSearch": "搜索昵称 / 用户名 / 团号标识",
@@ -1939,6 +1948,11 @@
     "memberTaken": "所选账号已属于其他关联组，请刷新后重新选择",
     "unlinkSuccess": "已解除关联",
     "scope": "业务",
-    "alreadySelected": "已选"
+    "alreadySelected": "已选",
+    "businessOptions": {
+      "shengxu": "盛旭",
+      "linxi": "霖熹",
+      "website": "独立站"
+    }
   }
 }

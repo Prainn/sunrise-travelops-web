@@ -182,7 +182,12 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('coordinatorDuty.label')" min-width="130" :show-overflow-tooltip="false">
+        <el-table-column
+          v-if="showCoordinatorDuty"
+          :label="$t('coordinatorDuty.label')"
+          min-width="130"
+          :show-overflow-tooltip="false"
+        >
           <template #default="{ row }">
             <!-- 仅单一身份计调可单项设置分工；其他账号只读，不猜测历史混合身份。 -->
             <el-select
@@ -597,6 +602,10 @@ const resetPasswordForm = reactive<ResetPasswordForm>({
 
 const roleOptions = ref<IdentityRoleOption[]>([]);
 const departmentOptions = ref<DepartmentOption[]>([]);
+const showCoordinatorDuty = computed(() => {
+  const department = departmentOptions.value.find((dept) => dept.value === params.deptId);
+  return (department?.scope ?? params.scope ?? userStore.userInfo.scope) !== "shengxu";
+});
 
 type DepartmentTreeNode = {
   key: string | number;
@@ -778,6 +787,7 @@ const dutyUpdatingId = ref("");
 function canEditDuty(row: UserItem): boolean {
   return (
     row.identities.length === 1 &&
+    row.identities[0]!.scope !== "shengxu" &&
     isCoordinatorIdentity(row.identities[0]!, roleOptions.value) &&
     hasUserPermission(userStore.userInfo, "sys:user:update")
   );
@@ -785,6 +795,7 @@ function canEditDuty(row: UserItem): boolean {
 
 function dutyText(row: UserItem): string {
   const duties = row.identities
+    .filter((identity) => identity.scope !== "shengxu")
     .map((identity) => identity.coordinatorDuty)
     .filter((duty): duty is CoordinatorDuty => Boolean(duty));
   return duties.length ? duties.map((duty) => t(`coordinatorDuty.${duty}`)).join(" / ") : "—";
@@ -792,7 +803,7 @@ function dutyText(row: UserItem): string {
 
 /** 单项更新分工，只提交 version 与分工；冲突提示刷新，不自动重试。 */
 async function handleDutyChange(row: UserItem, duty: CoordinatorDuty): Promise<void> {
-  if (dutyUpdatingId.value || duty === row.identities[0]?.coordinatorDuty) return;
+  if (!canEditDuty(row) || dutyUpdatingId.value || duty === row.identities[0]?.coordinatorDuty) return;
   dutyUpdatingId.value = row.id;
   try {
     const updated = await userService.updateCoordinatorDuty(row.id, {

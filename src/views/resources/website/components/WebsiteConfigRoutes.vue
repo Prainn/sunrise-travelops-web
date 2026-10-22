@@ -194,7 +194,7 @@ const isNew = ref(false);
 const record = ref<WebsiteRoute>();
 const formRef = ref<FormInstance>();
 const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
-const rules = useWebsiteRouteRules(() => props.config, record);
+const rules = useWebsiteRouteRules(() => props.config);
 const { t } = useI18n();
 
 function getOptionLabel(options: Array<{ value: string; labelKey: string }>, value: string) {

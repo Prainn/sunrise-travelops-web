@@ -1,6 +1,6 @@
 export type WebsiteBusinessUnit = "linxi" | "website";
 export type FeeState =
-  "INCLUDED" | "EXCLUDED" | "OPTIONAL" | "RECOMMENDED" | "ARRANGED" | "SELF_PAY" | "UNKNOWN";
+  "INCLUDED" | "EXCLUDED" | "OPTIONAL" | "RECOMMENDED" | "SELF_PAY" | "UNKNOWN";
 export type TransportMode = "hsr" | "private_vehicle" | "flight" | "other";
 export type VehicleType = "5_seat" | "7_seat" | "9_seat" | "14_seat" | "18_seat";
 export type ConfigStatus = "enabled" | "disabled";
@@ -148,6 +148,7 @@ export interface WebsiteService {
   feeState: FeeState;
 }
 export interface WebsiteDay {
+  eventOrder?: string[];
   id: string;
   dayNumber: number;
   departCityId: string;
@@ -158,7 +159,6 @@ export interface WebsiteDay {
   hotels: WebsiteHotelStay[];
   meals: WebsiteMeal[];
   guideLanguage: string;
-  guideScope: string;
   services: WebsiteService[];
 }
 export interface WebsiteVehiclePrice {
@@ -166,6 +166,7 @@ export interface WebsiteVehiclePrice {
   unitPrice: string | null;
 }
 export interface WebsiteItineraryInput {
+  reorderDraft?: WebsiteReorderDraft | null;
   title: string;
   duration: number;
   startDate: string | null;
@@ -292,4 +293,14 @@ export interface WebsiteInquiryLogOperator {
   id: string;
   name: string;
   username: string | null;
+}
+
+/** Unapplied board edits; canonical details stay in their structured tables. */
+export interface WebsiteReorderDraft {
+  dayIds: string[];
+  addedDayIds: string[];
+  deletedDays: { id: string; dayNumber: number; date: string | null }[];
+  placements: { dayId: string; itemIds: string[] }[];
+  copies: { id: string; sourceId: string; parentId: string; dayId: string; placed: boolean }[];
+  overnight: { dayId: string; cityId: string }[];
 }

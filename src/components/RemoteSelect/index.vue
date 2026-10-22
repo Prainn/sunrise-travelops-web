@@ -5,6 +5,8 @@
     :disabled="disabled"
     :placeholder="placeholder"
     :clearable="clearable"
+    :allow-create="allowCreate"
+    :default-first-option="allowCreate"
     filterable
     remote
     remote-show-suffix
@@ -67,6 +69,7 @@ const props = withDefaults(
     disabled?: boolean;
     placeholder?: string;
     clearable?: boolean;
+    allowCreate?: boolean;
     /** 无选项时的业务提示，默认“无匹配选项”。 */
     emptyText?: string;
   }>(),

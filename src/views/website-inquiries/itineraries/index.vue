@@ -193,6 +193,7 @@
             v-if="plan && config && plan.days[index]"
             :ref="(card) => setDayCard(plan!.days[index]!.id, card)"
             :day="plan.days[index]"
+            :sequence="boardDay(plan.days[index]).groups[0]?.items.filter(item => !item.placeholder)"
             :config="config"
             :editable="editable && !saving"
             :start-date="plan.startDate"
@@ -313,6 +314,9 @@
           :readonly="!editable || saving"
           transfer
           :validate="validateReorder"
+          :draft="plan.reorderDraft"
+          :create-day="createBoardDay"
+          :stash="stashReorder"
           @apply="applyReorder"
         />
       </template>
@@ -345,9 +349,9 @@ import ItineraryWorkspaceLayout from "@/views/inquiries/itineraries/components/I
 import ItineraryWorkspaceFooter from "@/views/inquiries/itineraries/components/ItineraryWorkspaceFooter.vue";
 import ItineraryReorderDialog from "@/views/inquiries/itineraries/components/ItineraryReorderDialog.vue";
 import type { DayOrderChange, DayOrderIssue, ReorderBoardDay } from "@/views/inquiries/itineraries/reorder-board";
-import { isMealArranged, TRANSPORT_OPTIONS } from "../options";
-import { reorderWebsiteDays, WEBSITE_BOARD_GROUPS, websiteGuideBoardId, websiteTransferIssues } from "./day-order";
-import { useResourceCityLookup } from "./resource-cities";
+import { emptyDay, isMealArranged, TRANSPORT_OPTIONS } from "../options";
+import { reorderWebsiteDays, WEBSITE_BOARD_GROUPS, websiteGuideBoardId } from "./day-order";
+import { websiteService, websiteErrorMessage } from "@/services/website.service";
 import { useWebsiteWorkspace } from "./useWebsiteWorkspace";
 import WebsiteDayCard, { type WebsiteResourceDialogKind } from "./components/WebsiteDayCard.vue";
 import WebsiteItineraryBasics from "./components/WebsiteItineraryBasics.vue";
@@ -435,8 +439,8 @@ const resourceMealSlot = computed<WebsiteMeal["slot"]>(() => {
   const target = resourceDialog.value?.target;
   return typeof target === "string" ? target : "lunch";
 });
-const allReorderBoardDays = computed<ReorderBoardDay[]>(() =>
-  [...(plan.value?.days ?? []), ...(plan.value?.deletedDays ?? []).map((entry) => entry.day)].map((day) => ({
+function boardDay(day: WebsiteDay): ReorderBoardDay {
+  const result: ReorderBoardDay = {
     id: day.id,
     title: dayRoute(day) || t("itineraryWorkspace.notArranged"),
     dayNumber: day.dayNumber,
@@ -478,7 +482,8 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() =>
             id: hotel.id,
             label: `${hotel.tier} · ${localName(hotel) || "-"}`,
             detail: cityName(hotel.cityId),
-            slot: hotel.tier,
+            slot: `hotel-${hotel.tier}`,
+            hotelCityId: hotel.cityId,
           })),
         ],
       },
@@ -491,7 +496,7 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() =>
           id: meal.id,
           label: `${t(`itinerary.meals.${meal.slot}`)} · ${t(`websiteInquiry.feeStates.${meal.feeState}`)}`,
           detail: (locale.value === "en" ? meal.restaurantEn : meal.restaurantZh) || meal.restaurantZh || undefined,
-          slot: meal.slot,
+          slot: `meal-${meal.slot}`,
           placeholder: !isMealArranged(meal),
         })),
       },
@@ -505,7 +510,6 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() =>
             ? [{
               id: websiteGuideBoardId(day.id),
               label: `${t("itineraryWorkspace.actions.guide")} · ${day.guideLanguage}`,
-              detail: day.guideScope,
               slot: "guide",
             }]
             : []),
@@ -513,8 +517,15 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() =>
         ],
       },
     ],
-  })),
-);
+  };
+  const items = result.groups.flatMap(group => group.items);
+  const byId = new Map(items.map(item => [item.id, item]));
+  const ordered = (day.eventOrder ?? []).flatMap(id => { const item = byId.get(id); byId.delete(id); return item ? [item] : []; });
+  result.groups = [{ key: "events", label: t("itineraryWorkspace.eventOrder"), sortable: true, transferable: true, items: [...ordered, ...byId.values()] }];
+  return result;
+}
+const allReorderBoardDays = computed(() => [...(plan.value?.days ?? []), ...(plan.value?.deletedDays ?? []).map(entry => entry.day)].map(boardDay));
+function createBoardDay(id: string) { return boardDay({ ...emptyDay(1), id }); }
 
 watch(plan, () => {
   isBasicsDialogVisible.value = false;
@@ -575,20 +586,26 @@ function submitMeal(changes: Pick<WebsiteMeal, "slot" | "resourceId" | "restaura
 const reorderBoardDays = computed(() => allReorderBoardDays.value.slice(0, plan.value?.days.length ?? 0));
 const deletedBoardDays = computed(() => allReorderBoardDays.value.slice(plan.value?.days.length ?? 0));
 
-const resourceCities = useResourceCityLookup();
-// 城市对应关系取自当前行程绑定的配置版本，切换行程或配置后重新读取。
-watch(() => [plan.value?.id, config.value?.version], () => resourceCities.reset());
-function validateReorder(change: DayOrderChange): DayOrderIssue[] {
-  if (!plan.value || !config.value) return [];
-  return [
-    ...reorderWebsiteDays(plan.value.days, change, plan.value.deletedDays).issues,
-    ...websiteTransferIssues(plan.value.days, change, plan.value.deletedDays ?? [], { config: config.value, ...resourceCities }),
-  ];
+async function validateReorder(change: DayOrderChange): Promise<DayOrderIssue[]> {
+  if (!plan.value) return [];
+  const result = reorderWebsiteDays(plan.value.days, change, plan.value.deletedDays);
+  try {
+    const preview = await websiteService.validateItinerary({ ...plan.value, days: result.days, deletedDays: result.deletedDays, duration: result.days.length, reorderDraft: null });
+    return preview.issues.map(issue => ({ dayId: result.days.find(day => day.dayNumber === issue.dayNumber)?.id ?? "", key: "itineraryWorkspace.serverIssue", params: { message: issue.message, code: issue.code, day: issue.dayNumber ? `D${issue.dayNumber} · ` : "" }, blocking: issue.severity === "ERROR" }));
+  } catch (cause) {
+    return [{ dayId: "", key: "itineraryWorkspace.serverIssue", params: { message: websiteErrorMessage(cause), code: "", day: "" }, blocking: true }];
+  }
+}
+async function stashReorder(change: DayOrderChange) {
+  if (!plan.value || !editable.value) return false;
+  plan.value.reorderDraft = change.draft ?? null;
+  return save();
 }
 
 function applyReorder(change: DayOrderChange) {
   if (!plan.value || !editable.value) return;
   const result = reorderWebsiteDays(plan.value.days, change, plan.value.deletedDays);
+  plan.value.reorderDraft = null;
   plan.value.days = result.days;
   plan.value.deletedDays = result.deletedDays;
   plan.value.duration = result.days.length;

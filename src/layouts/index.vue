@@ -15,11 +15,12 @@ import MixLayout from "./modes/MixLayout.vue";
 import DoubleLayout from "./modes/DoubleLayout.vue";
 
 const route = useRoute();
-const { currentLayout } = useLayout();
+const { currentLayout, isWorkspaceChromeless, isMobile } = useLayout();
 
 useLayoutDevice();
 
 const currentLayoutComponent = computed(() => {
+  if (isWorkspaceChromeless.value && !isMobile.value) return LeftLayout;
   const override = route.meta?.layout as LayoutMode | undefined;
   const layout = override ?? currentLayout.value;
 

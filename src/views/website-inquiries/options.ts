@@ -13,7 +13,6 @@ export const FEE_OPTIONS: Array<{ value: FeeState; labelKey: string }> = [
   { value: "EXCLUDED", labelKey: "websiteInquiry.feeStates.EXCLUDED" },
   { value: "OPTIONAL", labelKey: "websiteInquiry.feeStates.OPTIONAL" },
   { value: "RECOMMENDED", labelKey: "websiteInquiry.feeStates.RECOMMENDED" },
-  { value: "ARRANGED", labelKey: "websiteInquiry.feeStates.ARRANGED" },
   { value: "SELF_PAY", labelKey: "websiteInquiry.feeStates.SELF_PAY" },
   { value: "UNKNOWN", labelKey: "websiteInquiry.feeStates.UNKNOWN" },
 ];
@@ -73,7 +72,6 @@ export function emptyDay(dayNumber: number): WebsiteDay {
       feeState: "SELF_PAY",
     })),
     guideLanguage: "",
-    guideScope: "",
     services: [],
   };
 }
