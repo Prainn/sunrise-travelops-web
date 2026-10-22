@@ -417,7 +417,7 @@ export const constantRoutes: RouteRecordRaw[] = [
           menuKey: "guide-ratings",
           title: "guideRatings",
           icon: "el-icon-Star",
-          perms: ["tour:list"],
+          perms: ["tour:rating:list"],
         },
       },
     ],
