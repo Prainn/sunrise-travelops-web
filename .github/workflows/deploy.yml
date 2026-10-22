@@ -39,7 +39,7 @@ jobs:
   deploy:
     needs: ready
     runs-on: [self-hosted, Linux, X64, sunrise-frontend]
-    timeout-minutes: 60
+    timeout-minutes: ${{ github.ref_name == 'dev' && 35 || 60 }}
     env:
       DEPLOY_ENV: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
       OPERATION: ${{ inputs.operation || 'deploy' }}
@@ -48,7 +48,15 @@ jobs:
       NODE_OPTIONS: --max-old-space-size=1400
       GH_TOKEN: ${{ github.token }}
     steps:
+      - name: Supervised frontend dev release
+        if: github.ref == 'refs/heads/dev'
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="/opt/sunrise-ci/node/bin:$PATH"
+          python3 /opt/sunrise-ci/frontend-dev-guard/dev_release_guard.py run
       - name: Serialized build, release or rollback
+        if: github.ref != 'refs/heads/dev'
         shell: bash
         run: |
           set -euo pipefail

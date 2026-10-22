@@ -23,6 +23,7 @@ jobs:
           node-version: '24.20.0'
           cache: pnpm
       - run: python3 scripts/test_deploy.py
+      - run: python3 scripts/test_dev_release_guard.py
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint:eslint
       - run: pnpm test
