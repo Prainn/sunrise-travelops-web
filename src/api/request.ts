@@ -1,5 +1,7 @@
 import type { LoginResult } from "@/types/auth";
 import { AuthStorage } from "@/utils/auth-storage";
+import { reloadPageWithoutConfirmation } from "@/utils/page-lifecycle";
+import { sessionGate } from "@/utils/session-gate";
 import { translate, translateIfExists } from "@/lang/utils";
 import { ApiErrorCode } from "./error-code";
 
@@ -26,6 +28,10 @@ interface RequestOptions extends Omit<RequestInit, "body" | "method"> {
   params?: RequestParams;
   requiresAuth?: boolean;
   retryAfterRefresh?: boolean;
+  /** 仅账号切换流程使用：切换冻结、身份替换后仍放行，且不计入在途写请求。 */
+  bypassSessionGate?: boolean;
+  /** 为 false 时 401 不刷新、不清除登录，由调用方处理。 */
+  handleUnauthorized?: boolean;
 }
 
 interface ApiErrorOptions {
@@ -166,10 +172,32 @@ async function expireSession(): Promise<void> {
   await redirectAfterSessionExpiry();
 }
 
+function sessionGateError(code: string): ApiError {
+  return new ApiError(getErrorMessage(code), { code });
+}
+
+/** 切换冻结时拒绝新请求与刷新；本页身份已替换或错过切换时不再用任何令牌发请求。 */
+function assertSessionGate(options: RequestOptions): void {
+  if (options.bypassSessionGate) return;
+  if (sessionGate.isRetired()) throw sessionGateError(ApiErrorCode.ACCOUNT_SESSION_CHANGED);
+  if (sessionGate.isStale()) {
+    sessionGate.retire();
+    reloadPageWithoutConfirmation();
+    throw sessionGateError(ApiErrorCode.ACCOUNT_SESSION_CHANGED);
+  }
+  if (sessionGate.isFrozen()) throw sessionGateError(ApiErrorCode.ACCOUNT_SWITCH_IN_PROGRESS);
+}
+
+/** 请求期间身份已替换：丢弃旧身份回包，也不刷新或重试。 */
+function assertSameEpoch(startEpoch: number): void {
+  if (sessionGate.epoch() !== startEpoch)
+    throw sessionGateError(ApiErrorCode.ACCOUNT_SESSION_CHANGED);
+}
+
 const REFRESH_LOCK_NAME = "sunrise-auth-token-refresh";
 
 /** 刷新令牌一次性有效，跨标签页串行刷新；不支持 Web Locks 的环境只做单标签页合并。 */
-function runWithRefreshLock<T>(task: () => Promise<T>): Promise<T> {
+export function runWithRefreshLock<T>(task: () => Promise<T>): Promise<T> {
   if (typeof navigator === "undefined" || !navigator.locks) return task();
   return navigator.locks.request(REFRESH_LOCK_NAME, task);
 }
@@ -235,6 +263,8 @@ async function sendRequest(
     params,
     requiresAuth: _requiresAuth,
     retryAfterRefresh: _retryAfterRefresh,
+    bypassSessionGate: _bypassSessionGate,
+    handleUnauthorized: _handleUnauthorized,
     ...fetchOptions
   } = options;
   const url = appendParams(`${API_BASE_URL}${path}`, params);
@@ -254,40 +284,80 @@ async function sendRequest(
   }
 }
 
+function canRefreshAfter(options: RequestOptions): boolean {
+  return (
+    options.requiresAuth !== false &&
+    options.retryAfterRefresh !== false &&
+    options.handleUnauthorized !== false
+  );
+}
+
+function shouldExpireAfter(options: RequestOptions): boolean {
+  return options.requiresAuth !== false && options.handleUnauthorized !== false;
+}
+
+/**
+ * @param startEpoch 首次发出时的身份代次；刷新后的重试沿用，身份已替换则不重发。
+ */
 async function sendJsonRequest<T>(
   method: string,
   path: string,
   body: unknown,
   options: RequestOptions,
+  startEpoch = sessionGate.epoch(),
 ): Promise<T> {
-  const sentAccessToken = AuthStorage.getAccessToken();
-  const response = await sendRequest(method, path, body, options);
-  const canRefresh = options.requiresAuth !== false && options.retryAfterRefresh !== false;
+  if (!options.bypassSessionGate && options.requiresAuth !== false) await sessionGate.waitVerified();
+  assertSessionGate(options);
+  const isTrackedWrite =
+    method !== "GET" && options.requiresAuth !== false && !options.bypassSessionGate;
+  const endWrite = isTrackedWrite ? sessionGate.beginWrite() : undefined;
 
-  if (response.status === 401 && canRefresh && AuthStorage.getRefreshToken()) {
-    await refreshTokensOnce(sentAccessToken);
-    return sendJsonRequest<T>(method, path, body, { ...options, retryAfterRefresh: false });
+  try {
+    const sentAccessToken = AuthStorage.getAccessToken();
+    const response = await sendRequest(method, path, body, options);
+    assertSameEpoch(startEpoch);
+
+    if (response.status === 401 && canRefreshAfter(options) && AuthStorage.getRefreshToken()) {
+      await refreshTokensOnce(sentAccessToken);
+      assertSameEpoch(startEpoch);
+      return await sendJsonRequest<T>(
+        method,
+        path,
+        body,
+        { ...options, retryAfterRefresh: false },
+        startEpoch,
+      );
+    }
+
+    if (response.status === 401 && shouldExpireAfter(options)) {
+      await expireSession();
+    }
+    if (!response.ok) throw await parseError(response);
+
+    return await parseJsonData<T>(response);
+  } finally {
+    endWrite?.();
   }
-
-  if (response.status === 401 && options.requiresAuth !== false) {
-    await expireSession();
-  }
-  if (!response.ok) throw await parseError(response);
-
-  return parseJsonData<T>(response);
 }
 
-async function sendBlobRequest(path: string, options: RequestOptions): Promise<Blob> {
+async function sendBlobRequest(
+  path: string,
+  options: RequestOptions,
+  startEpoch = sessionGate.epoch(),
+): Promise<Blob> {
+  if (!options.bypassSessionGate && options.requiresAuth !== false) await sessionGate.waitVerified();
+  assertSessionGate(options);
   const sentAccessToken = AuthStorage.getAccessToken();
   const response = await sendRequest("GET", path, undefined, options);
-  const canRefresh = options.requiresAuth !== false && options.retryAfterRefresh !== false;
+  assertSameEpoch(startEpoch);
 
-  if (response.status === 401 && canRefresh && AuthStorage.getRefreshToken()) {
+  if (response.status === 401 && canRefreshAfter(options) && AuthStorage.getRefreshToken()) {
     await refreshTokensOnce(sentAccessToken);
-    return sendBlobRequest(path, { ...options, retryAfterRefresh: false });
+    assertSameEpoch(startEpoch);
+    return sendBlobRequest(path, { ...options, retryAfterRefresh: false }, startEpoch);
   }
 
-  if (response.status === 401 && options.requiresAuth !== false) {
+  if (response.status === 401 && shouldExpireAfter(options)) {
     await expireSession();
   }
   if (!response.ok) throw await parseError(response);
@@ -312,8 +382,9 @@ export const request = {
     return sendJsonRequest<T>("PATCH", path, body, options);
   },
 
-  delete<T>(path: string, options: RequestOptions = {}): Promise<T> {
-    return sendJsonRequest<T>("DELETE", path, undefined, options);
+  /** body 可选；需要 JSON 请求体的删除接口（如解除账号关联）通过 options.body 传入。 */
+  delete<T>(path: string, { body, ...options }: RequestOptions & { body?: unknown } = {}): Promise<T> {
+    return sendJsonRequest<T>("DELETE", path, body, options);
   },
 
   getBlob(path: string, options: RequestOptions = {}): Promise<Blob> {

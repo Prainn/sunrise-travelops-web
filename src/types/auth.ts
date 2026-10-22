@@ -28,4 +28,8 @@ export interface CurrentUserResult {
   username: string;
   permissions: string[];
   menuKeys: string[];
+  /** 服务端登录会话 ID；切换账号保持不变，用于同会话标签页协调。 */
+  sessionId: string;
+  /** 会话版本；切换账号后递增，旧令牌随之失效。 */
+  sessionVersion: number;
 }

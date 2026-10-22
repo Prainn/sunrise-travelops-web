@@ -75,7 +75,8 @@
     "shengxuLedger": "Shengxu Ledger",
     "directLedger": "Linxi Ledger",
     "websiteLedger": "Website Ledger",
-    "businessGroups": "Business Groups"
+    "businessGroups": "Business Groups",
+    "accountLinks": "Account Links"
   },
   "appVersion": {
     "title": "New Version",
@@ -658,7 +659,8 @@
     "expandMenu": "Expand menu",
     "logout": "Log out",
     "logoutConfirm": "Log out of this account?",
-    "profile": "Profile"
+    "profile": "Profile",
+    "switchAccount": "Switch account"
   },
   "langSelect": {
     "message": {
@@ -794,7 +796,9 @@
     "tourCodeManualHint": "No available code could be generated. Enter one manually.",
     "tourCodeGenerateFailed": "Generation failed. Change the name to retry or enter a code manually.",
     "tourCodeRequired": "Enter a tour code",
-    "tourCodeInvalid": "Use 1-10 letters or digits for the tour code"
+    "tourCodeInvalid": "Use 1-10 letters or digits for the tour code",
+    "linkedScopeChange": "This account is linked to other accounts. Adjust or remove the account link before changing its business scope.",
+    "linkedDelete": "A selected account is linked to other accounts. Remove the account link before deleting it."
   },
   "resource": {
     "englishDescription": "English description",
@@ -963,7 +967,7 @@
     "USER_NOT_FOUND": "User not found",
     "USERS_NOT_FOUND": "One or more users were not found",
     "USERNAME_ALREADY_EXISTS": "Username already in use",
-    "USER_TOUR_CODE_EXISTS": "Tour code already in use. Choose another code before saving.",
+    "USER_TOUR_CODE_EXISTS": "Tour code is used by an account outside this group. Change it before saving.",
     "USERNAME_IMMUTABLE": "Username cannot be changed",
     "CURRENT_USER_CANNOT_BE_DISABLED": "You cannot disable your own account",
     "CURRENT_USER_CANNOT_BE_DELETED": "You cannot delete your own account",
@@ -1042,7 +1046,9 @@
     "DIRECT_LEDGER_NOT_PENDING_OPERATION": "Only entries pending operation can be marked operated",
     "DIRECT_LEDGER_DELETE_REVIEWED": "Cannot delete confirmed entries",
     "DIRECT_LEDGER_DELETE_OPERATED": "Cannot delete previously operated entries",
-    "DIRECT_LEDGER_DELETE_CONVERTED": "Cannot delete converted entries"
+    "DIRECT_LEDGER_DELETE_CONVERTED": "Cannot delete converted entries",
+    "ACCOUNT_SWITCH_IN_PROGRESS": "Switching accounts. Please wait.",
+    "ACCOUNT_SESSION_CHANGED": "The account was switched. Reloading the page."
   },
   "request": {
     "failed": "Request failed",
@@ -1881,5 +1887,57 @@
     "reception": "Sales only",
     "operation": "Operations only",
     "both": "Sales & operations"
+  },
+  "accountSwitch": {
+    "title": "Switch account",
+    "current": "Current",
+    "switch": "Switch",
+    "empty": "No linked accounts available",
+    "switching": "Switching account…",
+    "unsupported": "This browser can't switch accounts safely across tabs. Use an up-to-date browser.",
+    "busy": "Another account switch is in progress. Try again later.",
+    "separator": ", ",
+    "blockedCurrent": "This page {reasons}. Resolve it before switching accounts.",
+    "blockedOther": "Another tab of this sign-in {reasons}. Resolve or close it before switching accounts.",
+    "reasons": {
+      "dirty": "has unsaved changes",
+      "saving": "is saving",
+      "unresponsive": "is not responding",
+      "unknown": "has an unconfirmed account state"
+    },
+    "unknownResult": "The switch result could not be confirmed. Please sign in again."
+  },
+  "accountLink": {
+    "searchPlaceholder": "Nickname / username / tour code",
+    "members": "Linked accounts",
+    "memberCount": "Members",
+    "tourCode": "Tour code",
+    "unlink": "Unlink",
+    "unlinkTitle": "Unlink accounts",
+    "unlinkConfirm": "After unlinking, these accounts can no longer switch to each other. Sessions already switched keep their current account.",
+    "selected": "Selected ({count}/3)",
+    "selectHint": "Select 2–3 accounts, at most one per business",
+    "candidates": "Available accounts",
+    "candidateSearch": "Search nickname / username / tour code",
+    "select": "Select",
+    "scopeTaken": "Business already selected",
+    "limitReached": "Up to 3",
+    "tourCodeMode": "Tour code",
+    "modeKeep": "Keep each code",
+    "modeUnify": "Use one shared code",
+    "unifyTourCode": "Shared code",
+    "tourCodePlaceholder": "1–10 letters or digits",
+    "tourCodeInvalid": "Tour code must be 1–10 letters or digits",
+    "overrides": "Change codes (optional)",
+    "overridesHint": "When members are removed or unlinked, a code shared with the group becomes used outside the group. Assign new codes in the same save.",
+    "newTourCode": "New code",
+    "removedMember": "Removing",
+    "sharedTourCode": "Same as another member",
+    "memberCountInvalid": "Select 2–3 accounts",
+    "scopeDuplicate": "Select at most one account per business",
+    "memberTaken": "A selected account already belongs to another group. Refresh and select again.",
+    "unlinkSuccess": "Accounts unlinked",
+    "scope": "Business",
+    "alreadySelected": "Selected"
   }
 }

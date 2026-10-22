@@ -15,7 +15,7 @@
     </template>
 
     <div class="layout-toolbar__item layout-toolbar__item--profile">
-      <el-dropdown trigger="click">
+      <el-dropdown trigger="click" @visible-change="handleDropdownVisible">
         <div class="layout-user">
           <div class="layout-user__avatar">
             <img :src="userStore.userInfo.avatar" class="layout-user__avatar-img" />
@@ -28,6 +28,9 @@
             <el-dropdown-item @click="handleProfileClick">
               {{ t("navbar.profile") }}
             </el-dropdown-item>
+            <el-dropdown-item v-if="canSwitchAccount" @click="switchVisible = true">
+              {{ t("navbar.switchAccount") }}
+            </el-dropdown-item>
             <el-dropdown-item divided @click="logout">
               {{ t("navbar.logout") }}
             </el-dropdown-item>
@@ -35,6 +38,12 @@
         </template>
       </el-dropdown>
     </div>
+
+    <SwitchAccountDialog
+      v-model="switchVisible"
+      :accounts="linkedAccounts"
+      @failed="loadLinkedAccounts"
+    />
   </div>
 </template>
 
@@ -45,10 +54,13 @@ import { DeviceEnum, SidebarColor, ThemeMode, LayoutMode } from "@/enums/setting
 import { useAppStore } from "@/stores/app";
 import { useSettingsStore } from "@/stores/settings";
 import { useUserStore } from "@/stores/user";
+import { authService } from "@/services";
+import type { LinkedAccount } from "@/types/account-link";
 
 import CommandPalette from "@/components/CommandPalette/index.vue";
 import DensitySelect from "@/components/DensitySelect/index.vue";
 import LangSelect from "@/components/LangSelect/index.vue";
+import SwitchAccountDialog from "./SwitchAccountDialog.vue";
 
 const { t } = useI18n();
 const appStore = useAppStore();
@@ -65,6 +77,26 @@ const isDesktop = computed(() => appStore.device === DeviceEnum.DESKTOP);
 function handleProfileClick() {
   router.push({ name: "Profile" });
 }
+
+const linkedAccounts = ref<LinkedAccount[]>([]);
+const switchVisible = ref(false);
+/** 仅存在当前账号以外的可切换目标时显示入口。 */
+const canSwitchAccount = computed(() => linkedAccounts.value.some((account) => !account.current));
+
+/** 加载失败时隐藏入口，不影响其他菜单。 */
+async function loadLinkedAccounts(): Promise<void> {
+  try {
+    linkedAccounts.value = await authService.getLinkedAccounts();
+  } catch {
+    linkedAccounts.value = [];
+  }
+}
+
+function handleDropdownVisible(open: boolean): void {
+  if (open) void loadLinkedAccounts();
+}
+
+onMounted(loadLinkedAccounts);
 
 const toolbarToneClass = computed(() => {
   const { resolvedTheme, sidebarColorScheme, layout } = settingStore;

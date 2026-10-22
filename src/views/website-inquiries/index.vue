@@ -116,6 +116,7 @@ import {
 } from "@/services/website.service";
 import type { WebsiteBusinessUnit, WebsiteCity, WebsiteInquiry, WebsiteInquiryInput } from "@/types/website";
 import { INQUIRY_STATUS_OPTIONS } from "@/views/inquiries/options";
+import { useAccountSwitchGuard } from "@/composables/useAccountSwitchGuard";
 import WebsiteInquiryTable from "./components/WebsiteInquiryTable.vue";
 import WebsiteInquiryEditor from "./components/WebsiteInquiryEditor.vue";
 import WebsiteInquiryTransfer from "./components/WebsiteInquiryTransfer.vue";
@@ -142,6 +143,11 @@ const editorVisible = ref(false);
 const editingRecord = ref<WebsiteInquiry>();
 const editorReadOnly = ref(false);
 const saving = ref(false);
+// 打开中的可编辑询盘弹窗视为未保存，阻止切换账号。
+useAccountSwitchGuard({
+  dirty: () => editorVisible.value && !editorReadOnly.value,
+  saving: () => saving.value,
+});
 const optionsLoading = ref(false);
 const transferVisible = ref(false);
 const transferRecord = ref<WebsiteInquiry>();

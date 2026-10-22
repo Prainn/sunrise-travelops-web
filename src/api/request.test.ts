@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const auth = vi.hoisted(() => ({
   accessToken: "old-access",
   refreshToken: "old-refresh",
+  sessionState: null as { sessionId: string; version: number } | null,
   setTokens: vi.fn(),
   clearAuth: vi.fn(),
 }));
@@ -14,16 +15,20 @@ vi.mock("@/utils/auth-storage", () => ({
     getAccessToken: () => auth.accessToken,
     getRefreshToken: () => auth.refreshToken,
     getRememberMe: () => true,
+    getSessionState: () => auth.sessionState,
     setTokens: auth.setTokens,
     clearAuth: auth.clearAuth,
   },
 }));
+
+vi.mock("@/utils/page-lifecycle", () => ({ reloadPageWithoutConfirmation: vi.fn() }));
 
 vi.mock("@/lang/utils", () => ({
   translate: (key: string) => key,
   translateIfExists: (key: string) => translations.messages[key],
 }));
 
+import { sessionGate } from "@/utils/session-gate";
 import { request } from "./request";
 
 function response(status: number, code: string, data: unknown = null): Response {
@@ -53,7 +58,9 @@ describe("request session recovery", () => {
       auth.accessToken = "";
       auth.refreshToken = "";
     });
+    auth.sessionState = null;
     translations.messages = {};
+    sessionGate.resetForTest();
     vi.unstubAllGlobals();
   });
 
@@ -291,6 +298,104 @@ describe("request session recovery", () => {
     refresh.resolve(response(401, "AUTH_REFRESH_TOKEN_INVALID"));
 
     await expect(pending).resolves.toEqual({ id: "user-1" });
+    expect(auth.clearAuth).not.toHaveBeenCalled();
+  });
+});
+
+describe("request account switch gate", () => {
+  beforeEach(() => {
+    auth.accessToken = "old-access";
+    auth.refreshToken = "old-refresh";
+    auth.sessionState = null;
+    auth.setTokens.mockReset();
+    auth.clearAuth.mockReset();
+    sessionGate.resetForTest();
+    vi.unstubAllGlobals();
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("sends a JSON body with DELETE", async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetch);
+
+    await request.delete("/system/account-links/1", { body: { version: 2 } });
+
+    const [, init] = fetch.mock.calls[0] as [string, RequestInit];
+    expect(init.method).toBe("DELETE");
+    expect(init.body).toBe(JSON.stringify({ version: 2 }));
+    expect(new Headers(init.headers).get("Content-Type")).toBe("application/json");
+  });
+
+  it("rejects new requests while frozen but lets the switch flow through", async () => {
+    const fetch = vi.fn().mockResolvedValue(response(200, "SUCCESS", { ok: true }));
+    vi.stubGlobal("fetch", fetch);
+    sessionGate.freeze();
+
+    await expect(request.post("/inquiries", {})).rejects.toMatchObject({
+      code: "ACCOUNT_SWITCH_IN_PROGRESS",
+    });
+    expect(fetch).not.toHaveBeenCalled();
+
+    await expect(
+      request.post("/auth/switch-account", {}, { bypassSessionGate: true }),
+    ).resolves.toEqual({ ok: true });
+  });
+
+  it("drops a response from the replaced identity without refreshing or retrying", async () => {
+    const pending = deferredResponse();
+    const fetch = vi.fn().mockReturnValueOnce(pending.promise);
+    vi.stubGlobal("fetch", fetch);
+
+    const result = request.get("/inquiries");
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    sessionGate.retire();
+    pending.resolve(response(401, "AUTH_TOKEN_EXPIRED"));
+
+    await expect(result).rejects.toMatchObject({ code: "ACCOUNT_SESSION_CHANGED" });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(auth.setTokens).not.toHaveBeenCalled();
+    expect(auth.clearAuth).not.toHaveBeenCalled();
+  });
+
+  it("refuses requests once the stored session version moved past this page", async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    sessionGate.setKnown({ sessionId: "s1", version: 1 });
+    auth.sessionState = { sessionId: "s1", version: 2 };
+
+    await expect(request.get("/inquiries")).rejects.toMatchObject({
+      code: "ACCOUNT_SESSION_CHANGED",
+    });
+    expect(sessionGate.isRetired()).toBe(true);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("tracks in-flight writes but not reads", async () => {
+    const write = deferredResponse();
+    const read = deferredResponse();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockReturnValueOnce(write.promise).mockReturnValueOnce(read.promise),
+    );
+
+    const saving = request.put("/inquiries/1", {});
+    const loading = request.get("/inquiries");
+    await vi.waitFor(() => expect(sessionGate.pendingWrites()).toBe(1));
+    write.resolve(response(200, "SUCCESS", null));
+    read.resolve(response(200, "SUCCESS", []));
+    await Promise.all([saving, loading]);
+    expect(sessionGate.pendingWrites()).toBe(0);
+  });
+
+  it("leaves 401 handling to the caller when handleUnauthorized is false", async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(response(401, "AUTH_TOKEN_EXPIRED"));
+    vi.stubGlobal("fetch", fetch);
+
+    await expect(
+      request.post("/auth/switch-account", {}, { handleUnauthorized: false }),
+    ).rejects.toMatchObject({ status: 401 });
+    expect(fetch).toHaveBeenCalledTimes(1);
     expect(auth.clearAuth).not.toHaveBeenCalled();
   });
 });

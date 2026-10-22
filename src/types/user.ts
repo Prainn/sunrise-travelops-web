@@ -17,6 +17,8 @@ export interface UserInfo {
   roles: string[];
   perms: string[];
   menuKeys?: string[];
+  sessionId?: string;
+  sessionVersion?: number;
 }
 
 export interface UserQueryParams extends BaseQueryParams {

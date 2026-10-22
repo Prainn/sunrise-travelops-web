@@ -2,6 +2,7 @@ import { computed, ref, watch, toRaw } from "vue";
 import { useI18n } from "vue-i18n";
 import { isValidVehiclePrice } from "./vehicle-price";
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute } from "vue-router";
+import { useAccountSwitchGuard } from "@/composables/useAccountSwitchGuard";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   websiteErrorMessage,
@@ -54,6 +55,7 @@ export function useWebsiteWorkspace() {
   const dirty = computed(() =>
     Boolean(plan.value && JSON.stringify(websiteItineraryInput(plan.value)) !== baseline.value),
   );
+  useAccountSwitchGuard({ dirty: () => dirty.value, saving: () => saving.value });
   function showError(cause: unknown) {
     ElMessage.error(websiteErrorMessage(cause));
   }

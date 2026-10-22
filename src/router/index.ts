@@ -151,6 +151,19 @@ export const constantRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: "account-links",
+        name: "AccountLinks",
+        component: () => import("@/views/system/account-links/index.vue"),
+        meta: {
+          menuKey: "account-links",
+          title: "accountLinks",
+          icon: "el-icon-Connection",
+          keepAlive: true,
+          scopes: ["headquarters"],
+          perms: ["sys:account-link:manage"],
+        },
+      },
+      {
         path: "operation-logs",
         name: "OperationLogs",
         component: () => import("@/views/system/operation-logs/index.vue"),
