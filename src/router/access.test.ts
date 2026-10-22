@@ -35,6 +35,30 @@ const websiteMeta: RouteMeta = {
   perms: ["website:inquiry:list"],
 };
 
+describe("台账独立入口", () => {
+  const group = constantRoutes.find((route) => route.name === "DataLedgers")!;
+  const linxi = group.children!.find((route) => route.name === "DirectLedger")!;
+  const website = group.children!.find((route) => route.name === "WebsiteLedger")!;
+
+  it.each([
+    { scope: "linxi" as const, allowed: linxi, denied: website },
+    { scope: "website" as const, allowed: website, denied: linxi },
+  ])("$scope 仅能进入本业务台账，即使菜单快照同时包含两个入口", ({ scope, allowed, denied }) => {
+    const context = { scope, roles: ["COORDINATOR"], perms: ["ledger:direct:list"], menuKeys: ["direct-ledger", "website-ledger"] };
+    expect(hasRouteChainAccess([group.meta!, allowed.meta!], context)).toBe(true);
+    expect(hasRouteChainAccess([group.meta!, denied.meta!], context)).toBe(false);
+  });
+
+  it("总部两个入口独立授权，并固定各自列表和新增业务", () => {
+    const context = { scope: "headquarters" as const, roles: ["ADMIN"], perms: ["ledger:direct:list"], menuKeys: ["website-ledger"] };
+    expect(hasRouteChainAccess([group.meta!, website.meta!], context)).toBe(true);
+    expect(hasRouteChainAccess([group.meta!, linxi.meta!], context)).toBe(false);
+    expect(hasRouteChainAccess([group.meta!, website.meta!], { ...context, perms: [] })).toBe(false);
+    expect(linxi.props).toEqual({ businessUnit: "linxi" });
+    expect(website.props).toEqual({ businessUnit: "website" });
+  });
+});
+
 describe("独立站路由范围", () => {
   it("即使持有独立站权限也拒绝盛旭身份", () => {
     for (const scope of ["shengxu"] as const) {

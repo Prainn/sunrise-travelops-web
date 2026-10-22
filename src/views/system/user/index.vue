@@ -105,7 +105,7 @@
         />
         <el-table-column
           :label="$t('user.nickname')"
-          min-width="140"
+          min-width="240"
           fixed="left"
           :show-overflow-tooltip="false"
         >
