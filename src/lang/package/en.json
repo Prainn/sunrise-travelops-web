@@ -73,7 +73,8 @@
     "websiteVisits": "Website Visits",
     "dataLedgers": "Data Ledgers",
     "shengxuLedger": "Shengxu Ledger",
-    "directLedger": "Linxi Ledger"
+    "directLedger": "Linxi Ledger",
+    "businessGroups": "Business Groups"
   },
   "appVersion": {
     "title": "New Version",
@@ -598,7 +599,9 @@
     "loadFailed": "Failed to load",
     "noData": "No data",
     "noMatch": "No records match these filters",
-    "filters": "Filters"
+    "filters": "Filters",
+    "versionConflict": "This record was updated by someone else. Refresh and try again.",
+    "updatedAt": "Updated At"
   },
   "login": {
     "auto": "System",
@@ -1718,12 +1721,10 @@
       "receivedDate": "Received Date",
       "receivedMonth": "Received Month",
       "source": "Source",
-      "sourcePlaceholder": "Ctrip order no. or customer name",
-      "creator": "Trip Designer",
+      "creator": "Sales Coordinator",
       "receivingAccount": "Receiving Account",
       "websiteAccount": "Website",
       "operator": "Operations Coordinator",
-      "coordinatorPlaceholder": "Select a coordinator for this business unit",
       "orderStatus": "Order Status",
       "orderStatuses": {
         "unconverted": "Not Converted",
@@ -1757,7 +1758,15 @@
       "markOperated": "Mark Operated",
       "markOperatedConfirm": "Mark order {orderNo} operated? Regular fields will lock. Cannot be undone.",
       "deleteConfirm": "Delete order {orderNo}?",
-      "searchPlaceholder": "Order no., source, designer, receiving account, coordinator, itinerary"
+      "searchPlaceholder": "Order no., source, sales coordinator, receiving account, coordinator, itinerary",
+      "sourcePlaceholders": {
+        "linxi": "Ctrip order no.",
+        "website": "Customer name"
+      },
+      "collectorPlaceholder": "Select a sales coordinator for this business unit",
+      "operatorPlaceholder": "Select an operations coordinator for this business unit",
+      "receivingGroupPlaceholder": "Select a business group",
+      "noOperators": "No operations coordinators yet. Ask a manager to set coordinator duties in User Management first."
     }
   },
   "itineraryWorkspace": {
@@ -1845,5 +1854,31 @@
       "missingHotel": "D{day} needs an overnight stay but has no hotel",
       "legChainBroken": "D{day}: transport legs do not link start to end city continuously"
     }
+  },
+  "businessGroup": {
+    "label": "Business Group",
+    "selectPlaceholder": "Select a business group",
+    "name": "Group Name",
+    "namePlaceholder": "Enter the group name",
+    "searchPlaceholder": "Group name",
+    "memberCount": "Members",
+    "members": "Members",
+    "membersTitle": "{name} · Members",
+    "addMember": "Add to Group",
+    "searchUserPlaceholder": "Search Linxi accounts",
+    "move": "Move",
+    "moveTitle": "Change business group for {name}",
+    "enable": "Enable",
+    "disable": "Disable",
+    "enableConfirm": "Enable business group \"{name}\"?",
+    "disableConfirm": "Once disabled, \"{name}\" cannot take new members or be chosen on new ledgers. Existing members and ledger history are kept. Disable it?",
+    "disabledNoJoin": "This business group is disabled. Existing members are shown but no one can join."
+  },
+  "coordinatorDuty": {
+    "label": "Coordinator Duty",
+    "selectPlaceholder": "Select a duty",
+    "reception": "Sales only",
+    "operation": "Operations only",
+    "both": "Sales & operations"
   }
 }

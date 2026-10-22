@@ -1,5 +1,9 @@
 import type { LoginScope } from "./auth";
+import type { BusinessGroupStatus } from "./business-group";
 import type { BaseQueryParams } from "@/types/common";
+
+/** 计调分工：reception 仅收客、operation 仅操作、both 两者兼任。 */
+export type CoordinatorDuty = "reception" | "operation" | "both";
 
 export interface UserInfo {
   identityId?: string;
@@ -21,6 +25,8 @@ export interface UserQueryParams extends BaseQueryParams {
   roleId?: string | number;
   status?: number;
   createTime?: [string, string];
+  scope?: LoginScope;
+  businessGroupId?: string;
 }
 
 export interface UserItem {
@@ -38,6 +44,7 @@ export interface UserItem {
   roleNames?: string;
   status?: number;
   username?: string;
+  version: number;
 }
 
 export interface UserForm {
@@ -52,6 +59,7 @@ export interface UserForm {
   tourCode?: string | null;
   status?: number;
   username?: string;
+  version?: number;
   password?: string;
   temporaryPassword?: string;
 }
@@ -102,6 +110,12 @@ export interface UserIdentity {
   deptName?: string;
   roleIds: string[];
   roleNames?: string;
+  /** 仅 COORDINATOR 角色可设置；非计调为 null。 */
+  coordinatorDuty?: CoordinatorDuty | null;
+  /** 仅霖熹身份必填；其他范围为 null。 */
+  businessGroupId?: string | null;
+  businessGroupName?: string | null;
+  businessGroupStatus?: BusinessGroupStatus | null;
 }
 export interface IdentityRoleOption {
   value: string;

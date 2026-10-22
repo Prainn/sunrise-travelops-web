@@ -27,6 +27,7 @@ declare module 'vue' {
     Breadcrumb: typeof import('./../src/components/Breadcrumb/index.vue')['default']
     BusinessCategoryPanel: typeof import('./../src/views/system/business-category/components/BusinessCategoryPanel.vue')['default']
     BusinessCategorySearch: typeof import('./../src/views/system/business-category/components/BusinessCategorySearch.vue')['default']
+    BusinessGroupMembers: typeof import('./../src/views/system/business-groups/components/BusinessGroupMembers.vue')['default']
     BusinessItemSelect: typeof import('./../src/components/BusinessItemSelect/index.vue')['default']
     CitySelect: typeof import('./../src/components/CitySelect.vue')['default']
     CommandPalette: typeof import('./../src/components/CommandPalette/index.vue')['default']

@@ -73,7 +73,8 @@
     "websiteVisits": "独立站访问记录",
     "dataLedgers": "数据台账",
     "shengxuLedger": "盛旭台账",
-    "directLedger": "霖熹台账"
+    "directLedger": "霖熹台账",
+    "businessGroups": "业务组"
   },
   "appVersion": {
     "title": "有新版本",
@@ -598,7 +599,9 @@
     "loadFailed": "加载失败",
     "noData": "暂无数据",
     "noMatch": "无匹配记录",
-    "filters": "筛选"
+    "filters": "筛选",
+    "versionConflict": "记录已被他人更新，请刷新后重试",
+    "updatedAt": "更新时间"
   },
   "login": {
     "auto": "跟随系统",
@@ -1718,12 +1721,10 @@
       "receivedDate": "接单日期",
       "receivedMonth": "接单月份",
       "source": "来源",
-      "sourcePlaceholder": "携程单号或客户姓名",
-      "creator": "定制师",
+      "creator": "收客计调",
       "receivingAccount": "接单账号",
       "websiteAccount": "独立站",
       "operator": "操作计调",
-      "coordinatorPlaceholder": "选择本业务计调",
       "orderStatus": "订单状态",
       "orderStatuses": {
         "unconverted": "未成团",
@@ -1757,7 +1758,15 @@
       "markOperated": "已操作",
       "markOperatedConfirm": "确认订单 {orderNo} 已操作？普通字段将锁定，不可撤销。",
       "deleteConfirm": "删除订单 {orderNo}？",
-      "searchPlaceholder": "订单号、来源、定制师、接单账号、操作计调、行程"
+      "searchPlaceholder": "订单号、来源、收客计调、接单账号、操作计调、行程",
+      "sourcePlaceholders": {
+        "linxi": "携程单号",
+        "website": "客户姓名"
+      },
+      "collectorPlaceholder": "选择本业务收客计调",
+      "operatorPlaceholder": "选择本业务操作计调",
+      "receivingGroupPlaceholder": "选择业务组",
+      "noOperators": "暂无操作计调，请负责人先在用户管理设置计调分工"
     }
   },
   "itineraryWorkspace": {
@@ -1845,5 +1854,31 @@
       "missingHotel": "D{day} 需要住宿但没有酒店",
       "legChainBroken": "D{day} 的交通段未从出发城市连续连接到结束城市"
     }
+  },
+  "businessGroup": {
+    "label": "业务组",
+    "selectPlaceholder": "选择业务组",
+    "name": "组名称",
+    "namePlaceholder": "请输入组名称",
+    "searchPlaceholder": "组名称",
+    "memberCount": "成员数",
+    "members": "成员",
+    "membersTitle": "{name} · 成员",
+    "addMember": "加入本组",
+    "searchUserPlaceholder": "搜索霖熹账号",
+    "move": "调组",
+    "moveTitle": "调整 {name} 的业务组",
+    "enable": "启用",
+    "disable": "停用",
+    "enableConfirm": "确定启用业务组“{name}”？",
+    "disableConfirm": "停用后“{name}”不能新加入成员或被新台账选择，已有成员与历史台账保留。确定停用？",
+    "disabledNoJoin": "该业务组已停用，可查看已有成员，不能新加入。"
+  },
+  "coordinatorDuty": {
+    "label": "计调分工",
+    "selectPlaceholder": "选择计调分工",
+    "reception": "仅收客",
+    "operation": "仅操作",
+    "both": "两者兼任"
   }
 }

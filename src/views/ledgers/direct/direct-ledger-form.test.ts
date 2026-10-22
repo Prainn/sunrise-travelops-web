@@ -15,9 +15,9 @@ const item: DirectLedgerItem = {
   receivedDate: "2026-10-19",
   source: " 携程123 ",
   creatorId: "user-1",
-  creatorName: "定制师",
-  receivingAccountId: "user-2",
-  receivingAccountName: "接单计调",
+  creatorName: "收客计调",
+  receivingGroupId: "group-1",
+  receivingAccountName: "定制师杨娟组",
   operatorId: "user-3",
   operatorName: "操作计调",
   orderStatus: "converted",
@@ -60,7 +60,7 @@ describe("direct ledger form", () => {
     expect(body).toEqual({
       receivedDate: "2026-10-19",
       source: "携程123",
-      receivingAccountId: "user-2",
+      receivingGroupId: "group-1",
       operatorId: "user-3",
       orderStatus: "converted",
       effectiveContact: false,
@@ -80,10 +80,10 @@ describe("direct ledger form", () => {
     });
   });
 
-  it("never sends a receiving account for website records", () => {
-    const form = { ...directLedgerFormFromItem(item), receivingAccountId: "user-2" };
+  it("never sends a receiving group for website records", () => {
+    const form = { ...directLedgerFormFromItem(item), receivingGroupId: "group-1" };
 
-    expect(directLedgerInput(form, "website").receivingAccountId).toBeNull();
+    expect(directLedgerInput(form, "website").receivingGroupId).toBeNull();
   });
 
   it("maps tri-state answers without swallowing false", () => {

@@ -24,8 +24,21 @@ export const directLedgerService = {
   detail(id: string) {
     return request.get<DirectLedgerItem>(`${BASE_URL}/${encodeURIComponent(id)}`);
   },
+  /** 操作计调选项：本业务启用且分工 operation/both。 */
   operators(query: DirectLedgerOperatorQuery) {
     return request.get<PageResult<DirectLedgerOperatorOption>>(`${BASE_URL}/operators`, {
+      params: { ...query },
+    });
+  },
+  /** 收客计调选项：本业务启用且分工 reception/both。 */
+  collectors(query: DirectLedgerOperatorQuery) {
+    return request.get<PageResult<DirectLedgerOperatorOption>>(`${BASE_URL}/collectors`, {
+      params: { ...query },
+    });
+  },
+  /** 霖熹启用接单业务组；独立站不调用。 */
+  receivingGroups(query: DirectLedgerOperatorQuery) {
+    return request.get<PageResult<DirectLedgerOperatorOption>>(`${BASE_URL}/receiving-groups`, {
       params: { ...query },
     });
   },
