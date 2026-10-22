@@ -47,7 +47,7 @@
               </template>
               <template #extra>
                 <el-button v-if="canCreateItinerary" type="primary" @click="openCreateDialog">
-                  {{ $t("itinerary.createTitle") }}
+                  {{ $t("common.create") }}
                 </el-button>
               </template>
             </el-page-header>
@@ -96,7 +96,7 @@
                 $t("inquiry.agencyName")
               }}</small>{{ inquiry.agencyName }}</span>
               <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-                $t("inquiry.contactName")
+                $t("common.contact")
               }}</small>{{ inquiry.contactName }}</span>
               <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
                 $t("inquiry.plannedDays")
@@ -183,7 +183,7 @@
           <SectionCard v-if="!selectedItinerary">
             <FeedbackState :title="$t('itinerary.noPlans')">
               <el-button v-if="canCreateItinerary" type="primary" @click="openCreateDialog">
-                {{ $t("itinerary.createTitle") }}
+                {{ $t("common.create") }}
               </el-button>
             </FeedbackState>
           </SectionCard>
@@ -196,7 +196,7 @@
               {{ $t("itinerary.resourceItemCount", { count: itemCount }) }}
             </template>
             <el-button :disabled="!canSaveItinerary" class="ml-0!" @click="saveItinerary">
-              {{ $t("itinerary.save") }}
+              {{ $t("common.save") }}
             </el-button>
             <el-button type="primary" class="ml-0!" @click="isQuoteDrawerVisible = true">
               {{ $t("itinerary.viewQuote") }}
@@ -398,7 +398,7 @@
               {{ $t("itinerary.copyForRevision") }}
             </el-button>
             <el-button v-if="canSaveItinerary" @click="saveItinerary">
-              {{ $t("itinerary.save") }}
+              {{ $t("common.save") }}
             </el-button>
             <el-button @click="isQuoteDrawerVisible = false">
               {{ $t("common.close") }}

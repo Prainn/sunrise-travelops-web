@@ -15,7 +15,7 @@
           type="primary"
           @click="emit('create')"
         >
-          {{ $t("attraction.createAttraction") }}
+          {{ $t("common.create") }}
         </el-button>
       </TableToolbar>
       <DataTable
@@ -38,11 +38,11 @@
         <el-table-column prop="name" :label="$t('resource.attractionName')" min-width="200" />
         <el-table-column
           prop="englishName"
-          :label="$t('resource.englishName')"
+          :label="$t('common.englishName')"
           min-width="200"
           show-overflow-tooltip
         />
-        <el-table-column :label="$t('attraction.price')" width="110" align="right">
+        <el-table-column :label="$t('common.price')" width="110" align="right">
           <template #default="scope">
             {{ formatMoney(scope.row.price) }}
           </template>

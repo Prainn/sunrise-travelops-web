@@ -15,6 +15,7 @@ interface ItineraryPdfOptions {
   selectedItinerary: ComputedRef<ItineraryRecord | undefined>;
   canGenerate: () => boolean;
   canDownload: () => boolean;
+  onRefreshError: () => void;
 }
 
 export function useItineraryPdf(options: ItineraryPdfOptions) {
@@ -74,6 +75,18 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     }
   }
 
+  async function refreshConfirmed(plan: ItineraryRecord, inquiry: InquiryRecord) {
+    // 确认已落库；快照仍可能带确认前版本，不能据此恢复可编辑状态或猜测新版本。
+    plan.status = "quoted";
+    inquiry.status = "quoted";
+    closePdfPreview();
+    const results = await Promise.allSettled([
+      inquiryService.itinerary(plan.id).then((record) => Object.assign(plan, record)),
+      inquiryService.detail(inquiry.id).then((record) => Object.assign(inquiry, record)),
+    ]);
+    if (results.some((result) => result.status === "rejected")) options.onRefreshError();
+  }
+
   async function confirmPdfDownload(): Promise<boolean> {
     const plan = options.selectedItinerary.value;
     const inquiry = options.inquiry.value;
@@ -90,8 +103,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     isDownloadingPdf.value = true;
     try {
       const data = await inquiryService.confirmPdf(previewData);
-      Object.assign(plan, await inquiryService.itinerary(plan.id));
-      Object.assign(inquiry, await inquiryService.detail(inquiry.id));
+      await refreshConfirmed(plan, inquiry);
       const file = await generateItineraryPrintDocument(
         data.itinerary,
         data.inquiry,
@@ -138,8 +150,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
       if (plan.status === "draft") {
         if (data.itinerary.version !== plan.version) return false;
         data = await inquiryService.confirmPdf(data);
-        Object.assign(plan, await inquiryService.itinerary(plan.id));
-        Object.assign(inquiry, await inquiryService.detail(inquiry.id));
+        await refreshConfirmed(plan, inquiry);
       }
       const file = await generateItineraryWordDocument(
         data.itinerary,

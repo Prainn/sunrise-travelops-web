@@ -18,7 +18,7 @@
         <el-button
           v-has-perm="'sys:dict:delete'"
           type="danger"
-          :disabled="!hasSelection"
+          :disabled="!hasSelection || deleting"
           @click="handleDelete()"
         >
           {{ $t("common.delete") }}
@@ -37,8 +37,8 @@
         @retry="fetchData"
       >
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column :label="$t('dictionary.name')" prop="name" />
-        <el-table-column :label="$t('dictionary.code')" prop="dictCode" />
+        <el-table-column :label="$t('businessCategory.typeName')" prop="name" />
+        <el-table-column :label="$t('businessCategory.typeCode')" prop="dictCode" />
         <el-table-column :label="$t('common.status')" prop="status">
           <template #default="scope">
             <el-tag :type="scope.row.status === CommonStatus.ENABLED ? 'success' : 'info'">
@@ -82,6 +82,7 @@
                 type="danger"
                 link
                 size="small"
+                :disabled="deleting"
                 @click.stop="handleDelete(scope.row.id)"
               >
                 {{ $t("common.delete") }}
@@ -114,14 +115,14 @@
         :rules="rules"
         label-width="180px"
       >
-        <el-form-item :label="$t('dictionary.name')" prop="name">
-          <el-input v-model="formData.name" :placeholder="$t('dictionary.namePlaceholder')" />
+        <el-form-item :label="$t('businessCategory.typeName')" prop="name">
+          <el-input v-model="formData.name" :placeholder="$t('businessCategory.typeNameRequired')" />
         </el-form-item>
 
-        <el-form-item :label="$t('dictionary.code')" prop="dictCode">
+        <el-form-item :label="$t('businessCategory.typeCode')" prop="dictCode">
           <el-input
             v-model.trim="formData.dictCode"
-            :placeholder="$t('dictionary.codePlaceholder')"
+            :placeholder="$t('businessCategory.typeCodeRequired')"
           />
         </el-form-item>
 
@@ -229,9 +230,9 @@ const initialFormData: DictTypeForm = {
 const formData = reactive<DictTypeForm>({ ...initialFormData });
 
 const rules = computed<FormRules<DictTypeForm>>(() => ({
-  name: [{ required: true, message: t("dictionary.namePlaceholder"), trigger: "blur" }],
+  name: [{ required: true, message: t("businessCategory.typeNameRequired"), trigger: "blur" }],
   dictCode: [
-    { required: true, message: t("dictionary.codePlaceholder"), trigger: "blur" },
+    { required: true, message: t("businessCategory.typeCodeRequired"), trigger: "blur" },
     {
       pattern: /^(?=.{1,100}$)[a-z][a-z0-9_]*$/,
       message: t("dictionary.codeFormat"),
@@ -321,7 +322,18 @@ function handleSubmit(): Promise<void> {
  *
  * @param id 指定时删除单个字典；不指定时删除表格勾选项
  */
+// 影响检查与确认前即占用，删除结束前工具栏与行内删除都不可再次触发。
+const deleting = ref(false);
 async function handleDelete(id?: string): Promise<void> {
+  if (deleting.value) return;
+  deleting.value = true;
+  try {
+    await confirmAndDelete(id);
+  } finally {
+    deleting.value = false;
+  }
+}
+async function confirmAndDelete(id?: string): Promise<void> {
   const dictIds = id ?? selectedIds.value.join(",");
   if (!dictIds) {
     ElMessage.warning(t("common.selectDeleteItem"));

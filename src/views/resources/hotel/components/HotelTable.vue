@@ -6,7 +6,7 @@
         type="primary"
         @click="emit('create')"
       >
-        {{ $t("hotel.createHotel") }}
+        {{ $t("common.create") }}
       </el-button>
     </TableToolbar>
 
@@ -23,11 +23,11 @@
       <el-table-column prop="name" :label="$t('resource.hotelName')" min-width="190" />
       <el-table-column
         prop="englishName"
-        :label="$t('resource.englishName')"
+        :label="$t('common.englishName')"
         min-width="200"
         show-overflow-tooltip
       />
-      <el-table-column prop="city" :label="$t('resource.city')" width="100" />
+      <el-table-column prop="city" :label="$t('common.cityRegion')" width="100" />
       <el-table-column prop="rating" :label="$t('resource.starRating')" width="130">
         <template #default="scope">
           <el-tag :type="scope.row.rating === 5 ? 'success' : scope.row.rating === 4 ? 'primary' : 'info'">
@@ -61,14 +61,14 @@
         width="110"
         align="center"
       />
-      <el-table-column prop="unit" :label="$t('resource.priceUnit')" width="120">
+      <el-table-column prop="unit" :label="$t('itinerary.priceUnit')" width="120">
         <template #default="scope">
           {{ getResourceUnitName(scope.row.unit, locale) }}
         </template>
       </el-table-column>
       <el-table-column
         prop="address"
-        :label="$t('hotel.address')"
+        :label="$t('common.address')"
         min-width="220"
         show-overflow-tooltip
       />

@@ -14,6 +14,7 @@
               circle
               :icon="Camera"
               size="small"
+              :loading="uploadingAvatar"
               :title="$t('profile.changeAvatar')"
               :aria-label="$t('profile.changeAvatar')"
               @click="triggerFileUpload"
@@ -204,7 +205,7 @@
             :placeholder="$t('profile.nicknamePlaceholder')"
           />
         </el-form-item>
-        <el-form-item :label="$t('user.gender')">
+        <el-form-item :label="$t('common.gender')">
           <DictSelect v-model="userProfileForm.gender" code="gender" />
         </el-form-item>
       </el-form>
@@ -378,7 +379,7 @@ const genderText = computed(() => {
 
 const profileInfoItems = computed<ProfileInfoItem[]>(() => [
   {
-    label: t("user.username"),
+    label: t("common.username"),
     value: userProfile.value.username || "-",
     icon: userProfile.value.gender === 2 ? Female : userProfile.value.gender === 1 ? Male : User,
   },
@@ -389,13 +390,13 @@ const profileInfoItems = computed<ProfileInfoItem[]>(() => [
     muted: !userProfile.value.mobile,
   },
   {
-    label: t("user.email"),
+    label: t("common.email"),
     value: userProfile.value.email || t("profile.unbound"),
     icon: Message,
     muted: !userProfile.value.email,
   },
   {
-    label: t("profile.department"),
+    label: t("common.department"),
     value: userProfile.value.deptName || "-",
     icon: OfficeBuilding,
     muted: !userProfile.value.deptName,
@@ -464,13 +465,21 @@ const handleCancel = () => {
 
 const fileInput = ref<HTMLInputElement | null>(null);
 
+// 上传期间不能再选新头像，避免两次请求乱序导致页面与服务器头像不一致。
+const uploadingAvatar = ref(false);
 const triggerFileUpload = () => {
+  if (uploadingAvatar.value) return;
   fileInput.value?.click();
 };
 
 const handleFileChange = async (event: Event) => {
   const target = event.target as HTMLInputElement;
   const file = target.files ? target.files[0] : null;
+  if (uploadingAvatar.value) {
+    target.value = "";
+    return;
+  }
+  uploadingAvatar.value = true;
   try {
     if (file) {
       const avatar = await readFileAsDataUrl(file);
@@ -482,6 +491,7 @@ const handleFileChange = async (event: Event) => {
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : t("apiErrors.REQUEST_FAILED"));
   } finally {
+    uploadingAvatar.value = false;
     target.value = "";
   }
 };

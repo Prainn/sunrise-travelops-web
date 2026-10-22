@@ -29,7 +29,7 @@
       <el-form-item :label="$t('resource.attractionName')" prop="name">
         <el-input v-model.trim="form.name" />
       </el-form-item>
-      <el-form-item :label="$t('resource.englishName')">
+      <el-form-item :label="$t('common.englishName')">
         <el-input v-model.trim="form.englishName" :maxlength="150" />
       </el-form-item>
       <el-form-item :label="$t('attraction.area')" prop="area">
@@ -41,7 +41,7 @@
       <el-form-item :label="$t('resource.englishDescription')">
         <el-input v-model.trim="form.englishDescription" type="textarea" :rows="3" />
       </el-form-item>
-      <el-form-item :label="$t('attraction.price')" prop="price">
+      <el-form-item :label="$t('common.price')" prop="price">
         <el-input-number
           v-model="form.price"
           :min="0"
@@ -49,7 +49,7 @@
           :controls="false"
         />
       </el-form-item>
-      <el-form-item :label="$t('resource.priceUnit')" prop="unit">
+      <el-form-item :label="$t('itinerary.priceUnit')" prop="unit">
         <el-select v-model="form.unit" autocomplete="new-password">
           <el-option
             v-for="option in unitOptions"

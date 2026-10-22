@@ -7,7 +7,7 @@
         :disabled="!config.cities.length"
         @click="openEditor()"
       >
-        {{ $t("websiteConfig.skeletons.create") }}
+        {{ $t("common.create") }}
       </el-button>
       <span class="text-muted text-[13px]">
         {{ $t("websiteConfig.skeletons.help") }}
@@ -19,8 +19,8 @@
       row-key="id"
       :empty-text="$t('websiteConfig.skeletons.empty')"
     >
-      <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
-      <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
+      <el-table-column prop="nameZh" :label="$t('common.nameZh')" min-width="160" />
+      <el-table-column prop="nameEn" :label="$t('common.nameEn')" min-width="180" />
       <el-table-column :label="$t('websiteConfig.days')" width="90" align="center">
         <template #default="{ row }">
           {{ row.days.length }}
@@ -90,10 +90,10 @@
         label-width="auto"
       >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
-          <el-form-item :label="$t('websiteConfig.nameZh')" prop="nameZh">
+          <el-form-item :label="$t('common.nameZh')" prop="nameZh">
             <el-input v-model="record.nameZh" maxlength="150" />
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.nameEn')" prop="nameEn">
+          <el-form-item :label="$t('common.nameEn')" prop="nameEn">
             <el-input v-model="record.nameEn" maxlength="150" />
           </el-form-item>
         </div>
@@ -174,7 +174,7 @@
                       link
                       @click="move($index, -1)"
                     >
-                      {{ $t("websiteConfig.moveUp") }}
+                      {{ $t("common.moveUp") }}
                     </el-button>
                     <el-button
                       :disabled="$index === record.days.length - 1"
@@ -182,10 +182,10 @@
                       link
                       @click="move($index, 1)"
                     >
-                      {{ $t("websiteConfig.moveDown") }}
+                      {{ $t("common.moveDown") }}
                     </el-button>
                     <el-button type="danger" link @click="record.days.splice($index, 1)">
-                      {{ $t("websiteConfig.remove") }}
+                      {{ $t("common.remove") }}
                     </el-button>
                   </RowActions>
                 </template>

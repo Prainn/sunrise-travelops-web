@@ -27,7 +27,7 @@
           type="primary"
           @click="emit('create')"
         >
-          {{ $t("guide.createPrice") }}
+          {{ $t("common.create") }}
         </el-button>
       </TableToolbar>
       <DataTable

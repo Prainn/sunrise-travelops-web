@@ -2,7 +2,7 @@
   <SectionCard fill>
     <TableToolbar :refreshing="loading" @refresh="emit('refresh')">
       <el-button v-hasPerm="'inquiry:create'" type="primary" @click="emit('create')">
-        {{ $t("inquiry.createInquiry") }}
+        {{ $t("common.create") }}
       </el-button>
     </TableToolbar>
     <DataTable
@@ -30,10 +30,10 @@
         min-width="190"
         show-overflow-tooltip
       />
-      <el-table-column prop="contactName" :label="$t('inquiry.contactName')" width="120" />
+      <el-table-column prop="contactName" :label="$t('common.contact')" width="120" />
       <el-table-column
         prop="countryOrRegion"
-        :label="$t('inquiry.countryOrRegion')"
+        :label="$t('common.countryOrRegion')"
         width="110"
       />
       <el-table-column prop="sourceChannel" :label="$t('inquiry.sourceChannel')" width="110" />
@@ -100,6 +100,7 @@
               v-hasPerm="'inquiry:update'"
               type="primary"
               link
+              :disabled="isPending?.(scope.row.id)"
               @click="emit('edit', scope.row as InquiryRecord)"
             >
               {{ $t("common.edit") }}
@@ -118,6 +119,7 @@
                   hasPerm('inquiry:archive')
                     && !isInquiryReadOnly(scope.row.status as InquiryStatus, scope.row.hasActiveTour)
                 "
+                :disabled="isPending?.(scope.row.id)"
                 @click="emit('archive', scope.row as InquiryRecord)"
               >
                 {{ $t("inquiry.archive") }}
@@ -170,6 +172,8 @@ defineProps<{
   error?: string;
   /** 存在生效的筛选条件 */
   filtered?: boolean;
+  /** 行写操作处理中时禁用该行的编辑与归档 */
+  isPending?: (id: string) => boolean;
 }>();
 const emit = defineEmits<{
   refresh: [];

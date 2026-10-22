@@ -17,7 +17,7 @@
       <el-form-item :label="$t('guide.name')" prop="name">
         <el-input v-model="form.name" />
       </el-form-item>
-      <el-form-item :label="$t('guide.gender')">
+      <el-form-item :label="$t('common.gender')">
         <el-select v-model="form.gender" autocomplete="new-password" class="w-full">
           <el-option
             v-for="item in [0, 1, 2]"
@@ -36,7 +36,7 @@
           class="w-full"
         />
       </el-form-item>
-      <el-form-item :label="$t('guide.language')">
+      <el-form-item :label="$t('common.language')">
         <el-input v-model="form.language" />
       </el-form-item>
       <el-form-item :label="$t('guide.contact')">
@@ -78,7 +78,7 @@
           <el-option :label="$t('common.disabled')" value="disabled" />
         </el-select>
       </el-form-item>
-      <el-form-item :label="$t('guide.remark')">
+      <el-form-item :label="$t('common.remark')">
         <el-input v-model="form.remark" type="textarea" :rows="3" />
       </el-form-item>
     </el-form>

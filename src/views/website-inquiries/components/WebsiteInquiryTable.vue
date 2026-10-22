@@ -2,7 +2,7 @@
   <SectionCard fill>
     <TableToolbar @refresh="emit('refresh')">
       <el-button v-if="can('website:inquiry:create')" type="primary" @click="emit('create')">
-        {{ $t("inquiry.createInquiry") }}
+        {{ $t("common.create") }}
       </el-button>
     </TableToolbar>
     <DataTable
@@ -79,6 +79,7 @@
               v-if="can('website:inquiry:update') && !ended(row)"
               type="primary"
               link
+              :disabled="isPending?.(row.id)"
               @click="emit('edit', row)"
             >
               {{ $t("common.edit") }}
@@ -87,10 +88,18 @@
               v-if="!ended(row) && (can('website:inquiry:transfer') || can('website:inquiry:archive'))"
               #more
             >
-              <el-dropdown-item v-if="can('website:inquiry:transfer')" @click="emit('transfer', row)">
+              <el-dropdown-item
+                v-if="can('website:inquiry:transfer')"
+                :disabled="isPending?.(row.id)"
+                @click="emit('transfer', row)"
+              >
                 {{ $t("identity.transfer") }}
               </el-dropdown-item>
-              <el-dropdown-item v-if="can('website:inquiry:archive')" @click="emit('archive', row)">
+              <el-dropdown-item
+                v-if="can('website:inquiry:archive')"
+                :disabled="isPending?.(row.id)"
+                @click="emit('archive', row)"
+              >
                 {{ $t("inquiry.archive") }}
               </el-dropdown-item>
             </template>
@@ -128,6 +137,8 @@ defineProps<{
   page: number;
   pageSize: number;
   can: (permission: string) => boolean;
+  /** 行写操作处理中时禁用该行的编辑、转交与归档 */
+  isPending?: (id: string) => boolean;
 }>();
 const emit = defineEmits<{
   refresh: [];

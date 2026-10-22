@@ -3,6 +3,7 @@
     :model-value="modelValue"
     :title="$t('identity.transfer')"
     size="sm"
+    :busy="saving"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <el-form
@@ -85,12 +86,14 @@ watch(
     }
   },
 );
+// 校验前即占用，保存期间弹窗不可关闭，避免重复转交或以旧版本再次提交。
 async function submit() {
-  if (!props.record || saving.value || !(await formRef.value?.validate().catch(() => false)))
-    return;
+  if (!props.record || saving.value) return;
+  const record = props.record;
   saving.value = true;
   try {
-    await websiteService.transfer(props.record.id, props.record.version, form.ownerId, form.reason);
+    if (!(await formRef.value?.validate().catch(() => false))) return;
+    await websiteService.transfer(record.id, record.version, form.ownerId, form.reason);
     emit("saved");
     emit("update:modelValue", false);
     ElMessage.success(t("websiteInquiry.transferred"));

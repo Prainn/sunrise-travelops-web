@@ -3,12 +3,12 @@
     :model-value="modelValue"
     size="full"
     :append-to-body="recovery"
-    :title="$t(recovery ? 'itineraryWorkspace.deletedTitle' : 'itineraryWorkspace.reorderTitle')"
+    :title="$t(recovery ? 'itineraryWorkspace.deletedDays' : 'itineraryWorkspace.reorderTitle')"
     @close="emit('update:modelValue', false)"
   >
     <template #header>
       <div class="flex items-center gap-4 flex-wrap">
-        <strong>{{ $t(recovery ? 'itineraryWorkspace.deletedTitle' : 'itineraryWorkspace.reorderTitle') }}</strong>
+        <strong>{{ $t(recovery ? 'itineraryWorkspace.deletedDays' : 'itineraryWorkspace.reorderTitle') }}</strong>
         <el-button v-if="!recovery" :disabled="!recycledDays.length" @click="isRecycleVisible = true">
           {{ $t('itineraryWorkspace.deletedDays') }} ({{ recycledDays.length }})
         </el-button>
@@ -154,8 +154,8 @@
               <el-button
                 link
                 :disabled="itemIndex === 0"
-                :aria-label="$t('itineraryWorkspace.moveUp')"
-                :title="$t('itineraryWorkspace.moveUp')"
+                :aria-label="$t('common.moveUp')"
+                :title="$t('common.moveUp')"
                 @click="moveItem(day.id, group, itemIndex, -1)"
               >
                 <el-icon><ArrowUp /></el-icon>
@@ -163,8 +163,8 @@
               <el-button
                 link
                 :disabled="itemIndex === groupItems(day.id, group).length - 1"
-                :aria-label="$t('itineraryWorkspace.moveDown')"
-                :title="$t('itineraryWorkspace.moveDown')"
+                :aria-label="$t('common.moveDown')"
+                :title="$t('common.moveDown')"
                 @click="moveItem(day.id, group, itemIndex, 1)"
               >
                 <el-icon><ArrowDown /></el-icon>

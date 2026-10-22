@@ -1,0 +1,11 @@
+[Unit]
+Description=Check frontend dev release deadlines independently of the runner
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=15
+AccuracySec=1
+Unit=sunrise-frontend-dev-watchdog.service
+
+[Install]
+WantedBy=timers.target

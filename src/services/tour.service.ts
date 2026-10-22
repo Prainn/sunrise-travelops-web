@@ -70,9 +70,9 @@ export const tourService = {
       params: { businessUnit },
     });
   },
-  flights(businessUnit: TourBusinessUnit, keyword?: string) {
-    return request.get<TourFlightOption[]>("/tours/flights", {
-      params: clean({ businessUnit, keyword }),
+  flights(query: PagedKeywordQuery & { businessUnit: TourBusinessUnit }) {
+    return request.get<PageResult<TourFlightOption>>("/tours/flights", {
+      params: clean(query),
     });
   },
   guideLanguages(query: PagedKeywordQuery) {

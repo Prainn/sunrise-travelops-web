@@ -69,7 +69,7 @@
       <el-form-item :label="$t('inquiry.log.dateRange')" class="filter-bar__wide">
         <el-date-picker v-model="dates" type="daterange" value-format="YYYY-MM-DD" />
       </el-form-item>
-      <el-form-item :label="$t('inquiry.log.operator')">
+      <el-form-item :label="$t('common.operator')">
         <el-select
           v-model="operatorId"
           autocomplete="new-password"
@@ -183,7 +183,7 @@
           min-width="150"
           :formatter="formatAction"
         />
-        <el-table-column :label="$t('inquiry.log.operator')" min-width="150">
+        <el-table-column :label="$t('common.operator')" min-width="150">
           <template #default="{ row }">
             {{ row.operatorName }}（{{ row.operatorUsername }}）
           </template>
@@ -246,7 +246,7 @@ import { businessUnitName } from "@/constants/identity";
 import { useUserStore } from "@/stores/user";
 import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useOpenInNewTab } from "@/composables";
+import { useOpenInNewTab, useRefreshOnActivated } from "@/composables";
 import { useI18n } from "vue-i18n";
 import { inquiryService, type PersonOption } from "@/services/inquiry.service";
 import { inquiryLogService, type LogReport } from "@/services/inquiry-log.service";
@@ -362,6 +362,7 @@ async function fetchLogs() {
     if (version === requestVersion) isLoading.value = false;
   }
 }
+useRefreshOnActivated(fetchLogs);
 function search() {
   if (page.value === 1) void fetchLogs();
   else page.value = 1;

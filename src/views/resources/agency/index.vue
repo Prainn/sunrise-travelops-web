@@ -50,6 +50,7 @@ import { computed, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import PageShell from "@/components/PageShell/index.vue";
+import { usePendingActions } from "@/composables";
 import { RESOURCE_PERMISSIONS } from "@/constants";
 import { resourceService } from "@/services/resource.service";
 import type { AgencyContactRecord, AgencyRecord } from "@/types/resource";
@@ -129,30 +130,37 @@ async function saveAgency(agency: AgencyRecord) {
   }
 }
 
-async function toggleStatus(agency: AgencyRecord) {
-  try {
-    const saved = await resourceService.agencyApi.update(agency.id, {
-      ...agency,
-      status: agency.status === "enabled" ? "disabled" : "enabled",
-    });
-    await refreshAfterChange(saved, agency);
-    ElMessage.success(t("common.updateSuccess"));
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : String(error));
-  }
+// 启停、删除从确认前占用到树刷新结束，同一组团社或联系人不会以旧版本重复提交。
+const { run } = usePendingActions();
+
+function toggleStatus(agency: AgencyRecord) {
+  return run(agency.id, async () => {
+    try {
+      const saved = await resourceService.agencyApi.update(agency.id, {
+        ...agency,
+        status: agency.status === "enabled" ? "disabled" : "enabled",
+      });
+      await refreshAfterChange(saved, agency);
+      ElMessage.success(t("common.updateSuccess"));
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : String(error));
+    }
+  });
 }
 
-async function deleteRecord(agency: AgencyRecord) {
-  try {
-    await ElMessageBox.confirm(t("resource.deleteAgencyConfirm"), t("common.tip"), { type: "warning" });
-  } catch { return; }
-  try {
-    await resourceService.agencyApi.deleteByIds(agency.id);
-    await refreshAfterChange(undefined, agency);
-    ElMessage.success(t("common.deleteSuccess"));
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : String(error));
-  }
+function deleteRecord(agency: AgencyRecord) {
+  return run(agency.id, async () => {
+    try {
+      await ElMessageBox.confirm(t("resource.deleteAgencyConfirm"), t("common.tip"), { type: "warning" });
+    } catch { return; }
+    try {
+      await resourceService.agencyApi.deleteByIds(agency.id);
+      await refreshAfterChange(undefined, agency);
+      ElMessage.success(t("common.deleteSuccess"));
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : String(error));
+    }
+  });
 }
 
 function openCreateContactDialog() {
@@ -194,7 +202,11 @@ async function saveContact(contact: AgencyContactRecord) {
   }
 }
 
-async function deleteContact(contact: AgencyContactRecord) {
+function deleteContact(contact: AgencyContactRecord) {
+  return run(`contact:${contact.id}`, () => deleteContactRecord(contact));
+}
+
+async function deleteContactRecord(contact: AgencyContactRecord) {
   const agency = selectedAgency.value;
   if (!agency) return;
   try {

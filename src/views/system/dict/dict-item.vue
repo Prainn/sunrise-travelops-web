@@ -24,7 +24,7 @@
         <el-button
           v-has-perm="'sys:dict-item:delete'"
           type="danger"
-          :disabled="!hasSelection"
+          :disabled="!hasSelection || deleting"
           @click="handleBatchDelete()"
         >
           {{ $t("common.delete") }}
@@ -42,7 +42,7 @@
         @retry="fetchData"
       >
         <el-table-column type="selection" width="55" align="center" />
-        <el-table-column :label="$t('dictionary.optionName')" prop="label" />
+        <el-table-column :label="$t('businessCategory.optionName')" prop="label" />
         <el-table-column :label="$t('dictionary.optionValue')" prop="value" />
         <el-table-column :label="$t('common.sort')" prop="sort" />
         <el-table-column :label="$t('common.status')">
@@ -80,6 +80,7 @@
                 type="danger"
                 link
                 size="small"
+                :disabled="deleting"
                 @click.stop="handleDelete(scope.row.id)"
               >
                 {{ $t("common.delete") }}
@@ -112,10 +113,10 @@
         :rules="rules"
         label-width="100px"
       >
-        <el-form-item :label="$t('dictionary.optionName')" prop="label">
+        <el-form-item :label="$t('businessCategory.optionName')" prop="label">
           <el-input
             v-model="formData.label"
-            :placeholder="$t('dictionary.optionNamePlaceholder')"
+            :placeholder="$t('businessCategory.optionNameRequired')"
           />
         </el-form-item>
         <el-form-item :label="$t('dictionary.optionValue')" prop="value">
@@ -150,7 +151,7 @@
           >
             <template #label="{ value }">
               <el-tag v-if="value" :type="value">
-                {{ formData.label ? formData.label : $t("dictionary.optionName") }}
+                {{ formData.label ? formData.label : $t("businessCategory.optionName") }}
               </el-tag>
             </template>
             <el-option
@@ -161,7 +162,7 @@
             >
               <div flex-y-center gap-10px>
                 <el-tag :type="type as any">
-                  {{ formData.label ?? $t("dictionary.optionName") }}
+                  {{ formData.label ?? $t("businessCategory.optionName") }}
                 </el-tag>
                 <span>{{ type }}</span>
               </div>
@@ -244,7 +245,7 @@ const { loading, list, total, error, params, fetchData, handleQuery, handleReset
 const { selectedIds, hasSelection, handleSelectionChange } = useTableSelection<DictItem>();
 
 const dialogState = reactive({
-  titleKey: "dictionary.createOptionTitle",
+  titleKey: "businessCategory.createOptionTitle",
   visible: false,
 });
 
@@ -259,7 +260,7 @@ const formData = reactive<DictItemForm>({ ...initialFormData });
 
 const rules = computed<FormRules<DictItemForm>>(() => ({
   value: [{ required: true, message: t("dictionary.optionValuePlaceholder"), trigger: "blur" }],
-  label: [{ required: true, message: t("dictionary.optionNamePlaceholder"), trigger: "blur" }],
+  label: [{ required: true, message: t("businessCategory.optionNameRequired"), trigger: "blur" }],
 }));
 
 /**
@@ -293,7 +294,7 @@ function closeDialog(): void {
  * 打开新增字典项弹窗
  */
 function handleCreateClick(): void {
-  dialogState.titleKey = "dictionary.createOptionTitle";
+  dialogState.titleKey = "businessCategory.createOptionTitle";
   openDialog();
 }
 
@@ -304,7 +305,7 @@ function handleCreateClick(): void {
  */
 async function handleEditClick(row: DictItem): Promise<void> {
   if (!row.id) return;
-  dialogState.titleKey = "dictionary.editOptionTitle";
+  dialogState.titleKey = "businessCategory.editOptionTitle";
   try {
     const data = await dictionaryService.getDictItemFormData(dictCode.value, row.id);
     Object.assign(formData, data);
@@ -347,7 +348,18 @@ function handleSubmit(): Promise<void> {
  *
  * @param id 指定时删除单个字典项；不指定时删除表格勾选项
  */
+// 影响检查与确认前即占用，删除结束前工具栏与行内删除都不可再次触发。
+const deleting = ref(false);
 async function handleDelete(id?: string): Promise<void> {
+  if (deleting.value) return;
+  deleting.value = true;
+  try {
+    await confirmAndDelete(id);
+  } finally {
+    deleting.value = false;
+  }
+}
+async function confirmAndDelete(id?: string): Promise<void> {
   const itemIds = id ?? selectedIds.value.join(",");
   if (!itemIds) {
     ElMessage.warning(t("common.selectDeleteItem"));

@@ -9,10 +9,10 @@
   >
     <template v-if="editable" #actions>
       <el-button :disabled="index === 0" link @click="emit('move', -1)">
-        {{ $t("websiteItineraryUi.moveUp") }}
+        {{ $t("common.moveUp") }}
       </el-button>
       <el-button :disabled="last" link @click="emit('move', 1)">
-        {{ $t("websiteItineraryUi.moveDown") }}
+        {{ $t("common.moveDown") }}
       </el-button>
       <el-button link type="danger" @click="emit('remove')">
         {{ $t("websiteItineraryUi.removeDay") }}
@@ -58,7 +58,7 @@
             filterable
             clearable
             :disabled="!editable || (last && day.overnightCityId === null)"
-            :placeholder="$t('websiteItineraryUi.noOvernightStay')"
+            :placeholder="$t('itinerary.noOvernightStay')"
             :empty-values="[null, undefined]"
             :value-on-clear="null"
             @update:model-value="setOvernight"
@@ -76,7 +76,7 @@
             :model-value="day.overnightCityId === null"
             @update:model-value="toggleNoStay"
           >
-            {{ $t("websiteItineraryUi.noOvernightTonight") }}
+            {{ $t("itinerary.noOvernightStay") }}
           </el-checkbox>
         </el-form-item>
       </ItineraryDayPanel>

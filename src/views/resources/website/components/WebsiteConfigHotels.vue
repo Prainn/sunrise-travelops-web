@@ -2,7 +2,7 @@
   <section class="flex flex-col gap-[12px] h-full min-h-0">
     <TableToolbar :refreshable="false">
       <el-button v-if="editable" type="primary" @click="openEditor()">
-        {{ $t("websiteConfig.hotels.create") }}
+        {{ $t("common.create") }}
       </el-button>
       <span class="text-muted text-[13px]">
         {{ $t("websiteConfig.hotels.help") }}
@@ -14,13 +14,13 @@
       row-key="id"
       :empty-text="$t('websiteConfig.hotels.empty')"
     >
-      <el-table-column :label="$t('websiteConfig.hotels.city')" min-width="120">
+      <el-table-column :label="$t('common.cityRegion')" min-width="120">
         <template #default="{ row }">
           {{ config.cities.find((city) => city.id === row.cityId)?.nameZh ?? row.cityId }}
         </template>
       </el-table-column>
-      <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
-      <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
+      <el-table-column prop="nameZh" :label="$t('common.nameZh')" min-width="160" />
+      <el-table-column prop="nameEn" :label="$t('common.nameEn')" min-width="180" />
       <el-table-column
         prop="price"
         :label="$t('websiteConfig.hotels.price')"
@@ -33,7 +33,7 @@
       </el-table-column>
       <el-table-column :label="$t('websiteConfig.hotels.publicHotel')" width="120">
         <template #default="{ row }">
-          {{ row.resourceId ? $t("websiteConfig.cities.linked") : $t("websiteConfig.cities.unlinked") }}
+          {{ row.resourceId ? $t("websiteConfig.cities.linked") : $t("common.notLinked") }}
         </template>
       </el-table-column>
       <el-table-column :label="$t('common.status')" width="100" align="center">
@@ -89,7 +89,7 @@
         :disabled="!editable || saving || isSubmitting"
         label-width="auto"
       >
-        <el-form-item :label="$t('websiteConfig.hotels.city')" prop="cityId">
+        <el-form-item :label="$t('common.cityRegion')" prop="cityId">
           <el-select v-model="record.cityId" autocomplete="new-password" filterable>
             <el-option
               v-for="city in config.cities"
@@ -99,10 +99,10 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$t('websiteConfig.nameZh')" prop="nameZh">
+        <el-form-item :label="$t('common.nameZh')" prop="nameZh">
           <el-input v-model="record.nameZh" maxlength="150" />
         </el-form-item>
-        <el-form-item :label="$t('websiteConfig.nameEn')" prop="nameEn">
+        <el-form-item :label="$t('common.nameEn')" prop="nameEn">
           <el-input v-model="record.nameEn" maxlength="150" />
         </el-form-item>
         <el-form-item :label="$t('websiteConfig.hotels.linkHotel')">

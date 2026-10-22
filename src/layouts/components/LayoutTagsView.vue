@@ -43,8 +43,8 @@
       <button
         type="button"
         class="layout-tabs__action"
-        :aria-label="$t('tags.refreshCurrent')"
-        :title="$t('tags.refreshCurrent')"
+        :aria-label="$t('common.refresh')"
+        :title="$t('common.refresh')"
         @click="refreshSelectedTag(currentTag)"
       >
         <el-icon :size="16">
@@ -81,7 +81,7 @@
               <el-icon :size="14" class="icon-14">
                 <Refresh />
               </el-icon>
-              <span>{{ $t("tags.refreshCurrent") }}</span>
+              <span>{{ $t("common.refresh") }}</span>
             </el-dropdown-item>
             <el-dropdown-item v-if="currentTag && !currentTag.affix" command="closeCurrent">
               <div class="i-svg:close icon-14" />

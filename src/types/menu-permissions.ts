@@ -1,11 +1,21 @@
 import type { LoginScope } from "./auth";
 
-export interface MenuDefinition {
+export interface MenuItem {
+  key: string;
+  menuKey: string;
+  title: string;
+  routeName: string;
+  scopes: LoginScope[];
+  permissions: string[];
+}
+export interface MenuGroup {
   key: string;
   title: string;
-  group: string;
-  scopes?: LoginScope[];
-  permissions: string[];
+  routeName: string;
+  children: MenuItem[];
+}
+export interface MenuNavigationResult {
+  groups: MenuGroup[];
 }
 export interface RoleMenuConfig {
   code: string;
@@ -15,7 +25,6 @@ export interface RoleMenuConfig {
   allowedMenuKeys: string[];
   locked: boolean;
 }
-export interface MenuPermissionsResult {
-  menus: MenuDefinition[];
+export interface MenuPermissionsResult extends MenuNavigationResult {
   roles: RoleMenuConfig[];
 }

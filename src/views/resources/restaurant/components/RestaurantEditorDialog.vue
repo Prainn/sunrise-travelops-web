@@ -19,10 +19,10 @@
       <el-form-item :label="$t('resource.restaurantName')" prop="name">
         <el-input v-model.trim="form.name" />
       </el-form-item>
-      <el-form-item :label="$t('resource.englishName')">
+      <el-form-item :label="$t('common.englishName')">
         <el-input v-model.trim="form.englishName" :maxlength="150" />
       </el-form-item>
-      <el-form-item :label="$t('resource.city')" prop="city">
+      <el-form-item :label="$t('common.cityRegion')" prop="city">
         <CitySelect v-model="form.city" />
       </el-form-item>
       <el-form-item :label="$t('resource.description')" prop="description">
@@ -31,7 +31,7 @@
       <el-form-item :label="$t('resource.englishDescription')">
         <el-input v-model.trim="form.englishDescription" type="textarea" :rows="3" />
       </el-form-item>
-      <el-form-item :label="$t('resource.priceUnit')" prop="unit">
+      <el-form-item :label="$t('itinerary.priceUnit')" prop="unit">
         <el-select v-model="form.unit" autocomplete="new-password">
           <el-option
             v-for="option in unitOptions"
@@ -41,7 +41,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item :label="$t('restaurant.price')" prop="price">
+      <el-form-item :label="$t('common.price')" prop="price">
         <el-input-number
           v-model="form.price"
           :min="0"
@@ -64,13 +64,13 @@
       <el-form-item :label="$t('resource.cuisine')">
         <el-input v-model.trim="form.cuisine" />
       </el-form-item>
-      <el-form-item :label="$t('resource.contact')">
+      <el-form-item :label="$t('common.contact')">
         <el-input v-model.trim="form.contact" />
       </el-form-item>
       <el-form-item :label="$t('resource.phone')">
         <el-input v-model.trim="form.phone" />
       </el-form-item>
-      <el-form-item :label="$t('restaurant.address')">
+      <el-form-item :label="$t('common.address')">
         <el-input v-model.trim="form.address" />
       </el-form-item>
       <el-form-item :label="$t('resource.isStandardPrice')">
@@ -137,7 +137,7 @@ const isVisible = computed({
 const unitOptions = computed(() => getResourceUnitOptions("restaurant", locale.value));
 const rules = computed<FormRules>(() => ({
   name: [{ required: true, message: t("restaurant.nameRequired"), trigger: "blur" }],
-  city: [{ required: true, message: t("restaurant.cityRequired"), trigger: "change" }],
+  city: [{ required: true, message: t("common.selectCity"), trigger: "change" }],
   description: [{ required: true, message: t("resource.descriptionRequired"), trigger: "blur" }],
   price: [{ required: true, message: t("restaurant.priceRequired"), trigger: "blur" }],
   unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],

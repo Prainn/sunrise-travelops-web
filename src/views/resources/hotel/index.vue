@@ -8,7 +8,7 @@
           clearable
         />
       </el-form-item>
-      <el-form-item :label="$t('resource.city')">
+      <el-form-item :label="$t('common.cityRegion')">
         <el-select
           v-model="city"
           autocomplete="new-password"
@@ -76,13 +76,13 @@
         <el-form-item :label="$t('resource.hotelName')" prop="name">
           <el-input v-model.trim="hotelForm.name" />
         </el-form-item>
-        <el-form-item :label="$t('resource.englishName')">
+        <el-form-item :label="$t('common.englishName')">
           <el-input v-model.trim="hotelForm.englishName" :maxlength="150" />
         </el-form-item>
-        <el-form-item :label="$t('resource.city')" prop="city">
+        <el-form-item :label="$t('common.cityRegion')" prop="city">
           <CitySelect v-model="hotelForm.city" />
         </el-form-item>
-        <el-form-item :label="$t('resource.priceUnit')" prop="unit">
+        <el-form-item :label="$t('itinerary.priceUnit')" prop="unit">
           <el-select v-model="hotelForm.unit" autocomplete="new-password">
             <el-option
               v-for="option in hotelUnitOptions"
@@ -108,7 +108,7 @@
             </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item :label="$t('hotel.address')">
+        <el-form-item :label="$t('common.address')">
           <el-input v-model.trim="hotelForm.address" />
         </el-form-item>
         <el-form-item :label="$t('resource.phone')">
@@ -181,7 +181,7 @@ const hotelUnitOptions = computed(() => getResourceUnitOptions("hotel", locale.v
 const requestHotels = useDebounceFn(() => loadHotels(currentQuery()), 300);
 const hotelRules = computed<FormRules>(() => ({
   name: [{ required: true, message: t("hotel.nameRequired"), trigger: "blur" }],
-  city: [{ required: true, message: t("hotel.cityRequired"), trigger: "change" }],
+  city: [{ required: true, message: t("common.selectCity"), trigger: "change" }],
   individualPrice: [
     { required: true, message: t("hotel.individualPriceRequired"), trigger: "change" },
   ],

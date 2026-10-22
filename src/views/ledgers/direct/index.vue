@@ -12,7 +12,7 @@
         <el-select
           v-model="orderStatus"
           autocomplete="new-password"
-          :placeholder="$t('ledger.direct.allOrderStatuses')"
+          :placeholder="$t('common.allStatuses')"
           clearable
         >
           <el-option value="unconverted" :label="$t('ledger.direct.orderStatuses.unconverted')" />
@@ -43,7 +43,7 @@
           :end-placeholder="$t('common.endDate')"
         />
       </el-form-item>
-      <el-form-item :label="$t('tour.collectCoordinator')">
+      <el-form-item :label="$t('ledger.direct.creator')">
         <RemoteSelect
           v-model="creatorId"
           :query-key="businessUnit"
@@ -71,7 +71,7 @@
     <SectionCard fill>
       <TableToolbar :refreshing="loading" @refresh="fetchList">
         <el-button v-if="canCreate" type="primary" @click="openCreate">
-          {{ $t("ledger.direct.create") }}
+          {{ $t("common.create") }}
         </el-button>
       </TableToolbar>
       <DataTable
@@ -181,6 +181,7 @@
                 link
                 type="primary"
                 :loading="openingId === row.id"
+                :disabled="isPending(row.id)"
                 @click="handleOpenClick(row as DirectLedgerItem)"
               >
                 {{ $t(canEditRow(row as DirectLedgerItem) ? "common.edit" : "common.view") }}
@@ -189,7 +190,7 @@
                 v-if="canReviewRow(row as DirectLedgerItem)"
                 link
                 type="primary"
-                :disabled="actingId === row.id"
+                :disabled="isPending(row.id) || openingId === row.id"
                 @click="handleReview(row as DirectLedgerItem)"
               >
                 {{ $t("ledger.direct.review") }}
@@ -198,7 +199,7 @@
                 v-if="canOperateRow(row as DirectLedgerItem)"
                 link
                 type="primary"
-                :disabled="actingId === row.id"
+                :disabled="isPending(row.id) || openingId === row.id"
                 @click="handleOperation(row as DirectLedgerItem)"
               >
                 {{ $t("ledger.direct.markOperated") }}
@@ -207,7 +208,7 @@
                 v-if="canDeleteRow(row as DirectLedgerItem)"
                 link
                 type="danger"
-                :disabled="actingId === row.id"
+                :disabled="isPending(row.id) || openingId === row.id"
                 @click="handleDelete(row as DirectLedgerItem)"
               >
                 {{ $t("common.delete") }}
@@ -241,6 +242,8 @@ import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
+import { usePendingActions } from "@/composables/usePendingActions";
+import { useRefreshOnActivated } from "@/composables";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
@@ -298,7 +301,7 @@ const dialogVisible = ref(false);
 const editing = ref<DirectLedgerItem | null>(null);
 const isReadonly = ref(false);
 const openingId = ref("");
-const actingId = ref("");
+const { isPending, run } = usePendingActions();
 let listGeneration = 0;
 
 // 使用当前身份的有效动作权限；行级操作另结合后端 capabilities。
@@ -373,15 +376,17 @@ const reload = useDebounceFn(() => {
   void fetchList();
 }, 300);
 watch([keyword, orderStatus, workflowStatus, dateRange, creatorId, operatorId], reload);
+// 切换业务时清空人员筛选，与其触发的筛选重载合并为一次请求；旧业务的在途响应直接作废。
 watch(headquartersUnit, () => {
+  listGeneration++;
   creatorId.value = "";
   operatorId.value = "";
   dialogVisible.value = false;
   editing.value = null;
   rows.value = [];
   total.value = 0;
-  pageNum.value = 1;
-  void fetchList();
+  loading.value = true;
+  void reload();
 });
 
 function resetQuery() {
@@ -399,7 +404,7 @@ function openCreate() {
 }
 // 打开前取最新详情，保证编辑基于最新 version 与能力。
 async function handleOpenClick(row: DirectLedgerItem) {
-  if (openingId.value) return;
+  if (openingId.value || isPending(row.id)) return;
   openingId.value = row.id;
   try {
     const detail = await directLedgerService.detail(row.id);
@@ -424,45 +429,46 @@ async function confirmAction(message: string) {
     return false;
   }
 }
-async function runRowAction(row: DirectLedgerItem, action: () => Promise<unknown>, success: string) {
-  if (actingId.value) return;
-  actingId.value = row.id;
-  try {
-    await action();
-    ElMessage.success(success);
-  } catch (error) {
-    // 请求层已按错误码本地化精确原因（版本、审核、操作或删除限制）。
-    ElMessage.error(error instanceof Error ? error.message : String(error));
-  } finally {
-    actingId.value = "";
-    void fetchList();
-  }
+async function runRowAction(row: DirectLedgerItem, message: string, action: () => Promise<unknown>, success: string) {
+  if (openingId.value === row.id) return;
+  await run(row.id, async () => {
+    if (!(await confirmAction(message))) return;
+    try {
+      await action();
+      ElMessage.success(success);
+    } catch (error) {
+      // 请求层已按错误码本地化精确原因。
+      ElMessage.error(error instanceof Error ? error.message : String(error));
+    } finally {
+      await fetchList();
+    }
+  });
 }
 async function handleReview(row: DirectLedgerItem) {
-  if (!(await confirmAction(t("ledger.direct.reviewConfirm", { orderNo: row.orderNo })))) return;
   await runRowAction(
     row,
+    t("ledger.direct.reviewConfirm", { orderNo: row.orderNo }),
     () => directLedgerService.review(row.id, row.version),
     t("ledger.direct.reviewSuccess"),
   );
 }
 async function handleOperation(row: DirectLedgerItem) {
-  const message = t("ledger.direct.markOperatedConfirm", { orderNo: row.orderNo });
-  if (!(await confirmAction(message))) return;
   await runRowAction(
     row,
+    t("ledger.direct.markOperatedConfirm", { orderNo: row.orderNo }),
     () => directLedgerService.updateOperation(row.id, { version: row.version }),
     t("common.updateSuccess"),
   );
 }
 async function handleDelete(row: DirectLedgerItem) {
-  if (!(await confirmAction(t("ledger.direct.deleteConfirm", { orderNo: row.orderNo })))) return;
   await runRowAction(
     row,
+    t("ledger.direct.deleteConfirm", { orderNo: row.orderNo }),
     () => directLedgerService.delete(row.id, row.version),
     t("common.deleteSuccess"),
   );
 }
 
 onMounted(fetchList);
+useRefreshOnActivated(fetchList);
 </script>

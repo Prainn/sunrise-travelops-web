@@ -22,7 +22,7 @@
         </el-tag>
       </template>
       <template #filters>
-        <el-form-item :label="$t('resource.vehicleServiceLevel')">
+        <el-form-item :label="$t('itinerary.vehicleServiceLevel')">
           <el-select
             v-model="serviceLevel"
             autocomplete="new-password"
@@ -78,7 +78,7 @@ const columns: ResourceColumn[] = [
   },
   {
     prop: "serviceLevelLabel",
-    labelKey: "resource.vehicleServiceLevel",
+    labelKey: "itinerary.vehicleServiceLevel",
   },
   {
     prop: "seats",
@@ -93,7 +93,7 @@ const fields = computed<ResourceFormField[]>(() => [
   },
   {
     prop: "serviceLevel",
-    labelKey: "resource.vehicleServiceLevel",
+    labelKey: "itinerary.vehicleServiceLevel",
     required: true,
     type: "select",
     options: [
@@ -111,7 +111,7 @@ const fields = computed<ResourceFormField[]>(() => [
   },
   {
     prop: "unit",
-    labelKey: "resource.priceUnit",
+    labelKey: "itinerary.priceUnit",
     required: true,
     type: "select",
     options: getResourceUnitOptions("vehicle", locale.value),

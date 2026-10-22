@@ -15,6 +15,7 @@
       :total="total"
       :page-num="pageNum"
       :page-size="pageSize"
+      :is-pending="isPending"
       @refresh="fetchInquiries"
       @update:page-num="pageNum = $event"
       @update:page-size="changePageSize"
@@ -32,6 +33,7 @@
       :agency-options="agencyOptions"
       :owner-options="ownerOptions"
       :source-options="sourceOptions"
+      :saving="saving"
       @submit="saveInquiry"
     />
     <InquiryDetailDrawer v-model="isDetailVisible" :record="selectedInquiry" />
@@ -39,12 +41,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onActivated, onDeactivated, ref, watch } from "vue";
+import { computed, nextTick, onDeactivated, onMounted, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import PageShell from "@/components/PageShell/index.vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
-import { useOpenInNewTab } from "@/composables";
+import { useOpenInNewTab, usePendingActions, useRefreshOnActivated } from "@/composables";
 import { inquiryService, type PersonOption } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
 import { useUserStore } from "@/stores/user";
@@ -122,7 +124,8 @@ watch(() => route.query.code, applyRouteCode);
 onDeactivated(() => {
   isActive = false;
 });
-onActivated(async () => {
+// 关闭标签栏时页面不缓存，进入页面须在挂载时加载；缓存页面切回时再刷新。
+async function enterPage() {
   if (route.query.code) applyRouteCode();
   await nextTick();
   isActive = true;
@@ -132,7 +135,9 @@ onActivated(async () => {
   } catch (error) {
     showError(error);
   }
-});
+}
+onMounted(enterPage);
+useRefreshOnActivated(enterPage);
 watch([keywords, status, owner, sourceChannel, businessUnit], () => {
   if (!isActive) return;
   if (pageNum.value === 1) void fetchInquiries();
@@ -220,35 +225,41 @@ function openItineraryManagement(record: InquiryRecord) {
 function openInquiryLogs(record: InquiryRecord) {
   openInNewTab({ name: "InquiryLogs", params: { inquiryId: record.id } });
 }
-let saving = false;
+// 保存期间弹窗不可关闭，避免旧请求返回后关掉新打开的弹窗。
+const saving = ref(false);
+const { isPending, run } = usePendingActions();
 async function saveInquiry(record: InquiryRecord) {
-  if (saving) return;
-  saving = true;
+  if (saving.value) return;
+  saving.value = true;
+  const isUpdate = Boolean(editingId.value);
   try {
-    if (editingId.value) await inquiryService.update(record);
+    if (isUpdate) await inquiryService.update(record);
     else await inquiryService.create(record);
     isEditorVisible.value = false;
+    ElMessage.success(t(isUpdate ? "common.updateSuccess" : "common.createSuccess"));
     await fetchInquiries();
-    ElMessage.success(t(editingId.value ? "common.updateSuccess" : "common.createSuccess"));
   } catch (error) {
     showError(error);
   } finally {
-    saving = false;
+    saving.value = false;
   }
 }
-async function archiveInquiry(record: InquiryRecord) {
+function archiveInquiry(record: InquiryRecord) {
   if (isInquiryReadOnly(record.status, record.hasActiveTour)) return;
-  try {
-    await ElMessageBox.confirm(t("inquiry.archiveConfirm"), t("common.tip"), { type: "warning" });
-  } catch {
-    return;
-  }
-  try {
-    await inquiryService.archive(record);
+  // 确认前占用该行，请求返回前不能再次归档或编辑。
+  return run(record.id, async () => {
+    try {
+      await ElMessageBox.confirm(t("inquiry.archiveConfirm"), t("common.tip"), { type: "warning" });
+    } catch {
+      return;
+    }
+    try {
+      await inquiryService.archive(record);
+      ElMessage.success(t("inquiry.archiveSuccess"));
+    } catch (error) {
+      showError(error);
+    }
     await fetchInquiries();
-    ElMessage.success(t("inquiry.archiveSuccess"));
-  } catch (error) {
-    showError(error);
-  }
+  });
 }
 </script>

@@ -6,3 +6,5 @@ export type { UsePageTableOptions, UsePageTableReturn } from "./usePageTable";
 // 导航
 export { useOpenInNewTab } from "./useOpenInNewTab";
 export { pageTitle, usePageTitle } from "./usePageTitle";
+export { useRefreshOnActivated } from "./useRefreshOnActivated";
+export { usePendingActions } from "./usePendingActions";

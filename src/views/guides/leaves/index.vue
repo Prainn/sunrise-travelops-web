@@ -25,8 +25,8 @@
         @retry="load"
       >
         <el-table-column prop="guideName" :label="$t('guideLeave.guide')" min-width="140" />
-        <el-table-column prop="startDate" :label="$t('guideLeave.startDate')" min-width="120" />
-        <el-table-column prop="endDate" :label="$t('guideLeave.endDate')" min-width="120" />
+        <el-table-column prop="startDate" :label="$t('common.startDate')" min-width="120" />
+        <el-table-column prop="endDate" :label="$t('common.endDate')" min-width="120" />
         <el-table-column
           prop="reason"
           :label="$t('guideLeave.reason')"
@@ -59,6 +59,7 @@
                 v-has-perm="RESOURCE_PERMISSIONS.guide.delete"
                 link
                 type="danger"
+                :disabled="isPending(row.id)"
                 @click="remove(row as GuideLeaveRecord)"
               >
                 {{ $t("common.delete") }}
@@ -113,8 +114,8 @@
             v-model="range"
             type="daterange"
             value-format="YYYY-MM-DD"
-            :start-placeholder="$t('guideLeave.startDate')"
-            :end-placeholder="$t('guideLeave.endDate')"
+            :start-placeholder="$t('common.startDate')"
+            :end-placeholder="$t('common.endDate')"
             style="width: 100%"
           />
         </el-form-item>
@@ -156,6 +157,7 @@ import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
+import { usePendingActions } from "@/composables";
 import Pagination from "@/components/Pagination/index.vue";
 import RowActions from "@/components/RowActions/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
@@ -280,19 +282,23 @@ async function save() {
     validating.value = false;
   }
 }
-async function remove(row: GuideLeaveRecord) {
-  try {
-    await ElMessageBox.confirm(t("common.deleteConfirm"), t("common.tip"), { type: "warning" });
-  } catch {
-    return;
-  }
-  try {
-    await tourService.deleteLeave(row.id);
-    ElMessage.success(t("common.deleteSuccess"));
-    await load();
-  } catch (error) {
-    message(error);
-  }
+// 删除从确认前占用到列表刷新结束，避免重复删除同一条请假。
+const { isPending, run } = usePendingActions();
+function remove(row: GuideLeaveRecord) {
+  return run(row.id, async () => {
+    try {
+      await ElMessageBox.confirm(t("common.deleteConfirm"), t("common.tip"), { type: "warning" });
+    } catch {
+      return;
+    }
+    try {
+      await tourService.deleteLeave(row.id);
+      ElMessage.success(t("common.deleteSuccess"));
+      await load();
+    } catch (error) {
+      message(error);
+    }
+  });
 }
 
 onMounted(load);

@@ -1,7 +1,7 @@
 <template>
   <AppDialog
     v-model="visible"
-    :title="$t(tour ? 'tour.edit' : 'tour.create')"
+    :title="$t(tour ? 'common.edit' : 'common.create')"
     size="lg"
     :busy="saving"
     destroy-on-close
@@ -43,6 +43,8 @@
               filterable
               remote
               :remote-method="loadSources"
+              :loading="sourcesLoading"
+              :placeholder="$t(`tour.inquirySearch.${sourceModule}`)"
               class="w-full"
             >
               <el-option
@@ -74,7 +76,7 @@
           <el-descriptions-item :label="$t('tour.days')">
             {{ source.days ?? "-" }}
           </el-descriptions-item>
-          <el-descriptions-item :label="$t('inquiry.countryOrRegion')">
+          <el-descriptions-item :label="$t('common.countryOrRegion')">
             {{ source.countryName || "-" }}
           </el-descriptions-item>
           <el-descriptions-item :label="$t('tour.collectCoordinator')">
@@ -124,7 +126,7 @@
             </el-form-item>
           </el-col>
           <el-col :xs="24" :sm="12">
-            <el-form-item :label="$t('inquiry.countryOrRegion')" prop="countryItemId">
+            <el-form-item :label="$t('common.countryOrRegion')" prop="countryItemId">
               <BusinessItemSelect
                 v-model="form.countryItemId"
                 type-code="country-region"
@@ -169,6 +171,7 @@
                 type="date"
                 value-format="YYYY-MM-DD"
                 class="w-full!"
+                @change="handleScheduleDateChange"
               />
             </el-form-item>
           </el-col>
@@ -180,6 +183,8 @@
                 :max="365"
                 :step="1"
                 step-strictly
+                controls-position="right"
+                class="w-full"
               />
             </el-form-item>
           </el-col>
@@ -232,6 +237,8 @@
               :max="10000"
               :step="1"
               step-strictly
+              controls-position="right"
+              class="w-full"
             />
           </el-form-item>
         </el-col>
@@ -243,6 +250,8 @@
               :max="10000"
               :step="1"
               step-strictly
+              controls-position="right"
+              class="w-full"
             />
           </el-form-item>
         </el-col>
@@ -254,6 +263,8 @@
               :max="10000"
               :step="1"
               step-strictly
+              controls-position="right"
+              class="w-full"
             />
           </el-form-item>
         </el-col>
@@ -263,7 +274,7 @@
       </el-form-item>
       <el-row :gutter="12">
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('tour.language')">
+          <el-form-item :label="$t('common.language')">
             <RemoteSelect
               v-model="form.language"
               :load-options="loadLanguages"
@@ -279,7 +290,7 @@
         </el-col>
       </el-row>
       <el-form-item v-if="isManual" :label="$t('tour.scheduleModeLabel')">
-        <el-radio-group v-model="form.scheduleMode">
+        <el-radio-group v-model="form.scheduleMode" @change="handleScheduleDateChange">
           <el-radio-button value="flight">
             {{ $t("tour.scheduleMode.flight") }}
           </el-radio-button>
@@ -290,34 +301,32 @@
       </el-form-item>
       <template v-if="form.scheduleMode === 'flight'">
         <el-form-item :label="$t('tour.pickupFlight')" prop="pickupFlightId">
-          <el-select
+          <RemoteSelect
+            v-if="visible"
+            :key="flightQueryKey"
             v-model="form.pickupFlightId"
+            :load-options="loadPickupFlights"
+            :query-key="flightQueryKey"
+            :selected-label="selectedFlightLabel('pickup')"
+            :disabled="!unit"
+            :placeholder="$t('common.selectPlaceholder')"
             autocomplete="new-password"
-            filterable
             class="w-full"
-          >
-            <el-option
-              v-for="item in flights"
-              :key="item.id"
-              :value="item.id"
-              :label="flightLabel(item)"
-            />
-          </el-select>
+          />
         </el-form-item>
         <el-form-item :label="$t('tour.dropFlight')" prop="dropFlightId">
-          <el-select
+          <RemoteSelect
+            v-if="visible"
+            :key="flightQueryKey"
             v-model="form.dropFlightId"
+            :load-options="loadDropFlights"
+            :query-key="flightQueryKey"
+            :selected-label="selectedFlightLabel('drop')"
+            :disabled="!unit"
+            :placeholder="$t('common.selectPlaceholder')"
             autocomplete="new-password"
-            filterable
             class="w-full"
-          >
-            <el-option
-              v-for="item in flights"
-              :key="item.id"
-              :value="item.id"
-              :label="flightLabel(item)"
-            />
-          </el-select>
+          />
         </el-form-item>
       </template>
       <el-row v-else :gutter="12">
@@ -382,6 +391,7 @@
           type="textarea"
           :rows="3"
           maxlength="2000"
+          show-word-limit
         />
       </el-form-item>
     </el-form>
@@ -395,14 +405,14 @@
         :disabled="saving"
         @click="save"
       >
-        {{ $t("common.confirm") }}
+        {{ $t("common.save") }}
       </el-button>
     </template>
   </AppDialog>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import { computed, nextTick, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
@@ -428,6 +438,7 @@ import {
   guideQuery,
   isGuideUnavailable,
   manualScheduleError,
+  syncManualPickupDate,
   tourFormFromRecord,
   updateTourRequest,
   type TourCreateMode,
@@ -449,8 +460,13 @@ const saving = computed(() => validating.value || requesting.value);
 const createMode = ref<TourCreateMode>("manual");
 const sourceModule = ref<TourLinkedSourceModule>("standard");
 const sources = ref<TourSource[]>([]);
+const sourcesLoading = ref(false);
 const operators = ref<Array<{ id: string; name: string }>>([]);
-const flights = ref<TourFlightOption[]>([]);
+const flightSession = ref(0);
+const flightOptions = {
+  pickup: reactive(new Map<string, TourFlightOption>()),
+  drop: reactive(new Map<string, TourFlightOption>()),
+};
 const guides = ref<TourGuideOption[]>([]);
 /** 候选或团快照中出现过的导游名称，供候选缺失时展示已选导游。 */
 const guideLabels = ref<Record<string, string>>({});
@@ -475,6 +491,9 @@ const unit = computed<TourBusinessUnit | null>(() => {
   if (isManual.value) return form.businessUnit || null;
   return source.value?.businessUnit ?? null;
 });
+const flightQueryKey = computed(() => JSON.stringify([
+  unit.value, props.tour?.id ?? "new", flightSession.value, locale.value, form.scheduleMode,
+]));
 const fixedPlatform = computed(() =>
   unit.value === "linxi" || unit.value === "website"
     ? t(`tour.fixedPlatforms.${unit.value}`)
@@ -546,8 +565,8 @@ const rules = computed<FormRules>(() => ({
   pickupAt: [
     selectRule.value,
     {
-      validator: (_rule: unknown, _value: unknown, callback: (error?: Error) => void) =>
-        manualScheduleError(form.startDate, form.pickupAt, "") === "pickupDate"
+      validator: (_rule: unknown, value: string, callback: (error?: Error) => void) =>
+        manualScheduleError(form.startDate, value, "") === "pickupDate"
           ? callback(new Error(t("tour.pickupDateMismatch")))
           : callback(),
       trigger: "change",
@@ -565,6 +584,15 @@ const rules = computed<FormRules>(() => ({
   ],
 }));
 
+async function handleScheduleDateChange() {
+  if (!isManual.value || form.scheduleMode !== "manual") return;
+  syncManualPickupDate(form);
+  await nextTick();
+  const fields = ["pickupAt", "dropAt"] as const;
+  const filledFields = fields.filter((field) => form[field]);
+  if (filledFields.length) await formRef.value?.validateField(filledFields).catch(() => false);
+}
+
 async function loadLanguages(query: RemoteOptionsQuery) {
   const result = await tourService.guideLanguages(query);
   return { ...result, list: result.list.map((item) => ({ id: item.id, label: item.name })) };
@@ -573,6 +601,56 @@ async function loadLanguages(query: RemoteOptionsQuery) {
 function flightLabel(item: TourFlightOption) {
   const name = (zh: string, en: string) => (locale.value === "en" ? en : zh);
   return `${item.flightNumber} ${name(item.departureName, item.departureEnglishName)} ${item.departureTime} → ${name(item.arrivalName, item.arrivalEnglishName)} ${item.arrivalTime}`;
+}
+
+function originalFlight(kind: "pickup" | "drop"): TourFlightOption | undefined {
+  const current = props.tour;
+  const id = current?.[`${kind}FlightId`];
+  const snapshot = current?.[`${kind}Flight`];
+  if (!id || !snapshot) return;
+  return {
+    id,
+    flightNumber: snapshot.flightNumber,
+    departureTime: snapshot.departureTime,
+    arrivalTime: snapshot.arrivalTime,
+    departureCode: snapshot.departureAirport.code,
+    departureName: snapshot.departureAirport.name,
+    departureEnglishName: snapshot.departureAirport.englishName,
+    arrivalCode: snapshot.arrivalAirport.code,
+    arrivalName: snapshot.arrivalAirport.name,
+    arrivalEnglishName: snapshot.arrivalAirport.englishName,
+  };
+}
+
+function selectedFlightLabel(kind: "pickup" | "drop") {
+  const id = form[`${kind}FlightId`];
+  const original = originalFlight(kind);
+  const selected = original?.id === id ? original : flightOptions[kind].get(id);
+  return selected ? flightLabel(selected) : "";
+}
+
+async function loadFlights(query: RemoteOptionsQuery, kind: "pickup" | "drop") {
+  const businessUnit = unit.value;
+  if (!visible.value || form.scheduleMode !== "flight" || !businessUnit) return { list: [], total: 0 };
+  const key = flightQueryKey.value;
+  const result = await tourService.flights({ ...query, businessUnit });
+  if (!visible.value || key !== flightQueryKey.value) return { list: [], total: 0 };
+  const original = originalFlight(kind);
+  return {
+    ...result,
+    list: result.list.map((item) => {
+      flightOptions[kind].set(item.id, item);
+      // 同一 ID 保存时继续沿用原团快照，候选页也显示这份快照。
+      return { id: item.id, label: flightLabel(original?.id === item.id ? original : item) };
+    }),
+  };
+}
+
+function loadPickupFlights(query: RemoteOptionsQuery) {
+  return loadFlights(query, "pickup");
+}
+function loadDropFlights(query: RemoteOptionsQuery) {
+  return loadFlights(query, "drop");
 }
 function guideLabel(item: { name: string; code: string | null; language?: string | null }) {
   const base = item.code ? `${item.name} (${item.code})` : item.name;
@@ -590,6 +668,7 @@ let guidesKey: string | undefined;
 
 async function loadSources(keyword = "") {
   const generation = ++sourcesGeneration;
+  sourcesLoading.value = true;
   try {
     const selected = source.value;
     const result = await tourService.sources(sourceModule.value, keyword);
@@ -597,7 +676,9 @@ async function loadSources(keyword = "") {
     sources.value = selected && !result.some((item) => item.inquiryId === selected.inquiryId)
       ? [selected, ...result] : result;
   } catch (error) {
-    fail(error);
+    if (generation === sourcesGeneration) fail(error);
+  } finally {
+    if (generation === sourcesGeneration) sourcesLoading.value = false;
   }
 }
 async function loadChoices(businessUnit: TourBusinessUnit | null) {
@@ -605,28 +686,13 @@ async function loadChoices(businessUnit: TourBusinessUnit | null) {
   choicesUnit = businessUnit;
   const generation = ++choicesGeneration;
   operators.value = [];
-  flights.value = [];
   if (!businessUnit) return;
   try {
-    const result = await Promise.all([
-      tourService.operators(businessUnit),
-      tourService.flights(businessUnit),
-    ]);
+    const result = await tourService.operators(businessUnit);
     if (generation !== choicesGeneration) return;
-    [operators.value, flights.value] = result;
+    operators.value = result;
     const current = props.tour;
     if (current) {
-      // 只为实际存在的航班快照补选项；手填时间的团没有航班。
-      for (const [id, snapshot] of [[current.pickupFlightId, current.pickupFlight], [current.dropFlightId, current.dropFlight]] as const) {
-        if (!id || !snapshot) continue;
-        const booked = { id, flightNumber: snapshot.flightNumber, departureTime: snapshot.departureTime,
-          arrivalTime: snapshot.arrivalTime, departureCode: snapshot.departureAirport.code,
-          departureName: snapshot.departureAirport.name, departureEnglishName: snapshot.departureAirport.englishName,
-          arrivalCode: snapshot.arrivalAirport.code, arrivalName: snapshot.arrivalAirport.name,
-          arrivalEnglishName: snapshot.arrivalAirport.englishName };
-        const index = flights.value.findIndex((item) => item.id === id);
-        if (index < 0) flights.value.push(booked); else flights.value.splice(index, 1, booked);
-      }
       if (!operators.value.some((item) => item.id === current.operatorId))
         operators.value.push({ id: current.operatorId, name: current.operatorName });
     } else if (
@@ -668,6 +734,7 @@ async function loadGuides() {
 function resetCreateForm() {
   sourcesGeneration++;
   sources.value = [];
+  sourcesLoading.value = false;
   const manual = createMode.value === "manual";
   Object.assign(form, emptyTourForm(), { scheduleMode: manual ? "manual" : "flight" });
   if (manual) {
@@ -681,6 +748,9 @@ function resetCreateForm() {
   }
 }
 function onOpen() {
+  flightSession.value++;
+  flightOptions.pickup.clear();
+  flightOptions.drop.clear();
   choicesUnit = undefined;
   guidesKey = undefined;
   guideLabels.value = {};
@@ -702,6 +772,8 @@ function onOpen() {
 
 // 新建时业务随来源或手选业务确定；业务变化后计调、航班和导游都需重新选择。
 watch(unit, (value, previous) => {
+  flightOptions.pickup.clear();
+  flightOptions.drop.clear();
   if (props.tour || !visible.value || value === previous) return;
   form.agencyId = "";
   form.operatorId = "";

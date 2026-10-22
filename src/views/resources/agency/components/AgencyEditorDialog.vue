@@ -61,14 +61,14 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item :label="$t('resource.agencyName')" prop="shortName">
+      <el-form-item :label="$t('inquiry.agencyName')" prop="shortName">
         <el-input v-model.trim="form.shortName">
           <template v-if="form.parentId" #prepend>
             {{ form.parentName }}-
           </template>
         </el-input>
       </el-form-item>
-      <el-form-item :label="$t('resource.countryOrRegion')" prop="countryItemId">
+      <el-form-item :label="$t('common.countryOrRegion')" prop="countryItemId">
         <BusinessItemSelect
           :model-value="form.countryItemId ?? ''"
           type-code="country-region"
@@ -77,7 +77,7 @@
           @update:model-value="form.countryItemId = $event || null"
         />
       </el-form-item>
-      <el-form-item :label="$t('resource.city')">
+      <el-form-item :label="$t('common.cityRegion')">
         <el-input v-model.trim="form.city" autocomplete="new-password" :maxlength="100" />
       </el-form-item>
       <el-form-item :label="$t('resource.agencyEmail')" prop="email">
@@ -166,7 +166,7 @@ const rules = computed<FormRules>(() => ({
   shortName: [
     {
       required: true,
-      message: t("resource.fieldRequired", { field: t("resource.agencyName") }),
+      message: t("resource.fieldRequired", { field: t("inquiry.agencyName") }),
       trigger: "blur",
     },
   ],

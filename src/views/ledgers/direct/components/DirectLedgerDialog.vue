@@ -240,7 +240,7 @@ import {
   type TriStateValue,
 } from "../direct-ledger-form";
 
-const BOOLEAN_FIELDS = ["effectiveContact", "proposalSent", "priority", "loss"] as const;
+const BOOLEAN_FIELDS = ["effectiveContact", "proposalSent", "loss", "priority"] as const;
 const TRI_STATE_FIELDS = ["complaint", "satisfied"] as const;
 const TEXT_FIELDS = [
   "notConvertedReason",
@@ -272,8 +272,8 @@ const isDelegate = computed(
 );
 const isWebsite = computed(() => businessUnit.value === "website");
 const dialogTitle = computed(() => {
-  if (!props.ledger) return t("ledger.direct.create");
-  return t(props.readonly ? "ledger.direct.view" : "ledger.direct.edit");
+  if (!props.ledger) return t("common.create");
+  return t(props.readonly ? "common.view" : "common.edit");
 });
 const creatorName = computed(() => props.ledger?.creatorName ?? user.userInfo.nickname ?? "");
 const receivedMonth = computed(() => form.receivedDate.slice(0, 7));

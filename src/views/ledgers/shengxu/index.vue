@@ -36,7 +36,7 @@
     <SectionCard fill>
       <TableToolbar :refreshing="loading" @refresh="fetchList">
         <el-button v-if="canCreate" type="primary" @click="openCreate">
-          {{ $t("ledger.shengxu.create") }}
+          {{ $t("common.create") }}
         </el-button>
       </TableToolbar>
       <DataTable
@@ -65,7 +65,7 @@
             {{ regionText(row as ShengxuLedgerItem) }}
           </template>
         </el-table-column>
-        <el-table-column prop="contactName" :label="$t('ledger.shengxu.contact')" min-width="110" />
+        <el-table-column prop="contactName" :label="$t('common.contact')" min-width="110" />
         <el-table-column
           prop="creatorName"
           :label="$t('ledger.shengxu.collectCoordinator')"
@@ -114,6 +114,7 @@
                 link
                 type="primary"
                 :loading="openingId === row.id"
+                :disabled="isPending(row.id)"
                 @click="handleOpenClick(row as ShengxuLedgerItem)"
               >
                 {{ $t(canEditRow(row as ShengxuLedgerItem) ? "common.edit" : "common.view") }}
@@ -122,7 +123,7 @@
                 v-if="canDeleteRow(row as ShengxuLedgerItem)"
                 link
                 type="danger"
-                :disabled="deletingId === row.id"
+                :disabled="isPending(row.id) || openingId === row.id"
                 @click="handleDelete(row as ShengxuLedgerItem)"
               >
                 {{ $t("common.delete") }}
@@ -155,6 +156,8 @@ import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
+import { usePendingActions } from "@/composables/usePendingActions";
+import { useRefreshOnActivated } from "@/composables";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
@@ -186,7 +189,7 @@ const dialogVisible = ref(false);
 const editing = ref<ShengxuLedgerItem | null>(null);
 const isReadonly = ref(false);
 const openingId = ref("");
-const deletingId = ref("");
+const { isPending, run } = usePendingActions();
 let listGeneration = 0;
 
 // 使用当前身份的有效动作权限；行级操作另结合后端 capabilities。
@@ -259,7 +262,7 @@ function openCreate() {
 }
 // 打开前取最新详情，保证编辑基于最新 version 与能力。
 async function handleOpenClick(row: ShengxuLedgerItem) {
-  if (openingId.value) return;
+  if (openingId.value || isPending(row.id)) return;
   openingId.value = row.id;
   try {
     const detail = await shengxuLedgerService.detail(row.id);
@@ -277,26 +280,28 @@ function handleSaved(saved: ShengxuLedgerItem) {
   void fetchList();
 }
 async function handleDelete(row: ShengxuLedgerItem) {
-  try {
-    await ElMessageBox.confirm(
-      t("ledger.shengxu.deleteConfirm", { date: row.recordDate, agency: row.agencyName }),
-      t("common.warning"),
-      { type: "warning" },
-    );
-  } catch {
-    return;
-  }
-  deletingId.value = row.id;
-  try {
-    await shengxuLedgerService.delete(row.id, row.version);
-    ElMessage.success(t("common.deleteSuccess"));
-  } catch (error) {
-    ElMessage.error(errorText(error));
-  } finally {
-    deletingId.value = "";
-    void fetchList();
-  }
+  if (openingId.value === row.id) return;
+  await run(row.id, async () => {
+    try {
+      await ElMessageBox.confirm(
+        t("ledger.shengxu.deleteConfirm", { date: row.recordDate, agency: row.agencyName }),
+        t("common.warning"),
+        { type: "warning" },
+      );
+    } catch {
+      return;
+    }
+    try {
+      await shengxuLedgerService.delete(row.id, row.version);
+      ElMessage.success(t("common.deleteSuccess"));
+    } catch (error) {
+      ElMessage.error(errorText(error));
+    } finally {
+      await fetchList();
+    }
+  });
 }
 
 onMounted(fetchList);
+useRefreshOnActivated(fetchList);
 </script>

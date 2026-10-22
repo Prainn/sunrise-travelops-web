@@ -4,7 +4,7 @@
       <SectionCard
         fill
         padding="compact"
-        :title="$t('menuPermission.rolesTitle')"
+        :title="$t('common.roles')"
         body-class="overflow-y-auto"
       >
         <div class="flex flex-col gap-2">
@@ -63,8 +63,10 @@
           @check="readChecked"
         >
           <template #default="{ data }">
-            <span>{{ data.label }}</span>
-            <span v-if="data.unavailable" class="ml-3 text-xs text-muted">{{ $t('menuPermission.unavailable') }}</span>
+            <span class="inline-flex items-center gap-3">
+              <span class="leading-none">{{ data.label }}</span>
+              <span v-if="data.unavailable" class="text-xs text-muted leading-none">{{ $t('menuPermission.unavailable') }}</span>
+            </span>
           </template>
         </el-tree>
       </div>
@@ -86,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox, type ElTree } from "element-plus";
@@ -94,28 +96,46 @@ import PageShell from "@/components/PageShell/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { menuPermissionsService } from "@/services/menu-permissions.service";
-import type { MenuDefinition, RoleMenuConfig } from "@/types/menu-permissions";
+import type { MenuGroup, RoleMenuConfig } from "@/types/menu-permissions";
+
+interface MenuTreeNode {
+  key: string;
+  label: string;
+  menuKey?: string;
+  disabled: boolean;
+  unavailable?: boolean;
+  children?: MenuTreeNode[];
+}
 
 defineOptions({ name: "MenuPermissions" });
 const { t } = useI18n();
 const roles = ref<RoleMenuConfig[]>([]);
-const menus = ref<MenuDefinition[]>([]);
+const groups = ref<MenuGroup[]>([]);
 const selected = ref<RoleMenuConfig>();
-const checked = ref<string[]>([]);
+const checked = ref(new Set<string>());
 const tree = ref<InstanceType<typeof ElTree>>();
 const loading = ref(false);
 const saving = ref(false);
 const error = ref("");
-const dirty = computed(() => Boolean(selected.value && JSON.stringify([...checked.value].sort()) !== JSON.stringify([...selected.value.menuKeys].sort())));
-const nodes = computed(() => [...new Set(menus.value.map((menu) => menu.group))].map((group) => {
-  const children = menus.value.filter((menu) => menu.group === group).map((menu) => ({
+const dirty = computed(() => Boolean(selected.value && JSON.stringify([...checked.value].sort()) !== JSON.stringify([...new Set(selected.value.menuKeys)].sort())));
+const nodes = computed<MenuTreeNode[]>(() => groups.value.map((group) => {
+  const children = group.children.map((menu) => ({
     key: menu.key,
+    menuKey: menu.menuKey,
     label: t(`route.${menu.title}`),
-    disabled: Boolean(selected.value?.locked || !selected.value?.allowedMenuKeys.includes(menu.key)),
-    unavailable: !selected.value?.allowedMenuKeys.includes(menu.key),
+    disabled: Boolean(selected.value?.locked || !selected.value?.allowedMenuKeys.includes(menu.menuKey)),
+    unavailable: !selected.value?.allowedMenuKeys.includes(menu.menuKey),
   }));
-  return { key: `group:${group}`, label: t(`route.${group}`), disabled: children.every((child) => child.disabled), children };
+  return { key: group.key, label: t(`route.${group.title}`), disabled: children.every((child) => child.disabled), children };
 }));
+
+function syncChecked() {
+  const keys = groups.value.flatMap((group) => group.children)
+    .filter((menu) => checked.value.has(menu.menuKey))
+    .map((menu) => menu.key);
+  tree.value?.setCheckedKeys(keys);
+}
+watch(nodes, syncChecked, { flush: "post" });
 
 async function discard() {
   if (!dirty.value) return true;
@@ -130,11 +150,22 @@ async function selectRole(role: RoleMenuConfig) {
   cancel();
 }
 function cancel() {
-  checked.value = [...(selected.value?.menuKeys ?? [])];
-  void nextTick(() => tree.value?.setCheckedKeys(checked.value));
+  checked.value = new Set(selected.value?.menuKeys ?? []);
+  void nextTick(syncChecked);
 }
-function readChecked() {
-  checked.value = (tree.value?.getCheckedKeys(true) ?? []).filter((key): key is string => typeof key === "string" && Boolean(selected.value?.allowedMenuKeys.includes(key)));
+function readChecked(node: MenuTreeNode) {
+  if (saving.value || node.disabled) return;
+  // 禁用子项可能让父组保持半选；勾选方向以本次可操作的叶子为准。
+  const leaves = (node.children ?? [node]).filter((leaf) => !leaf.disabled && leaf.menuKey);
+  const isChecked = leaves.every((leaf) => tree.value?.getNode(leaf.key)?.checked);
+  const next = new Set(checked.value);
+  for (const leaf of leaves) {
+    if (!leaf.menuKey) continue;
+    if (isChecked) next.add(leaf.menuKey);
+    else next.delete(leaf.menuKey);
+  }
+  checked.value = next;
+  syncChecked();
 }
 function setExpanded(expanded: boolean) {
   for (const node of nodes.value) {
@@ -148,7 +179,7 @@ async function reload() {
   error.value = "";
   try {
     const result = await menuPermissionsService.list();
-    menus.value = result.menus;
+    groups.value = result.groups;
     roles.value = result.roles;
     selected.value = result.roles.find((role) => role.code === selected.value?.code) ?? result.roles[0];
     cancel();
@@ -159,7 +190,7 @@ async function save() {
   if (!selected.value || selected.value.locked || saving.value || !dirty.value) return;
   saving.value = true;
   try {
-    const saved = await menuPermissionsService.save(selected.value, checked.value);
+    const saved = await menuPermissionsService.save(selected.value, [...checked.value]);
     roles.value = roles.value.map((role) => role.code === saved.code ? saved : role);
     selected.value = saved;
     cancel();

@@ -5,7 +5,7 @@
       <SectionCard
         fill
         padding="compact"
-        :title="$t('user.department')"
+        :title="$t('common.department')"
         body-class="overflow-y-auto"
       >
         <el-tree
@@ -41,7 +41,7 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item :label="$t('user.rolesLabel')" prop="roleId">
+      <el-form-item :label="$t('common.roles')" prop="roleId">
         <el-select
           v-model="params.roleId"
           autocomplete="new-password"
@@ -78,7 +78,7 @@
         <el-button
           v-hasPerm="'sys:user:delete'"
           type="danger"
-          :disabled="!hasSelection"
+          :disabled="!hasSelection || deleting"
           @click="handleDelete()"
         >
           {{ $t("common.delete") }}
@@ -124,12 +124,12 @@
         </el-table-column>
         <el-table-column
           prop="englishName"
-          :label="$t('user.englishName')"
+          :label="$t('common.englishName')"
           min-width="120"
         />
         <el-table-column prop="tourCode" :label="$t('user.tourCode')" width="110" />
         <el-table-column
-          :label="$t('user.username')"
+          :label="$t('common.username')"
           min-width="120"
           prop="username"
           show-overflow-tooltip
@@ -148,7 +148,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('user.gender')" align="center" width="70">
+        <el-table-column :label="$t('common.gender')" align="center" width="70">
           <template #default="scope">
             <el-tag
               v-if="
@@ -168,7 +168,7 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('user.department')" min-width="220">
+        <el-table-column :label="$t('common.department')" min-width="220">
           <template #default="{ row }">
             <div
               v-for="identity in row.identities"
@@ -182,7 +182,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('user.rolesLabel')" prop="roleNames" width="400">
+        <el-table-column :label="$t('common.roles')" prop="roleNames" width="400">
           <template #default="scope">
             <el-tag
               v-for="role in userRoleLabels(scope.row.roleNames, roleOptions)"
@@ -196,7 +196,7 @@
         </el-table-column>
         <el-table-column :label="$t('user.mobile')" prop="mobile" width="130" />
         <el-table-column
-          :label="$t('user.email')"
+          :label="$t('common.email')"
           prop="email"
           min-width="180"
           show-overflow-tooltip
@@ -230,6 +230,7 @@
                 type="danger"
                 size="small"
                 link
+                :disabled="deleting"
                 @click="handleDelete(scope.row.id)"
               >
                 {{ $t("common.delete") }}
@@ -276,7 +277,7 @@
         <h4 class="mt-0 mb-5 text-base font-semibold leading-6">
           {{ $t("user.basicInfo") }}
         </h4>
-        <el-form-item :label="$t('user.username')" prop="username">
+        <el-form-item :label="$t('common.username')" prop="username">
           <el-input
             v-model.trim="formData.username"
             :readonly="!!formData.id"
@@ -285,18 +286,26 @@
         </el-form-item>
 
         <el-form-item :label="$t('user.nickname')" prop="nickname">
-          <el-input v-model="formData.nickname" :placeholder="$t('user.nicknamePlaceholder')" />
+          <el-input v-model="formData.nickname" :placeholder="$t('profile.nicknamePlaceholder')" />
         </el-form-item>
 
-        <el-form-item :label="$t('user.englishName')" prop="englishName">
+        <el-form-item :label="$t('common.englishName')" prop="englishName">
           <el-input v-model="formData.englishName" maxlength="100" />
         </el-form-item>
 
-        <el-form-item :label="$t('user.tourCode')" prop="tourCode">
-          <el-input v-model="formData.tourCode" maxlength="10" :placeholder="$t('user.tourCodeHint')" />
+        <el-form-item v-if="needsTourCode" :label="$t('user.tourCode')" prop="tourCode">
+          <el-input
+            v-model="formData.tourCode"
+            maxlength="10"
+            :placeholder="$t('user.tourCodeHint')"
+            @input="tourCodeSuggestion.markManual"
+          />
+          <div v-if="dialogState.mode === DialogMode.CREATE" class="text-xs text-[var(--el-text-color-secondary)]">
+            {{ $t(tourCodeSuggestionHint) }}
+          </div>
         </el-form-item>
 
-        <el-form-item :label="$t('user.gender')" prop="gender">
+        <el-form-item :label="$t('common.gender')" prop="gender">
           <DictSelect v-model="formData.gender" code="gender" :style="{ width: '100%' }" />
         </el-form-item>
 
@@ -314,7 +323,7 @@
           />
         </el-form-item>
 
-        <el-form-item :label="$t('user.email')" prop="email">
+        <el-form-item :label="$t('common.email')" prop="email">
           <el-input
             v-model="formData.email"
             :placeholder="$t('user.emailPlaceholder')"
@@ -345,7 +354,12 @@
         <el-button :disabled="isSubmitting" @click="closeDialog">
           {{ $t("common.cancel") }}
         </el-button>
-        <el-button type="primary" :loading="isSubmitting" @click="handleSubmit">
+        <el-button
+          type="primary"
+          :loading="isSubmitting"
+          :disabled="tourCodeSuggestion.status.value === 'loading'"
+          @click="handleSubmit"
+        >
           {{ $t("common.confirm") }}
         </el-button>
       </template>
@@ -384,7 +398,7 @@
         <el-form-item :label="$t('user.nickname')">
           <el-input :model-value="resetPasswordDialog.nickname" readonly />
         </el-form-item>
-        <el-form-item :label="$t('user.username')">
+        <el-form-item :label="$t('common.username')">
           <el-input :model-value="resetPasswordDialog.username" readonly />
         </el-form-item>
 
@@ -425,6 +439,7 @@ import type { FormInstance, FormRules } from "element-plus";
 import { CopyDocument, Female, Male } from "@element-plus/icons-vue";
 
 import UserIdentityFields from "./components/UserIdentityFields.vue";
+import { useTourCodeSuggestion } from "./useTourCodeSuggestion";
 import type {
   IdentityRoleOption,
   DepartmentOption,
@@ -522,6 +537,18 @@ const initialFormData: UserForm = {
 };
 
 const formData = reactive<UserForm>(structuredClone(initialFormData));
+const needsTourCode = computed(() => formData.identities?.[0]?.scope !== "headquarters");
+const tourCodeSuggestion = useTourCodeSuggestion({
+  form: formData,
+  enabled: () => dialogState.visible && dialogState.mode === DialogMode.CREATE && needsTourCode.value,
+  suggest: userService.suggestTourCode,
+});
+const tourCodeSuggestionHint = computed(() => ({
+  idle: "user.tourCodeAutoHint",
+  loading: "user.tourCodeGenerating",
+  unavailable: "user.tourCodeManualHint",
+  failed: "user.tourCodeGenerateFailed",
+})[tourCodeSuggestion.status.value]);
 
 type ResetPasswordForm = {
   password: string;
@@ -582,12 +609,12 @@ const rules = computed<FormRules<UserForm>>(() => ({
       trigger: "blur",
     },
   ],
-  nickname: [{ required: true, message: t("user.nicknamePlaceholder"), trigger: "blur" }],
+  nickname: [{ required: true, message: t("profile.nicknamePlaceholder"), trigger: "blur" }],
   englishName: [{ required: true, whitespace: true, message: t("user.englishNameRequired"), trigger: "blur" }],
-  tourCode: [
+  tourCode: needsTourCode.value ? [
     { required: true, message: t("user.tourCodeRequired"), trigger: "blur" },
     { pattern: /^[A-Za-z0-9]{1,10}$/, message: t("user.tourCodeInvalid"), trigger: "blur" },
-  ],
+  ] : [],
   email: [{ type: "email", message: t("user.emailInvalid"), trigger: "blur" }],
   mobile: [{ pattern: /^1[3-9]\d{9}$/, message: t("user.mobileInvalid"), trigger: "blur" }],
 }));
@@ -672,6 +699,7 @@ function closeDialog(): void {
  * 重置表单数据和验证状态。
  */
 function resetForm(): void {
+  tourCodeSuggestion.reset();
   userFormRef.value?.resetFields();
   userFormRef.value?.clearValidate();
   Object.keys(formData).forEach((key) => {
@@ -720,6 +748,7 @@ async function handleEditClick(id: string): Promise<void> {
  * 校验并提交用户表单。
  */
 function handleSubmit(): Promise<void> {
+  if (tourCodeSuggestion.status.value === "loading") return Promise.resolve();
   return submitForm(async () => {
     loading.value = true;
     try {
@@ -750,7 +779,18 @@ function handleSubmit(): Promise<void> {
  *
  * @param id 指定时删除单个用户；不指定时删除表格勾选项
  */
+// 影响检查与确认前即占用，删除结束前工具栏与行内删除都不可再次触发。
+const deleting = ref(false);
 async function handleDelete(id?: string): Promise<void> {
+  if (deleting.value) return;
+  deleting.value = true;
+  try {
+    await confirmAndDelete(id);
+  } finally {
+    deleting.value = false;
+  }
+}
+async function confirmAndDelete(id?: string): Promise<void> {
   const userIds = id ?? selectedIds.value.join(",");
   if (!userIds) {
     ElMessage.warning(t("common.selectDeleteItem"));

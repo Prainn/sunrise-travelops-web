@@ -56,8 +56,8 @@ function requiredText(t: Translate, field: string, max = 150): FormItemRule[] {
 
 function nameRules(t: Translate) {
   return {
-    nameZh: requiredText(t, "websiteConfig.nameZh"),
-    nameEn: requiredText(t, "websiteConfig.nameEn"),
+    nameZh: requiredText(t, "common.nameZh"),
+    nameEn: requiredText(t, "common.nameEn"),
   };
 }
 

@@ -7,7 +7,7 @@
   >
     <template #actions>
       <el-button v-has-perm="permissions.create" type="primary" @click="emit('create')">
-        {{ $t("resource.addAgency") }}
+        {{ $t("common.create") }}
       </el-button>
     </template>
     <FilterBar variant="compact" @reset="resetQuery">

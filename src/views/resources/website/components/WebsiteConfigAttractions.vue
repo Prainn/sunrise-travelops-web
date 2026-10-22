@@ -7,7 +7,7 @@
         :disabled="!config.cities.length"
         @click="openEditor()"
       >
-        {{ $t("websiteConfig.attractions.create") }}
+        {{ $t("common.create") }}
       </el-button>
       <span class="text-muted text-[13px]">
         {{ $t("websiteConfig.attractions.help") }}
@@ -19,8 +19,8 @@
       row-key="id"
       :empty-text="$t('websiteConfig.attractions.empty')"
     >
-      <el-table-column prop="nameZh" :label="$t('websiteConfig.nameZh')" min-width="160" />
-      <el-table-column prop="nameEn" :label="$t('websiteConfig.nameEn')" min-width="180" />
+      <el-table-column prop="nameZh" :label="$t('common.nameZh')" min-width="160" />
+      <el-table-column prop="nameEn" :label="$t('common.nameEn')" min-width="180" />
       <el-table-column :label="$t('websiteConfig.city')" min-width="120">
         <template #default="{ row }">
           {{ config.cities.find((city) => city.id === row.cityId)?.nameZh ?? row.cityId }}
@@ -130,10 +130,10 @@
               <el-option value="component" :label="$t('websiteConfig.attractions.component')" />
             </el-select>
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.nameZh')" prop="nameZh">
+          <el-form-item :label="$t('common.nameZh')" prop="nameZh">
             <el-input v-model="record.nameZh" maxlength="150" />
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.nameEn')" prop="nameEn">
+          <el-form-item :label="$t('common.nameEn')" prop="nameEn">
             <el-input v-model="record.nameEn" maxlength="150" />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.attractions.parent')" prop="parentId">

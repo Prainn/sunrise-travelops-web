@@ -64,6 +64,7 @@
         <el-input
           v-model="keyword"
           :placeholder="$t('tour.searchPlaceholder')"
+          maxlength="200"
           clearable
         />
       </el-form-item>
@@ -71,7 +72,7 @@
     <SectionCard fill>
       <TableToolbar :refreshing="loading" @refresh="load">
         <el-button v-has-perm="'tour:create'" type="primary" @click="openCreate">
-          {{ $t("tour.create") }}
+          {{ $t("common.create") }}
         </el-button>
       </TableToolbar>
       <!-- 行数据的 children 是儿童人数，改用不存在的字段作树形子行，避免 el-table 当作子行遍历 -->
@@ -92,12 +93,19 @@
           fixed="left"
           :show-overflow-tooltip="false"
         />
+        <el-table-column :label="$t('common.status')" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'active' ? 'success' : 'info'">
+              {{ $t(`tour.status.${row.status}`) }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('identity.businessUnit')" min-width="110">
           <template #default="{ row }">
             {{ businessUnitName(row.businessUnit) }}
           </template>
         </el-table-column>
-        <el-table-column prop="countryName" :label="$t('inquiry.countryOrRegion')" min-width="120" />
+        <el-table-column prop="countryName" :label="$t('common.countryOrRegion')" min-width="120" />
         <el-table-column :label="$t('tour.source')" min-width="100">
           <template #default="{ row }">
             {{ $t(`tour.sourceModule.${row.sourceModule}`) }}
@@ -136,14 +144,14 @@
           min-width="150"
           show-overflow-tooltip
         />
-        <el-table-column prop="contactName" :label="$t('inquiry.contactName')" min-width="110" />
+        <el-table-column prop="contactName" :label="$t('common.contact')" min-width="110" />
         <el-table-column prop="collectCoordinatorName" :label="$t('tour.collectCoordinator')" min-width="110" />
         <el-table-column prop="operatorName" :label="$t('tour.operator')" min-width="110" />
         <el-table-column prop="adults" :label="$t('tour.adults')" width="80" />
         <el-table-column prop="children" :label="$t('tour.children')" width="80" />
         <el-table-column prop="leaders" :label="$t('tour.leaders')" width="80" />
         <el-table-column prop="totalPeople" :label="$t('tour.totalPeople')" width="90" />
-        <el-table-column prop="language" :label="$t('tour.language')" min-width="90" />
+        <el-table-column prop="language" :label="$t('common.language')" min-width="90" />
         <el-table-column :label="$t('tour.shopping')" width="80">
           <template #default="{ row }">
             {{ $t(row.shopping ? "common.yes" : "common.no") }}
@@ -172,13 +180,6 @@
           min-width="160"
           show-overflow-tooltip
         />
-        <el-table-column :label="$t('common.status')" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'info'">
-              {{ $t(`tour.status.${row.status}`) }}
-            </el-tag>
-          </template>
-        </el-table-column>
         <el-table-column
           :label="$t('common.actions')"
           width="150"
@@ -191,6 +192,7 @@
                 v-has-perm="'tour:update'"
                 link
                 type="primary"
+                :disabled="isPending(row.id)"
                 @click="openEdit(row as TourRecord)"
               >
                 {{ $t("common.edit") }}
@@ -199,6 +201,7 @@
                 v-has-perm="'tour:cancel'"
                 link
                 type="danger"
+                :disabled="isPending(row.id)"
                 @click="cancelTour(row as TourRecord)"
               >
                 {{ $t("tour.cancel") }}
@@ -226,6 +229,8 @@ import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
+import { usePendingActions } from "@/composables/usePendingActions";
+import { useRefreshOnActivated } from "@/composables";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
@@ -244,6 +249,7 @@ import TourEditorDialog from "./components/TourEditorDialog.vue";
 defineOptions({ name: "TourList" });
 
 const UNITS: TourBusinessUnit[] = ["shengxu", "linxi", "website"];
+const CANCEL_REASON_MAX_LENGTH = 500;
 const { t } = useI18n();
 const user = useUserStore();
 const isHeadquarters = computed(() => user.userInfo.scope === "headquarters");
@@ -257,13 +263,14 @@ const businessUnit = ref<TourBusinessUnit | "">("");
 const loading = ref(false);
 const loadError = ref("");
 const hasActiveFilters = computed(() =>
-  Boolean(keyword.value || status.value || businessUnit.value || dateRange.value || collectCoordinatorId.value || operatorId.value || agencyName.value),
+  Boolean(keyword.value.trim() || status.value || businessUnit.value || dateRange.value || collectCoordinatorId.value || operatorId.value || agencyName.value),
 );
 const total = ref(0);
 const rows = ref<TourRecord[]>([]);
 const { pageNum, pageSize, paginationQuery } = useResourcePagination();
 const dialogVisible = ref(false);
 const editing = ref<TourRecord | null>(null);
+const { isPending, run } = usePendingActions();
 
 async function loadFilterOptions(kind: "collectCoordinator" | "operator" | "agency", query: RemoteOptionsQuery) {
   const result = await tourService.filterOptions({ ...query, kind, businessUnit: businessUnit.value || undefined });
@@ -282,7 +289,7 @@ async function load() {
       agencyName: agencyName.value || undefined,
       from: dateRange.value?.[0],
       to: dateRange.value?.[1],
-      keyword: keyword.value,
+      keyword: keyword.value.trim() || undefined,
       status: status.value || undefined,
       businessUnit: businessUnit.value || undefined,
     });
@@ -322,11 +329,11 @@ function textOrDash(_row: unknown, _column: unknown, value: string | null) {
 }
 // 手工团没有来源关系；关联团缺编号时显示横线，不生成空链接。
 function sourceCode(row: TourRecord, _column: unknown, value: string | null) {
-  return value || (row.sourceModule === "manual" ? t("tour.unlinked") : "-");
+  return value || (row.sourceModule === "manual" ? t("common.notLinked") : "-");
 }
 function flightText(row: TourRecord, kind: "pickup" | "drop") {
   const flight = kind === "pickup" ? row.pickupFlight : row.dropFlight;
-  if (!flight) return row.scheduleMode === "manual" ? t("tour.scheduleMode.manual") : "-";
+  if (!flight) return t("tour.flightNotLinked");
   const airport = kind === "pickup" ? flight.arrivalAirport : flight.departureAirport;
   return `${flight.flightNumber} ${airport.code}`;
 }
@@ -335,28 +342,39 @@ function openCreate() {
   dialogVisible.value = true;
 }
 function openEdit(row: TourRecord) {
+  if (isPending(row.id)) return;
   editing.value = row;
   dialogVisible.value = true;
 }
 async function cancelTour(row: TourRecord) {
-  let reason: string;
-  try {
-    const result = await ElMessageBox.prompt(t("tour.cancelConfirm"), t("tour.cancel"), {
-      type: "warning",
-      inputPlaceholder: t("tour.cancelReason"),
-    });
-    reason = result.value ?? "";
-  } catch {
-    return;
-  }
-  try {
-    await tourService.cancel(row.id, row.version, reason);
-    ElMessage.success(t("tour.cancelled"));
-    await load();
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : String(error));
-  }
+  await run(row.id, async () => {
+    let reason: string;
+    try {
+      const result = await ElMessageBox.prompt(t("tour.cancelConfirm"), t("tour.cancel"), {
+        type: "warning",
+        inputPlaceholder: t("tour.cancelReason"),
+        // 与后端 DTO 一致：去除首尾空白后最多 500 字。
+        inputValidator: (value) => (value ?? "").trim().length <= CANCEL_REASON_MAX_LENGTH,
+        inputErrorMessage: t("websiteConfig.validation.maxLength", {
+          field: t("tour.cancelReason"),
+          max: CANCEL_REASON_MAX_LENGTH,
+        }),
+      });
+      reason = (result.value ?? "").trim();
+    } catch {
+      return;
+    }
+    try {
+      await tourService.cancel(row.id, row.version, reason);
+      ElMessage.success(t("tour.cancelled"));
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : String(error));
+    } finally {
+      await load();
+    }
+  });
 }
 
 onMounted(load);
+useRefreshOnActivated(load);
 </script>

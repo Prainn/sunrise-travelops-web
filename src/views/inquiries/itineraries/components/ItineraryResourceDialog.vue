@@ -51,7 +51,7 @@
         <p>{{ $t("itinerary.customMealHint") }}</p>
       </template>
       <template v-else>
-        <el-form-item :label="$t('resource.city')">
+        <el-form-item :label="$t('common.cityRegion')">
           <el-select
             v-model="city"
             autocomplete="new-password"

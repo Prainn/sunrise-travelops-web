@@ -93,8 +93,9 @@
   <AppDialog
     v-else
     :model-value="modelValue"
-    :title="$t(record ? 'inquiry.editInquiry' : 'inquiry.createInquiry')"
+    :title="$t(record ? 'common.edit' : 'common.create')"
     size="lg"
+    :busy="saving"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <el-form
@@ -145,7 +146,7 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('inquiry.countryOrRegion')" prop="countryItemId">
+          <el-form-item :label="$t('common.countryOrRegion')" prop="countryItemId">
             <BusinessItemSelect
               v-model="form.countryItemId"
               type-code="country-region"
@@ -231,7 +232,9 @@
       <el-row :gutter="16">
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.receivedAt')">
+            <el-input v-if="sourceReadOnly" :model-value="form.receivedAt ?? ''" readonly />
             <el-date-picker
+              v-else
               v-model="form.receivedAt"
               type="datetime"
               format="YYYY-MM-DD HH:mm"
@@ -244,27 +247,27 @@
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.contactChannel')">
-            <el-input v-model="form.contactChannel" maxlength="100" />
+            <el-input v-model="form.contactChannel" maxlength="100" :readonly="sourceReadOnly" />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.acquisitionSource')">
-            <el-input v-model="form.acquisitionSource" maxlength="2048" />
+            <el-input v-model="form.acquisitionSource" maxlength="2048" :readonly="sourceReadOnly" />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.whatsappSourceId')">
-            <el-input v-model="form.whatsappSourceId" maxlength="200" />
+            <el-input v-model="form.whatsappSourceId" maxlength="200" :readonly="sourceReadOnly" />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.websiteInquiryNo')">
-            <el-input v-model="form.websiteInquiryNo" maxlength="200" />
+            <el-input v-model="form.websiteInquiryNo" maxlength="200" :readonly="sourceReadOnly" />
           </el-form-item>
         </el-col>
         <el-col :span="24">
           <el-form-item :label="$t('websiteInquiry.landingPage')">
-            <el-input v-model="form.landingPage" maxlength="2048" />
+            <el-input v-model="form.landingPage" maxlength="2048" :readonly="sourceReadOnly" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -319,6 +322,7 @@ const props = defineProps<{
   showBusiness: boolean;
   record?: WebsiteInquiry;
   initialValues?: Partial<WebsiteInquiryInput>;
+  sourceReadOnly?: boolean;
   owners: WebsiteOwnerOption[];
   cities: WebsiteCity[];
   allowAssign: boolean;

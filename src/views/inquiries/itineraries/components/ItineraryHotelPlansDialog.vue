@@ -174,7 +174,7 @@
         :disabled="!canSave"
         @click="emit('save')"
       >
-        {{ $t("itinerary.save") }}
+        {{ $t("common.save") }}
       </el-button>
     </template>
   </AppDialog>

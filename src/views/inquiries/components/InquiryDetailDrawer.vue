@@ -25,16 +25,16 @@
         <el-descriptions-item :label="$t('inquiry.owner')">
           {{ record.owner }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('inquiry.contactName')">
+        <el-descriptions-item :label="$t('common.contact')">
           {{ record.contactName }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('inquiry.email')">
+        <el-descriptions-item :label="$t('common.email')">
           {{ valueOrDash(record.email) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.phone')">
           {{ valueOrDash(record.phone) }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('inquiry.countryOrRegion')">
+        <el-descriptions-item :label="$t('common.countryOrRegion')">
           {{ valueOrDash(record.countryOrRegion) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.sourceChannel')">

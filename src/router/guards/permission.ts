@@ -43,7 +43,21 @@ export function setupPermissionGuard() {
       }
 
       if (!permissionStore.isRouteGenerated) {
-        await permissionStore.generateRoutes();
+        const routes = await permissionStore.generateRoutes();
+        if (!routes) return false;
+      }
+
+      // 静态父路由可能重定向到当前导航没有返回的默认子项。
+      const redirectedGroup = to.redirectedFrom && permissionStore.routes.find(
+        (record) => record.path === to.redirectedFrom?.path && !record.meta?.hidden,
+      );
+      if (redirectedGroup) {
+        const visibleChildren = redirectedGroup.children?.filter((record) => !record.meta?.hidden) ?? [];
+        const childPath = (child: typeof visibleChildren[number]) => child.path.startsWith("/")
+          ? child.path : `${redirectedGroup.path}/${child.path}`.replace(/\/+/g, "/");
+        if (visibleChildren.length && !visibleChildren.some((child) => childPath(child) === to.path)) {
+          return { path: childPath(visibleChildren[0]!), replace: true };
+        }
       }
 
       const canAccessRoute = hasRouteChainAccess(

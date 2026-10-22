@@ -48,11 +48,10 @@
         <el-select
           autocomplete="new-password"
           :model-value="day.overnightDestination"
-          :disabled="!editable || !isLast"
-          :placeholder="$t('itinerary.overnightPending')"
+          :disabled="!editable || !isLast || day.overnightDestination === ''"
+          :placeholder="day.overnightDestination === '' ? $t('itinerary.noOvernightStay') : $t('itinerary.overnightPending')"
           @update:model-value="updateField('overnightDestination', $event)"
         >
-          <el-option :label="$t('itinerary.noOvernightStay')" value="" />
           <el-option
             v-for="destination in destinations"
             :key="destination"
@@ -60,6 +59,15 @@
             :value="destination"
           />
         </el-select>
+        <el-checkbox
+          v-if="isLast"
+          class="mt-2"
+          :model-value="day.overnightDestination === ''"
+          :disabled="!editable"
+          @update:model-value="toggleNoStay"
+        >
+          {{ $t("itinerary.noOvernightStay") }}
+        </el-checkbox>
       </el-form-item>
       <el-form-item :label="$t('itinerary.transport')">
         <el-select
@@ -129,5 +137,8 @@ function updateField(field: EditableDayField, value: string | null) {
 }
 function updateTransport(values: string[]) {
   updateField("transport", values.join(","));
+}
+function toggleNoStay(checked: string | number | boolean) {
+  updateField("overnightDestination", checked ? "" : props.day.destination || null);
 }
 </script>

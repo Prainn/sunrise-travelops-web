@@ -10,7 +10,7 @@
         type="primary"
         @click="emit('edit', -1)"
       >
-        {{ $t("websiteItineraryUi.addHotel") }}
+        {{ $t("common.create") }}
       </el-button>
     </div>
     <el-alert
@@ -20,7 +20,7 @@
       :closable="false"
     />
     <p v-if="!day.overnightCityId && !day.hotels.length" class="m-0 text-[13px] text-muted">
-      {{ $t("websiteItineraryUi.noOvernightStay") }}
+      {{ $t("itinerary.noOvernightStay") }}
     </p>
     <p v-if="day.hotels.length > 1" class="m-0 text-[12px] text-muted">
       {{ $t("websiteItineraryUi.hotelAlternativesHint") }}
@@ -56,7 +56,7 @@
           {{ $t("common.edit") }}
         </el-button>
         <el-button link type="danger" @click="day.hotels.splice(index, 1)">
-          {{ $t("websiteItineraryUi.removeHotel") }}
+          {{ $t("common.remove") }}
         </el-button>
       </div>
     </div>

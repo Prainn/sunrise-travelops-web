@@ -11,6 +11,8 @@ import type {
   UserProfileDetail,
   UserProfileForm,
   UserQueryParams,
+  TourCodeSuggestion,
+  TourCodeSuggestionInput,
 } from "@/types/user";
 import { authService } from "./auth.service";
 
@@ -37,7 +39,6 @@ function toUserInput(
   const input: Record<string, unknown> = {
     nickname: data.nickname?.trim() ?? "",
     englishName: data.englishName?.trim() ?? "",
-    tourCode: data.tourCode?.trim().toUpperCase() ?? "",
     avatar: data.avatar ?? "",
     gender: data.gender ?? 0,
     mobile: data.mobile?.trim() ?? "",
@@ -50,12 +51,19 @@ function toUserInput(
     })),
     status: data.status ?? 1,
   };
+  if (data.identities[0]?.scope !== "headquarters")
+    input.tourCode = data.tourCode?.trim().toUpperCase() ?? "";
   if (options.includeUsername) input.username = data.username?.trim() ?? "";
   if (options.includePassword) input.password = data.password?.trim() || undefined;
   return input;
 }
 
 export const userService = {
+  suggestTourCode(input: TourCodeSuggestionInput): Promise<TourCodeSuggestion> {
+    return request.get<TourCodeSuggestion>(`${USER_BASE_URL}/tour-code-suggestion`, {
+      params: { ...input },
+    });
+  },
   getProfileSecurity(): Promise<ProfileSecurity> {
     return request.get<ProfileSecurity>("/auth/me/security");
   },
