@@ -1139,7 +1139,6 @@
     "keywordPlaceholder": "询盘编号、客户称呼或原始消息",
     "transferReasonRequired": "填写转交原因",
     "transferred": "已转交",
-    "historyTitle": "{code} 询盘日志",
     "searchSharedResources": "搜索共用资料",
     "feeStates": {
       "INCLUDED": "包含",

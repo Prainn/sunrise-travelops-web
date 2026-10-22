@@ -1139,7 +1139,6 @@
     "keywordPlaceholder": "Inquiry no., customer or original message",
     "transferReasonRequired": "Enter the transfer reason",
     "transferred": "Transferred",
-    "historyTitle": "Inquiry history: {code}",
     "searchSharedResources": "Search shared resources",
     "feeStates": {
       "INCLUDED": "Included",

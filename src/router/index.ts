@@ -248,6 +248,17 @@ export const constantRoutes: RouteRecordRaw[] = [
           perms: ["website:inquiry:list"],
         },
       },
+      {
+        path: ":inquiryId/logs",
+        name: "WebsiteInquiryLogs",
+        component: () => import("@/views/website-inquiries/logs/index.vue"),
+        meta: {
+          menuKey: "inquiries",
+          title: "inquiryLogs",
+          hidden: true,
+          perms: ["website:inquiry:list"],
+        },
+      },
     ],
   },
   {

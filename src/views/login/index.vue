@@ -27,9 +27,24 @@
           </span>
         </div>
       </div>
-      <div class="login-toolbar flex shrink-0 items-center gap-[20px] rounded-full bg-[var(--login-paper)] px-[17px] py-[13px]">
-        <ThemeSwitch />
-        <LangSelect size="text-18px" />
+      <div class="flex shrink-0 items-center gap-[12px]">
+        <!-- 总部是独立登录范围，以轻量入口与底部品牌卡片区分。 -->
+        <button
+          type="button"
+          class="login-hq-option flex cursor-pointer items-center gap-[6px] rounded-full border border-[var(--login-line)] border-solid bg-[var(--login-paper)] px-[14px] py-[10px] text-[12px] tracking-[1px] text-[var(--login-muted)] transition-colors duration-200 disabled:cursor-wait"
+          :aria-pressed="loginFormData.scope === 'headquarters'"
+          :disabled="loading"
+          @click="loginFormData.scope = 'headquarters'"
+        >
+          <el-icon aria-hidden="true">
+            <OfficeBuilding />
+          </el-icon>
+          {{ $t("login.brandDesign.headquarters") }}
+        </button>
+        <div class="login-toolbar flex shrink-0 items-center gap-[20px] rounded-full bg-[var(--login-paper)] px-[17px] py-[13px]">
+          <ThemeSwitch />
+          <LangSelect size="text-18px" />
+        </div>
       </div>
     </header>
 
@@ -96,24 +111,6 @@
           :validate-on-rule-change="false"
           @submit.prevent="handleLoginSubmit"
         >
-          <el-form-item prop="scope" :label="$t('identity.scope')">
-            <el-select
-              v-model="loginFormData.scope"
-              autocomplete="new-password"
-              :placeholder="$t('identity.chooseScope')"
-              :aria-label="$t('identity.scope')"
-              :disabled="loading"
-              class="w-full"
-            >
-              <el-option value="headquarters" :label="$t('login.brandDesign.headquarters')" />
-              <el-option
-                v-for="brand in brands"
-                :key="brand.scope"
-                :value="brand.scope"
-                :label="brand.optionLabel"
-              />
-            </el-select>
-          </el-form-item>
           <el-form-item prop="username">
             <el-input
               v-model.trim="loginFormData.username"
@@ -193,7 +190,7 @@
 </template>
 
 <script setup lang="ts">
-import { Lock, Right, TopRight, User } from "@element-plus/icons-vue";
+import { Lock, OfficeBuilding, Right, TopRight, User } from "@element-plus/icons-vue";
 import type { FormInstance } from "element-plus";
 import type { LoginRequest } from "@/types/auth";
 import router from "@/router";
@@ -414,6 +411,10 @@ function checkCapsLock(event: KeyboardEvent) {
   border-color: var(--login-accent);
   box-shadow: inset 0 -3px var(--login-accent);
   .login-brand-number, .el-icon { color: var(--login-accent); }
+}
+.login-hq-option:enabled:hover, .login-hq-option[aria-pressed="true"] {
+  border-color: var(--login-accent);
+  color: var(--login-accent);
 }
 .login-toolbar :deep(.el-dropdown) { color: var(--login-ink); }
 @media (prefers-reduced-motion: reduce) {

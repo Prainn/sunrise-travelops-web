@@ -228,15 +228,6 @@ export interface WebsiteQuotation extends WebsitePreview {
   confirmedBy: string;
   acknowledgedWarnings: string[];
 }
-export interface WebsiteLog {
-  id: string;
-  action: string;
-  targetId: string;
-  actorName: string;
-  occurredAt: string;
-  detail: string;
-}
-
 export type WebsiteInquiryLogAction =
   | "inquiry_created"
   | "inquiry_updated"

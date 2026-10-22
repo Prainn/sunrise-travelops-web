@@ -10,7 +10,6 @@ import type {
   WebsiteInquiryLogReport,
   WebsiteItinerary,
   WebsiteItineraryInput,
-  WebsiteLog,
   WebsitePreview,
   WebsiteQuotation,
 } from "@/types/website";
@@ -144,12 +143,6 @@ export const websiteService = {
     return request.post<WebsiteInquiry>(`/website/inquiries/${encodeURIComponent(id)}/archive`, {
       version,
     });
-  },
-  logs(id: string, page: number, pageSize: number) {
-    return request.get<PageResult<WebsiteLog>>(
-      `/website/inquiries/${encodeURIComponent(id)}/logs`,
-      { params: { page, pageSize } },
-    );
   },
   inquiryLogs(query: WebsiteInquiryLogQuery) {
     return request.get<PageResult<WebsiteInquiryLog>>("/website/inquiry-logs", {
