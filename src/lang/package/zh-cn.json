@@ -1573,6 +1573,7 @@
     "itinerarySummaryPlaceholder": "例如：昆大丽9N10D",
     "contact": "联系人/接单账号",
     "scheduleModeLabel": "接送方式",
+    "flightNotLinked": "未关联航班",
     "scheduleMode": {
       "flight": "按航班",
       "manual": "手填时间"

@@ -93,6 +93,13 @@
           fixed="left"
           :show-overflow-tooltip="false"
         />
+        <el-table-column :label="$t('common.status')" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'active' ? 'success' : 'info'">
+              {{ $t(`tour.status.${row.status}`) }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('identity.businessUnit')" min-width="110">
           <template #default="{ row }">
             {{ businessUnitName(row.businessUnit) }}
@@ -173,13 +180,6 @@
           min-width="160"
           show-overflow-tooltip
         />
-        <el-table-column :label="$t('common.status')" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'info'">
-              {{ $t(`tour.status.${row.status}`) }}
-            </el-tag>
-          </template>
-        </el-table-column>
         <el-table-column
           :label="$t('common.actions')"
           width="150"
@@ -333,7 +333,7 @@ function sourceCode(row: TourRecord, _column: unknown, value: string | null) {
 }
 function flightText(row: TourRecord, kind: "pickup" | "drop") {
   const flight = kind === "pickup" ? row.pickupFlight : row.dropFlight;
-  if (!flight) return row.scheduleMode === "manual" ? t("tour.scheduleMode.manual") : "-";
+  if (!flight) return t("tour.flightNotLinked");
   const airport = kind === "pickup" ? flight.arrivalAirport : flight.departureAirport;
   return `${flight.flightNumber} ${airport.code}`;
 }

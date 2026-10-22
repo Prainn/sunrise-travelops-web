@@ -1573,6 +1573,7 @@
     "itinerarySummaryPlaceholder": "e.g. Kunming–Dali–Lijiang 9N10D",
     "contact": "Contact / order account",
     "scheduleModeLabel": "Transfer Method",
+    "flightNotLinked": "No flight linked",
     "scheduleMode": {
       "flight": "From flights",
       "manual": "Manual times"
