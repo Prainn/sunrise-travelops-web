@@ -172,6 +172,17 @@ class DevReleaseGuardTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     guard.validate_environment()
 
+    def test_cleanup_blocked_prevents_next_release_even_if_lock_is_free(self):
+        guard.save(self.root / 'previous.json', {'status': 'cleanup-blocked'})
+        with patch.object(guard, 'LOCK', self.root / 'build.lock'):
+            job = guard.Job(IDENTITY, 'next-attempt', grace=0.2)
+            try:
+                with self.assertRaisesRegex(RuntimeError, 'have not exited'):
+                    job.lock(1)
+            finally:
+                job.finish('probe finished')
+        self.assert_unlocked()
+
     def test_watchdog_never_signals_a_mismatched_process(self):
         child = self.launch('orphan', 30)
         state = self.wait_group()
