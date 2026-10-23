@@ -1,4 +1,14 @@
 {
+  "ledgerSummary": {
+    "sequence": "No.",
+    "quotedCount": "Total quotes",
+    "convertedCount": "Total bookings",
+    "platformAccount": "Platform account",
+    "firstFollowUp": "First follow-up",
+    "agencySearch": "Search agency names",
+    "coordinatorSearch": "Search reception coordinators",
+    "platformSearch": "Search platform accounts"
+  },
   "websiteVisits": {
     "dateRange": "Export date range (Beijing time)",
     "searchPlaceholder": "WhatsApp reference / Website inquiry number",
@@ -40,6 +50,12 @@
     "empty": "No matching options"
   },
   "route": {
+    "shengxuAgencySummary": "Shengxu agency summary",
+    "shengxuCoordinatorSummary": "Shengxu reception quote summary",
+    "linxiQuoteSummary": "Linxi quote summary",
+    "linxiPlatformSummary": "Linxi platform quote summary",
+    "websiteQuoteSummary": "Website quote summary",
+    "websitePlatformSummary": "Website platform quote summary",
     "dashboard": "Home",
     "profile": "Profile",
     "systemManagement": "System",
@@ -939,6 +955,7 @@
       "title": "Access Denied"
     },
     "unavailable": {
+      "stillDown": "The service is still unavailable. Please try again later.",
       "description": "Service unavailable. You are still logged in. Try again later.",
       "label": "Service Unavailable",
       "signal": "Waiting for service",
@@ -1044,6 +1061,7 @@
     "DIRECT_LEDGER_NOT_PENDING_CONFIRMATION": "Only loss entries pending confirmation need manager approval",
     "DIRECT_LEDGER_OPERATED_READ_ONLY": "Operated entries: regular fields are locked",
     "DIRECT_LEDGER_NOT_PENDING_OPERATION": "Only entries pending operation can be marked operated",
+    "DIRECT_LEDGER_OPERATION_PREREQUISITES_NOT_MET": "The proposal must be sent and the order converted before marking it operated",
     "DIRECT_LEDGER_DELETE_REVIEWED": "Cannot delete confirmed entries",
     "DIRECT_LEDGER_DELETE_OPERATED": "Cannot delete previously operated entries",
     "DIRECT_LEDGER_DELETE_CONVERTED": "Cannot delete converted entries",
@@ -1151,11 +1169,11 @@
     "transferred": "Transferred",
     "searchSharedResources": "Search shared resources",
     "feeStates": {
+      "ARRANGED": "Arranged",
       "INCLUDED": "Included",
       "EXCLUDED": "Excluded",
       "OPTIONAL": "Optional, self-pay",
       "RECOMMENDED": "Recommended only",
-      "ARRANGED": "Arranged",
       "SELF_PAY": "Self-pay",
       "UNKNOWN": "To be confirmed"
     },
@@ -1280,7 +1298,6 @@
       "cityMissing": "Select an existing website city",
       "parentSameCity": "Parent attraction must exist in the same city",
       "parentCycle": "Attraction links cannot form a cycle",
-      "routeDistinct": "Origin and destination cities must differ",
       "maxAttractions": "Day pattern: max 200 attractions or components",
       "patternAttractions": "Use attractions or components from the day pattern's city",
       "skeletonDays": "Add 1–365 days to the city skeleton",
@@ -1425,9 +1442,9 @@
     "overnightCity": "Overnight city",
     "guideArranged": "Guide for this day",
     "guideLanguage": "Guide language",
+    "guideLanguageRequired": "Select or enter a guide language",
+    "guideLanguageTooLong": "Guide language must be at most 100 characters",
     "guideLanguagePlaceholder": "e.g. English",
-    "guideScope": "Daily guide service scope",
-    "guideScopePlaceholder": "e.g. Full day",
     "transportLegs": "Transport legs",
     "hotelPlans": "Hotel options",
     "hotelRequiredHint": "Stay required: enter at least one hotel name. Choose A/B tiers manually; shared hotel ratings are not auto-mapped.",
@@ -1763,17 +1780,18 @@
       "reviewSuccess": "Confirmed; pending operation",
       "reviewedLocked": "Confirmed or operated: regular fields and personnel locked.",
       "markOperated": "Mark Operated",
-      "markOperatedConfirm": "Mark order {orderNo} operated? Regular fields will lock. Cannot be undone.",
+      "markOperatedConfirm": "Confirm order {orderNo} has its proposal sent, is converted and has been operated? Regular fields will lock. Cannot be undone.",
       "deleteConfirm": "Delete order {orderNo}?",
       "searchPlaceholder": "Order no., source, sales coordinator, receiving account, coordinator, itinerary",
       "sourcePlaceholders": {
         "linxi": "Ctrip order no.",
+        "linxiCustomer": "Source customer",
         "website": "Customer name"
       },
-      "collectorPlaceholder": "Select a sales coordinator for this business unit",
-      "operatorPlaceholder": "Select an operations coordinator for this business unit",
+      "collectorPlaceholder": "Change receiving coordinator",
+      "operatorPlaceholder": "Change operating coordinator",
       "receivingGroupPlaceholder": "Select a business group",
-      "noOperators": "No operations coordinators yet. Ask a manager to set coordinator duties in User Management first."
+      "noOperators": "No matching options"
     }
   },
   "itineraryWorkspace": {
@@ -1839,7 +1857,7 @@
       "legsCheck": "D{day}: transport legs moved with the day. Check connections and seasonal/first/last-day rules"
     },
     "transfer": {
-      "hint": "Drag day headers or use left/right arrows to reorder days; sort attractions within a day. Drag attraction, transport, hotel, meal, guide or service cards to matching groups on other days. Hover to make a temporary copy; move it to another day or delete it before applying. Save after applying.",
+      "hint": "Drag days or cards to reorder or move between days. Move pending copies before their originals. Save draft keeps unfinished edits; Apply validates the itinerary.",
       "copy": "Make temporary copy",
       "copyTag": "Copy",
       "removeCopy": "Delete copy",
@@ -1860,7 +1878,12 @@
       "hotelCityMismatch": "D{day}: hotel \"{name}\" does not match the overnight city {city}",
       "missingHotel": "D{day} needs an overnight stay but has no hotel",
       "legChainBroken": "D{day}: transport legs do not link start to end city continuously"
-    }
+    },
+    "stash": "Save draft",
+    "eventOrder": "Daily sequence",
+    "arrangeOvernight": "No overnight stay is planned. Arrange accommodation?",
+    "applyDespiteWarnings": "Confirm and apply",
+    "serverIssue": "{code}{day}{message}"
   },
   "businessGroup": {
     "label": "Business Group",
@@ -1916,6 +1939,9 @@
     "unlinkTitle": "Unlink accounts",
     "unlinkConfirm": "After unlinking, these accounts can no longer switch to each other. Sessions already switched keep their current account.",
     "selected": "Selected ({count}/3)",
+    "selectedEmpty": "Select accounts from the list below",
+    "replace": "Replace",
+    "replaceHint": "Select at most one account per business. Replace changes the selected account for that business. Changes take effect after saving.",
     "selectHint": "Select 2–3 accounts, at most one per business",
     "candidates": "Available accounts",
     "candidateSearch": "Search nickname / username / tour code",
@@ -1938,6 +1964,11 @@
     "memberTaken": "A selected account already belongs to another group. Refresh and select again.",
     "unlinkSuccess": "Accounts unlinked",
     "scope": "Business",
-    "alreadySelected": "Selected"
+    "alreadySelected": "Selected",
+    "businessOptions": {
+      "shengxu": "Sunrise",
+      "linxi": "Linxi",
+      "website": "Website"
+    }
   }
 }

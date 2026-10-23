@@ -1,10 +1,10 @@
 <template>
-  <section class="surface-muted p-4 flex flex-col gap-3">
-    <h4 class="m-0 text-[14px] text-strong font-600">
+  <section class="flex flex-col gap-3" :class="{ 'surface-muted p-4': !mealId }">
+    <h4 v-if="!mealId" class="m-0 text-[14px] text-strong font-600">
       {{ $t("websiteItineraryUi.mealsAndServices") }}
     </h4>
     <div
-      v-for="meal in day.meals.filter(isMealArranged)"
+      v-for="meal in visibleMeals"
       :key="meal.id"
       class="flex flex-wrap items-center justify-between gap-3 p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)] text-[13px]"
     >
@@ -35,7 +35,7 @@
       </el-button>
     </div>
     <div
-      v-if="day.services.length"
+      v-if="!mealId && day.services.length"
       :id="`website-day-services-${day.id}`"
       class="flex flex-wrap justify-between items-center gap-3 mt-1"
     >
@@ -47,7 +47,7 @@
       </el-button>
     </div>
     <div
-      v-for="(service, index) in day.services"
+      v-for="(service, index) in mealId ? [] : day.services"
       :key="service.id"
       class="p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)]"
     >
@@ -77,14 +77,17 @@
   </section>
 </template>
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { WebsiteDay, WebsiteMeal } from "@/types/website";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
 import { isMealArranged } from "../../options";
 const day = defineModel<WebsiteDay>("day", { required: true });
-defineProps<{ editable: boolean }>();
+const props = defineProps<{ editable: boolean; mealId?: string; servicesOnly?: boolean }>();
 const emit = defineEmits<{ "edit-meal": [slot: WebsiteMeal["slot"]]; "add-service": [] }>();
 const { locale } = useI18n();
+const visibleMeals = computed(() => props.servicesOnly ? [] : day.value.meals
+  .filter(meal => isMealArranged(meal) && (!props.mealId || meal.id === props.mealId)));
 function mealName(meal: WebsiteMeal) {
   return (locale.value === "en" ? meal.restaurantEn : meal.restaurantZh) || meal.restaurantZh || meal.restaurantEn;
 }

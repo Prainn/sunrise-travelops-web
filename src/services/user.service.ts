@@ -60,8 +60,8 @@ function toUserInput(
         scope,
         deptId,
         roleIds,
-        // 非计调/非霖熹由表单清空为 null；编辑计调保留实际分工。
-        coordinatorDuty: coordinatorDuty ?? null,
+        // 盛旭不提交分工；其他业务保留原有表单值。
+        ...(scope === "shengxu" ? {} : { coordinatorDuty: coordinatorDuty ?? null }),
         businessGroupId: scope === "linxi" ? (businessGroupId ?? null) : null,
       }),
     ),

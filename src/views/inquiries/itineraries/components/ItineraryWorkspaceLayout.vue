@@ -1,7 +1,7 @@
 <template>
   <div
     ref="root"
-    class="itinerary-workspace flex flex-col gap-4"
+    class="itinerary-workspace flex flex-col gap-4 [overflow-anchor:none]"
     :style="{ '--itinerary-workspace-offset': `${scrollOffset}px` }"
   >
     <div
@@ -10,7 +10,7 @@
       :class="{ 'has-stripe': stripe }"
       :style="stripe ? { '--itinerary-workspace-stripe': stripe } : undefined"
     >
-      <slot name="header" />
+      <slot name="header" :collapsed="isOverviewCollapsed" />
     </div>
     <slot name="notice" />
     <div
@@ -122,6 +122,7 @@ const nav = ref<HTMLElement>();
 const footer = ref<HTMLElement>();
 const scrollContainer = ref<HTMLElement>();
 const activeId = ref("");
+const isOverviewCollapsed = ref(false);
 const isNarrow = useMediaQuery("(max-width: 900px)");
 const { height: headerHeight } = useElementSize(header, undefined, { box: "border-box" });
 const { height: navHeight } = useElementSize(nav, undefined, { box: "border-box" });
@@ -131,6 +132,9 @@ const scrollOffset = computed(
 );
 let lockedUntil = 0;
 let frame = 0;
+let previousScrollTop = 0;
+let previousScrollRange = 0;
+let scrollTravel = 0;
 
 function dayElementId(id: string) {
   return `itinerary-day-${id}`;
@@ -138,7 +142,44 @@ function dayElementId(id: string) {
 
 function attachScrollContainer() {
   scrollContainer.value = root.value?.closest<HTMLElement>(".layout-content") ?? undefined;
+  isOverviewCollapsed.value = false;
+  resetScrollTracking();
   syncActiveDay();
+}
+
+function resetScrollTracking() {
+  const container = scrollContainer.value;
+  previousScrollTop = Math.max(0, container?.scrollTop ?? 0);
+  previousScrollRange = container ? container.scrollHeight - container.clientHeight : 0;
+  scrollTravel = 0;
+}
+
+// 折叠动画逐帧改变高度，及时重设基准，让动画后的首次反向滚动即可展开。
+watch(headerHeight, resetScrollTracking, { flush: "post" });
+
+function syncOverviewVisibility() {
+  const container = scrollContainer.value;
+  if (!container) return;
+  const top = Math.max(0, container.scrollTop);
+  const range = container.scrollHeight - container.clientHeight;
+  const delta = top - previousScrollTop;
+  if (top <= 8) {
+    isOverviewCollapsed.value = false;
+    scrollTravel = 0;
+  } else if (range !== previousScrollRange || Date.now() < lockedUntil) {
+    // 收起、展开或内容变化导致的滚动范围调整，不算作用户反向滚动。
+    scrollTravel = 0;
+  } else {
+    if (delta * scrollTravel < 0) scrollTravel = 0;
+    scrollTravel += delta;
+    // 略过触控板的小幅抖动，页面顶部保留完整概览。
+    if (Math.abs(scrollTravel) >= 16) {
+      isOverviewCollapsed.value = scrollTravel > 0 && top > 64;
+      scrollTravel = 0;
+    }
+  }
+  previousScrollTop = top;
+  previousScrollRange = range;
 }
 
 function syncActiveDay() {
@@ -162,7 +203,10 @@ function syncActiveDay() {
 
 useEventListener(scrollContainer, "scroll", () => {
   cancelAnimationFrame(frame);
-  frame = requestAnimationFrame(syncActiveDay);
+  frame = requestAnimationFrame(() => {
+    syncOverviewVisibility();
+    syncActiveDay();
+  });
 }, { passive: true });
 useEventListener(scrollContainer, "scrollend", () => {
   lockedUntil = 0;
@@ -187,6 +231,10 @@ watch(
   () => [props.resetKey, props.days.map((day) => day.id).join()],
   ([resetKey], previous) => {
     const previousResetKey = previous?.[0];
+    if (resetKey !== previousResetKey) {
+      isOverviewCollapsed.value = false;
+      resetScrollTracking();
+    }
     if (resetKey !== previousResetKey || !props.days.some((day) => day.id === activeId.value))
       activeId.value = props.days[0]?.id ?? "";
     void nextTick(syncActiveDay);

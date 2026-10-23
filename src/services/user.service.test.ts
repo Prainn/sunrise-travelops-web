@@ -29,3 +29,23 @@ describe("user tour code payloads", () => {
     expect(request.get).toHaveBeenCalledExactlyOnceWith("/users/tour-code-suggestion", { params: input });
   });
 });
+
+describe("user coordinator duty payload", () => {
+  it.each(["create", "update"] as const)(
+    "%s omits historical Shengxu duty and preserves duty for other businesses",
+    async (action) => {
+      for (const scope of ["shengxu", "linxi", "website"] as const) {
+        const form: UserForm = {
+          nickname: "Test", englishName: "Test", tourCode: "TT",
+          identities: [{ scope, deptId: 3, roleIds: ["coordinator"], coordinatorDuty: "operation" }],
+        };
+        if (action === "create") await userService.create(form);
+        else await userService.update("user", form);
+        const mock = vi.mocked(action === "create" ? request.post : request.put);
+        const payload = mock.mock.lastCall?.[1] as { identities: Array<Record<string, unknown>> };
+        if (scope === "shengxu") expect(payload.identities[0]).not.toHaveProperty("coordinatorDuty");
+        else expect(payload.identities[0]).toHaveProperty("coordinatorDuty", "operation");
+      }
+    },
+  );
+});

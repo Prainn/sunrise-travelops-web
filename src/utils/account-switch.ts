@@ -95,6 +95,7 @@ export function createAccountSwitchCoordinator<P>(deps: SwitchCoordinatorDeps<P>
   /** 本页已就绪等待结论的切换 ID。 */
   let preparedSwitchId: string | null = null;
   let releasePresence: (() => void) | null = null;
+  let presenceSessionId: string | null | undefined = null;
   let initiating = false;
 
   function post(message: SwitchMessage<P>): void {
@@ -151,31 +152,35 @@ export function createAccountSwitchCoordinator<P>(deps: SwitchCoordinatorDeps<P>
     }
   }
 
-  /** 向同会话其他在场标签页征询；超时未答复记为无响应。 */
+  /** 向初始在场标签页征询；超时保留未回复名单，交由最终在场核验判断。 */
   function collectReplies(
     sessionId: string,
     switchId: string,
     peers: string[],
-  ): Promise<SwitchBlockReason[]> {
-    if (!peers.length) return Promise.resolve([]);
+  ): Promise<{ reasons: SwitchBlockReason[]; missing: string[] }> {
+    if (!peers.length) return Promise.resolve({ reasons: [], missing: [] });
     return new Promise((resolve) => {
       const waiting = new Set(peers);
       const reasons: SwitchBlockReason[] = [];
       let settled = false;
-      const finish = (extra: SwitchBlockReason[] = []) => {
+      const finish = () => {
         if (settled) return;
         settled = true;
         unsubscribe();
-        resolve(unique([...reasons, ...extra]));
+        resolve({ reasons: unique(reasons), missing: [...waiting] });
       };
       const unsubscribe = deps.bus.subscribe((message) => {
-        if (message.type !== "reply" || message.switchId !== switchId) return;
+        if (
+          message.type !== "reply" ||
+          message.sessionId !== sessionId ||
+          message.switchId !== switchId
+        ) return;
         if (!waiting.delete(message.from)) return;
         reasons.push(...message.blockers);
         if (!waiting.size) finish();
       });
       post({ type: "prepare", sessionId, switchId, from: deps.tabId });
-      void sleep(replyTimeoutMs).then(() => finish(waiting.size ? ["unresponsive"] : []));
+      void sleep(replyTimeoutMs).then(finish);
     });
   }
 
@@ -208,9 +213,20 @@ export function createAccountSwitchCoordinator<P>(deps: SwitchCoordinatorDeps<P>
     }
 
     const switchId = deps.createId();
-    const { peers, pending } = await peerTabs(sessionId);
-    const reasons = await collectReplies(sessionId, switchId, peers);
-    if (pending) reasons.push("unknown");
+    let reasons: SwitchBlockReason[];
+    try {
+      const { peers } = await peerTabs(sessionId);
+      const replies = await collectReplies(sessionId, switchId, peers);
+      const current = await peerTabs(sessionId);
+      reasons = replies.reasons;
+      // 已退出的旧页面不算无响应；仍在场且未答复的页面继续阻止切换。
+      if (current.peers.some((peer) => replies.missing.includes(peer))) reasons.push("unresponsive");
+      // 等待期间新出现或尚未确认会话的页面没有完成准备，不能直接放行。
+      if (current.pending || current.peers.some((peer) => !peers.includes(peer))) reasons.push("unknown");
+    } catch {
+      // 在场状态无法确认时，不发送切换请求，并恢复已冻结的页面。
+      reasons = ["unknown"];
+    }
     if (reasons.length) {
       post({ type: "release", sessionId, switchId, from: deps.tabId });
       deps.unfreeze();
@@ -242,12 +258,15 @@ export function createAccountSwitchCoordinator<P>(deps: SwitchCoordinatorDeps<P>
         unsubscribe();
         releasePresence?.();
         releasePresence = null;
+        presenceSessionId = null;
       };
     },
 
     /** 更新在场锁；sessionId 为 undefined 表示已登录但会话未确认，null 表示未登录。 */
     updatePresence(sessionId: string | null | undefined): void {
+      if (sessionId === presenceSessionId) return;
       releasePresence?.();
+      presenceSessionId = sessionId;
       releasePresence =
         sessionId === null ? null : deps.locks.hold(presenceLockName(sessionId, deps.tabId));
     },

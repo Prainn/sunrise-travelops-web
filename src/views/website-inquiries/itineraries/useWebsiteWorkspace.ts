@@ -1,6 +1,5 @@
 import { computed, ref, watch, toRaw } from "vue";
 import { useI18n } from "vue-i18n";
-import { isValidVehiclePrice } from "./vehicle-price";
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute } from "vue-router";
 import { useAccountSwitchGuard } from "@/composables/useAccountSwitchGuard";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -144,26 +143,6 @@ export function useWebsiteWorkspace() {
   }
   async function save() {
     if (!plan.value || !editable.value || saving.value) return false;
-    if (!plan.value.title.trim()) {
-      ElMessage.error(t("websiteWorkspace.titleRequired"));
-      return false;
-    }
-    if (
-      plan.value.days.some(
-        (day) =>
-          !day.departCityId ||
-          !day.endCityId ||
-          day.legs.some((leg) => !leg.fromCityId || !leg.toCityId) ||
-          day.hotels.some((hotel) => !hotel.cityId),
-      )
-    ) {
-      ElMessage.error(t("websiteWorkspace.citiesRequired"));
-      return false;
-    }
-    if (plan.value.vehiclePrices.some((item) => item.unitPrice != null && !isValidVehiclePrice(item.unitPrice))) {
-      ElMessage.error(t("websiteWorkspace.vehiclePriceInvalid"));
-      return false;
-    }
     saving.value = true;
     let saved: WebsiteItinerary;
     try {

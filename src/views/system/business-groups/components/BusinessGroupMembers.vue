@@ -36,7 +36,18 @@
     >
       <el-table-column prop="nickname" :label="$t('user.nickname')" min-width="140" />
       <el-table-column prop="username" :label="$t('common.username')" min-width="140" />
-      <el-table-column prop="roleNames" :label="$t('common.roles')" min-width="140" />
+      <el-table-column :label="$t('common.roles')" min-width="140">
+        <template #default="{ row }">
+          <el-tag
+            v-for="role in userRoleLabels(row.roleNames, roleOptions)"
+            :key="role"
+            size="small"
+            class="mr-2"
+          >
+            {{ role }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column :label="$t('common.status')" width="90" align="center">
         <template #default="{ row }">
           <el-tag :type="row.status === 1 ? 'success' : 'info'">
@@ -119,7 +130,8 @@ import { usePendingActions } from "@/composables/usePendingActions";
 import { businessGroupService } from "@/services/business-group.service";
 import { userService } from "@/services/user.service";
 import type { BusinessGroupItem } from "@/types/business-group";
-import type { UserItem, UserQueryParams } from "@/types/user";
+import type { IdentityRoleOption, UserItem, UserQueryParams } from "@/types/user";
+import { userRoleLabels } from "@/utils/user-role";
 import { requestErrorMessage } from "@/utils/version-conflict";
 
 const props = defineProps<{ group: BusinessGroupItem }>();
@@ -216,5 +228,10 @@ async function confirmMove(): Promise<void> {
   });
 }
 
-onMounted(handleQuery);
+// 后端 roleNames 顺序不固定，按角色选项 code 排序后展示，与用户管理页一致。
+const roleOptions = ref<IdentityRoleOption[]>([]);
+onMounted(async () => {
+  roleOptions.value = await userService.getRoleOptions();
+  await handleQuery();
+});
 </script>

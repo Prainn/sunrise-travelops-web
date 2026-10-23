@@ -18,7 +18,7 @@ const TEMPLATE_VARIABLES = new Map<string, readonly string[]>([
   ["arrival-basic", ["city"]],
   ["departure-basic", ["city"]],
   ["overnight", ["city"]],
-  ["guide", ["language", "service_scope"]],
+  ["guide", ["language"]],
   ["private-driver", []],
   ["hsr-second-class", ["city"]],
   ["hotel-breakfast", ["hotel"]],
@@ -130,23 +130,13 @@ export function useWebsiteAttractionRules(config: () => WebsiteConfig, record: R
   }));
 }
 
-export function useWebsiteRouteRules(config: () => WebsiteConfig, record: Ref<WebsiteRoute | undefined>) {
+export function useWebsiteRouteRules(config: () => WebsiteConfig) {
   const { t } = useI18n();
   return computed<FormRules<WebsiteRoute>>(() => ({
     nameZh: requiredText(t, "websiteConfig.routes.nameZh"),
     nameEn: requiredText(t, "websiteConfig.routes.nameEn"),
     fromCityId: cityRules(t, config, "websiteConfig.routes.fromCity"),
-    toCityId: [
-      ...cityRules(t, config, "websiteConfig.routes.toCity"),
-      {
-        validator: (_rule, value: string, callback) => {
-          callback(value && value === record.value?.fromCityId
-            ? new Error(t("websiteConfig.validation.routeDistinct"))
-            : undefined);
-        },
-        trigger: "change",
-      },
-    ],
+    toCityId: cityRules(t, config, "websiteConfig.routes.toCity"),
   }));
 }
 

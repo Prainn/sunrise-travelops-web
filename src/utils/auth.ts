@@ -1,4 +1,3 @@
-import { ROLE_ROOT } from "@/constants";
 import { useUserStoreHook } from "@/stores/user";
 import router from "@/router";
 import { translate } from "@/lang/utils";
@@ -13,11 +12,6 @@ export function hasPerm(value: string | string[], type: "button" | "role" = "but
 
   if (!roles || !perms) {
     return false;
-  }
-
-  // 超级管理员拥有所有权限
-  if (type === "button" && roles.includes(ROLE_ROOT)) {
-    return true;
   }
 
   const auths = type === "button" ? perms : roles;

@@ -320,6 +320,7 @@ export const constantRoutes: RouteRecordRaw[] = [
           title: "travelAgencies",
           icon: "el-icon-Promotion",
           keepAlive: true,
+          scopes: ["headquarters", "shengxu"],
           perms: ["resource:agency:list"],
         },
       },
@@ -473,12 +474,7 @@ export const constantRoutes: RouteRecordRaw[] = [
           perms: ["ledger:shengxu:list"],
         },
       },
-      {
-        path: "website-visits",
-        name: "WebsiteVisits",
-        component: () => import("@/views/ledgers/website-visits/index.vue"),
-        meta: { menuKey: "website-visits", title: "websiteVisits", icon: "el-icon-View", keepAlive: true, scopes: ["headquarters", "website"], perms: ["website:visit:list"] },
-      },
+
       {
         path: "direct",
         name: "DirectLedger",
@@ -506,6 +502,72 @@ export const constantRoutes: RouteRecordRaw[] = [
           scopes: ["headquarters", "website"],
           perms: ["ledger:direct:list"],
         },
+      },
+      {
+        path: "shengxu-agency-summary",
+        name: "ShengxuAgencySummary",
+        component: () => import("@/views/ledgers/summaries/index.vue"),
+        props: { report: "shengxu-agency-summary" },
+        meta: {
+          menuKey: "shengxu-agency-summary", title: "shengxuAgencySummary", icon: "el-icon-OfficeBuilding", keepAlive: true,
+          scopes: ["headquarters", "shengxu"], perms: ["ledger:summary:list"],
+        },
+      },
+      {
+        path: "shengxu-coordinator-summary",
+        name: "ShengxuCoordinatorSummary",
+        component: () => import("@/views/ledgers/summaries/index.vue"),
+        props: { report: "shengxu-coordinator-summary" },
+        meta: {
+          menuKey: "shengxu-coordinator-summary", title: "shengxuCoordinatorSummary", icon: "el-icon-UserFilled", keepAlive: true,
+          scopes: ["headquarters", "shengxu"], perms: ["ledger:summary:list"],
+        },
+      },
+      {
+        path: "linxi-quote-summary",
+        name: "LinxiQuoteSummary",
+        component: () => import("@/views/ledgers/summaries/index.vue"),
+        props: { report: "linxi-quote-summary" },
+        meta: {
+          menuKey: "linxi-quote-summary", title: "linxiQuoteSummary", icon: "el-icon-TrendCharts", keepAlive: true,
+          scopes: ["headquarters", "linxi"], perms: ["ledger:summary:list"],
+        },
+      },
+      {
+        path: "linxi-platform-summary",
+        name: "LinxiPlatformSummary",
+        component: () => import("@/views/ledgers/summaries/index.vue"),
+        props: { report: "linxi-platform-summary" },
+        meta: {
+          menuKey: "linxi-platform-summary", title: "linxiPlatformSummary", icon: "el-icon-DataAnalysis", keepAlive: true,
+          scopes: ["headquarters", "linxi"], perms: ["ledger:summary:list"],
+        },
+      },
+      {
+        path: "website-quote-summary",
+        name: "WebsiteQuoteSummary",
+        component: () => import("@/views/ledgers/summaries/index.vue"),
+        props: { report: "website-quote-summary" },
+        meta: {
+          menuKey: "website-quote-summary", title: "websiteQuoteSummary", icon: "el-icon-TrendCharts", keepAlive: true,
+          scopes: ["headquarters", "website"], perms: ["ledger:summary:list"],
+        },
+      },
+      {
+        path: "website-platform-summary",
+        name: "WebsitePlatformSummary",
+        component: () => import("@/views/ledgers/summaries/index.vue"),
+        props: { report: "website-platform-summary" },
+        meta: {
+          menuKey: "website-platform-summary", title: "websitePlatformSummary", icon: "el-icon-DataAnalysis", keepAlive: true,
+          scopes: ["headquarters", "website"], perms: ["ledger:summary:list"],
+        },
+      },
+      {
+        path: "website-visits",
+        name: "WebsiteVisits",
+        component: () => import("@/views/ledgers/website-visits/index.vue"),
+        meta: { menuKey: "website-visits", title: "websiteVisits", icon: "el-icon-View", keepAlive: true, scopes: ["headquarters", "website"], perms: ["website:visit:list"] },
       },
     ],
   },

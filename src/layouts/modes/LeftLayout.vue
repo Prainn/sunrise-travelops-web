@@ -3,12 +3,14 @@
     <div
       v-show="!appStore.contentFullscreen"
       class="layout-sidebar"
-      :class="{ 'is-collapsed': !isSidebarOpen }"
+      :class="{ 'is-collapsed': !sidebarExpanded, 'is-hover-expanded': isSidebarHoverExpanded }"
+      @mouseenter="hovered = true"
+      @mouseleave="hovered = false"
     >
       <div :class="{ 'has-logo': showLogo }" class="layout-sidebar__inner">
-        <LayoutLogo v-if="showLogo" :collapse="!isSidebarOpen" />
+        <LayoutLogo v-if="showLogo" :collapse="!sidebarExpanded" />
         <el-scrollbar>
-          <LayoutSidebar :data="routes" base-path="" />
+          <LayoutSidebar :data="routes" base-path="" :collapse-override="!sidebarExpanded" />
         </el-scrollbar>
       </div>
     </div>
@@ -28,6 +30,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref, watch, onBeforeUnmount } from "vue";
 import { useLayout } from "../composables/useLayout";
 import { useAppStore } from "@/stores/app";
 import BaseLayout from "../BaseLayout.vue";
@@ -39,6 +42,28 @@ import LayoutSidebar from "../components/LayoutSidebar.vue";
 
 const { showTagsView, showLogo, isSidebarOpen, isWorkspaceChromeless, isWorkspaceNavbarHidden, routes } = useLayout();
 const appStore = useAppStore();
+const hovered = ref(false);
+const sidebarExpanded = computed(() => isSidebarOpen.value || (isWorkspaceNavbarHidden.value && hovered.value));
+const isSidebarHoverExpanded = computed(() => !isSidebarOpen.value && sidebarExpanded.value);
+// 工作区仅在本页收起侧栏，不写入共享的本地偏好，离开时恢复进入前的状态；移动端的侧栏是抽屉，不处理。
+let sidebarBeforeWorkspace: boolean | undefined;
+function restoreSidebar() {
+  if (sidebarBeforeWorkspace === undefined) return;
+  appStore.sidebar.opened = sidebarBeforeWorkspace;
+  sidebarBeforeWorkspace = undefined;
+}
+watch(
+  isWorkspaceNavbarHidden,
+  (hidden) => {
+    if (hidden) {
+      sidebarBeforeWorkspace ??= appStore.sidebar.opened;
+      appStore.sidebar.opened = false;
+    } else restoreSidebar();
+    hovered.value = false;
+  },
+  { immediate: true },
+);
+onBeforeUnmount(restoreSidebar);
 </script>
 
 <style lang="scss" scoped>

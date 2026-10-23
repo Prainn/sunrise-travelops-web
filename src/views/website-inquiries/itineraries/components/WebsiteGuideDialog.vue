@@ -5,26 +5,26 @@
     :title="$t('itineraryWorkspace.resourceDialogTitle', { day: dayLabel, type: $t('planning.guideService') })"
     @close="close"
   >
-    <el-form label-position="top" @submit.prevent>
-      <el-form-item :label="$t('websiteItineraryUi.guideArranged')">
+    <el-form :model="{ language }" label-position="top" @submit.prevent>
+      <el-form-item>
+        <span class="mr-3">{{ $t("websiteItineraryUi.guideArranged") }}</span>
         <el-switch v-model="arranged" />
       </el-form-item>
       <div
         v-if="arranged"
-        class="grid grid-cols-2 gap-x-4 p-4 rounded-[var(--custom-radius)] surface-muted max-[560px]:grid-cols-1"
+        class="grid grid-cols-1 gap-x-4 p-4 rounded-[var(--custom-radius)] surface-muted max-[560px]:grid-cols-1"
       >
-        <el-form-item class="mb-0!" :label="$t('websiteItineraryUi.guideLanguage')" required>
-          <el-input
+        <el-form-item
+          class="mb-0!"
+          :label="$t('websiteItineraryUi.guideLanguage')"
+          prop="language"
+          :rules="[{ required: true, whitespace: true, message: $t('websiteItineraryUi.guideLanguageRequired'), trigger: 'change' }, { max: 100, message: $t('websiteItineraryUi.guideLanguageTooLong'), trigger: 'change' }]"
+        >
+          <RemoteSelect
             v-model="language"
+            :load-options="loadLanguages"
+            allow-create
             :placeholder="$t('websiteItineraryUi.guideLanguagePlaceholder')"
-            maxlength="100"
-          />
-        </el-form-item>
-        <el-form-item class="mb-0!" :label="$t('websiteItineraryUi.guideScope')">
-          <el-input
-            v-model="scope"
-            :placeholder="$t('websiteItineraryUi.guideScopePlaceholder')"
-            maxlength="1000"
           />
         </el-form-item>
       </div>
@@ -42,11 +42,14 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import RemoteSelect from "@/components/RemoteSelect/index.vue";
+import { websiteService } from "@/services/website.service";
+import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import AppDialog from "@/components/AppDialog/index.vue";
 import type { WebsiteDay } from "@/types/website";
 
 /**
- * 独立站当天导游：开关与语言、服务范围在弹窗内编辑，确认后写回当天；关闭开关确认即取消当天导游。
+ * 独立站当天导游：开关与语言在弹窗内编辑，确认后写回当天；关闭开关确认即取消当天导游。
  * 导游语言为空表示当天不安排导游。
  */
 const props = defineProps<{
@@ -56,29 +59,26 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [guide: Pick<WebsiteDay, "guideLanguage" | "guideScope">];
+  submit: [guide: Pick<WebsiteDay, "guideLanguage">];
 }>();
 const arranged = ref(false);
 const language = ref("");
-const scope = ref("");
-const canSubmit = computed(() => !arranged.value || Boolean(language.value.trim()));
+const canSubmit = computed(() => !arranged.value || Boolean(language.value.trim()) && language.value.trim().length <= 100);
 
 watch(
   () => props.modelValue,
   (visible) => {
     if (!visible) return;
     const current = props.day?.guideLanguage ?? "";
-    // 新安排导游时沿用原默认值，减少常见输入。
-    arranged.value = true;
-    language.value = current || "English";
-    scope.value = current ? (props.day?.guideScope ?? "") : "Full day";
+    arranged.value = Boolean(current.trim());
+    language.value = current;
   },
   { immediate: true },
 );
-// 关闭后重新打开开关时恢复默认值，不保留空白输入。
-watch(arranged, (value) => {
-  if (value && !language.value.trim()) language.value = "English";
-});
+async function loadLanguages(query: RemoteOptionsQuery) {
+  const result = await websiteService.guideLanguages(query);
+  return { ...result, list: result.list.map(item => ({ id: item.id, label: item.name })) };
+}
 
 function close() {
   emit("update:modelValue", false);
@@ -88,8 +88,8 @@ function submit() {
   emit(
     "submit",
     arranged.value
-      ? { guideLanguage: language.value.trim(), guideScope: scope.value.trim() }
-      : { guideLanguage: "", guideScope: "" },
+      ? { guideLanguage: language.value.trim() }
+      : { guideLanguage: "" },
   );
   close();
 }

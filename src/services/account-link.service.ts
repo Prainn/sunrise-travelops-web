@@ -28,6 +28,7 @@ export const accountLinkService = {
         pageSize: query.pageSize,
         keyword: query.keyword?.trim() || undefined,
         groupId: query.groupId,
+        scope: query.scope,
       },
     });
   },

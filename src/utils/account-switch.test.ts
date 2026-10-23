@@ -126,6 +126,16 @@ function createWorld() {
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe("account switch coordinator", () => {
+  it("switches on the first attempt when only the current tab is present", async () => {
+    const initiator = createWorld().tab("a");
+    const task = vi.fn().mockResolvedValue({ token: "t2" });
+
+    expect(await initiator.coordinator.initiate(task)).toEqual({
+      status: "committed", payload: { token: "t2" },
+    });
+    expect(task).toHaveBeenCalledTimes(1);
+  });
+
   it("calls the switch task once and commits to every ready tab", async () => {
     const world = createWorld();
     const initiator = world.tab("a");
@@ -152,17 +162,17 @@ describe("account switch coordinator", () => {
     expect(initiator.state.frozen).toBe(false);
   });
 
-  it("blocks when another tab is dirty and releases every frozen tab", async () => {
+  it.each(["dirty", "saving"] as const)("blocks when another tab is %s and releases every frozen tab", async (reason) => {
     const world = createWorld();
     const initiator = world.tab("a");
     const ready = world.tab("b");
-    world.tab("c", { blockers: ["dirty"] });
+    world.tab("c", { blockers: [reason] });
     const task = vi.fn();
 
     const result = await initiator.coordinator.initiate(task);
     await flush();
 
-    expect(result).toEqual({ status: "blocked", reasons: ["dirty"], local: false });
+    expect(result).toEqual({ status: "blocked", reasons: [reason], local: false });
     expect(task).not.toHaveBeenCalled();
     expect(initiator.state.frozen).toBe(false);
     expect(ready.state.frozen).toBe(false);
@@ -178,6 +188,83 @@ describe("account switch coordinator", () => {
 
     expect(result).toEqual({ status: "blocked", reasons: ["unresponsive"], local: false });
     expect(task).not.toHaveBeenCalled();
+  });
+
+  it("switches on the first attempt if the non-replying old page exits during preparation", async () => {
+    const world = createWorld();
+    const initiator = world.tab("a");
+    const oldPage = world.tab("old-page", { listen: false });
+    const task = vi.fn().mockResolvedValue({ token: "t2" });
+    const result = initiator.coordinator.initiate(task);
+    await flush();
+    oldPage.coordinator.updatePresence(null);
+
+    expect(await result).toEqual({ status: "committed", payload: { token: "t2" } });
+    expect(task).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["dirty", "saving", "unresponsive"] as const)("retains a real peer's %s protection when an old page exits", async (reason) => {
+    const world = createWorld();
+    const initiator = world.tab("a");
+    const oldPage = world.tab("old-page", { listen: false });
+    world.tab("real-peer", reason === "unresponsive" ? { listen: false } : { blockers: [reason] });
+    const task = vi.fn();
+    const result = initiator.coordinator.initiate(task);
+    await flush();
+    oldPage.coordinator.updatePresence(null);
+
+    expect(await result).toEqual({ status: "blocked", reasons: [reason], local: false });
+    expect(task).not.toHaveBeenCalled();
+    expect(initiator.state.frozen).toBe(false);
+  });
+
+  it.each([false, true])("blocks if a replacement page appears without completing preparation (pending=%s)", async (pending) => {
+    const world = createWorld();
+    const initiator = world.tab("a");
+    const oldPage = world.tab("old-page", { listen: false });
+    const task = vi.fn();
+    const result = initiator.coordinator.initiate(task);
+    await flush();
+    oldPage.coordinator.updatePresence(null);
+    const replacement = world.tab("replacement", { blockers: ["dirty"] });
+    if (pending) replacement.coordinator.updatePresence(undefined);
+
+    expect(await result).toEqual({ status: "blocked", reasons: ["unknown"], local: false });
+    expect(task).not.toHaveBeenCalled();
+  });
+
+  it.each([1, 2])("fails closed and unfreezes tabs if presence query %i fails", async (query) => {
+    const world = createWorld();
+    const initiator = world.tab("a");
+    const peer = world.tab("b");
+    const readNames = world.locks.heldNames;
+    let calls = 0;
+    vi.spyOn(world.locks, "heldNames").mockImplementation(() =>
+      ++calls === query ? Promise.reject(new Error("query failed")) : readNames(),
+    );
+    const task = vi.fn();
+
+    expect(await initiator.coordinator.initiate(task)).toEqual({
+      status: "blocked", reasons: ["unknown"], local: false,
+    });
+    await flush();
+    expect(task).not.toHaveBeenCalled();
+    expect(initiator.state.frozen).toBe(false);
+    expect(peer.state.frozen).toBe(false);
+  });
+
+  it("does not retain a pending-page blocker after that page exits", async () => {
+    const world = createWorld();
+    const initiator = world.tab("a");
+    const oldPage = world.tab("old-page", { listen: false });
+    const pending = world.tab("pending-page", { listen: false });
+    pending.coordinator.updatePresence(undefined);
+    const result = initiator.coordinator.initiate(async () => ({ token: "t2" }));
+    await flush();
+    oldPage.coordinator.updatePresence(null);
+    pending.coordinator.updatePresence(null);
+
+    expect(await result).toEqual({ status: "committed", payload: { token: "t2" } });
   });
 
   it("treats a tab with an unconfirmed session as unknown", async () => {

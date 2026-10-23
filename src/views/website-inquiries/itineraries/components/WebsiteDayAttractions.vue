@@ -1,6 +1,6 @@
 <template>
-  <section class="surface-muted p-4 flex flex-col gap-3">
-    <div class="flex flex-wrap justify-between items-center gap-3">
+  <section class="flex flex-col gap-3" :class="{ 'surface-muted p-4': !itemId }">
+    <div v-if="!itemId" class="flex flex-wrap justify-between items-center gap-3">
       <h4 class="m-0 text-[14px] text-strong font-600">
         {{ $t("websiteItineraryUi.attractions") }}
       </h4>
@@ -18,7 +18,7 @@
       :title="$t('websiteItineraryUi.noAttractions')"
     />
     <div
-      v-for="(item, index) in day.items"
+      v-for="{ item, index } in visibleItems"
       :key="item.id"
       class="p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)]"
     >
@@ -78,21 +78,32 @@
           <FeeStateSelect v-model="item.feeState" />
         </el-form-item>
       </div>
-      <el-button v-if="editable && item.attractionId" link @click="item.attractionId = null">
+      <el-button
+        v-if="editable && item.attractionId"
+        type="primary"
+        plain
+        size="small"
+        @click="item.attractionId = null"
+      >
         {{ $t("websiteItineraryUi.convertToManualCopy") }}
       </el-button>
     </div>
   </section>
 </template>
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import FeedbackState from "@/components/FeedbackState/index.vue";
 import type { WebsiteConfig, WebsiteDay, WebsiteItem } from "@/types/website";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
+import { websiteDayEventIds } from "../event-order";
 const day = defineModel<WebsiteDay>("day", { required: true });
-const props = defineProps<{ config: WebsiteConfig; editable: boolean }>();
+const props = defineProps<{ config: WebsiteConfig; editable: boolean; itemId?: string }>();
 const emit = defineEmits<{ add: [] }>();
 const { locale } = useI18n();
+const visibleItems = computed(() => day.value.items
+  .map((item, index) => ({ item, index }))
+  .filter(({ item }) => !props.itemId || item.id === props.itemId));
 function itemName(item: WebsiteItem) {
   return (locale.value === "en" ? item.nameEn : item.nameZh) || item.nameZh || item.nameEn;
 }
@@ -100,6 +111,16 @@ function configKind(item: WebsiteItem) {
   return props.config.attractions.find((attraction) => attraction.id === item.attractionId)?.kind;
 }
 function move(index: number, direction: number) {
+  const current = day.value.items[index];
+  const adjacent = day.value.items[index + direction];
+  if (!current || !adjacent) return;
+  if (day.value.eventOrder?.length) {
+    day.value.eventOrder = websiteDayEventIds(day.value).map(id => {
+      if (id === current.id) return adjacent.id;
+      if (id === adjacent.id) return current.id;
+      return id;
+    });
+  }
   const item = day.value.items.splice(index, 1)[0];
   if (item) day.value.items.splice(index + direction, 0, item);
 }

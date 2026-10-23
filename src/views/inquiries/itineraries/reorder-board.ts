@@ -1,14 +1,18 @@
 import type { Component } from "vue";
+import type { WebsiteReorderDraft } from "@/types/website";
 
 /** 顺序调整看板中的一条缩略信息；sortable 分组内的条目可在当天内调整顺序。 */
 export interface ReorderBoardItem {
   id: string;
   label: string;
   detail?: string;
+  /** 资源类型图标，与日卡按钮一致；页面需 markRaw */
+  icon?: Component;
   /** 分组内唯一的安排位（如酒店档位、餐次、按天导游）；跨天放入已有同位安排时需确认替换 */
   slot?: string;
   /** 未安排的占位（如默认自理的餐次），不可拖动或复制，同位安排放入时直接让位 */
   placeholder?: boolean;
+  hotelCityId?: string;
 }
 
 export interface ReorderBoardGroup {
@@ -41,6 +45,9 @@ export interface DayOrderChange {
   placements?: BoardPlacements;
   /** 跨天模式：副本 ID → 原条目 ID，应用时按原条目内容克隆 */
   copies?: Record<string, string>;
+  addedDayIds?: string[];
+  overnight?: Record<string, string>;
+  draft?: WebsiteReorderDraft;
 }
 
 /** 重排产生的待核对事项；dayId 为空表示整程事项。 */
@@ -63,7 +70,7 @@ export type BoardPlacements = Record<string, Record<string, string[]>>;
 export interface BoardState {
   placements: BoardPlacements;
   /** 临时副本 ID → 原条目 ID 与创建时所在日 */
-  copies: Record<string, { sourceId: string; dayId: string }>;
+  copies: Record<string, { sourceId: string; dayId: string; parentId?: string; placed?: boolean }>;
 }
 
 /**
@@ -107,6 +114,8 @@ export function planBoardTransfer(
   const sourceIds = state.placements[source.dayId]?.[group.key];
   if (!group.transferable || !moving || moving.placeholder || source.dayId === target.dayId || !targetIds || !sourceIds?.includes(source.itemId))
     return null;
+  if (Object.entries(state.copies).some(([id, copy]) =>
+    !copy.placed && (copy.parentId ?? copy.sourceId) === source.itemId && copy.dayId === source.dayId && sourceIds.includes(id))) return null;
   const sameSlot = (id: string) => Boolean(moving.slot) && item(id)?.slot === moving.slot;
   const replaced = targetIds.filter((id) => sameSlot(id) && !item(id)?.placeholder);
   const anchor = target.index === undefined ? undefined : targetIds[target.index];
@@ -115,6 +124,8 @@ export function planBoardTransfer(
   const placements = withGroup(state, source.dayId, group.key, sourceIds.filter((id) => id !== source.itemId));
   const copies = { ...state.copies };
   replaced.forEach((id) => delete copies[id]);
+  const movingCopy = copies[source.itemId];
+  if (movingCopy) copies[source.itemId] = { ...movingCopy, placed: true };
   return {
     next: {
       placements: {
@@ -143,7 +154,7 @@ export function copyBoardItem(state: BoardState, dayId: string, groupKey: string
   if (index < 0) return state;
   return {
     placements: withGroup(state, dayId, groupKey, [...ids.slice(0, index + 1), copyId, ...ids.slice(index + 1)]),
-    copies: { ...state.copies, [copyId]: { sourceId: state.copies[itemId]?.sourceId ?? itemId, dayId } },
+    copies: { ...state.copies, [copyId]: { sourceId: state.copies[itemId]?.sourceId ?? itemId, parentId: itemId, dayId, placed: false } },
   };
 }
 
@@ -180,7 +191,7 @@ export function boardTransferIssues(
     day.groups.flatMap((group) => {
       const ids = state.placements[day.id]?.[group.key] ?? [];
       const unplaced = ids
-        .filter((id) => state.copies[id]?.dayId === day.id)
+        .filter((id) => state.copies[id]?.dayId === day.id && !state.copies[id]?.placed)
         .map((id) => ({
           dayId: day.id, itemId: id, blocking: true,
           key: "itineraryWorkspace.transfer.unplacedCopy",
@@ -258,4 +269,41 @@ export function restoredDayIndex(dates: (string | null)[], date: string | null, 
     return index < 0 ? dates.length : index;
   }
   return Math.min(Math.max(dayNumber - 1, 0), dates.length);
+}
+
+/**
+ * Restore pending website placements, preserving new canonical content and dropping removed references.
+ *
+ * Items the draft no longer places are normally new main-page content, except those displaced by a confirmed slot
+ * replacement before stashing; a same-slot item already placed that day marks them as displaced.
+ */
+export function restoreWebsiteBoard(days: ReorderBoardDay[], draft: WebsiteReorderDraft): BoardState {
+  const current = boardPlacements(days);
+  const items = new Map(days.flatMap(day => day.groups.flatMap(group => group.items.map(item => [item.id, item] as const))));
+  const available = new Set(items.keys());
+  const copies = Object.fromEntries(draft.copies.filter(copy => available.has(copy.sourceId)).map(({ id, ...copy }) => [id, copy]));
+  const itemOf = (id: string) => items.get(id) ?? items.get(copies[id]?.sourceId ?? "");
+  const saved = new Map(draft.placements.map(entry => [entry.dayId, entry.itemIds]));
+  const assigned = new Set(draft.placements.filter(entry => current[entry.dayId]).flatMap(entry => entry.itemIds));
+  const overnight = new Set(draft.overnight.map(entry => entry.dayId));
+  return {
+    copies,
+    placements: Object.fromEntries(days.map(day => {
+      let previous = (saved.get(day.id) ?? []).filter(id => available.has(id) || copies[id]);
+      const added = (current[day.id]?.events ?? []).filter(id => !assigned.has(id) && !(id === `${day.id}-no-stay` && overnight.has(day.id)))
+        .filter(id => {
+          const slot = itemOf(id)?.slot;
+          if (!slot) return true;
+          const occupant = previous.find(other => itemOf(other)?.slot === slot);
+          if (!occupant) return true;
+          // New real content takes over a draft placeholder; otherwise it is a displaced item.
+          if (itemOf(occupant)?.placeholder && !itemOf(id)?.placeholder) {
+            previous = previous.filter(other => other !== occupant);
+            return true;
+          }
+          return false;
+        });
+      return [day.id, { events: [...previous, ...added] }];
+    })),
+  };
 }

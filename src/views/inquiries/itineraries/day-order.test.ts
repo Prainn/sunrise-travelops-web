@@ -1,3 +1,4 @@
+import { restoreWebsiteBoard } from "./reorder-board";
 import { reactive } from "vue";
 import { describe, expect, it } from "vitest";
 import type { ItineraryDayRecord, ItineraryResourceItem } from "@/types/itinerary";
@@ -177,12 +178,12 @@ describe("website cross-day transfer and copy", () => {
   };
 
   function websiteDays(): WebsiteDay[] {
-    const d1 = { ...emptyDay(1), id: "d1", departCityId: "km", endCityId: "km", overnightCityId: "km", guideLanguage: "English", guideScope: "全天" };
+    const d1 = { ...emptyDay(1), id: "d1", departCityId: "km", endCityId: "km", overnightCityId: "km", guideLanguage: "English" };
     d1.items = [{ id: "i-km", attractionId: "att-km", nameZh: "石林", nameEn: "Stone Forest", descriptionZh: "中文", descriptionEn: "EN", appears: false, feeState: "OPTIONAL" }];
     d1.hotels = [{ id: "h-km", tier: "A", cityId: "km", configHotelId: null, resourceId: "pub-h", nameZh: "昆明酒店", nameEn: "KM Hotel", roomType: "大床", breakfastIncluded: false }];
     d1.meals[1] = { ...d1.meals[1]!, id: "lunch-km", resourceId: "r-km", restaurantZh: "昆明餐厅", feeState: "INCLUDED" };
     d1.services = [{ id: "s1", nameZh: "接机", nameEn: "Pickup", appears: true, feeState: "INCLUDED" }];
-    const d2 = { ...emptyDay(2), id: "d2", departCityId: "km", endCityId: "dl", overnightCityId: "dl", guideLanguage: "日语", guideScope: "半天" };
+    const d2 = { ...emptyDay(2), id: "d2", departCityId: "km", endCityId: "dl", overnightCityId: "dl", guideLanguage: "日语" };
     d2.items = [{ id: "i-dl", attractionId: "att-dl", nameZh: "洱海", nameEn: "Erhai", descriptionZh: "", descriptionEn: "", appears: true, feeState: "INCLUDED" }];
     d2.legs = [{ id: "leg", routeId: null, fromCityId: "km", toCityId: "dl", mode: "hsr", nameZh: "", nameEn: "", feeState: "INCLUDED" }];
     d2.hotels = [{ id: "h-dl", tier: "A", cityId: "dl", configHotelId: null, resourceId: null, nameZh: "大理酒店", nameEn: "DL Hotel", roomType: "", breakfastIncluded: true }];
@@ -255,6 +256,36 @@ describe("website cross-day transfer and copy", () => {
       hints: () => websiteTransferIssues(days, change(), [], context).filter((issue) => !issue.blocking).map((issue) => [issue.dayId, issue.key.split(".").pop(), issue.itemId]),
     };
   }
+
+  it("locks only the corresponding original until its pending copies leave, and allows re-copy after placement", () => {
+    const board = setup();
+    board.days[0]!.items.push({ ...board.days[0]!.items[0]!, id: "other" });
+    board.copy("services", "d1", "s1", "s-copy");
+    expect(board.move("services", "d1", "s1", "d2")).toBeNull();
+    expect(board.move("attractions", "d1", "i-km", "d2")).not.toBeNull();
+    expect(board.move("services", "d1", "s-copy", "d3")).not.toBeNull();
+    expect(board.state.copies["s-copy"]?.placed).toBe(true);
+    board.copy("services", "d3", "s-copy", "s-copy2");
+    expect(board.move("services", "d3", "s-copy", "d2")).toBeNull();
+    expect(board.move("services", "d3", "s-copy2", "d2")).not.toBeNull();
+    expect(board.move("services", "d1", "s1", "d2")).not.toBeNull();
+  });
+
+  it("preserves a mixed sequence and new days without mutating the submitted board", () => {
+    const days = websiteDays();
+    const change: DayOrderChange = {
+      dayIds: ["d1", "d2", "d3", "d4"], addedDayIds: ["d4"], itemIds: {}, deletedDays: [],
+      placements: { d1: { events: ["lunch-km", "i-km", "h-km", "s1"] }, d4: { events: ["leg-copy"] } },
+      copies: { "leg-copy": "leg" }, overnight: { d3: "dl" },
+    };
+    const before = JSON.stringify(change);
+    const result = reorderWebsiteDays(days, change);
+    expect(JSON.stringify(change)).toBe(before);
+    expect(result.days[0]!.eventOrder).toEqual(["lunch-km", "i-km", "h-km", "s1"]);
+    expect(result.days[3]!.legs[0]!.id).toBe("leg-copy");
+    expect(result.days[3]!.dayNumber).toBe(4);
+    expect(result.days[2]!.overnightCityId).toBe("dl");
+  });
 
   it("moves a card into another day's empty category, keeping its ID and full content", () => {
     const board = setup();
@@ -331,7 +362,7 @@ describe("website cross-day transfer and copy", () => {
     expect(board.boardIssues()).toEqual([]);
     expect(board.move("services", "d1", websiteGuideBoardId("d1"), "d2")?.replaced).toEqual([websiteGuideBoardId("d2")]);
     const [d1, d2, d3] = board.result().days;
-    expect([d1, d2, d3].map((day) => [day!.guideLanguage, day!.guideScope])).toEqual([["", ""], ["English", "全天"], ["English", "全天"]]);
+    expect([d1, d2, d3].map((day) => day!.guideLanguage)).toEqual(["", "English", "English"]);
   });
 
   it("keeps the meal slot, refills the vacated slot and checks restaurant cities", () => {
@@ -352,7 +383,7 @@ describe("website cross-day transfer and copy", () => {
     restaurantCities["r-km"] = ready("昆明");
   });
 
-  it("only hints manual checks for manual content and keeps historical issues non-blocking", () => {
+  it("hints manual content and includes historical issues in explicit full validation", () => {
     const board = setup();
     // D2 手填午餐移入 D1，与 D1 已安排午餐冲突 → 替换后仅提示人工核对。
     expect(board.move("meals", "d2", "lunch-manual", "d1")?.replaced).toEqual(["lunch-km"]);
@@ -361,7 +392,7 @@ describe("website cross-day transfer and copy", () => {
     // D3 原本就没有交通段（dl→dl 无需交通），改为历史断链：既有问题不因收到服务而阻断。
     board.days[2]!.endCityId = "lj";
     board.move("services", "d1", "s1", "d3");
-    expect(board.blocking()).toEqual([]);
+    expect(board.blocking()).toContainEqual(["d3", "legChainBroken", undefined]);
   });
 
   it("keeps moved cards with a recycled day", () => {
@@ -373,4 +404,42 @@ describe("website cross-day transfer and copy", () => {
     expect(result.days.map((day) => day.id)).toEqual(["d1", "d2"]);
     expect(result.deletedDays[0]!.day.services.map((value) => value.id)).toEqual(["s1"]);
   });
+});
+
+it("permits unrelated original B of the same type while A has a pending copy", () => {
+  const items = new Map(["a", "b", "a-copy"].map(id => [id, { id, label: id }]));
+  let state: BoardState = { placements: { d1: { events: ["a", "b"] }, d2: { events: [] } }, copies: {} };
+  state = copyBoardItem(state, "d1", "events", "a", "a-copy");
+  expect(planBoardTransfer(state, { key: "events", transferable: true }, { dayId: "d1", itemId: "a" }, { dayId: "d2" }, id => items.get(id))).toBeNull();
+  expect(planBoardTransfer(state, { key: "events", transferable: true }, { dayId: "d1", itemId: "b" }, { dayId: "d2" }, id => items.get(id))).not.toBeNull();
+});
+
+it("restores pending placements while retaining newly added content and dropping removed sources", () => {
+  const days = [
+    { id: "d1", title: "", groups: [{ key: "events", label: "", items: [{ id: "a", label: "A" }, { id: "new", label: "New" }] }] },
+    { id: "d2", title: "", groups: [{ key: "events", label: "", items: [{ id: "d2-no-stay", label: "No stay", placeholder: true }] }] },
+  ];
+  const result = restoreWebsiteBoard(days, {
+    dayIds: ["d1", "d2"], addedDayIds: [], deletedDays: [],
+    placements: [{ dayId: "d1", itemIds: ["copy", "removed"] }, { dayId: "d2", itemIds: ["a"] }],
+    copies: [{ id: "copy", sourceId: "a", parentId: "a", dayId: "d1", placed: false }, { id: "lost", sourceId: "removed", parentId: "removed", dayId: "d1", placed: false }],
+    overnight: [{ dayId: "d2", cityId: "city" }],
+  });
+  expect(result.placements).toEqual({ d1: { events: ["copy", "new"] }, d2: { events: ["a"] } });
+  expect(Object.keys(result.copies)).toEqual(["copy"]);
+});
+
+it("does not bring back items displaced by a confirmed same-slot replacement", () => {
+  const days = [
+    { id: "d1", title: "", groups: [{ key: "events", label: "", items: [{ id: "h1", label: "H1", slot: "hotel:A" }, { id: "lunch1", label: "Lunch", slot: "meal:lunch" }] }] },
+    { id: "d2", title: "", groups: [{ key: "events", label: "", items: [
+      { id: "h2", label: "H2", slot: "hotel:A" }, { id: "lunch-none", label: "Self", slot: "meal:lunch", placeholder: true }, { id: "fresh", label: "Fresh" },
+    ] }] },
+  ];
+  const result = restoreWebsiteBoard(days, {
+    dayIds: ["d1", "d2"], addedDayIds: [], deletedDays: [],
+    placements: [{ dayId: "d1", itemIds: [] }, { dayId: "d2", itemIds: ["h1", "lunch1"] }],
+    copies: [], overnight: [],
+  });
+  expect(result.placements).toEqual({ d1: { events: [] }, d2: { events: ["h1", "lunch1", "fresh"] } });
 });

@@ -35,6 +35,35 @@ const websiteMeta: RouteMeta = {
   perms: ["website:inquiry:list"],
 };
 
+describe("组团社访问范围", () => {
+  const resources = constantRoutes.find((route) => route.name === "TourismResources")!;
+  const agency = resources.children!.find((route) => route.name === "Agency")!;
+  const chain = [resources.meta!, agency.meta!];
+
+  it.each(["linxi", "website"] as const)("%s 持有旧菜单和权限也无法直接进入组团社", (scope) => {
+    for (const role of ["BUSINESS_MANAGER", "COORDINATOR", "RESOURCE_MANAGER", "ROOT"]) {
+      const context = { scope, roles: [role], perms: ["resource:agency:list"], menuKeys: ["agency"] };
+      expect(hasRouteChainAccess(chain, context)).toBe(false);
+      const menu = filterRoutesByAccess(constantRoutes, context).find((route) => route.name === "TourismResources");
+      expect(menu?.children?.some((route) => route.name === "Agency") ?? false).toBe(false);
+    }
+  });
+
+  it.each([
+    { scope: "headquarters" as const, role: "ROOT" },
+    { scope: "headquarters" as const, role: "ADMIN" },
+    { scope: "headquarters" as const, role: "EXECUTIVE" },
+    { scope: "shengxu" as const, role: "BUSINESS_MANAGER" },
+    { scope: "shengxu" as const, role: "COORDINATOR" },
+    { scope: "shengxu" as const, role: "RESOURCE_MANAGER" },
+  ])("$scope/$role 保留获授权的组团社入口", ({ scope, role }) => {
+    const context = { scope, roles: [role], perms: ["resource:agency:list"], menuKeys: ["agency"] };
+    expect(hasRouteChainAccess(chain, context)).toBe(true);
+    const menu = filterRoutesByAccess(constantRoutes, context).find((route) => route.name === "TourismResources");
+    expect(menu?.children?.some((route) => route.name === "Agency")).toBe(true);
+  });
+});
+
 describe("台账独立入口", () => {
   const group = constantRoutes.find((route) => route.name === "DataLedgers")!;
   const linxi = group.children!.find((route) => route.name === "DirectLedger")!;

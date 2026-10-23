@@ -5,9 +5,9 @@
     size="lg"
     :busy="saving"
     destroy-on-close
-    @open="resetForm"
   >
     <el-form
+      :key="formSession"
       ref="formRef"
       :model="form"
       :rules="rules"
@@ -37,6 +37,7 @@
               :model-value="form.agencyId"
               :load-options="loadAgencies"
               :selected-label="form.agencyName"
+              :disabled="readonly || saving"
               :placeholder="$t('ledger.shengxu.agencyPlaceholder')"
               :clearable="false"
               class="w-full"
@@ -62,7 +63,7 @@
               :load-options="loadContacts"
               :query-key="form.agencyId"
               :selected-label="form.contactName"
-              :disabled="!form.agencyId"
+              :disabled="readonly || saving || !form.agencyId"
               :placeholder="
                 $t(form.agencyId ? 'ledger.shengxu.contactPlaceholder' : 'ledger.shengxu.agencyFirst')
               "
@@ -150,7 +151,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
@@ -177,6 +178,7 @@ const visible = defineModel<boolean>({ required: true });
 const { t } = useI18n();
 const user = useUserStore();
 const formRef = ref<FormInstance>();
+const formSession = ref(0);
 const form = reactive(emptyShengxuLedgerForm());
 const saving = ref(false);
 /** 已加载的组团社选项，用于选中后带出地区快照。 */
@@ -215,7 +217,6 @@ function resetForm() {
     form,
     props.ledger ? shengxuLedgerFormFromItem(props.ledger) : emptyShengxuLedgerForm(),
   );
-  formRef.value?.clearValidate();
 }
 
 async function loadAgencies(query: RemoteOptionsQuery) {
@@ -286,4 +287,10 @@ async function handleSubmit() {
     saving.value = false;
   }
 }
+// 在控件挂载前回填；重建表单以隔离旧校验状态及关闭动画期间残留的控件。
+watch(visible, (opened) => {
+  if (!opened) return;
+  resetForm();
+  formSession.value++;
+}, { immediate: true });
 </script>

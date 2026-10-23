@@ -87,7 +87,7 @@
         </el-select>
       </el-form-item>
       <el-form-item
-        v-if="isCoordinator(identity)"
+        v-if="identity.scope !== 'shengxu' && isCoordinator(identity)"
         :label="$t('coordinatorDuty.label')"
         :prop="`identities.${index}.coordinatorDuty`"
         :rules="{ required: true, message: $t('coordinatorDuty.selectPlaceholder') }"
@@ -126,10 +126,10 @@ function updateDuty(identity: UserIdentity, value: unknown): void {
   if (duty) identity.coordinatorDuty = duty;
 }
 
-/** 新增计调默认仅收客；撤销计调清空分工，已有计调保留实际值。 */
+/** 霖熹/独立站计调默认仅收客；盛旭及非计调不设置分工。 */
 function updateRoles(identity: UserIdentity, roleIds: string[]): void {
   identity.roleIds = sortUserRoleIds(roleIds, props.roles);
-  if (!isCoordinator(identity)) identity.coordinatorDuty = null;
+  if (identity.scope === "shengxu" || !isCoordinator(identity)) identity.coordinatorDuty = null;
   else identity.coordinatorDuty ??= "reception";
 }
 

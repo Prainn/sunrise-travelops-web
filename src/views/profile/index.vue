@@ -8,7 +8,6 @@
               <el-icon><UserFilled /></el-icon>
             </el-avatar>
             <el-button
-              v-hasPerm="'sys:user:update'"
               type="info"
               class="profile-avatar__action"
               circle
@@ -56,7 +55,6 @@
 
         <div class="flex flex-wrap shrink-0 items-center gap-2">
           <el-button
-            v-hasPerm="'sys:user:update'"
             :icon="Edit"
             @click="handleOpenDialog(DialogType.ACCOUNT)"
           >

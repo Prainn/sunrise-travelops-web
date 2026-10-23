@@ -9,7 +9,7 @@
     <template #header>
       <div class="flex items-center gap-4 flex-wrap">
         <strong>{{ $t(recovery ? 'itineraryWorkspace.deletedDays' : 'itineraryWorkspace.reorderTitle') }}</strong>
-        <el-button v-if="!recovery" :disabled="!recycledDays.length" @click="isRecycleVisible = true">
+        <el-button v-if="!recovery" :disabled="!recycledDays.length || busy" @click="isRecycleVisible = true">
           {{ $t('itineraryWorkspace.deletedDays') }} ({{ recycledDays.length }})
         </el-button>
       </div>
@@ -17,7 +17,7 @@
     <p class="m-0 mb-3 text-[13px] text-muted">
       {{ $t(recovery ? "itineraryWorkspace.deletedHint" : readonly ? "itineraryWorkspace.reorderReadonly" : transfer ? "itineraryWorkspace.transfer.hint" : "itineraryWorkspace.reorderHint") }}
     </p>
-    <div class="itinerary-reorder__board flex gap-3 overflow-x-auto pb-3" role="list">
+    <div class="itinerary-reorder__board flex gap-3 overflow-x-auto pb-3" role="list" :inert="busy">
       <section
         v-for="(day, dayIndex) in orderedDays"
         :key="day.id"
@@ -118,9 +118,12 @@
             @dragover="allowItemDrop($event, day.id, item.id, group)"
             @drop="dropItem($event, day.id, group, itemIndex)"
           >
+            <el-icon v-if="item.icon" class="shrink-0 self-start mt-[3px] text-muted" aria-hidden="true">
+              <component :is="item.icon" />
+            </el-icon>
             <span class="min-w-0 flex-1 [overflow-wrap:anywhere]">
               <el-tag
-                v-if="board.copies[item.id]"
+                v-if="isPendingCopy(item.id)"
                 size="small"
                 type="warning"
                 class="mr-1"
@@ -131,7 +134,7 @@
               <small v-if="item.detail" class="block text-muted">{{ item.detail }}</small>
             </span>
             <el-button
-              v-if="board.copies[item.id] && canMove(group, item)"
+              v-if="isPendingCopy(item.id) && canMove(group, item)"
               link
               type="danger"
               :aria-label="$t('itineraryWorkspace.transfer.removeCopy')"
@@ -173,7 +176,16 @@
           </div>
         </div>
       </section>
+      <el-button
+        v-if="createDay && !readonly && !recovery"
+        :disabled="dayIds.length >= 365 || busy"
+        class="shrink-0"
+        @click="addBoardDay"
+      >
+        {{ $t('websiteWorkspace.addDay') }}
+      </el-button>
     </div>
+    <div ref="issueAnchor" />
     <el-alert
       v-if="!readonly && !recovery && blockingIssues.length"
       type="error"
@@ -209,16 +221,20 @@
       </ul>
     </el-alert>
     <template #footer>
+      <el-button v-if="stash && !readonly && !recovery" :loading="busy" @click="stashBoard">
+        {{ $t('itineraryWorkspace.stash') }}
+      </el-button>
       <el-button @click="emit('update:modelValue', false)">
         {{ $t(readonly || recovery ? "common.close" : "common.cancel") }}
       </el-button>
       <el-button
         v-if="!readonly && !recovery"
         type="primary"
-        :disabled="!isChanged || blockingIssues.length > 0"
+        :disabled="busy || (!transfer && (!isChanged || blockingIssues.length > 0))"
+        :loading="busy"
         @click="apply"
       >
-        {{ $t("itineraryWorkspace.applyOrder") }}
+        {{ $t(warningsAccepted ? "itineraryWorkspace.applyDespiteWarnings" : "itineraryWorkspace.applyOrder") }}
       </el-button>
     </template>
   </AppDialog>
@@ -228,16 +244,17 @@
     :days="recycledDays"
     :readonly="readonly"
     recovery
-    :restore-disabled="dayIds.length >= 365"
+    :restore-disabled="dayIds.length >= 365 || busy"
     @restore="restoreDay"
   />
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Close, CopyDocument, Delete } from "@element-plus/icons-vue";
 import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+import type { WebsiteReorderDraft } from "@/types/website";
 import AppDialog from "@/components/AppDialog/index.vue";
 import { addDays } from "@/utils";
 import {
@@ -247,6 +264,7 @@ import {
   planBoardTransfer,
   removeBoardCopy,
   restoredDayIndex,
+  restoreWebsiteBoard,
   type BoardState,
   type DayOrderChange,
   type DayOrderIssue,
@@ -273,7 +291,10 @@ const props = withDefaults(
     /** 开启跨天移动与复制 */
     transfer?: boolean;
     /** 预演本次调整，返回需核对事项；不修改草稿 */
-    validate?: (change: DayOrderChange) => DayOrderIssue[];
+    validate?: (change: DayOrderChange) => DayOrderIssue[] | Promise<DayOrderIssue[]>;
+    draft?: WebsiteReorderDraft | null;
+    createDay?: (id: string) => ReorderBoardDay;
+    stash?: (change: DayOrderChange) => Promise<boolean>;
   }>(),
   { readonly: false, startDate: null, transfer: false, validate: undefined, deletedDays: () => [], recovery: false, restoreDisabled: false },
 );
@@ -294,7 +315,15 @@ const dropDayId = ref("");
 const dropItemId = ref("");
 const dropGroupKey = ref("");
 
-const allDays = computed(() => [...props.days, ...props.deletedDays]);
+const addedDays = ref<ReorderBoardDay[]>([]);
+const overnight = ref<Record<string, string>>({});
+const busy = ref(false);
+const issueAnchor = ref<HTMLElement>();
+/** 独立站（transfer）点击应用时才完整校验；普通询盘实时显示核对事项 */
+const issues = ref<DayOrderIssue[]>([]);
+let session = 0;
+const warningsAccepted = ref(false);
+const allDays = computed(() => [...props.days, ...props.deletedDays, ...addedDays.value]);
 const orderedDays = computed(() => dayIds.value.map((id) => allDays.value.find((day) => day.id === id)!).filter(Boolean));
 const canTransfer = computed(() => props.transfer && !props.readonly && !props.recovery);
 /** 看板条目（含临时副本：内容同原卡片，仅 ID 不同） */
@@ -309,6 +338,16 @@ const boardItems = computed(() => {
 const boardItem = (id: string) => boardItems.value.get(id);
 const change = computed<DayOrderChange>(() => ({
   dayIds: dayIds.value,
+  addedDayIds: addedDays.value.map(day => day.id),
+  overnight: overnight.value,
+  draft: props.transfer ? {
+    dayIds: dayIds.value,
+    addedDayIds: addedDays.value.map(day => day.id),
+    deletedDays: recycledDays.value.map(day => ({ id: day.id, dayNumber: day.dayNumber!, date: day.date ?? null })),
+    placements: Object.entries(board.value.placements).map(([dayId, groups]) => ({ dayId, itemIds: groups.events ?? [] })),
+    copies: Object.entries(board.value.copies).map(([id, copy]) => ({ id, sourceId: copy.sourceId, parentId: copy.parentId ?? copy.sourceId, dayId: copy.dayId, placed: Boolean(copy.placed) })),
+    overnight: Object.entries(overnight.value).map(([dayId, cityId]) => ({ dayId, cityId })),
+  } : undefined,
   itemIds: Object.fromEntries(
     allDays.value.map((day) => {
       const group = day.groups.find((value) => value.sortable);
@@ -330,31 +369,63 @@ const isChanged = computed(
     dayIds.value.some((id, index) => id !== props.days[index]?.id) ||
     JSON.stringify(board.value.placements) !== initialPlacements.value,
 );
-const issues = computed<DayOrderIssue[]>(() =>
-  isChanged.value
-    ? [
-      ...(props.transfer ? boardTransferIssues(board.value, orderedDays.value, boardItem) : []),
-      ...(props.validate ? props.validate(change.value) : []),
-    ]
-    : [],
+const liveIssues = computed<DayOrderIssue[]>(() =>
+  !props.transfer && isChanged.value && props.validate ? (props.validate(change.value) as DayOrderIssue[]) : [],
 );
-const blockingIssues = computed(() => issues.value.filter((issue) => issue.blocking));
-const hintIssues = computed(() => issues.value.filter((issue) => !issue.blocking));
+const shownIssues = computed(() => (props.transfer ? issues.value : liveIssues.value));
+const blockingIssues = computed(() => shownIssues.value.filter((issue) => issue.blocking));
+const hintIssues = computed(() => shownIssues.value.filter((issue) => !issue.blocking));
 const invalidItemIds = computed(() => new Set(blockingIssues.value.flatMap((issue) => (issue.itemId ? [issue.itemId] : []))));
 
 watch(
   () => props.modelValue,
   (visible) => {
     isRecycleVisible.value = false;
+    // 重开即新会话：丢弃上一次仍在途的校验或暂存结果。
+    session += 1;
+    busy.value = false;
     if (!visible) return;
+    addedDays.value = (props.draft?.addedDayIds ?? []).flatMap(id => props.createDay ? [props.createDay(id)] : []);
+    overnight.value = Object.fromEntries((props.draft?.overnight ?? []).map(entry => [entry.dayId, entry.cityId]));
+    issues.value = [];
+    warningsAccepted.value = false;
     recycledDays.value = props.deletedDays.map((day) => ({ ...day }));
     dayIds.value = props.days.map((day) => day.id);
     board.value = { placements: boardPlacements(allDays.value), copies: {} };
+    if (props.draft) {
+      const activeDays = new Set([...props.days, ...addedDays.value].map(day => day.id));
+      const recorded = new Set([...props.draft.dayIds, ...props.draft.deletedDays.map(day => day.id)]);
+      // 暂存后在主页面删除的天不复活，保留在回收中。
+      dayIds.value = [...props.draft.dayIds.filter(id => activeDays.has(id)), ...props.days.filter(day => !recorded.has(day.id)).map(day => day.id)];
+      recycledDays.value = props.draft.deletedDays.flatMap(entry => {
+        const day = allDays.value.find(day => day.id === entry.id);
+        return day ? [{ ...day, dayNumber: entry.dayNumber, date: entry.date }] : [];
+      });
+      const placed = new Set([...dayIds.value, ...recycledDays.value.map(day => day.id)]);
+      recycledDays.value.push(...props.deletedDays.filter(day => !placed.has(day.id)).map(day => ({ ...day })));
+      board.value = restoreWebsiteBoard(allDays.value, props.draft);
+    }
     initialPlacements.value = JSON.stringify(board.value.placements);
   },
   { immediate: true },
 );
 
+watch(change, () => { issues.value = []; warningsAccepted.value = false; }, { deep: true });
+function isPendingCopy(id: string) { return Boolean(board.value.copies[id] && !board.value.copies[id].placed); }
+function addBoardDay() {
+  if (!props.createDay || dayIds.value.length >= 365) return;
+  const day = props.createDay(crypto.randomUUID());
+  addedDays.value.push(day);
+  dayIds.value.push(day.id);
+  board.value = { ...board.value, placements: { ...board.value.placements, ...boardPlacements([day]) } };
+}
+async function stashBoard() {
+  if (!props.stash || busy.value) return;
+  const current = session;
+  busy.value = true;
+  try { if (await props.stash(change.value) && current === session) emit("update:modelValue", false); }
+  finally { if (current === session) busy.value = false; }
+}
 function canSort(group: ReorderBoardGroup) {
   return Boolean(group.sortable && !props.readonly && !props.recovery);
 }
@@ -380,7 +451,7 @@ async function deleteDay(id: string) {
   if (!day || day.id !== id) return;
   // 未安置的临时副本不随整天进入回收；回收展示当前看板排布。
   Object.entries(board.value.copies).forEach(([copyId, copy]) => {
-    if (copy.dayId === id && Object.values(board.value.placements[id] ?? {}).some((ids) => ids.includes(copyId)))
+    if (!copy.placed && copy.dayId === id && Object.values(board.value.placements[id] ?? {}).some((ids) => ids.includes(copyId)))
       board.value = removeBoardCopy(board.value, copyId);
   });
   const groups = day.groups.map((group) => ({ ...group, items: groupItems(id, group) }));
@@ -435,6 +506,18 @@ async function transferItem(dayId: string, group: ReorderBoardGroup, index?: num
   if (!source?.itemId || !canTransfer.value || !group.transferable || source.groupKey !== group.key) return;
   const plan = planBoardTransfer(board.value, group, { dayId: source.dayId, itemId: source.itemId }, { dayId, index }, boardItem);
   if (!plan) return;
+  const before = board.value;
+  const hotelCityId = boardItem(source.itemId)?.hotelCityId;
+  const noStayId = `${dayId}-no-stay`;
+  const requiresStay = hotelCityId && Object.values(board.value.placements[dayId] ?? {}).some(ids => ids.includes(noStayId));
+  if (requiresStay) {
+    try {
+      await ElMessageBox.confirm(t("itineraryWorkspace.arrangeOvernight"), t("common.confirm"), {
+        type: "warning", confirmButtonText: t("common.confirm"), cancelButtonText: t("common.cancel"),
+      });
+    } catch { return; }
+    if (!props.modelValue || board.value !== before) return;
+  }
   if (plan.replaced.length) {
     const before = board.value;
     try {
@@ -450,7 +533,25 @@ async function transferItem(dayId: string, group: ReorderBoardGroup, index?: num
     } catch { return; }
     if (!props.modelValue || board.value !== before) return;
   }
+  if (requiresStay) {
+    overnight.value = { ...overnight.value, [dayId]: hotelCityId };
+    for (const ids of Object.values(plan.next.placements[dayId] ?? {})) {
+      const index = ids.indexOf(noStayId);
+      if (index >= 0) ids.splice(index, 1);
+    }
+  }
   board.value = plan.next;
+  releaseOvernight(source.dayId);
+}
+
+/** 该日由看板安排的住宿已无酒店时，撤销安排并恢复“不住宿”占位。 */
+function releaseOvernight(dayId: string) {
+  const noStayId = `${dayId}-no-stay`;
+  const groups = board.value.placements[dayId];
+  if (!overnight.value[dayId] || !groups || !boardItems.value.has(noStayId)) return;
+  if (Object.values(groups).some(ids => ids.some(id => boardItem(id)?.hotelCityId))) return;
+  overnight.value = Object.fromEntries(Object.entries(overnight.value).filter(([id]) => id !== dayId));
+  board.value = { ...board.value, placements: { ...board.value.placements, [dayId]: { ...groups, events: [...(groups.events ?? []), noStayId] } } };
 }
 
 function startDayDrag(event: DragEvent, dayId: string) {
@@ -554,11 +655,38 @@ function endDrag() {
   dropGroupKey.value = "";
 }
 
-function apply() {
-  if (props.readonly || !isChanged.value || blockingIssues.value.length) return;
-  // 排布嵌套在响应式状态中，按纯数据复制后交给页面，避免页面写回时与看板状态共享引用。
-  emit("apply", JSON.parse(JSON.stringify(change.value)) as DayOrderChange);
-  emit("update:modelValue", false);
+async function apply() {
+  if (busy.value || props.readonly || props.recovery) return;
+  if (!props.transfer) {
+    if (!isChanged.value || blockingIssues.value.length) return;
+    // 排布嵌套在响应式状态中，按纯数据复制后交给页面，避免页面写回时与看板状态共享引用。
+    emit("apply", JSON.parse(JSON.stringify(change.value)) as DayOrderChange);
+    emit("update:modelValue", false);
+    return;
+  }
+  if (warningsAccepted.value) {
+    emit("apply", change.value);
+    emit("update:modelValue", false);
+    return;
+  }
+  const current = session;
+  const submitted = change.value;
+  busy.value = true;
+  try {
+    const local = boardTransferIssues(board.value, orderedDays.value, boardItem);
+    const external = props.validate ? await props.validate(submitted) : [];
+    // 校验期间看板被改动或弹窗已重开时，结果不再适用。
+    if (current !== session || !props.modelValue || change.value !== submitted) return;
+    issues.value = [...local, ...external];
+    if (issues.value.length) {
+      warningsAccepted.value = !blockingIssues.value.length;
+      await nextTick();
+      issueAnchor.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    emit("apply", submitted);
+    emit("update:modelValue", false);
+  } finally { if (current === session) busy.value = false; }
 }
 </script>
 

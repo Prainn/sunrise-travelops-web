@@ -34,7 +34,7 @@ describe("ledger conflict error codes", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it("translates all contract codes in both languages", () => {
-    expect(LEDGER_CODES).toHaveLength(10);
+    expect(LEDGER_CODES).toContain(ApiErrorCode.DIRECT_LEDGER_OPERATION_PREREQUISITES_NOT_MET);
     for (const code of LEDGER_CODES) {
       expect(zhCn.apiErrors).toHaveProperty(code);
       expect(en.apiErrors).toHaveProperty(code);

@@ -1,7 +1,6 @@
 import type { Directive, DirectiveBinding } from "vue";
 
 import { useUserStore } from "@/stores/user";
-import { ROLE_ROOT } from "@/constants";
 
 const HIDDEN_DISPLAY = "__permDisplay";
 type PermElement = HTMLElement & { [HIDDEN_DISPLAY]?: string };
@@ -14,10 +13,8 @@ function isAllowed(requiredPerms: unknown): boolean {
     );
   }
 
-  const { roles, perms } = useUserStore().userInfo;
-
-  // 超级管理员拥有所有权限，如果是"*:*:*"权限标识，则不需要进行权限校验
-  if (roles.includes(ROLE_ROOT) || requiredPerms.includes("*:*:*")) return true;
+  // 按钮只依据服务端下发的有效权限，ROOT 不再特殊放行。
+  const { perms } = useUserStore().userInfo;
 
   return Array.isArray(requiredPerms)
     ? requiredPerms.some((perm) => perms.includes(perm))

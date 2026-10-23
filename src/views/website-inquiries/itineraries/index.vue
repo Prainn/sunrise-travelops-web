@@ -23,7 +23,7 @@
         @add="addDay"
         @reorder="isReorderDialogVisible = true"
       >
-        <template #header>
+        <template #header="{ collapsed }">
           <SectionCard class="website-itinerary-page__overview">
             <el-page-header @back="router.push('/website-inquiries')">
               <template #content>
@@ -51,70 +51,74 @@
                 </el-button>
               </template>
             </el-page-header>
-            <div
-              v-if="plan"
-              class="flex flex-wrap items-center justify-between gap-3 mt-3 py-3 [border-top:1px_solid_var(--divider-color)] [border-bottom:1px_solid_var(--divider-color)]"
-            >
-              <div class="min-w-0 flex flex-wrap items-center gap-2">
-                <h2 class="m-0 text-[18px] text-strong break-words">
-                  {{ plan.title }}
-                </h2>
-                <span v-if="plan.startDate" class="text-sm text-muted">
-                  {{ plan.startDate }}
-                </span>
-                <el-tag v-if="plan.pax !== null" size="small" effect="plain">
-                  {{ plan.pax }} PAX
-                </el-tag>
-              </div>
-              <div class="flex flex-wrap items-center gap-[10px]">
-                <el-tag :type="plan.status === 'draft' ? 'info' : 'success'">
-                  {{ $t(plan.status === "draft" ? "websiteWorkspace.draft" : "websiteWorkspace.quotedLocked") }}
-                </el-tag>
-                <el-button v-if="editable" class="ml-0!" @click="isBasicsDialogVisible = true">
-                  {{ $t("itinerary.editItinerary") }}
-                </el-button>
-                <span v-if="currentConfig && plan.configVersion !== currentConfig.version">
-                  {{
-                    $t("websiteWorkspace.configVersions", {
-                      used: plan.configVersion,
-                      current: currentConfig?.version,
-                    })
-                  }}
-                </span>
-                <el-button
-                  v-if="editable && plan.configVersion !== currentConfig?.version"
-                  class="ml-0!"
-                  @click="useCurrentConfig"
+            <el-collapse-transition>
+              <div v-show="!collapsed" class="flow-root">
+                <div
+                  v-if="plan"
+                  class="flex flex-wrap items-center justify-between gap-3 mt-3 py-3 [border-top:1px_solid_var(--divider-color)] [border-bottom:1px_solid_var(--divider-color)]"
                 >
-                  {{ $t("websiteWorkspace.useCurrentConfig") }}
-                </el-button>
-                <el-button v-if="canCreate && plan.status === 'quoted'" class="ml-0!" @click="copy">
-                  {{ $t("websiteWorkspace.copyToEdit") }}
-                </el-button>
-                <el-tag v-if="dirty" type="warning">
-                  {{ $t("websiteWorkspace.unsavedChanges") }}
-                </el-tag>
+                  <div class="min-w-0 flex flex-wrap items-center gap-2">
+                    <h2 class="m-0 text-[18px] text-strong break-words">
+                      {{ plan.title }}
+                    </h2>
+                    <span v-if="plan.startDate" class="text-sm text-muted">
+                      {{ plan.startDate }}
+                    </span>
+                    <el-tag v-if="plan.pax !== null" size="small" effect="plain">
+                      {{ plan.pax }} PAX
+                    </el-tag>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-[10px]">
+                    <el-tag :type="plan.status === 'draft' ? 'info' : 'success'">
+                      {{ $t(plan.status === "draft" ? "websiteWorkspace.draft" : "websiteWorkspace.quotedLocked") }}
+                    </el-tag>
+                    <el-button v-if="editable" class="ml-0!" @click="isBasicsDialogVisible = true">
+                      {{ $t("itinerary.editItinerary") }}
+                    </el-button>
+                    <span v-if="currentConfig && plan.configVersion !== currentConfig.version">
+                      {{
+                        $t("websiteWorkspace.configVersions", {
+                          used: plan.configVersion,
+                          current: currentConfig?.version,
+                        })
+                      }}
+                    </span>
+                    <el-button
+                      v-if="editable && plan.configVersion !== currentConfig?.version"
+                      class="ml-0!"
+                      @click="useCurrentConfig"
+                    >
+                      {{ $t("websiteWorkspace.useCurrentConfig") }}
+                    </el-button>
+                    <el-button v-if="canCreate && plan.status === 'quoted'" class="ml-0!" @click="copy">
+                      {{ $t("websiteWorkspace.copyToEdit") }}
+                    </el-button>
+                    <el-tag v-if="dirty" type="warning">
+                      {{ $t("websiteWorkspace.unsavedChanges") }}
+                    </el-tag>
+                  </div>
+                </div>
+                <div class="grid grid-cols-4 gap-x-[18px] gap-y-2 mt-3 text-sm max-[1100px]:grid-cols-2 max-[650px]:grid-cols-1">
+                  <span class="flex flex-wrap items-center gap-[6px]">
+                    <small class="text-muted">{{ $t("inquiry.code") }}</small>
+                    {{ inquiry.code }}
+                    <el-tag size="small" effect="plain">{{ $t(`inquiry.statuses.${inquiry.status}`) }}</el-tag>
+                  </span>
+                  <span class="flex gap-[6px]">
+                    <small class="shrink-0 text-muted">{{ $t("websiteInquiry.customerName") }}</small>
+                    {{ inquiry.customerName }}
+                  </span>
+                  <span class="flex gap-[6px]">
+                    <small class="shrink-0 text-muted">{{ $t("inquiry.owner") }}</small>
+                    {{ inquiry.owner }}
+                  </span>
+                  <span class="flex gap-[6px]">
+                    <small class="shrink-0 text-muted">{{ $t("inquiry.plannedDays") }}</small>
+                    {{ $t("websiteInquiry.dayCount", { days: inquiry.plannedDays }) }}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div class="grid grid-cols-4 gap-x-[18px] gap-y-2 mt-3 text-sm max-[1100px]:grid-cols-2 max-[650px]:grid-cols-1">
-              <span class="flex flex-wrap items-center gap-[6px]">
-                <small class="text-muted">{{ $t("inquiry.code") }}</small>
-                {{ inquiry.code }}
-                <el-tag size="small" effect="plain">{{ $t(`inquiry.statuses.${inquiry.status}`) }}</el-tag>
-              </span>
-              <span class="flex gap-[6px]">
-                <small class="shrink-0 text-muted">{{ $t("websiteInquiry.customerName") }}</small>
-                {{ inquiry.customerName }}
-              </span>
-              <span class="flex gap-[6px]">
-                <small class="shrink-0 text-muted">{{ $t("inquiry.owner") }}</small>
-                {{ inquiry.owner }}
-              </span>
-              <span class="flex gap-[6px]">
-                <small class="shrink-0 text-muted">{{ $t("inquiry.plannedDays") }}</small>
-                {{ $t("websiteInquiry.dayCount", { days: inquiry.plannedDays }) }}
-              </span>
-            </div>
+            </el-collapse-transition>
           </SectionCard>
         </template>
 
@@ -193,6 +197,7 @@
             v-if="plan && config && plan.days[index]"
             :ref="(card) => setDayCard(plan!.days[index]!.id, card)"
             :day="plan.days[index]"
+            :sequence="boardDay(plan.days[index]).groups[0]?.items.filter(item => !item.placeholder)"
             :config="config"
             :editable="editable && !saving"
             :start-date="plan.startDate"
@@ -202,6 +207,7 @@
             @remove="removeDay(index)"
             @move="moveDay(index, $event)"
             @open-resource="(kind, target) => openResource(index, kind, target)"
+            @insert-resource="(kind, afterId) => openInsertResource(index, kind, afterId)"
           />
         </template>
 
@@ -265,7 +271,7 @@
           :days="plan.days"
           :config="config"
           @update:model-value="closeResource"
-          @submit="(item) => resourceDay?.items.push(item)"
+          @submit="submitAttraction"
         />
         <WebsiteTransportDialog
           :model-value="resourceDialog?.kind === 'transport'"
@@ -273,7 +279,7 @@
           :day="resourceDay"
           :config="config"
           @update:model-value="closeResource"
-          @submit="(leg) => resourceDay?.legs.push(leg)"
+          @submit="submitTransport"
         />
         <WebsiteHotelDialog
           :model-value="resourceDialog?.kind === 'hotel'"
@@ -313,6 +319,9 @@
           :readonly="!editable || saving"
           transfer
           :validate="validateReorder"
+          :draft="plan.reorderDraft"
+          :create-day="createBoardDay"
+          :stash="stashReorder"
           @apply="applyReorder"
         />
       </template>
@@ -331,7 +340,7 @@
 </template>
 <script setup lang="ts">
 import { computed, markRaw, ref, useTemplateRef, watch } from "vue";
-import { Bowl, Location, OfficeBuilding, Service, Van } from "@element-plus/icons-vue";
+import { Bowl, Location, OfficeBuilding, Service, User, Van } from "@element-plus/icons-vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { usePageTitle } from "@/composables/usePageTitle";
@@ -339,15 +348,16 @@ import { ElMessage } from "element-plus";
 import PageShell from "@/components/PageShell/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import FeedbackState from "@/components/FeedbackState/index.vue";
-import type { WebsiteDay, WebsiteHotelStay, WebsiteMeal } from "@/types/website";
+import type { WebsiteDay, WebsiteHotelStay, WebsiteItem, WebsiteLeg, WebsiteMeal } from "@/types/website";
 import InquiryMessagePreview from "@/views/inquiries/itineraries/components/InquiryMessagePreview.vue";
 import ItineraryWorkspaceLayout from "@/views/inquiries/itineraries/components/ItineraryWorkspaceLayout.vue";
 import ItineraryWorkspaceFooter from "@/views/inquiries/itineraries/components/ItineraryWorkspaceFooter.vue";
 import ItineraryReorderDialog from "@/views/inquiries/itineraries/components/ItineraryReorderDialog.vue";
 import type { DayOrderChange, DayOrderIssue, ReorderBoardDay } from "@/views/inquiries/itineraries/reorder-board";
-import { isMealArranged, TRANSPORT_OPTIONS } from "../options";
-import { reorderWebsiteDays, WEBSITE_BOARD_GROUPS, websiteGuideBoardId, websiteTransferIssues } from "./day-order";
-import { useResourceCityLookup } from "./resource-cities";
+import { emptyDay, isMealArranged, TRANSPORT_OPTIONS } from "../options";
+import { reorderWebsiteDays, WEBSITE_BOARD_GROUPS, websiteGuideBoardId } from "./day-order";
+import { insertWebsiteEvent } from "./event-order";
+import { websiteService, websiteErrorMessage } from "@/services/website.service";
 import { useWebsiteWorkspace } from "./useWebsiteWorkspace";
 import WebsiteDayCard, { type WebsiteResourceDialogKind } from "./components/WebsiteDayCard.vue";
 import WebsiteItineraryBasics from "./components/WebsiteItineraryBasics.vue";
@@ -369,6 +379,7 @@ const BOARD_ICONS = {
   hotels: markRaw(OfficeBuilding),
   meals: markRaw(Bowl),
   services: markRaw(Service),
+  guide: markRaw(User),
 };
 const router = useRouter();
 const { t, locale } = useI18n();
@@ -382,6 +393,7 @@ const resourceDialog = ref<{
   kind: WebsiteResourceDialogKind;
   dayId: string;
   target?: number | WebsiteMeal["slot"];
+  afterId?: string;
 }>();
 const {
   inquiry,
@@ -435,8 +447,8 @@ const resourceMealSlot = computed<WebsiteMeal["slot"]>(() => {
   const target = resourceDialog.value?.target;
   return typeof target === "string" ? target : "lunch";
 });
-const allReorderBoardDays = computed<ReorderBoardDay[]>(() =>
-  [...(plan.value?.days ?? []), ...(plan.value?.deletedDays ?? []).map((entry) => entry.day)].map((day) => ({
+function boardDay(day: WebsiteDay): ReorderBoardDay {
+  const result: ReorderBoardDay = {
     id: day.id,
     title: dayRoute(day) || t("itineraryWorkspace.notArranged"),
     dayNumber: day.dayNumber,
@@ -478,7 +490,8 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() =>
             id: hotel.id,
             label: `${hotel.tier} · ${localName(hotel) || "-"}`,
             detail: cityName(hotel.cityId),
-            slot: hotel.tier,
+            slot: `hotel-${hotel.tier}`,
+            hotelCityId: hotel.cityId,
           })),
         ],
       },
@@ -491,7 +504,7 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() =>
           id: meal.id,
           label: `${t(`itinerary.meals.${meal.slot}`)} · ${t(`websiteInquiry.feeStates.${meal.feeState}`)}`,
           detail: (locale.value === "en" ? meal.restaurantEn : meal.restaurantZh) || meal.restaurantZh || undefined,
-          slot: meal.slot,
+          slot: `meal-${meal.slot}`,
           placeholder: !isMealArranged(meal),
         })),
       },
@@ -505,16 +518,23 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() =>
             ? [{
               id: websiteGuideBoardId(day.id),
               label: `${t("itineraryWorkspace.actions.guide")} · ${day.guideLanguage}`,
-              detail: day.guideScope,
               slot: "guide",
+              icon: BOARD_ICONS.guide,
             }]
             : []),
           ...day.services.map((service) => ({ id: service.id, label: localName(service) || "-" })),
         ],
       },
     ],
-  })),
-);
+  };
+  const items = result.groups.flatMap(group => group.items.map(item => ({ ...item, icon: item.icon ?? group.icon })));
+  const byId = new Map(items.map(item => [item.id, item]));
+  const ordered = (day.eventOrder ?? []).flatMap(id => { const item = byId.get(id); byId.delete(id); return item ? [item] : []; });
+  result.groups = [{ key: "events", label: t("itineraryWorkspace.eventOrder"), sortable: true, transferable: true, items: [...ordered, ...byId.values()] }];
+  return result;
+}
+const allReorderBoardDays = computed(() => [...(plan.value?.days ?? []), ...(plan.value?.deletedDays ?? []).map(entry => entry.day)].map(boardDay));
+function createBoardDay(id: string) { return boardDay({ ...emptyDay(1), id }); }
 
 watch(plan, () => {
   isBasicsDialogVisible.value = false;
@@ -561,6 +581,26 @@ function openResource(index: number, kind: WebsiteResourceDialogKind, target?: n
 function closeResource(visible: boolean) {
   if (!visible) resourceDialog.value = undefined;
 }
+function openInsertResource(index: number, kind: "attraction" | "transport" | "meal", afterId: string) {
+  openResource(index, kind);
+  if (!resourceDialog.value) return;
+  resourceDialog.value.afterId = afterId;
+  if (kind === "meal") {
+    resourceDialog.value.target = resourceDay.value?.meals.find(meal => !isMealArranged(meal))?.slot ?? "lunch";
+  }
+}
+function submitAttraction(item: WebsiteItem) {
+  const day = resourceDay.value;
+  if (!day) return;
+  day.items.push(item);
+  if (resourceDialog.value?.afterId) insertWebsiteEvent(day, item.id, resourceDialog.value.afterId);
+}
+function submitTransport(leg: WebsiteLeg) {
+  const day = resourceDay.value;
+  if (!day) return;
+  day.legs.push(leg);
+  if (resourceDialog.value?.afterId) insertWebsiteEvent(day, leg.id, resourceDialog.value.afterId);
+}
 function submitHotel(hotel: WebsiteHotelStay) {
   const day = resourceDay.value;
   if (!day) return;
@@ -569,26 +609,39 @@ function submitHotel(hotel: WebsiteHotelStay) {
   else day.hotels.push(hotel);
 }
 function submitMeal(changes: Pick<WebsiteMeal, "slot" | "resourceId" | "restaurantZh" | "restaurantEn" | "feeState">) {
-  const meal = resourceDay.value?.meals.find((item) => item.slot === changes.slot);
-  if (meal) Object.assign(meal, changes);
+  const day = resourceDay.value;
+  const meal = day?.meals.find((item) => item.slot === changes.slot);
+  if (!day || !meal) return;
+  Object.assign(meal, changes);
+  if (resourceDialog.value?.afterId) insertWebsiteEvent(day, meal.id, resourceDialog.value.afterId);
 }
 const reorderBoardDays = computed(() => allReorderBoardDays.value.slice(0, plan.value?.days.length ?? 0));
 const deletedBoardDays = computed(() => allReorderBoardDays.value.slice(plan.value?.days.length ?? 0));
 
-const resourceCities = useResourceCityLookup();
-// 城市对应关系取自当前行程绑定的配置版本，切换行程或配置后重新读取。
-watch(() => [plan.value?.id, config.value?.version], () => resourceCities.reset());
-function validateReorder(change: DayOrderChange): DayOrderIssue[] {
-  if (!plan.value || !config.value) return [];
-  return [
-    ...reorderWebsiteDays(plan.value.days, change, plan.value.deletedDays).issues,
-    ...websiteTransferIssues(plan.value.days, change, plan.value.deletedDays ?? [], { config: config.value, ...resourceCities }),
-  ];
+async function validateReorder(change: DayOrderChange): Promise<DayOrderIssue[]> {
+  if (!plan.value) return [];
+  const result = reorderWebsiteDays(plan.value.days, change, plan.value.deletedDays);
+  try {
+    const preview = await websiteService.validateItinerary({ ...plan.value, days: result.days, deletedDays: result.deletedDays, duration: result.days.length, reorderDraft: null });
+    return preview.issues.map(issue => ({ dayId: result.days.find(day => day.dayNumber === issue.dayNumber)?.id ?? "", key: "itineraryWorkspace.serverIssue", params: { message: issue.message, code: issue.code ? `${issue.code} · ` : "", day: issue.dayNumber ? `D${issue.dayNumber} · ` : "" }, blocking: issue.severity === "ERROR" }));
+  } catch (cause) {
+    return [{ dayId: "", key: "itineraryWorkspace.serverIssue", params: { message: websiteErrorMessage(cause), code: "", day: "" }, blocking: true }];
+  }
+}
+async function stashReorder(change: DayOrderChange) {
+  if (!plan.value || !editable.value) return false;
+  const previous = plan.value.reorderDraft;
+  // 看板状态继续变化，暂存按纯数据复制；保存失败则撤回，避免残留未保存的暂存。
+  plan.value.reorderDraft = change.draft ? JSON.parse(JSON.stringify(change.draft)) : null;
+  const saved = await save();
+  if (!saved && plan.value) plan.value.reorderDraft = previous;
+  return saved;
 }
 
 function applyReorder(change: DayOrderChange) {
   if (!plan.value || !editable.value) return;
   const result = reorderWebsiteDays(plan.value.days, change, plan.value.deletedDays);
+  plan.value.reorderDraft = null;
   plan.value.days = result.days;
   plan.value.deletedDays = result.deletedDays;
   plan.value.duration = result.days.length;
