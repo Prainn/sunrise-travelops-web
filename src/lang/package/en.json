@@ -1,4 +1,20 @@
 {
+  "ledgerSummary": {
+    "sequence": "No.",
+    "quotedCount": "Total quotes",
+    "convertedCount": "Total bookings",
+    "platformAccount": "Platform account",
+    "firstFollowUp": "First follow-up",
+    "bookedTourNumbers": "Booked tour codes",
+    "tourNumbers": "Tour codes",
+    "editNotes": "Edit notes",
+    "agencySearch": "Search agency names",
+    "coordinatorSearch": "Search reception coordinators",
+    "platformSearch": "Search platform accounts",
+    "followUpPlaceholder": "Enter first follow-up details",
+    "tourNumbersPlaceholder": "Enter tour codes, one per line",
+    "maxLength": "Up to {max} characters"
+  },
   "websiteVisits": {
     "dateRange": "Export date range (Beijing time)",
     "searchPlaceholder": "WhatsApp reference / Website inquiry number",
@@ -40,6 +56,12 @@
     "empty": "No matching options"
   },
   "route": {
+    "shengxuAgencySummary": "Shengxu agency summary",
+    "shengxuCoordinatorSummary": "Shengxu reception quote summary",
+    "linxiQuoteSummary": "Linxi quote summary",
+    "linxiPlatformSummary": "Linxi platform quote summary",
+    "websiteQuoteSummary": "Website quote summary",
+    "websitePlatformSummary": "Website platform quote summary",
     "dashboard": "Home",
     "profile": "Profile",
     "systemManagement": "System",

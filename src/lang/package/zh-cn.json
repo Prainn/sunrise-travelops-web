@@ -1,4 +1,20 @@
 {
+  "ledgerSummary": {
+    "sequence": "序号",
+    "quotedCount": "报价合计",
+    "convertedCount": "成团合计",
+    "platformAccount": "平台账号",
+    "firstFollowUp": "第一次跟进",
+    "bookedTourNumbers": "定团团号",
+    "tourNumbers": "成团团号",
+    "editNotes": "编辑补充资料",
+    "agencySearch": "搜索组团社名称",
+    "coordinatorSearch": "搜索收客计调姓名",
+    "platformSearch": "搜索平台账号名称",
+    "followUpPlaceholder": "填写第一次跟进情况",
+    "tourNumbersPlaceholder": "填写团号，多个团号可换行",
+    "maxLength": "最多 {max} 字"
+  },
   "websiteVisits": {
     "dateRange": "日期范围（北京时间）",
     "searchPlaceholder": "WhatsApp来源编号 / 网站询盘编号",
@@ -40,6 +56,12 @@
     "empty": "无匹配选项"
   },
   "route": {
+    "shengxuAgencySummary": "盛旭组团社汇总",
+    "shengxuCoordinatorSummary": "盛旭收客计调报价汇总",
+    "linxiQuoteSummary": "霖熹报价汇总",
+    "linxiPlatformSummary": "霖熹平台报价汇总",
+    "websiteQuoteSummary": "独立站报价汇总",
+    "websitePlatformSummary": "独立站平台报价汇总",
     "dashboard": "首页",
     "profile": "个人中心",
     "systemManagement": "系统管理",
