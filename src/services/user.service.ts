@@ -150,7 +150,7 @@ export const userService = {
       userId: currentUser.id,
       username: currentUser.username,
       nickname: currentUser.nickname,
-      avatar: "/favicon.ico",
+      avatar: "/logo-emblem.png",
       roles: currentUser.roles,
       perms: [...currentUser.permissions],
       menuKeys: [...currentUser.menuKeys],

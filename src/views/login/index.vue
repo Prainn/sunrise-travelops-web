@@ -192,7 +192,9 @@
 <script setup lang="ts">
 import { Lock, OfficeBuilding, Right, TopRight, User } from "@element-plus/icons-vue";
 import type { FormInstance } from "element-plus";
-import type { LoginRequest } from "@/types/auth";
+import type { LoginRequest, LoginScope } from "@/types/auth";
+import { STORAGE_KEYS } from "@/constants";
+import { Storage } from "@/utils/storage";
 import router from "@/router";
 import { useUserStore } from "@/stores/user";
 import { AuthStorage } from "@/utils/auth-storage";
@@ -209,12 +211,19 @@ const loading = ref(false);
 const isCapsLock = ref(false);
 const UserIcon = markRaw(User);
 const LockIcon = markRaw(Lock);
+const savedScope = Storage.get<unknown>(STORAGE_KEYS.LOGIN_SCOPE);
+const initialScope: LoginScope = savedScope === "shengxu" || savedScope === "linxi" || savedScope === "website"
+  ? savedScope
+  : "headquarters";
 const loginFormData = ref<LoginRequest>({
-  scope: "headquarters",
+  scope: initialScope,
   username: "",
   password: "",
   rememberMe: AuthStorage.getRememberMe(),
 });
+watch(() => loginFormData.value.scope, scope => {
+  Storage.set(STORAGE_KEYS.LOGIN_SCOPE, scope);
+}, { flush: "sync" });
 
 const brands = computed(() => [
   {
