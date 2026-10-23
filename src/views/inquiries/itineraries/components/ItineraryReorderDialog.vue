@@ -118,6 +118,9 @@
             @dragover="allowItemDrop($event, day.id, item.id, group)"
             @drop="dropItem($event, day.id, group, itemIndex)"
           >
+            <el-icon v-if="item.icon" class="shrink-0 self-start mt-[3px] text-muted" aria-hidden="true">
+              <component :is="item.icon" />
+            </el-icon>
             <span class="min-w-0 flex-1 [overflow-wrap:anywhere]">
               <el-tag
                 v-if="isPendingCopy(item.id)"

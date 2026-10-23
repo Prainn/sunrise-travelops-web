@@ -38,7 +38,14 @@
       <el-table-column prop="username" :label="$t('common.username')" min-width="140" />
       <el-table-column :label="$t('common.roles')" min-width="140">
         <template #default="{ row }">
-          {{ userRoleLabels(row.roleNames, roleOptions).join("、") }}
+          <el-tag
+            v-for="role in userRoleLabels(row.roleNames, roleOptions)"
+            :key="role"
+            size="small"
+            class="mr-2"
+          >
+            {{ role }}
+          </el-tag>
         </template>
       </el-table-column>
       <el-table-column :label="$t('common.status')" width="90" align="center">

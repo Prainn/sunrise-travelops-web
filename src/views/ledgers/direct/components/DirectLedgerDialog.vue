@@ -5,7 +5,6 @@
     size="lg"
     :busy="saving"
     destroy-on-close
-    @open="resetForm"
   >
     <el-alert
       v-if="ledger?.reviewedAt || ledger?.operatedAt"
@@ -16,6 +15,7 @@
       class="mb-3!"
     />
     <el-form
+      :key="formSession"
       ref="formRef"
       :model="form"
       :rules="rules"
@@ -223,7 +223,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
@@ -265,6 +265,7 @@ const visible = defineModel<boolean>({ required: true });
 const { t } = useI18n();
 const user = useUserStore();
 const formRef = ref<FormInstance>();
+const formSession = ref(0);
 const form = reactive(emptyDirectLedgerForm());
 const receivingGroupNames = reactive(new Map<string, string>());
 const saving = ref(false);
@@ -317,7 +318,6 @@ function resetForm() {
     form,
     props.ledger ? directLedgerFormFromItem(props.ledger) : emptyDirectLedgerForm(),
   );
-  formRef.value?.clearValidate();
 }
 
 type OptionLoader = typeof directLedgerService.operators;
@@ -373,4 +373,10 @@ async function handleSubmit() {
     saving.value = false;
   }
 }
+// 在控件挂载前回填；重建表单以隔离旧校验状态及关闭动画期间残留的控件。
+watch(visible, (opened) => {
+  if (!opened) return;
+  resetForm();
+  formSession.value++;
+}, { immediate: true });
 </script>

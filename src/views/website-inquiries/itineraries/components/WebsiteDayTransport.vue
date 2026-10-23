@@ -1,6 +1,6 @@
 <template>
-  <section class="surface-muted p-4 flex flex-col gap-3">
-    <div class="flex flex-wrap justify-between items-center gap-3">
+  <section class="flex flex-col gap-3" :class="{ 'surface-muted p-4': !legId }">
+    <div v-if="!legId" class="flex flex-wrap justify-between items-center gap-3">
       <h4 class="m-0 text-[14px] text-strong font-600">
         {{ $t("websiteItineraryUi.transportLegs") }}
       </h4>
@@ -14,7 +14,7 @@
       </el-button>
     </div>
     <div
-      v-for="(leg, index) in day.legs"
+      v-for="{ leg, index } in visibleLegs"
       :key="leg.id"
       class="p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)]"
     >
@@ -71,12 +71,16 @@
   </section>
 </template>
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { WebsiteConfig, WebsiteDay } from "@/types/website";
 import { TRANSPORT_OPTIONS } from "../../options";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
 const day = defineModel<WebsiteDay>("day", { required: true });
-defineProps<{ config: WebsiteConfig; editable: boolean }>();
+const props = defineProps<{ config: WebsiteConfig; editable: boolean; legId?: string }>();
 const emit = defineEmits<{ add: [] }>();
 const { locale } = useI18n();
+const visibleLegs = computed(() => day.value.legs
+  .map((leg, index) => ({ leg, index }))
+  .filter(({ leg }) => !props.legId || leg.id === props.legId));
 </script>

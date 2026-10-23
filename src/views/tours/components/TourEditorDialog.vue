@@ -5,9 +5,9 @@
     size="lg"
     :busy="saving"
     destroy-on-close
-    @open="onOpen"
   >
     <el-form
+      :key="formSession"
       ref="formRef"
       :model="form"
       :rules="rules"
@@ -454,6 +454,7 @@ const visible = computed({
   set: (value) => emit("update:modelValue", value),
 });
 const formRef = ref<FormInstance>();
+const formSession = ref(0);
 const validating = ref(false);
 const requesting = ref(false);
 const saving = computed(() => validating.value || requesting.value);
@@ -832,4 +833,10 @@ async function save() {
     requesting.value = false;
   }
 }
+// 在控件挂载前回填；重建表单以隔离旧校验状态及关闭动画期间残留的控件。
+watch(visible, (opened) => {
+  if (!opened) return;
+  onOpen();
+  formSession.value++;
+}, { immediate: true });
 </script>

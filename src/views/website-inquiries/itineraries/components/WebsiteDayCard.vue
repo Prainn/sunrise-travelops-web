@@ -88,20 +88,42 @@
           </el-checkbox>
         </el-form-item>
       </ItineraryDayPanel>
-      <WebsiteDayAttractions
-        v-if="day.items.length"
-        v-model:day="day"
-        :config="config"
-        :editable="editable"
-        @add="emit('open-resource', 'attraction')"
-      />
-      <WebsiteDayTransport
-        v-if="day.legs.length"
-        v-model:day="day"
-        :config="config"
-        :editable="editable"
-        @add="emit('open-resource', 'transport')"
-      />
+      <section v-if="events.length" class="surface-muted p-4 flex flex-col gap-3">
+        <h4 class="m-0 text-[14px] text-strong font-600">
+          {{ $t("itineraryWorkspace.eventOrder") }}
+        </h4>
+        <template v-for="event in events" :key="event.id">
+          <WebsiteDayAttractions
+            v-if="event.kind === 'attraction'"
+            v-model:day="day"
+            :item-id="event.id"
+            :config="config"
+            :editable="editable"
+          />
+          <WebsiteDayTransport
+            v-else-if="event.kind === 'transport'"
+            v-model:day="day"
+            :leg-id="event.id"
+            :config="config"
+            :editable="editable"
+          />
+          <WebsiteDayMealsServices
+            v-else
+            v-model:day="day"
+            :meal-id="event.id"
+            :editable="editable"
+            @edit-meal="(slot) => emit('open-resource', 'meal', slot)"
+          />
+          <div v-if="editable" class="flex items-center gap-3 py-1">
+            <span class="h-px flex-1 bg-[var(--divider-color)]" />
+            <ItineraryDayResourceBar
+              :actions="insertActions"
+              @select="(key) => insertResource(key, event.id)"
+            />
+            <span class="h-px flex-1 bg-[var(--divider-color)]" />
+          </div>
+        </template>
+      </section>
       <WebsiteDayHotels
         v-if="day.hotels.length"
         v-model:day="day"
@@ -110,10 +132,10 @@
         @edit="(hotelIndex) => emit('open-resource', 'hotel', hotelIndex)"
       />
       <WebsiteDayMealsServices
-        v-if="day.services.length || day.meals.some(isMealArranged)"
+        v-if="day.services.length"
         v-model:day="day"
         :editable="editable"
-        @edit-meal="(slot) => emit('open-resource', 'meal', slot)"
+        services-only
         @add-service="addService"
       />
     </el-form>
@@ -136,6 +158,7 @@ import WebsiteDayTransport from "./WebsiteDayTransport.vue";
 import WebsiteDayHotels from "./WebsiteDayHotels.vue";
 import WebsiteDayMealsServices from "./WebsiteDayMealsServices.vue";
 import { isMealArranged } from "../../options";
+import { websiteDayEventIds } from "../event-order";
 
 export type WebsiteResourceDialogKind = "attraction" | "transport" | "hotel" | "meal" | "guide";
 
@@ -153,6 +176,7 @@ const emit = defineEmits<{
   remove: [];
   /** hotel 传酒店下标（-1 新增），meal 传餐次 */
   "open-resource": [kind: WebsiteResourceDialogKind, target?: number | WebsiteMeal["slot"]];
+  "insert-resource": [kind: "attraction" | "transport" | "meal", afterId: string];
 }>();
 const { t, locale } = useI18n();
 const frame = useTemplateRef<InstanceType<typeof ItineraryDayCardFrame>>("frame");
@@ -161,6 +185,17 @@ const destinationName = computed(() => cityName(day.value.endCityId));
 const date = computed(() =>
   props.startDate ? addDays(props.startDate, day.value.dayNumber - 1) : "",
 );
+const events = computed(() => {
+  const kinds = new Map<string, "attraction" | "transport" | "meal">([
+    ...day.value.items.map(item => [item.id, "attraction"] as const),
+    ...day.value.legs.map(leg => [leg.id, "transport"] as const),
+    ...day.value.meals.filter(isMealArranged).map(meal => [meal.id, "meal"] as const),
+  ]);
+  return websiteDayEventIds(day.value).flatMap(id => {
+    const kind = kinds.get(id);
+    return kind ? [{ id, kind }] : [];
+  });
+});
 const resourceActions = computed<DayResourceAction[]>(() => [
   {
     key: "attraction",
@@ -202,6 +237,15 @@ const resourceActions = computed<DayResourceAction[]>(() => [
     active: day.value.services.length > 0,
   },
 ]);
+const insertActions = computed(() => resourceActions.value
+  .filter(action => action.key === "attraction" || action.key === "transport" || action.key === "meal")
+  .map(action => ({ ...action, active: false })));
+
+function insertResource(key: string, afterId: string) {
+  if (key === "attraction" || key === "transport" || key === "meal") {
+    emit("insert-resource", key, afterId);
+  }
+}
 
 function cityName(id: string) {
   const city = props.config.cities.find((item) => item.id === id);

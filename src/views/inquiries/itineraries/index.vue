@@ -22,7 +22,7 @@
         @expand="(id) => dayCards.get(id)?.expand()"
         @reorder="isReorderDialogVisible = true"
       >
-        <template #header>
+        <template #header="{ collapsed }">
           <SectionCard class="itinerary-page__header">
             <el-page-header @back="router.push({ name: 'InquiryList' })">
               <template #content>
@@ -51,57 +51,61 @@
                 </el-button>
               </template>
             </el-page-header>
-            <div
-              v-if="selectedItinerary"
-              class="itinerary-page__plan-bar flex flex-wrap items-center justify-between gap-3 mt-[12px] p-[12px_0] [border-top:1px_solid_var(--divider-color)] [border-bottom:1px_solid_var(--divider-color)]"
-            >
-              <div class="itinerary-page__plan-summary min-w-0 flex flex-wrap items-center gap-2">
-                <h2 class="m-0 text-[18px] text-strong break-words">
-                  {{ selectedItinerary.title }}
-                </h2>
-                <p class="m-0 flex flex-wrap items-center gap-[6px] text-[14px] text-muted">
-                  <span>{{ selectedItinerary.startDate }} — {{ selectedItinerary.endDate }}</span>
-                  <el-tag
-                    v-for="pax in selectedItinerary.paxTiers"
-                    :key="pax"
-                    size="small"
-                    effect="plain"
-                  >
-                    {{ pax }} PAX
-                  </el-tag>
-                </p>
+            <el-collapse-transition>
+              <div v-show="!collapsed" class="flow-root">
+                <div
+                  v-if="selectedItinerary"
+                  class="itinerary-page__plan-bar flex flex-wrap items-center justify-between gap-3 mt-[12px] p-[12px_0] [border-top:1px_solid_var(--divider-color)] [border-bottom:1px_solid_var(--divider-color)]"
+                >
+                  <div class="itinerary-page__plan-summary min-w-0 flex flex-wrap items-center gap-2">
+                    <h2 class="m-0 text-[18px] text-strong break-words">
+                      {{ selectedItinerary.title }}
+                    </h2>
+                    <p class="m-0 flex flex-wrap items-center gap-[6px] text-[14px] text-muted">
+                      <span>{{ selectedItinerary.startDate }} — {{ selectedItinerary.endDate }}</span>
+                      <el-tag
+                        v-for="pax in selectedItinerary.paxTiers"
+                        :key="pax"
+                        size="small"
+                        effect="plain"
+                      >
+                        {{ pax }} PAX
+                      </el-tag>
+                    </p>
+                  </div>
+                  <div class="itinerary-page__plan-controls flex flex-wrap items-center gap-[10px]">
+                    <el-tag :type="ITINERARY_STATUS_TAG_TYPES[selectedItinerary.status]">
+                      {{ $t(`itinerary.statuses.${selectedItinerary.status}`) }}
+                    </el-tag>
+                    <el-tag v-if="hasUnsavedChanges" type="warning">
+                      {{ $t("websiteWorkspace.unsavedChanges") }}
+                    </el-tag>
+                    <el-button v-if="canEditItineraryBasics" class="ml-0!" @click="openEditDialog">
+                      {{ $t("itinerary.editItinerary") }}
+                    </el-button>
+                    <el-button v-if="!isDraft && canCreateItinerary" class="ml-0!" @click="copyItinerary">
+                      {{ $t("itinerary.copyForRevision") }}
+                    </el-button>
+                  </div>
+                </div>
+                <div
+                  class="itinerary-page__inquiry-summary grid [grid-template-columns:repeat(4,_minmax(0,_1fr))] items-center gap-x-[18px] gap-y-2 mt-[10px] text-[14px] max-[1100px]:[grid-template-columns:repeat(2,_minmax(0,_1fr))] max-[650px]:grid-cols-1"
+                >
+                  <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+                    $t("inquiry.code")
+                  }}</small>{{ inquiry.code }}</span>
+                  <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+                    $t("inquiry.agencyName")
+                  }}</small>{{ inquiry.agencyName }}</span>
+                  <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+                    $t("common.contact")
+                  }}</small>{{ inquiry.contactName }}</span>
+                  <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
+                    $t("inquiry.plannedDays")
+                  }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
+                </div>
               </div>
-              <div class="itinerary-page__plan-controls flex flex-wrap items-center gap-[10px]">
-                <el-tag :type="ITINERARY_STATUS_TAG_TYPES[selectedItinerary.status]">
-                  {{ $t(`itinerary.statuses.${selectedItinerary.status}`) }}
-                </el-tag>
-                <el-tag v-if="hasUnsavedChanges" type="warning">
-                  {{ $t("websiteWorkspace.unsavedChanges") }}
-                </el-tag>
-                <el-button v-if="canEditItineraryBasics" class="ml-0!" @click="openEditDialog">
-                  {{ $t("itinerary.editItinerary") }}
-                </el-button>
-                <el-button v-if="!isDraft && canCreateItinerary" class="ml-0!" @click="copyItinerary">
-                  {{ $t("itinerary.copyForRevision") }}
-                </el-button>
-              </div>
-            </div>
-            <div
-              class="itinerary-page__inquiry-summary grid [grid-template-columns:repeat(4,_minmax(0,_1fr))] items-center gap-x-[18px] gap-y-2 mt-[10px] text-[14px] max-[1100px]:[grid-template-columns:repeat(2,_minmax(0,_1fr))] max-[650px]:grid-cols-1"
-            >
-              <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-                $t("inquiry.code")
-              }}</small>{{ inquiry.code }}</span>
-              <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-                $t("inquiry.agencyName")
-              }}</small>{{ inquiry.agencyName }}</span>
-              <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-                $t("common.contact")
-              }}</small>{{ inquiry.contactName }}</span>
-              <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
-                $t("inquiry.plannedDays")
-              }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
-            </div>
+            </el-collapse-transition>
             <div
               v-if="selectedItinerary"
               class="itinerary-page__section-actions flex flex-wrap items-center gap-[10px] mt-[12px]"

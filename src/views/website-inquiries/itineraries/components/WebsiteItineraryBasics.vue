@@ -4,10 +4,10 @@
     :title="$t('itinerary.editItinerary')"
     size="md"
     destroy-on-close
-    @open="resetForm"
     @close="emit('update:modelValue', false)"
   >
     <el-form
+      :key="formSession"
       ref="formRef"
       :model="form"
       :rules="rules"
@@ -62,7 +62,7 @@
   </AppDialog>
 </template>
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import AppDialog from "@/components/AppDialog/index.vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -76,6 +76,7 @@ const emit = defineEmits<{
 }>();
 const { t } = useI18n();
 const formRef = ref<FormInstance>();
+const formSession = ref(0);
 const form = reactive<Basics>(pickBasics());
 const rules = computed<FormRules>(() => ({
   title: [{ required: true, whitespace: true, message: t("itinerary.titleRequired"), trigger: "blur" }],
@@ -88,11 +89,16 @@ function pickBasics(): Basics {
 }
 function resetForm() {
   Object.assign(form, pickBasics());
-  formRef.value?.clearValidate();
 }
 async function submitForm() {
   if (!(await formRef.value?.validate().catch(() => false))) return;
   emit("submit", { ...form });
   emit("update:modelValue", false);
 }
+// 在控件挂载前回填；重建表单以隔离旧校验状态及关闭动画期间残留的控件。
+watch(() => props.modelValue, (opened) => {
+  if (!opened) return;
+  resetForm();
+  formSession.value++;
+}, { immediate: true });
 </script>

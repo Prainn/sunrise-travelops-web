@@ -6,6 +6,8 @@ export interface ReorderBoardItem {
   id: string;
   label: string;
   detail?: string;
+  /** 资源类型图标，与日卡按钮一致；页面需 markRaw */
+  icon?: Component;
   /** 分组内唯一的安排位（如酒店档位、餐次、按天导游）；跨天放入已有同位安排时需确认替换 */
   slot?: string;
   /** 未安排的占位（如默认自理的餐次），不可拖动或复制，同位安排放入时直接让位 */

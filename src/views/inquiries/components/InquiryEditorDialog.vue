@@ -7,9 +7,9 @@
     :busy="saving || creatingContact"
     destroy-on-close
     @update:model-value="emit('update:modelValue', $event)"
-    @open="resetForm"
   >
     <el-form
+      :key="formSession"
       ref="formRef"
       :model="form"
       :disabled="creatingContact || saving"
@@ -182,7 +182,7 @@ import { useUserStore } from "@/stores/user";
 import { inquiryService } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
 import { plannedDuration } from "@/views/inquiries/itineraries/duration";
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { InquiryRecord } from "@/types/inquiry";
@@ -212,6 +212,7 @@ const scopedOwners = ref(props.ownerOptions);
 const loadingOwners = ref(false);
 let ownerRequestVersion = 0;
 const formRef = ref<FormInstance>();
+const formSession = ref(0);
 const expandedDetails = ref<string[]>([]);
 const creatingContact = ref(false);
 const isParsingDocument = ref(false);
@@ -254,7 +255,6 @@ function resetForm() {
   void refreshOwners();
   expandedDetails.value = props.isEditing ? ["followup"] : [];
   syncAgencyDetails();
-  formRef.value?.clearValidate();
 }
 
 async function refreshOwners() {
@@ -409,6 +409,12 @@ async function submitForm() {
   syncAgencyDetails();
   emit("submit", { ...form, lostReason: form.status === "lost" ? form.lostReason : "" });
 }
+// 在控件挂载前回填；重建表单以隔离旧校验状态及关闭动画期间残留的控件。
+watch(() => props.modelValue, (opened) => {
+  if (!opened) return;
+  resetForm();
+  formSession.value++;
+}, { immediate: true });
 </script>
 
 <style scoped lang="scss">
