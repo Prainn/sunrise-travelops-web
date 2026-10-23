@@ -107,7 +107,8 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       selectedItinerary.value &&
       !inquiryReadOnly.value &&
       canPerformItineraryOperation(selectedItinerary.value.status, "edit_content") &&
-      hasUserPermission(userStore.userInfo, "itinerary:update"),
+      hasUserPermission(userStore.userInfo, "itinerary:update") &&
+      hasUserPermission(userStore.userInfo, "itinerary:price"),
     ),
   );
   const priceFormVisible = computed(() =>
@@ -115,7 +116,8 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       selectedItinerary.value &&
       !inquiryReadOnly.value &&
       canPerformItineraryOperation(selectedItinerary.value.status, "edit_price") &&
-      hasUserPermission(userStore.userInfo, "itinerary:price"),
+      hasUserPermission(userStore.userInfo, "itinerary:price") &&
+      hasUserPermission(userStore.userInfo, "itinerary:update"),
     ),
   );
   const contentEditable = computed(() => contentFormVisible.value);

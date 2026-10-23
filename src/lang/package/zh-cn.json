@@ -1281,7 +1281,6 @@
       "cityMissing": "选择已有的独立站城市",
       "parentSameCity": "父景点须存在且属于同一城市",
       "parentCycle": "景点父子关系不能成环",
-      "routeDistinct": "起点与终点城市须不同",
       "maxAttractions": "单日行程模板最多含 200 个景点或组件",
       "patternAttractions": "单日行程模板须引用同城景点或组件",
       "skeletonDays": "城市骨架须有 1–365 天",
@@ -1427,6 +1426,7 @@
     "guideArranged": "当天安排导游",
     "guideLanguage": "导游语言",
     "guideLanguageRequired": "请选择或填写导游语言",
+    "guideLanguageTooLong": "导游语言不能超过 100 个字符",
     "guideLanguagePlaceholder": "例如 English",
     "transportLegs": "交通段",
     "hotelPlans": "酒店方案",
@@ -1865,9 +1865,7 @@
     "eventOrder": "当天行程顺序",
     "arrangeOvernight": "当天未安排住宿，是否安排住宿？",
     "applyDespiteWarnings": "确认并应用调整",
-    "serverIssue": "{code} · {day}{message}",
-    "collapseMenu": "收起菜单",
-    "expandMenu": "展开菜单"
+    "serverIssue": "{code}{day}{message}"
   },
   "businessGroup": {
     "label": "业务组",

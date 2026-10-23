@@ -9,6 +9,7 @@ import type {
   AgencyRecord,
   AttractionRecord,
   CityRecord,
+  CityOption,
   FlightRecord,
   GuidePersonRecord,
   GuideRecord,
@@ -259,8 +260,8 @@ const cityApi = createCrud<CityRecord>("cities", (data) => ({
   status: data.status,
 }));
 const cities = reactive<CityRecord[]>([]);
-const cityOptions = reactive<CityRecord[]>([]);
-let cityOptionsRequest: Promise<CityRecord[]> | null = null;
+const cityOptions = reactive<CityOption[]>([]);
+let cityOptionsRequest: Promise<CityOption[]> | null = null;
 const agencyApi = createCrud<AgencyRecord>("agencies", agencyInput, (data) => ({
   ...data,
   contacts: data.contacts ?? [],
@@ -341,10 +342,10 @@ export const resourceService = {
   async loadCities(query: ResourceListQuery = {}) {
     return loadResourceRecords(cities, cityApi, query);
   },
-  loadCityOptions(): Promise<CityRecord[]> {
+  loadCityOptions(): Promise<CityOption[]> {
     if (!cityOptionsRequest)
       cityOptionsRequest = request
-        .get<CityRecord[]>(`${RESOURCE_BASE_URL}/cities/options`)
+        .get<CityOption[]>(`${RESOURCE_BASE_URL}/cities/options`)
         .then((records) => replaceRecords(cityOptions, records))
         .finally(() => {
           cityOptionsRequest = null;

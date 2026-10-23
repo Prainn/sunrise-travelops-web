@@ -9,7 +9,7 @@
     <template #header>
       <div class="flex items-center gap-4 flex-wrap">
         <strong>{{ $t(recovery ? 'itineraryWorkspace.deletedDays' : 'itineraryWorkspace.reorderTitle') }}</strong>
-        <el-button v-if="!recovery" :disabled="!recycledDays.length" @click="isRecycleVisible = true">
+        <el-button v-if="!recovery" :disabled="!recycledDays.length || busy" @click="isRecycleVisible = true">
           {{ $t('itineraryWorkspace.deletedDays') }} ({{ recycledDays.length }})
         </el-button>
       </div>
@@ -227,7 +227,7 @@
       <el-button
         v-if="!readonly && !recovery"
         type="primary"
-        :disabled="busy || (!transfer && !isChanged)"
+        :disabled="busy || (!transfer && (!isChanged || blockingIssues.length > 0))"
         :loading="busy"
         @click="apply"
       >
@@ -241,7 +241,7 @@
     :days="recycledDays"
     :readonly="readonly"
     recovery
-    :restore-disabled="dayIds.length >= 365"
+    :restore-disabled="dayIds.length >= 365 || busy"
     @restore="restoreDay"
   />
 </template>
@@ -316,7 +316,9 @@ const addedDays = ref<ReorderBoardDay[]>([]);
 const overnight = ref<Record<string, string>>({});
 const busy = ref(false);
 const issueAnchor = ref<HTMLElement>();
+/** 独立站（transfer）点击应用时才完整校验；普通询盘实时显示核对事项 */
 const issues = ref<DayOrderIssue[]>([]);
+let session = 0;
 const warningsAccepted = ref(false);
 const allDays = computed(() => [...props.days, ...props.deletedDays, ...addedDays.value]);
 const orderedDays = computed(() => dayIds.value.map((id) => allDays.value.find((day) => day.id === id)!).filter(Boolean));
@@ -364,14 +366,21 @@ const isChanged = computed(
     dayIds.value.some((id, index) => id !== props.days[index]?.id) ||
     JSON.stringify(board.value.placements) !== initialPlacements.value,
 );
-const blockingIssues = computed(() => issues.value.filter((issue) => issue.blocking));
-const hintIssues = computed(() => issues.value.filter((issue) => !issue.blocking));
+const liveIssues = computed<DayOrderIssue[]>(() =>
+  !props.transfer && isChanged.value && props.validate ? (props.validate(change.value) as DayOrderIssue[]) : [],
+);
+const shownIssues = computed(() => (props.transfer ? issues.value : liveIssues.value));
+const blockingIssues = computed(() => shownIssues.value.filter((issue) => issue.blocking));
+const hintIssues = computed(() => shownIssues.value.filter((issue) => !issue.blocking));
 const invalidItemIds = computed(() => new Set(blockingIssues.value.flatMap((issue) => (issue.itemId ? [issue.itemId] : []))));
 
 watch(
   () => props.modelValue,
   (visible) => {
     isRecycleVisible.value = false;
+    // 重开即新会话：丢弃上一次仍在途的校验或暂存结果。
+    session += 1;
+    busy.value = false;
     if (!visible) return;
     addedDays.value = (props.draft?.addedDayIds ?? []).flatMap(id => props.createDay ? [props.createDay(id)] : []);
     overnight.value = Object.fromEntries((props.draft?.overnight ?? []).map(entry => [entry.dayId, entry.cityId]));
@@ -381,13 +390,16 @@ watch(
     dayIds.value = props.days.map((day) => day.id);
     board.value = { placements: boardPlacements(allDays.value), copies: {} };
     if (props.draft) {
-      const knownDays = new Set(allDays.value.map(day => day.id));
+      const activeDays = new Set([...props.days, ...addedDays.value].map(day => day.id));
       const recorded = new Set([...props.draft.dayIds, ...props.draft.deletedDays.map(day => day.id)]);
-      dayIds.value = [...props.draft.dayIds.filter(id => knownDays.has(id)), ...props.days.filter(day => !recorded.has(day.id)).map(day => day.id)];
+      // 暂存后在主页面删除的天不复活，保留在回收中。
+      dayIds.value = [...props.draft.dayIds.filter(id => activeDays.has(id)), ...props.days.filter(day => !recorded.has(day.id)).map(day => day.id)];
       recycledDays.value = props.draft.deletedDays.flatMap(entry => {
         const day = allDays.value.find(day => day.id === entry.id);
         return day ? [{ ...day, dayNumber: entry.dayNumber, date: entry.date }] : [];
       });
+      const placed = new Set([...dayIds.value, ...recycledDays.value.map(day => day.id)]);
+      recycledDays.value.push(...props.deletedDays.filter(day => !placed.has(day.id)).map(day => ({ ...day })));
       board.value = restoreWebsiteBoard(allDays.value, props.draft);
     }
     initialPlacements.value = JSON.stringify(board.value.placements);
@@ -406,9 +418,10 @@ function addBoardDay() {
 }
 async function stashBoard() {
   if (!props.stash || busy.value) return;
+  const current = session;
   busy.value = true;
-  try { if (await props.stash(change.value)) emit("update:modelValue", false); }
-  finally { busy.value = false; }
+  try { if (await props.stash(change.value) && current === session) emit("update:modelValue", false); }
+  finally { if (current === session) busy.value = false; }
 }
 function canSort(group: ReorderBoardGroup) {
   return Boolean(group.sortable && !props.readonly && !props.recovery);
@@ -525,6 +538,17 @@ async function transferItem(dayId: string, group: ReorderBoardGroup, index?: num
     }
   }
   board.value = plan.next;
+  releaseOvernight(source.dayId);
+}
+
+/** 该日由看板安排的住宿已无酒店时，撤销安排并恢复“不住宿”占位。 */
+function releaseOvernight(dayId: string) {
+  const noStayId = `${dayId}-no-stay`;
+  const groups = board.value.placements[dayId];
+  if (!overnight.value[dayId] || !groups || !boardItems.value.has(noStayId)) return;
+  if (Object.values(groups).some(ids => ids.some(id => boardItem(id)?.hotelCityId))) return;
+  overnight.value = Object.fromEntries(Object.entries(overnight.value).filter(([id]) => id !== dayId));
+  board.value = { ...board.value, placements: { ...board.value.placements, [dayId]: { ...groups, events: [...(groups.events ?? []), noStayId] } } };
 }
 
 function startDayDrag(event: DragEvent, dayId: string) {
@@ -630,16 +654,26 @@ function endDrag() {
 
 async function apply() {
   if (busy.value || props.readonly || props.recovery) return;
+  if (!props.transfer) {
+    if (!isChanged.value || blockingIssues.value.length) return;
+    // 排布嵌套在响应式状态中，按纯数据复制后交给页面，避免页面写回时与看板状态共享引用。
+    emit("apply", JSON.parse(JSON.stringify(change.value)) as DayOrderChange);
+    emit("update:modelValue", false);
+    return;
+  }
   if (warningsAccepted.value) {
     emit("apply", change.value);
     emit("update:modelValue", false);
     return;
   }
+  const current = session;
+  const submitted = change.value;
   busy.value = true;
   try {
-    const local = props.transfer ? boardTransferIssues(board.value, orderedDays.value, boardItem) : [];
-    const external = props.validate ? await props.validate(change.value) : [];
-    if (!props.modelValue) return;
+    const local = boardTransferIssues(board.value, orderedDays.value, boardItem);
+    const external = props.validate ? await props.validate(submitted) : [];
+    // 校验期间看板被改动或弹窗已重开时，结果不再适用。
+    if (current !== session || !props.modelValue || change.value !== submitted) return;
     issues.value = [...local, ...external];
     if (issues.value.length) {
       warningsAccepted.value = !blockingIssues.value.length;
@@ -647,9 +681,9 @@ async function apply() {
       issueAnchor.value?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
-    emit("apply", change.value);
+    emit("apply", submitted);
     emit("update:modelValue", false);
-  } finally { busy.value = false; }
+  } finally { if (current === session) busy.value = false; }
 }
 </script>
 

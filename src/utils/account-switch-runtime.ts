@@ -255,13 +255,22 @@ export function setupAccountSwitchSync(): () => void {
   }
   const active = coordinator;
   const stopCoordinator = active?.start();
-  const updatePresence = (state: SessionState | null) =>
+  let pagePresent = true;
+  const updatePresence = (state: SessionState | null) => {
+    if (!pagePresent) return;
     active?.updatePresence(state ? state.sessionId : AuthStorage.getAccessToken() ? undefined : null);
+  };
   updatePresence(sessionGate.getKnown());
   const stopKnown = sessionGate.onKnownChange(updatePresence);
 
   let hiddenAt = 0;
+  const handlePageHide = () => {
+    pagePresent = false;
+    active?.updatePresence(null);
+  };
   const handlePageShow = (event: PageTransitionEvent) => {
+    pagePresent = true;
+    updatePresence(sessionGate.getKnown());
     if (event.persisted) verifyResumedSession();
   };
   const handleVisibility = () => {
@@ -274,12 +283,14 @@ export function setupAccountSwitchSync(): () => void {
     hiddenAt = 0;
   };
   window.addEventListener("pageshow", handlePageShow);
+  window.addEventListener("pagehide", handlePageHide);
   document.addEventListener("visibilitychange", handleVisibility);
 
   return () => {
     stopCoordinator?.();
     stopKnown();
     window.removeEventListener("pageshow", handlePageShow);
+    window.removeEventListener("pagehide", handlePageHide);
     document.removeEventListener("visibilitychange", handleVisibility);
     if (coordinator === active) coordinator = null;
   };

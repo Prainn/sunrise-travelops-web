@@ -238,3 +238,6 @@ export interface RestaurantRecord extends ResourceAuditRecord {
   dinerCount: number | null;
   status: ResourceStatus;
 }
+
+/** Enabled shared dropdown entries, without resource audit metadata. */
+export type CityOption = Pick<CityRecord, "id" | "name" | "province" | "status">;

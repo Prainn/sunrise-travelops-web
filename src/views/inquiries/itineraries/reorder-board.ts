@@ -269,19 +269,38 @@ export function restoredDayIndex(dates: (string | null)[], date: string | null, 
   return Math.min(Math.max(dayNumber - 1, 0), dates.length);
 }
 
-/** Restore pending website placements, preserving new canonical content and dropping removed references. */
+/**
+ * Restore pending website placements, preserving new canonical content and dropping removed references.
+ *
+ * Items the draft no longer places are normally new main-page content, except those displaced by a confirmed slot
+ * replacement before stashing; a same-slot item already placed that day marks them as displaced.
+ */
 export function restoreWebsiteBoard(days: ReorderBoardDay[], draft: WebsiteReorderDraft): BoardState {
   const current = boardPlacements(days);
-  const available = new Set(days.flatMap(day => day.groups.flatMap(group => group.items.map(item => item.id))));
+  const items = new Map(days.flatMap(day => day.groups.flatMap(group => group.items.map(item => [item.id, item] as const))));
+  const available = new Set(items.keys());
   const copies = Object.fromEntries(draft.copies.filter(copy => available.has(copy.sourceId)).map(({ id, ...copy }) => [id, copy]));
+  const itemOf = (id: string) => items.get(id) ?? items.get(copies[id]?.sourceId ?? "");
   const saved = new Map(draft.placements.map(entry => [entry.dayId, entry.itemIds]));
   const assigned = new Set(draft.placements.filter(entry => current[entry.dayId]).flatMap(entry => entry.itemIds));
   const overnight = new Set(draft.overnight.map(entry => entry.dayId));
   return {
     copies,
     placements: Object.fromEntries(days.map(day => {
-      const previous = (saved.get(day.id) ?? []).filter(id => available.has(id) || copies[id]);
-      const added = (current[day.id]?.events ?? []).filter(id => !assigned.has(id) && !(id === `${day.id}-no-stay` && overnight.has(day.id)));
+      let previous = (saved.get(day.id) ?? []).filter(id => available.has(id) || copies[id]);
+      const added = (current[day.id]?.events ?? []).filter(id => !assigned.has(id) && !(id === `${day.id}-no-stay` && overnight.has(day.id)))
+        .filter(id => {
+          const slot = itemOf(id)?.slot;
+          if (!slot) return true;
+          const occupant = previous.find(other => itemOf(other)?.slot === slot);
+          if (!occupant) return true;
+          // New real content takes over a draft placeholder; otherwise it is a displaced item.
+          if (itemOf(occupant)?.placeholder && !itemOf(id)?.placeholder) {
+            previous = previous.filter(other => other !== occupant);
+            return true;
+          }
+          return false;
+        });
       return [day.id, { events: [...previous, ...added] }];
     })),
   };

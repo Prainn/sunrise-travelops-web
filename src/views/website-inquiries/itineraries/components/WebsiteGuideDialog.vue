@@ -18,7 +18,7 @@
           class="mb-0!"
           :label="$t('websiteItineraryUi.guideLanguage')"
           prop="language"
-          :rules="[{ required: true, whitespace: true, message: $t('websiteItineraryUi.guideLanguageRequired'), trigger: 'change' }]"
+          :rules="[{ required: true, whitespace: true, message: $t('websiteItineraryUi.guideLanguageRequired'), trigger: 'change' }, { max: 100, message: $t('websiteItineraryUi.guideLanguageTooLong'), trigger: 'change' }]"
         >
           <RemoteSelect
             v-model="language"
@@ -63,7 +63,7 @@ const emit = defineEmits<{
 }>();
 const arranged = ref(false);
 const language = ref("");
-const canSubmit = computed(() => !arranged.value || Boolean(language.value.trim()));
+const canSubmit = computed(() => !arranged.value || Boolean(language.value.trim()) && language.value.trim().length <= 100);
 
 watch(
   () => props.modelValue,

@@ -1281,7 +1281,6 @@
       "cityMissing": "Select an existing website city",
       "parentSameCity": "Parent attraction must exist in the same city",
       "parentCycle": "Attraction links cannot form a cycle",
-      "routeDistinct": "Origin and destination cities must differ",
       "maxAttractions": "Day pattern: max 200 attractions or components",
       "patternAttractions": "Use attractions or components from the day pattern's city",
       "skeletonDays": "Add 1–365 days to the city skeleton",
@@ -1427,6 +1426,7 @@
     "guideArranged": "Guide for this day",
     "guideLanguage": "Guide language",
     "guideLanguageRequired": "Select or enter a guide language",
+    "guideLanguageTooLong": "Guide language must be at most 100 characters",
     "guideLanguagePlaceholder": "e.g. English",
     "transportLegs": "Transport legs",
     "hotelPlans": "Hotel options",
@@ -1865,9 +1865,7 @@
     "eventOrder": "Daily sequence",
     "arrangeOvernight": "No overnight stay is planned. Arrange accommodation?",
     "applyDespiteWarnings": "Confirm and apply",
-    "serverIssue": "{code} · {day}{message}",
-    "collapseMenu": "Collapse menu",
-    "expandMenu": "Expand menu"
+    "serverIssue": "{code}{day}{message}"
   },
   "businessGroup": {
     "label": "Business Group",

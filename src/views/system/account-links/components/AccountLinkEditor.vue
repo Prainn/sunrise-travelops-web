@@ -293,11 +293,17 @@ function resetCandidateFilters() {
   candidates.params.scope = undefined;
 }
 
+let requestedFilter = "";
+const currentFilter = () => JSON.stringify([candidates.params.keyword, candidates.params.scope]);
+
 function loadCandidates(): void {
+  requestedFilter = currentFilter();
   candidates.fetchData().catch(() => undefined);
 }
 
+// 重开弹窗重置筛选时已主动加载，筛选未变化的防抖回调不再重复请求。
 const searchCandidates = useDebounceFn(() => {
+  if (!visible.value || currentFilter() === requestedFilter) return;
   candidates.params.page = 1;
   loadCandidates();
 }, 300);

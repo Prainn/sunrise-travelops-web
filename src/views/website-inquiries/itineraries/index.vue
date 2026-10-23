@@ -591,15 +591,19 @@ async function validateReorder(change: DayOrderChange): Promise<DayOrderIssue[]>
   const result = reorderWebsiteDays(plan.value.days, change, plan.value.deletedDays);
   try {
     const preview = await websiteService.validateItinerary({ ...plan.value, days: result.days, deletedDays: result.deletedDays, duration: result.days.length, reorderDraft: null });
-    return preview.issues.map(issue => ({ dayId: result.days.find(day => day.dayNumber === issue.dayNumber)?.id ?? "", key: "itineraryWorkspace.serverIssue", params: { message: issue.message, code: issue.code, day: issue.dayNumber ? `D${issue.dayNumber} · ` : "" }, blocking: issue.severity === "ERROR" }));
+    return preview.issues.map(issue => ({ dayId: result.days.find(day => day.dayNumber === issue.dayNumber)?.id ?? "", key: "itineraryWorkspace.serverIssue", params: { message: issue.message, code: issue.code ? `${issue.code} · ` : "", day: issue.dayNumber ? `D${issue.dayNumber} · ` : "" }, blocking: issue.severity === "ERROR" }));
   } catch (cause) {
     return [{ dayId: "", key: "itineraryWorkspace.serverIssue", params: { message: websiteErrorMessage(cause), code: "", day: "" }, blocking: true }];
   }
 }
 async function stashReorder(change: DayOrderChange) {
   if (!plan.value || !editable.value) return false;
-  plan.value.reorderDraft = change.draft ?? null;
-  return save();
+  const previous = plan.value.reorderDraft;
+  // 看板状态继续变化，暂存按纯数据复制；保存失败则撤回，避免残留未保存的暂存。
+  plan.value.reorderDraft = change.draft ? JSON.parse(JSON.stringify(change.draft)) : null;
+  const saved = await save();
+  if (!saved && plan.value) plan.value.reorderDraft = previous;
+  return saved;
 }
 
 function applyReorder(change: DayOrderChange) {

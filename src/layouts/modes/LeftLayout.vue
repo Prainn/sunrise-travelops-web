@@ -3,22 +3,13 @@
     <div
       v-show="!appStore.contentFullscreen"
       class="layout-sidebar"
-      :class="{ 'is-collapsed': !sidebarExpanded }"
+      :class="{ 'is-collapsed': !sidebarExpanded, 'is-hover-expanded': isSidebarHoverExpanded }"
       @mouseenter="hovered = true"
       @mouseleave="hovered = false"
     >
       <div :class="{ 'has-logo': showLogo }" class="layout-sidebar__inner">
         <LayoutLogo v-if="showLogo" :collapse="!sidebarExpanded" />
-        <el-button
-          v-if="isWorkspaceNavbarHidden"
-          text
-          class="w-full"
-          :aria-label="$t(isSidebarOpen ? 'itineraryWorkspace.collapseMenu' : 'itineraryWorkspace.expandMenu')"
-          @click="toggleWorkspaceSidebar"
-        >
-          <el-icon><Fold v-if="isSidebarOpen" /><Expand v-else /></el-icon>
-        </el-button>
-        <el-scrollbar :class="{ 'workspace-menu': isWorkspaceNavbarHidden }">
+        <el-scrollbar>
           <LayoutSidebar :data="routes" base-path="" :collapse-override="!sidebarExpanded" />
         </el-scrollbar>
       </div>
@@ -40,7 +31,6 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, onBeforeUnmount } from "vue";
-import { Fold, Expand } from "@element-plus/icons-vue";
 import { useLayout } from "../composables/useLayout";
 import { useAppStore } from "@/stores/app";
 import BaseLayout from "../BaseLayout.vue";
@@ -54,9 +44,26 @@ const { showTagsView, showLogo, isSidebarOpen, isWorkspaceChromeless, isWorkspac
 const appStore = useAppStore();
 const hovered = ref(false);
 const sidebarExpanded = computed(() => isSidebarOpen.value || (isWorkspaceNavbarHidden.value && hovered.value));
-function toggleWorkspaceSidebar() { hovered.value = false; appStore.toggleSidebar(); }
-watch(isWorkspaceChromeless, (current, previous) => { if (previous && !current) appStore.openSidebar(); hovered.value = false; });
-onBeforeUnmount(() => { if (isWorkspaceChromeless.value) appStore.openSidebar(); });
+const isSidebarHoverExpanded = computed(() => !isSidebarOpen.value && sidebarExpanded.value);
+// 工作区仅在本页收起侧栏，不写入共享的本地偏好，离开时恢复进入前的状态；移动端的侧栏是抽屉，不处理。
+let sidebarBeforeWorkspace: boolean | undefined;
+function restoreSidebar() {
+  if (sidebarBeforeWorkspace === undefined) return;
+  appStore.sidebar.opened = sidebarBeforeWorkspace;
+  sidebarBeforeWorkspace = undefined;
+}
+watch(
+  isWorkspaceNavbarHidden,
+  (hidden) => {
+    if (hidden) {
+      sidebarBeforeWorkspace ??= appStore.sidebar.opened;
+      appStore.sidebar.opened = false;
+    } else restoreSidebar();
+    hovered.value = false;
+  },
+  { immediate: true },
+);
+onBeforeUnmount(restoreSidebar);
 </script>
 
 <style lang="scss" scoped>
@@ -80,9 +87,6 @@ onBeforeUnmount(() => { if (isWorkspaceChromeless.value) appStore.openSidebar();
         @include sidebar-scroll-height-with-logo;
       }
     }
-
-    .workspace-menu { height: calc(100% - 32px); }
-    &.has-logo .workspace-menu { height: calc(100% - 32px - var(--navbar-height, 50px)); }
 
     :deep(.el-menu) {
       border: none;

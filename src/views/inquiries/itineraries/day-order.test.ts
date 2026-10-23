@@ -428,3 +428,18 @@ it("restores pending placements while retaining newly added content and dropping
   expect(result.placements).toEqual({ d1: { events: ["copy", "new"] }, d2: { events: ["a"] } });
   expect(Object.keys(result.copies)).toEqual(["copy"]);
 });
+
+it("does not bring back items displaced by a confirmed same-slot replacement", () => {
+  const days = [
+    { id: "d1", title: "", groups: [{ key: "events", label: "", items: [{ id: "h1", label: "H1", slot: "hotel:A" }, { id: "lunch1", label: "Lunch", slot: "meal:lunch" }] }] },
+    { id: "d2", title: "", groups: [{ key: "events", label: "", items: [
+      { id: "h2", label: "H2", slot: "hotel:A" }, { id: "lunch-none", label: "Self", slot: "meal:lunch", placeholder: true }, { id: "fresh", label: "Fresh" },
+    ] }] },
+  ];
+  const result = restoreWebsiteBoard(days, {
+    dayIds: ["d1", "d2"], addedDayIds: [], deletedDays: [],
+    placements: [{ dayId: "d1", itemIds: [] }, { dayId: "d2", itemIds: ["h1", "lunch1"] }],
+    copies: [], overnight: [],
+  });
+  expect(result.placements).toEqual({ d1: { events: [] }, d2: { events: ["h1", "lunch1", "fresh"] } });
+});
