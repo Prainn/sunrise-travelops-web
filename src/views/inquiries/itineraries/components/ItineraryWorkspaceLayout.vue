@@ -69,11 +69,9 @@
       </div>
     </div>
     <slot v-else name="empty" />
-    <!-- 有逐日内容时让出左侧目录宽度（168px + gap 16px），与逐日列对齐 -->
     <div
       ref="footer"
-      class="itinerary-workspace__footer sticky bottom-0 z-[20] mt-auto"
-      :class="{ 'ml-[184px] max-[900px]:ml-0': days.length }"
+      class="itinerary-workspace__footer sticky bottom-0 z-[20] mt-auto w-full"
     >
       <slot name="footer" />
     </div>

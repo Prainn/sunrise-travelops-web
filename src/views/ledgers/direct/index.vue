@@ -95,7 +95,7 @@
         <el-table-column
           prop="receivingAccountName"
           :label="$t('ledger.direct.receivingAccount')"
-          min-width="100"
+          :min-width="businessUnit === 'linxi' ? 200 : 100"
         />
         <el-table-column prop="operatorName" :label="$t('ledger.direct.operator')" min-width="200" />
         <el-table-column :label="$t('ledger.direct.orderStatus')" min-width="100" align="center">

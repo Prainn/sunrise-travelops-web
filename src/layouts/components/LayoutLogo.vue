@@ -38,7 +38,9 @@ const isLynxtour = computed(
 );
 const brandLogo = computed(() => (isLynxtour.value ? lynxtourLogo : sunriseLogo));
 const brandTitle = computed(() =>
-  t(isLynxtour.value ? "login.brandDesign.linxiName" : "login.brandDesign.sunriseName")
+  t(userStore.userInfo.scope === "website"
+    ? "login.brandDesign.websiteShortName"
+    : isLynxtour.value ? "login.brandDesign.linxiName" : "login.brandDesign.sunriseName")
 );
 </script>
 

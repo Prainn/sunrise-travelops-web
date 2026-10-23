@@ -30,6 +30,7 @@ export const STORAGE_KEYS = {
   DICT_CACHE: `${APP_PREFIX}:system:dict_cache`,
 
   // UI
+  LOGIN_SCOPE: `${APP_PREFIX}:ui:login_scope`,
   SHOW_TAGS_VIEW: `${APP_PREFIX}:ui:show_tags_view`,
   TAGS_VIEW_STYLE: `${APP_PREFIX}:ui:tags_view_style`,
   SHOW_APP_LOGO: `${APP_PREFIX}:ui:show_app_logo`,
