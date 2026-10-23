@@ -5,15 +5,9 @@
     "convertedCount": "成团合计",
     "platformAccount": "平台账号",
     "firstFollowUp": "第一次跟进",
-    "bookedTourNumbers": "定团团号",
-    "tourNumbers": "成团团号",
-    "editNotes": "编辑补充资料",
     "agencySearch": "搜索组团社名称",
     "coordinatorSearch": "搜索收客计调姓名",
-    "platformSearch": "搜索平台账号名称",
-    "followUpPlaceholder": "填写第一次跟进情况",
-    "tourNumbersPlaceholder": "填写团号，多个团号可换行",
-    "maxLength": "最多 {max} 字"
+    "platformSearch": "搜索平台账号名称"
   },
   "websiteVisits": {
     "dateRange": "日期范围（北京时间）",
@@ -1067,6 +1061,7 @@
     "DIRECT_LEDGER_NOT_PENDING_CONFIRMATION": "仅待确认的亏损台账需负责人确认",
     "DIRECT_LEDGER_OPERATED_READ_ONLY": "已操作台账不能修改普通字段",
     "DIRECT_LEDGER_NOT_PENDING_OPERATION": "仅待操作的台账可以标记已操作",
+    "DIRECT_LEDGER_OPERATION_PREREQUISITES_NOT_MET": "台账须已发送方案且已成团，才能标记已操作",
     "DIRECT_LEDGER_DELETE_REVIEWED": "已确认台账不能删除",
     "DIRECT_LEDGER_DELETE_OPERATED": "曾操作的台账不能删除",
     "DIRECT_LEDGER_DELETE_CONVERTED": "已成团台账不能删除",
@@ -1785,11 +1780,12 @@
       "reviewSuccess": "已确认，待操作",
       "reviewedLocked": "已确认或已操作，普通字段与人员已锁定。",
       "markOperated": "已操作",
-      "markOperatedConfirm": "确认订单 {orderNo} 已操作？普通字段将锁定，不可撤销。",
+      "markOperatedConfirm": "确认订单 {orderNo} 已发送方案、已成团并已操作？普通字段将锁定，不可撤销。",
       "deleteConfirm": "删除订单 {orderNo}？",
       "searchPlaceholder": "订单号、来源、收客计调、接单账号、操作计调、行程",
       "sourcePlaceholders": {
         "linxi": "携程单号",
+        "linxiCustomer": "来源客户",
         "website": "客户姓名"
       },
       "collectorPlaceholder": "修改收客计调",

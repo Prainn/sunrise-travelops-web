@@ -58,7 +58,7 @@
           <el-form-item :label="$t('ledger.direct.source')" prop="source">
             <el-input
               v-model="form.source"
-              :placeholder="$t(`ledger.direct.sourcePlaceholders.${businessUnit}`)"
+              :placeholder="sourcePlaceholder"
               maxlength="200"
             />
           </el-form-item>
@@ -266,6 +266,7 @@ const { t } = useI18n();
 const user = useUserStore();
 const formRef = ref<FormInstance>();
 const form = reactive(emptyDirectLedgerForm());
+const receivingGroupNames = reactive(new Map<string, string>());
 const saving = ref(false);
 
 const businessUnit = computed(() => props.ledger?.businessUnit ?? props.businessUnit);
@@ -273,6 +274,13 @@ const isDelegate = computed(
   () => !props.ledger && user.userInfo.scope === "headquarters" && user.userInfo.roles.includes("ROOT"),
 );
 const isWebsite = computed(() => businessUnit.value === "website");
+const sourcePlaceholder = computed(() => {
+  if (isWebsite.value) return t("ledger.direct.sourcePlaceholders.website");
+  const groupName = receivingGroupNames.get(form.receivingGroupId ?? "") ?? form.receivingAccountName;
+  return t(groupName && !groupName.startsWith("定制师")
+    ? "ledger.direct.sourcePlaceholders.linxiCustomer"
+    : "ledger.direct.sourcePlaceholders.linxi");
+});
 const dialogTitle = computed(() => {
   if (!props.ledger) return t("common.create");
   return t(props.readonly ? "common.view" : "common.edit");
@@ -304,6 +312,7 @@ const rules = computed<FormRules>(() => {
 });
 
 function resetForm() {
+  receivingGroupNames.clear();
   Object.assign(
     form,
     props.ledger ? directLedgerFormFromItem(props.ledger) : emptyDirectLedgerForm(),
@@ -328,7 +337,11 @@ function optionsLoader(load: OptionLoader) {
 }
 const loadCollectors = optionsLoader(directLedgerService.collectors);
 const loadOperators = optionsLoader(directLedgerService.operators);
-const loadReceivingGroups = optionsLoader(directLedgerService.receivingGroups);
+async function loadReceivingGroups(query: RemoteOptionsQuery) {
+  const result = await optionsLoader(directLedgerService.receivingGroups)(query);
+  for (const option of result.list) receivingGroupNames.set(option.id, option.label);
+  return result;
+}
 
 async function handleSubmit() {
   if (saving.value) return;

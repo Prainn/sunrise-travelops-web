@@ -5,15 +5,9 @@
     "convertedCount": "Total bookings",
     "platformAccount": "Platform account",
     "firstFollowUp": "First follow-up",
-    "bookedTourNumbers": "Booked tour codes",
-    "tourNumbers": "Tour codes",
-    "editNotes": "Edit notes",
     "agencySearch": "Search agency names",
     "coordinatorSearch": "Search reception coordinators",
-    "platformSearch": "Search platform accounts",
-    "followUpPlaceholder": "Enter first follow-up details",
-    "tourNumbersPlaceholder": "Enter tour codes, one per line",
-    "maxLength": "Up to {max} characters"
+    "platformSearch": "Search platform accounts"
   },
   "websiteVisits": {
     "dateRange": "Export date range (Beijing time)",
@@ -1067,6 +1061,7 @@
     "DIRECT_LEDGER_NOT_PENDING_CONFIRMATION": "Only loss entries pending confirmation need manager approval",
     "DIRECT_LEDGER_OPERATED_READ_ONLY": "Operated entries: regular fields are locked",
     "DIRECT_LEDGER_NOT_PENDING_OPERATION": "Only entries pending operation can be marked operated",
+    "DIRECT_LEDGER_OPERATION_PREREQUISITES_NOT_MET": "The proposal must be sent and the order converted before marking it operated",
     "DIRECT_LEDGER_DELETE_REVIEWED": "Cannot delete confirmed entries",
     "DIRECT_LEDGER_DELETE_OPERATED": "Cannot delete previously operated entries",
     "DIRECT_LEDGER_DELETE_CONVERTED": "Cannot delete converted entries",
@@ -1785,11 +1780,12 @@
       "reviewSuccess": "Confirmed; pending operation",
       "reviewedLocked": "Confirmed or operated: regular fields and personnel locked.",
       "markOperated": "Mark Operated",
-      "markOperatedConfirm": "Mark order {orderNo} operated? Regular fields will lock. Cannot be undone.",
+      "markOperatedConfirm": "Confirm order {orderNo} has its proposal sent, is converted and has been operated? Regular fields will lock. Cannot be undone.",
       "deleteConfirm": "Delete order {orderNo}?",
       "searchPlaceholder": "Order no., source, sales coordinator, receiving account, coordinator, itinerary",
       "sourcePlaceholders": {
         "linxi": "Ctrip order no.",
+        "linxiCustomer": "Source customer",
         "website": "Customer name"
       },
       "collectorPlaceholder": "Change receiving coordinator",

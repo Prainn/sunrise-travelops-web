@@ -8,18 +8,12 @@ export type SummaryReport =
   | "website-quote-summary"
   | "website-platform-summary";
 
-export interface SummaryNotes {
+export interface LedgerSummaryItem {
   firstFollowUp: string;
-  tourNumbers: string;
-  version: number;
-}
-export interface LedgerSummaryItem extends SummaryNotes {
   id: string;
   name: string;
   quotedCount: number;
   convertedCount: number;
-  reasons: { ledgerId: string; date: string; text: string }[];
-  canEdit: boolean;
 }
 export interface LedgerSummaryQuery {
   page: number;

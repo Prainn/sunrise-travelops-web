@@ -320,6 +320,7 @@ export const constantRoutes: RouteRecordRaw[] = [
           title: "travelAgencies",
           icon: "el-icon-Promotion",
           keepAlive: true,
+          scopes: ["headquarters", "shengxu"],
           perms: ["resource:agency:list"],
         },
       },
