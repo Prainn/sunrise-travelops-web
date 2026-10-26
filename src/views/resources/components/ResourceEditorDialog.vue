@@ -31,10 +31,11 @@
           v-else-if="field.type === 'number'"
           :model-value="form[field.prop] == null ? null : Number(form[field.prop])"
           :min="field.min ?? 0"
+          :max="field.max ?? Infinity"
           :precision="field.precision"
           :value-on-clear="null"
           controls-position="right"
-          @update:model-value="form[field.prop] = $event"
+          @update:model-value="updateNumber(field, $event)"
         />
         <el-select
           v-else-if="field.type === 'select'"
@@ -89,7 +90,7 @@
 import AppDialog from "@/components/AppDialog/index.vue";
 import CitySelect from "@/components/CitySelect.vue";
 import { computed, reactive, watch } from "vue";
-import type { FormInstance, FormRules } from "element-plus";
+import type { FormInstance, FormItemRule, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { ResourceFormField, ResourceRow } from "../types";
 import { useResourceFormSubmit } from "../useResourceFormSubmit";
@@ -118,20 +119,35 @@ const isVisible = computed({
 const rules = computed<FormRules>(() => ({
   ...Object.fromEntries(
     props.fields
-      .filter((field) => field.required)
-      .map((field) => [
-        field.prop,
-        [
-          {
-            required: true,
-            ...(field.type === "number" ? { type: "number" as const, min: field.min } : {}),
-            message: t("resource.fieldRequired", { field: t(field.labelKey) }),
-            trigger: field.type === "select" ? "change" : "blur",
-          },
-        ],
-      ]),
+      .filter((field) => field.required || field.pairedWith)
+      .map((field) => [field.prop, fieldRules(field)]),
   ),
 }));
+
+function fieldRules(field: ResourceFormField): FormItemRule[] {
+  const message = t("resource.fieldRequired", { field: t(field.labelKey) });
+  if (field.required) {
+    return [
+      {
+        required: true,
+        ...(field.type === "number" ? { type: "number" as const, min: field.min } : {}),
+        message,
+        trigger: field.type === "select" ? "change" : "blur",
+      },
+    ];
+  }
+  const peer = field.pairedWith!;
+  return [
+    {
+      validator: (_rule, value, callback) => {
+        const isPeerFilled = form[peer] != null && form[peer] !== "";
+        const isFilled = value != null && value !== "";
+        callback(isPeerFilled && !isFilled ? new Error(message) : undefined);
+      },
+      trigger: "change",
+    },
+  ];
+}
 
 watch(
   () => [props.modelValue, props.record] as const,
@@ -141,6 +157,12 @@ watch(
   },
   { deep: true },
 );
+
+function updateNumber(field: ResourceFormField, value: number | null | undefined) {
+  form[field.prop] = value;
+  // 成对字段任一侧变化都要刷新另一侧的提示，避免同时清空后残留旧错误。
+  if (field.pairedWith) void formRef.value?.validateField(field.pairedWith).catch(() => undefined);
+}
 
 function resetForm() {
   formRef.value?.clearValidate();

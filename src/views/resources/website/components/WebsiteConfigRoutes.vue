@@ -4,7 +4,6 @@
       <el-button
         v-if="editable"
         type="primary"
-        :disabled="config.cities.length < 2"
         @click="openEditor()"
       >
         {{ $t("common.create") }}
@@ -15,7 +14,7 @@
     </TableToolbar>
     <DataTable
       fill
-      :data="config.routes"
+      :data="rows"
       row-key="id"
       :empty-text="$t('websiteConfig.routes.empty')"
     >
@@ -23,12 +22,12 @@
       <el-table-column prop="nameEn" :label="$t('websiteConfig.routes.nameEn')" min-width="180" />
       <el-table-column :label="$t('websiteConfig.routes.fromCity')" min-width="120">
         <template #default="{ row }">
-          {{ config.cities.find((city) => city.id === row.fromCityId)?.nameZh ?? row.fromCityId }}
+          {{ labels[row.fromCityId] ?? row.fromCityId }}
         </template>
       </el-table-column>
       <el-table-column :label="$t('websiteConfig.routes.toCity')" min-width="120">
         <template #default="{ row }">
-          {{ config.cities.find((city) => city.id === row.toCityId)?.nameZh ?? row.toCityId }}
+          {{ labels[row.toCityId] ?? row.toCityId }}
         </template>
       </el-table-column>
       <el-table-column :label="$t('websiteConfig.routes.transport')" min-width="120">
@@ -56,7 +55,7 @@
         fixed="right"
         :show-overflow-tooltip="false"
       >
-        <template #default="{ row, $index }">
+        <template #default="{ row }">
           <RowActions>
             <el-button type="primary" link @click="openEditor(row)">
               {{ editable ? $t("common.edit") : $t("common.view") }}
@@ -65,7 +64,7 @@
               v-if="editable"
               type="danger"
               link
-              @click="deleteRecord($index)"
+              @click="props.deleteRecord(row.id)"
             >
               {{ $t("common.delete") }}
             </el-button>
@@ -96,24 +95,24 @@
       >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
           <el-form-item :label="$t('websiteConfig.routes.fromCity')" prop="fromCityId">
-            <el-select v-model="record.fromCityId" autocomplete="new-password" filterable>
-              <el-option
-                v-for="city in config.cities"
-                :key="city.id"
-                :value="city.id"
-                :label="city.nameZh"
-              />
-            </el-select>
+            <WebsiteConfigSelect
+              v-model="record.fromCityId"
+              group="cities"
+              :version="version"
+              :business-unit="businessUnit"
+              :labels="labels"
+              @labels="Object.assign(labels, $event)"
+            />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.routes.toCity')" prop="toCityId">
-            <el-select v-model="record.toCityId" autocomplete="new-password" filterable>
-              <el-option
-                v-for="city in config.cities"
-                :key="city.id"
-                :value="city.id"
-                :label="city.nameZh"
-              />
-            </el-select>
+            <WebsiteConfigSelect
+              v-model="record.toCityId"
+              group="cities"
+              :version="version"
+              :business-unit="businessUnit"
+              :labels="labels"
+              @labels="Object.assign(labels, $event)"
+            />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.routes.nameZh')" prop="nameZh">
             <el-input v-model="record.nameZh" maxlength="150" />
@@ -169,10 +168,10 @@ import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
 import RowActions from "@/components/RowActions/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
-import { ref } from "vue";
+import { reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { FormInstance } from "element-plus";
-import type { WebsiteConfig, WebsiteRoute } from "@/types/website";
+import type { WebsiteConfigEditorProps, WebsiteRoute } from "@/types/website";
 import {
   cloneWebsiteDraft,
   FEE_OPTIONS,
@@ -180,21 +179,18 @@ import {
 } from "@/views/website-inquiries/options";
 import FeeStateSelect from "@/views/website-inquiries/components/FeeStateSelect.vue";
 import { useWebsiteRouteRules } from "../useWebsiteConfigRules";
+import WebsiteConfigSelect from "./WebsiteConfigSelect.vue";
 import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
-const props = defineProps<{
-  config: WebsiteConfig;
-  editable: boolean;
-  saving: boolean;
-  saveConfig: (next: WebsiteConfig) => Promise<boolean>;
-  deleteConfig: (next: WebsiteConfig) => Promise<boolean>;
-}>();
+const props = defineProps<WebsiteConfigEditorProps & { rows: WebsiteRoute[] }>();
+const labels = reactive<Record<string, string>>({});
+watch(() => props.references, (value) => Object.assign(labels, value), { immediate: true });
 const visible = ref(false);
 const isNew = ref(false);
 const record = ref<WebsiteRoute>();
 const formRef = ref<FormInstance>();
 const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
-const rules = useWebsiteRouteRules(() => props.config);
+const rules = useWebsiteRouteRules();
 const { t } = useI18n();
 
 function getOptionLabel(options: Array<{ value: string; labelKey: string }>, value: string) {
@@ -223,19 +219,8 @@ async function applyEdit() {
   if (!record.value || !props.editable || props.saving) return;
   await submitForm(async () => {
     if (!record.value || !props.editable || props.saving) return;
-    const next = cloneWebsiteDraft(props.config);
     const result = cloneWebsiteDraft(record.value);
-    const index = next.routes.findIndex((row) => row.id === result.id);
-    if (index < 0) next.routes.push(result);
-    else next.routes.splice(index, 1, result);
-    if (await props.saveConfig(next)) visible.value = false;
+    if (await props.saveRecord(result, isNew.value)) visible.value = false;
   });
-}
-
-async function deleteRecord(index: number) {
-  if (!props.editable || props.saving) return;
-  const next = cloneWebsiteDraft(props.config);
-  next.routes.splice(index, 1);
-  await props.deleteConfig(next);
 }
 </script>

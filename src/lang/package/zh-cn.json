@@ -727,7 +727,71 @@
     "guideLeaves": "导游请假",
     "lastDays": "最近 {days} 天",
     "newInquiries": "新增询盘",
-    "noAccessibleStats": "当前账号暂无可查看的统计"
+    "noAccessibleStats": "当前账号暂无可查看的统计",
+    "tourMap": {
+      "title": "云南团务地图",
+      "subtitle": "按计划行程展示当日在途团的计划位置，不是实时定位。",
+      "date": "日期",
+      "destinations": "目的地列表",
+      "pointSummary": "{tours} 个团 · {people} 人",
+      "noToursHere": "当日无在途团",
+      "noTours": "当日无在途团",
+      "peopleCount": "{count} 人",
+      "regionNoDestinations": "该州市当日没有已校准的在途目的地",
+      "uncalibrated": "地图点位待校准",
+      "totals": {
+        "tours": "在途团",
+        "people": "在途人数",
+        "located": "已落图",
+        "unlocated": "待定位",
+        "pickups": "当日接团",
+        "drops": "当日送团"
+      },
+      "headcount": "成人 {adults} · 儿童 {children} · 领队 {leaders} · 共 {total} 人",
+      "guidePending": "待安排",
+      "totalDays": "共 {days} 天",
+      "dayProgress": "第 {day} 天 / 共 {days} 天",
+      "routeToday": "当日路线",
+      "routeFull": "完整路线",
+      "routeManual": "手工成团未绑定行程，无法绘制路线",
+      "routeEmpty": "暂无可落图的路线点",
+      "routeGap": "部分地点待定位或待校准，路线已在这些位置断开",
+      "todayPlan": "当日计划",
+      "nextDayPlan": "次日计划",
+      "todayEmpty": "当日不在行程日期内",
+      "nextDayEmpty": "次日无行程",
+      "dayLabel": "第 {day} 天",
+      "plannedStops": "计划地点",
+      "stay": "住宿",
+      "overnightStatus": {
+        "planned": "计划住宿",
+        "none": "无住宿",
+        "unconfirmed": "住宿待确认"
+      },
+      "hotelPlans": "酒店安排",
+      "dayDescription": "行程说明",
+      "attractions": "景点",
+      "meals": "餐饮",
+      "transport": "交通",
+      "roles": {
+        "departure": "出发",
+        "visit": "游览",
+        "arrival": "到达",
+        "overnight": "住宿"
+      },
+      "issues": {
+        "manual_tour": "手工成团",
+        "source_missing": "来源行程缺失",
+        "date_not_covered": "日期不在行程内",
+        "city_unlinked": "地点未关联城市",
+        "city_unmatched": "城市未匹配",
+        "outside_yunnan": "云南省外",
+        "coordinates_missing": "城市缺少经纬度",
+        "no_location": "无计划地点",
+        "unknown": "其他定位问题"
+      },
+      "coordinateSource": "城市坐标参考："
+    }
   },
   "profile": {
     "avatarUpdatedSuccess": "头像已更新",
@@ -1078,7 +1142,9 @@
   "city": {
     "create": "新增城市",
     "edit": "编辑城市",
-    "province": "省份 / 地区"
+    "province": "省份 / 地区",
+    "longitude": "经度",
+    "latitude": "纬度"
   },
   "planning": {
     "secondLanguage": "第二语种",
@@ -1746,7 +1812,6 @@
     "direct": {
       "orderNo": "订单号",
       "receivedDate": "接单日期",
-      "receivedMonth": "接单月份",
       "source": "来源",
       "creator": "收客计调",
       "receivingAccount": "接单账号",
@@ -1791,6 +1856,7 @@
         "linxiCustomer": "来源客户",
         "website": "客户姓名"
       },
+      "numericSourceConfirm": "可能输入了携程单号，是否确认？取消将撤销本次来源改动。",
       "collectorPlaceholder": "修改收客计调",
       "operatorPlaceholder": "修改操作计调",
       "receivingGroupPlaceholder": "选择业务组",

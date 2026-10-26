@@ -84,11 +84,10 @@
           :show-overflow-tooltip="false"
         />
         <el-table-column prop="receivedDate" :label="$t('ledger.direct.receivedDate')" width="110" />
-        <el-table-column prop="receivedMonth" :label="$t('ledger.direct.receivedMonth')" width="100" />
         <el-table-column
           prop="source"
           :label="$t('ledger.direct.source')"
-          min-width="140"
+          min-width="200"
           show-overflow-tooltip
         />
         <el-table-column prop="creatorName" :label="$t('ledger.direct.creator')" min-width="200" />

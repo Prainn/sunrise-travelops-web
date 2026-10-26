@@ -82,7 +82,6 @@ export interface DirectLedgerItem extends DirectLedgerInput {
   id: string;
   businessUnit: DirectLedgerBusinessUnit;
   orderNo: string;
-  receivedMonth: string;
   /** 收客计调及其姓名快照。 */
   creatorId: string;
   creatorName: string;

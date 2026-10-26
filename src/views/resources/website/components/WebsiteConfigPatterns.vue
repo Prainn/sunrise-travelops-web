@@ -4,7 +4,6 @@
       <el-button
         v-if="editable"
         type="primary"
-        :disabled="!config.cities.length"
         @click="openEditor()"
       >
         {{ $t("common.create") }}
@@ -15,7 +14,7 @@
     </TableToolbar>
     <DataTable
       fill
-      :data="config.patterns"
+      :data="rows"
       row-key="id"
       :empty-text="$t('websiteConfig.patterns.empty')"
     >
@@ -23,7 +22,7 @@
       <el-table-column prop="nameEn" :label="$t('common.nameEn')" min-width="180" />
       <el-table-column :label="$t('websiteConfig.belongsToCity')" min-width="120">
         <template #default="{ row }">
-          {{ config.cities.find((city) => city.id === row.cityId)?.nameZh ?? row.cityId }}
+          {{ labels[row.cityId] ?? row.cityId }}
         </template>
       </el-table-column>
       <!-- @vue-generic {WebsitePattern} -->
@@ -51,7 +50,7 @@
         fixed="right"
         :show-overflow-tooltip="false"
       >
-        <template #default="{ row, $index }">
+        <template #default="{ row }">
           <RowActions>
             <el-button type="primary" link @click="openEditor(row)">
               {{ editable ? $t("common.edit") : $t("common.view") }}
@@ -60,7 +59,7 @@
               v-if="editable"
               type="danger"
               link
-              @click="deleteRecord($index)"
+              @click="props.deleteRecord(row.id)"
             >
               {{ $t("common.delete") }}
             </el-button>
@@ -91,14 +90,14 @@
       >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
           <el-form-item :label="$t('websiteConfig.belongsToCity')" prop="cityId">
-            <el-select v-model="record.cityId" autocomplete="new-password" filterable>
-              <el-option
-                v-for="city in config.cities"
-                :key="city.id"
-                :value="city.id"
-                :label="city.nameZh"
-              />
-            </el-select>
+            <WebsiteConfigSelect
+              v-model="record.cityId"
+              group="cities"
+              :version="version"
+              :business-unit="businessUnit"
+              :labels="labels"
+              @labels="Object.assign(labels, $event)"
+            />
           </el-form-item>
           <el-form-item :label="$t('common.status')">
             <el-radio-group v-model="record.status">
@@ -118,19 +117,17 @@
           </el-form-item>
         </div>
         <el-form-item :label="$t('websiteConfig.patterns.attractions')" prop="attractionIds">
-          <el-select
+          <WebsiteConfigSelect
             v-model="record.attractionIds"
-            autocomplete="new-password"
+            group="attractions"
+            :version="version"
+            :business-unit="businessUnit"
+            :labels="labels"
+            :city-id="record.cityId"
+            :disabled="!record.cityId"
             multiple
-            filterable
-          >
-            <el-option
-              v-for="item in config.attractions.filter((row) => row.cityId === record?.cityId)"
-              :key="item.id"
-              :value="item.id"
-              :label="item.nameZh"
-            />
-          </el-select>
+            @labels="Object.assign(labels, $event)"
+          />
         </el-form-item>
         <DataTable
           :data="record.attractionIds.map((id) => ({ id }))"
@@ -144,7 +141,7 @@
           />
           <el-table-column :label="$t('websiteConfig.patterns.attractions')" min-width="180">
             <template #default="{ row }">
-              {{ config.attractions.find((item) => item.id === row.id)?.nameZh ?? row.id }}
+              {{ labels[row.id] ?? row.id }}
             </template>
           </el-table-column>
           <el-table-column
@@ -199,26 +196,23 @@ import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
 import RowActions from "@/components/RowActions/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
-import { ref } from "vue";
+import { reactive, ref, watch } from "vue";
 import type { FormInstance } from "element-plus";
-import type { WebsiteConfig, WebsitePattern } from "@/types/website";
+import type { WebsiteConfigEditorProps, WebsitePattern } from "@/types/website";
 import { cloneWebsiteDraft } from "@/views/website-inquiries/options";
 import { useWebsitePatternRules } from "../useWebsiteConfigRules";
+import WebsiteConfigSelect from "./WebsiteConfigSelect.vue";
 import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
-const props = defineProps<{
-  config: WebsiteConfig;
-  editable: boolean;
-  saving: boolean;
-  saveConfig: (next: WebsiteConfig) => Promise<boolean>;
-  deleteConfig: (next: WebsiteConfig) => Promise<boolean>;
-}>();
+const props = defineProps<WebsiteConfigEditorProps & { rows: WebsitePattern[] }>();
+const labels = reactive<Record<string, string>>({});
+watch(() => props.references, (value) => Object.assign(labels, value), { immediate: true });
 const visible = ref(false);
 const isNew = ref(false);
 const record = ref<WebsitePattern>();
 const formRef = ref<FormInstance>();
 const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
-const rules = useWebsitePatternRules(() => props.config, record);
+const rules = useWebsitePatternRules();
 
 function openEditor(pattern?: WebsitePattern) {
   isNew.value = !pattern;
@@ -239,25 +233,14 @@ async function applyEdit() {
   if (!record.value || !props.editable || props.saving) return;
   await submitForm(async () => {
     if (!record.value || !props.editable || props.saving) return;
-    const next = cloneWebsiteDraft(props.config);
     const result = cloneWebsiteDraft(record.value);
-    const index = next.patterns.findIndex((row) => row.id === result.id);
-    if (index < 0) next.patterns.push(result);
-    else next.patterns.splice(index, 1, result);
-    if (await props.saveConfig(next)) visible.value = false;
+    if (await props.saveRecord(result, isNew.value)) visible.value = false;
   });
-}
-
-async function deleteRecord(index: number) {
-  if (!props.editable || props.saving) return;
-  const next = cloneWebsiteDraft(props.config);
-  next.patterns.splice(index, 1);
-  await props.deleteConfig(next);
 }
 
 function attractionNames(pattern: WebsitePattern) {
   return pattern.attractionIds
-    .map((id) => props.config.attractions.find((item) => item.id === id)?.nameZh ?? id)
+    .map((id) => labels[id] ?? id)
     .join(" → ");
 }
 

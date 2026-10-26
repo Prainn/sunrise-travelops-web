@@ -4,7 +4,6 @@ import type { FormItemRule, FormRules } from "element-plus";
 import type {
   WebsiteAttraction,
   WebsiteCity,
-  WebsiteConfig,
   WebsiteConfigHotel,
   WebsitePattern,
   WebsiteRoute,
@@ -61,22 +60,8 @@ function nameRules(t: Translate) {
   };
 }
 
-function cityRules(t: Translate, config: () => WebsiteConfig, field = "websiteConfig.city"): FormItemRule[] {
-  return [
-    {
-      required: true,
-      message: t("websiteConfig.validation.selectRequired", { field: t(field) }),
-      trigger: "change",
-    },
-    {
-      validator: (_rule, value: string, callback) => {
-        callback(value && !config().cities.some((city) => city.id === value)
-          ? new Error(t("websiteConfig.validation.cityMissing"))
-          : undefined);
-      },
-      trigger: "change",
-    },
-  ];
+function cityRules(t: Translate, field = "websiteConfig.city"): FormItemRule[] {
+  return [{ required: true, message: t("websiteConfig.validation.selectRequired", { field: t(field) }), trigger: "change" }];
 }
 
 export function useWebsiteCityRules() {
@@ -84,7 +69,7 @@ export function useWebsiteCityRules() {
   return computed<FormRules<WebsiteCity>>(() => nameRules(t));
 }
 
-export function useWebsiteHotelRules(config: () => WebsiteConfig) {
+export function useWebsiteHotelRules() {
   const { t } = useI18n();
   return computed<FormRules<WebsiteConfigHotel>>(() => ({
     ...nameRules(t),
@@ -93,7 +78,7 @@ export function useWebsiteHotelRules(config: () => WebsiteConfig) {
       message: t("websiteConfig.validation.maxLength", { field: t("common.nameEn"), max: 150 }),
       trigger: "blur",
     }],
-    cityId: cityRules(t, config, "websiteConfig.belongsToCity"),
+    cityId: cityRules(t, "websiteConfig.belongsToCity"),
     price: [{
       validator: (_rule, value: string, callback) => {
         callback(typeof value === "string" && /^(0|[1-9]\d{0,9})(\.\d{1,2})?$/.test(value)
@@ -105,89 +90,49 @@ export function useWebsiteHotelRules(config: () => WebsiteConfig) {
   }));
 }
 
-export function useWebsiteAttractionRules(config: () => WebsiteConfig, record: Ref<WebsiteAttraction | undefined>) {
+export function useWebsiteAttractionRules() {
   const { t } = useI18n();
   return computed<FormRules<WebsiteAttraction>>(() => ({
     ...nameRules(t),
-    cityId: cityRules(t, config, "websiteConfig.belongsToCity"),
+    cityId: cityRules(t, "websiteConfig.belongsToCity"),
     copyKey: requiredText(t, "websiteConfig.attractions.copyKey", 100),
-    parentId: [{
-      validator: (_rule, value: string | null, callback) => {
-        const item = record.value;
-        if (!value || !item) return callback();
-        const attractions = new Map(config().attractions.map((row) => [row.id, row]));
-        let parent = attractions.get(value);
-        if (!parent || parent.cityId !== item.cityId) {
-          return callback(new Error(t("websiteConfig.validation.parentSameCity")));
-        }
-        const visited = new Set([item.id]);
-        while (parent) {
-          if (visited.has(parent.id)) return callback(new Error(t("websiteConfig.validation.parentCycle")));
-          visited.add(parent.id);
-          if (!parent.parentId) break;
-          parent = attractions.get(parent.parentId);
-          if (!parent) return callback(new Error(t("websiteConfig.validation.parentSameCity")));
-        }
-        callback();
-      },
-      trigger: "change",
-    }],
   }));
 }
 
-export function useWebsiteRouteRules(config: () => WebsiteConfig) {
+export function useWebsiteRouteRules() {
   const { t } = useI18n();
   return computed<FormRules<WebsiteRoute>>(() => ({
     nameZh: requiredText(t, "websiteConfig.routes.nameZh"),
     nameEn: requiredText(t, "websiteConfig.routes.nameEn"),
-    fromCityId: cityRules(t, config, "websiteConfig.routes.fromCity"),
-    toCityId: cityRules(t, config, "websiteConfig.routes.toCity"),
+    fromCityId: cityRules(t, "websiteConfig.routes.fromCity"),
+    toCityId: cityRules(t, "websiteConfig.routes.toCity"),
   }));
 }
 
-export function useWebsitePatternRules(config: () => WebsiteConfig, record: Ref<WebsitePattern | undefined>) {
+export function useWebsitePatternRules() {
   const { t } = useI18n();
   return computed<FormRules<WebsitePattern>>(() => ({
     ...nameRules(t),
-    cityId: cityRules(t, config, "websiteConfig.belongsToCity"),
-    attractionIds: [
-      { type: "array", max: 200, message: t("websiteConfig.validation.maxAttractions"), trigger: "change" },
-      {
-        validator: (_rule, value: string[], callback) => {
-          const cityId = record.value?.cityId;
-          callback(value.some((id) => !config().attractions.some((item) => item.id === id && item.cityId === cityId))
-            ? new Error(t("websiteConfig.validation.patternAttractions"))
-            : undefined);
-        },
-        trigger: "change",
-      },
-    ],
+    cityId: cityRules(t, "websiteConfig.belongsToCity"),
+    attractionIds: [{ type: "array", max: 200, message: t("websiteConfig.validation.maxAttractions"), trigger: "change" }],
   }));
 }
 
-export function useWebsiteSkeletonRules(config: () => WebsiteConfig, record: Ref<WebsiteSkeleton | undefined>) {
+export function useWebsiteSkeletonRules(record: Ref<WebsiteSkeleton | undefined>) {
   const { t } = useI18n();
   return computed<FormRules<WebsiteSkeleton>>(() => {
     const rules: FormRules<WebsiteSkeleton> = {
       ...nameRules(t),
       days: [{ type: "array", required: true, min: 1, max: 365, message: t("websiteConfig.validation.skeletonDays"), trigger: "change" }],
     };
-    record.value?.days.forEach((day, index) => {
-      rules[`days.${index}.cityId`] = cityRules(t, config);
-      rules[`days.${index}.patternId`] = [{
-        validator: (_rule, value: string | null, callback) => {
-          callback(value && !config().patterns.some((pattern) => pattern.id === value && pattern.cityId === day.cityId)
-            ? new Error(t("websiteConfig.validation.patternCity"))
-            : undefined);
-        },
-        trigger: "change",
-      }];
+    record.value?.days.forEach((_day, index) => {
+      rules[`days.${index}.cityId`] = cityRules(t);
     });
     return rules;
   });
 }
 
-export function useWebsiteTemplateRules(config: () => WebsiteConfig, record: Ref<WebsiteTemplate | undefined>) {
+export function useWebsiteTemplateRules(record: Ref<WebsiteTemplate | undefined>) {
   const { t } = useI18n();
   const copyRules = (field: string): FormItemRule[] => [
     ...requiredText(t, field, 20000),
@@ -208,17 +153,7 @@ export function useWebsiteTemplateRules(config: () => WebsiteConfig, record: Ref
   ];
   return computed<FormRules<WebsiteTemplate>>(() => ({
     name: requiredText(t, "websiteConfig.templates.name"),
-    code: [
-      ...requiredText(t, "websiteConfig.templates.code", 100),
-      {
-        validator: (_rule, value: string, callback) => {
-          callback(config().templates.some((template) => template.id !== record.value?.id && template.code === value)
-            ? new Error(t("websiteConfig.validation.templateCodeDuplicate"))
-            : undefined);
-        },
-        trigger: "change",
-      },
-    ],
+    code: requiredText(t, "websiteConfig.templates.code", 100),
     zh: copyRules("websiteConfig.templates.zh"),
     en: copyRules("websiteConfig.templates.en"),
   }));

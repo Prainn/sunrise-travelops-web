@@ -147,6 +147,7 @@ export const constantRoutes: RouteRecordRaw[] = [
           icon: "el-icon-UserFilled",
           keepAlive: true,
           scopes: ["headquarters", "linxi"],
+          roles: ["ROOT", "ADMIN", "EXECUTIVE", "BUSINESS_MANAGER"],
           perms: ["sys:business-group:list"],
         },
       },

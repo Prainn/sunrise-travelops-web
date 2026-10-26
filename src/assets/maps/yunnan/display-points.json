@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "mapId": "yunnan-eps-2026",
+  "viewBox": [
+    0,
+    0,
+    1050,
+    1100
+  ],
+  "coordinateSystem": "SVG display units (not longitude/latitude)",
+  "geographicCoordinateSystem": "WGS84",
+  "controlPoints": [
+    {
+      "name": "昆明",
+      "longitude": 102.7169,
+      "latitude": 25.0399,
+      "svg": [
+        621.3834745762712,
+        541.9287856071963
+      ]
+    },
+    {
+      "name": "大理",
+      "longitude": 100.2469,
+      "latitude": 25.597,
+      "svg": [
+        342.2033898305085,
+        480.32533733133437
+      ]
+    },
+    {
+      "name": "丽江",
+      "longitude": 100.225,
+      "latitude": 26.8596,
+      "svg": [
+        346.6631355932203,
+        318.7278860569715
+      ]
+    },
+    {
+      "name": "香格里拉",
+      "longitude": 99.7078,
+      "latitude": 27.8251,
+      "svg": [
+        286.01059322033893,
+        199.09220389805097
+      ]
+    },
+    {
+      "name": "德钦",
+      "longitude": 98.91301,
+      "latitude": 28.48652,
+      "svg": [
+        200.38347457627117,
+        111.59745127436281
+      ]
+    }
+  ],
+  "affine": {
+    "input": [
+      "longitude",
+      "latitude",
+      1
+    ],
+    "x": [
+      113.44217368557335,
+      2.8571775353768545,
+      -11102.408484285641
+    ],
+    "y": [
+      -3.7276915038359033,
+      -128.43827372702543,
+      4141.669405473358
+    ],
+    "maxControlResidual": 3.61955105579815
+  },
+  "accuracyNote": "展示用近似校准，控制点覆盖现有六个云南目的地，非已知地理投影；固定点优先，不用于导航或自动扩展全省任意点。新增目的地需补校准点。",
+  "points": [
+    {
+      "name": "昆明",
+      "code": "CITY-001",
+      "devResourceCityId": "acff9df7-30e0-4c5e-865a-5e9659185863",
+      "longitude": 102.7169,
+      "latitude": 25.0399,
+      "regionAdcode": "530100",
+      "svg": [
+        621.383,
+        541.929
+      ],
+      "placement": "printed-city-symbol"
+    },
+    {
+      "name": "大理",
+      "code": "CITY-002",
+      "devResourceCityId": "599ff71c-048a-48c6-9350-3648f12b34dd",
+      "longitude": 100.2469,
+      "latitude": 25.597,
+      "regionAdcode": "532900",
+      "svg": [
+        342.203,
+        480.325
+      ],
+      "placement": "printed-city-symbol"
+    },
+    {
+      "name": "丽江",
+      "code": "CITY-003",
+      "devResourceCityId": "1940a869-4ec8-433d-b040-9582fe6070a1",
+      "longitude": 100.225,
+      "latitude": 26.8596,
+      "regionAdcode": "530700",
+      "svg": [
+        346.663,
+        318.728
+      ],
+      "placement": "printed-city-symbol"
+    },
+    {
+      "name": "香格里拉",
+      "code": "CITY-015",
+      "devResourceCityId": "89b3ace7-1ac6-4434-91d5-2a60fff874f6",
+      "longitude": 99.7078,
+      "latitude": 27.8251,
+      "regionAdcode": "533400",
+      "svg": [
+        286.011,
+        199.092
+      ],
+      "placement": "printed-city-symbol"
+    },
+    {
+      "name": "德钦",
+      "code": "CITY-016",
+      "devResourceCityId": "19671188-13ad-4a2e-9b80-4499bd04f76b",
+      "longitude": 98.91301,
+      "latitude": 28.48652,
+      "regionAdcode": "533400",
+      "svg": [
+        200.383,
+        111.597
+      ],
+      "placement": "printed-city-symbol"
+    },
+    {
+      "name": "巴拉格宗",
+      "code": "CITY-017",
+      "devResourceCityId": "dcc6773a-441e-41e9-ac02-9127e68279b8",
+      "longitude": 99.4611168,
+      "latitude": 28.3433766,
+      "regionAdcode": "533400",
+      "svg": [
+        261.659,
+        130.535
+      ],
+      "placement": "affine-interpolation"
+    }
+  ]
+}

@@ -10,7 +10,7 @@
     </TableToolbar>
     <DataTable
       fill
-      :data="config.cities"
+      :data="rows"
       row-key="id"
       :empty-text="$t('websiteConfig.cities.empty')"
     >
@@ -40,7 +40,7 @@
         fixed="right"
         :show-overflow-tooltip="false"
       >
-        <template #default="{ row, $index }">
+        <template #default="{ row }">
           <RowActions>
             <el-button type="primary" link @click="openEditor(row)">
               {{ editable ? $t("common.edit") : $t("common.view") }}
@@ -49,7 +49,7 @@
               v-if="editable"
               type="danger"
               link
-              @click="deleteRecord($index)"
+              @click="props.deleteRecord(row.id)"
             >
               {{ $t("common.delete") }}
             </el-button>
@@ -127,19 +127,13 @@ import RowActions from "@/components/RowActions/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { ref } from "vue";
 import type { FormInstance } from "element-plus";
-import type { WebsiteCity, WebsiteConfig } from "@/types/website";
+import type { WebsiteCity, WebsiteConfigEditorProps } from "@/types/website";
 import { cloneWebsiteDraft } from "@/views/website-inquiries/options";
 import WebsiteResourceSelect from "@/views/website-inquiries/components/WebsiteResourceSelect.vue";
 import { useWebsiteCityRules } from "../useWebsiteConfigRules";
 import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
-const props = defineProps<{
-  config: WebsiteConfig;
-  editable: boolean;
-  saving: boolean;
-  saveConfig: (next: WebsiteConfig) => Promise<boolean>;
-  deleteConfig: (next: WebsiteConfig) => Promise<boolean>;
-}>();
+const props = defineProps<WebsiteConfigEditorProps & { rows: WebsiteCity[] }>();
 const visible = ref(false);
 const isNew = ref(false);
 const record = ref<WebsiteCity>();
@@ -165,19 +159,8 @@ async function applyEdit() {
   if (!record.value || !props.editable || props.saving) return;
   await submitForm(async () => {
     if (!record.value || !props.editable || props.saving) return;
-    const next = cloneWebsiteDraft(props.config);
     const result = cloneWebsiteDraft(record.value);
-    const index = next.cities.findIndex((row) => row.id === result.id);
-    if (index < 0) next.cities.push(result);
-    else next.cities.splice(index, 1, result);
-    if (await props.saveConfig(next)) visible.value = false;
+    if (await props.saveRecord(result, isNew.value)) visible.value = false;
   });
-}
-
-async function deleteRecord(index: number) {
-  if (!props.editable || props.saving) return;
-  const next = cloneWebsiteDraft(props.config);
-  next.cities.splice(index, 1);
-  await props.deleteConfig(next);
 }
 </script>
