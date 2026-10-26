@@ -88,6 +88,11 @@ export function useWebsiteHotelRules(config: () => WebsiteConfig) {
   const { t } = useI18n();
   return computed<FormRules<WebsiteConfigHotel>>(() => ({
     ...nameRules(t),
+    nameEn: [{
+      max: 150,
+      message: t("websiteConfig.validation.maxLength", { field: t("common.nameEn"), max: 150 }),
+      trigger: "blur",
+    }],
     cityId: cityRules(t, config, "websiteConfig.belongsToCity"),
     price: [{
       validator: (_rule, value: string, callback) => {
