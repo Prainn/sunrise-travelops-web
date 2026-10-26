@@ -10,7 +10,7 @@
     "platformSearch": "Search platform accounts"
   },
   "websiteVisits": {
-    "dateRange": "Export date range (Beijing time)",
+    "dateRange": "Date range",
     "searchPlaceholder": "WhatsApp reference / Website inquiry number",
     "generate": "Create inquiry",
     "converted": "Inquiry created",
@@ -26,6 +26,8 @@
     "externalReferrer": "External referrer"
   },
   "operationLog": {
+    "dateRange": "Date range",
+    "actorPlaceholder": "Search operator names",
     "category": "Category",
     "action": "Action",
     "result": "Result",
@@ -1168,7 +1170,7 @@
     "dayCount": "{days} day | {days} days",
     "pax": "Guests",
     "contactInfo": "Contact details",
-    "receivedAt": "Received at (Beijing time)",
+    "receivedAt": "Received at",
     "contactChannel": "Contact channel",
     "whatsappSourceId": "WhatsApp source ID",
     "websiteInquiryNo": "Website inquiry No.",
