@@ -10,7 +10,7 @@
     "platformSearch": "搜索平台账号名称"
   },
   "websiteVisits": {
-    "dateRange": "日期范围（北京时间）",
+    "dateRange": "日期范围",
     "searchPlaceholder": "WhatsApp来源编号 / 网站询盘编号",
     "generate": "生成询盘",
     "converted": "已生成询盘",
@@ -26,6 +26,8 @@
     "externalReferrer": "外部引荐页"
   },
   "operationLog": {
+    "dateRange": "时间范围",
+    "actorPlaceholder": "搜索操作人名称",
     "category": "分类",
     "action": "操作",
     "result": "结果",
@@ -1151,7 +1153,7 @@
     "dayCount": "{days} 天",
     "pax": "人数",
     "contactInfo": "联系方式",
-    "receivedAt": "收到时间（北京时间）",
+    "receivedAt": "收到时间",
     "contactChannel": "联系渠道",
     "whatsappSourceId": "WhatsApp 来源编号",
     "websiteInquiryNo": "网站询盘编号",

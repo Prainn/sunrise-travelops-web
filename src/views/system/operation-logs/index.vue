@@ -31,6 +31,23 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item :label="$t('operationLog.dateRange')" class="filter-bar__wide">
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          value-format="YYYY-MM-DD"
+          :start-placeholder="$t('common.startDate')"
+          :end-placeholder="$t('common.endDate')"
+        />
+      </el-form-item>
+      <el-form-item :label="$t('common.operator')">
+        <el-input
+          v-model="actorName"
+          :placeholder="$t('operationLog.actorPlaceholder')"
+          maxlength="80"
+          clearable
+        />
+      </el-form-item>
     </FilterBar>
 
     <SectionCard fill>
@@ -40,7 +57,7 @@
         :loading="loading"
         :data="list"
         :error="loadError"
-        :filtered="Boolean(category || scope)"
+        :filtered="Boolean(category || scope || dateRange || actorName.trim())"
         row-key="id"
         @retry="fetchData"
       >
@@ -129,6 +146,8 @@ const scopes: { value: LoginScope; label: string }[] = [
 ];
 const scope = ref<LoginScope | "">("");
 const category = ref<OperationCategory | "">("");
+const dateRange = ref<[string, string] | null>(null);
+const actorName = ref("");
 const page = ref(1);
 const pageSize = ref(20);
 const total = ref(0);
@@ -137,7 +156,7 @@ const loadError = ref("");
 const list = ref<OperationLog[]>([]);
 const requestRows = useDebounceFn(fetchData, 300);
 
-watch([category, scope], () => {
+watch([category, scope, dateRange, actorName], () => {
   page.value = 1;
   requestRows();
 });
@@ -168,6 +187,9 @@ async function fetchData() {
       pageSize: pageSize.value,
       category: category.value || undefined,
       scope: scope.value || undefined,
+      start: dateRange.value?.[0],
+      end: dateRange.value?.[1],
+      actorName: actorName.value.trim() || undefined,
     });
     list.value = result.list;
     total.value = result.total;
@@ -181,6 +203,8 @@ async function fetchData() {
 function reset() {
   scope.value = "";
   category.value = "";
+  dateRange.value = null;
+  actorName.value = "";
   page.value = 1;
   requestRows();
 }
