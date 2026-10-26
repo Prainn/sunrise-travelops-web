@@ -130,6 +130,9 @@ export interface ResourceRecord extends ResourceAuditRecord {
 
 export interface CityRecord extends ResourceRecord {
   province: string;
+  /** WGS84 经度；与纬度同时为空或同时有值，0 为有效值。 */
+  longitude: number | null;
+  latitude: number | null;
 }
 
 export interface TransportRecord extends ResourceRecord {

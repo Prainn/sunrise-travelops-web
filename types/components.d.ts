@@ -162,6 +162,7 @@ declare module 'vue' {
     WebsiteConfigHotels: typeof import('./../src/views/resources/website/components/WebsiteConfigHotels.vue')['default']
     WebsiteConfigPatterns: typeof import('./../src/views/resources/website/components/WebsiteConfigPatterns.vue')['default']
     WebsiteConfigRoutes: typeof import('./../src/views/resources/website/components/WebsiteConfigRoutes.vue')['default']
+    WebsiteConfigSelect: typeof import('./../src/views/resources/website/components/WebsiteConfigSelect.vue')['default']
     WebsiteConfigSkeletons: typeof import('./../src/views/resources/website/components/WebsiteConfigSkeletons.vue')['default']
     WebsiteConfigTemplates: typeof import('./../src/views/resources/website/components/WebsiteConfigTemplates.vue')['default']
     WebsiteDayAttractions: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteDayAttractions.vue')['default']

@@ -45,7 +45,7 @@
         <el-table-column
           prop="whatsapp_reference"
           :label="$t('websiteInquiry.whatsappSourceId')"
-          min-width="180"
+          min-width="80"
           fixed="left"
         />
         <el-table-column
@@ -67,7 +67,7 @@
         />
         <el-table-column :label="$t('websiteVisits.source')" min-width="200" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ row.utm_source || row.external_referrer || $t('common.notSet') }}
+            {{ row.utm_source || row.external_referrer || '' }}
           </template>
         </el-table-column>
         <el-table-column

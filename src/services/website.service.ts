@@ -3,6 +3,11 @@ import type { PageResult } from "@/types/common";
 import type {
   WebsiteBusinessUnit,
   WebsiteConfig,
+  WebsiteConfigGroup,
+  WebsiteConfigRecord,
+  WebsiteConfigPage,
+  WebsiteConfigOption,
+  WebsiteConfigListQuery,
   WebsiteInquiry,
   WebsiteInquiryInput,
   WebsiteInquiryLog,
@@ -221,8 +226,22 @@ export const websiteService = {
   config(version?: number, businessUnit?: WebsiteBusinessUnit) {
     return request.get<WebsiteConfig>("/website/config", { params: { version, businessUnit } });
   },
-  saveConfig(config: WebsiteConfig, businessUnit?: WebsiteBusinessUnit) {
-    return request.put<WebsiteConfig>("/website/config", config, {params: {businessUnit}});
+  configRecords(group: WebsiteConfigGroup, query: WebsiteConfigListQuery) {
+    return request.get<WebsiteConfigPage>(`/website/config/${group}`, { params: { ...query } });
+  },
+  configOptions(group: WebsiteConfigGroup, query: WebsiteConfigListQuery) {
+    return request.get<PageResult<WebsiteConfigOption> & { version: number }>(
+      `/website/config/${group}/options`, { params: { ...query } },
+    );
+  },
+  createConfigRecord(group: WebsiteConfigGroup, version: number, record: WebsiteConfigRecord, businessUnit: WebsiteBusinessUnit) {
+    return request.post<{ version: number }>(`/website/config/${group}`, { version, record }, { params: { businessUnit } });
+  },
+  updateConfigRecord(group: WebsiteConfigGroup, version: number, record: WebsiteConfigRecord, businessUnit: WebsiteBusinessUnit) {
+    return request.put<{ version: number }>(`/website/config/${group}/${encodeURIComponent(record.id)}`, { version, record }, { params: { businessUnit } });
+  },
+  deleteConfigRecord(group: WebsiteConfigGroup, id: string, version: number, businessUnit: WebsiteBusinessUnit) {
+    return request.delete<{ version: number }>(`/website/config/${group}/${encodeURIComponent(id)}`, { body: { version }, params: { businessUnit } });
   },
   resource(kind: WebsiteResourceKind, id: string) {
     return request.get<WebsiteResourceDetail>(`/website/resources/${kind}/${encodeURIComponent(id)}`);

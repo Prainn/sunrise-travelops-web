@@ -66,6 +66,41 @@ export interface WebsiteConfig {
   skeletons: WebsiteSkeleton[];
   templates: WebsiteTemplate[];
 }
+export type WebsiteConfigGroup = Exclude<keyof WebsiteConfig, "version">;
+export type WebsiteConfigRecord = WebsiteConfig[WebsiteConfigGroup][number];
+export interface WebsiteConfigOption {
+  id: string;
+  value: string;
+  label: string;
+}
+
+export interface WebsiteConfigPage {
+  version: number;
+  list: WebsiteConfigRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+  references: Record<string, string>;
+}
+export interface WebsiteConfigListQuery {
+  businessUnit: WebsiteBusinessUnit;
+  version?: number;
+  page: number;
+  pageSize: number;
+  keyword?: string;
+  cityId?: string;
+  excludeId?: string;
+}
+export interface WebsiteConfigEditorProps {
+  version: number;
+  businessUnit: WebsiteBusinessUnit;
+  references: Record<string, string>;
+  editable: boolean;
+  saving: boolean;
+  saveRecord: (record: WebsiteConfigRecord, isNew: boolean) => Promise<boolean>;
+  deleteRecord: (id: string) => Promise<boolean>;
+}
+
 export interface WebsiteInquiryInput {
   businessUnit?: WebsiteBusinessUnit;
   countryItemId: string;

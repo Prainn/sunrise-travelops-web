@@ -257,6 +257,8 @@ const cityApi = createCrud<CityRecord>("cities", (data) => ({
   code: data.code.trim(),
   name: data.name.trim(),
   province: data.province.trim(),
+  longitude: data.longitude,
+  latitude: data.latitude,
   status: data.status,
 }));
 const cities = reactive<CityRecord[]>([]);

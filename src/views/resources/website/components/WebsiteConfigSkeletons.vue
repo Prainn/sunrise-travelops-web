@@ -4,7 +4,6 @@
       <el-button
         v-if="editable"
         type="primary"
-        :disabled="!config.cities.length"
         @click="openEditor()"
       >
         {{ $t("common.create") }}
@@ -15,7 +14,7 @@
     </TableToolbar>
     <DataTable
       fill
-      :data="config.skeletons"
+      :data="rows"
       row-key="id"
       :empty-text="$t('websiteConfig.skeletons.empty')"
     >
@@ -51,7 +50,7 @@
         fixed="right"
         :show-overflow-tooltip="false"
       >
-        <template #default="{ row, $index }">
+        <template #default="{ row }">
           <RowActions>
             <el-button type="primary" link @click="openEditor(row)">
               {{ editable ? $t("common.edit") : $t("common.view") }}
@@ -60,7 +59,7 @@
               v-if="editable"
               type="danger"
               link
-              @click="deleteRecord($index)"
+              @click="props.deleteRecord(row.id)"
             >
               {{ $t("common.delete") }}
             </el-button>
@@ -107,7 +106,7 @@
             </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item prop="days">
+        <el-form-item prop="days" label-width="0">
           <div class="w-full">
             <TableToolbar v-if="editable" :refreshable="false" class="mb-[8px]">
               <el-button
@@ -127,36 +126,42 @@
               </el-table-column>
               <el-table-column :label="$t('websiteConfig.city')" min-width="160">
                 <template #default="{ row, $index }">
-                  <el-form-item :prop="`days.${$index}.cityId`" inline-message class="my-[8px]">
-                    <el-select v-model="row.cityId" autocomplete="new-password" filterable>
-                      <el-option
-                        v-for="city in config.cities"
-                        :key="city.id"
-                        :value="city.id"
-                        :label="city.nameZh"
-                      />
-                    </el-select>
+                  <el-form-item
+                    :prop="`days.${$index}.cityId`"
+                    label-width="0"
+                    inline-message
+                    class="my-[8px]"
+                  >
+                    <WebsiteConfigSelect
+                      v-model="row.cityId"
+                      group="cities"
+                      :version="version"
+                      :business-unit="businessUnit"
+                      :labels="labels"
+                      @labels="Object.assign(labels, $event)"
+                    />
                   </el-form-item>
                 </template>
               </el-table-column>
               <el-table-column :label="$t('websiteConfig.tabs.patterns')" min-width="200">
                 <template #default="{ row, $index }">
-                  <el-form-item :prop="`days.${$index}.patternId`" inline-message class="my-[8px]">
-                    <el-select
+                  <el-form-item
+                    :prop="`days.${$index}.patternId`"
+                    label-width="0"
+                    inline-message
+                    class="my-[8px]"
+                  >
+                    <WebsiteConfigSelect
                       v-model="row.patternId"
-                      autocomplete="new-password"
-                      filterable
-                      clearable
-                      :value-on-clear="null"
-                      :empty-values="[null, undefined]"
-                    >
-                      <el-option
-                        v-for="pattern in config.patterns.filter((item) => item.cityId === row.cityId)"
-                        :key="pattern.id"
-                        :value="pattern.id"
-                        :label="pattern.nameZh"
-                      />
-                    </el-select>
+                      group="patterns"
+                      :version="version"
+                      :business-unit="businessUnit"
+                      :labels="labels"
+                      :city-id="row.cityId"
+                      :disabled="!row.cityId"
+                      nullable
+                      @labels="Object.assign(labels, $event)"
+                    />
                   </el-form-item>
                 </template>
               </el-table-column>
@@ -217,26 +222,23 @@ import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
 import RowActions from "@/components/RowActions/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
-import { ref } from "vue";
+import { reactive, ref, watch } from "vue";
 import type { FormInstance } from "element-plus";
-import type { WebsiteConfig, WebsiteSkeleton } from "@/types/website";
+import type { WebsiteConfigEditorProps, WebsiteSkeleton } from "@/types/website";
 import { cloneWebsiteDraft } from "@/views/website-inquiries/options";
 import { useWebsiteSkeletonRules } from "../useWebsiteConfigRules";
+import WebsiteConfigSelect from "./WebsiteConfigSelect.vue";
 import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
-const props = defineProps<{
-  config: WebsiteConfig;
-  editable: boolean;
-  saving: boolean;
-  saveConfig: (next: WebsiteConfig) => Promise<boolean>;
-  deleteConfig: (next: WebsiteConfig) => Promise<boolean>;
-}>();
+const props = defineProps<WebsiteConfigEditorProps & { rows: WebsiteSkeleton[] }>();
+const labels = reactive<Record<string, string>>({});
+watch(() => props.references, (value) => Object.assign(labels, value), { immediate: true });
 const visible = ref(false);
 const isNew = ref(false);
 const record = ref<WebsiteSkeleton>();
 const formRef = ref<FormInstance>();
 const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
-const rules = useWebsiteSkeletonRules(() => props.config, record);
+const rules = useWebsiteSkeletonRules(record);
 
 function openEditor(skeleton?: WebsiteSkeleton) {
   isNew.value = !skeleton;
@@ -256,25 +258,14 @@ async function applyEdit() {
   if (!record.value || !props.editable || props.saving) return;
   await submitForm(async () => {
     if (!record.value || !props.editable || props.saving) return;
-    const next = cloneWebsiteDraft(props.config);
     const result = cloneWebsiteDraft(record.value);
-    const index = next.skeletons.findIndex((row) => row.id === result.id);
-    if (index < 0) next.skeletons.push(result);
-    else next.skeletons.splice(index, 1, result);
-    if (await props.saveConfig(next)) visible.value = false;
+    if (await props.saveRecord(result, isNew.value)) visible.value = false;
   });
-}
-
-async function deleteRecord(index: number) {
-  if (!props.editable || props.saving) return;
-  const next = cloneWebsiteDraft(props.config);
-  next.skeletons.splice(index, 1);
-  await props.deleteConfig(next);
 }
 
 function citySequence(skeleton: WebsiteSkeleton) {
   return skeleton.days
-    .map((day) => props.config.cities.find((city) => city.id === day.cityId)?.nameZh ?? day.cityId)
+    .map((day) => labels[day.cityId] ?? day.cityId)
     .join(" → ");
 }
 

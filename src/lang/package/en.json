@@ -728,7 +728,71 @@
     "guideLeaves": "Guide Leave",
     "lastDays": "Last {days} days",
     "newInquiries": "New Inquiries",
-    "noAccessibleStats": "No stats available for this account"
+    "noAccessibleStats": "No stats available for this account",
+    "tourMap": {
+      "title": "Yunnan tour map",
+      "subtitle": "Planned positions of tours in progress, based on itineraries. Not real-time tracking.",
+      "date": "Date",
+      "destinations": "Destinations",
+      "pointSummary": "{tours} tours · {people} people",
+      "noToursHere": "No tours in progress on this day",
+      "noTours": "No tours in progress on this day",
+      "peopleCount": "{count} people",
+      "regionNoDestinations": "No calibrated destinations with tours in this prefecture",
+      "uncalibrated": "Map point pending calibration",
+      "totals": {
+        "tours": "Tours",
+        "people": "People",
+        "located": "On map",
+        "unlocated": "Unlocated",
+        "pickups": "Pickups",
+        "drops": "Drop-offs"
+      },
+      "headcount": "Adults {adults} · Children {children} · Leaders {leaders} · Total {total}",
+      "guidePending": "To be assigned",
+      "totalDays": "{days} days",
+      "dayProgress": "Day {day} of {days}",
+      "routeToday": "Today's route",
+      "routeFull": "Full route",
+      "routeManual": "Manual tour without a linked itinerary; route unavailable",
+      "routeEmpty": "No mappable route points",
+      "routeGap": "Some stops are unlocated or uncalibrated; the route breaks at those points",
+      "todayPlan": "Today's plan",
+      "nextDayPlan": "Next day's plan",
+      "todayEmpty": "This date is outside the itinerary",
+      "nextDayEmpty": "No itinerary for the next day",
+      "dayLabel": "Day {day}",
+      "plannedStops": "Planned stops",
+      "stay": "Stay",
+      "overnightStatus": {
+        "planned": "Overnight planned",
+        "none": "No overnight stay",
+        "unconfirmed": "Stay to be confirmed"
+      },
+      "hotelPlans": "Hotels",
+      "dayDescription": "Description",
+      "attractions": "Attractions",
+      "meals": "Meals",
+      "transport": "Transport",
+      "roles": {
+        "departure": "Departure",
+        "visit": "Visit",
+        "arrival": "Arrival",
+        "overnight": "Overnight"
+      },
+      "issues": {
+        "manual_tour": "Manual tour",
+        "source_missing": "Source itinerary missing",
+        "date_not_covered": "Date not in itinerary",
+        "city_unlinked": "Stop not linked to a city",
+        "city_unmatched": "City not matched",
+        "outside_yunnan": "Outside Yunnan",
+        "coordinates_missing": "City coordinates missing",
+        "no_location": "No planned stop",
+        "unknown": "Other location issue"
+      },
+      "coordinateSource": "City coordinate references:"
+    }
   },
   "profile": {
     "avatarUpdatedSuccess": "Avatar updated",
@@ -1095,7 +1159,9 @@
   "city": {
     "create": "Add city",
     "edit": "Edit city",
-    "province": "Province / region"
+    "province": "Province / region",
+    "longitude": "Longitude",
+    "latitude": "Latitude"
   },
   "planning": {
     "secondLanguage": "Second language",
@@ -1763,7 +1829,6 @@
     "direct": {
       "orderNo": "Order No.",
       "receivedDate": "Received Date",
-      "receivedMonth": "Received Month",
       "source": "Source",
       "creator": "Sales Coordinator",
       "receivingAccount": "Receiving Account",
@@ -1808,6 +1873,7 @@
         "linxiCustomer": "Source customer",
         "website": "Customer name"
       },
+      "numericSourceConfirm": "This may be a Ctrip order number. Confirm? Cancel will undo this source change.",
       "collectorPlaceholder": "Change receiving coordinator",
       "operatorPlaceholder": "Change operating coordinator",
       "receivingGroupPlaceholder": "Select a business group",

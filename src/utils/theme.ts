@@ -121,3 +121,35 @@ export function toggleSidebarColor(isBlueSidebar: boolean) {
     document.documentElement.classList.remove("sidebar-color-blue");
   }
 }
+
+/** 读取根元素上的主题 CSS 变量，缺失时使用回退色。 */
+export function getCssVar(name: string, fallback: string) {
+  if (typeof window === "undefined") return fallback;
+
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+}
+
+/** 为 hex 或 rgb 颜色附加透明度，供图表配色使用。 */
+export function colorWithAlpha(color: string, alpha: number) {
+  const value = color.trim();
+
+  if (value.startsWith("#")) {
+    const hex =
+      value.length === 4
+        ? `#${value[1]}${value[1]}${value[2]}${value[2]}${value[3]}${value[3]}`
+        : value;
+    const rgb = Number.parseInt(hex.slice(1), 16);
+    const r = (rgb >> 16) & 255;
+    const g = (rgb >> 8) & 255;
+    const b = rgb & 255;
+
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  const parts = value.match(/\d+(\.\d+)?/g);
+  if (parts && parts.length >= 3) {
+    return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`;
+  }
+
+  return value;
+}

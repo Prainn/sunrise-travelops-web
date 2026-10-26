@@ -10,13 +10,13 @@
     </TableToolbar>
     <DataTable
       fill
-      :data="config.hotels"
+      :data="rows"
       row-key="id"
       :empty-text="$t('websiteConfig.hotels.empty')"
     >
       <el-table-column :label="$t('common.cityRegion')" min-width="120">
         <template #default="{ row }">
-          {{ config.cities.find((city) => city.id === row.cityId)?.nameZh ?? row.cityId }}
+          {{ labels[row.cityId] ?? row.cityId }}
         </template>
       </el-table-column>
       <el-table-column prop="nameZh" :label="$t('common.nameZh')" min-width="160" />
@@ -51,7 +51,7 @@
         fixed="right"
         :show-overflow-tooltip="false"
       >
-        <template #default="{ row, $index }">
+        <template #default="{ row }">
           <RowActions>
             <el-button type="primary" link @click="openEditor(row)">
               {{ editable ? $t("common.edit") : $t("common.view") }}
@@ -60,7 +60,7 @@
               v-if="editable"
               type="danger"
               link
-              @click="deleteRecord($index)"
+              @click="props.deleteRecord(row.id)"
             >
               {{ $t("common.delete") }}
             </el-button>
@@ -90,14 +90,14 @@
         label-width="auto"
       >
         <el-form-item :label="$t('common.cityRegion')" prop="cityId">
-          <el-select v-model="record.cityId" autocomplete="new-password" filterable>
-            <el-option
-              v-for="city in config.cities"
-              :key="city.id"
-              :value="city.id"
-              :label="city.nameZh"
-            />
-          </el-select>
+          <WebsiteConfigSelect
+            v-model="record.cityId"
+            group="cities"
+            :version="version"
+            :business-unit="businessUnit"
+            :labels="labels"
+            @labels="Object.assign(labels, $event)"
+          />
         </el-form-item>
         <el-form-item :label="$t('common.nameZh')" prop="nameZh">
           <el-input v-model="record.nameZh" maxlength="150" />
@@ -146,27 +146,24 @@ import DataTable from "@/components/DataTable/index.vue";
 import RowActions from "@/components/RowActions/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { formatMoney } from "@/utils";
-import { ref } from "vue";
+import { reactive, ref, watch } from "vue";
 import type { FormInstance } from "element-plus";
-import type { WebsiteConfig, WebsiteConfigHotel } from "@/types/website";
+import type { WebsiteConfigEditorProps, WebsiteConfigHotel } from "@/types/website";
 import { cloneWebsiteDraft } from "@/views/website-inquiries/options";
 import WebsiteResourceSelect from "@/views/website-inquiries/components/WebsiteResourceSelect.vue";
 import { useWebsiteHotelRules } from "../useWebsiteConfigRules";
+import WebsiteConfigSelect from "./WebsiteConfigSelect.vue";
 import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
-const props = defineProps<{
-  config: WebsiteConfig;
-  editable: boolean;
-  saving: boolean;
-  saveConfig: (next: WebsiteConfig) => Promise<boolean>;
-  deleteConfig: (next: WebsiteConfig) => Promise<boolean>;
-}>();
+const props = defineProps<WebsiteConfigEditorProps & { rows: WebsiteConfigHotel[] }>();
+const labels = reactive<Record<string, string>>({});
+watch(() => props.references, (value) => Object.assign(labels, value), { immediate: true });
 const visible = ref(false);
 const isNew = ref(false);
 const record = ref<WebsiteConfigHotel>();
 const formRef = ref<FormInstance>();
 const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
-const rules = useWebsiteHotelRules(() => props.config);
+const rules = useWebsiteHotelRules();
 
 function openEditor(hotel?: WebsiteConfigHotel) {
   isNew.value = !hotel;
@@ -188,19 +185,8 @@ async function applyEdit() {
   if (!record.value || !props.editable || props.saving) return;
   await submitForm(async () => {
     if (!record.value || !props.editable || props.saving) return;
-    const next = cloneWebsiteDraft(props.config);
     const result = cloneWebsiteDraft(record.value);
-    const index = next.hotels.findIndex((row) => row.id === result.id);
-    if (index < 0) next.hotels.push(result);
-    else next.hotels.splice(index, 1, result);
-    if (await props.saveConfig(next)) visible.value = false;
+    if (await props.saveRecord(result, isNew.value)) visible.value = false;
   });
-}
-
-async function deleteRecord(index: number) {
-  if (!props.editable || props.saving) return;
-  const next = cloneWebsiteDraft(props.config);
-  next.hotels.splice(index, 1);
-  await props.deleteConfig(next);
 }
 </script>

@@ -246,6 +246,19 @@ html:root {
 }
 
 // 弹出层
+.el-popper[role="tooltip"]:not(
+  .el-select__popper,
+  .el-dropdown__popper,
+  .el-picker__popper,
+  .el-cascader__dropdown,
+  .el-autocomplete__popper,
+  .el-popover
+) {
+  max-width: min(480px, calc(100vw - 24px));
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .el-popper.is-light,
 .el-dropdown__popper.el-popper,
 .el-select__popper.el-popper,
