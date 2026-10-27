@@ -74,7 +74,7 @@
     ],
     "maxControlResidual": 3.61955105579815
   },
-  "accuracyNote": "展示用近似校准，控制点覆盖现有六个云南目的地，非已知地理投影；固定点优先，不用于导航或自动扩展全省任意点。新增目的地需补校准点。",
+  "accuracyNote": "展示用近似校准，15个城市使用原图印刷符号，巴拉格宗使用既有控制点插值；非已知地理投影，不用于导航或自动扩展全省任意点。新增目的地需补校准点。",
   "points": [
     {
       "name": "昆明",
@@ -153,6 +153,136 @@
         130.535
       ],
       "placement": "affine-interpolation"
+    },
+    {
+      "name": "曲靖",
+      "code": "CITY-024",
+      "devResourceCityId": "b27ac04b-c5c9-41a2-855c-b151124c961b",
+      "longitude": 103.7963,
+      "latitude": 25.49,
+      "regionAdcode": "530300",
+      "svg": [
+        748.04,
+        491.039
+      ],
+      "placement": "printed-city-symbol"
+    },
+    {
+      "name": "玉溪",
+      "code": "CITY-025",
+      "devResourceCityId": "c7b45249-91ea-47a6-8ed4-227afb7f864e",
+      "longitude": 102.5466,
+      "latitude": 24.352,
+      "regionAdcode": "530400",
+      "svg": [
+        603.544,
+        637.459
+      ],
+      "placement": "printed-city-symbol"
+    },
+    {
+      "name": "保山",
+      "code": "CITY-026",
+      "devResourceCityId": "e3a27930-d43f-4a04-9ea3-ab8c81da4c68",
+      "longitude": 99.1618,
+      "latitude": 25.112,
+      "regionAdcode": "530500",
+      "svg": [
+        218.222,
+        536.572
+      ],
+      "placement": "printed-city-symbol"
+    },
+    {
+      "name": "普洱",
+      "code": "CITY-027",
+      "devResourceCityId": "6e73f5cb-332c-4125-a759-c1266243f895",
+      "longitude": 100.9723,
+      "latitude": 22.7773,
+      "regionAdcode": "530800",
+      "svg": [
+        422.479,
+        832.983
+      ],
+      "placement": "printed-city-symbol"
+    },
+    {
+      "name": "临沧",
+      "code": "CITY-028",
+      "devResourceCityId": "998313ab-66a0-43b9-aca3-01d5d3fb3a8e",
+      "longitude": 100.0888,
+      "latitude": 23.8843,
+      "regionAdcode": "530900",
+      "svg": [
+        320.797,
+        692.813
+      ],
+      "placement": "printed-city-symbol"
+    },
+    {
+      "name": "昭通",
+      "code": "CITY-029",
+      "devResourceCityId": "d9825808-6598-4399-bfdd-0f161fc2b0a4",
+      "longitude": 103.7172,
+      "latitude": 27.3369,
+      "regionAdcode": "530600",
+      "svg": [
+        734.661,
+        259.803
+      ],
+      "placement": "printed-city-symbol"
+    },
+    {
+      "name": "楚雄",
+      "code": "CITY-030",
+      "devResourceCityId": "b7937bc5-f12f-4009-864e-0c2356597c9b",
+      "longitude": 101.5461,
+      "latitude": 25.041,
+      "regionAdcode": "532300",
+      "svg": [
+        490.267,
+        550.857
+      ],
+      "placement": "printed-city-symbol"
+    },
+    {
+      "name": "个旧",
+      "code": "CITY-031",
+      "devResourceCityId": "f93a5b2f-93b2-4049-a960-75768f6b55cf",
+      "longitude": 103.16,
+      "latitude": 23.359,
+      "regionAdcode": "532500",
+      "svg": [
+        676.684,
+        760.666
+      ],
+      "placement": "printed-city-symbol"
+    },
+    {
+      "name": "景洪",
+      "code": "CITY-032",
+      "devResourceCityId": "f1fb1388-2167-4c7f-b13e-0f2601157df3",
+      "longitude": 100.7979,
+      "latitude": 22.0017,
+      "regionAdcode": "532800",
+      "svg": [
+        401.072,
+        929.406
+      ],
+      "placement": "printed-city-symbol"
+    },
+    {
+      "name": "芒市",
+      "code": "CITY-033",
+      "devResourceCityId": "12df72b7-6814-4d60-950f-6b45398aa08b",
+      "longitude": 98.5881,
+      "latitude": 24.4337,
+      "regionAdcode": "533100",
+      "svg": [
+        150.434,
+        620.496
+      ],
+      "placement": "printed-city-symbol"
     }
   ]
 }

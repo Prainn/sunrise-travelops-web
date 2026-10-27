@@ -82,6 +82,21 @@ export function shanghaiToday(now = new Date()): string {
   return SHANGHAI_DATE.format(now);
 }
 
+const DAY_MS = 86_400_000;
+/** Asia/Shanghai 固定 UTC+8，无夏令时 */
+const SHANGHAI_OFFSET_MS = 8 * 3_600_000;
+
+/** 距下一个上海午夜的毫秒数，用于今日模式跨天。 */
+export function msUntilShanghaiMidnight(now = Date.now()): number {
+  return DAY_MS - ((now + SHANGHAI_OFFSET_MS) % DAY_MS);
+}
+
+/** YYYY-MM-DD 按自然日前后移动，纯日期计算，不受浏览器时区影响。 */
+export function shiftDate(date: string, days: number): string {
+  const [year = 0, month = 1, day = 1] = date.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+}
+
 /**
  * 查找城市在底图上的已校准展示点。
  *

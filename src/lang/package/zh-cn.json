@@ -791,7 +791,73 @@
         "no_location": "无计划地点",
         "unknown": "其他定位问题"
       },
+      "baseMapSource": "底图来源：云南省地图院编制，云南省自然资源厅监制（审图号：云S(2026)49号）",
       "coordinateSource": "城市坐标参考："
+    },
+    "opsMap": {
+      "previousDay": "前一天",
+      "nextDay": "后一天",
+      "today": "今天",
+      "play": "播放动画",
+      "pause": "暂停动画",
+      "reducedMotion": "已减少动态效果",
+      "fullscreen": "全屏",
+      "exitFullscreen": "退出全屏"
+    },
+    "flightMap": {
+      "title": "世界航班地图",
+      "subtitle": "按成团表接送航班快照演示机场间航线，不是实时航班或实际飞行位置。",
+      "resetView": "重置视图",
+      "demoNote": "路线演示 · 非实时",
+      "timeNote": "日期与参考时刻为成团排期的北京时间；起降时刻为航班资料中的 HH:mm，不含时区与跨日推算。航段为每团每个接/送方向一条，不等于实际航班架次。",
+      "baseMapSource": "底图为社区数据（非官方审定地图），机场坐标来自：",
+      "legKinds": {
+        "pickup": "接团航段",
+        "drop": "送团航段"
+      },
+      "legCount": "{count} 条航段",
+      "referenceEvents": {
+        "arrival": "抵达",
+        "departure": "起飞"
+      },
+      "reference": "参考{event} {time}",
+      "tourPeople": "{tours} 个团 · {people} 人",
+      "airportLegs": "接团航段 {pickup} · 送团航段 {drop}",
+      "noFlightNumber": "无航班号",
+      "airportMissing": "机场缺失",
+      "showAll": "显示全部",
+      "tooltip": {
+        "moreGroups": "另有 {count} 组航班",
+        "moreTours": "等 {count} 个团"
+      },
+      "totals": {
+        "flightLegs": "接送航段",
+        "pickupLegs": "接团航段",
+        "dropLegs": "送团航段",
+        "tours": "关联团",
+        "people": "关联人数",
+        "unlocatedLegs": "待定位航段",
+        "unscheduledTours": "无航班资料团"
+      },
+      "tabs": {
+        "flights": "航段 {count}",
+        "pending": "待定位 {count}",
+        "unscheduled": "无航班资料 {count}"
+      },
+      "noLocatedFlights": "当前没有可落图的航段",
+      "noPending": "没有待定位航段",
+      "noUnscheduled": "没有无航班资料的团",
+      "unscheduledHint": "以下团当日接/送为手填时间，没有航班资料，不绘制航线。",
+      "noFlights": "当日没有接送航段",
+      "onlyUnscheduled": "当日接/送团均为手填时间，见“无航班资料”列表",
+      "allPending": "当日航段均待定位，未绘制航线，见“待定位”列表",
+      "forbidden": "当前身份无权查看航班地图",
+      "issues": {
+        "flight_missing": "缺少航班快照",
+        "airport_missing": "缺少机场代码",
+        "coordinates_missing": "机场缺少坐标",
+        "unknown": "其他定位问题"
+      }
     }
   },
   "profile": {

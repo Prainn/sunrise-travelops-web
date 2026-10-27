@@ -1,193 +1,171 @@
 <template>
-  <SectionCard
-    :title="$t('dashboard.tourMap.title')"
-    :description="$t('dashboard.tourMap.subtitle')"
-  >
-    <template #actions>
-      <el-radio-group
-        v-if="canSelectBusinessUnit"
-        v-model="businessUnit"
-        size="small"
-        :aria-label="$t('identity.businessUnit')"
-      >
-        <el-radio-button :label="$t('common.all')" value="" />
-        <el-radio-button
-          v-for="unit in BUSINESS_UNITS"
-          :key="unit"
-          :label="$t(`accountLink.businessOptions.${unit}`)"
-          :value="unit"
-        />
-      </el-radio-group>
-      <el-date-picker
-        v-model="date"
-        type="date"
-        value-format="YYYY-MM-DD"
-        size="small"
-        :clearable="false"
-        :aria-label="$t('dashboard.tourMap.date')"
-        class="!w-[150px]"
-      />
-    </template>
+  <!-- 加载中保留旧内容占位，蒙版覆盖并禁止交互，避免切换筛选时页面高度跳动。 -->
+  <div v-loading="isLoading" :inert="isLoading" class="flex flex-col flex-1 gap-4 min-h-[240px] lg:min-h-0">
+    <el-empty v-if="loadError" :description="loadError">
+      <el-button @click="reload">
+        {{ $t("common.retry") }}
+      </el-button>
+    </el-empty>
 
-    <div v-loading="isLoading" class="flex flex-col gap-4 min-h-[240px]">
-      <el-empty v-if="loadError" :description="loadError">
-        <el-button @click="reload">
-          {{ $t("common.retry") }}
-        </el-button>
-      </el-empty>
+    <template v-else-if="data">
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+        <component
+          :is="stat.panel ? 'button' : 'div'"
+          v-for="stat in stats"
+          :key="stat.key"
+          :type="stat.panel ? 'button' : undefined"
+          class="ops-map__stat"
+          :class="{ 'is-clickable': stat.panel, 'is-active': isStatActive(stat.panel) }"
+          @click="stat.panel && openListPanel(stat.panel)"
+        >
+          <span class="ops-map__stat-label">{{ stat.label }}</span>
+          <span class="ops-map__stat-value">{{ stat.value }}</span>
+        </component>
+      </div>
 
-      <template v-else-if="data">
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-          <component
-            :is="stat.panel ? 'button' : 'div'"
-            v-for="stat in stats"
-            :key="stat.key"
-            :type="stat.panel ? 'button' : undefined"
-            class="tour-map__stat"
-            :class="{ 'is-clickable': stat.panel, 'is-active': isStatActive(stat.panel) }"
-            @click="stat.panel && openListPanel(stat.panel)"
-          >
-            <span class="text-[13px] text-muted">{{ stat.label }}</span>
-            <span class="text-[22px] font-semibold leading-[1.2] text-strong">{{ stat.value }}</span>
-          </component>
-        </div>
-
-        <div class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div class="w-full max-w-[640px] mx-auto">
+      <div class="grid grid-cols-1 gap-4 lg:flex-1 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_360px] lg:grid-rows-[minmax(0,1fr)]">
+        <div class="ops-map__stage flex items-center justify-center p-3">
+          <div class="w-full max-w-[640px] lg:max-w-none lg:h-full">
             <YunnanTourMap
               :points="mapPoints"
               :active-regions="activeRegions"
               :selected-region="panel.kind === 'region' ? panel.adcode : null"
               :selected-city-id="panel.kind === 'city' ? panel.cityId : null"
               :route-segments="routeSegments"
+              :animate="animate"
               @city-click="openCityPanel"
               @region-click="openRegionPanel"
             />
           </div>
-
-          <div class="tour-map__panel">
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <span class="min-w-0 text-[15px] font-medium text-strong truncate">
-                {{ panelTitle }}
-              </span>
-              <el-button
-                v-if="selectedTour"
-                link
-                type="primary"
-                @click="selectedTourId = null"
-              >
-                {{ $t("common.goBack") }}
-              </el-button>
-              <el-button
-                v-else-if="panel.kind !== 'cities'"
-                link
-                type="primary"
-                @click="resetPanel"
-              >
-                {{ $t("dashboard.tourMap.destinations") }}
-              </el-button>
-            </div>
-
-            <div class="tour-map__panel-body">
-              <TourMapTourDetail
-                v-if="selectedTour"
-                v-model:route-mode="routeMode"
-                :tour="selectedTour"
-                :route-hint="routeHint"
-              />
-
-              <template v-else-if="panel.kind === 'cities'">
-                <el-empty
-                  v-if="!activeCities.length"
-                  :image-size="80"
-                  :description="$t('dashboard.tourMap.noTours')"
-                />
-                <button
-                  v-for="item in activeCities"
-                  :key="item.city.id"
-                  type="button"
-                  class="tour-map__row"
-                  @click="openCityPanel(item.city.id)"
-                >
-                  <span class="flex flex-col min-w-0">
-                    <span class="text-[14px] text-strong truncate">{{ item.city.name }}</span>
-                    <span v-if="!item.point" class="text-[12px] text-[var(--el-color-warning)]">
-                      {{ $t("dashboard.tourMap.uncalibrated") }}
-                    </span>
-                  </span>
-                  <span class="shrink-0 text-[13px] text-muted">
-                    {{ pointSummary(item.city.tourCount, item.city.peopleCount) }}
-                  </span>
-                </button>
-              </template>
-
-              <template v-else>
-                <template v-if="panel.kind === 'region'">
-                  <p v-if="!regionCities.length" class="m-0 mb-3 text-[13px] text-muted">
-                    {{ $t("dashboard.tourMap.regionNoDestinations") }}
-                  </p>
-                  <div v-else class="flex flex-wrap gap-2 mb-3">
-                    <el-button
-                      v-for="city in regionCities"
-                      :key="city.id"
-                      size="small"
-                      @click="openCityPanel(city.id)"
-                    >
-                      {{ city.name }} · {{ city.tourCount }}
-                    </el-button>
-                  </div>
-                </template>
-                <p
-                  v-if="panel.kind === 'city' && panelCity && !pointByCityId.has(panelCity.id)"
-                  class="m-0 mb-3 text-[13px] text-[var(--el-color-warning)]"
-                >
-                  {{ $t("dashboard.tourMap.uncalibrated") }}
-                </p>
-                <el-empty
-                  v-if="!panelTours.length"
-                  :image-size="80"
-                  :description="$t('dashboard.tourMap.noTours')"
-                />
-                <button
-                  v-for="tour in panelTours"
-                  :key="tour.id"
-                  type="button"
-                  class="tour-map__row"
-                  @click="selectTour(tour.id)"
-                >
-                  <span class="flex flex-col gap-1 min-w-0">
-                    <span class="flex flex-wrap items-center gap-x-2 text-[14px] text-strong">
-                      {{ tour.tourNo }}
-                      <span class="text-[12px] text-muted">
-                        {{ $t(`accountLink.businessOptions.${tour.businessUnit}`) }}
-                      </span>
-                    </span>
-                    <span class="text-[12px] text-muted">
-                      {{ tour.guideName || $t("dashboard.tourMap.guidePending") }}
-                      <template v-if="panel.kind === 'pickup'"> · {{ tour.pickupAt }}</template>
-                      <template v-if="panel.kind === 'drop'"> · {{ tour.dropAt }}</template>
-                    </span>
-                    <span v-if="tour.issues.length" class="flex flex-wrap gap-1">
-                      <el-tag
-                        v-for="issue in tour.issues"
-                        :key="issue"
-                        size="small"
-                        type="warning"
-                      >
-                        {{ $t(issueLabelKey(issue)) }}
-                      </el-tag>
-                    </span>
-                  </span>
-                  <span class="shrink-0 text-[13px] text-muted">
-                    {{ $t("dashboard.tourMap.peopleCount", { count: tour.totalPeople }) }}
-                  </span>
-                </button>
-              </template>
-            </div>
-          </div>
         </div>
 
-        <p class="m-0 text-[12px] leading-[1.6] text-muted">
+        <div class="ops-map__panel">
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="min-w-0 text-[15px] font-medium text-strong truncate">
+              {{ panelTitle }}
+            </span>
+            <el-button
+              v-if="selectedTour"
+              link
+              type="primary"
+              @click="selectedTourId = null"
+            >
+              {{ $t("common.goBack") }}
+            </el-button>
+            <el-button
+              v-else-if="panel.kind !== 'cities'"
+              link
+              type="primary"
+              @click="resetPanel"
+            >
+              {{ $t("dashboard.tourMap.destinations") }}
+            </el-button>
+          </div>
+
+          <div class="ops-map__panel-body">
+            <TourMapTourDetail
+              v-if="selectedTour"
+              v-model:route-mode="routeMode"
+              :tour="selectedTour"
+              :route-hint="routeHint"
+            />
+
+            <template v-else-if="panel.kind === 'cities'">
+              <el-empty
+                v-if="!activeCities.length"
+                :image-size="80"
+                :description="$t('dashboard.tourMap.noTours')"
+              />
+              <button
+                v-for="item in activeCities"
+                :key="item.city.id"
+                type="button"
+                class="ops-map__row"
+                @click="openCityPanel(item.city.id)"
+              >
+                <span class="flex flex-col min-w-0">
+                  <span class="text-[14px] text-strong truncate">{{ item.city.name }}</span>
+                  <span v-if="!item.point" class="text-[12px] text-[var(--el-color-warning)]">
+                    {{ $t("dashboard.tourMap.uncalibrated") }}
+                  </span>
+                </span>
+                <span class="shrink-0 text-[13px] text-muted">
+                  {{ pointSummary(item.city.tourCount, item.city.peopleCount) }}
+                </span>
+              </button>
+            </template>
+
+            <template v-else>
+              <template v-if="panel.kind === 'region'">
+                <p v-if="!regionCities.length" class="m-0 mb-3 text-[13px] text-muted">
+                  {{ $t("dashboard.tourMap.regionNoDestinations") }}
+                </p>
+                <div v-else class="flex flex-wrap gap-2 mb-3">
+                  <el-button
+                    v-for="city in regionCities"
+                    :key="city.id"
+                    size="small"
+                    @click="openCityPanel(city.id)"
+                  >
+                    {{ city.name }} · {{ city.tourCount }}
+                  </el-button>
+                </div>
+              </template>
+              <p
+                v-if="panel.kind === 'city' && panelCity && !pointByCityId.has(panelCity.id)"
+                class="m-0 mb-3 text-[13px] text-[var(--el-color-warning)]"
+              >
+                {{ $t("dashboard.tourMap.uncalibrated") }}
+              </p>
+              <el-empty
+                v-if="!panelTours.length"
+                :image-size="80"
+                :description="$t('dashboard.tourMap.noTours')"
+              />
+              <button
+                v-for="tour in panelTours"
+                :key="tour.id"
+                type="button"
+                class="ops-map__row"
+                @click="selectTour(tour.id)"
+              >
+                <span class="flex flex-col gap-1 min-w-0">
+                  <span class="flex flex-wrap items-center gap-x-2 text-[14px] text-strong">
+                    {{ tour.tourNo }}
+                    <span class="text-[12px] text-muted">
+                      {{ $t(`accountLink.businessOptions.${tour.businessUnit}`) }}
+                    </span>
+                  </span>
+                  <span class="text-[12px] text-muted">
+                    {{ tour.guideName || $t("dashboard.tourMap.guidePending") }}
+                    <template v-if="panel.kind === 'pickup'"> · {{ tour.pickupAt }}</template>
+                    <template v-if="panel.kind === 'drop'"> · {{ tour.dropAt }}</template>
+                  </span>
+                  <span v-if="tour.issues.length" class="flex flex-wrap gap-1">
+                    <el-tag
+                      v-for="issue in tour.issues"
+                      :key="issue"
+                      size="small"
+                      type="warning"
+                    >
+                      {{ $t(issueLabelKey(issue)) }}
+                    </el-tag>
+                  </span>
+                </span>
+                <span class="shrink-0 text-[13px] text-muted">
+                  {{ $t("dashboard.tourMap.peopleCount", { count: tour.totalPeople }) }}
+                </span>
+              </button>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1 text-[12px] leading-[1.6] text-muted">
+        <p class="m-0">
+          {{ $t("dashboard.tourMap.baseMapSource") }}
+        </p>
+        <p class="m-0">
           {{ $t("dashboard.tourMap.coordinateSource") }}
           <a
             v-for="source in COORDINATE_SOURCES"
@@ -200,15 +178,14 @@
             {{ source.label }}
           </a>
         </p>
-      </template>
-    </div>
-  </SectionCard>
+      </div>
+    </template>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import SectionCard from "@/components/SectionCard/index.vue";
 import { dashboardService } from "@/services";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
 import type { TourMapBusinessUnit, TourMapCity, TourMapTour } from "@/types/dashboard";
@@ -218,7 +195,6 @@ import {
   buildRouteSegments,
   issueLabelKey,
   resolveDisplayPoint,
-  shanghaiToday,
   YUNNAN_REGION_NAMES,
   type TourMapPoint,
   type YunnanDisplayPoint,
@@ -232,21 +208,30 @@ type TourMapPanel =
   | { kind: "region"; adcode: string }
   | { kind: ListPanelKind };
 
-const BUSINESS_UNITS: TourMapBusinessUnit[] = ["shengxu", "linxi", "website"];
 const COORDINATE_SOURCES = [
   { label: "© OpenStreetMap contributors (ODbL)", url: "https://www.openstreetmap.org/copyright" },
   { label: "GeoNames (CC BY)", url: "https://www.geonames.org/" },
   { label: "Wikidata (CC0)", url: "https://www.wikidata.org/" },
 ];
 
+const props = defineProps<{
+  date: string;
+  businessUnit: TourMapBusinessUnit | "";
+  /** 视图未激活时不发请求、不播放动画 */
+  active: boolean;
+  animate: boolean;
+}>();
+
+const emit = defineEmits<{
+  scope: [canSelectBusinessUnit: boolean];
+}>();
+
 const { t } = useI18n();
 const { data, isLoading, loadError, load } = useTourMapData({
   fetchMap: (query) => dashboardService.getTourMap(query),
 });
-const date = ref(shanghaiToday());
-const businessUnit = ref<TourMapBusinessUnit | "">("");
-/** 沿用最近一次响应，加载中不让业务筛选闪烁消失。 */
-const canSelectBusinessUnit = ref(false);
+/** 已发出请求的筛选条件；切回视图时条件未变不重复请求 */
+let loadedQueryKey = "";
 const panel = ref<TourMapPanel>({ kind: "cities" });
 const selectedTourId = ref<string | null>(null);
 const routeMode = ref<"today" | "full">("today");
@@ -372,24 +357,27 @@ const routeHint = computed(() => {
   return hasGap ? t("dashboard.tourMap.routeGap") : "";
 });
 
-// 切换筛选时清空旧选择，旧业务的列表不会在新结果到达前继续可点。
+// 切换筛选时清空旧选择，旧业务的列表不会在新结果到达前继续可点；未激活时等切回再请求。
 watch(
-  [date, businessUnit],
-  () => {
+  () => [props.active, props.date, props.businessUnit] as const,
+  ([active, date, businessUnit]) => {
+    const key = `${date}|${businessUnit}`;
+    if (!active || key === loadedQueryKey) return;
+    loadedQueryKey = key;
     resetPanel();
     reload();
   },
   { immediate: true },
 );
 watch(data, (value) => {
-  if (value) canSelectBusinessUnit.value = value.canSelectBusinessUnit;
+  if (value) emit("scope", value.canSelectBusinessUnit);
 });
 
 // 普通行程交通方式按字典显示；字典读取失败时保留原始编码，不阻塞地图。
 void businessDictionaryService.ensureBuiltInTypesLoaded().catch(() => undefined);
 
 function reload() {
-  void load({ date: date.value, businessUnit: businessUnit.value || undefined });
+  void load({ date: props.date, businessUnit: props.businessUnit || undefined });
 }
 
 function resetPanel() {
@@ -430,38 +418,3 @@ function pointSummary(tours: number, people: number) {
   return t("dashboard.tourMap.pointSummary", { tours, people });
 }
 </script>
-
-<style scoped lang="scss">
-.tour-map__stat {
-  @apply flex flex-col gap-[2px] min-w-0 px-3 py-[10px] text-left rounded-[6px] border border-solid border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-blank)];
-
-  &.is-clickable {
-    @apply cursor-pointer transition-colors;
-
-    &:hover,
-    &.is-active {
-      @apply border-[var(--el-color-primary)];
-    }
-  }
-}
-
-.tour-map__panel {
-  @apply flex flex-col min-w-0 p-3 rounded-[6px] border border-solid border-[var(--el-border-color-lighter)];
-}
-
-.tour-map__panel-body {
-  @apply min-h-0 max-h-[640px] overflow-y-auto;
-}
-
-.tour-map__row {
-  @apply flex w-full items-center justify-between gap-3 px-2 py-[10px] text-left bg-transparent border-0 border-b border-solid border-[var(--el-border-color-extra-light)] cursor-pointer;
-
-  &:hover {
-    @apply bg-[var(--el-fill-color-light)];
-  }
-
-  &:last-child {
-    @apply border-b-0;
-  }
-}
-</style>
