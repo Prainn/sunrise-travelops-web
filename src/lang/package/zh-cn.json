@@ -4,7 +4,6 @@
     "quotedCount": "报价合计",
     "convertedCount": "成团合计",
     "platformAccount": "平台账号",
-    "firstFollowUp": "第一次跟进",
     "agencySearch": "搜索组团社名称",
     "coordinatorSearch": "搜索收客计调姓名",
     "platformSearch": "搜索平台账号名称"
@@ -101,6 +100,7 @@
     "message": "网站已更新，刷新即可使用新版。"
   },
   "inquiry": {
+    "deleteConfirm": "确认删除询盘“{code}”吗？删除后其行程和报价将无法从询盘入口访问，历史记录保留。",
     "uploadDocument": "拖入 Word 文档，或点击上传",
     "documentHint": ".doc / .docx / 文字型 PDF；最大 2 MiB、200,000 字符。提取文字与换行，成功后替换现有内容。",
     "documentParseFailed": "文档解析失败，请检查是否损坏、加密、无文字或超过 200,000 字符。",
@@ -749,7 +749,6 @@
         "drops": "当日送团"
       },
       "headcount": "成人 {adults} · 儿童 {children} · 领队 {leaders} · 共 {total} 人",
-      "guidePending": "待安排",
       "totalDays": "共 {days} 天",
       "dayProgress": "第 {day} 天 / 共 {days} 天",
       "routeToday": "当日路线",
@@ -792,7 +791,9 @@
         "unknown": "其他定位问题"
       },
       "baseMapSource": "底图来源：云南省地图院编制，云南省自然资源厅监制（审图号：云S(2026)49号）",
-      "coordinateSource": "城市坐标参考："
+      "coordinateSource": "城市坐标参考：",
+      "noGuideToday": "当日未安排导游",
+      "allGuideServices": "全部服务段（{n}）"
     },
     "opsMap": {
       "previousDay": "前一天",
@@ -1603,6 +1604,8 @@
     "hotelTier": "酒店档次",
     "hotelTierA": "A 高端五星",
     "hotelTierB": "B 舒适四星",
+    "hotelTierC": "C 经济三星",
+    "hotelTierD": "D 二星及以下",
     "selectSharedHotel": "选择共用酒店",
     "selectConfigHotel": "选择独立站酒店",
     "configHotelPrice": "独立站价格（内部参考）：{price} 元/间/晚",
@@ -1681,6 +1684,7 @@
     "hotelNameNote": "可在下方修改酒店名。",
     "mealNameNote": "填写推荐餐厅或餐食名，留空为未指定。",
     "mealSlot": "餐次",
+    "replaceMealConfirm": "{day} 已有{slot}安排“{name}”，是否替换？取消将保留原安排和当前编辑内容。",
     "hotelAlternativesHint": "多家酒店为 A／B 备选方案，不是同晚连住。",
     "hotelNameMissing": "未填写酒店名称",
     "hotelSources": {
@@ -1715,7 +1719,7 @@
     "selectSkeleton": "选择已有城市骨架",
     "skeletonLabel": "{name} · {days} 天",
     "generateDraft": "生成草稿",
-    "addDay": "手工添加一天",
+    "addDay": "添加一天",
     "noDays": "暂无每日行程，可手动添加，或选城市骨架生成草案。",
     "cancelChanges": "取消修改",
     "saveDraft": "保存草稿",
@@ -1852,7 +1856,30 @@
       "linxi": "霖熹",
       "website": "独立站"
     },
-    "guideUnavailable": "导游不符合语种或接送安排，请更换或清空后保存。"
+    "guideUnavailable": "所选导游不符合该段的语种、时间或排班，请更换后保存。",
+    "guideService": {
+      "title": "导游服务",
+      "empty": "暂无服务段",
+      "segment": "第 {n} 段",
+      "add": "新增服务段",
+      "selectGuide": "请选择导游",
+      "fillFirst": "请先补全语种与有效的起止时间",
+      "startAt": "服务开始",
+      "endAt": "服务结束",
+      "useTeamTime": "沿用团队接送时间",
+      "confirmTime": "确认服务时间",
+      "confirmed": "已确认服务时间",
+      "legacyTime": "历史时间待核对",
+      "invalidDuration": "时间异常",
+      "outsideWindow": "超出团队接送范围",
+      "count": "共 {n} 段",
+      "fixBeforeSave": "请先修正导游服务段中的问题",
+      "errors": {
+        "incomplete": "请补全导游、语种及起止时间",
+        "order": "服务开始必须早于结束",
+        "overlap": "同一导游的服务段时间重叠（交接不得在同一分钟）"
+      }
+    }
   },
   "menuPermission": {
     "navigationConfigurationError": "菜单配置与本地路由不匹配：{route}",
@@ -2009,7 +2036,7 @@
       "legsCheck": "D{day} 交通段随日移动，请核对衔接、季节及首末日规则"
     },
     "transfer": {
-      "hint": "拖动日卡调整天数顺序，拖动卡片调整当天先后顺序或跨天移动。复制后请先移动副本；暂存可保存未完成的调整，应用调整时统一校验。",
+      "hint": "拖动日卡调整天数顺序，拖动卡片调整当天先后顺序或跨天移动。复制后请先移动副本；应用调整只检查排布冲突，可回主页面继续填写。暂存保留未完成的看板；完整校验在双语预览和正式确认时执行。",
       "copy": "复制临时副本",
       "copyTag": "副本",
       "removeCopy": "删除副本",

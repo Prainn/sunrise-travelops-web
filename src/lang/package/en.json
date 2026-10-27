@@ -4,7 +4,6 @@
     "quotedCount": "Total quotes",
     "convertedCount": "Total bookings",
     "platformAccount": "Platform account",
-    "firstFollowUp": "First follow-up",
     "agencySearch": "Search agency names",
     "coordinatorSearch": "Search reception coordinators",
     "platformSearch": "Search platform accounts"
@@ -101,6 +100,7 @@
     "message": "Site updated. Refresh for the latest version."
   },
   "inquiry": {
+    "deleteConfirm": "Delete inquiry “{code}”? Its itineraries and quotations will no longer be accessible from inquiries. Historical records will be retained.",
     "uploadDocument": "Drop a Word file here or click to upload",
     "documentHint": ".doc / .docx / text-based PDF; max 2 MiB, 200,000 characters. Extracts text and line breaks; replaces current content on success.",
     "documentParseFailed": "Cannot read document. Check for damage, encryption, no text, or over 200,000 characters.",
@@ -749,7 +749,6 @@
         "drops": "Drop-offs"
       },
       "headcount": "Adults {adults} · Children {children} · Leaders {leaders} · Total {total}",
-      "guidePending": "To be assigned",
       "totalDays": "{days} days",
       "dayProgress": "Day {day} of {days}",
       "routeToday": "Today's route",
@@ -792,7 +791,9 @@
         "unknown": "Other location issue"
       },
       "baseMapSource": "Base map: compiled by Yunnan Provincial Institute of Cartography, supervised by the Department of Natural Resources of Yunnan Province (Map Review No. 云S(2026)49号)",
-      "coordinateSource": "City coordinate references:"
+      "coordinateSource": "City coordinate references:",
+      "noGuideToday": "No guide scheduled today",
+      "allGuideServices": "All segments ({n})"
     },
     "opsMap": {
       "previousDay": "Previous day",
@@ -1603,6 +1604,8 @@
     "hotelTier": "Hotel tier",
     "hotelTierA": "A Luxury five-star",
     "hotelTierB": "B Comfortable four-star",
+    "hotelTierC": "C Economy 3-star",
+    "hotelTierD": "D 2-star and below",
     "selectSharedHotel": "Select a shared hotel",
     "selectConfigHotel": "Select website hotel",
     "configHotelPrice": "Website price (internal reference): {price} CNY/room/night",
@@ -1681,6 +1684,7 @@
     "hotelNameNote": "Edit hotel names below.",
     "mealNameNote": "Enter a recommended restaurant or meal name; blank means unspecified.",
     "mealSlot": "Meal",
+    "replaceMealConfirm": "{day} already has {slot} arranged: “{name}”. Replace it? Cancel keeps the existing arrangement and your current edits.",
     "hotelAlternativesHint": "Hotels are A/B alternatives for one night, not consecutive stays.",
     "hotelNameMissing": "Hotel name missing",
     "hotelSources": {
@@ -1715,7 +1719,7 @@
     "selectSkeleton": "Select a saved city skeleton",
     "skeletonLabel": "{name} · {days} days",
     "generateDraft": "Generate draft",
-    "addDay": "Add day manually",
+    "addDay": "Add day",
     "noDays": "No daily plans. Add a day manually or generate a draft from a saved city skeleton.",
     "cancelChanges": "Cancel changes",
     "saveDraft": "Save draft",
@@ -1852,7 +1856,30 @@
       "linxi": "Linxi",
       "website": "Website"
     },
-    "guideUnavailable": "Guide does not match language or transfer schedule. Change or clear the guide before saving."
+    "guideUnavailable": "The selected guide does not match this segment's language, time or schedule. Change the guide before saving.",
+    "guideService": {
+      "title": "Guide services",
+      "empty": "No service segments",
+      "segment": "Segment {n}",
+      "add": "Add segment",
+      "selectGuide": "Select guide",
+      "fillFirst": "Fill in language and a valid time range first",
+      "startAt": "Service start",
+      "endAt": "Service end",
+      "useTeamTime": "Use tour transfer times",
+      "confirmTime": "Confirm service time",
+      "confirmed": "Service time confirmed",
+      "legacyTime": "Legacy time to verify",
+      "invalidDuration": "Invalid duration",
+      "outsideWindow": "Outside tour transfer window",
+      "count": "{n} segments",
+      "fixBeforeSave": "Fix the guide service segments before saving",
+      "errors": {
+        "incomplete": "Guide, language and time range are required",
+        "order": "Service start must be earlier than end",
+        "overlap": "This guide's segments overlap (handover cannot share the same minute)"
+      }
+    }
   },
   "menuPermission": {
     "navigationConfigurationError": "Menu configuration does not match local route: {route}",
@@ -2009,7 +2036,7 @@
       "legsCheck": "D{day}: transport legs moved with the day. Check connections and seasonal/first/last-day rules"
     },
     "transfer": {
-      "hint": "Drag days or cards to reorder or move between days. Move pending copies before their originals. Save draft keeps unfinished edits; Apply validates the itinerary.",
+      "hint": "Drag days or cards to reorder or move between days. Move pending copies before their originals. Apply checks placement conflicts and returns to the editor to finish details. Save draft keeps unfinished board edits. Full validation runs at bilingual preview and final confirmation.",
       "copy": "Make temporary copy",
       "copyTag": "Copy",
       "removeCopy": "Delete copy",

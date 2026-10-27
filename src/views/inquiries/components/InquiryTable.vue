@@ -124,6 +124,13 @@
               >
                 {{ $t("inquiry.archive") }}
               </el-dropdown-item>
+              <el-dropdown-item
+                v-if="hasPerm('inquiry:delete') && scope.row.canDelete"
+                :disabled="isPending?.(scope.row.id)"
+                @click="emit('delete', scope.row as InquiryRecord)"
+              >
+                <span class="text-[var(--el-color-danger)]">{{ $t("common.delete") }}</span>
+              </el-dropdown-item>
             </template>
           </RowActions>
         </template>
@@ -181,6 +188,7 @@ const emit = defineEmits<{
   view: [record: InquiryRecord];
   edit: [record: InquiryRecord];
   archive: [record: InquiryRecord];
+  delete: [record: InquiryRecord];
   "manage-itineraries": [record: InquiryRecord];
   "view-logs": [record: InquiryRecord];
   "update:pageNum": [value: number];

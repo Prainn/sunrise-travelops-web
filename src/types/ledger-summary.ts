@@ -9,7 +9,6 @@ export type SummaryReport =
   | "website-platform-summary";
 
 export interface LedgerSummaryItem {
-  firstFollowUp: string;
   id: string;
   name: string;
   quotedCount: number;

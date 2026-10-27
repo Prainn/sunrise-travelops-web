@@ -22,6 +22,7 @@
       @create="openCreateDialog"
       @view="openDetailDrawer"
       @edit="openEditDialog"
+      @delete="deleteInquiry"
       @archive="archiveInquiry"
       @manage-itineraries="openItineraryManagement"
       @view-logs="openInquiryLogs"
@@ -246,6 +247,28 @@ async function saveInquiry(record: InquiryRecord) {
   } finally {
     saving.value = false;
   }
+}
+function deleteInquiry(record: InquiryRecord) {
+  if (!record.canDelete) return;
+  return run(record.id, async () => {
+    try {
+      await ElMessageBox.confirm(t("inquiry.deleteConfirm", { code: record.code }), t("common.tip"), {
+        type: "warning",
+        confirmButtonText: t("common.delete"),
+        cancelButtonText: t("common.cancel"),
+      });
+    } catch {
+      return;
+    }
+    try {
+      await inquiryService.delete(record);
+      ElMessage.success(t("common.deleteSuccess"));
+      if (inquiryStore.value.length === 1 && pageNum.value > 1) pageNum.value -= 1;
+      else await fetchInquiries();
+    } catch (error) {
+      showError(error);
+    }
+  });
 }
 function archiveInquiry(record: InquiryRecord) {
   if (isInquiryReadOnly(record.status, record.hasActiveTour)) return;

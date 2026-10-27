@@ -5,16 +5,31 @@
     size="full"
     :busy="loading"
     @update:model-value="emit('update:modelValue', $event)"
+    @closed="handleClosed"
   >
     <template v-if="preview">
       <el-alert
         v-for="issue in preview.issues"
         :key="`${issue.code}-${issue.dayNumber ?? 0}-${issue.message}`"
         :type="issue.severity === 'ERROR' ? 'error' : 'warning'"
-        :title="`${issue.code}${issue.dayNumber ? ` · D${issue.dayNumber}` : ''}：${issue.message}`"
         :closable="false"
         class="mb-3!"
-      />
+      >
+        <template #title>
+          <button
+            v-if="canLocateIssue(issue)"
+            type="button"
+            :disabled="loading"
+            class="p-0 border-0 bg-transparent text-inherit text-left font-inherit cursor-pointer hover:underline focus-visible:underline disabled:cursor-wait"
+            @click="locateIssue(issue)"
+          >
+            {{ issue.code }}{{ issue.dayNumber ? ` · D${issue.dayNumber}` : '' }}：{{ issue.message }}
+          </button>
+          <template v-else>
+            {{ issue.code }}{{ issue.dayNumber ? ` · D${issue.dayNumber}` : '' }}：{{ issue.message }}
+          </template>
+        </template>
+      </el-alert>
       <el-checkbox-group
         v-if="!confirmed && warningCodes.length"
         v-model="acknowledged"
@@ -72,7 +87,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import AppDialog from "@/components/AppDialog/index.vue";
-import type { WebsitePreview } from "@/types/website";
+import type { WebsitePreview, WebsiteValidation } from "@/types/website";
 import { websitePrintBlob } from "../print";
 const props = defineProps<{
   modelValue: boolean;
@@ -81,15 +96,28 @@ const props = defineProps<{
   canConfirm: boolean;
   canDownload: boolean;
   loading: boolean;
+  canLocateIssue: (issue: WebsiteValidation) => boolean;
 }>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
   confirm: [codes: string[]];
   print: [language: "en" | "zh"];
+  "locate-issue": [issue: WebsiteValidation];
 }>();
 const language = ref<"en" | "zh">("en");
 const acknowledged = ref<string[]>([]);
 const previewUrl = ref("");
+let pendingIssue: WebsiteValidation | undefined;
+function locateIssue(issue: WebsiteValidation) {
+  if (props.loading) return;
+  pendingIssue = issue;
+  emit("update:modelValue", false);
+}
+function handleClosed() {
+  const issue = pendingIssue;
+  pendingIssue = undefined;
+  if (issue) emit("locate-issue", issue);
+}
 const hasErrors = computed(
   () => props.preview?.issues.some((issue) => issue.severity === "ERROR") ?? true,
 );

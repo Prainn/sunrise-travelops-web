@@ -15,10 +15,10 @@ export function hasRouteAccess(meta: RouteMeta, context: RouteAccessContext): bo
   const perms = context.perms ?? [];
 
   if (meta.scopes?.length && (!context.scope || !meta.scopes.includes(context.scope))) return false;
-  if (roles.includes(ROLE_ROOT)) return true;
+  const matchesPerms = !meta.perms?.length || meta.perms.some((perm) => perms.includes(perm));
+  if (roles.includes(ROLE_ROOT)) return matchesPerms;
 
   const matchesRoles = !meta.roles?.length || meta.roles.some((role) => roles.includes(role));
-  const matchesPerms = !meta.perms?.length || meta.perms.some((perm) => perms.includes(perm));
 
   const matchesMenu = !meta.menuKey || Boolean(context.menuKeys?.includes(meta.menuKey));
   return matchesRoles && matchesPerms && matchesMenu;

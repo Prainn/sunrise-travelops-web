@@ -2,10 +2,11 @@
   <AppDialog
     :model-value="modelValue"
     size="lg"
+    :busy="busy"
     :title="$t('itineraryWorkspace.resourceDialogTitle', { day: dayLabel, type: $t('websiteItineraryUi.mealsAndServices') })"
     @close="close"
   >
-    <el-form label-position="top" @submit.prevent>
+    <el-form label-position="top" :inert="busy" @submit.prevent>
       <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
         <el-form-item :label="$t('websiteItineraryUi.mealSlot')">
           <el-select v-model="slot" autocomplete="new-password">
@@ -33,7 +34,7 @@
       </el-form-item>
       <WebsitePublicResourcePicker
         v-if="source === 'public'"
-        :key="slot"
+        :key="mealId"
         kind="restaurant"
         :model-value="resourceId"
         :linked-city-id="linkedCityId"
@@ -53,10 +54,10 @@
       </div>
     </el-form>
     <template #footer>
-      <el-button @click="close">
+      <el-button :disabled="busy" @click="close">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button type="primary" @click="submit">
+      <el-button type="primary" :loading="busy" @click="submit">
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -65,15 +66,18 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import { ElMessageBox } from "element-plus";
+import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
 import type { FeeState, WebsiteConfig, WebsiteDay, WebsiteMeal } from "@/types/website";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
 import WebsitePublicResourcePicker from "../../components/WebsitePublicResourcePicker.vue";
+import { isMealArranged } from "../../options";
 
 const MEAL_SLOTS = ["breakfast", "lunch", "dinner"] as const;
 
 /**
- * 独立站三餐编辑：餐次与费用状态独立，公共餐厅只写 resourceId 与中文名；确认后才写回当天对应餐次。
+ * 独立站三餐编辑：打开时绑定原明细 ID，切换餐次只改 slot，确认后才写回；已有目标安排须确认替换。
  */
 const props = defineProps<{
   modelValue: boolean;
@@ -84,8 +88,11 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [meal: Pick<WebsiteMeal, "slot" | "resourceId" | "restaurantZh" | "restaurantEn" | "feeState">];
+  submit: [meal: WebsiteMeal];
 }>();
+const { t } = useI18n();
+const mealId = ref("");
+const busy = ref(false);
 const slot = ref<WebsiteMeal["slot"]>("lunch");
 const source = ref<"public" | "manual">("public");
 const resourceId = ref<string | null>(null);
@@ -105,12 +112,9 @@ watch(
   },
   { immediate: true },
 );
-watch(slot, (value, previous) => {
-  if (props.modelValue && value !== previous) loadSlot(value);
-});
-
 function loadSlot(value: WebsiteMeal["slot"]) {
   const meal = props.day?.meals.find((item) => item.slot === value);
+  mealId.value = meal?.id ?? crypto.randomUUID();
   slot.value = value;
   resourceId.value = meal?.resourceId ?? null;
   restaurantZh.value = meal?.restaurantZh ?? "";
@@ -123,10 +127,31 @@ function changeSource(value: string | number | boolean | undefined) {
   if (source.value === "manual") resourceId.value = null;
 }
 function close() {
-  emit("update:modelValue", false);
+  if (!busy.value) emit("update:modelValue", false);
 }
-function submit() {
+async function submit() {
+  if (busy.value) return;
+  const target = props.day?.meals.find(meal => meal.slot === slot.value && meal.id !== mealId.value);
+  if (target && isMealArranged(target)) {
+    busy.value = true;
+    try {
+      await ElMessageBox.confirm(t("websiteItineraryUi.replaceMealConfirm", {
+        day: props.dayLabel,
+        slot: t(`itinerary.meals.${target.slot}`),
+        name: target.restaurantZh || target.restaurantEn || t("websiteItineraryUi.noRestaurant"),
+      }), t("itineraryWorkspace.transfer.replaceTitle"), {
+        confirmButtonText: t("itineraryWorkspace.transfer.replace"),
+        cancelButtonText: t("common.cancel"),
+        type: "warning",
+      });
+    } catch {
+      return;
+    } finally {
+      busy.value = false;
+    }
+  }
   emit("submit", {
+    id: mealId.value,
     slot: slot.value,
     resourceId: source.value === "public" ? resourceId.value : null,
     restaurantZh: restaurantZh.value.trim(),

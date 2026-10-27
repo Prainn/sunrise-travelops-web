@@ -34,6 +34,8 @@ function placeWebsiteDays(days: WebsiteDay[], change: DayOrderChange) {
   const placements = change.placements;
   if (!placements) return;
   const copies = change.copies ?? {};
+  const transportCopies = new Map((change.transportCopies ?? []).map(leg => [leg.id, leg]));
+  const removed = new Set(change.removedItemIds ?? []);
   const pool = {
     items: new Map(days.flatMap((day) => day.items.map((item) => [item.id, item] as const))),
     legs: new Map(days.flatMap((day) => day.legs.map((leg) => [leg.id, leg] as const))),
@@ -60,12 +62,15 @@ function placeWebsiteDays(days: WebsiteDay[], change: DayOrderChange) {
       day.eventOrder = [...events];
     }
     day.items = resolve(pool.items, groups[WEBSITE_BOARD_GROUPS.attractions]);
-    day.legs = resolve(pool.legs, groups[WEBSITE_BOARD_GROUPS.legs]);
+    day.legs = resolve(pool.legs, groups[WEBSITE_BOARD_GROUPS.legs]).map(leg =>
+      transportCopies.has(leg.id) ? structuredClone(toRaw(transportCopies.get(leg.id)!)) : leg,
+    );
     day.hotels = resolve(pool.hotels, groups[WEBSITE_BOARD_GROUPS.hotels]);
     const meals = resolve(pool.meals, groups[WEBSITE_BOARD_GROUPS.meals]);
     day.meals = MEAL_SLOTS.flatMap((slot) => {
       const placed = meals.filter((meal) => meal.slot === slot);
-      return placed.length ? placed : [emptyMeal(slot)];
+      const original = day.meals.find(meal => meal.slot === slot);
+      return placed.length ? placed : original && !removed.has(original.id) ? [emptyMeal(slot)] : [];
     });
     const serviceIds = groups[WEBSITE_BOARD_GROUPS.services] ?? [];
     const guide = serviceIds.map((id) => pool.guides.get(copies[id] ?? id)).find(Boolean);

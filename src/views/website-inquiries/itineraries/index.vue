@@ -199,13 +199,11 @@
             :day="plan.days[index]"
             :sequence="boardDay(plan.days[index]).groups[0]?.items.filter(item => !item.placeholder)"
             :config="config"
-            :editable="editable && !saving"
+            :editable="editable"
+            :saving="saving"
             :start-date="plan.startDate"
-            :index="index"
             :last="index === plan.days.length - 1"
             @update:day="plan.days.splice(index, 1, $event)"
-            @remove="removeDay(index)"
-            @move="moveDay(index, $event)"
             @open-resource="(kind, target) => openResource(index, kind, target)"
             @insert-resource="(kind, afterId) => openInsertResource(index, kind, afterId)"
           />
@@ -299,6 +297,14 @@
           @update:model-value="closeResource"
           @submit="submitMeal"
         />
+        <WebsiteTransportDialog
+          :model-value="Boolean(boardTransport)"
+          :day-label="$t('itineraryWorkspace.transfer.copyTag')"
+          :config="config"
+          :leg="boardTransport"
+          @update:model-value="(visible) => !visible && closeBoardTransport()"
+          @submit="finishBoardTransport"
+        />
         <WebsiteVehiclePrices
           v-model="isVehiclePricesDialogVisible"
           v-model:plan="plan"
@@ -318,10 +324,11 @@
           :start-date="plan.startDate"
           :readonly="!editable || saving"
           transfer
-          :validate="validateReorder"
           :draft="plan.reorderDraft"
           :create-day="createBoardDay"
           :stash="stashReorder"
+          :edit-transport="editBoardTransport"
+          :transport-item="transportBoardItem"
           @apply="applyReorder"
         />
       </template>
@@ -333,8 +340,10 @@
       :can-confirm="canConfirm"
       :can-download="canDownload"
       :loading="saving"
+      :can-locate-issue="canLocatePreviewIssue"
       @confirm="confirm"
       @print="print"
+      @locate-issue="locatePreviewIssue"
     />
   </PageShell>
 </template>
@@ -348,16 +357,15 @@ import { ElMessage } from "element-plus";
 import PageShell from "@/components/PageShell/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import FeedbackState from "@/components/FeedbackState/index.vue";
-import type { WebsiteDay, WebsiteHotelStay, WebsiteItem, WebsiteLeg, WebsiteMeal } from "@/types/website";
+import type { WebsiteDay, WebsiteHotelStay, WebsiteItem, WebsiteLeg, WebsiteMeal, WebsiteValidation } from "@/types/website";
 import InquiryMessagePreview from "@/views/inquiries/itineraries/components/InquiryMessagePreview.vue";
 import ItineraryWorkspaceLayout from "@/views/inquiries/itineraries/components/ItineraryWorkspaceLayout.vue";
 import ItineraryWorkspaceFooter from "@/views/inquiries/itineraries/components/ItineraryWorkspaceFooter.vue";
 import ItineraryReorderDialog from "@/views/inquiries/itineraries/components/ItineraryReorderDialog.vue";
-import type { DayOrderChange, DayOrderIssue, ReorderBoardDay } from "@/views/inquiries/itineraries/reorder-board";
+import type { DayOrderChange, DayOrderIssue, ReorderBoardDay, ReorderBoardItem } from "@/views/inquiries/itineraries/reorder-board";
 import { emptyDay, isMealArranged, TRANSPORT_OPTIONS } from "../options";
 import { reorderWebsiteDays, WEBSITE_BOARD_GROUPS, websiteGuideBoardId } from "./day-order";
-import { insertWebsiteEvent } from "./event-order";
-import { websiteService, websiteErrorMessage } from "@/services/website.service";
+import { insertWebsiteEvent, updateWebsiteMeal } from "./event-order";
 import { useWebsiteWorkspace } from "./useWebsiteWorkspace";
 import WebsiteDayCard, { type WebsiteResourceDialogKind } from "./components/WebsiteDayCard.vue";
 import WebsiteItineraryBasics from "./components/WebsiteItineraryBasics.vue";
@@ -423,8 +431,6 @@ const {
   confirm,
   print,
   addDay,
-  removeDay,
-  moveDay,
 } = useWebsiteWorkspace();
 usePageTitle(() =>
   inquiry.value ? t("itineraryWorkspace.pageTitles.website", { name: inquiry.value.customerName }) : "",
@@ -447,6 +453,31 @@ const resourceMealSlot = computed<WebsiteMeal["slot"]>(() => {
   const target = resourceDialog.value?.target;
   return typeof target === "string" ? target : "lunch";
 });
+const boardTransport = ref<WebsiteLeg>();
+let resolveBoardTransport: ((leg: WebsiteLeg | undefined) => void) | undefined;
+function editBoardTransport(leg: WebsiteLeg): Promise<WebsiteLeg | undefined> {
+  boardTransport.value = { ...leg };
+  return new Promise(resolve => { resolveBoardTransport = resolve; });
+}
+function closeBoardTransport() {
+  resolveBoardTransport?.(undefined);
+  resolveBoardTransport = undefined;
+  boardTransport.value = undefined;
+}
+function finishBoardTransport(leg: WebsiteLeg) {
+  resolveBoardTransport?.(leg);
+  resolveBoardTransport = undefined;
+  boardTransport.value = undefined;
+}
+function transportBoardItem(leg: WebsiteLeg): ReorderBoardItem {
+  return {
+    id: leg.id,
+    label: `${cityName(leg.fromCityId)} → ${cityName(leg.toCityId)}`,
+    detail: [transportLabel(leg.mode), localName(leg)].filter(Boolean).join(" · "),
+    icon: BOARD_ICONS.legs,
+    transportLeg: leg,
+  };
+}
 function boardDay(day: WebsiteDay): ReorderBoardDay {
   const result: ReorderBoardDay = {
     id: day.id,
@@ -471,11 +502,7 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
         label: t("websiteItineraryUi.transportLegs"),
         icon: BOARD_ICONS.legs,
         transferable: true,
-        items: day.legs.map((leg) => ({
-          id: leg.id,
-          label: `${cityName(leg.fromCityId)} → ${cityName(leg.toCityId)}`,
-          detail: [transportLabel(leg.mode), localName(leg)].filter(Boolean).join(" · "),
-        })),
+        items: day.legs.map(transportBoardItem),
       },
       {
         key: WEBSITE_BOARD_GROUPS.hotels,
@@ -483,9 +510,8 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
         icon: BOARD_ICONS.hotels,
         transferable: true,
         scope: day.hotels.length > 1 ? t("itineraryWorkspace.scopes.alternatives") : undefined,
-        // 不住宿时仍列出已有酒店，便于移出；占位不可拖动。
+        // 不住宿时仍列出已有酒店，便于移出。
         items: [
-          ...(day.overnightCityId ? [] : [{ id: `${day.id}-no-stay`, label: t("itinerary.noOvernightStay"), placeholder: true }]),
           ...day.hotels.map((hotel) => ({
             id: hotel.id,
             label: `${hotel.tier} · ${localName(hotel) || "-"}`,
@@ -539,6 +565,7 @@ function createBoardDay(id: string) { return boardDay({ ...emptyDay(1), id }); }
 watch(plan, () => {
   isBasicsDialogVisible.value = false;
   isReorderDialogVisible.value = false;
+  closeBoardTransport();
   resourceDialog.value = undefined;
 });
 watch(
@@ -548,10 +575,31 @@ watch(
   },
 );
 
-const dayCards = new Map<string, { expand: () => void }>();
+const dayCards = new Map<string, InstanceType<typeof WebsiteDayCard>>();
 function setDayCard(id: string, card: unknown) {
-  if (card) dayCards.set(id, card as { expand: () => void });
+  if (card) dayCards.set(id, card as InstanceType<typeof WebsiteDayCard>);
   else dayCards.delete(id);
+}
+function canLocatePreviewIssue(issue: WebsiteValidation) {
+  if (!plan.value) return false;
+  if (issue.dayNumber !== undefined)
+    return plan.value.days.some(day => day.dayNumber === issue.dayNumber);
+  if (issue.code === "REORDER_PENDING" || issue.code === "VAL-E01") return true;
+  return editable.value && (issue.code === "VAL-E07" || issue.code === "ITINERARY_INVALID" || issue.code === "REQUIREMENTS_MISMATCH");
+}
+async function locatePreviewIssue(issue: WebsiteValidation) {
+  if (saving.value || !canLocatePreviewIssue(issue)) return;
+  const day = plan.value?.days.find(day => day.dayNumber === issue.dayNumber);
+  if (day) {
+    await workspaceLayout.value?.scrollToDay(day.id);
+    dayCards.get(day.id)?.openValidationIssue(issue.code);
+  } else if (issue.code === "REORDER_PENDING" || issue.code === "VAL-E01") {
+    isReorderDialogVisible.value = true;
+  } else if (issue.code === "VAL-E07") {
+    isVehiclePricesDialogVisible.value = true;
+  } else {
+    isBasicsDialogVisible.value = true;
+  }
 }
 function localName(item: { nameZh: string; nameEn: string }) {
   return (locale.value === "en" ? item.nameEn : item.nameZh) || item.nameZh || item.nameEn;
@@ -608,26 +656,15 @@ function submitHotel(hotel: WebsiteHotelStay) {
   if (index >= 0) day.hotels.splice(index, 1, hotel);
   else day.hotels.push(hotel);
 }
-function submitMeal(changes: Pick<WebsiteMeal, "slot" | "resourceId" | "restaurantZh" | "restaurantEn" | "feeState">) {
+function submitMeal(meal: WebsiteMeal) {
   const day = resourceDay.value;
-  const meal = day?.meals.find((item) => item.slot === changes.slot);
-  if (!day || !meal) return;
-  Object.assign(meal, changes);
+  if (!day) return;
+  updateWebsiteMeal(day, meal);
   if (resourceDialog.value?.afterId) insertWebsiteEvent(day, meal.id, resourceDialog.value.afterId);
 }
 const reorderBoardDays = computed(() => allReorderBoardDays.value.slice(0, plan.value?.days.length ?? 0));
 const deletedBoardDays = computed(() => allReorderBoardDays.value.slice(plan.value?.days.length ?? 0));
 
-async function validateReorder(change: DayOrderChange): Promise<DayOrderIssue[]> {
-  if (!plan.value) return [];
-  const result = reorderWebsiteDays(plan.value.days, change, plan.value.deletedDays);
-  try {
-    const preview = await websiteService.validateItinerary({ ...plan.value, days: result.days, deletedDays: result.deletedDays, duration: result.days.length, reorderDraft: null });
-    return preview.issues.map(issue => ({ dayId: result.days.find(day => day.dayNumber === issue.dayNumber)?.id ?? "", key: "itineraryWorkspace.serverIssue", params: { message: issue.message, code: issue.code ? `${issue.code} · ` : "", day: issue.dayNumber ? `D${issue.dayNumber} · ` : "" }, blocking: issue.severity === "ERROR" }));
-  } catch (cause) {
-    return [{ dayId: "", key: "itineraryWorkspace.serverIssue", params: { message: websiteErrorMessage(cause), code: "", day: "" }, blocking: true }];
-  }
-}
 async function stashReorder(change: DayOrderChange) {
   if (!plan.value || !editable.value) return false;
   const previous = plan.value.reorderDraft;

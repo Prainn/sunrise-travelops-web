@@ -71,6 +71,7 @@
       @view="openEditor($event, true)"
       @edit="openEditor($event)"
       @transfer="openTransfer"
+      @delete="deleteInquiry"
       @archive="archive"
       @lost="markLost"
       @itineraries="openItineraries"
@@ -217,6 +218,28 @@ async function save(input: WebsiteInquiryInput) {
 }
 // 行操作从确认前占用到请求结束，期间同一行不能再次归档、转交或编辑。
 const { isPending, run } = usePendingActions();
+function deleteInquiry(record: WebsiteInquiry) {
+  if (!record.canDelete) return;
+  return run(record.id, async () => {
+    try {
+      await ElMessageBox.confirm(t("inquiry.deleteConfirm", { code: record.code }), t("common.tip"), {
+        type: "warning",
+        confirmButtonText: t("common.delete"),
+        cancelButtonText: t("common.cancel"),
+      });
+    } catch {
+      return;
+    }
+    try {
+      await websiteService.deleteInquiry(record.id, record.version);
+      ElMessage.success(t("common.deleteSuccess"));
+      if (rows.value.length === 1 && query.page > 1) query.page -= 1;
+      await load();
+    } catch (error) {
+      ElMessage.error(websiteErrorMessage(error));
+    }
+  });
+}
 function archive(record: WebsiteInquiry) {
   return run(record.id, () => archiveRecord(record));
 }

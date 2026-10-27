@@ -17,6 +17,7 @@ import {
   copyBoardItem,
   planBoardTransfer,
   removeBoardCopy,
+  removeBoardItem,
   restoredDayIndex,
   type BoardState,
   type DayOrderChange,
@@ -351,7 +352,8 @@ describe("website cross-day transfer and copy", () => {
     d2!.services[0]!.nameZh = "改名";
     expect(board.days[0]!.services[0]!.nameZh).toBe("接机");
     board.remove("copy-s1");
-    expect(board.state).toEqual(initial);
+    expect(board.state.placements).toEqual(initial.placements);
+    expect(board.state.copies).toEqual(initial.copies);
   });
 
   it("moves, copies and replaces day guide arrangements with language and scope", () => {
@@ -442,4 +444,63 @@ it("does not bring back items displaced by a confirmed same-slot replacement", (
     copies: [], overnight: [],
   });
   expect(result.placements).toEqual({ d1: { events: [] }, d2: { events: ["h1", "lunch1", "fresh"] } });
+});
+
+it("deletes originals and placed copies across stash/reopen without losing independent copies or new content", () => {
+  const days: ReorderBoardDay[] = [
+    { id: "d1", title: "", groups: [{ key: "events", label: "", items: [{ id: "original", label: "Original" }, { id: "new", label: "New" }] }] },
+    { id: "d2", title: "", groups: [{ key: "events", label: "", items: [] }] },
+  ];
+  let state: BoardState = { placements: { d1: { events: ["original"] }, d2: { events: [] } }, copies: {} };
+  state = copyBoardItem(state, "d1", "events", "original", "copy");
+  state = planBoardTransfer(state, { key: "events", transferable: true }, { dayId: "d1", itemId: "copy" }, { dayId: "d2" }, id => ({ id, label: id }))!.next;
+  state = removeBoardItem(state, "original");
+  const draft = {
+    dayIds: ["d1", "d2"], addedDayIds: [], deletedDays: [], overnight: [],
+    placements: Object.entries(state.placements).map(([dayId, groups]) => ({ dayId, itemIds: groups.events! })),
+    copies: Object.entries(state.copies).map(([id, copy]) => ({ id, ...copy, parentId: copy.parentId!, placed: copy.placed! })),
+    removedItemIds: state.removedItemIds,
+  };
+  const restored = restoreWebsiteBoard(days, JSON.parse(JSON.stringify(draft)));
+  expect(restored.placements).toEqual({ d1: { events: ["new"] }, d2: { events: ["copy"] } });
+  expect(restored.copies.copy?.sourceId).toBe("original");
+  const deleted = removeBoardItem(restored, "copy");
+  expect(deleted.placements.d2?.events).toEqual([]);
+  expect(deleted.copies).toEqual({});
+});
+
+it("applies manually chosen transport endpoints and persists edited copies through stash/reopen", () => {
+  const source = emptyDay(1), target = emptyDay(2);
+  source.legs = [{ id: "leg", mode: "hsr", routeId: "old-route", fromCityId: "a", toCityId: "b", nameZh: "旧路线", nameEn: "Old route", feeState: "EXCLUDED" }];
+  const copy = { id: "copy", mode: source.legs[0]!.mode, routeId: null, fromCityId: "c", toCityId: "d", nameZh: "", nameEn: "", feeState: "INCLUDED" as const };
+  const draft = JSON.parse(JSON.stringify({
+    dayIds: [source.id, target.id], addedDayIds: [], deletedDays: [], overnight: [],
+    placements: [{ dayId: source.id, itemIds: ["leg"] }, { dayId: target.id, itemIds: ["copy"] }],
+    copies: [{ id: "copy", sourceId: "leg", parentId: "leg", dayId: source.id, placed: true }],
+    transportCopies: [copy],
+  }));
+  const state = restoreWebsiteBoard([source, target].map(day => ({ id: day.id, title: "", groups: [{ key: "events", label: "", items: day.legs.map(leg => ({ id: leg.id, label: leg.id })) }] })), draft);
+  const result = reorderWebsiteDays([source, target], {
+    dayIds: draft.dayIds, itemIds: {}, placements: state.placements, copies: { copy: "leg" }, transportCopies: reactive(state.transportCopies ?? []),
+  });
+  expect(result.days[0]!.legs).toEqual(source.legs);
+  expect(result.days[1]!.legs).toEqual([copy]);
+  expect(removeBoardItem(state, "copy").transportCopies).toEqual([]);
+});
+
+it("removes every category including default meal cards without recreating deleted meals on later applies", () => {
+  const day = emptyDay(1);
+  day.items = [{ id: "attraction", attractionId: null, nameZh: "", nameEn: "", descriptionZh: "", descriptionEn: "", appears: true, feeState: "INCLUDED" }];
+  day.legs = [{ id: "leg", routeId: null, fromCityId: "a", toCityId: "b", mode: "hsr", nameZh: "", nameEn: "", feeState: "INCLUDED" }];
+  day.hotels = [{ id: "hotel", tier: "D", cityId: "a", configHotelId: null, resourceId: null, nameZh: "酒店", nameEn: "Hotel", roomType: "", breakfastIncluded: true }];
+  day.services = [{ id: "service", nameZh: "", nameEn: "", appears: true, feeState: "INCLUDED" }];
+  day.guideLanguage = "English";
+  const ids = [...day.items, ...day.legs, ...day.hotels, ...day.meals, ...day.services].map(item => item.id).concat(websiteGuideBoardId(day.id));
+  let state: BoardState = { placements: { [day.id]: { events: ids } }, copies: {} };
+  for (const id of ids) state = removeBoardItem(state, id);
+  const change = { dayIds: [day.id], itemIds: {}, placements: state.placements, removedItemIds: state.removedItemIds };
+  const result = reorderWebsiteDays([day], change).days;
+  expect(result[0]).toMatchObject({ items: [], legs: [], hotels: [], meals: [], services: [], guideLanguage: "", eventOrder: [] });
+  expect(reorderWebsiteDays(result, { ...change, removedItemIds: [] }).days[0]!.meals).toEqual([]);
+  expect(day.meals).toHaveLength(3);
 });

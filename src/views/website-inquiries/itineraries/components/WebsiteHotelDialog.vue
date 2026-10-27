@@ -11,6 +11,8 @@
           <el-select v-model="draft.tier" autocomplete="new-password">
             <el-option value="A" :label="$t('websiteItineraryUi.hotelTierA')" />
             <el-option value="B" :label="$t('websiteItineraryUi.hotelTierB')" />
+            <el-option value="C" :label="$t('websiteItineraryUi.hotelTierC')" />
+            <el-option value="D" :label="$t('websiteItineraryUi.hotelTierD')" />
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.overnightCity')" required>

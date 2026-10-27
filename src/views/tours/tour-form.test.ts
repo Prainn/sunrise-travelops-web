@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
-import type { TourRecord } from "@/types/tour";
+import type { TourGuideService, TourRecord } from "@/types/tour";
 import {
   createTourRequest,
   emptyTourForm,
-  guideQuery,
-  isGuideUnavailable,
+  guideAvailabilityQuery,
+  guideServiceChanged,
+  guideServiceErrors,
+  guideServiceInputs,
+  guideServiceRowFromRecord,
+  emptyGuideServiceRow,
+  isGuideServiceUnavailable,
+  outsideTeamWindow,
+  type GuideServiceRow,
   manualScheduleError,
   syncManualPickupDate,
   tourFormFromRecord,
@@ -74,9 +81,7 @@ function manualTour(patch: Partial<TourRecord> = {}): TourRecord {
     dropFlightId: null,
     pickupFlight: null,
     dropFlight: null,
-    guideId: "guide-1",
-    guideCode: "G1",
-    guideName: "导游甲",
+    guideServices: [],
     remark: "",
     status: "active",
     cancelReason: null,
@@ -193,34 +198,180 @@ describe("manual pickup date", () => {
   });
 });
 
-describe("guide availability", () => {
-  const period = { businessUnit: "shengxu" as const, startDate: "2026-08-01", days: 10 };
+function service(patch: Partial<TourGuideService> = {}): TourGuideService {
+  return {
+    id: "svc-1",
+    tourId: "tour-1",
+    guideId: "guide-1",
+    guideName: "导游甲",
+    guideCode: "G1",
+    language: "英语",
+    serviceStartAt: "2026-08-01 09:00",
+    serviceEndAt: "2026-08-03 12:00",
+    remark: "",
+    timeSource: "manual",
+    invalidDuration: false,
+    outsideTourWindow: false,
+    createdAt: "2026-07-01T00:00:00Z",
+    createdBy: "u1",
+    updatedAt: "2026-07-01T00:00:00Z",
+    updatedBy: "u1",
+    ...patch,
+  };
+}
+function row(patch: Partial<GuideServiceRow> = {}): GuideServiceRow {
+  return {
+    ...emptyGuideServiceRow(),
+    guideId: "guide-1",
+    language: "英语",
+    serviceStartAt: "2026-08-01 09:00",
+    serviceEndAt: "2026-08-03 12:00",
+    ...patch,
+  };
+}
 
-  it("skips the request while required or valid manual times are missing", () => {
-    expect(guideQuery(period, manualForm({ language: "" }))).toBeNull();
-    expect(guideQuery(period, manualForm({ dropAt: "" }))).toBeNull();
-    expect(guideQuery(period, manualForm({ pickupAt: "2026-08-02 09:00" }))).toBeNull();
-    expect(guideQuery(period, manualForm({ dropAt: "2026-08-01 08:00" }))).toBeNull();
-    expect(guideQuery(period, manualForm(), "tour-1")).toEqual({
-      ...period,
-      language: "英语",
-      scheduleMode: "manual",
-      pickupAt: "2026-08-01 15:20",
-      dropAt: "2026-08-10 12:00",
-      excludeTourId: "tour-1",
-    });
+describe("guide service requests", () => {
+  it("always submits the whitelisted array; empty means explicitly none", () => {
+    expect(createTourRequest(manualForm(), { sourceModule: "manual" })).toHaveProperty("guideServices", []);
+    expect(updateTourRequest(manualTour(), manualForm())).toHaveProperty("guideServices", []);
+    expect(createTourRequest(manualForm(), { sourceModule: "standard", inquiryId: "i", quoteId: "q" }))
+      .toHaveProperty("guideServices", []);
   });
 
-  it("keeps the selected guide when still available and flags it only after a real schedule change", () => {
-    const tour = manualTour();
-    const candidates = [{ id: "guide-1", code: "G1", name: "导游甲", language: null }];
+  it("keeps original IDs, omits IDs for new segments and never sends read-only fields", () => {
+    const old = service({ timeSource: "legacy", invalidDuration: true, outsideTourWindow: true });
+    const tour = manualTour({ guideServices: [old] });
+    const form = tourFormFromRecord(tour);
+    form.guideServices.push(row({ guideId: "guide-2", remark: " 接送 " }));
+    const { guideServices } = updateTourRequest(tour, form);
 
-    expect(isGuideUnavailable(tourFormFromRecord(tour), candidates, tour)).toBe(false);
-    // 原导游、接送未变：候选缺失（已停用档案）也保留。
-    expect(isGuideUnavailable(tourFormFromRecord(tour), [], tour)).toBe(false);
-    const moved = { ...tourFormFromRecord(tour), startDate: "2026-08-02", pickupAt: "2026-08-02 15:20" };
-    expect(isGuideUnavailable(moved, candidates, tour)).toBe(false);
-    expect(isGuideUnavailable(moved, [], tour)).toBe(true);
-    expect(isGuideUnavailable({ ...tourFormFromRecord(tour), language: "法语" }, [], tour)).toBe(true);
+    expect(guideServices).toEqual([
+      {
+        id: "svc-1",
+        guideId: "guide-1",
+        language: "英语",
+        serviceStartAt: "2026-08-01 09:00",
+        serviceEndAt: "2026-08-03 12:00",
+        remark: "",
+      },
+      {
+        guideId: "guide-2",
+        language: "英语",
+        serviceStartAt: "2026-08-01 09:00",
+        serviceEndAt: "2026-08-03 12:00",
+        remark: "接送",
+      },
+    ]);
+    for (const item of guideServices)
+      for (const key of ["timeSource", "guideName", "invalidDuration", "outsideTourWindow", "tourId", "createdAt"])
+        expect(item).not.toHaveProperty(key);
+  });
+
+  it("sends confirmTime only for explicitly confirmed existing segments", () => {
+    const legacy = guideServiceRowFromRecord(service({ timeSource: "legacy" }));
+    expect(guideServiceInputs([legacy])[0]).not.toHaveProperty("confirmTime");
+    legacy.confirmTime = true;
+    expect(guideServiceInputs([legacy])[0]).toHaveProperty("confirmTime", true);
+    expect(guideServiceInputs([row({ confirmTime: true })])[0]).not.toHaveProperty("confirmTime");
+  });
+
+  it("does not rewrite segments when the tour pickup/drop times change", () => {
+    const tour = manualTour({ guideServices: [service()] });
+    const form = tourFormFromRecord(tour);
+    form.startDate = "2026-08-09";
+    form.pickupAt = "2026-08-09 10:00";
+    form.dropAt = "2026-08-12 10:00";
+    expect(updateTourRequest(tour, form).guideServices[0]).toMatchObject({
+      serviceStartAt: "2026-08-01 09:00",
+      serviceEndAt: "2026-08-03 12:00",
+    });
+  });
+});
+
+describe("guide service validation", () => {
+  it("allows the same guide in two non-overlapping segments and different guides to overlap", () => {
+    const rows = [
+      row(),
+      row({ serviceStartAt: "2026-08-03 12:01", serviceEndAt: "2026-08-05 10:00" }),
+      row({ guideId: "guide-2" }),
+    ];
+    expect(guideServiceErrors(rows)).toEqual([null, null, null]);
+  });
+
+  it("rejects same-minute handover and overlap for one guide", () => {
+    const rows = [row(), row({ serviceStartAt: "2026-08-03 12:00", serviceEndAt: "2026-08-04 12:00" })];
+    expect(guideServiceErrors(rows)).toEqual(["overlap", "overlap"]);
+  });
+
+  it("requires complete fields and a positive duration for new or changed segments", () => {
+    expect(guideServiceErrors([row({ guideId: "" })])).toEqual(["incomplete"]);
+    expect(guideServiceErrors([row({ serviceEndAt: "2026-08-01 09:00" })])).toEqual(["order"]);
+  });
+
+  it("keeps an unchanged zero-duration legacy segment but demands a real duration to confirm or adjust it", () => {
+    const legacy = service({
+      timeSource: "legacy",
+      invalidDuration: true,
+      serviceStartAt: "2026-08-01 15:20",
+      serviceEndAt: "2026-08-01 15:20",
+    });
+    const kept = guideServiceRowFromRecord(legacy);
+    expect(guideServiceErrors([kept])).toEqual([null]);
+    expect(guideServiceInputs([kept])[0]).toMatchObject({ serviceEndAt: "2026-08-01 15:20" });
+    kept.confirmTime = true;
+    expect(guideServiceErrors([kept])).toEqual(["order"]);
+    kept.confirmTime = false;
+    kept.serviceEndAt = "2026-08-01 18:00";
+    expect(guideServiceErrors([kept])).toEqual([null]);
+  });
+
+  it("flags windows only as a hint: segments may exceed the tour transfer window", () => {
+    const window = { from: "2026-08-01 15:20", to: "2026-08-10 12:00" };
+    expect(outsideTeamWindow(row({ serviceEndAt: "2026-08-09 12:00", serviceStartAt: "2026-08-02 00:00" }), window)).toBe(false);
+    // 游客 10 号离境但服务 9 号结束；27 号凌晨航班但 26 号结束，均不依赖团队时间。
+    expect(outsideTeamWindow(row({ serviceEndAt: "2026-08-10 12:01" }), window)).toBe(true);
+    expect(outsideTeamWindow(row(), null)).toBe(false);
+    expect(guideServiceErrors([row({ serviceEndAt: "2026-08-10 12:01" })])).toEqual([null]);
+  });
+});
+
+describe("guide availability", () => {
+  it("needs language and a strictly positive range for the queried segment", () => {
+    const rows = [row({ language: "" }), row({ serviceEndAt: "2026-08-01 09:00" }), row()];
+    expect(guideAvailabilityQuery("shengxu", rows, 0)).toBeNull();
+    expect(guideAvailabilityQuery("shengxu", rows, 1)).toBeNull();
+    expect(guideAvailabilityQuery(null, rows, 2)).toBeNull();
+  });
+
+  it("sends all other filled siblings with only 3 fields, excluding the queried one", () => {
+    const rows = [
+      row({ guideId: "", serviceStartAt: "", serviceEndAt: "" }),
+      row({ guideId: "guide-2", serviceStartAt: "2026-08-05 08:00", serviceEndAt: "2026-08-05 08:00", remark: "x" }),
+      row({ id: "svc-9", guideId: "guide-3", serviceStartAt: "2026-08-06 08:00", serviceEndAt: "2026-08-07 08:00" }),
+    ];
+    expect(guideAvailabilityQuery("shengxu", rows, 2, "tour-1")).toEqual({
+      businessUnit: "shengxu",
+      language: "英语",
+      serviceStartAt: "2026-08-06 08:00",
+      serviceEndAt: "2026-08-07 08:00",
+      excludeTourId: "tour-1",
+      otherServices: [
+        { guideId: "guide-2", serviceStartAt: "2026-08-05 08:00", serviceEndAt: "2026-08-05 08:00" },
+      ],
+    });
+    expect(guideAvailabilityQuery("shengxu", [row()], 0)).not.toHaveProperty("otherServices");
+  });
+
+  it("flags an unavailable guide only for new or adjusted segments, keeping unchanged archived guides", () => {
+    const candidates = [{ id: "guide-1", code: "G1", name: "导游甲", language: "英语" }];
+    const kept = guideServiceRowFromRecord(service());
+    expect(isGuideServiceUnavailable(kept, [])).toBe(false);
+    expect(isGuideServiceUnavailable(row(), candidates)).toBe(false);
+    expect(isGuideServiceUnavailable(row(), [])).toBe(true);
+    kept.remark = "仅改备注";
+    expect(isGuideServiceUnavailable(kept, [])).toBe(false);
+    kept.serviceEndAt = "2026-08-04 12:00";
+    expect(guideServiceChanged(kept)).toBe(true);
+    expect(isGuideServiceUnavailable(kept, [])).toBe(true);
   });
 });

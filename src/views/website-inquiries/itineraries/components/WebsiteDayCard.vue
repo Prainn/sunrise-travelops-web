@@ -7,20 +7,9 @@
     :date="date"
     :body-id="`website-day-body-${day.id}`"
   >
-    <template v-if="editable" #actions>
-      <el-button :disabled="index === 0" link @click="emit('move', -1)">
-        {{ $t("common.moveUp") }}
-      </el-button>
-      <el-button :disabled="last" link @click="emit('move', 1)">
-        {{ $t("common.moveDown") }}
-      </el-button>
-      <el-button link type="danger" @click="emit('remove')">
-        {{ $t("websiteItineraryUi.removeDay") }}
-      </el-button>
-    </template>
     <el-form
       label-position="top"
-      :disabled="!editable"
+      :disabled="!editable || saving"
       class="flex flex-col gap-4"
       @submit.prevent
     >
@@ -95,6 +84,7 @@
         <template v-for="event in events" :key="event.id">
           <WebsiteDayAttractions
             v-if="event.kind === 'attraction'"
+            :ref="(card) => setEventCard(event.id, card)"
             v-model:day="day"
             :item-id="event.id"
             :config="config"
@@ -102,6 +92,7 @@
           />
           <WebsiteDayTransport
             v-else-if="event.kind === 'transport'"
+            :ref="(card) => setEventCard(event.id, card)"
             v-model:day="day"
             :leg-id="event.id"
             :config="config"
@@ -133,6 +124,7 @@
       />
       <WebsiteDayMealsServices
         v-if="day.services.length"
+        ref="servicesCard"
         v-model:day="day"
         :editable="editable"
         services-only
@@ -167,19 +159,23 @@ const props = defineProps<{
   sequence?: { id: string; label: string }[];
   config: WebsiteConfig;
   editable: boolean;
+  saving?: boolean;
   startDate: string | null;
-  index: number;
   last: boolean;
 }>();
 const emit = defineEmits<{
-  move: [direction: number];
-  remove: [];
   /** hotel 传酒店下标（-1 新增），meal 传餐次 */
   "open-resource": [kind: WebsiteResourceDialogKind, target?: number | WebsiteMeal["slot"]];
   "insert-resource": [kind: "attraction" | "transport" | "meal", afterId: string];
 }>();
 const { t, locale } = useI18n();
 const frame = useTemplateRef<InstanceType<typeof ItineraryDayCardFrame>>("frame");
+const servicesCard = useTemplateRef<InstanceType<typeof WebsiteDayMealsServices>>("servicesCard");
+const eventCards = new Map<string, unknown>();
+function setEventCard(id: string, card: unknown) {
+  if (card) eventCards.set(id, card);
+  else eventCards.delete(id);
+}
 const departureName = computed(() => cityName(day.value.departCityId));
 const destinationName = computed(() => cityName(day.value.endCityId));
 const date = computed(() =>
@@ -308,7 +304,36 @@ function toggleNoStay(checked: string | number | boolean) {
   else day.value.overnightCityId = day.value.endCityId || null;
 }
 
+function openValidationIssue(code: string) {
+  if (!props.editable || props.saving) return;
+  if (code === "VAL-E06") {
+    const index = day.value.hotels.findIndex(hotel => !hotel.nameZh.trim() || !hotel.nameEn.trim());
+    emit("open-resource", "hotel", index);
+  } else if (code === "VAL-E03" && !day.value.legs.length && day.value.departCityId !== day.value.endCityId) {
+    emit("open-resource", "transport");
+  } else if (code === "VAL-E04") {
+    const item = day.value.items.find(item => item.feeState === "UNKNOWN");
+    if (item) {
+      (eventCards.get(item.id) as InstanceType<typeof WebsiteDayAttractions> | undefined)?.openEdit(item);
+      return;
+    }
+    const leg = day.value.legs.find(leg => leg.feeState === "UNKNOWN");
+    if (leg) {
+      (eventCards.get(leg.id) as InstanceType<typeof WebsiteDayTransport> | undefined)?.openEdit(leg);
+      return;
+    }
+    const meal = day.value.meals.find(meal => meal.feeState === "UNKNOWN");
+    if (meal) {
+      emit("open-resource", "meal", meal.slot);
+      return;
+    }
+    const service = day.value.services.find(service => service.feeState === "UNKNOWN");
+    if (service) servicesCard.value?.openEdit(service);
+  }
+}
+
 defineExpose({
   expand: () => frame.value?.expand(),
+  openValidationIssue,
 });
 </script>

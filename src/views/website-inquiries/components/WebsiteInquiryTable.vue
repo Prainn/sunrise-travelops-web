@@ -104,6 +104,13 @@
               >
                 {{ $t("inquiry.archive") }}
               </el-dropdown-item>
+              <el-dropdown-item
+                v-if="can('website:inquiry:delete') && row.canDelete"
+                :disabled="isPending?.(row.id)"
+                @click="emit('delete', row)"
+              >
+                <span class="text-[var(--el-color-danger)]">{{ $t("common.delete") }}</span>
+              </el-dropdown-item>
             </template>
           </RowActions>
         </template>
@@ -149,6 +156,7 @@ const emit = defineEmits<{
   edit: [record: WebsiteInquiry];
   transfer: [record: WebsiteInquiry];
   archive: [record: WebsiteInquiry];
+  delete: [record: WebsiteInquiry];
   lost: [record: WebsiteInquiry];
   itineraries: [record: WebsiteInquiry];
   "view-logs": [record: WebsiteInquiry];

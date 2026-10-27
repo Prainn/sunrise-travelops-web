@@ -169,9 +169,27 @@
         </el-table-column>
         <el-table-column prop="pickupAt" :label="$t('tour.pickupAt')" min-width="150" />
         <el-table-column prop="dropAt" :label="$t('tour.dropAt')" min-width="150" />
-        <el-table-column :label="$t('tour.guide')" min-width="110">
+        <el-table-column :label="$t('tour.guide')" min-width="160" :show-overflow-tooltip="false">
           <template #default="{ row }">
-            {{ row.guideName ?? $t("tour.unassigned") }}
+            <el-popover
+              v-if="(row as TourRecord).guideServices.length"
+              placement="left"
+              trigger="click"
+              :width="360"
+            >
+              <template #reference>
+                <el-button link type="primary">
+                  {{ guideSummaryText((row as TourRecord).guideServices) }}
+                  <span class="ml-1 text-muted">
+                    {{ $t("tour.guideService.count", { n: (row as TourRecord).guideServices.length }) }}
+                  </span>
+                </el-button>
+              </template>
+              <GuideServiceList :services="(row as TourRecord).guideServices" />
+            </el-popover>
+            <template v-else>
+              {{ $t("tour.unassigned") }}
+            </template>
           </template>
         </el-table-column>
         <el-table-column
@@ -239,6 +257,7 @@ import { usePendingActions } from "@/composables/usePendingActions";
 import { useRefreshOnActivated } from "@/composables";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import DataTable from "@/components/DataTable/index.vue";
+import GuideServiceList from "@/components/GuideServiceList/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
 import Pagination from "@/components/Pagination/index.vue";
@@ -249,6 +268,7 @@ import { businessUnitName } from "@/constants/identity";
 import { tourService } from "@/services/tour.service";
 import { useUserStore } from "@/stores/user";
 import type { TourBusinessUnit, TourRecord } from "@/types/tour";
+import { guideSummaryText } from "@/utils/guide-services";
 import { hasUserPermission } from "@/utils/permission";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 import TourEditorDialog from "./components/TourEditorDialog.vue";

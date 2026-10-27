@@ -1,5 +1,5 @@
 import type { Component } from "vue";
-import type { WebsiteReorderDraft } from "@/types/website";
+import type { WebsiteReorderDraft, WebsiteLeg } from "@/types/website";
 
 /** 顺序调整看板中的一条缩略信息；sortable 分组内的条目可在当天内调整顺序。 */
 export interface ReorderBoardItem {
@@ -13,6 +13,7 @@ export interface ReorderBoardItem {
   /** 未安排的占位（如默认自理的餐次），不可拖动或复制，同位安排放入时直接让位 */
   placeholder?: boolean;
   hotelCityId?: string;
+  transportLeg?: WebsiteLeg;
 }
 
 export interface ReorderBoardGroup {
@@ -48,6 +49,8 @@ export interface DayOrderChange {
   addedDayIds?: string[];
   overnight?: Record<string, string>;
   draft?: WebsiteReorderDraft;
+  removedItemIds?: string[];
+  transportCopies?: WebsiteLeg[];
 }
 
 /** 重排产生的待核对事项；dayId 为空表示整程事项。 */
@@ -68,6 +71,8 @@ export type BoardPlacements = Record<string, Record<string, string[]>>;
 
 /** 看板内的临时排布：只存在于弹窗副本中，取消即丢弃。 */
 export interface BoardState {
+  removedItemIds?: string[];
+  transportCopies?: WebsiteLeg[];
   placements: BoardPlacements;
   /** 临时副本 ID → 原条目 ID 与创建时所在日 */
   copies: Record<string, { sourceId: string; dayId: string; parentId?: string; placed?: boolean }>;
@@ -128,11 +133,14 @@ export function planBoardTransfer(
   if (movingCopy) copies[source.itemId] = { ...movingCopy, placed: true };
   return {
     next: {
+      ...state,
       placements: {
         ...placements,
         [target.dayId]: { ...placements[target.dayId], [group.key]: [...kept.slice(0, index), source.itemId, ...kept.slice(index)] },
       },
       copies,
+      removedItemIds: [...new Set([...(state.removedItemIds ?? []), ...targetIds.filter(id => sameSlot(id) && !state.copies[id])])],
+      transportCopies: state.transportCopies?.filter(leg => !replaced.includes(leg.id)),
     },
     replaced,
   };
@@ -153,25 +161,34 @@ export function copyBoardItem(state: BoardState, dayId: string, groupKey: string
   const index = ids.indexOf(itemId);
   if (index < 0) return state;
   return {
+    ...state,
     placements: withGroup(state, dayId, groupKey, [...ids.slice(0, index + 1), copyId, ...ids.slice(index + 1)]),
     copies: { ...state.copies, [copyId]: { sourceId: state.copies[itemId]?.sourceId ?? itemId, parentId: itemId, dayId, placed: false } },
   };
 }
 
-/** 删除临时副本，其他排布不变。 */
-export function removeBoardCopy(state: BoardState, copyId: string): BoardState {
-  if (!state.copies[copyId]) return state;
+/** 删除卡片，保留依赖同一源内容的独立副本；显式删除的原卡在暂存恢复时不补回。 */
+export function removeBoardItem(state: BoardState, itemId: string): BoardState {
   const copies = { ...state.copies };
-  delete copies[copyId];
+  const isCopy = Boolean(copies[itemId]);
+  delete copies[itemId];
   return {
+    ...state,
+    removedItemIds: isCopy ? state.removedItemIds : [...new Set([...(state.removedItemIds ?? []), itemId])],
+    transportCopies: state.transportCopies?.filter(leg => leg.id !== itemId),
     placements: Object.fromEntries(
       Object.entries(state.placements).map(([dayId, groups]) => [
         dayId,
-        Object.fromEntries(Object.entries(groups).map(([key, ids]) => [key, ids.filter((id) => id !== copyId)])),
+        Object.fromEntries(Object.entries(groups).map(([key, ids]) => [key, ids.filter((id) => id !== itemId)])),
       ]),
     ),
     copies,
   };
+}
+
+/** 删除临时副本，保留既有调用的副本限定语义。 */
+export function removeBoardCopy(state: BoardState, copyId: string): BoardState {
+  return state.copies[copyId] ? removeBoardItem(state, copyId) : state;
 }
 
 /**
@@ -281,6 +298,7 @@ export function restoreWebsiteBoard(days: ReorderBoardDay[], draft: WebsiteReord
   const current = boardPlacements(days);
   const items = new Map(days.flatMap(day => day.groups.flatMap(group => group.items.map(item => [item.id, item] as const))));
   const available = new Set(items.keys());
+  const removed = new Set(draft.removedItemIds ?? []);
   const copies = Object.fromEntries(draft.copies.filter(copy => available.has(copy.sourceId)).map(({ id, ...copy }) => [id, copy]));
   const itemOf = (id: string) => items.get(id) ?? items.get(copies[id]?.sourceId ?? "");
   const saved = new Map(draft.placements.map(entry => [entry.dayId, entry.itemIds]));
@@ -288,9 +306,11 @@ export function restoreWebsiteBoard(days: ReorderBoardDay[], draft: WebsiteReord
   const overnight = new Set(draft.overnight.map(entry => entry.dayId));
   return {
     copies,
+    removedItemIds: [...removed],
+    transportCopies: (draft.transportCopies ?? []).filter(leg => copies[leg.id]),
     placements: Object.fromEntries(days.map(day => {
-      let previous = (saved.get(day.id) ?? []).filter(id => available.has(id) || copies[id]);
-      const added = (current[day.id]?.events ?? []).filter(id => !assigned.has(id) && !(id === `${day.id}-no-stay` && overnight.has(day.id)))
+      let previous = (saved.get(day.id) ?? []).filter(id => !removed.has(id) && (available.has(id) || copies[id]));
+      const added = (current[day.id]?.events ?? []).filter(id => !removed.has(id) && !assigned.has(id) && !(id === `${day.id}-no-stay` && overnight.has(day.id)))
         .filter(id => {
           const slot = itemOf(id)?.slot;
           if (!slot) return true;

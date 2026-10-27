@@ -99,6 +99,8 @@ declare module 'vue' {
     GuideEditorDialog: typeof import('./../src/views/resources/guide/components/GuideEditorDialog.vue')['default']
     GuidePersonEditorDialog: typeof import('./../src/views/resources/guide/components/GuidePersonEditorDialog.vue')['default']
     GuidePersonTable: typeof import('./../src/views/resources/guide/components/GuidePersonTable.vue')['default']
+    GuideServiceList: typeof import('./../src/components/GuideServiceList/index.vue')['default']
+    GuideServicesEditor: typeof import('./../src/views/tours/components/GuideServicesEditor.vue')['default']
     GuideTable: typeof import('./../src/views/resources/guide/components/GuideTable.vue')['default']
     Hamburger: typeof import('./../src/components/Hamburger/index.vue')['default']
     HotelTable: typeof import('./../src/views/resources/hotel/components/HotelTable.vue')['default']

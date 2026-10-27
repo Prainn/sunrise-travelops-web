@@ -129,6 +129,8 @@ const props = defineProps<{
   dayLabel: string;
   day?: WebsiteDay;
   config: WebsiteConfig;
+  /** 编辑看板交通副本；复制时仅预填交通方式，城市保持空白。 */
+  leg?: WebsiteLeg;
 }>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
@@ -160,13 +162,13 @@ watch(
   () => props.modelValue,
   (visible) => {
     if (!visible) return;
-    source.value = "route";
-    fromCityId.value = props.day?.departCityId ?? "";
-    toCityId.value = props.day?.endCityId ?? "";
-    selectedId.value = "";
-    mode.value = "private_vehicle";
-    nameZh.value = "";
-    nameEn.value = "";
+    source.value = props.leg ? (props.leg.routeId ? "route" : "manual") : "route";
+    fromCityId.value = props.leg?.fromCityId ?? props.day?.departCityId ?? "";
+    toCityId.value = props.leg?.toCityId ?? props.day?.endCityId ?? "";
+    selectedId.value = props.leg?.routeId ?? "";
+    mode.value = props.leg?.mode ?? "private_vehicle";
+    nameZh.value = props.leg?.nameZh ?? "";
+    nameEn.value = props.leg?.nameEn ?? "";
   },
   { immediate: true },
 );
@@ -196,7 +198,7 @@ function submit() {
     "submit",
     source.value === "route" && route
       ? {
-        id: crypto.randomUUID(),
+        id: props.leg?.id ?? crypto.randomUUID(),
         routeId: route.id,
         fromCityId: route.fromCityId,
         toCityId: route.toCityId,
@@ -206,7 +208,7 @@ function submit() {
         feeState: route.feeState,
       }
       : {
-        id: crypto.randomUUID(),
+        id: props.leg?.id ?? crypto.randomUUID(),
         routeId: null,
         fromCityId: fromCityId.value,
         toCityId: toCityId.value,

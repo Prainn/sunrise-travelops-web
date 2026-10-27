@@ -171,6 +171,9 @@ export const inquiryService = {
       version: record.version,
     });
   },
+  delete(record: InquiryRecord) {
+    return request.delete<void>(`/inquiries/${encodeURIComponent(record.id)}`, { body: { version: record.version } });
+  },
   archive(record: InquiryRecord) {
     return request.post<InquiryRecord>(`/inquiries/${record.id}/archive`, {
       version: record.version,

@@ -123,6 +123,7 @@ export interface WebsiteInquiryInput {
   lostReason: string;
 }
 export interface WebsiteInquiry extends WebsiteInquiryInput {
+  canDelete?: boolean;
   businessUnit: WebsiteBusinessUnit;
   hasActiveTour: boolean;
   countryCode: string | null;
@@ -158,7 +159,7 @@ export interface WebsiteLeg {
 }
 export interface WebsiteHotelStay {
   id: string;
-  tier: "A" | "B";
+  tier: "A" | "B" | "C" | "D";
   cityId: string;
   configHotelId: string | null;
   resourceId: string | null;
@@ -242,7 +243,7 @@ export interface WebsiteOutput {
   itinerary: WebsiteOutputDay[];
   inclusions: string[];
   exclusions: string[];
-  hotelOptions: Array<{ tier: "A" | "B"; city: string; hotel: string; roomType: string }>;
+  hotelOptions: Array<{ tier: "A" | "B" | "C" | "D"; city: string; hotel: string; roomType: string }>;
   quotation: Array<{ vehicle: string; price: string }>;
   notes: string[];
 }
@@ -284,7 +285,7 @@ export interface WebsiteInquiryLogChange {
     dayNumber?: number;
     nameZh?: string;
     nameEn?: string;
-    hotelTier?: "A" | "B";
+    hotelTier?: "A" | "B" | "C" | "D";
     mealSlot?: string;
     vehicleType?: string;
   };
@@ -332,6 +333,8 @@ export interface WebsiteInquiryLogOperator {
 
 /** Unapplied board edits; canonical details stay in their structured tables. */
 export interface WebsiteReorderDraft {
+  removedItemIds?: string[];
+  transportCopies?: WebsiteLeg[];
   dayIds: string[];
   addedDayIds: string[];
   deletedDays: { id: string; dayNumber: number; date: string | null }[];

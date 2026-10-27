@@ -151,6 +151,9 @@ export const websiteService = {
       reason,
     });
   },
+  deleteInquiry(id: string, version: number) {
+    return request.delete<void>(`/website/inquiries/${encodeURIComponent(id)}`, { body: { version } });
+  },
   archive(id: string, version: number) {
     return request.post<WebsiteInquiry>(`/website/inquiries/${encodeURIComponent(id)}/archive`, {
       version,
