@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
+import { graphic } from "echarts";
+import yunnanSvg from "@/assets/maps/yunnan/yunnan-regions.svg?raw";
+import productionCities from "./fixtures/production-cities.json";
 import type { TourMapDay, TourMapStop } from "@/types/dashboard";
 import {
   buildRouteSegments,
   issueLabelKey,
   resolveDisplayPoint,
   shanghaiToday,
+  YUNNAN_DISPLAY_POINTS,
   type SvgCoord,
   type YunnanDisplayPoint,
 } from "./tour-map";
@@ -60,6 +64,36 @@ const ids = (segments: ReturnType<typeof buildRouteSegments>) =>
   segments.map((segment) => segment.map((point) => point.cityId));
 
 describe("resolveDisplayPoint", () => {
+  it("生产快照45个云南目的地均可跨环境落图，省外不扩入", () => {
+    const yunnanCities = productionCities.filter((city) => city.province === "云南");
+    expect(yunnanCities).toHaveLength(45);
+    for (const city of yunnanCities) {
+      expect(resolveDisplayPoint({ ...city, id: `different-environment-${city.name}` })?.name)
+        .toBe(city.name);
+      expect(resolveDisplayPoint({
+        ...city,
+        id: `different-environment-${city.name}`,
+        longitude: city.longitude + 0.001,
+      })).toBeNull();
+    }
+    for (const name of ["盐源", "香格里拉镇", "成都", "康定", "雅江", "理塘", "雅安"]) {
+      expect(YUNNAN_DISPLAY_POINTS.some((point) => point.name === name)).toBe(false);
+    }
+  });
+
+  it("全部静态点位落在其声明的原SVG州市区域内", () => {
+    const paths = new Map([...yunnanSvg.matchAll(/<path[^>]+name="(\d+)"[^>]+d="([^"]+)"/g)]
+      .map((match) => [match[1], match[2]]));
+    expect(paths.size).toBe(16);
+    expect(YUNNAN_DISPLAY_POINTS).toHaveLength(49);
+    for (const point of YUNNAN_DISPLAY_POINTS) {
+      const path = paths.get(point.regionAdcode);
+      expect(path, point.name).toBeDefined();
+      const Region = graphic.extendPath(path!, { style: { fill: "#000", stroke: "none" } });
+      expect(new Region().contain(...point.svg), point.name).toBe(true);
+    }
+  });
+
   it("优先按开发库 ID 匹配，即使名称不同", () => {
     const city = { id: "dev-dl", name: "大理市", longitude: 100.2469, latitude: 25.597 };
     expect(resolveDisplayPoint(city, POINTS)?.name).toBe("大理");
