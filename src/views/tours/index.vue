@@ -71,7 +71,7 @@
     </FilterBar>
     <SectionCard fill>
       <TableToolbar :refreshing="loading" @refresh="load">
-        <el-button v-has-perm="'tour:create'" type="primary" @click="openCreate">
+        <el-button v-if="canCreate" type="primary" @click="openCreate">
           {{ $t("common.create") }}
         </el-button>
       </TableToolbar>
@@ -189,7 +189,7 @@
           <template #default="{ row }">
             <RowActions v-if="row.status === 'active'">
               <el-button
-                v-has-perm="'tour:update'"
+                v-if="canUpdate"
                 link
                 type="primary"
                 :disabled="isPending(row.id)"
@@ -198,7 +198,7 @@
                 {{ $t("common.edit") }}
               </el-button>
               <el-button
-                v-has-perm="'tour:cancel'"
+                v-if="canCancel"
                 link
                 type="danger"
                 :disabled="isPending(row.id)"
@@ -219,7 +219,12 @@
       />
     </SectionCard>
 
-    <TourEditorDialog v-model="dialogVisible" :tour="editing" @saved="load" />
+    <TourEditorDialog
+      v-if="canCreate || canUpdate"
+      v-model="dialogVisible"
+      :tour="editing"
+      @saved="load"
+    />
   </PageShell>
 </template>
 
@@ -228,6 +233,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
 import { usePendingActions } from "@/composables/usePendingActions";
 import { useRefreshOnActivated } from "@/composables";
@@ -243,6 +249,7 @@ import { businessUnitName } from "@/constants/identity";
 import { tourService } from "@/services/tour.service";
 import { useUserStore } from "@/stores/user";
 import type { TourBusinessUnit, TourRecord } from "@/types/tour";
+import { hasUserPermission } from "@/utils/permission";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 import TourEditorDialog from "./components/TourEditorDialog.vue";
 
@@ -252,12 +259,17 @@ const UNITS: TourBusinessUnit[] = ["shengxu", "linxi", "website"];
 const CANCEL_REASON_MAX_LENGTH = 500;
 const { t } = useI18n();
 const user = useUserStore();
+const canCreate = computed(() => hasUserPermission(user.userInfo, "tour:create"));
+const canUpdate = computed(() => hasUserPermission(user.userInfo, "tour:update"));
+const canCancel = computed(() => hasUserPermission(user.userInfo, "tour:cancel"));
 const isHeadquarters = computed(() => user.userInfo.scope === "headquarters");
 const collectCoordinatorId = ref("");
 const operatorId = ref("");
 const agencyName = ref("");
 const dateRange = ref<[string, string] | null>(null);
-const keyword = ref("");
+const route = useRoute();
+/** 首页地图等入口以 ?keyword=团号 跳转，预填关键词；不读取单团详情接口。 */
+const keyword = ref(routeKeyword() ?? "");
 const status = ref<"active" | "cancelled" | "">("");
 const businessUnit = ref<TourBusinessUnit | "">("");
 const loading = ref(false);
@@ -271,6 +283,11 @@ const { pageNum, pageSize, paginationQuery } = useResourcePagination();
 const dialogVisible = ref(false);
 const editing = ref<TourRecord | null>(null);
 const { isPending, run } = usePendingActions();
+
+function routeKeyword() {
+  const value = route.query.keyword;
+  return typeof value === "string" ? value : undefined;
+}
 
 async function loadFilterOptions(kind: "collectCoordinator" | "operator" | "agency", query: RemoteOptionsQuery) {
   const result = await tourService.filterOptions({ ...query, kind, businessUnit: businessUnit.value || undefined });
@@ -310,6 +327,10 @@ const reload = useDebounceFn(() => {
   void load();
 }, 300);
 watch([keyword, status, businessUnit, dateRange, collectCoordinatorId, operatorId, agencyName], reload);
+// 缓存页面再次从入口带入团号时更新关键词；离开本页时 query 不含 keyword，保留当前输入。
+watch(routeKeyword, (value) => {
+  if (value !== undefined) keyword.value = value;
+});
 watch(businessUnit, () => {
   collectCoordinatorId.value = "";
   operatorId.value = "";
@@ -338,15 +359,17 @@ function flightText(row: TourRecord, kind: "pickup" | "drop") {
   return `${flight.flightNumber} ${airport.code}`;
 }
 function openCreate() {
+  if (!canCreate.value) return;
   editing.value = null;
   dialogVisible.value = true;
 }
 function openEdit(row: TourRecord) {
-  if (isPending(row.id)) return;
+  if (!canUpdate.value || isPending(row.id)) return;
   editing.value = row;
   dialogVisible.value = true;
 }
 async function cancelTour(row: TourRecord) {
+  if (!canCancel.value) return;
   await run(row.id, async () => {
     let reason: string;
     try {

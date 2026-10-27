@@ -11,7 +11,6 @@ const item: DirectLedgerItem = {
   id: "ledger-1",
   businessUnit: "linxi",
   orderNo: "DL-0000000001",
-  receivedMonth: "2026-10",
   receivedDate: "2026-10-19",
   source: " 携程123 ",
   creatorId: "user-1",

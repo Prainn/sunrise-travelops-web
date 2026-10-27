@@ -45,6 +45,8 @@
       <el-empty :description="$t('dashboard.noAccessibleStats')" />
     </SectionCard>
 
+    <OperationsMap v-if="canViewTourMap" />
+
     <SectionCard :title="$t('dashboard.businessTrend')">
       <template #actions>
         <el-radio-group v-model="trendDays" size="small">
@@ -81,6 +83,9 @@ import { User } from "@element-plus/icons-vue";
 import PageShell from "@/components/PageShell/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import { useRefreshOnActivated } from "@/composables";
+import { colorWithAlpha, getCssVar } from "@/utils/theme";
+import { hasUserPermission } from "@/utils/permission";
+import OperationsMap from "./OperationsMap.vue";
 
 interface SummaryCard {
   key: string;
@@ -91,6 +96,7 @@ interface SummaryCard {
 const userStore = useUserStore();
 const settingsStore = useSettingsStore();
 const { t, locale } = useI18n();
+const canViewTourMap = computed(() => hasUserPermission(userStore.userInfo, "tour:list"));
 
 const hours = new Date().getHours();
 const greetings = computed(() => {
@@ -195,36 +201,6 @@ async function fetchTrend() {
   }
 }
 
-function getCssVar(name: string, fallback: string) {
-  if (typeof window === "undefined") return fallback;
-
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
-}
-
-function colorWithAlpha(color: string, alpha: number) {
-  const value = color.trim();
-
-  if (value.startsWith("#")) {
-    const hex =
-      value.length === 4
-        ? `#${value[1]}${value[1]}${value[2]}${value[2]}${value[3]}${value[3]}`
-        : value;
-    const rgb = Number.parseInt(hex.slice(1), 16);
-    const r = (rgb >> 16) & 255;
-    const g = (rgb >> 8) & 255;
-    const b = rgb & 255;
-
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  }
-
-  const parts = value.match(/\d+(\.\d+)?/g);
-  if (parts && parts.length >= 3) {
-    return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`;
-  }
-
-  return value;
-}
-
 function lineSeries(name: string, data: number[], color: string, areaAlpha: number) {
   return {
     name,
@@ -273,7 +249,8 @@ function updateTrendChartOptions(d: DashboardTrend) {
       trigger: "axis",
       borderWidth: 0,
       padding: [8, 12],
-      extraCssText: "box-shadow: var(--el-box-shadow-light); border-radius: 6px;",
+      extraCssText:
+        "box-shadow: var(--el-box-shadow-light); border-radius: 6px; max-width: min(480px, calc(100vw - 24px)); white-space: normal; overflow-wrap: anywhere;",
     },
     legend: {
       data: series.map((item) => item.name),
@@ -283,7 +260,14 @@ function updateTrendChartOptions(d: DashboardTrend) {
       itemHeight: 8,
       itemGap: 24,
     },
-    grid: { left: "0%", right: "3%", bottom: "14%", top: "5%", containLabel: true },
+    grid: {
+      left: "0%",
+      right: "3%",
+      bottom: "14%",
+      top: "5%",
+      outerBoundsMode: "same",
+      outerBoundsContain: "axisLabel",
+    },
     xAxis: {
       type: "category",
       data: d.dates,

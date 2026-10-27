@@ -4,7 +4,6 @@
       <el-button
         v-if="editable"
         type="primary"
-        :disabled="!config.cities.length"
         @click="openEditor()"
       >
         {{ $t("common.create") }}
@@ -15,7 +14,7 @@
     </TableToolbar>
     <DataTable
       fill
-      :data="config.attractions"
+      :data="rows"
       row-key="id"
       :empty-text="$t('websiteConfig.attractions.empty')"
     >
@@ -23,7 +22,7 @@
       <el-table-column prop="nameEn" :label="$t('common.nameEn')" min-width="180" />
       <el-table-column :label="$t('websiteConfig.city')" min-width="120">
         <template #default="{ row }">
-          {{ config.cities.find((city) => city.id === row.cityId)?.nameZh ?? row.cityId }}
+          {{ labels[row.cityId] ?? row.cityId }}
         </template>
       </el-table-column>
       <el-table-column :label="$t('websiteConfig.attractions.kind')" width="110">
@@ -75,7 +74,7 @@
         fixed="right"
         :show-overflow-tooltip="false"
       >
-        <template #default="{ row, $index }">
+        <template #default="{ row }">
           <RowActions>
             <el-button type="primary" link @click="openEditor(row)">
               {{ editable ? $t("common.edit") : $t("common.view") }}
@@ -84,7 +83,7 @@
               v-if="editable"
               type="danger"
               link
-              @click="deleteRecord($index)"
+              @click="props.deleteRecord(row.id)"
             >
               {{ $t("common.delete") }}
             </el-button>
@@ -115,14 +114,14 @@
       >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
           <el-form-item :label="$t('websiteConfig.belongsToCity')" prop="cityId">
-            <el-select v-model="record.cityId" autocomplete="new-password" filterable>
-              <el-option
-                v-for="city in config.cities"
-                :key="city.id"
-                :value="city.id"
-                :label="city.nameZh"
-              />
-            </el-select>
+            <WebsiteConfigSelect
+              v-model="record.cityId"
+              group="cities"
+              :version="version"
+              :business-unit="businessUnit"
+              :labels="labels"
+              @labels="Object.assign(labels, $event)"
+            />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.attractions.kind')">
             <el-select v-model="record.kind" autocomplete="new-password">
@@ -137,33 +136,28 @@
             <el-input v-model="record.nameEn" maxlength="150" />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.attractions.parent')" prop="parentId">
-            <el-select
+            <WebsiteConfigSelect
               v-model="record.parentId"
-              autocomplete="new-password"
-              filterable
-              clearable
-              :value-on-clear="null"
-              :empty-values="[null, undefined]"
-            >
-              <el-option
-                v-for="parent in config.attractions.filter(
-                  (row) => row.id !== record?.id && row.cityId === record?.cityId,
-                )"
-                :key="parent.id"
-                :value="parent.id"
-                :label="parent.nameZh"
-              />
-            </el-select>
+              group="attractions"
+              :version="version"
+              :business-unit="businessUnit"
+              :labels="labels"
+              :city-id="record.cityId"
+              :disabled="!record.cityId"
+              :exclude-id="record.id"
+              nullable
+              @labels="Object.assign(labels, $event)"
+            />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.attractions.copyKey')" prop="copyKey">
-            <el-select v-model="record.copyKey" autocomplete="new-password" filterable>
-              <el-option
-                v-for="template in config.templates"
-                :key="template.id"
-                :value="template.code"
-                :label="template.code"
-              />
-            </el-select>
+            <WebsiteConfigSelect
+              v-model="record.copyKey"
+              group="templates"
+              :version="version"
+              :business-unit="businessUnit"
+              :labels="labels"
+              @labels="Object.assign(labels, $event)"
+            />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.attractions.linkAttraction')">
             <WebsiteResourceSelect
@@ -220,27 +214,24 @@ import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
 import RowActions from "@/components/RowActions/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
-import { ref } from "vue";
+import { reactive, ref, watch } from "vue";
 import type { FormInstance } from "element-plus";
-import type { WebsiteAttraction, WebsiteConfig } from "@/types/website";
+import type { WebsiteAttraction, WebsiteConfigEditorProps } from "@/types/website";
 import { cloneWebsiteDraft } from "@/views/website-inquiries/options";
 import WebsiteResourceSelect from "@/views/website-inquiries/components/WebsiteResourceSelect.vue";
 import { useWebsiteAttractionRules } from "../useWebsiteConfigRules";
+import WebsiteConfigSelect from "./WebsiteConfigSelect.vue";
 import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 
-const props = defineProps<{
-  config: WebsiteConfig;
-  editable: boolean;
-  saving: boolean;
-  saveConfig: (next: WebsiteConfig) => Promise<boolean>;
-  deleteConfig: (next: WebsiteConfig) => Promise<boolean>;
-}>();
+const props = defineProps<WebsiteConfigEditorProps & { rows: WebsiteAttraction[] }>();
+const labels = reactive<Record<string, string>>({});
+watch(() => props.references, (value) => Object.assign(labels, value), { immediate: true });
 const visible = ref(false);
 const isNew = ref(false);
 const record = ref<WebsiteAttraction>();
 const formRef = ref<FormInstance>();
 const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
-const rules = useWebsiteAttractionRules(() => props.config, record);
+const rules = useWebsiteAttractionRules();
 
 function openEditor(item?: WebsiteAttraction) {
   isNew.value = !item;
@@ -266,19 +257,8 @@ async function applyEdit() {
   if (!record.value || !props.editable || props.saving) return;
   await submitForm(async () => {
     if (!record.value || !props.editable || props.saving) return;
-    const next = cloneWebsiteDraft(props.config);
     const result = cloneWebsiteDraft(record.value);
-    const index = next.attractions.findIndex((row) => row.id === result.id);
-    if (index < 0) next.attractions.push(result);
-    else next.attractions.splice(index, 1, result);
-    if (await props.saveConfig(next)) visible.value = false;
+    if (await props.saveRecord(result, isNew.value)) visible.value = false;
   });
-}
-
-async function deleteRecord(index: number) {
-  if (!props.editable || props.saving) return;
-  const next = cloneWebsiteDraft(props.config);
-  next.attractions.splice(index, 1);
-  await props.deleteConfig(next);
 }
 </script>

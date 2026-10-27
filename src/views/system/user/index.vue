@@ -11,7 +11,7 @@
         <el-tree
           :data="departmentTree"
           node-key="key"
-          :current-node-key="params.deptId ?? 'all'"
+          :current-node-key="params.deptId ?? params.scope ?? 'all'"
           default-expand-all
           highlight-current
           :expand-on-click-node="false"
@@ -582,6 +582,7 @@ const { loading, list, total, error, params, fetchData, handleQuery, resetParams
     page: 1,
     pageSize: 20,
     deptId: undefined,
+    scope: undefined,
   },
   request: userService.getPage,
 });
@@ -591,7 +592,7 @@ const requestRows = useDebounceFn(handleQuery, 300);
 const hasActiveFilters = computed(
   () =>
     Boolean(params.keyword || params.createTime?.length) ||
-    [params.status, params.roleId, params.deptId].some(
+    [params.status, params.roleId, params.deptId, params.scope].some(
       (value) => value !== undefined && value !== null && value !== "",
     ),
 );
@@ -603,6 +604,7 @@ watch(
     () => params.roleId,
     () => params.createTime,
     () => params.deptId,
+    () => params.scope,
   ],
   () => {
     params.page = 1;
@@ -699,6 +701,7 @@ type DepartmentTreeNode = {
   key: string | number;
   label: string;
   deptId?: number;
+  scope?: UserQueryParams["scope"];
   children?: DepartmentTreeNode[];
 };
 const departmentTree = computed<DepartmentTreeNode[]>(() => [
@@ -707,6 +710,7 @@ const departmentTree = computed<DepartmentTreeNode[]>(() => [
     label: t("common.all"),
     children: [...new Set(departmentOptions.value.map((dept) => dept.scope))].map((scope) => ({
       key: scope,
+      scope,
       label: loginScopeName(scope),
       children: departmentOptions.value
         .filter((dept) => dept.scope === scope)
@@ -714,13 +718,14 @@ const departmentTree = computed<DepartmentTreeNode[]>(() => [
           key: dept.value,
           label: dept.label,
           deptId: dept.value,
+          scope,
         })),
     })),
   },
 ]);
 
 function handleDepartmentClick(node: DepartmentTreeNode): void {
-  if (node.key !== "all" && node.deptId === undefined) return;
+  params.scope = node.scope;
   params.deptId = node.deptId;
 }
 

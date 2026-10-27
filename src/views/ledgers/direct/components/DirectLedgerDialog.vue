@@ -50,16 +50,12 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('ledger.direct.receivedMonth')">
-            <el-input :model-value="receivedMonth" disabled />
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('ledger.direct.source')" prop="source">
             <el-input
               v-model="form.source"
               :placeholder="sourcePlaceholder"
               maxlength="200"
+              @change="confirmSourceChange"
             />
           </el-form-item>
         </el-col>
@@ -224,7 +220,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
-import { ElMessage, type FormInstance, type FormRules } from "element-plus";
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
@@ -269,6 +265,8 @@ const formSession = ref(0);
 const form = reactive(emptyDirectLedgerForm());
 const receivingGroupNames = reactive(new Map<string, string>());
 const saving = ref(false);
+let acceptedSource = "";
+let sourceConfirmation: Promise<boolean> | undefined;
 
 const businessUnit = computed(() => props.ledger?.businessUnit ?? props.businessUnit);
 const isDelegate = computed(
@@ -287,7 +285,6 @@ const dialogTitle = computed(() => {
   return t(props.readonly ? "common.view" : "common.edit");
 });
 const creatorName = computed(() => props.ledger?.creatorName ?? user.userInfo.nickname ?? "");
-const receivedMonth = computed(() => form.receivedDate.slice(0, 7));
 // 编辑时由后端判断，指定操作计调不能替他人改订单状态。
 const canChangeStatus = computed(() => !props.ledger || props.ledger.capabilities.canChangeStatus);
 const rules = computed<FormRules>(() => {
@@ -318,6 +315,44 @@ function resetForm() {
     form,
     props.ledger ? directLedgerFormFromItem(props.ledger) : emptyDirectLedgerForm(),
   );
+  acceptedSource = form.source;
+  sourceConfirmation = undefined;
+}
+
+function confirmSourceChange(): Promise<boolean> {
+  // 离开输入框与点击保存可能同时触发，共享同一次确认及取消结果。
+  if (sourceConfirmation) return sourceConfirmation;
+  const source = form.source;
+  if (!isWebsite.value || source === acceptedSource || !/^\d+$/.test(source.trim())) {
+    acceptedSource = source;
+    return Promise.resolve(true);
+  }
+  const session = formSession.value;
+  const confirmation = ElMessageBox.confirm(
+    t("ledger.direct.numericSourceConfirm"),
+    t("common.warning"),
+    {
+      type: "warning",
+      confirmButtonText: t("common.confirm"),
+      cancelButtonText: t("common.cancel"),
+    },
+  ).then(
+    () => {
+      if (!visible.value || session !== formSession.value || form.source !== source) return false;
+      acceptedSource = source;
+      return true;
+    },
+    () => {
+      if (visible.value && session === formSession.value && form.source === source) {
+        form.source = acceptedSource;
+      }
+      return false;
+    },
+  ).finally(() => {
+    if (sourceConfirmation === confirmation) sourceConfirmation = undefined;
+  });
+  sourceConfirmation = confirmation;
+  return confirmation;
 }
 
 type OptionLoader = typeof directLedgerService.operators;
@@ -344,9 +379,10 @@ async function loadReceivingGroups(query: RemoteOptionsQuery) {
 }
 
 async function handleSubmit() {
-  if (saving.value) return;
+  if (props.readonly || saving.value) return;
   saving.value = true;
   try {
+    if (!await confirmSourceChange()) return;
     const valid = await formRef.value?.validate().then(
       () => true,
       () => false,

@@ -74,6 +74,7 @@ const props = withDefaults(
     emptyText?: string;
   }>(),
   {
+    disabled: undefined,
     clearable: true,
     queryKey: "",
   },

@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "regions": [
+    {
+      "adcode": "530300",
+      "name": "曲靖市",
+      "sourceObjectIndex": 5,
+      "svgName": "530300"
+    },
+    {
+      "adcode": "532800",
+      "name": "西双版纳傣族自治州",
+      "sourceObjectIndex": 6,
+      "svgName": "532800"
+    },
+    {
+      "adcode": "530900",
+      "name": "临沧市",
+      "sourceObjectIndex": 7,
+      "svgName": "530900"
+    },
+    {
+      "adcode": "533300",
+      "name": "怒江傈僳族自治州",
+      "sourceObjectIndex": 8,
+      "svgName": "533300"
+    },
+    {
+      "adcode": "530600",
+      "name": "昭通市",
+      "sourceObjectIndex": 9,
+      "svgName": "530600"
+    },
+    {
+      "adcode": "532600",
+      "name": "文山壮族苗族自治州",
+      "sourceObjectIndex": 10,
+      "svgName": "532600"
+    },
+    {
+      "adcode": "530400",
+      "name": "玉溪市",
+      "sourceObjectIndex": 11,
+      "svgName": "530400"
+    },
+    {
+      "adcode": "532900",
+      "name": "大理白族自治州",
+      "sourceObjectIndex": 12,
+      "svgName": "532900"
+    },
+    {
+      "adcode": "530700",
+      "name": "丽江市",
+      "sourceObjectIndex": 13,
+      "svgName": "530700"
+    },
+    {
+      "adcode": "530100",
+      "name": "昆明市",
+      "sourceObjectIndex": 14,
+      "svgName": "530100"
+    },
+    {
+      "adcode": "530800",
+      "name": "普洱市",
+      "sourceObjectIndex": 15,
+      "svgName": "530800"
+    },
+    {
+      "adcode": "530500",
+      "name": "保山市",
+      "sourceObjectIndex": 16,
+      "svgName": "530500"
+    },
+    {
+      "adcode": "533400",
+      "name": "迪庆藏族自治州",
+      "sourceObjectIndex": 17,
+      "svgName": "533400"
+    },
+    {
+      "adcode": "533100",
+      "name": "德宏傣族景颇族自治州",
+      "sourceObjectIndex": 18,
+      "svgName": "533100"
+    },
+    {
+      "adcode": "532300",
+      "name": "楚雄彝族自治州",
+      "sourceObjectIndex": 19,
+      "svgName": "532300"
+    },
+    {
+      "adcode": "532500",
+      "name": "红河哈尼族彝族自治州",
+      "sourceObjectIndex": 20,
+      "svgName": "532500"
+    }
+  ]
+}
