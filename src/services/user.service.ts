@@ -1,6 +1,7 @@
 import type { PageResult } from "@/types/common";
 import { request } from "@/api/request";
 import type {
+  FeishuTestTemplate,
   ProfileSecurity,
   PasswordChangeForm,
   UserForm,
@@ -76,8 +77,8 @@ function toUserInput(
 }
 
 export const userService = {
-  testFeishu(userId: string): Promise<{ messageId: string }> {
-    return request.post(`${USER_BASE_URL}/${encodeURIComponent(userId)}/feishu-test`);
+  testFeishu(userId: string, template: FeishuTestTemplate): Promise<{ messageId: string }> {
+    return request.post(`${USER_BASE_URL}/${encodeURIComponent(userId)}/feishu-test`, { template });
   },
   suggestTourCode(input: TourCodeSuggestionInput): Promise<TourCodeSuggestion> {
     return request.get<TourCodeSuggestion>(`${USER_BASE_URL}/tour-code-suggestion`, {

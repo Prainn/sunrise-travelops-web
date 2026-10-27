@@ -235,7 +235,7 @@
                 size="small"
                 :disabled="!row.feishuOpenId || row.status !== CommonStatus.ENABLED || !!feishuTestingId"
                 :loading="feishuTestingId === row.id"
-                @click="sendFeishuTest(row as UserItem)"
+                @click="openFeishuTest(row as UserItem)"
               >
                 {{ $t("user.feishuTest") }}
               </el-button>
@@ -484,6 +484,38 @@
         </el-button>
       </template>
     </AppDialog>
+    <AppDialog
+      v-model="feishuTestVisible"
+      :title="$t('user.feishuTestTitle')"
+      size="sm"
+      :busy="!!feishuTestingId"
+      append-to-body
+    >
+      <p class="mb-4">
+        {{ $t("user.feishuTestHint", { name: feishuTestUser?.nickname }) }}
+      </p>
+      <el-radio-group v-model="feishuTestTemplate" :disabled="!!feishuTestingId" :aria-label="$t('user.feishuTestTemplate')">
+        <el-radio value="review">
+          {{ $t("user.feishuReviewTemplate") }}
+        </el-radio>
+        <el-radio value="operate">
+          {{ $t("user.feishuOperateTemplate") }}
+        </el-radio>
+      </el-radio-group>
+      <template #footer>
+        <el-button :disabled="!!feishuTestingId" @click="feishuTestVisible = false">
+          {{ $t("common.cancel") }}
+        </el-button>
+        <el-button
+          v-hasPerm="'sys:user:update'"
+          type="primary"
+          :loading="!!feishuTestingId"
+          @click="sendFeishuTest"
+        >
+          {{ $t("common.send") }}
+        </el-button>
+      </template>
+    </AppDialog>
   </PageShell>
 </template>
 
@@ -503,6 +535,7 @@ import { CopyDocument, Female, Male } from "@element-plus/icons-vue";
 import UserIdentityFields from "./components/UserIdentityFields.vue";
 import { useTourCodeSuggestion } from "./useTourCodeSuggestion";
 import type {
+  FeishuTestTemplate,
   CoordinatorDuty,
   IdentityRoleOption,
   DepartmentOption,
@@ -594,12 +627,23 @@ const dialogState = reactive({
 });
 
 const feishuTestingId = ref("");
-async function sendFeishuTest(row: UserItem): Promise<void> {
+const feishuTestVisible = ref(false);
+const feishuTestUser = ref<UserItem>();
+const feishuTestTemplate = ref<FeishuTestTemplate>("review");
+function openFeishuTest(row: UserItem): void {
   if (feishuTestingId.value) return;
+  feishuTestUser.value = row;
+  feishuTestTemplate.value = "review";
+  feishuTestVisible.value = true;
+}
+async function sendFeishuTest(): Promise<void> {
+  const row = feishuTestUser.value;
+  if (!row || feishuTestingId.value) return;
   feishuTestingId.value = row.id;
   try {
-    await userService.testFeishu(row.id);
+    await userService.testFeishu(row.id, feishuTestTemplate.value);
     ElMessage.success(t("user.feishuTestSent"));
+    feishuTestVisible.value = false;
   } catch (error) {
     ElMessage.error(requestErrorMessage(error) || t("user.feishuTestFailed"));
   } finally {
