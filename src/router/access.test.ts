@@ -103,7 +103,7 @@ describe("独立站路由范围", () => {
   });
 
   it("总部 ROOT 可访问，范围声明仍阻止不合范围的身份", () => {
-    expect(hasRouteAccess(websiteMeta, { scope: "headquarters", roles: ["ROOT"] })).toBe(true);
+    expect(hasRouteAccess(websiteMeta, { scope: "headquarters", roles: ["ROOT"], perms: ["website:inquiry:list"] })).toBe(true);
     expect(hasRouteAccess(websiteMeta, { scope: "shengxu", roles: ["ROOT"] })).toBe(false);
   });
 
@@ -121,7 +121,7 @@ describe("独立站路由范围", () => {
   it("不改变未声明范围的原有路由权限", () => {
     expect(hasRouteAccess({ perms: ["itinerary:list"] }, { perms: ["itinerary:list"] })).toBe(true);
     expect(hasRouteAccess({ perms: ["itinerary:list"] }, { perms: [] })).toBe(false);
-    expect(hasRouteAccess({ perms: ["itinerary:list"] }, { roles: ["ROOT"] })).toBe(true);
+    expect(hasRouteAccess({ perms: ["itinerary:list"] }, { roles: ["ROOT"], perms: ["itinerary:list"] })).toBe(true);
   });
 });
 
@@ -156,7 +156,7 @@ describe("角色菜单准入", () => {
   });
 
   it("保留总部 ROOT 固定可用的配置菜单和页面", () => {
-    const context = { scope: "headquarters" as const, roles: ["ROOT"], perms: [], menuKeys: [] };
+    const context = { scope: "headquarters" as const, roles: ["ROOT"], perms: ["website:config:list"], menuKeys: [] };
     expect(hasRouteChainAccess(configChain, context)).toBe(true);
     const menu = filterRoutesByAccess(constantRoutes, context).find((route) => route.name === "TourismResources");
     expect(menu?.children?.some((route) => route.name === "WebsiteResources")).toBe(true);
@@ -188,5 +188,17 @@ describe("角色菜单准入", () => {
     expect(hasRouteAccess({menuKey: "menu-permissions", scopes: ["headquarters"], roles: ["ROOT"]}, {scope: "headquarters", roles: ["ROOT"], menuKeys: []})).toBe(true);
     expect(hasRouteAccess({roles: ["ROOT"], perms: ["sys:menu-permission:list"]}, {roles: ["ADMIN"], perms: ["sys:menu-permission:list"]})).toBe(false);
     expect(filterRoutesByAccess(constantRoutes, {roles: ["COORDINATOR"], menuKeys: []}).find((route) => route.path === "/")?.children?.some((route) => route.name === "Dashboard")).toBe(true);
+  });
+});
+
+describe("ROOT 账号的实时读取权限", () => {
+  it.each(["MenuPermissions", "WebsiteVisits", "AccountLinks"])("旧菜单快照不能绕过 %s 的权限限制", (name) => {
+    const group = constantRoutes.find((route) => route.children?.some((child) => child.name === name))!;
+    const page = group.children!.find((route) => route.name === name)!;
+    const context = { scope: "headquarters" as const, roles: ["ROOT"], perms: ["inquiry:list"], menuKeys: ["menu-permissions", "website-visits"] };
+    expect(hasRouteChainAccess([group.meta!, page.meta!], context)).toBe(false);
+    const menu = filterRoutesByAccess(constantRoutes, context).find((route) => route.name === group.name);
+    expect(menu?.children?.some((route) => route.name === name) ?? false).toBe(false);
+    expect(hasRouteChainAccess([group.meta!, page.meta!], { ...context, perms: page.meta!.perms!, menuKeys: [] })).toBe(true);
   });
 });
