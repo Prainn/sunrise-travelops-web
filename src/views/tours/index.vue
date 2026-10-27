@@ -233,6 +233,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
 import { usePendingActions } from "@/composables/usePendingActions";
 import { useRefreshOnActivated } from "@/composables";
@@ -266,7 +267,9 @@ const collectCoordinatorId = ref("");
 const operatorId = ref("");
 const agencyName = ref("");
 const dateRange = ref<[string, string] | null>(null);
-const keyword = ref("");
+const route = useRoute();
+/** 首页地图等入口以 ?keyword=团号 跳转，预填关键词；不读取单团详情接口。 */
+const keyword = ref(routeKeyword() ?? "");
 const status = ref<"active" | "cancelled" | "">("");
 const businessUnit = ref<TourBusinessUnit | "">("");
 const loading = ref(false);
@@ -280,6 +283,11 @@ const { pageNum, pageSize, paginationQuery } = useResourcePagination();
 const dialogVisible = ref(false);
 const editing = ref<TourRecord | null>(null);
 const { isPending, run } = usePendingActions();
+
+function routeKeyword() {
+  const value = route.query.keyword;
+  return typeof value === "string" ? value : undefined;
+}
 
 async function loadFilterOptions(kind: "collectCoordinator" | "operator" | "agency", query: RemoteOptionsQuery) {
   const result = await tourService.filterOptions({ ...query, kind, businessUnit: businessUnit.value || undefined });
@@ -319,6 +327,10 @@ const reload = useDebounceFn(() => {
   void load();
 }, 300);
 watch([keyword, status, businessUnit, dateRange, collectCoordinatorId, operatorId, agencyName], reload);
+// 缓存页面再次从入口带入团号时更新关键词；离开本页时 query 不含 keyword，保留当前输入。
+watch(routeKeyword, (value) => {
+  if (value !== undefined) keyword.value = value;
+});
 watch(businessUnit, () => {
   collectCoordinatorId.value = "";
   operatorId.value = "";

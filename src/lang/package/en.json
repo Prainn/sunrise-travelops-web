@@ -791,7 +791,73 @@
         "no_location": "No planned stop",
         "unknown": "Other location issue"
       },
+      "baseMapSource": "Base map: compiled by Yunnan Provincial Institute of Cartography, supervised by the Department of Natural Resources of Yunnan Province (Map Review No. 云S(2026)49号)",
       "coordinateSource": "City coordinate references:"
+    },
+    "opsMap": {
+      "previousDay": "Previous day",
+      "nextDay": "Next day",
+      "today": "Today",
+      "play": "Play animation",
+      "pause": "Pause animation",
+      "reducedMotion": "Reduced motion",
+      "fullscreen": "Full screen",
+      "exitFullscreen": "Exit full screen"
+    },
+    "flightMap": {
+      "title": "World Flight Map",
+      "subtitle": "Demonstrates airport-to-airport routes from tour pickup/drop flight snapshots. Not real-time flights or actual aircraft positions.",
+      "resetView": "Reset view",
+      "demoNote": "Route demo · not real-time",
+      "timeNote": "Dates and reference times use the tour schedule's Beijing time. Departure/arrival times are the HH:mm from flight records, with no time zone or overnight inference. Each tour has one leg per pickup/drop direction; legs are not actual flight counts.",
+      "baseMapSource": "Base map is community data (not an officially approved map). Airport coordinates from:",
+      "legKinds": {
+        "pickup": "Pickup leg",
+        "drop": "Drop-off leg"
+      },
+      "legCount": "{count} legs",
+      "referenceEvents": {
+        "arrival": "arrival",
+        "departure": "departure"
+      },
+      "reference": "Ref. {event} {time}",
+      "tourPeople": "{tours} tours · {people} pax",
+      "airportLegs": "Pickup legs {pickup} · Drop-off legs {drop}",
+      "noFlightNumber": "No flight no.",
+      "airportMissing": "Airport missing",
+      "showAll": "Show all",
+      "tooltip": {
+        "moreGroups": "{count} more flight groups",
+        "moreTours": "and {count} more tours"
+      },
+      "totals": {
+        "flightLegs": "Pickup/drop legs",
+        "pickupLegs": "Pickup legs",
+        "dropLegs": "Drop-off legs",
+        "tours": "Tours",
+        "people": "Pax",
+        "unlocatedLegs": "Legs to locate",
+        "unscheduledTours": "Tours without flights"
+      },
+      "tabs": {
+        "flights": "Legs {count}",
+        "pending": "To locate {count}",
+        "unscheduled": "No flight {count}"
+      },
+      "noLocatedFlights": "No legs can be placed on the map",
+      "noPending": "No legs to locate",
+      "noUnscheduled": "No tours without flight info",
+      "unscheduledHint": "These tours use manually entered pickup/drop times without flight info, so no route is drawn.",
+      "noFlights": "No pickup/drop legs on this date",
+      "onlyUnscheduled": "All pickups/drop-offs on this date use manual times. See \"No flight\".",
+      "allPending": "All legs on this date still need locating, so no routes are drawn. See \"To locate\".",
+      "forbidden": "Your current identity cannot view the flight map",
+      "issues": {
+        "flight_missing": "Flight snapshot missing",
+        "airport_missing": "Airport code missing",
+        "coordinates_missing": "Airport coordinates missing",
+        "unknown": "Other location issue"
+      }
     }
   },
   "profile": {

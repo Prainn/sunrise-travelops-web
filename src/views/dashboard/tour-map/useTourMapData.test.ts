@@ -67,14 +67,15 @@ describe("useTourMapData", () => {
     expect(state.loadError.value).toBe("");
   });
 
-  it("切换筛选立即清空旧数据，失败时不伪造结果", async () => {
+  it("切换筛选加载中保留旧数据，失败时清空不伪造结果", async () => {
     const { state, request } = setup();
     const first = state.load({ date: "2026-10-25" });
     request(0).resolve(mapData("2026-10-25"));
     await first;
 
     const second = state.load({ date: "2026-10-26" });
-    expect(state.data.value).toBeUndefined();
+    expect(state.data.value).toEqual(mapData("2026-10-25"));
+    expect(state.isLoading.value).toBe(true);
     request(1).reject(new Error("network"));
     await second;
     expect(state.data.value).toBeUndefined();

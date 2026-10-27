@@ -41,6 +41,7 @@ export const STORAGE_KEYS = {
   THEME: `${APP_PREFIX}:ui:theme`,
   THEME_COLORS: `${APP_PREFIX}:ui:theme_colors`,
   UI_DENSITY: `${APP_PREFIX}:ui:density`,
+  DASHBOARD_MAP_VIEW: `${APP_PREFIX}:ui:dashboard_map_view`,
 
   // 应用
   DEVICE: `${APP_PREFIX}:app:device`,

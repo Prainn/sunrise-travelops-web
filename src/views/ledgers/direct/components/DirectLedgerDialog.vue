@@ -379,7 +379,7 @@ async function loadReceivingGroups(query: RemoteOptionsQuery) {
 }
 
 async function handleSubmit() {
-  if (saving.value) return;
+  if (props.readonly || saving.value) return;
   saving.value = true;
   try {
     if (!await confirmSourceChange()) return;

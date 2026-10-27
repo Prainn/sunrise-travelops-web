@@ -45,7 +45,7 @@
       <el-empty :description="$t('dashboard.noAccessibleStats')" />
     </SectionCard>
 
-    <TourMapSection v-if="canViewTourMap" />
+    <OperationsMap v-if="canViewTourMap" />
 
     <SectionCard :title="$t('dashboard.businessTrend')">
       <template #actions>
@@ -85,7 +85,7 @@ import SectionCard from "@/components/SectionCard/index.vue";
 import { useRefreshOnActivated } from "@/composables";
 import { colorWithAlpha, getCssVar } from "@/utils/theme";
 import { hasUserPermission } from "@/utils/permission";
-import TourMapSection from "./tour-map/TourMapSection.vue";
+import OperationsMap from "./OperationsMap.vue";
 
 interface SummaryCard {
   key: string;
@@ -260,7 +260,14 @@ function updateTrendChartOptions(d: DashboardTrend) {
       itemHeight: 8,
       itemGap: 24,
     },
-    grid: { left: "0%", right: "3%", bottom: "14%", top: "5%", containLabel: true },
+    grid: {
+      left: "0%",
+      right: "3%",
+      bottom: "14%",
+      top: "5%",
+      outerBoundsMode: "same",
+      outerBoundsContain: "axisLabel",
+    },
     xAxis: {
       type: "category",
       data: d.dates,
