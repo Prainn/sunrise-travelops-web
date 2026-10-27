@@ -222,6 +222,26 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column :label="$t('user.feishu')" width="200" :show-overflow-tooltip="false">
+          <template #default="{ row }">
+            <div class="flex items-center gap-2">
+              <el-tag :type="row.feishuOpenId ? 'success' : 'info'" size="small">
+                {{ $t(row.feishuOpenId ? "user.feishuConnected" : "user.feishuNotConnected") }}
+              </el-tag>
+              <el-button
+                v-hasPerm="'sys:user:update'"
+                link
+                type="primary"
+                size="small"
+                :disabled="!row.feishuOpenId || row.status !== CommonStatus.ENABLED || !!feishuTestingId"
+                :loading="feishuTestingId === row.id"
+                @click="sendFeishuTest(row as UserItem)"
+              >
+                {{ $t("user.feishuTest") }}
+              </el-button>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('user.mobile')" prop="mobile" width="130" />
         <el-table-column
           :label="$t('common.email')"
@@ -348,6 +368,15 @@
             v-model="formData.mobile"
             :placeholder="$t('user.mobilePlaceholder')"
             maxlength="11"
+          />
+        </el-form-item>
+
+        <el-form-item :label="$t('user.feishuOpenId')" prop="feishuOpenId">
+          <el-input
+            v-model.trim="formData.feishuOpenId"
+            maxlength="100"
+            :placeholder="$t('user.feishuOpenIdHint')"
+            clearable
           />
         </el-form-item>
 
@@ -564,10 +593,25 @@ const dialogState = reactive({
   mode: DialogMode.CREATE,
 });
 
+const feishuTestingId = ref("");
+async function sendFeishuTest(row: UserItem): Promise<void> {
+  if (feishuTestingId.value) return;
+  feishuTestingId.value = row.id;
+  try {
+    await userService.testFeishu(row.id);
+    ElMessage.success(t("user.feishuTestSent"));
+  } catch (error) {
+    ElMessage.error(requestErrorMessage(error) || t("user.feishuTestFailed"));
+  } finally {
+    feishuTestingId.value = "";
+  }
+}
+
 const resetPasswordSubmitting = ref(false);
 
 const impact = ref<{ total: number; unfinished: number }>();
 const initialFormData: UserForm = {
+  feishuOpenId: "",
   identities: [{ scope: userStore.userInfo.scope ?? "shengxu", roleIds: [] }],
   status: CommonStatus.ENABLED,
 };
@@ -658,6 +702,7 @@ const rules = computed<FormRules<UserForm>>(() => ({
     { required: true, message: t("user.tourCodeRequired"), trigger: "blur" },
     { pattern: /^[A-Za-z0-9]{1,10}$/, message: t("user.tourCodeInvalid"), trigger: "blur" },
   ] : [],
+  feishuOpenId: [{ pattern: /^(?:|ou_[A-Za-z0-9_-]{1,97})$/, message: t("user.feishuOpenIdInvalid"), trigger: "blur" }],
   email: [{ type: "email", message: t("user.emailInvalid"), trigger: "blur" }],
   mobile: [{ pattern: /^1[3-9]\d{9}$/, message: t("user.mobileInvalid"), trigger: "blur" }],
 }));

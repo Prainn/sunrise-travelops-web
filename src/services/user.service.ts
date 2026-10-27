@@ -54,6 +54,7 @@ function toUserInput(
     gender: data.gender ?? 0,
     mobile: data.mobile?.trim() ?? "",
     email: data.email?.trim() ?? "",
+    feishuOpenId: data.feishuOpenId?.trim() ?? "",
     identities: data.identities.map(
       ({ id, scope, deptId, roleIds, coordinatorDuty, businessGroupId }) => ({
         id,
@@ -75,6 +76,9 @@ function toUserInput(
 }
 
 export const userService = {
+  testFeishu(userId: string): Promise<{ messageId: string }> {
+    return request.post(`${USER_BASE_URL}/${encodeURIComponent(userId)}/feishu-test`);
+  },
   suggestTourCode(input: TourCodeSuggestionInput): Promise<TourCodeSuggestion> {
     return request.get<TourCodeSuggestion>(`${USER_BASE_URL}/tour-code-suggestion`, {
       params: { ...input },

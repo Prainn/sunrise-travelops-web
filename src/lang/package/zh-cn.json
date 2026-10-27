@@ -837,6 +837,15 @@
     "tagTypePlaceholder": "选择标签样式"
   },
   "user": {
+    "feishu": "飞书",
+    "feishuConnected": "已接入",
+    "feishuNotConnected": "未接入",
+    "feishuTest": "测试",
+    "feishuOpenId": "飞书 Open ID",
+    "feishuOpenIdHint": "填写当前应用的 open_id，留空解除接入",
+    "feishuOpenIdInvalid": "请填写 ou_ 开头的有效 Open ID",
+    "feishuTestSent": "测试消息已发送，请在飞书中查看",
+    "feishuTestFailed": "测试消息发送失败",
     "basicInfo": "基本信息",
     "cannotDeleteCurrent": "不能删除当前登录用户",
     "createSuccess": "用户已创建",
@@ -1035,6 +1044,8 @@
     }
   },
   "apiErrors": {
+    "FEISHU_NOT_CONFIGURED": "飞书应用尚未配置",
+    "FEISHU_SEND_FAILED": "飞书发送失败，请检查应用配置、权限、可用范围及 Open ID",
     "VALIDATION_ERROR": "输入有误，请检查后重试",
     "BAD_REQUEST": "请求内容不符合要求",
     "AUTH_PASSWORD_INCORRECT": "原密码错误，请重新输入",
