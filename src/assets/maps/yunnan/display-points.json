@@ -74,7 +74,7 @@
     ],
     "maxControlResidual": 3.61955105579815
   },
-  "accuracyNote": "展示用近似校准，15个城市使用原图印刷符号，巴拉格宗使用既有控制点插值；非已知地理投影，不用于导航或自动扩展全省任意点。新增目的地需补校准点。",
+  "accuracyNote": "省级展示近似配准：保留15个印刷符号点及巴拉格宗旧插值；新增33点由15个控制点离线局部插值并核对州市，泸沽湖/奔子栏另有边界展示微调。非已知投影或导航坐标；运行时只使用已登记静态点，新增或改经纬度须重新配准。",
   "points": [
     {
       "name": "昆明",
@@ -283,6 +283,689 @@
         620.496
       ],
       "placement": "printed-city-symbol"
+    },
+    {
+      "name": "泸沽湖",
+      "longitude": 100.78521,
+      "latitude": 27.7042,
+      "devResourceCityId": null,
+      "regionAdcode": "530700",
+      "svg": [
+        409,
+        219
+      ],
+      "placement": "local-control-interpolation-border-adjustment",
+      "registrationControls": [
+        "香格里拉",
+        "丽江",
+        "德钦",
+        "大理"
+      ],
+      "interpolatedSvg": [
+        409.806,
+        213.522
+      ],
+      "displayAdjustmentNote": "省界附近简化底图展示修正；不修改WGS84或行政归属"
+    },
+    {
+      "name": "元阳",
+      "longitude": 102.8333,
+      "latitude": 23.18037,
+      "devResourceCityId": null,
+      "regionAdcode": "532500",
+      "svg": [
+        638.567,
+        782.937
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "个旧",
+        "玉溪",
+        "普洱",
+        "昆明"
+      ]
+    },
+    {
+      "name": "建水",
+      "longitude": 102.83092,
+      "latitude": 23.60255,
+      "devResourceCityId": null,
+      "regionAdcode": "532500",
+      "svg": [
+        638.231,
+        729.942
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "个旧",
+        "玉溪",
+        "昆明",
+        "楚雄"
+      ]
+    },
+    {
+      "name": "普者黑",
+      "longitude": 104.118,
+      "latitude": 24.1393,
+      "devResourceCityId": null,
+      "regionAdcode": "532600",
+      "svg": [
+        783.106,
+        661.509
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "个旧",
+        "曲靖",
+        "玉溪",
+        "昆明"
+      ]
+    },
+    {
+      "name": "蒙自",
+      "longitude": 103.38212,
+      "latitude": 23.36779,
+      "devResourceCityId": null,
+      "regionAdcode": "532500",
+      "svg": [
+        701.673,
+        759.592
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "个旧",
+        "玉溪",
+        "昆明",
+        "曲靖"
+      ]
+    },
+    {
+      "name": "罗平",
+      "longitude": 104.29225,
+      "latitude": 24.88558,
+      "devResourceCityId": null,
+      "regionAdcode": "530300",
+      "svg": [
+        803.203,
+        567.021
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "曲靖",
+        "昆明",
+        "玉溪",
+        "个旧"
+      ]
+    },
+    {
+      "name": "元谋",
+      "longitude": 101.86133,
+      "latitude": 25.71779,
+      "devResourceCityId": null,
+      "regionAdcode": "532300",
+      "svg": [
+        526.522,
+        463.355
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "楚雄",
+        "昆明",
+        "大理",
+        "玉溪"
+      ]
+    },
+    {
+      "name": "剑川",
+      "longitude": 99.91715,
+      "latitude": 26.538,
+      "devResourceCityId": null,
+      "regionAdcode": "532900",
+      "svg": [
+        309.998,
+        359.515
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "丽江",
+        "大理",
+        "香格里拉",
+        "保山"
+      ]
+    },
+    {
+      "name": "墨江",
+      "longitude": 101.71028,
+      "latitude": 23.40844,
+      "devResourceCityId": null,
+      "regionAdcode": "530800",
+      "svg": [
+        507.762,
+        754.259
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "普洱",
+        "玉溪",
+        "个旧",
+        "临沧"
+      ]
+    },
+    {
+      "name": "安宁",
+      "longitude": 102.48496,
+      "latitude": 24.92271,
+      "devResourceCityId": null,
+      "regionAdcode": "530100",
+      "svg": [
+        595.413,
+        558.538
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "昆明",
+        "玉溪",
+        "楚雄",
+        "曲靖"
+      ]
+    },
+    {
+      "name": "宜良",
+      "longitude": 103.14789,
+      "latitude": 24.91379,
+      "devResourceCityId": null,
+      "regionAdcode": "530100",
+      "svg": [
+        671.195,
+        560.809
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "昆明",
+        "玉溪",
+        "曲靖",
+        "楚雄"
+      ]
+    },
+    {
+      "name": "寻甸",
+      "longitude": 103.27604,
+      "latitude": 25.55821,
+      "devResourceCityId": null,
+      "regionAdcode": "530100",
+      "svg": [
+        688.017,
+        481.344
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "曲靖",
+        "昆明",
+        "玉溪",
+        "楚雄"
+      ]
+    },
+    {
+      "name": "弥勒",
+      "longitude": 103.44278,
+      "latitude": 24.40417,
+      "devResourceCityId": null,
+      "regionAdcode": "532500",
+      "svg": [
+        705.846,
+        627.693
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "玉溪",
+        "昆明",
+        "个旧",
+        "曲靖"
+      ]
+    },
+    {
+      "name": "怒江",
+      "longitude": 99.14062,
+      "latitude": 26.61738,
+      "devResourceCityId": null,
+      "regionAdcode": "533300",
+      "svg": [
+        220.468,
+        349.513
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "丽江",
+        "香格里拉",
+        "大理",
+        "保山"
+      ]
+    },
+    {
+      "name": "石林",
+      "longitude": 103.38942,
+      "latitude": 24.74775,
+      "devResourceCityId": null,
+      "regionAdcode": "530100",
+      "svg": [
+        699.534,
+        583.226
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "昆明",
+        "曲靖",
+        "玉溪",
+        "个旧"
+      ]
+    },
+    {
+      "name": "禄劝",
+      "longitude": 102.47581,
+      "latitude": 25.51985,
+      "devResourceCityId": null,
+      "regionAdcode": "530100",
+      "svg": [
+        595.737,
+        484.823
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "昆明",
+        "楚雄",
+        "玉溪",
+        "曲靖"
+      ]
+    },
+    {
+      "name": "腾冲",
+      "longitude": 98.51276,
+      "latitude": 24.99492,
+      "devResourceCityId": null,
+      "regionAdcode": "530500",
+      "svg": [
+        143.525,
+        550.789
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "芒市",
+        "保山",
+        "大理",
+        "临沧"
+      ]
+    },
+    {
+      "name": "南涧",
+      "longitude": 100.51437,
+      "latitude": 25.04493,
+      "devResourceCityId": null,
+      "regionAdcode": "532900",
+      "svg": [
+        371.932,
+        548.972
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "大理",
+        "楚雄",
+        "临沧",
+        "保山"
+      ]
+    },
+    {
+      "name": "巍山",
+      "longitude": 100.30344,
+      "latitude": 25.22222,
+      "devResourceCityId": null,
+      "regionAdcode": "532900",
+      "svg": [
+        348.121,
+        526.892
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "大理",
+        "保山",
+        "楚雄",
+        "临沧"
+      ]
+    },
+    {
+      "name": "云龙",
+      "longitude": 99.36916,
+      "latitude": 25.8885,
+      "devResourceCityId": null,
+      "regionAdcode": "532900",
+      "svg": [
+        243.61,
+        440.635
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "保山",
+        "大理",
+        "丽江",
+        "芒市"
+      ]
+    },
+    {
+      "name": "玉龙",
+      "longitude": 100.21906,
+      "latitude": 26.82634,
+      "devResourceCityId": null,
+      "regionAdcode": "530700",
+      "svg": [
+        345.93,
+        322.913
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "丽江",
+        "香格里拉",
+        "大理",
+        "保山"
+      ]
+    },
+    {
+      "name": "宁蒗",
+      "longitude": 100.86387,
+      "latitude": 27.26369,
+      "devResourceCityId": null,
+      "regionAdcode": "530700",
+      "svg": [
+        418.609,
+        268.725
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "丽江",
+        "香格里拉",
+        "大理",
+        "德钦"
+      ]
+    },
+    {
+      "name": "勐腊",
+      "longitude": 101.5637,
+      "latitude": 21.46234,
+      "devResourceCityId": null,
+      "regionAdcode": "532800",
+      "svg": [
+        487.627,
+        997.925
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "景洪",
+        "普洱",
+        "个旧",
+        "临沧"
+      ]
+    },
+    {
+      "name": "勐海",
+      "longitude": 100.4353,
+      "latitude": 21.95266,
+      "devResourceCityId": null,
+      "regionAdcode": "532800",
+      "svg": [
+        359.863,
+        935.572
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "景洪",
+        "普洱",
+        "临沧",
+        "个旧"
+      ]
+    },
+    {
+      "name": "元江",
+      "longitude": 102.00417,
+      "latitude": 23.5711,
+      "devResourceCityId": null,
+      "regionAdcode": "530400",
+      "svg": [
+        542.079,
+        734.589
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "玉溪",
+        "个旧",
+        "普洱",
+        "楚雄"
+      ]
+    },
+    {
+      "name": "瑞丽",
+      "longitude": 97.86499,
+      "latitude": 24.00139,
+      "devResourceCityId": null,
+      "regionAdcode": "533100",
+      "svg": [
+        68.095,
+        675.378
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "芒市",
+        "保山",
+        "临沧",
+        "大理"
+      ]
+    },
+    {
+      "name": "丘北",
+      "longitude": 104.22702,
+      "latitude": 24.03054,
+      "devResourceCityId": null,
+      "regionAdcode": "532600",
+      "svg": [
+        795.516,
+        675.323
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "个旧",
+        "曲靖",
+        "玉溪",
+        "昆明"
+      ]
+    },
+    {
+      "name": "广南",
+      "longitude": 105.07497,
+      "latitude": 24.05192,
+      "devResourceCityId": null,
+      "regionAdcode": "532600",
+      "svg": [
+        891.528,
+        672.707
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "曲靖",
+        "个旧",
+        "玉溪",
+        "昆明"
+      ]
+    },
+    {
+      "name": "西双版纳",
+      "longitude": 101.00691,
+      "latitude": 22.00358,
+      "devResourceCityId": null,
+      "regionAdcode": "532800",
+      "svg": [
+        424.848,
+        929.32
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "景洪",
+        "普洱",
+        "临沧",
+        "个旧"
+      ]
+    },
+    {
+      "name": "沙溪",
+      "longitude": 99.85,
+      "latitude": 26.3,
+      "devResourceCityId": null,
+      "regionAdcode": "532900",
+      "svg": [
+        300.723,
+        389.874
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "丽江",
+        "大理",
+        "保山",
+        "香格里拉"
+      ]
+    },
+    {
+      "name": "茨中",
+      "longitude": 98.9048,
+      "latitude": 28.0332,
+      "devResourceCityId": null,
+      "regionAdcode": "533400",
+      "svg": [
+        197.76,
+        169.787
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "德钦",
+        "香格里拉",
+        "丽江",
+        "大理"
+      ]
+    },
+    {
+      "name": "维西塔城",
+      "longitude": 99.4018,
+      "latitude": 27.607,
+      "devResourceCityId": null,
+      "regionAdcode": "533400",
+      "svg": [
+        251.562,
+        225.844
+      ],
+      "placement": "local-control-interpolation",
+      "registrationControls": [
+        "香格里拉",
+        "德钦",
+        "丽江",
+        "大理"
+      ]
+    },
+    {
+      "name": "奔子栏",
+      "longitude": 99.36827,
+      "latitude": 28.23591,
+      "devResourceCityId": null,
+      "regionAdcode": "533400",
+      "svg": [
+        254,
+        147
+      ],
+      "placement": "local-control-interpolation-border-adjustment",
+      "registrationControls": [
+        "德钦",
+        "香格里拉",
+        "丽江",
+        "大理"
+      ],
+      "interpolatedSvg": [
+        250.011,
+        145.217
+      ],
+      "displayAdjustmentNote": "省界附近简化底图展示修正；不修改WGS84或行政归属"
     }
-  ]
+  ],
+  "supplementalRegistration": {
+    "date": "2026-10-27",
+    "method": "15 printed-symbol controls: affine least squares + 4-nearest inverse-distance-squared residual correction; offline only",
+    "controlNames": [
+      "昆明",
+      "大理",
+      "丽江",
+      "香格里拉",
+      "德钦",
+      "曲靖",
+      "玉溪",
+      "保山",
+      "普洱",
+      "临沧",
+      "昭通",
+      "楚雄",
+      "个旧",
+      "景洪",
+      "芒市"
+    ],
+    "affine": {
+      "x": [
+        113.56982436905662,
+        1.49584021632824,
+        -11079.6541025327
+      ],
+      "y": [
+        0.38520810107806386,
+        -125.79221340958055,
+        3658.557166495037
+      ]
+    },
+    "distanceScale": [
+      0.9063077870366499,
+      1
+    ],
+    "leaveOneOutMaxResidual": 8.765,
+    "leaveOneOutRmsResidual": 4.539,
+    "registeredNames": [
+      "泸沽湖",
+      "元阳",
+      "建水",
+      "普者黑",
+      "蒙自",
+      "罗平",
+      "元谋",
+      "剑川",
+      "墨江",
+      "安宁",
+      "宜良",
+      "寻甸",
+      "弥勒",
+      "怒江",
+      "石林",
+      "禄劝",
+      "腾冲",
+      "南涧",
+      "巍山",
+      "云龙",
+      "玉龙",
+      "宁蒗",
+      "勐腊",
+      "勐海",
+      "元江",
+      "瑞丽",
+      "丘北",
+      "广南",
+      "西双版纳",
+      "沙溪",
+      "茨中",
+      "维西塔城",
+      "奔子栏"
+    ],
+    "borderAdjustedNames": [
+      "泸沽湖",
+      "奔子栏"
+    ],
+    "regionValidation": "All 33 supplemental points lie within their assigned EPS SVG region."
+  }
 }

@@ -7,8 +7,8 @@ export type SvgCoord = [number, number];
 
 export interface YunnanDisplayPoint {
   name: string;
-  /** 仅开发库资源 ID，其他环境按精确中文名匹配 */
-  devResourceCityId: string;
+  /** 仅已核对的开发库资源 ID；无对应记录为 null，其他环境按精确中文名匹配 */
+  devResourceCityId: string | null;
   longitude: number;
   latitude: number;
   regionAdcode: string;
