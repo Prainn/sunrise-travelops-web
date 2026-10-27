@@ -1073,7 +1073,7 @@
     "ITINERARY_RESOURCE_DUPLICATE": "行程中不可重复使用非标准价景点或餐食",
     "RESOURCE_STANDARD_PRICE_EXISTS": "此城市已有标准价资源，先取消原资源的标准价标记",
     "LEDGER_VERSION_CONFLICT": "记录已更新，请刷新重试",
-    "SHENGXU_LEDGER_DUPLICATE": "该组团社当天已有台账，请修改原记录",
+    "SHENGXU_LEDGER_DUPLICATE": "该组团社的该联系人当天已有台账，请修改原记录",
     "SHENGXU_LEDGER_DELETE_CONVERTED": "成团数大于零的台账不能删除",
     "DIRECT_LEDGER_REVIEWED_READ_ONLY": "已确认台账不能修改普通字段",
     "DIRECT_LEDGER_NOT_PENDING_CONFIRMATION": "仅待确认的亏损台账需负责人确认",
