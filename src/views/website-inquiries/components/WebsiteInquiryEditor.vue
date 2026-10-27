@@ -102,6 +102,7 @@
       ref="formRef"
       :model="form"
       :rules="rules"
+      :validate-on-rule-change="false"
       label-width="auto"
       :disabled="saving"
     >

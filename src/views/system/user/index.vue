@@ -320,6 +320,7 @@
         ref="userFormRef"
         :model="formData"
         :rules="rules"
+        :validate-on-rule-change="false"
         label-width="auto"
       >
         <h4 class="mt-0 mb-5 text-base font-semibold leading-6">

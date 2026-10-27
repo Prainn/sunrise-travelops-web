@@ -10,6 +10,7 @@
       ref="formRef"
       :model="form"
       :rules="rules"
+      :validate-on-rule-change="false"
       :disabled="isSubmitting"
       label-width="auto"
     >

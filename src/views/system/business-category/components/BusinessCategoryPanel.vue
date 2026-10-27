@@ -107,6 +107,7 @@
         ref="formRef"
         :model="form"
         :rules="rules"
+        :validate-on-rule-change="false"
         label-width="180px"
       >
         <el-form-item v-if="isCatalog && !editingId" :label="$t('businessCategory.catalogEntry')">

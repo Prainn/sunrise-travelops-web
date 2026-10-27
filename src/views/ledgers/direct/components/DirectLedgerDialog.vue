@@ -19,6 +19,7 @@
       ref="formRef"
       :model="form"
       :rules="rules"
+      :validate-on-rule-change="false"
       :disabled="readonly || saving"
       label-width="auto"
     >

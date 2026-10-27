@@ -14,6 +14,7 @@
       :model="form"
       :disabled="creatingContact || saving"
       :rules="rules"
+      :validate-on-rule-change="false"
       label-width="auto"
     >
       <el-row :gutter="16">
