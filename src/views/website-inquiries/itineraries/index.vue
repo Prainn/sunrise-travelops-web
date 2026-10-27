@@ -675,7 +675,7 @@ async function stashReorder(change: DayOrderChange) {
   return saved;
 }
 
-function applyReorder(change: DayOrderChange) {
+async function applyReorder(change: DayOrderChange) {
   if (!plan.value || !editable.value) return;
   const result = reorderWebsiteDays(plan.value.days, change, plan.value.deletedDays);
   plan.value.reorderDraft = null;
@@ -684,6 +684,8 @@ function applyReorder(change: DayOrderChange) {
   plan.value.duration = result.days.length;
   reorderIssues.value = result.issues;
   ElMessage.success(t("itineraryWorkspace.orderApplied"));
+  // 应用调整后同步保存草稿，避免刷新丢失排序
+  await save();
 }
 </script>
 <style scoped lang="scss">
