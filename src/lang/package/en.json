@@ -1073,7 +1073,7 @@
     "ITINERARY_RESOURCE_DUPLICATE": "Cannot repeat attractions or meals with non-standard prices in one itinerary",
     "RESOURCE_STANDARD_PRICE_EXISTS": "This city has a standard-price resource. Clear that resource's standard-price flag first",
     "LEDGER_VERSION_CONFLICT": "Entry updated. Refresh and retry",
-    "SHENGXU_LEDGER_DUPLICATE": "This agency has an entry for this date. Edit that entry",
+    "SHENGXU_LEDGER_DUPLICATE": "This agency's contact has an entry for this date. Edit that entry",
     "SHENGXU_LEDGER_DELETE_CONVERTED": "Cannot delete entries with over 0 converted groups",
     "DIRECT_LEDGER_REVIEWED_READ_ONLY": "Confirmed entries: regular fields are locked",
     "DIRECT_LEDGER_NOT_PENDING_CONFIRMATION": "Only loss entries pending confirmation need manager approval",
