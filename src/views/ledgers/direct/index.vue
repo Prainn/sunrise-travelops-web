@@ -276,7 +276,8 @@ const user = useUserStore();
 const businessUnit = computed(() => props.businessUnit);
 const creatorId = ref("");
 const operatorId = ref("");
-const keyword = ref("");
+const route = useRoute();
+const keyword = ref(typeof route.query.keyword === "string" ? route.query.keyword : "");
 const orderStatus = ref<DirectLedgerOrderStatus | "">("");
 const workflowStatus = ref<DirectLedgerWorkflowStatus | "">("");
 const dateRange = ref<[string, string] | null>(null);
@@ -363,6 +364,12 @@ const reload = useDebounceFn(() => {
   pageNum.value = 1;
   void fetchList();
 }, 300);
+watch([() => route.path, () => route.query.keyword], ([path, value]) => {
+  if (path === `/data-ledgers/${businessUnit.value === "linxi" ? "direct" : "website"}` && typeof value === "string") {
+    resetQuery();
+    keyword.value = value;
+  }
+});
 watch([keyword, orderStatus, workflowStatus, dateRange, creatorId, operatorId], reload);
 
 function resetQuery() {
