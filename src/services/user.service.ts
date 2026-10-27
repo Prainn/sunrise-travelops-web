@@ -1,6 +1,7 @@
 import type { PageResult } from "@/types/common";
 import { request } from "@/api/request";
 import type {
+  FeishuTestTemplate,
   ProfileSecurity,
   PasswordChangeForm,
   UserForm,
@@ -54,6 +55,7 @@ function toUserInput(
     gender: data.gender ?? 0,
     mobile: data.mobile?.trim() ?? "",
     email: data.email?.trim() ?? "",
+    feishuOpenId: data.feishuOpenId?.trim() ?? "",
     identities: data.identities.map(
       ({ id, scope, deptId, roleIds, coordinatorDuty, businessGroupId }) => ({
         id,
@@ -75,6 +77,9 @@ function toUserInput(
 }
 
 export const userService = {
+  testFeishu(userId: string, template: FeishuTestTemplate): Promise<{ messageId: string }> {
+    return request.post(`${USER_BASE_URL}/${encodeURIComponent(userId)}/feishu-test`, { template });
+  },
   suggestTourCode(input: TourCodeSuggestionInput): Promise<TourCodeSuggestion> {
     return request.get<TourCodeSuggestion>(`${USER_BASE_URL}/tour-code-suggestion`, {
       params: { ...input },

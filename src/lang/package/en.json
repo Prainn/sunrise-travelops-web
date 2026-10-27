@@ -574,6 +574,7 @@
     "clear": "Clear",
     "close": "Close",
     "confirm": "Confirm",
+    "send": "Send",
     "create": "Add",
     "createSuccess": "Added",
     "createdAt": "Created At",
@@ -771,6 +772,20 @@
     "tagTypePlaceholder": "Select a tag style"
   },
   "user": {
+    "feishu": "Feishu",
+    "feishuConnected": "Connected",
+    "feishuNotConnected": "Not connected",
+    "feishuTest": "Test",
+    "feishuTestTitle": "Test Feishu reminder",
+    "feishuTestHint": "Send a simulated reminder to {name}. This tests message content and leaves ledgers unchanged.",
+    "feishuTestTemplate": "Reminder template",
+    "feishuReviewTemplate": "Pending review",
+    "feishuOperateTemplate": "Pending operation",
+    "feishuOpenId": "Feishu Open ID",
+    "feishuOpenIdHint": "Enter this app’s open_id; clear to disconnect",
+    "feishuOpenIdInvalid": "Enter a valid Open ID starting with ou_",
+    "feishuTestSent": "Test message sent. Check Feishu.",
+    "feishuTestFailed": "Failed to send test message",
     "basicInfo": "Basic info",
     "cannotDeleteCurrent": "Cannot delete the logged-in user",
     "createSuccess": "User created",
@@ -969,6 +984,8 @@
     }
   },
   "apiErrors": {
+    "FEISHU_NOT_CONFIGURED": "Feishu app is not configured",
+    "FEISHU_SEND_FAILED": "Feishu delivery failed. Check app settings, permissions, availability and Open ID.",
     "VALIDATION_ERROR": "Invalid input. Check and retry",
     "BAD_REQUEST": "Request does not meet requirements",
     "AUTH_PASSWORD_INCORRECT": "Current password is incorrect. Re-enter it",

@@ -31,7 +31,10 @@ export interface UserQueryParams extends BaseQueryParams {
   businessGroupId?: string;
 }
 
+export type FeishuTestTemplate = "review" | "operate";
+
 export interface UserItem {
+  feishuOpenId?: string;
   identities: UserIdentity[];
   id: string;
   avatar?: string;
@@ -50,6 +53,7 @@ export interface UserItem {
 }
 
 export interface UserForm {
+  feishuOpenId?: string;
   identities: UserIdentity[];
   id?: string;
   avatar?: string;

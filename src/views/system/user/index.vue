@@ -222,6 +222,26 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column :label="$t('user.feishu')" width="200" :show-overflow-tooltip="false">
+          <template #default="{ row }">
+            <div class="flex items-center gap-2">
+              <el-tag :type="row.feishuOpenId ? 'success' : 'info'" size="small">
+                {{ $t(row.feishuOpenId ? "user.feishuConnected" : "user.feishuNotConnected") }}
+              </el-tag>
+              <el-button
+                v-hasPerm="'sys:user:update'"
+                link
+                type="primary"
+                size="small"
+                :disabled="!row.feishuOpenId || row.status !== CommonStatus.ENABLED || !!feishuTestingId"
+                :loading="feishuTestingId === row.id"
+                @click="openFeishuTest(row as UserItem)"
+              >
+                {{ $t("user.feishuTest") }}
+              </el-button>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('user.mobile')" prop="mobile" width="130" />
         <el-table-column
           :label="$t('common.email')"
@@ -351,6 +371,15 @@
           />
         </el-form-item>
 
+        <el-form-item :label="$t('user.feishuOpenId')" prop="feishuOpenId">
+          <el-input
+            v-model.trim="formData.feishuOpenId"
+            maxlength="100"
+            :placeholder="$t('user.feishuOpenIdHint')"
+            clearable
+          />
+        </el-form-item>
+
         <el-form-item :label="$t('common.email')" prop="email">
           <el-input
             v-model="formData.email"
@@ -455,6 +484,38 @@
         </el-button>
       </template>
     </AppDialog>
+    <AppDialog
+      v-model="feishuTestVisible"
+      :title="$t('user.feishuTestTitle')"
+      size="sm"
+      :busy="!!feishuTestingId"
+      append-to-body
+    >
+      <p class="mb-4">
+        {{ $t("user.feishuTestHint", { name: feishuTestUser?.nickname }) }}
+      </p>
+      <el-radio-group v-model="feishuTestTemplate" :disabled="!!feishuTestingId" :aria-label="$t('user.feishuTestTemplate')">
+        <el-radio value="review">
+          {{ $t("user.feishuReviewTemplate") }}
+        </el-radio>
+        <el-radio value="operate">
+          {{ $t("user.feishuOperateTemplate") }}
+        </el-radio>
+      </el-radio-group>
+      <template #footer>
+        <el-button :disabled="!!feishuTestingId" @click="feishuTestVisible = false">
+          {{ $t("common.cancel") }}
+        </el-button>
+        <el-button
+          v-hasPerm="'sys:user:update'"
+          type="primary"
+          :loading="!!feishuTestingId"
+          @click="sendFeishuTest"
+        >
+          {{ $t("common.send") }}
+        </el-button>
+      </template>
+    </AppDialog>
   </PageShell>
 </template>
 
@@ -474,6 +535,7 @@ import { CopyDocument, Female, Male } from "@element-plus/icons-vue";
 import UserIdentityFields from "./components/UserIdentityFields.vue";
 import { useTourCodeSuggestion } from "./useTourCodeSuggestion";
 import type {
+  FeishuTestTemplate,
   CoordinatorDuty,
   IdentityRoleOption,
   DepartmentOption,
@@ -562,10 +624,36 @@ const dialogState = reactive({
   mode: DialogMode.CREATE,
 });
 
+const feishuTestingId = ref("");
+const feishuTestVisible = ref(false);
+const feishuTestUser = ref<UserItem>();
+const feishuTestTemplate = ref<FeishuTestTemplate>("review");
+function openFeishuTest(row: UserItem): void {
+  if (feishuTestingId.value) return;
+  feishuTestUser.value = row;
+  feishuTestTemplate.value = "review";
+  feishuTestVisible.value = true;
+}
+async function sendFeishuTest(): Promise<void> {
+  const row = feishuTestUser.value;
+  if (!row || feishuTestingId.value) return;
+  feishuTestingId.value = row.id;
+  try {
+    await userService.testFeishu(row.id, feishuTestTemplate.value);
+    ElMessage.success(t("user.feishuTestSent"));
+    feishuTestVisible.value = false;
+  } catch (error) {
+    ElMessage.error(requestErrorMessage(error) || t("user.feishuTestFailed"));
+  } finally {
+    feishuTestingId.value = "";
+  }
+}
+
 const resetPasswordSubmitting = ref(false);
 
 const impact = ref<{ total: number; unfinished: number }>();
 const initialFormData: UserForm = {
+  feishuOpenId: "",
   identities: [{ scope: userStore.userInfo.scope ?? "shengxu", roleIds: [] }],
   status: CommonStatus.ENABLED,
 };
@@ -653,6 +741,7 @@ const rules = computed<FormRules<UserForm>>(() => ({
     { required: true, message: t("user.tourCodeRequired"), trigger: "blur" },
     { pattern: /^[A-Za-z0-9]{1,10}$/, message: t("user.tourCodeInvalid"), trigger: "blur" },
   ] : [],
+  feishuOpenId: [{ pattern: /^(?:|ou_[A-Za-z0-9_-]{1,97})$/, message: t("user.feishuOpenIdInvalid"), trigger: "blur" }],
   email: [{ type: "email", message: t("user.emailInvalid"), trigger: "blur" }],
   mobile: [{ pattern: /^1[3-9]\d{9}$/, message: t("user.mobileInvalid"), trigger: "blur" }],
 }));
