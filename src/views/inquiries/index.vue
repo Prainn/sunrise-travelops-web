@@ -10,6 +10,16 @@
       :source-options="sourceOptions"
       @reset="resetQuery"
     />
+    <el-alert
+      v-if="listError && inquiryStore.length"
+      :title="listError"
+      type="error"
+      :closable="false"
+    >
+      <el-button :loading="isLoading" @click="fetchInquiries">
+        {{ $t("common.retry") }}
+      </el-button>
+    </el-alert>
     <InquiryTable
       :rows="inquiryStore"
       :total="total"
@@ -112,7 +122,7 @@ async function fetchInquiries() {
     total.value = result.total;
     listError.value = "";
   } catch (error) {
-    // 列表失败交给表格展示错误与重试，不另弹提示。
+    // 空列表由表格展示错误；保留旧行时在表格外显示错误与重试。
     if (version === fetchVersion)
       listError.value = error instanceof Error ? error.message : t("request.failed");
   } finally {

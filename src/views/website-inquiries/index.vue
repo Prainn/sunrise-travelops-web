@@ -52,6 +52,16 @@
         </el-select>
       </el-form-item>
     </FilterBar>
+    <el-alert
+      v-if="error && rows.length"
+      :title="error"
+      type="error"
+      :closable="false"
+    >
+      <el-button :loading="loading" @click="load">
+        {{ $t("common.retry") }}
+      </el-button>
+    </el-alert>
     <WebsiteInquiryTable
       v-model:page="query.page"
       v-model:page-size="query.pageSize"

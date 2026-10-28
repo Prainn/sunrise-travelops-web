@@ -88,7 +88,8 @@
       <DataTable
         fill
         :error="error"
-        :loading="loading"
+        :loading="loading || deleting"
+        :inert="deleting"
         :data="list"
         :filtered="hasActiveFilters"
         highlight-current-row
@@ -1011,7 +1012,7 @@ async function confirmAndDelete(id?: string): Promise<void> {
   try {
     await userService.deleteByIds(userIds);
     ElMessage.success(t("common.deleteSuccess"));
-    handleQuery();
+    await handleQuery();
   } catch (error) {
     ElMessage.error(userConflictMessage(error, "user.linkedDelete"));
   }

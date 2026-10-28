@@ -34,7 +34,8 @@
       <DataTable
         fill
         :error="error"
-        :loading="loading"
+        :loading="loading || deleting"
+        :inert="deleting"
         highlight-current-row
         :data="list"
         row-key="id"
@@ -379,7 +380,7 @@ async function confirmAndDelete(id?: string): Promise<void> {
     dictStore.removeDictItem(dictCode.value);
     ElMessage.success(t("common.deleteSuccess"));
     // 保留筛选与页码；删空末页时 Pagination 会把页码夹回有效范围。
-    void fetchData();
+    await fetchData();
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : t("common.deleteFailed"));
   }
