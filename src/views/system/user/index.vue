@@ -928,7 +928,6 @@ function userConflictMessage(error: unknown, linkMessageKey: string): string {
 function handleSubmit(): Promise<void> {
   if (tourCodeSuggestion.status.value === "loading") return Promise.resolve();
   return submitForm(async () => {
-    loading.value = true;
     try {
       if (formData.id) {
         await userService.update(formData.id, formData);
@@ -944,8 +943,6 @@ function handleSubmit(): Promise<void> {
       handleQuery();
     } catch (error) {
       ElMessage.error(userConflictMessage(error, "user.linkedScopeChange"));
-    } finally {
-      loading.value = false;
     }
   });
 }
@@ -987,6 +984,7 @@ async function confirmAndDelete(id?: string): Promise<void> {
     }
   }
 
+  // 影响检查失败须如实提示，只有用户关闭确认框才算取消。
   try {
     const impacts = await Promise.all(
       userIds.split(",").map((value) => userService.inquiryImpact(value)),
@@ -995,6 +993,11 @@ async function confirmAndDelete(id?: string): Promise<void> {
       ElMessage.warning(t("identity.transferFirst"));
       return;
     }
+  } catch (error) {
+    ElMessage.error(requestErrorMessage(error));
+    return;
+  }
+  try {
     await ElMessageBox.confirm(t("user.deleteConfirm"), t("common.warning"), {
       confirmButtonText: t("common.confirm"),
       cancelButtonText: t("common.cancel"),
@@ -1005,15 +1008,12 @@ async function confirmAndDelete(id?: string): Promise<void> {
     return;
   }
 
-  loading.value = true;
   try {
     await userService.deleteByIds(userIds);
     ElMessage.success(t("common.deleteSuccess"));
     handleQuery();
   } catch (error) {
     ElMessage.error(userConflictMessage(error, "user.linkedDelete"));
-  } finally {
-    loading.value = false;
   }
 }
 
@@ -1078,7 +1078,8 @@ const handleResetPasswordSubmit = useDebounceFn(async () => {
 }, 300);
 
 onMounted(() => {
-  loadFormOptions();
+  // 角色选项决定“分工”列能否编辑，加载失败要提示而不是静默变成只读。
+  loadFormOptions().catch((error: unknown) => ElMessage.error(requestErrorMessage(error)));
   handleQuery();
 });
 </script>

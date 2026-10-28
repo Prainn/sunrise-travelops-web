@@ -123,7 +123,6 @@
 import { onMounted, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage } from "element-plus";
-import { useI18n } from "vue-i18n";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
@@ -133,13 +132,13 @@ import TableToolbar from "@/components/TableToolbar/index.vue";
 import GuideServiceList from "@/components/GuideServiceList/index.vue";
 import { tourService } from "@/services/tour.service";
 import { guideIdentityText } from "@/utils/guide-services";
+import { requestErrorMessage } from "@/utils/version-conflict";
 import { RATING_FIELDS, type RatingField, type TourRatingRow } from "@/types/tour";
 import { ratingKey, replaceRatingRow } from "./rating-row";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 
 defineOptions({ name: "GuideRatings" });
 
-const { t } = useI18n();
 const keyword = ref("");
 const loading = ref(false);
 const loadError = ref("");
@@ -159,18 +158,23 @@ const canEdit = (row: TourRatingRow) => row.canEdit;
 const isActive = (row: TourRatingRow, field: RatingField) =>
   active.value?.key === ratingKey(row) && active.value.field === field;
 
+let loadVersion = 0;
+/** 只有最近一次请求能写入列表、错误与 loading。 */
 async function load() {
+  const version = ++loadVersion;
   loading.value = true;
   try {
     const result = await tourService.ratings({ ...paginationQuery(), keyword: keyword.value });
+    if (version !== loadVersion) return;
     rows.value = result.list;
     total.value = result.total;
     loadError.value = "";
   } catch (error) {
-    loadError.value = error instanceof Error ? error.message : String(error);
+    if (version !== loadVersion) return;
+    loadError.value = requestErrorMessage(error);
     ElMessage.error(loadError.value);
   } finally {
-    loading.value = false;
+    if (version === loadVersion) loading.value = false;
   }
 }
 const reload = useDebounceFn(() => {
@@ -204,7 +208,7 @@ async function commit(row: TourRatingRow) {
     active.value = null;
   } catch (error) {
     // 保留输入和原版本；版本冲突需手动刷新，避免覆盖未读更新。
-    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+    ElMessage.error(requestErrorMessage(error));
 
   } finally {
     savingKey.value = "";

@@ -32,6 +32,8 @@ interface RequestOptions extends Omit<RequestInit, "body" | "method"> {
   bypassSessionGate?: boolean;
   /** 为 false 时 401 不刷新、不清除登录，由调用方处理。 */
   handleUnauthorized?: boolean;
+  /** 等待响应头的超时毫秒数，默认 DEFAULT_TIMEOUT_MS；0 表示不限时。 */
+  timeoutMs?: number;
 }
 
 interface ApiErrorOptions {
@@ -45,6 +47,9 @@ interface ApiErrorOptions {
 }
 
 const API_BASE_URL = (import.meta.env.VITE_APP_BASE_API || "/api").replace(/\/$/, "");
+export const DEFAULT_TIMEOUT_MS = 30_000;
+/** 文件上传解析、导出等长请求。 */
+export const LONG_REQUEST_TIMEOUT_MS = 120_000;
 
 function getErrorMessage(code: string, status?: number): string {
   return (
@@ -265,9 +270,25 @@ async function sendRequest(
     retryAfterRefresh: _retryAfterRefresh,
     bypassSessionGate: _bypassSessionGate,
     handleUnauthorized: _handleUnauthorized,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    signal: callerSignal,
     ...fetchOptions
   } = options;
   const url = appendParams(`${API_BASE_URL}${path}`, params);
+
+  // 超时与调用方取消合并为同一个信号；调用方主动取消仍按网络错误处理。
+  const controller = new AbortController();
+  let timedOut = false;
+  const abortFromCaller = () => controller.abort(callerSignal?.reason);
+  if (callerSignal?.aborted) abortFromCaller();
+  else callerSignal?.addEventListener("abort", abortFromCaller, { once: true });
+  const timer =
+    timeoutMs > 0
+      ? setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, timeoutMs)
+      : undefined;
 
   try {
     return await fetch(url, {
@@ -275,12 +296,14 @@ async function sendRequest(
       method,
       headers: createHeaders(options, body),
       body: body instanceof FormData ? body : body === undefined ? undefined : JSON.stringify(body),
+      signal: controller.signal,
     });
   } catch (error) {
-    throw new ApiError(getErrorMessage(ApiErrorCode.NETWORK_ERROR), {
-      code: ApiErrorCode.NETWORK_ERROR,
-      cause: error,
-    });
+    const code = timedOut ? ApiErrorCode.REQUEST_TIMEOUT : ApiErrorCode.NETWORK_ERROR;
+    throw new ApiError(getErrorMessage(code), { code, cause: error });
+  } finally {
+    clearTimeout(timer);
+    callerSignal?.removeEventListener("abort", abortFromCaller);
   }
 }
 

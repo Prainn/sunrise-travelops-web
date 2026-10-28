@@ -3,9 +3,26 @@ import { STORAGE_KEYS } from "@/constants";
 import { dictionaryService } from "@/services";
 import type { DictItemOption } from "@/types/dictionary";
 
+/** 字典缓存有效期；超时后重新请求，避免其他用户修改后长期显示旧选项。 */
+const DICT_CACHE_TTL_MS = 10 * 60 * 1000;
+
+interface DictCacheEntry {
+  items: DictItemOption[];
+  cachedAt: number;
+}
+
+function isFresh(entry: DictCacheEntry | undefined): entry is DictCacheEntry {
+  return (
+    !!entry &&
+    Array.isArray(entry.items) &&
+    typeof entry.cachedAt === "number" &&
+    Date.now() - entry.cachedAt < DICT_CACHE_TTL_MS
+  );
+}
+
 export const useDictStore = defineStore("dict", () => {
   // 字典数据缓存
-  const dictCache = useStorage<Record<string, DictItemOption[]>>(STORAGE_KEYS.DICT_CACHE, {});
+  const dictCache = useStorage<Record<string, DictCacheEntry>>(STORAGE_KEYS.DICT_CACHE, {});
 
   // 请求队列（防止重复请求）
   const requestQueue: Record<string, Promise<void>> = {};
@@ -16,7 +33,7 @@ export const useDictStore = defineStore("dict", () => {
    * @param data 字典项列表
    */
   const cacheDictItems = (dictCode: string, data: DictItemOption[]) => {
-    dictCache.value[dictCode] = data;
+    dictCache.value[dictCode] = { items: data, cachedAt: Date.now() };
   };
 
   /**
@@ -24,7 +41,7 @@ export const useDictStore = defineStore("dict", () => {
    * @param dictCode 字典编码
    */
   const loadDictItems = async (dictCode: string) => {
-    if (dictCache.value[dictCode]) return;
+    if (isFresh(dictCache.value[dictCode])) return;
     // 防止重复请求
     if (!requestQueue[dictCode]) {
       requestQueue[dictCode] = dictionaryService
@@ -48,7 +65,8 @@ export const useDictStore = defineStore("dict", () => {
    * @returns 字典项列表
    */
   const getDictItems = (dictCode: string): DictItemOption[] => {
-    return dictCache.value[dictCode] || [];
+    const entry = dictCache.value[dictCode];
+    return isFresh(entry) ? entry.items : [];
   };
 
   /**

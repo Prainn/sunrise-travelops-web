@@ -44,6 +44,17 @@
     <SectionCard v-else-if="summary">
       <el-empty :description="$t('dashboard.noAccessibleStats')" />
     </SectionCard>
+    <SectionCard v-else-if="summaryError">
+      <FeedbackState
+        type="error"
+        :description="summaryError"
+        retryable
+        @retry="fetchSummary"
+      />
+    </SectionCard>
+    <SectionCard v-else-if="summaryLoading">
+      <el-skeleton :rows="2" animated />
+    </SectionCard>
 
     <OperationsMap v-if="canViewTourMap" />
 
@@ -82,9 +93,11 @@ import { ElMessage } from "element-plus";
 import { User } from "@element-plus/icons-vue";
 import PageShell from "@/components/PageShell/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
+import FeedbackState from "@/components/FeedbackState/index.vue";
 import { useRefreshOnActivated } from "@/composables";
 import { colorWithAlpha, getCssVar } from "@/utils/theme";
 import { hasUserPermission } from "@/utils/permission";
+import { requestErrorMessage } from "@/utils/version-conflict";
 import OperationsMap from "./OperationsMap.vue";
 
 interface SummaryCard {
@@ -115,7 +128,7 @@ const currentDateStr = computed(() => {
 });
 
 function showError(error: unknown) {
-  ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+  ElMessage.error(requestErrorMessage(error));
 }
 
 const summary = ref<DashboardSummary>();
@@ -168,11 +181,24 @@ const summaryCards = computed<SummaryCard[]>(() => {
 });
 const hasSummaryItems = computed(() => summaryCards.value.length > 0);
 
+const summaryLoading = ref(false);
+const summaryError = ref("");
+let summaryVersion = 0;
+
+/** 首次加载显示骨架，失败在卡片内提供重试；激活刷新失败时保留上次数据并提示。 */
 async function fetchSummary() {
+  const version = ++summaryVersion;
+  summaryLoading.value = true;
+  summaryError.value = "";
   try {
-    summary.value = await dashboardService.getSummary();
+    const result = await dashboardService.getSummary();
+    if (version === summaryVersion) summary.value = result;
   } catch (error) {
-    showError(error);
+    if (version !== summaryVersion) return;
+    if (summary.value) showError(error);
+    else summaryError.value = requestErrorMessage(error);
+  } finally {
+    if (version === summaryVersion) summaryLoading.value = false;
   }
 }
 

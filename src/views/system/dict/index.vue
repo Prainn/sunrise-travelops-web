@@ -296,7 +296,6 @@ async function handleEditClick(id: string): Promise<void> {
  */
 function handleSubmit(): Promise<void> {
   return submitForm(async () => {
-    loading.value = true;
     try {
       const id = formData.id;
       if (id) {
@@ -311,8 +310,6 @@ function handleSubmit(): Promise<void> {
       handleQuery();
     } catch (error) {
       ElMessage.error(error instanceof Error ? error.message : t("common.saveFailed"));
-    } finally {
-      loading.value = false;
     }
   });
 }
@@ -351,16 +348,14 @@ async function confirmAndDelete(id?: string): Promise<void> {
     return;
   }
 
-  loading.value = true;
   try {
     await dictionaryService.deleteByIds(dictIds);
     dictStore.clearDictCache();
     ElMessage.success(t("common.deleteSuccess"));
-    handleResetQuery();
+    // 保留筛选与页码；删空末页时 Pagination 会把页码夹回有效范围。
+    void fetchData();
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : t("common.deleteFailed"));
-  } finally {
-    loading.value = false;
   }
 }
 

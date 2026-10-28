@@ -92,6 +92,7 @@
               v-has-perm="RESOURCE_PERMISSIONS.hotel.update"
               type="primary"
               link
+              :disabled="isPending?.(scope.row.id)"
               @click="emit('edit', scope.row as HotelRecord)"
             >
               {{ $t("common.edit") }}
@@ -100,6 +101,7 @@
               v-has-perm="RESOURCE_PERMISSIONS.hotel.update"
               type="warning"
               link
+              :disabled="isPending?.(scope.row.id)"
               @click="emit('toggle-status', scope.row as HotelRecord)"
             >
               {{ $t(scope.row.status === "enabled" ? "common.disabled" : "common.enabled") }}
@@ -108,6 +110,7 @@
               v-has-perm="RESOURCE_PERMISSIONS.hotel.delete"
               type="danger"
               link
+              :disabled="isPending?.(scope.row.id)"
               @click="emit('delete', scope.row as HotelRecord)"
             >
               {{ $t("common.delete") }}
@@ -146,6 +149,8 @@ defineProps<{
   error?: string;
   /** 存在生效的筛选条件 */
   filtered?: boolean;
+  /** 行写操作处理中时禁用该行的编辑、启停与删除 */
+  isPending?: (id: string) => boolean;
 }>();
 
 const emit = defineEmits<{

@@ -48,6 +48,7 @@
       :rows="hotelStore"
       :error="loadError"
       :filtered="hasActiveFilters"
+      :is-pending="isPending"
       @pagination="refreshHotels"
       @refresh="refreshHotels"
       @create="openCreateDialog"
@@ -152,6 +153,7 @@ import AppDialog from "@/components/AppDialog/index.vue";
 import CitySelect from "@/components/CitySelect.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
+import { usePendingActions } from "@/composables";
 import { useCityOptions } from "@/composables/useCityOptions";
 import { resourceService } from "@/services/resource.service";
 import type { HotelRating, HotelRecord, ResourceListQuery } from "@/types/resource";
@@ -270,11 +272,12 @@ async function openEditDialog(hotel: HotelRecord) {
     ElMessage.error(error instanceof Error ? error.message : String(error));
   }
 }
-// Row-level mutations in flight; repeated clicks would hit a stale version.
-const busyHotelIds = new Set<string>();
-async function toggleStatus(hotel: HotelRecord) {
-  if (busyHotelIds.has(hotel.id)) return;
-  busyHotelIds.add(hotel.id);
+// 行写操作从确认前占用到请求结束，重复点击会使用过期版本或弹出多个确认框。
+const { isPending, run } = usePendingActions();
+function toggleStatus(hotel: HotelRecord) {
+  return run(hotel.id, () => toggleHotelStatus(hotel));
+}
+async function toggleHotelStatus(hotel: HotelRecord) {
   try {
     const updated = await resourceService.hotelApi.update(hotel.id, {
       ...hotel,
@@ -285,14 +288,13 @@ async function toggleStatus(hotel: HotelRecord) {
     ElMessage.success(t("common.updateSuccess"));
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : String(error));
-  } finally {
-    busyHotelIds.delete(hotel.id);
   }
 }
-async function deleteHotel(hotel: HotelRecord) {
+function deleteHotel(hotel: HotelRecord) {
+  return run(hotel.id, () => confirmAndDeleteHotel(hotel));
+}
+async function confirmAndDeleteHotel(hotel: HotelRecord) {
   if (!(await confirmDelete("hotel.deleteHotelConfirm"))) return;
-  if (busyHotelIds.has(hotel.id)) return;
-  busyHotelIds.add(hotel.id);
   try {
     await resourceService.hotelApi.deleteByIds(hotel.id);
     const index = hotelStore.findIndex((item) => item.id === hotel.id);
@@ -301,8 +303,6 @@ async function deleteHotel(hotel: HotelRecord) {
     ElMessage.success(t("common.deleteSuccess"));
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : String(error));
-  } finally {
-    busyHotelIds.delete(hotel.id);
   }
 }
 async function saveHotel() {

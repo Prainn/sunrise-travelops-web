@@ -58,13 +58,16 @@
   </AppDialog>
 </template>
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
 import { ElMessage } from "element-plus";
 import type { FormInstance } from "element-plus";
 import AppDialog from "@/components/AppDialog/index.vue";
+import { requestErrorMessage } from "@/utils/version-conflict";
 import type { InquiryRecord } from "@/types/inquiry";
 import { inquiryService, type PersonOption } from "@/services/inquiry.service";
 const props = defineProps<{ inquiry: InquiryRecord }>();
 const emit = defineEmits<{ transferred: [] }>();
+const { t } = useI18n();
 const visible = ref(false),
   saving = ref(false),
   opening = ref(false),
@@ -80,7 +83,7 @@ async function open() {
     data.reason = "";
     visible.value = true;
   } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : String(e));
+    ElMessage.error(requestErrorMessage(e));
   } finally {
     opening.value = false;
   }
@@ -93,9 +96,10 @@ async function submit() {
     if (!(await form.value?.validate().catch(() => false))) return;
     await inquiryService.transfer(props.inquiry, data.ownerId, data.reason);
     visible.value = false;
+    ElMessage.success(t("identity.transferSuccess"));
     emit("transferred");
   } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : String(e));
+    ElMessage.error(requestErrorMessage(e));
   } finally {
     saving.value = false;
   }
