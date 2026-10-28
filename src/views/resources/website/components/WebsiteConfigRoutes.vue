@@ -140,55 +140,59 @@
           <el-form-item :label="$t('websiteConfig.routes.feeState')">
             <FeeStateSelect v-model="record.feeState" />
           </el-form-item>
-          <div v-if="record.mode === 'private_vehicle'" class="col-span-2 max-[650px]:col-span-1">
-            <el-form-item :label="$t('websiteReport.vehicleType')" prop="vehicleOptions">
-              <div class="flex flex-col gap-[12px] w-full">
-                <div v-for="(option, index) in record.vehicleOptions" :key="index" class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
-                  <el-select
-                    v-model="option.vehicleType"
-                    filterable
-                    allow-create
-                    default-first-option
-                    clearable
-                    autocomplete="new-password"
-                    :maxlength="100"
-                    :placeholder="$t('websiteReport.vehicleSelectOrEnter')"
-                    :aria-label="$t('websiteReport.vehicleType')"
-                  >
-                    <el-option
-                      v-for="vehicle in VEHICLE_OPTIONS"
-                      :key="vehicle.value"
-                      :value="vehicle.value"
-                      :label="$t(vehicle.labelKey)"
-                    />
-                  </el-select>
-                  <div class="max-[650px]:mt-[8px]">
-                    <div class="text-muted">
-                      {{ $t('websiteReport.durationMinutes') }}
-                    </div>
-                    <div class="flex items-center gap-[8px]">
-                      <el-input-number
-                        v-model="option.durationMinutes"
-                        class="!w-full min-w-0"
-                        :min="1"
-                        :max="525600"
-                        :precision="0"
-                        :placeholder="$t('websiteReport.notSpecified')"
-                        :aria-label="$t('websiteReport.durationMinutes')"
-                        @update:model-value="option.durationMinutes = $event ?? null"
-                      />
-                      <el-button type="danger" link @click="record.vehicleOptions.splice(index, 1)">
-                        {{ $t('common.delete') }}
-                      </el-button>
-                    </div>
-                  </div>
+          <template v-if="record.mode === 'private_vehicle'">
+            <template v-for="(option, index) in record.vehicleOptions" :key="index">
+              <el-form-item :label="$t('websiteReport.vehicleType')">
+                <el-select
+                  v-model="option.vehicleType"
+                  filterable
+                  allow-create
+                  default-first-option
+                  clearable
+                  autocomplete="new-password"
+                  :maxlength="100"
+                  :placeholder="$t('websiteReport.vehicleSelectOrEnter')"
+                  :aria-label="$t('websiteReport.vehicleType')"
+                  @change="formRef?.validateField('vehicleOptions').catch(() => undefined)"
+                >
+                  <el-option
+                    v-for="vehicle in VEHICLE_OPTIONS"
+                    :key="vehicle.value"
+                    :value="vehicle.value"
+                    :label="$t(vehicle.labelKey)"
+                  />
+                </el-select>
+              </el-form-item>
+              <el-form-item :label="$t('websiteReport.durationMinutes')">
+                <div class="flex w-full min-w-0 items-center gap-[8px]">
+                  <el-input-number
+                    v-model="option.durationMinutes"
+                    class="!w-full min-w-0"
+                    :min="1"
+                    :max="525600"
+                    :precision="0"
+                    :placeholder="$t('websiteReport.notSpecified')"
+                    :aria-label="$t('websiteReport.durationMinutes')"
+                    @update:model-value="option.durationMinutes = $event ?? null"
+                    @change="formRef?.validateField('vehicleOptions').catch(() => undefined)"
+                  />
+                  <el-button type="danger" link @click="record.vehicleOptions.splice(index, 1)">
+                    {{ $t('common.delete') }}
+                  </el-button>
                 </div>
-                <el-button :disabled="record.vehicleOptions.length >= 100" class="self-start" @click="record.vehicleOptions.push({ vehicleType: '', durationMinutes: null })">
-                  {{ $t('common.create') }}
-                </el-button>
-              </div>
+              </el-form-item>
+            </template>
+            <el-form-item prop="vehicleOptions" class="col-span-2 max-[650px]:col-span-1">
+              <template #label>
+                <span :class="{ invisible: record.vehicleOptions.length > 0 }" :aria-hidden="record.vehicleOptions.length > 0">
+                  {{ $t('websiteReport.vehicleType') }}
+                </span>
+              </template>
+              <el-button :disabled="record.vehicleOptions.length >= 100" @click="record.vehicleOptions.push({ vehicleType: '', durationMinutes: null })">
+                {{ $t('common.create') }}
+              </el-button>
             </el-form-item>
-          </div>
+          </template>
           <WebsiteTransportFields
             v-model="record"
             :mode="record.mode"
