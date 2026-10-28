@@ -28,7 +28,7 @@
       <DataTable
         fill
         :error="error"
-        :loading="loading || deleting"
+        :loading="loading || removing"
         :inert="deleting"
         highlight-current-row
         :data="list"
@@ -322,6 +322,8 @@ function handleSubmit(): Promise<void> {
  */
 // 影响检查与确认前即占用，删除结束前工具栏与行内删除都不可再次触发。
 const deleting = ref(false);
+// 仅删除请求进行中显示表格加载，确认框打开期间不遮罩。
+const removing = ref(false);
 async function handleDelete(id?: string): Promise<void> {
   if (deleting.value) return;
   deleting.value = true;
@@ -349,6 +351,7 @@ async function confirmAndDelete(id?: string): Promise<void> {
     return;
   }
 
+  removing.value = true;
   try {
     await dictionaryService.deleteByIds(dictIds);
     dictStore.clearDictCache();
@@ -357,6 +360,8 @@ async function confirmAndDelete(id?: string): Promise<void> {
     await fetchData();
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : t("common.deleteFailed"));
+  } finally {
+    removing.value = false;
   }
 }
 

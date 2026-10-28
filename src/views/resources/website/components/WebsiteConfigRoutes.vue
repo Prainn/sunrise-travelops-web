@@ -149,6 +149,7 @@
                   allow-create
                   default-first-option
                   clearable
+                  :value-on-clear="''"
                   autocomplete="new-password"
                   :maxlength="100"
                   :placeholder="$t('websiteReport.vehicleSelectOrEnter')"

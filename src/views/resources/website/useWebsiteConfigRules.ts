@@ -163,8 +163,8 @@ export function useWebsiteTemplateRules(record: Ref<WebsiteTemplate | undefined>
 export function transportRules(t: (key: string) => string): FormRules {
   return {
     vehicleType: [{ max: 100, message: t("websiteReport.vehicleInvalid"), trigger: "change" }],
-    vehicleOptions: [{ validator: (_rule, values: {vehicleType: string; durationMinutes: number | null}[], callback) => {
-      const trimmed = values.map(value => value.vehicleType.trim());
+    vehicleOptions: [{ validator: (_rule, values: {vehicleType: string | null | undefined; durationMinutes: number | null}[], callback) => {
+      const trimmed = values.map(value => (value.vehicleType ?? "").trim());
       callback(trimmed.length <= 100 && trimmed.every(value => value.length >= 1 && value.length <= 100) && new Set(trimmed).size === trimmed.length
         && values.every(value => value.durationMinutes == null || (Number.isInteger(value.durationMinutes) && value.durationMinutes >= 1 && value.durationMinutes <= 525600))
         ? undefined : new Error(t("websiteReport.vehicleOptionsInvalid")));
