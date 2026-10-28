@@ -93,9 +93,8 @@ export function emptyItinerary(
     departureTime: "",
     configVersion,
     days: [],
-    vehiclePrices: VEHICLE_OPTIONS.map((option) => ({
-      vehicleType: option.value,
-      unitPrice: null,
-    })),
+    vehiclePrices: VEHICLE_OPTIONS.flatMap((option) => (["A", "B"] as const).map(plan => ({
+      vehicleType: option.value, plan, includesDriver: false, includesGuide: false, unitPrice: null,
+    }))),
   };
 }

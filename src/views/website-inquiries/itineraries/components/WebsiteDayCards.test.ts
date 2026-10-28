@@ -4,7 +4,7 @@ import { createRenderer, defineComponent, h, nextTick, reactive, ref, type Compo
 import type { WebsiteConfig, WebsiteDay } from "@/types/website";
 import { emptyDay } from "../../options";
 
-vi.mock("vue-i18n", () => ({ useI18n: () => ({ locale: ref("zh-cn") }) }));
+vi.mock("vue-i18n", () => ({ useI18n: () => ({ locale: ref("zh-cn"), t: (key: string) => key }) }));
 vi.mock("@/components/AppDialog/index.vue", () => ({ default: {
   props: ["modelValue"],
   render(this: ComponentPublicInstance<{ modelValue: boolean }>) {
@@ -36,11 +36,12 @@ const renderer = createRenderer<HostNode, HostNode>({
 let unmount: (() => void) | undefined;
 function mount(component: Component, day: WebsiteDay, editable = true) {
   const root = node("root");
-  const app = renderer.createApp(component, { day, editable, config: { attractions: [], cities: [] } as unknown as WebsiteConfig });
+  const app = renderer.createApp(component, { day, editable, config: { attractions: [], cities: [], routes: [] } as unknown as WebsiteConfig });
   app.config.globalProperties.$t = (key: string) => key;
-  for (const name of ["ElForm", "ElFormItem", "ElSelect", "ElOption", "ElInput", "ElSwitch", "ElTag", "ElButton"]) {
+  for (const name of ["ElFormItem", "ElSelect", "ElOption", "ElInput", "ElInputNumber", "ElSwitch", "ElTag", "ElButton"]) {
     app.component(name, defineComponent({ inheritAttrs: false, setup(_, { attrs, slots }) { return () => h(name, attrs, slots.default?.()); } }));
   }
+  app.component("ElForm", defineComponent({ inheritAttrs: false, setup(_, { attrs, slots, expose }) { expose({ validate: async () => true }); return () => h("ElForm", attrs, slots.default?.()); } }));
   app.mount(root);
   unmount = () => app.unmount();
   function find(type: string, current = root): HostNode[] {
@@ -51,7 +52,7 @@ function mount(component: Component, day: WebsiteDay, editable = true) {
     find,
     async click(label: string) {
       const button = find("ElButton").find(button => text(button) === label)!;
-      (button.props.onClick as () => void)();
+      await (button.props.onClick as () => void | Promise<void>)();
       await nextTick();
     },
     async changeName(value: string) {
@@ -64,7 +65,7 @@ afterEach(() => { unmount?.(); unmount = undefined; });
 
 const cases = [
   { label: "attraction", component: WebsiteDayAttractions, collection: "items" as const, value: { id: "original", attractionId: null, nameZh: "景点", nameEn: "Attraction", descriptionZh: "正文", descriptionEn: "Copy", appears: true, feeState: "SELF_PAY" as const } },
-  { label: "transport", component: WebsiteDayTransport, collection: "legs" as const, value: { id: "original", routeId: "route", fromCityId: "from", toCityId: "to", mode: "hsr" as const, nameZh: "交通", nameEn: "Transport", feeState: "SELF_PAY" as const } },
+  { label: "transport", component: WebsiteDayTransport, collection: "legs" as const, value: { id: "original", routeId: "route", fromCityId: "from", toCityId: "to", mode: "hsr" as const, vehicleType: null, nameZh: "交通", nameEn: "Transport", feeState: "SELF_PAY" as const } },
   { label: "service", component: WebsiteDayMealsServices, collection: "services" as const, value: { id: "original", nameZh: "服务", nameEn: "Service", appears: true, feeState: "SELF_PAY" as const } },
 ];
 describe.each(cases)("$label card editing", ({ component, collection, value }) => {

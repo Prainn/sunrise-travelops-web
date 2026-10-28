@@ -564,6 +564,7 @@ function createBoardDay(id: string) { return boardDay({ ...emptyDay(1), id }); }
 
 watch(plan, () => {
   isBasicsDialogVisible.value = false;
+  isVehiclePricesDialogVisible.value = false;
   isReorderDialogVisible.value = false;
   closeBoardTransport();
   resourceDialog.value = undefined;
@@ -585,7 +586,7 @@ function canLocatePreviewIssue(issue: WebsiteValidation) {
   if (issue.dayNumber !== undefined)
     return plan.value.days.some(day => day.dayNumber === issue.dayNumber);
   if (issue.code === "REORDER_PENDING" || issue.code === "VAL-E01") return true;
-  return editable.value && (issue.code === "VAL-E07" || issue.code === "ITINERARY_INVALID" || issue.code === "REQUIREMENTS_MISMATCH");
+  return editable.value && (issue.code === "VAL-E07" || issue.code === "VAL-E08" || issue.code === "ITINERARY_INVALID" || issue.code === "REQUIREMENTS_MISMATCH");
 }
 async function locatePreviewIssue(issue: WebsiteValidation) {
   if (saving.value || !canLocatePreviewIssue(issue)) return;

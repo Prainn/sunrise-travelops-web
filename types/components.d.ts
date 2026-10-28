@@ -185,6 +185,7 @@ declare module 'vue' {
     WebsiteQuotationPreview: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteQuotationPreview.vue')['default']
     WebsiteResourceSelect: typeof import('./../src/views/website-inquiries/components/WebsiteResourceSelect.vue')['default']
     WebsiteTransportDialog: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteTransportDialog.vue')['default']
+    WebsiteTransportFields: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteTransportFields.vue')['default']
     WebsiteVehiclePrices: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteVehiclePrices.vue')['default']
   }
   export interface GlobalDirectives {

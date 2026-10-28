@@ -1440,7 +1440,10 @@
         "destinations": "Destinations",
         "internalRemark": "Internal notes",
         "status": "Status",
-        "lostReason": "Lost reason"
+        "lostReason": "Lost reason",
+        "distanceKm": "Distance (km)",
+        "durationMinutes": "Estimated duration (minutes)",
+        "showInMileage": "Show in PDF mileage table"
       }
     }
   },
@@ -1514,7 +1517,7 @@
       "create": "Add route",
       "edit": "Edit route",
       "detail": "Intercity route details",
-      "help": "Default transport and fee status; editable per itinerary.",
+      "help": "Maintain transport, vehicle type, distance and duration. Planners can override them.",
       "empty": "No intercity routes configured",
       "nameZh": "Chinese route name",
       "nameEn": "English route name",
@@ -1870,7 +1873,7 @@
       "segment": "Segment {n}",
       "add": "Add segment",
       "selectGuide": "Select guide",
-      "fillFirst": "Fill in language and a valid time range first",
+      "fillFirst": "Select language and time first",
       "startAt": "Service start",
       "endAt": "Service end",
       "useTeamTime": "Use tour transfer times",
@@ -2156,5 +2159,29 @@
       "linxi": "Linxi",
       "website": "Website"
     }
+  },
+  "websiteReport": {
+    "plan": "Plan {plan}",
+    "driver": "Driver",
+    "guide": "Tour guide",
+    "pax": "Guests",
+    "total": "Total tour fare (CNY)",
+    "undetermined": "Not set",
+    "plansHelp": "Each vehicle offers plans A/B with separate driver and guide selections. Blank prices omit a plan; zero is valid. Totals use itinerary guest count.",
+    "distanceKm": "Distance (km)",
+    "durationMinutes": "Estimated time (minutes)",
+    "distanceInvalid": "Enter a non-negative distance with up to 10 integer digits and 2 decimals",
+    "durationInvalid": "Enter an integer from 1 to 525600 minutes",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "vehicleType": "Vehicle type",
+    "vehicleSelectOrEnter": "Select or enter a vehicle type",
+    "vehicleInvalid": "Vehicle type must be at most 100 characters",
+    "vehicleOptionsInvalid": "Use up to 100 unique vehicle types, 1–100 characters each",
+    "notSpecified": "Not specified",
+    "showInMileage": "Show in PDF mileage table",
+    "routeSearch": "Search transport, city, mode or vehicle type",
+    "transportDetailsHelp": "Edit the vehicle, distance and duration for this leg. Leave unknown values blank.",
+    "minutesValue": "{value} min"
   }
 }

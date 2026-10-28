@@ -136,7 +136,7 @@ export function formatLogValue(value: unknown, path: string, context: LogDisplay
   };
   const key = keys[field] ?? "";
   if (field === "tier") return te(key) ? t(key, { tier: text }) : text;
-  if (path.includes("vehiclePrices") && field === "vehicleType")
+  if (field === "vehicleType")
     return te(`websiteInquiry.vehicleTypes.${text}`) ? t(`websiteInquiry.vehicleTypes.${text}`) : text;
   return key && te(key) ? t(key) : text;
 }

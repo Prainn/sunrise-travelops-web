@@ -1,88 +1,85 @@
 <template>
-  <AppDialog
-    v-model="visible"
-    size="xl"
-    :title="$t('websiteItineraryUi.packagePriceTitle')"
-  >
+  <AppDialog v-model="visible" size="xl" :title="$t('websiteItineraryUi.packagePriceTitle')">
     <p class="m-0 mb-4 text-sm text-muted">
-      {{ $t("websiteItineraryUi.packagePriceDescription") }}
+      {{ $t("websiteReport.plansHelp") }}
     </p>
     <el-form label-position="top" :disabled="!editable">
-      <div class="grid grid-cols-5 gap-4 max-[1200px]:grid-cols-3 max-[800px]:grid-cols-2 max-[550px]:grid-cols-1">
-        <div
-          v-for="option in VEHICLE_OPTIONS"
-          :key="option.value"
-          class="flex flex-col gap-2 p-3 rounded-[var(--custom-radius)] surface-muted [border:1px_solid_var(--divider-color)]"
-        >
-          <h4 class="m-0 text-[14px] text-strong font-600">
-            {{ $t("websiteItineraryUi.vehiclePlanTitle", { vehicle: $t(option.labelKey) }) }}
+      <div class="grid grid-cols-2 gap-4 max-[800px]:grid-cols-1">
+        <SectionCard v-for="option in VEHICLE_OPTIONS" :key="option.value">
+          <h4 class="m-0 mb-3 text-[14px] text-strong font-600">
+            {{ $t(option.labelKey) }}
           </h4>
-          <el-form-item
-            class="mb-0!"
-            :label="$t('websiteItineraryUi.pricePerPerson')"
-            :error="invalid(option.value) ? $t('websiteWorkspace.vehiclePriceInvalid') : ''"
-          >
-            <el-input
-              :model-value="editable ? (price(option.value) ?? '') : displayPrice(option.value)"
-              :placeholder="$t('websiteItineraryUi.pricePlaceholder')"
-              :aria-label="`${$t('websiteItineraryUi.vehiclePlanTitle', { vehicle: $t(option.labelKey) })} · ${$t('websiteItineraryUi.pricePerPerson')}`"
-              @update:model-value="setPrice(option.value, $event)"
-            >
-              <template #append>
-                {{ $t("websiteItineraryUi.pricePerPersonUnit") }}
-              </template>
-            </el-input>
-          </el-form-item>
+          <div class="grid grid-cols-2 gap-4 max-[550px]:grid-cols-1">
+            <div v-for="price in prices.filter(item => item.vehicleType === option.value)" :key="price.plan">
+              <strong>{{ $t("websiteReport.plan", { plan: price.plan }) }}</strong>
+              <div class="flex flex-wrap gap-x-3">
+                <el-checkbox v-model="price.includesDriver">
+                  {{ $t("websiteReport.driver") }}
+                </el-checkbox>
+                <el-checkbox v-model="price.includesGuide">
+                  {{ $t("websiteReport.guide") }}
+                </el-checkbox>
+              </div>
+              <el-form-item :label="`${$t('websiteItineraryUi.pricePerPerson')} (${$t('websiteItineraryUi.pricePerPersonUnit')})`" :error="price.unitPrice !== null && !isValidVehiclePrice(price.unitPrice) ? $t('websiteWorkspace.vehiclePriceInvalid') : ''">
+                <el-input
+                  :model-value="price.unitPrice ?? ''"
+                  :placeholder="$t('websiteItineraryUi.pricePlaceholder')"
+                  :aria-label="`${$t(option.labelKey)} ${price.plan} · ${$t('websiteItineraryUi.pricePerPerson')}`"
+                  @update:model-value="price.unitPrice = $event.trim() || null"
+                >
+                </el-input>
+              </el-form-item>
+              <p class="text-sm">
+                {{ $t("websiteReport.pax") }}: {{ plan.pax ?? $t("websiteReport.undetermined") }}
+              </p>
+              <p class="text-sm">
+                {{ $t("websiteReport.total") }}: {{ vehiclePriceTotal(price.unitPrice, plan.pax) ?? $t("websiteReport.undetermined") }}
+              </p>
+            </div>
+          </div>
           <p class="text-xs m-0 text-muted">
-            {{
-              $t("websiteItineraryUi.capacityHint", {
-                comfortable: option.seats - 2,
-                economy: option.seats - 1,
-                luggage: option.seats - 4,
-              })
-            }}
+            {{ $t("websiteItineraryUi.capacityHint", { comfortable: option.seats - 2, economy: option.seats - 1, luggage: option.seats - 4 }) }}
           </p>
-        </div>
+        </SectionCard>
       </div>
-      <p class="m-0 mt-3 text-sm text-muted">
-        {{ $t("websiteItineraryUi.finalPriceHint") }}
-      </p>
     </el-form>
     <template #footer>
-      <el-button type="primary" @click="visible = false">
-        {{ $t(editable ? "common.confirm" : "common.close") }}
+      <el-button @click="visible = false">
+        {{ $t(editable ? "common.cancel" : "common.close") }}
+      </el-button>
+      <el-button
+        v-if="editable"
+        type="primary"
+        :disabled="hasInvalidPrice"
+        @click="apply"
+      >
+        {{ $t("common.confirm") }}
       </el-button>
     </template>
   </AppDialog>
 </template>
 <script setup lang="ts">
+import { computed, ref, watch } from "vue";
 import AppDialog from "@/components/AppDialog/index.vue";
-import { formatMoney } from "@/utils";
-import { isValidVehiclePrice } from "../vehicle-price";
-import type { VehicleType, WebsiteItinerary } from "@/types/website";
+import SectionCard from "@/components/SectionCard/index.vue";
+import { isValidVehiclePrice, vehiclePriceTotal } from "../vehicle-price";
+import type { WebsiteItinerary, WebsiteVehiclePrice } from "@/types/website";
 import { VEHICLE_OPTIONS } from "../../options";
-/**
- * 整程套餐人均售价弹窗：按所用车型分别报价，不是单独车费；空值保持 null，0 是有效报价。
- * 直接编辑行程草稿，随“保存行程草稿”一并提交。
- */
 const visible = defineModel<boolean>({ required: true });
 const plan = defineModel<WebsiteItinerary>("plan", { required: true });
-defineProps<{ editable: boolean }>();
-function price(type: VehicleType) {
-  return plan.value.vehiclePrices.find((item) => item.vehicleType === type)?.unitPrice;
-}
-function displayPrice(type: VehicleType) {
-  const value = price(type);
-  return value == null ? "" : formatMoney(value);
-}
-function invalid(type: VehicleType) {
-  const value = price(type);
-  return value != null && !isValidVehiclePrice(value);
-}
-function setPrice(type: VehicleType, value: string) {
-  const existing = plan.value.vehiclePrices.find((item) => item.vehicleType === type);
-  const unitPrice = value.trim() || null;
-  if (existing) existing.unitPrice = unitPrice;
-  else plan.value.vehiclePrices.push({ vehicleType: type, unitPrice });
+const props = defineProps<{ editable: boolean }>();
+const prices = ref<WebsiteVehiclePrice[]>([]);
+const hasInvalidPrice = computed(() => prices.value.some(price => price.unitPrice !== null && !isValidVehiclePrice(price.unitPrice)));
+watch(visible, (value) => {
+  if (!value) return;
+  prices.value = VEHICLE_OPTIONS.flatMap(option => (["A", "B"] as const).map(key => {
+    const existing = plan.value.vehiclePrices.find(price => price.vehicleType === option.value && price.plan === key);
+    return existing ? { ...existing } : { vehicleType: option.value, plan: key, includesDriver: false, includesGuide: false, unitPrice: null };
+  }));
+});
+function apply() {
+  if (!props.editable || hasInvalidPrice.value) return;
+  plan.value.vehiclePrices = prices.value.map(price => ({ ...price }));
+  visible.value = false;
 }
 </script>

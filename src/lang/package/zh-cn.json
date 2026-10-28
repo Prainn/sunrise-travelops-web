@@ -1440,7 +1440,10 @@
         "destinations": "目的地",
         "internalRemark": "内部备注",
         "status": "状态",
-        "lostReason": "流失原因"
+        "lostReason": "流失原因",
+        "distanceKm": "里程（km）",
+        "durationMinutes": "预计耗时（分钟）",
+        "showInMileage": "显示在 PDF 里程表"
       }
     }
   },
@@ -1514,7 +1517,7 @@
       "create": "新增交通段",
       "edit": "编辑交通段",
       "detail": "交通段详情",
-      "help": "设置默认交通方式和费用状态，行程中可修改。",
+      "help": "维护交通方式、包车车型、里程和预计时长；计调选择后可修改。",
       "empty": "尚未维护交通段",
       "nameZh": "交通段中文名",
       "nameEn": "交通段英文名",
@@ -1870,7 +1873,7 @@
       "segment": "第 {n} 段",
       "add": "新增服务段",
       "selectGuide": "请选择导游",
-      "fillFirst": "请先补全语种与有效的起止时间",
+      "fillFirst": "请先选语种和时间",
       "startAt": "服务开始",
       "endAt": "服务结束",
       "useTeamTime": "沿用团队接送时间",
@@ -2156,5 +2159,29 @@
       "linxi": "霖熹",
       "website": "独立站"
     }
+  },
+  "websiteReport": {
+    "plan": "方案 {plan}",
+    "driver": "司机",
+    "guide": "导游",
+    "pax": "报价人数",
+    "total": "团费总额（元）",
+    "undetermined": "未确定",
+    "plansHelp": "每车型可提供 A/B 两套方案，分别勾选司机和导游。空售价不提供，0 元有效；总额按行程人数计算。",
+    "distanceKm": "里程（km）",
+    "durationMinutes": "预计耗时（分钟）",
+    "distanceInvalid": "请输入非负里程，最多10位整数及2位小数",
+    "durationInvalid": "请输入1–525600之间的整数分钟数",
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "vehicleType": "包车车型",
+    "vehicleSelectOrEnter": "请选择或输入车型",
+    "vehicleInvalid": "车型最多100个字符",
+    "vehicleOptionsInvalid": "最多100种车型，每种1–100个字符且不可重复",
+    "notSpecified": "未填写",
+    "showInMileage": "显示在 PDF 里程表",
+    "routeSearch": "搜索交通名称、城市、方式或车型",
+    "transportDetailsHelp": "选择后可修改本段车型、里程和时长；未知值可留空。",
+    "minutesValue": "{value} 分钟"
   }
 }

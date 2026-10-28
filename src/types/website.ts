@@ -31,7 +31,14 @@ export interface WebsiteAttraction extends ConfigBase {
   copyKey: string;
   recommendedMonths: number[];
 }
+export interface WebsiteRouteVehicleOption {
+  vehicleType: string;
+  durationMinutes: number | null;
+}
 export interface WebsiteRoute extends ConfigBase {
+  vehicleOptions: WebsiteRouteVehicleOption[];
+  distanceKm?: string | null;
+  durationMinutes?: number | null;
   fromCityId: string;
   toCityId: string;
   mode: TransportMode;
@@ -83,6 +90,7 @@ export interface WebsiteConfigPage {
   references: Record<string, string>;
 }
 export interface WebsiteConfigListQuery {
+  status?: ConfigStatus;
   businessUnit: WebsiteBusinessUnit;
   version?: number;
   page: number;
@@ -148,6 +156,10 @@ export interface WebsiteItem {
   feeState: FeeState;
 }
 export interface WebsiteLeg {
+  vehicleType?: string | null;
+  distanceKm?: string | null;
+  durationMinutes?: number | null;
+  showInMileage?: boolean;
   id: string;
   routeId: string | null;
   fromCityId: string;
@@ -198,6 +210,9 @@ export interface WebsiteDay {
   services: WebsiteService[];
 }
 export interface WebsiteVehiclePrice {
+  plan: "A" | "B";
+  includesDriver: boolean;
+  includesGuide: boolean;
   vehicleType: VehicleType;
   unitPrice: string | null;
 }
@@ -244,7 +259,24 @@ export interface WebsiteOutput {
   inclusions: string[];
   exclusions: string[];
   hotelOptions: Array<{ tier: "A" | "B" | "C" | "D"; city: string; hotel: string; roomType: string }>;
-  quotation: Array<{ vehicle: string; price: string }>;
+  // Schema 1 frozen outputs only contain vehicle/price; never infer missing facts.
+  quotation: Array<{
+    vehicle: string;
+    price: string;
+    vehicleType?: VehicleType;
+    plan?: "A" | "B";
+    includesDriver?: boolean;
+    includesGuide?: boolean;
+    services?: string;
+    pax?: number | null;
+    unitPrice?: string;
+    totalPrice?: string | null;
+  }>;
+  teamStandard?: Array<{
+    category: "hotel" | "meal" | "entry" | "service" | "transport";
+    included: string[];
+  }>;
+  mileage?: Array<{ route: string; distanceKm: string | null; durationMinutes: number | null; vehicleType?: string | null; transport: string }>;
   notes: string[];
 }
 export interface WebsitePreview {
@@ -252,8 +284,8 @@ export interface WebsitePreview {
   sourceVersion: number;
   inquiryVersion: number;
   configVersion: number;
-  schemaVersion: 1;
-  validationVersion: 1;
+  schemaVersion: 1 | 2 | 3;
+  validationVersion: 1 | 2 | 3;
   issues: WebsiteValidation[];
   english: WebsiteOutput;
   chinese: WebsiteOutput;
