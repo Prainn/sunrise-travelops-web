@@ -74,7 +74,7 @@
               <el-empty
                 v-if="!activeCities.length"
                 :image-size="80"
-                :description="$t('dashboard.tourMap.noTours')"
+                :description="$t(data?.totals.tours ? 'dashboard.tourMap.noDestinations' : 'dashboard.tourMap.noTours')"
               />
               <button
                 v-for="item in activeCities"
@@ -137,7 +137,7 @@
                     </span>
                   </span>
                   <span class="text-[12px] text-muted">
-                    {{ tour.guideName || $t("dashboard.tourMap.guidePending") }}
+                    {{ todayGuideText(tour.todayGuideServices) }}
                     <template v-if="panel.kind === 'pickup'"> · {{ tour.pickupAt }}</template>
                     <template v-if="panel.kind === 'drop'"> · {{ tour.dropAt }}</template>
                   </span>
@@ -189,6 +189,8 @@ import { useI18n } from "vue-i18n";
 import { dashboardService } from "@/services";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
 import type { TourMapBusinessUnit, TourMapCity, TourMapTour } from "@/types/dashboard";
+import type { TourGuideService } from "@/types/tour";
+import { guideSummaryText } from "@/utils/guide-services";
 import TourMapTourDetail from "./TourMapTourDetail.vue";
 import YunnanTourMap from "./YunnanTourMap.vue";
 import {
@@ -200,6 +202,11 @@ import {
   type YunnanDisplayPoint,
 } from "./tour-map";
 import { useTourMapData } from "./useTourMapData";
+
+/** 当日服务导游按 ID 去重；当日无服务不回退其它日期。 */
+function todayGuideText(services: TourGuideService[]) {
+  return services.length ? guideSummaryText(services) : t("dashboard.tourMap.noGuideToday");
+}
 
 type ListPanelKind = "pickup" | "drop" | "pending";
 type TourMapPanel =

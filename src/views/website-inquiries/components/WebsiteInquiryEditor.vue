@@ -102,6 +102,7 @@
       ref="formRef"
       :model="form"
       :rules="rules"
+      :validate-on-rule-change="false"
       label-width="auto"
       :disabled="saving"
     >
@@ -165,6 +166,7 @@
               v-model="form.plannedDays"
               :min="1"
               :max="365"
+              :precision="0"
               controls-position="right"
             />
           </el-form-item>
@@ -197,11 +199,12 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('websiteInquiry.pax')">
+          <el-form-item :label="$t('websiteInquiry.pax')" prop="pax">
             <el-input-number
               v-model="form.pax"
               :min="1"
               :max="10000"
+              :precision="0"
               controls-position="right"
             />
           </el-form-item>
@@ -357,10 +360,20 @@ const rules = computed<FormRules>(() => ({
   plannedDays: [
     {
       required: true,
-      type: "number",
+      type: "integer",
       min: 1,
       max: 365,
       message: t("websiteInquiry.plannedDaysRange"),
+      trigger: "change",
+    },
+  ],
+  // 人数可留空（未确认）；填写时须为 1–10000 的整数，与后端 DTO 一致。
+  pax: [
+    {
+      type: "integer",
+      min: 1,
+      max: 10000,
+      message: t("websiteInquiry.paxRange"),
       trigger: "change",
     },
   ],

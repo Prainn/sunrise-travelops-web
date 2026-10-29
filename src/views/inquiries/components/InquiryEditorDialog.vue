@@ -14,6 +14,7 @@
       :model="form"
       :disabled="creatingContact || saving"
       :rules="rules"
+      :validate-on-rule-change="false"
       label-width="auto"
     >
       <el-row :gutter="16">
@@ -165,7 +166,7 @@
       </el-button>
       <el-button
         type="primary"
-        :loading="creatingContact || saving"
+        :loading="validating || creatingContact || saving"
         :disabled="isParsingDocument || loadingOwners"
         @click="submitForm"
       >
@@ -190,6 +191,7 @@ import type { AgencyContactRecord, AgencyRecord } from "@/types/resource";
 import InquiryMessageInput from "./InquiryMessageInput.vue";
 import InquiryAgencyFields from "./InquiryAgencyFields.vue";
 import { INQUIRY_STATUS_OPTIONS } from "../options";
+import { requestErrorMessage } from "@/utils/version-conflict";
 
 const props = defineProps<{
   modelValue: boolean;
@@ -215,6 +217,7 @@ const formRef = ref<FormInstance>();
 const formSession = ref(0);
 const expandedDetails = ref<string[]>([]);
 const creatingContact = ref(false);
+const validating = ref(false);
 const isParsingDocument = ref(false);
 const form = reactive<InquiryRecord>({ ...props.record });
 const selectedAgency = computed(() =>
@@ -388,9 +391,15 @@ function createContact(name: string) {
   form.phone = "";
 }
 
+// 从校验开始即占用，连续点击不会在校验期间重复新建联系人或重复提交。
 async function submitForm() {
-  if (creatingContact.value || isParsingDocument.value || loadingOwners.value) return;
-  if (!(await formRef.value?.validate().catch(() => false)) || creatingContact.value) return;
+  if (validating.value || creatingContact.value || props.saving || isParsingDocument.value || loadingOwners.value) return;
+  validating.value = true;
+  try {
+    if (!(await formRef.value?.validate().catch(() => false))) return;
+  } finally {
+    validating.value = false;
+  }
   if (!form.contactId) {
     const agency = selectedAgency.value;
     if (!agency) return;
@@ -400,7 +409,7 @@ async function submitForm() {
       agency.contacts.push(contact);
       selectContact(contact);
     } catch (error) {
-      ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+      ElMessage.error(requestErrorMessage(error));
       return;
     } finally {
       creatingContact.value = false;

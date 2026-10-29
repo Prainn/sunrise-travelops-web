@@ -42,7 +42,7 @@
         <el-input v-model.trim="form.englishDescription" type="textarea" :rows="3" />
       </el-form-item>
       <el-form-item :label="$t('common.price')" prop="price">
-        <el-input-number
+        <StrictInputNumber
           v-model="form.price"
           :min="0"
           :precision="2"
@@ -96,6 +96,7 @@
 </template>
 
 <script setup lang="ts">
+import StrictInputNumber from "@/components/StrictInputNumber/index.vue";
 import AppDialog from "@/components/AppDialog/index.vue";
 import { computed, reactive, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";

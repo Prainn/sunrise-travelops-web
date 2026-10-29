@@ -85,6 +85,7 @@
         ref="formRef"
         :model="record"
         :rules="rules"
+        :validate-on-rule-change="false"
         :disabled="!editable || saving || isSubmitting"
         label-width="auto"
       >

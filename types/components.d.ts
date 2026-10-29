@@ -78,6 +78,7 @@ declare module 'vue' {
     ElScrollbar: typeof import('element-plus/es')['ElScrollbar']
     ElSegmented: typeof import('element-plus/es')['ElSegmented']
     ElSelect: typeof import('element-plus/es')['ElSelect']
+    ElSkeleton: typeof import('element-plus/es')['ElSkeleton']
     ElSubMenu: typeof import('element-plus/es')['ElSubMenu']
     ElSwitch: typeof import('element-plus/es')['ElSwitch']
     ElTable: typeof import('element-plus/es')['ElTable']
@@ -99,6 +100,8 @@ declare module 'vue' {
     GuideEditorDialog: typeof import('./../src/views/resources/guide/components/GuideEditorDialog.vue')['default']
     GuidePersonEditorDialog: typeof import('./../src/views/resources/guide/components/GuidePersonEditorDialog.vue')['default']
     GuidePersonTable: typeof import('./../src/views/resources/guide/components/GuidePersonTable.vue')['default']
+    GuideServiceList: typeof import('./../src/components/GuideServiceList/index.vue')['default']
+    GuideServicesEditor: typeof import('./../src/views/tours/components/GuideServicesEditor.vue')['default']
     GuideTable: typeof import('./../src/views/resources/guide/components/GuideTable.vue')['default']
     Hamburger: typeof import('./../src/components/Hamburger/index.vue')['default']
     HotelTable: typeof import('./../src/views/resources/hotel/components/HotelTable.vue')['default']
@@ -152,6 +155,7 @@ declare module 'vue' {
     RowActions: typeof import('./../src/components/RowActions/index.vue')['default']
     SectionCard: typeof import('./../src/components/SectionCard/index.vue')['default']
     ShengxuLedgerDialog: typeof import('./../src/views/ledgers/shengxu/components/ShengxuLedgerDialog.vue')['default']
+    StrictInputNumber: typeof import('./../src/components/StrictInputNumber/index.vue')['default']
     SwitchAccountDialog: typeof import('./../src/layouts/components/SwitchAccountDialog.vue')['default']
     TableToolbar: typeof import('./../src/components/TableToolbar/index.vue')['default']
     ThemeSwitch: typeof import('./../src/components/ThemeSwitch/index.vue')['default']
@@ -182,6 +186,7 @@ declare module 'vue' {
     WebsiteQuotationPreview: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteQuotationPreview.vue')['default']
     WebsiteResourceSelect: typeof import('./../src/views/website-inquiries/components/WebsiteResourceSelect.vue')['default']
     WebsiteTransportDialog: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteTransportDialog.vue')['default']
+    WebsiteTransportFields: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteTransportFields.vue')['default']
     WebsiteVehiclePrices: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteVehiclePrices.vue')['default']
   }
   export interface GlobalDirectives {

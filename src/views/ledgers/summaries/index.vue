@@ -50,18 +50,6 @@
           width="140"
           align="right"
         />
-        <el-table-column
-          v-if="isAgency"
-          prop="firstFollowUp"
-          :label="$t('ledgerSummary.firstFollowUp')"
-          width="280"
-        >
-          <template #default="{ row }">
-            <div class="whitespace-pre-wrap">
-              {{ row.firstFollowUp }}
-            </div>
-          </template>
-        </el-table-column>
       </DataTable>
       <Pagination
         v-model:page="pageNum"

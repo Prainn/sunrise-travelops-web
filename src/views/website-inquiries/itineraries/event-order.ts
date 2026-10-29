@@ -1,4 +1,4 @@
-import type { WebsiteDay } from "@/types/website";
+import type { WebsiteDay, WebsiteMeal } from "@/types/website";
 import { orderById } from "@/views/inquiries/itineraries/reorder-board";
 import { websiteGuideBoardId } from "./day-order";
 
@@ -30,4 +30,15 @@ export function insertWebsiteEvent(day: WebsiteDay, id: string, afterId: string)
   day.eventOrder = order;
   day.items = orderById(day.items, order);
   day.legs = orderById(day.legs, order);
+}
+
+/** 按原明细 ID 更新餐食，替换已确认的目标餐次并保留原卡片的交错位置。 */
+export function updateWebsiteMeal(day: WebsiteDay, meal: WebsiteMeal) {
+  const order = websiteDayEventIds(day);
+  const original = day.meals.find(item => item.id === meal.id);
+  day.meals = day.meals.filter(item => item.id === meal.id || item.slot !== meal.slot);
+  if (original) Object.assign(original, meal);
+  else day.meals.push({ ...meal });
+  day.eventOrder = order;
+  day.eventOrder = websiteDayEventIds(day);
 }

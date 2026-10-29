@@ -53,6 +53,7 @@
         v-if="canSelectBusinessUnit"
         v-model="businessUnit"
         size="small"
+        class="ops-map__unit"
         :aria-label="$t('identity.businessUnit')"
       >
         <el-radio-button :label="$t('common.all')" value="" />
@@ -295,6 +296,25 @@ function scheduleMidnight() {
   --el-segmented-item-selected-bg-color: #38d9ff;
   --el-segmented-item-selected-color: #04121f;
   --el-segmented-color: #c2d1e6;
+}
+
+/* 业务单元筛选：选中态用半透明青色底 + 青色描边，避免实心亮底配白框。 */
+.ops-map__unit {
+  --el-radio-button-checked-bg-color: rgba(56, 217, 255, 0.16);
+  --el-radio-button-checked-text-color: #7ae6ff;
+  --el-radio-button-checked-border-color: rgba(56, 217, 255, 0.6);
+
+  :deep(.el-radio-button__inner) {
+    @apply bg-[rgba(255,255,255,0.04)] text-[#c2d1e6] border-[rgba(120,180,240,0.28)] shadow-none;
+  }
+
+  :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+    @apply shadow-none;
+
+    background-color: var(--el-radio-button-checked-bg-color);
+    border-color: var(--el-radio-button-checked-border-color);
+    color: var(--el-radio-button-checked-text-color);
+  }
 }
 
 .ops-map__toolbar {

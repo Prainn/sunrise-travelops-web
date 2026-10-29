@@ -398,4 +398,34 @@ describe("request account switch gate", () => {
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(auth.clearAuth).not.toHaveBeenCalled();
   });
+
+  it("aborts a stalled request after the timeout and reports REQUEST_TIMEOUT", async () => {
+    const fetch = vi.fn(
+      (_url: string, options?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          options?.signal?.addEventListener("abort", () => reject(new DOMException("", "AbortError")));
+        }),
+    );
+    vi.stubGlobal("fetch", fetch);
+
+    await expect(request.get("/inquiries", { timeoutMs: 10 })).rejects.toMatchObject({
+      code: "REQUEST_TIMEOUT",
+    });
+  });
+
+  it("keeps caller cancellation as a network error", async () => {
+    const fetch = vi.fn(
+      (_url: string, options?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          options?.signal?.addEventListener("abort", () => reject(new DOMException("", "AbortError")));
+        }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    const controller = new AbortController();
+
+    const pending = request.get("/inquiries", { signal: controller.signal });
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    controller.abort();
+    await expect(pending).rejects.toMatchObject({ code: "NETWORK_ERROR" });
+  });
 });

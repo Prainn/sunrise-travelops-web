@@ -48,6 +48,7 @@ const props = withDefaults(defineProps<{
   businessUnit: WebsiteBusinessUnit;
   labels: Record<string, string>;
   cityId?: string;
+  status?: "enabled" | "disabled";
   excludeId?: string;
   multiple?: boolean;
   clearable?: boolean;
@@ -61,7 +62,7 @@ const emit = defineEmits<{
 const visible = ref(false);
 const cachedLabels = ref<Record<string, string>>({});
 const contextKey = computed(() => JSON.stringify([
-  props.group, props.businessUnit, props.version, props.cityId, props.excludeId,
+  props.group, props.businessUnit, props.version, props.cityId, props.excludeId, props.status,
 ]));
 let disposed = false;
 onScopeDispose(() => { disposed = true; });
@@ -71,7 +72,7 @@ const { items, loading, hasMore, search: searchOptions, loadMore, reset } = useR
     try {
       const result = await websiteService.configOptions(props.group, {
         ...query, version: props.version, businessUnit: props.businessUnit,
-        cityId: props.cityId || undefined, excludeId: props.excludeId,
+        cityId: props.cityId || undefined, excludeId: props.excludeId, status: props.status,
       });
       if (!disposed && context === contextKey.value) {
         const labels = Object.fromEntries(result.list.map((option) => [option.value, option.label]));

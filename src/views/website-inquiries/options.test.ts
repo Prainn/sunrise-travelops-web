@@ -20,6 +20,16 @@ describe("website draft cloning", () => {
     expect(copy.destinations).toEqual(["昆明", "大理"]);
   });
 
+  it("clones a plain object spread from a reactive draft with nested proxies", () => {
+    const draft = reactive({ vehicleOptions: [{ vehicleType: "5", durationMinutes: 60 }] });
+
+    const copy = cloneWebsiteDraft({ ...draft, distanceKm: "50" });
+    copy.vehicleOptions[0]!.durationMinutes = 80;
+
+    expect(isReactive(copy.vehicleOptions)).toBe(false);
+    expect(draft.vehicleOptions[0]?.durationMinutes).toBe(60);
+  });
+
   it("clones mapped inquiry input containing reactive destinations", () => {
     const draft = reactive({ ...emptyInquiry(), destinations: ["昆明"] });
 

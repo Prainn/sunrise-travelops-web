@@ -1,4 +1,9 @@
-import type { TourBusinessUnit, TourFlightSnapshot, TourSourceModule } from "./tour";
+import type {
+  TourBusinessUnit,
+  TourFlightSnapshot,
+  TourGuideService,
+  TourSourceModule,
+} from "./tour";
 
 export interface DashboardInquiryCounts {
   new: number;
@@ -82,7 +87,10 @@ export interface TourMapTour {
   adults: number;
   children: number;
   leaders: number;
-  guideName: string | null;
+  /** 全部服务段 */
+  guideServices: TourGuideService[];
+  /** 所选自然日内有服务的段；空数组表示当日未安排，不回退其它日期。 */
+  todayGuideServices: TourGuideService[];
   collectCoordinatorName: string;
   operatorName: string;
   /** YYYY-MM-DD HH:mm，北京时间墙钟 */

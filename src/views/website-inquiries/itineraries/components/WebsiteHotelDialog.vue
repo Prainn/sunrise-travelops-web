@@ -7,10 +7,18 @@
   >
     <el-form label-position="top" @submit.prevent>
       <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
-        <el-form-item :label="$t('websiteItineraryUi.hotelTier')">
+        <el-form-item
+          :label="$t('websiteItineraryUi.hotelTier')"
+          :error="tierTaken ? $t('websiteItineraryUi.hotelTierTaken') : ''"
+        >
           <el-select v-model="draft.tier" autocomplete="new-password">
-            <el-option value="A" :label="$t('websiteItineraryUi.hotelTierA')" />
-            <el-option value="B" :label="$t('websiteItineraryUi.hotelTierB')" />
+            <el-option
+              v-for="tier in HOTEL_TIERS"
+              :key="tier"
+              :value="tier"
+              :label="$t(`websiteItineraryUi.hotelTier${tier}`)"
+              :disabled="usedTiers.has(tier)"
+            />
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.overnightCity')" required>
@@ -116,6 +124,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import { HOTEL_TIERS } from "../vehicle-price";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
@@ -160,8 +169,13 @@ const configHotels = computed(() => {
 const linkedCityId = computed(
   () => props.config.cities.find((city) => city.id === draft.value.cityId)?.resourceId ?? null,
 );
+/** 同日每个档次最多一家酒店；编辑时排除自身，原档次可保存。 */
+const usedTiers = computed(() => new Set(
+  (props.day?.hotels ?? []).filter((hotel) => hotel.id !== draft.value.id).map((hotel) => hotel.tier),
+));
+const tierTaken = computed(() => usedTiers.value.has(draft.value.tier));
 const canSubmit = computed(() =>
-  Boolean(draft.value.cityId && (draft.value.nameZh.trim() || draft.value.nameEn.trim())),
+  Boolean(draft.value.cityId && (draft.value.nameZh.trim() || draft.value.nameEn.trim())) && !tierTaken.value,
 );
 
 watch(
@@ -189,7 +203,7 @@ watch(
 function emptyHotel(): WebsiteHotelStay {
   return {
     id: crypto.randomUUID(),
-    tier: "A",
+    tier: HOTEL_TIERS.find((tier) => !props.day?.hotels.some((hotel) => hotel.tier === tier)) ?? "A",
     cityId: props.day?.overnightCityId ?? props.day?.endCityId ?? "",
     configHotelId: null,
     resourceId: null,

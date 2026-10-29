@@ -22,7 +22,7 @@ export function usePageTable<T, Q extends BaseQueryParams = BaseQueryParams>(
   /**
    * 拉取当前查询参数对应的分页数据
    *
-   * 只负责请求和回填，不处理弹窗、路由或消息提示
+   * 只负责请求和回填，不处理弹窗、路由或消息提示；失败写入 error 交给表格展示，不再抛出
    */
   async function fetchData(): Promise<void> {
     const version = ++requestVersion;
@@ -40,7 +40,6 @@ export function usePageTable<T, Q extends BaseQueryParams = BaseQueryParams>(
       if (version === requestVersion) {
         error.value = cause instanceof Error ? cause.message : String(cause);
       }
-      throw cause;
     } finally {
       if (version === requestVersion) loading.value = false;
     }
@@ -49,9 +48,9 @@ export function usePageTable<T, Q extends BaseQueryParams = BaseQueryParams>(
   /**
    * 回到第一页并查询
    */
-  function handleQuery(): void {
+  function handleQuery(): Promise<void> {
     params.page = 1;
-    fetchData();
+    return fetchData();
   }
 
   /**
@@ -66,10 +65,10 @@ export function usePageTable<T, Q extends BaseQueryParams = BaseQueryParams>(
   /**
    * 恢复初始查询参数并重新查询
    */
-  function handleResetQuery(): void {
+  function handleResetQuery(): Promise<void> {
     onBeforeReset?.();
     resetParams();
-    fetchData();
+    return fetchData();
   }
 
   return {
@@ -112,17 +111,17 @@ export interface UsePageTableReturn<T, Q extends BaseQueryParams> {
   /** 当前查询参数 */
   params: Q;
   /**
-   * 拉取分页数据
+   * 拉取分页数据；失败只写入 error，不会 reject
    */
   fetchData: () => Promise<void>;
   /**
    * 回到第一页并查询
    */
-  handleQuery: () => void;
+  handleQuery: () => Promise<void>;
   /**
    * 恢复初始参数并重新查询
    */
-  handleResetQuery: () => void;
+  handleResetQuery: () => Promise<void>;
   /**
    * 恢复初始参数但不触发查询
    */

@@ -43,12 +43,6 @@
             class="w-full!"
           />
         </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.arrivalTime')">
-          <el-input v-model="form.arrivalTime" maxlength="100" />
-        </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.departureTime')">
-          <el-input v-model="form.departureTime" maxlength="100" />
-        </el-form-item>
       </div>
     </el-form>
     <template #footer>
@@ -68,7 +62,7 @@ import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { WebsiteItinerary } from "@/types/website";
 
-type Basics = Pick<WebsiteItinerary, "title" | "duration" | "startDate" | "pax" | "arrivalTime" | "departureTime">;
+type Basics = Pick<WebsiteItinerary, "title" | "duration" | "startDate" | "pax">;
 const props = defineProps<{ modelValue: boolean; plan: WebsiteItinerary }>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
@@ -84,8 +78,8 @@ const rules = computed<FormRules>(() => ({
 }));
 
 function pickBasics(): Basics {
-  const { title, duration, startDate, pax, arrivalTime, departureTime } = props.plan;
-  return { title, duration, startDate, pax, arrivalTime, departureTime };
+  const { title, duration, startDate, pax } = props.plan;
+  return { title, duration, startDate, pax };
 }
 function resetForm() {
   Object.assign(form, pickBasics());

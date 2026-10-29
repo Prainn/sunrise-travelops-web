@@ -185,7 +185,11 @@ export const userService = {
   },
 
   async updateProfile(data: UserProfileForm): Promise<void> {
-    await request.patch<void>("/auth/me/profile", data);
+    await request.patch<void>("/auth/me/profile", {
+      nickname: data.nickname?.trim(),
+      avatar: data.avatar,
+      gender: data.gender === undefined ? undefined : Number(data.gender),
+    });
   },
 
   async changePassword(data: PasswordChangeForm): Promise<void> {

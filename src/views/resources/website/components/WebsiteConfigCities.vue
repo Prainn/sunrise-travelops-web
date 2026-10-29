@@ -88,7 +88,6 @@
           <WebsiteResourceSelect
             v-model="record.resourceId"
             kind="city"
-            :selected-name="record.nameZh"
           />
         </el-form-item>
         <el-form-item :label="$t('common.status')">

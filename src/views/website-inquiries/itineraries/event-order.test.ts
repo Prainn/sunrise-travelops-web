@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { WebsiteItem, WebsiteLeg } from "@/types/website";
 import { emptyDay } from "../options";
-import { insertWebsiteEvent, websiteDayEventIds } from "./event-order";
+import { insertWebsiteEvent, updateWebsiteMeal, websiteDayEventIds } from "./event-order";
 
 function attraction(id: string): WebsiteItem {
   return { id, attractionId: null, nameZh: id, nameEn: id, descriptionZh: "", descriptionEn: "", appears: true, feeState: "UNKNOWN" };
@@ -54,5 +54,42 @@ describe("website event insertion", () => {
     const before = [...day.eventOrder];
     insertWebsiteEvent(day, before[0]!, before[0]!);
     expect(day.eventOrder).toEqual(before);
+  });
+
+  it("changes breakfast to lunch by ID and keeps its position between other cards", () => {
+    const day = emptyDay(1);
+    const breakfast = day.meals[0]!;
+    const oldLunch = day.meals[1]!;
+    day.items = [attraction("before"), attraction("after")];
+    day.eventOrder = ["before", breakfast.id, "after", oldLunch.id];
+    updateWebsiteMeal(day, { ...breakfast, slot: "lunch", resourceId: "restaurant", restaurantZh: "午餐", feeState: "INCLUDED" });
+    expect(day.meals.some(meal => meal.slot === "breakfast")).toBe(false);
+    expect(day.meals.filter(meal => meal.slot === "lunch")).toEqual([
+      expect.objectContaining({ id: breakfast.id, restaurantZh: "午餐", resourceId: "restaurant", feeState: "INCLUDED" }),
+    ]);
+    expect(day.eventOrder?.slice(0, 3)).toEqual(["before", breakfast.id, "after"]);
+    expect(day.eventOrder).not.toContain(oldLunch.id);
+    expect(JSON.parse(JSON.stringify(day)).meals).toHaveLength(2);
+  });
+
+  it("preserves implicit card order and other meals when editing without a slot change", () => {
+    const day = emptyDay(1);
+    const breakfast = day.meals[0]!;
+    const order = websiteDayEventIds(day);
+    const lunch = { ...day.meals[1]! };
+    updateWebsiteMeal(day, { ...breakfast, restaurantZh: "早餐", restaurantEn: "Breakfast" });
+    expect(day.meals).toHaveLength(3);
+    expect(day.meals[1]).toEqual(lunch);
+    expect(day.eventOrder).toEqual(order);
+  });
+
+  it("adds a previously deleted meal and supports insertion after an existing card", () => {
+    const day = emptyDay(1);
+    day.meals = day.meals.filter(meal => meal.slot !== "lunch");
+    day.items = [attraction("anchor")];
+    updateWebsiteMeal(day, { id: "new-lunch", slot: "lunch", resourceId: null, restaurantZh: "手填", restaurantEn: "Manual", feeState: "SELF_PAY" });
+    insertWebsiteEvent(day, "new-lunch", "anchor");
+    expect(day.meals.filter(meal => meal.slot === "lunch")).toHaveLength(1);
+    expect(day.eventOrder?.slice(0, 2)).toEqual(["anchor", "new-lunch"]);
   });
 });

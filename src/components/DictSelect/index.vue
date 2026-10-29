@@ -43,7 +43,9 @@
 </template>
 
 <script setup lang="ts">
+import { ElMessage } from "element-plus";
 import { useDictStore } from "@/stores/dict";
+import { requestErrorMessage } from "@/utils/version-conflict";
 
 const dictStore = useDictStore();
 
@@ -123,7 +125,11 @@ function handleChange(val: any) {
 
 // 获取字典数据
 onMounted(async () => {
-  await dictStore.loadDictItems(props.code);
-  options.value = dictStore.getDictItems(props.code);
+  try {
+    await dictStore.loadDictItems(props.code);
+    options.value = dictStore.getDictItems(props.code);
+  } catch (error) {
+    ElMessage.error(requestErrorMessage(error));
+  }
 });
 </script>

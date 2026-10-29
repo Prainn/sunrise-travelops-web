@@ -28,7 +28,8 @@
       <DataTable
         fill
         :error="error"
-        :loading="loading"
+        :loading="loading || removing"
+        :inert="deleting"
         highlight-current-row
         :data="list"
         :filtered="Boolean(params.keyword)"
@@ -296,7 +297,6 @@ async function handleEditClick(id: string): Promise<void> {
  */
 function handleSubmit(): Promise<void> {
   return submitForm(async () => {
-    loading.value = true;
     try {
       const id = formData.id;
       if (id) {
@@ -311,8 +311,6 @@ function handleSubmit(): Promise<void> {
       handleQuery();
     } catch (error) {
       ElMessage.error(error instanceof Error ? error.message : t("common.saveFailed"));
-    } finally {
-      loading.value = false;
     }
   });
 }
@@ -324,6 +322,8 @@ function handleSubmit(): Promise<void> {
  */
 // 影响检查与确认前即占用，删除结束前工具栏与行内删除都不可再次触发。
 const deleting = ref(false);
+// 仅删除请求进行中显示表格加载，确认框打开期间不遮罩。
+const removing = ref(false);
 async function handleDelete(id?: string): Promise<void> {
   if (deleting.value) return;
   deleting.value = true;
@@ -351,16 +351,17 @@ async function confirmAndDelete(id?: string): Promise<void> {
     return;
   }
 
-  loading.value = true;
+  removing.value = true;
   try {
     await dictionaryService.deleteByIds(dictIds);
     dictStore.clearDictCache();
     ElMessage.success(t("common.deleteSuccess"));
-    handleResetQuery();
+    // 保留筛选与页码；删空末页时 Pagination 会把页码夹回有效范围。
+    await fetchData();
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : t("common.deleteFailed"));
   } finally {
-    loading.value = false;
+    removing.value = false;
   }
 }
 

@@ -81,7 +81,7 @@ export const tourService = {
     });
   },
   availableGuides(params: TourGuideQuery) {
-    return request.get<TourGuideOption[]>("/tours/available-guides", { params });
+    return request.post<TourGuideOption[]>("/tours/available-guides", params);
   },
   create(body: TourCreateRequest) {
     return request.post<TourRecord>("/tours", body);
@@ -98,11 +98,16 @@ export const tourService = {
   ratings(query: PagedKeywordQuery) {
     return request.get<PageResult<TourRatingRow>>("/tours/ratings", { params: clean(query) });
   },
-  saveRating(tourId: string, version: number, patch: Partial<Record<RatingField, number | null>>) {
-    return request.put<TourRatingRow>(`/tours/ratings/${encodeURIComponent(tourId)}`, {
-      ...patch,
-      version,
-    });
+  saveRating(
+    tourId: string,
+    guideId: string,
+    version: number,
+    patch: Partial<Record<RatingField, number | null>>,
+  ) {
+    return request.put<TourRatingRow>(
+      `/tours/${encodeURIComponent(tourId)}/ratings/${encodeURIComponent(guideId)}`,
+      { ...patch, version },
+    );
   },
   leaves(query: PagedKeywordQuery) {
     return request.get<PageResult<GuideLeaveRecord>>("/resources/guide-leaves", {

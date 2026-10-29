@@ -14,7 +14,7 @@
       label-position="top"
     >
       <el-form-item :label="$t('guide.referenceDailyPrice')" prop="dailyPrice">
-        <el-input-number v-model="form.dailyPrice" :min="0" :precision="2" />
+        <StrictInputNumber v-model="form.dailyPrice" :min="0" :precision="2" />
       </el-form-item>
       <el-form-item :label="$t('planning.secondLanguage')" prop="secondLanguage">
         <el-select v-model="form.secondLanguage" autocomplete="new-password">
@@ -56,6 +56,7 @@
   </AppDialog>
 </template>
 <script setup lang="ts">
+import StrictInputNumber from "@/components/StrictInputNumber/index.vue";
 import { reactive, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";

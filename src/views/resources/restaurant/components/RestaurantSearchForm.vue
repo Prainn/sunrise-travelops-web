@@ -33,10 +33,10 @@
       </el-select>
     </el-form-item>
     <el-form-item :label="$t('resource.isStandardPrice')">
-      <el-select v-model="isStandardPrice" autocomplete="new-password" :placeholder="$t('common.all')">
-        <el-option :label="$t('common.all')" value="" />
-        <el-option :label="$t('common.yes')" :value="true" />
-        <el-option :label="$t('common.no')" :value="false" />
+      <el-select v-model="standardPriceSelection" autocomplete="new-password" :placeholder="$t('common.all')">
+        <el-option :label="$t('common.all')" value="all" />
+        <el-option :label="$t('common.yes')" value="yes" />
+        <el-option :label="$t('common.no')" value="no" />
       </el-select>
     </el-form-item>
   </FilterBar>
@@ -81,5 +81,9 @@ const priceUnit = computed({
 const isStandardPrice = computed({
   get: () => props.isStandardPrice,
   set: (value) => emit("update:isStandardPrice", value),
+});
+const standardPriceSelection = computed({
+  get: () => isStandardPrice.value === "" ? "all" : isStandardPrice.value ? "yes" : "no",
+  set: (value: string) => { isStandardPrice.value = value === "all" ? "" : value === "yes"; },
 });
 </script>

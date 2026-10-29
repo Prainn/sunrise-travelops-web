@@ -1,6 +1,7 @@
 export type InquiryStatus = "new" | "planning" | "quoted" | "lost" | "archived";
 
 export interface InquiryRecord {
+  canDelete?: boolean;
   hasActiveTour: boolean;
   businessUnit?: "shengxu" | "linxi" | "website";
   version: number;

@@ -1,5 +1,5 @@
 <template>
-  <PageShell v-loading="isLoading">
+  <PageShell>
     <InquirySearchForm
       v-model:business-unit="businessUnit"
       v-model:keywords="keywords"
@@ -10,18 +10,32 @@
       :source-options="sourceOptions"
       @reset="resetQuery"
     />
+    <el-alert
+      v-if="listError && inquiryStore.length"
+      :title="listError"
+      type="error"
+      :closable="false"
+    >
+      <el-button :loading="isLoading" @click="fetchInquiries">
+        {{ $t("common.retry") }}
+      </el-button>
+    </el-alert>
     <InquiryTable
       :rows="inquiryStore"
       :total="total"
       :page-num="pageNum"
       :page-size="pageSize"
       :is-pending="isPending"
+      :loading="isLoading"
+      :error="listError"
+      :filtered="hasActiveFilters"
       @refresh="fetchInquiries"
       @update:page-num="pageNum = $event"
       @update:page-size="changePageSize"
       @create="openCreateDialog"
       @view="openDetailDrawer"
       @edit="openEditDialog"
+      @delete="deleteInquiry"
       @archive="archiveInquiry"
       @manage-itineraries="openItineraryManagement"
       @view-logs="openInquiryLogs"
@@ -43,6 +57,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onDeactivated, onMounted, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { useDebounceFn } from "@vueuse/core";
 import PageShell from "@/components/PageShell/index.vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
@@ -67,6 +82,7 @@ const user = useUserStore();
 const inquiryStore = ref<InquiryRecord[]>([]);
 const total = ref(0);
 const isLoading = ref(false);
+const listError = ref("");
 const keywords = ref("");
 const businessUnit = ref<NonNullable<InquiryRecord["businessUnit"]> | "">("");
 const status = ref<InquiryStatus | "">("");
@@ -104,15 +120,25 @@ async function fetchInquiries() {
     if (version !== fetchVersion) return;
     inquiryStore.value = result.list;
     total.value = result.total;
+    listError.value = "";
   } catch (error) {
-    if (version === fetchVersion) showError(error);
+    // 空列表由表格展示错误；保留旧行时在表格外显示错误与重试。
+    if (version === fetchVersion)
+      listError.value = error instanceof Error ? error.message : t("request.failed");
   } finally {
     if (version === fetchVersion) isLoading.value = false;
   }
 }
+const hasActiveFilters = computed(() =>
+  Boolean(keywords.value || businessUnit.value || status.value || owner.value || sourceChannel.value),
+);
+// 缓存页面切回时同一 code 不再重复应用，保留用户之后调整的筛选和页码。
+let appliedRouteCode: string | undefined;
 function applyRouteCode() {
   if (route.name !== "InquiryList") return;
   const code = typeof route.query.code === "string" ? route.query.code : "";
+  if (code === appliedRouteCode) return;
+  appliedRouteCode = code;
   businessUnit.value = "";
   exactCode.value = code;
   keywords.value = code;
@@ -139,10 +165,12 @@ async function enterPage() {
 }
 onMounted(enterPage);
 useRefreshOnActivated(enterPage);
-watch([keywords, status, owner, sourceChannel, businessUnit], () => {
-  if (!isActive) return;
+const reloadFromFilters = useDebounceFn(() => {
   if (pageNum.value === 1) void fetchInquiries();
   else pageNum.value = 1;
+}, 300);
+watch([keywords, status, owner, sourceChannel, businessUnit], () => {
+  if (isActive) void reloadFromFilters();
 });
 watch([pageNum, pageSize], () => {
   if (isActive) void fetchInquiries();
@@ -176,13 +204,18 @@ function createEmptyInquiry(): InquiryRecord {
     createdAt: "",
   };
 }
+// 筛选变化由监听统一回到第 1 页并查询；无筛选时直接刷新，避免一次重置发出多个请求。
 function resetQuery() {
+  if (!hasActiveFilters.value) {
+    if (pageNum.value === 1) void fetchInquiries();
+    else pageNum.value = 1;
+    return;
+  }
   businessUnit.value = "";
   keywords.value = "";
   status.value = "";
   owner.value = "";
   sourceChannel.value = "";
-  pageNum.value = 1;
 }
 function changePageSize(value: number) {
   pageSize.value = value;
@@ -193,15 +226,20 @@ function openCreateDialog() {
   inquiryForm.value = createEmptyInquiry();
   isEditorVisible.value = true;
 }
+// 快速点击多行时只采用最后一次打开的记录，过期响应直接丢弃。
+let openVersion = 0;
 async function openEditDialog(record: InquiryRecord) {
   if (isInquiryReadOnly(record.status, record.hasActiveTour)) return;
+  const version = ++openVersion;
   try {
     const detail = await inquiryService.detail(record.id);
+    if (version !== openVersion) return;
     if (isInquiryReadOnly(detail.status, detail.hasActiveTour)) {
       await fetchInquiries();
       return;
     }
     const agency = await resourceService.agencyApi.getDetail(detail.agencyId);
+    if (version !== openVersion) return;
     const index = resourceService.agencies.findIndex((item) => item.id === agency.id);
     if (index >= 0) resourceService.agencies.splice(index, 1, agency);
     else resourceService.agencies.push(agency);
@@ -209,15 +247,18 @@ async function openEditDialog(record: InquiryRecord) {
     inquiryForm.value = detail;
     isEditorVisible.value = true;
   } catch (error) {
-    showError(error);
+    if (version === openVersion) showError(error);
   }
 }
 async function openDetailDrawer(record: InquiryRecord) {
+  const version = ++openVersion;
   try {
-    selectedInquiry.value = await inquiryService.detail(record.id);
+    const detail = await inquiryService.detail(record.id);
+    if (version !== openVersion) return;
+    selectedInquiry.value = detail;
     isDetailVisible.value = true;
   } catch (error) {
-    showError(error);
+    if (version === openVersion) showError(error);
   }
 }
 function openItineraryManagement(record: InquiryRecord) {
@@ -246,6 +287,28 @@ async function saveInquiry(record: InquiryRecord) {
   } finally {
     saving.value = false;
   }
+}
+function deleteInquiry(record: InquiryRecord) {
+  if (!record.canDelete) return;
+  return run(record.id, async () => {
+    try {
+      await ElMessageBox.confirm(t("inquiry.deleteConfirm", { code: record.code }), t("common.tip"), {
+        type: "warning",
+        confirmButtonText: t("common.delete"),
+        cancelButtonText: t("common.cancel"),
+      });
+    } catch {
+      return;
+    }
+    try {
+      await inquiryService.delete(record);
+      ElMessage.success(t("common.deleteSuccess"));
+      if (inquiryStore.value.length === 1 && pageNum.value > 1) pageNum.value -= 1;
+      else await fetchInquiries();
+    } catch (error) {
+      showError(error);
+    }
+  });
 }
 function archiveInquiry(record: InquiryRecord) {
   if (isInquiryReadOnly(record.status, record.hasActiveTour)) return;

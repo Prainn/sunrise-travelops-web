@@ -108,12 +108,20 @@ export function websiteItineraryInput(record: WebsiteItineraryInput): WebsiteIti
     duration: record.duration,
     startDate: record.startDate,
     pax: record.pax,
-    arrivalTime: record.arrivalTime,
-    departureTime: record.departureTime,
     configVersion: record.configVersion,
     days: record.days,
     deletedDays: record.deletedDays ?? [],
-    vehiclePrices: record.vehiclePrices,
+    // 白名单映射：不回传 plan、includesDriver/includesGuide 等只读字段。
+    vehiclePrices: record.vehiclePrices.map((price) => ({
+      vehicleType: price.vehicleType,
+      hotelTier: price.hotelTier,
+      unitPrice: price.unitPrice,
+      priceComponents: (price.priceComponents ?? []).map((component) => ({
+        category: component.category,
+        unitPrice: component.unitPrice,
+        showInPdf: component.showInPdf,
+      })),
+    })),
   };
 }
 
@@ -151,6 +159,9 @@ export const websiteService = {
       reason,
     });
   },
+  deleteInquiry(id: string, version: number) {
+    return request.delete<void>(`/website/inquiries/${encodeURIComponent(id)}`, { body: { version } });
+  },
   archive(id: string, version: number) {
     return request.post<WebsiteInquiry>(`/website/inquiries/${encodeURIComponent(id)}/archive`, {
       version,
@@ -182,7 +193,7 @@ export const websiteService = {
   createItinerary(inquiryId: string, input: WebsiteItineraryInput & { inquiryVersion: number }) {
     return request.post<WebsiteItinerary>(
       `/website/inquiries/${encodeURIComponent(inquiryId)}/itineraries`,
-      input,
+      { ...websiteItineraryInput(input), inquiryVersion: input.inquiryVersion },
     );
   },
   saveItinerary(record: WebsiteItinerary) {

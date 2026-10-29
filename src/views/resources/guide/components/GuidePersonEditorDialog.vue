@@ -28,7 +28,7 @@
         </el-select>
       </el-form-item>
       <el-form-item :label="$t('guide.age')">
-        <el-input-number
+        <StrictInputNumber
           v-model="form.age"
           :min="0"
           :precision="0"
@@ -99,6 +99,7 @@
 </template>
 
 <script setup lang="ts">
+import StrictInputNumber from "@/components/StrictInputNumber/index.vue";
 import { computed, reactive, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";

@@ -5,7 +5,13 @@
     :title="$t('itineraryWorkspace.resourceDialogTitle', { day: dayLabel, type: $t('websiteItineraryUi.transportLegs') })"
     @close="close"
   >
-    <el-form label-position="top" @submit.prevent>
+    <el-form
+      ref="formRef"
+      :model="details"
+      :rules="rules"
+      label-position="top"
+      @submit.prevent
+    >
       <el-form-item :label="$t('websiteItineraryUi.resourceSource')">
         <el-radio-group v-model="source">
           <el-radio-button value="route">
@@ -76,6 +82,13 @@
             {{ modeLabel(row.mode) }}
           </template>
         </el-table-column>
+        <el-table-column :label="$t('websiteReport.vehicleType')" min-width="110">
+          <template #default="{ row }">
+            {{ row.vehicleOptions.length ? row.vehicleOptions.map((option: WebsiteRouteVehicleOption) => `${vehicleLabel(option.vehicleType)} · ${option.durationMinutes == null ? $t('websiteReport.notSpecified') : $t('websiteReport.minutesValue', { value: option.durationMinutes })}`).join(' / ') : $t('websiteReport.notSpecified') }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="distanceKm" :label="$t('websiteReport.distanceKm')" min-width="110" />
+        <el-table-column prop="durationMinutes" :label="$t('websiteReport.durationMinutes')" min-width="130" />
         <el-table-column :label="$t('websiteItineraryUi.routeCities')" min-width="160">
           <template #default="{ row }">
             {{ cityName(row.fromCityId) }} → {{ cityName(row.toCityId) }}
@@ -101,6 +114,12 @@
           <el-input v-model="nameEn" maxlength="150" />
         </el-form-item>
       </div>
+      <p class="text-muted my-3">
+        {{ $t("websiteReport.transportDetailsHelp") }}
+      </p>
+      <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
+        <WebsiteTransportFields v-model="details" :mode="effectiveMode" :vehicle-options="vehicleOptions" />
+      </div>
     </el-form>
     <template #footer>
       <el-button @click="close">
@@ -115,11 +134,14 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import type { FormInstance } from "element-plus";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
-import type { TransportMode, WebsiteConfig, WebsiteDay, WebsiteLeg, WebsiteRoute } from "@/types/website";
-import { TRANSPORT_OPTIONS } from "../../options";
+import type { TransportMode, WebsiteConfig, WebsiteDay, WebsiteLeg, WebsiteRoute, WebsiteRouteVehicleOption } from "@/types/website";
+import WebsiteTransportFields from "./WebsiteTransportFields.vue";
+import { transportRules } from "@/views/resources/website/useWebsiteConfigRules";
+import { TRANSPORT_OPTIONS, VEHICLE_OPTIONS } from "../../options";
 
 /**
  * 独立站交通段：从当前配置的专属路线按出发/抵达城市筛选，或手填；确认后才加入当天。
@@ -129,6 +151,8 @@ const props = defineProps<{
   dayLabel: string;
   day?: WebsiteDay;
   config: WebsiteConfig;
+  /** 编辑看板交通副本；复制时仅预填交通方式，城市保持空白。 */
+  leg?: WebsiteLeg;
 }>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
@@ -142,6 +166,10 @@ const selectedId = ref("");
 const mode = ref<TransportMode>("private_vehicle");
 const nameZh = ref("");
 const nameEn = ref("");
+const formRef = ref<FormInstance>();
+const details = ref<Pick<WebsiteLeg, "vehicleType" | "distanceKm" | "durationMinutes" | "showInMileage">>({});
+const rules = computed(() => transportRules(t));
+const effectiveMode = computed(() => source.value === "route" ? selected.value?.mode ?? mode.value : mode.value);
 
 const routes = computed(() =>
   props.config.routes.filter(
@@ -151,7 +179,15 @@ const routes = computed(() =>
       (!toCityId.value || route.toCityId === toCityId.value),
   ),
 );
+const vehicleOptions = computed(() => source.value === "route"
+  ? selected.value?.vehicleOptions ?? []
+  : routes.value.filter(route => route.mode === "private_vehicle").flatMap(route => route.vehicleOptions));
 const selected = computed(() => routes.value.find((route) => route.id === selectedId.value));
+watch(selected, (route) => {
+  if (route) details.value = { vehicleType: route.vehicleOptions.length === 1 ? route.vehicleOptions[0]!.vehicleType : null, distanceKm: route.distanceKm ?? null, durationMinutes: route.mode === "private_vehicle" ? (route.vehicleOptions.length === 1 ? route.vehicleOptions[0]!.durationMinutes : null) : route.durationMinutes ?? null, showInMileage: false };
+}, { flush: "sync" });
+watch(effectiveMode, (value) => { if (value !== "private_vehicle") details.value.vehicleType = null; });
+
 const canSubmit = computed(() =>
   source.value === "route" ? Boolean(selected.value) : Boolean(fromCityId.value && toCityId.value),
 );
@@ -160,13 +196,15 @@ watch(
   () => props.modelValue,
   (visible) => {
     if (!visible) return;
-    source.value = "route";
-    fromCityId.value = props.day?.departCityId ?? "";
-    toCityId.value = props.day?.endCityId ?? "";
-    selectedId.value = "";
-    mode.value = "private_vehicle";
-    nameZh.value = "";
-    nameEn.value = "";
+    source.value = props.leg ? (props.leg.routeId ? "route" : "manual") : "route";
+    fromCityId.value = props.leg?.fromCityId ?? props.day?.departCityId ?? "";
+    toCityId.value = props.leg?.toCityId ?? props.day?.endCityId ?? "";
+    selectedId.value = props.leg?.routeId ?? "";
+    mode.value = props.leg?.mode ?? "private_vehicle";
+    nameZh.value = props.leg?.nameZh ?? "";
+    nameEn.value = props.leg?.nameEn ?? "";
+    details.value = { vehicleType: props.leg?.vehicleType ?? null, distanceKm: props.leg?.distanceKm ?? null, durationMinutes: props.leg?.durationMinutes ?? null, showInMileage: props.leg?.showInMileage ?? false };
+    formRef.value?.clearValidate();
   },
   { immediate: true },
 );
@@ -186,34 +224,42 @@ function modeLabel(value: TransportMode) {
   const option = TRANSPORT_OPTIONS.find((item) => item.value === value);
   return option ? t(option.labelKey) : value;
 }
+function vehicleLabel(value: WebsiteLeg["vehicleType"]) {
+  const option = VEHICLE_OPTIONS.find(item => item.value === value);
+  return option ? t(option.labelKey) : value || t("websiteReport.notSpecified");
+}
 function close() {
   emit("update:modelValue", false);
 }
-function submit() {
-  if (!canSubmit.value) return;
+async function submit() {
+  if (!canSubmit.value || !(await formRef.value?.validate().catch(() => false))) return;
   const route = selected.value;
   emit(
     "submit",
     source.value === "route" && route
       ? {
-        id: crypto.randomUUID(),
+        id: props.leg?.id ?? crypto.randomUUID(),
         routeId: route.id,
         fromCityId: route.fromCityId,
         toCityId: route.toCityId,
         mode: route.mode,
         nameZh: route.nameZh,
         nameEn: route.nameEn,
-        feeState: route.feeState,
+        feeState: props.leg?.routeId === route.id ? props.leg.feeState : route.feeState,
+        ...details.value,
+        vehicleType: effectiveMode.value === "private_vehicle" ? details.value.vehicleType ?? null : null,
       }
       : {
-        id: crypto.randomUUID(),
+        id: props.leg?.id ?? crypto.randomUUID(),
         routeId: null,
         fromCityId: fromCityId.value,
         toCityId: toCityId.value,
         mode: mode.value,
         nameZh: nameZh.value.trim(),
         nameEn: nameEn.value.trim(),
-        feeState: "INCLUDED",
+        feeState: props.leg?.feeState ?? "INCLUDED",
+        ...details.value,
+        vehicleType: effectiveMode.value === "private_vehicle" ? details.value.vehicleType ?? null : null,
       },
   );
   close();

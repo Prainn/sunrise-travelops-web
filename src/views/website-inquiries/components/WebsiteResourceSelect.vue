@@ -64,13 +64,24 @@ const visible = ref(false);
 const failed = ref(false);
 let requested = false;
 let generation = 0;
+const selected = ref<WebsiteResourceOption>();
+watch(() => [props.kind, props.modelValue] as const, async ([kind, id], _, onCleanup) => {
+  let cancelled = false;
+  onCleanup(() => { cancelled = true; });
+  selected.value = undefined;
+  if (!id) return;
+  try {
+    const result = await websiteService.resource(kind, id);
+    if (!cancelled) selected.value = { id: result.id, name: result.name, city: result.city ?? undefined };
+  } catch (cause) { if (!cancelled) ElMessage.error(websiteErrorMessage(cause)); }
+}, { immediate: true });
 const displayedOptions = computed(() => {
   if (
     props.modelValue &&
-    props.selectedName &&
+    (selected.value?.name || props.selectedName) &&
     !options.value.some((option) => option.id === props.modelValue)
   )
-    return [{ id: props.modelValue, name: props.selectedName }, ...options.value];
+    return [{ id: props.modelValue, name: selected.value?.name || props.selectedName || props.modelValue }, ...options.value];
   return options.value;
 });
 

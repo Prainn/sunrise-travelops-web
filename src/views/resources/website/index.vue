@@ -12,6 +12,21 @@
         </el-select>
       </el-form-item>
     </FilterBar>
+    <FilterBar v-if="activeTab === 'routes'" @reset="resetRouteSearch">
+      <el-form-item class="filter-bar__wide" :label="$t('common.keywords')">
+        <el-input
+          v-model="routeKeyword"
+          clearable
+          :placeholder="$t('websiteReport.routeSearch')"
+          @keyup.enter="searchRoutes"
+        />
+      </el-form-item>
+      <template #actions>
+        <el-button type="primary" @click="searchRoutes">
+          {{ $t('common.search') }}
+        </el-button>
+      </template>
+    </FilterBar>
     <SectionCard fill>
       <TableToolbar :refreshing="loading" @refresh="refreshPage">
         <el-tabs v-model="activeTab" class="website-config-tabs flex-1 min-w-0">
@@ -112,6 +127,10 @@ const businessUnit = ref<WebsiteBusinessUnit>(user.userInfo.scope === "linxi" ? 
 const activeTab = ref<WebsiteConfigGroup>("cities");
 const result = ref<WebsiteConfigPage>();
 const page = ref(1);
+const routeKeyword = ref("");
+const appliedRouteKeyword = ref("");
+function searchRoutes() { appliedRouteKeyword.value = routeKeyword.value.trim(); page.value = 1; void refreshPage(); }
+function resetRouteSearch() { routeKeyword.value = ""; searchRoutes(); }
 const pageSize = ref(20);
 const loading = ref(false);
 const saving = ref(false);
@@ -130,6 +149,7 @@ async function loadPage() {
   try {
     const data = await websiteService.configRecords(activeTab.value, {
       businessUnit: businessUnit.value, page: page.value, pageSize: pageSize.value,
+      ...(activeTab.value === "routes" ? { keyword: appliedRouteKeyword.value } : {}),
     });
     if (current !== requestId) return;
     const lastPage = Math.max(1, Math.ceil(data.total / pageSize.value));
