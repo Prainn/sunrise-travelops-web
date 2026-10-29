@@ -32,6 +32,9 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh"): 
     rows.push(quote);
     quoteGroups.set(quote.vehicle, rows);
   }
+  const componentLabels = en
+    ? { hotel: "Hotel", guide: "Guide", vehicle: "Vehicle", attraction: "Attractions", meal: "Meals" }
+    : { hotel: "酒店", guide: "导游", vehicle: "用车", attraction: "景点", meal: "餐食" };
   const quotes = [...quoteGroups].map(([vehicle, rows]) => {
     const plans = [...rows].sort((a, b) => (a.plan ?? "").localeCompare(b.plan ?? ""));
     // Historical schema 1 contains no structured plan, guest count or total.
@@ -39,7 +42,7 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh"): 
     return `<table class="quotation"><colgroup><col style="width:13%">${plans.map(() => "<col>").join("")}</colgroup>
       <thead><tr><th>${escapeHtml(vehicle)}</th>${plans.map(plan => `<th class="plan">${escapeHtml(`${plan.plan}: ${plan.services}`)}</th>`).join("")}</tr></thead>
       <tbody><tr><th>${en ? "Quotation" : "报价人数"}</th>${plans.map(plan => `<td class="pax">${plan.pax == null ? (en ? "To be confirmed" : "未确定") : `${plan.pax} ${en ? "pax" : "人"}`}</td>`).join("")}</tr>
-      <tr><th>${en ? "Tour fare / person" : "人均团费"}</th>${plans.map(plan => `<td>${escapeHtml(plan.price)}</td>`).join("")}</tr>
+      <tr><th>${en ? "Tour fare / person" : "人均团费"}</th>${plans.map(plan => `<td>${escapeHtml(plan.price)}${(plan.priceComponents ?? []).map(component => `<p>${escapeHtml(componentLabels[component.category])}: RMB ${escapeHtml(component.unitPrice)} ${en ? "/ person" : "／人"}</p>`).join("")}</td>`).join("")}</tr>
       <tr><th>${en ? "Total tour fare" : "团费总额"}</th>${plans.map(plan => `<td>${plan.totalPrice == null ? (en ? "To be confirmed" : "未确定") : `RMB ${escapeHtml(plan.totalPrice)}`}</td>`).join("")}</tr></tbody></table>`;
   }).join("");
   const notes = `<table class="notes"><tbody><tr><th class="label">${en ? "NOTES" : "说明"}</th><td>${output.notes.map((note, index) => `<p>${index + 1}. ${escapeHtml(note)}</p>`).join("")}</td></tr></tbody></table>`;

@@ -16,3 +16,17 @@ describe("vehicle quote amounts", () => {
     expect(vehiclePriceTotal("1", null)).toBeNull();
   });
 });
+
+it("sums per-person components including hidden items without rounding drift", async () => {
+  const { componentUnitPrice, PRICE_CATEGORIES } = await import("./vehicle-price");
+  const amounts = ["2000", "1000", "3000", "2000", "2000"];
+  const rows = PRICE_CATEGORIES.map((category, i) => ({ category, unitPrice: amounts[i]!, showInPdf: i === 0 }));
+  expect(componentUnitPrice(rows)).toBe("10000.00");
+  rows.forEach(row => row.unitPrice = "0");
+  expect(componentUnitPrice(rows)).toBe("0.00");
+  rows[0]!.unitPrice = "0.10";
+  rows[1]!.unitPrice = "0.20";
+  expect(componentUnitPrice(rows)).toBe("0.30");
+  rows[0]!.unitPrice = "9999999999.99";
+  expect(componentUnitPrice(rows)).toBeNull();
+});

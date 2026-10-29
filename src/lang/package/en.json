@@ -624,7 +624,9 @@
     "noMatch": "No records match these filters",
     "filters": "Filters",
     "versionConflict": "This record was updated by someone else. Refresh and try again.",
-    "updatedAt": "Updated At"
+    "updatedAt": "Updated At",
+    "prevStep": "Back",
+    "nextStep": "Next"
   },
   "login": {
     "auto": "System",
@@ -1641,7 +1643,18 @@
     "transportNameZh": "Chinese transport leg description",
     "transportNameEn": "English transport leg description",
     "finalPrice": "Final price / person (CNY)",
-    "pricePlaceholder": "Leave blank if not offered",
+    "pricePlaceholder": "Blank = excluded",
+    "priceCategories": {
+      "hotel": "Hotel",
+      "guide": "Guide",
+      "vehicle": "Vehicle",
+      "attraction": "Attractions",
+      "meal": "Meals"
+    },
+    "componentTotal": "Total (RMB / person)",
+    "componentTotalInvalid": "Enter valid amounts. The per-person total cannot exceed RMB 9999999999.99.",
+    "quotationVehicles": "Vehicles to quote",
+    "quotationVehiclesHint": "Preselected from private transport legs. Adjust as needed; deselecting and confirming clears that vehicle’s quotes.",
     "capacityHint": "Suggested passengers: comfort {comfortable} / economy {economy} / extra luggage {luggage}",
     "finalPriceHint": "Enter a price per person for at least one option before confirming. Leave other options blank if not offered.",
     "title": "Itinerary title",
@@ -1711,7 +1724,23 @@
     "packagePriceDescription": "Enter the final full-trip price per person for each vehicle type, not just vehicle costs. Inclusions follow itinerary fee settings.",
     "vehiclePlanTitle": "Trip with {vehicle}",
     "pricePerPerson": "Price per person",
-    "pricePerPersonUnit": "CNY / person"
+    "pricePerPersonUnit": "CNY / person",
+    "priceItemUnit": "Item (CNY / person)",
+    "noQuotationVehicle": "Select vehicles to quote",
+    "sharedPriceUnified": "Saved prices differed between vehicles or plans and have been aligned (non-vehicle prices follow the first quoted vehicle; vehicle prices follow plan A). Review before confirming.",
+    "addPlanB": "+ Add plan B",
+    "removePlanB": "Remove plan B",
+    "priceSteps": {
+      "shared": "Non-vehicle prices",
+      "vehicle": "Vehicle prices",
+      "pdf": "PDF items",
+      "summary": "Review"
+    },
+    "sharedPricesHint": "Enter per-person hotel, guide, attraction and meal prices per plan; they apply to all quoted vehicles. Blank items are excluded; zero is valid.",
+    "pdfItemsHint": "Checked items are listed with per-person amounts in the customer PDF; unchecked items still count toward the total.",
+    "notEntered": "Not entered",
+    "pdfShownItems": "Listed in PDF",
+    "pdfTotalOnly": "Per-person total only"
   },
   "websiteWorkspace": {
     "businessLabel": "Website",
@@ -2167,7 +2196,6 @@
     "pax": "Guests",
     "total": "Total tour fare (CNY)",
     "undetermined": "Not set",
-    "plansHelp": "Each vehicle offers plans A/B with separate driver and guide selections. Blank prices omit a plan; zero is valid. Totals use itinerary guest count.",
     "distanceKm": "Distance (km)",
     "durationMinutes": "Estimated time (minutes)",
     "distanceInvalid": "Enter a non-negative distance with up to 10 integer digits and 2 decimals",

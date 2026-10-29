@@ -26,3 +26,19 @@ describe("frozen report rendering", () => {
     expect(html).not.toContain("Private driver");
   });
 });
+
+it("renders only the frozen customer breakdown in both languages", () => {
+  const output: WebsiteOutput = { ...empty, quotation: [{ vehicle: "7 seats", plan: "A", services: "Driver", price: "RMB 10000.00 PP", pax: 2, totalPrice: "20000.00", priceComponents: [{ category: "hotel", unitPrice: "2000.00" }, { category: "attraction", unitPrice: "2000.00" }] }] };
+  const zh = websitePrintHtml(output, "zh");
+  const en = websitePrintHtml(output, "en");
+  expect(zh).toContain("酒店: RMB 2000.00 ／人");
+  expect(zh).toContain("景点: RMB 2000.00 ／人");
+  expect(en).toContain("Hotel: RMB 2000.00 / person");
+  expect(en).toContain("Attractions: RMB 2000.00 / person");
+  for (const html of [zh, en]) {
+    expect(html).toContain("RMB 10000.00 PP");
+    expect(html).toContain("RMB 20000.00");
+    expect(html).not.toContain("Meals:");
+    expect(html).not.toContain("导游:");
+  }
+});

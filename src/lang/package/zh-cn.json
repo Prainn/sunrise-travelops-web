@@ -624,7 +624,9 @@
     "noMatch": "无匹配记录",
     "filters": "筛选",
     "versionConflict": "记录已被他人更新，请刷新后重试",
-    "updatedAt": "更新时间"
+    "updatedAt": "更新时间",
+    "prevStep": "上一步",
+    "nextStep": "下一步"
   },
   "login": {
     "auto": "跟随系统",
@@ -1641,7 +1643,18 @@
     "transportNameZh": "交通段中文说明",
     "transportNameEn": "交通段英文说明",
     "finalPrice": "最终人均售价（元）",
-    "pricePlaceholder": "不提供的方案留空",
+    "pricePlaceholder": "留空不计",
+    "priceCategories": {
+      "hotel": "酒店",
+      "guide": "导游",
+      "vehicle": "用车",
+      "attraction": "景点",
+      "meal": "餐食"
+    },
+    "componentTotal": "人均总价（元／人）",
+    "componentTotalInvalid": "请填写有效分项金额，人均合计不能超过 9999999999.99 元。",
+    "quotationVehicles": "报价车型",
+    "quotationVehiclesHint": "默认按行程包车交通段的车型勾选，可增减；取消勾选并确定后，将清空该车型报价。",
     "capacityHint": "建议人数：舒适 {comfortable}／经济 {economy}／行李多 {luggage}",
     "finalPriceHint": "确认报价前，至少填写一个方案的每人售价；不提供的方案留空。",
     "title": "行程标题",
@@ -1711,7 +1724,23 @@
     "packagePriceDescription": "按车型填写整程每人最终售价，并非单独用车费；包含项以行程费用设置为准。",
     "vehiclePlanTitle": "{vehicle} 行程方案",
     "pricePerPerson": "每人售价",
-    "pricePerPersonUnit": "元 / 人"
+    "pricePerPersonUnit": "元 / 人",
+    "priceItemUnit": "分项（元／人）",
+    "noQuotationVehicle": "请先勾选要报价的车型",
+    "sharedPriceUnified": "已保存的报价在各车型或方案间不一致，已按统一口径对齐（非车型价格取第一个已报价车型，用车价取方案 A）；请核对后确定。",
+    "addPlanB": "+ 添加方案 B",
+    "removePlanB": "移除方案 B",
+    "priceSteps": {
+      "shared": "非车型价格",
+      "vehicle": "车型价格",
+      "pdf": "PDF 显示项",
+      "summary": "报价确认"
+    },
+    "sharedPricesHint": "按方案填写酒店、导游、景点、餐食的人均价，适用于所有报价车型；留空不计入，0 元有效。",
+    "pdfItemsHint": "勾选的分项会在客户 PDF 中单独列出人均金额；未勾选的仍计入人均总价。",
+    "notEntered": "未填写",
+    "pdfShownItems": "PDF 单独列出",
+    "pdfTotalOnly": "仅显示人均总价"
   },
   "websiteWorkspace": {
     "businessLabel": "独立站",
@@ -2167,7 +2196,6 @@
     "pax": "报价人数",
     "total": "团费总额（元）",
     "undetermined": "未确定",
-    "plansHelp": "每车型可提供 A/B 两套方案，分别勾选司机和导游。空售价不提供，0 元有效；总额按行程人数计算。",
     "distanceKm": "里程（km）",
     "durationMinutes": "预计耗时（分钟）",
     "distanceInvalid": "请输入非负里程，最多10位整数及2位小数",
