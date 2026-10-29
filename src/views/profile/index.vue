@@ -204,7 +204,11 @@
           />
         </el-form-item>
         <el-form-item :label="$t('common.gender')">
-          <DictSelect v-model="userProfileForm.gender" code="gender" />
+          <el-select v-model="userProfileForm.gender" autocomplete="new-password">
+            <el-option :value="0" :label="$t('common.notSet')" />
+            <el-option :value="1" :label="$t('user.male')" />
+            <el-option :value="2" :label="$t('user.female')" />
+          </el-select>
         </el-form-item>
       </el-form>
 

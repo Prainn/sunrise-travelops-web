@@ -251,8 +251,6 @@ export interface WebsiteItineraryInput {
   duration: number;
   startDate: string | null;
   pax: number | null;
-  arrivalTime: string;
-  departureTime: string;
   configVersion: number;
   days: WebsiteDay[];
   deletedDays?: { day: WebsiteDay; originalDate: string | null }[];

@@ -28,7 +28,7 @@
           :model-value="String(form[field.prop] ?? '')"
           @update:model-value="form[field.prop] = $event"
         />
-        <el-input-number
+        <StrictInputNumber
           v-else-if="field.type === 'number'"
           :model-value="form[field.prop] == null ? null : Number(form[field.prop])"
           :min="field.min ?? 0"
@@ -88,6 +88,7 @@
 </template>
 
 <script setup lang="ts">
+import StrictInputNumber from "@/components/StrictInputNumber/index.vue";
 import AppDialog from "@/components/AppDialog/index.vue";
 import CitySelect from "@/components/CitySelect.vue";
 import { computed, reactive, watch } from "vue";

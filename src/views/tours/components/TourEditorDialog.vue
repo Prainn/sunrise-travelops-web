@@ -178,7 +178,7 @@
           </el-col>
           <el-col :xs="24" :sm="12">
             <el-form-item :label="$t('tour.days')" prop="days">
-              <el-input-number
+              <StrictInputNumber
                 v-model="form.days"
                 :min="1"
                 :max="365"
@@ -232,7 +232,7 @@
       <el-row :gutter="12">
         <el-col :xs="24" :sm="8">
           <el-form-item :label="$t('tour.adults')" prop="adults">
-            <el-input-number
+            <StrictInputNumber
               v-model="form.adults"
               :min="0"
               :max="10000"
@@ -245,7 +245,7 @@
         </el-col>
         <el-col :xs="24" :sm="8">
           <el-form-item :label="$t('tour.children')" prop="children">
-            <el-input-number
+            <StrictInputNumber
               v-model="form.children"
               :min="0"
               :max="10000"
@@ -258,7 +258,7 @@
         </el-col>
         <el-col :xs="24" :sm="8">
           <el-form-item :label="$t('tour.leaders')" prop="leaders">
-            <el-input-number
+            <StrictInputNumber
               v-model="form.leaders"
               :min="0"
               :max="10000"
@@ -394,6 +394,7 @@
 </template>
 
 <script setup lang="ts">
+import StrictInputNumber from "@/components/StrictInputNumber/index.vue";
 import { computed, nextTick, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";

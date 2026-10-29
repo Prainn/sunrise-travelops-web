@@ -74,7 +74,7 @@
               <el-empty
                 v-if="!activeCities.length"
                 :image-size="80"
-                :description="$t('dashboard.tourMap.noTours')"
+                :description="$t(data?.totals.tours ? 'dashboard.tourMap.noDestinations' : 'dashboard.tourMap.noTours')"
               />
               <button
                 v-for="item in activeCities"

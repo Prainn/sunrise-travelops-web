@@ -30,6 +30,7 @@ export interface ReorderBoardGroup {
 }
 
 export interface ReorderBoardDay {
+  noOvernight?: boolean;
   id: string;
   title: string;
   groups: ReorderBoardGroup[];

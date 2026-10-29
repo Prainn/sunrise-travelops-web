@@ -547,7 +547,7 @@ async function transferItem(dayId: string, group: ReorderBoardGroup, index?: num
   const before = board.value;
   const hotelCityId = boardItem(source.itemId)?.hotelCityId;
   const noStayId = `${dayId}-no-stay`;
-  const requiresStay = hotelCityId && Object.values(board.value.placements[dayId] ?? {}).some(ids => ids.includes(noStayId));
+  const requiresStay = hotelCityId && (allDays.value.some(day => day.id === dayId && day.noOvernight) && !overnight.value[dayId] || Object.values(board.value.placements[dayId] ?? {}).some(ids => ids.includes(noStayId)));
   if (requiresStay) {
     try {
       await ElMessageBox.confirm(t("itineraryWorkspace.arrangeOvernight"), t("common.confirm"), {

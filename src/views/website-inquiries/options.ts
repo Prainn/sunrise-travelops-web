@@ -89,8 +89,6 @@ export function emptyItinerary(
     duration: inquiry.plannedDays,
     startDate: inquiry.startDate,
     pax: inquiry.pax,
-    arrivalTime: "",
-    departureTime: "",
     configVersion,
     days: [],
     // 报价组合由当前日程的车型×酒店档次派生，新行程不预置价格行。

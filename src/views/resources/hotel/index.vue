@@ -94,13 +94,13 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('hotel.individualPrice')" prop="individualPrice">
-          <el-input-number v-model="hotelForm.individualPrice" :min="0" :precision="2" />
+          <StrictInputNumber v-model="hotelForm.individualPrice" :min="0" :precision="2" />
         </el-form-item>
         <el-form-item :label="$t('hotel.groupPrice')">
-          <el-input-number v-model="hotelForm.groupPrice" :min="0" :precision="2" />
+          <StrictInputNumber v-model="hotelForm.groupPrice" :min="0" :precision="2" />
         </el-form-item>
         <el-form-item :label="$t('hotel.minimumGroupSize')">
-          <el-input-number v-model="hotelForm.minimumGroupSize" :min="1" :precision="0" />
+          <StrictInputNumber v-model="hotelForm.minimumGroupSize" :min="1" :precision="0" />
         </el-form-item>
         <el-form-item :label="$t('resource.starRating')">
           <el-radio-group v-model="hotelForm.rating">
@@ -143,6 +143,7 @@
 </template>
 
 <script setup lang="ts">
+import StrictInputNumber from "@/components/StrictInputNumber/index.vue";
 import { useResourcePagination } from "../useResourcePagination";
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";

@@ -166,7 +166,7 @@
               </el-form-item>
               <el-form-item :label="$t('websiteReport.durationMinutes')">
                 <div class="flex w-full min-w-0 items-center gap-[8px]">
-                  <el-input-number
+                  <StrictInputNumber
                     v-model="option.durationMinutes"
                     class="!w-full min-w-0"
                     :min="1"
@@ -232,6 +232,7 @@
 </template>
 
 <script setup lang="ts">
+import StrictInputNumber from "@/components/StrictInputNumber/index.vue";
 import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
 import RowActions from "@/components/RowActions/index.vue";

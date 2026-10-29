@@ -43,7 +43,7 @@
           align="center"
         >
           <template #default="{ row }">
-            <el-input-number
+            <StrictInputNumber
               v-if="isActive(row as TourRatingRow, field)"
               v-model="draft"
               :min="0"
@@ -120,6 +120,7 @@
 </template>
 
 <script setup lang="ts">
+import StrictInputNumber from "@/components/StrictInputNumber/index.vue";
 import { onMounted, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage } from "element-plus";
@@ -139,6 +140,7 @@ import { useResourcePagination } from "@/views/resources/useResourcePagination";
 
 defineOptions({ name: "GuideRatings" });
 
+const { t } = useI18n();
 const keyword = ref("");
 const loading = ref(false);
 const loadError = ref("");
@@ -196,6 +198,10 @@ async function commit(row: TourRatingRow) {
   if (!current || current.key !== ratingKey(row) || savingKey.value) return;
   if ((draft.value ?? null) === row[current.field]) {
     active.value = null;
+    return;
+  }
+  if (draft.value != null && (!Number.isFinite(draft.value) || draft.value < 0 || draft.value > 100 || Math.abs(draft.value * 100 - Math.round(draft.value * 100)) > 1e-6)) {
+    ElMessage.error(t("common.invalidNumber", { min: 0, max: 100, precision: 2 }));
     return;
   }
   savingKey.value = ratingKey(row);

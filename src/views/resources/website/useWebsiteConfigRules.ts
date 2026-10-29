@@ -147,6 +147,8 @@ export function useWebsiteTemplateRules(record: Ref<WebsiteTemplate | undefined>
             return callback(new Error(t("websiteConfig.validation.templateVariable", { code, variable })));
           }
         }
+        const tokens = (text: string) => [...new Set([...text.matchAll(/\{([^{}]+)\}/g)].map(match => match[1]))].sort().join(",");
+        if (record.value && tokens(record.value.zh) !== tokens(record.value.en)) return callback(new Error(t("websiteConfig.validation.templateVariablesMatch")));
         callback();
       },
       trigger: "blur",

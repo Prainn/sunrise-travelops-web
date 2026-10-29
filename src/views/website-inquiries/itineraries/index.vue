@@ -484,6 +484,7 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
     id: day.id,
     title: dayRoute(day) || t("itineraryWorkspace.notArranged"),
     dayNumber: day.dayNumber,
+    noOvernight: day.overnightCityId === null,
     date: plan.value?.deletedDays?.find((entry) => entry.day.id === day.id)?.originalDate ?? null,
     groups: [
       {
@@ -691,8 +692,6 @@ async function applyReorder(change: DayOrderChange) {
   plan.value.deletedDays = result.deletedDays;
   plan.value.duration = result.days.length;
   reorderIssues.value = result.issues;
-  ElMessage.success(t("itineraryWorkspace.orderApplied"));
-  // 应用调整后同步保存草稿，避免刷新丢失排序
   await save();
 }
 </script>

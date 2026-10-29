@@ -28,7 +28,7 @@ export function useItineraryQuote(
       transportFees: [],
       options: input.quote.options.map((option) => ({
         ...option,
-        paxPrices: option.paxPrices.map((price) => ({ ...price, adultUnitPrice: null })),
+        paxPrices: option.paxPrices.map((price) => ({ ...price })),
       })),
       mealOtherReason: "",
       attractionOtherReason: "",

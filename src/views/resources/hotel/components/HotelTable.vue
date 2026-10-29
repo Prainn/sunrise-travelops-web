@@ -104,7 +104,7 @@
               :disabled="isPending?.(scope.row.id)"
               @click="emit('toggle-status', scope.row as HotelRecord)"
             >
-              {{ $t(scope.row.status === "enabled" ? "common.disabled" : "common.enabled") }}
+              {{ $t(scope.row.status === "enabled" ? "common.disable" : "common.enable") }}
             </el-button>
             <el-button
               v-has-perm="RESOURCE_PERMISSIONS.hotel.delete"

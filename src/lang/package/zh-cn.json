@@ -626,7 +626,10 @@
     "versionConflict": "记录已被他人更新，请刷新后重试",
     "updatedAt": "更新时间",
     "prevStep": "上一步",
-    "nextStep": "下一步"
+    "nextStep": "下一步",
+    "disable": "禁用",
+    "enable": "启用",
+    "invalidNumber": "请输入范围 {min} 至 {max} 内、最多 {precision} 位小数的数字"
   },
   "login": {
     "auto": "跟随系统",
@@ -797,7 +800,8 @@
       "baseMapSource": "底图来源：云南省地图院编制，云南省自然资源厅监制（审图号：云S(2026)49号）",
       "coordinateSource": "城市坐标参考：",
       "noGuideToday": "当日未安排导游",
-      "allGuideServices": "全部服务段（{n}）"
+      "allGuideServices": "全部服务段（{n}）",
+      "noDestinations": "暂无可展示的目的地，请查看待定位团队"
     },
     "opsMap": {
       "previousDay": "前一天",
@@ -1473,7 +1477,8 @@
       "skeletonDays": "城市骨架须有 1–365 天",
       "patternCity": "单日行程模板须属于当天城市",
       "templateCodeDuplicate": "标准文案编码不可重复",
-      "templateVariable": "文案 {code} 不支持变量：{variable}"
+      "templateVariable": "文案 {code} 不支持变量：{variable}",
+      "templateVariablesMatch": "中英文文案必须使用相同变量"
     },
     "tabs": {
       "cities": "城市",
@@ -1743,7 +1748,8 @@
     "noAccommodation": "不住宿",
     "noPrivateVehicle": "无专车",
     "hotelTierTaken": "当天已有该档次酒店，每个档次每天最多一家。",
-    "hotelTiersFull": "当天四个酒店档次均已安排，如需更换请编辑或移除现有酒店。"
+    "hotelTiersFull": "当天四个酒店档次均已安排，如需更换请编辑或移除现有酒店。",
+    "orderSaved": "已应用并保存行程"
   },
   "websiteWorkspace": {
     "businessLabel": "独立站",
@@ -2104,7 +2110,8 @@
     "eventOrder": "当天行程顺序",
     "arrangeOvernight": "当天未安排住宿，是否安排住宿？",
     "applyDespiteWarnings": "确认并应用调整",
-    "serverIssue": "{code}{day}{message}"
+    "serverIssue": "{code}{day}{message}",
+    "dayCount": "行程天数"
   },
   "businessGroup": {
     "label": "业务组",

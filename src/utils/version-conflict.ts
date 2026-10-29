@@ -8,5 +8,6 @@ import { translate } from "@/lang/utils";
 export function requestErrorMessage(error: unknown): string {
   if (error instanceof ApiError && error.code === "CONFLICT" && error.details?.currentVersion !== undefined)
     return translate("common.versionConflict");
+  if (error instanceof ApiError && error.code === "CONFLICT" && error.serverMessage) return error.serverMessage;
   return error instanceof Error ? error.message : translate("request.failed");
 }

@@ -626,7 +626,10 @@
     "versionConflict": "This record was updated by someone else. Refresh and try again.",
     "updatedAt": "Updated At",
     "prevStep": "Back",
-    "nextStep": "Next"
+    "nextStep": "Next",
+    "disable": "Disable",
+    "enable": "Enable",
+    "invalidNumber": "Enter a number from {min} to {max}, with up to {precision} decimal places."
   },
   "login": {
     "auto": "System",
@@ -797,7 +800,8 @@
       "baseMapSource": "Base map: compiled by Yunnan Provincial Institute of Cartography, supervised by the Department of Natural Resources of Yunnan Province (Map Review No. 云S(2026)49号)",
       "coordinateSource": "City coordinate references:",
       "noGuideToday": "No guide scheduled today",
-      "allGuideServices": "All segments ({n})"
+      "allGuideServices": "All segments ({n})",
+      "noDestinations": "No destinations to display. Check unlocated tours."
     },
     "opsMap": {
       "previousDay": "Previous day",
@@ -1473,7 +1477,8 @@
       "skeletonDays": "Add 1–365 days to the city skeleton",
       "patternCity": "Day pattern must match the day's city",
       "templateCodeDuplicate": "Standard copy codes must be unique",
-      "templateVariable": "Copy {code} does not support variable {variable}"
+      "templateVariable": "Copy {code} does not support variable {variable}",
+      "templateVariablesMatch": "Use the same variables in Chinese and English."
     },
     "tabs": {
       "cities": "Cities",
@@ -1743,7 +1748,8 @@
     "noAccommodation": "No accommodation",
     "noPrivateVehicle": "No private vehicle",
     "hotelTierTaken": "This day already has a hotel in this tier. One hotel per tier per day.",
-    "hotelTiersFull": "All four hotel tiers are used for this day. Edit or remove a hotel to change it."
+    "hotelTiersFull": "All four hotel tiers are used for this day. Edit or remove a hotel to change it.",
+    "orderSaved": "Itinerary applied and saved"
   },
   "websiteWorkspace": {
     "businessLabel": "Website",
@@ -2104,7 +2110,8 @@
     "eventOrder": "Daily sequence",
     "arrangeOvernight": "No overnight stay is planned. Arrange accommodation?",
     "applyDespiteWarnings": "Confirm and apply",
-    "serverIssue": "{code}{day}{message}"
+    "serverIssue": "{code}{day}{message}",
+    "dayCount": "Days"
   },
   "businessGroup": {
     "label": "Business Group",

@@ -108,8 +108,6 @@ export function websiteItineraryInput(record: WebsiteItineraryInput): WebsiteIti
     duration: record.duration,
     startDate: record.startDate,
     pax: record.pax,
-    arrivalTime: record.arrivalTime,
-    departureTime: record.departureTime,
     configVersion: record.configVersion,
     days: record.days,
     deletedDays: record.deletedDays ?? [],
