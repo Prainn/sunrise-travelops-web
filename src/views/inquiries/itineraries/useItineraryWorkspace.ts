@@ -22,10 +22,20 @@ import { useItineraryEditor } from "./useItineraryEditor";
 import { useItineraryPdf } from "./useItineraryPdf";
 import type { PdfValidationIssue } from "./workflow";
 import { useItinerarySelection } from "./useItinerarySelection";
+import { isApiError } from "@/api/request";
+import { ApiErrorCode } from "@/api/error-code";
+import { requestErrorMessage } from "@/utils/version-conflict";
+
+const VERSION_CONFLICT_CODES = new Set<string>([
+  ApiErrorCode.ITINERARY_VERSION_CONFLICT,
+  ApiErrorCode.INQUIRY_VERSION_CONFLICT,
+]);
 
 interface WorkspaceMessages {
   confirm: (key: string, params?: Record<string, unknown>) => Promise<boolean>;
   error: (key: string, params?: Record<string, unknown>) => void;
+  /** 显示已本地化的错误文本（如 ApiError.message），不再经过翻译。 */
+  errorText: (text: string) => void;
   success: (key: string) => void;
   warning: (key: string, params: Record<string, unknown>) => void;
   translate: (key: string, params?: Record<string, unknown>) => string;
@@ -358,9 +368,25 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       isSaving.value = false;
     }
   }
+  let isOfferingReload = false;
+  // 版本冲突只提示并由用户决定是否放弃本地修改重载，不自动覆盖服务端数据。
+  async function offerConflictReload(message: string) {
+    if (isOfferingReload) return;
+    isOfferingReload = true;
+    try {
+      if (await messages.confirm("itinerary.versionConflictReload", { reason: message }))
+        await selection.reload();
+    } finally {
+      isOfferingReload = false;
+    }
+  }
   function reportError(error: unknown) {
-    const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
-    messages.error(code ? `apiErrors.${code}` : "request.failed");
+    const message = requestErrorMessage(error);
+    if (isApiError(error) && VERSION_CONFLICT_CODES.has(error.code)) {
+      void offerConflictReload(message);
+      return;
+    }
+    messages.errorText(message);
   }
   async function refreshInquiry() {
     try {
@@ -465,9 +491,11 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     try {
       try {
         if (!(await prepareExport())) return;
-        await pdf.generatePreview();
-      } catch {
-        messages.error("itinerary.pdfGenerationFailed");
+        if (!(await pdf.generatePreview())) messages.error("itinerary.previewRegenerate");
+      } catch (error) {
+        // 接口错误保留具体原因；本地渲染失败才使用通用文案。
+        if (isApiError(error)) reportError(error);
+        else messages.error("itinerary.pdfGenerationFailed");
       }
     } finally {
       isPreparingPdf.value = false;

@@ -11,6 +11,7 @@
       ref="formRef"
       :model="form"
       :rules="rules"
+      :validate-on-rule-change="false"
       :disabled="saving"
       label-width="auto"
     >
@@ -177,7 +178,7 @@
           </el-col>
           <el-col :xs="24" :sm="12">
             <el-form-item :label="$t('tour.days')" prop="days">
-              <el-input-number
+              <StrictInputNumber
                 v-model="form.days"
                 :min="1"
                 :max="365"
@@ -231,7 +232,7 @@
       <el-row :gutter="12">
         <el-col :xs="24" :sm="8">
           <el-form-item :label="$t('tour.adults')" prop="adults">
-            <el-input-number
+            <StrictInputNumber
               v-model="form.adults"
               :min="0"
               :max="10000"
@@ -244,7 +245,7 @@
         </el-col>
         <el-col :xs="24" :sm="8">
           <el-form-item :label="$t('tour.children')" prop="children">
-            <el-input-number
+            <StrictInputNumber
               v-model="form.children"
               :min="0"
               :max="10000"
@@ -257,7 +258,7 @@
         </el-col>
         <el-col :xs="24" :sm="8">
           <el-form-item :label="$t('tour.leaders')" prop="leaders">
-            <el-input-number
+            <StrictInputNumber
               v-model="form.leaders"
               :min="0"
               :max="10000"
@@ -279,7 +280,6 @@
               v-model="form.language"
               :load-options="loadLanguages"
               :placeholder="$t('common.selectPlaceholder')"
-              @update:model-value="form.guideId = null"
             />
           </el-form-item>
         </el-col>
@@ -355,36 +355,18 @@
           </el-form-item>
         </el-col>
       </el-row>
-      <el-form-item :label="$t('tour.guide')">
-        <el-select
-          v-model="form.guideId"
-          :disabled="!currentGuideQuery || !guidesReady"
-          autocomplete="new-password"
-          clearable
-          filterable
-          :placeholder="$t('tour.unassigned')"
-          class="w-full"
-        >
-          <el-option
-            v-for="item in guides"
-            :key="item.id"
-            :value="item.id"
-            :label="guideLabel(item)"
-          />
-          <el-option
-            v-if="form.guideId && !guides.some((item) => item.id === form.guideId)"
-            :value="form.guideId"
-            :label="guideLabels[form.guideId] ?? form.guideId"
-          />
-        </el-select>
+      <el-form-item :label="$t('tour.guideService.title')">
+        <GuideServicesEditor
+          ref="guideEditorRef"
+          v-model="form.guideServices"
+          :business-unit="unit"
+          :exclude-tour-id="props.tour?.id"
+          :team-window="teamWindow"
+          :disabled="saving"
+          :server-errors="guideServerErrors"
+          :show-incomplete="showGuideIncomplete"
+        />
       </el-form-item>
-      <el-alert
-        v-if="guideUnavailable"
-        type="warning"
-        :closable="false"
-        :title="$t('tour.guideUnavailable')"
-        class="mb-3!"
-      />
       <el-form-item :label="$t('common.remark')">
         <el-input
           v-model.trim="form.remark"
@@ -412,6 +394,7 @@
 </template>
 
 <script setup lang="ts">
+import StrictInputNumber from "@/components/StrictInputNumber/index.vue";
 import { computed, nextTick, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -420,6 +403,7 @@ import RemoteSelect from "@/components/RemoteSelect/index.vue";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
+import { isApiError } from "@/api/request";
 import { ROLE_ROOT } from "@/constants";
 import { businessUnitName } from "@/constants/identity";
 import { tourService } from "@/services/tour.service";
@@ -427,7 +411,6 @@ import { useUserStore } from "@/stores/user";
 import type {
   TourBusinessUnit,
   TourFlightOption,
-  TourGuideOption,
   TourLinkedSourceModule,
   TourRecord,
   TourSource,
@@ -435,14 +418,14 @@ import type {
 import {
   createTourRequest,
   emptyTourForm,
-  guideQuery,
-  isGuideUnavailable,
+  guideServiceErrors,
   manualScheduleError,
   syncManualPickupDate,
   tourFormFromRecord,
   updateTourRequest,
   type TourCreateMode,
 } from "../tour-form";
+import GuideServicesEditor from "./GuideServicesEditor.vue";
 
 const UNITS: TourBusinessUnit[] = ["shengxu", "linxi", "website"];
 const props = defineProps<{ modelValue: boolean; tour: TourRecord | null }>();
@@ -468,10 +451,9 @@ const flightOptions = {
   pickup: reactive(new Map<string, TourFlightOption>()),
   drop: reactive(new Map<string, TourFlightOption>()),
 };
-const guides = ref<TourGuideOption[]>([]);
-/** 候选或团快照中出现过的导游名称，供候选缺失时展示已选导游。 */
-const guideLabels = ref<Record<string, string>>({});
-const guidesReady = ref(false);
+const guideEditorRef = ref<InstanceType<typeof GuideServicesEditor>>();
+const guideServerErrors = ref<Record<string, string>>({});
+const showGuideIncomplete = ref(false);
 const form = reactive(emptyTourForm());
 
 const isHeadquarters = computed(() => user.userInfo.scope === "headquarters");
@@ -500,16 +482,13 @@ const fixedPlatform = computed(() =>
     ? t(`tour.fixedPlatforms.${unit.value}`)
     : "",
 );
-// 手工团使用表单内日期/天数；关联团沿用来源或原团日期。
-const period = computed(() => {
-  if (isManual.value) return { businessUnit: unit.value, startDate: form.startDate, days: form.days };
-  const origin = props.tour ?? source.value;
-  return { businessUnit: unit.value, startDate: origin?.startDate ?? null, days: origin?.days ?? null };
+// 团队接送窗口仅用于“沿用团队接送时间”和越界提示；航班模式编辑沿用已保存的接送时间。
+const teamWindow = computed(() => {
+  if (form.scheduleMode === "manual")
+    return form.pickupAt && form.dropAt ? { from: form.pickupAt, to: form.dropAt } : null;
+  const current = props.tour;
+  return current?.pickupAt && current.dropAt ? { from: current.pickupAt, to: current.dropAt } : null;
 });
-const currentGuideQuery = computed(() => guideQuery(period.value, form, props.tour?.id));
-const guideUnavailable = computed(
-  () => guidesReady.value && isGuideUnavailable(form, guides.value, props.tour),
-);
 const collectOptions = computed(() => {
   const self = { id: user.userInfo.userId ?? "", name: user.userInfo.nickname || user.userInfo.username || "" };
   const options = canAssignCollector.value ? [...operators.value] : self.id ? [self] : [];
@@ -653,10 +632,6 @@ function loadPickupFlights(query: RemoteOptionsQuery) {
 function loadDropFlights(query: RemoteOptionsQuery) {
   return loadFlights(query, "drop");
 }
-function guideLabel(item: { name: string; code: string | null; language?: string | null }) {
-  const base = item.code ? `${item.name} (${item.code})` : item.name;
-  return item.language ? `${base} · ${item.language}` : base;
-}
 function fail(error: unknown) {
   ElMessage.error(error instanceof Error ? error.message : String(error));
 }
@@ -664,8 +639,6 @@ function fail(error: unknown) {
 let sourcesGeneration = 0;
 let choicesGeneration = 0;
 let choicesUnit: TourBusinessUnit | null | undefined;
-let guidesGeneration = 0;
-let guidesKey: string | undefined;
 
 async function loadSources(keyword = "") {
   const generation = ++sourcesGeneration;
@@ -709,29 +682,6 @@ async function loadChoices(businessUnit: TourBusinessUnit | null) {
     fail(error);
   }
 }
-/** 查询条件变化后刷新候选；失败或候选缺失都不清空已选导游。 */
-async function loadGuides() {
-  const query = currentGuideQuery.value;
-  const key = JSON.stringify(query);
-  if (key === guidesKey) return;
-  guidesKey = key;
-  const generation = ++guidesGeneration;
-  guidesReady.value = false;
-  guides.value = [];
-  if (!query) return;
-  try {
-    const result = await tourService.availableGuides(query);
-    if (generation !== guidesGeneration) return;
-    guides.value = result;
-    for (const item of result) guideLabels.value[item.id] = guideLabel(item);
-    guidesReady.value = true;
-  } catch (error) {
-    if (generation !== guidesGeneration) return;
-    guidesKey = undefined;
-    fail(error);
-  }
-}
-
 function resetCreateForm() {
   sourcesGeneration++;
   sources.value = [];
@@ -753,17 +703,12 @@ function onOpen() {
   flightOptions.pickup.clear();
   flightOptions.drop.clear();
   choicesUnit = undefined;
-  guidesKey = undefined;
-  guideLabels.value = {};
-  guides.value = [];
-  guidesReady.value = false;
+  guideServerErrors.value = {};
+  showGuideIncomplete.value = false;
   const current = props.tour;
   if (current) {
     Object.assign(form, tourFormFromRecord(current));
-    if (current.guideId && current.guideName)
-      guideLabels.value[current.guideId] = guideLabel({ name: current.guideName, code: current.guideCode });
     void loadChoices(current.businessUnit);
-    void loadGuides();
     return;
   }
   createMode.value = "manual";
@@ -780,18 +725,10 @@ watch(unit, (value, previous) => {
   form.operatorId = "";
   form.pickupFlightId = "";
   form.dropFlightId = "";
-  form.guideId = null;
+  form.guideServices = [];
   if (canAssignCollector.value) form.collectCoordinatorId = "";
   void loadChoices(value);
 });
-// 日期、天数、接送方式或时间变化后按新值查询，旧响应由 generation 丢弃。
-watch(
-  () => JSON.stringify(currentGuideQuery.value),
-  () => {
-    if (visible.value) void loadGuides();
-  },
-);
-
 async function save() {
   if (saving.value) return;
   validating.value = true;
@@ -801,7 +738,13 @@ async function save() {
       () => false,
     );
     if (!valid) return;
-    if (guideUnavailable.value) {
+    guideServerErrors.value = {};
+    if (guideServiceErrors(form.guideServices).some(Boolean)) {
+      showGuideIncomplete.value = true;
+      ElMessage.warning(t("tour.guideService.fixBeforeSave"));
+      return;
+    }
+    if (guideEditorRef.value?.hasUnavailable()) {
       ElMessage.warning(t("tour.guideUnavailable"));
       return;
     }
@@ -827,11 +770,20 @@ async function save() {
     emit("saved");
   } catch (error) {
     // 冲突（如已评分换导游、版本变化）保留表单内容，由用户调整后重试。
+    markGuideServiceError(error);
     fail(error);
   } finally {
     validating.value = false;
     requesting.value = false;
   }
+}
+/** 服务端按 serviceIndex 定位到具体段（索引对应提交数组顺序，即当前表单行顺序）。 */
+function markGuideServiceError(error: unknown) {
+  if (!isApiError(error)) return;
+  const index = error.details?.serviceIndex;
+  if (typeof index !== "number") return;
+  const row = form.guideServices[index];
+  if (row) guideServerErrors.value = { [row.key]: error.message };
 }
 // 在控件挂载前回填；重建表单以隔离旧校验状态及关闭动画期间残留的控件。
 watch(visible, (opened) => {

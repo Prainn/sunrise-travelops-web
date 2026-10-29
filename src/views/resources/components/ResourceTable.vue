@@ -68,7 +68,7 @@
                 link
                 @click="toggleRowStatus(scope.row)"
               >
-                {{ $t(scope.row.status === "enabled" ? "common.disabled" : "common.enabled") }}
+                {{ $t(scope.row.status === "enabled" ? "common.disable" : "common.enable") }}
               </el-button>
               <el-button
                 v-has-perm="permissions.delete"

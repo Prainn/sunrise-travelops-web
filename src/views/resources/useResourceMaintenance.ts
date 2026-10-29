@@ -5,6 +5,7 @@ import type { ResourceListQuery, ResourceStatus } from "@/types/resource";
 import { resourceService } from "@/services/resource.service";
 import type { ResourceCrud } from "@/services/resource.service";
 import { usePendingActions } from "@/composables/usePendingActions";
+import { requestErrorMessage } from "@/utils/version-conflict";
 import { RESOURCE_PAGE_SIZE } from "./useResourcePagination";
 
 interface ResourceMaintenanceRecord {
@@ -40,19 +41,25 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
   let activeQuery: ResourceListQuery | undefined =
     options.paginated === false ? undefined : { page: 1, pageSize: RESOURCE_PAGE_SIZE };
 
+  let loadVersion = 0;
+
+  /** 只有最近一次请求能写入列表、错误与 loading，过期响应直接丢弃。 */
   async function loadRecords(query?: ResourceListQuery) {
     if (query !== undefined) activeQuery = { ...activeQuery, ...query };
+    const version = ++loadVersion;
     isLoading.value = true;
     try {
       const loaded = await options.loadRecords(activeQuery);
+      if (version !== loadVersion) return;
       if (options.paginated !== false) rows.splice(0, rows.length, ...loaded);
       total.value = resourceService.getTotal(options.records);
       loadError.value = "";
     } catch (error) {
-      loadError.value = error instanceof Error ? error.message : String(error);
+      if (version !== loadVersion) return;
+      loadError.value = requestErrorMessage(error);
       ElMessage.error(loadError.value);
     } finally {
-      isLoading.value = false;
+      if (version === loadVersion) isLoading.value = false;
     }
   }
 
@@ -69,7 +76,7 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
       record.value = options.cloneForEdit?.(detail) ?? { ...detail };
       isDialogVisible.value = true;
     } catch (error) {
-      ElMessage.error(error instanceof Error ? error.message : String(error));
+      ElMessage.error(requestErrorMessage(error));
     }
   }
 
@@ -87,7 +94,7 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
         await loadRecords();
         ElMessage.success(t("common.updateSuccess"));
       } catch (error) {
-        ElMessage.error(error instanceof Error ? error.message : String(error));
+        ElMessage.error(requestErrorMessage(error));
       }
     });
   }
@@ -108,7 +115,7 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
       isDialogVisible.value = false;
       ElMessage.success(t(editingId.value ? "common.updateSuccess" : "common.createSuccess"));
     } catch (error) {
-      ElMessage.error(error instanceof Error ? error.message : String(error));
+      ElMessage.error(requestErrorMessage(error));
     }
   }
 
@@ -130,7 +137,7 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
         await loadRecords();
         ElMessage.success(t("common.deleteSuccess"));
       } catch (error) {
-        ElMessage.error(error instanceof Error ? error.message : String(error));
+        ElMessage.error(requestErrorMessage(error));
       }
     });
   }

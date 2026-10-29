@@ -47,7 +47,25 @@
         {{ $t("tour.guide") }}
       </dt>
       <dd class="m-0 text-[var(--el-text-color-regular)]">
-        {{ tour.guideName || $t("dashboard.tourMap.guidePending") }}
+        <template v-if="tour.todayGuideServices.length">
+          {{ guideSummaryText(tour.todayGuideServices) }}
+        </template>
+        <template v-else>
+          {{ $t("dashboard.tourMap.noGuideToday") }}
+        </template>
+        <el-popover
+          v-if="tour.guideServices.length"
+          placement="left"
+          trigger="click"
+          :width="340"
+        >
+          <template #reference>
+            <el-button link type="primary" class="ml-1">
+              {{ $t("dashboard.tourMap.allGuideServices", { n: tour.guideServices.length }) }}
+            </el-button>
+          </template>
+          <GuideServiceList :services="tour.guideServices" />
+        </el-popover>
       </dd>
       <dt class="text-muted">
         {{ $t("tour.collectCoordinator") }}
@@ -112,7 +130,9 @@
 
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
+import GuideServiceList from "@/components/GuideServiceList/index.vue";
 import type { TourMapTour } from "@/types/dashboard";
+import { guideSummaryText } from "@/utils/guide-services";
 import TourMapDayPlan from "./TourMapDayPlan.vue";
 import { issueLabelKey } from "./tour-map";
 

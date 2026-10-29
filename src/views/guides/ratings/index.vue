@@ -17,7 +17,7 @@
         :data="rows"
         :error="loadError"
         :filtered="Boolean(keyword)"
-        row-key="tourId"
+        :row-key="ratingKey"
         @retry="load"
       >
         <el-table-column
@@ -27,7 +27,14 @@
           fixed="left"
           :show-overflow-tooltip="false"
         />
-        <el-table-column prop="guideName" :label="$t('guideRating.guide')" min-width="120" />
+        <el-table-column :label="$t('guideRating.guide')" min-width="220" :show-overflow-tooltip="false">
+          <template #default="{ row }">
+            <div class="flex flex-col gap-1">
+              <span class="text-strong">{{ guideIdentityText(row as TourRatingRow) }}</span>
+              <GuideServiceList :services="(row as TourRatingRow).guideServices" />
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column
           v-for="field in RATING_FIELDS"
           :key="field"
@@ -36,14 +43,14 @@
           align="center"
         >
           <template #default="{ row }">
-            <el-input-number
+            <StrictInputNumber
               v-if="isActive(row as TourRatingRow, field)"
               v-model="draft"
               :min="0"
               :max="100"
               :precision="2"
               :controls="false"
-              :disabled="savingId === (row as TourRatingRow).tourId"
+              :disabled="savingKey === ratingKey(row as TourRatingRow)"
               size="small"
               @keyup.enter="commit(row as TourRatingRow)"
               @keyup.esc="cancelEdit"
@@ -113,18 +120,22 @@
 </template>
 
 <script setup lang="ts">
+import StrictInputNumber from "@/components/StrictInputNumber/index.vue";
 import { onMounted, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage } from "element-plus";
-import { useI18n } from "vue-i18n";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
 import Pagination from "@/components/Pagination/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
+import GuideServiceList from "@/components/GuideServiceList/index.vue";
 import { tourService } from "@/services/tour.service";
+import { guideIdentityText } from "@/utils/guide-services";
+import { requestErrorMessage } from "@/utils/version-conflict";
 import { RATING_FIELDS, type RatingField, type TourRatingRow } from "@/types/tour";
+import { ratingKey, replaceRatingRow } from "./rating-row";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 
 defineOptions({ name: "GuideRatings" });
@@ -137,28 +148,35 @@ const total = ref(0);
 const rows = ref<TourRatingRow[]>([]);
 const { pageNum, pageSize, paginationQuery } = useResourcePagination();
 
+// 评分行身份是 团+导游；编辑状态、保存锁和行 key 均使用该组合。
+
 // 只有激活单元格挂载编辑控件；失败时保留输入。
-const active = ref<{ tourId: string; field: RatingField } | null>(null);
+const active = ref<{ key: string; field: RatingField } | null>(null);
 const draft = ref<number | null>(null);
-const savingId = ref("");
+const savingKey = ref("");
 
 // 服务端 canEdit 已包含权限、参与人/负责人/总部 ROOT 及撤销状态判断。
 const canEdit = (row: TourRatingRow) => row.canEdit;
 const isActive = (row: TourRatingRow, field: RatingField) =>
-  active.value?.tourId === row.tourId && active.value.field === field;
+  active.value?.key === ratingKey(row) && active.value.field === field;
 
+let loadVersion = 0;
+/** 只有最近一次请求能写入列表、错误与 loading。 */
 async function load() {
+  const version = ++loadVersion;
   loading.value = true;
   try {
     const result = await tourService.ratings({ ...paginationQuery(), keyword: keyword.value });
+    if (version !== loadVersion) return;
     rows.value = result.list;
     total.value = result.total;
     loadError.value = "";
   } catch (error) {
-    loadError.value = error instanceof Error ? error.message : String(error);
+    if (version !== loadVersion) return;
+    loadError.value = requestErrorMessage(error);
     ElMessage.error(loadError.value);
   } finally {
-    loading.value = false;
+    if (version === loadVersion) loading.value = false;
   }
 }
 const reload = useDebounceFn(() => {
@@ -168,35 +186,38 @@ const reload = useDebounceFn(() => {
 watch(keyword, reload);
 
 function startEdit(row: TourRatingRow, field: RatingField) {
-  if (!canEdit(row) || savingId.value) return;
-  active.value = { tourId: row.tourId, field };
+  if (!canEdit(row) || savingKey.value) return;
+  active.value = { key: ratingKey(row), field };
   draft.value = row[field];
 }
 function cancelEdit() {
-  if (!savingId.value) active.value = null;
+  if (!savingKey.value) active.value = null;
 }
 async function commit(row: TourRatingRow) {
   const current = active.value;
-  if (!current || current.tourId !== row.tourId || savingId.value) return;
+  if (!current || current.key !== ratingKey(row) || savingKey.value) return;
   if ((draft.value ?? null) === row[current.field]) {
     active.value = null;
     return;
   }
-  savingId.value = row.tourId;
+  if (draft.value != null && (!Number.isFinite(draft.value) || draft.value < 0 || draft.value > 100 || Math.abs(draft.value * 100 - Math.round(draft.value * 100)) > 1e-6)) {
+    ElMessage.error(t("common.invalidNumber", { min: 0, max: 100, precision: 2 }));
+    return;
+  }
+  savingKey.value = ratingKey(row);
   try {
     // 只提交被修改的单元格，只回填受影响的行。
-    const saved = await tourService.saveRating(row.tourId, row.version, {
+    const saved = await tourService.saveRating(row.tourId, row.guideId, row.version, {
       [current.field]: draft.value ?? null,
     });
-    const index = rows.value.findIndex((item) => item.tourId === row.tourId);
-    if (index >= 0) rows.value.splice(index, 1, saved);
+    replaceRatingRow(rows.value, saved);
     active.value = null;
   } catch (error) {
     // 保留输入和原版本；版本冲突需手动刷新，避免覆盖未读更新。
-    ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
+    ElMessage.error(requestErrorMessage(error));
 
   } finally {
-    savingId.value = "";
+    savingKey.value = "";
   }
 }
 function scoreText(_row: unknown, _column: unknown, value: number | null) {

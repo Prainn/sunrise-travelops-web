@@ -77,16 +77,6 @@ export const usePermissionStore = defineStore("permission", () => {
     isRouteGenerated.value = false;
   };
 
-  async function reloadRoutes(): Promise<RouteRecordRaw[] | null> {
-    resetRouter();
-    return generateRoutes();
-  }
-
-  async function refreshPermissions(): Promise<void> {
-    await useUserStoreHook().getUserInfo();
-    await reloadRoutes();
-  }
-
   return {
     routes,
     mixLayoutSideMenus,
@@ -94,8 +84,6 @@ export const usePermissionStore = defineStore("permission", () => {
     generateRoutes,
     setMixLayoutSideMenus,
     resetRouter,
-    reloadRoutes,
-    refreshPermissions,
   };
 });
 

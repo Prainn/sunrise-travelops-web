@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --noEmit",
-    "test": "vitest run --passWithNoTests --exclude src/views/resources/website/index.test.ts --exclude src/components/RemoteSelect/index.test.ts && vitest run --config src/views/resources/website/vitest.config.ts && vitest run --config src/components/RemoteSelect/vitest.config.ts",
+    "test": "vitest run --passWithNoTests",
     "lint:eslint": "eslint --cache .",
     "lint:fix": "eslint --cache . --fix",
     "lint:lint-staged": "lint-staged",

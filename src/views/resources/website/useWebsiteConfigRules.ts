@@ -102,6 +102,7 @@ export function useWebsiteAttractionRules() {
 export function useWebsiteRouteRules() {
   const { t } = useI18n();
   return computed<FormRules<WebsiteRoute>>(() => ({
+    ...transportRules(t),
     nameZh: requiredText(t, "websiteConfig.routes.nameZh"),
     nameEn: requiredText(t, "websiteConfig.routes.nameEn"),
     fromCityId: cityRules(t, "websiteConfig.routes.fromCity"),
@@ -146,6 +147,8 @@ export function useWebsiteTemplateRules(record: Ref<WebsiteTemplate | undefined>
             return callback(new Error(t("websiteConfig.validation.templateVariable", { code, variable })));
           }
         }
+        const tokens = (text: string) => [...new Set([...text.matchAll(/\{([^{}]+)\}/g)].map(match => match[1]))].sort().join(",");
+        if (record.value && tokens(record.value.zh) !== tokens(record.value.en)) return callback(new Error(t("websiteConfig.validation.templateVariablesMatch")));
         callback();
       },
       trigger: "blur",
@@ -157,4 +160,24 @@ export function useWebsiteTemplateRules(record: Ref<WebsiteTemplate | undefined>
     zh: copyRules("websiteConfig.templates.zh"),
     en: copyRules("websiteConfig.templates.en"),
   }));
+}
+
+export function transportRules(t: (key: string) => string): FormRules {
+  return {
+    vehicleType: [{ max: 100, message: t("websiteReport.vehicleInvalid"), trigger: "change" }],
+    vehicleOptions: [{ validator: (_rule, values: {vehicleType: string | null | undefined; durationMinutes: number | null}[], callback) => {
+      const trimmed = values.map(value => (value.vehicleType ?? "").trim());
+      callback(trimmed.length <= 100 && trimmed.every(value => value.length >= 1 && value.length <= 100) && new Set(trimmed).size === trimmed.length
+        && values.every(value => value.durationMinutes == null || (Number.isInteger(value.durationMinutes) && value.durationMinutes >= 1 && value.durationMinutes <= 525600))
+        ? undefined : new Error(t("websiteReport.vehicleOptionsInvalid")));
+    }, trigger: "change" }],
+    distanceKm: [{ validator: (_rule, value: string | null | undefined, callback) => {
+      callback(value == null || /^(0|[1-9]\d{0,9})(\.\d{1,2})?$/.test(value)
+        ? undefined : new Error(t("websiteReport.distanceInvalid")));
+    }, trigger: "blur" }],
+    durationMinutes: [{ validator: (_rule, value: number | null | undefined, callback) => {
+      callback(value == null || (Number.isInteger(value) && value >= 1 && value <= 525600)
+        ? undefined : new Error(t("websiteReport.durationInvalid")));
+    }, trigger: "change" }],
+  };
 }

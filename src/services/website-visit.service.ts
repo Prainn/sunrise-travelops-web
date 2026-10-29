@@ -1,4 +1,4 @@
-import { request } from "@/api/request";
+import { LONG_REQUEST_TIMEOUT_MS, request } from "@/api/request";
 import type { PageResult } from "@/types/common";
 import type { WebsiteInquiry, WebsiteInquiryInput } from "@/types/website";
 import type { WebsiteVisit, WebsiteVisitQuery } from "@/types/website-visit";
@@ -16,6 +16,6 @@ export const websiteVisitService = {
     return request.post<WebsiteInquiry>(`${base}/${encodeURIComponent(id)}/inquiry`, websiteInquiryInput(input));
   },
   export(query: { start: string; end: string; keyword?: string }) {
-    return request.getBlob(`${base}/export`, { params: { ...query } });
+    return request.getBlob(`${base}/export`, { params: { ...query }, timeoutMs: LONG_REQUEST_TIMEOUT_MS });
   },
 };

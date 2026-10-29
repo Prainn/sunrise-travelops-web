@@ -222,9 +222,13 @@ async function load() {
     if (current === generation) loading.value = false;
   }
 }
+/** 有筛选时只清空，由 watch 统一重载；否则直接回第一页刷新，保证只发一次请求。 */
 function reset() {
-  keyword.value = "";
-  dateRange.value = null;
+  if (keyword.value || dateRange.value) {
+    keyword.value = "";
+    dateRange.value = null;
+    return;
+  }
   page.value = 1;
   void load();
 }

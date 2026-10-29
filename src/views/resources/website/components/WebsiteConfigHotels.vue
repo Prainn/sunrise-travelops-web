@@ -106,7 +106,7 @@
           <el-input v-model="record.nameEn" maxlength="150" />
         </el-form-item>
         <el-form-item :label="$t('websiteConfig.hotels.linkHotel')">
-          <WebsiteResourceSelect v-model="record.resourceId" kind="hotel" :selected-name="record.nameZh" />
+          <WebsiteResourceSelect v-model="record.resourceId" kind="hotel" />
         </el-form-item>
         <el-form-item :label="$t('websiteConfig.hotels.price')" prop="price">
           <el-input v-model="record.price" inputmode="decimal" maxlength="13" />

@@ -36,6 +36,7 @@
     "src/**/*.ts",
     "src/**/*.vue",
     "vite.config.ts",
+    "vitest.config.ts",
     "eslint.config.ts",
     "uno.config.ts"
   ],

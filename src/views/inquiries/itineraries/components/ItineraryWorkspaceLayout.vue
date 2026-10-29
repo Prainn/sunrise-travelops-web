@@ -1,7 +1,7 @@
 <template>
   <div
     ref="root"
-    class="itinerary-workspace flex flex-col gap-4 [overflow-anchor:none]"
+    class="itinerary-workspace flex flex-1 flex-col gap-4 [overflow-anchor:none]"
     :style="{ '--itinerary-workspace-offset': `${scrollOffset}px` }"
   >
     <div

@@ -106,7 +106,7 @@
           <div
             v-for="(item, itemIndex) in groupItems(day.id, group)"
             :key="item.id"
-            class="itinerary-reorder__item flex items-center gap-1 px-2 py-[6px] rounded-[6px] bg-surface [border:1px_solid_var(--divider-color)] text-[13px]"
+            class="itinerary-reorder__item flex flex-col gap-1 px-2 py-[6px] rounded-[6px] bg-surface [border:1px_solid_var(--divider-color)] text-[13px]"
             :class="{
               'cursor-grab': canSort(group) || canMove(group, item),
               'is-drop-target': dropItemId === item.id,
@@ -118,61 +118,73 @@
             @dragover="allowItemDrop($event, day.id, item.id, group)"
             @drop="dropItem($event, day.id, group, itemIndex)"
           >
-            <el-icon v-if="item.icon" class="shrink-0 self-start mt-[3px] text-muted" aria-hidden="true">
-              <component :is="item.icon" />
-            </el-icon>
-            <span class="min-w-0 flex-1 [overflow-wrap:anywhere]">
-              <el-tag
-                v-if="isPendingCopy(item.id)"
-                size="small"
-                type="warning"
-                class="mr-1"
-              >
-                {{ $t("itineraryWorkspace.transfer.copyTag") }}
-              </el-tag>
-              {{ item.label }}
-              <small v-if="item.detail" class="block text-muted">{{ item.detail }}</small>
-            </span>
-            <el-button
-              v-if="isPendingCopy(item.id) && canMove(group, item)"
-              link
-              type="danger"
-              :aria-label="$t('itineraryWorkspace.transfer.removeCopy')"
-              :title="$t('itineraryWorkspace.transfer.removeCopy')"
-              @click="removeCopy(item.id)"
-            >
-              <el-icon><Delete /></el-icon>
-            </el-button>
-            <el-button
-              v-else-if="canMove(group, item)"
-              link
-              class="itinerary-reorder__copy"
-              :aria-label="$t('itineraryWorkspace.transfer.copy')"
-              :title="$t('itineraryWorkspace.transfer.copy')"
-              @click="copyItem(day.id, group.key, item.id)"
-            >
-              <el-icon><CopyDocument /></el-icon>
-            </el-button>
-            <template v-if="canSort(group)">
+            <div class="flex items-start gap-1">
+              <el-icon v-if="item.icon" class="shrink-0 mt-[3px] text-muted" aria-hidden="true">
+                <component :is="item.icon" />
+              </el-icon>
+              <span class="min-w-0 flex-1 [overflow-wrap:anywhere]">
+                <el-tag
+                  v-if="isPendingCopy(item.id)"
+                  size="small"
+                  type="warning"
+                  class="mr-1"
+                >
+                  {{ $t("itineraryWorkspace.transfer.copyTag") }}
+                </el-tag>
+                {{ item.label }}
+                <small v-if="item.detail" class="block text-muted">{{ item.detail }}</small>
+              </span>
+            </div>
+            <div class="itinerary-reorder__actions flex items-center justify-end gap-1 empty:hidden">
               <el-button
+                v-if="!isPendingCopy(item.id) && canMove(group, item)"
                 link
-                :disabled="itemIndex === 0"
-                :aria-label="$t('common.moveUp')"
-                :title="$t('common.moveUp')"
-                @click="moveItem(day.id, group, itemIndex, -1)"
+                :aria-label="$t('itineraryWorkspace.transfer.copy')"
+                :title="$t('itineraryWorkspace.transfer.copy')"
+                @click="copyItem(day.id, group.key, item.id)"
               >
-                <el-icon><ArrowUp /></el-icon>
+                <el-icon><CopyDocument /></el-icon>
               </el-button>
               <el-button
+                v-if="canMove(group, item) && item.transportLeg && board.copies[item.id] && editTransport"
                 link
-                :disabled="itemIndex === groupItems(day.id, group).length - 1"
-                :aria-label="$t('common.moveDown')"
-                :title="$t('common.moveDown')"
-                @click="moveItem(day.id, group, itemIndex, 1)"
+                :aria-label="$t('common.edit')"
+                :title="$t('common.edit')"
+                @click="editTransportCopy(item.id)"
               >
-                <el-icon><ArrowDown /></el-icon>
+                <el-icon><Edit /></el-icon>
               </el-button>
-            </template>
+              <template v-if="canSort(group)">
+                <el-button
+                  link
+                  :disabled="itemIndex === 0"
+                  :aria-label="$t('common.moveUp')"
+                  :title="$t('common.moveUp')"
+                  @click="moveItem(day.id, group, itemIndex, -1)"
+                >
+                  <el-icon><ArrowUp /></el-icon>
+                </el-button>
+                <el-button
+                  link
+                  :disabled="itemIndex === groupItems(day.id, group).length - 1"
+                  :aria-label="$t('common.moveDown')"
+                  :title="$t('common.moveDown')"
+                  @click="moveItem(day.id, group, itemIndex, 1)"
+                >
+                  <el-icon><ArrowDown /></el-icon>
+                </el-button>
+              </template>
+              <el-button
+                v-if="canTransfer && group.transferable"
+                link
+                type="danger"
+                :aria-label="$t('common.remove')"
+                :title="$t('common.remove')"
+                @click="removeItem(item.id)"
+              >
+                <el-icon><Delete /></el-icon>
+              </el-button>
+            </div>
           </div>
         </div>
       </section>
@@ -251,10 +263,10 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Close, CopyDocument, Delete } from "@element-plus/icons-vue";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Close, CopyDocument, Delete, Edit } from "@element-plus/icons-vue";
 import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
-import type { WebsiteReorderDraft } from "@/types/website";
+import type { WebsiteReorderDraft, WebsiteLeg } from "@/types/website";
 import AppDialog from "@/components/AppDialog/index.vue";
 import { addDays } from "@/utils";
 import {
@@ -263,6 +275,7 @@ import {
   copyBoardItem,
   planBoardTransfer,
   removeBoardCopy,
+  removeBoardItem,
   restoredDayIndex,
   restoreWebsiteBoard,
   type BoardState,
@@ -295,6 +308,8 @@ const props = withDefaults(
     draft?: WebsiteReorderDraft | null;
     createDay?: (id: string) => ReorderBoardDay;
     stash?: (change: DayOrderChange) => Promise<boolean>;
+    editTransport?: (leg: WebsiteLeg) => Promise<WebsiteLeg | undefined>;
+    transportItem?: (leg: WebsiteLeg) => ReorderBoardItem;
   }>(),
   { readonly: false, startDate: null, transfer: false, validate: undefined, deletedDays: () => [], recovery: false, restoreDisabled: false },
 );
@@ -319,7 +334,7 @@ const addedDays = ref<ReorderBoardDay[]>([]);
 const overnight = ref<Record<string, string>>({});
 const busy = ref(false);
 const issueAnchor = ref<HTMLElement>();
-/** 独立站（transfer）点击应用时才完整校验；普通询盘实时显示核对事项 */
+/** 跨天看板点击应用时检查排布冲突；普通询盘实时显示核对事项 */
 const issues = ref<DayOrderIssue[]>([]);
 let session = 0;
 const warningsAccepted = ref(false);
@@ -331,16 +346,22 @@ const boardItems = computed(() => {
   const items = new Map(allDays.value.flatMap((day) => day.groups.flatMap((group) => group.items.map((item) => [item.id, item] as const))));
   Object.entries(board.value.copies).forEach(([id, copy]) => {
     const source = items.get(copy.sourceId);
-    if (source) items.set(id, { ...source, id });
+    const leg = board.value.transportCopies?.find(leg => leg.id === id);
+    if (leg && props.transportItem) items.set(id, props.transportItem(leg));
+    else if (source) items.set(id, { ...source, id });
   });
   return items;
 });
 const boardItem = (id: string) => boardItems.value.get(id);
 const change = computed<DayOrderChange>(() => ({
+  removedItemIds: board.value.removedItemIds,
+  transportCopies: board.value.transportCopies,
   dayIds: dayIds.value,
   addedDayIds: addedDays.value.map(day => day.id),
   overnight: overnight.value,
   draft: props.transfer ? {
+    removedItemIds: board.value.removedItemIds ?? [],
+    transportCopies: board.value.transportCopies ?? [],
     dayIds: dayIds.value,
     addedDayIds: addedDays.value.map(day => day.id),
     deletedDays: recycledDays.value.map(day => ({ id: day.id, dayNumber: day.dayNumber!, date: day.date ?? null })),
@@ -367,7 +388,7 @@ const isChanged = computed(
     dayIds.value.length !== props.days.length ||
     recycledDays.value.some((day, index) => day.id !== props.deletedDays[index]?.id || day.dayNumber !== props.deletedDays[index]?.dayNumber || day.date !== props.deletedDays[index]?.date) ||
     dayIds.value.some((id, index) => id !== props.days[index]?.id) ||
-    JSON.stringify(board.value.placements) !== initialPlacements.value,
+    JSON.stringify(board.value) !== initialPlacements.value,
 );
 const liveIssues = computed<DayOrderIssue[]>(() =>
   !props.transfer && isChanged.value && props.validate ? (props.validate(change.value) as DayOrderIssue[]) : [],
@@ -405,7 +426,7 @@ watch(
       recycledDays.value.push(...props.deletedDays.filter(day => !placed.has(day.id)).map(day => ({ ...day })));
       board.value = restoreWebsiteBoard(allDays.value, props.draft);
     }
-    initialPlacements.value = JSON.stringify(board.value.placements);
+    initialPlacements.value = JSON.stringify(board.value);
   },
   { immediate: true },
 );
@@ -490,13 +511,30 @@ function moveItem(dayId: string, group: ReorderBoardGroup, index: number, direct
   };
 }
 
-function copyItem(dayId: string, groupKey: string, itemId: string) {
+async function copyItem(dayId: string, groupKey: string, itemId: string) {
   if (!canTransfer.value) return;
-  board.value = copyBoardItem(board.value, dayId, groupKey, itemId, crypto.randomUUID());
+  const id = crypto.randomUUID();
+  const source = boardItem(itemId)?.transportLeg;
+  const current = session;
+  if (source && props.editTransport) {
+    const leg = await props.editTransport({ id, mode: source.mode, routeId: null, fromCityId: "", toCityId: "", nameZh: "", nameEn: "", feeState: "INCLUDED" });
+    if (!leg || current !== session) return;
+    board.value = { ...board.value, transportCopies: [...(board.value.transportCopies ?? []), leg] };
+  }
+  board.value = copyBoardItem(board.value, dayId, groupKey, itemId, id);
 }
 
-function removeCopy(id: string) {
-  board.value = removeBoardCopy(board.value, id);
+async function editTransportCopy(id: string) {
+  const source = boardItem(id)?.transportLeg;
+  if (!source || !props.editTransport) return;
+  const current = session;
+  const leg = await props.editTransport({ ...source, id });
+  if (!leg || current !== session) return;
+  board.value = { ...board.value, transportCopies: [...(board.value.transportCopies ?? []).filter(leg => leg.id !== id), leg] };
+}
+
+function removeItem(id: string) {
+  if (canTransfer.value) board.value = removeBoardItem(board.value, id);
 }
 
 /** 跨天放入；同 slot 已有安排时确认替换，取消则保持拖动前的完整排布。 */
@@ -509,7 +547,7 @@ async function transferItem(dayId: string, group: ReorderBoardGroup, index?: num
   const before = board.value;
   const hotelCityId = boardItem(source.itemId)?.hotelCityId;
   const noStayId = `${dayId}-no-stay`;
-  const requiresStay = hotelCityId && Object.values(board.value.placements[dayId] ?? {}).some(ids => ids.includes(noStayId));
+  const requiresStay = hotelCityId && (allDays.value.some(day => day.id === dayId && day.noOvernight) && !overnight.value[dayId] || Object.values(board.value.placements[dayId] ?? {}).some(ids => ids.includes(noStayId)));
   if (requiresStay) {
     try {
       await ElMessageBox.confirm(t("itineraryWorkspace.arrangeOvernight"), t("common.confirm"), {
@@ -705,13 +743,9 @@ async function apply() {
   border-color: var(--el-color-danger);
 }
 
-/* 复制按钮悬浮或键盘聚焦卡片时显示 */
-.itinerary-reorder__copy {
-  opacity: 0;
+/* 操作按钮行内不要 Element Plus 相邻按钮的默认左外边距 */
+.itinerary-reorder__actions .el-button + .el-button {
+  margin-left: 0;
 }
 
-.itinerary-reorder__item:hover .itinerary-reorder__copy,
-.itinerary-reorder__item:focus-within .itinerary-reorder__copy {
-  opacity: 1;
-}
 </style>

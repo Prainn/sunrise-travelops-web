@@ -75,6 +75,7 @@
           {{ $t('common.cancel') }}
         </el-button>
         <el-button
+          v-has-perm="'sys:menu-permission:update'"
           type="primary"
           :disabled="!dirty || selected?.locked"
           :loading="saving"

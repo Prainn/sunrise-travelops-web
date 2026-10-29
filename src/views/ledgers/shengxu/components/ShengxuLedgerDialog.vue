@@ -86,7 +86,7 @@
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('ledger.shengxu.quotedGroups')" prop="quotedGroups">
-            <el-input-number
+            <StrictInputNumber
               :model-value="form.quotedGroups"
               :min="0"
               :max="MAX_GROUPS"
@@ -101,7 +101,7 @@
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('ledger.shengxu.convertedGroups')" prop="convertedGroups">
-            <el-input-number
+            <StrictInputNumber
               :model-value="form.convertedGroups"
               :min="0"
               :max="MAX_GROUPS"
@@ -151,6 +151,7 @@
 </template>
 
 <script setup lang="ts">
+import StrictInputNumber from "@/components/StrictInputNumber/index.vue";
 import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";

@@ -1,11 +1,5 @@
 <template>
-  <PageShell v-loading="loading">
-    <el-alert
-      v-if="error"
-      :title="error"
-      type="error"
-      :closable="false"
-    />
+  <PageShell>
     <FilterBar @reset="reset">
       <el-form-item v-if="user.userInfo.scope === 'headquarters'" :label="$t('websiteInquiry.businessUnit')">
         <el-select
@@ -58,6 +52,16 @@
         </el-select>
       </el-form-item>
     </FilterBar>
+    <el-alert
+      v-if="error && rows.length"
+      :title="error"
+      type="error"
+      :closable="false"
+    >
+      <el-button :loading="loading" @click="load">
+        {{ $t("common.retry") }}
+      </el-button>
+    </el-alert>
     <WebsiteInquiryTable
       v-model:page="query.page"
       v-model:page-size="query.pageSize"
@@ -66,13 +70,16 @@
       :total="total"
       :can="can"
       :is-pending="isPending"
+      :loading="loading"
+      :error="error"
+      :filtered="hasActiveFilters"
       @refresh="load"
       @create="openEditor()"
       @view="openEditor($event, true)"
       @edit="openEditor($event)"
       @transfer="openTransfer"
+      @delete="deleteInquiry"
       @archive="archive"
-      @lost="markLost"
       @itineraries="openItineraries"
       @view-logs="openInquiryLogs"
     />
@@ -99,6 +106,7 @@
 </template>
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
+import { useDebounceFn } from "@vueuse/core";
 import { useOpenInNewTab, usePendingActions, useRefreshOnActivated } from "@/composables";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
@@ -110,7 +118,6 @@ import { hasUserPermission } from "@/utils/permission";
 import {
   websiteErrorMessage,
   websiteService,
-  websiteInquiryInput,
   type WebsiteInquiryQuery,
   type WebsiteOwnerOption,
 } from "@/services/website.service";
@@ -172,19 +179,29 @@ async function load() {
     if (current === generation) loading.value = false;
   }
 }
+const hasActiveFilters = computed(() =>
+  Boolean(query.keyword || query.status || query.ownerId || query.businessUnit),
+);
 function search() {
   query.page = 1;
   void load();
 }
-watch([() => query.keyword, () => query.status, () => query.ownerId], search);
-watch(() => query.businessUnit, () => { query.ownerId = ""; void loadFilterOwners(); search(); });
+// 多个筛选同时变化（如重置）合并为一次查询。
+const searchFromFilters = useDebounceFn(search, 300);
+watch([() => query.keyword, () => query.status, () => query.ownerId], () => void searchFromFilters());
+watch(() => query.businessUnit, () => {
+  query.ownerId = "";
+  void loadFilterOwners();
+  void searchFromFilters();
+});
 function reset() {
-  const hasFilter = Boolean(query.keyword || query.status || query.ownerId || query.businessUnit);
+  const hasFilter = hasActiveFilters.value;
   Object.assign(query, { keyword: "", status: "", ownerId: "", businessUnit: undefined });
   if (!hasFilter) search();
 }
 async function openEditor(record?: WebsiteInquiry, readOnly = false) {
-  await loadOptions(record?.businessUnit ?? query.businessUnit);
+  // 选项加载失败已提示，不打开下拉为空的弹窗。
+  if (!(await loadOptions(record?.businessUnit ?? query.businessUnit))) return;
   editingRecord.value = record;
   editorReadOnly.value = readOnly;
   editorVisible.value = true;
@@ -217,6 +234,28 @@ async function save(input: WebsiteInquiryInput) {
 }
 // 行操作从确认前占用到请求结束，期间同一行不能再次归档、转交或编辑。
 const { isPending, run } = usePendingActions();
+function deleteInquiry(record: WebsiteInquiry) {
+  if (!record.canDelete) return;
+  return run(record.id, async () => {
+    try {
+      await ElMessageBox.confirm(t("inquiry.deleteConfirm", { code: record.code }), t("common.tip"), {
+        type: "warning",
+        confirmButtonText: t("common.delete"),
+        cancelButtonText: t("common.cancel"),
+      });
+    } catch {
+      return;
+    }
+    try {
+      await websiteService.deleteInquiry(record.id, record.version);
+      ElMessage.success(t("common.deleteSuccess"));
+      if (rows.value.length === 1 && query.page > 1) query.page -= 1;
+      await load();
+    } catch (error) {
+      ElMessage.error(websiteErrorMessage(error));
+    }
+  });
+}
 function archive(record: WebsiteInquiry) {
   return run(record.id, () => archiveRecord(record));
 }
@@ -242,45 +281,15 @@ async function archiveRecord(record: WebsiteInquiry) {
     ElMessage.error(websiteErrorMessage(cause));
   }
 }
-function markLost(record: WebsiteInquiry) {
-  return run(record.id, () => markRecordLost(record));
-}
-async function markRecordLost(record: WebsiteInquiry) {
-  let reason: string;
-  try {
-    const result = await ElMessageBox.prompt(
-      t("inquiry.lostReasonRequired"),
-      t("inquiry.markLost"),
-      {
-        inputValidator: (value) => Boolean(value?.trim()) || t("inquiry.lostReasonRequired"),
-        confirmButtonText: t("common.confirm"),
-        cancelButtonText: t("common.cancel"),
-      },
-    );
-    reason = result.value.trim();
-  } catch {
-    return;
-  }
-  try {
-    await websiteService.updateInquiry(
-      record.id,
-      { ...websiteInquiryInput(record), status: "lost", lostReason: reason },
-      record.version,
-    );
-    await load();
-    ElMessage.success(t("common.updateSuccess"));
-  } catch (cause) {
-    ElMessage.error(websiteErrorMessage(cause));
-  }
-}
 let optionsGeneration = 0;
-async function loadOptions(businessUnit?: WebsiteBusinessUnit) {
+/** 返回选项是否可用；被后发请求取代或失败时为 false。 */
+async function loadOptions(businessUnit?: WebsiteBusinessUnit): Promise<boolean> {
   const current = ++optionsGeneration;
   cities.value = [];
   owners.value = [];
   if (user.userInfo.scope === "headquarters" && !businessUnit) {
     optionsLoading.value = false;
-    return;
+    return true;
   }
   optionsLoading.value = true;
   try {
@@ -288,11 +297,14 @@ async function loadOptions(businessUnit?: WebsiteBusinessUnit) {
       websiteService.config(undefined, businessUnit),
       websiteService.owners(businessUnit),
     ]);
-    if (current !== optionsGeneration) return;
+    if (current !== optionsGeneration) return false;
     cities.value = config.cities.filter((city) => city.status === "enabled");
     owners.value = candidates;
-  } catch (cause) { ElMessage.error(websiteErrorMessage(cause)); }
-  finally { if (current === optionsGeneration) optionsLoading.value = false; }
+    return true;
+  } catch (cause) {
+    if (current === optionsGeneration) ElMessage.error(websiteErrorMessage(cause));
+    return false;
+  } finally { if (current === optionsGeneration) optionsLoading.value = false; }
 }
 // 转交成功后到列表刷新前，该行仍是旧版本，暂不允许再次操作。
 function reloadAfterTransfer() {
@@ -300,7 +312,7 @@ function reloadAfterTransfer() {
   return record ? run(record.id, load) : load();
 }
 async function openTransfer(record: WebsiteInquiry) {
-  await loadOptions(record.businessUnit);
+  if (!(await loadOptions(record.businessUnit))) return;
   transferRecord.value = record;
   transferVisible.value = true;
 }

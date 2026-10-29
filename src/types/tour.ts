@@ -12,6 +12,37 @@ export interface TourFlightSnapshot {
   arrivalAirport: { code: string; name: string; englishName: string };
 }
 
+/** 服务段时间均为 Asia/Shanghai 无时区墙钟 `YYYY-MM-DD HH:mm`。 */
+export interface TourGuideService {
+  id: string;
+  tourId: string;
+  guideId: string;
+  guideName: string;
+  guideCode: string;
+  language: string;
+  serviceStartAt: string;
+  serviceEndAt: string;
+  remark: string;
+  timeSource: "legacy" | "manual";
+  invalidDuration: boolean;
+  outsideTourWindow: boolean;
+  createdAt: string;
+  createdBy: string | null;
+  updatedAt: string;
+  updatedBy: string | null;
+}
+
+/** 请求白名单；旧段带服务端 ID，新段不传。 */
+export interface TourGuideServiceInput {
+  id?: string;
+  guideId: string;
+  language: string;
+  serviceStartAt: string;
+  serviceEndAt: string;
+  remark?: string;
+  confirmTime?: boolean;
+}
+
 export interface TourRecord {
   id: string;
   tourNo: string;
@@ -53,9 +84,7 @@ export interface TourRecord {
   dropFlightId: string | null;
   pickupFlight: TourFlightSnapshot | null;
   dropFlight: TourFlightSnapshot | null;
-  guideId: string | null;
-  guideCode: string | null;
-  guideName: string | null;
+  guideServices: TourGuideService[];
   remark: string;
   status: "active" | "cancelled";
   cancelReason: string | null;
@@ -85,7 +114,7 @@ export type TourInput = {
   leaders: number;
   language: string;
   shopping: boolean;
-  guideId: string | null;
+  guideServices: TourGuideServiceInput[];
   remark: string;
 } & TourSchedule;
 
@@ -101,13 +130,21 @@ export type TourUpdateRequest = TourInput & {
   manualSource?: TourManualSource;
 };
 
-export type TourGuideQuery = {
-  language: string;
+/** 兄弟段只带这 3 个字段。 */
+export interface TourGuideSiblingService {
+  guideId: string;
+  serviceStartAt: string;
+  serviceEndAt: string;
+}
+
+export interface TourGuideQuery {
   businessUnit: TourBusinessUnit;
-  startDate: string;
-  days: number;
+  language: string;
+  serviceStartAt: string;
+  serviceEndAt: string;
   excludeTourId?: string;
-} & TourSchedule;
+  otherServices?: TourGuideSiblingService[];
+}
 
 export interface TourSource {
   inquiryId: string;
@@ -168,6 +205,8 @@ export type TourRatingRow = {
   startDate: string;
   guideId: string;
   guideName: string;
+  guideCode: string;
+  guideServices: TourGuideService[];
   collectCoordinatorName: string;
   operatorName: string;
   max: number | null;

@@ -1,6 +1,6 @@
 <template>
   <SectionCard fill>
-    <TableToolbar @refresh="emit('refresh')">
+    <TableToolbar :refreshing="loading" @refresh="emit('refresh')">
       <el-button v-if="can('website:inquiry:create')" type="primary" @click="emit('create')">
         {{ $t("common.create") }}
       </el-button>
@@ -8,7 +8,11 @@
     <DataTable
       fill
       :data="rows"
+      :loading="loading"
+      :error="error"
+      :filtered="filtered"
       row-key="id"
+      @retry="emit('refresh')"
     >
       <el-table-column v-if="showBusiness" :label="$t('websiteInquiry.businessUnit')" min-width="100">
         <template #default="{ row }">
@@ -104,6 +108,13 @@
               >
                 {{ $t("inquiry.archive") }}
               </el-dropdown-item>
+              <el-dropdown-item
+                v-if="can('website:inquiry:delete') && row.canDelete"
+                :disabled="isPending?.(row.id)"
+                @click="emit('delete', row)"
+              >
+                <span class="text-[var(--el-color-danger)]">{{ $t("common.delete") }}</span>
+              </el-dropdown-item>
             </template>
           </RowActions>
         </template>
@@ -138,6 +149,11 @@ defineProps<{
   total: number;
   page: number;
   pageSize: number;
+  loading?: boolean;
+  /** 列表加载失败信息 */
+  error?: string;
+  /** 存在生效的筛选条件 */
+  filtered?: boolean;
   can: (permission: string) => boolean;
   /** 行写操作处理中时禁用该行的编辑、转交与归档 */
   isPending?: (id: string) => boolean;
@@ -149,7 +165,7 @@ const emit = defineEmits<{
   edit: [record: WebsiteInquiry];
   transfer: [record: WebsiteInquiry];
   archive: [record: WebsiteInquiry];
-  lost: [record: WebsiteInquiry];
+  delete: [record: WebsiteInquiry];
   itineraries: [record: WebsiteInquiry];
   "view-logs": [record: WebsiteInquiry];
   "update:page": [value: number];

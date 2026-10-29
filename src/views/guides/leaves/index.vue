@@ -51,6 +51,7 @@
                 v-has-perm="RESOURCE_PERMISSIONS.guide.update"
                 link
                 type="primary"
+                :disabled="isPending(row.id)"
                 @click="openEdit(row as GuideLeaveRecord)"
               >
                 {{ $t("common.edit") }}
@@ -167,6 +168,7 @@ import { resourceService } from "@/services/resource.service";
 import { tourService } from "@/services/tour.service";
 import type { GuidePersonRecord } from "@/types/resource";
 import type { GuideLeaveInput, GuideLeaveRecord } from "@/types/tour";
+import { requestErrorMessage } from "@/utils/version-conflict";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 
 defineOptions({ name: "GuideLeaves" });
@@ -202,23 +204,28 @@ function emptyForm(): GuideLeaveInput {
   return { guidePersonId: "", startDate: "", endDate: "", reason: "", remark: "" };
 }
 function message(error: unknown) {
-  ElMessage.error(error instanceof Error ? error.message : String(error));
+  ElMessage.error(requestErrorMessage(error));
 }
+let loadVersion = 0;
+/** 只有最近一次请求能写入列表、错误与 loading。 */
 async function load() {
+  const version = ++loadVersion;
   loading.value = true;
   try {
     const result = await tourService.leaves({
       ...paginationQuery(),
       keyword: keyword.value,
     });
+    if (version !== loadVersion) return;
     rows.value = result.list;
     total.value = result.total;
     loadError.value = "";
   } catch (error) {
-    loadError.value = error instanceof Error ? error.message : String(error);
+    if (version !== loadVersion) return;
+    loadError.value = requestErrorMessage(error);
     message(error);
   } finally {
-    loading.value = false;
+    if (version === loadVersion) loading.value = false;
   }
 }
 const reload = useDebounceFn(() => {
@@ -226,24 +233,30 @@ const reload = useDebounceFn(() => {
   void load();
 }, 300);
 watch(keyword, reload);
+/** 有关键词时只清空，由 watch 统一重载；否则直接回第一页刷新，保证只发一次请求。 */
 function resetQuery() {
-  keyword.value = "";
+  if (keyword.value) {
+    keyword.value = "";
+    return;
+  }
   pageNum.value = 1;
   void load();
 }
-async function loadGuides(keyword = "") {
+async function loadGuides(keyword = ""): Promise<boolean> {
   try {
     guideOptions.value = (
       await resourceService.guidePersonApi.getPage({ page: 1, pageSize: 100, status: "enabled", keyword })
     ).list;
+    return true;
   } catch (error) {
     message(error);
+    return false;
   }
 }
 async function openCreate() {
   editing.value = null;
   Object.assign(form, emptyForm());
-  await loadGuides();
+  if (!(await loadGuides())) return;
   dialogVisible.value = true;
 }
 async function openEdit(row: GuideLeaveRecord) {

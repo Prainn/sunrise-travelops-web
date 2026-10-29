@@ -298,7 +298,7 @@ const currentFilter = () => JSON.stringify([candidates.params.keyword, candidate
 
 function loadCandidates(): void {
   requestedFilter = currentFilter();
-  candidates.fetchData().catch(() => undefined);
+  void candidates.fetchData();
 }
 
 // 重开弹窗重置筛选时已主动加载，筛选未变化的防抖回调不再重复请求。

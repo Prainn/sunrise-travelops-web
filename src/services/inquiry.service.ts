@@ -1,5 +1,5 @@
 import { parseMoney } from "@/utils/format";
-import { request } from "@/api/request";
+import { LONG_REQUEST_TIMEOUT_MS, request } from "@/api/request";
 import type { PageResult } from "@/types/common";
 import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";
 import type {
@@ -139,7 +139,9 @@ export const inquiryService = {
   parseDocument(file: File) {
     const body = new FormData();
     body.append("file", file);
-    return request.post<{ text: string }>("/inquiries/parse-document", body);
+    return request.post<{ text: string }>("/inquiries/parse-document", body, {
+      timeoutMs: LONG_REQUEST_TIMEOUT_MS,
+    });
   },
   list(query: InquiryQuery) {
     return request.get<PageResult<InquiryRecord>>("/inquiries", { params: { ...query } });
@@ -170,6 +172,9 @@ export const inquiryService = {
       ...inquiryInput(record),
       version: record.version,
     });
+  },
+  delete(record: InquiryRecord) {
+    return request.delete<void>(`/inquiries/${encodeURIComponent(record.id)}`, { body: { version: record.version } });
   },
   archive(record: InquiryRecord) {
     return request.post<InquiryRecord>(`/inquiries/${record.id}/archive`, {

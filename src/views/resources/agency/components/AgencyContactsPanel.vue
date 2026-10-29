@@ -6,7 +6,7 @@
           <strong>{{ agency.name }}</strong>
           <span>{{ agency.code }}</span>
         </div>
-        <small>{{ agency.countryOrRegion }} · {{ agency.email || "-" }}</small>
+        <small>{{ agency.countryOrRegion }} · {{ agency.city || "-" }} · {{ agency.email || "-" }}</small>
       </div>
       <span v-else>{{ $t("resource.contacts") }}</span>
     </template>

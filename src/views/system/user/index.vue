@@ -88,7 +88,8 @@
       <DataTable
         fill
         :error="error"
-        :loading="loading"
+        :loading="loading || removing"
+        :inert="deleting"
         :data="list"
         :filtered="hasActiveFilters"
         highlight-current-row
@@ -320,6 +321,7 @@
         ref="userFormRef"
         :model="formData"
         :rules="rules"
+        :validate-on-rule-change="false"
         label-width="auto"
       >
         <h4 class="mt-0 mb-5 text-base font-semibold leading-6">
@@ -927,7 +929,6 @@ function userConflictMessage(error: unknown, linkMessageKey: string): string {
 function handleSubmit(): Promise<void> {
   if (tourCodeSuggestion.status.value === "loading") return Promise.resolve();
   return submitForm(async () => {
-    loading.value = true;
     try {
       if (formData.id) {
         await userService.update(formData.id, formData);
@@ -943,8 +944,6 @@ function handleSubmit(): Promise<void> {
       handleQuery();
     } catch (error) {
       ElMessage.error(userConflictMessage(error, "user.linkedScopeChange"));
-    } finally {
-      loading.value = false;
     }
   });
 }
@@ -958,6 +957,8 @@ function handleSubmit(): Promise<void> {
  */
 // 影响检查与确认前即占用，删除结束前工具栏与行内删除都不可再次触发。
 const deleting = ref(false);
+// 仅删除请求进行中显示表格加载，确认框打开期间不遮罩。
+const removing = ref(false);
 async function handleDelete(id?: string): Promise<void> {
   if (deleting.value) return;
   deleting.value = true;
@@ -986,6 +987,7 @@ async function confirmAndDelete(id?: string): Promise<void> {
     }
   }
 
+  // 影响检查失败须如实提示，只有用户关闭确认框才算取消。
   try {
     const impacts = await Promise.all(
       userIds.split(",").map((value) => userService.inquiryImpact(value)),
@@ -994,6 +996,11 @@ async function confirmAndDelete(id?: string): Promise<void> {
       ElMessage.warning(t("identity.transferFirst"));
       return;
     }
+  } catch (error) {
+    ElMessage.error(requestErrorMessage(error));
+    return;
+  }
+  try {
     await ElMessageBox.confirm(t("user.deleteConfirm"), t("common.warning"), {
       confirmButtonText: t("common.confirm"),
       cancelButtonText: t("common.cancel"),
@@ -1004,15 +1011,15 @@ async function confirmAndDelete(id?: string): Promise<void> {
     return;
   }
 
-  loading.value = true;
+  removing.value = true;
   try {
     await userService.deleteByIds(userIds);
     ElMessage.success(t("common.deleteSuccess"));
-    handleQuery();
+    await handleQuery();
   } catch (error) {
     ElMessage.error(userConflictMessage(error, "user.linkedDelete"));
   } finally {
-    loading.value = false;
+    removing.value = false;
   }
 }
 
@@ -1077,7 +1084,8 @@ const handleResetPasswordSubmit = useDebounceFn(async () => {
 }, 300);
 
 onMounted(() => {
-  loadFormOptions();
+  // 角色选项决定“分工”列能否编辑，加载失败要提示而不是静默变成只读。
+  loadFormOptions().catch((error: unknown) => ElMessage.error(requestErrorMessage(error)));
   handleQuery();
 });
 </script>

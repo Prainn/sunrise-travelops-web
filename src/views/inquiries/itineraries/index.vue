@@ -383,39 +383,37 @@
             class="mr-auto"
             :active-text="$t('itinerary.showChildPriceInPdf')"
           />
-          <div>
-            <el-button
-              v-if="canDownloadOriginal || (isDraft && canGeneratePdf)"
-              :loading="isGeneratingWord"
-              @click="handleGenerateWord"
-            >
-              {{ $t("itinerary.exportWord") }}
-            </el-button>
-            <el-button
-              v-if="canDownloadOriginal"
-              :loading="isGeneratingPdf"
-              @click="downloadOriginal"
-            >
-              {{ $t("itinerary.downloadOriginal") }}
-            </el-button>
-            <el-button v-if="!isDraft && canCreateItinerary" @click="copyItinerary">
-              {{ $t("itinerary.copyForRevision") }}
-            </el-button>
-            <el-button v-if="canSaveItinerary" @click="saveItinerary">
-              {{ $t("common.save") }}
-            </el-button>
-            <el-button @click="isQuoteDrawerVisible = false">
-              {{ $t("common.close") }}
-            </el-button>
-            <el-button
-              v-if="isDraft && canGeneratePdf"
-              type="primary"
-              :loading="isGeneratingPdf"
-              @click="handleGeneratePdf"
-            >
-              {{ $t("itinerary.generatePdf") }}
-            </el-button>
-          </div>
+          <el-button
+            v-if="canDownloadOriginal || (isDraft && canGeneratePdf)"
+            :loading="isGeneratingWord"
+            @click="handleGenerateWord"
+          >
+            {{ $t("itinerary.exportWord") }}
+          </el-button>
+          <el-button
+            v-if="canDownloadOriginal"
+            :loading="isGeneratingPdf"
+            @click="downloadOriginal"
+          >
+            {{ $t("itinerary.downloadOriginal") }}
+          </el-button>
+          <el-button v-if="!isDraft && canCreateItinerary" @click="copyItinerary">
+            {{ $t("itinerary.copyForRevision") }}
+          </el-button>
+          <el-button v-if="canSaveItinerary" @click="saveItinerary">
+            {{ $t("common.save") }}
+          </el-button>
+          <el-button @click="isQuoteDrawerVisible = false">
+            {{ $t("common.close") }}
+          </el-button>
+          <el-button
+            v-if="isDraft && canGeneratePdf"
+            type="primary"
+            :loading="isGeneratingPdf"
+            @click="handleGeneratePdf"
+          >
+            {{ $t("itinerary.generatePdf") }}
+          </el-button>
         </template>
       </AppDrawer>
     </template>
@@ -588,6 +586,7 @@ const {
 } = useItineraryWorkspace({
   confirm: confirmAction,
   error: (key, params) => ElMessage.error(t(key, params ?? {})),
+  errorText: (text) => ElMessage.error(text),
   success: (key) => ElMessage.success(t(key)),
   warning: (key, params) => ElMessage.warning(t(key, params)),
   translate: t,
