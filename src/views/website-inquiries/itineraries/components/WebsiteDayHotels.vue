@@ -8,11 +8,15 @@
         v-if="editable && day.overnightCityId"
         link
         type="primary"
+        :disabled="tiersFull"
         @click="emit('edit', -1)"
       >
         {{ $t("common.create") }}
       </el-button>
     </div>
+    <p v-if="editable && day.overnightCityId && tiersFull" class="m-0 text-[12px] text-muted">
+      {{ $t("websiteItineraryUi.hotelTiersFull") }}
+    </p>
     <el-alert
       v-if="day.overnightCityId && !day.hotels.length"
       :title="$t('websiteItineraryUi.hotelRequiredHint')"
@@ -60,7 +64,9 @@
   </section>
 </template>
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { HOTEL_TIERS } from "../vehicle-price";
 import { formatMoney } from "@/utils";
 import type { WebsiteConfig, WebsiteDay, WebsiteHotelStay } from "@/types/website";
 const day = defineModel<WebsiteDay>("day", { required: true });
@@ -68,6 +74,8 @@ const props = defineProps<{ config: WebsiteConfig; editable: boolean }>();
 /** index 为 -1 表示新增 */
 const emit = defineEmits<{ edit: [index: number] }>();
 const { locale } = useI18n();
+/** 同日每档最多一家酒店，四档用完后不可新增。 */
+const tiersFull = computed(() => HOTEL_TIERS.every((tier) => day.value.hotels.some((hotel) => hotel.tier === tier)));
 function hotelName(hotel: WebsiteHotelStay) {
   return (locale.value === "en" ? hotel.nameEn : hotel.nameZh) || hotel.nameZh || hotel.nameEn;
 }

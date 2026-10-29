@@ -19,7 +19,7 @@ vi.mock("./print", () => ({ printWebsiteQuotation: vi.fn() }));
 
 let scope: ReturnType<typeof effectScope>;
 const inquiry = { id: "inquiry", status: "new", version: 2 } as WebsiteInquiry;
-const plan = { id: "plan", status: "draft", version: 3, configVersion: 1, title: "Trip", days: [] } as unknown as WebsiteItinerary;
+const plan = { id: "plan", status: "draft", version: 3, configVersion: 1, title: "Trip", days: [], vehiclePrices: [] } as unknown as WebsiteItinerary;
 const preview = { itineraryId: "plan", sourceVersion: 3 } as WebsitePreview;
 const quotation = { ...preview, id: "quote", code: "Q1" } as WebsiteQuotation;
 

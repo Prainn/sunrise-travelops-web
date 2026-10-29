@@ -76,14 +76,20 @@ function segmentLabel(segment: string, previous: string | undefined, context: Lo
   return te(key) ? t(key) : segment;
 }
 
-/** 路径去掉稳定 ID 后翻译各段，并用 context 补充日序、名称、档位、餐次、车型。 */
+/** 酒店档次显示完整标签；历史日志的方案 A/B 位于 plan 字段，不经此处解释为档次。 */
+function hotelTierLabel(tier: string, { t, te }: LogDisplayContext) {
+  const key = `websiteItineraryUi.hotelTier${tier}`;
+  return te(key) ? t(key) : t("websiteInquiry.log.hotelTier", { tier });
+}
+
+/** 路径去掉稳定 ID（含报价组合键 ["7_seat","A"]）后翻译各段，并用 context 补充日序、名称、档位、餐次、车型。 */
 export function changeLabel(change: WebsiteInquiryLogChange, context: LogDisplayContext): string {
   const { t, te, locale } = context;
   const ctx = change.context;
   const prefix = [
     ctx?.dayNumber ? t("websiteInquiry.log.day", { day: ctx.dayNumber }) : "",
     localName(ctx?.nameZh, ctx?.nameEn, locale),
-    ctx?.hotelTier ? t("websiteInquiry.log.hotelTier", { tier: ctx.hotelTier }) : "",
+    ctx?.hotelTier ? hotelTierLabel(ctx.hotelTier, context) : "",
     ctx?.mealSlot && te(`itinerary.meals.${ctx.mealSlot}`) ? t(`itinerary.meals.${ctx.mealSlot}`) : ctx?.mealSlot,
     ctx?.vehicleType && te(`websiteInquiry.vehicleTypes.${ctx.vehicleType}`)
       ? t(`websiteInquiry.vehicleTypes.${ctx.vehicleType}`)
@@ -136,6 +142,9 @@ export function formatLogValue(value: unknown, path: string, context: LogDisplay
   };
   const key = keys[field] ?? "";
   if (field === "tier") return te(key) ? t(key, { tier: text }) : text;
+  if (field === "hotelTier") return hotelTierLabel(text, context);
+  if (field === "category" && te(`websiteItineraryUi.priceCategories.${text}`))
+    return t(`websiteItineraryUi.priceCategories.${text}`);
   if (field === "vehicleType")
     return te(`websiteInquiry.vehicleTypes.${text}`) ? t(`websiteInquiry.vehicleTypes.${text}`) : text;
   return key && te(key) ? t(key) : text;

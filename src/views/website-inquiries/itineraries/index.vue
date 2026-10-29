@@ -309,6 +309,7 @@
           v-model="isVehiclePricesDialogVisible"
           v-model:plan="plan"
           :editable="editable"
+          :dirty="dirty"
         />
         <WebsiteGuideDialog
           :model-value="resourceDialog?.kind === 'guide'"
@@ -586,6 +587,7 @@ function canLocatePreviewIssue(issue: WebsiteValidation) {
   if (issue.dayNumber !== undefined)
     return plan.value.days.some(day => day.dayNumber === issue.dayNumber);
   if (issue.code === "REORDER_PENDING" || issue.code === "VAL-E01") return true;
+  if (issue.code === "VAL-E09") return true;
   return editable.value && (issue.code === "VAL-E07" || issue.code === "VAL-E08" || issue.code === "ITINERARY_INVALID" || issue.code === "REQUIREMENTS_MISMATCH");
 }
 async function locatePreviewIssue(issue: WebsiteValidation) {
@@ -596,7 +598,7 @@ async function locatePreviewIssue(issue: WebsiteValidation) {
     dayCards.get(day.id)?.openValidationIssue(issue.code);
   } else if (issue.code === "REORDER_PENDING" || issue.code === "VAL-E01") {
     isReorderDialogVisible.value = true;
-  } else if (issue.code === "VAL-E07") {
+  } else if (issue.code === "VAL-E07" || issue.code === "VAL-E09") {
     isVehiclePricesDialogVisible.value = true;
   } else {
     isBasicsDialogVisible.value = true;
@@ -653,6 +655,11 @@ function submitTransport(leg: WebsiteLeg) {
 function submitHotel(hotel: WebsiteHotelStay) {
   const day = resourceDay.value;
   if (!day) return;
+  // 提交前复核同日档次唯一；后端约束仍保留。
+  if (day.hotels.some((item) => item.id !== hotel.id && item.tier === hotel.tier)) {
+    ElMessage.error(t("websiteItineraryUi.hotelTierTaken"));
+    return;
+  }
   const index = day.hotels.findIndex((item) => item.id === hotel.id);
   if (index >= 0) day.hotels.splice(index, 1, hotel);
   else day.hotels.push(hotel);

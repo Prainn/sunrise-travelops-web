@@ -1,209 +1,150 @@
 <template>
   <AppDialog v-model="visible" size="xl" :title="$t('websiteItineraryUi.packagePriceTitle')">
-    <el-steps
-      :active="step"
-      finish-status="success"
-      simple
-      class="mb-4"
-    >
-      <el-step v-for="key in STEP_KEYS" :key="key" :title="$t(`websiteItineraryUi.priceSteps.${key}`)" />
-    </el-steps>
+    <p class="m-0 mb-3 text-xs text-muted">
+      {{ $t("websiteItineraryUi.combinationPricesHint") }}
+    </p>
+    <div class="mb-3 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+      <el-checkbox :model-value="services.includesDriver" disabled>
+        {{ $t("websiteReport.driver") }}
+      </el-checkbox>
+      <el-checkbox :model-value="services.includesGuide" disabled>
+        {{ $t("websiteReport.guide") }}
+      </el-checkbox>
+      <span class="text-xs text-muted">{{ servicesSummary }}</span>
+      <span class="ml-auto">{{ $t("websiteReport.pax") }}: {{ plan.pax ?? $t("websiteReport.undetermined") }}</span>
+    </div>
     <el-alert
-      v-if="hadInconsistentShared"
+      v-if="tooMany"
+      class="mb-3"
+      type="error"
+      :closable="false"
+      show-icon
+      :title="$t('websiteItineraryUi.combinationLimit', { count: rows.length, max: MAX_PRICE_COMBINATIONS })"
+    />
+    <el-alert
+      v-if="staleCount"
       class="mb-3"
       type="warning"
       :closable="false"
       show-icon
-      :title="$t('websiteItineraryUi.sharedPriceUnified')"
+      :title="$t('websiteItineraryUi.staleCombinationsHint', { count: staleCount })"
     />
-    <el-form label-position="top" :disabled="!editable">
-      <!-- 1. 非车型价格：按方案统一，适用于所有车型 -->
-      <template v-if="step === 0">
-        <p class="m-0 mb-3 text-xs text-muted">
-          {{ $t("websiteItineraryUi.sharedPricesHint") }}
-        </p>
-        <div class="price-grid" :style="gridStyle">
-          <span class="text-xs text-muted">{{ $t("websiteItineraryUi.priceItemUnit") }}</span>
-          <div v-for="key in activePlans" :key="key" class="flex items-center">
-            <strong class="text-[14px] text-strong">{{ $t("websiteReport.plan", { plan: key }) }}</strong>
-            <el-checkbox v-model="shared[key].includesDriver" class="ml-4">
-              {{ $t("websiteReport.driver") }}
-            </el-checkbox>
-            <el-checkbox v-model="shared[key].includesGuide">
-              {{ $t("websiteReport.guide") }}
-            </el-checkbox>
-            <el-button
-              v-if="key === 'A' && !planBEnabled"
-              class="ml-auto"
-              link
-              type="primary"
-              @click="planBEnabled = true"
-            >
-              {{ $t("websiteItineraryUi.addPlanB") }}
-            </el-button>
-            <el-button
-              v-if="key === 'B'"
-              class="ml-auto"
-              link
-              type="danger"
-              @click="disablePlanB"
-            >
-              {{ $t("websiteItineraryUi.removePlanB") }}
-            </el-button>
-          </div>
-          <template v-for="category in SHARED_CATEGORIES" :key="category">
-            <span class="text-sm">{{ $t(`websiteItineraryUi.priceCategories.${category}`) }}</span>
-            <el-form-item
-              v-for="key in activePlans"
-              :key="key"
-              class="!mb-0"
-              :show-message="false"
-              :error="isInvalidValue(shared[key].prices[category]) ? 'invalid' : ''"
-            >
-              <el-input
-                :model-value="shared[key].prices[category] ?? ''"
-                :placeholder="$t('websiteItineraryUi.pricePlaceholder')"
-                @update:model-value="shared[key].prices[category] = $event.trim() || null"
-              />
-            </el-form-item>
-          </template>
+    <el-form :disabled="!editable" @submit.prevent>
+      <section v-for="group in groups" :key="String(group.tier)" class="mb-4">
+        <h4 class="m-0 mb-2 text-[14px] text-strong">
+          {{ tierLabel(group.tier) }}
+        </h4>
+        <div class="overflow-x-auto">
+          <table class="price-table">
+            <thead>
+              <tr>
+                <th>{{ $t("websiteReport.vehicleType") }}</th>
+                <th v-for="category in PRICE_CATEGORIES" :key="category">
+                  {{ $t(`websiteItineraryUi.priceCategories.${category}`) }}
+                </th>
+                <th>{{ $t("websiteItineraryUi.componentTotal") }}</th>
+                <th>{{ $t("websiteReport.total") }}</th>
+                <th v-if="editable" />
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in group.rows" :key="row.key" :class="{ 'price-table__stale': isStale(row) }">
+                <td class="whitespace-nowrap">
+                  {{ vehicleLabel(row.vehicleType) }}
+                  <el-tag
+                    v-if="isStale(row)"
+                    class="ml-1"
+                    type="warning"
+                    size="small"
+                  >
+                    {{ $t("websiteItineraryUi.staleCombination") }}
+                  </el-tag>
+                </td>
+                <td v-for="category in PRICE_CATEGORIES" :key="category">
+                  <el-form-item class="!mb-0" :show-message="false" :error="isInvalidValue(row.prices[category]) ? 'invalid' : ''">
+                    <el-input
+                      :model-value="row.prices[category] ?? ''"
+                      :placeholder="$t('websiteItineraryUi.pricePlaceholder')"
+                      @update:model-value="setPrice(row, category, $event)"
+                    />
+                  </el-form-item>
+                  <el-checkbox
+                    v-model="row.showInPdf[category]"
+                    size="small"
+                    :disabled="row.prices[category] === null"
+                  >
+                    {{ $t("websiteItineraryUi.showInPdfShort") }}
+                  </el-checkbox>
+                </td>
+                <td class="whitespace-nowrap">
+                  <span class="font-600" :class="isInvalidTotal(row) ? 'text-danger' : 'text-strong'">
+                    {{ unitPrice(row) ?? $t("websiteReport.undetermined") }}
+                  </span>
+                </td>
+                <td class="whitespace-nowrap text-muted">
+                  {{ vehiclePriceTotal(unitPrice(row), plan.pax) ?? $t("websiteReport.undetermined") }}
+                </td>
+                <td v-if="editable">
+                  <el-button
+                    v-if="isStale(row)"
+                    link
+                    type="danger"
+                    @click="removeRow(row.key)"
+                  >
+                    {{ $t("common.delete") }}
+                  </el-button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <p v-if="hasInvalidShared" class="m-0 mt-2 text-xs text-danger">
-          {{ $t("websiteWorkspace.vehiclePriceInvalid") }}
-        </p>
-      </template>
-
-      <!-- 2. 车型价格：每车型一个价格，方案 A/B 通用 -->
-      <template v-else-if="step === 1">
-        <el-form-item :label="$t('websiteItineraryUi.quotationVehicles')" class="!mb-2">
-          <el-checkbox-group v-model="selectedVehicles">
-            <el-checkbox
-              v-for="option in VEHICLE_OPTIONS"
-              :key="option.value"
-              :value="option.value"
-              border
-            >
-              {{ $t(option.labelKey) }}
-            </el-checkbox>
-          </el-checkbox-group>
-        </el-form-item>
-        <p class="m-0 mb-3 text-xs text-muted">
-          {{ $t("websiteItineraryUi.quotationVehiclesHint") }}
-        </p>
-        <p v-if="!selectedOptions.length" class="m-0 py-6 text-center text-sm text-muted">
-          {{ $t("websiteItineraryUi.noQuotationVehicle") }}
-        </p>
-        <div v-else class="price-grid price-grid--vehicle">
-          <template v-for="option in selectedOptions" :key="option.value">
-            <span class="whitespace-nowrap text-sm">{{ $t(option.labelKey) }}</span>
-            <el-form-item class="!mb-0" :show-message="false" :error="isInvalidValue(vehicleRates[option.value] ?? null) ? 'invalid' : ''">
-              <el-input
-                :model-value="vehicleRates[option.value] ?? ''"
-                :placeholder="$t('websiteItineraryUi.pricePlaceholder')"
-                @update:model-value="vehicleRates[option.value] = $event.trim() || null"
-              >
-                <template #append>
-                  {{ $t("websiteItineraryUi.pricePerPersonUnit") }}
-                </template>
-              </el-input>
-            </el-form-item>
-            <span class="text-xs text-muted">
-              {{ $t("websiteItineraryUi.capacityHint", { comfortable: option.seats - 2, economy: option.seats - 1, luggage: option.seats - 4 }) }}
-            </span>
-          </template>
-        </div>
-        <p v-if="hasInvalidVehicleRate" class="m-0 mt-2 text-xs text-danger">
-          {{ $t("websiteWorkspace.vehiclePriceInvalid") }}
-        </p>
-      </template>
-
-      <!-- 3. PDF 展示分项：未勾选的仍计入总价 -->
-      <template v-else-if="step === 2">
-        <p class="m-0 mb-3 text-xs text-muted">
-          {{ $t("websiteItineraryUi.pdfItemsHint") }}
-        </p>
-        <div class="price-grid" :style="gridStyle">
-          <span class="text-xs text-muted">{{ $t("websiteItineraryUi.priceItemUnit") }}</span>
-          <strong v-for="key in activePlans" :key="key" class="text-[14px] text-strong">
-            {{ $t("websiteReport.plan", { plan: key }) }}
-          </strong>
-          <template v-for="category in SHARED_CATEGORIES" :key="category">
-            <span class="text-sm">{{ $t(`websiteItineraryUi.priceCategories.${category}`) }}</span>
-            <el-checkbox
-              v-for="key in activePlans"
-              :key="key"
-              v-model="shared[key].showInPdf[category]"
-              :disabled="shared[key].prices[category] === null"
-            >
-              {{ shared[key].prices[category] ?? $t("websiteItineraryUi.notEntered") }}
-            </el-checkbox>
-          </template>
-          <span class="text-sm">{{ $t("websiteItineraryUi.priceCategories.vehicle") }}</span>
-          <el-checkbox
-            v-model="vehicleInPdf"
-            :disabled="!selectedOptions.some(option => vehicleRates[option.value] !== null)"
-            :style="{ gridColumn: `span ${activePlans.length}` }"
-          >
-            {{ vehicleRateSummary || $t("websiteItineraryUi.notEntered") }}
-          </el-checkbox>
-        </div>
-      </template>
-
-      <!-- 4. 报价确认 -->
-      <template v-else>
-        <p v-if="!selectedOptions.length" class="m-0 py-6 text-center text-sm text-muted">
-          {{ $t("websiteItineraryUi.noQuotationVehicle") }}
-        </p>
-        <div v-else class="price-grid" :style="gridStyle">
-          <span class="text-xs text-muted">
-            {{ $t("websiteItineraryUi.componentTotal") }}
-            <br>
-            {{ $t("websiteReport.total") }} · {{ $t("websiteReport.pax") }}: {{ plan.pax ?? $t("websiteReport.undetermined") }}
-          </span>
-          <div v-for="key in activePlans" :key="key">
-            <strong class="text-[14px] text-strong">{{ $t("websiteReport.plan", { plan: key }) }}</strong>
-            <span class="ml-2 text-xs text-muted">{{ planServices(key) }}</span>
-          </div>
-          <template v-for="option in selectedOptions" :key="option.value">
-            <span class="whitespace-nowrap text-sm">{{ $t(option.labelKey) }}</span>
-            <div v-for="key in activePlans" :key="key">
-              <span class="text-[16px] font-600" :class="isInvalidTotal(built(option.value, key)) ? 'text-danger' : 'text-strong'">
-                {{ built(option.value, key).unitPrice ?? $t("websiteReport.undetermined") }}
-              </span>
-              <span class="ml-3 text-sm text-muted">
-                {{ vehiclePriceTotal(built(option.value, key).unitPrice, plan.pax) ?? $t("websiteReport.undetermined") }}
-              </span>
-              <p v-if="isInvalidTotal(built(option.value, key))" class="m-0 mt-1 text-xs text-danger">
-                {{ $t("websiteItineraryUi.componentTotalInvalid") }}
-              </p>
-            </div>
-          </template>
-          <span class="price-grid__divider text-xs text-muted">{{ $t("websiteItineraryUi.pdfShownItems") }}</span>
-          <span v-for="key in activePlans" :key="key" class="price-grid__divider text-xs text-muted">
-            {{ pdfSummary(key) || $t("websiteItineraryUi.pdfTotalOnly") }}
-          </span>
-        </div>
-      </template>
+      </section>
     </el-form>
+    <p v-if="hasInvalidPrice" class="m-0 mt-2 text-xs text-danger">
+      {{ $t("websiteItineraryUi.componentTotalInvalid") }}
+    </p>
+    <p v-else-if="editable && !hasAnyPrice" class="m-0 mt-2 text-xs text-muted">
+      {{ $t("websiteItineraryUi.finalPriceHint") }}
+    </p>
+
+    <section v-if="plan.previousPlanPrices?.length" class="mt-4">
+      <h4 class="m-0 mb-1 text-[14px] text-strong">
+        {{ $t("websiteItineraryUi.previousPlanPrices") }}
+      </h4>
+      <p class="m-0 mb-2 text-xs text-muted">
+        {{ $t("websiteItineraryUi.previousPlanPricesHint") }}
+      </p>
+      <table class="price-table">
+        <thead>
+          <tr>
+            <th>{{ $t("websiteReport.vehicleType") }}</th>
+            <th>{{ $t("websiteItineraryUi.previousPlan") }}</th>
+            <th>{{ $t("websiteItineraryUi.previousServices") }}</th>
+            <th>{{ $t("websiteItineraryUi.componentTotal") }}</th>
+            <th>{{ $t("websiteItineraryUi.priceItemUnit") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="price in plan.previousPlanPrices" :key="`${price.vehicleType}-${price.plan}`">
+            <td>{{ vehicleLabel(price.vehicleType) }}</td>
+            <td>{{ $t("websiteReport.plan", { plan: price.plan }) }}</td>
+            <td>{{ servicesText(price.includesDriver, price.includesGuide) }}</td>
+            <td>{{ price.unitPrice ?? $t("websiteReport.undetermined") }}</td>
+            <td class="text-xs text-muted">
+              {{ componentsText(price.priceComponents) }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
     <template #footer>
       <el-button @click="visible = false">
         {{ $t(editable ? "common.cancel" : "common.close") }}
       </el-button>
-      <el-button v-if="step > 0" @click="step--">
-        {{ $t("common.prevStep") }}
-      </el-button>
       <el-button
-        v-if="step < STEP_KEYS.length - 1"
+        v-if="editable"
         type="primary"
-        :disabled="editable && !canLeaveStep"
-        @click="step++"
-      >
-        {{ $t("common.nextStep") }}
-      </el-button>
-      <el-button
-        v-else-if="editable"
-        type="primary"
-        :disabled="hasInvalidPrice"
+        :disabled="hasInvalidPrice || tooMany"
         @click="apply"
       >
         {{ $t("common.confirm") }}
@@ -212,170 +153,188 @@
   </AppDialog>
 </template>
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
-import { PRICE_CATEGORIES, componentUnitPrice, isValidVehiclePrice, vehiclePriceTotal } from "../vehicle-price";
-import type { VehicleType, WebsiteItinerary, WebsitePriceCategory, WebsiteVehiclePrice } from "@/types/website";
+import {
+  MAX_PRICE_COMBINATIONS,
+  PRICE_CATEGORIES,
+  componentUnitPrice,
+  isValidVehiclePrice,
+  priceKey,
+  quotationCandidates,
+  quotationServices,
+  vehiclePriceTotal,
+} from "../vehicle-price";
+import type {
+  WebsiteHotelTier,
+  WebsiteItinerary,
+  WebsitePriceCategory,
+  WebsitePriceComponent,
+  WebsiteVehiclePriceInput,
+} from "@/types/website";
 import { VEHICLE_OPTIONS } from "../../options";
-type PlanKey = WebsiteVehiclePrice["plan"];
-type SharedCategory = Exclude<WebsitePriceCategory, "vehicle">;
-interface SharedPlan {
-  includesDriver: boolean;
-  includesGuide: boolean;
-  prices: Record<SharedCategory, string | null>;
-  showInPdf: Record<SharedCategory, boolean>;
+interface PriceRow {
+  key: string;
+  vehicleType: string | null;
+  hotelTier: WebsiteHotelTier | null;
+  prices: Record<WebsitePriceCategory, string | null>;
+  showInPdf: Record<WebsitePriceCategory, boolean>;
+  /** 历史仅有总价、无分项的行；录入分项前保留原价。 */
+  legacyUnitPrice: string | null;
 }
-const PLANS: PlanKey[] = ["A", "B"];
-const STEP_KEYS = ["shared", "vehicle", "pdf", "summary"] as const;
 /**
- * Entered once per plan for every selected vehicle; the vehicle item is entered once per vehicle for both plans.
- * Saved data stays one row per vehicle × plan with all five components.
+ * 每个车型×酒店档次组合独立填写五类人均分项（整数分求和）；总价 = 人均 × 行程人数。
+ * 候选组合只从当前有效日程派生；已不在候选内但有价格的组合保留金额并标记待调整，由操作人显式删除。
  */
-const SHARED_CATEGORIES = PRICE_CATEGORIES.filter((category): category is SharedCategory => category !== "vehicle");
 const visible = defineModel<boolean>({ required: true });
 const plan = defineModel<WebsiteItinerary>("plan", { required: true });
-const props = defineProps<{ editable: boolean }>();
+const props = defineProps<{ editable: boolean; dirty?: boolean }>();
 const { t } = useI18n();
-const step = ref(0);
-const shared = reactive<Record<PlanKey, SharedPlan>>({ A: emptySharedPlan(), B: emptySharedPlan() });
-const vehicleRates = reactive<Partial<Record<VehicleType, string | null>>>({});
-const vehicleInPdf = ref(false);
-const selectedVehicles = ref<VehicleType[]>([]);
-const planBEnabled = ref(false);
-const hadInconsistentShared = ref(false);
-const activePlans = computed<PlanKey[]>(() => planBEnabled.value ? PLANS : ["A"]);
-const gridStyle = computed(() => ({ gridTemplateColumns: `max-content repeat(${activePlans.value.length}, minmax(0, 1fr))` }));
-const selectedOptions = computed(() => VEHICLE_OPTIONS.filter(option => selectedVehicles.value.includes(option.value)));
-const hasInvalidShared = computed(() => activePlans.value.some(key => SHARED_CATEGORIES.some(category => isInvalidValue(shared[key].prices[category]))));
-const hasInvalidVehicleRate = computed(() => selectedVehicles.value.some(vehicle => isInvalidValue(vehicleRates[vehicle] ?? null)));
-const hasInvalidPrice = computed(() => hasInvalidShared.value || hasInvalidVehicleRate.value
-  || selectedVehicles.value.some(vehicle => activePlans.value.some(key => isInvalidTotal(built(vehicle, key)))));
-const canLeaveStep = computed(() => [!hasInvalidShared.value, !hasInvalidVehicleRate.value, true][step.value] ?? true);
-const vehicleRateSummary = computed(() => selectedOptions.value
-  .filter(option => vehicleRates[option.value] !== null && vehicleRates[option.value] !== undefined)
-  .map(option => `${t(option.labelKey)} ${vehicleRates[option.value]}`)
-  .join(" / "));
+const entries = reactive(new Map<string, PriceRow>());
+
+const candidates = computed(() => quotationCandidates(plan.value.days));
+const candidateKeys = computed(() => candidates.value.hotelTiers.flatMap(tier =>
+  candidates.value.vehicleTypes.map(vehicle => ({ key: priceKey(vehicle, tier), vehicleType: vehicle, hotelTier: tier }))));
+/** 保存前按本地草稿派生；无未保存修改时使用服务端返回。 */
+const services = computed(() => (!props.dirty && plan.value.quotationOptions) || quotationServices(plan.value.days));
+const currentKeys = computed(() => new Set(candidateKeys.value.map(item => item.key)));
+const rows = computed<PriceRow[]>(() => [
+  ...candidateKeys.value.map(item => entries.get(item.key)).filter((row): row is PriceRow => Boolean(row)),
+  ...[...entries.values()].filter(row => isStale(row) && hasPrice(row)),
+]);
+const groups = computed(() => {
+  const tiers = [...new Set(rows.value.map(row => row.hotelTier))]
+    .sort((a, b) => (a ?? "").localeCompare(b ?? ""));
+  return tiers.map(tier => ({
+    tier,
+    rows: rows.value.filter(row => row.hotelTier === tier)
+      .sort((a, b) => Number(isStale(a)) - Number(isStale(b)) || (a.vehicleType ?? "").localeCompare(b.vehicleType ?? "", "en", { numeric: true })),
+  }));
+});
+const staleCount = computed(() => rows.value.filter(isStale).length);
+const tooMany = computed(() => rows.value.length > MAX_PRICE_COMBINATIONS);
+const hasInvalidPrice = computed(() => rows.value.some(row => PRICE_CATEGORIES.some(category => isInvalidValue(row.prices[category])) || isInvalidTotal(row)));
+const hasAnyPrice = computed(() => rows.value.some(hasPrice));
+const servicesSummary = computed(() => {
+  const value = services.value;
+  return [
+    value.driverDays.length ? t("websiteItineraryUi.driverDays", { days: value.driverDays.map(day => `D${day}`).join(", ") }) : "",
+    ...value.guideServices.map(item => t("websiteItineraryUi.guideDay", { day: item.dayNumber, language: item.language })),
+  ].filter(Boolean).join("；");
+});
 
 watch(visible, (value) => {
   if (!value) return;
-  const saved = plan.value.vehiclePrices;
-  const savedRow = (vehicle: VehicleType, key: PlanKey) => saved.find(price => price.vehicleType === vehicle && price.plan === key);
-  selectedVehicles.value = VEHICLE_OPTIONS.filter(option => PLANS.some(key => hasPlanData(savedRow(option.value, key)))).map(option => option.value);
-  if (selectedVehicles.value.length === 0) {
-    const legVehicles = new Set(plan.value.days.flatMap(day => day.legs
-      .filter(leg => leg.mode === "private_vehicle")
-      .map(leg => leg.vehicleType)));
-    selectedVehicles.value = VEHICLE_OPTIONS.filter(option => legVehicles.has(option.value)).map(option => option.value);
-  }
-  const rows = (key: PlanKey) => selectedVehicles.value.map(vehicle => savedRow(vehicle, key)).filter((row): row is WebsiteVehiclePrice => Boolean(row));
-  planBEnabled.value = rows("B").some(hasPlanData);
-  for (const key of PLANS) {
-    // The first vehicle with a breakdown defines the plan's shared items.
-    const source = rows(key).find(row => row.priceComponents?.length) ?? rows(key)[0];
-    const next = emptySharedPlan();
-    next.includesDriver = source?.includesDriver ?? false;
-    next.includesGuide = source?.includesGuide ?? false;
-    for (const category of SHARED_CATEGORIES) {
-      next.prices[category] = source ? componentPrice(source, category) : null;
-      next.showInPdf[category] = source ? componentVisible(source, category) : false;
+  entries.clear();
+  for (const price of plan.value.vehiclePrices) {
+    const row = emptyRow(price.vehicleType, price.hotelTier);
+    for (const component of price.priceComponents ?? []) {
+      row.prices[component.category] = component.unitPrice;
+      row.showInPdf[component.category] = component.unitPrice !== null && component.showInPdf;
     }
-    shared[key] = next;
+    if (!price.priceComponents?.length) row.legacyUnitPrice = price.unitPrice;
+    entries.set(row.key, row);
   }
-  for (const option of VEHICLE_OPTIONS) {
-    const rowA = savedRow(option.value, "A");
-    vehicleRates[option.value] = (rowA?.priceComponents?.length ? componentPrice(rowA, "vehicle") : null)
-      ?? (savedRow(option.value, "B") ? componentPrice(savedRow(option.value, "B")!, "vehicle") : null);
-  }
-  vehicleInPdf.value = selectedVehicles.value.some(vehicle => PLANS.some(key => {
-    const row = savedRow(vehicle, key);
-    return row ? componentVisible(row, "vehicle") : false;
-  }));
-  // Saved quotes may predate shared entry; tell the operator before the aligned values are confirmed.
-  hadInconsistentShared.value = selectedVehicles.value.some(vehicle => activePlans.value.some(key => !samePrice(savedRow(vehicle, key), built(vehicle, key))));
-  step.value = props.editable ? 0 : STEP_KEYS.length - 1;
 });
+// 候选随有效日程响应式更新：只补空行，从不删除或迁移已有价格。
+watch([visible, candidateKeys], () => {
+  if (!visible.value) return;
+  for (const item of candidateKeys.value)
+    if (!entries.has(item.key)) entries.set(item.key, emptyRow(item.vehicleType, item.hotelTier));
+}, { immediate: true });
 
-function emptySharedPlan(): SharedPlan {
-  return {
-    includesDriver: false,
-    includesGuide: false,
-    prices: { hotel: null, guide: null, attraction: null, meal: null },
-    showInPdf: { hotel: false, guide: false, attraction: false, meal: false },
-  };
+function emptyRow(vehicleType: string | null, hotelTier: WebsiteHotelTier | null): PriceRow {
+  const nulls = Object.fromEntries(PRICE_CATEGORIES.map(category => [category, null])) as PriceRow["prices"];
+  const hidden = Object.fromEntries(PRICE_CATEGORIES.map(category => [category, false])) as PriceRow["showInPdf"];
+  return { key: priceKey(vehicleType, hotelTier), vehicleType, hotelTier, prices: nulls, showInPdf: hidden, legacyUnitPrice: null };
 }
-function hasPlanData(price: WebsiteVehiclePrice | undefined) {
-  return Boolean(price && (price.unitPrice !== null || price.includesDriver || price.includesGuide || price.priceComponents?.some(component => component.unitPrice !== null)));
+function components(row: PriceRow): WebsitePriceComponent[] {
+  return PRICE_CATEGORIES.map(category => ({
+    category,
+    unitPrice: row.prices[category],
+    showInPdf: row.prices[category] !== null && row.showInPdf[category],
+  }));
 }
-function componentPrice(price: WebsiteVehiclePrice, category: WebsitePriceCategory) {
-  return price.priceComponents?.find(item => item.category === category)?.unitPrice ?? null;
+function isStale(row: PriceRow) {
+  return !currentKeys.value.has(row.key);
 }
-function componentVisible(price: WebsiteVehiclePrice, category: WebsitePriceCategory) {
-  return price.priceComponents?.find(item => item.category === category)?.showInPdf ?? false;
+function hasComponents(row: PriceRow) {
+  return PRICE_CATEGORIES.some(category => row.prices[category] !== null);
+}
+function hasPrice(row: PriceRow) {
+  return hasComponents(row) || row.legacyUnitPrice !== null;
+}
+function unitPrice(row: PriceRow) {
+  if (!hasComponents(row)) return row.legacyUnitPrice;
+  if (PRICE_CATEGORIES.some(category => isInvalidValue(row.prices[category]))) return null;
+  return componentUnitPrice(components(row));
 }
 function isInvalidValue(value: string | null) {
   return value !== null && !isValidVehiclePrice(value);
 }
-function isInvalidTotal(price: WebsiteVehiclePrice) {
-  return Boolean(price.priceComponents?.some(component => component.unitPrice !== null)) && price.unitPrice === null;
+function isInvalidTotal(row: PriceRow) {
+  return hasComponents(row) && unitPrice(row) === null;
 }
-/** Row to save for a vehicle × plan; a historical single price is kept until a breakdown is entered. */
-function built(vehicle: VehicleType, key: PlanKey): WebsiteVehiclePrice {
-  const entry = shared[key];
-  const vehicleRate = vehicleRates[vehicle] ?? null;
-  const components = PRICE_CATEGORIES.map((category) => {
-    const unitPrice = category === "vehicle" ? vehicleRate : entry.prices[category];
-    const showInPdf = category === "vehicle" ? vehicleInPdf.value : entry.showInPdf[category];
-    return { category, unitPrice, showInPdf: unitPrice !== null && showInPdf };
-  });
-  const base = { vehicleType: vehicle, plan: key, includesDriver: entry.includesDriver, includesGuide: entry.includesGuide };
-  if (components.every(component => component.unitPrice === null)) {
-    const legacy = plan.value.vehiclePrices.find(price => price.vehicleType === vehicle && price.plan === key && !price.priceComponents?.length);
-    return { ...base, unitPrice: legacy?.unitPrice ?? null, priceComponents: [] };
-  }
-  const valid = components.every(component => component.unitPrice === null || isValidVehiclePrice(component.unitPrice));
-  return { ...base, unitPrice: valid ? componentUnitPrice(components) : null, priceComponents: components };
+function setPrice(row: PriceRow, category: WebsitePriceCategory, value: string) {
+  // 空值保持 null（不计入），0 为有效金额。
+  row.prices[category] = value.trim() || null;
+  if (row.prices[category] === null) row.showInPdf[category] = false;
 }
-function samePrice(saved: WebsiteVehiclePrice | undefined, next: WebsiteVehiclePrice) {
-  const normalize = (price: WebsiteVehiclePrice | undefined) => JSON.stringify(price && hasPlanData(price)
-    ? [price.unitPrice, price.includesDriver, price.includesGuide, PRICE_CATEGORIES.map(category => [componentPrice(price, category), componentPrice(price, category) !== null && componentVisible(price, category)])]
-    : null);
-  return normalize(saved) === normalize(next);
+function removeRow(key: string) {
+  entries.delete(key);
 }
-function disablePlanB() {
-  planBEnabled.value = false;
-  shared.B = emptySharedPlan();
+function tierLabel(tier: WebsiteHotelTier | null) {
+  return tier ? t(`websiteItineraryUi.hotelTier${tier}`) : t("websiteItineraryUi.noAccommodation");
 }
-function planServices(key: PlanKey) {
-  return [shared[key].includesDriver && t("websiteReport.driver"), shared[key].includesGuide && t("websiteReport.guide")].filter(Boolean).join(" + ");
+function vehicleLabel(vehicleType: string | null) {
+  if (vehicleType === null) return t("websiteItineraryUi.noPrivateVehicle");
+  const option = VEHICLE_OPTIONS.find(item => item.value === vehicleType);
+  return option ? t(option.labelKey) : vehicleType;
 }
-function pdfSummary(key: PlanKey) {
-  const items = SHARED_CATEGORIES.filter(category => shared[key].showInPdf[category] && shared[key].prices[category] !== null)
-    .map(category => `${t(`websiteItineraryUi.priceCategories.${category}`)} ${shared[key].prices[category]}`);
-  if (vehicleInPdf.value && vehicleRateSummary.value) items.push(`${t("websiteItineraryUi.priceCategories.vehicle")}（${vehicleRateSummary.value}）`);
-  return items.join("；");
+function servicesText(driver: boolean, guide: boolean) {
+  return [driver && t("websiteReport.driver"), guide && t("websiteReport.guide")].filter(Boolean).join(" + ") || "-";
+}
+function componentsText(items: WebsitePriceComponent[]) {
+  return items.filter(item => item.unitPrice !== null)
+    .map(item => `${t(`websiteItineraryUi.priceCategories.${item.category}`)} ${item.unitPrice}`)
+    .join("；") || "-";
 }
 function apply() {
-  if (!props.editable || hasInvalidPrice.value) return;
-  plan.value.vehiclePrices = VEHICLE_OPTIONS.flatMap(option => PLANS.map(key => selectedVehicles.value.includes(option.value) && activePlans.value.includes(key)
-    ? built(option.value, key)
-    : { vehicleType: option.value, plan: key, includesDriver: false, includesGuide: false, unitPrice: null, priceComponents: [] }));
+  if (!props.editable || hasInvalidPrice.value || tooMany.value) return;
+  // 只保存有价格的组合；待调整组合保留原金额，直至操作人删除。
+  plan.value.vehiclePrices = rows.value.filter(hasPrice).map((row): WebsiteVehiclePriceInput => hasComponents(row)
+    ? { vehicleType: row.vehicleType, hotelTier: row.hotelTier, unitPrice: unitPrice(row), priceComponents: components(row) }
+    : { vehicleType: row.vehicleType, hotelTier: row.hotelTier, unitPrice: row.legacyUnitPrice, priceComponents: [] });
   visible.value = false;
 }
 </script>
 <style scoped lang="scss">
-.price-grid {
-  display: grid;
-  gap: 10px 24px;
-  align-items: center;
+.price-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
 
-  &--vehicle {
-    grid-template-columns: max-content minmax(0, 320px) minmax(0, 1fr);
+  th,
+  td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    text-align: left;
+    vertical-align: top;
   }
 
-  &__divider {
-    padding-top: 10px;
-    border-top: 1px solid var(--el-border-color-lighter);
+  th {
+    font-weight: 500;
+    color: var(--el-text-color-secondary);
+    white-space: nowrap;
+  }
+
+  td :deep(.el-input) {
+    min-width: 88px;
+  }
+
+  &__stale td {
+    background: var(--el-color-warning-light-9);
   }
 }
 </style>

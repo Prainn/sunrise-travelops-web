@@ -3,6 +3,7 @@ export type FeeState =
   "INCLUDED" | "EXCLUDED" | "OPTIONAL" | "RECOMMENDED" | "SELF_PAY" | "UNKNOWN";
 export type TransportMode = "hsr" | "private_vehicle" | "flight" | "other";
 export type VehicleType = "5_seat" | "7_seat" | "9_seat" | "14_seat" | "18_seat";
+export type WebsiteHotelTier = "A" | "B" | "C" | "D";
 export type ConfigStatus = "enabled" | "disabled";
 export interface ConfigBase {
   id: string;
@@ -171,7 +172,7 @@ export interface WebsiteLeg {
 }
 export interface WebsiteHotelStay {
   id: string;
-  tier: "A" | "B" | "C" | "D";
+  tier: WebsiteHotelTier;
   cityId: string;
   configHotelId: string | null;
   resourceId: string | null;
@@ -215,13 +216,34 @@ export interface WebsitePriceComponent {
   unitPrice: string | null;
   showInPdf: boolean;
 }
-export interface WebsiteVehiclePrice {
+/** 报价组合唯一键为 [vehicleType, hotelTier]；null 表示无专车/不住宿。 */
+export interface WebsiteVehiclePriceInput {
   priceComponents?: WebsitePriceComponent[];
+  vehicleType: string | null;
+  hotelTier: WebsiteHotelTier | null;
+  unitPrice: string | null;
+}
+/** 响应中的司机/导游由服务端按行程派生，只读，不回传。 */
+export interface WebsiteVehiclePrice extends WebsiteVehiclePriceInput {
+  includesDriver?: boolean;
+  includesGuide?: boolean;
+}
+/** 旧 A/B 方案价格只读参考，不能映射为酒店档次或提交。 */
+export interface WebsitePreviousPlanPrice {
+  vehicleType: VehicleType;
   plan: "A" | "B";
   includesDriver: boolean;
   includesGuide: boolean;
-  vehicleType: VehicleType;
   unitPrice: string | null;
+  priceComponents: WebsitePriceComponent[];
+}
+export interface WebsiteQuotationOptions {
+  vehicleTypes: (string | null)[];
+  hotelTiers: (WebsiteHotelTier | null)[];
+  includesDriver: boolean;
+  includesGuide: boolean;
+  driverDays: number[];
+  guideServices: { dayNumber: number; language: string }[];
 }
 export interface WebsiteItineraryInput {
   reorderDraft?: WebsiteReorderDraft | null;
@@ -234,9 +256,12 @@ export interface WebsiteItineraryInput {
   configVersion: number;
   days: WebsiteDay[];
   deletedDays?: { day: WebsiteDay; originalDate: string | null }[];
-  vehiclePrices: WebsiteVehiclePrice[];
+  vehiclePrices: WebsiteVehiclePriceInput[];
 }
 export interface WebsiteItinerary extends WebsiteItineraryInput {
+  vehiclePrices: WebsiteVehiclePrice[];
+  quotationOptions?: WebsiteQuotationOptions;
+  previousPlanPrices?: WebsitePreviousPlanPrice[];
   businessUnit: WebsiteBusinessUnit;
   id: string;
   inquiryId: string;
@@ -265,12 +290,24 @@ export interface WebsiteOutput {
   itinerary: WebsiteOutputDay[];
   inclusions: string[];
   exclusions: string[];
-  hotelOptions: Array<{ tier: "A" | "B" | "C" | "D"; city: string; hotel: string; roomType: string }>;
+  hotelOptions: Array<{
+    tier: WebsiteHotelTier;
+    city: string;
+    hotel: string;
+    roomType: string;
+    tierLabel?: string;
+    startDay?: number;
+    endDay?: number;
+    nights?: number;
+    breakfastIncluded?: boolean;
+  }>;
   // Schema 1 frozen outputs only contain vehicle/price; never infer missing facts.
   quotation: Array<{
     vehicle: string;
     price: string;
-    vehicleType?: VehicleType;
+    vehicleType?: string | null;
+    hotelTier?: WebsiteHotelTier | null;
+    hotelCategory?: string;
     plan?: "A" | "B";
     includesDriver?: boolean;
     includesGuide?: boolean;
@@ -285,6 +322,7 @@ export interface WebsiteOutput {
     included: string[];
   }>;
   mileage?: Array<{ route: string; distanceKm: string | null; durationMinutes: number | null; vehicleType?: string | null; transport: string }>;
+  quotationServices?: WebsiteQuotationOptions;
   notes: string[];
 }
 export interface WebsitePreview {
@@ -292,8 +330,8 @@ export interface WebsitePreview {
   sourceVersion: number;
   inquiryVersion: number;
   configVersion: number;
-  schemaVersion: 1 | 2 | 3 | 4;
-  validationVersion: 1 | 2 | 3 | 4;
+  schemaVersion: 1 | 2 | 3 | 4 | 5;
+  validationVersion: 1 | 2 | 3 | 4 | 5;
   issues: WebsiteValidation[];
   english: WebsiteOutput;
   chinese: WebsiteOutput;
@@ -325,7 +363,7 @@ export interface WebsiteInquiryLogChange {
     dayNumber?: number;
     nameZh?: string;
     nameEn?: string;
-    hotelTier?: "A" | "B" | "C" | "D";
+    hotelTier?: WebsiteHotelTier | null;
     mealSlot?: string;
     vehicleType?: string;
   };

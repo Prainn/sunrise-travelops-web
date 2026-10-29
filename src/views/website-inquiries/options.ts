@@ -93,8 +93,7 @@ export function emptyItinerary(
     departureTime: "",
     configVersion,
     days: [],
-    vehiclePrices: VEHICLE_OPTIONS.flatMap((option) => (["A", "B"] as const).map(plan => ({
-      vehicleType: option.value, plan, includesDriver: false, includesGuide: false, unitPrice: null,
-    }))),
+    // 报价组合由当前日程的车型×酒店档次派生，新行程不预置价格行。
+    vehiclePrices: [],
   };
 }

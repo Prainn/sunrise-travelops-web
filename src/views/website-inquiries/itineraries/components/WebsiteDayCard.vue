@@ -306,9 +306,10 @@ function toggleNoStay(checked: string | number | boolean) {
 
 function openValidationIssue(code: string) {
   if (!props.editable || props.saving) return;
-  if (code === "VAL-E06") {
+  if (code === "VAL-E06" || code === "VAL-E09") {
+    // E09：已报价档次缺当天酒店时打开新增（index -1）；缺双语名时编辑该酒店。
     const index = day.value.hotels.findIndex(hotel => !hotel.nameZh.trim() || !hotel.nameEn.trim());
-    emit("open-resource", "hotel", index);
+    if (index >= 0 || day.value.hotels.length < 4) emit("open-resource", "hotel", index);
   } else if (code === "VAL-E03" && !day.value.legs.length && day.value.departCityId !== day.value.endCityId) {
     emit("open-resource", "transport");
   } else if (code === "VAL-E04") {
