@@ -355,7 +355,7 @@
           </el-form-item>
         </el-col>
       </el-row>
-      <el-form-item :label="$t('tour.guideService.title')">
+      <el-form-item v-if="tour" :label="$t('tour.guideService.title')">
         <GuideServicesEditor
           ref="guideEditorRef"
           v-model="form.guideServices"

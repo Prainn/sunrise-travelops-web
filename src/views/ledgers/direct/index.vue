@@ -104,6 +104,13 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column :label="$t('ledger.direct.workflowStatus')" min-width="110" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.workflowStatus === 'operated' ? 'success' : row.workflowStatus === 'pending_confirmation' ? 'warning' : 'info'">
+              {{ $t(`ledger.direct.workflowStatuses.${row.workflowStatus}`) }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column
           v-for="field in BOOLEAN_FIELDS"
           :key="field"
@@ -154,13 +161,6 @@
           show-overflow-tooltip
           :formatter="textOrDash"
         />
-        <el-table-column :label="$t('ledger.direct.workflowStatus')" min-width="110" align="center">
-          <template #default="{ row }">
-            <el-tag :type="row.workflowStatus === 'operated' ? 'success' : row.workflowStatus === 'pending_confirmation' ? 'warning' : 'info'">
-              {{ $t(`ledger.direct.workflowStatuses.${row.workflowStatus}`) }}
-            </el-tag>
-          </template>
-        </el-table-column>
         <el-table-column
           :label="$t('common.actions')"
           width="220"

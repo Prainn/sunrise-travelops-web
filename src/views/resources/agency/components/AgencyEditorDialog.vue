@@ -163,6 +163,13 @@ const rules = computed<FormRules>(() => ({
   coordinatorId: [
     { required: true, message: t("resource.agencyCoordinatorRequired"), trigger: "change" },
   ],
+  countryItemId: [
+    {
+      required: !props.isEditing,
+      message: t("resource.fieldRequired", { field: t("common.countryOrRegion") }),
+      trigger: "change",
+    },
+  ],
   shortName: [
     {
       required: true,

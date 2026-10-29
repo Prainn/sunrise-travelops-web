@@ -12,19 +12,61 @@
         </el-select>
       </el-form-item>
     </FilterBar>
-    <FilterBar v-if="activeTab === 'routes'" @reset="resetRouteSearch">
+    <FilterBar @reset="resetSearch">
       <el-form-item class="filter-bar__wide" :label="$t('common.keywords')">
         <el-input
-          v-model="routeKeyword"
+          v-model="keyword"
           clearable
-          :placeholder="$t('websiteReport.routeSearch')"
-          @keyup.enter="searchRoutes"
+          :maxlength="100"
+          :placeholder="$t(activeTab === 'routes' ? 'websiteReport.routeSearch' : 'websiteConfig.searchPlaceholder')"
         />
       </el-form-item>
-      <template #actions>
-        <el-button type="primary" @click="searchRoutes">
-          {{ $t('common.search') }}
-        </el-button>
+      <el-form-item v-if="hasCityFilter" :label="$t('websiteConfig.city')">
+        <WebsiteConfigSelect
+          v-model="cityId"
+          group="cities"
+          :business-unit="businessUnit"
+          :version="result?.version"
+          :labels="cityLabels"
+          @labels="Object.assign(cityLabels, $event)"
+        />
+      </el-form-item>
+      <template v-if="activeTab === 'routes'">
+        <el-form-item :label="$t('websiteConfig.routes.fromCity')">
+          <WebsiteConfigSelect
+            v-model="fromCityId"
+            group="cities"
+            :business-unit="businessUnit"
+            :version="result?.version"
+            :labels="cityLabels"
+            @labels="Object.assign(cityLabels, $event)"
+          />
+        </el-form-item>
+        <el-form-item :label="$t('websiteConfig.routes.toCity')">
+          <WebsiteConfigSelect
+            v-model="toCityId"
+            group="cities"
+            :business-unit="businessUnit"
+            :version="result?.version"
+            :labels="cityLabels"
+            @labels="Object.assign(cityLabels, $event)"
+          />
+        </el-form-item>
+        <el-form-item :label="$t('websiteItineraryUi.transportMode')">
+          <el-select
+            v-model="mode"
+            autocomplete="new-password"
+            clearable
+            :placeholder="$t('common.all')"
+          >
+            <el-option
+              v-for="option in TRANSPORT_OPTIONS"
+              :key="option.value"
+              :value="option.value"
+              :label="$t(option.labelKey)"
+            />
+          </el-select>
+        </el-form-item>
       </template>
     </FilterBar>
     <SectionCard fill>
@@ -95,7 +137,8 @@
   </PageShell>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onScopeDispose, ref, watch } from "vue";
+import { useDebounceFn } from "@vueuse/core";
 import { onBeforeRouteLeave } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -108,10 +151,11 @@ import Pagination from "@/components/Pagination/index.vue";
 import { websiteErrorMessage, websiteService } from "@/services/website.service";
 import { useUserStore } from "@/stores/user";
 import { hasUserPermission } from "@/utils/permission";
+import { TRANSPORT_OPTIONS } from "@/views/website-inquiries/options";
 import type {
   WebsiteBusinessUnit, WebsiteConfigGroup, WebsiteConfigRecord, WebsiteConfigPage,
   WebsiteConfigEditorProps, WebsiteCity, WebsiteAttraction, WebsiteConfigHotel,
-  WebsiteRoute, WebsitePattern, WebsiteSkeleton, WebsiteTemplate,
+  WebsiteRoute, WebsitePattern, WebsiteSkeleton, WebsiteTemplate, WebsiteConfigListQuery, TransportMode,
 } from "@/types/website";
 import WebsiteConfigCities from "./components/WebsiteConfigCities.vue";
 import WebsiteConfigAttractions from "./components/WebsiteConfigAttractions.vue";
@@ -120,6 +164,7 @@ import WebsiteConfigRoutes from "./components/WebsiteConfigRoutes.vue";
 import WebsiteConfigPatterns from "./components/WebsiteConfigPatterns.vue";
 import WebsiteConfigSkeletons from "./components/WebsiteConfigSkeletons.vue";
 import WebsiteConfigTemplates from "./components/WebsiteConfigTemplates.vue";
+import WebsiteConfigSelect from "./components/WebsiteConfigSelect.vue";
 defineOptions({ name: "WebsiteResources" });
 const user = useUserStore();
 const { t } = useI18n();
@@ -127,10 +172,47 @@ const businessUnit = ref<WebsiteBusinessUnit>(user.userInfo.scope === "linxi" ? 
 const activeTab = ref<WebsiteConfigGroup>("cities");
 const result = ref<WebsiteConfigPage>();
 const page = ref(1);
-const routeKeyword = ref("");
-const appliedRouteKeyword = ref("");
-function searchRoutes() { appliedRouteKeyword.value = routeKeyword.value.trim(); page.value = 1; void refreshPage(); }
-function resetRouteSearch() { routeKeyword.value = ""; searchRoutes(); }
+const keyword = ref("");
+const cityId = ref("");
+const fromCityId = ref("");
+const toCityId = ref("");
+const mode = ref<TransportMode | "">("");
+const cityLabels = ref<Record<string, string>>({});
+const hasCityFilter = computed(() => ["attractions", "hotels", "patterns"].includes(activeTab.value));
+type SearchFilters = Pick<WebsiteConfigListQuery, "keyword" | "cityId" | "fromCityId" | "toCityId" | "mode">;
+const searchFilters = computed<SearchFilters>(() => ({
+  ...(keyword.value.trim() ? { keyword: keyword.value.trim() } : {}),
+  ...(hasCityFilter.value && cityId.value ? { cityId: cityId.value } : {}),
+  ...(activeTab.value === "routes" ? {
+    ...(fromCityId.value ? { fromCityId: fromCityId.value } : {}),
+    ...(toCityId.value ? { toCityId: toCityId.value } : {}),
+    ...(mode.value ? { mode: mode.value } : {}),
+  } : {}),
+}));
+const appliedFilters = ref<SearchFilters>({});
+let disposed = false;
+onScopeDispose(() => { disposed = true; });
+function searchRecords() {
+  if (disposed || JSON.stringify(searchFilters.value) === JSON.stringify(appliedFilters.value)) return;
+  appliedFilters.value = { ...searchFilters.value };
+  page.value = 1;
+  void refreshPage();
+}
+const requestSearch = useDebounceFn(searchRecords, 300);
+watch(searchFilters, () => { void requestSearch(); });
+function clearSearch() {
+  keyword.value = "";
+  cityId.value = "";
+  fromCityId.value = "";
+  toCityId.value = "";
+  mode.value = "";
+}
+function resetSearch() {
+  clearSearch();
+  appliedFilters.value = {};
+  page.value = 1;
+  void refreshPage();
+}
 const pageSize = ref(20);
 const loading = ref(false);
 const saving = ref(false);
@@ -149,7 +231,7 @@ async function loadPage() {
   try {
     const data = await websiteService.configRecords(activeTab.value, {
       businessUnit: businessUnit.value, page: page.value, pageSize: pageSize.value,
-      ...(activeTab.value === "routes" ? { keyword: appliedRouteKeyword.value } : {}),
+      ...appliedFilters.value,
     });
     if (current !== requestId) return;
     const lastPage = Math.max(1, Math.ceil(data.total / pageSize.value));
@@ -205,6 +287,9 @@ async function deleteRecord(id: string): Promise<boolean> {
   }
 }
 watch([businessUnit, activeTab], () => {
+  clearSearch();
+  appliedFilters.value = {};
+  cityLabels.value = {};
   page.value = 1;
   result.value = undefined;
   void loadPage();

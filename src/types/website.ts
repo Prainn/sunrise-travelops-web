@@ -98,6 +98,9 @@ export interface WebsiteConfigListQuery {
   pageSize: number;
   keyword?: string;
   cityId?: string;
+  fromCityId?: string;
+  toCityId?: string;
+  mode?: TransportMode;
   excludeId?: string;
 }
 export interface WebsiteConfigEditorProps {

@@ -44,7 +44,7 @@ import type { WebsiteBusinessUnit, WebsiteConfigGroup, WebsiteConfigOption } fro
 const props = withDefaults(defineProps<{
   modelValue: T;
   group: WebsiteConfigGroup;
-  version: number;
+  version?: number;
   businessUnit: WebsiteBusinessUnit;
   labels: Record<string, string>;
   cityId?: string;

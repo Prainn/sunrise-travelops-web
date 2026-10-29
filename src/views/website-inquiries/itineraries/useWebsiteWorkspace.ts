@@ -20,6 +20,7 @@ import type {
 import { cloneWebsiteDraft, emptyDay, emptyItinerary } from "../options";
 import { addDays } from "@/utils";
 import { printWebsiteQuotation } from "./print";
+import { downloadWordDocument } from "@/views/inquiries/itineraries/docx";
 
 export function useWebsiteWorkspace() {
   const route = useRoute();
@@ -285,8 +286,8 @@ export function useWebsiteWorkspace() {
       saving.value = false;
     }
   }
-  async function confirm(codes: string[]) {
-    if (!preview.value || !plan.value || !inquiry.value || !canConfirm.value || saving.value || dirty.value) return;
+  async function confirm(codes: string[]): Promise<boolean> {
+    if (!preview.value || !plan.value || !inquiry.value || !canConfirm.value || saving.value || dirty.value) return false;
     const confirmedPlan = plan.value;
     const confirmedInquiry = inquiry.value;
     saving.value = true;
@@ -310,8 +311,10 @@ export function useWebsiteWorkspace() {
       if (results.some((result) => result.status === "rejected"))
         ElMessage.warning(t("itinerary.confirmedRefreshFailed"));
       ElMessage.success(t("websiteWorkspace.quotationConfirmed"));
+      return true;
     } catch (cause) {
       showError(cause);
+      return false;
     } finally {
       saving.value = false;
     }
@@ -322,6 +325,37 @@ export function useWebsiteWorkspace() {
     try {
       await websiteService.recordDownload(quotation.value.itineraryId);
       await printWebsiteQuotation(quotation.value, language);
+    } catch (cause) {
+      showError(cause);
+    } finally {
+      saving.value = false;
+    }
+  }
+  async function exportWord(language: "en" | "zh", codes: string[]) {
+    if (!plan.value || !preview.value || !canDownload.value || saving.value) return;
+    if (plan.value.status === "draft") {
+      if (!canConfirm.value || dirty.value || preview.value.issues.some(issue => issue.severity === "ERROR")) return;
+      const warnings = [...new Set(preview.value.issues.filter(issue => issue.severity === "WARNING").map(issue => issue.code))];
+      if (warnings.length !== codes.length || warnings.some(code => !codes.includes(code))) return;
+      saving.value = true;
+      try {
+        await ElMessageBox.confirm(t("itinerary.confirmFreezeWord"), t("itinerary.exportWord"), {
+          confirmButtonText: t("common.confirm"), cancelButtonText: t("common.cancel"), type: "warning",
+        });
+      } catch {
+        return;
+      } finally {
+        saving.value = false;
+      }
+      if (!(await confirm(codes))) return;
+    }
+    if (!quotation.value || !canDownload.value) return;
+    saving.value = true;
+    try {
+      const { generateWebsiteWordDocument } = await import("./docx");
+      const file = await generateWebsiteWordDocument(quotation.value, language);
+      await websiteService.recordDownload(quotation.value.itineraryId);
+      downloadWordDocument(file);
     } catch (cause) {
       showError(cause);
     } finally {
@@ -398,6 +432,7 @@ export function useWebsiteWorkspace() {
     openPreview,
     confirm,
     print,
+    exportWord,
     addDay,
     removeDay,
     moveDay,

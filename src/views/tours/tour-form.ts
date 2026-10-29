@@ -279,6 +279,16 @@ export function tourSchedule(form: TourFormState): TourSchedule {
     : { scheduleMode: "flight", pickupFlightId: form.pickupFlightId, dropFlightId: form.dropFlightId };
 }
 
+/**
+ * 导游专用保存保留当前团资料，不重提手工来源或重建来源快照。
+ */
+export function guideAssignmentRequest(tour: TourRecord, rows: GuideServiceRow[]): TourUpdateRequest {
+  return {
+    ...tourInput({ ...tourFormFromRecord(tour), guideServices: rows }),
+    version: tour.version,
+  };
+}
+
 function tourInput(form: TourFormState): TourInput {
   return {
     operatorId: form.operatorId,

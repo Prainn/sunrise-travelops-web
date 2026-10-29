@@ -64,6 +64,14 @@
       />
     </template>
     <template #footer>
+      <el-button
+        v-if="canDownload && (confirmed || canConfirm)"
+        :loading="loading"
+        :disabled="!preview || (!confirmed && (hasErrors || acknowledged.length !== warningCodes.length))"
+        @click="emit('export-word', language, acknowledged)"
+      >
+        {{ $t("itinerary.exportWord") }}
+      </el-button>
       <el-button :disabled="loading" @click="emit('update:modelValue', false)">
         {{ $t("common.close") }}
       </el-button>
@@ -105,6 +113,7 @@ const emit = defineEmits<{
   "update:modelValue": [value: boolean];
   confirm: [codes: string[]];
   print: [language: "en" | "zh"];
+  "export-word": [language: "en" | "zh", codes: string[]];
   "locate-issue": [issue: WebsiteValidation];
 }>();
 const language = ref<"en" | "zh">("en");

@@ -62,19 +62,28 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
   const quotationV5 = () => {
     const pax = output.quotation[0]?.pax;
     const meta = `<p class="quote-meta">${escapeHtml(pax == null ? text("guestsPending") : text("guests", { pax }))}</p>`;
-    const head = `<thead><tr>${(["vehicle", "hotelCategory", "perPerson", "groupTotal"] as const).map(key => `<th>${escapeHtml(text(key))}</th>`).join("")}</tr></thead>`;
-    // 服务端已按档次、车型自然序排序；金额取冻结值，不重算。
-    const options = output.quotation.map(quote => `<tbody class="quote-option"><tr>
-      <td>${escapeHtml(quote.vehicle)}</td><td>${escapeHtml(quote.hotelCategory ?? "")}</td>
-      <td>RMB ${escapeHtml(quote.unitPrice ?? "")}</td><td>${quote.totalPrice == null ? escapeHtml(text("toBeConfirmed")) : `RMB ${escapeHtml(quote.totalPrice)}`}</td></tr>
-      ${(quote.priceComponents ?? []).map(component => `<tr class="component"><td colspan="2">${escapeHtml(text("componentPerPerson", { category: componentLabels[component.category] }))}</td><td>RMB ${escapeHtml(component.unitPrice)}</td><td></td></tr>`).join("")}</tbody>`).join("");
-    const body = options || `<tbody><tr><td colspan="4">${escapeHtml(text("noQuotation"))}</td></tr></tbody>`;
-    return `${meta}<table class="quotation quotation-v5"><colgroup>${[28, 28, 22, 22].map(width => `<col style="width:${width}%">`).join("")}</colgroup>${head}${body}</table>`;
+    const money = (value: string) => escapeHtml(value.replace(/\B(?=(\d{3})+(?!\d))/g, ","));
+    const groups = new Map<string, WebsiteOutput["quotation"]>();
+    for (const quote of output.quotation) {
+      const category = quote.hotelCategory ?? "";
+      const group = groups.get(category) ?? [];
+      group.push(quote);
+      groups.set(category, group);
+    }
+    // 保留服务端顺序及冻结金额，仅按酒店档次分表，不重算或补分项。
+    const tables = [...groups].map(([category, rows]) => {
+      const head = `<thead><tr><th colspan="3" class="quote-category">${escapeHtml(category)}</th></tr><tr>${(["vehicle", "perPerson", "groupTotal"] as const).map(key => `<th>${escapeHtml(text(key))}</th>`).join("")}</tr></thead>`;
+      const body = rows.map(quote => `<tr class="quote-option"><td class="quote-vehicle">${escapeHtml(quote.vehicle)}</td>
+        <td><strong>RMB ${money(quote.unitPrice ?? "")}</strong>${(quote.priceComponents ?? []).map(component => `<p class="quote-breakdown">${escapeHtml(text("componentPerPerson", { category: componentLabels[component.category] }))}: RMB ${money(component.unitPrice)}</p>`).join("")}</td>
+        <td>${quote.totalPrice == null ? escapeHtml(text("toBeConfirmed")) : `RMB ${money(quote.totalPrice)}`}</td></tr>`).join("");
+      return `<table class="quotation quotation-v5"><colgroup>${[34, 33, 33].map(width => `<col style="width:${width}%">`).join("")}</colgroup>${head}<tbody>${body}</tbody></table>`;
+    }).join("");
+    return `${meta}${tables || `<p class="empty">${escapeHtml(text("noQuotation"))}</p>`}`;
   };
-  const notes = `<table class="notes"><tbody><tr><th class="label">${text("notes")}</th><td>${output.notes.map((note, index) => `<p>${index + 1}. ${escapeHtml(note)}</p>`).join("")}</td></tr></tbody></table>`;
   const noShopping = output.noShopping
-    ? `<table class="no-shopping"><tbody><tr><td><strong>${escapeHtml(en ? output.noShopping.replace(/^no shopping([.!]?)$/i, "No shopping$1") : output.noShopping)}</strong></td></tr></tbody></table>`
+    ? `<tr class="no-shopping"><td colspan="2"><strong>${escapeHtml(en ? output.noShopping.replace(/^no shopping([.!]?)$/i, "No shopping$1") : output.noShopping)}</strong></td></tr>`
     : "";
+  const notes = `<table class="notes"><tbody><tr><th class="label">${text("notes")}</th><td>${output.notes.map((note, index) => `<p>${index + 1}. ${escapeHtml(note)}</p>`).join("")}</td></tr>${noShopping}</tbody></table>`;
   const cities = [...new Set(output.hotelOptions.map(row => row.city))];
   const hotelTables: string[] = [];
   for (let index = 0; index < cities.length; index += 4) {
@@ -142,15 +151,19 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
       .pax { font-weight: bold; }
       .label { width: 13%; }
       .quotation-notes { break-inside: avoid; }
-      .notes { margin-top: -.5pt; }
+      .notes { margin-top: 2mm; }
       .notes th { font-size: 9pt; }
-      .no-shopping { margin-top: -.5pt; }
       .hotels { margin-bottom: 2mm; }
       .hotels th { text-align: left; padding: 2mm 1.8mm; font-size: 9pt; }
       .hotels td { padding: 1mm 1.8mm 4mm; }
       .quote-meta { margin: 0 1mm 1mm; font: bold 7.5pt/1.5 Arial, "PingFang SC", sans-serif; }
-      .quotation-v5 td:nth-child(n+3) { text-align: right; }
-      .quotation-v5 .component td { padding-left: 5mm; font-size: 7pt; }
+      .quotation-v5 { margin: 0 0 2.5mm; font-size: 8.5pt; }
+      .quotation-v5 th, .quotation-v5 td { border-color: #9ca3af; padding: 1.5mm 2mm; vertical-align: middle; }
+      .quotation-v5 th { font-size: 8pt; }
+      .quotation-v5 td { text-align: center; font-variant-numeric: tabular-nums; }
+      .quotation-v5 .quote-category { font-size: 9pt; background: #f3f4f6; }
+      .quotation-v5 .quote-vehicle { text-align: left; font-weight: bold; background: #f9fafb; }
+      .quotation-v5 .quote-breakdown { margin-top: .8mm; font-size: 7.5pt; color: #4b5563; }
       .quote-option { break-inside: avoid; }
       .hotels-v5 { margin-bottom: 2mm; font-family: Arial, "PingFang SC", sans-serif; }
       .hotels-v5 th, .hotels-v5 td { line-height: 1.5; }
@@ -179,7 +192,7 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
     </div></header>
     <table class="print-layout"><thead><tr><td></td></tr></thead><tbody><tr><td><main><h2>${text(headings[0])}</h2><table class="itinerary"><colgroup>${[8, 11, 8, 45, 13, 15].map(width => `<col style="width:${width}%">`).join("")}</colgroup><thead><tr>${columns.map(column => `<th>${escapeHtml(text(column))}</th>`).join("")}</tr></thead><tbody>${dayRows}</tbody></table>
     <h2>${text(headings[1])}</h2>${standard}
-    <h2>${text(headings[2])}</h2>${v5 ? quotationV5() : quotes}<div class="quotation-notes">${notes}${noShopping}</div>
+    <h2>${text(headings[2])}</h2>${v5 ? quotationV5() : quotes}<div class="quotation-notes">${notes}</div>
     <h2>${text(headings[3])}</h2>${v5 ? hotelsV5() : hotelTables.join("")}
     ${mileage.length ? `<h2>${text(headings[4])}</h2><table class="mileage"><colgroup>${[15, 8, 10, 17, 15, 8, 10, 17].map(width => `<col style="width:${width}%">`).join("")}</colgroup><thead><tr>${[...mileageHead, ...mileageHead].map(column => `<th>${column}</th>`).join("")}</tr></thead><tbody>${mileages.join("")}</tbody></table><p class="estimate">${en ? "Distances and travel times are estimates." : "里程及行车时间均为预计值。"}</p>` : ""}
     </main></td></tr></tbody><tfoot><tr><td></td></tr></tfoot></table><footer class="brand-footer">昆明霖熹旅行社有限公司<br>Kunming&emsp;Lynxtour Travel Agency Co., Ltd.</footer>
