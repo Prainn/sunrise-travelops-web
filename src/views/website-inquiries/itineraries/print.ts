@@ -22,10 +22,8 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
   // Schema 5：车型×酒店档次报价；历史 1–4 按其冻结结构原样渲染（保留方案分支）。
   const v5 = schemaVersion >= 5;
   const text = (key: PrintTextKey, params?: Record<string, string | number>) => printText(language, key, params);
-  const headings = en
-    ? ["1.ITINERARY", "2.TEAM STANDARD", "3.QUOTATION", "4.HOTEL", "5.MILEAGE"]
-    : ["1.行程", "2.服务标准", "3.报价", "4.酒店", "5.里程／耗时"];
-  const columns = en ? ["D.", "DEPART.", "T.", "SIGHT-SEEING REGION", "HOTEL", "M"] : ["天数", "出发", "交通", "游览", "酒店", "餐食"];
+  const headings = ["itineraryHeading", "standardsHeading", "quotationHeading", "hotelHeading", "mileageHeading"] as const;
+  const columns = ["dayColumn", "departureColumn", "transportColumn", "sightseeingColumn", "overnightColumn", "mealsColumn"] as const;
   const paragraphs = (values: string[]) => values.map(value => `<p>${escapeHtml(value)}</p>`).join("");
   const dayRows = output.itinerary.map(day => `<tr>${[day.day, day.depart, day.transportation, day.sightseeing, day.hotel, day.meal]
     .map((value, index) => `<td class="${index === 3 ? "sightseeing" : "center"}">${escapeHtml(value)}</td>`).join("")}</tr>`).join("");
@@ -36,12 +34,12 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
   const standardWidths = v5 ? [12, 7, 35.5, 10, 35.5] : [12, 7, 38.5, 6.5, 36];
   const standard = output.teamStandard
     ? `<table class="standards"><colgroup>${standardWidths.map(width => `<col style="width:${width}%">`).join("")}</colgroup><tbody>
-      <tr><th rowspan="3">${en ? "INCLUDE" : "包含"}</th><th>${en ? "Hotel" : "酒店"}</th><td>${included("hotel")}</td><th>${en ? "Meal" : "餐食"}</th><td>${included("meal")}</td></tr>
-      <tr><th>${en ? "Entry" : "门票"}</th><td>${included("entry")}</td><th>${escapeHtml(serviceLabel)}</th><td>${included("service")}</td></tr>
+      <tr><th rowspan="3">${text("includes")}</th><th>${en ? "Hotel" : "酒店"}</th><td>${included("hotel")}</td><th>${text("mealsColumn")}</th><td>${included("meal")}</td></tr>
+      <tr><th>${text("admission")}</th><td>${included("entry")}</td><th>${escapeHtml(serviceLabel)}</th><td>${included("service")}</td></tr>
       <tr><th>${escapeHtml(transportLabel)}</th><td colspan="3">${included("transport")}</td></tr>
-      <tr><th>${en ? "EXCLUDES" : "不含"}</th><td colspan="4">${paragraphs(output.exclusions)}</td></tr>
+      <tr><th>${text("excludes")}</th><td colspan="4">${paragraphs(output.exclusions)}</td></tr>
       </tbody></table>`
-    : `<table><tbody><tr><th class="label">${en ? "INCLUDE" : "包含"}</th><td>${paragraphs(output.inclusions)}</td></tr><tr><th>${en ? "EXCLUDES" : "不含"}</th><td>${paragraphs(output.exclusions)}</td></tr></tbody></table>`;
+    : `<table><tbody><tr><th class="label">${text("includes")}</th><td>${paragraphs(output.inclusions)}</td></tr><tr><th>${text("excludes")}</th><td>${paragraphs(output.exclusions)}</td></tr></tbody></table>`;
   const quoteGroups = new Map<string, WebsiteOutput["quotation"]>();
   for (const quote of output.quotation) {
     const rows = quoteGroups.get(quote.vehicle) ?? [];
@@ -73,7 +71,10 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
     const body = options || `<tbody><tr><td colspan="4">${escapeHtml(text("noQuotation"))}</td></tr></tbody>`;
     return `${meta}<table class="quotation quotation-v5"><colgroup>${[28, 28, 22, 22].map(width => `<col style="width:${width}%">`).join("")}</colgroup>${head}${body}</table>`;
   };
-  const notes = `<table class="notes"><tbody><tr><th class="label">${en ? "NOTES" : "说明"}</th><td>${output.notes.map((note, index) => `<p>${index + 1}. ${escapeHtml(note)}</p>`).join("")}</td></tr></tbody></table>`;
+  const notes = `<table class="notes"><tbody><tr><th class="label">${text("notes")}</th><td>${output.notes.map((note, index) => `<p>${index + 1}. ${escapeHtml(note)}</p>`).join("")}</td></tr></tbody></table>`;
+  const noShopping = output.noShopping
+    ? `<table class="no-shopping"><tbody><tr><td><strong>${escapeHtml(en ? output.noShopping.replace(/^no shopping([.!]?)$/i, "No shopping$1") : output.noShopping)}</strong></td></tr></tbody></table>`
+    : "";
   const cities = [...new Set(output.hotelOptions.map(row => row.city))];
   const hotelTables: string[] = [];
   for (let index = 0; index < cities.length; index += 4) {
@@ -98,7 +99,7 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
       return `<table class="hotels-v5"><colgroup>${[28, 36, 20, 16].map(width => `<col style="width:${width}%">`).join("")}</colgroup><thead><tr><th colspan="4" class="tier">${escapeHtml(rows[0]!.tierLabel ?? tier)}</th></tr>${head}</thead><tbody>${body}</tbody></table>`;
     }).join("");
   };
-  const mileageHead = en ? ["ITINERARY", "MILES", "TIME", "T"] : ["路线", "里程", "预计耗时", "交通"];
+  const mileageHead = [text("routeColumn"), text("distanceColumn"), text("timeColumn"), text("transportColumn")];
   const mileages: string[] = [];
   const mileage = output.mileage ?? [];
   const mileageCells = (row: (typeof mileage)[number] | undefined) => {
@@ -131,6 +132,7 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
       tr { break-inside: avoid; }
       .center { text-align: center; vertical-align: middle; }
       .sightseeing { text-align: justify; }
+      .itinerary th { overflow-wrap: normal; padding-left: .7mm; padding-right: .7mm; }
       .itinerary td:first-child { font-family: Arial, sans-serif; font-weight: bold; }
       .itinerary td:last-child { text-align: left; overflow-wrap: normal; word-break: normal; line-height: 1.6; }
       .standards th { overflow-wrap: normal; }
@@ -139,8 +141,10 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
       .plan { color: #0000ff; }
       .pax { font-weight: bold; }
       .label { width: 13%; }
+      .quotation-notes { break-inside: avoid; }
       .notes { margin-top: -.5pt; }
-      .notes th { font-size: 13pt; }
+      .notes th { font-size: 9pt; }
+      .no-shopping { margin-top: -.5pt; }
       .hotels { margin-bottom: 2mm; }
       .hotels th { text-align: left; padding: 2mm 1.8mm; font-size: 9pt; }
       .hotels td { padding: 1mm 1.8mm 4mm; }
@@ -169,15 +173,15 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
       }
     </style></head><body>
     <header class="brand-header"><img src="${logo}" alt=""><div class="brand-contact">
-      <p><strong>电话/TEL:</strong> +86-871-63218088 63218099&emsp; <strong>传真/FAX:</strong> +86-871-63218066&emsp; <strong>邮编/PC:</strong> 650011</p>
+      <p><strong>电话/Tel:</strong> +86-871-63218088 63218099&emsp; <strong>传真/Fax:</strong> +86-871-63218066&emsp; <strong>邮编/Postcode:</strong> 650011</p>
       <p><strong>地址 /</strong> 中国 · 云南省 · 昆明市 · 北京路 1079#· 欣都龙城购物中心</p>
-      <p><strong>ADD/</strong>Xindu Longcheng VC Park, No.1079 Beijing Rd., Kunming, Yunnan</p>
+      <p><strong>Address: </strong>Xindu Longcheng VC Park, No. 1079 Beijing Rd., Kunming, Yunnan</p>
     </div></header>
-    <table class="print-layout"><thead><tr><td></td></tr></thead><tbody><tr><td><main><h2>${headings[0]}</h2><table class="itinerary"><colgroup>${[8, 11, 8, 45, 13, 15].map(width => `<col style="width:${width}%">`).join("")}</colgroup><thead><tr>${columns.map(column => `<th>${column}</th>`).join("")}</tr></thead><tbody>${dayRows}</tbody></table>
-    <h2>${headings[1]}</h2>${standard}
-    <h2>${headings[2]}</h2>${v5 ? quotationV5() : quotes}${notes}
-    <h2>${headings[3]}</h2>${v5 ? hotelsV5() : hotelTables.join("")}
-    ${mileage.length ? `<h2>${headings[4]}</h2><table class="mileage"><colgroup>${[15, 8, 10, 17, 15, 8, 10, 17].map(width => `<col style="width:${width}%">`).join("")}</colgroup><thead><tr>${[...mileageHead, ...mileageHead].map(column => `<th>${column}</th>`).join("")}</tr></thead><tbody>${mileages.join("")}</tbody></table><p class="estimate">${en ? "Distances and travel times are estimates." : "里程及行车时间均为预计值。"}</p>` : ""}
+    <table class="print-layout"><thead><tr><td></td></tr></thead><tbody><tr><td><main><h2>${text(headings[0])}</h2><table class="itinerary"><colgroup>${[8, 11, 8, 45, 13, 15].map(width => `<col style="width:${width}%">`).join("")}</colgroup><thead><tr>${columns.map(column => `<th>${escapeHtml(text(column))}</th>`).join("")}</tr></thead><tbody>${dayRows}</tbody></table>
+    <h2>${text(headings[1])}</h2>${standard}
+    <h2>${text(headings[2])}</h2>${v5 ? quotationV5() : quotes}<div class="quotation-notes">${notes}${noShopping}</div>
+    <h2>${text(headings[3])}</h2>${v5 ? hotelsV5() : hotelTables.join("")}
+    ${mileage.length ? `<h2>${text(headings[4])}</h2><table class="mileage"><colgroup>${[15, 8, 10, 17, 15, 8, 10, 17].map(width => `<col style="width:${width}%">`).join("")}</colgroup><thead><tr>${[...mileageHead, ...mileageHead].map(column => `<th>${column}</th>`).join("")}</tr></thead><tbody>${mileages.join("")}</tbody></table><p class="estimate">${en ? "Distances and travel times are estimates." : "里程及行车时间均为预计值。"}</p>` : ""}
     </main></td></tr></tbody><tfoot><tr><td></td></tr></tfoot></table><footer class="brand-footer">昆明霖熹旅行社有限公司<br>Kunming&emsp;Lynxtour Travel Agency Co., Ltd.</footer>
     </body></html>`;
 }

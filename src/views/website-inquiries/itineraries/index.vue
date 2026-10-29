@@ -310,6 +310,7 @@
           v-model:plan="plan"
           :editable="editable"
           :dirty="dirty"
+          @applied="save"
         />
         <WebsiteGuideDialog
           :model-value="resourceDialog?.kind === 'guide'"

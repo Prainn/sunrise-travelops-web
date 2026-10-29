@@ -157,6 +157,7 @@ declare module 'vue' {
     RowActions: typeof import('./../src/components/RowActions/index.vue')['default']
     SectionCard: typeof import('./../src/components/SectionCard/index.vue')['default']
     ShengxuLedgerDialog: typeof import('./../src/views/ledgers/shengxu/components/ShengxuLedgerDialog.vue')['default']
+    StrictInputNumber: typeof import('./../src/components/StrictInputNumber/index.vue')['default']
     SwitchAccountDialog: typeof import('./../src/layouts/components/SwitchAccountDialog.vue')['default']
     TableToolbar: typeof import('./../src/components/TableToolbar/index.vue')['default']
     ThemeSwitch: typeof import('./../src/components/ThemeSwitch/index.vue')['default']

@@ -123,18 +123,16 @@
         @edit="(hotelIndex) => emit('open-resource', 'hotel', hotelIndex)"
       />
       <WebsiteDayMealsServices
-        v-if="day.services.length"
         ref="servicesCard"
         v-model:day="day"
         :editable="editable"
         services-only
-        @add-service="addService"
       />
     </el-form>
   </ItineraryDayCardFrame>
 </template>
 <script setup lang="ts">
-import { computed, nextTick, useTemplateRef } from "vue";
+import { computed, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { Bowl, Location, OfficeBuilding, Service, User, Van } from "@element-plus/icons-vue";
@@ -255,25 +253,12 @@ const guideSummaries = computed(() =>
     }]
     : [],
 );
-function addService() {
-  day.value.services.push({
-    id: crypto.randomUUID(),
-    nameZh: "",
-    nameEn: "",
-    appears: true,
-    feeState: "UNKNOWN",
-  });
-}
-async function selectResource(key: string) {
+function selectResource(key: string) {
   if (key === "attraction" || key === "transport") emit("open-resource", key);
   else if (key === "hotel") emit("open-resource", "hotel", -1);
   else if (key === "meal") emit("open-resource", "meal", "lunch");
   else if (key === "guide") emit("open-resource", "guide");
-  else if (key === "service") {
-    addService();
-    await nextTick();
-    document.getElementById(`website-day-services-${day.value.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+  else if (key === "service") servicesCard.value?.openCreate();
 }
 
 /**

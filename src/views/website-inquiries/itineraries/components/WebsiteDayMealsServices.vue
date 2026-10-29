@@ -1,5 +1,5 @@
 <template>
-  <section class="flex flex-col gap-3" :class="{ 'surface-muted p-4': !mealId }">
+  <section v-if="!servicesOnly || day.services.length" class="flex flex-col gap-3" :class="{ 'surface-muted p-4': !mealId }">
     <h4 v-if="!mealId" class="m-0 text-[14px] text-strong font-600">
       {{ $t("websiteItineraryUi.mealsAndServices") }}
     </h4>
@@ -37,13 +37,12 @@
     </div>
     <div
       v-if="!mealId && day.services.length"
-      :id="`website-day-services-${day.id}`"
       class="flex flex-wrap justify-between items-center gap-3 mt-1"
     >
       <h5 class="m-0 text-[13px] text-strong font-600">
         {{ $t("websiteItineraryUi.otherServices") }}
       </h5>
-      <el-button v-if="editable" @click="emit('add-service')">
+      <el-button v-if="editable" @click="openCreate">
         {{ $t("common.create") }}
       </el-button>
     </div>
@@ -118,7 +117,7 @@ import FeeStateSelect from "../../components/FeeStateSelect.vue";
 import { isMealArranged } from "../../options";
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{ editable: boolean; mealId?: string; servicesOnly?: boolean }>();
-const emit = defineEmits<{ "edit-meal": [slot: WebsiteMeal["slot"]]; "add-service": [] }>();
+const emit = defineEmits<{ "edit-meal": [slot: WebsiteMeal["slot"]] }>();
 const { locale } = useI18n();
 const draft = ref<WebsiteService | null>(null);
 const visibleMeals = computed(() => props.servicesOnly ? [] : day.value.meals
@@ -129,12 +128,17 @@ function mealName(meal: WebsiteMeal) {
 function openEdit(item: WebsiteService) {
   if (props.editable) draft.value = { ...item };
 }
+/** 新增服务先在弹窗中编辑，确认后才加入当天；取消不留下空服务。 */
+function openCreate() {
+  if (props.editable) draft.value = { id: crypto.randomUUID(), nameZh: "", nameEn: "", appears: true, feeState: "UNKNOWN" };
+}
 function saveEdit() {
   if (!props.editable || !draft.value) return;
   const id = draft.value.id;
   const original = day.value.services.find(item => item.id === id);
   if (original) Object.assign(original, draft.value);
+  else day.value.services.push(draft.value);
   draft.value = null;
 }
-defineExpose({ openEdit });
+defineExpose({ openEdit, openCreate });
 </script>

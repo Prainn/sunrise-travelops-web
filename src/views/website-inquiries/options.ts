@@ -29,8 +29,18 @@ export const TRANSPORT_OPTIONS = [
   { value: "flight", labelKey: "websiteInquiry.transportModes.flight" },
   { value: "other", labelKey: "websiteInquiry.transportModes.other" },
 ];
+// 展开 reactive 对象（如 { ...props.modelValue }）会把嵌套 Proxy 带进普通对象，需逐层 toRaw 才能 structuredClone
+function toDeepRaw(value: unknown): unknown {
+  const raw = toRaw(value);
+  if (Array.isArray(raw)) return raw.map(toDeepRaw);
+  if (raw && typeof raw === "object" && Object.getPrototypeOf(raw) === Object.prototype) {
+    return Object.fromEntries(Object.entries(raw).map(([key, item]) => [key, toDeepRaw(item)]));
+  }
+  return raw;
+}
+
 export function cloneWebsiteDraft<T>(value: T): T {
-  return structuredClone(toRaw(value));
+  return structuredClone(toDeepRaw(value)) as T;
 }
 export function emptyInquiry(): WebsiteInquiryInput {
   return {

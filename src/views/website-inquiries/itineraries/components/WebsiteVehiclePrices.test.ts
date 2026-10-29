@@ -84,10 +84,10 @@ describe("vehicle × hotel tier price editing", () => {
   });
   it("derives read-only services, blocks invalid input and drops stale combinations only on delete", async () => {
     const view = await mount();
-    const [driver, guide] = view.find("ElCheckbox");
+    const [driver, guide] = view.find("ElTag");
     // 司导只读：由日程派生（有专车段、无导游语种）。
-    expect(driver!.props).toMatchObject({ "model-value": true, disabled: "" });
-    expect(guide!.props).toMatchObject({ "model-value": false, disabled: "" });
+    expect(driver!.props).toMatchObject({ type: "success" });
+    expect(guide!.props).toMatchObject({ type: "info" });
     await view.change(view.inputs()[0]!, "-1");
     expect(view.button("common.confirm")!.props.disabled).toBe(true);
     await view.change(view.inputs()[0]!, "2000");

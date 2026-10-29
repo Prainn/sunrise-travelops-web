@@ -1,17 +1,33 @@
 <template>
   <AppDialog v-model="visible" size="xl" :title="$t('websiteItineraryUi.packagePriceTitle')">
-    <p class="m-0 mb-3 text-xs text-muted">
-      {{ $t("websiteItineraryUi.combinationPricesHint") }}
-    </p>
-    <div class="mb-3 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
-      <el-checkbox :model-value="services.includesDriver" disabled>
-        {{ $t("websiteReport.driver") }}
+    <div class="mb-3 flex items-start gap-x-6 text-sm">
+      <dl class="m-0 grid flex-1 grid-cols-[auto_auto_1fr] items-center gap-x-3 gap-y-1">
+        <template v-for="item in serviceRows" :key="item.label">
+          <dt class="text-strong">
+            {{ item.label }}
+          </dt>
+          <dd class="m-0">
+            <el-tag :type="item.included ? 'success' : 'info'" size="small">
+              {{ $t(item.included ? "websiteItineraryUi.serviceIncluded" : "websiteItineraryUi.serviceExcluded") }}
+            </el-tag>
+          </dd>
+          <dd class="m-0 text-muted">
+            {{ item.reason }}
+          </dd>
+        </template>
+      </dl>
+      <span class="whitespace-nowrap">{{ $t("websiteReport.pax") }}: {{ plan.pax ?? $t("websiteReport.undetermined") }}</span>
+    </div>
+    <div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+      <span class="text-muted">{{ $t("websiteItineraryUi.pdfCategoriesLabel") }}</span>
+      <el-checkbox
+        v-for="category in PRICE_CATEGORIES"
+        :key="category"
+        v-model="pdfCategories[category]"
+        :disabled="!editable"
+      >
+        {{ $t(`websiteItineraryUi.priceCategories.${category}`) }}
       </el-checkbox>
-      <el-checkbox :model-value="services.includesGuide" disabled>
-        {{ $t("websiteReport.guide") }}
-      </el-checkbox>
-      <span class="text-xs text-muted">{{ servicesSummary }}</span>
-      <span class="ml-auto">{{ $t("websiteReport.pax") }}: {{ plan.pax ?? $t("websiteReport.undetermined") }}</span>
     </div>
     <el-alert
       v-if="tooMany"
@@ -65,16 +81,10 @@
                     <el-input
                       :model-value="row.prices[category] ?? ''"
                       :placeholder="$t('websiteItineraryUi.pricePlaceholder')"
+                      :disabled="isCategoryLocked(row, category)"
                       @update:model-value="setPrice(row, category, $event)"
                     />
                   </el-form-item>
-                  <el-checkbox
-                    v-model="row.showInPdf[category]"
-                    size="small"
-                    :disabled="row.prices[category] === null"
-                  >
-                    {{ $t("websiteItineraryUi.showInPdfShort") }}
-                  </el-checkbox>
                 </td>
                 <td class="whitespace-nowrap">
                   <span class="font-600" :class="isInvalidTotal(row) ? 'text-danger' : 'text-strong'">
@@ -179,7 +189,6 @@ interface PriceRow {
   vehicleType: string | null;
   hotelTier: WebsiteHotelTier | null;
   prices: Record<WebsitePriceCategory, string | null>;
-  showInPdf: Record<WebsitePriceCategory, boolean>;
   /** 历史仅有总价、无分项的行；录入分项前保留原价。 */
   legacyUnitPrice: string | null;
 }
@@ -190,8 +199,12 @@ interface PriceRow {
 const visible = defineModel<boolean>({ required: true });
 const plan = defineModel<WebsiteItinerary>("plan", { required: true });
 const props = defineProps<{ editable: boolean; dirty?: boolean }>();
+/** 确认写入报价后通知父级保存草稿。 */
+const emit = defineEmits<{ applied: [] }>();
 const { t } = useI18n();
 const entries = reactive(new Map<string, PriceRow>());
+/** 按类别统一控制 PDF 是否显示该类分项，对所有组合生效；隐藏项仍计入人均总价。 */
+const pdfCategories = reactive(emptyPdfCategories());
 
 const candidates = computed(() => quotationCandidates(plan.value.days));
 const candidateKeys = computed(() => candidates.value.hotelTiers.flatMap(tier =>
@@ -216,22 +229,36 @@ const staleCount = computed(() => rows.value.filter(isStale).length);
 const tooMany = computed(() => rows.value.length > MAX_PRICE_COMBINATIONS);
 const hasInvalidPrice = computed(() => rows.value.some(row => PRICE_CATEGORIES.some(category => isInvalidValue(row.prices[category])) || isInvalidTotal(row)));
 const hasAnyPrice = computed(() => rows.value.some(hasPrice));
-const servicesSummary = computed(() => {
+/** 司机/导游是否包含及其来源：由各日专车段、导游语种派生，页面只读展示。 */
+const serviceRows = computed(() => {
   const value = services.value;
   return [
-    value.driverDays.length ? t("websiteItineraryUi.driverDays", { days: value.driverDays.map(day => `D${day}`).join(", ") }) : "",
-    ...value.guideServices.map(item => t("websiteItineraryUi.guideDay", { day: item.dayNumber, language: item.language })),
-  ].filter(Boolean).join("；");
+    {
+      label: t("websiteReport.driver"),
+      included: value.includesDriver,
+      reason: value.includesDriver
+        ? t("websiteItineraryUi.driverReason", { days: value.driverDays.map(day => `D${day}`).join("、") })
+        : t("websiteItineraryUi.noDriverReason"),
+    },
+    {
+      label: t("websiteReport.guide"),
+      included: value.includesGuide,
+      reason: value.includesGuide
+        ? t("websiteItineraryUi.guideReason", { items: value.guideServices.map(item => `D${item.dayNumber} ${item.language}`).join("、") })
+        : t("websiteItineraryUi.noGuideReason"),
+    },
+  ];
 });
 
 watch(visible, (value) => {
   if (!value) return;
   entries.clear();
+  Object.assign(pdfCategories, emptyPdfCategories());
   for (const price of plan.value.vehiclePrices) {
     const row = emptyRow(price.vehicleType, price.hotelTier);
     for (const component of price.priceComponents ?? []) {
       row.prices[component.category] = component.unitPrice;
-      row.showInPdf[component.category] = component.unitPrice !== null && component.showInPdf;
+      if (component.unitPrice !== null && component.showInPdf) pdfCategories[component.category] = true;
     }
     if (!price.priceComponents?.length) row.legacyUnitPrice = price.unitPrice;
     entries.set(row.key, row);
@@ -246,15 +273,21 @@ watch([visible, candidateKeys], () => {
 
 function emptyRow(vehicleType: string | null, hotelTier: WebsiteHotelTier | null): PriceRow {
   const nulls = Object.fromEntries(PRICE_CATEGORIES.map(category => [category, null])) as PriceRow["prices"];
-  const hidden = Object.fromEntries(PRICE_CATEGORIES.map(category => [category, false])) as PriceRow["showInPdf"];
-  return { key: priceKey(vehicleType, hotelTier), vehicleType, hotelTier, prices: nulls, showInPdf: hidden, legacyUnitPrice: null };
+  return { key: priceKey(vehicleType, hotelTier), vehicleType, hotelTier, prices: nulls, legacyUnitPrice: null };
+}
+function emptyPdfCategories() {
+  return Object.fromEntries(PRICE_CATEGORIES.map(category => [category, false])) as Record<WebsitePriceCategory, boolean>;
 }
 function components(row: PriceRow): WebsitePriceComponent[] {
   return PRICE_CATEGORIES.map(category => ({
     category,
     unitPrice: row.prices[category],
-    showInPdf: row.prices[category] !== null && row.showInPdf[category],
+    showInPdf: row.prices[category] !== null && pdfCategories[category],
   }));
+}
+/** 行程未选导游时禁用导游分项；已有金额仍可编辑以便清空，清空后锁定，不静默丢弃价格。 */
+function isCategoryLocked(row: PriceRow, category: WebsitePriceCategory) {
+  return category === "guide" && !services.value.includesGuide && row.prices.guide === null;
 }
 function isStale(row: PriceRow) {
   return !currentKeys.value.has(row.key);
@@ -279,7 +312,6 @@ function isInvalidTotal(row: PriceRow) {
 function setPrice(row: PriceRow, category: WebsitePriceCategory, value: string) {
   // 空值保持 null（不计入），0 为有效金额。
   row.prices[category] = value.trim() || null;
-  if (row.prices[category] === null) row.showInPdf[category] = false;
 }
 function removeRow(key: string) {
   entries.delete(key);
@@ -307,6 +339,7 @@ function apply() {
     ? { vehicleType: row.vehicleType, hotelTier: row.hotelTier, unitPrice: unitPrice(row), priceComponents: components(row) }
     : { vehicleType: row.vehicleType, hotelTier: row.hotelTier, unitPrice: row.legacyUnitPrice, priceComponents: [] });
   visible.value = false;
+  emit("applied");
 }
 </script>
 <style scoped lang="scss">

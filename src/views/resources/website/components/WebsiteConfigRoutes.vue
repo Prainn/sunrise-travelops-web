@@ -185,8 +185,14 @@
             </template>
             <el-form-item prop="vehicleOptions" class="col-span-2 max-[650px]:col-span-1">
               <template #label>
-                <span :class="{ invisible: record.vehicleOptions.length > 0 }" :aria-hidden="record.vehicleOptions.length > 0">
-                  {{ $t('websiteReport.vehicleType') }}
+                <!-- 叠放预计耗时标签占位，使 label-width="auto" 在新增车型前后宽度一致 -->
+                <span class="inline-grid">
+                  <span class="col-start-1 row-start-1 justify-self-end" :class="{ invisible: record.vehicleOptions.length > 0 }" :aria-hidden="record.vehicleOptions.length > 0">
+                    {{ $t('websiteReport.vehicleType') }}
+                  </span>
+                  <span class="invisible col-start-1 row-start-1" aria-hidden="true">
+                    {{ $t('websiteReport.durationMinutes') }}
+                  </span>
                 </span>
               </template>
               <el-button :disabled="record.vehicleOptions.length >= 100" @click="record.vehicleOptions.push({ vehicleType: '', durationMinutes: null })">

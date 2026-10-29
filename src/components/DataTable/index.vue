@@ -160,7 +160,8 @@ defineExpose({ table: tableRef });
       width: 100%;
     }
 
-    .el-table__body .cell .el-button.is-link + .el-button.is-link {
+    // RowActions 自带 gap，排除它避免相邻按钮间距叠加
+    .el-table__body .cell :not(.row-actions) > .el-button.is-link + .el-button.is-link {
       margin-left: 12px;
     }
 
