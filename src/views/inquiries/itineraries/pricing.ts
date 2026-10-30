@@ -10,7 +10,7 @@ import type {
   RestaurantRecord,
   TransportRecord,
 } from "@/types/resource";
-import { createId, multiplyMoney, roundMoney } from "@/utils";
+import { createId, divideMoney, multiplyMoney, roundMoney } from "@/utils";
 
 export interface ResourcePriceOption {
   id: string;
@@ -180,6 +180,7 @@ export function calculateItem(
   quantity: number,
   unitCost: number | null = option.unitCost,
 ): ItineraryResourceItem {
+  unitCost = unitCost === null ? null : roundMoney(unitCost);
   return {
     id: createId("item"),
     type: option.type,
@@ -198,7 +199,7 @@ export function calculateItem(
         ? null
         : multiplyMoney(
           option.unit === "table" && option.dinerCount
-            ? roundMoney(unitCost / option.dinerCount)
+            ? divideMoney(unitCost, option.dinerCount)
             : unitCost,
           quantity,
         ),
@@ -211,9 +212,10 @@ export function recalculateItem(item: ItineraryResourceItem) {
     item.totalCost = null;
     return;
   }
+  item.unitCost = roundMoney(item.unitCost);
   item.totalCost = multiplyMoney(
     item.unit === "table" && item.dinerCount
-      ? roundMoney(item.unitCost / item.dinerCount)
+      ? divideMoney(item.unitCost, item.dinerCount)
       : item.unitCost,
     item.quantity,
   );

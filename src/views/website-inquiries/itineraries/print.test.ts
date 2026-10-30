@@ -94,3 +94,15 @@ it("preserves frozen combination totals and visible zero-price components when g
   expect(html).toContain("To be confirmed");
   expect(html).toContain("Custom &lt;vehicle&gt;");
 });
+
+it("labels team standard rows as Driver & Guide and Transportation while quotations keep Vehicle", () => {
+  const teamStandard = (["hotel", "meal", "entry", "service", "transport"] as const).map(category => ({ category, included: [] }));
+  const output: WebsiteOutput = { ...empty, teamStandard, quotation: [{ vehicle: "7-seat vehicle", hotelCategory: "5-star", unitPrice: "800.00", price: "RMB 800.00 PP" }] };
+  const en = websitePrintHtml(output, "en", 6);
+  expect(en).toContain("<th>Driver &amp; Guide</th>");
+  expect(en).toContain("<th>Transportation</th>");
+  expect(en).toContain("<th>Vehicle</th>");
+  const zh = websitePrintHtml(output, "zh", 6);
+  expect(zh).toContain("<th>司机与导游</th>");
+  expect(zh).toContain("<th>交通</th>");
+});

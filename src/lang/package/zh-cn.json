@@ -538,9 +538,7 @@
     "optionCodeDuplicate": "选项编码已存在",
     "optionSearchPlaceholder": "选项名称或编码",
     "createOptionTitle": "新增分类选项",
-    "editOptionTitle": "编辑分类选项",
-    "catalogEntry": "标准目录",
-    "catalogPlaceholder": "搜索目录名称或代码"
+    "editOptionTitle": "编辑分类选项"
   },
   "common": {
     "export": "导出",
@@ -1930,6 +1928,7 @@
   },
   "ledger": {
     "required": "填写{field}",
+    "lastUpdatedAt": "最后更新时间",
     "shengxu": {
       "businessUnitName": "盛旭",
       "recordDate": "日期",
@@ -2215,7 +2214,8 @@
     "routeColumn": "路线",
     "distanceColumn": "里程",
     "timeColumn": "预计耗时",
-    "transportGuide": "交通与导游",
+    "transportGuide": "司机与导游",
+    "transportation": "交通",
     "vehicle": "车型",
     "perPerson": "人均",
     "groupTotal": "团费总额",

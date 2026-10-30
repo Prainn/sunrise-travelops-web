@@ -538,9 +538,7 @@
     "optionCodeDuplicate": "Option code already exists",
     "optionSearchPlaceholder": "Option name or code",
     "createOptionTitle": "Add Category Option",
-    "editOptionTitle": "Edit Category Option",
-    "catalogEntry": "Standard catalog",
-    "catalogPlaceholder": "Catalog name or code"
+    "editOptionTitle": "Edit Category Option"
   },
   "common": {
     "export": "Export",
@@ -1930,6 +1928,7 @@
   },
   "ledger": {
     "required": "enter {field}",
+    "lastUpdatedAt": "Last updated",
     "shengxu": {
       "businessUnitName": "Shengxu",
       "recordDate": "Date",
@@ -2215,7 +2214,8 @@
     "routeColumn": "Route",
     "distanceColumn": "Distance",
     "timeColumn": "Travel time",
-    "transportGuide": "Transport & Guide",
+    "transportGuide": "Driver & Guide",
+    "transportation": "Transportation",
     "vehicle": "Vehicle",
     "perPerson": "Per person",
     "groupTotal": "Group total",

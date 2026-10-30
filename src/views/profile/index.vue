@@ -3,28 +3,10 @@
     <SectionCard>
       <div class="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
         <div class="flex flex-col items-start gap-4 min-w-0 sm:flex-row sm:items-center">
-          <div class="relative shrink-0">
-            <el-avatar :src="displayAvatar" :size="72">
+          <div class="shrink-0">
+            <el-avatar :src="userStore.businessAvatar" :size="72" fit="contain">
               <el-icon><UserFilled /></el-icon>
             </el-avatar>
-            <el-button
-              type="info"
-              class="profile-avatar__action"
-              circle
-              :icon="Camera"
-              size="small"
-              :loading="uploadingAvatar"
-              :title="$t('profile.changeAvatar')"
-              :aria-label="$t('profile.changeAvatar')"
-              @click="triggerFileUpload"
-            />
-            <input
-              ref="fileInput"
-              class="hidden"
-              type="file"
-              accept="image/*"
-              @change="handleFileChange"
-            />
           </div>
 
           <div class="min-w-0">
@@ -254,7 +236,7 @@ import type { Component } from "vue";
 import { computed, onMounted, reactive, ref } from "vue";
 import { userService } from "@/services";
 import { useUserStoreHook } from "@/stores/user";
-import { readFileAsDataUrl, formatDateTime } from "@/utils";
+import { formatDateTime } from "@/utils";
 import { redirectToLogin } from "@/utils/auth";
 import PageShell from "@/components/PageShell/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
@@ -265,7 +247,6 @@ import FeedbackState from "@/components/FeedbackState/index.vue";
 
 import {
   Calendar,
-  Camera,
   Edit,
   Female,
   Iphone,
@@ -352,8 +333,6 @@ const passwordChangeRules = computed(() => ({
     },
   ],
 }));
-
-const displayAvatar = computed(() => userProfile.value.avatar || userStore.userInfo.avatar || "");
 
 const displayName = computed(() => {
   return (
@@ -465,39 +444,6 @@ const handleCancel = () => {
   }
 };
 
-const fileInput = ref<HTMLInputElement | null>(null);
-
-// 上传期间不能再选新头像，避免两次请求乱序导致页面与服务器头像不一致。
-const uploadingAvatar = ref(false);
-const triggerFileUpload = () => {
-  if (uploadingAvatar.value) return;
-  fileInput.value?.click();
-};
-
-const handleFileChange = async (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const file = target.files ? target.files[0] : null;
-  if (uploadingAvatar.value) {
-    target.value = "";
-    return;
-  }
-  uploadingAvatar.value = true;
-  try {
-    if (file) {
-      const avatar = await readFileAsDataUrl(file);
-      await userService.updateProfile({ avatar });
-      userProfile.value.avatar = avatar;
-      userStore.userInfo.avatar = avatar;
-      ElMessage.success(t("profile.avatarUpdatedSuccess"));
-    }
-  } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : t("apiErrors.REQUEST_FAILED"));
-  } finally {
-    uploadingAvatar.value = false;
-    target.value = "";
-  }
-};
-
 const loadUserProfile = async () => {
   try {
     userProfile.value = await userService.getProfile();
@@ -510,13 +456,3 @@ const loadUserProfile = async () => {
 onMounted(loadUserProfile);
 onMounted(loadSecurity);
 </script>
-
-<style lang="scss" scoped>
-// 头像角标按钮覆盖 ElButton 自带边框，用内容底色描边与头像分隔
-.profile-avatar__action {
-  position: absolute;
-  right: -2px;
-  bottom: -2px;
-  border: 2px solid var(--content-bg);
-}
-</style>

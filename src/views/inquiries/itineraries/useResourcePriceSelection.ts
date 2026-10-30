@@ -2,7 +2,7 @@ import { computed, ref, watch, onScopeDispose } from "vue";
 import type { ItineraryDailyItemType, ItineraryResourceItem, MealSlot } from "@/types/itinerary";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import { resourceService } from "@/services/resource.service";
-import { createId, multiplyMoney, roundMoney } from "@/utils";
+import { createId, divideMoney, multiplyMoney, roundMoney } from "@/utils";
 import {
   calculateItem,
   recalculateItem,
@@ -202,7 +202,7 @@ export function useResourcePriceSelection(
     if (!canSubmitWithDiners.value) return;
     const current = props.currentItem;
     if (props.mealSlot && source.value === "custom") {
-      const price = customPrice.value;
+      const price = customPrice.value === null ? null : roundMoney(customPrice.value);
       return {
         referencePrice: null,
         referenceBasis: "unknown",
@@ -222,7 +222,7 @@ export function useResourcePriceSelection(
             ? null
             : multiplyMoney(
               customUnit.value === "table"
-                ? roundMoney(price / dinerCount.value!)
+                ? divideMoney(price, dinerCount.value!)
                 : price,
               customQuantity.value,
             ),

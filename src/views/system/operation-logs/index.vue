@@ -66,6 +66,14 @@
             {{ beijingTime(row.time) }}
           </template>
         </el-table-column>
+        <el-table-column
+          :label="$t('identity.businessUnit')"
+          prop="scopeName"
+        >
+          <template #default="{ row }">
+            {{ businessUnitName(row.scope) }}
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('operationLog.category')" min-width="120">
           <template #default="{ row }">
             {{ categoryLabel(row.category) }}
@@ -116,6 +124,7 @@ import { useRefreshOnActivated } from "@/composables";
 import { operationLogService } from "@/services/operation-log.service";
 import type { LoginScope } from "@/types/auth";
 import type { OperationCategory, OperationLog } from "@/types/operation-log";
+import { businessUnitName } from "@/constants/identity";
 
 const { t } = useI18n();
 const actionCodeLabels: Record<string, string> = {

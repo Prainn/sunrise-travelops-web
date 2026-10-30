@@ -30,8 +30,8 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
   const included = (category: string) => paragraphs(output.teamStandard?.find(row => row.category === category)?.included ?? []);
   // v5 司机/导游说明与报价车型由服务端写入 service/transport，前端只换标签不再拼接。
   const serviceLabel = v5 ? text("transportGuide") : en ? "Srv." : "服务";
-  const transportLabel = v5 ? text("vehicle") : en ? "T." : "交通";
-  const standardWidths = v5 ? [12, 7, 35.5, 10, 35.5] : [12, 7, 38.5, 6.5, 36];
+  const transportLabel = v5 ? text("transportation") : en ? "T." : "交通";
+  const standardWidths = v5 ? [11, 11, 34, 10, 34] : [12, 7, 38.5, 6.5, 36];
   const standard = output.teamStandard
     ? `<table class="standards"><colgroup>${standardWidths.map(width => `<col style="width:${width}%">`).join("")}</colgroup><tbody>
       <tr><th rowspan="3">${text("includes")}</th><th>${en ? "Hotel" : "酒店"}</th><td>${included("hotel")}</td><th>${text("mealsColumn")}</th><td>${included("meal")}</td></tr>

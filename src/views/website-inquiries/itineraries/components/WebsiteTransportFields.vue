@@ -1,23 +1,12 @@
 <template>
   <el-form-item v-if="showVehicle && mode === 'private_vehicle'" :label="$t('websiteReport.vehicleType')" prop="vehicleType">
-    <el-select
+    <BusinessDictionarySelect
       :model-value="modelValue.vehicleType"
-      clearable
-      filterable
-      allow-create
-      default-first-option
-      :maxlength="100"
-      autocomplete="new-password"
+      type-code="vehicle-type"
+      :extra-options="uniqueVehicleOptions.map(option => ({ value: option.vehicleType, label: vehicleLabel(option.vehicleType) }))"
       :placeholder="$t('websiteReport.vehicleSelectOrEnter')"
-      @update:model-value="selectVehicle($event)"
-    >
-      <el-option
-        v-for="option in uniqueVehicleOptions"
-        :key="option.vehicleType"
-        :value="option.vehicleType"
-        :label="vehicleLabel(option.vehicleType)"
-      />
-    </el-select>
+      @update:model-value="selectVehicle"
+    />
   </el-form-item>
   <el-form-item :label="$t('websiteReport.distanceKm')" prop="distanceKm">
     <el-input :model-value="modelValue.distanceKm ?? ''" :placeholder="$t('websiteReport.notSpecified')" @update:model-value="update('distanceKm', $event.trim() || null)" />
@@ -38,6 +27,7 @@
 </template>
 
 <script setup lang="ts" generic="T extends Pick<WebsiteLeg, 'vehicleType' | 'distanceKm' | 'durationMinutes' | 'showInMileage'>">
+import BusinessDictionarySelect from "@/components/BusinessDictionarySelect/index.vue";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { TransportMode, WebsiteLeg, WebsiteRouteVehicleOption } from "@/types/website";

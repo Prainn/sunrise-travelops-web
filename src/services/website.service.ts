@@ -130,7 +130,7 @@ export const websiteService = {
     return request.post<WebsitePreview>(`/website/itineraries/${encodeURIComponent(record.id)}/validate`, { ...websiteItineraryInput(record), version: record.version });
   },
   guideLanguages(query: { page: number; pageSize: number; keyword?: string }) {
-    return request.get<PageResult<{ id: string; name: string }>>("/website/guide-languages", { params: { ...query } });
+    return request.get<PageResult<{ id: string; name: string; englishName: string }>>("/website/guide-languages", { params: { ...query } });
   },
   inquiries(query: WebsiteInquiryQuery) {
     return request.get<PageResult<WebsiteInquiry>>("/website/inquiries", { params: { ...query } });

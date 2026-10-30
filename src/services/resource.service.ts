@@ -105,7 +105,6 @@ function agencyInput(data: AgencyRecord) {
     parentId: data.parentId,
     businessUnit: data.businessUnit || undefined,
     coordinatorId: data.coordinatorId,
-    id: data.id || undefined,
     code: data.code.trim(),
     name: data.shortName.trim(),
     city: data.city.trim(),
@@ -118,7 +117,6 @@ function agencyInput(data: AgencyRecord) {
 
 function hotelInput(data: HotelRecord) {
   return {
-    id: data.id || undefined,
     code: data.code.trim(),
     name: data.name.trim(),
     englishName: data.englishName.trim(),
@@ -140,7 +138,6 @@ function hotelInput(data: HotelRecord) {
 
 function restaurantInput(data: RestaurantRecord) {
   return {
-    id: data.id || undefined,
     code: data.code.trim(),
     name: data.name.trim(),
     englishName: data.englishName.trim(),
@@ -162,7 +159,6 @@ function restaurantInput(data: RestaurantRecord) {
 
 function attractionInput(data: AttractionRecord) {
   return {
-    id: data.id || undefined,
     code: data.code.trim(),
     name: data.name.trim(),
     englishName: data.englishName.trim(),
@@ -181,7 +177,6 @@ function attractionInput(data: AttractionRecord) {
 
 function transportInput(data: TransportRecord) {
   return {
-    id: data.id || undefined,
     code: data.code.trim(),
     name: data.name.trim(),
     serviceLevel: data.serviceLevel,
@@ -195,7 +190,6 @@ function transportInput(data: TransportRecord) {
 
 function guideInput(data: GuideRecord) {
   return {
-    id: data.id || undefined,
     secondLanguage: data.secondLanguage,
     shopping: data.shopping,
     dailyPrice: data.dailyPrice,
@@ -205,7 +199,6 @@ function guideInput(data: GuideRecord) {
 
 function guidePersonInput(data: GuidePersonRecord) {
   return {
-    id: data.id || undefined,
     name: data.name.trim(),
     gender: data.gender,
     age: data.age,
@@ -246,10 +239,8 @@ function normalizeGuide(data: ApiRecord<GuideRecord>): GuideRecord {
 
 function contactInput(data: AgencyContactRecord) {
   return {
-    id: data.id || undefined,
     name: data.name.trim(),
     phone: data.phone.trim(),
-    version: data.version,
   };
 }
 
@@ -385,7 +376,7 @@ export const resourceService = {
     updateContact(agencyId: string, contactId: string, data: AgencyContactRecord) {
       return request.put<AgencyContactRecord>(
         `${RESOURCE_BASE_URL}/agencies/${encodeURIComponent(agencyId)}/contacts/${encodeURIComponent(contactId)}`,
-        { ...contactInput(data), id: contactId },
+        { ...contactInput(data), id: contactId, version: data.version },
       );
     },
     async deleteContacts(agencyId: string, ids: string) {

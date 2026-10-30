@@ -181,8 +181,8 @@ export const inquiryService = {
       version: record.version,
     });
   },
-  createContact(agencyId: string, name: string, phone: string) {
-    return request.post<AgencyContactRecord>(`/inquiries/contacts/${agencyId}`, { name, phone });
+  createContact(agencyId: string, name: string, phone: string, inquiryId?: string) {
+    return request.post<AgencyContactRecord>(`/inquiries/contacts/${agencyId}`, { name, phone, inquiryId });
   },
   async listItineraries(inquiryId: string) {
     return normalizeInquiryMoney<ItineraryRecord[]>(

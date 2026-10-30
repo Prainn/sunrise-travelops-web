@@ -18,7 +18,7 @@
       <el-dropdown trigger="click" @visible-change="handleDropdownVisible">
         <div class="layout-user">
           <div class="layout-user__avatar">
-            <img :src="userStore.userInfo.avatar" class="layout-user__avatar-img" />
+            <img :src="userStore.businessAvatar" class="layout-user__avatar-img" />
           </div>
           <span class="layout-user__name">{{ userStore.userInfo.nickname }} ·
             {{ userStore.userInfo.deptName || $t("identity.superuser") }}</span>
@@ -224,7 +224,7 @@ async function logout() {
   }
 
   &__avatar-img {
-    @apply 'w-full h-full object-cover [object-position:center]';
+    @apply 'w-full h-full object-contain [object-position:center]';
   }
 
   &__name {

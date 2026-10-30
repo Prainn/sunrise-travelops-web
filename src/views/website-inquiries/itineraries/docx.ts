@@ -45,9 +45,9 @@ function wordTable(source: HTMLTableElement): Table {
   const widths = cols.length
     ? cols.map(col => Math.round(CONTENT_WIDTH * parseFloat(col.style.width) / 100))
     : Array.from({ length: count }, () => Math.floor(CONTENT_WIDTH / count));
-  // Word 字体度量不同于浏览器，给短标签留足宽度，避免 Vehicle/Transport 从单词中间换行。
+  // Word 字体度量不同于浏览器，给短标签留足宽度，避免 Transportation 等从单词中间换行。
   const wordColumns = source.classList.contains("itinerary") ? [10, 12, 12, 40, 13, 13]
-    : source.classList.contains("standards") ? [12, 9, 33.5, 12, 33.5] : undefined;
+    : source.classList.contains("standards") ? [11, 12, 32.5, 12, 32.5] : undefined;
   if (wordColumns) widths.splice(0, widths.length, ...wordColumns.map(width => Math.round(CONTENT_WIDTH * width / 100)));
   if (source.classList.contains("notes")) widths.splice(0, widths.length, 1422, CONTENT_WIDTH - 1422);
   const quote = source.classList.contains("quotation-v5");
