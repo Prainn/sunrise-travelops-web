@@ -160,6 +160,7 @@ declare module 'vue' {
     TableToolbar: typeof import('./../src/components/TableToolbar/index.vue')['default']
     ThemeSwitch: typeof import('./../src/components/ThemeSwitch/index.vue')['default']
     TourEditorDialog: typeof import('./../src/views/tours/components/TourEditorDialog.vue')['default']
+    TourGuideAssignmentDialog: typeof import('./../src/views/tours/components/TourGuideAssignmentDialog.vue')['default']
     UserIdentityFields: typeof import('./../src/views/system/user/components/UserIdentityFields.vue')['default']
     WebsiteAttractionDialog: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteAttractionDialog.vue')['default']
     WebsiteConfigAttractions: typeof import('./../src/views/resources/website/components/WebsiteConfigAttractions.vue')['default']

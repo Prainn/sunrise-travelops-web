@@ -126,7 +126,7 @@ const formRef = ref<FormInstance>();
 const vehicleOptions = computed(() => {
   if (draft.value?.routeId) return props.config.routes.find(route => route.id === draft.value?.routeId)?.vehicleOptions ?? [];
   return props.config.routes.filter(route => route.status === "enabled" && route.mode === "private_vehicle"
-    && route.fromCityId === draft.value?.fromCityId && route.toCityId === draft.value?.toCityId).flatMap(route => route.vehicleOptions);
+    && route.fromCityId === draft.value?.fromCityId && route.toCityId === draft.value?.toCityId).flatMap(route => route.vehicleOptions ?? []);
 });
 function vehicleLabel(value: string) {
   const option = VEHICLE_OPTIONS.find(option => option.value === value);

@@ -3,6 +3,7 @@ import type { TourGuideService, TourRecord } from "@/types/tour";
 import {
   createTourRequest,
   emptyTourForm,
+  guideAssignmentRequest,
   guideAvailabilityQuery,
   guideServiceChanged,
   guideServiceErrors,
@@ -231,6 +232,44 @@ function row(patch: Partial<GuideServiceRow> = {}): GuideServiceRow {
 }
 
 describe("guide service requests", () => {
+  it("assigns guides without resubmitting manual source or changing saved tour fields", () => {
+    const tour = manualTour({
+      countryItemId: null,
+      agencyId: null,
+      adults: 7,
+      children: 2,
+      leaders: 1,
+      shopping: true,
+      remark: "原备注",
+    });
+    const services = [guideServiceRowFromRecord(service()), row({ guideId: "guide-2" })];
+    const body = guideAssignmentRequest(tour, services);
+    expect(body).toEqual({
+      version: 3,
+      operatorId: tour.operatorId,
+      adults: 7,
+      children: 2,
+      leaders: 1,
+      language: tour.language,
+      shopping: true,
+      remark: "原备注",
+      scheduleMode: "manual",
+      pickupAt: tour.pickupAt,
+      dropAt: tour.dropAt,
+      guideServices: guideServiceInputs(services),
+    });
+    expect(tour.guideServices).toEqual([]);
+  });
+
+  it("keeps linked tour flight IDs and version when assigning or clearing guides", () => {
+    const tour = manualTour({ sourceModule: "website", scheduleMode: "flight", pickupFlightId: "a", dropFlightId: "b" });
+    const body = guideAssignmentRequest(tour, []);
+    expect(body).toMatchObject({ version: 3, scheduleMode: "flight", pickupFlightId: "a", dropFlightId: "b", guideServices: [] });
+    expect(body).not.toHaveProperty("manualSource");
+    expect(body).not.toHaveProperty("pickupAt");
+    expect(body).not.toHaveProperty("dropAt");
+  });
+
   it("always submits the whitelisted array; empty means explicitly none", () => {
     expect(createTourRequest(manualForm(), { sourceModule: "manual" })).toHaveProperty("guideServices", []);
     expect(updateTourRequest(manualTour(), manualForm())).toHaveProperty("guideServices", []);

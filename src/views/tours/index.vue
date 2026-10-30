@@ -180,9 +180,6 @@
               <template #reference>
                 <el-button link type="primary">
                   {{ guideSummaryText((row as TourRecord).guideServices) }}
-                  <span class="ml-1 text-muted">
-                    {{ $t("tour.guideService.count", { n: (row as TourRecord).guideServices.length }) }}
-                  </span>
                 </el-button>
               </template>
               <GuideServiceList :services="(row as TourRecord).guideServices" />
@@ -200,7 +197,7 @@
         />
         <el-table-column
           :label="$t('common.actions')"
-          width="150"
+          width="260"
           fixed="right"
           :show-overflow-tooltip="false"
         >
@@ -214,6 +211,15 @@
                 @click="openEdit(row as TourRecord)"
               >
                 {{ $t("common.edit") }}
+              </el-button>
+              <el-button
+                v-if="canUpdate"
+                link
+                type="primary"
+                :disabled="isPending(row.id)"
+                @click="openGuideAssignment(row as TourRecord)"
+              >
+                {{ $t("tour.assignGuide") }}
               </el-button>
               <el-button
                 v-if="canCancel"
@@ -241,6 +247,12 @@
       v-if="canCreate || canUpdate"
       v-model="dialogVisible"
       :tour="editing"
+      @saved="load"
+    />
+    <TourGuideAssignmentDialog
+      v-if="canUpdate && assigningTour"
+      v-model="guideDialogVisible"
+      :tour="assigningTour"
       @saved="load"
     />
   </PageShell>
@@ -272,6 +284,7 @@ import { guideSummaryText } from "@/utils/guide-services";
 import { hasUserPermission } from "@/utils/permission";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 import TourEditorDialog from "./components/TourEditorDialog.vue";
+import TourGuideAssignmentDialog from "./components/TourGuideAssignmentDialog.vue";
 
 defineOptions({ name: "TourList" });
 
@@ -302,6 +315,8 @@ const rows = ref<TourRecord[]>([]);
 const { pageNum, pageSize, paginationQuery } = useResourcePagination();
 const dialogVisible = ref(false);
 const editing = ref<TourRecord | null>(null);
+const guideDialogVisible = ref(false);
+const assigningTour = ref<TourRecord | null>(null);
 const { isPending, run } = usePendingActions();
 
 function routeKeyword() {
@@ -387,6 +402,11 @@ function openEdit(row: TourRecord) {
   if (!canUpdate.value || isPending(row.id)) return;
   editing.value = row;
   dialogVisible.value = true;
+}
+function openGuideAssignment(row: TourRecord) {
+  if (!canUpdate.value || row.status !== "active" || isPending(row.id)) return;
+  assigningTour.value = row;
+  guideDialogVisible.value = true;
 }
 async function cancelTour(row: TourRecord) {
   if (!canCancel.value) return;
