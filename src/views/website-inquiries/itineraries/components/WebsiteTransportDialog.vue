@@ -84,7 +84,7 @@
         </el-table-column>
         <el-table-column :label="$t('websiteReport.vehicleType')" min-width="110">
           <template #default="{ row }">
-            {{ row.vehicleOptions.length ? row.vehicleOptions.map((option: WebsiteRouteVehicleOption) => `${vehicleLabel(option.vehicleType)} · ${option.durationMinutes == null ? $t('websiteReport.notSpecified') : $t('websiteReport.minutesValue', { value: option.durationMinutes })}`).join(' / ') : $t('websiteReport.notSpecified') }}
+            {{ row.mode === 'private_vehicle' && row.vehicleOptions?.length ? row.vehicleOptions.map((option: WebsiteRouteVehicleOption) => `${vehicleLabel(option.vehicleType)} · ${option.durationMinutes == null ? $t('websiteReport.notSpecified') : $t('websiteReport.minutesValue', { value: option.durationMinutes })}`).join(' / ') : $t('websiteReport.notSpecified') }}
           </template>
         </el-table-column>
         <el-table-column prop="distanceKm" :label="$t('websiteReport.distanceKm')" min-width="110" />
@@ -181,10 +181,10 @@ const routes = computed(() =>
 );
 const vehicleOptions = computed(() => source.value === "route"
   ? selected.value?.vehicleOptions ?? []
-  : routes.value.filter(route => route.mode === "private_vehicle").flatMap(route => route.vehicleOptions));
+  : routes.value.filter(route => route.mode === "private_vehicle").flatMap(route => route.vehicleOptions ?? []));
 const selected = computed(() => routes.value.find((route) => route.id === selectedId.value));
 watch(selected, (route) => {
-  if (route) details.value = { vehicleType: route.vehicleOptions.length === 1 ? route.vehicleOptions[0]!.vehicleType : null, distanceKm: route.distanceKm ?? null, durationMinutes: route.mode === "private_vehicle" ? (route.vehicleOptions.length === 1 ? route.vehicleOptions[0]!.durationMinutes : null) : route.durationMinutes ?? null, showInMileage: false };
+  if (route) details.value = { vehicleType: route.mode === "private_vehicle" && route.vehicleOptions?.length === 1 ? route.vehicleOptions[0]!.vehicleType : null, distanceKm: route.distanceKm ?? null, durationMinutes: route.mode === "private_vehicle" ? (route.vehicleOptions?.length === 1 ? route.vehicleOptions[0]!.durationMinutes : null) : route.durationMinutes ?? null, showInMileage: false };
 }, { flush: "sync" });
 watch(effectiveMode, (value) => { if (value !== "private_vehicle") details.value.vehicleType = null; });
 

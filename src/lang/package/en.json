@@ -1530,6 +1530,8 @@
       "fromCity": "Origin city",
       "toCity": "Destination city",
       "transport": "Default transport",
+      "duration": "Duration",
+      "vehicleDurations": "Private vehicle durations · {name}",
       "feeState": "Default fee status"
     },
     "patterns": {

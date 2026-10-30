@@ -1530,6 +1530,8 @@
       "fromCity": "起点城市",
       "toCity": "终点城市",
       "transport": "默认交通方式",
+      "duration": "时长",
+      "vehicleDurations": "专车时长 · {name}",
       "feeState": "默认费用状态"
     },
     "patterns": {
