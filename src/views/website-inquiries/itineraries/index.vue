@@ -345,6 +345,7 @@
       :can-locate-issue="canLocatePreviewIssue"
       @confirm="confirm"
       @print="print"
+      @export-word="exportWord"
       @locate-issue="locatePreviewIssue"
     />
   </PageShell>
@@ -432,6 +433,7 @@ const {
   openPreview,
   confirm,
   print,
+  exportWord,
   addDay,
 } = useWebsiteWorkspace();
 usePageTitle(() =>

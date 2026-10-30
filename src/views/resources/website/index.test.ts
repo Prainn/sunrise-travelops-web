@@ -6,6 +6,8 @@ import type { WebsiteConfigEditorProps, WebsiteConfigPage, WebsiteCity } from "@
 const mocks = vi.hoisted(() => ({
   list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn(),
   success: vi.fn(), error: vi.fn(), confirm: vi.fn(),
+  selects: new Map<number, Record<string, unknown>>(),
+  modeSelect: {} as Record<string, unknown>,
   editor: undefined as (WebsiteConfigEditorProps & { rows: WebsiteCity[] }) | undefined,
 }));
 const editorComponent = vi.hoisted(() => ({
@@ -19,6 +21,10 @@ vi.mock("./components/WebsiteConfigRoutes.vue", () => ({ default: editorComponen
 vi.mock("./components/WebsiteConfigPatterns.vue", () => ({ default: editorComponent }));
 vi.mock("./components/WebsiteConfigSkeletons.vue", () => ({ default: editorComponent }));
 vi.mock("./components/WebsiteConfigTemplates.vue", () => ({ default: editorComponent }));
+vi.mock("./components/WebsiteConfigSelect.vue", () => ({ default: {
+  render(this: ComponentPublicInstance) { mocks.selects.set(this.$.uid, this.$attrs); return null; },
+  beforeUnmount(this: ComponentPublicInstance) { mocks.selects.delete(this.$.uid); },
+} }));
 vi.mock("@/services/website.service", () => ({
   websiteService: { configRecords: mocks.list, createConfigRecord: mocks.create, updateConfigRecord: mocks.update, deleteConfigRecord: mocks.remove },
   websiteErrorMessage: (error: Error) => error.message,
@@ -31,7 +37,7 @@ vi.mock("element-plus", () => ({ ElMessage: { success: mocks.success, error: moc
 vi.mock("@/components/PageShell/index.vue", () => ({ default: { render(this: ComponentPublicInstance) { return this.$slots.default?.(); } } }));
 vi.mock("@/components/SectionCard/index.vue", () => ({ default: { render(this: ComponentPublicInstance) { return this.$slots.default?.(); } } }));
 vi.mock("@/components/TableToolbar/index.vue", () => ({ default: { render(this: ComponentPublicInstance) { return this.$slots.default?.(); } } }));
-vi.mock("@/components/FilterBar/index.vue", () => ({ default: { render(this: ComponentPublicInstance) { return this.$slots.default?.(); } } }));
+vi.mock("@/components/FilterBar/index.vue", () => ({ default: { name: "TestFilterBar", render(this: ComponentPublicInstance) { return [this.$slots.default?.(), this.$slots.actions?.()]; } } }));
 vi.mock("@/components/FeedbackState/index.vue", () => ({ default: { render: () => null } }));
 vi.mock("@/components/Pagination/index.vue", () => ({ default: { name: "TestPagination", render: () => null } }));
 import WebsiteResources from "./index.vue";
@@ -52,6 +58,8 @@ const renderer = createRenderer<HostNode, HostNode>({
 });
 let tabs: Record<string, unknown>;
 let pagination: Record<string, unknown>;
+let filterBar: Record<string, unknown>;
+let searchInput: Record<string, unknown>;
 let unmount: (() => void) | undefined;
 const city: WebsiteCity = { id: "city-1", nameZh: "城市", nameEn: "City", resourceId: null, status: "enabled" };
 const data = (version = 7, page = 1, total = 21): WebsiteConfigPage => ({
@@ -64,8 +72,13 @@ function mount() {
   app.directive("loading", {});
   app.component("ElTabs", defineComponent({ inheritAttrs: false, setup(_, { attrs, slots }) { return () => { tabs = attrs; return h("div", slots.default?.()); }; } }));
   app.component("ElTabPane", { render: () => null });
+  app.component("ElFormItem", { render(this: ComponentPublicInstance) { return this.$slots.default?.(); } });
+  app.component("ElInput", defineComponent({ inheritAttrs: false, setup(_, { attrs }) { return () => { searchInput = attrs; return null; }; } }));
+  app.component("ElSelect", defineComponent({ inheritAttrs: false, setup(_, { attrs, slots }) { return () => { mocks.modeSelect = attrs; return h("div", slots.default?.()); }; } }));
+  app.component("ElOption", { render: () => null });
   // The Pagination stub keeps model/event attributes available to the test.
   app.mixin({ beforeUpdate() { if (this.$options.name === "TestPagination") pagination = this.$attrs; }, mounted() { if (this.$options.name === "TestPagination") pagination = this.$attrs; } });
+  app.mixin({ beforeUpdate() { if (this.$options.name === "TestFilterBar") filterBar = this.$attrs; }, mounted() { if (this.$options.name === "TestFilterBar") filterBar = this.$attrs; } });
   app.mount({ children: [] });
   unmount = () => app.unmount();
 }
@@ -74,10 +87,68 @@ function changePage(value: number) {
   (pagination["onUpdate:page"] as (value: number) => void)(value);
   (pagination.onPagination as () => void)();
 }
-beforeEach(() => { vi.resetAllMocks(); mocks.list.mockResolvedValue(data()); mocks.confirm.mockResolvedValue(undefined); });
-afterEach(() => { unmount?.(); unmount = undefined; });
+beforeEach(() => { vi.useFakeTimers(); mocks.selects.clear(); vi.resetAllMocks(); mocks.list.mockResolvedValue(data()); mocks.confirm.mockResolvedValue(undefined); });
+afterEach(() => { unmount?.(); unmount = undefined; vi.useRealTimers(); });
 
 describe("website resource loading and writes", () => {
+  it.each(["cities", "attractions", "hotels", "routes", "patterns", "skeletons", "templates"])("searches %s on the server and keeps the filter while paging, then resets", async (group) => {
+    mount(); await flush();
+    changeTab(group); await flush();
+    changePage(2); await flush();
+    (searchInput["onUpdate:modelValue"] as (value: string) => void)("  昆明  ");
+    await flush(); await vi.advanceTimersByTimeAsync(300); await flush();
+    expect(mocks.list).toHaveBeenLastCalledWith(group, { businessUnit: "website", page: 1, pageSize: 20, keyword: "昆明" });
+    changePage(2); await flush();
+    expect(mocks.list).toHaveBeenLastCalledWith(group, { businessUnit: "website", page: 2, pageSize: 20, keyword: "昆明" });
+    (filterBar.onReset as () => void)(); await flush();
+    expect(mocks.list).toHaveBeenLastCalledWith(group, { businessUnit: "website", page: 1, pageSize: 20 });
+    expect(searchInput.modelValue).toBe("");
+  });
+
+  it("debounces rapid input and drops the pending search when switching tabs", async () => {
+    mount(); await flush();
+    for (const value of ["C", "Ci", "City"]) {
+      (searchInput["onUpdate:modelValue"] as (value: string) => void)(value);
+      await flush(); await vi.advanceTimersByTimeAsync(100);
+    }
+    expect(mocks.list).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(200); await flush();
+    expect(mocks.list).toHaveBeenCalledTimes(2);
+    expect(mocks.list).toHaveBeenLastCalledWith("cities", { businessUnit: "website", page: 1, pageSize: 20, keyword: "City" });
+    (searchInput["onUpdate:modelValue"] as (value: string) => void)("old search"); await flush();
+    changeTab("hotels"); await flush();
+    expect(mocks.list).toHaveBeenLastCalledWith("hotels", { businessUnit: "website", page: 1, pageSize: 20 });
+    expect(searchInput.modelValue).toBe("");
+    const count = mocks.list.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(500); await flush();
+    expect(mocks.list).toHaveBeenCalledTimes(count);
+  });
+
+  it.each(["attractions", "hotels", "patterns"])("sends the %s city filter with the keyword and retains both while paging", async (group) => {
+    mount(); await flush(); changeTab(group); await flush();
+    const citySelect = [...mocks.selects.values()][0]!;
+    (citySelect["onUpdate:modelValue"] as (value: string) => void)("city-2");
+    (searchInput["onUpdate:modelValue"] as (value: string) => void)("酒店");
+    await flush(); await vi.advanceTimersByTimeAsync(300); await flush();
+    expect(mocks.list).toHaveBeenLastCalledWith(group, { businessUnit: "website", page: 1, pageSize: 20, keyword: "酒店", cityId: "city-2" });
+    changePage(2); await flush();
+    expect(mocks.list).toHaveBeenLastCalledWith(group, { businessUnit: "website", page: 2, pageSize: 20, keyword: "酒店", cityId: "city-2" });
+    (filterBar.onReset as () => void)(); await flush();
+    expect(mocks.list).toHaveBeenLastCalledWith(group, { businessUnit: "website", page: 1, pageSize: 20 });
+  });
+
+  it("combines route origin, destination and mode in the API query, and clears them on tab change", async () => {
+    mount(); await flush(); changeTab("routes"); await flush();
+    const [from, to] = [...mocks.selects.values()];
+    (from!["onUpdate:modelValue"] as (value: string) => void)("city-1");
+    (to!["onUpdate:modelValue"] as (value: string) => void)("city-2");
+    (mocks.modeSelect["onUpdate:modelValue"] as (value: string) => void)("hsr");
+    await flush(); await vi.advanceTimersByTimeAsync(300); await flush();
+    expect(mocks.list).toHaveBeenLastCalledWith("routes", { businessUnit: "website", page: 1, pageSize: 20, fromCityId: "city-1", toCityId: "city-2", mode: "hsr" });
+    changeTab("cities"); await flush(); await vi.advanceTimersByTimeAsync(300); await flush();
+    expect(mocks.list).toHaveBeenLastCalledWith("cities", { businessUnit: "website", page: 1, pageSize: 20 });
+  });
+
   it("loads only the active tab and ignores a slower previous tab response", async () => {
     let resolveCities!: (result: WebsiteConfigPage) => void;
     mocks.list.mockReturnValueOnce(new Promise<WebsiteConfigPage>((resolve) => { resolveCities = resolve; }));

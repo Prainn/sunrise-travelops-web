@@ -62,7 +62,7 @@ it.each(["en", "zh"] as const)("uses identical frozen HTML for %s preview and fo
   expect(printDocument.fileName).toBe(`WQT-TEST-${language}.pdf`);
   const statement = language === "en" ? "No shopping." : "无购物。";
   const notes = previewHtml.indexOf('<table class="notes">');
-  const shopping = previewHtml.indexOf('<table class="no-shopping">');
+  const shopping = previewHtml.indexOf('<tr class="no-shopping">');
   const hotels = previewHtml.indexOf('<table class="hotels-v5">');
   expect(notes).toBeLessThan(shopping);
   expect(shopping).toBeLessThan(hotels);
@@ -77,5 +77,20 @@ it("keeps historical frozen notes and labels without deriving a new statement", 
   const html = websitePrintHtml(output, "en", 5);
   expect(html).toContain("3. NO SHOPPING.");
   expect(html).toContain("Luxury 5-star");
-  expect(html).not.toContain('<table class="no-shopping">');
+  expect(html).not.toContain('<tr class="no-shopping">');
+});
+
+it("preserves frozen combination totals and visible zero-price components when grouping quotations", () => {
+  const html = websitePrintHtml({
+    ...empty,
+    quotation: [
+      { vehicle: "Custom <vehicle>", hotelCategory: "5-star", pax: 3, unitPrice: "1000.00", totalPrice: "2999.99", price: "RMB 1000.00 PP", priceComponents: [{ category: "hotel", unitPrice: "0.00" }] },
+      { vehicle: "7-seat vehicle", hotelCategory: "4-star", pax: null, unitPrice: "800.00", totalPrice: null, price: "RMB 800.00 PP" },
+    ],
+  }, "en", 6);
+  expect(html).toContain("RMB 2,999.99");
+  expect(html).not.toContain("RMB 3,000.00");
+  expect(html).toContain("Hotel (per person): RMB 0.00");
+  expect(html).toContain("To be confirmed");
+  expect(html).toContain("Custom &lt;vehicle&gt;");
 });

@@ -412,7 +412,7 @@
             :loading="isGeneratingPdf"
             @click="handleGeneratePdf"
           >
-            {{ $t("itinerary.generatePdf") }}
+            {{ $t("itinerary.previewPdf") }}
           </el-button>
         </template>
       </AppDrawer>

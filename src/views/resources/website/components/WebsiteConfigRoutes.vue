@@ -35,13 +35,24 @@
           {{ getOptionLabel(TRANSPORT_OPTIONS, row.mode) }}
         </template>
       </el-table-column>
-      <el-table-column :label="$t('websiteReport.vehicleType')" min-width="110">
+      <!-- @vue-generic {WebsiteRoute} -->
+      <el-table-column :label="$t('websiteConfig.routes.duration')" min-width="120" :show-overflow-tooltip="false">
         <template #default="{ row }">
-          {{ row.vehicleOptions.length ? row.vehicleOptions.map((option: WebsiteRouteVehicleOption) => `${getOptionLabel(VEHICLE_OPTIONS, option.vehicleType)} · ${option.durationMinutes == null ? $t('websiteReport.notSpecified') : $t('websiteReport.minutesValue', { value: option.durationMinutes })}`).join(' / ') : $t('websiteReport.notSpecified') }}
+          <el-button
+            v-if="row.mode === 'private_vehicle'"
+            type="primary"
+            link
+            :disabled="saving || isSubmitting"
+            @click="openEditor(row, true)"
+          >
+            {{ editable ? $t('common.edit') : $t('common.view') }}
+          </el-button>
+          <span v-else>
+            {{ row.durationMinutes == null ? $t('websiteReport.notSpecified') : $t('websiteReport.minutesValue', { value: row.durationMinutes }) }}
+          </span>
         </template>
       </el-table-column>
       <el-table-column prop="distanceKm" :label="$t('websiteReport.distanceKm')" min-width="110" />
-      <el-table-column prop="durationMinutes" :label="$t('websiteReport.durationMinutes')" min-width="120" />
       <el-table-column :label="$t('websiteConfig.routes.feeState')" min-width="160">
         <template #default="{ row }">
           {{ getOptionLabel(FEE_OPTIONS, row.feeState) }}
@@ -82,11 +93,13 @@
     <AppDialog
       v-model="visible"
       :title="
-        isNew
-          ? $t('websiteConfig.routes.create')
-          : editable
-            ? $t('websiteConfig.routes.edit')
-            : $t('websiteConfig.routes.detail')
+        durationOnly
+          ? $t('websiteConfig.routes.vehicleDurations', { name: record?.nameZh })
+          : isNew
+            ? $t('websiteConfig.routes.create')
+            : editable
+              ? $t('websiteConfig.routes.edit')
+              : $t('websiteConfig.routes.detail')
       "
       size="lg"
       :busy="saving || isSubmitting"
@@ -96,118 +109,127 @@
         v-if="record"
         ref="formRef"
         :model="record"
-        :rules="rules"
+        :rules="durationOnly ? { vehicleOptions: rules.vehicleOptions } : rules"
         :disabled="!editable || saving || isSubmitting"
         label-width="auto"
       >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
-          <el-form-item :label="$t('websiteConfig.routes.fromCity')" prop="fromCityId">
-            <WebsiteConfigSelect
-              v-model="record.fromCityId"
-              group="cities"
-              :version="version"
-              :business-unit="businessUnit"
-              :labels="labels"
-              @labels="Object.assign(labels, $event)"
-            />
-          </el-form-item>
-          <el-form-item :label="$t('websiteConfig.routes.toCity')" prop="toCityId">
-            <WebsiteConfigSelect
-              v-model="record.toCityId"
-              group="cities"
-              :version="version"
-              :business-unit="businessUnit"
-              :labels="labels"
-              @labels="Object.assign(labels, $event)"
-            />
-          </el-form-item>
-          <el-form-item :label="$t('websiteConfig.routes.nameZh')" prop="nameZh">
-            <el-input v-model="record.nameZh" maxlength="150" />
-          </el-form-item>
-          <el-form-item :label="$t('websiteConfig.routes.nameEn')" prop="nameEn">
-            <el-input v-model="record.nameEn" maxlength="150" />
-          </el-form-item>
-          <el-form-item :label="$t('websiteConfig.routes.transport')">
-            <el-select v-model="record.mode" autocomplete="new-password">
-              <el-option
-                v-for="option in TRANSPORT_OPTIONS"
-                :key="option.value"
-                :value="option.value"
-                :label="$t(option.labelKey)"
+          <template v-if="!durationOnly">
+            <el-form-item :label="$t('websiteConfig.routes.fromCity')" prop="fromCityId">
+              <WebsiteConfigSelect
+                v-model="record.fromCityId"
+                group="cities"
+                :version="version"
+                :business-unit="businessUnit"
+                :labels="labels"
+                @labels="Object.assign(labels, $event)"
               />
-            </el-select>
-          </el-form-item>
-          <el-form-item :label="$t('websiteConfig.routes.feeState')">
-            <FeeStateSelect v-model="record.feeState" />
-          </el-form-item>
+            </el-form-item>
+            <el-form-item :label="$t('websiteConfig.routes.toCity')" prop="toCityId">
+              <WebsiteConfigSelect
+                v-model="record.toCityId"
+                group="cities"
+                :version="version"
+                :business-unit="businessUnit"
+                :labels="labels"
+                @labels="Object.assign(labels, $event)"
+              />
+            </el-form-item>
+            <el-form-item :label="$t('websiteConfig.routes.nameZh')" prop="nameZh">
+              <el-input v-model="record.nameZh" maxlength="150" />
+            </el-form-item>
+            <el-form-item :label="$t('websiteConfig.routes.nameEn')" prop="nameEn">
+              <el-input v-model="record.nameEn" maxlength="150" />
+            </el-form-item>
+            <el-form-item :label="$t('websiteConfig.routes.transport')">
+              <el-select v-model="record.mode" autocomplete="new-password">
+                <el-option
+                  v-for="option in TRANSPORT_OPTIONS"
+                  :key="option.value"
+                  :value="option.value"
+                  :label="$t(option.labelKey)"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item :label="$t('websiteConfig.routes.feeState')">
+              <FeeStateSelect v-model="record.feeState" />
+            </el-form-item>
+          </template>
           <template v-if="record.mode === 'private_vehicle'">
-            <template v-for="(option, index) in record.vehicleOptions" :key="index">
-              <el-form-item :label="$t('websiteReport.vehicleType')">
-                <el-select
-                  v-model="option.vehicleType"
-                  filterable
-                  allow-create
-                  default-first-option
-                  clearable
-                  :value-on-clear="''"
-                  autocomplete="new-password"
-                  :maxlength="100"
-                  :placeholder="$t('websiteReport.vehicleSelectOrEnter')"
-                  :aria-label="$t('websiteReport.vehicleType')"
-                  @change="formRef?.validateField('vehicleOptions').catch(() => undefined)"
+            <el-form-item prop="vehicleOptions" label-width="0" class="col-span-2 max-[650px]:col-span-1">
+              <div class="flex w-full min-w-0 flex-col gap-[12px]">
+                <DataTable :data="record.vehicleOptions" :empty-text="$t('websiteReport.notSpecified')">
+                  <el-table-column :label="$t('websiteReport.vehicleType')" min-width="180">
+                    <template #default="{ row }">
+                      <el-select
+                        v-model="row.vehicleType"
+                        filterable
+                        allow-create
+                        default-first-option
+                        clearable
+                        :value-on-clear="''"
+                        autocomplete="new-password"
+                        :maxlength="100"
+                        :placeholder="$t('websiteReport.vehicleSelectOrEnter')"
+                        :aria-label="$t('websiteReport.vehicleType')"
+                        @change="formRef?.validateField('vehicleOptions').catch(() => undefined)"
+                      >
+                        <el-option
+                          v-for="vehicle in VEHICLE_OPTIONS"
+                          :key="vehicle.value"
+                          :value="vehicle.value"
+                          :label="$t(vehicle.labelKey)"
+                        />
+                      </el-select>
+                    </template>
+                  </el-table-column>
+                  <el-table-column :label="$t('websiteReport.durationMinutes')" min-width="180">
+                    <template #default="{ row }">
+                      <StrictInputNumber
+                        v-model="row.durationMinutes"
+                        :min="1"
+                        :max="525600"
+                        :precision="0"
+                        :placeholder="$t('websiteReport.notSpecified')"
+                        :aria-label="$t('websiteReport.durationMinutes')"
+                        @update:model-value="row.durationMinutes = $event ?? null"
+                        @change="formRef?.validateField('vehicleOptions').catch(() => undefined)"
+                      />
+                    </template>
+                  </el-table-column>
+                  <el-table-column
+                    v-if="editable"
+                    :label="$t('common.actions')"
+                    width="90"
+                    align="center"
+                  >
+                    <template #default="{ $index }">
+                      <el-button type="danger" link @click="record.vehicleOptions?.splice($index, 1)">
+                        {{ $t('common.delete') }}
+                      </el-button>
+                    </template>
+                  </el-table-column>
+                </DataTable>
+                <el-button
+                  v-if="editable"
+                  class="self-start"
+                  :disabled="(record.vehicleOptions?.length ?? 0) >= 100"
+                  @click="record.vehicleOptions?.push({ vehicleType: '', durationMinutes: null })"
                 >
-                  <el-option
-                    v-for="vehicle in VEHICLE_OPTIONS"
-                    :key="vehicle.value"
-                    :value="vehicle.value"
-                    :label="$t(vehicle.labelKey)"
-                  />
-                </el-select>
-              </el-form-item>
-              <el-form-item :label="$t('websiteReport.durationMinutes')">
-                <div class="flex w-full min-w-0 items-center gap-[8px]">
-                  <StrictInputNumber
-                    v-model="option.durationMinutes"
-                    class="!w-full min-w-0"
-                    :min="1"
-                    :max="525600"
-                    :precision="0"
-                    :placeholder="$t('websiteReport.notSpecified')"
-                    :aria-label="$t('websiteReport.durationMinutes')"
-                    @update:model-value="option.durationMinutes = $event ?? null"
-                    @change="formRef?.validateField('vehicleOptions').catch(() => undefined)"
-                  />
-                  <el-button type="danger" link @click="record.vehicleOptions.splice(index, 1)">
-                    {{ $t('common.delete') }}
-                  </el-button>
-                </div>
-              </el-form-item>
-            </template>
-            <el-form-item prop="vehicleOptions" class="col-span-2 max-[650px]:col-span-1">
-              <template #label>
-                <!-- 叠放预计耗时标签占位，使 label-width="auto" 在新增车型前后宽度一致 -->
-                <span class="inline-grid">
-                  <span class="col-start-1 row-start-1 justify-self-end" :class="{ invisible: record.vehicleOptions.length > 0 }" :aria-hidden="record.vehicleOptions.length > 0">
-                    {{ $t('websiteReport.vehicleType') }}
-                  </span>
-                  <span class="invisible col-start-1 row-start-1" aria-hidden="true">
-                    {{ $t('websiteReport.durationMinutes') }}
-                  </span>
-                </span>
-              </template>
-              <el-button :disabled="record.vehicleOptions.length >= 100" @click="record.vehicleOptions.push({ vehicleType: '', durationMinutes: null })">
-                {{ $t('common.create') }}
-              </el-button>
+                  {{ $t('common.create') }}
+                </el-button>
+              </div>
             </el-form-item>
           </template>
           <WebsiteTransportFields
+            v-if="!durationOnly"
             v-model="record"
             :mode="record.mode"
             :show-vehicle="false"
             :show-mileage="false"
             :show-duration="record.mode !== 'private_vehicle'"
           />
-          <el-form-item :label="$t('common.status')">
+          <el-form-item v-if="!durationOnly" :label="$t('common.status')">
             <el-radio-group v-model="record.status">
               <el-radio value="enabled">
                 {{ $t("common.enabled") }}
@@ -246,7 +268,7 @@ import TableToolbar from "@/components/TableToolbar/index.vue";
 import { reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { FormInstance } from "element-plus";
-import type { WebsiteConfigEditorProps, WebsiteRoute, WebsiteRouteVehicleOption } from "@/types/website";
+import type { WebsiteConfigEditorProps, WebsiteRoute } from "@/types/website";
 import {
   cloneWebsiteDraft,
   FEE_OPTIONS,
@@ -264,14 +286,20 @@ const labels = reactive<Record<string, string>>({});
 watch(() => props.references, (value) => Object.assign(labels, value), { immediate: true });
 const visible = ref(false);
 const isNew = ref(false);
+const durationOnly = ref(false);
 const record = ref<WebsiteRoute>();
 const formRef = ref<FormInstance>();
 const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
 const rules = useWebsiteRouteRules();
 watch(() => record.value?.mode, (mode) => {
   if (!record.value) return;
-  if (mode !== "private_vehicle") record.value.vehicleOptions = [];
-  else record.value.durationMinutes = null;
+  if (mode === "private_vehicle") {
+    delete record.value.durationMinutes;
+    record.value.vehicleOptions ??= [];
+  } else {
+    delete record.value.vehicleOptions;
+    record.value.durationMinutes ??= null;
+  }
 });
 const { t } = useI18n();
 
@@ -280,7 +308,8 @@ function getOptionLabel(options: Array<{ value: string; labelKey: string }>, val
   return labelKey ? t(labelKey) : value;
 }
 
-function openEditor(route?: WebsiteRoute) {
+function openEditor(route?: WebsiteRoute, onlyDuration = false) {
+  durationOnly.value = onlyDuration;
   isNew.value = !route;
   record.value = route
     ? cloneWebsiteDraft(route)
@@ -293,7 +322,7 @@ function openEditor(route?: WebsiteRoute) {
       nameZh: "",
       nameEn: "",
       feeState: "INCLUDED",
-      vehicleOptions: [], distanceKm: null, durationMinutes: null,
+      vehicleOptions: [], distanceKm: null,
     };
   visible.value = true;
 }

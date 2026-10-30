@@ -37,7 +37,8 @@ export interface WebsiteRouteVehicleOption {
   durationMinutes: number | null;
 }
 export interface WebsiteRoute extends ConfigBase {
-  vehicleOptions: WebsiteRouteVehicleOption[];
+  /** Only private_vehicle carries per-vehicle durations. */
+  vehicleOptions?: WebsiteRouteVehicleOption[];
   distanceKm?: string | null;
   durationMinutes?: number | null;
   fromCityId: string;
@@ -98,6 +99,9 @@ export interface WebsiteConfigListQuery {
   pageSize: number;
   keyword?: string;
   cityId?: string;
+  fromCityId?: string;
+  toCityId?: string;
+  mode?: TransportMode;
   excludeId?: string;
 }
 export interface WebsiteConfigEditorProps {
