@@ -17,10 +17,10 @@
 | Inquiry | `src/views/inquiries`、`src/services/inquiry.service.ts`、`src/types/inquiry.ts` |
 | Itinerary / Quotation | `src/views/inquiries/itineraries` 的 Workspace/Editor/Quote/Pdf composables、`pdf.ts` / `docx.ts`；同一个 inquiry service、`src/types/itinerary.ts` |
 | 独立站询盘 / 行程 / 配置 | `src/views/website-inquiries`、`src/views/resources/website`；业务合同见根 [统一 API 第 18 节](../docs/api/Sunrise%20TravelOps%20后端说明.md#website-api) |
-| 成团 / 导游请假与评分 | `src/views/tours`、`src/views/guides`；根成团专题及共享 API 成团章节 |
+| 成团 / 导游请假与评分 | `src/views/tours`、`src/views/guides`；根 P0 第 11 节及共享 API 成团章节 |
 | 系统操作日志 | `src/views/system/operation-logs`、`src/services/operation-log.service.ts` |
 
-修改业务按 Page → Service → Type → backend endpoint 核对实际链路；Inquiry/Itinerary/Quotation 读根 P0、P0.1 和 API 的受影响主题。局部样式/文案无需走接口链；简单接口改动只因实际共享依赖扩大阅读，不因跨端而全量 AOCI。报价没有独立 quotations 页面。类型变化同时检查表单、列表、详情、保存映射和冻结数据/PDF 消费者，只修改受影响部分。
+修改业务按 Page → Service → Type → backend endpoint 核对实际链路；Inquiry/Itinerary/Quotation 读根 P0 和 API 的受影响主题；2026-11-02 起新增范围再读新的 P0.1（建立后）。局部样式/文案无需走接口链；简单接口改动只因实际共享依赖扩大阅读，不因跨端而全量 AOCI。报价没有独立 quotations 页面。类型变化同时检查表单、列表、详情、保存映射和冻结数据/PDF 消费者，只修改受影响部分。
 
 ## API Rules
 
