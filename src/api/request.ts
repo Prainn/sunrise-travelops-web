@@ -234,11 +234,8 @@ async function rotateTokens(staleAccessToken: string): Promise<void> {
       if (AuthStorage.getAccessToken() !== staleAccessToken) return;
       AuthStorage.setTokens(tokens.accessToken, tokens.refreshToken, AuthStorage.getRememberMe());
     } catch (error) {
-      if (
-        isApiError(error) &&
-        error.status === 401 &&
-        error.code === ApiErrorCode.AUTH_REFRESH_TOKEN_INVALID
-      ) {
+      // 刷新接口的任何 401 都表示刷新令牌不可用；5xx、网络错误或超时保留会话以便恢复后重试。
+      if (isApiError(error) && error.status === 401) {
         // 存储中的刷新令牌已被其他标签页更换时，不清除新会话，交给重试处理。
         if (AuthStorage.getRefreshToken() !== refreshToken) return;
         await expireSession();
@@ -258,12 +255,25 @@ async function refreshTokensOnce(staleAccessToken: string): Promise<void> {
   return refreshPromise;
 }
 
+interface SentRequest {
+  response: Response;
+  signal: AbortSignal;
+  timedOut: () => boolean;
+  /** 响应体读取结束后释放超时计时器与调用方取消监听。 */
+  release: () => void;
+}
+
+function abortError(timedOut: boolean, cause: unknown): ApiError {
+  const code = timedOut ? ApiErrorCode.REQUEST_TIMEOUT : ApiErrorCode.NETWORK_ERROR;
+  return new ApiError(getErrorMessage(code), { code, cause });
+}
+
 async function sendRequest(
   method: string,
   path: string,
   body: unknown,
   options: RequestOptions,
-): Promise<Response> {
+): Promise<SentRequest> {
   const {
     params,
     requiresAuth: _requiresAuth,
@@ -290,20 +300,36 @@ async function sendRequest(
       }, timeoutMs)
       : undefined;
 
+  const release = () => {
+    clearTimeout(timer);
+    callerSignal?.removeEventListener("abort", abortFromCaller);
+  };
+
   try {
-    return await fetch(url, {
+    const response = await fetch(url, {
       ...fetchOptions,
       method,
       headers: createHeaders(options, body),
       body: body instanceof FormData ? body : body === undefined ? undefined : JSON.stringify(body),
       signal: controller.signal,
     });
+    return { response, signal: controller.signal, timedOut: () => timedOut, release };
   } catch (error) {
-    const code = timedOut ? ApiErrorCode.REQUEST_TIMEOUT : ApiErrorCode.NETWORK_ERROR;
-    throw new ApiError(getErrorMessage(code), { code, cause: error });
-  } finally {
-    clearTimeout(timer);
-    callerSignal?.removeEventListener("abort", abortFromCaller);
+    release();
+    throw abortError(timedOut, error);
+  }
+}
+
+/** 超时与取消同样覆盖响应体读取，避免大文件传输停滞时一直等待。 */
+async function readBody<T>(
+  sent: SentRequest,
+  reader: (response: Response) => Promise<T>,
+): Promise<T> {
+  try {
+    return await reader(sent.response);
+  } catch (error) {
+    if (sent.signal.aborted) throw abortError(sent.timedOut(), error);
+    throw error;
   }
 }
 
@@ -337,27 +363,33 @@ async function sendJsonRequest<T>(
 
   try {
     const sentAccessToken = AuthStorage.getAccessToken();
-    const response = await sendRequest(method, path, body, options);
-    assertSameEpoch(startEpoch);
-
-    if (response.status === 401 && canRefreshAfter(options) && AuthStorage.getRefreshToken()) {
-      await refreshTokensOnce(sentAccessToken);
+    const sent = await sendRequest(method, path, body, options);
+    const { response } = sent;
+    try {
       assertSameEpoch(startEpoch);
-      return await sendJsonRequest<T>(
-        method,
-        path,
-        body,
-        { ...options, retryAfterRefresh: false },
-        startEpoch,
-      );
-    }
 
-    if (response.status === 401 && shouldExpireAfter(options)) {
-      await expireSession();
-    }
-    if (!response.ok) throw await parseError(response);
+      if (response.status === 401 && canRefreshAfter(options) && AuthStorage.getRefreshToken()) {
+        sent.release();
+        await refreshTokensOnce(sentAccessToken);
+        assertSameEpoch(startEpoch);
+        return await sendJsonRequest<T>(
+          method,
+          path,
+          body,
+          { ...options, retryAfterRefresh: false },
+          startEpoch,
+        );
+      }
 
-    return await parseJsonData<T>(response);
+      if (response.status === 401 && shouldExpireAfter(options)) {
+        await expireSession();
+      }
+      if (!response.ok) throw await readBody(sent, parseError);
+
+      return await readBody(sent, parseJsonData<T>);
+    } finally {
+      sent.release();
+    }
   } finally {
     endWrite?.();
   }
@@ -371,21 +403,27 @@ async function sendBlobRequest(
   if (!options.bypassSessionGate && options.requiresAuth !== false) await sessionGate.waitVerified();
   assertSessionGate(options);
   const sentAccessToken = AuthStorage.getAccessToken();
-  const response = await sendRequest("GET", path, undefined, options);
-  assertSameEpoch(startEpoch);
-
-  if (response.status === 401 && canRefreshAfter(options) && AuthStorage.getRefreshToken()) {
-    await refreshTokensOnce(sentAccessToken);
+  const sent = await sendRequest("GET", path, undefined, options);
+  const { response } = sent;
+  try {
     assertSameEpoch(startEpoch);
-    return sendBlobRequest(path, { ...options, retryAfterRefresh: false }, startEpoch);
-  }
 
-  if (response.status === 401 && shouldExpireAfter(options)) {
-    await expireSession();
-  }
-  if (!response.ok) throw await parseError(response);
+    if (response.status === 401 && canRefreshAfter(options) && AuthStorage.getRefreshToken()) {
+      sent.release();
+      await refreshTokensOnce(sentAccessToken);
+      assertSameEpoch(startEpoch);
+      return await sendBlobRequest(path, { ...options, retryAfterRefresh: false }, startEpoch);
+    }
 
-  return response.blob();
+    if (response.status === 401 && shouldExpireAfter(options)) {
+      await expireSession();
+    }
+    if (!response.ok) throw await readBody(sent, parseError);
+
+    return await readBody(sent, (body) => body.blob());
+  } finally {
+    sent.release();
+  }
 }
 
 export const request = {

@@ -136,8 +136,15 @@
             </el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item :label="$t('common.sort')">
-          <el-input-number v-model="formData.sort" controls-position="right" />
+        <el-form-item :label="$t('common.sort')" prop="sort">
+          <el-input-number
+            v-model="formData.sort"
+            :min="SORT_MIN"
+            :max="SORT_MAX"
+            :precision="0"
+            :value-on-clear="null"
+            controls-position="right"
+          />
         </el-form-item>
         <el-form-item>
           <template #label>
@@ -259,9 +266,23 @@ const initialFormData: DictItemForm = {
 
 const formData = reactive<DictItemForm>({ ...initialFormData });
 
+// 与后端 DictionaryItemInput.sort 一致：必填 int32 整数，允许负数。
+const SORT_MIN = -2147483648;
+const SORT_MAX = 2147483647;
+
 const rules = computed<FormRules<DictItemForm>>(() => ({
   value: [{ required: true, message: t("dictionary.optionValuePlaceholder"), trigger: "blur" }],
   label: [{ required: true, message: t("businessCategory.optionNameRequired"), trigger: "blur" }],
+  sort: [
+    {
+      required: true,
+      type: "integer",
+      min: SORT_MIN,
+      max: SORT_MAX,
+      message: t("common.invalidNumber", { min: SORT_MIN, max: SORT_MAX, precision: 0 }),
+      trigger: "change",
+    },
+  ],
 }));
 
 /**

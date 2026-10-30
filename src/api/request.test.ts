@@ -106,6 +106,19 @@ describe("request session recovery", () => {
     expect(auth.clearAuth).toHaveBeenCalledOnce();
   });
 
+  it("clears tokens when refresh is rejected with any other 401 code", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(response(401, "AUTH_TOKEN_EXPIRED"))
+        .mockResolvedValueOnce(response(401, "AUTH_SESSION_REVOKED")),
+    );
+
+    await expect(request.get("/auth/me")).rejects.toMatchObject({ status: 401 });
+    expect(auth.clearAuth).toHaveBeenCalledOnce();
+  });
+
   it("keeps the server error reason alongside the localized message", async () => {
     vi.stubGlobal(
       "fetch",
@@ -406,6 +419,24 @@ describe("request account switch gate", () => {
           options?.signal?.addEventListener("abort", () => reject(new DOMException("", "AbortError")));
         }),
     );
+    vi.stubGlobal("fetch", fetch);
+
+    await expect(request.get("/inquiries", { timeoutMs: 10 })).rejects.toMatchObject({
+      code: "REQUEST_TIMEOUT",
+    });
+  });
+
+  it("applies the timeout while the response body is still streaming", async () => {
+    const fetch = vi.fn(async (_url: string, options?: RequestInit) => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          options?.signal?.addEventListener("abort", () =>
+            controller.error(new DOMException("", "AbortError")),
+          );
+        },
+      });
+      return new Response(body, { status: 200, headers: { "Content-Type": "application/json" } });
+    });
     vi.stubGlobal("fetch", fetch);
 
     await expect(request.get("/inquiries", { timeoutMs: 10 })).rejects.toMatchObject({

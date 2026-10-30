@@ -26,6 +26,8 @@ export const useDictStore = defineStore("dict", () => {
 
   // 请求队列（防止重复请求）
   const requestQueue: Record<string, Promise<void>> = {};
+  // 清空缓存（退出、切换账号、维护字典）时递增，丢弃此前发出请求的回包，避免写回旧数据。
+  let cacheGeneration = 0;
 
   /**
    * 缓存字典数据
@@ -44,17 +46,17 @@ export const useDictStore = defineStore("dict", () => {
     if (isFresh(dictCache.value[dictCode])) return;
     // 防止重复请求
     if (!requestQueue[dictCode]) {
-      requestQueue[dictCode] = dictionaryService
+      const generation = cacheGeneration;
+      const pending = dictionaryService
         .getDictItems(dictCode)
         .then((data) => {
-          cacheDictItems(dictCode, data);
-          Reflect.deleteProperty(requestQueue, dictCode);
+          if (generation === cacheGeneration) cacheDictItems(dictCode, data);
         })
-        .catch((error) => {
-          // 请求失败，清理队列，允许重试
-          Reflect.deleteProperty(requestQueue, dictCode);
-          throw error;
+        .finally(() => {
+          // 完成或失败都移出队列，允许重试；清空后已被新请求替换的不误删。
+          if (requestQueue[dictCode] === pending) Reflect.deleteProperty(requestQueue, dictCode);
         });
+      requestQueue[dictCode] = pending;
     }
     await requestQueue[dictCode];
   };
@@ -74,6 +76,8 @@ export const useDictStore = defineStore("dict", () => {
    * @param dictCode 字典编码
    */
   const removeDictItem = (dictCode: string) => {
+    cacheGeneration++;
+    Reflect.deleteProperty(requestQueue, dictCode);
     if (dictCache.value[dictCode]) {
       Reflect.deleteProperty(dictCache.value, dictCode);
     }
@@ -83,6 +87,8 @@ export const useDictStore = defineStore("dict", () => {
    * 清空字典缓存
    */
   const clearDictCache = () => {
+    cacheGeneration++;
+    for (const dictCode of Object.keys(requestQueue)) Reflect.deleteProperty(requestQueue, dictCode);
     dictCache.value = {};
   };
 
