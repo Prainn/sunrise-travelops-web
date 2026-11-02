@@ -544,6 +544,7 @@ const inputRule = computed(() => ({
   trigger: "blur",
 }));
 const headcountRule = computed(() => ({
+  required: true,
   validator: (_rule: unknown, value: unknown, callback: (error?: Error) => void) =>
     typeof value === "number" && Number.isInteger(value) && value >= 0
       ? callback()
