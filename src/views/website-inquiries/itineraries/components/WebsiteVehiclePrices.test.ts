@@ -61,6 +61,22 @@ async function mount() {
 const row = (plan: WebsiteItinerary, hotelTier: "A" | "B" | "C") => plan.vehiclePrices.find(price => price.vehicleType === "7_seat" && price.hotelTier === hotelTier);
 
 describe("vehicle × hotel tier price editing", () => {
+  it("saves a price with a null hotel tier when overnight cities have no hotels", async () => {
+    const view = await mount();
+    await view.press("common.cancel");
+    view.plan.value.days.forEach(day => day.hotels = []);
+    view.plan.value.vehiclePrices = [];
+    await nextTick();
+    await view.open();
+    expect(view.plan.value.days[0]!.overnightCityId).toBe("city");
+    expect(view.inputs()).toHaveLength(5);
+    await view.change(view.inputs()[2]!, "500");
+    await view.press("common.confirm");
+    expect(view.plan.value.vehiclePrices).toEqual([
+      expect.objectContaining({ vehicleType: "7_seat", hotelTier: null, unitPrice: "500.00" }),
+    ]);
+  });
+
   it("keeps edits isolated until confirmation and saves only priced combinations", async () => {
     const view = await mount();
     // 档次 A、B 为当前候选，C 为待调整组合；每行五个分项。

@@ -38,7 +38,7 @@ export function priceKey(vehicleType: string | null, hotelTier: WebsiteHotelTier
 
 /**
  * 候选维度只取当前有效日程（不含 deletedDays 与未应用的 reorderDraft）：
- * 专车段的非空车型按原文去重；住宿日酒店档次按 A–D 排序；维度为空时为 [null]（无专车/不住宿）。
+ * 专车段的非空车型按原文去重；住宿日酒店档次按 A–D 排序；维度为空时为 [null]（无专车/未安排酒店）。
  */
 export function quotationCandidates(days: WebsiteDay[]) {
   const vehicles = [...new Set(days.flatMap(day => day.legs

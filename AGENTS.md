@@ -78,3 +78,4 @@ PageShell（左侧分类/树用 #aside 插槽）
 - 命令：`pnpm type-check`；`pnpm exec eslint <受影响文件>`；`pnpm test <测试文件>`。`pnpm lint` / `pnpm test` 是全量入口；`pnpm build` 包含类型检查和构建，`build-only` 不含类型检查。
 - 本地联调用 `pnpm dev:local`（localhost:4000）；`pnpm dev` 默认代理远程开发 API，勿把远程结果当成本地后端验证。
 - PR 的 [ci.yml](.github/workflows/ci.yml) 在 GitHub-hosted 运行类型检查、构建和发布恢复定向检查；[deploy.yml](.github/workflows/deploy.yml) 在 ECS runner 串行构建发布。dev push 发布 dev，main 仅经 PR 更新后手动发布 prod；根命令只发布 dev。步骤与验收见 [前端自动部署](../docs/deployment/前端自动部署.md)。
+- 生产发布按 `deploy-production` Skill 和根 AGENTS 的 CRF 规则执行：发布前核对本次新旧需求变更，发布核验后回填实际交付条目的上线时间。小 UI 调整和按原需求修复的 bug 不登记 CRF。

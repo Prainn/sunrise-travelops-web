@@ -1610,7 +1610,7 @@
     "guideLanguagePlaceholder": "e.g. English",
     "transportLegs": "Transport legs",
     "hotelPlans": "Hotel options",
-    "hotelRequiredHint": "Stay required: enter at least one hotel name. One hotel per tier per day; choose the tier manually, shared hotel ratings are not auto-mapped.",
+    "hotelRequiredHint": "You can quote with no hotels in the entire itinerary. If hotels are arranged, each priced tier must cover every overnight day. One hotel per tier per day; choose the tier manually, shared hotel ratings are not auto-mapped.",
     "hotelTier": "Hotel tier",
     "hotelTierA": "A Luxury 5-star",
     "hotelTierB": "B Comfort 4-star",
@@ -1726,7 +1726,7 @@
     "noDriverReason": "No private vehicle leg in the itinerary",
     "guideReason": "Guide language set on {items}",
     "noGuideReason": "No guide language set",
-    "noAccommodation": "No accommodation",
+    "noAccommodation": "No hotel arranged",
     "noPrivateVehicle": "No private vehicle",
     "hotelTierTaken": "This day already has a hotel in this tier. One hotel per tier per day.",
     "hotelTiersFull": "All four hotel tiers are used for this day. Edit or remove a hotel to change it."
@@ -2232,6 +2232,6 @@
     "nights": "{count} nights",
     "breakfastIncluded": "Included",
     "breakfastExcluded": "Not included",
-    "noHotels": "No hotel accommodation."
+    "noHotels": "No hotel arranged."
   }
 }

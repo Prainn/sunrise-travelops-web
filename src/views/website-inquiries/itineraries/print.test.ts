@@ -6,6 +6,18 @@ import { printWebsiteQuotation, websitePrintBlob, websitePrintHtml } from "./pri
 
 const empty: WebsiteOutput = { title: "Fixture", itinerary: [], inclusions: [], exclusions: [], hotelOptions: [], quotation: [], notes: [] };
 describe("frozen report rendering", () => {
+  it.each(["en", "zh"] as const)("renders a hotel-free quotation with overnight cities in %s", (language) => {
+    const html = websitePrintHtml({
+      ...empty,
+      itinerary: [{ day: "D1", depart: "Kunming", transportation: "", sightseeing: "", hotel: "Kunming", meal: "" }],
+      quotation: [{ vehicle: "7-seat vehicle", hotelTier: null, hotelCategory: language === "en" ? "No hotel arranged" : "未安排酒店", unitPrice: "500.00", totalPrice: "1500.00", pax: 3, price: "RMB 500.00 PP" }],
+    }, language, 6);
+    expect(html).toContain(language === "en" ? "No hotel arranged." : "本行程未安排酒店。");
+    expect(html).toContain("RMB 1,500.00");
+    expect(html).toContain("Kunming");
+    expect(html).not.toContain('<table class="hotels-v5">');
+  });
+
   it("escapes customer content and uses the frozen total without recomputing it", () => {
     const html = websitePrintHtml({
       ...empty,
