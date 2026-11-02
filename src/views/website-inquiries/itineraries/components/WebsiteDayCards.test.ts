@@ -16,6 +16,7 @@ vi.mock("../../components/FeeStateSelect.vue", () => ({ default: { render: () =>
 import WebsiteDayAttractions from "./WebsiteDayAttractions.vue";
 import WebsiteDayTransport from "./WebsiteDayTransport.vue";
 import WebsiteDayMealsServices from "./WebsiteDayMealsServices.vue";
+import WebsiteDayHotels from "./WebsiteDayHotels.vue";
 
 type HostNode = { type: string; props: Record<string, unknown>; children: HostNode[]; parent?: HostNode; text?: string };
 const node = (type: string): HostNode => ({ type, props: {}, children: [] });
@@ -34,9 +35,10 @@ const renderer = createRenderer<HostNode, HostNode>({
   },
 });
 let unmount: (() => void) | undefined;
-function mount(component: Component, day: WebsiteDay, editable = true) {
+function mount(component: Component, day: WebsiteDay, editable = true, config = { attractions: [], cities: [], routes: [], hotels: [] } as unknown as WebsiteConfig) {
   const root = node("root");
-  const app = renderer.createApp(component, { day, editable, config: { attractions: [], cities: [], routes: [] } as unknown as WebsiteConfig });
+  const remove = vi.fn();
+  const app = renderer.createApp(component, { day, editable, config, onRemove: remove });
   app.config.globalProperties.$t = (key: string) => key;
   for (const name of ["ElFormItem", "ElSelect", "ElOption", "ElInput", "ElInputNumber", "ElSwitch", "ElTag", "ElButton"]) {
     app.component(name, defineComponent({ inheritAttrs: false, setup(_, { attrs, slots }) { return () => h(name, attrs, slots.default?.()); } }));
@@ -50,6 +52,7 @@ function mount(component: Component, day: WebsiteDay, editable = true) {
   function text(node: HostNode): string { return (node.text ?? "") + node.children.map(text).join(""); }
   return {
     find,
+    remove,
     async click(label: string) {
       const button = find("ElButton").find(button => text(button) === label)!;
       await (button.props.onClick as () => void | Promise<void>)();
@@ -102,5 +105,27 @@ describe.each(cases)("$label card editing", ({ component, collection, value }) =
     const view = mount(component as Component, fixture(), false);
     expect(view.find("ElButton")).toHaveLength(0);
     expect(view.find("ElInput")).toHaveLength(0);
+  });
+});
+
+describe.each([
+  ...cases,
+  { label: "hotel", component: WebsiteDayHotels, collection: "hotels" as const, value: { id: "hotel", tier: "A" as const, cityId: "city", configHotelId: null, resourceId: "public-hotel", nameZh: "酒店", nameEn: "Hotel", roomType: "Twin", breakfastIncluded: true } },
+  { label: "meal", component: WebsiteDayMealsServices, collection: "meals" as const, value: { id: "meal", slot: "lunch" as const, resourceId: "public-restaurant", restaurantZh: "午餐", restaurantEn: "Lunch", feeState: "INCLUDED" as const } },
+])("$label card removal entry", ({ component, collection, value }) => {
+  it("requests removal by stable ID without changing the draft before confirmation", async () => {
+    const day = reactive(emptyDay(1));
+    Object.assign(day, { [collection]: [{ ...value }] });
+    const before = JSON.stringify(day);
+    const view = mount(component as Component, day);
+    await view.click("common.delete");
+    expect(view.remove).toHaveBeenCalledWith(value.id, expect.any(String));
+    expect(JSON.stringify(day)).toBe(before);
+  });
+  it("hides deletion for a readonly itinerary", () => {
+    const day = reactive(emptyDay(1));
+    Object.assign(day, { [collection]: [{ ...value }] });
+    const view = mount(component as Component, day, false);
+    expect(view.find("ElButton")).toHaveLength(0);
   });
 });

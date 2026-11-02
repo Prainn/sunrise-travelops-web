@@ -19,6 +19,7 @@
         :days="plan && config ? dayEntries : []"
         :reset-key="plan?.id"
         :can-add="editable && !saving"
+        :reorder-label="$t('websiteItineraryUi.organizeItinerary')"
         @expand="(id) => dayCards.get(id)?.expand()"
         @add="addDay"
         @reorder="isReorderDialogVisible = true"
@@ -206,6 +207,7 @@
             @update:day="plan.days.splice(index, 1, $event)"
             @open-resource="(kind, target) => openResource(index, kind, target)"
             @insert-resource="(kind, afterId) => openInsertResource(index, kind, afterId)"
+            @remove-item="(id, name) => removeItem(plan!.days[index]!.id, id, name)"
           />
         </template>
 
@@ -321,6 +323,7 @@
         />
         <ItineraryReorderDialog
           v-model="isReorderDialogVisible"
+          :title="$t('websiteItineraryUi.organizeTitle')"
           :days="reorderBoardDays"
           :deleted-days="deletedBoardDays"
           :start-date="plan.startDate"
@@ -424,6 +427,7 @@ const {
   previewVisible,
   skeletonId,
   save,
+  removeItem,
   create,
   copy,
   reset,

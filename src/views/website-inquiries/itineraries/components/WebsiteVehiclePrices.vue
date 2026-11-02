@@ -23,8 +23,9 @@
       <el-checkbox
         v-for="category in PRICE_CATEGORIES"
         :key="category"
-        v-model="pdfCategories[category]"
-        :disabled="!editable"
+        :model-value="category === 'hotel' && !hasHotels ? false : pdfCategories[category]"
+        :disabled="!editable || (category === 'hotel' && !hasHotels)"
+        @update:model-value="pdfCategories[category] = Boolean($event)"
       >
         {{ $t(`websiteItineraryUi.priceCategories.${category}`) }}
       </el-checkbox>
@@ -207,6 +208,7 @@ const entries = reactive(new Map<string, PriceRow>());
 const pdfCategories = reactive(emptyPdfCategories());
 
 const candidates = computed(() => quotationCandidates(plan.value.days));
+const hasHotels = computed(() => candidates.value.hotelTiers.some(tier => tier !== null));
 const candidateKeys = computed(() => candidates.value.hotelTiers.flatMap(tier =>
   candidates.value.vehicleTypes.map(vehicle => ({ key: priceKey(vehicle, tier), vehicleType: vehicle, hotelTier: tier }))));
 /** 保存前按本地草稿派生；无未保存修改时使用服务端返回。 */
@@ -282,11 +284,12 @@ function components(row: PriceRow): WebsitePriceComponent[] {
   return PRICE_CATEGORIES.map(category => ({
     category,
     unitPrice: row.prices[category],
-    showInPdf: row.prices[category] !== null && pdfCategories[category],
+    showInPdf: row.prices[category] !== null && pdfCategories[category] && (category !== "hotel" || hasHotels.value),
   }));
 }
-/** 行程未选导游时禁用导游分项；已有金额仍可编辑以便清空，清空后锁定，不静默丢弃价格。 */
+/** 无酒店档次的组合禁用酒店录价；未选导游时沿用可清空旧金额的规则。 */
 function isCategoryLocked(row: PriceRow, category: WebsitePriceCategory) {
+  if (category === "hotel") return row.hotelTier === null;
   return category === "guide" && !services.value.includesGuide && row.prices.guide === null;
 }
 function isStale(row: PriceRow) {

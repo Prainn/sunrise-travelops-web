@@ -26,15 +26,14 @@
           <span v-if="leg.distanceKm != null || leg.durationMinutes != null">{{ leg.distanceKm == null ? $t('websiteReport.notSpecified') : `${leg.distanceKm} km` }} · {{ leg.durationMinutes == null ? $t('websiteReport.notSpecified') : $t('websiteReport.minutesValue', { value: leg.durationMinutes }) }}</span>
           <span v-if="leg.nameZh || leg.nameEn">{{ (locale === 'en' ? leg.nameEn : leg.nameZh) || leg.nameZh || leg.nameEn }}</span>
         </div>
-        <el-button
-          v-if="editable"
-          class="shrink-0 self-start"
-          link
-          type="primary"
-          @click="openEdit(leg)"
-        >
-          {{ $t("common.edit") }}
-        </el-button>
+        <div v-if="editable" class="flex shrink-0 self-start">
+          <el-button link type="primary" @click="openEdit(leg)">
+            {{ $t("common.edit") }}
+          </el-button>
+          <el-button link type="danger" @click="emit('remove', leg.id, cityName(leg.fromCityId) + ' → ' + cityName(leg.toCityId))">
+            {{ $t("common.delete") }}
+          </el-button>
+        </div>
       </div>
     </div>
   </section>
@@ -119,7 +118,7 @@ import { TRANSPORT_OPTIONS, VEHICLE_OPTIONS } from "../../options";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{ config: WebsiteConfig; editable: boolean; legId?: string }>();
-const emit = defineEmits<{ add: [] }>();
+const emit = defineEmits<{ add: []; remove: [id: string, name: string] }>();
 const { t, locale } = useI18n();
 const draft = ref<WebsiteLeg | null>(null);
 const formRef = ref<FormInstance>();

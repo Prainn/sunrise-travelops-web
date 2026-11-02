@@ -20,6 +20,7 @@ import type {
 import { cloneWebsiteDraft, emptyDay, emptyItinerary } from "../options";
 import { addDays } from "@/utils";
 import { printWebsiteQuotation } from "./print";
+import { removeWebsiteEvent } from "./event-order";
 import { downloadWordDocument } from "@/views/inquiries/itineraries/docx";
 
 export function useWebsiteWorkspace() {
@@ -362,6 +363,24 @@ export function useWebsiteWorkspace() {
       saving.value = false;
     }
   }
+  async function removeItem(dayId: string, itemId: string, name: string) {
+    const record = plan.value;
+    const day = record?.days.find(item => item.id === dayId);
+    if (!record || !day || !editable.value || saving.value) return;
+    const hasPendingCopy = () => record.reorderDraft?.copies.some(copy => copy.sourceId === itemId || copy.parentId === itemId);
+    if (hasPendingCopy()) {
+      ElMessage.warning(t("websiteItineraryUi.applyBoardBeforeDelete"));
+      return;
+    }
+    try {
+      await ElMessageBox.confirm(t("websiteItineraryUi.deleteItemConfirm", { name }), t("common.delete"), {
+        type: "warning", confirmButtonText: t("common.delete"), cancelButtonText: t("common.cancel"),
+      });
+    } catch { return; }
+    if (plan.value !== record || !editable.value || saving.value || !record.days.includes(day) || hasPendingCopy()) return;
+    removeWebsiteEvent(day, itemId);
+    preview.value = undefined;
+  }
   function addDay() {
     if (plan.value && editable.value && plan.value.days.length < 365) {
       plan.value.days.push(emptyDay(plan.value.days.length + 1));
@@ -434,6 +453,7 @@ export function useWebsiteWorkspace() {
     print,
     exportWord,
     addDay,
+    removeItem,
     removeDay,
     moveDay,
   };
