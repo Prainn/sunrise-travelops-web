@@ -1,3 +1,4 @@
+import type { DirectLedgerTourInput } from "@/types/direct-ledger";
 import type {
   TourBusinessUnit,
   TourCreateRequest,
@@ -339,6 +340,80 @@ export function updateTourRequest(tour: TourRecord, form: TourFormState): TourUp
     ...tourInput(form),
     version: tour.version,
     ...(manualSource ? { manualSource } : {}),
+  };
+}
+
+export const ITINERARY_SUMMARY_MAX_LENGTH = 500;
+export const CANCEL_REASON_MAX_LENGTH = 500;
+
+export function isItinerarySummaryTooLong(summary: string) {
+  return summary.trim().length > ITINERARY_SUMMARY_MAX_LENGTH;
+}
+
+/** 撤销原因：去除首尾空白后必填且不超过上限。 */
+export function cancelReasonError(reason: string | null | undefined): "required" | "tooLong" | null {
+  const value = (reason ?? "").trim();
+  if (!value) return "required";
+  return value.length > CANCEL_REASON_MAX_LENGTH ? "tooLong" : null;
+}
+
+export type LedgerTourMode = "convert" | "backfill" | "rebuild";
+
+/** 从直客台账打开建团资料；业务与人员按台账固定。 */
+export interface LedgerTourDraft {
+  mode: LedgerTourMode;
+  businessUnit: TourBusinessUnit;
+  collectCoordinatorId: string;
+  collectCoordinatorName: string;
+  operatorId: string;
+  operatorName: string;
+  countryItemId: string;
+  countryName: string;
+  startDate: string;
+  itinerarySummary: string;
+  contactName: string;
+  submit: (input: DirectLedgerTourInput) => Promise<unknown>;
+}
+
+/** 人数未知，保持为空由计调明确填写；超长行程原样带入，由校验提示人工整理。 */
+export function tourFormFromLedgerDraft(draft: LedgerTourDraft): TourFormState {
+  const form: TourFormState = {
+    ...emptyTourForm(),
+    businessUnit: draft.businessUnit,
+    countryItemId: draft.countryItemId,
+    collectCoordinatorId: draft.collectCoordinatorId,
+    operatorId: draft.operatorId,
+    startDate: draft.startDate,
+    itinerarySummary: draft.itinerarySummary,
+    contactName: draft.contactName,
+    adults: null,
+    children: null,
+    leaders: null,
+  };
+  syncManualPickupDate(form);
+  return form;
+}
+
+/** 资料未补齐时返回 null；不把缺失人数转成 0。 */
+export function ledgerTourInput(form: TourFormState): DirectLedgerTourInput | null {
+  const { days, adults, children, leaders } = form;
+  if (!form.countryItemId || days == null || adults == null || children == null || leaders == null)
+    return null;
+  return {
+    countryItemId: form.countryItemId,
+    contactName: form.contactName,
+    itinerarySummary: form.itinerarySummary,
+    startDate: form.startDate,
+    days,
+    adults,
+    children,
+    leaders,
+    language: form.language,
+    shopping: form.shopping,
+    remark: form.remark,
+    // 导游之后在成团表安排，合同要求显式提交空数组。
+    guideServices: [],
+    ...tourSchedule(form),
   };
 }
 

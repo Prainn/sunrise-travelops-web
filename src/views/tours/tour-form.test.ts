@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { TourGuideService, TourRecord } from "@/types/tour";
 import {
+  cancelReasonError,
   createTourRequest,
   emptyTourForm,
   guideAssignmentRequest,
@@ -11,6 +12,10 @@ import {
   guideServiceRowFromRecord,
   emptyGuideServiceRow,
   isGuideServiceUnavailable,
+  isItinerarySummaryTooLong,
+  ledgerTourInput,
+  tourFormFromLedgerDraft,
+  type LedgerTourDraft,
   outsideTeamWindow,
   type GuideServiceRow,
   manualScheduleError,
@@ -86,6 +91,10 @@ function manualTour(patch: Partial<TourRecord> = {}): TourRecord {
     remark: "",
     status: "active",
     cancelReason: null,
+    directLedgerId: null,
+    directLedgerOrderNo: null,
+    canEdit: true,
+    canCancel: false,
     version: 3,
     ...patch,
   };
@@ -412,5 +421,74 @@ describe("guide availability", () => {
     kept.serviceEndAt = "2026-08-04 12:00";
     expect(guideServiceChanged(kept)).toBe(true);
     expect(isGuideServiceUnavailable(kept, [])).toBe(true);
+  });
+});
+
+describe("cancelReasonError", () => {
+  it("requires a trimmed reason of at most 500 characters", () => {
+    expect([null, undefined, "", "   "].map(cancelReasonError)).toEqual(Array(4).fill("required"));
+    expect(cancelReasonError(` ${"因".repeat(500)} `)).toBeNull();
+    expect(cancelReasonError("因".repeat(501))).toBe("tooLong");
+  });
+});
+
+describe("ledger tour form", () => {
+  const draft: LedgerTourDraft = {
+    mode: "convert",
+    businessUnit: "linxi",
+    collectCoordinatorId: "collector-1",
+    collectCoordinatorName: "收客",
+    operatorId: "operator-1",
+    operatorName: "操作",
+    countryItemId: "",
+    countryName: "",
+    startDate: "2026-12-01",
+    itinerarySummary: "因".repeat(501),
+    contactName: "",
+    submit: async () => undefined,
+  };
+
+  it("keeps unknown headcount empty and long itinerary intact", () => {
+    const form = tourFormFromLedgerDraft(draft);
+
+    expect([form.adults, form.children, form.leaders]).toEqual([null, null, null]);
+    expect(form.itinerarySummary).toHaveLength(501);
+    expect(isItinerarySummaryTooLong(form.itinerarySummary)).toBe(true);
+    expect(form.pickupAt).toBe("2026-12-01 00:00");
+    expect(form.scheduleMode).toBe("manual");
+    expect(form.guideServices).toEqual([]);
+  });
+
+  it("does not build a request until country, days and headcount are explicit", () => {
+    const form = { ...tourFormFromLedgerDraft(draft), itinerarySummary: "昆大丽", days: 5 };
+
+    expect(ledgerTourInput(form)).toBeNull();
+    expect(ledgerTourInput({ ...form, countryItemId: "country-1", adults: 2, children: 0 })).toBeNull();
+    expect(
+      ledgerTourInput({
+        ...form,
+        countryItemId: "country-1",
+        adults: 2,
+        children: 0,
+        leaders: 0,
+        dropAt: "2026-12-05 12:00",
+      }),
+    ).toEqual({
+      countryItemId: "country-1",
+      contactName: "",
+      itinerarySummary: "昆大丽",
+      startDate: "2026-12-01",
+      days: 5,
+      adults: 2,
+      children: 0,
+      leaders: 0,
+      language: "",
+      shopping: false,
+      remark: "",
+      guideServices: [],
+      scheduleMode: "manual",
+      pickupAt: "2026-12-01 00:00",
+      dropAt: "2026-12-05 12:00",
+    });
   });
 });

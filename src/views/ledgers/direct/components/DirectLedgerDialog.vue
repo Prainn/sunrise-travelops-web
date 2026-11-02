@@ -110,12 +110,25 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
+          <el-form-item :label="$t('ledger.direct.countryOrRegion')">
+            <el-input v-if="readonly" :model-value="ledger?.countryName || '-'" disabled />
+            <BusinessItemSelect
+              v-else
+              v-model="form.countryItemId"
+              type-code="country-region"
+              clearable
+              :selected-label="ledger?.countryName ?? undefined"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('ledger.direct.orderStatus')" prop="orderStatus">
-            <el-radio-group v-model="form.orderStatus" :disabled="!canChangeStatus">
+            <!-- 已有记录只能通过列表“成团”动作改变订单状态。 -->
+            <el-radio-group v-model="form.orderStatus" :disabled="Boolean(ledger)">
               <el-radio value="unconverted">
                 {{ $t("ledger.direct.orderStatuses.unconverted") }}
               </el-radio>
-              <el-radio value="converted">
+              <el-radio value="converted" :disabled="!canCreateTour">
                 {{ $t("ledger.direct.orderStatuses.converted") }}
               </el-radio>
             </el-radio-group>
@@ -184,6 +197,13 @@
           </el-form-item>
         </el-col>
       </el-row>
+      <el-alert
+        v-if="needsTour"
+        type="info"
+        :closable="false"
+        :title="$t('ledger.direct.tourRequiredHint')"
+        class="mb-3!"
+      />
       <el-form-item :label="$t('ledger.direct.itinerary')">
         <el-input
           v-model="form.itinerary"
@@ -213,9 +233,15 @@
         :loading="saving"
         @click="handleSubmit"
       >
-        {{ $t("common.save") }}
+        {{ $t(needsTour ? "ledger.direct.fillTourData" : "common.save") }}
       </el-button>
     </template>
+    <TourEditorDialog
+      v-if="tourDraft"
+      v-model="tourDialogVisible"
+      :tour="null"
+      :ledger-draft="tourDraft"
+    />
   </AppDialog>
 </template>
 
@@ -224,12 +250,20 @@ import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
+import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import { businessUnitName } from "@/constants/identity";
 import { directLedgerService } from "@/services/direct-ledger.service";
 import { useUserStore } from "@/stores/user";
-import type { DirectLedgerBusinessUnit, DirectLedgerItem } from "@/types/direct-ledger";
+import type {
+  DirectLedgerBusinessUnit,
+  DirectLedgerItem,
+  DirectLedgerTourInput,
+} from "@/types/direct-ledger";
+import { hasUserPermission } from "@/utils/permission";
+import TourEditorDialog from "@/views/tours/components/TourEditorDialog.vue";
+import type { LedgerTourDraft } from "@/views/tours/tour-form";
 import {
   directLedgerFormFromItem,
   directLedgerInput,
@@ -238,6 +272,7 @@ import {
   toTriState,
   type TriStateValue,
 } from "../direct-ledger-form";
+import { ledgerTourDraft, needsTourOnCreate } from "../direct-ledger-tour";
 
 const BOOLEAN_FIELDS = ["effectiveContact", "proposalSent", "loss", "priority"] as const;
 const TRI_STATE_FIELDS = ["complaint", "satisfied"] as const;
@@ -265,7 +300,10 @@ const formRef = ref<FormInstance>();
 const formSession = ref(0);
 const form = reactive(emptyDirectLedgerForm());
 const receivingGroupNames = reactive(new Map<string, string>());
+const optionNames = reactive(new Map<string, string>());
 const saving = ref(false);
+const tourDraft = ref<LedgerTourDraft | null>(null);
+const tourDialogVisible = ref(false);
 let acceptedSource = "";
 let sourceConfirmation: Promise<boolean> | undefined;
 
@@ -286,8 +324,8 @@ const dialogTitle = computed(() => {
   return t(props.readonly ? "common.view" : "common.edit");
 });
 const creatorName = computed(() => props.ledger?.creatorName ?? user.userInfo.nickname ?? "");
-// 编辑时由后端判断，指定操作计调不能替他人改订单状态。
-const canChangeStatus = computed(() => !props.ledger || props.ledger.capabilities.canChangeStatus);
+const canCreateTour = computed(() => hasUserPermission(user.userInfo, "tour:create"));
+const needsTour = computed(() => needsTourOnCreate(!props.ledger, form.orderStatus));
 const rules = computed<FormRules>(() => {
   const required = (key: string) => ({
     required: true,
@@ -312,6 +350,9 @@ const rules = computed<FormRules>(() => {
 
 function resetForm() {
   receivingGroupNames.clear();
+  optionNames.clear();
+  tourDraft.value = null;
+  tourDialogVisible.value = false;
   Object.assign(
     form,
     props.ledger ? directLedgerFormFromItem(props.ledger) : emptyDirectLedgerForm(),
@@ -365,6 +406,7 @@ function optionsLoader(load: OptionLoader) {
       ...query,
       businessUnit: user.userInfo.scope === "headquarters" ? businessUnit.value : undefined,
     });
+    for (const option of result.list) optionNames.set(option.id, option.name);
     return {
       total: result.total,
       list: result.list.map((option) => ({ id: option.id, label: option.name })),
@@ -379,6 +421,39 @@ async function loadReceivingGroups(query: RemoteOptionsQuery) {
   return result;
 }
 
+// 建团弹窗保存时才发起唯一一次新增请求，台账与团由后端同一事务写入；取消或失败都不会留下台账或团。
+function openTourDraft() {
+  const creatorId = isDelegate.value ? form.creatorId : user.userInfo.userId ?? "";
+  const unit = businessUnit.value;
+  const ledger = directLedgerInput(form, unit);
+  tourDraft.value = ledgerTourDraft(
+    {
+      businessUnit: unit,
+      creatorId,
+      creatorName: optionNames.get(creatorId) ?? creatorName.value,
+      operatorId: form.operatorId,
+      operatorName: optionNames.get(form.operatorId) ?? form.operatorName,
+      countryItemId: form.countryItemId,
+      departureDate: form.departureDate,
+      itinerary: form.itinerary,
+      source: form.source,
+    },
+    "convert",
+    async (tour: DirectLedgerTourInput) => {
+      const saved = await directLedgerService.create({
+        ...ledger,
+        countryItemId: tour.countryItemId,
+        businessUnit: unit,
+        ...(isDelegate.value ? { creatorId: form.creatorId } : {}),
+        tour,
+      });
+      emit("saved", saved);
+      visible.value = false;
+    },
+  );
+  tourDialogVisible.value = true;
+}
+
 async function handleSubmit() {
   if (props.readonly || saving.value) return;
   saving.value = true;
@@ -389,6 +464,10 @@ async function handleSubmit() {
       () => false,
     );
     if (!valid) return;
+    if (needsTour.value) {
+      openTourDraft();
+      return;
+    }
     const body = directLedgerInput(form, businessUnit.value);
     const saved = props.ledger
       ? await directLedgerService.update(props.ledger.id, {

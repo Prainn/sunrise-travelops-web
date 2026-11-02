@@ -8,8 +8,9 @@ import type {
 export type TriStateValue = "unset" | "yes" | "no";
 
 /** 直客台账表单；展示用人员姓名快照不提交。 */
-export interface DirectLedgerFormState extends DirectLedgerInput {
+export interface DirectLedgerFormState extends Omit<DirectLedgerInput, "countryItemId"> {
   creatorId: string;
+  countryItemId: string;
   receivingAccountName: string;
   operatorName: string;
 }
@@ -21,6 +22,7 @@ export function emptyDirectLedgerForm(): DirectLedgerFormState {
     source: "",
     receivingGroupId: null,
     operatorId: "",
+    countryItemId: "",
     orderStatus: "unconverted",
     effectiveContact: false,
     proposalSent: false,
@@ -48,6 +50,7 @@ export function directLedgerFormFromItem(item: DirectLedgerItem): DirectLedgerFo
     source: item.source,
     receivingGroupId: item.receivingGroupId,
     operatorId: item.operatorId,
+    countryItemId: item.countryItemId ?? "",
     orderStatus: item.orderStatus,
     effectiveContact: item.effectiveContact,
     proposalSent: item.proposalSent,
@@ -84,6 +87,7 @@ export function directLedgerInput(
     source: form.source.trim(),
     receivingGroupId: businessUnit === "website" ? null : form.receivingGroupId,
     operatorId: form.operatorId,
+    countryItemId: form.countryItemId || null,
     orderStatus: form.orderStatus,
     effectiveContact: form.effectiveContact,
     proposalSent: form.proposalSent,
