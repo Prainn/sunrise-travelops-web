@@ -1,0 +1,195 @@
+/* eslint vue/one-component-per-file: off -- The renderer supplies explicit UI stubs. */
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createRenderer, defineComponent, nextTick, type ComponentPublicInstance } from "vue";
+import type { DirectLedgerItem } from "@/types/direct-ledger";
+import type { LedgerTourDraft } from "@/views/tours/tour-form";
+
+const mocks = vi.hoisted(() => ({
+  create: vi.fn(),
+  update: vi.fn(),
+  error: vi.fn(),
+  success: vi.fn(),
+  perms: ["ledger:direct:create", "tour:create"] as string[],
+}));
+vi.mock("@/services/direct-ledger.service", () => ({ directLedgerService: {
+  create: mocks.create,
+  update: mocks.update,
+  collectors: vi.fn(),
+  operators: vi.fn(),
+  receivingGroups: vi.fn(),
+} }));
+vi.mock("element-plus", () => ({
+  ElMessage: { error: mocks.error, success: mocks.success },
+  ElMessageBox: { confirm: vi.fn() },
+}));
+vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
+vi.mock("@/constants/identity", () => ({ businessUnitName: (unit: string) => unit }));
+vi.mock("@/stores/user", () => ({ useUserStore: () => ({ userInfo: {
+  scope: "linxi", roles: ["COORDINATOR"], userId: "collector-1", nickname: "收客", perms: mocks.perms,
+} }) }));
+vi.mock("@/utils/permission", () => ({
+  hasUserPermission: (_user: unknown, permission: string) => mocks.perms.includes(permission),
+}));
+vi.mock("@/components/AppDialog/index.vue", () => ({ default: { render(this: ComponentPublicInstance) {
+  return [this.$slots.default?.(), this.$slots.footer?.()];
+} } }));
+vi.mock("@/components/RemoteSelect/index.vue", () => ({ default: { render: () => null } }));
+vi.mock("@/components/BusinessItemSelect/index.vue", () => ({ default: { render: () => null } }));
+vi.mock("@/views/tours/components/TourEditorDialog.vue", () => ({ default: {
+  inheritAttrs: false,
+  render(this: ComponentPublicInstance) { tourDialog = this.$attrs; return null; },
+} }));
+import DirectLedgerDialog from "./DirectLedgerDialog.vue";
+
+type HostNode = { parent?: HostNode; children: HostNode[] };
+const renderer = createRenderer<HostNode, HostNode>({
+  createElement: () => ({ children: [] }), createText: () => ({ children: [] }), createComment: () => ({ children: [] }),
+  setText: () => {}, setElementText: () => {}, patchProp: () => {},
+  parentNode: (node) => node.parent ?? null,
+  nextSibling: (node) => node.parent?.children[node.parent.children.indexOf(node) + 1] ?? null,
+  remove(node) { if (node.parent) node.parent.children.splice(node.parent.children.indexOf(node), 1); },
+  insert(node, parent, anchor) {
+    if (node.parent) node.parent.children.splice(node.parent.children.indexOf(node), 1);
+    node.parent = parent;
+    const index = anchor ? parent.children.indexOf(anchor) : -1;
+    if (index < 0) parent.children.push(node); else parent.children.splice(index, 0, node);
+  },
+});
+
+const ledger = {
+  id: "ledger-1", businessUnit: "linxi", orderNo: "DL-1", receivedDate: "2026-10-19", source: "携程123",
+  creatorId: "collector-1", creatorName: "收客", receivingGroupId: "group-1", receivingAccountName: "定制师组",
+  operatorId: "operator-1", operatorName: "操作", countryItemId: null, orderStatus: "unconverted",
+  effectiveContact: false, proposalSent: false, loss: false, priority: false, itinerary: "", notConvertedReason: "",
+  lossNote: "", remark: "", feedbackReason: "", solution: "", dealDate: null, departureDate: null, complaint: null,
+  satisfied: null, workflowStatus: "pending_operation", reviewedAt: null, reviewedBy: null, operated: false,
+  operatedAt: null, version: 4,
+  capabilities: { canEdit: true, canDelete: true, canReview: false, canOperate: false, canConvert: true },
+} as unknown as DirectLedgerItem;
+
+const tourInput = { countryItemId: "country-1", days: 3 } as never;
+let radios: Array<Record<string, unknown>>;
+let form: { model: Record<string, unknown> };
+let save: () => Promise<void>;
+let primaryText: string;
+let tourDialog: Record<string, unknown> | undefined;
+let saved: ReturnType<typeof vi.fn>;
+let visibility: ReturnType<typeof vi.fn>;
+let unmount: () => void;
+
+async function flush() { for (let i = 0; i < 4; i++) { await Promise.resolve(); await nextTick(); } }
+function mount(current: DirectLedgerItem | null) {
+  radios = [];
+  saved = vi.fn();
+  visibility = vi.fn();
+  const app = renderer.createApp(DirectLedgerDialog, {
+    modelValue: true, ledger: current, businessUnit: "linxi", readonly: false,
+    onSaved: saved, "onUpdate:modelValue": visibility,
+  });
+  app.config.globalProperties.$t = (key: string) => key;
+  const passthrough = defineComponent({ render(this: ComponentPublicInstance) { return this.$slots.default?.(); } });
+  for (const name of ["ElRow", "ElCol", "ElFormItem", "ElRadio"]) app.component(name, passthrough);
+  for (const name of ["ElInput", "ElDatePicker", "ElAlert"]) app.component(name, { render: () => null });
+  app.component("ElForm", defineComponent({
+    props: { model: { type: Object, required: true } },
+    setup(props, { slots, expose }) {
+      expose({ validate: () => Promise.resolve(true) });
+      return () => { form = props as never; return slots.default?.(); };
+    },
+  }));
+  app.component("ElRadioGroup", defineComponent({
+    inheritAttrs: false,
+    setup(_, { attrs, slots }) { return () => { radios.push(attrs); return slots.default?.(); }; },
+  }));
+  app.component("ElButton", defineComponent({
+    inheritAttrs: false,
+    setup(_, { attrs, slots }) {
+      return () => {
+        if (attrs.type === "primary") {
+          save = attrs.onClick as () => Promise<void>;
+          primaryText = String(slots.default?.()[0]?.children ?? "");
+        }
+        return null;
+      };
+    },
+  }));
+  app.mount({ children: [] });
+  unmount = () => app.unmount();
+}
+function draft() { return tourDialog?.["ledger-draft"] as LedgerTourDraft; }
+function fill(status: "unconverted" | "converted") {
+  Object.assign(form.model, {
+    receivedDate: "2026-11-01", source: "携程123", receivingGroupId: "group-1", operatorId: "operator-1", orderStatus: status,
+  });
+}
+
+describe("DirectLedgerDialog order status", () => {
+  beforeEach(() => { vi.clearAllMocks(); tourDialog = undefined; mocks.perms = ["ledger:direct:create", "tour:create"]; });
+  afterEach(() => unmount());
+
+  it("always disables order status when editing, including unlocked records", async () => {
+    mount(ledger);
+    await flush();
+    expect(radios.find((attrs) => attrs.modelValue === "unconverted")?.disabled).toBe(true);
+  });
+
+  it("allows choosing order status when creating and starts without a country", async () => {
+    mount(null);
+    await flush();
+    expect(radios.find((attrs) => attrs.modelValue === "unconverted")?.disabled).toBe(false);
+    expect(form.model.countryItemId).toBe("");
+  });
+
+  it("saves an unconverted ledger through the plain create request", async () => {
+    mocks.create.mockResolvedValue(ledger);
+    mount(null);
+    await flush();
+    fill("unconverted");
+    await save();
+    await flush();
+    expect(mocks.create).toHaveBeenCalledTimes(1);
+    expect(mocks.create.mock.calls[0]?.[0]).toMatchObject({ orderStatus: "unconverted", countryItemId: null });
+    expect(mocks.create.mock.calls[0]?.[0]).not.toHaveProperty("tour");
+    expect(tourDialog).toBeUndefined();
+  });
+
+  it("opens tour details without saving, and uses only the atomic request", async () => {
+    const result = { ...ledger, orderStatus: "converted" };
+    mocks.create.mockResolvedValue(result);
+    mount(null);
+    await flush();
+    fill("converted");
+    await nextTick();
+    expect(primaryText).toBe("ledger.direct.fillTourData");
+    await save();
+    await flush();
+    expect(tourDialog?.modelValue).toBe(true);
+    expect(mocks.create).not.toHaveBeenCalled();
+    expect(saved).not.toHaveBeenCalled();
+    expect(draft()).toMatchObject({ mode: "convert", collectCoordinatorId: "collector-1", operatorId: "operator-1", contactName: "" });
+
+    await draft().submit(tourInput);
+    expect(mocks.create).toHaveBeenCalledTimes(1);
+    const body = mocks.create.mock.calls[0]?.[0];
+    expect(body.orderStatus).toBe("converted");
+    expect(body.countryItemId).toBe("country-1");
+    expect(body.tour).toBe(tourInput);
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(saved).toHaveBeenCalledWith(result);
+    expect(visibility).toHaveBeenCalledWith(false);
+  });
+
+  it("keeps the dialog and draft open when the atomic request fails", async () => {
+    mocks.create.mockRejectedValue(new Error("VALIDATION_ERROR"));
+    mount(null);
+    await flush();
+    fill("converted");
+    await save();
+    await flush();
+    await expect(draft().submit(tourInput)).rejects.toThrow("VALIDATION_ERROR");
+    expect(mocks.create).toHaveBeenCalledTimes(1);
+    expect(saved).not.toHaveBeenCalled();
+    expect(visibility).not.toHaveBeenCalled();
+    expect(form.model.source).toBe("携程123");
+  });
+});

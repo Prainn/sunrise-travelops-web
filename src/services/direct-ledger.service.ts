@@ -2,6 +2,7 @@ import { request } from "@/api/request";
 import type { PageResult } from "@/types/common";
 import type {
   DirectLedgerCreateInput,
+  DirectLedgerConvertInput,
   DirectLedgerItem,
   DirectLedgerOperationInput,
   DirectLedgerOperatorOption,
@@ -44,6 +45,10 @@ export const directLedgerService = {
   },
   create(body: DirectLedgerCreateInput) {
     return request.post<DirectLedgerItem>(BASE_URL, body);
+  },
+  /** 既有台账成团、补建或重新建团；后端同一事务完成。 */
+  convert(id: string, body: DirectLedgerConvertInput) {
+    return request.post<DirectLedgerItem>(`${BASE_URL}/${encodeURIComponent(id)}/convert`, body);
   },
   update(id: string, body: DirectLedgerUpdateInput) {
     return request.put<DirectLedgerItem>(`${BASE_URL}/${encodeURIComponent(id)}`, body);

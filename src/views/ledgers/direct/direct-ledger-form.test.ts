@@ -3,6 +3,7 @@ import type { DirectLedgerItem } from "@/types/direct-ledger";
 import {
   directLedgerFormFromItem,
   directLedgerInput,
+  emptyDirectLedgerForm,
   fromTriState,
   toTriState,
 } from "./direct-ledger-form";
@@ -19,6 +20,10 @@ const item: DirectLedgerItem = {
   receivingAccountName: "定制师杨娟组",
   operatorId: "user-3",
   operatorName: "操作计调",
+  countryItemId: "country-1",
+  countryCode: "VNM",
+  countryName: "越南",
+  tours: [],
   orderStatus: "converted",
   effectiveContact: false,
   proposalSent: true,
@@ -48,7 +53,7 @@ const item: DirectLedgerItem = {
     canDelete: false,
     canReview: false,
     canOperate: false,
-    canChangeStatus: false,
+    canConvert: false,
   },
 };
 
@@ -61,6 +66,7 @@ describe("direct ledger form", () => {
       source: "携程123",
       receivingGroupId: "group-1",
       operatorId: "user-3",
+      countryItemId: "country-1",
       orderStatus: "converted",
       effectiveContact: false,
       proposalSent: true,
@@ -77,6 +83,12 @@ describe("direct ledger form", () => {
       complaint: false,
       satisfied: null,
     });
+  });
+
+  it("starts empty and submits a cleared country as null", () => {
+    expect(emptyDirectLedgerForm().countryItemId).toBe("");
+    const history = { ...item, countryItemId: null, countryName: null };
+    expect(directLedgerInput(directLedgerFormFromItem(history), "linxi").countryItemId).toBeNull();
   });
 
   it("never sends a receiving group for website records", () => {

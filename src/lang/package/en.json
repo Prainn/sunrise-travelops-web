@@ -1909,7 +1909,10 @@
         "order": "Service start must be earlier than end",
         "overlap": "This guide's segments overlap (handover cannot share the same minute)"
       }
-    }
+    },
+    "cancelReasonRequired": "Enter the cancellation reason",
+    "itinerarySummaryTooLong": "Itinerary exceeds 500 characters. Please shorten it before saving.",
+    "directLedgerOrderNo": "Source Ledger"
   },
   "menuPermission": {
     "navigationConfigurationError": "Menu configuration does not match local route: {route}",
@@ -2001,7 +2004,18 @@
       "collectorPlaceholder": "Change receiving coordinator",
       "operatorPlaceholder": "Change operating coordinator",
       "receivingGroupPlaceholder": "Select a business group",
-      "noOperators": "No matching options"
+      "noOperators": "No matching options",
+      "countryOrRegion": "Country/Region",
+      "tourActions": {
+        "convert": "Create Tour",
+        "backfill": "Backfill Tour",
+        "rebuild": "Recreate Tour"
+      },
+      "viewLinkedTours": "View Tours",
+      "linkedToursTitle": "Linked Tours",
+      "fillTourData": "Enter Tour Details",
+      "tourRequiredHint": "Converted orders need tour details before saving. Cancelling or a failed save keeps neither the ledger nor the tour.",
+      "tourActionUnavailable": "A tour cannot be created for this record. The list has been refreshed."
     }
   },
   "itineraryWorkspace": {

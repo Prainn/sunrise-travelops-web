@@ -1,9 +1,10 @@
 <template>
   <AppDialog
     v-model="visible"
-    :title="$t(tour ? 'common.edit' : 'common.create')"
+    :title="dialogTitle"
     size="lg"
     :busy="saving"
+    :append-to-body="Boolean(ledgerDraft)"
     destroy-on-close
   >
     <el-form
@@ -15,7 +16,7 @@
       :disabled="saving"
       label-width="auto"
     >
-      <template v-if="!tour">
+      <template v-if="!tour && !ledgerDraft">
         <el-form-item :label="$t('tour.createMode')">
           <el-radio-group v-model="createMode" @change="resetCreateForm">
             <el-radio-button value="manual">
@@ -108,13 +109,20 @@
       </template>
 
       <template v-if="isManual">
+        <el-alert
+          v-if="ledgerDraft && isItinerarySummaryTooLong(form.itinerarySummary)"
+          type="warning"
+          :closable="false"
+          :title="$t('tour.itinerarySummaryTooLong')"
+          class="mb-3!"
+        />
         <el-row :gutter="12">
           <el-col :xs="24" :sm="12">
             <el-form-item :label="$t('identity.businessUnit')" prop="businessUnit">
               <el-select
                 v-model="form.businessUnit"
                 autocomplete="new-password"
-                :disabled="Boolean(tour) || !isHeadquarters"
+                :disabled="Boolean(tour || ledgerDraft) || !isHeadquarters"
                 class="w-full"
               >
                 <el-option
@@ -131,8 +139,8 @@
               <BusinessItemSelect
                 v-model="form.countryItemId"
                 type-code="country-region"
-                :disabled="Boolean(tour)"
-                :selected-label="tour ? `${tour.countryName} (${tour.countryCode})` : undefined"
+                :disabled="Boolean(tour || ledgerDraft?.countryItemId)"
+                :selected-label="tour ? `${tour.countryName} (${tour.countryCode})` : ledgerDraft?.countryName"
               />
             </el-form-item>
           </el-col>
@@ -140,7 +148,9 @@
         <el-form-item :label="$t('tour.itinerarySummary')" prop="itinerarySummary">
           <el-input
             v-model.trim="form.itinerarySummary"
-            maxlength="500"
+            :type="ledgerDraft ? 'textarea' : 'text'"
+            :maxlength="ITINERARY_SUMMARY_MAX_LENGTH"
+            :show-word-limit="Boolean(ledgerDraft)"
             :placeholder="$t('tour.itinerarySummaryPlaceholder')"
           />
         </el-form-item>
@@ -217,6 +227,7 @@
               v-model="form.operatorId"
               autocomplete="new-password"
               filterable
+              :disabled="Boolean(ledgerDraft)"
               class="w-full"
             >
               <el-option
@@ -419,16 +430,26 @@ import {
   createTourRequest,
   emptyTourForm,
   guideServiceErrors,
+  isItinerarySummaryTooLong,
+  ITINERARY_SUMMARY_MAX_LENGTH,
+  ledgerTourInput,
   manualScheduleError,
   syncManualPickupDate,
+  tourFormFromLedgerDraft,
   tourFormFromRecord,
   updateTourRequest,
+  type LedgerTourDraft,
   type TourCreateMode,
 } from "../tour-form";
 import GuideServicesEditor from "./GuideServicesEditor.vue";
 
 const UNITS: TourBusinessUnit[] = ["shengxu", "linxi", "website"];
-const props = defineProps<{ modelValue: boolean; tour: TourRecord | null }>();
+const props = defineProps<{
+  modelValue: boolean;
+  tour: TourRecord | null;
+  /** 从直客台账成团或补建；提交走台账原子接口。 */
+  ledgerDraft?: LedgerTourDraft | null;
+}>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean]; saved: [] }>();
 const { t, locale } = useI18n();
 const user = useUserStore();
@@ -456,6 +477,10 @@ const guideServerErrors = ref<Record<string, string>>({});
 const showGuideIncomplete = ref(false);
 const form = reactive(emptyTourForm());
 
+const dialogTitle = computed(() => {
+  if (props.ledgerDraft) return t(`ledger.direct.tourActions.${props.ledgerDraft.mode}`);
+  return t(props.tour ? "common.edit" : "common.create");
+});
 const isHeadquarters = computed(() => user.userInfo.scope === "headquarters");
 // 与后端一致：ROOT/业务负责人可指定本业务收客计调，其他计调只能是本人。最终由服务端授权。
 const canAssignCollector = computed(() =>
@@ -490,6 +515,12 @@ const teamWindow = computed(() => {
   return current?.pickupAt && current.dropAt ? { from: current.pickupAt, to: current.dropAt } : null;
 });
 const collectOptions = computed(() => {
+  const draft = props.ledgerDraft;
+  if (draft) return [{ id: draft.collectCoordinatorId, name: draft.collectCoordinatorName }];
+  // 普通计调编辑关联团时不改收客计调，避免操作计调把团转到自己名下。
+  if (props.tour && !canAssignCollector.value) {
+    return [{ id: props.tour.collectCoordinatorId, name: props.tour.collectCoordinatorName }];
+  }
   const self = { id: user.userInfo.userId ?? "", name: user.userInfo.nickname || user.userInfo.username || "" };
   const options = canAssignCollector.value ? [...operators.value] : self.id ? [self] : [];
   const current = props.tour;
@@ -513,6 +544,7 @@ const inputRule = computed(() => ({
   trigger: "blur",
 }));
 const headcountRule = computed(() => ({
+  required: true,
   validator: (_rule: unknown, value: unknown, callback: (error?: Error) => void) =>
     typeof value === "number" && Number.isInteger(value) && value >= 0
       ? callback()
@@ -528,7 +560,16 @@ const rules = computed<FormRules>(() => ({
   countryItemId: [selectRule.value],
   collectCoordinatorId: [selectRule.value],
   agencyId: unit.value === "shengxu" && (!props.tour || props.tour.agencyId) ? [selectRule.value] : [],
-  itinerarySummary: [inputRule.value],
+  itinerarySummary: [
+    inputRule.value,
+    {
+      validator: (_rule: unknown, value: string, callback: (error?: Error) => void) =>
+        isItinerarySummaryTooLong(value ?? "")
+          ? callback(new Error(t("tour.itinerarySummaryTooLong")))
+          : callback(),
+      trigger: "blur",
+    },
+  ],
   startDate: [selectRule.value],
   days: [
     {
@@ -712,6 +753,13 @@ function onOpen() {
     return;
   }
   createMode.value = "manual";
+  const draft = props.ledgerDraft;
+  if (draft) {
+    Object.assign(form, tourFormFromLedgerDraft(draft));
+    // 业务和人员按台账固定，不加载候选，历史停用人员也能回显。
+    operators.value = [{ id: draft.operatorId, name: draft.operatorName }];
+    return;
+  }
   sourceModule.value = ["linxi", "website"].includes(user.userInfo.scope ?? "") ? "website" : "standard";
   resetCreateForm();
 }
@@ -720,7 +768,7 @@ function onOpen() {
 watch(unit, (value, previous) => {
   flightOptions.pickup.clear();
   flightOptions.drop.clear();
-  if (props.tour || !visible.value || value === previous) return;
+  if (props.tour || props.ledgerDraft || !visible.value || value === previous) return;
   form.agencyId = "";
   form.operatorId = "";
   form.pickupFlightId = "";
@@ -746,6 +794,18 @@ async function save() {
     }
     if (guideEditorRef.value?.hasUnavailable()) {
       ElMessage.warning(t("tour.guideUnavailable"));
+      return;
+    }
+    const draft = props.ledgerDraft;
+    if (draft) {
+      const input = ledgerTourInput(form);
+      if (!input) return;
+      requesting.value = true;
+      validating.value = false;
+      await draft.submit(input);
+      ElMessage.success(t("common.createSuccess"));
+      visible.value = false;
+      emit("saved");
       return;
     }
     const current = props.tour;

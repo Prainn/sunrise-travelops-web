@@ -1909,7 +1909,10 @@
         "order": "服务开始必须早于结束",
         "overlap": "同一导游的服务段时间重叠（交接不得在同一分钟）"
       }
-    }
+    },
+    "cancelReasonRequired": "填写撤销原因",
+    "itinerarySummaryTooLong": "行程概要超过 500 字，请人工整理后再保存",
+    "directLedgerOrderNo": "来源台账"
   },
   "menuPermission": {
     "navigationConfigurationError": "菜单配置与本地路由不匹配：{route}",
@@ -2001,7 +2004,18 @@
       "collectorPlaceholder": "修改收客计调",
       "operatorPlaceholder": "修改操作计调",
       "receivingGroupPlaceholder": "选择业务组",
-      "noOperators": "无匹配选项"
+      "noOperators": "无匹配选项",
+      "countryOrRegion": "国家和地区",
+      "tourActions": {
+        "convert": "成团",
+        "backfill": "补建",
+        "rebuild": "重新建团"
+      },
+      "viewLinkedTours": "查看关联团",
+      "linkedToursTitle": "关联团",
+      "fillTourData": "填写建团资料",
+      "tourRequiredHint": "已成团须补齐建团资料后才能保存；取消或保存失败不会留下台账和团。",
+      "tourActionUnavailable": "当前记录不可建团，已刷新列表。"
     }
   },
   "itineraryWorkspace": {

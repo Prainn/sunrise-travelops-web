@@ -97,6 +97,12 @@
           :min-width="businessUnit === 'linxi' ? 200 : 100"
         />
         <el-table-column prop="operatorName" :label="$t('ledger.direct.operator')" min-width="200" />
+        <el-table-column
+          prop="countryName"
+          :label="$t('ledger.direct.countryOrRegion')"
+          min-width="120"
+          :formatter="textOrDash"
+        />
         <el-table-column :label="$t('ledger.direct.orderStatus')" min-width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="row.orderStatus === 'converted' ? 'success' : 'info'">
@@ -169,7 +175,7 @@
         />
         <el-table-column
           :label="$t('common.actions')"
-          width="220"
+          width="300"
           fixed="right"
           :show-overflow-tooltip="false"
         >
@@ -183,6 +189,24 @@
                 @click="handleOpenClick(row as DirectLedgerItem)"
               >
                 {{ $t(canEditRow(row as DirectLedgerItem) ? "common.edit" : "common.view") }}
+              </el-button>
+              <el-button
+                v-if="tourModeOf(row as DirectLedgerItem)"
+                link
+                type="primary"
+                :disabled="isPending(row.id) || openingId === row.id"
+                @click="handleTourClick(row as DirectLedgerItem)"
+              >
+                {{ $t(`ledger.direct.tourActions.${tourModeOf(row as DirectLedgerItem)}`) }}
+              </el-button>
+              <el-button
+                v-if="(row as DirectLedgerItem).tours.length"
+                link
+                type="primary"
+                :disabled="isPending(row.id) || openingId === row.id"
+                @click="handleLinkedToursClick(row as DirectLedgerItem)"
+              >
+                {{ $t("ledger.direct.viewLinkedTours") }}
               </el-button>
               <el-button
                 v-if="canReviewRow(row as DirectLedgerItem)"
@@ -231,6 +255,14 @@
       :readonly="isReadonly"
       @saved="handleSaved"
     />
+    <TourEditorDialog
+      v-if="tourDraft"
+      v-model="tourDialogVisible"
+      :tour="null"
+      :ledger-draft="tourDraft"
+      @saved="fetchList"
+    />
+    <LinkedToursDialog v-model="linkedToursVisible" :tours="linkedTours" />
   </PageShell>
 </template>
 
@@ -256,11 +288,16 @@ import { useUserStore } from "@/stores/user";
 import type {
   DirectLedgerBusinessUnit,
   DirectLedgerItem,
+  DirectLedgerLinkedTour,
   DirectLedgerOrderStatus,
   DirectLedgerWorkflowStatus,
 } from "@/types/direct-ledger";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
+import TourEditorDialog from "@/views/tours/components/TourEditorDialog.vue";
+import type { LedgerTourDraft } from "@/views/tours/tour-form";
 import DirectLedgerDialog from "./components/DirectLedgerDialog.vue";
+import LinkedToursDialog from "./components/LinkedToursDialog.vue";
+import { directLedgerTourMode, ledgerTourDraft } from "./direct-ledger-tour";
 
 defineOptions({ name: "DirectLedger" });
 
@@ -296,6 +333,10 @@ const dialogVisible = ref(false);
 const editing = ref<DirectLedgerItem | null>(null);
 const isReadonly = ref(false);
 const openingId = ref("");
+const tourDraft = ref<LedgerTourDraft | null>(null);
+const tourDialogVisible = ref(false);
+const linkedTours = ref<DirectLedgerLinkedTour[]>([]);
+const linkedToursVisible = ref(false);
 const { isPending, run } = usePendingActions();
 let listGeneration = 0;
 
@@ -321,6 +362,12 @@ function canReviewRow(row: DirectLedgerItem) {
 }
 function canOperateRow(row: DirectLedgerItem) {
   return row.capabilities.canOperate && hasPermission("ledger:direct:operate");
+}
+function canConvertRow(row: DirectLedgerItem) {
+  return row.capabilities.canConvert && hasPermission("ledger:direct:update") && hasPermission("tour:create");
+}
+function tourModeOf(row: DirectLedgerItem) {
+  return directLedgerTourMode(row, canConvertRow(row));
 }
 function yesNo(value: boolean) {
   return t(value === true ? "common.yes" : "common.no");
@@ -405,6 +452,37 @@ async function handleOpenClick(row: DirectLedgerItem) {
   } finally {
     openingId.value = "";
   }
+}
+// 点击时重新取详情，版本和能力以服务端最新结果为准。
+async function openLatestDetail(row: DirectLedgerItem, open: (detail: DirectLedgerItem) => void) {
+  if (openingId.value || isPending(row.id)) return;
+  openingId.value = row.id;
+  try {
+    open(await directLedgerService.detail(row.id));
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+  } finally {
+    openingId.value = "";
+  }
+}
+async function handleTourClick(row: DirectLedgerItem) {
+  await openLatestDetail(row, (detail) => {
+    const mode = tourModeOf(detail);
+    if (!mode) {
+      ElMessage.warning(t("ledger.direct.tourActionUnavailable"));
+      void fetchList();
+      return;
+    }
+    tourDraft.value = ledgerTourDraft(detail, mode, (tour) =>
+      directLedgerService.convert(detail.id, { version: detail.version, tour }));
+    tourDialogVisible.value = true;
+  });
+}
+async function handleLinkedToursClick(row: DirectLedgerItem) {
+  await openLatestDetail(row, (detail) => {
+    linkedTours.value = detail.tours;
+    linkedToursVisible.value = true;
+  });
 }
 function handleSaved(saved: DirectLedgerItem) {
   editing.value = saved;

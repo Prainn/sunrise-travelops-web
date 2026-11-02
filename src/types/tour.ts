@@ -88,6 +88,12 @@ export interface TourRecord {
   remark: string;
   status: "active" | "cancelled";
   cancelReason: string | null;
+  /** 由直客台账生成时的来源；其他来源为 null。 */
+  directLedgerId: string | null;
+  directLedgerOrderNo: string | null;
+  /** 服务端按当前身份与记录范围计算。 */
+  canEdit: boolean;
+  canCancel: boolean;
   version: number;
 }
 

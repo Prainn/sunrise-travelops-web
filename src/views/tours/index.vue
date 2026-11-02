@@ -106,6 +106,12 @@
           </template>
         </el-table-column>
         <el-table-column prop="countryName" :label="$t('common.countryOrRegion')" min-width="120" />
+        <el-table-column
+          prop="directLedgerOrderNo"
+          :label="$t('tour.directLedgerOrderNo')"
+          min-width="140"
+          :formatter="textOrDash"
+        />
         <el-table-column :label="$t('tour.source')" min-width="100">
           <template #default="{ row }">
             {{ $t(`tour.sourceModule.${row.sourceModule}`) }}
@@ -196,6 +202,13 @@
           show-overflow-tooltip
         />
         <el-table-column
+          prop="cancelReason"
+          :label="$t('tour.cancelReason')"
+          min-width="160"
+          show-overflow-tooltip
+          :formatter="textOrDash"
+        />
+        <el-table-column
           :label="$t('common.actions')"
           width="260"
           fixed="right"
@@ -204,7 +217,7 @@
           <template #default="{ row }">
             <RowActions v-if="row.status === 'active'">
               <el-button
-                v-if="canUpdate"
+                v-if="canUpdate && row.canEdit"
                 link
                 type="primary"
                 :disabled="isPending(row.id)"
@@ -213,7 +226,7 @@
                 {{ $t("common.edit") }}
               </el-button>
               <el-button
-                v-if="canUpdate"
+                v-if="canUpdate && row.canEdit"
                 link
                 type="primary"
                 :disabled="isPending(row.id)"
@@ -222,7 +235,7 @@
                 {{ $t("tour.assignGuide") }}
               </el-button>
               <el-button
-                v-if="canCancel"
+                v-if="canCancel && row.canCancel"
                 link
                 type="danger"
                 :disabled="isPending(row.id)"
@@ -289,6 +302,7 @@ import type { TourBusinessUnit, TourRecord } from "@/types/tour";
 import { guideSummaryText } from "@/utils/guide-services";
 import { hasUserPermission } from "@/utils/permission";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
+import { CANCEL_REASON_MAX_LENGTH, cancelReasonError } from "./tour-form";
 import TourEditorDialog from "./components/TourEditorDialog.vue";
 import TourGuideAssignmentDialog from "./components/TourGuideAssignmentDialog.vue";
 import { formatDateTime } from "@/utils/format.js";
@@ -296,7 +310,6 @@ import { formatDateTime } from "@/utils/format.js";
 defineOptions({ name: "TourList" });
 
 const UNITS: TourBusinessUnit[] = ["shengxu", "linxi", "website"];
-const CANCEL_REASON_MAX_LENGTH = 500;
 const { t } = useI18n();
 const user = useUserStore();
 const canCreate = computed(() => hasUserPermission(user.userInfo, "tour:create"));
@@ -423,12 +436,17 @@ async function cancelTour(row: TourRecord) {
       const result = await ElMessageBox.prompt(t("tour.cancelConfirm"), t("tour.cancel"), {
         type: "warning",
         inputPlaceholder: t("tour.cancelReason"),
-        // 与后端 DTO 一致：去除首尾空白后最多 500 字。
-        inputValidator: (value) => (value ?? "").trim().length <= CANCEL_REASON_MAX_LENGTH,
-        inputErrorMessage: t("websiteConfig.validation.maxLength", {
-          field: t("tour.cancelReason"),
-          max: CANCEL_REASON_MAX_LENGTH,
-        }),
+        inputValidator: (value) => {
+          const error = cancelReasonError(value);
+          if (error === "required") return t("tour.cancelReasonRequired");
+          if (error === "tooLong") {
+            return t("websiteConfig.validation.maxLength", {
+              field: t("tour.cancelReason"),
+              max: CANCEL_REASON_MAX_LENGTH,
+            });
+          }
+          return true;
+        },
       });
       reason = (result.value ?? "").trim();
     } catch {
