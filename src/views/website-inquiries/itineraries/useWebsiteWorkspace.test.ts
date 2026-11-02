@@ -7,6 +7,8 @@ import { useWebsiteWorkspace } from "./useWebsiteWorkspace";
 import { printWebsiteQuotation } from "./print";
 import { generateWebsiteWordDocument } from "./docx";
 import { downloadWordDocument } from "@/views/inquiries/itineraries/docx";
+import { emptyDay } from "../options";
+import { quotationCandidates } from "./vehicle-price";
 
 vi.mock("vue-router", () => ({
   useRoute: () => ({ params: { inquiryId: "inquiry" }, query: {} }),
@@ -48,6 +50,73 @@ async function setup() {
   await workspace.openPreview();
   return workspace;
 }
+
+describe("main-page item deletion", () => {
+  it("confirms deletion, updates candidates, and keeps other days and the saved source unchanged", async () => {
+    const workspace = await setup();
+    const day = emptyDay(1);
+    day.overnightCityId = "city";
+    day.hotels = [{ id: "hotel", tier: "A", cityId: "city", configHotelId: null, resourceId: "public-hotel", nameZh: "酒店", nameEn: "Hotel", roomType: "", breakfastIncluded: true }];
+    day.eventOrder = ["hotel"];
+    workspace.plan.value!.days = [day, { ...emptyDay(2), id: "other-day" }];
+    const otherDay = JSON.stringify(workspace.plan.value!.days[1]);
+    const save = vi.spyOn(websiteService, "saveItinerary");
+    let resolve!: () => void;
+    vi.mocked(ElMessageBox.confirm).mockReturnValueOnce(new Promise(done => { resolve = () => done("confirm" as Awaited<ReturnType<typeof ElMessageBox.confirm>>); }));
+    const removing = workspace.removeItem(day.id, "hotel", "酒店");
+    expect(workspace.plan.value!.days[0]!.hotels).toHaveLength(1);
+    resolve();
+    await removing;
+    expect(workspace.plan.value!.days[0]!.hotels).toEqual([]);
+    expect(workspace.plan.value!.days[0]!.eventOrder).not.toContain("hotel");
+    expect(workspace.plan.value!.days[0]!.overnightCityId).toBe("city");
+    expect(quotationCandidates(workspace.plan.value!.days).hotelTiers).toEqual([null]);
+    expect(JSON.stringify(workspace.plan.value!.days[1])).toBe(otherDay);
+    expect(workspace.plans.value[0]!.days).toEqual([]);
+    expect(workspace.preview.value).toBeUndefined();
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("leaves cancellation, readonly, saving and switched-plan data unchanged", async () => {
+    const workspace = await setup();
+    const day = emptyDay(1);
+    day.services = [{ id: "service", nameZh: "服务", nameEn: "Service", appears: true, feeState: "INCLUDED" }];
+    workspace.plan.value!.days = [day];
+    vi.mocked(ElMessageBox.confirm).mockRejectedValueOnce("cancel");
+    await workspace.removeItem(day.id, "service", "服务");
+    expect(workspace.plan.value!.days[0]!.services).toHaveLength(1);
+    vi.mocked(ElMessageBox.confirm).mockClear();
+    workspace.plan.value!.status = "quoted";
+    await workspace.removeItem(day.id, "service", "服务");
+    workspace.plan.value!.status = "draft";
+    workspace.saving.value = true;
+    await workspace.removeItem(day.id, "service", "服务");
+    expect(ElMessageBox.confirm).not.toHaveBeenCalled();
+    workspace.saving.value = false;
+    const old = workspace.plan.value!;
+    let resolve!: () => void;
+    vi.mocked(ElMessageBox.confirm).mockReturnValueOnce(new Promise(done => { resolve = () => done("confirm" as Awaited<ReturnType<typeof ElMessageBox.confirm>>); }));
+    const removing = workspace.removeItem(day.id, "service", "服务");
+    workspace.plan.value = { ...old, id: "other-plan", days: [] };
+    resolve();
+    await removing;
+    expect(old.days[0]!.services).toHaveLength(1);
+    expect(workspace.plan.value.days).toEqual([]);
+  });
+
+  it("protects copies in the stashed board until that arrangement is applied", async () => {
+    const workspace = await setup();
+    const day = emptyDay(1);
+    day.services = [{ id: "service", nameZh: "服务", nameEn: "Service", appears: true, feeState: "INCLUDED" }];
+    workspace.plan.value!.days = [day];
+    workspace.plan.value!.reorderDraft = { dayIds: [day.id], addedDayIds: [], deletedDays: [], placements: [], overnight: [], copies: [{ id: "copy", sourceId: "service", parentId: "service", dayId: day.id, placed: false }] };
+    await workspace.removeItem(day.id, "service", "服务");
+    expect(ElMessageBox.confirm).not.toHaveBeenCalled();
+    expect(ElMessage.warning).toHaveBeenCalledWith("websiteItineraryUi.applyBoardBeforeDelete");
+    expect(workspace.plan.value!.days[0]!.services).toHaveLength(1);
+    expect(workspace.plan.value!.reorderDraft.copies).toHaveLength(1);
+  });
+});
 
 describe("website confirmation recovery", () => {
   it("retains quotation and disables draft edits when both reloads fail", async () => {

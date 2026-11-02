@@ -1590,6 +1590,10 @@
     }
   },
   "websiteItineraryUi": {
+    "organizeItinerary": "编排行程",
+    "organizeTitle": "行程编排",
+    "deleteItemConfirm": "确认删除“{name}”吗？仅移除当前行程中的此项目，资源库资料保留，保存行程后生效。",
+    "applyBoardBeforeDelete": "此项目在暂存编排中有副本，请先应用暂存的行程编排再删除。",
     "attractions": "景点与组件",
     "manualAttraction": "手填景点",
     "noAttractions": "尚未安排景点",

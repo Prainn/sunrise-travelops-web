@@ -18,6 +18,17 @@ export function websiteDayEventIds(day: WebsiteDay): string[] {
   return [...ordered, ...remaining];
 }
 
+/** 仅移除当前日的行程明细并清理顺序引用，资源主体和其他日保持不变。 */
+export function removeWebsiteEvent(day: WebsiteDay, id: string) {
+  day.items = day.items.filter(item => item.id !== id);
+  day.legs = day.legs.filter(leg => leg.id !== id);
+  day.hotels = day.hotels.filter(hotel => hotel.id !== id);
+  day.meals = day.meals.filter(meal => meal.id !== id);
+  day.services = day.services.filter(service => service.id !== id);
+  if (id === websiteGuideBoardId(day.id)) day.guideLanguage = "";
+  day.eventOrder = websiteDayEventIds(day);
+}
+
 /**
  * 将已确认的明细放到指定卡片之后；餐次复用当天原 ID，不重复创建。
  * 同步分类数组顺序，供交通链校验等原有消费者使用。

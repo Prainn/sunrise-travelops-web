@@ -1590,6 +1590,10 @@
     }
   },
   "websiteItineraryUi": {
+    "organizeItinerary": "Organize itinerary",
+    "organizeTitle": "Itinerary organization",
+    "deleteItemConfirm": "Delete \"{name}\" from this itinerary? Resource records are kept. Save the itinerary to apply this removal.",
+    "applyBoardBeforeDelete": "This item has a copy in the saved arrangement. Apply the arrangement before deleting it.",
     "attractions": "Attractions and components",
     "manualAttraction": "Manual attraction",
     "noAttractions": "No attractions scheduled",

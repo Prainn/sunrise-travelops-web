@@ -59,6 +59,9 @@
         <el-button link type="primary" @click="emit('edit', index)">
           {{ $t("common.edit") }}
         </el-button>
+        <el-button link type="danger" @click="emit('remove', hotel.id, hotelName(hotel) || $t('websiteItineraryUi.hotelNameMissing'))">
+          {{ $t("common.delete") }}
+        </el-button>
       </div>
     </div>
   </section>
@@ -72,7 +75,7 @@ import type { WebsiteConfig, WebsiteDay, WebsiteHotelStay } from "@/types/websit
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{ config: WebsiteConfig; editable: boolean }>();
 /** index 为 -1 表示新增 */
-const emit = defineEmits<{ edit: [index: number] }>();
+const emit = defineEmits<{ edit: [index: number]; remove: [id: string, name: string] }>();
 const { locale } = useI18n();
 /** 同日每档最多一家酒店，四档用完后不可新增。 */
 const tiersFull = computed(() => HOTEL_TIERS.every((tier) => day.value.hotels.some((hotel) => hotel.tier === tier)));

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { WebsiteItem, WebsiteLeg } from "@/types/website";
 import { emptyDay } from "../options";
-import { insertWebsiteEvent, updateWebsiteMeal, websiteDayEventIds } from "./event-order";
+import { insertWebsiteEvent, removeWebsiteEvent, updateWebsiteMeal, websiteDayEventIds } from "./event-order";
 
 function attraction(id: string): WebsiteItem {
   return { id, attractionId: null, nameZh: id, nameEn: id, descriptionZh: "", descriptionEn: "", appears: true, feeState: "UNKNOWN" };
@@ -92,4 +92,24 @@ describe("website event insertion", () => {
     expect(day.meals.filter(meal => meal.slot === "lunch")).toHaveLength(1);
     expect(day.eventOrder?.slice(0, 2)).toEqual(["anchor", "new-lunch"]);
   });
+});
+
+it.each(["items", "legs", "hotels", "meals", "services", "guide"])("removes only the selected %s event and its order reference", (category) => {
+  const day = emptyDay(1);
+  day.items = [attraction("item"), attraction("copy")];
+  day.legs = [transport("leg")];
+  day.hotels = [{ id: "hotel", tier: "A", cityId: "city", configHotelId: null, resourceId: "public-hotel", nameZh: "酒店", nameEn: "Hotel", roomType: "", breakfastIncluded: true }];
+  day.services = [{ id: "service", nameZh: "服务", nameEn: "Service", appears: true, feeState: "INCLUDED" }];
+  day.guideLanguage = "中文";
+  day.eventOrder = websiteDayEventIds(day);
+  const id = category === "guide" ? `${day.id}-guide` : category === "items" ? "item" : category === "legs" ? "leg" : category === "hotels" ? "hotel" : category === "meals" ? day.meals[0]!.id : "service";
+  const before = [...day.eventOrder];
+  const otherDay = structuredClone(day);
+  removeWebsiteEvent(day, id);
+  expect(day.eventOrder).toEqual(before.filter(eventId => eventId !== id));
+  expect(websiteDayEventIds(day)).not.toContain(id);
+  expect(day.items.map(item => item.id)).toContain("copy");
+  expect(websiteDayEventIds(otherDay)).toContain(id);
+  if (category === "guide") expect(day.guideLanguage).toBe("");
+  if (category === "hotels") expect(day.overnightCityId).toBe(otherDay.overnightCityId);
 });

@@ -34,15 +34,14 @@
             {{ $t(`websiteItineraryUi.attractionKinds.${configKind(item)}`) }}
           </el-tag>
         </span>
-        <el-button
-          v-if="editable"
-          class="shrink-0 self-start"
-          link
-          type="primary"
-          @click="openEdit(item)"
-        >
-          {{ $t("common.edit") }}
-        </el-button>
+        <div v-if="editable" class="flex shrink-0 self-start">
+          <el-button link type="primary" @click="openEdit(item)">
+            {{ $t("common.edit") }}
+          </el-button>
+          <el-button link type="danger" @click="emit('remove', item.id, itemName(item) || $t('websiteItineraryUi.manualAttractionOrComponent'))">
+            {{ $t("common.delete") }}
+          </el-button>
+        </div>
       </div>
       <p v-if="item.descriptionZh || item.descriptionEn" class="m-0 mt-2 text-[13px] text-muted whitespace-pre-wrap [overflow-wrap:anywhere]">
         {{ (locale === 'en' ? item.descriptionEn : item.descriptionZh) || item.descriptionZh || item.descriptionEn }}
@@ -123,7 +122,7 @@ import type { WebsiteConfig, WebsiteDay, WebsiteItem } from "@/types/website";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{ config: WebsiteConfig; editable: boolean; itemId?: string }>();
-const emit = defineEmits<{ add: [] }>();
+const emit = defineEmits<{ add: []; remove: [id: string, name: string] }>();
 const { locale } = useI18n();
 const draft = ref<WebsiteItem | null>(null);
 const visibleItems = computed(() => day.value.items
