@@ -103,6 +103,12 @@
           :formatter="textOrDash"
         />
         <el-table-column
+          prop="updatedAt"
+          :label="$t('ledger.lastUpdatedAt')"
+          width="170"
+          :formatter="(_row: unknown, _column: unknown, value: string) => formatDateTime(value)"
+        />
+        <el-table-column
           :label="$t('common.actions')"
           width="160"
           fixed="right"
@@ -155,6 +161,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
+import { formatDateTime } from "@/utils";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
 import { usePendingActions } from "@/composables/usePendingActions";
 import { useRefreshOnActivated } from "@/composables";

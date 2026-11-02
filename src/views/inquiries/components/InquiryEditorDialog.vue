@@ -405,7 +405,7 @@ async function submitForm() {
     if (!agency) return;
     creatingContact.value = true;
     try {
-      const contact = await inquiryService.createContact(agency.id, form.contactName, form.phone);
+      const contact = await inquiryService.createContact(agency.id, form.contactName, form.phone, props.isEditing ? props.record.id : undefined);
       agency.contacts.push(contact);
       selectContact(contact);
     } catch (error) {

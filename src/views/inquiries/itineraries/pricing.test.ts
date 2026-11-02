@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { getResourcePriceOptions, type PricingResources } from "./pricing";
+import { calculateItem, recalculateItem, getResourcePriceOptions, type PricingResources } from "./pricing";
 
 vi.mock("@/lang/utils", () => ({
   translate: (key: string) => key,
@@ -21,5 +21,18 @@ describe("new itinerary resource choices", () => {
         ? [["empty", 0], ["whitespace", 100], ["free", 0], ["complete", 100]]
         : [["free", 0], ["complete", 100]],
     );
+  });
+});
+
+describe("meal cent rounding", () => {
+  it("uses exact per-diner rounding and normalizes price before a repeat calculation", () => {
+    const option = {type:"restaurant",resourceId:"r",resourceName:"餐",priceName:"",unit:"table",unitCost:20.15,dinerCount:2} as Parameters<typeof calculateItem>[0];
+    const item=calculateItem(option,1);
+    expect(item.totalCost).toBe(10.08);
+    item.unit="personMeal";
+    item.unitCost=1.005;
+    recalculateItem(item);
+    expect(item.unitCost).toBe(1.01);
+    expect(item.totalCost).toBe(1.01);
   });
 });

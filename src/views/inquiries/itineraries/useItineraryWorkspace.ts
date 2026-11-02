@@ -2,7 +2,7 @@ import { missingPriceReasons } from "./price-adjustments";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
 import { itineraryDuration } from "./duration";
 import { computed, ref, toRaw, watch } from "vue";
-import { onBeforeRouteLeave } from "vue-router";
+import { onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
 import { useAccountSwitchGuard } from "@/composables/useAccountSwitchGuard";
 import { inquiryService, itineraryInput } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
@@ -70,8 +70,12 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       );
     }),
   );
-  onBeforeRouteLeave(
-    async () => !hasUnsavedChanges.value || (await messages.confirm("itinerary.unsavedLeaveConfirm")),
+  const allowDiscard = async () =>
+    !hasUnsavedChanges.value || (await messages.confirm("itinerary.unsavedLeaveConfirm"));
+  onBeforeRouteLeave(allowDiscard);
+  // 同一路由切换询盘会清空并重载行程；仅切换行程 query 时保留编辑，无需确认。
+  onBeforeRouteUpdate((to, from) =>
+    to.params.inquiryId !== from.params.inquiryId ? allowDiscard() : true,
   );
   useAccountSwitchGuard({ dirty: () => hasUnsavedChanges.value, saving: () => isSaving.value });
   const isPlanDialogVisible = ref(false);

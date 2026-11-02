@@ -44,7 +44,12 @@ export function setupPermissionGuard() {
 
       if (!permissionStore.isRouteGenerated) {
         const routes = await permissionStore.generateRoutes();
-        if (!routes) return false;
+        // 菜单返回前会话已退出或切换：退出时回登录页，切换后按新身份重新导航，避免停在空白布局。
+        if (!routes) {
+          NProgress.done();
+          if (!userStore.isLoggedIn()) return `/login?redirect=${encodeURIComponent(to.fullPath)}`;
+          return { path: to.fullPath, replace: true };
+        }
       }
 
       // 静态父路由可能重定向到当前导航没有返回的默认子项。

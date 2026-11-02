@@ -232,6 +232,9 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     touchSelectedItinerary();
   }
 
+  // 售价随成本差额调整被截断为 0 时记住未截断值，成本改回后能恢复原售价；
+  // 手工改价或重新加载会替换价格对象，记录随之失效。
+  const unclampedPrices = new WeakMap<object, number>();
   function updateQuoteSettings(changes: Partial<Omit<ItineraryQuoteSettings, "options">>) {
     if (!options.canEditPrice() || !options.selectedItinerary.value) return;
     const quote = options.selectedItinerary.value.quote;
@@ -252,10 +255,14 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
               (newPaxCost.staffRoomOtherCost ?? 0) - (oldPaxCost?.staffRoomOtherCost ?? 0),
             ])
             : 0;
-          price.adultUnitPrice = Math.max(
-            0,
-            sumMoney([price.adultUnitPrice, sharedDelta, paxDelta]),
-          );
+          const nextPrice = sumMoney([
+            unclampedPrices.get(price) ?? price.adultUnitPrice,
+            sharedDelta,
+            paxDelta,
+          ]);
+          if (nextPrice < 0) unclampedPrices.set(price, nextPrice);
+          else unclampedPrices.delete(price);
+          price.adultUnitPrice = Math.max(0, nextPrice);
         }
     }
     Object.assign(quote, changes);

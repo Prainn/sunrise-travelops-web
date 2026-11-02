@@ -1,4 +1,5 @@
 const businessUnitNames: Record<string, string> = {
+  headquarters: "总部",
   shengxu: "盛旭",
   linxi: "霖熹",
   website: "独立站",

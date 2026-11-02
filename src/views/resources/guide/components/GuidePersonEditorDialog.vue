@@ -37,7 +37,7 @@
         />
       </el-form-item>
       <el-form-item :label="$t('common.language')">
-        <el-input v-model="form.language" />
+        <BusinessDictionarySelect v-model="form.language" type-code="guide-language" class="w-full" />
       </el-form-item>
       <el-form-item :label="$t('guide.contact')">
         <el-input v-model="form.contact" />
@@ -99,6 +99,7 @@
 </template>
 
 <script setup lang="ts">
+import BusinessDictionarySelect from "@/components/BusinessDictionarySelect/index.vue";
 import StrictInputNumber from "@/components/StrictInputNumber/index.vue";
 import { computed, reactive, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";

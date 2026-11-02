@@ -5,6 +5,7 @@ import type { WebsiteConfig, WebsiteDay } from "@/types/website";
 import { emptyDay } from "../../options";
 
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ locale: ref("zh-cn"), t: (key: string) => key }) }));
+vi.mock("@/services/business-dictionary.service", () => ({ businessDictionaryService: { getItems: async () => [{ id: "seat9", code: "seat9", name: "9座", englishName: "9-seat vehicle", status: "enabled" }] } }));
 vi.mock("@/components/AppDialog/index.vue", () => ({ default: {
   props: ["modelValue"],
   render(this: ComponentPublicInstance<{ modelValue: boolean }>) {
@@ -128,4 +129,22 @@ describe.each([
     const view = mount(component as Component, day, false);
     expect(view.find("ElButton")).toHaveLength(0);
   });
+});
+
+it("selects a dictionary vehicle using the route value and retains its configured duration", async () => {
+  const day = reactive(emptyDay(1));
+  const leg = { id: "leg", routeId: "route", fromCityId: "from", toCityId: "to", mode: "private_vehicle" as const, vehicleType: null, nameZh: "专车", nameEn: "Private vehicle", feeState: "INCLUDED" as const };
+  day.legs = [leg];
+  const config = { attractions: [], cities: [], routes: [{ id: "route", vehicleOptions: [{ vehicleType: "9_seat", durationMinutes: 180 }] }] } as unknown as WebsiteConfig;
+  const view = mount(WebsiteDayTransport as Component, day, true, config);
+  await view.click("common.edit");
+  await nextTick();
+  const choices = view.find("ElOption").filter(option => option.props.label === "9座");
+  expect(choices).toHaveLength(1);
+  expect(choices[0]!.props.value).toBe("9_seat");
+  const selector = view.find("ElSelect").find(select => select.props.onVisibleChange)!;
+  (selector.props["onUpdate:modelValue"] as (value: string) => void)("9_seat");
+  await nextTick();
+  await view.click("common.confirm");
+  expect(day.legs[0]).toMatchObject({ vehicleType: "9_seat", durationMinutes: 180 });
 });

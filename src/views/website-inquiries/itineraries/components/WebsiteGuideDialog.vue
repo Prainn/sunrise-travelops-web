@@ -23,6 +23,7 @@
           <RemoteSelect
             v-model="language"
             :load-options="loadLanguages"
+            :query-key="locale"
             allow-create
             :placeholder="$t('websiteItineraryUi.guideLanguagePlaceholder')"
           />
@@ -43,6 +44,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
+import { useI18n } from "vue-i18n";
 import { websiteService } from "@/services/website.service";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import AppDialog from "@/components/AppDialog/index.vue";
@@ -61,6 +63,7 @@ const emit = defineEmits<{
   "update:modelValue": [value: boolean];
   submit: [guide: Pick<WebsiteDay, "guideLanguage">];
 }>();
+const { locale } = useI18n();
 const arranged = ref(false);
 const language = ref("");
 const canSubmit = computed(() => !arranged.value || Boolean(language.value.trim()) && language.value.trim().length <= 100);
@@ -77,7 +80,7 @@ watch(
 );
 async function loadLanguages(query: RemoteOptionsQuery) {
   const result = await websiteService.guideLanguages(query);
-  return { ...result, list: result.list.map(item => ({ id: item.id, label: item.name })) };
+  return { ...result, list: result.list.map(item => ({ id: item.id, label: locale.value.toLowerCase().startsWith("en") ? item.englishName : item.name })) };
 }
 
 function close() {

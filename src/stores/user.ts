@@ -11,10 +11,17 @@ import { sessionGate } from "@/utils/session-gate";
 import { usePermissionStoreHook } from "@/stores/permission";
 import { useDictStoreHook } from "@/stores/dict";
 import { useTagsViewStore } from "./tags-view";
+import sunriseAvatar from "@/assets/images/logo-emblem.png";
+import lynxtourLogo from "@/assets/images/login/lynxtour-logo.svg";
 
 export const useUserStore = defineStore("user", () => {
   // 用户信息
   const userInfo = ref<UserInfo>({ roles: [], perms: [] });
+  const businessAvatar = computed(() =>
+    userInfo.value.scope === "linxi" || userInfo.value.scope === "website"
+      ? lynxtourLogo
+      : sunriseAvatar,
+  );
   // 记住我状态
   const rememberMe = ref(AuthStorage.getRememberMe());
 
@@ -96,6 +103,7 @@ export const useUserStore = defineStore("user", () => {
 
   return {
     userInfo,
+    businessAvatar,
     rememberMe,
     isLoggedIn: () => !!AuthStorage.getAccessToken(),
     login,

@@ -801,7 +801,9 @@ async function showTemporaryPassword(password: string): Promise<void> {
       confirmButtonText: t("common.confirm"),
       customClass: "temporary-password-box",
     },
-  );
+  ).catch(() => {
+    // 右上角关闭与确认同样表示已查看，不作为错误处理。
+  });
 }
 
 /**
@@ -858,6 +860,8 @@ async function handleCreateClick(): Promise<void> {
   const department = departmentOptions.value.find((dept) => dept.value === params.deptId);
   if (department)
     formData.identities = [{ scope: department.scope, deptId: department.value, roleIds: [] }];
+  else if (params.scope)
+    formData.identities = [{ scope: params.scope, roleIds: [] }];
   openDialog();
 }
 
@@ -929,6 +933,7 @@ function userConflictMessage(error: unknown, linkMessageKey: string): string {
 function handleSubmit(): Promise<void> {
   if (tourCodeSuggestion.status.value === "loading") return Promise.resolve();
   return submitForm(async () => {
+    let temporaryPassword: string | undefined;
     try {
       if (formData.id) {
         await userService.update(formData.id, formData);
@@ -936,15 +941,16 @@ function handleSubmit(): Promise<void> {
       } else {
         const created = await userService.create(formData);
         ElMessage.success(t("user.createSuccess"));
-        if (created.temporaryPassword) {
-          await showTemporaryPassword(created.temporaryPassword);
-        }
+        temporaryPassword = created.temporaryPassword;
       }
-      closeDialog();
-      handleQuery();
     } catch (error) {
       ElMessage.error(userConflictMessage(error, "user.linkedScopeChange"));
+      return;
     }
+    // 用户已保存，先关闭表单并刷新，避免临时密码框的关闭被当成保存失败或再次提交。
+    closeDialog();
+    handleQuery();
+    if (temporaryPassword) await showTemporaryPassword(temporaryPassword);
   });
 }
 

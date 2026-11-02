@@ -233,6 +233,12 @@
             </RowActions>
           </template>
         </el-table-column>
+        <el-table-column
+          prop="updatedAt"
+          :label="$t('ledger.lastUpdatedAt')"
+          width="170"
+          :formatter="(_row: unknown, _column: unknown, value: string) => formatDateTime(value)"
+        />
       </DataTable>
       <Pagination
         v-if="total > 0"
@@ -285,6 +291,7 @@ import { hasUserPermission } from "@/utils/permission";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 import TourEditorDialog from "./components/TourEditorDialog.vue";
 import TourGuideAssignmentDialog from "./components/TourGuideAssignmentDialog.vue";
+import { formatDateTime } from "@/utils/format.js";
 
 defineOptions({ name: "TourList" });
 

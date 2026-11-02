@@ -45,7 +45,7 @@
             :disabled="saving || isSubmitting"
             @click="openEditor(row, true)"
           >
-            {{ editable ? $t('common.edit') : $t('common.view') }}
+            {{ $t('common.view') }}
           </el-button>
           <span v-else>
             {{ row.durationMinutes == null ? $t('websiteReport.notSpecified') : $t('websiteReport.minutesValue', { value: row.durationMinutes }) }}
@@ -161,26 +161,13 @@
                 <DataTable :data="record.vehicleOptions" :empty-text="$t('websiteReport.notSpecified')">
                   <el-table-column :label="$t('websiteReport.vehicleType')" min-width="180">
                     <template #default="{ row }">
-                      <el-select
+                      <BusinessDictionarySelect
                         v-model="row.vehicleType"
-                        filterable
-                        allow-create
-                        default-first-option
-                        clearable
-                        :value-on-clear="''"
-                        autocomplete="new-password"
-                        :maxlength="100"
+                        type-code="vehicle-type"
                         :placeholder="$t('websiteReport.vehicleSelectOrEnter')"
                         :aria-label="$t('websiteReport.vehicleType')"
-                        @change="formRef?.validateField('vehicleOptions').catch(() => undefined)"
-                      >
-                        <el-option
-                          v-for="vehicle in VEHICLE_OPTIONS"
-                          :key="vehicle.value"
-                          :value="vehicle.value"
-                          :label="$t(vehicle.labelKey)"
-                        />
-                      </el-select>
+                        @update:model-value="formRef?.validateField('vehicleOptions').catch(() => undefined)"
+                      />
                     </template>
                   </el-table-column>
                   <el-table-column :label="$t('websiteReport.durationMinutes')" min-width="180">
@@ -262,6 +249,7 @@
 <script setup lang="ts">
 import StrictInputNumber from "@/components/StrictInputNumber/index.vue";
 import AppDialog from "@/components/AppDialog/index.vue";
+import BusinessDictionarySelect from "@/components/BusinessDictionarySelect/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
 import RowActions from "@/components/RowActions/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
@@ -273,7 +261,6 @@ import {
   cloneWebsiteDraft,
   FEE_OPTIONS,
   TRANSPORT_OPTIONS,
-  VEHICLE_OPTIONS,
 } from "@/views/website-inquiries/options";
 import WebsiteTransportFields from "@/views/website-inquiries/itineraries/components/WebsiteTransportFields.vue";
 import FeeStateSelect from "@/views/website-inquiries/components/FeeStateSelect.vue";
