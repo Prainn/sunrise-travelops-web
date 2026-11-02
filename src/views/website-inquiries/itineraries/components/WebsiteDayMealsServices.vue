@@ -25,15 +25,14 @@
           {{ $t("websiteItineraryUi.hotelSources.public") }}
         </el-tag>
       </div>
-      <el-button
-        v-if="editable"
-        class="shrink-0 self-start"
-        link
-        type="primary"
-        @click="emit('edit-meal', meal.slot)"
-      >
-        {{ $t("common.edit") }}
-      </el-button>
+      <div v-if="editable" class="flex shrink-0 self-start">
+        <el-button link type="primary" @click="emit('edit-meal', meal.slot)">
+          {{ $t("common.edit") }}
+        </el-button>
+        <el-button link type="danger" @click="emit('remove', meal.id, $t('itinerary.meals.' + meal.slot) + (mealName(meal) ? ' · ' + mealName(meal) : ''))">
+          {{ $t("common.delete") }}
+        </el-button>
+      </div>
     </div>
     <div
       v-if="!mealId && day.services.length"
@@ -58,15 +57,14 @@
             {{ $t(`websiteInquiry.feeStates.${service.feeState}`) }}
           </el-tag>
         </div>
-        <el-button
-          v-if="editable"
-          class="shrink-0 self-start"
-          link
-          type="primary"
-          @click="openEdit(service)"
-        >
-          {{ $t("common.edit") }}
-        </el-button>
+        <div v-if="editable" class="flex shrink-0 self-start">
+          <el-button link type="primary" @click="openEdit(service)">
+            {{ $t("common.edit") }}
+          </el-button>
+          <el-button link type="danger" @click="emit('remove', service.id, (locale === 'en' ? service.nameEn : service.nameZh) || service.nameZh || service.nameEn || $t('websiteItineraryUi.otherServices'))">
+            {{ $t("common.delete") }}
+          </el-button>
+        </div>
       </div>
     </div>
   </section>
@@ -117,7 +115,7 @@ import FeeStateSelect from "../../components/FeeStateSelect.vue";
 import { isMealArranged } from "../../options";
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{ editable: boolean; mealId?: string; servicesOnly?: boolean }>();
-const emit = defineEmits<{ "edit-meal": [slot: WebsiteMeal["slot"]] }>();
+const emit = defineEmits<{ "edit-meal": [slot: WebsiteMeal["slot"]]; remove: [id: string, name: string] }>();
 const { locale } = useI18n();
 const draft = ref<WebsiteService | null>(null);
 const visibleMeals = computed(() => props.servicesOnly ? [] : day.value.meals

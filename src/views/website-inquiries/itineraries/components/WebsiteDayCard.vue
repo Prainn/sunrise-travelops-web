@@ -14,11 +14,21 @@
       @submit.prevent
     >
       <ItineraryDayResourceBar
-        v-if="editable || guideSummaries.length"
+        v-if="editable"
         :actions="editable ? resourceActions : []"
-        :summaries="guideSummaries"
         @select="selectResource"
       />
+      <div v-if="day.guideLanguage" class="flex flex-wrap items-center gap-3 text-[13px]">
+        <span class="min-w-0 flex-1 text-strong [overflow-wrap:anywhere]">{{ $t("itineraryWorkspace.actions.guide") }} · {{ day.guideLanguage }}</span>
+        <div v-if="editable && !saving" class="flex shrink-0">
+          <el-button link type="primary" @click="emit('open-resource', 'guide')">
+            {{ $t("common.edit") }}
+          </el-button>
+          <el-button link type="danger" @click="emit('remove-item', websiteGuideBoardId(day.id), $t('itineraryWorkspace.actions.guide') + ' · ' + day.guideLanguage)">
+            {{ $t("common.delete") }}
+          </el-button>
+        </div>
+      </div>
       <div v-if="sequence?.length" class="text-sm">
         <span class="text-muted">{{ $t('itineraryWorkspace.eventOrder') }}</span>
         <ol class="flex flex-wrap gap-2 list-none p-0 m-0 mt-2">
@@ -88,7 +98,8 @@
             v-model:day="day"
             :item-id="event.id"
             :config="config"
-            :editable="editable"
+            :editable="editable && !saving"
+            @remove="(id, name) => emit('remove-item', id, name)"
           />
           <WebsiteDayTransport
             v-else-if="event.kind === 'transport'"
@@ -96,13 +107,15 @@
             v-model:day="day"
             :leg-id="event.id"
             :config="config"
-            :editable="editable"
+            :editable="editable && !saving"
+            @remove="(id, name) => emit('remove-item', id, name)"
           />
           <WebsiteDayMealsServices
             v-else
             v-model:day="day"
             :meal-id="event.id"
-            :editable="editable"
+            :editable="editable && !saving"
+            @remove="(id, name) => emit('remove-item', id, name)"
             @edit-meal="(slot) => emit('open-resource', 'meal', slot)"
           />
           <div v-if="editable" class="flex items-center gap-3 py-1">
@@ -119,14 +132,16 @@
         v-if="day.hotels.length"
         v-model:day="day"
         :config="config"
-        :editable="editable"
+        :editable="editable && !saving"
+        @remove="(id, name) => emit('remove-item', id, name)"
         @edit="(hotelIndex) => emit('open-resource', 'hotel', hotelIndex)"
       />
       <WebsiteDayMealsServices
         ref="servicesCard"
         v-model:day="day"
-        :editable="editable"
+        :editable="editable && !saving"
         services-only
+        @remove="(id, name) => emit('remove-item', id, name)"
       />
     </el-form>
   </ItineraryDayCardFrame>
@@ -149,6 +164,7 @@ import WebsiteDayHotels from "./WebsiteDayHotels.vue";
 import WebsiteDayMealsServices from "./WebsiteDayMealsServices.vue";
 import { isMealArranged } from "../../options";
 import { websiteDayEventIds } from "../event-order";
+import { websiteGuideBoardId } from "../day-order";
 
 export type WebsiteResourceDialogKind = "attraction" | "transport" | "hotel" | "meal" | "guide";
 
@@ -165,6 +181,7 @@ const emit = defineEmits<{
   /** hotel 传酒店下标（-1 新增），meal 传餐次 */
   "open-resource": [kind: WebsiteResourceDialogKind, target?: number | WebsiteMeal["slot"]];
   "insert-resource": [kind: "attraction" | "transport" | "meal", afterId: string];
+  "remove-item": [id: string, name: string];
 }>();
 const { t, locale } = useI18n();
 const frame = useTemplateRef<InstanceType<typeof ItineraryDayCardFrame>>("frame");
@@ -245,14 +262,6 @@ function cityName(id: string) {
   const city = props.config.cities.find((item) => item.id === id);
   return city ? (locale.value === "en" ? city.nameEn : city.nameZh) : "";
 }
-const guideSummaries = computed(() =>
-  day.value.guideLanguage
-    ? [{
-      label: t("itineraryWorkspace.actions.guide"),
-      value: day.value.guideLanguage,
-    }]
-    : [],
-);
 function selectResource(key: string) {
   if (key === "attraction" || key === "transport") emit("open-resource", key);
   else if (key === "hotel") emit("open-resource", "hotel", -1);

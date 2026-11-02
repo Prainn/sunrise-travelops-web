@@ -70,6 +70,10 @@ describe("vehicle × hotel tier price editing", () => {
     await view.open();
     expect(view.plan.value.days[0]!.overnightCityId).toBe("city");
     expect(view.inputs()).toHaveLength(5);
+    expect(view.inputs()[0]!.props.disabled).toBe(true);
+    expect(view.inputs()[2]!.props.disabled).toBe(false);
+    expect(view.find("ElCheckbox")[0]!.props).toMatchObject({ disabled: true, "model-value": false });
+    expect(view.find("ElCheckbox")[2]!.props.disabled).toBe(false);
     await view.change(view.inputs()[2]!, "500");
     await view.press("common.confirm");
     expect(view.plan.value.vehiclePrices).toEqual([
@@ -77,10 +81,26 @@ describe("vehicle × hotel tier price editing", () => {
     ]);
   });
 
+  it("disables a stored hotel display choice without dropping existing prices", async () => {
+    const view = await mount();
+    await view.press("common.cancel");
+    view.plan.value.days.forEach(day => day.hotels = []);
+    view.plan.value.vehiclePrices = [{ vehicleType: "7_seat", hotelTier: null, unitPrice: "500.00", priceComponents: components(["100", null, "400", null, null]) }];
+    await nextTick();
+    await view.open();
+    expect(view.inputs()[0]!.props).toMatchObject({ disabled: true, "model-value": "100" });
+    expect(view.find("ElCheckbox")[0]!.props).toMatchObject({ disabled: true, "model-value": false });
+    await view.press("common.confirm");
+    expect(view.plan.value.vehiclePrices[0]).toMatchObject({ unitPrice: "500.00" });
+    expect(view.plan.value.vehiclePrices[0]!.priceComponents![0]).toEqual({ category: "hotel", unitPrice: "100", showInPdf: false });
+  });
+
   it("keeps edits isolated until confirmation and saves only priced combinations", async () => {
     const view = await mount();
     // 档次 A、B 为当前候选，C 为待调整组合；每行五个分项。
     expect(view.inputs()).toHaveLength(15);
+    expect(view.inputs()[0]!.props.disabled).toBe(false);
+    expect(view.find("ElCheckbox")[0]!.props.disabled).toBe(false);
     await view.change(view.inputs()[0]!, "3000");
     await view.press("common.cancel");
     expect(row(view.plan.value, "A")!.unitPrice).toBe("10000.00");

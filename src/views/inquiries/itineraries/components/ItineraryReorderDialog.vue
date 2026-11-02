@@ -3,12 +3,12 @@
     :model-value="modelValue"
     size="full"
     :append-to-body="recovery"
-    :title="$t(recovery ? 'itineraryWorkspace.deletedDays' : 'itineraryWorkspace.reorderTitle')"
+    :title="dialogTitle"
     @close="emit('update:modelValue', false)"
   >
     <template #header>
       <div class="flex items-center gap-4 flex-wrap">
-        <strong>{{ $t(recovery ? 'itineraryWorkspace.deletedDays' : 'itineraryWorkspace.reorderTitle') }}</strong>
+        <strong>{{ dialogTitle }}</strong>
         <el-button v-if="!recovery" :disabled="!recycledDays.length || busy" @click="isRecycleVisible = true">
           {{ $t('itineraryWorkspace.deletedDays') }} ({{ recycledDays.length }})
         </el-button>
@@ -295,6 +295,7 @@ import {
 const props = withDefaults(
   defineProps<{
     modelValue: boolean;
+    title?: string;
     days: ReorderBoardDay[];
     deletedDays?: ReorderBoardDay[];
     recovery?: boolean;
@@ -320,6 +321,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const dialogTitle = computed(() => props.recovery ? t("itineraryWorkspace.deletedDays") : props.title || t("itineraryWorkspace.reorderTitle"));
 const isRecycleVisible = ref(false);
 const recycledDays = ref<ReorderBoardDay[]>([]);
 const dayIds = ref<string[]>([]);
