@@ -1612,7 +1612,7 @@
     "guideLanguagePlaceholder": "例如 English",
     "transportLegs": "交通段",
     "hotelPlans": "酒店方案",
-    "hotelRequiredHint": "当天需住宿，至少填写一个酒店名。每个档次每天最多一家酒店，手动选择档次，不自动映射共用库酒店评级。",
+    "hotelRequiredHint": "整个行程不选酒店也可报价；如安排酒店，每个已报价档次须覆盖所有住宿日。每个档次每天最多一家，手动选择档次，不自动映射共用库酒店评级。",
     "hotelTier": "酒店档次",
     "hotelTierA": "A 高端五星",
     "hotelTierB": "B 舒适四星",
@@ -1728,7 +1728,7 @@
     "noDriverReason": "行程中没有专车段",
     "guideReason": "{items} 设有导游语种",
     "noGuideReason": "未设置导游语种",
-    "noAccommodation": "不住宿",
+    "noAccommodation": "未安排酒店",
     "noPrivateVehicle": "无专车",
     "hotelTierTaken": "当天已有该档次酒店，每个档次每天最多一家。",
     "hotelTiersFull": "当天四个酒店档次均已安排，如需更换请编辑或移除现有酒店。"
@@ -2232,6 +2232,6 @@
     "nights": "{count} 晚",
     "breakfastIncluded": "含早",
     "breakfastExcluded": "不含早",
-    "noHotels": "本行程不含住宿。"
+    "noHotels": "本行程未安排酒店。"
   }
 }
