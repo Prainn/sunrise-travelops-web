@@ -9,6 +9,9 @@ export const websiteVisitService = {
   list(query: WebsiteVisitQuery) {
     return request.get<PageResult<WebsiteVisit>>(base, { params: { ...query } });
   },
+  confirm(id: string) {
+    return request.post<{ confirmed: true }>(`${base}/${encodeURIComponent(id)}/confirm`);
+  },
   draft(id: string) {
     return request.get<Partial<WebsiteInquiryInput>>(`${base}/${encodeURIComponent(id)}/inquiry-draft`);
   },

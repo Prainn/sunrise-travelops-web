@@ -78,6 +78,16 @@
         >
           <template #default="{ row }">
             <RowActions>
+              <span v-if="row.confirmed">{{ $t('websiteVisits.confirmed') }}</span>
+              <el-button
+                v-else-if="can('website:visit:list')"
+                link
+                type="primary"
+                :loading="confirmingIds.has(row.id)"
+                @click="confirmRecord(row as WebsiteVisit)"
+              >
+                {{ $t('websiteVisits.confirm') }}
+              </el-button>
               <el-button
                 v-if="row.inquiry"
                 link
@@ -163,6 +173,7 @@ const saving = ref(false);
 const editorVisible = ref(false);
 const error = ref("");
 const openingId = ref("");
+const confirmingIds = ref(new Set<string>());
 const selectedId = ref("");
 const record = ref<WebsiteInquiry>();
 const draft = ref<Partial<WebsiteInquiryInput>>();
@@ -233,6 +244,20 @@ function reset() {
   void load();
 }
 // 生成询盘保存后会等待列表刷新才释放 saving，期间不能对访问记录再次生成。
+async function confirmRecord(row: WebsiteVisit) {
+  if (row.confirmed || confirmingIds.value.has(row.id)) return;
+  confirmingIds.value.add(row.id);
+  try {
+    await websiteVisitService.confirm(row.id);
+    row.confirmed = true;
+    await load();
+  } catch (cause) {
+    ElMessage.error(websiteErrorMessage(cause));
+  } finally {
+    confirmingIds.value.delete(row.id);
+  }
+}
+
 async function generateInquiry(row: WebsiteVisit) {
   if (openingId.value || saving.value) return;
   openingId.value = row.id;

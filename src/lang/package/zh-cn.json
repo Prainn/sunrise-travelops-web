@@ -9,6 +9,8 @@
     "platformSearch": "搜索平台账号名称"
   },
   "websiteVisits": {
+    "confirm": "确认",
+    "confirmed": "已确认",
     "dateRange": "日期范围",
     "searchPlaceholder": "WhatsApp来源编号 / 网站询盘编号",
     "generate": "生成询盘",

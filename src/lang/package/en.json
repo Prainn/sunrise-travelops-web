@@ -9,6 +9,8 @@
     "platformSearch": "Search platform accounts"
   },
   "websiteVisits": {
+    "confirm": "Confirm",
+    "confirmed": "Confirmed",
     "dateRange": "Date range",
     "searchPlaceholder": "WhatsApp reference / Website inquiry number",
     "generate": "Create inquiry",
