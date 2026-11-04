@@ -196,6 +196,7 @@
                 step-strictly
                 controls-position="right"
                 class="w-full"
+                @update:model-value="ledgerDraft && handleScheduleDateChange()"
               />
             </el-form-item>
           </el-col>
@@ -434,6 +435,7 @@ import {
   ITINERARY_SUMMARY_MAX_LENGTH,
   ledgerTourInput,
   manualScheduleError,
+  syncLedgerDropDate,
   syncManualPickupDate,
   tourFormFromLedgerDraft,
   tourFormFromRecord,
@@ -608,6 +610,7 @@ const rules = computed<FormRules>(() => ({
 async function handleScheduleDateChange() {
   if (!isManual.value || form.scheduleMode !== "manual") return;
   syncManualPickupDate(form);
+  if (props.ledgerDraft && !props.tour) syncLedgerDropDate(form);
   await nextTick();
   const fields = ["pickupAt", "dropAt"] as const;
   const filledFields = fields.filter((field) => form[field]);

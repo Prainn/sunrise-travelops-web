@@ -65,7 +65,7 @@ const ledger = {
   effectiveContact: false, proposalSent: false, loss: false, priority: false, itinerary: "", notConvertedReason: "",
   lossNote: "", remark: "", feedbackReason: "", solution: "", dealDate: null, departureDate: null, complaint: null,
   satisfied: null, workflowStatus: "pending_operation", reviewedAt: null, reviewedBy: null, operated: false,
-  operatedAt: null, version: 4,
+  operatedAt: null, version: 4, tours: [],
   capabilities: { canEdit: true, canDelete: true, canReview: false, canOperate: false, canConvert: true },
 } as unknown as DirectLedgerItem;
 
@@ -143,8 +143,8 @@ describe("DirectLedgerDialog order status", () => {
   beforeEach(() => { vi.clearAllMocks(); tourDialog = undefined; mocks.perms = ["ledger:direct:create", "tour:create"]; });
   afterEach(() => unmount());
 
-  it.each(["unconverted", "converted"] as const)("keeps %s read-only and unchanged on edit save", async (orderStatus) => {
-    const current = { ...ledger, orderStatus };
+  it.each(["unconverted", "converted"] as const)("keeps %s with an associated tour read-only on edit save", async (orderStatus) => {
+    const current = { ...ledger, orderStatus, tours: [{ id: "tour-1", status: "active" }] } as DirectLedgerItem;
     mocks.update.mockResolvedValue(current);
     mount(current);
     await flush();
@@ -155,6 +155,36 @@ describe("DirectLedgerDialog order status", () => {
     await save();
     expect(mocks.update).toHaveBeenCalledWith(current.id, expect.objectContaining({ orderStatus, version: 4 }));
     expect(mocks.create).not.toHaveBeenCalled();
+  });
+
+  it("allows an unlinked converted ledger to be corrected without tour creation permission", async () => {
+    mocks.perms = ["ledger:direct:update"];
+    const current = { ...ledger, orderStatus: "converted" as const };
+    mocks.update.mockResolvedValue({ ...current, orderStatus: "unconverted", version: 5 });
+    mount(current);
+    await flush();
+    const inputs = await renderOrderStatus();
+    expect(inputs).toHaveLength(2);
+    for (const input of inputs) expect(input).not.toMatch(/\sdisabled(?:[\s=>])/);
+    form.model.orderStatus = "unconverted";
+    await save();
+    expect(mocks.update).toHaveBeenCalledWith(current.id, expect.objectContaining({ orderStatus: "unconverted", version: 4 }));
+    expect(mocks.create).not.toHaveBeenCalled();
+    expect(tourDialog).toBeUndefined();
+  });
+
+  it.each([
+    { orderStatus: "unconverted" as const },
+    { tours: [{ id: "cancelled-tour", status: "cancelled" }] },
+    { reviewedAt: "2026-11-01T00:00:00Z" },
+    { operatedAt: "2026-11-01T00:00:00Z" },
+    { capabilities: { ...ledger.capabilities, canEdit: false } },
+  ])("keeps status locked for an ineligible existing ledger: %j", async (state) => {
+    mount({ ...ledger, orderStatus: "converted", ...state } as DirectLedgerItem);
+    await flush();
+    const inputs = await renderOrderStatus();
+    expect(inputs).toHaveLength(2);
+    for (const input of inputs) expect(input).toMatch(/\sdisabled(?:[\s=>])/);
   });
 
   it("allows choosing order status when creating and starts without a country", async () => {
