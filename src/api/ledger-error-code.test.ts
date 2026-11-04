@@ -44,11 +44,11 @@ describe("ledger conflict error codes", () => {
   it.each([
     ["LEDGER_VERSION_CONFLICT", "记录已更新，请刷新重试"],
     ["DIRECT_LEDGER_DELETE_OPERATED", "曾操作的台账不能删除"],
-  ])("localizes 409 %s by code instead of the generic conflict", async (code, message) => {
+  ])("localizes 409 %s by code when the server message is absent", async (code, message) => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ code, message: "服务端原文", data: null }), {
+        new Response(JSON.stringify({ code, data: null }), {
           status: 409,
           headers: { "Content-Type": "application/json" },
         }),
@@ -61,4 +61,23 @@ describe("ledger conflict error codes", () => {
       message,
     });
   });
+
+  it.each(["LEDGER_VERSION_CONFLICT", "DIRECT_LEDGER_DELETE_OPERATED"])(
+    "preserves the server reason for 409 %s",
+    async (code) => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          new Response(JSON.stringify({ code, message: "服务端明确原因", data: null }), {
+            status: 409,
+            headers: { "Content-Type": "application/json" },
+          }),
+        ),
+      );
+
+      await expect(
+        request.delete("/ledgers/direct/id", { params: { version: 1 } }),
+      ).rejects.toMatchObject({ code, status: 409, message: "服务端明确原因" });
+    },
+  );
 });
