@@ -265,7 +265,9 @@ def pipeline(job, identity, release):
                 return
             job.stage('release-safety-tests (fixture version IDs)', ['python3', 'scripts/test_deploy.py'], 60, work, env)
             job.stage('install', ['pnpm', 'install', '--frozen-lockfile', '--store-dir', '/opt/sunrise-ci/pnpm-store'], 300, work, env)
-            job.stage('type-check', ['pnpm', 'exec', 'vue-tsc', '--noEmit'], 300, work, env)
+            # Leave room for native allocations and runner overhead below memory.high.
+            type_check_env = dict(env, NODE_OPTIONS='--max-old-space-size=1200')
+            job.stage('type-check', ['pnpm', 'exec', 'vue-tsc', '--noEmit'], 300, work, type_check_env)
             job.stage('vite-build', ['pnpm', 'exec', 'vite', 'build', '--mode', 'server-dev'], 300, work, env)
             args = ['deploy', release, 'dist']
         else:
