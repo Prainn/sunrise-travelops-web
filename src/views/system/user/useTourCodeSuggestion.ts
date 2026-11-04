@@ -1,4 +1,5 @@
 import { readonly, ref, watch } from "vue";
+import { requestErrorMessage } from "@/utils/version-conflict";
 import type { TourCodeSuggestion, TourCodeSuggestionInput, UserForm } from "@/types/user";
 
 export function useTourCodeSuggestion(options: {
@@ -7,12 +8,14 @@ export function useTourCodeSuggestion(options: {
   suggest: (input: TourCodeSuggestionInput) => Promise<TourCodeSuggestion>;
 }) {
   const manual = ref(false);
+  const errorMessage = ref("");
   const status = ref<"idle" | "loading" | "unavailable" | "failed">("idle");
 
   watch(
     () => [options.enabled(), options.form.englishName, options.form.nickname, manual.value] as const,
     ([enabled, englishName, nickname, edited], _previous, onCleanup) => {
       status.value = "idle";
+      errorMessage.value = "";
       if (!enabled || edited) return;
       options.form.tourCode = "";
       if (!englishName?.trim() || !nickname?.trim()) return;
@@ -27,8 +30,11 @@ export function useTourCodeSuggestion(options: {
           if (!current) return;
           options.form.tourCode = result.tourCode ?? "";
           status.value = result.tourCode ? "idle" : "unavailable";
-        } catch {
-          if (current) status.value = "failed";
+        } catch (error) {
+          if (current) {
+            status.value = "failed";
+            errorMessage.value = requestErrorMessage(error);
+          }
         }
       }, 300);
       onCleanup(() => {
@@ -41,6 +47,7 @@ export function useTourCodeSuggestion(options: {
 
   return {
     status: readonly(status),
+    errorMessage: readonly(errorMessage),
     markManual: () => { manual.value = true; },
     reset: () => { manual.value = false; },
   };

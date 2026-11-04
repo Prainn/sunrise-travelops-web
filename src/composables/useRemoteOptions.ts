@@ -13,7 +13,7 @@ export interface RemoteOptionsPage<T> {
 
 export function useRemoteOptions<T extends { id: string }>(
   fetchOptions: (query: RemoteOptionsQuery) => Promise<RemoteOptionsPage<T>>,
-  onError: () => void,
+  onError: (error: unknown) => void,
 ) {
   const items = shallowRef<T[]>([]);
   const loading = ref(false);
@@ -52,10 +52,10 @@ export function useRemoteOptions<T extends { id: string }>(
       ];
       total.value = result.list.length ? result.total : items.value.length;
       page.value = nextPage;
-    } catch {
+    } catch (error) {
       if (current === version) {
         failed.value = true;
-        onError();
+        onError(error);
       }
     } finally {
       if (current === version) loading.value = false;

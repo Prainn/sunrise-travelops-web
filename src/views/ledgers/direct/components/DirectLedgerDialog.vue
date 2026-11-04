@@ -123,12 +123,12 @@
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('ledger.direct.orderStatus')" prop="orderStatus">
-            <!-- 已有记录只能通过列表“成团”动作改变订单状态。 -->
+            <!-- 已有记录只能通过列表“成团”动作改变状态；子选项不传 false，以免覆盖父组只读。 -->
             <el-radio-group v-model="form.orderStatus" :disabled="Boolean(ledger)">
               <el-radio value="unconverted">
                 {{ $t("ledger.direct.orderStatuses.unconverted") }}
               </el-radio>
-              <el-radio value="converted" :disabled="!canCreateTour">
+              <el-radio value="converted" :disabled="!canCreateTour || undefined">
                 {{ $t("ledger.direct.orderStatuses.converted") }}
               </el-radio>
             </el-radio-group>

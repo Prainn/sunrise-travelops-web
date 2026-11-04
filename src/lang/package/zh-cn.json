@@ -379,7 +379,7 @@
     "noQuoteOptions": "暂无报价方案",
     "noPlans": "此询盘暂无行程",
     "pdfGenerated": "报价已确认，行程已锁定为已报价",
-    "confirmedRefreshFailed": "报价已确认，但页面信息刷新失败。可继续导出，或刷新页面获取最新信息。",
+    "confirmedRefreshFailed": "报价已确认，但页面信息刷新失败：{reason}。可继续导出，或刷新页面获取最新信息。",
     "pdfGenerationFailed": "PDF 生成失败，请重试",
     "previewRegenerate": "行程数据已变化，请重新生成预览",
     "versionConflictReload": "{reason}。是否放弃本页未保存的修改并重新加载？",

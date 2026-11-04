@@ -351,7 +351,7 @@
             @input="tourCodeSuggestion.markManual"
           />
           <div v-if="dialogState.mode === DialogMode.CREATE" class="text-xs text-[var(--el-text-color-secondary)]">
-            {{ $t(tourCodeSuggestionHint) }}
+            {{ tourCodeSuggestion.errorMessage.value || $t(tourCodeSuggestionHint) }}
           </div>
         </el-form-item>
 
@@ -922,7 +922,7 @@ async function handleDutyChange(row: UserItem, duty: CoordinatorDuty): Promise<v
 
 /** 关联账号改业务范围或删除前须先调整/解除关联；后端以无 details 的 CONFLICT 表示。 */
 function userConflictMessage(error: unknown, linkMessageKey: string): string {
-  if (isApiError(error) && error.code === ApiErrorCode.CONFLICT && !error.details)
+  if (isApiError(error) && error.code === ApiErrorCode.CONFLICT && !error.details && !error.serverMessage)
     return t(linkMessageKey);
   return requestErrorMessage(error);
 }

@@ -23,6 +23,7 @@
 import { Refresh } from "@element-plus/icons-vue";
 import { usePermissionStore } from "@/stores/permission";
 import { useUserStore } from "@/stores/user";
+import { isApiError } from "@/api/request";
 import ErrorPage from "./components/ErrorPage.vue";
 
 defineOptions({ name: "Page503" });
@@ -46,8 +47,8 @@ async function retry() {
         ? redirect
         : "/";
     await router.replace(target);
-  } catch {
-    ElMessage.error(t("error.unavailable.stillDown"));
+  } catch (error) {
+    ElMessage.error(isApiError(error) ? error.message : t("error.unavailable.stillDown"));
   } finally {
     loading.value = false;
   }

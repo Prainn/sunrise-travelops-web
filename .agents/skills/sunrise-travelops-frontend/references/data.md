@@ -6,7 +6,7 @@
 
 - `/api` 无 `/v1`；成功 `{ code: "SUCCESS", message, data }`，字段是 `message`。request 返回解包后的 data，204 返回 undefined；组件通过业务 service 调用，不重复包装响应。
 - `src/types/common.ts` 的 `PageResult<T>` 为 `{ list, total, page, pageSize }`；列表项、详情和表单按各业务合同定义，非分页接口不强套分页。
-- request 抛本地化 `ApiError`，错误码在 `src/api/error-code.ts`；页面/composable 负责适当提示，不把请求失败变成成功空数据。
+- request 抛 `ApiError`，优先展示后端非空 `message`，无有效 message 时按错误码/HTTP 状态使用本地化兜底，错误码在 `src/api/error-code.ts`；页面/composable 负责适当提示，不把请求失败变成成功空数据。
 - Bearer、401 合并刷新及单次重试由 request 处理；token 存取走 `utils/auth-storage.ts`，身份状态走 user store，不绕过现有认证层。
 - 菜单/按钮使用现有路由权限、指令和业务 workflow；隐藏 UI 不能替代后端数据范围校验。
 - 新增页面后，静态检查菜单图标是否已注册：路由 `meta.icon` 使用 `el-icon-*` 时，核对 `src/main.ts` 中对应图标的导入及 `routeIcons` 全局注册。此项只检查注册，不要求浏览器验证。

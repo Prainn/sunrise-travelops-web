@@ -3,6 +3,8 @@ import { effectScope, reactive, ref } from "vue";
 import type { TourCodeSuggestion, UserForm } from "@/types/user";
 import { useTourCodeSuggestion } from "./useTourCodeSuggestion";
 
+vi.mock("@/lang/utils", () => ({ translate: (key: string) => key }));
+
 const scopes: ReturnType<typeof effectScope>[] = [];
 function setup() {
   vi.useFakeTimers();
@@ -88,9 +90,11 @@ describe("new-user tour code suggestion", () => {
     expect(form.tourCode).toBe("");
     await vi.advanceTimersByTimeAsync(300);
     expect(suggestion.status.value).toBe("failed");
+    expect(suggestion.errorMessage.value).toBe("offline");
     suggest.mockResolvedValue({ tourCode: null });
     form.englishName = "A";
     await vi.advanceTimersByTimeAsync(300);
     expect(suggestion.status.value).toBe("unavailable");
+    expect(suggestion.errorMessage.value).toBe("");
   });
 });

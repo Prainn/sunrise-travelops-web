@@ -379,7 +379,7 @@
     "noQuoteOptions": "No quote options",
     "noPlans": "No itineraries for this inquiry yet",
     "pdfGenerated": "Quote confirmed; itinerary locked as quoted",
-    "confirmedRefreshFailed": "Quote confirmed, but page details could not be refreshed. You can still export, or reload the page for the latest details.",
+    "confirmedRefreshFailed": "Quote confirmed, but page details could not be refreshed: {reason}. You can still export, or reload the page for the latest details.",
     "pdfGenerationFailed": "PDF failed. Try again",
     "previewRegenerate": "Itinerary changed. Generate the preview again",
     "versionConflictReload": "{reason}. Discard unsaved changes on this page and reload?",

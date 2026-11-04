@@ -20,7 +20,7 @@ export function useResourcePriceSelection(
     readonly currentItem?: ItineraryResourceItem;
     readonly itineraryItems: ItineraryResourceItem[];
   },
-  onError: () => void,
+  onError: (error: unknown) => void,
 ) {
   const type = computed<ItineraryDailyItemType>(() =>
     props.mealSlot ? "restaurant" : "attraction",
@@ -108,8 +108,8 @@ export function useResourcePriceSelection(
         const resources = await resourceService.getPriceSelection(type.value, id);
         if (version === detailVersion)
           selectedOption.value = getResourcePriceOptions(resources, props.guestCount)[0];
-      } catch {
-        if (version === detailVersion) onError();
+      } catch (error) {
+        if (version === detailVersion) onError(error);
       }
     },
     { flush: "sync" },
@@ -185,8 +185,8 @@ export function useResourcePriceSelection(
                 props.guestCount,
               )[0]?.isStandardPrice;
             })
-            .catch(() => {
-              if (version === detailVersion) onError();
+            .catch((error: unknown) => {
+              if (version === detailVersion) onError(error);
             });
           quantity.value = 1;
           actualPrice.value = item.unitCost;

@@ -52,7 +52,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { ElMessage } from "element-plus";
-import { useI18n } from "vue-i18n";
+import { requestErrorMessage } from "@/utils/version-conflict";
 import {
   useRemoteOptions,
   type RemoteOptionsPage,
@@ -84,8 +84,6 @@ const emit = defineEmits<{
   "update:modelValue": [value: string];
 }>();
 
-const { t } = useI18n();
-
 const visible = ref(false);
 const selected = ref<RemoteSelectOption>();
 
@@ -98,7 +96,7 @@ const {
   reset,
 } = useRemoteOptions(
   (query) => props.loadOptions(query),
-  () => ElMessage.error(t("request.failed")),
+  (error) => ElMessage.error(requestErrorMessage(error)),
 );
 
 function select(value: string) {
