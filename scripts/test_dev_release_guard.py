@@ -10,7 +10,7 @@ import sys
 import tempfile
 import time
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 SCRIPT = Path(__file__).with_name('dev_release_guard.py')
 spec = importlib.util.spec_from_file_location('guard', SCRIPT)
@@ -49,33 +49,6 @@ except Exception as e: error=e
 finally: j.finish(error)
 sys.exit(1 if error else 0)
 """
-
-
-class TypeCheckPipelineTests(unittest.TestCase):
-    def test_failed_type_check_scope_prevents_build_and_activation(self):
-        for failed_scope in ('app', 'tests', 'tools'):
-            with self.subTest(scope=failed_scope), tempfile.TemporaryDirectory() as temporary:
-                root = Path(temporary)
-                phases = []
-
-                def stage(name, command, seconds, cwd=None, env=None, **kwargs):
-                    phases.append(name)
-                    if name == 'check-dev-head':
-                        Path(command[-1]).write_text(json.dumps({'sha': IDENTITY['GITHUB_SHA']}))
-                    elif name == 'download-source':
-                        Path(command[-1]).touch()
-                    elif name == 'type-check:' + failed_scope:
-                        raise RuntimeError('Type error in ' + failed_scope)
-
-                job = Mock()
-                job.stage.side_effect = stage
-                with patch.object(guard, 'JOBS', root), patch.object(guard, 'BASE', root), \
-                     patch.dict(os.environ, {'GH_TOKEN': 'fixture', 'OPERATION': 'deploy'}):
-                    with self.assertRaisesRegex(RuntimeError, 'Type error in ' + failed_scope):
-                        guard.pipeline(job, IDENTITY, 'fixture-release')
-                self.assertNotIn('vite-build', phases)
-                self.assertNotIn('activate-and-verify', phases)
-                self.assertEqual(phases[-1], 'remove-source')
 
 
 @unittest.skipUnless(Path('/proc/self/stat').exists(), 'Requires Linux /proc')

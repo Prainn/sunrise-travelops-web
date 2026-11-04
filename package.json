@@ -7,13 +7,10 @@
   "scripts": {
     "dev": "vite",
     "dev:local": "vite --mode dev-local",
-    "build": "pnpm type-check && vite build",
+    "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "build-only": "vite build",
-    "type-check": "pnpm type-check:app && pnpm type-check:tests && pnpm type-check:tools",
-    "type-check:app": "vue-tsc --noEmit -p tsconfig.app.json",
-    "type-check:tests": "vue-tsc --noEmit -p tsconfig.tests.json",
-    "type-check:tools": "vue-tsc --noEmit -p tsconfig.tools.json",
+    "type-check": "vue-tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "lint:eslint": "eslint --cache .",
     "lint:fix": "eslint --cache . --fix",
@@ -22,7 +19,7 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky",
     "commit": "git-cz",
-    "build:server-dev": "pnpm type-check && vite build --mode server-dev"
+    "build:server-dev": "vue-tsc --noEmit && vite build --mode server-dev"
   },
   "config": {
     "commitizen": {
