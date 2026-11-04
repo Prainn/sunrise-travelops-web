@@ -194,7 +194,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     selectedItinerary,
     canGenerate: () => canGeneratePdf.value,
     canDownload: () => hasUserPermission(userStore.userInfo, "itinerary:download"),
-    onRefreshError: () => messages.warning("itinerary.confirmedRefreshFailed", {}),
+    onRefreshError: (error) => messages.warning("itinerary.confirmedRefreshFailed", { reason: requestErrorMessage(error) }),
   });
 
   async function loadDestinationResourceOptions() {
@@ -204,8 +204,8 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
         businessDictionaryService.ensureBuiltInTypesLoaded(),
       ]);
       return true;
-    } catch {
-      messages.error("request.failed");
+    } catch (error) {
+      messages.errorText(requestErrorMessage(error));
       return false;
     }
   }
@@ -326,8 +326,8 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
         else resourceService.hotels.push(record);
       }
       editor.updateHotelPlanSelection(...args);
-    } catch {
-      messages.error("request.failed");
+    } catch (error) {
+      messages.errorText(requestErrorMessage(error));
     }
   }
 

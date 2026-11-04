@@ -152,6 +152,7 @@ import { useResourcePriceSelection } from "../useResourcePriceSelection";
 import { ElMessage } from "element-plus";
 import { useCityOptions } from "@/composables/useCityOptions";
 import { useI18n } from "vue-i18n";
+import { requestErrorMessage } from "@/utils/version-conflict";
 import type { ItineraryResourceItem, MealSlot } from "@/types/itinerary";
 import { formatMoney } from "@/utils";
 import { getResourceUnitName } from "@/utils/resource-unit";
@@ -191,7 +192,7 @@ const {
   dinerCount,
   canSubmit,
   createItem,
-} = useResourcePriceSelection(props, () => ElMessage.error(t("request.failed")));
+} = useResourcePriceSelection(props, (error) => ElMessage.error(requestErrorMessage(error)));
 async function loadPriceOptions(query: RemoteOptionsQuery) {
   const result = await loadOptions(query);
   return {

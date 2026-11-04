@@ -1,9 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
 import { ElForm, ElFormItem, ElOption, ElSelect } from "element-plus";
 import { createI18n } from "vue-i18n";
 import RemoteSelect from "./index.vue";
+
+vi.mock("@/lang/utils", () => ({ translate: (key: string) => key }));
 
 async function render(formDisabled: boolean, disabled?: boolean) {
   const app = createSSRApp({

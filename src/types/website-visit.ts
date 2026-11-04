@@ -17,6 +17,7 @@ export interface WebsiteVisit {
   expires_at_utc: string;
   payload_fingerprint: string;
   converted: boolean;
+  confirmed: boolean;
   inquiry: { id: string; code: string } | null;
 }
 export interface WebsiteVisitQuery {

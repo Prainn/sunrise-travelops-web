@@ -1,0 +1,125 @@
+# 代码组织与命名
+
+新增或修改 TS/Vue 逻辑时，读取涉及的命名、组件、注释与可读性章节；仅改静态文案或样式无需读取。
+
+## 命名规范
+
+| 类型 | 风格 | 示例 | 理由 |
+|------|------|------|------|
+| 变量 | camelCase | `userName` | JS 惯例 |
+| 常量 | UPPER_SNAKE_CASE | `MAX_COUNT` | 区分不可变值 |
+| 函数 | camelCase，动词开头 | `fetchUserList` | 动词表行为 |
+| 类/接口/类型 | PascalCase | `UserInfo` | 区分类型与实例 |
+| 枚举 | PascalCase | `StatusEnum` | — |
+| 枚举值 | UPPER_SNAKE_CASE | `StatusEnum.ACTIVE` | 区分枚举成员 |
+| 布尔值 | is/has/can/should 前缀 | `isLoading` | 一眼识别为布尔判断，名词有歧义 |
+| Vue 组件文件 | PascalCase | `UserForm.vue` | 与 HTML 原生元素区分 |
+| 页面文件 | index.vue | `system/user/index.vue` | 路由目录入口 |
+| TS/JS 模块 | kebab-case | `format-date.ts` | 文件系统大小写兼容 |
+| Composables | use + camelCase | `usePageTable` | Vue 官方约定 |
+| Store | use + 模块名 + Store | `useUserStore` | Pinia 约定 |
+
+**禁止**：前端类型用 `VO/DTO` 后缀。前端无需区分数据传输层级，语义命名更直观：`UserItem`（列表项）、`UserForm`（表单）、`UserQueryParams`（查询参数）、`UserDetail`（详情）。
+
+## 方法命名与 handle 规则
+
+| 场景 | 命名 |
+|------|------|
+| 查询/加载 | `fetchList` / `loadOptions` |
+| 打开/关闭弹窗 | `openDialog` / `closeDialog` |
+| 提交/保存 | `submitForm` / `saveX` |
+| 新增/编辑/删除 | `createX` / `updateX` / `deleteX` |
+| 重置 | `resetForm` / `resetQuery` |
+| 表单校验 | `validateForm` |
+| 导入/导出 | `importX` / `exportX` |
+| **事件入口（流程编排）** | `handleSubmit` / `handleDelete` / `handleEditClick` |
+
+**handle 判断标准**：函数只做一件事 → 不用 handle（可复用）；组合多个动作 + 流程控制 → 用 handle（事件入口）。
+
+```typescript
+// ✅ 单一动作 → 不用 handle，可被多处复用
+function openDialog() { dialogState.visible = true; }
+
+// ✅ 流程编排 → 使用 handle，作为事件入口
+async function handleSubmit() {
+  const valid = await validateForm();
+  if (!valid) return;
+  await submitForm(formData);
+  closeDialog();
+  fetchList();
+}
+```
+
+`fetch/load` 本身已隐含异步语义，不加 `Async` 后缀。单次调用的逻辑直接内联，不过度抽取。
+
+## 组件规范
+
+- SFC 块顺序：`template` → `script setup` → `style scoped`
+- script 内部顺序：导入（Vue → 第三方 → 类型 → 内部 → 相对路径）→ Props/Emits → 状态 → 计算属性 → 监听器 → 生命周期 → 方法 → defineExpose
+- Props 优先 TypeScript 类型声明 + `withDefaults`，不与运行时声明混用
+- 使用 `<script setup>`；组件较大时按清晰职责考虑拆分，300 行只作为检查可读性的提示。局部修改不为行数限制顺带拆分已有组件。
+- 优先使用 Element Plus 已有组件及其标准结构；表单字段使用 `<el-form>`、`<el-form-item>` 和对应的 Element Plus 输入组件，不使用 `<label><el-input /></label>` 这类原生标签包裹组件的写法
+
+## 注释
+
+注释只写有信息量的内容：补充代码未直接表达的背景、意图、约束和边界。不复述代码、不做视觉分隔。
+
+| 场景 | 写法 | 说明 |
+|------|------|------|
+| 类型/属性/常量 | 单行 `/** ... */` | 说明用途、约束 |
+| 函数/方法 | 多行 JSDoc | 用途、参数、返回值 |
+| 业务规则/兼容策略 | 行内或块级 | 解释为什么这样做 |
+| 大型配置分组 | 简短普通注释 | `// 认证`、`// UI` |
+| 函数内部普通步骤 | 不写 | 通过命名和空行表达 |
+| 纯视觉分隔标题 | 禁止 | 不用横线/等号包裹 |
+
+**JSDoc 规则**：函数多行（至少 3 行），带 `@param`/`@returns` 必须多行。摘要句号结尾。不需要说明就不写。
+
+```typescript
+// ✅ 分组
+// 认证
+ACCESS_TOKEN: `${APP_PREFIX}:auth:access_token`,
+
+// ✅ 解释边界
+const keys = Object.keys(localStorage).filter(k => k.startsWith(prefix)); // 只清理当前应用写入的缓存
+
+/**
+ * 搜索仅匹配菜单标题，避免路径命中过多造成结果噪音。
+ */
+function searchByTitle() {}
+
+/**
+ * 格式化文件大小。
+ *
+ * @param bytes - 字节数。
+ * @param decimals - 小数位数，默认 2。
+ * @returns 格式化后的字符串，如 "1.50 MB"。
+ */
+export function formatFileSize(bytes: number, decimals = 2): string { /* ... */ }
+
+// ❌ 复述代码
+const index = list.findIndex(item => item.id === id); // 查找索引
+```
+
+行内注释解释“为什么”而非“是什么”，靠近相关代码。
+
+## 简单与可读性
+
+**不要过度设计。** 选择满足当前需求的最简单、清晰的方案；仅在实际需求证明简单方案不足时增加复杂度，不为假设场景或未来可能性提前设计，也不把具体实现选择固化为通用规则。
+
+**核心原则：先写清楚业务，再考虑复用。抽象必须减少真实重复或隔离稳定的通用规则。**
+
+- 优先使用直白的条件、循环、计算属性和小函数，避免为了缩短代码而堆叠三元表达式、链式调用或类型断言。
+- 同一段稳定逻辑在多个页面重复时，提取到 `src/utils`；典型场景包括日期、日期时间、金额、文件、连续编号等格式化或计算。
+- 页面只保留页面状态、交互流程和业务判断，不在页面内重复拼接日期、补零、金额精度等基础实现。
+- 仅使用一次且逻辑简单的代码直接内联；不要预先设计通用框架、复杂泛型、配置驱动层或多层包装。
+- 工具函数按用途拆分，名称直接表达结果；参数只保留当前真实需要的配置。
+- 重构以可读性和减少重复为目标，不借机改变业务规则、数据结构或交互行为。
+
+```typescript
+// ✅ 页面表达业务意图，格式细节集中复用
+const createdAt = formatDateTime(new Date());
+
+// ❌ 页面重复实现补零和日期拼接
+const date = `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+```

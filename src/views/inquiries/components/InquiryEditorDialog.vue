@@ -335,8 +335,8 @@ async function selectAgency(agencyId: string) {
   let agency: AgencyRecord;
   try {
     agency = await resourceService.agencyApi.getDetail(agencyId);
-  } catch {
-    if (version === agencySelectionVersion) ElMessage.error(t("request.failed"));
+  } catch (error) {
+    if (version === agencySelectionVersion) ElMessage.error(requestErrorMessage(error));
     return;
   }
   if (version !== agencySelectionVersion) return;

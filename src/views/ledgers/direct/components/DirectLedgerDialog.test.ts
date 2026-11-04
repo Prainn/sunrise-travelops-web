@@ -1,6 +1,8 @@
 /* eslint vue/one-component-per-file: off -- The renderer supplies explicit UI stubs. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createRenderer, defineComponent, nextTick, type ComponentPublicInstance } from "vue";
+import { createRenderer, createSSRApp, defineComponent, h, nextTick, type ComponentPublicInstance } from "vue";
+import { renderToString } from "vue/server-renderer";
+import type * as ElementPlus from "element-plus";
 import type { DirectLedgerItem } from "@/types/direct-ledger";
 import type { LedgerTourDraft } from "@/views/tours/tour-form";
 
@@ -69,6 +71,7 @@ const ledger = {
 
 const tourInput = { countryItemId: "country-1", days: 3 } as never;
 let radios: Array<Record<string, unknown>>;
+let radioOptions: Array<Record<string, unknown>>;
 let form: { model: Record<string, unknown> };
 let save: () => Promise<void>;
 let primaryText: string;
@@ -80,6 +83,7 @@ let unmount: () => void;
 async function flush() { for (let i = 0; i < 4; i++) { await Promise.resolve(); await nextTick(); } }
 function mount(current: DirectLedgerItem | null) {
   radios = [];
+  radioOptions = [];
   saved = vi.fn();
   visibility = vi.fn();
   const app = renderer.createApp(DirectLedgerDialog, {
@@ -88,7 +92,11 @@ function mount(current: DirectLedgerItem | null) {
   });
   app.config.globalProperties.$t = (key: string) => key;
   const passthrough = defineComponent({ render(this: ComponentPublicInstance) { return this.$slots.default?.(); } });
-  for (const name of ["ElRow", "ElCol", "ElFormItem", "ElRadio"]) app.component(name, passthrough);
+  for (const name of ["ElRow", "ElCol", "ElFormItem"]) app.component(name, passthrough);
+  app.component("ElRadio", defineComponent({
+    inheritAttrs: false,
+    setup(_, { attrs, slots }) { return () => { radioOptions.push(attrs); return slots.default?.(); }; },
+  }));
   for (const name of ["ElInput", "ElDatePicker", "ElAlert"]) app.component(name, { render: () => null });
   app.component("ElForm", defineComponent({
     props: { model: { type: Object, required: true } },
@@ -117,6 +125,14 @@ function mount(current: DirectLedgerItem | null) {
   unmount = () => app.unmount();
 }
 function draft() { return tourDialog?.["ledger-draft"] as LedgerTourDraft; }
+async function renderOrderStatus() {
+  const { ElRadio, ElRadioGroup } = await vi.importActual<typeof ElementPlus>("element-plus");
+  const group = radios.find((attrs) => typeof attrs.modelValue === "string" && ["unconverted", "converted"].includes(attrs.modelValue));
+  const app = createSSRApp({ render: () => h(ElRadioGroup, group, {
+    default: () => ["unconverted", "converted"].map((value) => h(ElRadio, radioOptions.find((attrs) => attrs.value === value))),
+  }) });
+  return (await renderToString(app)).match(/<input\b[^>]*type="radio"[^>]*>/g) ?? [];
+}
 function fill(status: "unconverted" | "converted") {
   Object.assign(form.model, {
     receivedDate: "2026-11-01", source: "携程123", receivingGroupId: "group-1", operatorId: "operator-1", orderStatus: status,
@@ -127,16 +143,27 @@ describe("DirectLedgerDialog order status", () => {
   beforeEach(() => { vi.clearAllMocks(); tourDialog = undefined; mocks.perms = ["ledger:direct:create", "tour:create"]; });
   afterEach(() => unmount());
 
-  it("always disables order status when editing, including unlocked records", async () => {
-    mount(ledger);
+  it.each(["unconverted", "converted"] as const)("keeps %s read-only and unchanged on edit save", async (orderStatus) => {
+    const current = { ...ledger, orderStatus };
+    mocks.update.mockResolvedValue(current);
+    mount(current);
     await flush();
-    expect(radios.find((attrs) => attrs.modelValue === "unconverted")?.disabled).toBe(true);
+    expect(radios.find((attrs) => attrs.modelValue === orderStatus)?.disabled).toBe(true);
+    const inputs = await renderOrderStatus();
+    expect(inputs).toHaveLength(2);
+    for (const input of inputs) expect(input).toMatch(/\sdisabled(?:[\s=>])/);
+    await save();
+    expect(mocks.update).toHaveBeenCalledWith(current.id, expect.objectContaining({ orderStatus, version: 4 }));
+    expect(mocks.create).not.toHaveBeenCalled();
   });
 
   it("allows choosing order status when creating and starts without a country", async () => {
     mount(null);
     await flush();
     expect(radios.find((attrs) => attrs.modelValue === "unconverted")?.disabled).toBe(false);
+    const inputs = await renderOrderStatus();
+    expect(inputs).toHaveLength(2);
+    for (const input of inputs) expect(input).not.toMatch(/\sdisabled(?:[\s=>])/);
     expect(form.model.countryItemId).toBe("");
   });
 

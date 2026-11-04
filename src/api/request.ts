@@ -68,10 +68,11 @@ export class ApiError extends Error {
   readonly requestId?: string;
 
   constructor(message: string, options: ApiErrorOptions) {
-    super(message, { cause: options.cause });
+    const serverMessage = options.serverMessage?.trim() || undefined;
+    super(serverMessage ?? message, { cause: options.cause });
     this.name = "ApiError";
     this.code = options.code;
-    this.serverMessage = options.serverMessage;
+    this.serverMessage = serverMessage;
     this.status = options.status;
     this.details = options.details;
     this.path = options.path;

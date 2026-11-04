@@ -15,7 +15,7 @@ interface ItineraryPdfOptions {
   selectedItinerary: ComputedRef<ItineraryRecord | undefined>;
   canGenerate: () => boolean;
   canDownload: () => boolean;
-  onRefreshError: () => void;
+  onRefreshError: (error: unknown) => void;
 }
 
 export function useItineraryPdf(options: ItineraryPdfOptions) {
@@ -84,7 +84,8 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
       inquiryService.itinerary(plan.id).then((record) => Object.assign(plan, record)),
       inquiryService.detail(inquiry.id).then((record) => Object.assign(inquiry, record)),
     ]);
-    if (results.some((result) => result.status === "rejected")) options.onRefreshError();
+    const failure = results.find((result) => result.status === "rejected");
+    if (failure) options.onRefreshError(failure.reason);
   }
 
   async function confirmPdfDownload(): Promise<boolean> {

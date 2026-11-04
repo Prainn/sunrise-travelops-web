@@ -364,7 +364,7 @@ function handleSaveError(error: unknown): void {
       emit("stale");
       return;
     }
-    ElMessage.error(t("accountLink.memberTaken"));
+    ElMessage.error(error.serverMessage ? requestErrorMessage(error) : t("accountLink.memberTaken"));
     loadCandidates();
     return;
   }

@@ -29,7 +29,8 @@ vi.mock("@/lang/utils", () => ({
 }));
 
 import { sessionGate } from "@/utils/session-gate";
-import { request } from "./request";
+import { ApiError, request } from "./request";
+import { requestErrorMessage } from "@/utils/version-conflict";
 
 function response(status: number, code: string, data: unknown = null): Response {
   return new Response(JSON.stringify({ code, message: code, data }), {
@@ -119,7 +120,8 @@ describe("request session recovery", () => {
     expect(auth.clearAuth).toHaveBeenCalledOnce();
   });
 
-  it("keeps the server error reason alongside the localized message", async () => {
+  it("displays the server reason instead of the localized generic error", async () => {
+    translations.messages = { "apiErrors.ITINERARY_RESOURCE_DUPLICATE": "通用错误" };
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -136,6 +138,7 @@ describe("request session recovery", () => {
 
     await expect(request.post("/itineraries/id/quote-calculation", {})).rejects.toMatchObject({
       code: "ITINERARY_RESOURCE_DUPLICATE",
+      message: "行程中不可重复使用非标准价景点或餐食",
       serverMessage: "行程中不可重复使用非标准价景点或餐食",
     });
   });
@@ -176,23 +179,68 @@ describe("request session recovery", () => {
       "apiErrors.BAD_REQUEST": "业务错误",
       "apiErrors.HTTP_400": "HTTP 错误",
     };
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response(400, "BAD_REQUEST")));
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: "BAD_REQUEST" }), { status: 400 })));
 
     await expect(request.get("/example")).rejects.toMatchObject({
       code: "BAD_REQUEST",
       message: "业务错误",
-      serverMessage: "BAD_REQUEST",
+      serverMessage: undefined,
     });
   });
 
   it("uses the localized HTTP message when the business code has no translation", async () => {
     translations.messages = { "apiErrors.HTTP_400": "HTTP 错误" };
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response(400, "UNKNOWN_CODE")));
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: "UNKNOWN_CODE" }), { status: 400 })));
 
     await expect(request.get("/example")).rejects.toMatchObject({
       code: "UNKNOWN_CODE",
       message: "HTTP 错误",
     });
+  });
+
+  it.each(["json", "upload", "blob"])("preserves the exact ledger rejection in %s requests", async (kind) => {
+    translations.messages = { "apiErrors.VALIDATION_ERROR": "输入有误，请检查后重试" };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      code: "VALIDATION_ERROR", message: "请使用成团操作修改订单状态", data: null,
+    }), { status: 400 })));
+
+    const result = kind === "blob"
+      ? request.getBlob("/export")
+      : kind === "upload"
+        ? request.post("/upload", new FormData())
+        : request.put("/ledgers/direct/ledger-1", { orderStatus: "converted" });
+    await expect(result).rejects.toMatchObject({
+      message: "请使用成团操作修改订单状态", code: "VALIDATION_ERROR", status: 400,
+    });
+  });
+
+  it.each([undefined, null, "", "  ", 42, ["invalid"]])("falls back when the message is invalid: %j", async (message) => {
+    translations.messages = { "apiErrors.VALIDATION_ERROR": "输入有误，请检查后重试" };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      code: "VALIDATION_ERROR", message,
+    }), { status: 400 })));
+    await expect(request.get("/example")).rejects.toMatchObject({
+      message: "输入有误，请检查后重试", serverMessage: undefined,
+    });
+  });
+
+  it("falls back for non-JSON proxy failures", async () => {
+    translations.messages = { "apiErrors.HTTP_502": "服务暂不可用" };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("<html>Bad gateway</html>", { status: 502 })));
+    await expect(request.getBlob("/export")).rejects.toMatchObject({ message: "服务暂不可用" });
+  });
+
+  it("uses the generic fallback when neither the code nor HTTP status has a translation", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status: 400 })));
+    await expect(request.get("/example")).rejects.toMatchObject({ message: "apiErrors.REQUEST_FAILED" });
+  });
+
+  it("keeps an explicit conflict reason ahead of the version fallback", () => {
+    const options = { code: "CONFLICT", details: { currentVersion: 8 } };
+    expect(requestErrorMessage(new ApiError("通用冲突", {
+      ...options, serverMessage: " 台账已由其他人修改，请刷新后重试 ",
+    }))).toBe("台账已由其他人修改，请刷新后重试");
+    expect(requestErrorMessage(new ApiError("通用冲突", options))).toBe("common.versionConflict");
   });
 
   it("shares one refresh between concurrent JSON and Blob requests", async () => {

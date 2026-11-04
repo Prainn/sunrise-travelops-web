@@ -26,7 +26,7 @@
       </el-form-item>
     </el-form>
     <p class="m-0 text-[12px] text-muted">
-      {{ $t(cityHintKey) }}
+      {{ cityLoadError || $t(cityHintKey) }}
     </p>
     <DataTable
       :data="rows"
@@ -98,6 +98,7 @@ const emit = defineEmits<{
 const cityId = ref<string | null>(null);
 const cityName = ref("");
 const isLinkedCityMissing = ref(false);
+const cityLoadError = ref("");
 const keyword = ref("");
 const page = ref(1);
 const pageSize = ref(10);
@@ -119,6 +120,7 @@ const cityHintKey = computed(() => {
 });
 
 function changeCity(option: WebsiteResourceOption | undefined | null) {
+  cityLoadError.value = "";
   cityId.value = option?.id ?? null;
   cityName.value = option?.name ?? "";
   // 切换城市后清除不再匹配的待确认选择。
@@ -179,8 +181,9 @@ async function preselectLinkedCity(token: number) {
       cityId.value = city.id;
       cityName.value = city.name;
     } else isLinkedCityMissing.value = true;
-  } catch {
-    isLinkedCityMissing.value = true;
+  } catch (cause) {
+    if (token !== generation) return;
+    cityLoadError.value = websiteErrorMessage(cause);
   }
 }
 

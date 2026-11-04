@@ -87,6 +87,7 @@
         </template>
         <FeedbackState
           v-if="securityLoadFailed"
+          :title="securityLoadError"
           type="error"
           retryable
           @retry="loadSecurity"
@@ -127,6 +128,7 @@
       </template>
       <FeedbackState
         v-if="securityLoadFailed"
+        :title="securityLoadError"
         type="error"
         retryable
         @retry="loadSecurity"
@@ -293,17 +295,18 @@ const passwordChangeForm = reactive<PasswordChangeForm>({});
 
 const security = ref<ProfileSecurity>({ roles: [], permissions: [], recentLogins: [] });
 const isSecurityLoading = ref(true);
-const securityLoadFailed = ref(false);
+const securityLoadError = ref("");
+const securityLoadFailed = computed(() => Boolean(securityLoadError.value));
 const recentLoginRecords = computed(() => security.value.recentLogins);
 
 async function loadSecurity() {
   isSecurityLoading.value = true;
-  securityLoadFailed.value = false;
+  securityLoadError.value = "";
   try {
     security.value = await userService.getProfileSecurity();
     permissionPage.value = 1;
-  } catch {
-    securityLoadFailed.value = true;
+  } catch (error) {
+    securityLoadError.value = error instanceof Error ? error.message : t("request.failed");
   } finally {
     isSecurityLoading.value = false;
   }
