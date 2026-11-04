@@ -1,4 +1,5 @@
 import type { DirectLedgerTourInput } from "@/types/direct-ledger";
+import { addDays } from "@/utils/format";
 import type {
   TourBusinessUnit,
   TourCreateRequest,
@@ -375,7 +376,7 @@ export interface LedgerTourDraft {
   submit: (input: DirectLedgerTourInput) => Promise<unknown>;
 }
 
-/** 人数未知，保持为空由计调明确填写；超长行程原样带入，由校验提示人工整理。 */
+/** 人数沿用新建默认值；超长行程原样带入，由校验提示人工整理。 */
 export function tourFormFromLedgerDraft(draft: LedgerTourDraft): TourFormState {
   const form: TourFormState = {
     ...emptyTourForm(),
@@ -386,9 +387,6 @@ export function tourFormFromLedgerDraft(draft: LedgerTourDraft): TourFormState {
     startDate: draft.startDate,
     itinerarySummary: draft.itinerarySummary,
     contactName: draft.contactName,
-    adults: null,
-    children: null,
-    leaders: null,
   };
   syncManualPickupDate(form);
   return form;
@@ -424,6 +422,16 @@ export function syncManualPickupDate(form: TourFormState): void {
   if (form.scheduleMode !== "manual" || !form.startDate) return;
   const time = form.pickupAt ? form.pickupAt.slice(11) : "00:00";
   form.pickupAt = `${form.startDate} ${time}`;
+}
+
+/**
+ * 台账建团按包含首日的天数带出送团日期，保留已选送团时分；首次沿用接团时分。
+ */
+export function syncLedgerDropDate(form: TourFormState): void {
+  const { days, startDate } = form;
+  if (form.scheduleMode !== "manual" || !startDate || days == null || !Number.isInteger(days) || days < 1 || days > 365) return;
+  const time = form.dropAt ? form.dropAt.slice(11) : form.pickupAt ? form.pickupAt.slice(11) : "00:00";
+  form.dropAt = `${addDays(startDate, days - 1)} ${time}`;
 }
 
 /** 手填接送校验：接团日须为开始日期，送团不得早于接团。 */

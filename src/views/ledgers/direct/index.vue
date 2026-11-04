@@ -193,6 +193,7 @@
               <el-button
                 v-if="tourModeOf(row as DirectLedgerItem)"
                 link
+                :loading="openingId === row.id"
                 type="primary"
                 :disabled="isPending(row.id) || openingId === row.id"
                 @click="handleTourClick(row as DirectLedgerItem)"

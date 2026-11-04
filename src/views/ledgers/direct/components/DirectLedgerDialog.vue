@@ -123,12 +123,12 @@
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('ledger.direct.orderStatus')" prop="orderStatus">
-            <!-- 已有记录只能通过列表“成团”动作改变状态；子选项不传 false，以免覆盖父组只读。 -->
-            <el-radio-group v-model="form.orderStatus" :disabled="Boolean(ledger)">
+            <!-- 无关联团的可编辑记录允许纠正为未成团；子选项不传 false，以免覆盖父组只读。 -->
+            <el-radio-group v-model="form.orderStatus" :disabled="Boolean(ledger) && !canCorrectOrderStatus">
               <el-radio value="unconverted">
                 {{ $t("ledger.direct.orderStatuses.unconverted") }}
               </el-radio>
-              <el-radio value="converted" :disabled="!canCreateTour || undefined">
+              <el-radio value="converted" :disabled="(!ledger && !canCreateTour) || undefined">
                 {{ $t("ledger.direct.orderStatuses.converted") }}
               </el-radio>
             </el-radio-group>
@@ -325,6 +325,14 @@ const dialogTitle = computed(() => {
 });
 const creatorName = computed(() => props.ledger?.creatorName ?? user.userInfo.nickname ?? "");
 const canCreateTour = computed(() => hasUserPermission(user.userInfo, "tour:create"));
+const canCorrectOrderStatus = computed(() => Boolean(
+  props.ledger?.capabilities.canEdit &&
+  !props.readonly &&
+  !props.ledger.reviewedAt &&
+  !props.ledger.operatedAt &&
+  props.ledger.orderStatus === "converted" &&
+  props.ledger.tours.length === 0,
+));
 const needsTour = computed(() => needsTourOnCreate(!props.ledger, form.orderStatus));
 const rules = computed<FormRules>(() => {
   const required = (key: string) => ({

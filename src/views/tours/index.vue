@@ -340,6 +340,7 @@ const assigningTour = ref<TourRecord | null>(null);
 const { isPending, run } = usePendingActions();
 
 function routeKeyword() {
+  if (route.path !== "/tours/list") return undefined;
   const value = route.query.keyword;
   return typeof value === "string" ? value : undefined;
 }
@@ -382,9 +383,12 @@ const reload = useDebounceFn(() => {
   void load();
 }, 300);
 watch([keyword, status, businessUnit, dateRange, collectCoordinatorId, operatorId, agencyName], reload);
-// 缓存页面再次从入口带入团号时更新关键词；离开本页时 query 不含 keyword，保留当前输入。
+// 带团号跳转时清空缓存筛选，避免其他业务部、状态或日期挡住目标团；普通切页保留筛选。
 watch(routeKeyword, (value) => {
-  if (value !== undefined) keyword.value = value;
+  if (value === undefined) return;
+  resetQuery();
+  keyword.value = value;
+  pageNum.value = 1;
 });
 watch(businessUnit, () => {
   collectCoordinatorId.value = "";

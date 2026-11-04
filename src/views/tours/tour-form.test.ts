@@ -19,6 +19,7 @@ import {
   outsideTeamWindow,
   type GuideServiceRow,
   manualScheduleError,
+  syncLedgerDropDate,
   syncManualPickupDate,
   tourFormFromRecord,
   updateTourRequest,
@@ -173,6 +174,42 @@ describe("tour edit form", () => {
     const body = updateTourRequest(tour, tourFormFromRecord(tour));
     expect(body).not.toHaveProperty("manualSource");
     expect(body).toMatchObject({ scheduleMode: "flight", pickupFlightId: "flight-a" });
+  });
+});
+
+describe("ledger drop date", () => {
+  it.each([
+    ["2026-10-27", 3, "2026-10-29"],
+    ["2026-10-27", 1, "2026-10-27"],
+    ["2026-12-31", 2, "2027-01-01"],
+    ["2028-02-28", 2, "2028-02-29"],
+  ])("counts the start day for %s over %i days", (startDate, days, endDate) => {
+    const form = manualForm({ startDate, days, pickupAt: `${startDate} 09:30`, dropAt: "" });
+    syncLedgerDropDate(form);
+    expect(form.dropAt).toBe(`${endDate} 09:30`);
+  });
+
+  it("updates the date while preserving the chosen drop time", () => {
+    const form = manualForm({ startDate: "2026-10-27", days: 3, dropAt: "2026-10-28 18:45" });
+    syncLedgerDropDate(form);
+    expect(form.dropAt).toBe("2026-10-29 18:45");
+    form.startDate = "2026-10-30";
+    form.days = 4;
+    syncLedgerDropDate(form);
+    expect(form.dropAt).toBe("2026-11-02 18:45");
+  });
+
+  it("waits for a valid duration and start date, and leaves flight mode unchanged", () => {
+    const patches: Partial<TourFormState>[] = [
+      { days: null }, { days: 0 }, { days: 1.5 }, { days: 366 },
+      { startDate: "" }, { scheduleMode: "flight" },
+    ];
+    for (const patch of patches) {
+      const form = manualForm(patch);
+      const original = form.dropAt;
+      syncLedgerDropDate(form);
+      expect(form.dropAt).toBe(original);
+    }
   });
 });
 
@@ -448,10 +485,10 @@ describe("ledger tour form", () => {
     submit: async () => undefined,
   };
 
-  it("keeps unknown headcount empty and long itinerary intact", () => {
+  it("defaults headcount to zero and keeps long itinerary intact", () => {
     const form = tourFormFromLedgerDraft(draft);
 
-    expect([form.adults, form.children, form.leaders]).toEqual([null, null, null]);
+    expect([form.adults, form.children, form.leaders]).toEqual([0, 0, 0]);
     expect(form.itinerarySummary).toHaveLength(501);
     expect(isItinerarySummaryTooLong(form.itinerarySummary)).toBe(true);
     expect(form.pickupAt).toBe("2026-12-01 00:00");
@@ -463,7 +500,7 @@ describe("ledger tour form", () => {
     const form = { ...tourFormFromLedgerDraft(draft), itinerarySummary: "昆大丽", days: 5 };
 
     expect(ledgerTourInput(form)).toBeNull();
-    expect(ledgerTourInput({ ...form, countryItemId: "country-1", adults: 2, children: 0 })).toBeNull();
+    expect(ledgerTourInput({ ...form, countryItemId: "country-1", adults: 2, children: 0, leaders: null })).toBeNull();
     expect(
       ledgerTourInput({
         ...form,
