@@ -153,7 +153,7 @@
               v-model="record.zh"
               type="textarea"
               :rows="8"
-              maxlength="20000"
+              maxlength="2000"
             />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.templates.en')" prop="en">
@@ -161,7 +161,7 @@
               v-model="record.en"
               type="textarea"
               :rows="8"
-              maxlength="20000"
+              maxlength="2000"
             />
           </el-form-item>
         </div>

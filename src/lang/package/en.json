@@ -11,6 +11,8 @@
   "websiteVisits": {
     "confirm": "Confirm",
     "confirmed": "Confirmed",
+    "unconfirmed": "Unconfirmed",
+    "confirmStatus": "Confirmation status",
     "dateRange": "Date range",
     "searchPlaceholder": "WhatsApp reference / Website inquiry number",
     "generate": "Create inquiry",
@@ -868,8 +870,6 @@
     }
   },
   "profile": {
-    "avatarUpdatedSuccess": "Avatar updated",
-    "changeAvatar": "Change Avatar",
     "changePassword": "Change Password",
     "confirmPassword": "Confirm New Password",
     "confirmPasswordPlaceholder": "Re-enter new password",
@@ -1501,6 +1501,9 @@
       "linkCity": "Link shared city"
     },
     "attractions": {
+      "copy": "Copy",
+      "copyComplete": "Complete",
+      "copyMissing": "Missing",
       "create": "Add attraction / component",
       "edit": "Edit attraction / component",
       "detail": "Attraction / component details",
@@ -1603,8 +1606,8 @@
     "manualAttraction": "Manual attraction",
     "noAttractions": "No attractions scheduled",
     "manualAttractionOrComponent": "Manual attraction or component",
-    "coreCopyZh": "Chinese core copy",
-    "coreCopyEn": "English core copy",
+    "coreCopyZh": "Chinese copy",
+    "coreCopyEn": "English copy",
     "appears": "Show in itinerary",
     "feeState": "Fee status",
     "convertToManualCopy": "Use manual copy for this itinerary",

@@ -94,9 +94,16 @@ export function useWebsiteHotelRules() {
   }));
 }
 
+/**
+ * 景点文案允许分阶段留空，正式报价前由行程校验要求补齐；填写时变量须受支持且中英文一致。
+ */
 function attractionCopyRules(t: Translate, field: string, record: Ref<WebsiteAttraction | undefined>): FormItemRule[] {
   return [
-    ...requiredText(t, field, 20000),
+    {
+      max: 2000,
+      message: t("websiteConfig.validation.maxLength", { field: t(field), max: 2000 }),
+      trigger: "blur",
+    },
     {
       validator: (_rule, value: string, callback) => {
         for (const match of value.matchAll(/\{([^{}]+)\}/g)) {
@@ -163,7 +170,7 @@ export function useWebsiteSkeletonRules(record: Ref<WebsiteSkeleton | undefined>
 export function useWebsiteTemplateRules(record: Ref<WebsiteTemplate | undefined>) {
   const { t } = useI18n();
   const copyRules = (field: string): FormItemRule[] => [
-    ...requiredText(t, field, 20000),
+    ...requiredText(t, field, 2000),
     {
       validator: (_rule, value: string, callback) => {
         const code = record.value?.code ?? "";

@@ -11,6 +11,8 @@
   "websiteVisits": {
     "confirm": "确认",
     "confirmed": "已确认",
+    "unconfirmed": "未确认",
+    "confirmStatus": "确认状态",
     "dateRange": "日期范围",
     "searchPlaceholder": "WhatsApp来源编号 / 网站询盘编号",
     "generate": "生成询盘",
@@ -868,8 +870,6 @@
     }
   },
   "profile": {
-    "avatarUpdatedSuccess": "头像已更新",
-    "changeAvatar": "更换头像",
     "changePassword": "修改密码",
     "confirmPassword": "确认新密码",
     "confirmPasswordPlaceholder": "再次输入新密码",
@@ -1501,6 +1501,9 @@
       "linkCity": "关联共用城市"
     },
     "attractions": {
+      "copy": "文案",
+      "copyComplete": "已补齐",
+      "copyMissing": "待补齐",
       "create": "新增景点／组件",
       "edit": "编辑景点／组件",
       "detail": "景点／组件详情",
@@ -1603,9 +1606,9 @@
     "manualAttraction": "手填景点",
     "noAttractions": "尚未安排景点",
     "manualAttractionOrComponent": "手填景点／组件",
-    "coreCopyZh": "中文核心文案",
-    "coreCopyEn": "英文核心文案",
-    "appears": "出现在行程中",
+    "coreCopyZh": "中文文案",
+    "coreCopyEn": "英文文案",
+    "appears": "显示在行程中",
     "feeState": "费用状态",
     "convertToManualCopy": "转为本行程手填文案",
     "attractionCopyMissing": "此景点的中英文文案不完整，请在独立站资源中补齐。",

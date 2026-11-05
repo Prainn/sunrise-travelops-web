@@ -54,6 +54,17 @@
           {{ row.chargeable ? $t("common.yes") : $t("common.no") }}
         </template>
       </el-table-column>
+      <el-table-column :label="$t('websiteConfig.attractions.copy')" width="100" align="center">
+        <template #default="{ row }">
+          <el-tag :type="row.descriptionZh.trim() && row.descriptionEn.trim() ? 'success' : 'warning'">
+            {{
+              row.descriptionZh.trim() && row.descriptionEn.trim()
+                ? $t("websiteConfig.attractions.copyComplete")
+                : $t("websiteConfig.attractions.copyMissing")
+            }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column :label="$t('common.status')" width="100" align="center">
         <template #default="{ row }">
           <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
@@ -149,8 +160,9 @@
               v-model="record.descriptionZh"
               type="textarea"
               :rows="4"
-              maxlength="20000"
+              maxlength="2000"
               show-word-limit
+              @blur="validateCopyFields"
             />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.templates.en')" prop="descriptionEn" class="col-span-full">
@@ -158,8 +170,9 @@
               v-model="record.descriptionEn"
               type="textarea"
               :rows="4"
-              maxlength="20000"
+              maxlength="2000"
               show-word-limit
+              @blur="validateCopyFields"
             />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.attractions.linkAttraction')">
@@ -255,6 +268,11 @@ function openEditor(item?: WebsiteAttraction) {
       recommendedMonths: [],
     };
   visible.value = true;
+}
+
+/** 中英文变量须一致，任一侧修改后同时刷新两侧校验结果。 */
+function validateCopyFields() {
+  formRef.value?.validateField(["descriptionZh", "descriptionEn"]).catch(() => undefined);
 }
 
 async function applyEdit() {

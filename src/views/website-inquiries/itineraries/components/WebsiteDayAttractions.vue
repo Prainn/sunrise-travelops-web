@@ -74,7 +74,7 @@
             type="textarea"
             :rows="3"
             :disabled="Boolean(draft.attractionId)"
-            maxlength="20000"
+            maxlength="2000"
           />
         </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.coreCopyEn')">
@@ -83,7 +83,7 @@
             type="textarea"
             :rows="3"
             :disabled="Boolean(draft.attractionId)"
-            maxlength="20000"
+            maxlength="2000"
           />
         </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.appears')">
