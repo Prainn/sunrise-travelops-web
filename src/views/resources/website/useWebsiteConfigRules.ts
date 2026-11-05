@@ -15,6 +15,10 @@ type Translate = Composer["t"];
 
 const TEMPLATE_VARIABLES = new Map<string, readonly string[]>([
   ["arrival-basic", ["city"]],
+  ["after-breakfast", ["attraction"]],
+  ["later-continue", ["attraction"]],
+  ["upon-arrival", ["city", "attraction"]],
+  ["free-time", []],
   ["departure-basic", ["city"]],
   ["overnight", ["city"]],
   ["guide", ["language"]],
@@ -31,7 +35,7 @@ const TEMPLATE_VARIABLES = new Map<string, readonly string[]>([
 ]);
 
 /**
- * 返回所选服务用途或自定义景点正文的可用变量。
+ * 返回所选服务用途或自定义文案的可用变量。
  */
 export function getWebsiteTemplateVariables(code: string): readonly string[] {
   return TEMPLATE_VARIABLES.get(code) ?? ["city", "attraction"];
@@ -90,12 +94,35 @@ export function useWebsiteHotelRules() {
   }));
 }
 
-export function useWebsiteAttractionRules() {
+function attractionCopyRules(t: Translate, field: string, record: Ref<WebsiteAttraction | undefined>): FormItemRule[] {
+  return [
+    ...requiredText(t, field, 20000),
+    {
+      validator: (_rule, value: string, callback) => {
+        for (const match of value.matchAll(/\{([^{}]+)\}/g)) {
+          const variable = match[1] ?? "";
+          if (!["city", "attraction"].includes(variable)) {
+            return callback(new Error(t("websiteConfig.validation.templateVariable", { code: record.value?.nameZh, variable })));
+          }
+        }
+        const tokens = (text: string) => [...new Set([...text.matchAll(/\{([^{}]+)\}/g)].map(match => match[1]))].sort().join(",");
+        if (record.value && tokens(record.value.descriptionZh) !== tokens(record.value.descriptionEn)) {
+          return callback(new Error(t("websiteConfig.validation.templateVariablesMatch")));
+        }
+        callback();
+      },
+      trigger: "blur",
+    },
+  ];
+}
+
+export function useWebsiteAttractionRules(record: Ref<WebsiteAttraction | undefined>) {
   const { t } = useI18n();
   return computed<FormRules<WebsiteAttraction>>(() => ({
     ...nameRules(t),
     cityId: cityRules(t, "websiteConfig.belongsToCity"),
-    copyKey: requiredText(t, "websiteConfig.attractions.copyKey", 100),
+    descriptionZh: attractionCopyRules(t, "websiteConfig.templates.zh", record),
+    descriptionEn: attractionCopyRules(t, "websiteConfig.templates.en", record),
   }));
 }
 

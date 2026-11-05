@@ -101,14 +101,14 @@
               {{ selected.recommendedMonths.join(", ") || "-" }}
             </el-descriptions-item>
             <el-descriptions-item :label="$t('websiteItineraryUi.coreCopyZh')" :span="2">
-              <span class="line-clamp-3 whitespace-pre-wrap">{{ template?.zh || "-" }}</span>
+              <span class="line-clamp-3 whitespace-pre-wrap">{{ selected.descriptionZh || "-" }}</span>
             </el-descriptions-item>
             <el-descriptions-item :label="$t('websiteItineraryUi.coreCopyEn')" :span="2">
-              <span class="line-clamp-3 whitespace-pre-wrap">{{ template?.en || "-" }}</span>
+              <span class="line-clamp-3 whitespace-pre-wrap">{{ selected.descriptionEn || "-" }}</span>
             </el-descriptions-item>
           </el-descriptions>
           <el-alert
-            v-if="!template"
+            v-if="!hasCopy"
             class="mt-3"
             type="error"
             :closable="false"
@@ -210,13 +210,11 @@ const rows = computed<AttractionRow[]>(() => {
   return result;
 });
 const selected = computed(() => props.config.attractions.find((item) => item.id === selectedId.value));
-const template = computed(() =>
-  props.config.templates.find((item) => item.code === selected.value?.copyKey && item.status === "enabled"),
-);
+const hasCopy = computed(() => Boolean(selected.value?.descriptionZh.trim() && selected.value.descriptionEn.trim()));
 const canSubmit = computed(() =>
   source.value === "manual"
     ? Boolean(manualNameZh.value.trim() || manualNameEn.value.trim())
-    : Boolean(selected.value && template.value),
+    : Boolean(selected.value && hasCopy.value),
 );
 
 watch(
@@ -273,8 +271,8 @@ function submit() {
       attractionId: attraction.id,
       nameZh: attraction.nameZh,
       nameEn: attraction.nameEn,
-      descriptionZh: template.value!.zh,
-      descriptionEn: template.value!.en,
+      descriptionZh: attraction.descriptionZh,
+      descriptionEn: attraction.descriptionEn,
       appears: true,
       feeState: attraction.kind === "attraction" && attraction.chargeable ? "INCLUDED" : "UNKNOWN",
     });

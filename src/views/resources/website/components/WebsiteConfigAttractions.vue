@@ -34,11 +34,6 @@
           }}
         </template>
       </el-table-column>
-      <el-table-column
-        prop="copyKey"
-        :label="$t('websiteConfig.attractions.copyKey')"
-        min-width="180"
-      />
       <el-table-column :label="$t('websiteConfig.attractions.recommendedMonths')" min-width="160">
         <template #default="{ row }">
           {{
@@ -149,14 +144,22 @@
               @labels="Object.assign(labels, $event)"
             />
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.attractions.copyKey')" prop="copyKey">
-            <WebsiteConfigSelect
-              v-model="record.copyKey"
-              group="templates"
-              :version="version"
-              :business-unit="businessUnit"
-              :labels="labels"
-              @labels="Object.assign(labels, $event)"
+          <el-form-item :label="$t('websiteConfig.templates.zh')" prop="descriptionZh" class="col-span-full">
+            <el-input
+              v-model="record.descriptionZh"
+              type="textarea"
+              :rows="4"
+              maxlength="20000"
+              show-word-limit
+            />
+          </el-form-item>
+          <el-form-item :label="$t('websiteConfig.templates.en')" prop="descriptionEn" class="col-span-full">
+            <el-input
+              v-model="record.descriptionEn"
+              type="textarea"
+              :rows="4"
+              maxlength="20000"
+              show-word-limit
             />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.attractions.linkAttraction')">
@@ -231,7 +234,7 @@ const isNew = ref(false);
 const record = ref<WebsiteAttraction>();
 const formRef = ref<FormInstance>();
 const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
-const rules = useWebsiteAttractionRules();
+const rules = useWebsiteAttractionRules(record);
 
 function openEditor(item?: WebsiteAttraction) {
   isNew.value = !item;
@@ -247,7 +250,8 @@ function openEditor(item?: WebsiteAttraction) {
       resourceId: null,
       kind: "attraction",
       chargeable: true,
-      copyKey: "",
+      descriptionZh: "",
+      descriptionEn: "",
       recommendedMonths: [],
     };
   visible.value = true;

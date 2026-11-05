@@ -207,6 +207,10 @@ const templateVariables = computed(() =>
   getWebsiteTemplateVariables(record.value?.code ?? "").map((variable) => `{${variable}}`),
 );
 const SYSTEM_TEMPLATES = [
+  { code: "after-breakfast", labelKey: "websiteConfig.templates.purposes.afterBreakfast" },
+  { code: "later-continue", labelKey: "websiteConfig.templates.purposes.laterContinue" },
+  { code: "upon-arrival", labelKey: "websiteConfig.templates.purposes.uponArrival" },
+  { code: "free-time", labelKey: "websiteConfig.templates.purposes.freeTime" },
   { code: "arrival-basic", labelKey: "websiteConfig.templates.purposes.arrival" },
   { code: "departure-basic", labelKey: "websiteConfig.templates.purposes.departure" },
   { code: "overnight", labelKey: "websiteConfig.templates.purposes.overnight" },
