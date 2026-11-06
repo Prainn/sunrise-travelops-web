@@ -1517,6 +1517,8 @@
       "anyMonth": "不限定",
       "chargeable": "收费",
       "chargeableAttraction": "收费景点",
+      "price": "价格（元）",
+      "priceInvalid": "请输入非负金额，最多10位整数和2位小数，允许为0",
       "parent": "父景点",
       "linkAttraction": "关联共用景点",
       "month": "{month} 月",

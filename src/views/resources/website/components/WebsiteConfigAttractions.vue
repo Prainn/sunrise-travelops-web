@@ -184,6 +184,13 @@
           <el-form-item :label="$t('websiteConfig.attractions.chargeableAttraction')">
             <el-switch v-model="record.chargeable" />
           </el-form-item>
+          <el-form-item
+            v-if="record.chargeable"
+            :label="$t('websiteConfig.attractions.price')"
+            prop="price"
+          >
+            <el-input v-model="record.price" inputmode="decimal" maxlength="13" />
+          </el-form-item>
           <el-form-item :label="$t('common.status')">
             <el-radio-group v-model="record.status">
               <el-radio value="enabled">
@@ -252,6 +259,7 @@ function openEditor(item?: WebsiteAttraction) {
       resourceId: null,
       kind: "attraction",
       chargeable: true,
+      price: "0.00",
       descriptionZh: "",
       descriptionEn: "",
       recommendedMonths: [],
@@ -269,6 +277,7 @@ async function applyEdit() {
   await submitForm(async () => {
     if (!record.value || !props.editable || props.saving) return;
     const result = cloneWebsiteDraft(record.value);
+    if (!result.chargeable) result.price = "0.00";
     if (await props.saveRecord(result, isNew.value)) visible.value = false;
   });
 }

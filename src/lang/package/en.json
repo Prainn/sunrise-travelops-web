@@ -1517,6 +1517,8 @@
       "anyMonth": "Any month",
       "chargeable": "Chargeable",
       "chargeableAttraction": "Chargeable attraction",
+      "price": "Price (CNY)",
+      "priceInvalid": "Enter a non-negative amount with up to 10 integer digits and 2 decimal places; 0 is allowed",
       "parent": "Parent attraction",
       "linkAttraction": "Link shared attraction",
       "month": "Month {month}",

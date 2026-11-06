@@ -142,6 +142,15 @@ export function useWebsiteAttractionRules(record: Ref<WebsiteAttraction | undefi
   return computed<FormRules<WebsiteAttraction>>(() => ({
     ...nameRules(t),
     cityId: cityRules(t, "websiteConfig.belongsToCity"),
+    price: [{
+      required: Boolean(record.value?.chargeable),
+      validator: (_rule, value: string, callback) => {
+        callback(!record.value?.chargeable || (typeof value === "string" && /^(0|[1-9]\d{0,9})(\.\d{1,2})?$/.test(value))
+          ? undefined
+          : new Error(t("websiteConfig.attractions.priceInvalid")));
+      },
+      trigger: "blur",
+    }],
     descriptionZh: bilingualCopyRules(t, "websiteConfig.templates.zh", attractionCopy),
     descriptionEn: bilingualCopyRules(t, "websiteConfig.templates.en", attractionCopy),
   }));
