@@ -1470,6 +1470,7 @@
       "maxAttractions": "Day pattern: max 200 attractions or components",
       "skeletonDays": "Add 1–365 days to the city skeleton",
       "templateVariable": "Copy {code} does not support variable {variable}",
+      "unsupportedVariable": "Variable {variable} is not supported",
       "templateVariablesMatch": "Use the same variables in Chinese and English."
     },
     "tabs": {

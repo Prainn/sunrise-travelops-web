@@ -54,11 +54,12 @@
           {{ row.chargeable ? $t("common.yes") : $t("common.no") }}
         </template>
       </el-table-column>
+      <!-- @vue-generic {WebsiteAttraction} -->
       <el-table-column :label="$t('websiteConfig.attractions.copy')" width="100" align="center">
         <template #default="{ row }">
-          <el-tag :type="row.descriptionZh.trim() && row.descriptionEn.trim() ? 'success' : 'warning'">
+          <el-tag :type="hasAttractionCopy(row) ? 'success' : 'warning'">
             {{
-              row.descriptionZh.trim() && row.descriptionEn.trim()
+              hasAttractionCopy(row)
                 ? $t("websiteConfig.attractions.copyComplete")
                 : $t("websiteConfig.attractions.copyMissing")
             }}
@@ -233,7 +234,7 @@ import TableToolbar from "@/components/TableToolbar/index.vue";
 import { reactive, ref, watch } from "vue";
 import type { FormInstance } from "element-plus";
 import type { WebsiteAttraction, WebsiteConfigEditorProps } from "@/types/website";
-import { cloneWebsiteDraft } from "@/views/website-inquiries/options";
+import { cloneWebsiteDraft, hasAttractionCopy } from "@/views/website-inquiries/options";
 import WebsiteResourceSelect from "@/views/website-inquiries/components/WebsiteResourceSelect.vue";
 import { useWebsiteAttractionRules } from "../useWebsiteConfigRules";
 import WebsiteConfigSelect from "./WebsiteConfigSelect.vue";

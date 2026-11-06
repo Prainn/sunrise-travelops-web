@@ -111,6 +111,7 @@
             allow-create
             default-first-option
             :placeholder="$t('websiteConfig.templates.codePlaceholder')"
+            @change="revalidateCopyVariables"
           >
             <el-option
               v-for="option in SYSTEM_TEMPLATES"
@@ -145,7 +146,7 @@
           "
           type="info"
           :closable="false"
-          class="mb-[20px]"
+          class="mb-[20px]!"
         />
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1 mt-3">
           <el-form-item :label="$t('websiteConfig.templates.zh')" prop="zh">
@@ -154,6 +155,7 @@
               type="textarea"
               :rows="8"
               maxlength="2000"
+              @blur="validateCopyFields"
             />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.templates.en')" prop="en">
@@ -162,6 +164,7 @@
               type="textarea"
               :rows="8"
               maxlength="2000"
+              @blur="validateCopyFields"
             />
           </el-form-item>
         </div>
@@ -232,6 +235,17 @@ const SYSTEM_TEMPLATES = [
   { code: "peak-season", labelKey: "websiteConfig.templates.purposes.peakSeason" },
   { code: "no-shopping", labelKey: "websiteConfig.templates.purposes.noShopping" },
 ];
+
+/** 中英文变量须一致，任一侧修改后同时刷新两侧校验结果。 */
+function validateCopyFields() {
+  formRef.value?.validateField(["zh", "en"]).catch(() => undefined);
+}
+
+/** 编码决定可用变量；切换后重新校验已填写的文案，未填写的不提前提示必填。 */
+function revalidateCopyVariables() {
+  const fields = (["zh", "en"] as const).filter((field) => record.value?.[field].trim());
+  if (fields.length) formRef.value?.validateField([...fields]).catch(() => undefined);
+}
 
 function openEditor(template?: WebsiteTemplate) {
   isNew.value = !template;

@@ -94,26 +94,36 @@ export function useWebsiteHotelRules() {
   }));
 }
 
+const VARIABLE_PATTERN = /\{([^{}]+)\}/g;
+
+function variableSet(text: string) {
+  return [...new Set([...text.matchAll(VARIABLE_PATTERN)].map(match => match[1]))].sort().join(",");
+}
+
 /**
- * 景点文案允许分阶段留空，正式报价前由行程校验要求补齐；填写时变量须受支持且中英文一致。
+ * 双语文案必填并限长；变量须受支持，且中英文使用相同变量。
  */
-function attractionCopyRules(t: Translate, field: string, record: Ref<WebsiteAttraction | undefined>): FormItemRule[] {
+function bilingualCopyRules(
+  t: Translate,
+  field: string,
+  options: { variables: () => readonly string[]; texts: () => [string, string] | undefined; code?: () => string },
+): FormItemRule[] {
   return [
-    {
-      max: 2000,
-      message: t("websiteConfig.validation.maxLength", { field: t(field), max: 2000 }),
-      trigger: "blur",
-    },
+    ...requiredText(t, field, 2000),
     {
       validator: (_rule, value: string, callback) => {
-        for (const match of value.matchAll(/\{([^{}]+)\}/g)) {
+        const variables = options.variables();
+        const code = options.code?.() ?? "";
+        for (const match of value.matchAll(VARIABLE_PATTERN)) {
           const variable = match[1] ?? "";
-          if (!["city", "attraction"].includes(variable)) {
-            return callback(new Error(t("websiteConfig.validation.templateVariable", { code: record.value?.nameZh, variable })));
+          if (!variables.includes(variable)) {
+            return callback(new Error(code
+              ? t("websiteConfig.validation.templateVariable", { code, variable })
+              : t("websiteConfig.validation.unsupportedVariable", { variable })));
           }
         }
-        const tokens = (text: string) => [...new Set([...text.matchAll(/\{([^{}]+)\}/g)].map(match => match[1]))].sort().join(",");
-        if (record.value && tokens(record.value.descriptionZh) !== tokens(record.value.descriptionEn)) {
+        const texts = options.texts();
+        if (texts && variableSet(texts[0]) !== variableSet(texts[1])) {
           return callback(new Error(t("websiteConfig.validation.templateVariablesMatch")));
         }
         callback();
@@ -125,11 +135,15 @@ function attractionCopyRules(t: Translate, field: string, record: Ref<WebsiteAtt
 
 export function useWebsiteAttractionRules(record: Ref<WebsiteAttraction | undefined>) {
   const { t } = useI18n();
+  const attractionCopy = {
+    variables: () => ["city", "attraction"],
+    texts: () => record.value && [record.value.descriptionZh, record.value.descriptionEn] as [string, string],
+  };
   return computed<FormRules<WebsiteAttraction>>(() => ({
     ...nameRules(t),
     cityId: cityRules(t, "websiteConfig.belongsToCity"),
-    descriptionZh: attractionCopyRules(t, "websiteConfig.templates.zh", record),
-    descriptionEn: attractionCopyRules(t, "websiteConfig.templates.en", record),
+    descriptionZh: bilingualCopyRules(t, "websiteConfig.templates.zh", attractionCopy),
+    descriptionEn: bilingualCopyRules(t, "websiteConfig.templates.en", attractionCopy),
   }));
 }
 
@@ -169,30 +183,16 @@ export function useWebsiteSkeletonRules(record: Ref<WebsiteSkeleton | undefined>
 
 export function useWebsiteTemplateRules(record: Ref<WebsiteTemplate | undefined>) {
   const { t } = useI18n();
-  const copyRules = (field: string): FormItemRule[] => [
-    ...requiredText(t, field, 2000),
-    {
-      validator: (_rule, value: string, callback) => {
-        const code = record.value?.code ?? "";
-        const variables = getWebsiteTemplateVariables(code);
-        for (const match of value.matchAll(/\{([^{}]+)\}/g)) {
-          const variable = match[1] ?? "";
-          if (!variables.includes(variable)) {
-            return callback(new Error(t("websiteConfig.validation.templateVariable", { code, variable })));
-          }
-        }
-        const tokens = (text: string) => [...new Set([...text.matchAll(/\{([^{}]+)\}/g)].map(match => match[1]))].sort().join(",");
-        if (record.value && tokens(record.value.zh) !== tokens(record.value.en)) return callback(new Error(t("websiteConfig.validation.templateVariablesMatch")));
-        callback();
-      },
-      trigger: "blur",
-    },
-  ];
+  const templateCopy = {
+    variables: () => getWebsiteTemplateVariables(record.value?.code ?? ""),
+    texts: () => record.value && [record.value.zh, record.value.en] as [string, string],
+    code: () => record.value?.code ?? "",
+  };
   return computed<FormRules<WebsiteTemplate>>(() => ({
     name: requiredText(t, "websiteConfig.templates.name"),
     code: requiredText(t, "websiteConfig.templates.code", 100),
-    zh: copyRules("websiteConfig.templates.zh"),
-    en: copyRules("websiteConfig.templates.en"),
+    zh: bilingualCopyRules(t, "websiteConfig.templates.zh", templateCopy),
+    en: bilingualCopyRules(t, "websiteConfig.templates.en", templateCopy),
   }));
 }
 

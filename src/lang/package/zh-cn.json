@@ -1470,6 +1470,7 @@
       "maxAttractions": "单日行程模板最多含 200 个景点或组件",
       "skeletonDays": "城市骨架须有 1–365 天",
       "templateVariable": "文案 {code} 不支持变量：{variable}",
+      "unsupportedVariable": "不支持变量：{variable}",
       "templateVariablesMatch": "中英文文案必须使用相同变量"
     },
     "tabs": {

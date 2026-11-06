@@ -109,7 +109,7 @@
           </el-descriptions>
           <el-alert
             v-if="!hasCopy"
-            class="mt-3"
+            class="mt-3!"
             type="error"
             :closable="false"
             :title="$t('websiteItineraryUi.attractionCopyMissing')"
@@ -152,6 +152,7 @@ import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
 import type { WebsiteAttraction, WebsiteConfig, WebsiteDay, WebsiteItem } from "@/types/website";
+import { hasAttractionCopy } from "@/views/website-inquiries/options";
 
 interface AttractionRow {
   attraction: WebsiteAttraction;
@@ -210,7 +211,7 @@ const rows = computed<AttractionRow[]>(() => {
   return result;
 });
 const selected = computed(() => props.config.attractions.find((item) => item.id === selectedId.value));
-const hasCopy = computed(() => Boolean(selected.value?.descriptionZh.trim() && selected.value.descriptionEn.trim()));
+const hasCopy = computed(() => Boolean(selected.value && hasAttractionCopy(selected.value)));
 const canSubmit = computed(() =>
   source.value === "manual"
     ? Boolean(manualNameZh.value.trim() || manualNameEn.value.trim())
