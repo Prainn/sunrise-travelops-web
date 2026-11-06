@@ -1898,6 +1898,7 @@
     },
     "guideUnavailable": "The selected guide does not match this segment's language, time or schedule. Change the guide before saving.",
     "guideService": {
+      "teamWindow": "Team transfer",
       "title": "Guide services",
       "empty": "No service segments",
       "segment": "Segment {n}",
@@ -1913,6 +1914,19 @@
       "invalidDuration": "Invalid duration",
       "outsideWindow": "Outside tour transfer window",
       "fixBeforeSave": "Fix the guide service segments before saving",
+      "searchGuide": "Enter a guide name to search",
+      "keywordTooLong": "Guide name can be at most 150 characters",
+      "searchFailed": "Guide search failed",
+      "unavailableTag": "Unavailable",
+      "removedSegment": "Removed segment",
+      "reasons": {
+        "GUIDE_DISABLED": "Guide is disabled",
+        "LANGUAGE_MISMATCH": "Language mismatch: this segment requires {expected}, guide profile has {actual}",
+        "languageEmpty": "Not set",
+        "LEAVE_CONFLICT": "On leave during the service (start and end dates inclusive)",
+        "SCHEDULE_CONFLICT": "Conflicts with existing tour services",
+        "FORM_CONFLICT": "Conflicts with other segments in this form"
+      },
       "errors": {
         "incomplete": "Guide, language and time range are required",
         "order": "Service start must be earlier than end",

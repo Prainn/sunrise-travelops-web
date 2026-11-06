@@ -3,7 +3,7 @@ import { addDays } from "@/utils/format";
 import type {
   TourBusinessUnit,
   TourCreateRequest,
-  TourGuideOption,
+  TourGuideAvailability,
   TourGuideQuery,
   TourGuideService,
   TourGuideServiceInput,
@@ -144,52 +144,73 @@ export function outsideTeamWindow(
   return row.serviceStartAt < window.from || row.serviceEndAt > window.to;
 }
 
+export const GUIDE_KEYWORD_MAX_LENGTH = 150;
+
+export type GuideAvailabilityRequest =
+  /** 语种或当前段起止未就绪。 */
+  | { ready: false; missing: "conditions" }
+  /** 姓名为空或超长，不发请求。 */
+  | { ready: false; missing: "keyword" | "keywordTooLong" }
+  /** siblingIndexes[i] 为 otherServices[i] 对应的完整表单行下标。 */
+  | { ready: true; query: TourGuideQuery; siblingIndexes: number[] };
+
 /**
- * 某段选人的可用性查询：当前段须正时长；除该段外所有已填兄弟段（含未保存）仅传 3 个字段。
- * 信息不全返回 null，由界面提示补齐。
+ * 某段按姓名选人的可用性查询：当前段须正时长；除该段外所有完整兄弟段（含未保存）仅传 3 个字段。
+ * 条件不全或姓名无效时不发请求，由界面提示补齐。
  */
-export function guideAvailabilityQuery(
+export function guideAvailabilityRequest(
   businessUnit: TourBusinessUnit | null,
   rows: GuideServiceRow[],
   index: number,
+  keyword: string,
   excludeTourId?: string,
-): TourGuideQuery | null {
+): GuideAvailabilityRequest {
   const row = rows[index];
-  if (!businessUnit || !row || !row.language.trim() || !hasPositiveDuration(row)) return null;
-  const otherServices = rows
-    .filter(
-      (other, otherIndex) =>
-        otherIndex !== index &&
-        other.guideId &&
-        other.serviceStartAt &&
-        other.serviceEndAt &&
-        other.serviceStartAt <= other.serviceEndAt,
-    )
-    .map((other) => ({
-      guideId: other.guideId,
-      serviceStartAt: other.serviceStartAt,
-      serviceEndAt: other.serviceEndAt,
-    }));
+  if (!businessUnit || !row || !row.language.trim() || !hasPositiveDuration(row))
+    return { ready: false, missing: "conditions" };
+  const name = keyword.trim();
+  if (!name) return { ready: false, missing: "keyword" };
+  if (name.length > GUIDE_KEYWORD_MAX_LENGTH) return { ready: false, missing: "keywordTooLong" };
+  const siblingIndexes = rows.flatMap((other, otherIndex) =>
+    otherIndex !== index &&
+    other.guideId &&
+    other.serviceStartAt &&
+    other.serviceEndAt &&
+    other.serviceStartAt <= other.serviceEndAt
+      ? [otherIndex]
+      : [],
+  );
+  const otherServices = siblingIndexes.map((otherIndex) => ({
+    guideId: rows[otherIndex]!.guideId,
+    serviceStartAt: rows[otherIndex]!.serviceStartAt,
+    serviceEndAt: rows[otherIndex]!.serviceEndAt,
+  }));
   return {
-    businessUnit,
-    language: row.language.trim(),
-    serviceStartAt: row.serviceStartAt,
-    serviceEndAt: row.serviceEndAt,
-    ...(excludeTourId ? { excludeTourId } : {}),
-    ...(otherServices.length ? { otherServices } : {}),
+    ready: true,
+    siblingIndexes,
+    query: {
+      keyword: name,
+      businessUnit,
+      language: row.language.trim(),
+      serviceStartAt: row.serviceStartAt,
+      serviceEndAt: row.serviceEndAt,
+      ...(excludeTourId ? { excludeTourId } : {}),
+      ...(otherServices.length ? { otherServices } : {}),
+    },
   };
 }
 
 /**
- * 候选里确实没有该段所选人员时返回 true，由用户自行调整，不自动清空。
- * 人员、语种、起止均未改的历史段允许保留停用/软删档案。
+ * 仅当本次查询明确把所选人员列为不可用时返回 true；未命中当前姓名搜索不代表不可用，
+ * 最终以保存校验为准。人员、语种、起止均未改的历史段允许保留停用/软删档案。
  */
 export function isGuideServiceUnavailable(
   row: GuideServiceRow,
-  candidates: TourGuideOption[],
+  availability: TourGuideAvailability | null | undefined,
 ): boolean {
-  if (!row.guideId || !guideServiceChanged(row)) return false;
-  return !candidates.some((item) => item.id === row.guideId);
+  if (!row.guideId || !availability || !guideServiceChanged(row)) return false;
+  if (availability.list.some((item) => item.id === row.guideId)) return false;
+  return availability.unavailable.some((item) => item.id === row.guideId);
 }
 
 /** 编辑框状态；两种接送模式的输入都保留，提交时只取当前模式字段。 */

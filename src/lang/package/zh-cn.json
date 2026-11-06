@@ -1898,6 +1898,7 @@
     },
     "guideUnavailable": "所选导游不符合该段的语种、时间或排班，请更换后保存。",
     "guideService": {
+      "teamWindow": "团队接送",
       "title": "导游服务",
       "empty": "暂无服务段",
       "segment": "第 {n} 段",
@@ -1913,6 +1914,19 @@
       "invalidDuration": "时间异常",
       "outsideWindow": "超出团队接送范围",
       "fixBeforeSave": "请先修正导游服务段中的问题",
+      "searchGuide": "输入导游姓名搜索",
+      "keywordTooLong": "导游姓名最多 150 字",
+      "searchFailed": "导游查询失败",
+      "unavailableTag": "不可用",
+      "removedSegment": "已移除的服务段",
+      "reasons": {
+        "GUIDE_DISABLED": "导游已停用",
+        "LANGUAGE_MISMATCH": "语种不符：本段要求 {expected}，导游档案为 {actual}",
+        "languageEmpty": "未设置",
+        "LEAVE_CONFLICT": "服务期间请假（起止日期均包含）",
+        "SCHEDULE_CONFLICT": "与已有团队服务排期冲突",
+        "FORM_CONFLICT": "与本表单其他服务段冲突"
+      },
       "errors": {
         "incomplete": "请补全导游、语种及起止时间",
         "order": "服务开始必须早于结束",

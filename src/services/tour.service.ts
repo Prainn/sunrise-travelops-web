@@ -7,7 +7,7 @@ import type {
   TourBusinessUnit,
   TourCreateRequest,
   TourFlightOption,
-  TourGuideOption,
+  TourGuideAvailability,
   TourGuideQuery,
   TourLinkedSourceModule,
   TourRatingRow,
@@ -81,7 +81,7 @@ export const tourService = {
     });
   },
   availableGuides(params: TourGuideQuery) {
-    return request.post<TourGuideOption[]>("/tours/available-guides", params);
+    return request.post<TourGuideAvailability>("/tours/available-guides", params);
   },
   create(body: TourCreateRequest) {
     return request.post<TourRecord>("/tours", body);

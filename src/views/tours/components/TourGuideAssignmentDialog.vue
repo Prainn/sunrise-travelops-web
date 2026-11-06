@@ -6,24 +6,31 @@
     :busy="saving"
     destroy-on-close
   >
-    <el-form :disabled="saving" label-width="auto">
-      <el-form-item :label="$t('tour.tourNo')">
-        {{ tour.tourNo }}
-      </el-form-item>
-      <el-form-item :label="$t('tour.guideService.title')">
+    <div class="flex flex-col gap-4">
+      <div class="surface-muted flex flex-wrap items-center gap-x-8 gap-y-1 px-4 py-3 text-[13px]">
+        <span>
+          <span class="text-muted">{{ $t("tour.tourNo") }}</span>
+          <span class="ml-2 font-medium text-strong">{{ tour.tourNo }}</span>
+        </span>
+        <span v-if="teamWindow">
+          <span class="text-muted">{{ $t("tour.guideService.teamWindow") }}</span>
+          <span class="ml-2 text-strong">{{ teamWindow.from }} ~ {{ teamWindow.to }}</span>
+        </span>
+      </div>
+      <el-form :disabled="saving" label-position="top">
         <GuideServicesEditor
           v-if="visible"
           ref="editorRef"
           v-model="rows"
           :business-unit="tour.businessUnit"
           :exclude-tour-id="tour.id"
-          :team-window="{ from: tour.pickupAt, to: tour.dropAt }"
+          :team-window="teamWindow"
           :disabled="saving"
           :server-errors="serverErrors"
           :show-incomplete="showIncomplete"
         />
-      </el-form-item>
-    </el-form>
+      </el-form>
+    </div>
     <template #footer>
       <el-button :disabled="saving" @click="visible = false">
         {{ $t('common.cancel') }}
@@ -63,6 +70,9 @@ const saving = ref(false);
 const editorRef = ref<InstanceType<typeof GuideServicesEditor>>();
 const serverErrors = ref<Record<string, string>>({});
 const showIncomplete = ref(false);
+const teamWindow = computed(() =>
+  props.tour.pickupAt && props.tour.dropAt ? { from: props.tour.pickupAt, to: props.tour.dropAt } : null,
+);
 
 watch(visible, (opened) => {
   if (!opened) return;
