@@ -107,6 +107,19 @@
                 </td>
               </tr>
             </tbody>
+            <tfoot>
+              <tr class="price-table__reference">
+                <td />
+                <td v-for="category in PRICE_CATEGORIES" :key="category">
+                  <span v-if="category === 'attraction'" class="whitespace-nowrap">
+                    {{ $t("websiteItineraryUi.attractionPriceReference", { price: formatAttractionPrice(attractionPriceTotal) }) }}
+                  </span>
+                </td>
+                <td />
+                <td />
+                <td v-if="editable" />
+              </tr>
+            </tfoot>
           </table>
         </div>
       </section>
@@ -177,6 +190,7 @@ import {
   quotationServices,
   vehiclePriceTotal,
 } from "../vehicle-price";
+import { formatAttractionPrice } from "../attraction-price";
 import type {
   WebsiteHotelTier,
   WebsiteItinerary,
@@ -199,7 +213,8 @@ interface PriceRow {
  */
 const visible = defineModel<boolean>({ required: true });
 const plan = defineModel<WebsiteItinerary>("plan", { required: true });
-const props = defineProps<{ editable: boolean; dirty?: boolean }>();
+/** 参考景点价格仅展示，不写入景点分项、人均总价或 PDF。 */
+const props = defineProps<{ editable: boolean; dirty?: boolean; attractionPriceTotal?: string | null }>();
 /** 确认写入报价后通知父级保存草稿。 */
 const emit = defineEmits<{ applied: [] }>();
 const { t } = useI18n();
@@ -367,6 +382,12 @@ function apply() {
 
   td :deep(.el-input) {
     min-width: 88px;
+  }
+
+  &__reference td {
+    border-bottom: 0;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
   }
 
   &__stale td {

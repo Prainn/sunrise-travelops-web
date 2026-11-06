@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { effectScope } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { websiteService } from "@/services/website.service";
+import { websiteItineraryInput, websiteService } from "@/services/website.service";
 import type { WebsiteConfig, WebsiteInquiry, WebsiteItinerary, WebsitePreview, WebsiteQuotation } from "@/types/website";
 import { useWebsiteWorkspace } from "./useWebsiteWorkspace";
 import { printWebsiteQuotation } from "./print";
@@ -204,5 +204,31 @@ describe("website Word export", () => {
     expect(workspace.plan.value?.status).toBe("draft");
     expect(generateWebsiteWordDocument).not.toHaveBeenCalled();
     expect(websiteService.recordDownload).not.toHaveBeenCalled();
+  });
+});
+
+describe("attraction price reference for drafts", () => {
+  it("recomputes from the bound config and active days instead of the saved response", async () => {
+    const bound = { version: 1, attractions: [{ id: "paid", chargeable: true, price: "12.30" }, { id: "free", chargeable: false, price: "0.00" }] } as WebsiteConfig;
+    vi.mocked(websiteService.config).mockResolvedValue(bound);
+    const first = { ...emptyDay(1), id: "d1", items: [{ id: "i1", attractionId: "paid", nameZh: "", nameEn: "", descriptionZh: "", descriptionEn: "", appears: false, feeState: "EXCLUDED" as const }] };
+    const second = { ...emptyDay(2), id: "d2", items: [{ ...first.items[0]!, id: "i2" }, { ...first.items[0]!, id: "i3", attractionId: "free" }] };
+    vi.mocked(websiteService.itineraries).mockResolvedValue([{ ...plan, days: [first, second],
+      attractionPriceReference: { configVersion: 1, items: [], total: "999.00" } }]);
+    const workspace = await setup();
+    const total = () => workspace.attractionPriceReference.value?.total;
+    expect(total()).toBe("24.60");
+    await workspace.removeDay(1);
+    expect(workspace.plan.value!.deletedDays).toHaveLength(1);
+    expect(total()).toBe("12.30");
+    workspace.plan.value!.days[0]!.items.push({ ...first.items[0]!, id: "i4" });
+    expect(total()).toBe("24.60");
+    workspace.plan.value!.days[0]!.items[0]!.attractionId = null;
+    expect(total()).toBe("12.30");
+    vi.mocked(websiteService.config).mockResolvedValueOnce({ version: 2, attractions: [{ id: "paid", chargeable: true, price: "1.00" }] } as WebsiteConfig);
+    await workspace.useCurrentConfig();
+    expect(workspace.attractionPriceReference.value).toMatchObject({ configVersion: 2, total: "1.00" });
+    // 只读投影不进入保存白名单。
+    expect(websiteItineraryInput(workspace.plan.value!)).not.toHaveProperty("attractionPriceReference");
   });
 });

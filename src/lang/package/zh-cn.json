@@ -1699,6 +1699,10 @@
       "component": "组件"
     },
     "parentAttraction": "所属景点：{name}",
+    "attractionPrice": "景点价格",
+    "attractionPriceValue": "{price} 元",
+    "attractionPriceLine": "景点价格：{price}",
+    "attractionPriceReference": "参考景点价格：{price} 元",
     "usedDays": "已用于",
     "chargeable": "收费",
     "chargeableYes": "收费",

@@ -1699,6 +1699,10 @@
       "component": "Component"
     },
     "parentAttraction": "Part of: {name}",
+    "attractionPrice": "Attraction price",
+    "attractionPriceValue": "{price} CNY",
+    "attractionPriceLine": "Attraction price: {price}",
+    "attractionPriceReference": "Reference attraction price: {price} CNY",
     "usedDays": "Used on",
     "chargeable": "Fee",
     "chargeableYes": "Chargeable",

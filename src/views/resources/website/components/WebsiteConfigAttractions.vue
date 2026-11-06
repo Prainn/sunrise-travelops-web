@@ -54,6 +54,11 @@
           {{ row.chargeable ? $t("common.yes") : $t("common.no") }}
         </template>
       </el-table-column>
+      <el-table-column :label="$t('common.price')" width="130" align="right">
+        <template #default="{ row }">
+          {{ row.chargeable ? formatMoney(row.price) : "-" }}
+        </template>
+      </el-table-column>
       <el-table-column :label="$t('common.status')" width="100" align="center">
         <template #default="{ row }">
           <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
@@ -229,6 +234,7 @@ import TableToolbar from "@/components/TableToolbar/index.vue";
 import { reactive, ref, watch } from "vue";
 import type { FormInstance } from "element-plus";
 import type { WebsiteAttraction, WebsiteConfigEditorProps } from "@/types/website";
+import { formatMoney } from "@/utils";
 import { cloneWebsiteDraft } from "@/views/website-inquiries/options";
 import WebsiteResourceSelect from "@/views/website-inquiries/components/WebsiteResourceSelect.vue";
 import { useWebsiteAttractionRules } from "../useWebsiteConfigRules";

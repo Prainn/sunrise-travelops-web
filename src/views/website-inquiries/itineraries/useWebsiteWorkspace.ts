@@ -21,6 +21,7 @@ import { cloneWebsiteDraft, emptyDay, emptyItinerary } from "../options";
 import { addDays } from "@/utils";
 import { printWebsiteQuotation } from "./print";
 import { removeWebsiteEvent } from "./event-order";
+import { websiteAttractionPriceReference } from "./attraction-price";
 import { downloadWordDocument } from "@/views/inquiries/itineraries/docx";
 
 export function useWebsiteWorkspace() {
@@ -56,6 +57,12 @@ export function useWebsiteWorkspace() {
   const dirty = computed(() =>
     Boolean(plan.value && JSON.stringify(websiteItineraryInput(plan.value)) !== baseline.value),
   );
+  /** 按绑定版本配置与当前活动日即时重算，草稿增删、恢复、转手填或切换配置后不沿用旧响应。 */
+  const attractionPriceReference = computed(() => {
+    const record = plan.value;
+    if (!record || !config.value || config.value.version !== record.configVersion) return undefined;
+    return websiteAttractionPriceReference(record.days, config.value);
+  });
   useAccountSwitchGuard({ dirty: () => dirty.value, saving: () => saving.value });
   function showError(cause: unknown) {
     ElMessage.error(websiteErrorMessage(cause));
@@ -429,6 +436,7 @@ export function useWebsiteWorkspace() {
     plan,
     config,
     currentConfig,
+    attractionPriceReference,
     loading,
     saving,
     error,
