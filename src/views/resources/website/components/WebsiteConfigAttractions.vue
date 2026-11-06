@@ -34,11 +34,6 @@
           }}
         </template>
       </el-table-column>
-      <el-table-column
-        prop="copyKey"
-        :label="$t('websiteConfig.attractions.copyKey')"
-        min-width="180"
-      />
       <el-table-column :label="$t('websiteConfig.attractions.recommendedMonths')" min-width="160">
         <template #default="{ row }">
           {{
@@ -57,6 +52,18 @@
       >
         <template #default="{ row }">
           {{ row.chargeable ? $t("common.yes") : $t("common.no") }}
+        </template>
+      </el-table-column>
+      <!-- @vue-generic {WebsiteAttraction} -->
+      <el-table-column :label="$t('websiteConfig.attractions.copy')" width="100" align="center">
+        <template #default="{ row }">
+          <el-tag :type="hasAttractionCopy(row) ? 'success' : 'warning'">
+            {{
+              hasAttractionCopy(row)
+                ? $t("websiteConfig.attractions.copyComplete")
+                : $t("websiteConfig.attractions.copyMissing")
+            }}
+          </el-tag>
         </template>
       </el-table-column>
       <el-table-column :label="$t('common.status')" width="100" align="center">
@@ -149,14 +156,24 @@
               @labels="Object.assign(labels, $event)"
             />
           </el-form-item>
-          <el-form-item :label="$t('websiteConfig.attractions.copyKey')" prop="copyKey">
-            <WebsiteConfigSelect
-              v-model="record.copyKey"
-              group="templates"
-              :version="version"
-              :business-unit="businessUnit"
-              :labels="labels"
-              @labels="Object.assign(labels, $event)"
+          <el-form-item :label="$t('websiteConfig.templates.zh')" prop="descriptionZh" class="col-span-full">
+            <el-input
+              v-model="record.descriptionZh"
+              type="textarea"
+              :rows="4"
+              maxlength="2000"
+              show-word-limit
+              @blur="validateCopyFields"
+            />
+          </el-form-item>
+          <el-form-item :label="$t('websiteConfig.templates.en')" prop="descriptionEn" class="col-span-full">
+            <el-input
+              v-model="record.descriptionEn"
+              type="textarea"
+              :rows="4"
+              maxlength="2000"
+              show-word-limit
+              @blur="validateCopyFields"
             />
           </el-form-item>
           <el-form-item :label="$t('websiteConfig.attractions.linkAttraction')">
@@ -217,7 +234,7 @@ import TableToolbar from "@/components/TableToolbar/index.vue";
 import { reactive, ref, watch } from "vue";
 import type { FormInstance } from "element-plus";
 import type { WebsiteAttraction, WebsiteConfigEditorProps } from "@/types/website";
-import { cloneWebsiteDraft } from "@/views/website-inquiries/options";
+import { cloneWebsiteDraft, hasAttractionCopy } from "@/views/website-inquiries/options";
 import WebsiteResourceSelect from "@/views/website-inquiries/components/WebsiteResourceSelect.vue";
 import { useWebsiteAttractionRules } from "../useWebsiteConfigRules";
 import WebsiteConfigSelect from "./WebsiteConfigSelect.vue";
@@ -231,7 +248,7 @@ const isNew = ref(false);
 const record = ref<WebsiteAttraction>();
 const formRef = ref<FormInstance>();
 const { isSubmitting, isSaving, submitForm } = useResourceFormSubmit(formRef);
-const rules = useWebsiteAttractionRules();
+const rules = useWebsiteAttractionRules(record);
 
 function openEditor(item?: WebsiteAttraction) {
   isNew.value = !item;
@@ -247,10 +264,16 @@ function openEditor(item?: WebsiteAttraction) {
       resourceId: null,
       kind: "attraction",
       chargeable: true,
-      copyKey: "",
+      descriptionZh: "",
+      descriptionEn: "",
       recommendedMonths: [],
     };
   visible.value = true;
+}
+
+/** 中英文变量须一致，任一侧修改后同时刷新两侧校验结果。 */
+function validateCopyFields() {
+  formRef.value?.validateField(["descriptionZh", "descriptionEn"]).catch(() => undefined);
 }
 
 async function applyEdit() {

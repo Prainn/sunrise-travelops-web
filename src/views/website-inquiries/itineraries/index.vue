@@ -19,7 +19,6 @@
         :days="plan && config ? dayEntries : []"
         :reset-key="plan?.id"
         :can-add="editable && !saving"
-        :reorder-label="$t('websiteItineraryUi.organizeItinerary')"
         @expand="(id) => dayCards.get(id)?.expand()"
         @add="addDay"
         @reorder="isReorderDialogVisible = true"

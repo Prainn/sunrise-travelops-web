@@ -70,6 +70,13 @@
             {{ row.utm_source || row.external_referrer || '' }}
           </template>
         </el-table-column>
+        <el-table-column :label="$t('websiteVisits.confirmStatus')" width="110">
+          <template #default="{ row }">
+            <el-tag :type="row.confirmed ? 'success' : 'info'">
+              {{ row.confirmed ? $t('websiteVisits.confirmed') : $t('websiteVisits.unconfirmed') }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column
           :label="$t('common.actions')"
           min-width="220"
@@ -78,9 +85,8 @@
         >
           <template #default="{ row }">
             <RowActions>
-              <span v-if="row.confirmed">{{ $t('websiteVisits.confirmed') }}</span>
               <el-button
-                v-else-if="can('website:visit:list')"
+                v-if="!row.confirmed && can('website:visit:list')"
                 link
                 type="primary"
                 :loading="confirmingIds.has(row.id)"

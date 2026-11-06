@@ -1,6 +1,7 @@
 import { toRaw } from "vue";
 import type {
   FeeState,
+  WebsiteAttraction,
   VehicleType,
   WebsiteDay,
   WebsiteInquiryInput,
@@ -37,6 +38,11 @@ function toDeepRaw(value: unknown): unknown {
     return Object.fromEntries(Object.entries(raw).map(([key, item]) => [key, toDeepRaw(item)]));
   }
   return raw;
+}
+
+/** 资源景点中英文文案均已填写，才可直接用于行程。 */
+export function hasAttractionCopy(item: Pick<WebsiteAttraction, "descriptionZh" | "descriptionEn">) {
+  return Boolean(item.descriptionZh.trim() && item.descriptionEn.trim());
 }
 
 export function cloneWebsiteDraft<T>(value: T): T {

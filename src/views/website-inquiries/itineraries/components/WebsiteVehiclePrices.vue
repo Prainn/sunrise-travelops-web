@@ -32,7 +32,7 @@
     </div>
     <el-alert
       v-if="tooMany"
-      class="mb-3"
+      class="mb-3!"
       type="error"
       :closable="false"
       show-icon
@@ -40,7 +40,7 @@
     />
     <el-alert
       v-if="staleCount"
-      class="mb-3"
+      class="mb-3!"
       type="warning"
       :closable="false"
       show-icon

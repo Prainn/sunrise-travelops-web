@@ -12,7 +12,7 @@
       type="warning"
       :closable="false"
       show-icon
-      class="mb-3"
+      class="mb-3!"
     />
     <div class="mb-2 text-xs text-[var(--el-text-color-secondary)]">
       {{ $t("accountLink.overridesHint") }}

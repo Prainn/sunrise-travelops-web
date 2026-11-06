@@ -25,7 +25,7 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
   const headings = ["itineraryHeading", "standardsHeading", "quotationHeading", "hotelHeading", "mileageHeading"] as const;
   const columns = ["dayColumn", "departureColumn", "transportColumn", "sightseeingColumn", "overnightColumn", "mealsColumn"] as const;
   const paragraphs = (values: string[]) => values.map(value => `<p>${escapeHtml(value)}</p>`).join("");
-  const dayRows = output.itinerary.map(day => `<tr>${[day.day, day.depart, day.transportation, day.sightseeing, day.hotel, day.meal]
+  const dayRows = output.itinerary.map((day, dayIndex) => `<tr>${[`D${dayIndex + 1}`, day.depart, day.transportation, day.sightseeing, day.hotel, day.meal]
     .map((value, index) => `<td class="${index === 3 ? "sightseeing" : "center"}">${escapeHtml(value)}</td>`).join("")}</tr>`).join("");
   const included = (category: string) => paragraphs(output.teamStandard?.find(row => row.category === category)?.included ?? []);
   // v5 司机/导游说明与报价车型由服务端写入 service/transport，前端只换标签不再拼接。
