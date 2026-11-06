@@ -104,6 +104,8 @@
   },
   "inquiry": {
     "deleteConfirm": "Delete inquiry “{code}”? Its itineraries and quotations will no longer be accessible from inquiries. Historical records will be retained.",
+    "deleteVersionConflict": "The inquiry was changed. The list is refreshed; review it and delete again.",
+    "deleteNotFound": "The inquiry was deleted or is no longer accessible. The list is refreshed.",
     "uploadDocument": "Drop a Word file here or click to upload",
     "documentHint": ".doc / .docx / text-based PDF; max 2 MiB, 200,000 characters. Extracts text and line breaks; replaces current content on success.",
     "documentParseFailed": "Cannot read document. Check for damage, encryption, no text, or over 200,000 characters.",

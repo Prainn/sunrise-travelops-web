@@ -104,6 +104,8 @@
   },
   "inquiry": {
     "deleteConfirm": "确认删除询盘“{code}”吗？删除后其行程和报价将无法从询盘入口访问，历史记录保留。",
+    "deleteVersionConflict": "询盘已被修改，列表已刷新，请核对后重新删除。",
+    "deleteNotFound": "询盘已被删除或无权访问，列表已刷新。",
     "uploadDocument": "拖入 Word 文档，或点击上传",
     "documentHint": ".doc / .docx / 文字型 PDF；最大 2 MiB、200,000 字符。提取文字与换行，成功后替换现有内容。",
     "documentParseFailed": "文档解析失败，请检查是否损坏、加密、无文字或超过 200,000 字符。",

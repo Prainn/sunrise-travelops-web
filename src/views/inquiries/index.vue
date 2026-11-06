@@ -71,7 +71,7 @@ import InquiryDetailDrawer from "./components/InquiryDetailDrawer.vue";
 import InquiryEditorDialog from "./components/InquiryEditorDialog.vue";
 import InquirySearchForm from "./components/InquirySearchForm.vue";
 import InquiryTable from "./components/InquiryTable.vue";
-import { isInquiryReadOnly } from "./inquiry-workflow";
+import { isInquiryReadOnly, staleDeleteReason } from "./inquiry-workflow";
 defineOptions({ name: "InquiryList" });
 const { t } = useI18n();
 const openInNewTab = useOpenInNewTab();
@@ -164,7 +164,8 @@ async function enterPage() {
   }
 }
 onMounted(enterPage);
-useRefreshOnActivated(enterPage);
+// 行程/报价在新浏览器标签页编辑会递增询盘 version，切回时按当前筛选和页码刷新。
+useRefreshOnActivated(enterPage, { refreshOnVisible: fetchInquiries });
 const reloadFromFilters = useDebounceFn(() => {
   if (pageNum.value === 1) void fetchInquiries();
   else pageNum.value = 1;
@@ -303,12 +304,20 @@ function deleteInquiry(record: InquiryRecord) {
     try {
       await inquiryService.delete(record);
       ElMessage.success(t("common.deleteSuccess"));
-      if (inquiryStore.value.length === 1 && pageNum.value > 1) pageNum.value -= 1;
-      else await fetchInquiries();
+      await reloadAfterRemoval();
     } catch (error) {
-      showError(error);
+      // 过期行只刷新供用户核对，不用新版本自动重试删除。
+      const stale = staleDeleteReason(error);
+      if (!stale) return showError(error);
+      ElMessage.warning(t(stale === "removed" ? "inquiry.deleteNotFound" : "inquiry.deleteVersionConflict"));
+      await (stale === "removed" ? reloadAfterRemoval() : fetchInquiries());
     }
   });
+}
+/** 当前页最后一行被移除时回到上一页（由页码监听加载），否则刷新当前页。 */
+async function reloadAfterRemoval() {
+  if (inquiryStore.value.length === 1 && pageNum.value > 1) pageNum.value -= 1;
+  else await fetchInquiries();
 }
 function archiveInquiry(record: InquiryRecord) {
   if (isInquiryReadOnly(record.status, record.hasActiveTour)) return;
