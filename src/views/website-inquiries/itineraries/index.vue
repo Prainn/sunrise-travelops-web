@@ -311,6 +311,7 @@
           v-model:plan="plan"
           :editable="editable"
           :dirty="dirty"
+          :attraction-price-total="attractionPriceReference?.total ?? null"
           @applied="save"
         />
         <WebsiteGuideDialog
@@ -414,6 +415,7 @@ const {
   plan,
   config,
   currentConfig,
+  attractionPriceReference,
   loading,
   saving,
   error,

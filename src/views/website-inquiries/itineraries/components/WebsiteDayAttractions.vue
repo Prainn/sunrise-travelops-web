@@ -43,6 +43,9 @@
           </el-button>
         </div>
       </div>
+      <p class="m-0 mt-1 text-[12px] text-muted">
+        {{ $t("websiteItineraryUi.attractionPriceLine", { price: priceText(item.attractionId) }) }}
+      </p>
       <p v-if="item.descriptionZh || item.descriptionEn" class="m-0 mt-2 text-[13px] text-muted whitespace-pre-wrap [overflow-wrap:anywhere]">
         {{ (locale === 'en' ? item.descriptionEn : item.descriptionZh) || item.descriptionZh || item.descriptionEn }}
       </p>
@@ -92,6 +95,9 @@
         <el-form-item :label="$t('websiteItineraryUi.feeState')">
           <FeeStateSelect v-model="draft.feeState" />
         </el-form-item>
+        <el-form-item :label="$t('websiteItineraryUi.attractionPrice')">
+          <span>{{ priceText(draft.attractionId) }}</span>
+        </el-form-item>
       </div>
       <el-button
         v-if="draft.attractionId"
@@ -120,10 +126,11 @@ import AppDialog from "@/components/AppDialog/index.vue";
 import FeedbackState from "@/components/FeedbackState/index.vue";
 import type { WebsiteConfig, WebsiteDay, WebsiteItem } from "@/types/website";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
+import { attractionReferencePrice, formatAttractionPrice } from "../attraction-price";
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{ config: WebsiteConfig; editable: boolean; itemId?: string }>();
 const emit = defineEmits<{ add: []; remove: [id: string, name: string] }>();
-const { locale } = useI18n();
+const { locale, t } = useI18n();
 const draft = ref<WebsiteItem | null>(null);
 const visibleItems = computed(() => day.value.items
   .map((item, index) => ({ item, index }))
@@ -133,6 +140,11 @@ function itemName(item: WebsiteItem) {
 }
 function configKind(item: WebsiteItem) {
   return props.config.attractions.find((attraction) => attraction.id === item.attractionId)?.kind;
+}
+/** 绑定版本的收费景点价格；转为手填（attractionId=null）后即显示“-”。 */
+function priceText(attractionId: string | null) {
+  const price = attractionReferencePrice(props.config, attractionId);
+  return price === null ? "-" : t("websiteItineraryUi.attractionPriceValue", { price: formatAttractionPrice(price) });
 }
 function openEdit(item: WebsiteItem) {
   if (props.editable) draft.value = { ...item };

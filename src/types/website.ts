@@ -29,6 +29,7 @@ export interface WebsiteAttraction extends ConfigBase {
   resourceId: string | null;
   kind: "attraction" | "component";
   chargeable: boolean;
+  price: string;
   descriptionZh: string;
   descriptionEn: string;
   recommendedMonths: number[];
@@ -261,7 +262,20 @@ export interface WebsiteItineraryInput {
   deletedDays?: { day: WebsiteDay; originalDate: string | null }[];
   vehiclePrices: WebsiteVehiclePriceInput[];
 }
+/** 响应只读：绑定 configVersion 的景点参考价，不回传保存/validate。 */
+export interface WebsiteAttractionPriceReference {
+  configVersion: number;
+  items: Array<{
+    dayId: string;
+    itemId: string;
+    attractionId: string | null;
+    chargeable: boolean | null;
+    price: string | null;
+  }>;
+  total: string;
+}
 export interface WebsiteItinerary extends WebsiteItineraryInput {
+  attractionPriceReference?: WebsiteAttractionPriceReference;
   vehiclePrices: WebsiteVehiclePrice[];
   quotationOptions?: WebsiteQuotationOptions;
   previousPlanPrices?: WebsitePreviousPlanPrice[];

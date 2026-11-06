@@ -36,7 +36,7 @@ function day(): WebsiteDay {
   value.hotels = (["A", "B"] as const).map(tier => ({ id: tier, tier, cityId: "city", configHotelId: null, resourceId: null, nameZh: tier, nameEn: tier, roomType: "", breakfastIncluded: true }));
   return value;
 }
-async function mount() {
+async function mount(attractionPriceTotal: string | null = "0.00") {
   const visible = ref(false);
   const plan = ref<WebsiteItinerary>({ ...emptyItinerary(emptyInquiry(), 0, "Test"), businessUnit: "website", id: "plan", inquiryId: "inquiry", code: "WIT-1", status: "draft", version: 1, createdAt: "", updatedAt: "", pax: 2, days: [day()], vehiclePrices: [
     { vehicleType: "7_seat", hotelTier: "A", unitPrice: "10000.00", priceComponents: components(["2000", "1000", "3000", "2000", "2000"]) },
@@ -44,8 +44,8 @@ async function mount() {
     { vehicleType: "7_seat", hotelTier: "C", unitPrice: "8000.00", priceComponents: [] },
   ] });
   const root = node("root");
-  const app = renderer.createApp(defineComponent({ setup() { return () => h(WebsiteVehiclePrices, { modelValue: visible.value, "onUpdate:modelValue": (value: boolean) => visible.value = value, plan: plan.value, editable: true }); } }));
-  app.config.globalProperties.$t = (key: string) => key;
+  const app = renderer.createApp(defineComponent({ setup() { return () => h(WebsiteVehiclePrices, { modelValue: visible.value, "onUpdate:modelValue": (value: boolean) => visible.value = value, plan: plan.value, editable: true, attractionPriceTotal }); } }));
+  app.config.globalProperties.$t = ((key: string, values?: unknown) => values ? `${key}:${JSON.stringify(values)}` : key) as typeof app.config.globalProperties.$t;
   for (const name of ["ElForm", "ElFormItem", "ElCheckbox", "ElInput", "ElButton", "ElAlert", "ElTag"]) app.component(name, defineComponent({ inheritAttrs: false, setup(_, { attrs, slots }) { return () => h(name, attrs, slots.default?.()); } }));
   app.mount(root);
   unmount = () => app.unmount();
@@ -56,7 +56,7 @@ async function mount() {
   async function press(key: string) { (button(key)!.props.onClick as () => void)(); await nextTick(); }
   async function open() { visible.value = true; await nextTick(); }
   await open();
-  return { plan, find, change, open, button, press, inputs: () => find("ElInput") };
+  return { plan, find, text: () => text(root), change, open, button, press, inputs: () => find("ElInput") };
 }
 const row = (plan: WebsiteItinerary, hotelTier: "A" | "B" | "C") => plan.vehiclePrices.find(price => price.vehicleType === "7_seat" && price.hotelTier === hotelTier);
 
@@ -117,6 +117,24 @@ describe("vehicle × hotel tier price editing", () => {
     expect(row(plan, "B")!.priceComponents!.filter(item => item.unitPrice !== null)).toEqual([{ category: "vehicle", unitPrice: "0", showInPdf: false }]);
     expect(row(plan, "C")).toEqual({ vehicleType: "7_seat", hotelTier: "C", unitPrice: "8000.00", priceComponents: [] });
     expect(Object.keys(row(plan, "A")!).sort()).toEqual(["hotelTier", "priceComponents", "unitPrice", "vehicleType"]);
+  });
+  it("shows the attraction reference once per tier table without filling or totaling it", async () => {
+    const view = await mount("1234.50");
+    const footers = view.find("tfoot");
+    // A、B 与待调整的 C 共三个分组表，每表一行参考价，位于景点列。
+    expect(footers).toHaveLength(3);
+    const attractionColumn = 1 + PRICE_CATEGORIES.indexOf("attraction");
+    for (const footer of footers) {
+      const cells = view.find("td", footer);
+      expect(cells.map(cell => view.find("span", cell).length)).toEqual(cells.map((_, index) => Number(index === attractionColumn)));
+    }
+    expect(view.text().match(/websiteItineraryUi\.attractionPriceReference:\{"price":"1,234\.50"\}/g)).toHaveLength(3);
+    expect(view.inputs()[3]!.props["model-value"]).toBe("2000");
+    expect(view.inputs()[8]!.props["model-value"]).toBe("");
+    await view.press("common.confirm");
+    expect(row(view.plan.value, "A")).toMatchObject({ unitPrice: "10000.00" });
+    expect(row(view.plan.value, "A")!.priceComponents!.find(item => item.category === "attraction")).toMatchObject({ unitPrice: "2000" });
+    expect(row(view.plan.value, "B")).toBeUndefined();
   });
   it("derives read-only services, blocks invalid input and drops stale combinations only on delete", async () => {
     const view = await mount();

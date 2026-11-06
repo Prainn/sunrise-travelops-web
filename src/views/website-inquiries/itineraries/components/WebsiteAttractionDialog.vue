@@ -97,6 +97,9 @@
             <el-descriptions-item :label="$t('websiteItineraryUi.chargeable')">
               {{ $t(selected.chargeable ? "websiteItineraryUi.chargeableYes" : "websiteItineraryUi.chargeableNo") }}
             </el-descriptions-item>
+            <el-descriptions-item :label="$t('websiteItineraryUi.attractionPrice')">
+              {{ selected.chargeable ? $t("websiteItineraryUi.attractionPriceValue", { price: formatAttractionPrice(attractionReferencePrice(config, selected.id)) }) : "-" }}
+            </el-descriptions-item>
             <el-descriptions-item :label="$t('websiteItineraryUi.recommendedMonths')">
               {{ selected.recommendedMonths.join(", ") || "-" }}
             </el-descriptions-item>
@@ -153,6 +156,7 @@ import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
 import type { WebsiteAttraction, WebsiteConfig, WebsiteDay, WebsiteItem } from "@/types/website";
 import { hasAttractionCopy } from "@/views/website-inquiries/options";
+import { attractionReferencePrice, formatAttractionPrice } from "../attraction-price";
 
 interface AttractionRow {
   attraction: WebsiteAttraction;
