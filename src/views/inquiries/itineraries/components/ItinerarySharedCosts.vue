@@ -23,7 +23,7 @@
             }}</span>
           </div>
         </template>
-        <DataTable :data="calculation?.[section.detailsKey] ?? []" border class="mb-4">
+        <DataTable :data="calculation?.[section.detailsKey] ?? []" border>
           <el-table-column :label="$t('itinerary.costDay')" prop="dayNumber" width="80" />
           <el-table-column :label="$t('itinerary.costItem')" prop="resourceName" min-width="180" />
           <el-table-column :label="$t('itinerary.costUnitPerPerson')" min-width="130">
@@ -38,6 +38,21 @@
             </template>
           </el-table-column>
         </DataTable>
+        <div
+          v-if="calculation?.[section.detailsKey]?.length"
+          class="quote-city-summary flex flex-wrap items-center gap-x-6 gap-y-2 pt-4 mb-4"
+        >
+          <strong>{{ $t("itinerary.costCitySummary") }}</strong>
+          <span v-if="citySummaries[section.kind] === null">
+            {{ $t("itinerary.costCityUnavailable") }}
+          </span>
+          <template v-else>
+            <span v-for="summary in citySummaries[section.kind]" :key="summary.city" class="inline-flex flex-wrap gap-2">
+              <span>{{ summary.city || $t("itinerary.costCityUnspecified") }}</span>
+              <span>{{ summary.totalCost === null ? $t("itinerary.costCityIncomplete") : money(summary.totalCost) }}</span>
+            </span>
+          </template>
+        </div>
       </el-collapse-item>
       <el-collapse-item name="guide">
         <template #title>
@@ -211,6 +226,7 @@ import type {
   PaxQuoteCalculation,
 } from "@/types/itinerary";
 import { formatMoney } from "@/utils";
+import { summarizeResourceCostsByCity } from "../city-cost-summary";
 import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
 import FeedbackState from "@/components/FeedbackState/index.vue";
@@ -229,6 +245,10 @@ const emit = defineEmits<{
 }>();
 const expanded = ref<string[]>([]);
 const guidePlan = computed(() => props.guidePlans[0]);
+const citySummaries = computed(() => ({
+  meal: summarizeResourceCostsByCity(props.calculation?.mealDetails ?? []),
+  attraction: summarizeResourceCostsByCity(props.calculation?.attractionDetails ?? []),
+}));
 const sections = [
   {
     kind: "meal",
