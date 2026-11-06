@@ -367,18 +367,6 @@
           </el-form-item>
         </el-col>
       </el-row>
-      <el-form-item v-if="tour" :label="$t('tour.guideService.title')">
-        <GuideServicesEditor
-          ref="guideEditorRef"
-          v-model="form.guideServices"
-          :business-unit="unit"
-          :exclude-tour-id="props.tour?.id"
-          :team-window="teamWindow"
-          :disabled="saving"
-          :server-errors="guideServerErrors"
-          :show-incomplete="showGuideIncomplete"
-        />
-      </el-form-item>
       <el-form-item :label="$t('common.remark')">
         <el-input
           v-model.trim="form.remark"
@@ -415,7 +403,6 @@ import RemoteSelect from "@/components/RemoteSelect/index.vue";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
-import { isApiError } from "@/api/request";
 import { ROLE_ROOT } from "@/constants";
 import { businessUnitName } from "@/constants/identity";
 import { tourService } from "@/services/tour.service";
@@ -430,7 +417,6 @@ import type {
 import {
   createTourRequest,
   emptyTourForm,
-  guideServiceErrors,
   isItinerarySummaryTooLong,
   ITINERARY_SUMMARY_MAX_LENGTH,
   ledgerTourInput,
@@ -443,7 +429,6 @@ import {
   type LedgerTourDraft,
   type TourCreateMode,
 } from "../tour-form";
-import GuideServicesEditor from "./GuideServicesEditor.vue";
 
 const UNITS: TourBusinessUnit[] = ["shengxu", "linxi", "website"];
 const props = defineProps<{
@@ -474,9 +459,6 @@ const flightOptions = {
   pickup: reactive(new Map<string, TourFlightOption>()),
   drop: reactive(new Map<string, TourFlightOption>()),
 };
-const guideEditorRef = ref<InstanceType<typeof GuideServicesEditor>>();
-const guideServerErrors = ref<Record<string, string>>({});
-const showGuideIncomplete = ref(false);
 const form = reactive(emptyTourForm());
 
 const dialogTitle = computed(() => {
@@ -509,13 +491,6 @@ const fixedPlatform = computed(() =>
     ? t(`tour.fixedPlatforms.${unit.value}`)
     : "",
 );
-// 团队接送窗口仅用于“沿用团队接送时间”和越界提示；航班模式编辑沿用已保存的接送时间。
-const teamWindow = computed(() => {
-  if (form.scheduleMode === "manual")
-    return form.pickupAt && form.dropAt ? { from: form.pickupAt, to: form.dropAt } : null;
-  const current = props.tour;
-  return current?.pickupAt && current.dropAt ? { from: current.pickupAt, to: current.dropAt } : null;
-});
 const collectOptions = computed(() => {
   const draft = props.ledgerDraft;
   if (draft) return [{ id: draft.collectCoordinatorId, name: draft.collectCoordinatorName }];
@@ -747,8 +722,6 @@ function onOpen() {
   flightOptions.pickup.clear();
   flightOptions.drop.clear();
   choicesUnit = undefined;
-  guideServerErrors.value = {};
-  showGuideIncomplete.value = false;
   const current = props.tour;
   if (current) {
     Object.assign(form, tourFormFromRecord(current));
@@ -789,16 +762,6 @@ async function save() {
       () => false,
     );
     if (!valid) return;
-    guideServerErrors.value = {};
-    if (guideServiceErrors(form.guideServices).some(Boolean)) {
-      showGuideIncomplete.value = true;
-      ElMessage.warning(t("tour.guideService.fixBeforeSave"));
-      return;
-    }
-    if (guideEditorRef.value?.hasUnavailable()) {
-      ElMessage.warning(t("tour.guideUnavailable"));
-      return;
-    }
     const draft = props.ledgerDraft;
     if (draft) {
       const input = ledgerTourInput(form);
@@ -832,21 +795,12 @@ async function save() {
     visible.value = false;
     emit("saved");
   } catch (error) {
-    // 冲突（如已评分换导游、版本变化）保留表单内容，由用户调整后重试。
-    markGuideServiceError(error);
+    // 冲突（如版本变化）保留表单内容，由用户调整后重试。
     fail(error);
   } finally {
     validating.value = false;
     requesting.value = false;
   }
-}
-/** 服务端按 serviceIndex 定位到具体段（索引对应提交数组顺序，即当前表单行顺序）。 */
-function markGuideServiceError(error: unknown) {
-  if (!isApiError(error)) return;
-  const index = error.details?.serviceIndex;
-  if (typeof index !== "number") return;
-  const row = form.guideServices[index];
-  if (row) guideServerErrors.value = { [row.key]: error.message };
 }
 // 在控件挂载前回填；重建表单以隔离旧校验状态及关闭动画期间残留的控件。
 watch(visible, (opened) => {

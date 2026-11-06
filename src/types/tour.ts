@@ -144,6 +144,8 @@ export interface TourGuideSiblingService {
 }
 
 export interface TourGuideQuery {
+  /** 导游姓名，去首尾空白后 1–150 字。 */
+  keyword: string;
   businessUnit: TourBusinessUnit;
   language: string;
   serviceStartAt: string;
@@ -187,6 +189,44 @@ export interface TourGuideOption {
   code: string;
   name: string;
   language: string | null;
+}
+
+export type TourGuideUnavailableCode =
+  | "GUIDE_DISABLED"
+  | "LANGUAGE_MISMATCH"
+  | "LEAVE_CONFLICT"
+  | "SCHEDULE_CONFLICT"
+  | "FORM_CONFLICT";
+
+export interface TourGuideUnavailableReason {
+  code: TourGuideUnavailableCode;
+  message: string;
+  expectedLanguage?: string;
+  actualLanguage?: string | null;
+  /** 日期两端均包含。 */
+  leaves?: Array<{ startDate: string; endDate: string }>;
+  /** 可含跨业务团的排期摘要，不含团 ID。 */
+  tours?: Array<{
+    tourNo: string;
+    businessUnit: TourBusinessUnit;
+    serviceStartAt: string;
+    serviceEndAt: string;
+  }>;
+  /** otherServiceIndex 为请求 otherServices 的零基下标，不是完整表单下标。 */
+  services?: Array<{ otherServiceIndex: number; serviceStartAt: string; serviceEndAt: string }>;
+}
+
+export interface TourGuideUnavailable extends TourGuideOption {
+  reasons: TourGuideUnavailableReason[];
+}
+
+/** 导游姓名可用性预览；message 为业务提示，区别于响应外层 message。 */
+export interface TourGuideAvailability {
+  status: "available" | "not_found" | "unavailable";
+  message: string;
+  matchedCount: number;
+  list: TourGuideOption[];
+  unavailable: TourGuideUnavailable[];
 }
 
 export const RATING_FIELDS = [

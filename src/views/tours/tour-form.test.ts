@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { TourGuideService, TourRecord } from "@/types/tour";
+import type { TourGuideAvailability, TourGuideService, TourRecord } from "@/types/tour";
 import {
   cancelReasonError,
   createTourRequest,
   emptyTourForm,
   guideAssignmentRequest,
-  guideAvailabilityQuery,
+  guideAvailabilityRequest,
   guideServiceChanged,
   guideServiceErrors,
   guideServiceInputs,
@@ -421,43 +421,64 @@ describe("guide service validation", () => {
 });
 
 describe("guide availability", () => {
-  it("needs language and a strictly positive range for the queried segment", () => {
+  it("needs language and a strictly positive range before a trimmed 1-150 character name", () => {
     const rows = [row({ language: "" }), row({ serviceEndAt: "2026-08-01 09:00" }), row()];
-    expect(guideAvailabilityQuery("shengxu", rows, 0)).toBeNull();
-    expect(guideAvailabilityQuery("shengxu", rows, 1)).toBeNull();
-    expect(guideAvailabilityQuery(null, rows, 2)).toBeNull();
+    expect(guideAvailabilityRequest("shengxu", rows, 0, "甲")).toEqual({ ready: false, missing: "conditions" });
+    expect(guideAvailabilityRequest("shengxu", rows, 1, "甲")).toEqual({ ready: false, missing: "conditions" });
+    expect(guideAvailabilityRequest(null, rows, 2, "甲")).toEqual({ ready: false, missing: "conditions" });
+    expect(guideAvailabilityRequest("shengxu", rows, 2, "  ")).toEqual({ ready: false, missing: "keyword" });
+    expect(guideAvailabilityRequest("shengxu", rows, 2, "甲".repeat(151))).toEqual({ ready: false, missing: "keywordTooLong" });
+    expect(guideAvailabilityRequest("shengxu", rows, 2, ` ${"甲".repeat(150)} `)).toMatchObject({ ready: true, query: { keyword: "甲".repeat(150) } });
   });
 
-  it("sends all other filled siblings with only 3 fields, excluding the queried one", () => {
+  it("sends complete siblings with only 3 fields and maps each back to its full form row", () => {
     const rows = [
       row({ guideId: "", serviceStartAt: "", serviceEndAt: "" }),
       row({ guideId: "guide-2", serviceStartAt: "2026-08-05 08:00", serviceEndAt: "2026-08-05 08:00", remark: "x" }),
       row({ id: "svc-9", guideId: "guide-3", serviceStartAt: "2026-08-06 08:00", serviceEndAt: "2026-08-07 08:00" }),
+      row({ guideId: "guide-4", serviceStartAt: "2026-08-09 08:00", serviceEndAt: "2026-08-08 08:00" }),
+      row({ guideId: "guide-5", serviceStartAt: "2026-08-10 08:00", serviceEndAt: "2026-08-11 08:00" }),
     ];
-    expect(guideAvailabilityQuery("shengxu", rows, 2, "tour-1")).toEqual({
-      businessUnit: "shengxu",
-      language: "英语",
-      serviceStartAt: "2026-08-06 08:00",
-      serviceEndAt: "2026-08-07 08:00",
-      excludeTourId: "tour-1",
-      otherServices: [
-        { guideId: "guide-2", serviceStartAt: "2026-08-05 08:00", serviceEndAt: "2026-08-05 08:00" },
-      ],
+    expect(guideAvailabilityRequest("shengxu", rows, 2, " 导游 ", "tour-1")).toEqual({
+      ready: true,
+      siblingIndexes: [1, 4],
+      query: {
+        keyword: "导游",
+        businessUnit: "shengxu",
+        language: "英语",
+        serviceStartAt: "2026-08-06 08:00",
+        serviceEndAt: "2026-08-07 08:00",
+        excludeTourId: "tour-1",
+        otherServices: [
+          { guideId: "guide-2", serviceStartAt: "2026-08-05 08:00", serviceEndAt: "2026-08-05 08:00" },
+          { guideId: "guide-5", serviceStartAt: "2026-08-10 08:00", serviceEndAt: "2026-08-11 08:00" },
+        ],
+      },
     });
-    expect(guideAvailabilityQuery("shengxu", [row()], 0)).not.toHaveProperty("otherServices");
+    const single = guideAvailabilityRequest("shengxu", [row()], 0, "甲");
+    expect(single.ready && single.query).not.toHaveProperty("otherServices");
   });
 
-  it("flags an unavailable guide only for new or adjusted segments, keeping unchanged archived guides", () => {
-    const candidates = [{ id: "guide-1", code: "G1", name: "导游甲", language: "英语" }];
+  it("flags only guides the current preview reports unavailable, never ones missing from the search", () => {
+    const guide = { id: "guide-1", code: "G1", name: "导游甲", language: "英语" };
+    const other = { id: "guide-9", code: "G9", name: "导游乙", language: "英语" };
+    const result = (patch: Partial<TourGuideAvailability>): TourGuideAvailability => ({
+      status: "available", message: "", matchedCount: 0, list: [], unavailable: [], ...patch,
+    });
+    const blocked = result({ unavailable: [{ ...guide, reasons: [{ code: "GUIDE_DISABLED", message: "" }] }] });
+    expect(isGuideServiceUnavailable(row(), null)).toBe(false);
+    expect(isGuideServiceUnavailable(row(), result({ list: [guide] }))).toBe(false);
+    // 换搜索词后已选人员未命中：不判为不可用。
+    expect(isGuideServiceUnavailable(row(), result({ list: [other] }))).toBe(false);
+    expect(isGuideServiceUnavailable(row(), result({ status: "not_found" }))).toBe(false);
+    expect(isGuideServiceUnavailable(row(), blocked)).toBe(true);
     const kept = guideServiceRowFromRecord(service());
-    expect(isGuideServiceUnavailable(kept, [])).toBe(false);
-    expect(isGuideServiceUnavailable(row(), candidates)).toBe(false);
-    expect(isGuideServiceUnavailable(row(), [])).toBe(true);
+    expect(isGuideServiceUnavailable(kept, blocked)).toBe(false);
     kept.remark = "仅改备注";
-    expect(isGuideServiceUnavailable(kept, [])).toBe(false);
+    expect(isGuideServiceUnavailable(kept, blocked)).toBe(false);
     kept.serviceEndAt = "2026-08-04 12:00";
     expect(guideServiceChanged(kept)).toBe(true);
-    expect(isGuideServiceUnavailable(kept, [])).toBe(true);
+    expect(isGuideServiceUnavailable(kept, blocked)).toBe(true);
   });
 });
 
