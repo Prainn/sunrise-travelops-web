@@ -23,6 +23,7 @@ declare module 'vue' {
     AppDrawer: typeof import('./../src/components/AppDrawer/index.vue')['default']
     AppLink: typeof import('./../src/components/AppLink/index.vue')['default']
     AppVersionNotifier: typeof import('./../src/components/AppVersionNotifier.vue')['default']
+    AssignDialog: typeof import('./../src/views/whatsapp/components/AssignDialog.vue')['default']
     AttractionEditorDialog: typeof import('./../src/views/resources/attraction/components/AttractionEditorDialog.vue')['default']
     AttractionSearchForm: typeof import('./../src/views/resources/attraction/components/AttractionSearchForm.vue')['default']
     AttractionTable: typeof import('./../src/views/resources/attraction/components/AttractionTable.vue')['default']
@@ -34,6 +35,9 @@ declare module 'vue' {
     BusinessItemSelect: typeof import('./../src/components/BusinessItemSelect/index.vue')['default']
     CitySelect: typeof import('./../src/components/CitySelect.vue')['default']
     CommandPalette: typeof import('./../src/components/CommandPalette/index.vue')['default']
+    ConversationInfo: typeof import('./../src/views/whatsapp/components/ConversationInfo.vue')['default']
+    ConversationList: typeof import('./../src/views/whatsapp/components/ConversationList.vue')['default']
+    ConversationThread: typeof import('./../src/views/whatsapp/components/ConversationThread.vue')['default']
     DataTable: typeof import('./../src/components/DataTable/index.vue')['default']
     DensitySelect: typeof import('./../src/components/DensitySelect/index.vue')['default']
     DictSelect: typeof import('./../src/components/DictSelect/index.vue')['default']
@@ -191,6 +195,7 @@ declare module 'vue' {
     WebsiteTransportDialog: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteTransportDialog.vue')['default']
     WebsiteTransportFields: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteTransportFields.vue')['default']
     WebsiteVehiclePrices: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteVehiclePrices.vue')['default']
+    WorkbenchPage: typeof import('./../src/views/whatsapp/components/WorkbenchPage.vue')['default']
   }
   export interface GlobalDirectives {
     vLoading: typeof import('element-plus/es')['ElLoadingDirective']

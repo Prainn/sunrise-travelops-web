@@ -81,14 +81,14 @@ let visibility: ReturnType<typeof vi.fn>;
 let unmount: () => void;
 
 async function flush() { for (let i = 0; i < 4; i++) { await Promise.resolve(); await nextTick(); } }
-function mount(current: DirectLedgerItem | null) {
+function mount(current: DirectLedgerItem | null, extra: Record<string, unknown> = {}) {
   radios = [];
   radioOptions = [];
   saved = vi.fn();
   visibility = vi.fn();
   const app = renderer.createApp(DirectLedgerDialog, {
     modelValue: true, ledger: current, businessUnit: "linxi", readonly: false,
-    onSaved: saved, "onUpdate:modelValue": visibility,
+    onSaved: saved, "onUpdate:modelValue": visibility, ...extra,
   });
   app.config.globalProperties.$t = (key: string) => key;
   const passthrough = defineComponent({ render(this: ComponentPublicInstance) { return this.$slots.default?.(); } });
@@ -248,5 +248,36 @@ describe("DirectLedgerDialog order status", () => {
     expect(saved).not.toHaveBeenCalled();
     expect(visibility).not.toHaveBeenCalled();
     expect(form.model.source).toBe("携程123");
+  });
+
+  it("links a website inquiry only on create and never on edit", async () => {
+    const inquiry = { id: "inquiry-1", code: "WI-1", ownerId: "collector-1", owner: "收客" };
+    mocks.create.mockResolvedValue(ledger);
+    mount(null, { businessUnit: "website", linkedInquiry: inquiry });
+    await flush();
+    expect(form.model.creatorId).toBe("collector-1");
+    fill("unconverted");
+    await save();
+    await flush();
+    expect(mocks.create.mock.calls[0]?.[0]).toMatchObject({ websiteInquiryId: "inquiry-1", businessUnit: "website" });
+    unmount();
+
+    const current = { ...ledger, businessUnit: "website", websiteInquiryId: "inquiry-1" } as DirectLedgerItem;
+    mocks.update.mockResolvedValue(current);
+    mount(current, { businessUnit: "website", linkedInquiry: inquiry });
+    await flush();
+    await save();
+    expect(mocks.update).toHaveBeenCalledTimes(1);
+    expect(mocks.update.mock.calls[0]?.[1]).not.toHaveProperty("websiteInquiryId");
+  });
+
+  it("does not attach an inquiry to a plain create", async () => {
+    mocks.create.mockResolvedValue(ledger);
+    mount(null);
+    await flush();
+    fill("unconverted");
+    await save();
+    await flush();
+    expect(mocks.create.mock.calls[0]?.[0]).not.toHaveProperty("websiteInquiryId");
   });
 });

@@ -66,6 +66,57 @@ export const constantRoutes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: "/whatsapp",
+    name: "WhatsappWorkbench",
+    component: Layout,
+    redirect: "/whatsapp/inbox",
+    meta: {
+      title: "whatsappWorkbench",
+      icon: "el-icon-ChatLineSquare",
+      alwaysShow: true,
+      scopes: ["headquarters", "website"],
+    },
+    children: [
+      {
+        path: "inbox",
+        name: "WhatsappInbox",
+        component: () => import("@/views/whatsapp/inbox/index.vue"),
+        meta: {
+          menuKey: "whatsapp-inbox",
+          title: "whatsappInbox",
+          icon: "el-icon-ChatLineSquare",
+          scopes: ["headquarters", "website"],
+          perms: ["whatsapp:conversation:list"],
+        },
+      },
+      {
+        path: "management",
+        name: "WhatsappManagement",
+        component: () => import("@/views/whatsapp/management/index.vue"),
+        meta: {
+          menuKey: "whatsapp-management",
+          title: "whatsappManagement",
+          icon: "el-icon-UserFilled",
+          scopes: ["headquarters", "website"],
+          perms: ["whatsapp:conversation:assign"],
+        },
+      },
+      {
+        path: "integration",
+        name: "WhatsappIntegration",
+        component: () => import("@/views/whatsapp/integration/index.vue"),
+        meta: {
+          menuKey: "whatsapp-integration",
+          title: "whatsappIntegration",
+          icon: "el-icon-Connection",
+          keepAlive: true,
+          scopes: ["headquarters"],
+          perms: ["whatsapp:integration:manage"],
+        },
+      },
+    ],
+  },
+  {
     path: "/system",
     name: "System",
     component: Layout,
