@@ -15,7 +15,42 @@
       >
         <!-- 包一层元素，禁用按钮仍能显示原因提示 -->
         <span>
+          <el-dropdown
+            v-if="action.commands?.length"
+            trigger="click"
+            :disabled="action.disabled"
+            @command="emit('select', action.key, $event)"
+          >
+            <el-button
+              round
+              :type="action.active ? 'primary' : undefined"
+              :plain="action.active"
+              :disabled="action.disabled"
+              class="ml-0!"
+            >
+              <el-icon class="mr-1">
+                <component :is="action.icon" />
+              </el-icon>
+              {{ action.label }}
+              <small v-if="action.scope" class="ml-1 text-[12px] opacity-75">· {{ action.scope }}</small>
+              <el-icon class="ml-1">
+                <ArrowDown />
+              </el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item
+                  v-for="item in action.commands"
+                  :key="item.command"
+                  :command="item.command"
+                >
+                  {{ item.label }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
           <el-button
+            v-else
             round
             :type="action.active ? 'primary' : undefined"
             :plain="action.active"
@@ -46,6 +81,7 @@
 </template>
 
 <script setup lang="ts">
+import { ArrowDown } from "@element-plus/icons-vue";
 import type { Component } from "vue";
 
 export interface DayResourceAction {
@@ -57,6 +93,8 @@ export interface DayResourceAction {
   hint?: string;
   active?: boolean;
   disabled?: boolean;
+  /** 有值时点击按钮先展开下拉，选择后随 key 一并抛出 command */
+  commands?: Array<{ command: string; label: string }>;
 }
 
 /**
@@ -69,5 +107,5 @@ withDefaults(
   }>(),
   { summaries: () => [] },
 );
-const emit = defineEmits<{ select: [key: string] }>();
+const emit = defineEmits<{ select: [key: string, command?: string] }>();
 </script>

@@ -140,13 +140,14 @@
                     @change="changeArrangementPrice(plan, arrangement.id, $event ?? null)"
                   />
                 </el-form-item>
-                <el-text v-if="mode === 'itinerary'" type="info" size="small">
+                <el-text
+                  v-if="mode === 'itinerary'"
+                  :type="arrangementSeats(arrangement) < passengerCount ? 'warning' : 'info'"
+                  size="small"
+                >
                   {{
                     $t("planning.capacityHint", {
-                      seats: arrangement.vehicles.reduce(
-                        (sum, vehicle) => sum + vehicle.seats * vehicle.quantity,
-                        0,
-                      ),
+                      seats: arrangementSeats(arrangement),
                       passengers: passengerCount,
                     })
                   }}
@@ -271,6 +272,10 @@ const canSave = computed(
       )),
 );
 const isAddingNewVehicle = ref(false);
+
+function arrangementSeats(arrangement: ItineraryVehicleArrangement) {
+  return arrangement.vehicles.reduce((sum, vehicle) => sum + vehicle.seats * vehicle.quantity, 0);
+}
 
 function updateArrangements(
   plan: ItineraryVehiclePlan,

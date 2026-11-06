@@ -70,7 +70,7 @@
         v-for="metric in metrics"
         :key="metric.field"
         :label="$t(metric.label)"
-        min-width="120"
+        :min-width="metric.width"
       >
         <template #default="{ row }">
           {{ money(row[metric.field]) }}
@@ -178,11 +178,12 @@ const metrics = computed(
         label: props.calculation?.paxPrices.some((row) => row.childWithoutBedUnitPrice != null)
           ? "itinerary.childWithBedPrice"
           : "itinerary.childTourPrice",
+        width: 150,
       },
       ...(props.calculation?.paxPrices.some((row) => row.childWithoutBedUnitPrice != null)
-        ? [{ field: "childWithoutBedUnitPrice", label: "itinerary.childWithoutBedPrice" } as const]
+        ? [{ field: "childWithoutBedUnitPrice", label: "itinerary.childWithoutBedPrice", width: 150 } as const]
         : []),
-      { field: "singleSupplementUnitCost", label: "itinerary.quoteLineTypes.single_supplement" },
+      { field: "singleSupplementUnitCost", label: "itinerary.quoteLineTypes.single_supplement", width: 120 },
     ] as const,
 );
 function money(value: number | null | undefined) {

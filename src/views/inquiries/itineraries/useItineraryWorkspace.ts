@@ -2,6 +2,7 @@ import { missingPriceReasons } from "./price-adjustments";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
 import { itineraryDuration } from "./duration";
 import { computed, ref, toRaw, watch } from "vue";
+import { watchDebounced } from "@vueuse/core";
 import { onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
 import { useAccountSwitchGuard } from "@/composables/useAccountSwitchGuard";
 import { inquiryService, itineraryInput } from "@/services/inquiry.service";
@@ -196,6 +197,15 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     canDownload: () => hasUserPermission(userStore.userInfo, "itinerary:download"),
     onRefreshError: (error) => messages.warning("itinerary.confirmedRefreshFailed", { reason: requestErrorMessage(error) }),
   });
+  // 仅在已有导出提示时随编辑防抖复核，补齐后提示自动更新或消失。
+  watchDebounced(
+    () => (validationIssues.value.length ? selectedItinerary.value : null),
+    (plan) => {
+      if (!plan) return;
+      validationIssues.value = pdf.validatePdf()?.issues ?? [];
+    },
+    { debounce: 800, deep: true },
+  );
 
   async function loadDestinationResourceOptions() {
     try {

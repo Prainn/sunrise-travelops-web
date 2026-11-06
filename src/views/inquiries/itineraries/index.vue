@@ -749,8 +749,9 @@ function dayVehicleSummary(day: ItineraryDayRecord) {
   return lines.length > 1 ? t("itineraryWorkspace.alternativePlans", { plans: lines.join(" / ") }) : lines[0]!;
 }
 
-function openDayPlan(section: "hotel" | "vehicle" | "guide") {
-  openSectionDialog(section);
+function openDayPlan(section: "hotel" | "vehicle" | "guide", command?: string) {
+  if (section === "vehicle" && command) openVehiclePlans(command);
+  else openSectionDialog(section);
 }
 
 function applyReorder(change: DayOrderChange) {

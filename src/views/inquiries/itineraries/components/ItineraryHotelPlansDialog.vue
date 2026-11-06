@@ -128,25 +128,26 @@
                       :aria-label="`${row.destination} · ${$t('planning.hotelPrice')}`"
                       @update:model-value="emit('update-cost', activeTier, row.destination, $event ?? null)"
                     />
-                    <small class="mt-1 w-full text-muted">
-                      {{ $t("itinerary.breakfastIncluded") }}
-                    </small>
-                  </el-form-item>
-                  <el-form-item
-                    v-if="hotelNeedsReason(activeTier, row.destination)"
-                    class="mt-3"
-                  >
-                    <el-input
-                      :model-value="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === row.destination)?.adjustmentReason ?? ''"
-                      :disabled="!editable"
-                      :aria-label="`${row.destination} · ${$t('identity.reason')}`"
-                      :placeholder="$t('identity.reasonPlaceholder')"
-                      type="textarea"
-                      :autosize="{ minRows: 2 }"
-                      @update:model-value="emit('update-reason', activeTier, row.destination, $event)"
-                    />
                   </el-form-item>
                 </template>
+              </template>
+            </el-table-column>
+            <!-- 原因单独成列并用单行输入，避免个别行变高导致表格高低不平 -->
+            <el-table-column
+              v-if="hasReasonRows"
+              :label="$t('identity.reason')"
+              min-width="200"
+            >
+              <template #default="{ row }">
+                <el-form-item v-if="hotelNeedsReason(activeTier, row.destination)">
+                  <el-input
+                    :model-value="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === row.destination)?.adjustmentReason ?? ''"
+                    :disabled="!editable"
+                    :aria-label="`${row.destination} · ${$t('identity.reason')}`"
+                    :placeholder="$t('identity.reasonPlaceholder')"
+                    @update:model-value="emit('update-reason', activeTier, row.destination, $event)"
+                  />
+                </el-form-item>
               </template>
             </el-table-column>
           </DataTable>
@@ -251,6 +252,9 @@ const overnightDestinations = computed(() =>
 );
 const hotelRows = computed(() =>
   overnightDestinations.value.map((destination) => ({ destination })),
+);
+const hasReasonRows = computed(() =>
+  hotelRows.value.some((row) => hotelNeedsReason(activeTier.value, row.destination)),
 );
 const pendingNights = computed(
   () => props.dailyPlans.filter((day) => day.overnightDestination === null).length,

@@ -168,7 +168,7 @@ const emit = defineEmits<{
   "add-item": [];
   "edit-item": [item: ItineraryResourceItem];
   "remove-item": [index: number];
-  "open-plan": [section: "hotel" | "vehicle" | "guide"];
+  "open-plan": [section: "hotel" | "vehicle" | "guide", command?: string];
 }>();
 const frame = useTemplateRef<InstanceType<typeof ItineraryDayCardFrame>>("frame");
 defineExpose({
@@ -220,6 +220,10 @@ const resourceActions = computed<DayResourceAction[]>(() => {
       scope: t("itineraryWorkspace.scopes.byDateRange"),
       hint: t("itineraryWorkspace.hints.normalVehicle"),
       active: Boolean(props.plans.vehicle),
+      commands: [
+        { command: "itinerary", label: t("planning.byItinerary") },
+        { command: "stage", label: t("planning.byStage") },
+      ],
     },
     {
       key: "guide",
@@ -241,10 +245,10 @@ function editItem(index: number) {
   const item = props.day.items[index];
   if (item) emit("edit-item", item);
 }
-function selectResource(key: string) {
+function selectResource(key: string, command?: string) {
   if (key === "attraction") emit("add-item");
   else if (key === "lunch" || key === "dinner") emit("select-meal", key);
-  else if (key === "hotel" || key === "vehicle" || key === "guide") emit("open-plan", key);
+  else if (key === "hotel" || key === "vehicle" || key === "guide") emit("open-plan", key, command);
 }
 function updateField(field: EditableDayField, value: string | null) {
   emit("update-field", field, value);
