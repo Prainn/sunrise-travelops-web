@@ -47,7 +47,7 @@
       />
       <el-table-column :label="$t('itinerary.vehiclePerPerson')" min-width="120">
         <template #default="{ row }">
-          {{ money(row.vehicleUnitCost) }}
+          {{ money(vehicleUnitCost(row)) }}
         </template>
       </el-table-column>
       <el-table-column :label="$t('itinerary.mealCost')" min-width="130">
@@ -90,7 +90,7 @@
                 }}<br />
                 {{ $t("itinerary.mealCost") }}: {{ formatMoney(mealCost) }}<br />
                 {{ $t("itinerary.attractionCost") }}: {{ formatMoney(attractionCost) }}<br />
-                {{ $t("itinerary.vehiclePerPerson") }}: {{ formatMoney(row.vehicleUnitCost) }}<br />
+                {{ $t("itinerary.vehiclePerPerson") }}: {{ money(vehicleUnitCost(row)) }}<br />
                 {{ $t("itinerary.guideServicePerPerson") }}:
                 {{ formatMoney(row.guideServiceUnitCost) }}<br />
                 {{ $t("itinerary.staffRoomPerPerson") }}: {{ formatMoney(row.staffRoomUnitCost) }}
@@ -186,6 +186,10 @@ const metrics = computed(
       { field: "singleSupplementUnitCost", label: "itinerary.quoteLineTypes.single_supplement", width: 120 },
     ] as const,
 );
+/** A missing PAX vehicle price stays visible as missing instead of reading as a free ¥0. */
+function vehicleUnitCost(row: Partial<ItineraryPaxCalculation>) {
+  return row.vehicleTotal === null ? null : row.vehicleUnitCost;
+}
 function money(value: number | null | undefined) {
   if (value === null) return "—";
   return `¥${formatMoney(value)}`;

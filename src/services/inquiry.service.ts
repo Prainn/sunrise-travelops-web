@@ -100,6 +100,24 @@ function inquiryInput(record: InquiryRecord) {
     lostReason: record.lostReason,
   };
 }
+/** PAX-format plans never send shared prices or the backend-derived segmentTotal. */
+function vehiclePlanInput(plan: ItineraryRecord["vehiclePlans"][number]) {
+  if (!plan.quotationMode) return plan;
+  return {
+    ...plan,
+    totalPrice: null,
+    pricingMode: null,
+    segmentTotal: null,
+    adjustmentReason: "",
+    paxPrices: plan.paxPrices?.map((price) => ({
+      pax: price.pax,
+      totalPrice: price.totalPrice,
+      pricingMode: price.pricingMode,
+      adjustmentReason: price.adjustmentReason ?? "",
+    })),
+    arrangements: plan.arrangements.map((arrangement) => ({ ...arrangement, totalPrice: null })),
+  };
+}
 export function itineraryInput(
   record: Pick<
     ItineraryRecord,
@@ -130,7 +148,7 @@ export function itineraryInput(
     })),
     deletedDays: record.deletedDays ?? [],
     hotelPlans: record.hotelPlans,
-    vehiclePlans: record.vehiclePlans,
+    vehiclePlans: record.vehiclePlans.map(vehiclePlanInput),
     guidePlans: record.guidePlans,
     quote: record.quote,
   };
@@ -197,10 +215,12 @@ export const inquiryService = {
       await request.post(`/inquiries/${record.inquiryId}/itineraries`, itineraryInput(record)),
     );
   },
-  async saveItinerary(record: ItineraryRecord) {
+  /** `confirmVehicleModeChange` is only sent for the save that applies a confirmed vehicle mode switch. */
+  async saveItinerary(record: ItineraryRecord, options: { confirmVehicleModeChange?: boolean } = {}) {
     return normalizeInquiryMoney<ItineraryRecord>(
       await request.put(`/itineraries/${record.id}`, {
         ...itineraryInput(record),
+        ...(options.confirmVehicleModeChange ? { confirmVehicleModeChange: true } : {}),
         version: record.version,
       }),
     );

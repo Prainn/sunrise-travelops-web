@@ -12,6 +12,7 @@ import type {
   ItineraryDailyItemType,
   ItineraryRecord,
   ItineraryResourceItem,
+  ItineraryVehiclePlan,
   MealSlot,
 } from "@/types/itinerary";
 import type { GuideRecord } from "@/types/resource";
@@ -23,6 +24,8 @@ import { useItineraryEditor } from "./useItineraryEditor";
 import { useItineraryPdf } from "./useItineraryPdf";
 import type { PdfValidationIssue } from "./workflow";
 import { useItinerarySelection } from "./useItinerarySelection";
+import { createVehicleDraft } from "./vehicle-plans";
+import type { VehicleMaintenanceMode } from "./vehicle-plans";
 import { isApiError } from "@/api/request";
 import { ApiErrorCode } from "@/api/error-code";
 import { requestErrorMessage } from "@/utils/version-conflict";
@@ -61,7 +64,13 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     },
     { immediate: true, flush: "post" },
   );
+  // 用车弹窗只编辑深拷贝草稿；确认切换仅属于本次草稿，关闭即丢弃。
+  const vehicleDraft = ref<ItineraryVehiclePlan[]>();
+  const vehicleDraftBaseline = ref("");
+  const vehicleModeChangeConfirmed = ref(false);
   const hasUnsavedChanges = computed(() =>
+    (vehicleDraft.value !== undefined &&
+      JSON.stringify(vehicleDraft.value) !== vehicleDraftBaseline.value) ||
     itineraryStore.some((plan) => {
       const saved = savedPrices.value.get(plan.id);
       return (
@@ -414,9 +423,13 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       await createItinerary(record);
       return;
     }
+    const current = selectedItinerary.value;
+    // 保存失败时回到提交前，避免人数档同步后的车价等改动残留在未保存记录中。
+    const before = current && (JSON.parse(JSON.stringify(current)) as ItineraryRecord);
     const updated = editor.updateItineraryBasics(record);
     if (!updated) return;
     if (await saveItinerary()) isPlanDialogVisible.value = false;
+    else if (before && selectedItinerary.value === current) Object.assign(current, before);
   }
 
   async function openResourceDialog(dayId: string, mealSlot: MealSlot | null = null, itemId = "") {
@@ -452,16 +465,54 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       isSaving.value = false;
     }
   }
-  async function saveItinerary(): Promise<boolean> {
+  function openVehicleDraft(mode: VehicleMaintenanceMode, reset: boolean) {
     const plan = selectedItinerary.value;
-    if (!plan || !canSaveItinerary.value || isSaving.value) return false;
-    if (missingPriceReasons(plan, savedPrices.value.get(plan.id)).length) {
+    if (!plan) return;
+    vehicleDraft.value = createVehicleDraft(plan.vehiclePlans, plan.paxTiers, mode, reset);
+    vehicleDraftBaseline.value = JSON.stringify(vehicleDraft.value);
+    vehicleModeChangeConfirmed.value = reset;
+  }
+  function discardVehicleDraft() {
+    vehicleDraft.value = undefined;
+    vehicleDraftBaseline.value = "";
+    vehicleModeChangeConfirmed.value = false;
+  }
+  function updateVehicleDraftPlan(plan: ItineraryVehiclePlan) {
+    if (!contentEditable.value || !vehicleDraft.value) return;
+    vehicleDraft.value = vehicleDraft.value.map((record) =>
+      record.tier === plan.tier ? plan : record,
+    );
+  }
+  /** Saved state is replaced only by the server response; failures keep both the record and the draft. */
+  async function saveVehicleDraft(): Promise<boolean> {
+    const plan = selectedItinerary.value;
+    const draft = vehicleDraft.value;
+    if (!plan || !draft || !contentEditable.value) return false;
+    const candidate = editor.withVehiclePlans(plan, draft);
+    if (!candidate) return false;
+    const saved = await persistItinerary(plan, candidate, {
+      confirmVehicleModeChange: vehicleModeChangeConfirmed.value,
+    });
+    if (saved) discardVehicleDraft();
+    return saved;
+  }
+  function saveItinerary(): Promise<boolean> {
+    const plan = selectedItinerary.value;
+    return plan ? persistItinerary(plan, plan) : Promise.resolve(false);
+  }
+  async function persistItinerary(
+    plan: ItineraryRecord,
+    candidate: ItineraryRecord,
+    options: { confirmVehicleModeChange?: boolean } = {},
+  ): Promise<boolean> {
+    if (!canSaveItinerary.value || isSaving.value) return false;
+    if (missingPriceReasons(candidate, savedPrices.value.get(plan.id)).length) {
       messages.error("identity.reasonPlaceholder");
       return false;
     }
     isSaving.value = true;
     try {
-      const saved = await inquiryService.saveItinerary(plan);
+      const saved = await inquiryService.saveItinerary(candidate, options);
       Object.assign(plan, saved);
       messages.success("itinerary.saveSuccess");
       return true;
@@ -550,6 +601,11 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
 
   return {
     sectionDialogSnapshot,
+    vehicleDraft,
+    openVehicleDraft,
+    discardVehicleDraft,
+    updateVehicleDraftPlan,
+    saveVehicleDraft,
     savedItinerary: computed(() => {
       const id = selectedItinerary.value?.id;
       return id ? savedPrices.value.get(id) : undefined;
@@ -642,7 +698,6 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     clearHotelPlan: editor.clearHotelPlan,
     updateHotelPlanSelection: selectHotelPlanSelection,
     updateQuoteOption: editor.updateQuoteOption,
-    updateVehiclePlan: editor.updateVehiclePlan,
     updateHotelCost: editor.updateHotelCost,
     updateHotelRate: editor.updateHotelRate,
     updateGuidePrice: editor.updateGuidePrice,

@@ -28,14 +28,34 @@ export interface ItineraryVehicleSelection {
   seats: number;
   quantity: number;
 }
+export type ItineraryVehicleQuotationMode = "itinerary" | "stage";
+export type ItineraryVehiclePaxPricingMode = "automatic" | "manual";
+/** Whole-group price of one arrangement for one PAX tier; null = not entered, 0 = free. */
+export interface ItineraryVehicleSegmentPaxPrice {
+  pax: number;
+  totalPrice: number | null;
+}
+export interface ItineraryVehiclePaxPrice {
+  pax: number;
+  totalPrice: number | null;
+  pricingMode: ItineraryVehiclePaxPricingMode;
+  /** Derived by the backend; never sent as a saved fact. */
+  segmentTotal?: number | null;
+  adjustmentReason?: string | null;
+}
 export interface ItineraryVehicleArrangement {
   id: string;
   startDate: string;
   endDate: string;
   vehicles: ItineraryVehicleSelection[];
+  /** Legacy shared segment price; null in the PAX format. */
   totalPrice?: number | null;
+  paxPrices?: ItineraryVehicleSegmentPaxPrice[];
 }
 export interface ItineraryVehiclePlan {
+  /** Absent on legacy records that still share one price across PAX tiers. */
+  quotationMode?: ItineraryVehicleQuotationMode | null;
+  paxPrices?: ItineraryVehiclePaxPrice[];
   pricingMode?: "automatic" | "manual" | "unknown" | null;
   segmentTotal?: number | null;
   adjustmentReason?: string | null;
@@ -140,6 +160,8 @@ export interface LegacyQuoteCalculation {
 
 export interface ItineraryPaxCalculation {
   pax: number;
+  /** Whole-group vehicle price of this PAX tier; null when missing. Older snapshots omit it. */
+  vehicleTotal?: number | null;
   vehicleUnitCost: number;
   guideServiceUnitCost: number;
   staffRoomUnitCost: number;
@@ -165,7 +187,8 @@ export interface ItineraryQuoteOptionCalculation {
     totalCost: number | null;
   }[];
   hotelUnitCost: number;
-  vehicleTotal: number;
+  /** null in the PAX vehicle format: use paxPrices[].vehicleTotal. */
+  vehicleTotal: number | null;
   staffRoomTotal: number;
   paxPrices: ItineraryPaxCalculation[];
 }

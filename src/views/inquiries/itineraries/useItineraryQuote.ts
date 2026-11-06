@@ -59,6 +59,7 @@ export function useItineraryQuote(
       vehiclePlans: input.vehiclePlans.map((vehiclePlan) => ({
         ...vehiclePlan,
         adjustmentReason: null,
+        paxPrices: vehiclePlan.paxPrices?.map((price) => ({ ...price, adjustmentReason: "" })),
       })),
       guidePlans: input.guidePlans.map((guidePlan) => ({ ...guidePlan, adjustmentReason: null })),
       quote: {

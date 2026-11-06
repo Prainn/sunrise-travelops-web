@@ -1,4 +1,3 @@
-import { calculateVehiclePlanAutomaticTotal } from "./vehicle-plans";
 import type { GuideRecord } from "@/types/resource";
 import { getDayBreakfastStatus } from "./hotel-plans";
 import type { ComputedRef, Ref } from "vue";
@@ -11,7 +10,6 @@ import type {
   ItineraryRecord,
   ItineraryResourceItem,
   ItineraryVehiclePlan,
-  ItineraryVehicleTier,
   ItineraryQuoteSettings,
   MealSlot,
 } from "@/types/itinerary";
@@ -27,7 +25,13 @@ import {
 import { createDefaultQuoteOption, createDefaultQuoteSettings } from "./quote-pricing";
 import { reorderItineraryDays } from "./day-order";
 import type { DayOrderChange, DayOrderIssue } from "./reorder-board";
-import { createDefaultVehiclePlans, getVehiclePlan, VEHICLE_PLAN_TIERS } from "./vehicle-plans";
+import {
+  cloneVehiclePlans,
+  createDefaultVehiclePlans,
+  getVehiclePlan,
+  syncVehiclePaxTiers,
+  VEHICLE_PLAN_TIERS,
+} from "./vehicle-plans";
 
 type EditableDayField =
   "departure" | "destination" | "overnightDestination" | "transport" | "description";
@@ -126,6 +130,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       childWithoutBedRate: record.childWithoutBedRate,
       destinations: [...record.destinations],
     });
+    plan.vehiclePlans = plan.vehiclePlans.map((vehicle) => syncVehiclePaxTiers(vehicle, plan.paxTiers));
     syncPlanDates(plan);
     syncDestinations(plan, destinationsChanged);
     syncBreakfast(plan, breakfastChanged);
@@ -409,17 +414,16 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     touchSelectedItinerary(breakfastChanged);
   }
 
-  function updateVehiclePlan(tier: ItineraryVehicleTier, value: ItineraryVehiclePlan) {
-    if (!options.canEditContent()) return;
-    const plan = options.selectedItinerary.value;
-    const target = plan && getVehiclePlan(plan, tier);
-    if (!plan || !target) return;
-    if (value.totalPrice !== target.totalPrice) value.adjustmentReason = "";
-    value.pricingMode =
-      value.totalPrice === calculateVehiclePlanAutomaticTotal(value) ? "automatic" : "manual";
-    Object.assign(target, cloneVehiclePlans([value])[0]);
-    syncQuoteOptions(plan);
-    touchSelectedItinerary();
+  /** Save candidate for the vehicle dialog draft; the selected itinerary itself stays untouched. */
+  function withVehiclePlans(
+    plan: ItineraryRecord,
+    vehiclePlans: ItineraryVehiclePlan[],
+  ): ItineraryRecord | null {
+    if (!options.canEditContent()) return null;
+    const candidate = JSON.parse(JSON.stringify(plan)) as ItineraryRecord;
+    candidate.vehiclePlans = cloneVehiclePlans(vehiclePlans);
+    syncQuoteOptions(candidate);
+    return candidate;
   }
 
   /**
@@ -586,16 +590,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     }));
   }
 
-  function cloneVehiclePlans(vehiclePlans: ItineraryVehiclePlan[]) {
-    return vehiclePlans.map((plan) => ({
-      ...plan,
-      arrangements: plan.arrangements.map((a) => ({
-        ...a,
-        vehicles: a.vehicles.map((v) => ({ ...v })),
-      })),
-    }));
-  }
-
   return {
     applyDayOrder,
     addDay,
@@ -612,7 +606,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     updateHotelPlanSelection,
     updateItineraryBasics,
     updateQuoteOption,
-    updateVehiclePlan,
+    withVehiclePlans,
     updateMeal,
     updateQuoteSettings,
   };

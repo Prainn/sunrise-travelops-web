@@ -1283,7 +1283,21 @@
       "my": "Burmese",
       "km": "Khmer",
       "lo": "Lao"
-    }
+    },
+    "paxSegmentPrice": "{pax} PAX segment group price (CNY)",
+    "paxStagePrice": "{pax} PAX stage group price (CNY)",
+    "paxTotalVehiclePrice": "{pax} PAX full-trip group price (CNY)",
+    "vehiclePricingAutomatic": "Auto total",
+    "vehiclePricingManual": "Manual total",
+    "vehiclePaxTotalHint": "Entering a value sets a manual full-trip price; clear it to restore this PAX tier's segment auto-total.",
+    "vehicleStageTotalHint": "Stage quotes always total the stage prices automatically and cannot be overridden.",
+    "vehiclePaxOverrideHint": "{pax} PAX segments total ¥{total}. Your manual full-trip price is used for costs.",
+    "vehiclePaxReason": "{pax} PAX change reason",
+    "vehicleModeChangeConfirm": "Changing the quotation method clears the vehicle arrangements and per-PAX prices of the current method. Continue?",
+    "vehicleLegacyStageMismatch": "The original full-trip total ¥{original} differs from the {pax} PAX stage sum {total}. Stage quotes use the stage sum; adjust the stage prices before saving.",
+    "vehicleSeatShortage": "Dated vehicle arrangements must seat the largest PAX tier ({passengers})",
+    "priceNotEntered": "Not entered",
+    "vehiclePaxItem": "{tier} · {pax} PAX"
   },
   "identity": {
     "scope": "Login scope",

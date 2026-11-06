@@ -1283,7 +1283,21 @@
       "my": "缅甸语",
       "km": "高棉语",
       "lo": "老挝语"
-    }
+    },
+    "paxSegmentPrice": "{pax}人 本段整团价（元）",
+    "paxStagePrice": "{pax}人 阶段整团价（元）",
+    "paxTotalVehiclePrice": "{pax}人 全程整团价（元）",
+    "vehiclePricingAutomatic": "自动合计",
+    "vehiclePricingManual": "手动全程价",
+    "vehiclePaxTotalHint": "填写即按手动全程价计入；清空恢复该人数档的各段自动合计。",
+    "vehicleStageTotalHint": "按阶段报价的全程价由各阶段自动合计，不可手动修改。",
+    "vehiclePaxOverrideHint": "{pax}人各段合计 ¥{total}，已手动修改全程价，按修改后金额计入成本。",
+    "vehiclePaxReason": "{pax}人调价原因",
+    "vehicleModeChangeConfirm": "更改报价方式会清空原方式的用车安排和各人数档报价。是否继续？",
+    "vehicleLegacyStageMismatch": "原全程总价 ¥{original} 与 {pax}人各阶段合计 {total} 不一致；按阶段报价以各阶段合计为准，请调整阶段价格后保存。",
+    "vehicleSeatShortage": "已填日期的用车安排座位须容纳最大人数档 {passengers} 人",
+    "priceNotEntered": "未填写",
+    "vehiclePaxItem": "{tier} · {pax}人"
   },
   "identity": {
     "scope": "登录范围",

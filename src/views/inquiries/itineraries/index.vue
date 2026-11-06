@@ -234,17 +234,17 @@
         @submit="submitItineraryPlan"
       />
       <ItineraryVehiclePlansDialog
-        v-if="selectedItinerary"
+        v-if="selectedItinerary && vehicleDraft"
         :model-value="isVehiclePlansDialogVisible"
-        :plans="selectedItinerary.vehiclePlans"
+        :plans="vehicleDraft"
         :saved-plans="savedItinerary?.vehiclePlans ?? []"
         :start-date="selectedItinerary.startDate"
         :planned-days="selectedItinerary?.dailyPlans.length || inquiry.plannedDays"
-        :passenger-count="passengerCount"
+        :pax-tiers="selectedItinerary.paxTiers"
         :editable="contentEditable"
         :saving="isSaving"
         :mode="vehicleMaintenanceMode"
-        @update-plan="updateVehiclePlan"
+        @update-plan="updateVehicleDraftPlan"
         @save="saveSectionDialog('vehicle')"
         @cancel="cancelSectionDialog('vehicle')"
       />
@@ -463,7 +463,7 @@ import PageShell from "@/components/PageShell/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import { usePageTitle } from "@/composables/usePageTitle";
 import { ITINERARY_STATUS_TAG_TYPES } from "./options";
-import { calculateVehiclePlanAutomaticTotal } from "./vehicle-plans";
+import { getVehicleQuotationMode, needsVehicleModeChangeConfirm } from "./vehicle-plans";
 import type { VehicleMaintenanceMode } from "./vehicle-plans";
 import { useItineraryWorkspace } from "./useItineraryWorkspace";
 
@@ -574,13 +574,16 @@ const {
   updateDayField,
   updateHotelPlanSelection,
   updateQuoteOption,
-  updateVehiclePlan,
   updateHotelCost,
   updateHotelRate,
   updateGuidePrice,
-  passengerCount,
   resourceDestination,
   sectionDialogSnapshot,
+  vehicleDraft,
+  openVehicleDraft,
+  discardVehicleDraft,
+  updateVehicleDraftPlan,
+  saveVehicleDraft,
   savedItinerary,
   showChildPrice,
 } = useItineraryWorkspace({
@@ -750,7 +753,7 @@ function dayVehicleSummary(day: ItineraryDayRecord) {
 }
 
 function openDayPlan(section: "hotel" | "vehicle" | "guide", command?: string) {
-  if (section === "vehicle" && command) openVehiclePlans(command);
+  if (section === "vehicle" && command) void openVehiclePlans(command);
   else openSectionDialog(section);
 }
 
@@ -790,46 +793,30 @@ function updateHotelReason(tier: ItineraryHotelTier, destination: string, reason
 function openSectionDialog(section: SectionDialog) {
   const plan = selectedItinerary.value;
   if (!plan) return;
+  if (section === "vehicle") {
+    void openVehiclePlans(getVehicleQuotationMode(plan.vehiclePlans) ?? "itinerary");
+    return;
+  }
   activeSectionDialog.value = section;
   sectionDialogSnapshot.value = cloneItinerary(plan);
-  if (section === "vehicle") {
-    vehicleMaintenanceMode.value = plan.vehiclePlans.some((vehicle) =>
-      vehicle.arrangements.some((arrangement) => arrangement.vehicles.length),
-    )
-      ? "itinerary"
-      : plan.vehiclePlans.some((vehicle) => vehicle.arrangements.length)
-        ? "stage"
-        : "itinerary";
-  }
   setSectionDialogVisible(section, true);
 }
 
-function openVehiclePlans(command: string | number | object) {
+async function openVehiclePlans(command: string | number | object) {
   if (command !== "itinerary" && command !== "stage") return;
-  openSectionDialog("vehicle");
-  vehicleMaintenanceMode.value = command;
-  if (command !== "stage") return;
   const plan = selectedItinerary.value;
   if (!plan) return;
-  // 已是按段形态时只切换模式，不重置已维护的日期段和手填价格。
-  const hasArrangements = plan.vehiclePlans.some((vehicle) => vehicle.arrangements.length);
-  const hasVehicles = plan.vehiclePlans.some((vehicle) =>
-    vehicle.arrangements.some((arrangement) => arrangement.vehicles.length),
-  );
-  if (hasArrangements && !hasVehicles) return;
-  for (const vehicle of plan.vehiclePlans) {
-    const arrangements = vehicle.arrangements.map((arrangement) => ({
-      ...arrangement,
-      vehicles: [],
-    }));
-    const stagePlan = { ...vehicle, arrangements };
-    updateVehiclePlan(vehicle.tier, {
-      ...stagePlan,
-      totalPrice: calculateVehiclePlanAutomaticTotal(stagePlan),
-      pricingMode: "automatic",
-      adjustmentReason: "",
-    });
-  }
+  const current = getVehicleQuotationMode(plan.vehiclePlans);
+  // 只读时始终查看已保存的方式；可编辑时切换已有安排须先确认，取消则不打开弹窗。
+  const mode = contentEditable.value ? command : (current ?? command);
+  const reset = needsVehicleModeChangeConfirm(plan.vehiclePlans, mode);
+  if (reset && !(await confirmAction("planning.vehicleModeChangeConfirm"))) return;
+  if (selectedItinerary.value !== plan) return;
+  vehicleMaintenanceMode.value = mode;
+  openVehicleDraft(mode, reset);
+  activeSectionDialog.value = "vehicle";
+  sectionDialogSnapshot.value = undefined;
+  setSectionDialogVisible("vehicle", true);
 }
 
 function cancelSectionDialog(section: SectionDialog) {
@@ -842,6 +829,7 @@ function cancelSectionDialog(section: SectionDialog) {
       guideShopping.value = plan.guidePlans[0]?.shopping ?? false;
     }
   }
+  if (section === "vehicle") discardVehicleDraft();
   activeSectionDialog.value = undefined;
   sectionDialogSnapshot.value = undefined;
   setSectionDialogVisible(section, false);
@@ -852,7 +840,8 @@ function cloneItinerary(plan: ItineraryRecord) {
 }
 
 async function saveSectionDialog(section: SectionDialog) {
-  if (activeSectionDialog.value !== section || !(await saveItinerary())) return;
+  if (activeSectionDialog.value !== section) return;
+  if (!(await (section === "vehicle" ? saveVehicleDraft() : saveItinerary()))) return;
   activeSectionDialog.value = undefined;
   sectionDialogSnapshot.value = undefined;
   setSectionDialogVisible(section, false);
@@ -868,6 +857,7 @@ watch(selectedItineraryId, () => {
   isPriceAdjustmentsDialogVisible.value = false;
   activeSectionDialog.value = undefined;
   sectionDialogSnapshot.value = undefined;
+  discardVehicleDraft();
 });
 const dayCards = new Map<string, { expand: () => void }>();
 function setDayCard(id: string, card: unknown) {
