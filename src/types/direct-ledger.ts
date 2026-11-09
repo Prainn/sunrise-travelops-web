@@ -72,6 +72,8 @@ export interface DirectLedgerInput {
 export interface DirectLedgerCreateInput extends DirectLedgerInput {
   businessUnit?: DirectLedgerBusinessUnit;
   creatorId?: string;
+  /** 独立站询盘关联，仅新增接收；询盘负责人须与收客计调一致，创建后不可替换。 */
+  websiteInquiryId?: string;
   /** orderStatus=converted 时必填，台账与团同一事务保存；未成团禁止携带。 */
   tour?: DirectLedgerTourInput;
 }
@@ -120,6 +122,8 @@ export interface DirectLedgerItem extends DirectLedgerInput {
   id: string;
   businessUnit: DirectLedgerBusinessUnit;
   orderNo: string;
+  /** 关联的独立站询盘；历史台账为空，不做猜测回填。 */
+  websiteInquiryId?: string | null;
   /** 收客计调及其姓名快照。 */
   creatorId: string;
   creatorName: string;

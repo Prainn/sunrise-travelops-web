@@ -332,8 +332,7 @@ async function load(
     state.siblingKeys = siblingKeys;
   } catch (error) {
     if (generation !== state.generation) return;
-    // 失败不缓存查询键，再次输入同一姓名可重试。
-    state.key = undefined;
+    // 保留查询键，其他段变化不触发重试；用户再次输入姓名时由 search 重试。
     state.error = requestErrorMessage(error);
   } finally {
     if (generation === state.generation) state.loading = false;
@@ -365,7 +364,10 @@ function discard(key: string) {
 /** 下拉展开时会以空串回调；空姓名不请求，保留上次结果。 */
 function search(rowKey: string, value: string) {
   if (!value.trim()) return;
-  stateOf(rowKey).keyword = value;
+  const state = stateOf(rowKey);
+  state.keyword = value;
+  // 上次查询失败时，同一条件也重新请求。
+  if (state.error) state.key = undefined;
   const index = rows.value.findIndex((row) => row.key === rowKey);
   if (index >= 0) refresh(rowKey, requests.value[index]!);
 }

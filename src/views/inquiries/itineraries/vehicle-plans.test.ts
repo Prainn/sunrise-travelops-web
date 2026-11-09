@@ -84,6 +84,25 @@ describe("vehicle PAX drafts", () => {
     expect(saved[0]!.arrangements).toHaveLength(1);
   });
 
+  it("asks for confirmation when any legacy tier was kept in another mode", () => {
+    const legacy = (tier: "standard" | "vip", withVehicles: boolean): ItineraryVehiclePlan => ({
+      tier,
+      totalPrice: 5000,
+      pricingMode: "manual",
+      arrangements: [{
+        id: `${tier}-range`,
+        startDate: "2026-12-12",
+        endDate: "2026-12-22",
+        totalPrice: 5000,
+        vehicles: withVehicles ? [{ vehicleId: "car-1", vehicleName: "考斯特", seats: 22, quantity: 1 }] : [],
+      }],
+    });
+    const saved = [legacy("standard", true), legacy("vip", false)];
+    expect(needsVehicleModeChangeConfirm(saved, "itinerary")).toBe(true);
+    expect(needsVehicleModeChangeConfirm(saved, "stage")).toBe(true);
+    expect(needsVehicleModeChangeConfirm([legacy("standard", true)], "itinerary")).toBe(false);
+  });
+
   it("uses the selected mode after all arrangements were removed", () => {
     const empty = { ...stagePlan([null, null, null]), arrangements: [] };
     expect(needsVehicleModeChangeConfirm([empty], "itinerary")).toBe(false);

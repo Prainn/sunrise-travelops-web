@@ -45,12 +45,18 @@ export function getVehicleQuotationMode(
   return plans.some((plan) => plan.arrangements.length) ? "stage" : null;
 }
 
+/** Mirrors backend validateVehicleModeChange: each tier with arrangements is judged on its own. */
 export function needsVehicleModeChangeConfirm(
   plans: ItineraryVehiclePlan[],
   mode: VehicleMaintenanceMode,
 ) {
-  const current = getVehicleQuotationMode(plans);
-  return plans.some((plan) => plan.arrangements.length) && current !== null && current !== mode;
+  return plans.some((plan) => {
+    if (!plan.arrangements.length) return false;
+    const planMode =
+      plan.quotationMode ??
+      (plan.arrangements.some((arrangement) => arrangement.vehicles.length) ? "itinerary" : "stage");
+    return planMode !== mode;
+  });
 }
 
 function createPaxRows(paxTiers: number[]): ItineraryVehiclePaxPrice[] {

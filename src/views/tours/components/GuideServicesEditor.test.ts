@@ -168,6 +168,24 @@ describe("guide name search", () => {
     expect(text).not.toContain("未找到该姓名的导游");
   });
 
+  it("retries a failed query only when that segment searches again", async () => {
+    mount([ready, { ...ready, serviceStartAt: "2026-11-17 08:00", serviceEndAt: "2026-11-17 18:00" }]);
+    mocks.availableGuides.mockRejectedValueOnce(new Error("网络异常"));
+    await search(0, "李四");
+    expect(mocks.availableGuides).toHaveBeenCalledTimes(1);
+
+    mocks.availableGuides.mockResolvedValue(result({}));
+    await search(1, "王五");
+    expect(mocks.availableGuides).toHaveBeenCalledTimes(2);
+    expect(mocks.availableGuides).toHaveBeenLastCalledWith(expect.objectContaining({ keyword: "王五" }));
+    expect(textOf(root)).toContain("网络异常");
+
+    await search(0, "李四");
+    expect(mocks.availableGuides).toHaveBeenCalledTimes(3);
+    expect(mocks.availableGuides).toHaveBeenLastCalledWith(expect.objectContaining({ keyword: "李四" }));
+    expect(textOf(root)).not.toContain("网络异常");
+  });
+
   it("drops an outdated response and re-queries when the segment changes", async () => {
     mount([ready]);
     const first = deferred<TourGuideAvailability>();

@@ -51,6 +51,20 @@ export const DEFAULT_TIMEOUT_MS = 30_000;
 /** 文件上传解析、导出等长请求。 */
 export const LONG_REQUEST_TIMEOUT_MS = 120_000;
 
+/**
+ * 含义固定的通用错误码只用本地化文案，后端固定中文 message 不进入界面；
+ * 其余错误码（含可能带具体原因的 AUTH_FORBIDDEN / CONFLICT / NOT_FOUND）仍优先后端原因。
+ */
+const LOCALIZED_ERROR_CODES = new Set<string>([
+  ApiErrorCode.INTERNAL_SERVER_ERROR,
+  ApiErrorCode.TOO_MANY_REQUESTS,
+  ApiErrorCode.AUTH_INVALID_CREDENTIALS,
+  ApiErrorCode.AUTH_PASSWORD_INCORRECT,
+  ApiErrorCode.AUTH_TOKEN_INVALID,
+  ApiErrorCode.AUTH_TOKEN_EXPIRED,
+  ApiErrorCode.AUTH_REFRESH_TOKEN_INVALID,
+]);
+
 function getErrorMessage(code: string, status?: number): string {
   return (
     translateIfExists(`apiErrors.${code}`) ??
@@ -68,7 +82,9 @@ export class ApiError extends Error {
   readonly requestId?: string;
 
   constructor(message: string, options: ApiErrorOptions) {
-    const serverMessage = options.serverMessage?.trim() || undefined;
+    const serverMessage = LOCALIZED_ERROR_CODES.has(options.code)
+      ? undefined
+      : options.serverMessage?.trim() || undefined;
     super(serverMessage ?? message, { cause: options.cause });
     this.name = "ApiError";
     this.code = options.code;

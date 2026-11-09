@@ -53,7 +53,7 @@
           <el-icon class="mr-1">
             <Sort />
           </el-icon>
-          {{ $t("websiteItineraryUi.organizeItinerary") }}
+          {{ reorderLabel || $t("common.reorder") }}
         </el-button>
       </nav>
       <div class="itinerary-workspace__days min-w-0 flex-1 flex flex-col gap-4">
@@ -100,6 +100,8 @@ const props = defineProps<{
   /** 当前行程标识；变化时目录状态重置，不沿用上份行程的日 ID */
   resetKey?: string;
   canAdd?: boolean;
+  /** 排序按钮文案；不传显示通用的“调整顺序” */
+  reorderLabel?: string;
   /** 业务强调色 HEX，仅作用于行程页；不传沿用全局主色 */
   accent?: string;
   /** 顶部信息区的品牌装饰条颜色 */

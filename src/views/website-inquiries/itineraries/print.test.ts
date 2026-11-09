@@ -82,6 +82,9 @@ it.each(["en", "zh"] as const)("uses identical frozen HTML for %s preview and fo
   expect(previewHtml).not.toContain(`3. ${statement}`);
   expect(previewHtml).not.toMatch(/Luxury|Comfort|Economy/);
   expect(previewHtml).toContain('class="tier">5-star</th>');
+  // 天数列按顺序输出 D{n}，不输出冻结日期。
+  expect(previewHtml).toContain('<td class="center">D1</td>');
+  expect(previewHtml).not.toContain("2026-10-30");
 });
 
 it("keeps historical frozen notes and labels without deriving a new statement", () => {

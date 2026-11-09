@@ -24,6 +24,19 @@
       label-width="auto"
     >
       <el-row :gutter="12">
+        <el-col v-if="linkedInquiry" :span="24">
+          <el-form-item :label="$t('whatsapp.linkedInquiry')">
+            <el-input :model-value="linkedInquiry.code" disabled />
+            <div class="text-[12px] text-[var(--el-text-color-secondary)]">
+              {{ $t("whatsapp.linkedInquiryHint") }}
+            </div>
+          </el-form-item>
+        </el-col>
+        <el-col v-if="ledger && isWebsite" :xs="24" :sm="12">
+          <el-form-item :label="$t('whatsapp.linkedInquiry')">
+            <el-input :model-value="ledger.websiteInquiryId ? $t('whatsapp.inquiryLinked') : $t('whatsapp.notLinked')" disabled />
+          </el-form-item>
+        </el-col>
         <el-col v-if="ledger" :xs="24" :sm="12">
           <el-form-item :label="$t('ledger.direct.orderNo')">
             <el-input :model-value="ledger.orderNo" disabled />
@@ -62,8 +75,9 @@
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('ledger.direct.creator')" :prop="isDelegate ? 'creatorId' : undefined">
+            <el-input v-if="linkedInquiry" :model-value="linkedInquiry.owner" disabled />
             <RemoteSelect
-              v-if="isDelegate"
+              v-else-if="isDelegate"
               v-model="form.creatorId"
               :load-options="loadCollectors"
               :query-key="businessUnit"
@@ -264,6 +278,7 @@ import type {
 import { hasUserPermission } from "@/utils/permission";
 import TourEditorDialog from "@/views/tours/components/TourEditorDialog.vue";
 import type { LedgerTourDraft } from "@/views/tours/tour-form";
+import type { WebsiteInquiry } from "@/types/website";
 import {
   directLedgerFormFromItem,
   directLedgerInput,
@@ -290,6 +305,8 @@ const props = defineProps<{
   /** 新增时为当前业务；编辑/查看以记录自身业务为准。 */
   businessUnit: DirectLedgerBusinessUnit;
   readonly: boolean;
+  /** 仅新增：从独立站询盘创建时关联，收客计调固定为询盘负责人；编辑不提交关联。 */
+  linkedInquiry?: Pick<WebsiteInquiry, "id" | "code" | "ownerId" | "owner"> | null;
 }>();
 const emit = defineEmits<{ saved: [ledger: DirectLedgerItem] }>();
 const visible = defineModel<boolean>({ required: true });
@@ -323,7 +340,9 @@ const dialogTitle = computed(() => {
   if (!props.ledger) return t("common.create");
   return t(props.readonly ? "common.view" : "common.edit");
 });
+const linkedInquiry = computed(() => (props.ledger ? null : props.linkedInquiry ?? null));
 const creatorName = computed(() => props.ledger?.creatorName ?? user.userInfo.nickname ?? "");
+const linkFields = computed(() => (linkedInquiry.value ? { websiteInquiryId: linkedInquiry.value.id } : {}));
 const canCreateTour = computed(() => hasUserPermission(user.userInfo, "tour:create"));
 const canCorrectOrderStatus = computed(() => Boolean(
   props.ledger?.capabilities.canEdit &&
@@ -365,6 +384,10 @@ function resetForm() {
     form,
     props.ledger ? directLedgerFormFromItem(props.ledger) : emptyDirectLedgerForm(),
   );
+  if (linkedInquiry.value) {
+    form.creatorId = linkedInquiry.value.ownerId;
+    optionNames.set(linkedInquiry.value.ownerId, linkedInquiry.value.owner);
+  }
   acceptedSource = form.source;
   sourceConfirmation = undefined;
 }
@@ -453,6 +476,7 @@ function openTourDraft() {
         countryItemId: tour.countryItemId,
         businessUnit: unit,
         ...(isDelegate.value ? { creatorId: form.creatorId } : {}),
+        ...linkFields.value,
         tour,
       });
       emit("saved", saved);
@@ -486,6 +510,7 @@ async function handleSubmit() {
         ...body,
         businessUnit: businessUnit.value,
         ...(isDelegate.value ? { creatorId: form.creatorId } : {}),
+        ...linkFields.value,
       });
     ElMessage.success(t(props.ledger ? "common.updateSuccess" : "common.createSuccess"));
     emit("saved", saved);

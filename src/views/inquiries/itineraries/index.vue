@@ -809,7 +809,7 @@ async function openVehiclePlans(command: string | number | object) {
   const current = getVehicleQuotationMode(plan.vehiclePlans);
   // 只读时始终查看已保存的方式；可编辑时切换已有安排须先确认，取消则不打开弹窗。
   const mode = contentEditable.value ? command : (current ?? command);
-  const reset = needsVehicleModeChangeConfirm(plan.vehiclePlans, mode);
+  const reset = contentEditable.value && needsVehicleModeChangeConfirm(plan.vehiclePlans, mode);
   if (reset && !(await confirmAction("planning.vehicleModeChangeConfirm"))) return;
   if (selectedItinerary.value !== plan) return;
   vehicleMaintenanceMode.value = mode;

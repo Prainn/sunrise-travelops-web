@@ -224,6 +224,25 @@ describe("request session recovery", () => {
     });
   });
 
+  it.each([
+    ["INTERNAL_SERVER_ERROR", 500, "服务器内部错误"],
+    ["TOO_MANY_REQUESTS", 429, "请求过于频繁，请稍后重试"],
+  ])("localizes the fixed %s message instead of the server text", async (code, status, message) => {
+    translations.messages = { [`apiErrors.${code}`]: "Localized" };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ code, message }), { status })));
+    const error = await request.get("/example").catch((caught: unknown) => caught);
+    expect(error).toMatchObject({ code, message: "Localized", serverMessage: undefined });
+    expect(requestErrorMessage(error)).toBe("Localized");
+  });
+
+  it("keeps a specific AUTH_FORBIDDEN reason from the server", async () => {
+    translations.messages = { "apiErrors.AUTH_FORBIDDEN": "Forbidden" };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      code: "AUTH_FORBIDDEN", message: "只能删除当前本人负责的询盘",
+    }), { status: 403 })));
+    await expect(request.get("/example")).rejects.toMatchObject({ message: "只能删除当前本人负责的询盘" });
+  });
+
   it("falls back for non-JSON proxy failures", async () => {
     translations.messages = { "apiErrors.HTTP_502": "服务暂不可用" };
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("<html>Bad gateway</html>", { status: 502 })));
