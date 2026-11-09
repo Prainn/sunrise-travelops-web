@@ -82,7 +82,7 @@ export function useWebsiteHotelRules() {
       message: t("websiteConfig.validation.maxLength", { field: t("common.nameEn"), max: 150 }),
       trigger: "blur",
     }],
-    cityId: cityRules(t, "websiteConfig.belongsToCity"),
+    cityId: cityRules(t, "common.cityRegion"),
     price: [{
       validator: (_rule, value: string, callback) => {
         callback(typeof value === "string" && /^(0|[1-9]\d{0,9})(\.\d{1,2})?$/.test(value)
@@ -141,7 +141,7 @@ export function useWebsiteAttractionRules(record: Ref<WebsiteAttraction | undefi
   };
   return computed<FormRules<WebsiteAttraction>>(() => ({
     ...nameRules(t),
-    cityId: cityRules(t, "websiteConfig.belongsToCity"),
+    cityId: cityRules(t, "common.cityRegion"),
     price: [{
       required: Boolean(record.value?.chargeable),
       validator: (_rule, value: string, callback) => {
@@ -171,7 +171,7 @@ export function useWebsitePatternRules() {
   const { t } = useI18n();
   return computed<FormRules<WebsitePattern>>(() => ({
     ...nameRules(t),
-    cityId: cityRules(t, "websiteConfig.belongsToCity"),
+    cityId: cityRules(t, "common.cityRegion"),
     attractionIds: [{ type: "array", max: 200, message: t("websiteConfig.validation.maxAttractions"), trigger: "change" }],
   }));
 }

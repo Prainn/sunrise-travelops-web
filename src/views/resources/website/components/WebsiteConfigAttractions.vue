@@ -113,7 +113,7 @@
         label-width="auto"
       >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
-          <el-form-item :label="$t('websiteConfig.belongsToCity')" prop="cityId">
+          <el-form-item :label="$t('common.cityRegion')" prop="cityId">
             <WebsiteConfigSelect
               v-model="record.cityId"
               group="cities"

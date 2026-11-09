@@ -32,7 +32,7 @@
       <el-form-item :label="$t('common.englishName')">
         <el-input v-model.trim="form.englishName" :maxlength="150" />
       </el-form-item>
-      <el-form-item :label="$t('attraction.area')" prop="area">
+      <el-form-item :label="$t('common.cityRegion')" prop="area">
         <CitySelect v-model="form.area" />
       </el-form-item>
       <el-form-item :label="$t('resource.description')" prop="description">
@@ -129,7 +129,7 @@ const isVisible = computed({
 const unitOptions = computed(() => getResourceUnitOptions("attraction", locale.value));
 const rules = computed<FormRules>(() => ({
   name: [{ required: true, message: t("attraction.nameRequired"), trigger: "blur" }],
-  area: [{ required: true, message: t("attraction.areaRequired"), trigger: "change" }],
+  area: [{ required: true, message: t("common.selectCity"), trigger: "change" }],
   description: [{ required: true, message: t("resource.descriptionRequired"), trigger: "blur" }],
   price: [{ required: true, message: t("resource.priceRequired"), trigger: "blur" }],
   unit: [{ required: true, message: t("resource.priceUnitRequired"), trigger: "change" }],

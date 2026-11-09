@@ -565,7 +565,7 @@
     "englishName": "英文名",
     "address": "地址",
     "price": "价格",
-    "selectCity": "选择城市",
+    "selectCity": "选择城市/区域",
     "contact": "联系人",
     "countryOrRegion": "国家/地区",
     "email": "邮箱",
@@ -1049,8 +1049,6 @@
     "breakfastIncluded": "含早餐"
   },
   "attraction": {
-    "area": "旅游区域",
-    "areaRequired": "选择旅游区域",
     "category": "资源类别",
     "categoryExperience": "体验项目",
     "categoryPackage": "组合套票",
@@ -1481,7 +1479,6 @@
     "searchPlaceholder": "搜索名称或编码",
     "disabled": "停用",
     "city": "城市",
-    "belongsToCity": "所属城市",
     "days": "天数",
     "listSeparator": "、",
     "validation": {

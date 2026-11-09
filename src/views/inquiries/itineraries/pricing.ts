@@ -126,7 +126,7 @@ export function getResourcePriceOptions(
         details: [
           { labelKey: "resource.code", value: attraction.code },
           { labelKey: "resource.attractionName", value: attraction.name },
-          { labelKey: "attraction.area", value: attraction.area },
+          { labelKey: "common.cityRegion", value: attraction.area },
           {
             labelKey: "attraction.category",
             value: attraction.category ? attractionCategoryLabelKeys[attraction.category] : "",

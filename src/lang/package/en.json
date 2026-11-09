@@ -565,7 +565,7 @@
     "englishName": "English name",
     "address": "Address",
     "price": "Price",
-    "selectCity": "Select a city",
+    "selectCity": "Select a city/region",
     "contact": "Contact",
     "countryOrRegion": "Country/Region",
     "email": "Email",
@@ -1049,8 +1049,6 @@
     "breakfastIncluded": "Breakfast included"
   },
   "attraction": {
-    "area": "Tourism Area",
-    "areaRequired": "Select a tourism area",
     "category": "Resource Category",
     "categoryExperience": "Experience",
     "categoryPackage": "Package",
@@ -1481,7 +1479,6 @@
     "searchPlaceholder": "Search name or code",
     "disabled": "Disabled",
     "city": "City",
-    "belongsToCity": "City",
     "days": "Days",
     "listSeparator": ", ",
     "validation": {
