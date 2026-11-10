@@ -10,6 +10,7 @@ const service = vi.hoisted(() => ({
   messages: vi.fn(),
   markRead: vi.fn(),
   sendText: vi.fn(),
+  sendReaction: vi.fn(),
   retryMessage: vi.fn(),
 }));
 vi.mock("@/services/whatsapp.service", async (importOriginal) => ({
@@ -25,7 +26,7 @@ vi.mock("@/stores/user", async () => {
 
 import { useUserStore } from "@/stores/user";
 import { whatsappInquiryInput } from "@/services/whatsapp.service";
-import { canRetryMessage, compareSeq, mergeLatestPage, messageSourceLabel, sortMessages, maxSeq, threadAccess } from "./message-utils";
+import { canRetryMessage, compareSeq, mergeLatestPage, messageSourceLabel, sortMessages, maxSeq, threadAccess, threadMessages } from "./message-utils";
 import { useWhatsappWorkbench } from "./useWhatsappWorkbench";
 
 const BIG_SEQ = "9007199254740993";
@@ -181,6 +182,20 @@ describe("useWhatsappWorkbench", () => {
     expect(service.sendText).toHaveBeenCalledTimes(3);
   });
 
+  it("表情回应保留目标和请求编号，未知结果不允许换表情重复提交", async () => {
+    const workbench = setup();
+    await workbench.selectConversation("c-1");
+    const target = message({ id: "customer-message", providerId: "provider-original" });
+    service.sendReaction.mockRejectedValueOnce(networkError());
+    expect((await workbench.sendReaction(target, "👍"))?.kind).toBe("uncertain");
+    const requestId = service.sendReaction.mock.calls[0]![2];
+    expect(workbench.sendReaction(target, "❤️")).toBeUndefined();
+    service.sendReaction.mockResolvedValueOnce(message({ id: "reaction", seq: "12", kind: "reaction", clientRequestId: requestId }));
+    await workbench.resubmitPending(requestId);
+    expect(service.sendReaction.mock.calls[1]).toEqual(["c-1", target.id, requestId, "👍"]);
+    expect(service.sendText).not.toHaveBeenCalled();
+  });
+
   it("失败重试生成新编号，结果不明时复用该编号；unknown 不请求重试", async () => {
     const workbench = setup();
     await workbench.selectConversation("c-1");
@@ -227,5 +242,20 @@ describe("useWhatsappWorkbench", () => {
     expect(workbench.detail.value).toBeNull();
     expect(workbench.messages.value).toEqual([]);
     expect(workbench.threadError.value?.kind).toBe("not-found");
+  });
+});
+
+describe("消息气泡与交互", () => {
+  it("新回应更新已加载的旧消息，保留原始分页行而不重复显示", () => {
+    const original = message({ id: "original", presentation: { text: "hi", editedAt: null, hidden: false, interaction: null, targetMessageId: null, emoji: null, reactions: [] } });
+    const reaction = message({ id: "reaction", seq: "99", kind: "reaction", direction: "outbound", presentation: { text: "", editedAt: null, hidden: true, interaction: "reaction", targetMessageId: "original", emoji: "👍", reactions: [] } });
+    const visible = threadMessages([original, reaction]);
+    expect(visible).toHaveLength(1);
+    expect(visible[0]!.presentation!.reactions[0]!.emoji).toBe("👍");
+    expect(original.presentation!.reactions).toEqual([]);
+    const stale = message({ ...original, presentation: visible[0]!.presentation });
+    expect(threadMessages([stale, { ...reaction, status: "failed", presentation: { ...reaction.presentation!, hidden: false } }])[0]!.presentation!.reactions).toEqual([]);
+    const removal = message({ ...reaction, id: "removal", seq: "100", presentation: { ...reaction.presentation!, emoji: "" } });
+    expect(threadMessages([original, reaction, removal])[0]!.presentation!.reactions).toEqual([]);
   });
 });

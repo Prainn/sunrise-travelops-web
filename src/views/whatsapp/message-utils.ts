@@ -11,6 +11,7 @@ import type {
 export interface PendingMessage {
   clientRequestId: string;
   text: string;
+  reaction?: { targetMessageId: string; emoji: string };
   /** sending：请求中；uncertain：结果未知，只能用同一请求编号再次提交；rejected：服务端明确拒绝。 */
   state: "sending" | "uncertain" | "rejected";
   error: string;
@@ -164,4 +165,35 @@ export function attachmentSummary(attachment: Record<string, unknown> | null): s
   };
   return [pick("fileName", "filename", "name", "caption"), pick("mimeType", "mime_type", "type"), pick("fileSize", "size")]
     .filter(Boolean);
+}
+
+/** Merge newly loaded interactions into older bubbles without changing sequence cursors. */
+export function threadMessages(messages: WhatsappMessage[]): WhatsappMessage[] {
+  const items = sortMessages(messages).map((message) => ({
+    ...message,
+    presentation: message.presentation ? { ...message.presentation, reactions: [...message.presentation.reactions] } : undefined,
+  }));
+  const byId = new Map(items.map((message) => [message.id, message]));
+  for (const message of items) {
+    const change = message.presentation;
+    const target = change?.targetMessageId ? byId.get(change.targetMessageId) : undefined;
+    if (!change || !target?.presentation) continue;
+    if (["failed", "unknown"].includes(message.status)) {
+      target.presentation.reactions = target.presentation.reactions.filter((item) => item.id !== message.id);
+      continue;
+    }
+    if (change.interaction === "edit" && (!target.presentation.editedAt || message.occurredAt >= target.presentation.editedAt)) {
+      target.presentation.text = change.text;
+      target.presentation.editedAt = message.occurredAt;
+    }
+    if (change.interaction === "reaction") {
+      const previous = target.presentation.reactions.find((item) => item.direction === message.direction);
+      if (previous && compareSeq(previous.seq, message.seq) > 0) continue;
+      target.presentation.reactions = target.presentation.reactions.filter((item) => item.direction !== message.direction);
+      if (change.emoji !== "") target.presentation.reactions.push({
+        id: message.id, seq: message.seq, direction: message.direction, emoji: change.emoji, source: message.source, status: message.status,
+      });
+    }
+  }
+  return items.filter((message) => !message.presentation?.hidden);
 }

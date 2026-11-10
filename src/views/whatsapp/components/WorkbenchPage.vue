@@ -76,6 +76,7 @@
             :older-loading="workbench.olderLoading.value"
             :retrying-ids="workbench.retryingIds.value"
             @send="handleSend"
+            @react="handleReact"
             @resubmit="handleResubmit"
             @discard="workbench.discardPending"
             @retry="handleRetry"
@@ -244,6 +245,9 @@ function notifySend(feedback: SendFeedback | undefined) {
 }
 async function handleSend(text: string) {
   notifySend(await workbench.sendText(text));
+}
+async function handleReact(message: WhatsappMessage, emoji: string) {
+  notifySend(await workbench.sendReaction(message, emoji));
 }
 async function handleResubmit(clientRequestId: string) {
   notifySend(await workbench.resubmitPending(clientRequestId));

@@ -319,7 +319,9 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     const currentSession = session;
     updatePending(id, item.clientRequestId, { state: "sending", error: "" });
     try {
-      const saved = await whatsappService.sendText(id, item.clientRequestId, item.text);
+      const saved = item.reaction
+        ? await whatsappService.sendReaction(id, item.reaction.targetMessageId, item.clientRequestId, item.reaction.emoji)
+        : await whatsappService.sendText(id, item.clientRequestId, item.text);
       if (currentSession !== session) return { kind: "queued", message: "" };
       setPending(id, (pendingByConversation.value.get(id) ?? []).filter((entry) => entry.clientRequestId !== item.clientRequestId));
       if (id === selectedId.value) messages.value = mergeMessages(messages.value, [saved]);
@@ -346,6 +348,18 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
       state: "sending",
       error: "",
       createdAt: new Date().toISOString(),
+    };
+    setPending(id, [...(pendingByConversation.value.get(id) ?? []), item]);
+    return submitPending(id, item);
+  }
+
+  function sendReaction(message: WhatsappMessage, emoji: string) {
+    const id = selectedId.value;
+    if (pending.value.some((item) => item.reaction?.targetMessageId === message.id && item.state !== "rejected")) return undefined;
+    const item: PendingMessage = {
+      clientRequestId: crypto.randomUUID(), text: emoji,
+      reaction: { targetMessageId: message.id, emoji },
+      state: "sending", error: "", createdAt: new Date().toISOString(),
     };
     setPending(id, [...(pendingByConversation.value.get(id) ?? []), item]);
     return submitPending(id, item);
@@ -473,6 +487,7 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     loadOlder,
     markDisplayed,
     sendText,
+    sendReaction,
     resubmitPending,
     discardPending,
     retryMessage,

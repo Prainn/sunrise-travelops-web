@@ -2320,6 +2320,13 @@
     "viewPrevious": "查看历史咨询",
     "loadOlder": "加载更早消息",
     "attachment": "附件",
+    "edited": "已编辑",
+    "react": "表情回应",
+    "unknownReaction": "表情不可用",
+    "unlinkedReaction": "表情回应",
+    "removeReaction": "移除表情",
+    "reactionPending": "表情回应处理中",
+    "unavailableMessage": "无法显示此消息",
     "statuses": {
       "received": "已接收",
       "queued": "排队中",
@@ -2327,7 +2334,7 @@
       "accepted": "已受理",
       "sent": "已发送",
       "delivered": "已送达",
-      "read": "客户已读",
+      "read": "已读",
       "failed": "发送失败",
       "unknown": "结果待核实"
     },

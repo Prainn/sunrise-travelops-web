@@ -79,6 +79,16 @@ export interface WhatsappMessageQueryParams extends BaseQueryParams {
   afterSeq?: string;
 }
 
+export interface WhatsappMessagePresentation {
+  text: string;
+  editedAt: string | null;
+  hidden: boolean;
+  interaction: "reaction" | "edit" | null;
+  targetMessageId: string | null;
+  emoji: string | null;
+  reactions: { id: string; seq: string; direction: "inbound" | "outbound"; emoji: string | null; source: WhatsappMessage["source"]; status: WhatsappMessageStatus }[];
+}
+
 export interface WhatsappMessage {
   id: string;
   /** 十进制字符串序号，超出 Number 安全范围，只能用 BigInt 比较。 */
@@ -95,6 +105,7 @@ export interface WhatsappMessage {
   text: string;
   /** 供应商附件元数据，仅展示，不下载远端资源。 */
   attachment: Record<string, unknown> | null;
+  presentation?: WhatsappMessagePresentation;
   status: WhatsappMessageStatus;
   actorId: string | null;
   actorIdentityId: string | null;

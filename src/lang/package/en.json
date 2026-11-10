@@ -2320,6 +2320,13 @@
     "viewPrevious": "View previous consultation",
     "loadOlder": "Load earlier",
     "attachment": "Attachment",
+    "edited": "edited",
+    "react": "React",
+    "unknownReaction": "Reaction unavailable",
+    "unlinkedReaction": "Reaction",
+    "removeReaction": "Remove reaction",
+    "reactionPending": "Reaction pending",
+    "unavailableMessage": "Message unavailable",
     "statuses": {
       "received": "Received",
       "queued": "Queued",
@@ -2327,7 +2334,7 @@
       "accepted": "Accepted",
       "sent": "Sent",
       "delivered": "Delivered",
-      "read": "Read by customer",
+      "read": "Read",
       "failed": "Failed",
       "unknown": "Pending verification"
     },

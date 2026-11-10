@@ -88,6 +88,9 @@ export const whatsappService = {
   sendText(id: string, clientRequestId: string, text: string) {
     return request.post<WhatsappMessage>(`${conversationUrl(id)}/messages`, { clientRequestId, text });
   },
+  sendReaction(id: string, messageId: string, clientRequestId: string, emoji: string) {
+    return request.post<WhatsappMessage>(`${conversationUrl(id)}/messages/${encodeURIComponent(messageId)}/reactions`, { clientRequestId, emoji });
+  },
   retryMessage(id: string, messageId: string, clientRequestId: string) {
     return request.post<WhatsappMessage>(
       `${conversationUrl(id)}/messages/${encodeURIComponent(messageId)}/retry`,
