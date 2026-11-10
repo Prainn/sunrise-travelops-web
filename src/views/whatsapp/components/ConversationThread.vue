@@ -2,9 +2,20 @@
   <SectionCard fill padding="compact" body-class="flex flex-col gap-[8px] min-h-0">
     <template #header>
       <div class="flex items-center justify-between gap-[8px] min-w-0">
-        <h3 class="m-0 text-[16px] truncate">
-          {{ detail.name || detail.bsuid || detail.phone }}
-        </h3>
+        <div class="flex flex-1 items-center flex-wrap gap-[8px] min-w-0">
+          <h3 class="m-0 max-w-full text-[16px] truncate">
+            {{ detail.name || detail.bsuid || detail.phone }}
+          </h3>
+          <el-tag
+            v-if="phoneRegionLabel"
+            type="info"
+            effect="plain"
+            size="small"
+            :title="$t('whatsapp.phoneRegion')"
+          >
+            {{ phoneRegionLabel }}
+          </el-tag>
+        </div>
         <el-tag :type="STATE_TAG_TYPES[detail.state]">
           {{ $t(`whatsapp.states.${detail.state}`) }}
         </el-tag>
@@ -215,6 +226,8 @@ import {
   type PendingMessage,
 } from "../message-utils";
 
+import { phoneRegion } from "../phone-region";
+
 const MAX_TEXT_LENGTH = 4096;
 const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
@@ -238,7 +251,7 @@ const emit = defineEmits<{
   displayed: [conversationId: string, isUserOpened: boolean];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const draft = ref("");
 const activeReactionMessageId = ref("");
 const scrollRef = ref<HTMLElement>();
@@ -246,6 +259,14 @@ const now = ref(Date.now());
 let clock: ReturnType<typeof setInterval> | undefined;
 let renderedConversationId = "";
 
+const phoneRegionLabel = computed(() => {
+  const region = phoneRegion(props.detail.phone);
+  if (!region) return "";
+  if (region.regions.includes("001")) return t("whatsapp.globalPhoneRegion", { code: region.callingCode });
+  if (region.regions.length !== 1) return t("whatsapp.sharedPhoneRegion", { code: region.callingCode });
+  const names = new Intl.DisplayNames([locale.value], { type: "region", style: "short" });
+  return `${names.of(region.regions[0]!)} ${region.callingCode}`;
+});
 const visibleMessages = computed(() => threadMessages(props.messages));
 const access = computed(() => threadAccess(props.detail));
 const retriedIds = computed(() => new Set(props.messages.map((message) => message.retryOf).filter(Boolean)));
