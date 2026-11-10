@@ -98,6 +98,7 @@
     "businessGroups": "业务组",
     "accountLinks": "账号关联",
     "whatsappWorkbench": "WhatsApp 工作台",
+    "whatsappQuickReplies": "快捷回复",
     "whatsappInbox": "会话收件箱",
     "whatsappIntegration": "接入状态"
   },
@@ -2351,6 +2352,19 @@
     "reply": "回复",
     "replyingTo": "回复消息",
     "cancelReply": "取消回复",
+    "emoji": "表情",
+    "quickReply": "快捷回复",
+    "quickReplies": {
+      "stage": "业务阶段",
+      "scenario": "触发场景",
+      "content": "内容",
+      "sortOrder": "排序",
+      "search": "业务阶段、触发场景或内容",
+      "empty": "暂无快捷回复，请先在维护页面新增",
+      "chooseScenario": "请选择业务阶段和触发场景",
+      "insert": "插入草稿",
+      "required": "请填写此项"
+    },
     "formatting": {
       "label": "文字格式",
       "bold": "加粗",

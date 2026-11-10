@@ -5,7 +5,6 @@ export interface MessageBlock {
   numbers?: number[];
   code?: string;
 }
-export type MessageFormat = "bold" | "italic";
 
 const INLINE_MARKERS = [
   { marker: "```", tag: "code" },
@@ -78,19 +77,4 @@ export function parseMessageText(text: string): MessageBlock[] {
     });
   }
   return blocks;
-}
-
-/** Apply a toolbar action using textarea UTF-16 selection offsets, retaining the selected text. */
-export function applyMessageFormat(text: string, start: number, end: number, format: MessageFormat) {
-  const markers: Record<MessageFormat, string> = { bold: "*", italic: "_" };
-  const marker = markers[format];
-  const selected = text.slice(start, end);
-  if (selected.startsWith(marker) && selected.endsWith(marker) && selected.length >= marker.length * 2) {
-    const content = selected.slice(marker.length, -marker.length);
-    return { text: text.slice(0, start) + content + text.slice(end), start, end: start + content.length };
-  }
-  if (text.slice(start - marker.length, start) === marker && text.slice(end, end + marker.length) === marker) {
-    return { text: text.slice(0, start - marker.length) + selected + text.slice(end + marker.length), start: start - marker.length, end: end - marker.length };
-  }
-  return { text: text.slice(0, start) + marker + selected + marker + text.slice(end), start: start + marker.length, end: end + marker.length };
 }

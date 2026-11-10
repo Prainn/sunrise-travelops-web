@@ -97,6 +97,25 @@ export interface WhatsappReply {
   source: WhatsappMessageSource;
 }
 
+export interface WhatsappQuickReply {
+  id: string;
+  stage: string;
+  scenario: string;
+  content: string;
+  enabled: boolean;
+  sortOrder: number;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+export type WhatsappQuickReplyInput = Pick<WhatsappQuickReply, "stage" | "scenario" | "content" | "enabled" | "sortOrder"> & { version?: number };
+export interface WhatsappQuickReplyQuery extends BaseQueryParams {
+  keyword?: string;
+  stage?: string;
+  scenario?: string;
+  status?: "enabled" | "disabled";
+}
+
 export interface WhatsappMessage {
   id: string;
   /** 十进制字符串序号，超出 Number 安全范围，只能用 BigInt 比较。 */

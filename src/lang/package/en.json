@@ -98,6 +98,7 @@
     "businessGroups": "Business Groups",
     "accountLinks": "Account Links",
     "whatsappWorkbench": "WhatsApp Workbench",
+    "whatsappQuickReplies": "Quick replies",
     "whatsappInbox": "Inbox",
     "whatsappIntegration": "Integration"
   },
@@ -2351,6 +2352,19 @@
     "reply": "Reply",
     "replyingTo": "Replying to",
     "cancelReply": "Cancel reply",
+    "emoji": "Emoji",
+    "quickReply": "Quick replies",
+    "quickReplies": {
+      "stage": "Business stage",
+      "scenario": "Trigger scenario",
+      "content": "Content",
+      "sortOrder": "Sort order",
+      "search": "Stage, scenario or content",
+      "empty": "No quick replies yet. Add one on the maintenance page.",
+      "chooseScenario": "Choose a business stage and trigger scenario",
+      "insert": "Insert into draft",
+      "required": "This field is required"
+    },
     "formatting": {
       "label": "Text formatting",
       "bold": "Bold",

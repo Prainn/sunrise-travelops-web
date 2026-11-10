@@ -58,7 +58,7 @@
         <div class="text-[12px] text-[var(--el-text-color-secondary)]">
           {{ sourceLabel(message) }}
         </div>
-        <div class="flex items-center gap-[6px] min-w-0">
+        <div class="flex items-center gap-[6px] min-w-0" :class="message.direction === 'outbound' ? 'flex-row-reverse' : ''">
           <div class="whatsapp-message__bubble min-w-0" :class="{ 'is-reaction': message.presentation?.interaction === 'reaction' }">
             <ReplyPreview v-if="messageReply(message)" class="mb-[6px]" :reply="messageReply(message)!" />
             <div v-if="message.presentation?.interaction === 'reaction'" class="text-[24px]" :title="$t('whatsapp.unlinkedReaction')">
@@ -246,32 +246,11 @@
             ×
           </el-button>
         </div>
-        <div class="flex items-center flex-wrap gap-[3px]" role="toolbar" :aria-label="$t('whatsapp.formatting.label')">
-          <button
-            v-for="action in FORMAT_ACTIONS"
-            :key="action.format"
-            type="button"
-            class="grid place-items-center box-border w-[36px] h-[30px] p-0 border-solid border-[1px] border-[var(--el-border-color)] rounded-[5px] bg-[var(--el-bg-color)] text-[14px] text-[var(--el-text-color-regular)] cursor-pointer hover:border-[var(--el-color-primary)] hover:text-[var(--el-color-primary)] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-[var(--el-color-primary)]"
-            :disabled="!access.canCompose"
-            :aria-label="$t(`whatsapp.formatting.${action.format}`)"
-            :title="$t(`whatsapp.formatting.${action.format}`)"
-            @mousedown.prevent
-            @click="handleFormat(action.format)"
-          >
-            <span :class="action.className" aria-hidden="true">{{ action.icon }}</span>
-          </button>
-        </div>
-        <el-input
+        <MessageComposer
           ref="composerRef"
           v-model="draft"
-          type="textarea"
-          :rows="3"
-          :maxlength="MAX_TEXT_LENGTH"
-          show-word-limit
           :disabled="!access.canCompose"
-          :placeholder="$t('whatsapp.composerPlaceholder')"
-          @keydown.enter.ctrl.prevent="handleSend"
-          @keydown.enter.meta.prevent="handleSend"
+          @send="handleSend"
         />
         <div class="flex justify-end">
           <el-button
@@ -290,7 +269,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { ElMessage, type InputInstance } from "element-plus";
 import FeedbackState from "@/components/FeedbackState/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import type { WhatsappConversationDetail, WhatsappMessage, WhatsappReply } from "@/types/whatsapp";
@@ -308,16 +286,12 @@ import {
 } from "../message-utils";
 
 import { phoneRegion } from "../phone-region";
-import { applyMessageFormat, type MessageFormat } from "../message-format";
 import MessageText from "./MessageText.vue";
 import ReplyPreview from "./ReplyPreview.vue";
+import MessageComposer from "./MessageComposer.vue";
 
 const MAX_TEXT_LENGTH = 4096;
 const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
-const FORMAT_ACTIONS: { format: MessageFormat; icon: string; className: string }[] = [
-  { format: "bold", icon: "B", className: "font-bold" },
-  { format: "italic", icon: "I", className: "italic font-serif" },
-];
 
 const props = defineProps<{
   detail: WhatsappConversationDetail;
@@ -342,7 +316,7 @@ const emit = defineEmits<{
 const { t, locale } = useI18n();
 const draft = ref("");
 const replyTo = ref<WhatsappReply>();
-const composerRef = ref<InputInstance>();
+const composerRef = ref<InstanceType<typeof MessageComposer>>();
 const activeReactionMessageId = ref("");
 const scrollRef = ref<HTMLElement>();
 const now = ref(Date.now());
@@ -438,19 +412,7 @@ function handleSend() {
   draft.value = "";
   replyTo.value = undefined;
 }
-async function handleFormat(format: MessageFormat) {
-  const textarea = composerRef.value?.textarea;
-  if (!textarea || !access.value.canCompose) return;
-  const formatted = applyMessageFormat(draft.value, textarea.selectionStart, textarea.selectionEnd, format);
-  if (formatted.text.length > MAX_TEXT_LENGTH) {
-    ElMessage.warning(t("whatsapp.formatting.tooLong", { max: MAX_TEXT_LENGTH }));
-    return;
-  }
-  draft.value = formatted.text;
-  await nextTick();
-  textarea.focus();
-  textarea.setSelectionRange(formatted.start, formatted.end);
-}
+
 function editAgain(item: PendingMessage) {
   draft.value = item.text;
   replyTo.value = item.replyTo;

@@ -15,6 +15,7 @@ import type {
   WhatsappMessage,
   WhatsappMessageQueryParams,
   WhatsappNewConsultationResult,
+  WhatsappQuickReply, WhatsappQuickReplyInput, WhatsappQuickReplyQuery,
 } from "@/types/whatsapp";
 import type { WebsiteOwnerOption } from "@/services/website.service";
 
@@ -50,6 +51,19 @@ export function whatsappInquiryInput(input: WebsiteInquiryInput, version: number
 }
 
 export const whatsappService = {
+  managedQuickReplies(query: WhatsappQuickReplyQuery) {
+    return request.get<PageResult<WhatsappQuickReply>>(`${BASE_URL}/quick-replies/manage`, { params: { ...query } });
+  },
+  quickReplies(query: WhatsappQuickReplyQuery) {
+    return request.get<PageResult<WhatsappQuickReply>>(`${BASE_URL}/quick-replies`, { params: { ...query } });
+  },
+  quickReplyOptions(stage?: string) {
+    return request.get<{ stages: string[]; scenarios: string[] }>(`${BASE_URL}/quick-replies/options`, { params: stage ? { stage } : {} });
+  },
+  saveQuickReply(input: WhatsappQuickReplyInput, id?: string) {
+    return id ? request.put<WhatsappQuickReply>(`${BASE_URL}/quick-replies/${encodeURIComponent(id)}`, input)
+      : request.post<WhatsappQuickReply>(`${BASE_URL}/quick-replies`, input);
+  },
   conversations(query: WhatsappConversationQueryParams) {
     return request.get<PageResult<WhatsappConversationItem>>(`${BASE_URL}/conversations`, { params: { ...query } });
   },

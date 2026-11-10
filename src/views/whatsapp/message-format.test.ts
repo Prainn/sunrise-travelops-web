@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { applyMessageFormat, parseInline, parseMessageText } from "./message-format";
+import { parseInline, parseMessageText } from "./message-format";
 import MessageText from "./components/MessageText.vue";
 
 describe("WhatsApp文字显示", () => {
@@ -35,9 +35,10 @@ describe("WhatsApp文字显示", () => {
   });
 
   it("渲染真实语义标签且将消息中的HTML作为文字转义", async () => {
-    const html = await renderToString(createSSRApp({ render: () => h(MessageText, {
+    const rendered = await renderToString(createSSRApp({ render: () => h(MessageText, {
       text: '*bold* _italic_ ~strike~ `code`\n<img src=x onerror="alert(1)">\n* list',
     }) }));
+    const html = rendered.replace(/<!--.*?-->/gs, "");
     expect(html).toContain("<strong>bold</strong>");
     expect(html).toContain("<em>italic</em>");
     expect(html).toContain("<s>strike</s>");
@@ -45,20 +46,5 @@ describe("WhatsApp文字显示", () => {
     expect(html).not.toContain("<img");
     expect(html).toContain("<ul");
     expect(html.replace(/<!--.*?-->/gs, "")).toContain("<li>list</li>");
-  });
-});
-
-describe("输入工具栏", () => {
-  it("使用textarea UTF-16偏移保留表情和选区，重复点击取消格式", () => {
-    const result = applyMessageFormat("👍 hello", 3, 8, "bold");
-    expect(result).toEqual({ text: "👍 *hello*", start: 4, end: 9 });
-    expect(applyMessageFormat(result.text, result.start, result.end, "bold"))
-      .toEqual({ text: "👍 hello", start: 3, end: 8 });
-    expect(applyMessageFormat("*hello*", 0, 7, "bold").text).toBe("hello");
-  });
-
-  it("无选区时将光标放在标记内部", () => {
-    expect(applyMessageFormat("Hi ", 3, 3, "italic"))
-      .toEqual({ text: "Hi __", start: 4, end: 4 });
   });
 });

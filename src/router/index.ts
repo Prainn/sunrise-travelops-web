@@ -90,6 +90,15 @@ export const constantRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: "quick-replies",
+        name: "WhatsappQuickReplies",
+        component: () => import("@/views/whatsapp/quick-replies/index.vue"),
+        meta: {
+          menuKey: "whatsapp-quick-replies", title: "whatsappQuickReplies", icon: "el-icon-ChatLineSquare",
+          scopes: ["headquarters", "website"], perms: ["whatsapp:quick-reply:manage"], keepAlive: true,
+        },
+      },
+      {
         path: "integration",
         name: "WhatsappIntegration",
         component: () => import("@/views/whatsapp/integration/index.vue"),
