@@ -42,7 +42,10 @@ export function minSeq(messages: WhatsappMessage[]): string | null {
 }
 
 export function sortMessages(messages: WhatsappMessage[]): WhatsappMessage[] {
-  return [...messages].sort((a, b) => compareSeq(a.seq, b.seq));
+  return [...messages].sort((a, b) => {
+    const timeDifference = Date.parse(a.occurredAt) - Date.parse(b.occurredAt);
+    return timeDifference || compareSeq(a.seq, b.seq);
+  });
 }
 
 /**
@@ -51,7 +54,7 @@ export function sortMessages(messages: WhatsappMessage[]): WhatsappMessage[] {
  * @param current - 当前已展示的消息。
  * @param page - 最新页（seq 倒序或任意顺序）。
  * @param isComplete - 最新页已包含会话全部消息时，所有缺失的旧行都应移除。
- * @returns 按 seq 正序排列的合并结果。
+ * @returns 按消息发生时间排列的合并结果，增量游标仍使用 seq。
  */
 export function mergeLatestPage(current: WhatsappMessage[], page: WhatsappMessage[], isComplete: boolean): WhatsappMessage[] {
   const floor = minSeq(page);

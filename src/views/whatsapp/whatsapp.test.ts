@@ -25,7 +25,7 @@ vi.mock("@/stores/user", async () => {
 
 import { useUserStore } from "@/stores/user";
 import { whatsappInquiryInput } from "@/services/whatsapp.service";
-import { canRetryMessage, compareSeq, mergeLatestPage, messageSourceLabel, threadAccess } from "./message-utils";
+import { canRetryMessage, compareSeq, mergeLatestPage, messageSourceLabel, sortMessages, maxSeq, threadAccess } from "./message-utils";
 import { useWhatsappWorkbench } from "./useWhatsappWorkbench";
 
 const BIG_SEQ = "9007199254740993";
@@ -71,6 +71,13 @@ afterEach(() => {
 });
 
 describe("消息序号与合并", () => {
+  it("补录旧消息按发生时间展示，增量游标仍取最大入库序号", () => {
+    const newest = message({ id: "new", seq: "1", occurredAt: "2026-11-10T01:31:11Z" });
+    const history = message({ id: "history", seq: "2", occurredAt: "2026-11-06T06:00:00Z" });
+    const sameTime = message({ id: "tie", seq: "3", occurredAt: history.occurredAt });
+    expect(sortMessages([newest, sameTime, history]).map((item) => item.id)).toEqual(["history", "tie", "new"]);
+    expect(maxSeq([newest, history, sameTime])).toBe("3");
+  });
   it("用 BigInt 比较超出安全整数的序号", () => {
     expect(compareSeq("9007199254740993", "9007199254740992")).toBe(1);
   });
