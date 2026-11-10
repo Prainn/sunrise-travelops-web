@@ -267,8 +267,8 @@ def pipeline(job, identity, release):
             job.stage('install', ['pnpm', 'install', '--frozen-lockfile', '--store-dir', '/opt/sunrise-ci/pnpm-store'], 300, work, env)
             # Leave room for native allocations and runner overhead below memory.high.
             type_check_env = dict(env, NODE_OPTIONS='--max-old-space-size=1200')
-            # Run the installed CLI directly: a resident pnpm launcher consumes memory too.
-            job.stage('type-check', ['node', 'node_modules/vue-tsc/bin/vue-tsc.js', '--noEmit'],
+            # Run the sequential checker directly without a resident pnpm launcher.
+            job.stage('type-check', ['node', 'scripts/type-check.mjs'],
                       300, work, type_check_env)
             job.stage('vite-build', ['pnpm', 'exec', 'vite', 'build', '--mode', 'server-dev'], 300, work, env)
             args = ['deploy', release, 'dist']

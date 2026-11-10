@@ -69,13 +69,14 @@ const fields = computed<ResourceFormField[]>(() => [
     clearable: true,
     options: provinceOptions.value,
   },
-  // 不设 precision，编辑时保留原有坐标精度。
+  // 坐标为 double precision，允许小数；最多 8 位小数。
   {
     prop: "longitude",
     labelKey: "city.longitude",
     type: "number",
     min: -180,
     max: 180,
+    precision: 8,
     pairedWith: "latitude",
   },
   {
@@ -84,6 +85,7 @@ const fields = computed<ResourceFormField[]>(() => [
     type: "number",
     min: -90,
     max: 90,
+    precision: 8,
     pairedWith: "longitude",
   },
 ]);

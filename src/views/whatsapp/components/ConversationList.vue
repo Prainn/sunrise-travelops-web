@@ -1,14 +1,6 @@
 <template>
   <SectionCard fill padding="compact" body-class="flex flex-col gap-[8px] min-h-0">
-    <FilterBar variant="compact" @reset="emit('reset')">
-      <el-form-item :label="$t('common.keywords')" class="filter-bar__wide">
-        <el-input
-          :model-value="keyword"
-          :placeholder="$t('whatsapp.keywordPlaceholder')"
-          clearable
-          @update:model-value="emit('update:keyword', $event)"
-        />
-      </el-form-item>
+    <FilterBar variant="compact" class="whatsapp-filter" @reset="emit('reset')">
       <el-form-item v-if="viewOptions.length" :label="$t('whatsapp.view')">
         <el-select
           :model-value="view"
@@ -23,6 +15,15 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item :label="$t('common.keywords')" class="filter-bar__wide">
+        <el-input
+          :model-value="keyword"
+          :placeholder="$t('whatsapp.keywordPlaceholder')"
+          clearable
+          @update:model-value="emit('update:keyword', $event)"
+        />
+      </el-form-item>
+
       <el-form-item :label="$t('common.status')">
         <el-select
           :model-value="state"
@@ -128,6 +129,46 @@ const emit = defineEmits<{
 
 const STATE_OPTIONS: WhatsappConversationState[] = ["open", "closed", "archived"];
 </script>
+
+<style lang="scss">
+/* 侧栏宽度有限：每个筛选项独占一行，标签定宽对齐，重置按钮靠右 */
+.whatsapp-filter {
+  padding: 4px 4px 8px;
+
+  .filter-bar__form {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .filter-bar__fields {
+    flex: none;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 12px;
+
+    > .el-form-item,
+    > .el-form-item.filter-bar__wide {
+      flex: none;
+      width: 100%;
+      min-width: 0;
+      max-width: none;
+    }
+
+    .el-form-item__label {
+      width: 72px;
+      justify-content: flex-start;
+    }
+  }
+
+  .filter-bar__actions {
+    order: 99;
+    justify-content: flex-end;
+    margin-left: 0;
+  }
+}
+</style>
 
 <style scoped lang="scss">
 .whatsapp-conversation {
