@@ -89,6 +89,14 @@ export interface WhatsappMessagePresentation {
   reactions: { id: string; seq: string; direction: "inbound" | "outbound"; emoji: string | null; source: WhatsappMessage["source"]; status: WhatsappMessageStatus }[];
 }
 
+export interface WhatsappReply {
+  id: string;
+  text: string;
+  kind: string;
+  direction: WhatsappMessageDirection;
+  source: WhatsappMessageSource;
+}
+
 export interface WhatsappMessage {
   id: string;
   /** 十进制字符串序号，超出 Number 安全范围，只能用 BigInt 比较。 */

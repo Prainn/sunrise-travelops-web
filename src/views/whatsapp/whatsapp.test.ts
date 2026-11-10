@@ -26,7 +26,7 @@ vi.mock("@/stores/user", async () => {
 
 import { useUserStore } from "@/stores/user";
 import { whatsappInquiryInput } from "@/services/whatsapp.service";
-import { canRetryMessage, compareSeq, mergeLatestPage, messageSourceLabel, sortMessages, maxSeq, threadAccess, threadMessages } from "./message-utils";
+import { canRetryMessage, compareSeq, mergeLatestPage, messageSourceLabel, messageReply, sortMessages, maxSeq, threadAccess, threadMessages } from "./message-utils";
 import { useWhatsappWorkbench } from "./useWhatsappWorkbench";
 
 const BIG_SEQ = "9007199254740993";
@@ -194,6 +194,22 @@ describe("useWhatsappWorkbench", () => {
     await workbench.resubmitPending(requestId);
     expect(service.sendReaction.mock.calls[1]).toEqual(["c-1", target.id, requestId, "👍"]);
     expect(service.sendText).not.toHaveBeenCalled();
+  });
+  it("引用回复的未知提交保留原目标、文字和幂等编号", async () => {
+    const workbench = setup();
+    await workbench.selectConversation("c-1");
+    const replyTo = { id: "original", text: "客户原文", kind: "text", direction: "inbound" as const, source: "customer" as const };
+    service.sendText.mockRejectedValueOnce(networkError());
+    await workbench.sendText("*回复*", replyTo);
+    const requestId = workbench.pending.value[0]!.clientRequestId;
+    expect(workbench.pending.value[0]!.replyTo).toEqual(replyTo);
+    expect(service.sendText.mock.calls[0]).toEqual(["c-1", requestId, "*回复*", "original"]);
+    service.sendText.mockResolvedValueOnce(message({ id: "quoted", seq: "30", clientRequestId: requestId, attachment: { replyTo } }));
+    await workbench.resubmitPending(requestId);
+    expect(service.sendText.mock.calls[1]).toEqual(service.sendText.mock.calls[0]);
+    expect(messageReply(workbench.messages.value.find((item) => item.id === "quoted")!)).toEqual(replyTo);
+    expect(workbench.pending.value).toHaveLength(0);
+    expect(messageReply(message({ attachment: { replyTo: { text: "broken" } } }))).toBeUndefined();
   });
 
   it("失败重试生成新编号，结果不明时复用该编号；unknown 不请求重试", async () => {

@@ -10,6 +10,7 @@ import type {
   WhatsappConversationState,
   WhatsappConversationView,
   WhatsappMessage,
+  WhatsappReply,
 } from "@/types/whatsapp";
 import {
   compareSeq,
@@ -321,7 +322,7 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     try {
       const saved = item.reaction
         ? await whatsappService.sendReaction(id, item.reaction.targetMessageId, item.clientRequestId, item.reaction.emoji)
-        : await whatsappService.sendText(id, item.clientRequestId, item.text);
+        : await whatsappService.sendText(id, item.clientRequestId, item.text, item.replyTo?.id);
       if (currentSession !== session) return { kind: "queued", message: "" };
       setPending(id, (pendingByConversation.value.get(id) ?? []).filter((entry) => entry.clientRequestId !== item.clientRequestId));
       if (id === selectedId.value) messages.value = mergeMessages(messages.value, [saved]);
@@ -340,11 +341,12 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   }
 
   /** 新发送生成一个请求编号；同一条记录再次提交时复用原编号，防止重复发送。 */
-  function sendText(text: string) {
+  function sendText(text: string, replyTo?: WhatsappReply) {
     const id = selectedId.value;
     const item: PendingMessage = {
       clientRequestId: crypto.randomUUID(),
       text,
+      replyTo,
       state: "sending",
       error: "",
       createdAt: new Date().toISOString(),

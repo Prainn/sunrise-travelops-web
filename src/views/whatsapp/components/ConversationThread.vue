@@ -60,6 +60,7 @@
         </div>
         <div class="flex items-center gap-[6px] min-w-0">
           <div class="whatsapp-message__bubble min-w-0" :class="{ 'is-reaction': message.presentation?.interaction === 'reaction' }">
+            <ReplyPreview v-if="messageReply(message)" class="mb-[6px]" :reply="messageReply(message)!" />
             <div v-if="message.presentation?.interaction === 'reaction'" class="text-[24px]" :title="$t('whatsapp.unlinkedReaction')">
               <span v-if="message.presentation.emoji">{{ message.presentation.emoji }}</span>
               <span v-else class="text-[var(--el-text-color-secondary)]" :title="$t('whatsapp.unknownReaction')">◌</span>
@@ -131,6 +132,26 @@
               </button>
             </div>
           </el-popover>
+          <button
+            v-if="canReplyTo(message)"
+            type="button"
+            class="whatsapp-message__react grid place-items-center box-border w-[32px] h-[32px] min-w-[32px] shrink-0 p-0 rounded-full border-solid border-[1px] border-[var(--el-border-color)] bg-[var(--el-bg-color)] text-[var(--el-text-color-secondary)] cursor-pointer hover:text-[var(--el-color-primary)] focus-visible:outline-2 focus-visible:outline-[var(--el-color-primary)]"
+            :aria-label="$t('whatsapp.reply')"
+            :title="$t('whatsapp.reply')"
+            @click="handleReply(message)"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            ><path d="m9 5-6 6 6 6M3 11h10c5 0 7 3 7 8" /></svg>
+          </button>
         </div>
         <div v-if="message.presentation?.reactions.length" class="flex gap-[4px] flex-wrap">
           <button
@@ -167,6 +188,7 @@
         class="whatsapp-message whatsapp-message--outbound"
       >
         <div class="whatsapp-message__bubble">
+          <ReplyPreview v-if="item.replyTo" class="mb-[6px]" :reply="item.replyTo" />
           <div v-if="item.reaction" class="text-[24px]" :title="$t(item.text ? 'whatsapp.react' : 'whatsapp.removeReaction')">
             {{ item.text || '◌' }}
           </div>
@@ -208,12 +230,28 @@
         {{ replyHint.text }}
       </div>
       <template v-if="!access.isReadOnly">
+        <div v-if="replyTo" class="flex items-center gap-[8px] p-[8px] rounded-[6px] bg-[var(--el-fill-color-light)]">
+          <div class="flex-1 min-w-0">
+            <div class="mb-[3px] text-[12px] text-[var(--el-text-color-secondary)]">
+              {{ $t('whatsapp.replyingTo') }}
+            </div>
+            <ReplyPreview :reply="replyTo" />
+          </div>
+          <el-button
+            text
+            :aria-label="$t('whatsapp.cancelReply')"
+            :title="$t('whatsapp.cancelReply')"
+            @click="replyTo = undefined"
+          >
+            ×
+          </el-button>
+        </div>
         <div class="flex items-center flex-wrap gap-[3px]" role="toolbar" :aria-label="$t('whatsapp.formatting.label')">
           <button
             v-for="action in FORMAT_ACTIONS"
             :key="action.format"
             type="button"
-            class="grid place-items-center w-[32px] h-[30px] p-0 border-0 rounded-[5px] bg-transparent text-[14px] text-[var(--el-text-color-regular)] cursor-pointer hover:bg-[var(--el-fill-color)] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-[var(--el-color-primary)]"
+            class="grid place-items-center box-border w-[36px] h-[30px] p-0 border-solid border-[1px] border-[var(--el-border-color)] rounded-[5px] bg-[var(--el-bg-color)] text-[14px] text-[var(--el-text-color-regular)] cursor-pointer hover:border-[var(--el-color-primary)] hover:text-[var(--el-color-primary)] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-[var(--el-color-primary)]"
             :disabled="!access.canCompose"
             :aria-label="$t(`whatsapp.formatting.${action.format}`)"
             :title="$t(`whatsapp.formatting.${action.format}`)"
@@ -255,13 +293,14 @@ import { useI18n } from "vue-i18n";
 import { ElMessage, type InputInstance } from "element-plus";
 import FeedbackState from "@/components/FeedbackState/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
-import type { WhatsappConversationDetail, WhatsappMessage } from "@/types/whatsapp";
+import type { WhatsappConversationDetail, WhatsappMessage, WhatsappReply } from "@/types/whatsapp";
 import { formatDateTime } from "@/utils";
 import {
   STATE_TAG_TYPES,
   attachmentSummary,
   canRetryMessage,
   messageSourceLabel,
+  messageReply,
   replyWindowState,
   threadAccess,
   threadMessages,
@@ -271,18 +310,13 @@ import {
 import { phoneRegion } from "../phone-region";
 import { applyMessageFormat, type MessageFormat } from "../message-format";
 import MessageText from "./MessageText.vue";
+import ReplyPreview from "./ReplyPreview.vue";
 
 const MAX_TEXT_LENGTH = 4096;
 const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 const FORMAT_ACTIONS: { format: MessageFormat; icon: string; className: string }[] = [
   { format: "bold", icon: "B", className: "font-bold" },
   { format: "italic", icon: "I", className: "italic font-serif" },
-  { format: "strike", icon: "S", className: "line-through" },
-  { format: "inlineCode", icon: "<>", className: "font-mono" },
-  { format: "monospace", icon: "{ }", className: "font-mono" },
-  { format: "bullet", icon: "• ≡", className: "" },
-  { format: "numbered", icon: "1.≡", className: "" },
-  { format: "quote", icon: "❞", className: "text-[22px]" },
 ];
 
 const props = defineProps<{
@@ -294,7 +328,7 @@ const props = defineProps<{
   retryingIds: Set<string>;
 }>();
 const emit = defineEmits<{
-  send: [text: string];
+  send: [text: string, replyTo?: WhatsappReply];
   react: [message: WhatsappMessage, emoji: string];
   resubmit: [clientRequestId: string];
   discard: [clientRequestId: string];
@@ -307,6 +341,7 @@ const emit = defineEmits<{
 
 const { t, locale } = useI18n();
 const draft = ref("");
+const replyTo = ref<WhatsappReply>();
 const composerRef = ref<InputInstance>();
 const activeReactionMessageId = ref("");
 const scrollRef = ref<HTMLElement>();
@@ -345,6 +380,7 @@ watch(
     const wasAtBottom = isUserOpened || isNearBottom();
     if (previous && previous[0] !== id) {
       draft.value = "";
+      replyTo.value = undefined;
       activeReactionMessageId.value = "";
     }
     await nextTick();
@@ -372,6 +408,22 @@ function canReact(message: WhatsappMessage) {
   return access.value.canCompose && replyWindowState(props.detail.replyWindowExpiresAt, now.value).kind === "open" &&
     message.direction === "inbound" && !!message.providerId && !message.presentation?.interaction;
 }
+function canReplyTo(message: WhatsappMessage) {
+  return access.value.canCompose && replyWindowState(props.detail.replyWindowExpiresAt, now.value).kind === "open" &&
+    !!message.providerId && !message.presentation?.interaction && !["reaction", "edit"].includes(message.kind);
+}
+async function handleReply(message: WhatsappMessage) {
+  if (!canReplyTo(message)) return;
+  replyTo.value = {
+    id: message.id,
+    text: (message.presentation?.text ?? message.text).slice(0, 280),
+    kind: message.kind,
+    direction: message.direction,
+    source: message.source,
+  };
+  await nextTick();
+  composerRef.value?.focus();
+}
 function handleReact(message: WhatsappMessage, emoji: string) {
   activeReactionMessageId.value = "";
   emit("react", message, emoji);
@@ -382,8 +434,9 @@ function canRetry(message: WhatsappMessage) {
 function handleSend() {
   const text = draft.value.trim();
   if (!text || text.length > MAX_TEXT_LENGTH || !access.value.canCompose) return;
-  emit("send", text);
+  emit("send", text, replyTo.value);
   draft.value = "";
+  replyTo.value = undefined;
 }
 async function handleFormat(format: MessageFormat) {
   const textarea = composerRef.value?.textarea;
@@ -400,6 +453,7 @@ async function handleFormat(format: MessageFormat) {
 }
 function editAgain(item: PendingMessage) {
   draft.value = item.text;
+  replyTo.value = item.replyTo;
   emit("discard", item.clientRequestId);
 }
 </script>

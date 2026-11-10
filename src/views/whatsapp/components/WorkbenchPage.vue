@@ -149,6 +149,7 @@ import type {
   WhatsappConversationView,
   WhatsappIntegrationStatus,
   WhatsappMessage,
+  WhatsappReply,
 } from "@/types/whatsapp";
 import WebsiteInquiryEditor from "@/views/website-inquiries/components/WebsiteInquiryEditor.vue";
 import { useWhatsappWorkbench, type SendFeedback } from "../useWhatsappWorkbench";
@@ -243,8 +244,8 @@ function notifySend(feedback: SendFeedback | undefined) {
   if (feedback.kind === "uncertain") ElMessage.warning(t("whatsapp.uncertainHint"));
   else if (feedback.message) ElMessage.error(feedback.message);
 }
-async function handleSend(text: string) {
-  notifySend(await workbench.sendText(text));
+async function handleSend(text: string, replyTo?: WhatsappReply) {
+  notifySend(await workbench.sendText(text, replyTo));
 }
 async function handleReact(message: WhatsappMessage, emoji: string) {
   notifySend(await workbench.sendReaction(message, emoji));

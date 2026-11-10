@@ -5,7 +5,7 @@ export interface MessageBlock {
   numbers?: number[];
   code?: string;
 }
-export type MessageFormat = "bold" | "italic" | "strike" | "inlineCode" | "monospace" | "bullet" | "numbered" | "quote";
+export type MessageFormat = "bold" | "italic";
 
 const INLINE_MARKERS = [
   { marker: "```", tag: "code" },
@@ -82,31 +82,15 @@ export function parseMessageText(text: string): MessageBlock[] {
 
 /** Apply a toolbar action using textarea UTF-16 selection offsets, retaining the selected text. */
 export function applyMessageFormat(text: string, start: number, end: number, format: MessageFormat) {
-  const markers: Partial<Record<MessageFormat, string>> = { bold: "*", italic: "_", strike: "~", inlineCode: "`", monospace: "```" };
+  const markers: Record<MessageFormat, string> = { bold: "*", italic: "_" };
   const marker = markers[format];
-  if (marker) {
-    const selected = text.slice(start, end);
-    if (selected.startsWith(marker) && selected.endsWith(marker) && selected.length >= marker.length * 2) {
-      const content = selected.slice(marker.length, -marker.length);
-      return { text: text.slice(0, start) + content + text.slice(end), start, end: start + content.length };
-    }
-    if (text.slice(start - marker.length, start) === marker && text.slice(end, end + marker.length) === marker) {
-      return { text: text.slice(0, start - marker.length) + selected + text.slice(end + marker.length), start: start - marker.length, end: end - marker.length };
-    }
-    return { text: text.slice(0, start) + marker + selected + marker + text.slice(end), start: start + marker.length, end: end + marker.length };
+  const selected = text.slice(start, end);
+  if (selected.startsWith(marker) && selected.endsWith(marker) && selected.length >= marker.length * 2) {
+    const content = selected.slice(marker.length, -marker.length);
+    return { text: text.slice(0, start) + content + text.slice(end), start, end: start + content.length };
   }
-  const lineStart = start === 0 ? 0 : text.lastIndexOf("\n", start - 1) + 1;
-  const nextBreak = text.indexOf("\n", end > start && text[end - 1] === "\n" ? end - 1 : end);
-  const lineEnd = nextBreak < 0 ? text.length : nextBreak;
-  const selectedLines = text.slice(lineStart, lineEnd).split("\n");
-  const prefix = format === "bullet" ? /^[-*] / : format === "numbered" ? /^\d+\. / : /^> /;
-  const remove = selectedLines.every((line) => prefix.test(line));
-  const changed = selectedLines.map((line, index) => remove ? line.replace(prefix, "") :
-    `${format === "bullet" ? "- " : format === "numbered" ? `${index + 1}. ` : "> "}${line}`).join("\n");
-  const firstPrefixLength = remove ? selectedLines[0]!.match(prefix)![0].length : format === "numbered" ? 3 : 2;
-  return {
-    text: text.slice(0, lineStart) + changed + text.slice(lineEnd),
-    start: start === end ? Math.max(lineStart, start + (remove ? -firstPrefixLength : firstPrefixLength)) : lineStart,
-    end: start === end ? Math.max(lineStart, start + (remove ? -firstPrefixLength : firstPrefixLength)) : lineStart + changed.length,
-  };
+  if (text.slice(start - marker.length, start) === marker && text.slice(end, end + marker.length) === marker) {
+    return { text: text.slice(0, start - marker.length) + selected + text.slice(end + marker.length), start: start - marker.length, end: end - marker.length };
+  }
+  return { text: text.slice(0, start) + marker + selected + marker + text.slice(end), start: start + marker.length, end: end + marker.length };
 }

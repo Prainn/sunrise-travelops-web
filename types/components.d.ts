@@ -152,6 +152,7 @@ declare module 'vue' {
     PageShell: typeof import('./../src/components/PageShell/index.vue')['default']
     Pagination: typeof import('./../src/components/Pagination/index.vue')['default']
     RemoteSelect: typeof import('./../src/components/RemoteSelect/index.vue')['default']
+    ReplyPreview: typeof import('./../src/views/whatsapp/components/ReplyPreview.vue')['default']
     ResourceEditorDialog: typeof import('./../src/views/resources/components/ResourceEditorDialog.vue')['default']
     ResourceSelect: typeof import('./../src/components/ResourceSelect/index.vue')['default']
     ResourceTable: typeof import('./../src/views/resources/components/ResourceTable.vue')['default']

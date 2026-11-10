@@ -5,6 +5,7 @@ import type {
   WhatsappConversationState,
   WhatsappMessage,
   WhatsappMessageStatus,
+  WhatsappReply,
 } from "@/types/whatsapp";
 
 /** 本地发送中的消息；服务端未确认前不进入正式消息列表。 */
@@ -12,10 +13,21 @@ export interface PendingMessage {
   clientRequestId: string;
   text: string;
   reaction?: { targetMessageId: string; emoji: string };
+  replyTo?: WhatsappReply;
   /** sending：请求中；uncertain：结果未知，只能用同一请求编号再次提交；rejected：服务端明确拒绝。 */
   state: "sending" | "uncertain" | "rejected";
   error: string;
   createdAt: string;
+}
+
+export function messageReply(message: WhatsappMessage): WhatsappReply | undefined {
+  const value = message.attachment?.replyTo;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const reply = value as Record<string, unknown>;
+  if (typeof reply.id !== "string" || typeof reply.text !== "string" || typeof reply.kind !== "string" ||
+    (reply.direction !== "inbound" && reply.direction !== "outbound") ||
+    (reply.source !== "customer" && reply.source !== "mobile" && reply.source !== "system")) return undefined;
+  return { id: reply.id, text: reply.text, kind: reply.kind, direction: reply.direction, source: reply.source };
 }
 
 /** 消息序号可能超出 Number 安全范围，统一按 BigInt 比较。 */

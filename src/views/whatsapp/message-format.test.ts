@@ -57,25 +57,8 @@ describe("输入工具栏", () => {
     expect(applyMessageFormat("*hello*", 0, 7, "bold").text).toBe("hello");
   });
 
-  it("无选区时将光标放在标记内部，支持多行等宽文本", () => {
+  it("无选区时将光标放在标记内部", () => {
     expect(applyMessageFormat("Hi ", 3, 3, "italic"))
       .toEqual({ text: "Hi __", start: 4, end: 4 });
-    const result = applyMessageFormat("a\nb", 0, 3, "monospace");
-    expect(parseMessageText(result.text)[0]?.lines).toEqual([[{ tag: "code", children: ["a\nb"] }]]);
-  });
-
-  it("列表作用于整行，选择末尾换行时不修改下一行", () => {
-    const result = applyMessageFormat("one\ntwo\nthree", 1, 8, "numbered");
-    expect(result.text).toBe("1. one\n2. two\nthree");
-    expect(applyMessageFormat(result.text, result.start, result.end, "numbered").text).toBe("one\ntwo\nthree");
-  });
-
-  it("处理开头空行、十位编号移除及引用切换", () => {
-    expect(applyMessageFormat("\nnext", 0, 0, "bullet"))
-      .toEqual({ text: "- \nnext", start: 2, end: 2 });
-    expect(applyMessageFormat("10. item", 8, 8, "numbered"))
-      .toEqual({ text: "item", start: 4, end: 4 });
-    expect(applyMessageFormat("a\nb", 0, 3, "quote").text).toBe("> a\n> b");
-    expect(applyMessageFormat("> a\n> b", 0, 7, "quote").text).toBe("a\nb");
   });
 });

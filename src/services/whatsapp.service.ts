@@ -85,8 +85,8 @@ export const whatsappService = {
     return request.post<WhatsappInquiryResult>(`${conversationUrl(id)}/inquiry`, whatsappInquiryInput(input, version));
   },
   /** clientRequestId 由调用方生成；结果不明时须以同一 ID 重新提交。 */
-  sendText(id: string, clientRequestId: string, text: string) {
-    return request.post<WhatsappMessage>(`${conversationUrl(id)}/messages`, { clientRequestId, text });
+  sendText(id: string, clientRequestId: string, text: string, replyToMessageId?: string) {
+    return request.post<WhatsappMessage>(`${conversationUrl(id)}/messages`, { clientRequestId, text, ...(replyToMessageId ? { replyToMessageId } : {}) });
   },
   sendReaction(id: string, messageId: string, clientRequestId: string, emoji: string) {
     return request.post<WhatsappMessage>(`${conversationUrl(id)}/messages/${encodeURIComponent(messageId)}/reactions`, { clientRequestId, emoji });
