@@ -148,6 +148,7 @@ declare module 'vue' {
     LayoutTagsView: typeof import('./../src/layouts/components/LayoutTagsView.vue')['default']
     LayoutToolbar: typeof import('./../src/layouts/components/LayoutToolbar.vue')['default']
     LinkedToursDialog: typeof import('./../src/views/ledgers/direct/components/LinkedToursDialog.vue')['default']
+    MessageText: typeof import('./../src/views/whatsapp/components/MessageText.vue')['default']
     PageShell: typeof import('./../src/components/PageShell/index.vue')['default']
     Pagination: typeof import('./../src/components/Pagination/index.vue')['default']
     RemoteSelect: typeof import('./../src/components/RemoteSelect/index.vue')['default']

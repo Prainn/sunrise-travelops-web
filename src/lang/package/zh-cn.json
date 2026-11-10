@@ -2349,6 +2349,18 @@
     "resubmit": "核实提交",
     "editAgain": "重新编辑",
     "discard": "移除",
+    "formatting": {
+      "label": "文字格式",
+      "bold": "加粗",
+      "italic": "斜体",
+      "strike": "删除线",
+      "inlineCode": "行内代码",
+      "monospace": "等宽文本",
+      "bullet": "项目列表",
+      "numbered": "编号列表",
+      "quote": "引用",
+      "tooLong": "添加格式后不能超过 {max} 个字符"
+    },
     "composerPlaceholder": "输入回复内容，Ctrl/⌘ + Enter 发送",
     "send": "发送",
     "closedHint": "会话已关闭，请先重新打开再回复",

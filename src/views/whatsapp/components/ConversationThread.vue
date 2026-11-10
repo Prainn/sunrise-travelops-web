@@ -64,7 +64,7 @@
               <span v-if="message.presentation.emoji">{{ message.presentation.emoji }}</span>
               <span v-else class="text-[var(--el-text-color-secondary)]" :title="$t('whatsapp.unknownReaction')">◌</span>
             </div>
-            <div v-else-if="message.presentation?.text ?? message.text" class="whitespace-pre-wrap break-words" v-text="message.presentation?.text ?? message.text" />
+            <MessageText v-else-if="message.presentation?.text ?? message.text" :text="message.presentation?.text ?? message.text ?? ''" />
             <div v-if="['image', 'audio', 'video', 'document', 'sticker'].includes(message.kind) && attachmentSummary(message.attachment).length" class="text-[12px] text-[var(--el-text-color-secondary)]">
               {{ attachmentSummary(message.attachment).join(" · ") }}
             </div>
@@ -83,22 +83,47 @@
             :width="260"
           >
             <template #reference>
-              <el-button
-                class="whatsapp-message__react"
-                circle
-                size="small"
+              <button
+                type="button"
+                class="whatsapp-message__react grid place-items-center box-border w-[32px] h-[32px] min-w-[32px] shrink-0 p-0 rounded-full border-solid border-[1px] border-[var(--el-border-color)] bg-[var(--el-bg-color)] text-[var(--el-text-color-secondary)] cursor-pointer hover:text-[var(--el-color-primary)] focus-visible:outline-2 focus-visible:outline-[var(--el-color-primary)]"
                 :aria-label="$t('whatsapp.react')"
                 :title="$t('whatsapp.react')"
               >
-                ☺
-              </el-button>
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M8 14.5c1 3 7 3 8 0" />
+                  <circle
+                    cx="9"
+                    cy="9"
+                    r=".8"
+                    fill="currentColor"
+                    stroke="none"
+                  />
+                  <circle
+                    cx="15"
+                    cy="9"
+                    r=".8"
+                    fill="currentColor"
+                    stroke="none"
+                  />
+                </svg>
+              </button>
             </template>
             <div class="flex justify-between gap-[4px]" :aria-label="$t('whatsapp.react')">
               <button
                 v-for="emoji in REACTION_EMOJIS"
                 :key="emoji"
                 type="button"
-                class="border-0 bg-transparent cursor-pointer rounded-full p-[5px] text-[23px] hover:bg-[var(--el-fill-color)] focus-visible:outline-2 focus-visible:outline-[var(--el-color-primary)]"
+                class="grid place-items-center box-border w-[36px] h-[36px] shrink-0 p-0 border-0 bg-transparent cursor-pointer rounded-full text-[23px] leading-none hover:bg-[var(--el-fill-color)] focus-visible:outline-2 focus-visible:outline-[var(--el-color-primary)]"
                 :aria-label="`${$t('whatsapp.react')} ${emoji}`"
                 @click="handleReact(message, emoji)"
               >
@@ -112,14 +137,14 @@
             v-for="reaction in message.presentation.reactions"
             :key="reaction.id"
             type="button"
-            class="whatsapp-message__reaction rounded-full border-solid border-[1px] px-[8px] py-[2px] text-[15px]"
+            class="whatsapp-message__reaction relative grid place-items-center box-border w-[32px] h-[32px] min-w-[32px] shrink-0 p-0 rounded-full border-solid border-[1px] text-[20px] leading-none"
             :class="reaction.direction === 'outbound' ? 'is-mine' : ''"
             :disabled="reaction.direction !== 'outbound' || !canReact(message)"
             :title="reaction.emoji ? $t(reaction.direction === 'outbound' ? 'whatsapp.removeReaction' : 'whatsapp.sources.customer') : $t('whatsapp.unknownReaction')"
             @click="handleReact(message, '')"
           >
             {{ reaction.emoji || '◌' }}
-            <span v-if="['queued', 'sending'].includes(reaction.status)" class="text-[11px]" :aria-label="$t('whatsapp.reactionPending')">◷</span>
+            <span v-if="['queued', 'sending'].includes(reaction.status)" class="absolute right-[-3px] bottom-[-3px] rounded-full bg-[var(--el-bg-color)] text-[11px]" :aria-label="$t('whatsapp.reactionPending')">◷</span>
           </button>
         </div>
         <div v-if="message.errorCode || canRetry(message)" class="flex items-center gap-[6px] text-[12px]">
@@ -145,7 +170,7 @@
           <div v-if="item.reaction" class="text-[24px]" :title="$t(item.text ? 'whatsapp.react' : 'whatsapp.removeReaction')">
             {{ item.text || '◌' }}
           </div>
-          <div v-else class="whitespace-pre-wrap break-words" v-text="item.text" />
+          <MessageText v-else :text="item.text" />
         </div>
         <div class="flex flex-wrap items-center gap-[6px] text-[12px]">
           <el-tag size="small" :type="item.state === 'rejected' ? 'danger' : item.state === 'uncertain' ? 'warning' : 'info'">
@@ -183,7 +208,23 @@
         {{ replyHint.text }}
       </div>
       <template v-if="!access.isReadOnly">
+        <div class="flex items-center flex-wrap gap-[3px]" role="toolbar" :aria-label="$t('whatsapp.formatting.label')">
+          <button
+            v-for="action in FORMAT_ACTIONS"
+            :key="action.format"
+            type="button"
+            class="grid place-items-center w-[32px] h-[30px] p-0 border-0 rounded-[5px] bg-transparent text-[14px] text-[var(--el-text-color-regular)] cursor-pointer hover:bg-[var(--el-fill-color)] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-[var(--el-color-primary)]"
+            :disabled="!access.canCompose"
+            :aria-label="$t(`whatsapp.formatting.${action.format}`)"
+            :title="$t(`whatsapp.formatting.${action.format}`)"
+            @mousedown.prevent
+            @click="handleFormat(action.format)"
+          >
+            <span :class="action.className" aria-hidden="true">{{ action.icon }}</span>
+          </button>
+        </div>
         <el-input
+          ref="composerRef"
           v-model="draft"
           type="textarea"
           :rows="3"
@@ -211,6 +252,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { ElMessage, type InputInstance } from "element-plus";
 import FeedbackState from "@/components/FeedbackState/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import type { WhatsappConversationDetail, WhatsappMessage } from "@/types/whatsapp";
@@ -227,9 +269,21 @@ import {
 } from "../message-utils";
 
 import { phoneRegion } from "../phone-region";
+import { applyMessageFormat, type MessageFormat } from "../message-format";
+import MessageText from "./MessageText.vue";
 
 const MAX_TEXT_LENGTH = 4096;
 const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
+const FORMAT_ACTIONS: { format: MessageFormat; icon: string; className: string }[] = [
+  { format: "bold", icon: "B", className: "font-bold" },
+  { format: "italic", icon: "I", className: "italic font-serif" },
+  { format: "strike", icon: "S", className: "line-through" },
+  { format: "inlineCode", icon: "<>", className: "font-mono" },
+  { format: "monospace", icon: "{ }", className: "font-mono" },
+  { format: "bullet", icon: "• ≡", className: "" },
+  { format: "numbered", icon: "1.≡", className: "" },
+  { format: "quote", icon: "❞", className: "text-[22px]" },
+];
 
 const props = defineProps<{
   detail: WhatsappConversationDetail;
@@ -253,6 +307,7 @@ const emit = defineEmits<{
 
 const { t, locale } = useI18n();
 const draft = ref("");
+const composerRef = ref<InputInstance>();
 const activeReactionMessageId = ref("");
 const scrollRef = ref<HTMLElement>();
 const now = ref(Date.now());
@@ -329,6 +384,19 @@ function handleSend() {
   if (!text || text.length > MAX_TEXT_LENGTH || !access.value.canCompose) return;
   emit("send", text);
   draft.value = "";
+}
+async function handleFormat(format: MessageFormat) {
+  const textarea = composerRef.value?.textarea;
+  if (!textarea || !access.value.canCompose) return;
+  const formatted = applyMessageFormat(draft.value, textarea.selectionStart, textarea.selectionEnd, format);
+  if (formatted.text.length > MAX_TEXT_LENGTH) {
+    ElMessage.warning(t("whatsapp.formatting.tooLong", { max: MAX_TEXT_LENGTH }));
+    return;
+  }
+  draft.value = formatted.text;
+  await nextTick();
+  textarea.focus();
+  textarea.setSelectionRange(formatted.start, formatted.end);
 }
 function editAgain(item: PendingMessage) {
   draft.value = item.text;
