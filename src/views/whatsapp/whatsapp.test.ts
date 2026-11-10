@@ -249,6 +249,7 @@ describe("消息气泡与交互", () => {
   it("新回应更新已加载的旧消息，保留原始分页行而不重复显示", () => {
     const original = message({ id: "original", presentation: { text: "hi", editedAt: null, hidden: false, interaction: null, targetMessageId: null, emoji: null, reactions: [] } });
     const reaction = message({ id: "reaction", seq: "99", kind: "reaction", direction: "outbound", presentation: { text: "", editedAt: null, hidden: true, interaction: "reaction", targetMessageId: "original", emoji: "👍", reactions: [] } });
+    expect(threadMessages([reaction])).toHaveLength(1);
     const visible = threadMessages([original, reaction]);
     expect(visible).toHaveLength(1);
     expect(visible[0]!.presentation!.reactions[0]!.emoji).toBe("👍");

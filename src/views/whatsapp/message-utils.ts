@@ -195,5 +195,6 @@ export function threadMessages(messages: WhatsappMessage[]): WhatsappMessage[] {
       });
     }
   }
-  return items.filter((message) => !message.presentation?.hidden);
+  return items.filter((message) => !message.presentation?.hidden ||
+    !message.presentation.targetMessageId || !byId.has(message.presentation.targetMessageId));
 }
