@@ -21,4 +21,14 @@ describe("WhatsApp编辑器发送正文", () => {
     expect(composerText(element("DIV",text("Thanks "),emoji,element("IMG")))).toBe("Thanks 👍");
     expect(composerText(element("DIV",text('<img src=x onerror="alert(1)">')))).toBe('<img src=x onerror="alert(1)">');
   });
+  it("单词中部分文字加粗时，发送完整单词的有效WhatsApp格式", () => {
+    expect(composerText(element("DIV",text("He"),element("B",text("llo")),text(" world"))))
+      .toBe("*Hello* world");
+    expect(composerText(element("DIV",element("B",text("Hello")),element("B",text(" there")))))
+      .toBe("*Hello there*");
+  });
+  it("跨行粗体分别闭合标记，保留两行正文", () => {
+    expect(composerText(element("DIV",element("B",text("Hello"),element("BR"),text("there")))))
+      .toBe("*Hello*\n*there*");
+  });
 });

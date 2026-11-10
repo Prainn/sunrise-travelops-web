@@ -47,6 +47,8 @@ export interface WhatsappConversationItem {
   /** 当前员工未读的客户入站消息数，与客户端已读回执无关。 */
   unreadCount?: number;
   lastMessageText?: string | null;
+  /** 最新消息的 occurredAt，无消息时为空。 */
+  lastMessageAt?: string | null;
 }
 
 export interface WhatsappConversationTour {

@@ -72,7 +72,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     redirect: "/whatsapp/inbox",
     meta: {
       title: "whatsappWorkbench",
-      icon: "el-icon-ChatLineSquare",
+      icon: "el-icon-ChatDotRound",
       alwaysShow: true,
       scopes: ["headquarters", "website"],
     },
@@ -84,7 +84,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: {
           menuKey: "whatsapp-inbox",
           title: "whatsappInbox",
-          icon: "el-icon-ChatLineSquare",
+          icon: "el-icon-Message",
           scopes: ["headquarters", "website"],
           perms: ["whatsapp:conversation:list"],
         },
@@ -94,7 +94,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "WhatsappQuickReplies",
         component: () => import("@/views/whatsapp/quick-replies/index.vue"),
         meta: {
-          menuKey: "whatsapp-quick-replies", title: "whatsappQuickReplies", icon: "el-icon-ChatLineSquare",
+          menuKey: "whatsapp-quick-replies", title: "whatsappQuickReplies", icon: "el-icon-Lightning",
           scopes: ["headquarters", "website"], perms: ["whatsapp:quick-reply:manage"], keepAlive: true,
         },
       },
@@ -105,7 +105,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: {
           menuKey: "whatsapp-integration",
           title: "whatsappIntegration",
-          icon: "el-icon-Connection",
+          icon: "el-icon-Link",
           keepAlive: true,
           scopes: ["headquarters"],
           perms: ["whatsapp:integration:manage"],

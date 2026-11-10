@@ -131,7 +131,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { ApiError } from "@/api/request";
@@ -160,6 +160,8 @@ import ConversationThread from "./ConversationThread.vue";
 
 const { t } = useI18n();
 const router = useRouter();
+const route = useRoute();
+const routeName = route.name;
 const user = useUserStore();
 const can = (permission: string) => user.userInfo.perms.includes(permission);
 const isManager = can("whatsapp:conversation:assign");
@@ -194,8 +196,17 @@ watch(() => detail.value?.id, () => {
   void loadActions();
 });
 
+// 当前会话写入地址参数，刷新页面后恢复；页面缓存于其他标签时不改写别的路由。
+watch(workbench.selectedId, (id) => {
+  if (route.name !== routeName || (route.query.conversationId ?? "") === id) return;
+  const query = { ...route.query, conversationId: id || undefined };
+  void router.replace({ query });
+});
+
 onMounted(() => {
   workbench.start();
+  const initialId = route.query.conversationId;
+  if (typeof initialId === "string" && initialId) void workbench.selectConversation(initialId);
   void loadIntegration();
 });
 

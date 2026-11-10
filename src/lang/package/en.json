@@ -2313,6 +2313,7 @@
       "archived": "Archived"
     },
     "emptyList": "No conversations",
+    "draftLabel": "Draft",
     "noMessage": "No messages",
     "unassigned": "Unassigned",
     "archivedHint": "Previous consultation, read-only",

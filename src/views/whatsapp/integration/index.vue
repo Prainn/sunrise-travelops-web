@@ -51,12 +51,20 @@
     </SectionCard>
     <SectionCard fill>
       <TableToolbar :title="$t('whatsapp.failedEvents')" :refreshing="eventsLoading" @refresh="loadEvents" />
+      <FeedbackState
+        v-if="eventsError"
+        type="error"
+        :description="eventsError"
+        retryable
+        @retry="loadEvents"
+      />
       <DataTable
+        v-else
         fill
         :loading="eventsLoading"
         :data="events"
         row-key="id"
-        :empty-text="eventsError || $t('whatsapp.noFailedEvents')"
+        :empty-text="$t('whatsapp.noFailedEvents')"
       >
         <el-table-column prop="kind" :label="$t('whatsapp.eventKind')" min-width="120" />
         <el-table-column prop="attempts" :label="$t('whatsapp.attempts')" width="100" />

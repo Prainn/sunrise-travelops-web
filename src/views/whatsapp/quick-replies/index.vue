@@ -27,7 +27,7 @@
       </template>
     </FilterBar>
     <SectionCard fill>
-      <TableToolbar :title="$t('whatsapp.quickReply')" :refreshing="loading" @refresh="load">
+      <TableToolbar :refreshing="loading" @refresh="load">
         <template #default>
           <el-button type="primary" @click="edit()">
             {{ $t('common.create') }}
@@ -47,7 +47,7 @@
         :loading="loading"
         :data="rows"
         row-key="id"
-        :empty-text="$t('whatsapp.quickReplies.empty')"
+        :filtered="!!keyword.trim() || !!status"
       >
         <el-table-column prop="stage" :label="$t('whatsapp.quickReplies.stage')" min-width="140" />
         <el-table-column prop="scenario" :label="$t('whatsapp.quickReplies.scenario')" min-width="160" />
@@ -93,7 +93,20 @@
         label-position="top"
       >
         <el-form-item prop="stage" :label="$t('whatsapp.quickReplies.stage')">
-          <el-input v-model="form.stage" maxlength="100" />
+          <el-select
+            v-model="form.stage"
+            autocomplete="new-password"
+            filterable
+            :loading="stagesLoading"
+            :placeholder="$t('common.selectPlaceholder')"
+          >
+            <el-option
+              v-for="stage in stages"
+              :key="stage.id"
+              :label="stage.name"
+              :value="stage.name"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item prop="scenario" :label="$t('whatsapp.quickReplies.scenario')">
           <el-input v-model="form.scenario" maxlength="100" />
@@ -142,7 +155,9 @@ import Pagination from "@/components/Pagination/index.vue";
 import AppDialog from "@/components/AppDialog/index.vue";
 import FeedbackState from "@/components/FeedbackState/index.vue";
 import { whatsappService } from "@/services/whatsapp.service";
+import { businessDictionaryService } from "@/services/business-dictionary.service";
 import { websiteErrorMessage } from "@/services/website.service";
+import type { BusinessCategoryOptionRecord } from "@/types/resource";
 import type { WhatsappQuickReply, WhatsappQuickReplyInput } from "@/types/whatsapp";
 import { useRefreshOnActivated } from "@/composables";
 defineOptions({ name: "WhatsappQuickReplies" });
@@ -151,6 +166,7 @@ const rows = ref<WhatsappQuickReply[]>([]), total = ref(0), page = ref(1), pageS
 const keyword = ref(""), status = ref<"enabled" | "disabled">();
 const loading = ref(false), error = ref(""), editing = ref(false), saving = ref(false);
 const formRef = ref<FormInstance>();
+const stages = ref<BusinessCategoryOptionRecord[]>([]), stagesLoading = ref(false);
 const empty = (): WhatsappQuickReplyInput => ({stage:"",scenario:"",content:"",enabled:true,sortOrder:0});
 const form = ref(empty()), editingId = ref<string>();
 const rules = computed<FormRules>(() => Object.fromEntries(["stage","scenario","content"].map(key=>[key,[{required:true,whitespace:true,message:t("whatsapp.quickReplies.required"),trigger:"blur"}]])));
@@ -163,7 +179,19 @@ async function load() {
 }
 function search(){page.value=1;void load();}
 function resetFilters(){keyword.value="";status.value=undefined;search();}
-function edit(row?:WhatsappQuickReply){editingId.value=row?.id;form.value=row ? {stage:row.stage,scenario:row.scenario,content:row.content,enabled:row.enabled,sortOrder:row.sortOrder,version:row.version}:empty();editing.value=true;}
+function edit(row?:WhatsappQuickReply){editingId.value=row?.id;form.value=row ? {stage:row.stage,scenario:row.scenario,content:row.content,enabled:row.enabled,sortOrder:row.sortOrder,version:row.version}:empty();editing.value=true;void loadStages();}
+async function loadStages() {
+  if (stagesLoading.value) return;
+  stagesLoading.value = true;
+  stages.value = [];
+  try {
+    stages.value = await businessDictionaryService.getItems("whatsapp-quick-reply-stage", { status: "enabled" });
+  } catch (cause) {
+    ElMessage.error(websiteErrorMessage(cause));
+  } finally {
+    stagesLoading.value = false;
+  }
+}
 async function save(){
   if(!await formRef.value?.validate().catch(()=>false))return;
   saving.value=true;

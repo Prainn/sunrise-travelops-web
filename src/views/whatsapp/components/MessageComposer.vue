@@ -43,7 +43,7 @@
           </button>
         </div>
         <a
-          class="block mt-[8px] text-[10px] text-[var(--el-text-color-secondary)]"
+          class="block mt-[8px] text-[10px] text-muted"
           href="https://github.com/twitter/twemoji"
           target="_blank"
           rel="noopener noreferrer"
@@ -106,7 +106,7 @@
         @paste.prevent="handlePaste"
         @drop.prevent
       />
-      <span class="absolute right-[8px] bottom-[5px] text-[12px] text-[var(--el-text-color-placeholder)] pointer-events-none">{{ modelValue.length }} / 4096</span>
+      <span class="absolute right-[8px] bottom-[5px] text-[12px] text-faint pointer-events-none">{{ modelValue.length }} / 4096</span>
     </div>
     <QuickReplyDialog v-model="quickReplyOpen" @insert="insertText" />
   </div>
@@ -118,6 +118,7 @@ import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { COMMON_EMOJIS } from "../emoji";
 import { composerFragment, composerText } from "../composer-dom";
+import { isWord } from "../message-format";
 import QuickReplyDialog from "./QuickReplyDialog.vue";
 
 const props = defineProps<{ modelValue: string; disabled: boolean }>();
@@ -141,16 +142,33 @@ function rememberSelection() {
 function focus() {
   const el = editor.value;
   if (!el) return;
-  el.focus();
   const selection = window.getSelection();
   if (!selection) return;
+  // 光标仍在编辑器内时不重设选区，否则浏览器会丢掉已开启但尚未输入的粗体/斜体。
+  if (document.activeElement === el && selection.rangeCount && el.contains(selection.anchorNode)) return;
+  el.focus();
   const range = savedRange && el.contains(savedRange.commonAncestorContainer) ? savedRange : document.createRange();
   if (range !== savedRange) { range.selectNodeContents(el); range.collapse(false); }
   selection.removeAllRanges(); selection.addRange(range);
 }
+/** WhatsApp 只能整词加格式，选中部分单词时先扩展到单词边界，使编辑器显示与发送一致。 */
+function snapSelectionToWords() {
+  const selection = window.getSelection();
+  if (!selection?.rangeCount || selection.isCollapsed) return;
+  const range = selection.getRangeAt(0);
+  const { startContainer, endContainer } = range;
+  let { startOffset, endOffset } = range;
+  const startText = startContainer.nodeType === 3 ? startContainer.nodeValue ?? "" : "";
+  if (isWord(startText[startOffset] ?? "")) while (startOffset > 0 && isWord(startText[startOffset - 1]!)) startOffset--;
+  const endText = endContainer.nodeType === 3 ? endContainer.nodeValue ?? "" : "";
+  if (isWord(endText[endOffset - 1] ?? "")) while (endOffset < endText.length && isWord(endText[endOffset]!)) endOffset++;
+  if (startOffset === range.startOffset && endOffset === range.endOffset) return;
+  range.setStart(startContainer, startOffset); range.setEnd(endContainer, endOffset);
+  selection.removeAllRanges(); selection.addRange(range);
+}
 function toggleFormat(format: "bold" | "italic") {
   if (props.disabled) return;
-  focus(); document.execCommand(format); rememberSelection(); handleInput();
+  focus(); snapSelectionToWords(); document.execCommand(format); rememberSelection(); handleInput();
 }
 function handleInput() {
   if (composing.value || !editor.value) return;

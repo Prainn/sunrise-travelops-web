@@ -13,7 +13,7 @@ const INLINE_MARKERS = [
   { marker: "_", tag: "em" },
   { marker: "~", tag: "s" },
 ] as const;
-const isWord = (char: string) => /[\p{L}\p{N}]/u.test(char);
+export const isWord = (char: string) => /[\p{L}\p{N}]/u.test(char);
 
 /** Parse WhatsApp's text markers into a closed set of nodes, never HTML. */
 export function parseInline(text: string, used: string[] = []): InlineNode[] {

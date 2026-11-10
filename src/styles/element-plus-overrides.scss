@@ -124,6 +124,12 @@ html:root {
   }
 }
 
+// 容器已用 gap-* 控制水平间距时，相邻按钮不再叠加 margin-left；
+// Element Plus 组件样式按需加载在本文件之后，选择器优先级需高于其 `.el-button + .el-button`
+:is([class*='gap-']:not([class*='gap-y-']), [class*='gap-x-']) > .el-button + .el-button {
+  margin-left: 0;
+}
+
 .el-button--default:not(.is-link, .is-text) {
   --el-button-border-color: var(--border-color);
   --el-button-hover-border-color: var(--card-border-hover);

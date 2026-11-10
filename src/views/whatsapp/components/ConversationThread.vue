@@ -37,7 +37,7 @@
         {{ $t("whatsapp.viewCurrent") }}
       </el-button>
     </el-alert>
-    <div ref="scrollRef" class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-[10px] p-[4px]">
+    <div ref="scrollRef" class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-[20px] p-[4px]">
       <div v-if="hasOlder" class="text-center">
         <el-button
           link
@@ -55,7 +55,7 @@
         class="whatsapp-message"
         :class="message.direction === 'inbound' ? 'whatsapp-message--inbound' : 'whatsapp-message--outbound'"
       >
-        <div class="text-[12px] text-[var(--el-text-color-secondary)]">
+        <div v-if="message.direction === 'outbound'" class="text-[12px] text-muted">
           {{ sourceLabel(message) }}
         </div>
         <div class="flex items-center gap-[6px] min-w-0" :class="message.direction === 'outbound' ? 'flex-row-reverse' : ''">
@@ -63,13 +63,13 @@
             <ReplyPreview v-if="messageReply(message)" class="mb-[6px]" :reply="messageReply(message)!" />
             <div v-if="message.presentation?.interaction === 'reaction'" class="text-[24px]" :title="$t('whatsapp.unlinkedReaction')">
               <span v-if="message.presentation.emoji">{{ message.presentation.emoji }}</span>
-              <span v-else class="text-[var(--el-text-color-secondary)]" :title="$t('whatsapp.unknownReaction')">◌</span>
+              <span v-else class="text-muted" :title="$t('whatsapp.unknownReaction')">◌</span>
             </div>
             <MessageText v-else-if="message.presentation?.text ?? message.text" :text="message.presentation?.text ?? message.text ?? ''" />
-            <div v-if="['image', 'audio', 'video', 'document', 'sticker'].includes(message.kind) && attachmentSummary(message.attachment).length" class="text-[12px] text-[var(--el-text-color-secondary)]">
+            <div v-if="['image', 'audio', 'video', 'document', 'sticker'].includes(message.kind) && attachmentSummary(message.attachment).length" class="text-[12px] text-muted">
               {{ attachmentSummary(message.attachment).join(" · ") }}
             </div>
-            <div class="flex items-center justify-end flex-wrap gap-[5px] mt-[4px] text-[11px] text-[var(--el-text-color-secondary)]">
+            <div class="flex items-center justify-end flex-wrap gap-[5px] mt-[4px] text-[11px] text-muted">
               <span v-if="message.presentation?.editedAt" :title="formatDateTime(message.presentation.editedAt)">{{ $t("whatsapp.edited") }}</span>
               <time :datetime="message.occurredAt" :title="formatDateTime(message.occurredAt)">{{ formatDateTime(message.occurredAt) }}</time>
               <span v-if="message.direction === 'outbound'" :class="message.status === 'read' ? 'text-[var(--el-color-primary)]' : message.status === 'failed' ? 'text-[var(--el-color-danger)]' : ''">
@@ -86,7 +86,7 @@
             <template #reference>
               <button
                 type="button"
-                class="whatsapp-message__react grid place-items-center box-border w-[32px] h-[32px] min-w-[32px] shrink-0 p-0 rounded-full border-solid border-[1px] border-[var(--el-border-color)] bg-[var(--el-bg-color)] text-[var(--el-text-color-secondary)] cursor-pointer hover:text-[var(--el-color-primary)] focus-visible:outline-2 focus-visible:outline-[var(--el-color-primary)]"
+                class="whatsapp-message__react"
                 :aria-label="$t('whatsapp.react')"
                 :title="$t('whatsapp.react')"
               >
@@ -135,7 +135,7 @@
           <button
             v-if="canReplyTo(message)"
             type="button"
-            class="whatsapp-message__react grid place-items-center box-border w-[32px] h-[32px] min-w-[32px] shrink-0 p-0 rounded-full border-solid border-[1px] border-[var(--el-border-color)] bg-[var(--el-bg-color)] text-[var(--el-text-color-secondary)] cursor-pointer hover:text-[var(--el-color-primary)] focus-visible:outline-2 focus-visible:outline-[var(--el-color-primary)]"
+            class="whatsapp-message__react"
             :aria-label="$t('whatsapp.reply')"
             :title="$t('whatsapp.reply')"
             @click="handleReply(message)"
@@ -169,7 +169,7 @@
           </button>
         </div>
         <div v-if="message.errorCode || canRetry(message)" class="flex items-center gap-[6px] text-[12px]">
-          <span v-if="message.errorCode" class="text-[var(--el-text-color-secondary)]">{{ message.errorCode }}</span>
+          <span v-if="message.errorCode" class="text-muted">{{ message.errorCode }}</span>
           <el-button
             v-if="canRetry(message)"
             link
@@ -198,7 +198,7 @@
           <el-tag size="small" :type="item.state === 'rejected' ? 'danger' : item.state === 'uncertain' ? 'warning' : 'info'">
             {{ $t(`whatsapp.pendingStates.${item.state}`) }}
           </el-tag>
-          <span v-if="item.error" class="text-[var(--el-text-color-secondary)]">{{ item.error }}</span>
+          <span v-if="item.error" class="text-muted">{{ item.error }}</span>
           <el-button
             v-if="item.state === 'uncertain'"
             link
@@ -226,13 +226,13 @@
       </div>
     </div>
     <div class="flex flex-col gap-[6px]">
-      <div class="text-[12px]" :class="replyHint.isWarning ? 'text-[var(--el-color-warning)]' : 'text-[var(--el-text-color-secondary)]'">
+      <div class="text-[12px]" :class="replyHint.isWarning ? 'text-[var(--el-color-warning)]' : 'text-muted'">
         {{ replyHint.text }}
       </div>
       <template v-if="!access.isReadOnly">
-        <div v-if="replyTo" class="flex items-center gap-[8px] p-[8px] rounded-[6px] bg-[var(--el-fill-color-light)]">
+        <div v-if="replyTo" class="flex items-center gap-[8px] p-[8px] surface-muted">
           <div class="flex-1 min-w-0">
-            <div class="mb-[3px] text-[12px] text-[var(--el-text-color-secondary)]">
+            <div class="mb-[3px] text-[12px] text-muted">
               {{ $t('whatsapp.replyingTo') }}
             </div>
             <ReplyPreview :reply="replyTo" />
@@ -277,6 +277,8 @@ import {
   STATE_TAG_TYPES,
   attachmentSummary,
   canRetryMessage,
+  compareSeq,
+  maxSeq,
   messageSourceLabel,
   messageReply,
   replyWindowState,
@@ -285,6 +287,7 @@ import {
   type PendingMessage,
 } from "../message-utils";
 
+import { useWhatsappDrafts } from "../drafts";
 import { phoneRegion } from "../phone-region";
 import MessageText from "./MessageText.vue";
 import ReplyPreview from "./ReplyPreview.vue";
@@ -314,7 +317,11 @@ const emit = defineEmits<{
 }>();
 
 const { t, locale } = useI18n();
-const draft = ref("");
+const drafts = useWhatsappDrafts();
+const draft = computed({
+  get: () => drafts.get(props.detail.id),
+  set: (text: string) => drafts.set(props.detail.id, text),
+});
 const replyTo = ref<WhatsappReply>();
 const composerRef = ref<InstanceType<typeof MessageComposer>>();
 const activeReactionMessageId = ref("");
@@ -351,14 +358,15 @@ watch(
   async ([id], previous) => {
     // 详情先于消息到达；首次真正渲染出消息时才视为用户打开后的展示。
     const isUserOpened = id !== renderedConversationId;
-    const wasAtBottom = isUserOpened || isNearBottom();
+    const hasNewMessage = previous?.[0] === id &&
+      compareSeq(maxSeq(props.messages) ?? "0", maxSeq(previous[1]) ?? "0") > 0;
+    const shouldScroll = isUserOpened || hasNewMessage || isNearBottom();
     if (previous && previous[0] !== id) {
-      draft.value = "";
       replyTo.value = undefined;
       activeReactionMessageId.value = "";
     }
     await nextTick();
-    if (wasAtBottom && scrollRef.value) scrollRef.value.scrollTop = scrollRef.value.scrollHeight;
+    if (shouldScroll) scrollToBottom();
     if (!props.messages.length) return;
     renderedConversationId = id;
     emit("displayed", id, isUserOpened);
@@ -371,6 +379,9 @@ onMounted(() => {
 });
 onBeforeUnmount(() => clearInterval(clock));
 
+function scrollToBottom() {
+  if (scrollRef.value) scrollRef.value.scrollTop = scrollRef.value.scrollHeight;
+}
 function isNearBottom() {
   const el = scrollRef.value;
   return !el || el.scrollHeight - el.scrollTop - el.clientHeight < 80;
@@ -411,6 +422,8 @@ function handleSend() {
   emit("send", text, replyTo.value);
   draft.value = "";
   replyTo.value = undefined;
+  // 发送记录由父组件同步加入待发送列表，渲染后滚到最新一条。
+  void nextTick(scrollToBottom);
 }
 
 function editAgain(item: PendingMessage) {
@@ -459,7 +472,10 @@ function editAgain(item: PendingMessage) {
     &:not(:disabled) { cursor: pointer; }
   }
 
-  &__react { opacity: 0; }
+  &__react {
+    @apply grid place-items-center box-border w-[32px] h-[32px] min-w-[32px] shrink-0 p-0 rounded-full border-solid border-[1px] border-[var(--el-border-color)] bg-[var(--el-bg-color)] text-muted cursor-pointer hover:text-[var(--el-color-primary)] focus-visible:outline-2 focus-visible:outline-[var(--el-color-primary)];
+    opacity: 0;
+  }
   &:hover &__react, &:focus-within &__react { opacity: 1; }
   @media (hover: none) { &__react { opacity: 1; } }
 

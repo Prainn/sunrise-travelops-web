@@ -42,7 +42,7 @@
       </el-button>
     </div>
 
-    <h4 class="mt-[16px] mb-[8px]">
+    <h4 class="mt-[16px] mb-[8px] text-[14px] text-strong font-600">
       {{ $t("whatsapp.business") }}
     </h4>
     <el-descriptions :column="1" size="small" border>
@@ -98,7 +98,7 @@
     </el-descriptions>
 
     <template v-if="detail.tours.length || detail.previousId || detail.capabilities.canStartConsultation">
-      <h4 class="mt-[16px] mb-[8px]">
+      <h4 class="mt-[16px] mb-[8px] text-[14px] text-strong font-600">
         {{ $t("whatsapp.tours") }}
       </h4>
       <el-alert
@@ -140,10 +140,10 @@
     </template>
 
     <template v-if="showActions">
-      <h4 class="mt-[16px] mb-[8px]">
+      <h4 class="mt-[16px] mb-[8px] text-[14px] text-strong font-600">
         {{ $t("whatsapp.assignmentRecords") }}
       </h4>
-      <div v-if="!assignments.length" class="text-[12px] text-[var(--el-text-color-secondary)]">
+      <div v-if="!assignments.length" class="text-[12px] text-muted">
         {{ $t("whatsapp.noAssignmentRecords") }}
       </div>
       <div
@@ -151,7 +151,7 @@
         :key="item.id"
         class="text-[12px] py-[6px] border-b border-b-solid border-[var(--el-border-color-lighter)]"
       >
-        <div class="text-[var(--el-text-color-secondary)]">
+        <div class="text-muted">
           {{ formatDateTime(item.createdAt) }}
         </div>
         <div class="whitespace-pre-wrap break-words">

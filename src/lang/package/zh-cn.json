@@ -2313,6 +2313,7 @@
       "archived": "已归档"
     },
     "emptyList": "暂无会话",
+    "draftLabel": "草稿",
     "noMessage": "暂无消息",
     "unassigned": "未分配",
     "archivedHint": "历史咨询，只读",
