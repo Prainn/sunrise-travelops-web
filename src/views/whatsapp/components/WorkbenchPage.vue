@@ -1,74 +1,108 @@
 <template>
-  <PageShell aside-width="320px">
-    <template #aside>
-      <ConversationList
-        v-model:keyword="workbench.keyword.value"
-        v-model:view="workbench.view.value"
-        v-model:state="workbench.state.value"
-        v-model:page="workbench.page.value"
-        v-model:page-size="workbench.pageSize.value"
-        :items="workbench.conversations.value"
-        :selected-id="workbench.selectedId.value"
-        :loading="workbench.listLoading.value"
-        :error="workbench.listError.value"
-        :total="workbench.total.value"
-        :view-options="viewOptions"
-        @select="handleSelect"
-        @refresh="workbench.refreshNow"
-        @reset="resetFilters"
-      />
-    </template>
-    <el-alert
-      v-if="integration && !integration.enabled"
-      type="warning"
-      :closable="false"
-      show-icon
-      :title="$t('whatsapp.integrationDisabled')"
-    />
-    <SectionCard v-if="!detail" v-loading="workbench.threadLoading.value" fill>
-      <FeedbackState
-        v-if="workbench.threadError.value"
-        type="error"
-        :title="threadErrorTitle"
-        :description="workbench.threadError.value.message"
-      />
-      <FeedbackState v-else-if="!workbench.threadLoading.value" :title="$t('whatsapp.selectConversation')" />
-    </SectionCard>
-    <div v-else class="whatsapp-workbench__body">
-      <ConversationThread
-        class="flex-1 min-w-0"
-        :detail="detail"
-        :messages="workbench.messages.value"
-        :pending="workbench.pending.value"
-        :has-older="workbench.hasOlder.value"
-        :older-loading="workbench.olderLoading.value"
-        :retrying-ids="workbench.retryingIds.value"
-        @send="handleSend"
-        @resubmit="handleResubmit"
-        @discard="workbench.discardPending"
-        @retry="handleRetry"
-        @load-older="handleLoadOlder"
-        @open-conversation="handleSelect"
-        @displayed="workbench.markDisplayed"
-      />
-      <ConversationInfo
-        class="whatsapp-workbench__info"
-        :detail="detail"
-        :can-update-state="can('whatsapp:conversation:update')"
-        :can-view-inquiry="can('website:inquiry:list')"
-        :can-create-ledger="can('ledger:direct:create')"
-        :busy="actionBusy"
-        :show-actions="mode === 'management'"
-        :actions="actions"
-        @assign="assignVisible = true"
-        @set-state="handleSetState"
-        @start-consultation="handleStartConsultation"
-        @create-inquiry="handleCreateInquiry"
-        @view-inquiry="(id) => router.push({ name: 'WebsiteInquiryList', query: { inquiryId: id } })"
-        @create-ledger="(id) => router.push({ name: 'WebsiteLedger', query: { websiteInquiryId: id } })"
-        @view-ledger="(orderNo) => router.push({ name: 'WebsiteLedger', query: { keyword: orderNo } })"
-        @open-conversation="handleSelect"
-      />
+  <PageShell>
+    <FilterBar @reset="resetFilters">
+      <el-form-item v-if="viewOptions.length" :label="$t('whatsapp.view')">
+        <el-select v-model="workbench.view.value" autocomplete="new-password">
+          <el-option
+            v-for="option in viewOptions"
+            :key="option"
+            :value="option"
+            :label="$t(`whatsapp.views.${option}`)"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item :label="$t('common.keywords')" class="filter-bar__wide">
+        <el-input
+          v-model="workbench.keyword.value"
+          :placeholder="$t('whatsapp.keywordPlaceholder')"
+          clearable
+        />
+      </el-form-item>
+      <el-form-item :label="$t('common.status')">
+        <el-select
+          :model-value="workbench.state.value"
+          autocomplete="new-password"
+          clearable
+          :placeholder="$t('whatsapp.statePlaceholder')"
+          @update:model-value="workbench.state.value = $event || undefined"
+        >
+          <el-option
+            v-for="option in STATE_OPTIONS"
+            :key="option"
+            :value="option"
+            :label="$t(`whatsapp.states.${option}`)"
+          />
+        </el-select>
+      </el-form-item>
+    </FilterBar>
+    <div class="whatsapp-workbench__split">
+      <aside class="whatsapp-workbench__list">
+        <ConversationList
+          v-model:page="workbench.page.value"
+          v-model:page-size="workbench.pageSize.value"
+          :items="workbench.conversations.value"
+          :selected-id="workbench.selectedId.value"
+          :loading="workbench.listLoading.value"
+          :error="workbench.listError.value"
+          :total="workbench.total.value"
+          @select="handleSelect"
+          @refresh="workbench.refreshNow"
+        />
+      </aside>
+      <div class="whatsapp-workbench__content">
+        <el-alert
+          v-if="integration && !integration.enabled"
+          type="warning"
+          :closable="false"
+          show-icon
+          :title="$t('whatsapp.integrationDisabled')"
+        />
+        <SectionCard v-if="!detail" v-loading="workbench.threadLoading.value" fill>
+          <FeedbackState
+            v-if="workbench.threadError.value"
+            type="error"
+            :title="threadErrorTitle"
+            :description="workbench.threadError.value.message"
+          />
+          <FeedbackState v-else-if="!workbench.threadLoading.value" :title="$t('whatsapp.selectConversation')" />
+        </SectionCard>
+        <div v-else class="whatsapp-workbench__body">
+          <ConversationThread
+            class="flex-1 min-w-0"
+            :detail="detail"
+            :messages="workbench.messages.value"
+            :pending="workbench.pending.value"
+            :has-older="workbench.hasOlder.value"
+            :older-loading="workbench.olderLoading.value"
+            :retrying-ids="workbench.retryingIds.value"
+            @send="handleSend"
+            @resubmit="handleResubmit"
+            @discard="workbench.discardPending"
+            @retry="handleRetry"
+            @load-older="handleLoadOlder"
+            @open-conversation="handleSelect"
+            @displayed="workbench.markDisplayed"
+          />
+          <ConversationInfo
+            class="whatsapp-workbench__info"
+            :detail="detail"
+            :can-update-state="can('whatsapp:conversation:update')"
+            :can-view-inquiry="can('website:inquiry:list')"
+            :can-create-ledger="can('ledger:direct:create')"
+            :busy="actionBusy"
+            :show-actions="isManager"
+            :actions="actions"
+            @assign="assignVisible = true"
+            @set-state="handleSetState"
+            @start-consultation="handleStartConsultation"
+            @create-inquiry="handleCreateInquiry"
+            @view-inquiry="(id) => router.push({ name: 'WebsiteInquiryList', query: { inquiryId: id } })"
+            @create-ledger="(id) => router.push({ name: 'WebsiteLedger', query: { websiteInquiryId: id } })"
+            @view-ledger="(orderNo) => router.push({ name: 'WebsiteLedger', query: { keyword: orderNo } })"
+            @open-conversation="handleSelect"
+          />
+        </div>
+      </div>
     </div>
     <AssignDialog
       v-if="detail"
@@ -101,6 +135,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { ApiError } from "@/api/request";
 import FeedbackState from "@/components/FeedbackState/index.vue";
+import FilterBar from "@/components/FilterBar/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import { websiteErrorMessage, websiteService } from "@/services/website.service";
@@ -109,6 +144,7 @@ import { useUserStore } from "@/stores/user";
 import type { WebsiteCity, WebsiteInquiryInput } from "@/types/website";
 import type {
   WhatsappAction,
+  WhatsappConversationState,
   WhatsappConversationView,
   WhatsappIntegrationStatus,
   WhatsappMessage,
@@ -120,21 +156,15 @@ import ConversationInfo from "./ConversationInfo.vue";
 import ConversationList from "./ConversationList.vue";
 import ConversationThread from "./ConversationThread.vue";
 
-const props = defineProps<{
-  /** inbox：日常收发；management：主管分配，默认显示未分配并展示分配记录。 */
-  mode: "inbox" | "management";
-}>();
-
 const { t } = useI18n();
 const router = useRouter();
 const user = useUserStore();
 const can = (permission: string) => user.userInfo.perms.includes(permission);
 const isManager = can("whatsapp:conversation:assign");
-const defaultView: WhatsappConversationView | undefined = isManager
-  ? (props.mode === "management" ? "unassigned" : "all")
-  : undefined;
+const defaultView: WhatsappConversationView | undefined = isManager ? "all" : undefined;
 const workbench = useWhatsappWorkbench({ defaultView });
 
+const STATE_OPTIONS: WhatsappConversationState[] = ["open", "closed", "archived"];
 const viewOptions: WhatsappConversationView[] = isManager ? ["all", "unassigned", "mine"] : [];
 const assignVisible = ref(false);
 const actionBusy = ref(false);
@@ -179,7 +209,7 @@ async function loadActions() {
   const id = detail.value?.id;
   const current = ++actionsGeneration;
   actions.value = [];
-  if (!id || props.mode !== "management") return;
+  if (!id || !isManager) return;
   try {
     const result = await whatsappService.actions(id, { page: 1, pageSize: 100 });
     if (current === actionsGeneration) actions.value = result.list;
@@ -336,6 +366,30 @@ async function handleInquirySave(input: WebsiteInquiryInput) {
 </script>
 
 <style scoped lang="scss">
+.whatsapp-workbench__split {
+  display: flex;
+  flex: 1 1 0;
+  gap: var(--page-gap);
+  min-height: 0;
+}
+
+.whatsapp-workbench__list {
+  display: flex;
+  flex: 0 0 320px;
+  flex-direction: column;
+  width: 320px;
+  min-height: 0;
+}
+
+.whatsapp-workbench__content {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: var(--page-gap);
+  min-width: 0;
+  min-height: 0;
+}
+
 .whatsapp-workbench__body {
   display: flex;
   flex: 1 1 0;
@@ -346,6 +400,18 @@ async function handleInquirySave(input: WebsiteInquiryInput) {
 .whatsapp-workbench__info {
   flex: 0 0 320px;
   width: 320px;
+}
+
+@media (width <= 900px) {
+  .whatsapp-workbench__split {
+    flex-direction: column;
+  }
+
+  .whatsapp-workbench__list {
+    flex-basis: auto;
+    width: 100%;
+    max-height: 50vh;
+  }
 }
 
 @media (width <= 1200px) {

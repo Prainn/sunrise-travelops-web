@@ -90,18 +90,6 @@ export const constantRoutes: RouteRecordRaw[] = [
         },
       },
       {
-        path: "management",
-        name: "WhatsappManagement",
-        component: () => import("@/views/whatsapp/management/index.vue"),
-        meta: {
-          menuKey: "whatsapp-management",
-          title: "whatsappManagement",
-          icon: "el-icon-UserFilled",
-          scopes: ["headquarters", "website"],
-          perms: ["whatsapp:conversation:assign"],
-        },
-      },
-      {
         path: "integration",
         name: "WhatsappIntegration",
         component: () => import("@/views/whatsapp/integration/index.vue"),

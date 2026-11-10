@@ -210,7 +210,7 @@ describe("WhatsApp 工作台菜单", () => {
       ?.children?.map((route) => route.name) ?? [];
   const keys = ["whatsapp-inbox", "whatsapp-management", "whatsapp-integration"];
 
-  it("独立站计调只有收件箱，不能进入分配页", () => {
+  it("独立站计调只有收件箱", () => {
     const perms = ["whatsapp:conversation:list", "whatsapp:message:send", "whatsapp:inquiry:create", "whatsapp:conversation:update"];
     expect(visibleChildren({ scope: "website", roles: ["COORDINATOR"], perms, menuKeys: keys })).toEqual(["WhatsappInbox"]);
   });
@@ -218,7 +218,7 @@ describe("WhatsApp 工作台菜单", () => {
   it("独立站主管可分配，但接入状态仅限总部特权账号", () => {
     const perms = ["whatsapp:conversation:list", "whatsapp:conversation:assign"];
     expect(visibleChildren({ scope: "website", roles: ["BUSINESS_MANAGER"], perms, menuKeys: keys }))
-      .toEqual(["WhatsappInbox", "WhatsappManagement"]);
+      .toEqual(["WhatsappInbox"]);
   });
 
   it("没有 WhatsApp 权限的总部 ROOT/ADMIN 及其它业务看不到目录", () => {
@@ -230,6 +230,6 @@ describe("WhatsApp 工作台菜单", () => {
   it("后端下发权限的总部特权账号可见全部子页", () => {
     const perms = ["whatsapp:conversation:list", "whatsapp:conversation:assign", "whatsapp:integration:manage"];
     expect(visibleChildren({ scope: "headquarters", roles: ["ROOT"], perms }))
-      .toEqual(["WhatsappInbox", "WhatsappManagement", "WhatsappIntegration"]);
+      .toEqual(["WhatsappInbox", "WhatsappIntegration"]);
   });
 });

@@ -174,7 +174,7 @@ const props = defineProps<{
   canViewInquiry: boolean;
   canCreateLedger: boolean;
   busy: boolean;
-  /** 会话分配页展示分配记录及理由。 */
+  /** 有分配权限的主管在收件箱查看分配记录及理由。 */
   showActions: boolean;
   actions: WhatsappAction[];
 }>();

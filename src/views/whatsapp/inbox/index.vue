@@ -1,5 +1,5 @@
 <template>
-  <WorkbenchPage mode="inbox" />
+  <WorkbenchPage />
 </template>
 
 <script setup lang="ts">
