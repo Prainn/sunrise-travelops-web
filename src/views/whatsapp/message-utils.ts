@@ -150,6 +150,14 @@ export function canRetryMessage(message: WhatsappMessage, retriedIds: Set<string
   return message.status === "failed" && message.source === "system" && canReply && !retriedIds.has(message.id);
 }
 
+const CONFIRM_FAILED_WAIT_MS = 10 * 60_000;
+
+/** 结果待核实满 10 分钟仍无回执的系统消息，可由主管人工确认未送达；等待时间以服务端校验为准。 */
+export function canConfirmFailedMessage(message: WhatsappMessage, canConfirm: boolean, now: number): boolean {
+  return canConfirm && message.status === "unknown" && message.source === "system" &&
+    now - Date.parse(message.updatedAt) >= CONFIRM_FAILED_WAIT_MS;
+}
+
 /**
  * 会话输入区与历史导航：归档咨询始终只读，并指向当前咨询；能否回复以服务端能力为准。
  *

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { effectScope, nextTick } from "vue";
 import { ApiError } from "@/api/request";
-import type { WhatsappConversationDetail, WhatsappMessage } from "@/types/whatsapp";
+import type { WhatsappConversationDetail, WhatsappCustomerNotes, WhatsappMessage } from "@/types/whatsapp";
 import type { WebsiteInquiryInput } from "@/types/website";
 
 const service = vi.hoisted(() => ({
@@ -12,6 +12,8 @@ const service = vi.hoisted(() => ({
   sendText: vi.fn(),
   sendReaction: vi.fn(),
   retryMessage: vi.fn(),
+  customerNotes: vi.fn(),
+  saveCustomerNotes: vi.fn(),
 }));
 vi.mock("@/services/whatsapp.service", async (importOriginal) => ({
   ...(await importOriginal<object>()),
@@ -26,7 +28,8 @@ vi.mock("@/stores/user", async () => {
 
 import { useUserStore } from "@/stores/user";
 import { whatsappInquiryInput } from "@/services/whatsapp.service";
-import { canRetryMessage, compareSeq, mergeLatestPage, messageSourceLabel, messageReply, sortMessages, maxSeq, threadAccess, threadMessages } from "./message-utils";
+import { canConfirmFailedMessage, canRetryMessage, compareSeq, mergeLatestPage, messageSourceLabel, messageReply, sortMessages, maxSeq, threadAccess, threadMessages } from "./message-utils";
+import { useCustomerNotes } from "./useCustomerNotes";
 import { useWhatsappWorkbench } from "./useWhatsappWorkbench";
 
 const BIG_SEQ = "9007199254740993";
@@ -54,9 +57,21 @@ function setup() {
   return scope.run(() => useWhatsappWorkbench())!;
 }
 
+function memoryStorage() {
+  const values = new Map<string, string>();
+  return {
+    get length() { return values.size; },
+    key: (index: number) => [...values.keys()][index] ?? null,
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => { values.set(key, value); },
+    removeItem: (key: string) => { values.delete(key); },
+  };
+}
+
 beforeEach(() => {
   vi.useFakeTimers();
   vi.stubGlobal("document", doc);
+  vi.stubGlobal("localStorage", memoryStorage());
   doc.visibilityState = "visible";
   doc.hasFocus.mockReturnValue(true);
   for (const fn of Object.values(service)) fn.mockReset();
@@ -107,10 +122,21 @@ describe("来源与重试能力", () => {
     expect(canRetryMessage(failed, new Set(["f"]), true)).toBe(false);
     expect(canRetryMessage(failed, new Set(), false)).toBe(false);
   });
+
+  it("结果待核实满 10 分钟的系统消息仅主管可确认未送达", () => {
+    const updatedAt = "2026-11-06T00:00:00Z";
+    const unknown = message({ source: "system", direction: "outbound", status: "unknown", updatedAt });
+    const due = Date.parse(updatedAt) + 10 * 60_000;
+    expect(canConfirmFailedMessage(unknown, true, due)).toBe(true);
+    expect(canConfirmFailedMessage(unknown, true, due - 1)).toBe(false);
+    expect(canConfirmFailedMessage(unknown, false, due)).toBe(false);
+    expect(canConfirmFailedMessage({ ...unknown, status: "failed" }, true, due)).toBe(false);
+    expect(canConfirmFailedMessage({ ...unknown, source: "mobile" }, true, due)).toBe(false);
+  });
 });
 
 describe("历史咨询只读", () => {
-  const capabilities = { canReply: true, canAssign: false, canCreateInquiry: false, canStartConsultation: false };
+  const capabilities = { canReply: true, canAssign: false, canCreateInquiry: false, canStartConsultation: false, canUpdateCustomer: false, canConfirmFailed: false };
 
   it("归档咨询始终只读，即使服务端能力误报可回复，并提供进入新咨询入口", () => {
     expect(threadAccess({ id: "old", state: "archived", currentConversationId: "new", capabilities }))
@@ -139,6 +165,64 @@ describe("会话建询盘请求体", () => {
 });
 
 describe("useWhatsappWorkbench", () => {
+  it("积压超过5页分轮续取，已读不越过尚未补齐的消息", async () => {
+    const workbench = setup();
+    service.messages.mockResolvedValueOnce(page([message({ id: "m-1", seq: "1" })]));
+    await workbench.selectConversation("c-1");
+    const all = Array.from({ length: 651 }, (_, index) => message({ id: `m-${index + 1}`, seq: String(index + 1) }));
+    service.messages.mockImplementation(async (_id, query) => {
+      const selected = query.afterSeq ? all.filter((row) => BigInt(row.seq) > BigInt(query.afterSeq)) : [...all].reverse();
+      return { list: selected.slice(0, 50), total: selected.length, page: 1, pageSize: 50 };
+    });
+    await workbench.reloadSelected();
+    expect(maxSeq(workbench.messages.value)).toBe("251");
+    await workbench.markDisplayed("c-1", true);
+    expect(service.markRead).toHaveBeenLastCalledWith("c-1", "251");
+    // A local successful send can append an outbox row ahead of the incoming backlog.
+    workbench.messages.value = [...workbench.messages.value, message({ id: "own-send", seq: "700", direction: "outbound" })];
+    await workbench.markDisplayed("c-1", true);
+    expect(service.markRead).toHaveBeenCalledTimes(1);
+    await workbench.reloadSelected();
+    expect(service.messages.mock.calls.some(([, query]) => query.afterSeq === "251")).toBe(true);
+    await workbench.markDisplayed("c-1", true);
+    expect(service.markRead).toHaveBeenLastCalledWith("c-1", "501");
+    await workbench.reloadSelected();
+    expect(workbench.messages.value.map((row) => row.seq)).toEqual(all.map((row) => row.seq));
+    await workbench.markDisplayed("c-1", true);
+    expect(service.markRead).toHaveBeenLastCalledWith("c-1", "651");
+    expect(service.messages.mock.calls.filter(([, query]) => query.afterSeq).every(([, query]) => query.page === 1)).toBe(true);
+  });
+
+  it("同查询网络失败保留列表，权限失效清空列表与会话", async () => {
+    const workbench = setup();
+    workbench.start();
+    await flush();
+    await workbench.selectConversation("c-1");
+    service.conversations.mockRejectedValueOnce(networkError());
+    workbench.refreshNow();
+    await flush();
+    expect(workbench.conversations.value).toHaveLength(1);
+    expect(workbench.total.value).toBe(1);
+    expect(workbench.listError.value).not.toBe("");
+    expect(workbench.detail.value?.id).toBe("c-1");
+    service.conversations.mockRejectedValueOnce(new ApiError("forbidden", { status: 403, code: "AUTH_FORBIDDEN" }));
+    workbench.refreshNow();
+    await flush();
+    expect(workbench.conversations.value).toEqual([]);
+    expect(workbench.detail.value).toBeNull();
+  });
+
+  it("更换筛选后失败不沿用上个查询的结果", async () => {
+    const workbench = setup();
+    workbench.start();
+    await flush();
+    service.conversations.mockRejectedValue(networkError());
+    workbench.view.value = "unassigned";
+    await flush();
+    expect(workbench.conversations.value).toEqual([]);
+    expect(workbench.total.value).toBe(0);
+  });
+
   it("只有展示后显式标记已读，后台刷新不标记", async () => {
     const workbench = setup();
     workbench.start();
@@ -274,5 +358,129 @@ describe("消息气泡与交互", () => {
     expect(threadMessages([stale, { ...reaction, status: "failed", presentation: { ...reaction.presentation!, hidden: false } }])[0]!.presentation!.reactions).toEqual([]);
     const removal = message({ ...reaction, id: "removal", seq: "100", presentation: { ...reaction.presentation!, emoji: "" } });
     expect(threadMessages([original, reaction, removal])[0]!.presentation!.reactions).toEqual([]);
+  });
+});
+
+describe("useCustomerNotes", () => {
+  const notes = (patch: Partial<WhatsappCustomerNotes> = {}): WhatsappCustomerNotes => ({
+    conversationId: "c-1", version: 1, customerName: "Tom", countryItemId: null, plannedDays: null, startDate: null, pax: null,
+    contactInfo: "bsuid-1", destinations: [], requirements: "hi", internalRemark: "", updatedAt: null, ...patch,
+  });
+  function setupNotes() {
+    scope = effectScope();
+    return scope.run(() => useCustomerNotes())!;
+  }
+
+  it("按会话隔离草稿，切换回来保留未保存输入，晚到的旧响应不覆盖", async () => {
+    let resolveFirst!: (value: WhatsappCustomerNotes) => void;
+    service.customerNotes.mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve; }));
+    service.customerNotes.mockImplementation(async (id: string) => notes({ conversationId: id, customerName: id }));
+    const state = setupNotes();
+    state.select("c-1", 1);
+    void state.load("c-1", true);
+    await flush();
+    resolveFirst(notes({ customerName: "stale" }));
+    await flush();
+    expect(state.entry.value!.form.customerName).toBe("c-1");
+
+    state.entry.value!.form.internalRemark = "draft";
+    state.select("c-2", 1);
+    await flush();
+    expect(state.entry.value!.form).toMatchObject({ customerName: "c-2", internalRemark: "" });
+    state.select("c-1", 2);
+    await flush();
+    expect(state.entry.value!.form.internalRemark).toBe("draft");
+  });
+
+  it("全量提交版本和空白字段；409 保留输入且不自动重试", async () => {
+    service.customerNotes.mockResolvedValue(notes());
+    service.saveCustomerNotes.mockRejectedValueOnce(conflict());
+    const state = setupNotes();
+    state.select("c-1", 1);
+    await flush();
+    state.entry.value!.form.customerName = "";
+    const result = await state.save();
+    expect(service.saveCustomerNotes).toHaveBeenCalledExactlyOnceWith("c-1", {
+      version: 1, customerName: "", countryItemId: null, plannedDays: null, startDate: null, pax: null,
+      contactInfo: "bsuid-1", destinations: [], requirements: "hi", internalRemark: "",
+    });
+    expect(result?.kind).toBe("conflict");
+    expect(state.entry.value).toMatchObject({ conflict: true, form: { customerName: "" } });
+    await state.load("c-1");
+    expect(service.customerNotes).toHaveBeenCalledTimes(1);
+    expect(await state.save()).toBeUndefined();
+
+    await state.load("c-1", true);
+    expect(state.entry.value).toMatchObject({ conflict: false, form: { customerName: "Tom" } });
+  });
+
+  it("未保存修改写入缓存，刷新页面后恢复；保存成功后清除", async () => {
+    service.customerNotes.mockResolvedValue(notes());
+    service.saveCustomerNotes.mockResolvedValue(notes({ version: 2, internalRemark: "draft" }));
+    const first = setupNotes();
+    first.select("c-1", 1);
+    await flush();
+    first.entry.value!.form.internalRemark = "draft";
+    await flush();
+    scope.stop();
+
+    const reloaded = setupNotes();
+    reloaded.select("c-1", 1);
+    await flush();
+    expect(reloaded.entry.value).toMatchObject({ conflict: false, version: 1, form: { internalRemark: "draft" } });
+    await reloaded.save();
+    await flush();
+    scope.stop();
+
+    const afterSave = setupNotes();
+    afterSave.select("c-1", 2);
+    await flush();
+    expect(afterSave.dirty.value).toBe(false);
+  });
+
+  it("缓存草稿版本已过期时按冲突恢复，确认刷新后清除；其他身份读不到", async () => {
+    const user = useUserStore();
+    user.userInfo.identityId = "identity-1";
+    service.customerNotes.mockResolvedValue(notes());
+    const first = setupNotes();
+    first.select("c-1", 1);
+    await flush();
+    first.entry.value!.form.internalRemark = "draft";
+    await flush();
+    scope.stop();
+
+    user.userInfo.identityId = "identity-2";
+    const other = setupNotes();
+    other.select("c-1", 1);
+    await flush();
+    expect(other.dirty.value).toBe(false);
+    scope.stop();
+    user.userInfo.identityId = "identity-1";
+
+    service.customerNotes.mockResolvedValue(notes({ version: 3 }));
+    const stale = setupNotes();
+    stale.select("c-1", 3);
+    await flush();
+    expect(stale.entry.value).toMatchObject({ conflict: true, form: { internalRemark: "draft" } });
+    await stale.load("c-1", true);
+    await flush();
+    scope.stop();
+
+    const cleared = setupNotes();
+    cleared.select("c-1", 3);
+    await flush();
+    expect(cleared.dirty.value).toBe(false);
+  });
+
+  it("保存成功以服务端返回的称呼和版本为准", async () => {
+    service.customerNotes.mockResolvedValue(notes());
+    service.saveCustomerNotes.mockResolvedValue(notes({ version: 2, customerName: "WhatsApp Tom" }));
+    const state = setupNotes();
+    state.select("c-1", 1);
+    await flush();
+    state.entry.value!.form.customerName = "";
+    expect((await state.save())?.kind).toBe("saved");
+    expect(state.entry.value).toMatchObject({ version: 2, form: { customerName: "WhatsApp Tom" } });
+    expect(state.dirty.value).toBe(false);
   });
 });

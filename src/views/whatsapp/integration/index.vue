@@ -27,6 +27,15 @@
             {{ $t(status.workerEnabled ? "whatsapp.enabled" : "whatsapp.disabled") }}
           </el-tag>
         </el-descriptions-item>
+        <el-descriptions-item v-for="loop in workerLoops" :key="loop" :label="$t(`whatsapp.workerLoops.${loop}`)">
+          <div class="flex flex-col gap-1">
+            <el-tag :type="workerTagType(status.worker[loop].state)">
+              {{ $t(`whatsapp.workerStates.${status.worker[loop].state}`) }}
+            </el-tag>
+            <span class="text-muted text-[12px]">{{ $t('whatsapp.lastWorkerSuccess') }}：{{ formatDateTime(status.worker[loop].lastCompletedAt) }}</span>
+            <span v-if="status.worker[loop].lastErrorAt" class="text-muted text-[12px]">{{ $t('whatsapp.lastWorkerError') }}：{{ formatDateTime(status.worker[loop].lastErrorAt) }}</span>
+          </div>
+        </el-descriptions-item>
         <el-descriptions-item :label="$t('whatsapp.receiveMode')">
           {{ $t(`whatsapp.receiveModes.${status.receiveMode}`) }}
         </el-descriptions-item>
@@ -41,6 +50,12 @@
         <el-descriptions-item :label="$t('whatsapp.lastProcessedAt')">
           {{ formatDateTime(status.lastProcessedAt) }}
         </el-descriptions-item>
+        <el-descriptions-item v-for="state in outboundStates" :key="state" :label="$t('whatsapp.outboundCount', { state: $t(`whatsapp.statuses.${state}`) })">
+          {{ status.outbound[state] }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="$t('whatsapp.oldestOutbound')">
+          {{ formatDateTime(status.outbound.oldestPendingAt) }}
+        </el-descriptions-item>
         <el-descriptions-item :label="$t('whatsapp.pendingEvents')">
           {{ status.pending }}
         </el-descriptions-item>
@@ -48,6 +63,9 @@
           {{ status.failed }}
         </el-descriptions-item>
       </el-descriptions>
+      <p v-if="status" class="text-muted text-[12px] mb-0">
+        {{ $t("whatsapp.workerScopeHint") }}
+      </p>
     </SectionCard>
     <SectionCard fill>
       <TableToolbar :title="$t('whatsapp.failedEvents')" :refreshing="eventsLoading" @refresh="loadEvents" />
@@ -116,12 +134,20 @@ import TableToolbar from "@/components/TableToolbar/index.vue";
 import { useRefreshOnActivated } from "@/composables";
 import { websiteErrorMessage } from "@/services/website.service";
 import { whatsappService } from "@/services/whatsapp.service";
-import type { WhatsappFailedEvent, WhatsappIntegrationStatus } from "@/types/whatsapp";
+import type { WhatsappFailedEvent, WhatsappIntegrationStatus, WhatsappWorkerStatus } from "@/types/whatsapp";
 import { formatDateTime } from "@/utils";
 
 defineOptions({ name: "WhatsappIntegration" });
 
 const { t } = useI18n();
+const workerLoops = ["events", "outbound"] as const;
+const outboundStates = ["queued", "sending", "unknown", "failed"] as const;
+function workerTagType(state: WhatsappWorkerStatus["state"]) {
+  if (state === "running") return "success";
+  if (state === "error" || state === "stalled") return "danger";
+  if (state === "starting") return "warning";
+  return "info";
+}
 const status = ref<WhatsappIntegrationStatus | null>(null);
 const statusLoading = ref(false);
 const statusError = ref("");

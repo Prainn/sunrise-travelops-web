@@ -69,6 +69,8 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   const pendingByConversation = ref(new Map<string, PendingMessage[]>());
   const retryingIds = ref(new Set<string>());
 
+  let syncedSeq: string | null = null;
+  let lastListQuery = "";
   let session = 0;
   let threadToken = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -93,18 +95,27 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   }
 
   async function fetchList(currentSession = session) {
+    const query = listQuery();
+    const queryKey = JSON.stringify(query);
+    if (queryKey !== lastListQuery) {
+      conversations.value = [];
+      total.value = 0;
+      lastListQuery = queryKey;
+    }
     listLoading.value = conversations.value.length === 0;
     try {
-      const result = await whatsappService.conversations(listQuery());
-      if (currentSession !== session) return;
+      const result = await whatsappService.conversations(query);
+      if (currentSession !== session || queryKey !== JSON.stringify(listQuery())) return;
       conversations.value = result.list;
       total.value = result.total;
       listError.value = "";
     } catch (cause) {
-      if (currentSession !== session) return;
-      // 读取失败不保留上一轮列表，避免误认为数据仍有效。
-      conversations.value = [];
-      total.value = 0;
+      if (currentSession !== session || queryKey !== JSON.stringify(listQuery())) return;
+      if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403 || cause.status === 404)) {
+        conversations.value = [];
+        total.value = 0;
+        clearThread();
+      }
       listError.value = websiteErrorMessage(cause);
       throw cause;
     } finally {
@@ -114,6 +125,7 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
 
   function clearThread() {
     threadToken++;
+    syncedSeq = null;
     detail.value = null;
     messages.value = [];
     messageTotal.value = 0;
@@ -136,20 +148,33 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
    * @param token - 发起时的会话令牌，失效后丢弃结果。
    */
   async function syncMessages(id: string, token: number) {
-    const known = maxSeq(messages.value);
+    const known = syncedSeq;
     const latest = await whatsappService.messages(id, { page: 1, pageSize: MESSAGE_PAGE_SIZE });
     if (token !== threadToken) return;
     let merged = messages.value;
     const floor = minSeq(latest.list);
+    let reachedLatest = true;
+    let cursor = known;
     if (known && floor && compareSeq(floor, known) > 0 && latest.list.length >= MESSAGE_PAGE_SIZE) {
+      reachedLatest = false;
       for (let pageNo = 1; pageNo <= MAX_GAP_PAGES; pageNo++) {
-        const gap = await whatsappService.messages(id, { page: pageNo, pageSize: MESSAGE_PAGE_SIZE, afterSeq: known });
+        const gap = await whatsappService.messages(id, { page: 1, pageSize: MESSAGE_PAGE_SIZE, afterSeq: cursor! });
         if (token !== threadToken) return;
         merged = mergeMessages(merged, gap.list);
-        if (pageNo * MESSAGE_PAGE_SIZE >= gap.total) break;
+        const lastGapSeq = maxSeq(gap.list);
+        if (!lastGapSeq || compareSeq(lastGapSeq, cursor!) <= 0) break;
+        cursor = lastGapSeq;
+        reachedLatest = compareSeq(lastGapSeq, floor) >= 0;
+        if (reachedLatest) break;
       }
     }
-    merged = mergeLatestPage(merged, latest.list, latest.total <= latest.list.length);
+    // Advance only through fetched rows; the next poll resumes from this cursor after the cap.
+    if (reachedLatest) {
+      merged = mergeLatestPage(merged, latest.list, latest.total <= latest.list.length);
+      syncedSeq = maxSeq(latest.list);
+    } else {
+      syncedSeq = cursor;
+    }
     messages.value = merged;
     messageTotal.value = Math.max(latest.total, merged.length);
     const list = pendingByConversation.value.get(id);
@@ -284,7 +309,9 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   async function markDisplayed(id: string, isUserOpened: boolean) {
     if (id !== selectedId.value || detail.value?.id !== id) return;
     if (document.visibilityState !== "visible" || (!isUserOpened && !document.hasFocus())) return;
-    const seq = maxSeq(messages.value.filter((message) => message.conversationId === id));
+    // A newly sent outbox row may be ahead of the incoming rows still being fetched.
+    const seq = maxSeq(messages.value.filter((message) => message.conversationId === id &&
+      syncedSeq !== null && compareSeq(message.seq, syncedSeq) <= 0));
     if (!seq) return;
     const sent = lastReadSent.get(id);
     if (sent && compareSeq(seq, sent) <= 0) return;
@@ -415,6 +442,23 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     }
   }
 
+  /**
+   * 客户资料保存后同步当前会话的称呼和版本；同联系人其他列表项由下一轮刷新取得。
+   *
+   * @param id - 会话 ID。
+   * @param name - 服务端返回的有效称呼。
+   * @param version - 保存后的会话版本。
+   */
+  function applyCustomerName(id: string, name: string, version: number) {
+    if (detail.value?.id === id && detail.value.version <= version) detail.value = { ...detail.value, name, version };
+    const row = conversations.value.find((item) => item.id === id);
+    if (row && row.version <= version) {
+      row.name = name;
+      row.version = version;
+    }
+    refreshNow();
+  }
+
   /** 丢弃全部缓存、在途响应和定时器；身份切换或卸载时调用。 */
   function reset() {
     session++;
@@ -493,5 +537,6 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     resubmitPending,
     discardPending,
     retryMessage,
+    applyCustomerName,
   };
 }

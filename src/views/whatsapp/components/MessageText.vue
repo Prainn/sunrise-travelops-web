@@ -27,16 +27,12 @@
 <script setup lang="ts">
 import { computed, h, type VNodeChild } from "vue";
 import { parseMessageText, type InlineNode } from "../message-format";
-import { emojiUrl, splitEmojis } from "../emoji";
 
 const props = defineProps<{ text: string }>();
 const blocks = computed(() => parseMessageText(props.text));
 
 function InlineText({ nodes }: { nodes: InlineNode[] }): VNodeChild[] {
-  return nodes.map((node) => typeof node === "string" ? splitEmojis(node).map(part => {
-    const src = emojiUrl(part);
-    return src ? h("img", { src, alt: part, class: "inline-block w-[1.2em] h-[1.2em] align-middle" }) : part;
-  }) : h(node.tag,
+  return nodes.map((node) => typeof node === "string" ? node : h(node.tag,
     node.tag === "code" ? { class: "font-mono rounded-[3px] px-[3px] bg-[var(--el-fill-color)]" } : {},
     InlineText({ nodes: node.children })));
 }

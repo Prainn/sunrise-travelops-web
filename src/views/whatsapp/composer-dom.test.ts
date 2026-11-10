@@ -16,9 +16,8 @@ describe("WhatsApp编辑器发送正文", () => {
     expect(composerText(element("DIV",element("DIV",text("one")),element("DIV",element("BR")),element("DIV",text("two")))))
       .toBe("one\n\ntwo");
   });
-  it("本地表情图像发送Unicode，外部图片和标记不进入正文", () => {
-    const emoji = element("IMG");emoji.dataset.emoji="👍";
-    expect(composerText(element("DIV",text("Thanks "),emoji,element("IMG")))).toBe("Thanks 👍");
+  it("表情按Unicode文字发送，图片和HTML标记不进入正文", () => {
+    expect(composerText(element("DIV",text("Thanks 👍"),element("IMG")))).toBe("Thanks 👍");
     expect(composerText(element("DIV",text('<img src=x onerror="alert(1)">')))).toBe('<img src=x onerror="alert(1)">');
   });
   it("单词中部分文字加粗时，发送完整单词的有效WhatsApp格式", () => {

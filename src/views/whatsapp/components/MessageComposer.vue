@@ -16,38 +16,22 @@
             :title="$t('whatsapp.emoji')"
             @mousedown.prevent="rememberSelection"
           >
-            <img
-              src="/emoji/1f600.svg"
-              alt=""
-              width="20"
-              height="20"
-            >
+            <span class="text-[18px] leading-none" aria-hidden="true">😀</span>
           </button>
         </template>
         <div class="grid grid-cols-8 gap-[5px]" :aria-label="$t('whatsapp.emoji')">
           <button
-            v-for="[emoji, code] in COMMON_EMOJIS"
-            :key="code"
+            v-for="emoji in COMMON_EMOJIS"
+            :key="emoji"
             type="button"
-            class="grid place-items-center p-0 w-[28px] h-[30px] border-0 rounded-[4px] bg-transparent cursor-pointer hover:bg-[var(--el-fill-color)]"
+            class="grid place-items-center p-0 w-[30px] h-[30px] border-0 rounded-[4px] bg-transparent text-[22px] leading-none cursor-pointer hover:bg-[var(--el-fill-color)]"
             :aria-label="emoji"
             @mousedown.prevent
             @click="insertEmoji(emoji)"
           >
-            <img
-              :src="`/emoji/${code}.svg`"
-              :alt="emoji"
-              width="23"
-              height="23"
-            >
+            {{ emoji }}
           </button>
         </div>
-        <a
-          class="block mt-[8px] text-[10px] text-muted"
-          href="https://github.com/twitter/twemoji"
-          target="_blank"
-          rel="noopener noreferrer"
-        >Twemoji · CC BY 4.0</a>
       </el-popover>
       <button
         v-for="format in ['bold', 'italic'] as const"
@@ -222,6 +206,5 @@ defineExpose({ focus });
   &:focus { outline: none; border-color: var(--el-color-primary); }
   &[aria-disabled="true"] { background: var(--el-disabled-bg-color); color: var(--el-disabled-text-color); }
   &[data-empty="true"]::before { content: attr(data-placeholder); position: absolute; pointer-events: none; color: var(--el-text-color-placeholder); font-weight: normal; font-style: normal; }
-  :deep(.whatsapp-composer__emoji) { display: inline-block; width: 20px; height: 20px; vertical-align: -4px; }
 }
 </style>

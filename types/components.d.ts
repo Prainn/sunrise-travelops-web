@@ -38,6 +38,7 @@ declare module 'vue' {
     ConversationInfo: typeof import('./../src/views/whatsapp/components/ConversationInfo.vue')['default']
     ConversationList: typeof import('./../src/views/whatsapp/components/ConversationList.vue')['default']
     ConversationThread: typeof import('./../src/views/whatsapp/components/ConversationThread.vue')['default']
+    CustomerNotesPanel: typeof import('./../src/views/whatsapp/components/CustomerNotesPanel.vue')['default']
     DataTable: typeof import('./../src/components/DataTable/index.vue')['default']
     DensitySelect: typeof import('./../src/components/DensitySelect/index.vue')['default']
     DictSelect: typeof import('./../src/components/DictSelect/index.vue')['default']
@@ -200,6 +201,7 @@ declare module 'vue' {
     WebsiteTransportDialog: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteTransportDialog.vue')['default']
     WebsiteTransportFields: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteTransportFields.vue')['default']
     WebsiteVehiclePrices: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteVehiclePrices.vue')['default']
+    WhatsappBadges: typeof import('./../src/layouts/components/WhatsappBadges.vue')['default']
     WorkbenchPage: typeof import('./../src/views/whatsapp/components/WorkbenchPage.vue')['default']
   }
   export interface GlobalDirectives {

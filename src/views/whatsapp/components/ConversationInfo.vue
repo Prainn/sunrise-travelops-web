@@ -139,6 +139,8 @@
       </div>
     </template>
 
+    <slot name="notes" />
+
     <template v-if="showActions">
       <h4 class="mt-[16px] mb-[8px] text-[14px] text-strong font-600">
         {{ $t("whatsapp.assignmentRecords") }}

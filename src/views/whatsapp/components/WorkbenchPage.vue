@@ -75,11 +75,13 @@
             :has-older="workbench.hasOlder.value"
             :older-loading="workbench.olderLoading.value"
             :retrying-ids="workbench.retryingIds.value"
+            :confirming-ids="confirmingIds"
             @send="handleSend"
             @react="handleReact"
             @resubmit="handleResubmit"
             @discard="workbench.discardPending"
             @retry="handleRetry"
+            @confirm-failed="handleConfirmFailed"
             @load-older="handleLoadOlder"
             @open-conversation="handleSelect"
             @displayed="workbench.markDisplayed"
@@ -101,7 +103,17 @@
             @create-ledger="(id) => router.push({ name: 'WebsiteLedger', query: { websiteInquiryId: id } })"
             @view-ledger="(orderNo) => router.push({ name: 'WebsiteLedger', query: { keyword: orderNo } })"
             @open-conversation="handleSelect"
-          />
+          >
+            <template #notes>
+              <CustomerNotesPanel
+                :notes="customerNotes"
+                :cities="cities"
+                :editable="detail.state !== 'archived' && Boolean(detail.capabilities.canUpdateCustomer)"
+                @save="handleSaveNotes"
+                @refresh="handleRefreshNotes"
+              />
+            </template>
+          </ConversationInfo>
         </div>
       </div>
     </div>
@@ -152,9 +164,11 @@ import type {
   WhatsappReply,
 } from "@/types/whatsapp";
 import WebsiteInquiryEditor from "@/views/website-inquiries/components/WebsiteInquiryEditor.vue";
+import { useCustomerNotes } from "../useCustomerNotes";
 import { useWhatsappWorkbench, type SendFeedback } from "../useWhatsappWorkbench";
 import AssignDialog from "./AssignDialog.vue";
 import ConversationInfo from "./ConversationInfo.vue";
+import CustomerNotesPanel from "./CustomerNotesPanel.vue";
 import ConversationList from "./ConversationList.vue";
 import ConversationThread from "./ConversationThread.vue";
 
@@ -167,11 +181,13 @@ const can = (permission: string) => user.userInfo.perms.includes(permission);
 const isManager = can("whatsapp:conversation:assign");
 const defaultView: WhatsappConversationView | undefined = isManager ? "all" : undefined;
 const workbench = useWhatsappWorkbench({ defaultView });
+const customerNotes = useCustomerNotes();
 
 const STATE_OPTIONS: WhatsappConversationState[] = ["open", "closed", "archived"];
 const viewOptions: WhatsappConversationView[] = isManager ? ["all", "unassigned", "mine"] : [];
 const assignVisible = ref(false);
 const actionBusy = ref(false);
+const confirmingIds = ref(new Set<string>());
 const actions = ref<WhatsappAction[]>([]);
 const integration = ref<WhatsappIntegrationStatus | null>(null);
 const inquiryVisible = ref(false);
@@ -196,6 +212,11 @@ watch(() => detail.value?.id, () => {
   void loadActions();
 });
 
+// 切换会话或会话版本前进（建询盘、状态变化等）时读取客户资料；未保存输入不被覆盖。
+watch(() => [detail.value?.id, detail.value?.version] as const, ([id, version]) => {
+  customerNotes.select(id ?? "", version ?? 0);
+});
+
 // 当前会话写入地址参数，刷新页面后恢复；页面缓存于其他标签时不改写别的路由。
 watch(workbench.selectedId, (id) => {
   if (route.name !== routeName || (route.query.conversationId ?? "") === id) return;
@@ -208,6 +229,7 @@ onMounted(() => {
   const initialId = route.query.conversationId;
   if (typeof initialId === "string" && initialId) void workbench.selectConversation(initialId);
   void loadIntegration();
+  void loadCities();
 });
 
 async function loadIntegration() {
@@ -217,6 +239,42 @@ async function loadIntegration() {
   } catch {
     integration.value = null;
   }
+}
+/** 目的地选项取独立站配置中的启用城市；读取失败时已选城市仍保留 ID。 */
+async function loadCities() {
+  try {
+    const config = await websiteService.config(undefined, "website");
+    cities.value = config.cities.filter((city) => city.status === "enabled");
+  } catch {
+    cities.value = [];
+  }
+}
+async function handleSaveNotes() {
+  const result = await customerNotes.save();
+  if (!result) return;
+  if (result.kind === "saved") {
+    ElMessage.success(t("common.saveSuccess"));
+    workbench.applyCustomerName(result.notes.conversationId, result.notes.customerName, result.notes.version);
+    void loadActions();
+  } else if (result.kind === "conflict") {
+    // 保留用户输入，由用户确认后再刷新，不自动覆盖或重试。
+    ElMessage.warning(t("whatsapp.versionConflictKeepInput", { message: result.message }));
+  } else {
+    ElMessage.error(result.message);
+  }
+}
+async function handleRefreshNotes() {
+  const id = customerNotes.conversationId.value;
+  if (!id) return;
+  if (customerNotes.dirty.value || customerNotes.entry.value?.conflict) {
+    try {
+      await ElMessageBox.confirm(t("whatsapp.customerNotesRefreshConfirm"), t("common.warning"), { type: "warning" });
+    } catch {
+      return;
+    }
+  }
+  await customerNotes.load(id, true);
+  if (id === detail.value?.id) await workbench.reloadSelected();
 }
 async function loadActions() {
   const id = detail.value?.id;
@@ -273,6 +331,26 @@ async function handleRetry(message: WhatsappMessage) {
   const feedback = await workbench.retryMessage(message);
   if (feedback.kind === "uncertain") ElMessage.warning(t("whatsapp.retryUncertain"));
   else if (feedback.kind === "rejected" && feedback.message) ElMessage.error(feedback.message);
+}
+async function handleConfirmFailed(message: WhatsappMessage) {
+  if (confirmingIds.value.has(message.id)) return;
+  try {
+    await ElMessageBox.confirm(t("whatsapp.confirmFailedConfirm"), t("common.warning"), { type: "warning" });
+  } catch {
+    return;
+  }
+  confirmingIds.value = new Set(confirmingIds.value).add(message.id);
+  try {
+    await whatsappService.confirmFailed(message.conversationId, message.id);
+    ElMessage.success(t("whatsapp.confirmFailedSuccess"));
+    await refreshSelected();
+  } catch (cause) {
+    handleActionError(cause);
+  } finally {
+    const next = new Set(confirmingIds.value);
+    next.delete(message.id);
+    confirmingIds.value = next;
+  }
 }
 /** 409 表示会话已更新或状态不允许，刷新后由用户重新决定。 */
 function handleActionError(cause: unknown) {
@@ -342,7 +420,12 @@ async function handleCreateInquiry() {
       return;
     }
     inquiryVersion.value = prefill.version;
-    inquiryDraft.value = { ...prefill.input };
+    // 未填国家或天数保持空白，由询盘表单必填校验拦截。
+    inquiryDraft.value = {
+      ...prefill.input,
+      countryItemId: prefill.input.countryItemId ?? "",
+      plannedDays: prefill.input.plannedDays ?? undefined,
+    };
     cities.value = config.cities.filter((city) => city.status === "enabled");
     inquiryVisible.value = true;
   } catch (cause) {

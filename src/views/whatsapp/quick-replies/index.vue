@@ -86,6 +86,52 @@
       :busy="saving"
       @closed="formRef?.clearValidate()"
     >
+      <div v-if="hasConflict" class="flex flex-col gap-3 mb-4">
+        <el-alert
+          type="warning"
+          :closable="false"
+          show-icon
+          :title="$t('whatsapp.quickReplies.conflictTitle')"
+          :description="$t('whatsapp.quickReplies.conflictHint')"
+        />
+        <FeedbackState
+          v-if="latestError"
+          type="error"
+          :description="latestError"
+          retryable
+          @retry="editor.loadLatest"
+        />
+        <el-descriptions
+          v-if="latest"
+          :title="$t('whatsapp.quickReplies.latest')"
+          :column="1"
+          border
+        >
+          <el-descriptions-item :label="$t('whatsapp.quickReplies.stage')">
+            {{ latest.stage }}
+          </el-descriptions-item>
+          <el-descriptions-item :label="$t('whatsapp.quickReplies.scenario')">
+            {{ latest.scenario }}
+          </el-descriptions-item>
+          <el-descriptions-item :label="$t('whatsapp.quickReplies.content')">
+            <span class="whitespace-pre-wrap break-words">{{ latest.content }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item :label="$t('common.status')">
+            {{ $t(latest.enabled ? 'whatsapp.enabled' : 'whatsapp.disabled') }}
+          </el-descriptions-item>
+          <el-descriptions-item :label="$t('whatsapp.quickReplies.sortOrder')">
+            {{ latest.sortOrder }}
+          </el-descriptions-item>
+        </el-descriptions>
+        <div class="flex flex-wrap gap-2">
+          <el-button :loading="latestLoading" :disabled="!latest || latestLoading" @click="editor.resolveConflict(true)">
+            {{ $t('whatsapp.quickReplies.useLatest') }}
+          </el-button>
+          <el-button :disabled="!latest || latestLoading" @click="editor.resolveConflict(false)">
+            {{ $t('whatsapp.quickReplies.keepInput') }}
+          </el-button>
+        </div>
+      </div>
       <el-form
         ref="formRef"
         :model="form"
@@ -135,7 +181,12 @@
       <template #footer>
         <el-button :disabled="saving" @click="editing = false">
           {{ $t('common.cancel') }}
-        </el-button><el-button type="primary" :loading="saving" @click="save">
+        </el-button><el-button
+          type="primary"
+          :loading="saving"
+          :disabled="hasConflict"
+          @click="save"
+        >
           {{ $t('common.save') }}
         </el-button>
       </template>
@@ -158,17 +209,18 @@ import { whatsappService } from "@/services/whatsapp.service";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
 import { websiteErrorMessage } from "@/services/website.service";
 import type { BusinessCategoryOptionRecord } from "@/types/resource";
-import type { WhatsappQuickReply, WhatsappQuickReplyInput } from "@/types/whatsapp";
+import type { WhatsappQuickReply } from "@/types/whatsapp";
+import { useQuickReplyEditor } from "./useQuickReplyEditor";
 import { useRefreshOnActivated } from "@/composables";
 defineOptions({ name: "WhatsappQuickReplies" });
 const { t } = useI18n();
 const rows = ref<WhatsappQuickReply[]>([]), total = ref(0), page = ref(1), pageSize = ref(20);
 const keyword = ref(""), status = ref<"enabled" | "disabled">();
-const loading = ref(false), error = ref(""), editing = ref(false), saving = ref(false);
+const loading = ref(false), error = ref("");
+const editor = useQuickReplyEditor();
+const { editing, form, saving, hasConflict, latest, latestLoading, latestError } = editor;
 const formRef = ref<FormInstance>();
 const stages = ref<BusinessCategoryOptionRecord[]>([]), stagesLoading = ref(false);
-const empty = (): WhatsappQuickReplyInput => ({stage:"",scenario:"",content:"",enabled:true,sortOrder:0});
-const form = ref(empty()), editingId = ref<string>();
 const rules = computed<FormRules>(() => Object.fromEntries(["stage","scenario","content"].map(key=>[key,[{required:true,whitespace:true,message:t("whatsapp.quickReplies.required"),trigger:"blur"}]])));
 let generation = 0;
 async function load() {
@@ -179,7 +231,7 @@ async function load() {
 }
 function search(){page.value=1;void load();}
 function resetFilters(){keyword.value="";status.value=undefined;search();}
-function edit(row?:WhatsappQuickReply){editingId.value=row?.id;form.value=row ? {stage:row.stage,scenario:row.scenario,content:row.content,enabled:row.enabled,sortOrder:row.sortOrder,version:row.version}:empty();editing.value=true;void loadStages();}
+function edit(row?: WhatsappQuickReply) { editor.open(row); void loadStages(); }
 async function loadStages() {
   if (stagesLoading.value) return;
   stagesLoading.value = true;
@@ -192,12 +244,15 @@ async function loadStages() {
     stagesLoading.value = false;
   }
 }
-async function save(){
-  if(!await formRef.value?.validate().catch(()=>false))return;
-  saving.value=true;
-  try{await whatsappService.saveQuickReply(form.value,editingId.value);editing.value=false;ElMessage.success(t("common.saveSuccess"));await load();}
-  catch(cause){ElMessage.error(websiteErrorMessage(cause));}
-  finally{saving.value=false;}
+async function save() {
+  if (!await formRef.value?.validate().catch(() => false)) return;
+  try {
+    const result = await editor.save();
+    if (result === "saved") ElMessage.success(t("common.saveSuccess"));
+    if (result) await load();
+  } catch (cause) {
+    ElMessage.error(websiteErrorMessage(cause));
+  }
 }
 onMounted(load);useRefreshOnActivated(load);
 </script>

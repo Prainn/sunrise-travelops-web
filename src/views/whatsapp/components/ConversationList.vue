@@ -1,8 +1,22 @@
 <template>
   <SectionCard fill padding="compact" body-class="flex flex-col gap-[8px] min-h-0">
     <div v-loading="loading" class="flex-1 min-h-0 overflow-y-auto">
+      <el-alert
+        v-if="error && items.length"
+        type="warning"
+        :closable="false"
+        show-icon
+        :title="$t('whatsapp.listRefreshFailed')"
+      >
+        <p class="m-0">
+          {{ error }}
+        </p>
+        <el-button link type="primary" @click="emit('refresh')">
+          {{ $t('common.retry') }}
+        </el-button>
+      </el-alert>
       <FeedbackState
-        v-if="error"
+        v-if="error && !items.length"
         type="error"
         :description="error"
         retryable

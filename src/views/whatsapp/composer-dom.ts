@@ -1,5 +1,4 @@
 import { isWord, parseInline, type InlineNode } from "./message-format";
-import { COMMON_EMOJIS, emojiUrl } from "./emoji";
 
 const FORMATS = [["bold", "*"], ["italic", "_"], ["strike", "~"], ["code", "`"]] as const;
 type Format = typeof FORMATS[number][0];
@@ -75,10 +74,7 @@ export function composerText(root: Node): string {
     if (node.nodeType !== 1) return;
     const el = node as HTMLElement;
     if (el.tagName === "BR") return breakLine();
-    if (el.tagName === "IMG") {
-      if (COMMON_EMOJIS.some(([emoji]) => emoji === el.dataset.emoji)) chars.push({ char: el.dataset.emoji!, style: { ...style } });
-      return;
-    }
+    if (el.tagName === "IMG") return;
     const inner = elementStyle(el, style);
     const before = chars.length;
     for (const child of el.childNodes) {
@@ -106,16 +102,7 @@ export function composerFragment(text: string): DocumentFragment {
         const el = document.createElement(node.tag);
         append(el, node.children); parent.appendChild(el); continue;
       }
-      const pattern = new RegExp(`(${COMMON_EMOJIS.map(([emoji]) => emoji).join("|")})`, "gu");
-      for (const part of node.split(pattern)) {
-        const src = emojiUrl(part);
-        if (!src) parent.appendChild(document.createTextNode(part));
-        else {
-          const img = document.createElement("img");
-          img.src = src; img.alt = part; img.dataset.emoji = part; img.className = "whatsapp-composer__emoji";
-          parent.appendChild(img);
-        }
-      }
+      parent.appendChild(document.createTextNode(node));
     }
   };
   append(fragment, parseInline(text));

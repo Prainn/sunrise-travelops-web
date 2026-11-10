@@ -1,21 +1,6 @@
 <template>
   <PageShell>
     <FilterBar @reset="reset">
-      <el-form-item v-if="user.userInfo.scope === 'headquarters'" :label="$t('websiteInquiry.businessUnit')">
-        <el-select
-          v-model="query.businessUnit"
-          autocomplete="new-password"
-          clearable
-          :placeholder="$t('common.all')"
-        >
-          <el-option
-            v-for="unit in ['linxi', 'website']"
-            :key="unit"
-            :value="unit"
-            :label="$t(`websiteInquiry.businessUnits.${unit}`)"
-          />
-        </el-select>
-      </el-form-item>
       <el-form-item :label="$t('common.keywords')" class="filter-bar__wide">
         <el-input
           v-model.trim="query.keyword"
@@ -34,7 +19,7 @@
         </el-select>
       </el-form-item>
       <el-form-item
-        v-if="(allowAssign || user.userInfo.scope === 'headquarters') && (user.userInfo.scope !== 'headquarters' || query.businessUnit)"
+        v-if="allowAssign || user.userInfo.scope === 'headquarters'"
         :label="$t('inquiry.owner')"
       >
         <el-select
@@ -87,13 +72,12 @@
       v-model="editorVisible"
       :record="editingRecord"
       :cities="cities"
-      :business-unit="query.businessUnit"
-      :show-business="user.userInfo.scope === 'headquarters'"
+      :business-unit="inquiryBusinessUnit"
+      :show-business="false"
       :owners="owners"
       :allow-assign="allowAssign"
       :saving="saving || optionsLoading"
       :read-only="editorReadOnly"
-      @business-change="loadOptions"
       @save="save"
     />
     <WebsiteInquiryTransfer
@@ -133,6 +117,9 @@ const { t } = useI18n();
 const user = useUserStore();
 const route = useRoute();
 const openInNewTab = useOpenInNewTab();
+const inquiryBusinessUnit = computed<WebsiteBusinessUnit>(() =>
+  user.userInfo.scope === "linxi" ? "linxi" : "website",
+);
 const query = reactive<WebsiteInquiryQuery>({
   page: 1,
   pageSize: 10,
@@ -169,7 +156,7 @@ async function load() {
   loading.value = true;
   error.value = "";
   try {
-    const result = await websiteService.inquiries(query);
+    const result = await websiteService.inquiries({ ...query, businessUnit: inquiryBusinessUnit.value });
     if (current === generation) {
       rows.value = result.list;
       total.value = result.total;
@@ -181,7 +168,7 @@ async function load() {
   }
 }
 const hasActiveFilters = computed(() =>
-  Boolean(query.keyword || query.status || query.ownerId || query.businessUnit),
+  Boolean(query.keyword || query.status || query.ownerId),
 );
 function search() {
   query.page = 1;
@@ -190,19 +177,14 @@ function search() {
 // 多个筛选同时变化（如重置）合并为一次查询。
 const searchFromFilters = useDebounceFn(search, 300);
 watch([() => query.keyword, () => query.status, () => query.ownerId], () => void searchFromFilters());
-watch(() => query.businessUnit, () => {
-  query.ownerId = "";
-  void loadFilterOwners();
-  void searchFromFilters();
-});
 function reset() {
   const hasFilter = hasActiveFilters.value;
-  Object.assign(query, { keyword: "", status: "", ownerId: "", businessUnit: undefined });
+  Object.assign(query, { keyword: "", status: "", ownerId: "" });
   if (!hasFilter) search();
 }
 async function openEditor(record?: WebsiteInquiry, readOnly = false) {
   // 选项加载失败已提示，不打开下拉为空的弹窗。
-  if (!(await loadOptions(record?.businessUnit ?? query.businessUnit))) return;
+  if (!(await loadOptions(record?.businessUnit ?? inquiryBusinessUnit.value))) return;
   editingRecord.value = record;
   editorReadOnly.value = readOnly;
   editorVisible.value = true;
@@ -329,9 +311,8 @@ let filterGeneration = 0;
 async function loadFilterOwners() {
   const current = ++filterGeneration;
   filterOwners.value = [];
-  if (user.userInfo.scope === "headquarters" && !query.businessUnit) return;
   try {
-    const result = await websiteService.owners(query.businessUnit);
+    const result = await websiteService.owners(inquiryBusinessUnit.value);
     if (current === filterGeneration) filterOwners.value = result;
   } catch (cause) { ElMessage.error(websiteErrorMessage(cause)); }
 }

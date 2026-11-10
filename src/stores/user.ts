@@ -11,6 +11,7 @@ import { sessionGate } from "@/utils/session-gate";
 import { usePermissionStoreHook } from "@/stores/permission";
 import { useDictStoreHook } from "@/stores/dict";
 import { useTagsViewStore } from "./tags-view";
+import { clearNotesDrafts } from "@/views/whatsapp/notes-drafts";
 import sunriseAvatar from "@/assets/images/logo-emblem.png";
 import lynxtourLogo from "@/assets/images/login/lynxtour-logo.svg";
 
@@ -70,6 +71,8 @@ export const useUserStore = defineStore("user", () => {
     try {
       await authService.logout();
     } finally {
+      // 会话过期不清理，重新登录后仍可恢复；主动退出时清除含客户资料的草稿。
+      clearNotesDrafts();
       resetAllState();
     }
   }

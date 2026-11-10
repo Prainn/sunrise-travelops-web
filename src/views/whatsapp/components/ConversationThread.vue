@@ -59,7 +59,7 @@
           {{ sourceLabel(message) }}
         </div>
         <div class="flex items-center gap-[6px] min-w-0" :class="message.direction === 'outbound' ? 'flex-row-reverse' : ''">
-          <div class="whatsapp-message__bubble min-w-0" :class="{ 'is-reaction': message.presentation?.interaction === 'reaction' }">
+          <div class="whatsapp-message__bubble min-w-0" :class="{ 'is-reaction': message.presentation?.interaction === 'reaction', 'has-reactions': message.presentation?.reactions.length }">
             <ReplyPreview v-if="messageReply(message)" class="mb-[6px]" :reply="messageReply(message)!" />
             <div v-if="message.presentation?.interaction === 'reaction'" class="text-[24px]" :title="$t('whatsapp.unlinkedReaction')">
               <span v-if="message.presentation.emoji">{{ message.presentation.emoji }}</span>
@@ -75,6 +75,21 @@
               <span v-if="message.direction === 'outbound'" :class="message.status === 'read' ? 'text-[var(--el-color-primary)]' : message.status === 'failed' ? 'text-[var(--el-color-danger)]' : ''">
                 <span v-if="['delivered', 'read'].includes(message.status)" aria-hidden="true">✓✓ </span>{{ $t(`whatsapp.statuses.${message.status}`) }}
               </span>
+            </div>
+            <div v-if="message.presentation?.reactions.length" class="whatsapp-message__reactions">
+              <button
+                v-for="reaction in message.presentation.reactions"
+                :key="reaction.id"
+                type="button"
+                class="whatsapp-message__reaction"
+                :class="reaction.direction === 'outbound' ? 'is-mine' : ''"
+                :disabled="reaction.direction !== 'outbound' || !canReact(message)"
+                :title="reaction.emoji ? $t(reaction.direction === 'outbound' ? 'whatsapp.removeReaction' : 'whatsapp.sources.customer') : $t('whatsapp.unknownReaction')"
+                @click="handleReact(message, '')"
+              >
+                {{ reaction.emoji || '◌' }}
+                <span v-if="['queued', 'sending'].includes(reaction.status)" class="absolute right-[-4px] bottom-[-4px] rounded-full bg-[var(--el-bg-color)] text-[10px]" :aria-label="$t('whatsapp.reactionPending')">◷</span>
+              </button>
             </div>
           </div>
           <el-popover
@@ -153,22 +168,7 @@
             ><path d="m9 5-6 6 6 6M3 11h10c5 0 7 3 7 8" /></svg>
           </button>
         </div>
-        <div v-if="message.presentation?.reactions.length" class="flex gap-[4px] flex-wrap">
-          <button
-            v-for="reaction in message.presentation.reactions"
-            :key="reaction.id"
-            type="button"
-            class="whatsapp-message__reaction relative grid place-items-center box-border w-[32px] h-[32px] min-w-[32px] shrink-0 p-0 rounded-full border-solid border-[1px] text-[20px] leading-none"
-            :class="reaction.direction === 'outbound' ? 'is-mine' : ''"
-            :disabled="reaction.direction !== 'outbound' || !canReact(message)"
-            :title="reaction.emoji ? $t(reaction.direction === 'outbound' ? 'whatsapp.removeReaction' : 'whatsapp.sources.customer') : $t('whatsapp.unknownReaction')"
-            @click="handleReact(message, '')"
-          >
-            {{ reaction.emoji || '◌' }}
-            <span v-if="['queued', 'sending'].includes(reaction.status)" class="absolute right-[-3px] bottom-[-3px] rounded-full bg-[var(--el-bg-color)] text-[11px]" :aria-label="$t('whatsapp.reactionPending')">◷</span>
-          </button>
-        </div>
-        <div v-if="message.errorCode || canRetry(message)" class="flex items-center gap-[6px] text-[12px]">
+        <div v-if="message.errorCode || canRetry(message) || canConfirmFailed(message)" class="flex items-center gap-[6px] text-[12px]">
           <span v-if="message.errorCode" class="text-muted">{{ message.errorCode }}</span>
           <el-button
             v-if="canRetry(message)"
@@ -179,6 +179,16 @@
             @click="emit('retry', message)"
           >
             {{ $t("common.retry") }}
+          </el-button>
+          <el-button
+            v-if="canConfirmFailed(message)"
+            link
+            type="primary"
+            size="small"
+            :loading="confirmingIds.has(message.id)"
+            @click="emit('confirm-failed', message)"
+          >
+            {{ $t("whatsapp.confirmFailed") }}
           </el-button>
         </div>
       </div>
@@ -276,6 +286,7 @@ import { formatDateTime } from "@/utils";
 import {
   STATE_TAG_TYPES,
   attachmentSummary,
+  canConfirmFailedMessage,
   canRetryMessage,
   compareSeq,
   maxSeq,
@@ -303,6 +314,7 @@ const props = defineProps<{
   hasOlder: boolean;
   olderLoading: boolean;
   retryingIds: Set<string>;
+  confirmingIds: Set<string>;
 }>();
 const emit = defineEmits<{
   send: [text: string, replyTo?: WhatsappReply];
@@ -310,6 +322,7 @@ const emit = defineEmits<{
   resubmit: [clientRequestId: string];
   discard: [clientRequestId: string];
   retry: [message: WhatsappMessage];
+  "confirm-failed": [message: WhatsappMessage];
   "load-older": [];
   "open-conversation": [id: string];
   /** 消息已渲染；isUserOpened 表示用户刚打开该会话。 */
@@ -347,6 +360,7 @@ const replyHint = computed(() => {
   const window = replyWindowState(props.detail.replyWindowExpiresAt, now.value);
   if (window.kind === "none") return { text: t("whatsapp.window.none"), isWarning: true };
   if (window.kind === "expired") return { text: t("whatsapp.window.expired"), isWarning: true };
+  if (props.detail.sendBlockedReason) return { text: t(`whatsapp.sendBlockedReasons.${props.detail.sendBlockedReason}`), isWarning: true };
   const minutes = Math.floor(window.remainingMs / 60_000);
   const remaining = t("whatsapp.window.duration", { hours: Math.floor(minutes / 60), minutes: minutes % 60 });
   if (!props.detail.capabilities.canReply) return { text: t("whatsapp.cannotReply"), isWarning: true };
@@ -416,6 +430,9 @@ function handleReact(message: WhatsappMessage, emoji: string) {
 function canRetry(message: WhatsappMessage) {
   return canRetryMessage(message, retriedIds.value, props.detail.capabilities.canReply);
 }
+function canConfirmFailed(message: WhatsappMessage) {
+  return canConfirmFailedMessage(message, props.detail.capabilities.canConfirmFailed, now.value);
+}
 function handleSend() {
   const text = draft.value.trim();
   if (!text || text.length > MAX_TEXT_LENGTH || !access.value.canCompose) return;
@@ -450,6 +467,7 @@ function editAgain(item: PendingMessage) {
   }
 
   &__bubble {
+    position: relative;
     padding: 8px 12px;
     border-radius: 14px;
     background: var(--el-fill-color-light);
@@ -459,17 +477,29 @@ function editAgain(item: PendingMessage) {
     padding: 4px 10px;
   }
 
+  &__bubble.has-reactions {
+    margin-bottom: 18px;
+  }
+
+  // 参照 WhatsApp：表情以小胶囊压在气泡底边，客户消息靠左、企业消息靠右。
+  &__reactions {
+    @apply absolute bottom-[-22px] flex items-center gap-[2px] px-[6px] h-[28px] rounded-full bg-[var(--el-bg-color)] shadow-[0_1px_3px_rgba(0,0,0,0.16)] border-solid border-[2px] border-[var(--el-bg-color)];
+  }
+
+  &--inbound &__reactions {
+    left: 10px;
+  }
+
+  &--outbound &__reactions {
+    right: 10px;
+  }
+
   &__reaction {
-    background: var(--el-fill-color-light);
-    border-color: var(--el-border-color-lighter);
-    color: var(--el-text-color-primary);
+    @apply relative grid place-items-center p-0 border-0 bg-transparent text-[16px] leading-none text-strong;
 
-    &.is-mine {
-      background: var(--el-color-primary-light-9);
-      border-color: var(--el-color-primary-light-5);
+    &.is-mine:not(:disabled) {
+      cursor: pointer;
     }
-
-    &:not(:disabled) { cursor: pointer; }
   }
 
   &__react {

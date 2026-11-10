@@ -1,5 +1,15 @@
 <template>
   <div :class="['layout-toolbar', toolbarToneClass]">
+    <router-link
+      v-if="notifications.canView"
+      to="/whatsapp/inbox"
+      class="layout-toolbar__item"
+      :title="t('whatsapp.notifications.hint')"
+      :aria-label="t('route.whatsappInbox')"
+    >
+      <el-icon><ChatDotRound /></el-icon>
+      <WhatsappBadges />
+    </router-link>
     <template v-if="isDesktop">
       <div class="layout-toolbar__item layout-toolbar__item--search">
         <CommandPalette />
@@ -48,6 +58,7 @@
 </template>
 
 <script setup lang="ts">
+import { ChatDotRound } from "@element-plus/icons-vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { DeviceEnum, SidebarColor, ThemeMode, LayoutMode } from "@/enums/settings";
@@ -57,6 +68,8 @@ import { useUserStore } from "@/stores/user";
 import { authService } from "@/services";
 import type { LinkedAccount } from "@/types/account-link";
 
+import { useWhatsappNotificationsStore } from "@/stores/whatsapp-notifications";
+import WhatsappBadges from "./WhatsappBadges.vue";
 import CommandPalette from "@/components/CommandPalette/index.vue";
 import DensitySelect from "@/components/DensitySelect/index.vue";
 import LangSelect from "@/components/LangSelect/index.vue";
@@ -66,6 +79,7 @@ const { t } = useI18n();
 const appStore = useAppStore();
 const settingStore = useSettingsStore();
 const userStore = useUserStore();
+const notifications = useWhatsappNotificationsStore();
 
 const router = useRouter();
 

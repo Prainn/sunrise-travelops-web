@@ -17,29 +17,8 @@
       :validate-on-rule-change="false"
       label-width="auto"
     >
-      <el-row :gutter="16">
+      <el-row v-if="isEditing" :gutter="16">
         <el-col :span="12">
-          <el-form-item
-            v-if="userStore.userInfo.scope === 'headquarters'"
-            :label="$t('identity.businessUnit')"
-          >
-            <el-select
-              v-model="form.businessUnit"
-              autocomplete="new-password"
-              :disabled="isEditing"
-              :placeholder="$t('identity.selectBusinessUnitToCreate')"
-              @change="changeBusinessUnit"
-            >
-              <el-option
-                v-for="scope in ['shengxu', 'linxi', 'website']"
-                :key="scope"
-                :value="scope"
-                :label="businessUnitName(scope)"
-              />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col v-if="isEditing" :span="12">
           <el-form-item :label="$t('inquiry.code')">
             <el-input v-model="form.code" disabled />
           </el-form-item>
@@ -178,7 +157,6 @@
 
 <script setup lang="ts">
 import AppDialog from "@/components/AppDialog/index.vue";
-import { businessUnitName } from "@/constants/identity";
 import { useUserStore } from "@/stores/user";
 import { inquiryService } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
@@ -285,12 +263,6 @@ async function refreshOwners() {
   } finally {
     if (version === ownerRequestVersion) loadingOwners.value = false;
   }
-}
-async function changeBusinessUnit() {
-  form.agencyId = "";
-  form.contactId = "";
-  form.ownerId = "";
-  await Promise.all([resourceService.loadAgencies({ businessUnit: form.businessUnit }), refreshOwners()]);
 }
 function syncAgencyDetails() {
   const agency = selectedAgency.value;

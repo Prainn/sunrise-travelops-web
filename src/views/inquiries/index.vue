@@ -1,7 +1,6 @@
 <template>
   <PageShell>
     <InquirySearchForm
-      v-model:business-unit="businessUnit"
       v-model:keywords="keywords"
       v-model:status="status"
       v-model:owner="owner"
@@ -84,7 +83,6 @@ const total = ref(0);
 const isLoading = ref(false);
 const listError = ref("");
 const keywords = ref("");
-const businessUnit = ref<NonNullable<InquiryRecord["businessUnit"]> | "">("");
 const status = ref<InquiryStatus | "">("");
 const owner = ref("");
 const sourceChannel = ref("");
@@ -108,7 +106,7 @@ async function fetchInquiries() {
   try {
     const result = await inquiryService.list({
       businessUnit:
-        user.userInfo.scope === "headquarters" ? businessUnit.value || undefined : undefined,
+        user.userInfo.scope === "headquarters" ? "shengxu" : undefined,
       page: pageNum.value,
       pageSize: pageSize.value,
       keyword: keywords.value === exactCode.value ? undefined : keywords.value,
@@ -130,7 +128,7 @@ async function fetchInquiries() {
   }
 }
 const hasActiveFilters = computed(() =>
-  Boolean(keywords.value || businessUnit.value || status.value || owner.value || sourceChannel.value),
+  Boolean(keywords.value || status.value || owner.value || sourceChannel.value),
 );
 // 缓存页面切回时同一 code 不再重复应用，保留用户之后调整的筛选和页码。
 let appliedRouteCode: string | undefined;
@@ -139,7 +137,6 @@ function applyRouteCode() {
   const code = typeof route.query.code === "string" ? route.query.code : "";
   if (code === appliedRouteCode) return;
   appliedRouteCode = code;
-  businessUnit.value = "";
   exactCode.value = code;
   keywords.value = code;
   status.value = "";
@@ -158,7 +155,7 @@ async function enterPage() {
   isActive = true;
   await fetchInquiries();
   try {
-    ownerOptions.value = await inquiryService.owners();
+    ownerOptions.value = await inquiryService.owners(user.userInfo.scope === "headquarters" ? "shengxu" : undefined);
   } catch (error) {
     showError(error);
   }
@@ -170,7 +167,7 @@ const reloadFromFilters = useDebounceFn(() => {
   if (pageNum.value === 1) void fetchInquiries();
   else pageNum.value = 1;
 }, 300);
-watch([keywords, status, owner, sourceChannel, businessUnit], () => {
+watch([keywords, status, owner, sourceChannel], () => {
   if (isActive) void reloadFromFilters();
 });
 watch([pageNum, pageSize], () => {
@@ -212,7 +209,6 @@ function resetQuery() {
     else pageNum.value = 1;
     return;
   }
-  businessUnit.value = "";
   keywords.value = "";
   status.value = "";
   owner.value = "";

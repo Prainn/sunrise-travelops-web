@@ -65,6 +65,10 @@ export interface WhatsappConversationCapabilities {
   canAssign: boolean;
   canCreateInquiry: boolean;
   canStartConsultation: boolean;
+  /** 当前非归档咨询的负责人、主管或特权 ROOT 具备更新权限时可改客户资料。 */
+  canUpdateCustomer: boolean;
+  /** 主管或特权 ROOT 可将结果待核实的系统消息人工确认为未送达。 */
+  canConfirmFailed: boolean;
 }
 
 export interface WhatsappConversationDetail extends WhatsappConversationItem {
@@ -73,6 +77,7 @@ export interface WhatsappConversationDetail extends WhatsappConversationItem {
   ledger: { id: string; orderNo: string } | null;
   hasFormedTours: boolean;
   replyWindowExpiresAt: string | null;
+  sendBlockedReason: "not_configured" | "send_disabled" | "test_recipient" | null;
   capabilities: WhatsappConversationCapabilities;
 }
 
@@ -168,6 +173,30 @@ export interface WhatsappNewConsultationResult {
   canView: boolean;
 }
 
+/** 客户资料按咨询保存；国家、天数、日期和人数未知时为 null。 */
+export interface WhatsappCustomerNotes {
+  conversationId: string;
+  /** 当前会话版本。 */
+  version: number;
+  /** 有效称呼：人工称呼优先，清空后为 WhatsApp 原名。 */
+  customerName: string;
+  countryItemId: string | null;
+  plannedDays: number | null;
+  startDate: string | null;
+  pax: number | null;
+  contactInfo: string;
+  /** 独立站启用城市 ID，有序且不重复。 */
+  destinations: string[];
+  /** 客户原始消息。 */
+  requirements: string;
+  internalRemark: string;
+  /** 资料最后保存时间，未保存为 null。 */
+  updatedAt: string | null;
+}
+export type WhatsappCustomerNotesForm = Omit<WhatsappCustomerNotes, "conversationId" | "version" | "updatedAt">;
+/** 全量保存请求体。 */
+export type WhatsappCustomerNotesInput = WhatsappCustomerNotesForm & { version: number };
+
 export type WhatsappInquiryPrefillInput = Pick<
   WebsiteInquiryInput,
   | "customerName"
@@ -179,7 +208,15 @@ export type WhatsappInquiryPrefillInput = Pick<
   | "websiteInquiryNo"
   | "landingPage"
   | "acquisitionSource"
->;
+  | "startDate"
+  | "pax"
+  | "destinations"
+  | "internalRemark"
+> & {
+  /** 已保存的客户资料；未填时为 null，由建询盘必填校验处理。 */
+  countryItemId: string | null;
+  plannedDays: number | null;
+};
 
 export interface WhatsappInquiryPrefill {
   version: number;
@@ -200,9 +237,18 @@ export interface WhatsappInquiryResult {
   created: boolean;
 }
 
+export interface WhatsappWorkerStatus {
+  state: "disabled" | "starting" | "running" | "stalled" | "error" | "stopped";
+  lastStartedAt: string | null;
+  lastCompletedAt: string | null;
+  lastErrorAt: string | null;
+}
+
 export interface WhatsappIntegrationStatus {
   enabled: boolean;
   workerEnabled: boolean;
+  worker: { scope: "current_process"; events: WhatsappWorkerStatus; outbound: WhatsappWorkerStatus };
+  outbound: { queued: number; sending: number; unknown: number; failed: number; oldestPendingAt: string | null };
   receiveMode: "disabled" | "queue" | "http";
   sendEnabled: boolean;
   lastReceivedAt: string | null;
@@ -217,4 +263,10 @@ export interface WhatsappFailedEvent {
   attempts: number;
   errorCode: string | null;
   receivedAt: string;
+}
+
+export interface WhatsappSummary {
+  unreadCount: number;
+  /** null 表示当前身份不可查看未分配计数。 */
+  unassignedCount: number | null;
 }

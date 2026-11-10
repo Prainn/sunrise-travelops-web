@@ -2,11 +2,14 @@ import { request } from "@/api/request";
 import type { PageResult } from "@/types/common";
 import type { WebsiteInquiryInput } from "@/types/website";
 import type {
+  WhatsappSummary,
   WhatsappAction,
   WhatsappAssignInput,
   WhatsappConversationDetail,
   WhatsappConversationItem,
   WhatsappConversationQueryParams,
+  WhatsappCustomerNotes,
+  WhatsappCustomerNotesInput,
   WhatsappFailedEvent,
   WhatsappInquiryInput,
   WhatsappInquiryPrefill,
@@ -51,6 +54,9 @@ export function whatsappInquiryInput(input: WebsiteInquiryInput, version: number
 }
 
 export const whatsappService = {
+  summary() {
+    return request.get<WhatsappSummary>(`${BASE_URL}/summary`);
+  },
   managedQuickReplies(query: WhatsappQuickReplyQuery) {
     return request.get<PageResult<WhatsappQuickReply>>(`${BASE_URL}/quick-replies/manage`, { params: { ...query } });
   },
@@ -59,6 +65,9 @@ export const whatsappService = {
   },
   quickReplyOptions(stage?: string) {
     return request.get<{ stages: string[]; scenarios: string[] }>(`${BASE_URL}/quick-replies/options`, { params: stage ? { stage } : {} });
+  },
+  quickReply(id: string) {
+    return request.get<WhatsappQuickReply>(`${BASE_URL}/quick-replies/${encodeURIComponent(id)}`);
   },
   saveQuickReply(input: WhatsappQuickReplyInput, id?: string) {
     return id ? request.put<WhatsappQuickReply>(`${BASE_URL}/quick-replies/${encodeURIComponent(id)}`, input)
@@ -76,6 +85,13 @@ export const whatsappService = {
   },
   actions(id: string, query: { page: number; pageSize: number }) {
     return request.get<PageResult<WhatsappAction>>(`${conversationUrl(id)}/actions`, { params: { ...query } });
+  },
+  customerNotes(id: string) {
+    return request.get<WhatsappCustomerNotes>(`${conversationUrl(id)}/customer-notes`);
+  },
+  /** 全量保存；version 过期返回 409，由用户刷新后再决定。 */
+  saveCustomerNotes(id: string, input: WhatsappCustomerNotesInput) {
+    return request.put<WhatsappCustomerNotes>(`${conversationUrl(id)}/customer-notes`, input);
   },
   owners() {
     return request.get<WebsiteOwnerOption[]>(`${BASE_URL}/owners`);
@@ -109,6 +125,12 @@ export const whatsappService = {
     return request.post<WhatsappMessage>(
       `${conversationUrl(id)}/messages/${encodeURIComponent(messageId)}/retry`,
       { clientRequestId },
+    );
+  },
+  /** 主管人工确认结果待核实的消息未送达，消息转为失败后可按失败消息重试。 */
+  confirmFailed(id: string, messageId: string) {
+    return request.post<{ id: string; status: "failed"; errorCode: string }>(
+      `${conversationUrl(id)}/messages/${encodeURIComponent(messageId)}/confirm-failed`,
     );
   },
   integration() {
