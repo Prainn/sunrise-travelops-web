@@ -1,6 +1,6 @@
 <template>
   <el-form label-position="top" @submit.prevent>
-    <ItineraryDayPanel :columns="4">
+    <ItineraryDayPanel :columns="3">
       <el-form-item :label="$t('itinerary.departure')">
         <el-input
           v-if="day.dayNumber === 1"
@@ -25,51 +25,6 @@
             :value="city"
           />
         </el-select>
-      </el-form-item>
-      <el-form-item :label="$t('itinerary.viaDestinations')">
-        <el-select
-          autocomplete="new-password"
-          :model-value="day.viaDestinations"
-          :disabled="!editable"
-          multiple
-          filterable
-          :placeholder="$t('itinerary.viaDestinationsPlaceholder')"
-          @update:model-value="emit('update-via', $event)"
-        >
-          <el-option
-            v-for="city in destinations"
-            :key="city"
-            :label="city"
-            :value="city"
-          />
-        </el-select>
-        <div v-if="day.viaDestinations.length > 1" class="mt-2 flex flex-wrap items-center gap-1">
-          <el-tag
-            v-for="(city, index) in day.viaDestinations"
-            :key="city"
-            size="small"
-            type="info"
-            class="via-tag"
-          >
-            <el-button
-              link
-              size="small"
-              :icon="ArrowLeft"
-              :disabled="!editable || index === 0"
-              :aria-label="$t('itinerary.moveViaEarlier', { city })"
-              @click="moveVia(index, -1)"
-            />
-            {{ index + 1 }}. {{ city }}
-            <el-button
-              link
-              size="small"
-              :icon="ArrowRight"
-              :disabled="!editable || index === day.viaDestinations.length - 1"
-              :aria-label="$t('itinerary.moveViaLater', { city })"
-              @click="moveVia(index, 1)"
-            />
-          </el-tag>
-        </div>
       </el-form-item>
       <el-form-item :label="$t('itinerary.destination')">
         <el-select
@@ -105,7 +60,6 @@
           />
         </el-select>
         <el-checkbox
-          v-if="isLast"
           class="mt-2"
           :model-value="day.overnightDestination === ''"
           :disabled="!editable"
@@ -134,6 +88,56 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item class="self-end">
+        <el-checkbox v-model="hasVia" :disabled="!editable" @change="toggleVia">
+          {{ $t('itinerary.viaDestinations') }}
+        </el-checkbox>
+      </el-form-item>
+      <el-form-item v-if="hasVia" :label="$t('itinerary.viaDestinations')">
+        <el-select
+          autocomplete="new-password"
+          :model-value="day.viaDestinations"
+          :disabled="!editable"
+          multiple
+          filterable
+          :placeholder="$t('itinerary.viaDestinationsPlaceholder')"
+          @update:model-value="emit('update-via', $event)"
+        >
+          <el-option
+            v-for="city in viaOptions"
+            :key="city"
+            :label="city"
+            :value="city"
+          />
+        </el-select>
+        <div v-if="day.viaDestinations.length > 1" class="mt-2 flex flex-wrap items-center gap-1">
+          <el-tag
+            v-for="(city, index) in day.viaDestinations"
+            :key="city"
+            size="small"
+            type="info"
+            class="via-tag"
+          >
+            <el-button
+              link
+              size="small"
+              :icon="ArrowLeft"
+              :disabled="!editable || index === 0"
+              :aria-label="$t('itinerary.moveViaEarlier', { city })"
+              @click="moveVia(index, -1)"
+            />
+            {{ index + 1 }}. {{ city }}
+            <el-button
+              link
+              size="small"
+              :icon="ArrowRight"
+              :disabled="!editable || index === day.viaDestinations.length - 1"
+              :aria-label="$t('itinerary.moveViaLater', { city })"
+              @click="moveVia(index, 1)"
+            />
+          </el-tag>
+        </div>
+      </el-form-item>
       <el-form-item
         class="day-form__description [grid-column:1_/_-1]"
         :label="$t('itinerary.dayDescription')"
@@ -148,52 +152,12 @@
           @update:model-value="updateField('description', $event)"
         />
       </el-form-item>
-      <template v-if="english">
-        <el-form-item :label="$t('itinerary.english.departure')">
-          <el-input
-            :model-value="day.departureEn"
-            :disabled="!editable"
-            maxlength="300"
-            :placeholder="$t('itinerary.english.cityHint')"
-            @update:model-value="updateField('departureEn', $event)"
-          />
-        </el-form-item>
-        <el-form-item :label="$t('itinerary.english.destination')">
-          <el-input
-            :model-value="day.destinationEn"
-            :disabled="!editable"
-            maxlength="300"
-            :placeholder="$t('itinerary.english.cityHint')"
-            @update:model-value="updateField('destinationEn', $event)"
-          />
-        </el-form-item>
-        <el-form-item :label="$t('itinerary.english.transport')" class="[grid-column:span_2]">
-          <el-input
-            :model-value="day.transportEn"
-            :disabled="!editable"
-            maxlength="100"
-            :placeholder="$t('itinerary.english.transportHint')"
-            @update:model-value="updateField('transportEn', $event)"
-          />
-        </el-form-item>
-        <el-form-item class="[grid-column:1_/_-1]" :label="$t('itinerary.english.description')">
-          <el-input
-            :model-value="day.descriptionEn"
-            :disabled="!editable"
-            type="textarea"
-            :rows="4"
-            resize="vertical"
-            maxlength="20000"
-            @update:model-value="updateField('descriptionEn', $event)"
-          />
-        </el-form-item>
-      </template>
     </ItineraryDayPanel>
   </el-form>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ArrowLeft, ArrowRight } from "@element-plus/icons-vue";
 import type { ItineraryDayRecord, ItineraryEditableDayField } from "@/types/itinerary";
@@ -208,14 +172,24 @@ const props = defineProps<{
   allowCustomDestination: boolean;
   destinations: string[];
   editable: boolean;
-  /** 盛旭行程显示对客英文字段。 */
-  english: boolean;
 }>();
 const emit = defineEmits<{
   "update-field": [field: EditableDayField, value: string | null];
   "update-via": [cities: string[]];
 }>();
 const { locale } = useI18n();
+
+const hasVia = ref(props.day.viaDestinations.length > 0);
+const viaOptions = computed(() => props.destinations.filter(city => city !== props.day.departure && city !== props.day.destination));
+watch(() => props.day.id, () => { hasVia.value = props.day.viaDestinations.length > 0; });
+watch(() => props.day.viaDestinations.length, count => { if (count) hasVia.value = true; });
+watch(() => [props.day.departure, props.day.destination], () => {
+  const filtered = props.day.viaDestinations.filter(city => city !== props.day.departure && city !== props.day.destination);
+  if (props.editable && filtered.length !== props.day.viaDestinations.length) emit("update-via", filtered);
+});
+function toggleVia(value: string | number | boolean) {
+  if (!value) emit("update-via", []);
+}
 
 const transportCodes = computed(() => props.day.transport.split(",").filter(Boolean));
 const transportOptions = computed(() => getTransportMethodOptions(locale.value));

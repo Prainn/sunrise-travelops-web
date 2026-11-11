@@ -154,6 +154,7 @@ import SectionCard from "@/components/SectionCard/index.vue";
 import { websiteErrorMessage, websiteService } from "@/services/website.service";
 import { whatsappService } from "@/services/whatsapp.service";
 import { useUserStore } from "@/stores/user";
+import { useWhatsappNotificationsStore } from "@/stores/whatsapp-notifications";
 import type { WebsiteCity, WebsiteInquiryInput } from "@/types/website";
 import type {
   WhatsappAction,
@@ -177,6 +178,7 @@ const router = useRouter();
 const route = useRoute();
 const routeName = route.name;
 const user = useUserStore();
+const notifications = useWhatsappNotificationsStore();
 const can = (permission: string) => user.userInfo.perms.includes(permission);
 const isManager = can("whatsapp:conversation:assign");
 const defaultView: WhatsappConversationView | undefined = isManager ? "all" : undefined;
@@ -370,6 +372,7 @@ async function handleSetState(state: "open" | "closed") {
   actionBusy.value = true;
   try {
     await whatsappService.setState(current.id, current.version, state);
+    void notifications.refresh();
     ElMessage.success(t("whatsapp.stateUpdated"));
     await refreshSelected();
   } catch (cause) {

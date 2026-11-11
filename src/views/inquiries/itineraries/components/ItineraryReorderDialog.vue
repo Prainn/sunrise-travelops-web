@@ -38,7 +38,7 @@
           <div class="min-w-0">
             <h4 class="m-0 text-[14px] text-strong font-600">
               D{{ recovery ? day.dayNumber : dayIndex + 1 }}
-              <span v-if="recovery ? day.date : startDate" class="ml-1 font-400 text-muted">{{ recovery ? day.date : addDays(startDate!, dayIndex) }}</span>
+              <span v-if="!hideDates && (recovery ? day.date : startDate)" class="ml-1 font-400 text-muted">{{ recovery ? day.date : addDays(startDate!, dayIndex) }}</span>
             </h4>
             <p class="m-0 mt-1 text-[13px] [overflow-wrap:anywhere]">
               {{ day.title }}
@@ -254,6 +254,7 @@
     v-if="!recovery"
     v-model="isRecycleVisible"
     :days="recycledDays"
+    :hide-dates="hideDates"
     :readonly="readonly"
     recovery
     :restore-disabled="dayIds.length >= 365 || busy"
@@ -302,6 +303,7 @@ const props = withDefaults(
     restoreDisabled?: boolean;
     readonly?: boolean;
     startDate?: string | null;
+    hideDates?: boolean;
     /** 开启跨天移动与复制 */
     transfer?: boolean;
     /** 预演本次调整，返回需核对事项；不修改草稿 */

@@ -43,7 +43,47 @@
                 </el-button>
               </div>
 
-              <el-form-item :label="$t('planning.vehicleDateRange')">
+              <el-form-item v-if="isSeries" :label="$t('planning.vehicleDayRange')">
+                <div class="flex w-full items-center gap-2">
+                  <el-select
+                    class="flex-1"
+                    autocomplete="new-password"
+                    :model-value="itineraryDayNumber(startDate, arrangement.startDate)"
+                    :aria-label="$t('planning.vehicleStartDay')"
+                    :placeholder="$t('planning.vehicleStartDay')"
+                    :disabled="!editable"
+                    filterable
+                    @update:model-value="changeStartDay(plan, arrangement, $event)"
+                  >
+                    <el-option
+                      v-for="day in plannedDays"
+                      :key="day"
+                      :value="day"
+                      :label="`D${day}`"
+                    />
+                  </el-select>
+                  <span aria-hidden="true">—</span>
+                  <el-select
+                    class="flex-1"
+                    autocomplete="new-password"
+                    :model-value="itineraryDayNumber(startDate, arrangement.endDate)"
+                    :aria-label="$t('planning.vehicleEndDay')"
+                    :placeholder="$t('planning.vehicleEndDay')"
+                    :disabled="!editable || !arrangement.startDate"
+                    filterable
+                    @update:model-value="changeEndDay(plan, arrangement, $event)"
+                  >
+                    <el-option
+                      v-for="day in plannedDays"
+                      :key="day"
+                      :value="day"
+                      :label="`D${day}`"
+                      :disabled="day < (itineraryDayNumber(startDate, arrangement.startDate) ?? 1)"
+                    />
+                  </el-select>
+                </div>
+              </el-form-item>
+              <el-form-item v-else :label="$t('planning.vehicleDateRange')">
                 <el-date-picker
                   class="!w-full"
                   :model-value="arrangementDateRange(arrangement)"
@@ -100,7 +140,7 @@
                   <el-form-item
                     v-else
                     :label="$t('planning.arrangementVehicles')"
-                    class="w-full items-center justify-center"
+                    class="w-full [&_.el-form-item__content]:flex-nowrap"
                   >
                     <ResourceSelect
                       :key="`${arrangement.id}-${arrangement.vehicles.length}`"
@@ -112,7 +152,7 @@
                         arrangement.vehicles.map((vehicle) => vehicle.vehicleId)
                       "
                       :placeholder="$t('planning.addVehicle')"
-                      class="w-300px!"
+                      class="min-w-0 flex-1!"
                       @update:model-value="addVehicle(plan.tier, arrangement.id, $event)"
                     />
                     <el-button class="ml-4" @click="addingVehicleId = ''">
@@ -281,6 +321,7 @@ import type {
   ItineraryVehicleTier,
 } from "@/types/itinerary";
 import { addDays, createId, formatDate, formatMoney, roundMoney } from "@/utils";
+import { itineraryDayNumber } from "../duration";
 import { savedVehiclePaxTotal, vehiclePaxPriceNeedsReason } from "../price-adjustments";
 import {
   arrangementSeats,
@@ -299,6 +340,7 @@ const props = defineProps<{
   plans: ItineraryVehiclePlan[];
   savedPlans: ItineraryVehiclePlan[];
   startDate: string;
+  isSeries?: boolean;
   plannedDays: number;
   paxTiers: number[];
   editable: boolean;
@@ -402,6 +444,16 @@ function disabledDateFor(plan: ItineraryVehiclePlan, arrangementId: string) {
   return (date: Date) => isDateDisabled(plan, arrangementId, date);
 }
 
+function changeStartDay(plan: ItineraryVehiclePlan, arrangement: ItineraryVehicleArrangement, day: number) {
+  const startDate = addDays(props.startDate, day - 1);
+  const endDate = arrangement.endDate >= startDate ? arrangement.endDate : startDate;
+  changeDateRange(plan, arrangement.id, [startDate, endDate]);
+}
+
+function changeEndDay(plan: ItineraryVehiclePlan, arrangement: ItineraryVehicleArrangement, day: number) {
+  changeDateRange(plan, arrangement.id, [arrangement.startDate, addDays(props.startDate, day - 1)]);
+}
+
 function changeDateRange(plan: ItineraryVehiclePlan, id: string, value: unknown) {
   if (!Array.isArray(value) || value.length !== 2) {
     updateArrangements(
@@ -414,8 +466,8 @@ function changeDateRange(plan: ItineraryVehiclePlan, id: string, value: unknown)
   }
   const [startDate, endDate] = value.map(String);
   if (startDate === undefined || endDate === undefined) return;
-  if (startDate < props.startDate || endDate > tripEndDate.value) {
-    ElMessage.warning(t("planning.vehicleDateOutOfRange"));
+  if (startDate < props.startDate || endDate > tripEndDate.value || startDate > endDate) {
+    ElMessage.warning(t(props.isSeries ? "planning.vehicleDayOutOfRange" : "planning.vehicleDateOutOfRange"));
     return;
   }
   const overlaps = plan.arrangements.some(
@@ -427,7 +479,7 @@ function changeDateRange(plan: ItineraryVehiclePlan, id: string, value: unknown)
       endDate >= arrangement.startDate,
   );
   if (overlaps) {
-    ElMessage.warning(t("planning.vehicleDateOverlap"));
+    ElMessage.warning(t(props.isSeries ? "planning.vehicleDayOverlap" : "planning.vehicleDateOverlap"));
     return;
   }
   updateArrangements(

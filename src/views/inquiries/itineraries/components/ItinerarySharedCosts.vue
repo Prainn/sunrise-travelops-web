@@ -1,5 +1,19 @@
 <template>
   <SectionCard :title="$t('itinerary.sharedTripCosts')">
+    <el-select
+      v-if="calculation?.tableMealTotal"
+      v-model="costPax"
+      autocomplete="new-password"
+      class="mb-4"
+      aria-label="PAX"
+    >
+      <el-option
+        v-for="pax in paxTiers"
+        :key="pax"
+        :value="pax"
+        :label="pax + ' PAX'"
+      />
+    </el-select>
     <el-collapse v-model="expanded" class="mb-5">
       <el-collapse-item v-for="section in sections" :key="section.kind" :name="section.kind">
         <template #title>
@@ -219,13 +233,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import type {
   ItineraryGuidePlan,
   ItineraryQuoteSettings,
   PaxQuoteCalculation,
 } from "@/types/itinerary";
-import { formatMoney } from "@/utils";
+import { formatMoney, divideMoney, sumMoney } from "@/utils";
 import { summarizeResourceCostsByCity } from "../city-cost-summary";
 import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
@@ -243,11 +257,24 @@ const props = defineProps<{
 const emit = defineEmits<{
   "update-settings": [changes: Partial<Omit<ItineraryQuoteSettings, "options">>];
 }>();
+const costPax = ref(props.paxTiers[0] ?? 1);
+watch(() => props.paxTiers, tiers => { if (!tiers.includes(costPax.value)) costPax.value = tiers[0] ?? 1; });
+const calculation = computed(() => {
+  const value = props.calculation;
+  if (!value) return null;
+  return { ...value,
+    mealCost: sumMoney([value.mealCost ?? 0, sumMoney((value.mealDetails ?? []).map(item => divideMoney(item.groupTotal ?? 0, costPax.value)))]),
+    mealDetails: value.mealDetails?.map(item => item.groupTotal === undefined ? item : {
+      ...item, unitCost: item.groupTotal === null ? null : divideMoney(item.groupTotal, costPax.value),
+      quantity: 1, totalCost: item.groupTotal === null ? null : divideMoney(item.groupTotal, costPax.value),
+    }),
+  };
+});
 const expanded = ref<string[]>([]);
 const guidePlan = computed(() => props.guidePlans[0]);
 const citySummaries = computed(() => ({
-  meal: summarizeResourceCostsByCity(props.calculation?.mealDetails ?? []),
-  attraction: summarizeResourceCostsByCity(props.calculation?.attractionDetails ?? []),
+  meal: summarizeResourceCostsByCity(calculation.value?.mealDetails ?? []),
+  attraction: summarizeResourceCostsByCity(calculation.value?.attractionDetails ?? []),
 }));
 const sections = [
   {

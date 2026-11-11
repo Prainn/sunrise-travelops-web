@@ -62,7 +62,7 @@
                       {{ selectedItinerary.title }}
                     </h2>
                     <p class="m-0 flex flex-wrap items-center gap-[6px] text-[14px] text-muted">
-                      <span>{{ selectedItinerary.startDate }} — {{ selectedItinerary.endDate }}</span>
+                      <span v-if="!inquiry.isSeries">{{ selectedItinerary.startDate }} — {{ selectedItinerary.endDate }}</span>
                       <el-tag
                         v-for="pax in selectedItinerary.paxTiers"
                         :key="pax"
@@ -167,13 +167,13 @@
             v-if="selectedItinerary?.dailyPlans[index]"
             :ref="(card) => setDayCard(selectedItinerary!.dailyPlans[index]!.id, card)"
             :day="selectedItinerary.dailyPlans[index]"
+            :hide-date="inquiry.isSeries"
             :breakfast-status="getDayBreakfastStatus(selectedItinerary, index)"
             :destinations="selectedItinerary.destinations"
             :content-editable="contentEditable"
             :planned-days="selectedItinerary?.dailyPlans.length || inquiry.plannedDays || 0"
             :is-last="index === selectedItinerary.dailyPlans.length - 1"
             :plans="dayPlanSummaries[index] ?? EMPTY_DAY_PLANS"
-            :english="inquiry.businessUnit === 'shengxu'"
             @update-field="(field, value) => updateDayField(index, field, value)"
             @update-via="updateViaDestinations(index, $event)"
             @add-item="openResourceDialog(selectedItinerary!.dailyPlans[index]!.id)"
@@ -223,6 +223,7 @@
         :days="reorderBoardDays"
         :deleted-days="deletedBoardDays"
         :start-date="selectedItinerary.startDate"
+        :hide-dates="inquiry.isSeries"
         :readonly="!contentEditable"
         :validate="(change) => reorderItineraryDays(selectedItinerary!, change).issues"
         @apply="applyReorder"
@@ -234,6 +235,7 @@
         :english="inquiry.businessUnit === 'shengxu'"
         :destination-options="destinationOptions"
         :is-editing="isEditingPlan"
+        :is-series="inquiry.isSeries"
         @submit="submitItineraryPlan"
       />
       <ItineraryVehiclePlansDialog
@@ -242,6 +244,7 @@
         :plans="vehicleDraft"
         :saved-plans="savedItinerary?.vehiclePlans ?? []"
         :start-date="selectedItinerary.startDate"
+        :is-series="inquiry.isSeries"
         :planned-days="selectedItinerary?.dailyPlans.length || inquiry.plannedDays || 0"
         :pax-tiers="selectedItinerary.paxTiers"
         :editable="contentEditable"
@@ -451,7 +454,7 @@
 <script setup lang="ts">
 import { businessUnitName } from "@/constants/identity";
 import { ArrowDown, Bowl, Location, OfficeBuilding, User, Van } from "@element-plus/icons-vue";
-import { itineraryDuration } from "@/views/inquiries/itineraries/duration";
+import { itineraryDayNumber, itineraryDuration } from "@/views/inquiries/itineraries/duration";
 import { computed, markRaw, nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -485,7 +488,7 @@ import { useItineraryWorkspace } from "./useItineraryWorkspace";
 
 defineOptions({ name: "InquiryItineraries" });
 const { t } = useI18n();
-/** 地接服务天数与客户展示天数；住宿晚数按活动日实际住宿统计，不按天数减一。 */
+/** 地接天数与报价天数；住宿晚数按活动日实际住宿统计，不按天数减一。 */
 const serviceDisplayText = computed(() => {
   const plan = selectedItinerary.value;
   if (!plan) return "";
@@ -771,12 +774,21 @@ function dayVehicleSummary(day: ItineraryDayRecord) {
       .filter((arrangement) => !day.date || !arrangement.startDate || (arrangement.startDate <= day.date && day.date <= arrangement.endDate))
       .map((arrangement) => {
         const vehicles = arrangement.vehicles.map((item) => `${item.vehicleName}×${item.quantity}`).join("、");
-        const range = arrangement.startDate ? `${arrangement.startDate}~${arrangement.endDate}` : "";
+        const range = inquiry.value?.isSeries
+          ? seriesVehicleRange(plan.startDate, arrangement.startDate, arrangement.endDate)
+          : arrangement.startDate ? `${arrangement.startDate}~${arrangement.endDate}` : "";
         return `${t(`itinerary.vehicleServiceLevels.${vehicle.tier}`)} ${vehicles || range}`.trim();
       }),
   );
   if (!lines.length) return "";
   return lines.length > 1 ? t("itineraryWorkspace.alternativePlans", { plans: lines.join(" / ") }) : lines[0]!;
+}
+
+function seriesVehicleRange(startDate: string, from: string, to: string) {
+  const start = itineraryDayNumber(startDate, from);
+  const end = itineraryDayNumber(startDate, to);
+  if (start === undefined || end === undefined) return "";
+  return start === end ? `D${start}` : `D${start}–D${end}`;
 }
 
 function openDayPlan(section: "hotel" | "vehicle" | "guide", command?: string) {

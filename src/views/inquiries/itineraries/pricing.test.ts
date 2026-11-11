@@ -36,3 +36,13 @@ describe("meal cent rounding", () => {
     expect(item.totalCost).toBe(1.01);
   });
 });
+
+it("calculates table meals as a shared group total and preserves an unfilled price", () => {
+  const option = { type: "restaurant", resourceId: "r", resourceName: "餐", priceName: "", unit: "table", unitCost: 650, dinerCount: 10 } as Parameters<typeof calculateItem>[0];
+  const item = { ...calculateItem(option, 1), tableCount: 2 };
+  recalculateItem(item);
+  expect(item.totalCost).toBe(1300);
+  item.unitCost = null;
+  recalculateItem(item);
+  expect(item.totalCost).toBeNull();
+});

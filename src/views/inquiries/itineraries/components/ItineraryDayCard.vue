@@ -5,7 +5,7 @@
     :day-number="day.dayNumber"
     :departure="day.departure || $t('itinerary.departure')"
     :destination="day.destination || $t('itinerary.destination')"
-    :date="day.date"
+    :date="hideDate ? undefined : day.date"
     :body-id="`day-body-${day.id}`"
   >
     <ItineraryDayResourceBar
@@ -20,7 +20,6 @@
       :day="day"
       :destinations="destinations"
       :editable="contentEditable"
-      :english="english"
       @update-field="updateField"
       @update-via="emit('update-via', $event)"
     />
@@ -108,9 +107,19 @@
             ¥{{ formatMoney(scope.row.unitCost) }}
           </template>
         </el-table-column>
+        <el-table-column
+          v-if="day.items.some(item => item.tableCount != null)"
+          :label="$t('itinerary.tableMealTotal')"
+          width="180"
+          align="right"
+        >
+          <template #default="{ row }">
+            {{ row.tableCount != null && row.unitCost != null ? row.tableCount + ' × ¥' + formatMoney(row.unitCost) + ' = ¥' + formatMoney(row.totalCost) : '—' }}
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('itinerary.resourceCostPerPerson')" width="120" align="right">
           <template #default="scope">
-            ¥{{ formatMoney(scope.row.totalCost) }}
+            {{ scope.row.tableCount != null ? "—" : "¥" + formatMoney(scope.row.totalCost) }}
           </template>
         </el-table-column>
         <el-table-column
@@ -133,7 +142,8 @@
       <div
         class="day-card__subtotal mt-[12px] flex items-center justify-between text-muted"
       >
-        <span>{{ $t("itinerary.dayCost") }} ¥{{ formatMoney(dayCost) }}</span>
+        <span>{{ $t(hasTableMeals ? "itinerary.dayPerPersonCost" : "itinerary.dayCost") }} ¥{{ formatMoney(dayCost) }}</span>
+        <span v-if="hasTableMeals">{{ $t("itinerary.tableMealTotal") }} ¥{{ formatMoney(tableMealTotal) }}</span>
       </div>
     </template>
   </ItineraryDayCardFrame>
@@ -142,7 +152,7 @@
 <script setup lang="ts">
 import { computed, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
-import { Bowl, Coffee, OfficeBuilding, Location, User, Van } from "@element-plus/icons-vue";
+import { Bowl, Coffee, OfficeBuilding, Location, User } from "@element-plus/icons-vue";
 import type {
   ItineraryDayRecord,
   ItineraryEditableDayField,
@@ -159,13 +169,12 @@ import ItineraryDayResourceBar, { type DayResourceAction } from "./ItineraryDayR
 type EditableDayField = ItineraryEditableDayField;
 const props = defineProps<{
   day: ItineraryDayRecord;
+  hideDate?: boolean;
   breakfastStatus: "included" | "excluded" | "pending";
   destinations: string[];
   contentEditable: boolean;
   isLast: boolean;
   plannedDays: number;
-  /** 盛旭行程显示对客英文字段。 */
-  english: boolean;
   /** 当天可见的整程/按城市方案摘要，空字符串表示未配置 */
   plans: { hotel: string; vehicle: string; guide: string };
 }>();
@@ -186,7 +195,9 @@ defineExpose({
 const hasDayResources = computed(
   () => props.day.items.length > 0 || props.day.meals.lunch || props.day.meals.dinner,
 );
-const dayCost = computed(() => sumMoney(props.day.items.map((item) => item.totalCost ?? 0)));
+const hasTableMeals = computed(() => props.day.items.some(item => item.tableCount != null));
+const tableMealTotal = computed(() => sumMoney(props.day.items.filter(item => item.tableCount != null).map(item => item.totalCost ?? 0)));
+const dayCost = computed(() => sumMoney(props.day.items.filter(item => item.tableCount == null).map((item) => item.totalCost ?? 0)));
 const { t } = useI18n();
 
 function mealLabel(slot: MealSlot) {
@@ -223,18 +234,6 @@ const resourceActions = computed<DayResourceAction[]>(() => {
       active: Boolean(props.plans.hotel),
     },
     {
-      key: "vehicle",
-      label: t("itineraryWorkspace.actions.vehicle"),
-      icon: Van,
-      scope: t("itineraryWorkspace.scopes.byDateRange"),
-      hint: t("itineraryWorkspace.hints.normalVehicle"),
-      active: Boolean(props.plans.vehicle),
-      commands: [
-        { command: "itinerary", label: t("planning.byItinerary") },
-        { command: "stage", label: t("planning.byStage") },
-      ],
-    },
-    {
       key: "guide",
       label: t("itineraryWorkspace.actions.guide"),
       icon: User,
@@ -245,7 +244,7 @@ const resourceActions = computed<DayResourceAction[]>(() => {
   ];
 });
 const planSummaries = computed(() =>
-  (["hotel", "vehicle", "guide"] as const)
+  (["hotel", "guide"] as const)
     .filter((key) => props.plans[key])
     .map((key) => ({ label: t(`itineraryWorkspace.actions.${key}`), value: props.plans[key] })),
 );

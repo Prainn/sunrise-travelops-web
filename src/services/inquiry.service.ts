@@ -44,6 +44,8 @@ export interface PdfData {
   exportLanguage?: CustomerExportLanguage;
 }
 const MONEY_FIELDS = new Set([
+  "tableMealTotal",
+  "groupTotal",
   "hotelUnitCost",
   "vehicleTotal",
   "guideServiceTotal",

@@ -51,7 +51,9 @@
         </template>
       </el-table-column>
       <el-table-column :label="$t('itinerary.mealCost')" min-width="130">
-        {{ money(mealCost) }}
+        <template #default="{ row }">
+          {{ money(row.mealCost ?? mealCost) }}
+        </template>
       </el-table-column>
       <el-table-column :label="$t('itinerary.attractionCost')" min-width="130">
         {{ money(attractionCost) }}
@@ -88,7 +90,7 @@
               <template v-if="calculation">
                 {{ $t("itinerary.hotelPerPerson") }}: {{ formatMoney(calculation.hotelUnitCost)
                 }}<br />
-                {{ $t("itinerary.mealCost") }}: {{ formatMoney(mealCost) }}<br />
+                {{ $t("itinerary.mealCost") }}: {{ formatMoney(row.mealCost ?? mealCost) }}<br />
                 {{ $t("itinerary.attractionCost") }}: {{ formatMoney(attractionCost) }}<br />
                 {{ $t("itinerary.vehiclePerPerson") }}: {{ money(vehicleUnitCost(row)) }}<br />
                 {{ $t("itinerary.guideServicePerPerson") }}:

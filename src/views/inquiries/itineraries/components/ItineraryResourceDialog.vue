@@ -121,17 +121,14 @@
       </template>
       <el-form-item
         v-if="(source === 'custom' ? customUnit : selectedOption?.unit) === 'table'"
-        :label="$t('restaurant.dinerCount')"
+        :label="$t('itinerary.tableCount')"
         required
       >
         <el-input-number
-          v-model="dinerCount"
+          v-model="tableCount"
           :min="1"
           :max="10000"
           :precision="0"
-          :disabled="
-            source === 'library' && Boolean(currentItem?.dinerCount || selectedOption?.dinerCount)
-          "
         />
       </el-form-item>
       <el-form-item v-if="reasonRequired" :label="$t('identity.reason')" required>
@@ -209,7 +206,7 @@ const {
   customNameEn,
   customPrice,
   customUnit,
-  dinerCount,
+  tableCount,
   canSubmit,
   createItem,
 } = useResourcePriceSelection(props, (error) => ElMessage.error(requestErrorMessage(error)));

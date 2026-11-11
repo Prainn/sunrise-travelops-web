@@ -215,6 +215,10 @@ export function recalculateItem(item: ItineraryResourceItem) {
     return;
   }
   item.unitCost = roundMoney(item.unitCost);
+  if (item.unit === "table" && item.tableCount != null) {
+    item.totalCost = multiplyMoney(item.unitCost, item.tableCount);
+    return;
+  }
   item.totalCost = multiplyMoney(
     item.unit === "table" && item.dinerCount
       ? divideMoney(item.unitCost, item.dinerCount)

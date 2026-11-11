@@ -216,7 +216,7 @@
         "guideName": "导游服务",
         "dailyPrice": "导游日价",
         "dayIds": "用车日期",
-          "options": "报价组合",
+        "options": "报价组合",
         "hotelTier": "酒店档次",
         "vehicleTier": "车型档次",
         "adultUnitPrice": "成人单价",
@@ -254,7 +254,8 @@
         "secondLanguage": "第二语种",
         "shopping": "进店",
         "otherExpenses": "司陪费和其他支出",
-        "childWithoutBedRate": "儿童不占床团费比例"
+        "childWithoutBedRate": "儿童不占床团费比例",
+        "tableCount": "桌数"
       },
       "day": "第 {day} 天",
       "tiers": {
@@ -290,9 +291,7 @@
     "followupDetails": "跟进与内部信息",
     "series": {
       "label": "系列团",
-      "option": "系列团（仅需国家/地区，可多次成团）",
       "tag": "系列团",
-      "hint": "不填写组团社、联系人、来源及服务天数；每份行程单独填写服务天数及报价资料。",
       "ownerPlaceholder": "选择负责计调",
       "ownerRequired": "请选择负责的盛旭计调",
       "ownerSelf": "创建后由本人负责"
@@ -333,10 +332,10 @@
     }
   },
   "itinerary": {
+    "tableMealTotal": "按桌餐食总价（整团）",
+    "tableCount": "桌数",
     "customerNotes": "@:common.remark",
     "resourceCostPerPerson": "人均成本",
-    "usageCount": "次",
-    "perPersonQuantity": "每人使用次数",
     "pricingIncomplete": "{count} 项未填实际价格，未计入成本；冻结前须补齐。",
     "legacyQuote": "历史冻结报价，展示与下载均沿用原始价格。",
     "profitPerPerson": "人均预计利润",
@@ -368,7 +367,6 @@
     "actualMarginRate": "人均毛利率",
     "collapseDay": "收起",
     "expandDay": "展开",
-    "addResource": "添加景点",
     "adults": "成人",
     "allCities": "全部城市",
     "tourCostPerPerson": "人均团费成本",
@@ -442,7 +440,6 @@
     "pdfPrintHint": "确认后锁定报价并打开打印窗口。选择另存为 PDF、A4、100% 缩放，关闭浏览器页眉页脚；以打印预览分页为准。取消打印不撤销报价确认。",
     "unsavedLeaveConfirm": "离开将丢弃未保存的行程修改，继续？",
     "saveSuccess": "行程已保存",
-    "priceRemark": "报价备注",
     "priceUnit": "计价单位",
     "profit": "预计利润",
     "quoteConfigurations": "团队报价",
@@ -557,14 +554,14 @@
     "moveViaLater": "将{city}后移",
     "noAccommodation": "不含住宿",
     "viaDestinationsRemoved": "以下日程的途经地将被移除：{items}。确认继续？",
-    "customerDisplayMode": "客户文件天数",
+    "customerDisplayMode": "报价天数",
     "customerDisplayModes": {
-      "same": "与地接服务天数一致",
-      "returnArrival": "末尾增加返程展示日"
+      "same": "与服务天数一致",
+      "returnArrival": "显示最后一天返程日"
     },
     "returnArrivalText": "返程展示文案",
-    "serviceDaysOnly": "地接服务 {days}天 / 客户展示 {displayDays}天",
-    "serviceDisplay": "地接服务 {days}天{nights}晚 / 客户展示 {displayDays}天{nights}晚",
+    "serviceDaysOnly": "地接 {days}天 / 报价 {displayDays}天",
+    "serviceDisplay": "地接 {days}天{nights}晚 / 报价 {displayDays}天{nights}晚",
     "serviceDaysRequired": "输入 1–365 的服务天数",
     "exportLanguages": {
       "zh": "中文文件",
@@ -572,42 +569,19 @@
     },
     "english": {
       "title": "英文标题",
-      "departure": "英文出发地",
-      "destination": "英文目的地",
-      "transport": "英文交通方式",
-      "description": "英文行程描述",
       "cityHint": "资源库城市以英文名为准，非资源库地点填写",
-      "transportHint": "留空则使用交通方式的英文名称",
       "feeDeparture": "英文出发城市",
       "feeArrival": "英文到达城市",
       "customerNotes": "英文客户备注",
       "holidayRestrictions": "英文节假日限制",
       "hotelReplacementTerms": "英文酒店替换说明",
       "customRestaurantName": "英文餐厅名称",
-      "returnArrivalText": "英文返程展示文案",
-      "missing": "英文内容缺失：{field}",
-      "snapshotUnavailable": "该报价冻结时没有英文快照，无法导出英文文件。请复制为新草稿，补充英文后重新确认。",
-      "fields": {
-        "titleEn": "英文标题",
-        "departureEn": "英文出发地",
-        "destinationEn": "英文目的地",
-        "transportEn": "英文交通方式",
-        "descriptionEn": "英文行程描述",
-        "resourceNameEn": "英文餐厅名称",
-        "remarkEn": "英文资源备注",
-        "customerNotesEn": "英文客户备注",
-        "holidayRestrictionsEn": "英文节假日限制",
-        "hotelReplacementTermsEn": "英文酒店替换说明",
-        "departureCityEn": "英文出发城市",
-        "arrivalCityEn": "英文到达城市",
-        "returnArrivalTextEn": "英文返程展示文案",
-        "englishName": "资源英文名称",
-        "englishDescription": "资源英文描述"
-      }
+      "returnArrivalText": "英文返程展示文案"
     },
     "childWithoutBedRate": "儿童不占床团费比例",
     "childWithBedPrice": "儿童团费（占床）",
-    "childWithoutBedPrice": "儿童团费（不占床）"
+    "childWithoutBedPrice": "儿童团费（不占床）",
+    "dayPerPersonCost": "按人计价餐食与景点成本（人均）"
   },
   "businessCategory": {
     "applicableResources": "适用资源",
@@ -683,7 +657,6 @@
     "all": "全部",
     "backHome": "首页",
     "cancel": "取消",
-    "clear": "清空",
     "close": "关闭",
     "confirm": "确定",
     "send": "发送",
@@ -733,8 +706,6 @@
     "filters": "筛选",
     "versionConflict": "记录已被他人更新，请刷新后重试",
     "updatedAt": "更新时间",
-    "prevStep": "上一步",
-    "nextStep": "下一步",
     "disable": "禁用",
     "enable": "启用",
     "invalidNumber": "请输入范围 {min} 至 {max} 内、最多 {precision} 位小数的数字"
@@ -1358,18 +1329,20 @@
     "byItinerary": "按行程规划",
     "byStage": "按阶段报价",
     "addStage": "新增报价阶段",
-    "stageTotal": "阶段总价（元）",
     "addArrangement": "新增用车安排",
     "vehicleArrangementNumber": "用车安排 {number}",
     "vehicleDateRange": "用车日期",
     "vehicleDateOutOfRange": "用车日期须在询盘计划日期内",
     "vehicleDateOverlap": "日期与已有用车安排重叠",
+    "vehicleDayRange": "用车日序",
+    "vehicleStartDay": "开始日",
+    "vehicleEndDay": "结束日",
+    "vehicleDayOutOfRange": "用车日序须在行程范围内",
+    "vehicleDayOverlap": "日序与已有用车安排重叠",
     "arrangementVehicles": "使用车型",
-    "arrangementVehiclePrice": "本段用车价格（元）",
     "addVehicle": "选择车型",
     "vehicles": "辆",
     "seats": "座",
-    "totalVehiclePrice": "全程用车总价（元）",
     "capacityHint": "共 {seats} 座，须容纳 {passengers} 人",
     "hotelPrice": "实际每间每晚价格",
     "languages": {
@@ -1741,10 +1714,6 @@
     "hotelPlans": "酒店方案",
     "hotelRequiredHint": "整个行程不选酒店也可报价；如安排酒店，每个已报价档次须覆盖所有住宿日。每个档次每天最多一家，手动选择档次，不自动映射共用库酒店评级。",
     "hotelTier": "酒店档次",
-    "hotelTierA": "A 高端五星",
-    "hotelTierB": "B 舒适四星",
-    "hotelTierC": "C 经济三星",
-    "hotelTierD": "D 二星及以下",
     "configHotelPrice": "独立站价格（内部参考）：{price} 元/间/晚",
     "hotelBreakfastIncluded": "此方案含早",
     "hotelNameZh": "酒店中文名称",
@@ -2019,11 +1988,9 @@
     "guideUnavailable": "所选导游不符合该段的语种、时间或排班，请更换后保存。",
     "guideService": {
       "teamWindow": "团队接送",
-      "title": "导游服务",
       "empty": "暂无服务段",
       "segment": "第 {n} 段",
       "add": "新增服务段",
-      "selectGuide": "请选择导游",
       "fillFirst": "请先选语种和服务日期",
       "startAt": "服务开始日期",
       "endAt": "服务结束日期",
@@ -2412,16 +2379,34 @@
   },
   "whatsapp": {
     "listRefreshFailed": "刷新失败，暂时显示上次结果",
-    "sendBlockedReasons": {"not_configured": "WhatsApp接入尚未配置", "send_disabled": "WhatsApp发送尚未启用", "test_recipient": "测试环境只能向已授权测试对象发送"},
-    "workerLoops": {"events": "入站处理（当前实例）", "outbound": "出站处理（当前实例）"},
-    "workerStates": {"disabled": "未启用", "starting": "等待首次运行", "running": "运行中", "stalled": "超过60秒未更新", "error": "最近一次处理失败", "stopped": "已停止"},
+    "sendBlockedReasons": {
+      "not_configured": "WhatsApp接入尚未配置",
+      "send_disabled": "WhatsApp发送尚未启用",
+      "test_recipient": "测试环境只能向已授权测试对象发送"
+    },
+    "workerLoops": {
+      "events": "入站处理（当前实例）",
+      "outbound": "出站处理（当前实例）"
+    },
+    "workerStates": {
+      "disabled": "未启用",
+      "starting": "等待首次运行",
+      "running": "运行中",
+      "stalled": "超过60秒未更新",
+      "error": "最近一次处理失败",
+      "stopped": "已停止"
+    },
     "lastWorkerSuccess": "最近一次成功检查",
     "lastWorkerError": "最近一次处理错误",
     "outboundCount": "出站 · {state}",
     "oldestOutbound": "最早未完成消息",
     "workerScopeHint": "处理状态仅反映当前服务实例；超过60秒无进展提示异常。出站统计包含全部系统发送记录，最早未完成时间涵盖排队、发送中和待核实消息。",
-
-    "notifications": {"unread": "{count} 条未读消息", "unassigned": "{count} 个未分配会话", "unavailable": "消息角标暂不可用，正在重试", "hint": "打开收件箱；红色为未读消息，橙色为未分配会话"},
+    "notifications": {
+      "unread": "{count} 条未读消息",
+      "unassigned": "{count} 个未分配会话",
+      "unavailable": "消息角标暂不可用，正在重试",
+      "hint": "打开收件箱；红色为未读消息，橙色为未分配会话"
+    },
     "keywordPlaceholder": "姓名、手机号或 BSUID",
     "view": "视图",
     "views": {
@@ -2453,7 +2438,6 @@
     "unlinkedReaction": "表情回应",
     "removeReaction": "移除表情",
     "reactionPending": "表情回应处理中",
-    "unavailableMessage": "无法显示此消息",
     "statuses": {
       "received": "已接收",
       "queued": "排队中",
@@ -2484,7 +2468,6 @@
       "latest": "服务器最新内容",
       "useLatest": "采用最新",
       "keepInput": "保留输入",
-
       "stage": "业务阶段",
       "scenario": "触发场景",
       "content": "内容",

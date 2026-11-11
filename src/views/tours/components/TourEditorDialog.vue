@@ -72,7 +72,7 @@
           <el-descriptions-item :label="$t('tour.itineraryCode')">
             {{ source.itineraryCode ?? "-" }}
           </el-descriptions-item>
-          <el-descriptions-item :label="$t('common.startDate')">
+          <el-descriptions-item v-if="!source.isSeries" :label="$t('common.startDate')">
             {{ source.startDate ?? "-" }}
           </el-descriptions-item>
           <el-descriptions-item :label="$t('tour.days')">

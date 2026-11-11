@@ -29,7 +29,6 @@ import type { VehicleMaintenanceMode } from "./vehicle-plans";
 import { isApiError } from "@/api/request";
 import { ApiErrorCode } from "@/api/error-code";
 import { requestErrorMessage } from "@/utils/version-conflict";
-import { translateIfExists } from "@/lang/utils";
 
 const VERSION_CONFLICT_CODES = new Set<string>([
   ApiErrorCode.ITINERARY_VERSION_CONFLICT,
@@ -560,48 +559,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     return saveItinerary();
   }
 
-  /** 英文缺失路径定位到对应日程、报价或基础信息；未知路径只展示不定位。 */
-  function englishIssue(path: string): PdfValidationIssue {
-    const plan = selectedItinerary.value;
-    const dayRef = /dailyPlans\[([^\]]+)\]/.exec(path)?.[1];
-    const day = dayRef
-      ? (plan?.dailyPlans.find((record) => record.id === dayRef) ??
-        (/^\d+$/.test(dayRef) ? plan?.dailyPlans[Number(dayRef)] : undefined))
-      : undefined;
-    const field = path.split(".").pop()?.replace(/\[.*$/, "") ?? path;
-    const fieldName = translateIfExists(`itinerary.english.fields.${field}`) ?? path;
-    const target = day
-      ? `day-${day.id}`
-      : path.startsWith("quote")
-        ? "quote"
-        : /^(titleEn|returnArrivalText)/.test(path)
-          ? "itinerary-basics"
-          : "";
-    return {
-      key: "itinerary.english.missing",
-      target,
-      params: { field: day ? `D${day.dayNumber} · ${fieldName}` : fieldName },
-    };
-  }
-  /** 英文导出的 PDF_NOT_READY 需要列出缺失项或提示复制新草稿，其余错误按原方式提示。 */
   function reportExportError(error: unknown) {
-    if (isApiError(error) && error.code === ApiErrorCode.PDF_NOT_READY) {
-      const reason = error.details?.reason;
-      if (reason === "ENGLISH_SNAPSHOT_UNAVAILABLE") {
-        messages.error("itinerary.english.snapshotUnavailable");
-        return;
-      }
-      const paths = error.details?.issues;
-      if (reason === "ENGLISH_CONTENT_MISSING" && Array.isArray(paths) && paths.length) {
-        const issues = paths.map((path) => englishIssue(String(path)));
-        validationIssues.value = issues;
-        messages.error("itinerary.validation.toast", {
-          count: issues.length,
-          first: messages.translate(issues[0]!.key, issues[0]!.params),
-        });
-        return;
-      }
-    }
     reportError(error);
   }
 

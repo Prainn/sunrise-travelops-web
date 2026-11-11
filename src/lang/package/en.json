@@ -216,7 +216,7 @@
         "guideName": "Guide service",
         "dailyPrice": "Daily price",
         "dayIds": "Vehicle dates",
-          "options": "Quote options",
+        "options": "Quote options",
         "hotelTier": "Hotel tier",
         "vehicleTier": "Vehicle tier",
         "adultUnitPrice": "Adult unit price",
@@ -254,7 +254,8 @@
         "secondLanguage": "Second language",
         "shopping": "Shop visits",
         "otherExpenses": "Driver/guide and other expenses",
-        "childWithoutBedRate": "Child fare % (no bed)"
+        "childWithoutBedRate": "Child fare % (no bed)",
+        "tableCount": "Tables"
       },
       "day": "Day {day}",
       "tiers": {
@@ -290,9 +291,7 @@
     "followupDetails": "Follow-up & internal info",
     "series": {
       "label": "Series",
-      "option": "Series tour (country/region only; multiple tours allowed)",
       "tag": "Series",
-      "hint": "Agency, contact, source and service days are not filled in; each itinerary sets its own service days and quote.",
       "ownerPlaceholder": "Select the responsible coordinator",
       "ownerRequired": "Select a Shengxu coordinator",
       "ownerSelf": "You will be responsible after creation"
@@ -333,10 +332,10 @@
     }
   },
   "itinerary": {
+    "tableMealTotal": "Table meal total (group)",
+    "tableCount": "Tables",
     "customerNotes": "@:common.remark",
     "resourceCostPerPerson": "Cost per person",
-    "usageCount": "times",
-    "perPersonQuantity": "Uses per person",
     "pricingIncomplete": "{count} actual prices are missing and excluded from costs. Enter all before freezing the quote.",
     "legacyQuote": "Historical frozen quote; display and downloads use the original prices.",
     "profitPerPerson": "Est. profit / person",
@@ -368,7 +367,6 @@
     "actualMarginRate": "Margin % / person",
     "collapseDay": "Collapse",
     "expandDay": "Expand",
-    "addResource": "Add attraction",
     "adults": "Adults",
     "allCities": "All cities",
     "tourCostPerPerson": "Tour cost / person",
@@ -442,7 +440,6 @@
     "pdfPrintHint": "Confirming locks the quote and opens printing. Save as PDF: A4, 100% scale, no browser headers or footers. Check page breaks in print preview. Cancelling printing keeps the quote confirmed.",
     "unsavedLeaveConfirm": "Unsaved itinerary changes will be lost. Leave?",
     "saveSuccess": "Itinerary saved",
-    "priceRemark": "Price Notes",
     "priceUnit": "Pricing Unit",
     "profit": "Estimated Profit",
     "quoteConfigurations": "Group Quote",
@@ -557,14 +554,14 @@
     "moveViaLater": "Move {city} later",
     "noAccommodation": "No accommodation",
     "viaDestinationsRemoved": "Via stops will be removed from: {items}. Continue?",
-    "customerDisplayMode": "Customer file days",
+    "customerDisplayMode": "Quote days",
     "customerDisplayModes": {
       "same": "Same as service days",
-      "returnArrival": "Add a return-arrival day"
+      "returnArrival": "Show the final return day"
     },
     "returnArrivalText": "Return-arrival text",
-    "serviceDaysOnly": "Ground service {days} days / Customer view {displayDays} days",
-    "serviceDisplay": "Ground service {days} days / {nights} nights · Customer view {displayDays} days / {nights} nights",
+    "serviceDaysOnly": "Ground: {days} days / Quote: {displayDays} days",
+    "serviceDisplay": "Ground: {days} days / {nights} nights · Quote: {displayDays} days / {nights} nights",
     "serviceDaysRequired": "Enter 1–365 service days",
     "exportLanguages": {
       "zh": "Chinese file",
@@ -572,42 +569,19 @@
     },
     "english": {
       "title": "English title",
-      "departure": "English departure",
-      "destination": "English destination",
-      "transport": "English transport",
-      "description": "English day description",
       "cityHint": "Library cities use their English name; fill for other places",
-      "transportHint": "Leave blank to use the transport method's English name",
       "feeDeparture": "English departure city",
       "feeArrival": "English arrival city",
       "customerNotes": "English customer notes",
       "holidayRestrictions": "English holiday restrictions",
       "hotelReplacementTerms": "English hotel replacement terms",
       "customRestaurantName": "English restaurant name",
-      "returnArrivalText": "English return-arrival text",
-      "missing": "Missing English: {field}",
-      "snapshotUnavailable": "This frozen quote has no English snapshot. Copy it to a new draft, add English content and confirm again.",
-      "fields": {
-        "titleEn": "English title",
-        "departureEn": "English departure",
-        "destinationEn": "English destination",
-        "transportEn": "English transport",
-        "descriptionEn": "English day description",
-        "resourceNameEn": "English restaurant name",
-        "remarkEn": "English resource remark",
-        "customerNotesEn": "English customer notes",
-        "holidayRestrictionsEn": "English holiday restrictions",
-        "hotelReplacementTermsEn": "English hotel replacement terms",
-        "departureCityEn": "English departure city",
-        "arrivalCityEn": "English arrival city",
-        "returnArrivalTextEn": "English return-arrival text",
-        "englishName": "Resource English name",
-        "englishDescription": "Resource English description"
-      }
+      "returnArrivalText": "English return-arrival text"
     },
     "childWithoutBedRate": "Child fare % (no bed)",
     "childWithBedPrice": "Child fare (with bed)",
-    "childWithoutBedPrice": "Child fare (no bed)"
+    "childWithoutBedPrice": "Child fare (no bed)",
+    "dayPerPersonCost": "Per-person meals and attractions"
   },
   "businessCategory": {
     "applicableResources": "Resource Types",
@@ -683,7 +657,6 @@
     "all": "All",
     "backHome": "Home",
     "cancel": "Cancel",
-    "clear": "Clear",
     "close": "Close",
     "confirm": "Confirm",
     "send": "Send",
@@ -733,8 +706,6 @@
     "filters": "Filters",
     "versionConflict": "This record was updated by someone else. Refresh and try again.",
     "updatedAt": "Updated At",
-    "prevStep": "Back",
-    "nextStep": "Next",
     "disable": "Disable",
     "enable": "Enable",
     "invalidNumber": "Enter a number from {min} to {max}, with up to {precision} decimal places."
@@ -1358,18 +1329,20 @@
     "byItinerary": "Plan by itinerary",
     "byStage": "Quote by stage",
     "addStage": "Add stage",
-    "stageTotal": "Stage total (CNY)",
     "addArrangement": "Add vehicle arrangement",
     "vehicleArrangementNumber": "Vehicle arrangement {number}",
     "vehicleDateRange": "Vehicle dates",
     "vehicleDateOutOfRange": "Vehicle dates must be within inquiry dates",
     "vehicleDateOverlap": "Dates overlap an existing vehicle plan",
+    "vehicleDayRange": "Vehicle days",
+    "vehicleStartDay": "First day",
+    "vehicleEndDay": "Last day",
+    "vehicleDayOutOfRange": "Vehicle days must be within the itinerary",
+    "vehicleDayOverlap": "Days overlap an existing vehicle plan",
     "arrangementVehicles": "Vehicles",
-    "arrangementVehiclePrice": "Segment price (CNY)",
     "addVehicle": "Select a vehicle",
     "vehicles": "vehicles",
     "seats": "seats",
-    "totalVehiclePrice": "Total vehicle cost (CNY)",
     "capacityHint": "{seats} seats must cover {passengers} passengers",
     "hotelPrice": "Actual price / room/night",
     "languages": {
@@ -1741,10 +1714,6 @@
     "hotelPlans": "Hotel options",
     "hotelRequiredHint": "You can quote with no hotels in the entire itinerary. If hotels are arranged, each priced tier must cover every overnight day. One hotel per tier per day; choose the tier manually, shared hotel ratings are not auto-mapped.",
     "hotelTier": "Hotel tier",
-    "hotelTierA": "A Luxury 5-star",
-    "hotelTierB": "B Comfort 4-star",
-    "hotelTierC": "C Economy 3-star",
-    "hotelTierD": "D 2-star and below",
     "configHotelPrice": "Website price (internal reference): {price} CNY/room/night",
     "hotelBreakfastIncluded": "Breakfast included in this option",
     "hotelNameZh": "Chinese hotel name",
@@ -2019,11 +1988,9 @@
     "guideUnavailable": "The selected guide does not match this segment's language, time or schedule. Change the guide before saving.",
     "guideService": {
       "teamWindow": "Team transfer",
-      "title": "Guide services",
       "empty": "No service segments",
       "segment": "Segment {n}",
       "add": "Add segment",
-      "selectGuide": "Select guide",
       "fillFirst": "Select language and service dates first",
       "startAt": "Service start date",
       "endAt": "Service end date",
@@ -2412,16 +2379,34 @@
   },
   "whatsapp": {
     "listRefreshFailed": "Refresh failed. Showing the last results.",
-    "sendBlockedReasons": {"not_configured": "WhatsApp is not configured.", "send_disabled": "WhatsApp sending is disabled.", "test_recipient": "This test environment can only send to authorized test recipients."},
-    "workerLoops": {"events": "Inbound processing (this instance)", "outbound": "Outbound processing (this instance)"},
-    "workerStates": {"disabled": "Disabled", "starting": "Awaiting first run", "running": "Running", "stalled": "No update for over 60 seconds", "error": "Last processing attempt failed", "stopped": "Stopped"},
+    "sendBlockedReasons": {
+      "not_configured": "WhatsApp is not configured.",
+      "send_disabled": "WhatsApp sending is disabled.",
+      "test_recipient": "This test environment can only send to authorized test recipients."
+    },
+    "workerLoops": {
+      "events": "Inbound processing (this instance)",
+      "outbound": "Outbound processing (this instance)"
+    },
+    "workerStates": {
+      "disabled": "Disabled",
+      "starting": "Awaiting first run",
+      "running": "Running",
+      "stalled": "No update for over 60 seconds",
+      "error": "Last processing attempt failed",
+      "stopped": "Stopped"
+    },
     "lastWorkerSuccess": "Last successful check",
     "lastWorkerError": "Last processing error",
     "outboundCount": "Outbound · {state}",
     "oldestOutbound": "Oldest unfinished message",
     "workerScopeHint": "Processing status covers this service instance only; no progress for over 60 seconds is flagged. Outbound counts cover all system-sent records. The oldest unfinished time includes queued, sending and unknown messages.",
-
-    "notifications": {"unread": "{count} unread messages", "unassigned": "{count} unassigned conversations", "unavailable": "Message counts unavailable. Retrying.", "hint": "Open inbox; red: unread messages, orange: unassigned conversations"},
+    "notifications": {
+      "unread": "{count} unread messages",
+      "unassigned": "{count} unassigned conversations",
+      "unavailable": "Message counts unavailable. Retrying.",
+      "hint": "Open inbox; red: unread messages, orange: unassigned conversations"
+    },
     "keywordPlaceholder": "Name, phone or BSUID",
     "view": "View",
     "views": {
@@ -2453,7 +2438,6 @@
     "unlinkedReaction": "Reaction",
     "removeReaction": "Remove reaction",
     "reactionPending": "Reaction pending",
-    "unavailableMessage": "Message unavailable",
     "statuses": {
       "received": "Received",
       "queued": "Queued",
@@ -2484,7 +2468,6 @@
       "latest": "Latest saved values",
       "useLatest": "Use latest",
       "keepInput": "Keep input",
-
       "stage": "Business stage",
       "scenario": "Trigger scenario",
       "content": "Content",

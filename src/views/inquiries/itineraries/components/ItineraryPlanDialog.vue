@@ -74,7 +74,7 @@
         </el-col>
       </el-row>
       <el-row :gutter="16">
-        <el-col :span="8">
+        <el-col :span="isSeries ? 12 : 8">
           <el-form-item
             :label="$t(isEditing ? 'itineraryWorkspace.dayCount' : 'inquiry.plannedDays')"
             prop="days"
@@ -91,7 +91,7 @@
             <span class="w-full mt-[4px] text-muted">{{ durationText }}</span>
           </el-form-item>
         </el-col>
-        <el-col :span="8">
+        <el-col v-if="!isSeries" :span="8">
           <el-form-item :label="$t('common.startDate')" prop="startDate">
             <el-date-picker
               v-model="form.startDate"
@@ -101,7 +101,7 @@
             />
           </el-form-item>
         </el-col>
-        <el-col :span="8">
+        <el-col v-if="!isSeries" :span="8">
           <el-form-item :label="$t('common.endDate')">
             <el-input :model-value="form.endDate" disabled />
           </el-form-item>
@@ -173,6 +173,7 @@ const props = defineProps<{
   plannedDays: number | null;
   destinationOptions: string[];
   isEditing?: boolean;
+  isSeries?: boolean;
   /** 盛旭行程显示对客英文字段。 */
   english?: boolean;
 }>();
@@ -236,7 +237,9 @@ const rules = computed<FormRules>(() => ({
       trigger: "change",
     },
   ],
-  startDate: [{ required: true, message: t("itinerary.startDateRequired"), trigger: "change" }],
+  startDate: props.isSeries
+    ? []
+    : [{ required: true, message: t("itinerary.startDateRequired"), trigger: "change" }],
   paxTiers: [
     {
       type: "array",

@@ -92,14 +92,12 @@ describe("normal itinerary day reorder", () => {
     expect(plan.dailyPlans[0]!.items.map((record) => record.id)).toEqual(["a1", "m1", "a2"]);
   });
 
-  it("applies the middle-day overnight rule and reports the affected days", () => {
+  it("preserves explicit no-stay when moving the last day into the middle", () => {
     const result = reorderItineraryDays(plan, { dayIds: ["d1", "d3", "d2"], itemIds: {} });
-    expect(result.dailyPlans[1]!.overnightDestination).toBe("丽江");
+    expect(result.dailyPlans[1]!.overnightDestination).toBe("");
     expect(result.issues.map((issue) => [issue.dayId, issue.key.split(".").pop()])).toEqual([
-      ["d3", "formerLastDay"],
       ["d3", "routeBreak"],
       ["d2", "newLastDay"],
-      ["d2", "routeBreak"],
       ["", "vehicleCheck"],
     ]);
   });

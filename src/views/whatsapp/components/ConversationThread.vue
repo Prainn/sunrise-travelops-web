@@ -37,7 +37,7 @@
         {{ $t("whatsapp.viewCurrent") }}
       </el-button>
     </el-alert>
-    <div ref="scrollRef" class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-[20px] p-[4px]">
+    <div ref="scrollRef" class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-[20px] px-[4px] pt-[4px] pb-[12px]">
       <div v-if="hasOlder" class="text-center">
         <el-button
           link

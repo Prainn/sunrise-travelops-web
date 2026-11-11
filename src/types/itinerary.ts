@@ -173,6 +173,7 @@ export interface ItineraryPaxCalculation {
   guideServiceUnitCost: number;
   staffRoomUnitCost: number;
   baseCostPerPerson: number;
+  mealCost?: number;
   adultUnitPrice: number;
   childUnitPrice: number;
   childWithoutBedUnitPrice?: number;
@@ -202,11 +203,13 @@ export interface ItineraryQuoteOptionCalculation {
 
 export interface PaxQuoteCalculation {
   pricingVersion: 2;
+  tableMealTotal?: number;
   /** Only the three Draft actual-price fields; historical snapshots may omit these. */
   pricingComplete?: boolean;
   missingPrices?: string[];
   dailyResourceCost: number;
   mealDetails?: {
+    groupTotal?: number | null;
     city?: string | null;
     dayNumber: number;
     resourceName: string;
@@ -239,6 +242,7 @@ export interface ItineraryResourceItem extends PriceReference {
   priceName: string;
   quantity: number;
   dinerCount: number | null;
+  tableCount?: number | null;
   unit: ItineraryPriceUnit;
   /** null: actual price not entered yet (Draft only). */
   unitCost: number | null;

@@ -98,7 +98,7 @@ function scheduleTable(customer: CustomerDocument) {
         new TableRow({
           cantSplit: true,
           children: [
-            cell(day.date),
+            cell(day.dayLabel),
             cell(day.route),
             cell(day.transport),
             cell(day.description, { align: "left" }),

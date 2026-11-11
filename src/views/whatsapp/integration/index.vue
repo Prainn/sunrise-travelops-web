@@ -29,7 +29,7 @@
         </el-descriptions-item>
         <el-descriptions-item v-for="loop in workerLoops" :key="loop" :label="$t(`whatsapp.workerLoops.${loop}`)">
           <div class="flex flex-col gap-1">
-            <el-tag :type="workerTagType(status.worker[loop].state)">
+            <el-tag class="self-start" :type="workerTagType(status.worker[loop].state)">
               {{ $t(`whatsapp.workerStates.${status.worker[loop].state}`) }}
             </el-tag>
             <span class="text-muted text-[12px]">{{ $t('whatsapp.lastWorkerSuccess') }}：{{ formatDateTime(status.worker[loop].lastCompletedAt) }}</span>

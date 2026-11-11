@@ -29,7 +29,6 @@
             >
               {{ translateRouteTitle(onlyOneChild.meta.title) }}
             </span>
-            <WhatsappBadges v-if="onlyOneChild.name === 'WhatsappInbox'" />
           </template>
         </el-menu-item>
       </AppLink>
@@ -66,7 +65,6 @@ import path from "path-browserify";
 import type { RouteRecordRaw } from "vue-router";
 import { isExternal } from "@/utils";
 import { translateRouteTitle } from "@/lang/utils";
-import WhatsappBadges from "./WhatsappBadges.vue";
 import LayoutMenuIcon from "./LayoutMenuIcon.vue";
 
 type SidebarRoute = RouteRecordRaw & {

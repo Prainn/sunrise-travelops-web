@@ -41,6 +41,7 @@ import {
 } from "./vehicle-plans";
 
 type EditableDayField = ItineraryEditableDayField;
+const SERIES_ITINERARY_BASE_DATE = "2000-01-01";
 
 interface ItineraryEditorOptions {
   inquiry: Readonly<Ref<InquiryRecord | undefined>>;
@@ -92,6 +93,8 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     // 系列询盘没有计划天数，每份行程在新建弹窗中独立填写实际服务天数。
     const plannedDays = options.inquiry.value.plannedDays ?? record.days;
     if (!Number.isInteger(plannedDays) || plannedDays < 1 || plannedDays > 365) return null;
+    // 系列行程只按日序展示；内部基准供日期字段、用车分段和重排计算使用。
+    const startDate = options.inquiry.value.isSeries ? SERIES_ITINERARY_BASE_DATE : record.startDate;
     const timestamp = formatDateTime(new Date());
     const created: ItineraryRecord = {
       ...record,
@@ -105,9 +108,10 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       hotelPlans: cloneHotelPlans(record.hotelPlans),
       vehiclePlans: cloneVehiclePlans(record.vehiclePlans),
       quote: cloneQuoteSettings(record.quote),
-      dailyPlans: createDailyPlans(record.startDate, plannedDays),
+      startDate,
+      dailyPlans: createDailyPlans(startDate, plannedDays),
       days: plannedDays,
-      endDate: addDays(record.startDate, plannedDays - 1),
+      endDate: addDays(startDate, plannedDays - 1),
     };
     syncQuoteOptions(created);
     options.itineraryStore.unshift(created);
@@ -182,15 +186,16 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     const oldOvernight = day.overnightDestination;
     const isLast = index === plan.dailyPlans.length - 1;
     if (field === "overnightDestination") {
-      if (!isLast) return;
       day.overnightDestination = value;
     } else {
       day[field] = value ?? "";
-      if (field === "destination" && !isLast) day.overnightDestination = value || null;
+      if (field === "destination" && !isLast && oldOvernight !== "")
+        day.overnightDestination = value || null;
     }
     const next = plan.dailyPlans[index + 1];
     if (
       next &&
+      day.overnightDestination !== "" &&
       day.overnightDestination !== oldOvernight &&
       (!next.departure || next.departure === oldOvernight)
     )
@@ -481,7 +486,8 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     const plan = options.selectedItinerary.value;
     if (!plan || !options.canEditContent() || plan.dailyPlans.length >= 365) return;
     const formerLast = plan.dailyPlans[plan.dailyPlans.length - 1];
-    if (formerLast) formerLast.overnightDestination = formerLast.destination || null;
+    if (formerLast && formerLast.overnightDestination !== "")
+      formerLast.overnightDestination = formerLast.destination || null;
     plan.dailyPlans.push(...createDailyPlans(plan.startDate, 1));
     syncPlanDates(plan);
     syncQuoteOptions(plan);

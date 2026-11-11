@@ -58,7 +58,7 @@ export async function generateItineraryPrintDocument(
   showChildPrice = false,
 ): Promise<ItineraryPrintDocument> {
   const generatedAt = formatDateTime(new Date(snapshot.generatedAt));
-  const customer = buildCustomerDocument(itinerary, snapshot);
+  const customer = buildCustomerDocument(itinerary, snapshot, inquiry.isSeries);
   const fileName = `${sanitizeFileName(itinerary.code)}-${sanitizeFileName(customer.title)}.pdf`;
   const [header, footer] = await Promise.all(
     [quoteHeaderUrl, quoteFooterUrl].map(async (url) => {
@@ -148,11 +148,11 @@ export async function printItineraryDocument(file: ItineraryPrintDocument): Prom
 
 export function buildPdfHtml(
   itinerary: ItineraryRecord,
-  _inquiry: InquiryRecord,
+  inquiry: InquiryRecord,
   _generatedAt: string,
   snapshot: PdfSnapshot,
   showChildPrice = false,
-  customer = buildCustomerDocument(itinerary, snapshot),
+  customer = buildCustomerDocument(itinerary, snapshot, inquiry.isSeries),
 ) {
   const quote = snapshot.calculation;
   return `
@@ -312,7 +312,7 @@ function buildScheduleSections(customer: CustomerDocument) {
     .map((day) => {
       return `
       <tr>
-          <td style="${scheduleCellStyle("center")}">${escapeHtml(day.date)}</td>
+          <td style="${scheduleCellStyle("center")}">${escapeHtml(day.dayLabel)}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(day.route)}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(day.transport)}</td>
           <td style="${scheduleCellStyle("left")};white-space:pre-wrap;line-height:1.35;">${escapeHtml(day.description)}</td>

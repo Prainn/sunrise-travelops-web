@@ -7,6 +7,7 @@ import type {
   ItineraryQuoteSettings,
   ItineraryRecord,
 } from "@/types/itinerary";
+import type { InquiryRecord } from "@/types/inquiry";
 import { addDays, formatMoney } from "@/utils";
 import { getTransportMethodNames } from "@/utils/transport-method";
 import { getDayBreakfastStatus, isNoAccommodationItinerary } from "./hotel-plans";
@@ -124,11 +125,12 @@ export type CustomerText = (typeof CUSTOMER_TEXT)["zh"];
 export interface CustomerSnapshot {
   customerPresentation?: CustomerPresentation | null;
   exportLanguage?: CustomerExportLanguage;
+  inquiry?: Pick<InquiryRecord, "isSeries">;
 }
 
 export interface CustomerScheduleRow {
   key: string;
-  date: string;
+  dayLabel: string;
   route: string;
   transport: string;
   description: string;
@@ -155,17 +157,26 @@ export interface CustomerDocument {
 export function buildCustomerDocument(
   itinerary: ItineraryRecord,
   snapshot: CustomerSnapshot = {},
+  isSeries = snapshot.inquiry?.isSeries === true,
 ): CustomerDocument {
   const language = snapshot.exportLanguage ?? "zh";
   const text = CUSTOMER_TEXT[language];
   const presentation = snapshot.customerPresentation ?? undefined;
-  const content = presentation?.[language];
+  const content = presentation?.[language] ?? (language === "en" ? {
+    title: "", country: "", notes: [], hotels: [],
+    transportFees: itinerary.quote.transportFees.map(fee => ({ id: fee.id, departureCity: "", arrivalCity: "" })),
+    returnArrival: itinerary.customerDisplayMode === "returnArrival" && itinerary.dailyPlans.at(-1)?.date
+      ? { dayNumber: itinerary.dailyPlans.length + 1, date: addDays(itinerary.dailyPlans.at(-1)!.date, 1), text: "" } : null,
+    days: itinerary.dailyPlans.map(day => ({ ...day, route: [], transport: "", description: "", overnightDestination: "", items: [] })),
+  } : undefined);
   const noAccommodation = presentation?.noAccommodation ?? isNoAccommodationItinerary(itinerary);
+  const schedule = content ? presentationSchedule(content, text) : itinerarySchedule(itinerary, text);
+  if (isSeries) schedule.forEach((row, index) => { row.dayLabel = `D${index + 1}`; });
   return {
     language,
     text,
     title: content?.title ?? itinerary.title,
-    schedule: content ? presentationSchedule(content, text) : itinerarySchedule(itinerary, text),
+    schedule,
     termRows: termRows(itinerary, text, noAccommodation),
     extraFees: extraFeeLines(itinerary.quote, text, content),
     notes: content ? content.notes.filter((note) => note.trim()) : itineraryNotes(itinerary.quote),
@@ -178,11 +189,11 @@ export function buildCustomerDocument(
 function presentationSchedule(content: CustomerContent, text: CustomerText): CustomerScheduleRow[] {
   const rows = content.days.map((day) => ({
     key: day.id,
-    date: formatScheduleDate(day.date),
-    route: day.route.join(" / ") || "-",
-    transport: day.transport || "-",
-    description: day.description.trim() || "-",
-    hotel: day.overnightDestination || "-",
+    dayLabel: formatScheduleDate(day.date),
+    route: day.route.join(" / "),
+    transport: day.transport,
+    description: day.description.trim(),
+    hotel: day.overnightDestination ?? "",
     meals: mealCodes(day.meals, day.meals.breakfast ? "included" : "excluded", text) || "-",
   }));
   if (content.returnArrival) rows.push(returnArrivalRow(content.returnArrival.date, content.returnArrival.text));
@@ -192,11 +203,11 @@ function presentationSchedule(content: CustomerContent, text: CustomerText): Cus
 function itinerarySchedule(itinerary: ItineraryRecord, text: CustomerText): CustomerScheduleRow[] {
   const rows = itinerary.dailyPlans.map((day, index) => ({
     key: day.id,
-    date: formatScheduleDate(day.date),
+    dayLabel: formatScheduleDate(day.date),
     route: formatScheduleRoute(day),
     transport: getTransportMethodNames(day.transport) || "-",
     description: day.description?.trim() || "-",
-    hotel: day.overnightDestination || "-",
+    hotel: day.overnightDestination ?? "",
     meals: mealCodes(day.meals, getDayBreakfastStatus(itinerary, index), text) || "-",
   }));
   const last = itinerary.dailyPlans[itinerary.dailyPlans.length - 1];
@@ -209,10 +220,10 @@ function itinerarySchedule(itinerary: ItineraryRecord, text: CustomerText): Cust
 function returnArrivalRow(date: string, description: string): CustomerScheduleRow {
   return {
     key: "return-arrival",
-    date: formatScheduleDate(date),
+    dayLabel: formatScheduleDate(date),
     route: "-",
     transport: "-",
-    description: description.trim() || "-",
+    description: description.trim(),
     hotel: "-",
     meals: "-",
   };
@@ -276,7 +287,9 @@ function extraFeeLines(
   content: CustomerContent | undefined,
 ): Array<[string, string]> {
   return quote.transportFees.map((fee) => {
-    const cities = content?.transportFees.find((record) => record.id === fee.id) ?? fee;
+    const cities = content
+      ? content.transportFees.find((record) => record.id === fee.id) ?? { departureCity: "", arrivalCity: "" }
+      : fee;
     return [
       fee.type === "flight" ? text.flight : text.train,
       `${cities.departureCity} → ${cities.arrivalCity} · ${text.cabins[fee.cabin]} · RMB ${formatMoney(fee.unitPrice)} PP`,

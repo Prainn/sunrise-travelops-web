@@ -34,12 +34,11 @@
       <el-row v-else-if="form.businessUnit === 'shengxu'" :gutter="16">
         <el-col :span="24">
           <el-form-item :label="$t('inquiry.series.label')">
-            <el-checkbox v-model="form.isSeries" @change="formRef?.clearValidate()">
-              {{ $t("inquiry.series.option") }}
-            </el-checkbox>
-            <span v-if="form.isSeries" class="ml-3 text-[12px] text-muted">
-              {{ $t("inquiry.series.hint") }}
-            </span>
+            <el-checkbox
+              v-model="form.isSeries"
+              :aria-label="$t('inquiry.series.label')"
+              @change="formRef?.clearValidate()"
+            />
           </el-form-item>
         </el-col>
       </el-row>
