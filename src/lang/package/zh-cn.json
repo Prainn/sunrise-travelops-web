@@ -97,6 +97,7 @@
     "websiteLedger": "独立站台账",
     "businessGroups": "业务组",
     "accountLinks": "账号关联",
+    "notificationManagement": "通知管理",
     "whatsappWorkbench": "WhatsApp 工作台",
     "whatsappQuickReplies": "快捷回复",
     "whatsappInbox": "会话收件箱",
@@ -627,6 +628,23 @@
     "createOptionTitle": "新增分类选项",
     "editOptionTitle": "编辑分类选项"
   },
+  "notificationSettings": {
+    "hint": "关闭后不再发送该类待发提醒，重新开启不补发旧提醒；开关不影响分配、改派、审核和操作，未绑定飞书的账号仅跳过通知。",
+    "type": "通知类型",
+    "enabled": "飞书通知",
+    "empty": "暂无通知类型",
+    "conflict": "设置已被他人修改，请刷新后再操作",
+    "types": {
+      "whatsapp_unassigned": "WhatsApp待分配",
+      "whatsapp_message": "WhatsApp新消息",
+      "whatsapp_assignment": "WhatsApp分配与改派",
+      "linxi_ledger_review": "霖熹台账待审核",
+      "linxi_ledger_operate": "霖熹台账待操作",
+      "website_ledger_review": "独立站台账待审核",
+      "website_ledger_operate": "独立站台账待操作",
+      "inquiry_follow_up": "询盘跟进提醒"
+    }
+  },
   "common": {
     "export": "导出",
     "moveUp": "上移",
@@ -991,6 +1009,7 @@
     "tagTypePlaceholder": "选择标签样式"
   },
   "user": {
+    "bossDepartment": "老板",
     "feishu": "飞书",
     "feishuConnected": "已接入",
     "feishuNotConnected": "未接入",
@@ -2039,20 +2058,19 @@
     "relatedTours": "关联成团"
   },
   "menuPermission": {
-    "targets": "角色与账号",
-    "sunriseNotice": "仅 mango 可管理 Sunrise 的菜单与功能权限，保存后立即生效。",
-    "sunriseSaved": "Sunrise 权限已更新，立即生效。",
+    "targets": "角色",
     "navigationConfigurationError": "菜单配置与本地路由不匹配：{route}",
     "expand": "展开全部",
     "collapse": "收起全部",
     "loginNotice": "菜单修改在用户下次登录后生效。",
     "scopeNotice": "公共菜单按角色配置；询盘入口按登录范围匹配：盛旭用“询盘”，霖熹/独立站用“独立站询盘”。首页与个人中心固定保留。",
+    "bossLocked": "老板的菜单和功能权限固定，不可修改。",
     "rootLocked": "超级管理员菜单固定开放，不可改。",
     "unavailable": "该角色没有此页面的业务权限",
     "discard": "放弃未保存的菜单修改？",
     "saved": "已保存，下次登录后生效。",
     "roles": {
-      "SUNRISE": "Sunrise",
+      "BOSS": "老板",
       "ROOT": "超级管理员",
       "ADMIN": "系统管理员",
       "EXECUTIVE": "总经办",
@@ -2145,7 +2163,12 @@
       "tourRequiredHint": "已成团须补齐建团资料后才能保存；取消或保存失败不会留下台账和团。",
       "tourActionUnavailable": "当前记录不可建团，已刷新列表。",
       "linkUnavailable": "当前身份不能在独立站台账新增关联询盘的记录",
-      "linkOwnerMismatch": "询盘负责人与当前收客计调不一致，不能关联创建台账"
+      "linkOwnerMismatch": "询盘负责人与当前收客计调不一致，不能关联创建台账",
+      "locateFailed": "未能定位通知中的台账，可能已删除或不在当前业务",
+      "linkActionHint": {
+        "review": "该台账待审核，请核对后手动审核",
+        "operate": "该台账待操作，请核对后手动处理"
+      }
     }
   },
   "itineraryWorkspace": {

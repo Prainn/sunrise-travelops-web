@@ -22,6 +22,7 @@ export interface UserInfo {
 }
 
 export interface UserQueryParams extends BaseQueryParams {
+  view?: "management";
   keyword?: string;
   deptId?: number;
   roleId?: string | number;
@@ -34,6 +35,7 @@ export interface UserQueryParams extends BaseQueryParams {
 export type FeishuTestTemplate = "review" | "operate";
 
 export interface UserItem {
+  readOnly?: boolean;
   feishuOpenId?: string;
   identities: UserIdentity[];
   id: string;

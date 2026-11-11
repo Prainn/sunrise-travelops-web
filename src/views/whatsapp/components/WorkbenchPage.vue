@@ -165,6 +165,7 @@ import type {
   WhatsappReply,
 } from "@/types/whatsapp";
 import WebsiteInquiryEditor from "@/views/website-inquiries/components/WebsiteInquiryEditor.vue";
+import { linkedConversationId } from "../message-utils";
 import { useCustomerNotes } from "../useCustomerNotes";
 import { useWhatsappWorkbench, type SendFeedback } from "../useWhatsappWorkbench";
 import AssignDialog from "./AssignDialog.vue";
@@ -224,6 +225,12 @@ watch(workbench.selectedId, (id) => {
   if (route.name !== routeName || (route.query.conversationId ?? "") === id) return;
   const query = { ...route.query, conversationId: id || undefined };
   void router.replace({ query });
+});
+
+// 飞书链接可能打开已挂载或缓存中的工作台：按地址中的新会话定位；与当前选中一致时不重复请求。
+watch(() => route.query.conversationId, (queryId) => {
+  const id = linkedConversationId(route.name === routeName, queryId, workbench.selectedId.value);
+  if (id) void workbench.selectConversation(id);
 });
 
 onMounted(() => {

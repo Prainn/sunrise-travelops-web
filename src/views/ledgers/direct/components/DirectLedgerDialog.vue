@@ -326,7 +326,7 @@ let sourceConfirmation: Promise<boolean> | undefined;
 
 const businessUnit = computed(() => props.ledger?.businessUnit ?? props.businessUnit);
 const isDelegate = computed(
-  () => !props.ledger && user.userInfo.scope === "headquarters" && user.userInfo.roles.includes("ROOT"),
+  () => !props.ledger && user.userInfo.scope === "headquarters" && user.userInfo.roles.some((role) => role === "ROOT" || role === "BOSS"),
 );
 const isWebsite = computed(() => businessUnit.value === "website");
 const sourcePlaceholder = computed(() => {

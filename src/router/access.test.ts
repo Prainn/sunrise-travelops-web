@@ -234,12 +234,37 @@ describe("WhatsApp 工作台菜单", () => {
   });
 });
 
-describe("Sunrise account menu switches", () => {
-  it("enforces menu keys for Sunrise ROOT while preserving mango ROOT", () => {
-    const context = { scope: "headquarters" as const, roles: ["ROOT"], perms: ["whatsapp:conversation:list"], menuKeys: [] };
-    const meta = { menuKey: "whatsapp-inbox", perms: ["whatsapp:conversation:list"] };
-    expect(hasRouteChainAccess([meta], { ...context, username: "sunrise" })).toBe(false);
-    expect(hasRouteChainAccess([meta], { ...context, username: "mango" })).toBe(true);
-    expect(hasRouteChainAccess([meta], { ...context, username: "sunrise", menuKeys: ["whatsapp-inbox"] })).toBe(true);
+describe("老板角色", () => {
+  it("固定禁用 WhatsApp 和操作日志，保留用户管理", () => {
+    const context = { scope: "headquarters" as const, roles: ["BOSS"], perms: ["sys:user:list"], menuKeys: ["users"] };
+    const routes = filterRoutesByAccess(constantRoutes, context);
+    expect(routes.some((route) => route.name === "WhatsappWorkbench")).toBe(false);
+    const system = routes.find((route) => route.name === "System");
+    expect(system?.children?.map((route) => route.name)).toEqual(["User"]);
+  });
+});
+
+describe("通知管理入口", () => {
+  const system = constantRoutes.find((route) => route.name === "System")!;
+  const page = system.children!.find((route) => route.name === "NotificationManagement")!;
+  const chain = [system.meta!, page.meta!];
+  const perms = ["sys:notification:list", "sys:notification:update", "sys:user:list"];
+
+  it("仅总部 ROOT/ADMIN 在具备有效权限和菜单时可访问", () => {
+    expect(page.path).toBe("notifications");
+    expect(hasRouteChainAccess(chain, { scope: "headquarters", roles: ["ROOT"], perms })).toBe(true);
+    expect(hasRouteChainAccess(chain, { scope: "headquarters", roles: ["ADMIN"], perms, menuKeys: ["notifications"] })).toBe(true);
+    expect(hasRouteChainAccess(chain, { scope: "headquarters", roles: ["ADMIN"], perms, menuKeys: [] })).toBe(false);
+  });
+
+  it("用户管理权限、高管及业务身份不能获得通知管理", () => {
+    const userOnly = { scope: "headquarters" as const, roles: ["ADMIN"], perms: ["sys:user:list"], menuKeys: ["users", "notifications"] };
+    expect(hasRouteChainAccess(chain, userOnly)).toBe(false);
+    expect(hasRouteChainAccess(chain, { scope: "headquarters", roles: ["EXECUTIVE"], perms, menuKeys: ["notifications"] })).toBe(false);
+    for (const role of ["BUSINESS_MANAGER", "COORDINATOR", "RESOURCE_MANAGER"]) {
+      expect(hasRouteChainAccess(chain, { scope: "website", roles: [role], perms, menuKeys: ["notifications"] })).toBe(false);
+    }
+    expect(filterRoutesByAccess(constantRoutes, userOnly)
+      .find((route) => route.name === "System")?.children?.some((route) => route.name === "NotificationManagement")).toBe(false);
   });
 });

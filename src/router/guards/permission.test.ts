@@ -61,12 +61,12 @@ describe("permission guard during service outages", () => {
     expect(state.getUserInfo).toHaveBeenCalledOnce();
   });
 
-  it("returns to login after credentials have been cleared", async () => {
+  it("preserves the requested route after credentials have been cleared", async () => {
     state.getUserInfo.mockImplementationOnce(() => {
       state.loggedIn = false;
       return Promise.reject(new Error("Invalid session"));
     });
 
-    await expect(state.guard?.(route)).resolves.toBe("/login");
+    await expect(state.guard?.(route)).resolves.toBe("/login?redirect=%2Fdashboard");
   });
 });

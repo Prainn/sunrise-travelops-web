@@ -68,12 +68,14 @@
         </el-button>
       </TableToolbar>
       <DataTable
+        ref="tableRef"
         fill
         :loading="loading"
         :data="rows"
         :error="loadError"
         :filtered="hasActiveFilters"
         row-key="id"
+        :row-class-name="ledgerRowClass"
         @retry="fetchList"
       >
         <el-table-column
@@ -269,7 +271,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onDeactivated, onMounted, ref, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -302,6 +304,7 @@ import type { LedgerTourDraft } from "@/views/tours/tour-form";
 import DirectLedgerDialog from "./components/DirectLedgerDialog.vue";
 import LinkedToursDialog from "./components/LinkedToursDialog.vue";
 import { directLedgerTourMode, ledgerTourDraft } from "./direct-ledger-tour";
+import { parseLedgerLink, useRowHighlight, type LedgerLinkTarget } from "./ledger-link";
 
 defineOptions({ name: "DirectLedger" });
 
@@ -321,6 +324,7 @@ const TEXT_FIELDS = [
 const { t } = useI18n();
 const user = useUserStore();
 const businessUnit = computed(() => props.businessUnit);
+const ownPath = computed(() => `/data-ledgers/${businessUnit.value === "linxi" ? "direct" : "website"}`);
 const creatorId = ref("");
 const operatorId = ref("");
 const route = useRoute();
@@ -344,7 +348,13 @@ const tourDialogVisible = ref(false);
 const linkedTours = ref<DirectLedgerLinkedTour[]>([]);
 const linkedToursVisible = ref(false);
 const { isPending, run } = usePendingActions();
+const tableRef = ref<InstanceType<typeof DataTable>>();
+const rowHighlight = useRowHighlight();
 let listGeneration = 0;
+/** 已取得详情、等待列表结果确认的飞书定位目标。 */
+let pendingLocate: (LedgerLinkTarget & { orderNo: string }) | null = null;
+let locateGeneration = 0;
+let locatedId = "";
 
 // 使用当前身份的有效动作权限；行级操作另结合后端 capabilities。
 const canCreate = computed(
@@ -393,6 +403,8 @@ async function loadFilterOptions(kind: "creator" | "operator", query: RemoteOpti
 
 async function fetchList() {
   const generation = ++listGeneration;
+  // 仅按目标台账编号、无其它筛选的第一页结果确认定位，旧筛选的响应不能判定失败。
+  const locate = pendingLocate && isLocateQuery(pendingLocate.orderNo) ? pendingLocate : null;
   loading.value = true;
   try {
     const result = await directLedgerService.list({
@@ -411,6 +423,7 @@ async function fetchList() {
     rows.value = result.list;
     total.value = result.total;
     loadError.value = "";
+    if (locate && locate === pendingLocate) finishLocate(locate, result.list);
   } catch (error) {
     if (generation !== listGeneration) return;
     loadError.value = error instanceof Error ? error.message : String(error);
@@ -424,7 +437,7 @@ const reload = useDebounceFn(() => {
   void fetchList();
 }, 300);
 watch([() => route.path, () => route.query.keyword], ([path, value]) => {
-  if (path === `/data-ledgers/${businessUnit.value === "linxi" ? "direct" : "website"}` && typeof value === "string") {
+  if (path === ownPath.value && typeof value === "string") {
     resetQuery();
     keyword.value = value;
   }
@@ -557,7 +570,7 @@ async function openLinkedCreate(id: string) {
   }
   try {
     const inquiry = await websiteService.inquiry(id);
-    const isDelegate = user.userInfo.scope === "headquarters" && user.userInfo.roles.includes("ROOT");
+    const isDelegate = user.userInfo.scope === "headquarters" && user.userInfo.roles.some((role) => role === "ROOT" || role === "BOSS");
     if (inquiry.businessUnit !== "website" || (!isDelegate && inquiry.ownerId !== user.userInfo.userId)) {
       ElMessage.warning(t("ledger.direct.linkOwnerMismatch"));
       return;
@@ -577,6 +590,108 @@ watch(dialogVisible, (opened) => {
   if (!opened) linkedInquiry.value = null;
 });
 
+function isLocateQuery(orderNo: string) {
+  return keyword.value.trim() === orderNo && pageNum.value === 1 &&
+    !orderStatus.value && !workflowStatus.value && !dateRange.value && !creatorId.value && !operatorId.value;
+}
+function ledgerRowClass({ row }: { row: DirectLedgerItem }) {
+  return row.id === rowHighlight.highlightedId.value ? "ledger-row--highlighted" : "";
+}
+/** 用 replace 消耗一次性高亮参数，刷新不重复；保留 keyword、ledgerId 等定位参数。 */
+function consumeHighlight() {
+  if (route.path !== ownPath.value || route.query.highlight === undefined) return;
+  void router.replace({ query: { ...route.query, highlight: undefined } });
+}
+
+/**
+ * 飞书链接按 ledgerId 读取详情确认业务归属，再以台账编号查询第一页并按 ID 精确定位，不用模糊结果第一条替代。
+ *
+ * @param target - 地址中的定位目标。
+ */
+async function locateLedger(target: LedgerLinkTarget) {
+  const generation = ++locateGeneration;
+  locatedId = target.ledgerId;
+  pendingLocate = null;
+  rowHighlight.clear();
+  let detail: DirectLedgerItem;
+  try {
+    detail = await directLedgerService.detail(target.ledgerId);
+  } catch (error) {
+    if (generation !== locateGeneration) return;
+    ElMessage.error(error instanceof Error ? error.message : String(error));
+    consumeHighlight();
+    return;
+  }
+  if (generation !== locateGeneration) return;
+  if (detail.businessUnit !== businessUnit.value) {
+    ElMessage.warning(t("ledger.direct.locateFailed"));
+    consumeHighlight();
+    return;
+  }
+  pendingLocate = { ...target, orderNo: detail.orderNo };
+  resetQuery();
+  keyword.value = detail.orderNo;
+  void reload();
+}
+function finishLocate(target: LedgerLinkTarget, list: DirectLedgerItem[]) {
+  pendingLocate = null;
+  consumeHighlight();
+  const index = list.findIndex((row) => row.id === target.ledgerId);
+  if (index < 0) {
+    ElMessage.warning(t("ledger.direct.locateFailed"));
+    return;
+  }
+  // 刷新恢复只定位不高亮，动作提示也只在新的通知链接出现一次。
+  if (target.highlight) {
+    rowHighlight.start(target.ledgerId);
+    if (target.action) ElMessage.info(t(`ledger.direct.linkActionHint.${target.action}`));
+  }
+  void nextTick(() => {
+    if (rows.value[index]?.id !== target.ledgerId) return;
+    const tableElement: HTMLElement | undefined = tableRef.value?.table?.$el;
+    const element = tableElement?.querySelectorAll<HTMLElement>(".el-table__body-wrapper .el-table__row")[index];
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    element?.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" });
+  });
+}
+// 同页或缓存页收到新通知链接时重新定位；消耗 highlight 后同一目标不再重复请求。
+watch([() => route.path, () => route.query.ledgerId, () => route.query.highlight], () => {
+  if (route.path !== ownPath.value) return;
+  const target = parseLedgerLink(route.query);
+  if (!target || (!target.highlight && target.ledgerId === locatedId)) return;
+  void locateLedger(target);
+}, { immediate: true });
+
 onMounted(fetchList);
 useRefreshOnActivated(fetchList);
+onDeactivated(() => {
+  // 离开页面后丢弃进行中的定位，避免过期响应高亮旧目标。
+  locateGeneration++;
+  pendingLocate = null;
+  rowHighlight.clear();
+});
 </script>
+
+<style lang="scss" scoped>
+:deep(.ledger-row--highlighted > td.el-table__cell) {
+  animation: ledger-row-flash 1.5s ease-in-out 2;
+}
+
+@keyframes ledger-row-flash {
+  0%,
+  100% {
+    background-color: var(--el-table-tr-bg-color);
+  }
+
+  50% {
+    background-color: var(--el-color-warning-light-8);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :deep(.ledger-row--highlighted > td.el-table__cell) {
+    background-color: var(--el-color-warning-light-9);
+    animation: none;
+  }
+}
+</style>

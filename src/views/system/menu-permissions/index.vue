@@ -33,7 +33,8 @@
         </el-button>
       </TableToolbar>
       <el-alert
-        :title="$t(selected?.code === 'SUNRISE' ? 'menuPermission.sunriseNotice' : 'menuPermission.loginNotice')"
+        v-if="selected && !selected.locked"
+        :title="$t('menuPermission.loginNotice')"
         type="info"
         :closable="false"
       />
@@ -45,7 +46,7 @@
       />
       <el-alert
         v-if="selected?.locked"
-        :title="$t('menuPermission.rootLocked')"
+        :title="$t(selected.code === 'BOSS' ? 'menuPermission.bossLocked' : 'menuPermission.rootLocked')"
         type="info"
         :closable="false"
       />
@@ -195,7 +196,7 @@ async function save() {
     roles.value = roles.value.map((role) => role.code === saved.code ? saved : role);
     selected.value = saved;
     cancel();
-    ElMessage.success(t(saved.code === "SUNRISE" ? "menuPermission.sunriseSaved" : "menuPermission.saved"));
+    ElMessage.success(t("menuPermission.saved"));
   } catch (cause) { ElMessage.error(cause instanceof Error ? cause.message : String(cause)); }
   finally { saving.value = false; }
 }

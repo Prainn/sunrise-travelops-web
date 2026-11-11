@@ -229,7 +229,7 @@
 <script setup lang="ts">
 import AppDialog from "@/components/AppDialog/index.vue";
 import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
-import { ROLE_ROOT } from "@/constants";
+import { ROLE_BOSS, ROLE_ROOT } from "@/constants";
 import { useUserStore } from "@/stores/user";
 import { inquiryService } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
@@ -275,7 +275,7 @@ const selectedAgency = computed(() =>
 );
 // 系列询盘：计调创建时自动负责；ROOT/业务负责人代建须指定本业务计调，最终由服务端授权。
 const canAssignOwner = computed(() =>
-  userStore.userInfo.roles.some((role) => role === ROLE_ROOT || role === "BUSINESS_MANAGER"),
+  userStore.userInfo.roles.some((role) => role === ROLE_ROOT || role === ROLE_BOSS || role === "BUSINESS_MANAGER"),
 );
 const editableStatusOptions = computed(() => {
   if (!props.isEditing) return INQUIRY_STATUS_OPTIONS.filter((item) => item.value === "new");

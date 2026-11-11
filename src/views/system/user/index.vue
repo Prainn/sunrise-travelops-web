@@ -99,6 +99,7 @@
       >
         <el-table-column
           type="selection"
+          :selectable="(row: UserItem) => !row.readOnly"
           width="42"
           fixed="left"
           align="center"
@@ -179,7 +180,7 @@
               <el-tag size="small">
                 {{ loginScopeName(identity.scope) }}
               </el-tag>
-              <span>{{ identity.deptName }}</span>
+              <span>{{ departmentLabel(identity.deptId, identity.deptName) }}</span>
             </div>
           </template>
         </el-table-column>
@@ -230,6 +231,7 @@
                 {{ $t(row.feishuOpenId ? "user.feishuConnected" : "user.feishuNotConnected") }}
               </el-tag>
               <el-button
+                v-if="!row.readOnly"
                 v-hasPerm="'sys:user:update'"
                 link
                 type="primary"
@@ -264,7 +266,7 @@
           :show-overflow-tooltip="false"
         >
           <template #default="scope">
-            <RowActions>
+            <RowActions v-if="!scope.row.readOnly">
               <el-button
                 v-hasPerm="'sys:user:update'"
                 type="primary"
@@ -362,7 +364,7 @@
         <UserIdentityFields
           v-model="formData.identities"
           :roles="roleOptions"
-          :departments="departmentOptions"
+          :departments="localizedDepartmentOptions"
         />
 
         <el-form-item :label="$t('user.mobile')" prop="mobile">
@@ -586,7 +588,7 @@ const { loading, list, total, error, params, fetchData, handleQuery, resetParams
     deptId: undefined,
     scope: undefined,
   },
-  request: userService.getPage,
+  request: (query) => userService.getPage({ ...query, view: "management" }),
 });
 
 // FilterBar 的 resetFields 需要与 params 同一个响应式对象
@@ -694,6 +696,13 @@ const resetPasswordForm = reactive<ResetPasswordForm>({
 
 const roleOptions = ref<IdentityRoleOption[]>([]);
 const departmentOptions = ref<DepartmentOption[]>([]);
+const BOSS_DEPARTMENT_ID = 4;
+function departmentLabel(deptId: number | null | undefined, label: string): string {
+  return deptId === BOSS_DEPARTMENT_ID ? t("user.bossDepartment") : label;
+}
+const localizedDepartmentOptions = computed(() =>
+  departmentOptions.value.map((dept) => ({ ...dept, label: departmentLabel(dept.value, dept.label) })),
+);
 const showCoordinatorDuty = computed(() => {
   const department = departmentOptions.value.find((dept) => dept.value === params.deptId);
   return (department?.scope ?? params.scope ?? userStore.userInfo.scope) !== "shengxu";
@@ -718,7 +727,7 @@ const departmentTree = computed<DepartmentTreeNode[]>(() => [
         .filter((dept) => dept.scope === scope)
         .map((dept) => ({
           key: dept.value,
-          label: dept.label,
+          label: departmentLabel(dept.value, dept.label),
           deptId: dept.value,
           scope,
         })),
@@ -886,6 +895,7 @@ const dutyUpdatingId = ref("");
 
 function canEditDuty(row: UserItem): boolean {
   return (
+    !row.readOnly &&
     row.identities.length === 1 &&
     row.identities[0]!.scope !== "shengxu" &&
     isCoordinatorIdentity(row.identities[0]!, roleOptions.value) &&
