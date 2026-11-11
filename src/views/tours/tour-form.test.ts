@@ -52,6 +52,7 @@ function manualTour(patch: Partial<TourRecord> = {}): TourRecord {
     tourNo: "YNSS-260801AS1-CHN",
     sourceModule: "manual",
     businessUnit: "shengxu",
+    isSeriesSource: false,
     inquiryId: null,
     quoteId: null,
     itineraryId: null,
@@ -253,12 +254,13 @@ function service(patch: Partial<TourGuideService> = {}): TourGuideService {
     guideName: "导游甲",
     guideCode: "G1",
     language: "英语",
-    serviceStartAt: "2026-08-01 09:00",
-    serviceEndAt: "2026-08-03 12:00",
+    serviceStartDate: "2026-08-01",
+    serviceEndDate: "2026-08-03",
     remark: "",
     timeSource: "manual",
     invalidDuration: false,
     outsideTourWindow: false,
+    conflictConfirmation: null,
     createdAt: "2026-07-01T00:00:00Z",
     createdBy: "u1",
     updatedAt: "2026-07-01T00:00:00Z",
@@ -271,8 +273,8 @@ function row(patch: Partial<GuideServiceRow> = {}): GuideServiceRow {
     ...emptyGuideServiceRow(),
     guideId: "guide-1",
     language: "英语",
-    serviceStartAt: "2026-08-01 09:00",
-    serviceEndAt: "2026-08-03 12:00",
+    serviceStartDate: "2026-08-01",
+    serviceEndDate: "2026-08-03",
     ...patch,
   };
 }
@@ -335,15 +337,15 @@ describe("guide service requests", () => {
         id: "svc-1",
         guideId: "guide-1",
         language: "英语",
-        serviceStartAt: "2026-08-01 09:00",
-        serviceEndAt: "2026-08-03 12:00",
+        serviceStartDate: "2026-08-01",
+        serviceEndDate: "2026-08-03",
         remark: "",
       },
       {
         guideId: "guide-2",
         language: "英语",
-        serviceStartAt: "2026-08-01 09:00",
-        serviceEndAt: "2026-08-03 12:00",
+        serviceStartDate: "2026-08-01",
+        serviceEndDate: "2026-08-03",
         remark: "接送",
       },
     ]);
@@ -367,8 +369,8 @@ describe("guide service requests", () => {
     form.pickupAt = "2026-08-09 10:00";
     form.dropAt = "2026-08-12 10:00";
     expect(updateTourRequest(tour, form).guideServices[0]).toMatchObject({
-      serviceStartAt: "2026-08-01 09:00",
-      serviceEndAt: "2026-08-03 12:00",
+      serviceStartDate: "2026-08-01",
+      serviceEndDate: "2026-08-03",
     });
   });
 });
@@ -377,85 +379,91 @@ describe("guide service validation", () => {
   it("allows the same guide in two non-overlapping segments and different guides to overlap", () => {
     const rows = [
       row(),
-      row({ serviceStartAt: "2026-08-03 12:01", serviceEndAt: "2026-08-05 10:00" }),
+      row({ serviceStartDate: "2026-08-03", serviceEndDate: "2026-08-05" }),
       row({ guideId: "guide-2" }),
     ];
     expect(guideServiceErrors(rows)).toEqual([null, null, null]);
   });
 
-  it("rejects same-minute handover and overlap for one guide", () => {
-    const rows = [row(), row({ serviceStartAt: "2026-08-03 12:00", serviceEndAt: "2026-08-04 12:00" })];
-    expect(guideServiceErrors(rows)).toEqual(["overlap", "overlap"]);
+  it("leaves same-guide date overlap to the server confirmation instead of blocking locally", () => {
+    const rows = [row(), row({ serviceStartDate: "2026-08-03", serviceEndDate: "2026-08-04" })];
+    expect(guideServiceErrors(rows)).toEqual([null, null]);
   });
 
-  it("requires complete fields and a positive duration for new or changed segments", () => {
+  it("requires complete fields and an end date not before the start for new or changed segments", () => {
     expect(guideServiceErrors([row({ guideId: "" })])).toEqual(["incomplete"]);
-    expect(guideServiceErrors([row({ serviceEndAt: "2026-08-01 09:00" })])).toEqual(["order"]);
+    expect(guideServiceErrors([row({ serviceEndDate: "2026-08-01" })])).toEqual([null]);
+    expect(guideServiceErrors([row({ serviceEndDate: "2026-07-31" })])).toEqual(["order"]);
   });
 
-  it("keeps an unchanged zero-duration legacy segment but demands a real duration to confirm or adjust it", () => {
+  it("keeps an unchanged invalid legacy segment but demands a valid range to confirm or adjust it", () => {
     const legacy = service({
       timeSource: "legacy",
       invalidDuration: true,
-      serviceStartAt: "2026-08-01 15:20",
-      serviceEndAt: "2026-08-01 15:20",
+      serviceStartDate: "2026-08-02",
+      serviceEndDate: "2026-08-01",
     });
     const kept = guideServiceRowFromRecord(legacy);
     expect(guideServiceErrors([kept])).toEqual([null]);
-    expect(guideServiceInputs([kept])[0]).toMatchObject({ serviceEndAt: "2026-08-01 15:20" });
+    expect(guideServiceInputs([kept])[0]).toMatchObject({ serviceEndDate: "2026-08-01" });
     kept.confirmTime = true;
     expect(guideServiceErrors([kept])).toEqual(["order"]);
     kept.confirmTime = false;
-    kept.serviceEndAt = "2026-08-01 18:00";
+    kept.serviceEndDate = "2026-08-03";
     expect(guideServiceErrors([kept])).toEqual([null]);
   });
 
   it("flags windows only as a hint: segments may exceed the tour transfer window", () => {
     const window = { from: "2026-08-01 15:20", to: "2026-08-10 12:00" };
-    expect(outsideTeamWindow(row({ serviceEndAt: "2026-08-09 12:00", serviceStartAt: "2026-08-02 00:00" }), window)).toBe(false);
-    // 游客 10 号离境但服务 9 号结束；27 号凌晨航班但 26 号结束，均不依赖团队时间。
-    expect(outsideTeamWindow(row({ serviceEndAt: "2026-08-10 12:01" }), window)).toBe(true);
+    expect(outsideTeamWindow(row({ serviceEndDate: "2026-08-09", serviceStartDate: "2026-08-02" }), window)).toBe(false);
+    // 导游服务只比日期：接送当天仍在范围内，次日才提示。
+    expect(outsideTeamWindow(row({ serviceEndDate: "2026-08-10" }), window)).toBe(false);
+    expect(outsideTeamWindow(row({ serviceEndDate: "2026-08-11" }), window)).toBe(true);
     expect(outsideTeamWindow(row(), null)).toBe(false);
-    expect(guideServiceErrors([row({ serviceEndAt: "2026-08-10 12:01" })])).toEqual([null]);
+    expect(guideServiceErrors([row({ serviceEndDate: "2026-08-11" })])).toEqual([null]);
   });
 });
 
 describe("guide availability", () => {
-  it("needs language and a strictly positive range before a trimmed 1-150 character name", () => {
-    const rows = [row({ language: "" }), row({ serviceEndAt: "2026-08-01 09:00" }), row()];
-    expect(guideAvailabilityRequest("shengxu", rows, 0, "甲")).toEqual({ ready: false, missing: "conditions" });
-    expect(guideAvailabilityRequest("shengxu", rows, 1, "甲")).toEqual({ ready: false, missing: "conditions" });
-    expect(guideAvailabilityRequest(null, rows, 2, "甲")).toEqual({ ready: false, missing: "conditions" });
-    expect(guideAvailabilityRequest("shengxu", rows, 2, "  ")).toEqual({ ready: false, missing: "keyword" });
-    expect(guideAvailabilityRequest("shengxu", rows, 2, "甲".repeat(151))).toEqual({ ready: false, missing: "keywordTooLong" });
-    expect(guideAvailabilityRequest("shengxu", rows, 2, ` ${"甲".repeat(150)} `)).toMatchObject({ ready: true, query: { keyword: "甲".repeat(150) } });
+  it("needs language and a valid date range; the name is optional and at most 150 characters", () => {
+    const rows = [row({ language: "" }), row({ serviceEndDate: "2026-07-31" }), row()];
+    expect(guideAvailabilityRequest("shengxu", rows, 0, "甲", 1)).toEqual({ ready: false, missing: "conditions" });
+    expect(guideAvailabilityRequest("shengxu", rows, 1, "甲", 1)).toEqual({ ready: false, missing: "conditions" });
+    expect(guideAvailabilityRequest(null, rows, 2, "甲", 1)).toEqual({ ready: false, missing: "conditions" });
+    const blank = guideAvailabilityRequest("shengxu", rows, 2, "  ", 1);
+    expect(blank).toMatchObject({ ready: true, query: { page: 1, pageSize: 20 } });
+    expect(blank.ready && blank.query).not.toHaveProperty("keyword");
+    expect(guideAvailabilityRequest("shengxu", rows, 2, "甲".repeat(151), 1)).toEqual({ ready: false, missing: "keywordTooLong" });
+    expect(guideAvailabilityRequest("shengxu", rows, 2, ` ${"甲".repeat(150)} `, 2)).toMatchObject({ ready: true, query: { keyword: "甲".repeat(150), page: 2 } });
   });
 
   it("sends complete siblings with only 3 fields and maps each back to its full form row", () => {
     const rows = [
-      row({ guideId: "", serviceStartAt: "", serviceEndAt: "" }),
-      row({ guideId: "guide-2", serviceStartAt: "2026-08-05 08:00", serviceEndAt: "2026-08-05 08:00", remark: "x" }),
-      row({ id: "svc-9", guideId: "guide-3", serviceStartAt: "2026-08-06 08:00", serviceEndAt: "2026-08-07 08:00" }),
-      row({ guideId: "guide-4", serviceStartAt: "2026-08-09 08:00", serviceEndAt: "2026-08-08 08:00" }),
-      row({ guideId: "guide-5", serviceStartAt: "2026-08-10 08:00", serviceEndAt: "2026-08-11 08:00" }),
+      row({ guideId: "", serviceStartDate: "", serviceEndDate: "" }),
+      row({ guideId: "guide-2", serviceStartDate: "2026-08-05", serviceEndDate: "2026-08-05", remark: "x" }),
+      row({ id: "svc-9", guideId: "guide-3", serviceStartDate: "2026-08-06", serviceEndDate: "2026-08-07" }),
+      row({ guideId: "guide-4", serviceStartDate: "2026-08-09", serviceEndDate: "2026-08-08" }),
+      row({ guideId: "guide-5", serviceStartDate: "2026-08-10", serviceEndDate: "2026-08-11" }),
     ];
-    expect(guideAvailabilityRequest("shengxu", rows, 2, " 导游 ", "tour-1")).toEqual({
+    expect(guideAvailabilityRequest("shengxu", rows, 2, " 导游 ", 1, "tour-1")).toEqual({
       ready: true,
       siblingIndexes: [1, 4],
       query: {
         keyword: "导游",
         businessUnit: "shengxu",
         language: "英语",
-        serviceStartAt: "2026-08-06 08:00",
-        serviceEndAt: "2026-08-07 08:00",
+        serviceStartDate: "2026-08-06",
+        serviceEndDate: "2026-08-07",
+        page: 1,
+        pageSize: 20,
         excludeTourId: "tour-1",
         otherServices: [
-          { guideId: "guide-2", serviceStartAt: "2026-08-05 08:00", serviceEndAt: "2026-08-05 08:00" },
-          { guideId: "guide-5", serviceStartAt: "2026-08-10 08:00", serviceEndAt: "2026-08-11 08:00" },
+          { guideId: "guide-2", serviceStartDate: "2026-08-05", serviceEndDate: "2026-08-05" },
+          { guideId: "guide-5", serviceStartDate: "2026-08-10", serviceEndDate: "2026-08-11" },
         ],
       },
     });
-    const single = guideAvailabilityRequest("shengxu", [row()], 0, "甲");
+    const single = guideAvailabilityRequest("shengxu", [row()], 0, "甲", 1);
     expect(single.ready && single.query).not.toHaveProperty("otherServices");
   });
 
@@ -463,9 +471,9 @@ describe("guide availability", () => {
     const guide = { id: "guide-1", code: "G1", name: "导游甲", language: "英语" };
     const other = { id: "guide-9", code: "G9", name: "导游乙", language: "英语" };
     const result = (patch: Partial<TourGuideAvailability>): TourGuideAvailability => ({
-      status: "available", message: "", matchedCount: 0, list: [], unavailable: [], ...patch,
+      status: "available", message: "", matchedCount: 0, total: 0, page: 1, pageSize: 20, list: [], unavailable: [], ...patch,
     });
-    const blocked = result({ unavailable: [{ ...guide, reasons: [{ code: "GUIDE_DISABLED", message: "" }] }] });
+    const blocked = result({ unavailable: [{ ...guide, canOverride: false, reasons: [{ code: "GUIDE_DISABLED", message: "" }] }] });
     expect(isGuideServiceUnavailable(row(), null)).toBe(false);
     expect(isGuideServiceUnavailable(row(), result({ list: [guide] }))).toBe(false);
     // 换搜索词后已选人员未命中：不判为不可用。
@@ -476,7 +484,7 @@ describe("guide availability", () => {
     expect(isGuideServiceUnavailable(kept, blocked)).toBe(false);
     kept.remark = "仅改备注";
     expect(isGuideServiceUnavailable(kept, blocked)).toBe(false);
-    kept.serviceEndAt = "2026-08-04 12:00";
+    kept.serviceEndDate = "2026-08-04";
     expect(guideServiceChanged(kept)).toBe(true);
     expect(isGuideServiceUnavailable(kept, blocked)).toBe(true);
   });

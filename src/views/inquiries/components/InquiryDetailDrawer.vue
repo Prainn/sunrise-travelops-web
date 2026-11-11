@@ -9,8 +9,11 @@
       <div class="inquiry-detail__header">
         <div>
           <h3>
-            {{ record.agencyName }}
+            {{ record.isSeries ? $t("inquiry.series.tag") : record.agencyName }}
             <el-tag>{{ businessUnitName(record.businessUnit) }}</el-tag>
+            <el-tag v-if="record.isSeries" type="warning">
+              {{ $t("inquiry.series.tag") }}
+            </el-tag>
           </h3>
           <span>{{ record.code }}</span>
         </div>
@@ -43,8 +46,8 @@
         <el-descriptions-item :label="$t('inquiry.nextFollowUpAt')">
           {{ formatDateTime(record.nextFollowUpAt) }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('inquiry.plannedDays')">
-          {{ $t("itinerary.duration", plannedDuration(record.plannedDays)) }}
+        <el-descriptions-item v-if="!record.isSeries" :label="$t('inquiry.plannedDays')">
+          {{ $t("itinerary.durationDays", { days: record.plannedDays ?? 0 }) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('common.createdAt')">
           {{ formatDateTime(record.createdAt) }}
@@ -74,7 +77,6 @@
 import AppDrawer from "@/components/AppDrawer/index.vue";
 import { businessUnitName } from "@/constants/identity";
 import { formatDateTime } from "@/utils";
-import { plannedDuration } from "@/views/inquiries/itineraries/duration";
 import { useI18n } from "vue-i18n";
 import type { InquiryRecord } from "@/types/inquiry";
 import { INQUIRY_STATUS_TAG_TYPES } from "../options";

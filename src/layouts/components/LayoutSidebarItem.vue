@@ -47,7 +47,6 @@
           <span v-if="item.meta.title" class="ml-1 min-w-0 truncate" :title="translateRouteTitle(item.meta.title)">
             {{ translateRouteTitle(item.meta.title) }}
           </span>
-          <WhatsappBadges v-if="item.name === 'WhatsappWorkbench'" />
         </template>
       </template>
 

@@ -38,6 +38,8 @@ export function useResourcePriceSelection(
   );
   const source = ref<"library" | "custom">("library");
   const customName = ref("");
+  /** 自定义餐食英文名称；引用资源的英文名由服务端从资源库读取。 */
+  const customNameEn = ref("");
   const customPrice = ref<number | null>(null);
   const customUnit = ref<"personMeal" | "table">("personMeal");
   const customQuantity = ref(1);
@@ -155,6 +157,7 @@ export function useResourcePriceSelection(
           item?.type === "restaurant" && item.resourceId === null;
         source.value = custom ? "custom" : "library";
         customName.value = custom ? item.resourceName : "";
+        customNameEn.value = custom ? item.resourceNameEn : "";
         customPrice.value = custom ? item.unitCost : null;
         customUnit.value = custom && item.unit === "table" ? "table" : "personMeal";
         customQuantity.value = 1;
@@ -227,6 +230,8 @@ export function useResourcePriceSelection(
               customQuantity.value,
             ),
         remark: current?.remark ?? "",
+        resourceNameEn: customNameEn.value.trim(),
+        remarkEn: current?.remarkEn ?? "",
       };
     }
     const option = selectedOption.value;
@@ -253,6 +258,7 @@ export function useResourcePriceSelection(
       ...item,
       id: current?.id ?? item.id,
       remark: current?.remark ?? "",
+      remarkEn: current?.remarkEn ?? "",
       ...(props.mealSlot ? { mealSlot: props.mealSlot } : {}),
     };
   }
@@ -274,6 +280,7 @@ export function useResourcePriceSelection(
     duplicate,
     source,
     customName,
+    customNameEn,
     customPrice,
     customUnit,
     customQuantity,

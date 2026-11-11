@@ -92,52 +92,57 @@ function deferred<T>() {
   return { promise, resolve };
 }
 function result(patch: Partial<TourGuideAvailability>): TourGuideAvailability {
-  return { status: "available", message: "已找到可用导游", matchedCount: 0, list: [], unavailable: [], ...patch };
+  return { status: "available", message: "已找到可用导游", matchedCount: 0, total: 0, page: 1, pageSize: 20, list: [], unavailable: [], ...patch };
 }
-const ready = { language: "英文", serviceStartAt: "2026-11-16 08:00", serviceEndAt: "2026-11-16 19:00" };
+const ready = { language: "英文", serviceStartDate: "2026-11-16", serviceEndDate: "2026-11-16" };
 const zhang = { id: "guide-1", code: "G001", name: "张三", language: "英文" };
 const zhangTwin = { id: "guide-2", code: "G002", name: "张三", language: "法语" };
 
-beforeEach(() => { vi.useFakeTimers(); vi.resetAllMocks(); });
+beforeEach(() => { vi.useFakeTimers(); vi.resetAllMocks(); mocks.availableGuides.mockResolvedValue(result({})); });
 afterEach(() => { unmount?.(); vi.useRealTimers(); });
 
 describe("guide name search", () => {
-  it("waits for conditions and a name, then sends siblings and shows every unavailable reason", async () => {
+  it("queries once conditions are ready without a name, then sends the name, siblings and every unavailable reason", async () => {
     mount([
-      { ...ready, guideId: "", serviceStartAt: "" },
+      { ...ready, guideId: "", serviceStartDate: "" },
       { ...ready, language: "" },
-      { ...ready, guideId: "guide-x", serviceStartAt: "2026-11-17 08:00", serviceEndAt: "2026-11-17 18:00" },
+      { ...ready, guideId: "guide-x", serviceStartDate: "2026-11-17", serviceEndDate: "2026-11-17" },
     ]);
     expect(selects()[1]!.disabled).toBe(true);
     expect(selects()[1]!.placeholder).toBe("tour.guideService.fillFirst");
+    const base = {
+      businessUnit: "website", language: "英文", page: 1, pageSize: 20,
+      serviceStartDate: "2026-11-16", serviceEndDate: "2026-11-16", excludeTourId: "tour-1",
+      otherServices: [{ guideId: "guide-x", serviceStartDate: "2026-11-17", serviceEndDate: "2026-11-17" }],
+    };
     rows.value[1]!.language = "英文";
     await flush();
+    // 条件齐全即按条件列出导游，姓名可空。
+    expect(mocks.availableGuides).toHaveBeenLastCalledWith(base);
     expect(selects()[1]!.disabled).toBe(false);
     expect(selects()[1]!.placeholder).toBe("tour.guideService.searchGuide");
+    const calls = mocks.availableGuides.mock.calls.length;
     await search(1, "   ");
-    expect(mocks.availableGuides).not.toHaveBeenCalled();
+    expect(mocks.availableGuides).toHaveBeenCalledTimes(calls);
 
     mocks.availableGuides.mockResolvedValueOnce(result({
       matchedCount: 2,
       list: [zhang],
       unavailable: [{
         ...zhangTwin,
+        canOverride: false,
         reasons: [
           { code: "GUIDE_DISABLED", message: "该导游已停用" },
           { code: "LANGUAGE_MISMATCH", message: "", expectedLanguage: "英文", actualLanguage: "法语" },
           { code: "LEAVE_CONFLICT", message: "", leaves: [{ startDate: "2026-11-15", endDate: "2026-11-16" }] },
-          { code: "SCHEDULE_CONFLICT", message: "", tours: [{ tourNo: "LX-001", businessUnit: "linxi", serviceStartAt: "2026-11-16 09:00", serviceEndAt: "2026-11-16 12:00" }] },
-          { code: "FORM_CONFLICT", message: "", services: [{ otherServiceIndex: 0, serviceStartAt: "2026-11-17 08:00", serviceEndAt: "2026-11-17 18:00" }] },
+          { code: "SCHEDULE_CONFLICT", message: "", tours: [{ tourNo: "LX-001", businessUnit: "linxi", serviceStartDate: "2026-11-16", serviceEndDate: "2026-11-16" }] },
+          { code: "FORM_CONFLICT", message: "", services: [{ otherServiceIndex: 0, serviceStartDate: "2026-11-17", serviceEndDate: "2026-11-17" }] },
         ],
       }],
     }));
     await search(1, " 张 ");
-    expect(mocks.availableGuides).toHaveBeenCalledTimes(1);
-    expect(mocks.availableGuides).toHaveBeenCalledWith({
-      keyword: "张", businessUnit: "website", language: "英文",
-      serviceStartAt: "2026-11-16 08:00", serviceEndAt: "2026-11-16 19:00", excludeTourId: "tour-1",
-      otherServices: [{ guideId: "guide-x", serviceStartAt: "2026-11-17 08:00", serviceEndAt: "2026-11-17 18:00" }],
-    });
+    expect(mocks.availableGuides).toHaveBeenCalledTimes(calls + 1);
+    expect(mocks.availableGuides).toHaveBeenLastCalledWith({ ...base, keyword: "张" });
     // 同名人员按 ID 区分并带编号，仅 list 中的人可选。
     expect(options()).toEqual(expect.arrayContaining([
       { value: "guide-1", label: "张三 (G001) · 英文", disabled: false },
@@ -148,9 +153,9 @@ describe("guide name search", () => {
     expect(text).toContain("tour.guideService.reasons.GUIDE_DISABLED");
     expect(text).toContain('tour.guideService.reasons.LANGUAGE_MISMATCH{"expected":"英文","actual":"法语"}');
     expect(text).toContain("2026-11-15 ~ 2026-11-16");
-    expect(text).toContain("LX-001 · 霖熹 · 2026-11-16 09:00 ~ 2026-11-16 12:00");
+    expect(text).toContain("LX-001 · 霖熹 · 2026-11-16 ~ 2026-11-16");
     // otherServices[0] 是完整表单第 3 段（第 1 段不完整未提交）。
-    expect(text).toContain('tour.guideService.segment{"n":3} · 2026-11-17 08:00 ~ 2026-11-17 18:00');
+    expect(text).toContain('tour.guideService.segment{"n":3} · 2026-11-17 ~ 2026-11-17');
   });
 
   it("distinguishes not found from a failed request", async () => {
@@ -169,19 +174,21 @@ describe("guide name search", () => {
   });
 
   it("retries a failed query only when that segment searches again", async () => {
-    mount([ready, { ...ready, serviceStartAt: "2026-11-17 08:00", serviceEndAt: "2026-11-17 18:00" }]);
+    mount([ready, { ...ready, serviceStartDate: "2026-11-17", serviceEndDate: "2026-11-17" }]);
+    await flush();
+    const calls = mocks.availableGuides.mock.calls.length;
     mocks.availableGuides.mockRejectedValueOnce(new Error("网络异常"));
     await search(0, "李四");
-    expect(mocks.availableGuides).toHaveBeenCalledTimes(1);
+    expect(mocks.availableGuides).toHaveBeenCalledTimes(calls + 1);
+    expect(textOf(root)).toContain("网络异常");
 
-    mocks.availableGuides.mockResolvedValue(result({}));
     await search(1, "王五");
-    expect(mocks.availableGuides).toHaveBeenCalledTimes(2);
+    expect(mocks.availableGuides).toHaveBeenCalledTimes(calls + 2);
     expect(mocks.availableGuides).toHaveBeenLastCalledWith(expect.objectContaining({ keyword: "王五" }));
     expect(textOf(root)).toContain("网络异常");
 
     await search(0, "李四");
-    expect(mocks.availableGuides).toHaveBeenCalledTimes(3);
+    expect(mocks.availableGuides).toHaveBeenCalledTimes(calls + 3);
     expect(mocks.availableGuides).toHaveBeenLastCalledWith(expect.objectContaining({ keyword: "李四" }));
     expect(textOf(root)).not.toContain("网络异常");
   });
@@ -202,11 +209,10 @@ describe("guide name search", () => {
     expect(options().map((item) => item.value)).toEqual(["guide-1"]);
 
     mocks.availableGuides.mockResolvedValueOnce(result({ message: "改时段后" }));
-    rows.value[0]!.serviceEndAt = "2026-11-16 20:00";
+    // 日期变化立即重查，保留姓名。
+    rows.value[0]!.serviceEndDate = "2026-11-18";
     await flush();
-    await vi.advanceTimersByTimeAsync(300);
-    await flush();
-    expect(mocks.availableGuides).toHaveBeenLastCalledWith(expect.objectContaining({ keyword: "张三", serviceEndAt: "2026-11-16 20:00" }));
+    expect(mocks.availableGuides).toHaveBeenLastCalledWith(expect.objectContaining({ keyword: "张三", serviceEndDate: "2026-11-18" }));
     expect(textOf(root)).toContain("改时段后");
   });
 
@@ -225,7 +231,7 @@ describe("guide name search", () => {
 
     mocks.availableGuides.mockResolvedValueOnce(result({
       status: "unavailable",
-      unavailable: [{ ...zhang, reasons: [{ code: "GUIDE_DISABLED", message: "" }] }],
+      unavailable: [{ ...zhang, canOverride: false, reasons: [{ code: "GUIDE_DISABLED", message: "" }] }],
     }));
     await search(0, "张三");
     expect(editor.hasUnavailable()).toBe(true);

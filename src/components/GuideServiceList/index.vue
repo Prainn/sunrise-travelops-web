@@ -5,11 +5,14 @@
         {{ guideIdentityText(service) }}
         <span v-if="service.language" class="text-muted"> · {{ service.language }}</span>
       </span>
-      <span>{{ service.serviceStartAt }} ~ {{ service.serviceEndAt }}</span>
+      <span>{{ service.serviceStartDate }} ~ {{ service.serviceEndDate }}</span>
       <span v-if="service.remark" class="text-muted">{{ service.remark }}</span>
       <span
         v-if="
-          service.timeSource === 'legacy' || service.invalidDuration || service.outsideTourWindow
+          service.timeSource === 'legacy' ||
+            service.invalidDuration ||
+            service.outsideTourWindow ||
+            service.conflictConfirmation
         "
         class="flex flex-wrap gap-1"
       >
@@ -21,6 +24,14 @@
         </el-tag>
         <el-tag v-if="service.outsideTourWindow" size="small" type="info">
           {{ $t("tour.guideService.outsideWindow") }}
+        </el-tag>
+        <el-tag
+          v-if="service.conflictConfirmation"
+          size="small"
+          type="danger"
+          effect="dark"
+        >
+          {{ $t("tour.guideService.conflictConfirmed") }}
         </el-tag>
       </span>
     </li>

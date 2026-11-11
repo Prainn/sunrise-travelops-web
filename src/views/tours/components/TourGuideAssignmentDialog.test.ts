@@ -60,7 +60,7 @@ function setRows(rows: Partial<GuideServiceRow>[]) {
   (editor["onUpdate:modelValue"] as (value: Partial<GuideServiceRow>[]) => void)(rows);
 }
 function service(): Partial<GuideServiceRow> {
-  return { key: "new-1", guideId: "guide-1", language: "中文", serviceStartAt: "2026-11-01 10:00", serviceEndAt: "2026-11-03 12:00", remark: "", existing: null, confirmTime: false };
+  return { key: "new-1", guideId: "guide-1", language: "中文", serviceStartDate: "2026-11-01", serviceEndDate: "2026-11-03", remark: "", existing: null, confirmTime: false };
 }
 beforeEach(() => { vi.resetAllMocks(); mocks.unavailable.mockReturnValue(false); });
 afterEach(() => unmount?.());
@@ -98,7 +98,7 @@ describe("dedicated guide assignment", () => {
     await save(); await flush();
     expect(visibility).not.toHaveBeenCalled();
     expect(saved).not.toHaveBeenCalled();
-    expect(editor.serverErrors).toEqual({ "new-1": "排班冲突" });
+    expect(editor.serverErrors).toEqual({ "new-1": { message: "排班冲突" } });
     expect((editor.modelValue as GuideServiceRow[])[0]?.guideId).toBe("guide-1");
   });
 });

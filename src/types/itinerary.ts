@@ -84,7 +84,8 @@ export interface ItineraryPaxOtherCost {
 
 export interface ItineraryQuoteOption {
   id: string;
-  hotelTier: ItineraryHotelTier;
+  /** null only when every active day is explicitly without accommodation. */
+  hotelTier: ItineraryHotelTier | null;
   vehicleTier: ItineraryVehicleTier;
   paxPrices: ItineraryPaxPrice[];
 }
@@ -105,6 +106,10 @@ export interface ItineraryQuoteSettings {
   customerNotes: string;
   holidayRestrictions: string;
   hotelReplacementTerms: string;
+  /** English customer texts; empty until filled, required only for English export. */
+  customerNotesEn: string;
+  holidayRestrictionsEn: string;
+  hotelReplacementTermsEn: string;
 }
 
 export interface ItineraryTransportFee {
@@ -112,6 +117,8 @@ export interface ItineraryTransportFee {
   type: "flight" | "train";
   departureCity: string;
   arrivalCity: string;
+  departureCityEn: string;
+  arrivalCityEn: string;
   cabin: "economy" | "business" | "first" | "second";
   unitPrice: number | null;
 }
@@ -178,7 +185,7 @@ export interface ItineraryPaxCalculation {
 
 export interface ItineraryQuoteOptionCalculation {
   optionId: string;
-  hotelTier: ItineraryHotelTier;
+  hotelTier: ItineraryHotelTier | null;
   vehicleTier: ItineraryVehicleTier;
   hotelCityCosts?: {
     destination: string;
@@ -237,6 +244,9 @@ export interface ItineraryResourceItem extends PriceReference {
   unitCost: number | null;
   totalCost: number | null;
   remark: string;
+  /** English name of a custom meal; resource items take English from the resource library. */
+  resourceNameEn: string;
+  remarkEn: string;
   mealSlot?: MealSlot;
 }
 
@@ -246,12 +256,31 @@ export interface ItineraryDayRecord {
   date: string;
   departure: string;
   destination: string;
+  /** Ordered via cities chosen from the itinerary destinations. */
+  viaDestinations: string[];
+  /** null = not filled yet; "" = explicitly no accommodation that night. */
   overnightDestination: string | null;
   meals: ItineraryMeals;
   transport: string;
   description?: string;
+  departureEn: string;
+  destinationEn: string;
+  transportEn: string;
+  descriptionEn: string;
   items: ItineraryResourceItem[];
 }
+
+/** Day text fields edited inline on the day card. */
+export type ItineraryEditableDayField =
+  | "departure"
+  | "destination"
+  | "overnightDestination"
+  | "transport"
+  | "description"
+  | "departureEn"
+  | "destinationEn"
+  | "transportEn"
+  | "descriptionEn";
 
 export interface ItineraryGuidePlan extends PriceReference {
   destination: string;
@@ -264,6 +293,43 @@ export interface ItineraryGuidePlan extends PriceReference {
   serviceDays: number;
 }
 
+/** Customer documents either match the ground service days or append a return-arrival day. */
+export type CustomerDisplayMode = "same" | "returnArrival";
+/** Customer file language, independent of the UI language; en is 盛旭 only. */
+export type CustomerExportLanguage = "zh" | "en";
+
+export interface CustomerContent {
+  title: string;
+  country: string;
+  days: Array<{
+    id: string;
+    dayNumber: number;
+    date: string;
+    /** departure → via → destination, adjacent duplicates collapsed. */
+    route: string[];
+    transport: string;
+    description: string;
+    overnightDestination: string;
+    meals: ItineraryMeals;
+    items: Array<{ id: string; name: string; description: string; remark: string; unit: string }>;
+  }>;
+  hotels: Array<{ hotelId: string; name: string; destination: string }>;
+  notes: string[];
+  transportFees: Array<{ id: string; departureCity: string; arrivalCity: string }>;
+  returnArrival: { dayNumber: number; date: string; text: string } | null;
+}
+
+export interface CustomerPresentation {
+  version: 1;
+  serviceDays: number;
+  displayDays: number;
+  accommodationNights: number;
+  noAccommodation: boolean;
+  missingEnglish: string[];
+  zh: CustomerContent;
+  en: CustomerContent;
+}
+
 export interface ItineraryRecord {
   version: number;
   guidePlans: ItineraryGuidePlan[];
@@ -271,9 +337,17 @@ export interface ItineraryRecord {
   inquiryId: string;
   code: string;
   title: string;
+  titleEn: string;
+  customerDisplayMode: CustomerDisplayMode;
+  returnArrivalText: string;
+  returnArrivalTextEn: string;
   startDate: string;
   endDate: string;
   days: number;
+  /** Server-derived: days plus the optional return-arrival display day. */
+  displayDays?: number;
+  /** Server-derived from active days with accommodation, not days - 1. */
+  accommodationNights?: number;
   paxTiers: number[];
   childRate: number;
   childWithoutBedRate: number;

@@ -102,7 +102,7 @@
                   }}</small>{{ inquiry.contactName }}</span>
                   <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
                     $t("inquiry.plannedDays")
-                  }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
+                  }}</small>{{ inquiry.plannedDays === null ? "-" : $t("itinerary.durationDays", { days: inquiry.plannedDays }) }}</span>
                 </div>
               </div>
             </el-collapse-transition>
@@ -170,10 +170,12 @@
             :breakfast-status="getDayBreakfastStatus(selectedItinerary, index)"
             :destinations="selectedItinerary.destinations"
             :content-editable="contentEditable"
-            :planned-days="selectedItinerary?.dailyPlans.length || inquiry.plannedDays"
+            :planned-days="selectedItinerary?.dailyPlans.length || inquiry.plannedDays || 0"
             :is-last="index === selectedItinerary.dailyPlans.length - 1"
             :plans="dayPlanSummaries[index] ?? EMPTY_DAY_PLANS"
+            :english="inquiry.businessUnit === 'shengxu'"
             @update-field="(field, value) => updateDayField(index, field, value)"
+            @update-via="updateViaDestinations(index, $event)"
             @add-item="openResourceDialog(selectedItinerary!.dailyPlans[index]!.id)"
             @edit-item="(item) => openResourceDialog(selectedItinerary!.dailyPlans[index]!.id, item.mealSlot ?? null, item.id)"
             @update-meal="(slot, included) => updateMeal(index, slot, included)"
@@ -196,7 +198,7 @@
         <template #footer>
           <ItineraryWorkspaceFooter v-if="selectedItinerary">
             <template #summary>
-              {{ $t("itinerary.duration", itineraryDuration(selectedItinerary.dailyPlans)) }} ·
+              {{ serviceDisplayText }} ·
               {{ $t("itinerary.resourceItemCount", { count: itemCount }) }}
             </template>
             <el-button :disabled="!canSaveItinerary" class="ml-0!" @click="saveItinerary">
@@ -228,7 +230,8 @@
       <ItineraryPlanDialog
         v-model="isPlanDialogVisible"
         :record="itineraryForm"
-        :planned-days="isEditingPlan ? (selectedItinerary?.dailyPlans.length || inquiry.plannedDays) : inquiry.plannedDays"
+        :planned-days="isEditingPlan ? (selectedItinerary?.dailyPlans.length ?? null) : inquiry.plannedDays"
+        :english="inquiry.businessUnit === 'shengxu'"
         :destination-options="destinationOptions"
         :is-editing="isEditingPlan"
         @submit="submitItineraryPlan"
@@ -239,7 +242,7 @@
         :plans="vehicleDraft"
         :saved-plans="savedItinerary?.vehiclePlans ?? []"
         :start-date="selectedItinerary.startDate"
-        :planned-days="selectedItinerary?.dailyPlans.length || inquiry.plannedDays"
+        :planned-days="selectedItinerary?.dailyPlans.length || inquiry.plannedDays || 0"
         :pax-tiers="selectedItinerary.paxTiers"
         :editable="contentEditable"
         :saving="isSaving"
@@ -305,6 +308,8 @@
         :day-label="resourceDay ? `D${resourceDay.dayNumber}` : ''"
         :guest-count="guestCount"
         :destination="resourceDestination"
+        :day-cities="resourceDay ? dayCities(resourceDay) : []"
+        :english="inquiry.businessUnit === 'shengxu'"
         :meal-slot="resourceMealSlot"
         :current-item="resourceCurrentItem"
         :itinerary-items="selectedItinerary?.dailyPlans.flatMap((day) => day.items) ?? []"
@@ -374,15 +379,26 @@
           :item-count="itemCount"
           :duration="itineraryDuration(selectedItinerary.dailyPlans)"
           :editable="priceEditable"
+          :english="inquiry.businessUnit === 'shengxu'"
           @update-quote-option="updateQuoteOption"
           @update-settings="updateQuoteSettings"
         />
         <template #footer>
-          <el-switch
-            v-model="showChildPrice"
-            class="mr-auto"
-            :active-text="$t('itinerary.showChildPriceInPdf')"
-          />
+          <div class="mr-auto flex items-center gap-4">
+            <el-switch
+              v-model="showChildPrice"
+              :active-text="$t('itinerary.showChildPriceInPdf')"
+            />
+            <!-- 客户文件语言独立于界面语言，默认中文；仅盛旭可选英文。 -->
+            <el-radio-group v-if="canChooseExportLanguage" v-model="exportLanguage" size="small">
+              <el-radio-button value="zh">
+                {{ $t("itinerary.exportLanguages.zh") }}
+              </el-radio-button>
+              <el-radio-button value="en">
+                {{ $t("itinerary.exportLanguages.en") }}
+              </el-radio-button>
+            </el-radio-group>
+          </div>
           <el-button
             v-if="canDownloadOriginal || (isDraft && canGeneratePdf)"
             :loading="isGeneratingWord"
@@ -435,7 +451,7 @@
 <script setup lang="ts">
 import { businessUnitName } from "@/constants/identity";
 import { ArrowDown, Bowl, Location, OfficeBuilding, User, Van } from "@element-plus/icons-vue";
-import { plannedDuration, itineraryDuration } from "@/views/inquiries/itineraries/duration";
+import { itineraryDuration } from "@/views/inquiries/itineraries/duration";
 import { computed, markRaw, nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -469,6 +485,14 @@ import { useItineraryWorkspace } from "./useItineraryWorkspace";
 
 defineOptions({ name: "InquiryItineraries" });
 const { t } = useI18n();
+/** 地接服务天数与客户展示天数；住宿晚数按活动日实际住宿统计，不按天数减一。 */
+const serviceDisplayText = computed(() => {
+  const plan = selectedItinerary.value;
+  if (!plan) return "";
+  const { days, nights } = itineraryDuration(plan.dailyPlans);
+  const displayDays = days + (plan.customerDisplayMode === "returnArrival" ? 1 : 0);
+  return t("itinerary.serviceDisplay", { days, displayDays, nights });
+});
 const EMPTY_DAY_PLANS = { hotel: "", vehicle: "", guide: "" };
 const workspaceLayout = useTemplateRef<InstanceType<typeof ItineraryWorkspaceLayout>>("workspaceLayout");
 const isReorderDialogVisible = ref(false);
@@ -572,6 +596,9 @@ const {
   submitItineraryPlan,
   clearHotelPlan,
   updateDayField,
+  updateViaDestinations,
+  exportLanguage,
+  canChooseExportLanguage,
   updateHotelPlanSelection,
   updateQuoteOption,
   updateHotelCost,
@@ -764,6 +791,10 @@ function applyReorder(change: DayOrderChange) {
   ElMessage.success(t("itineraryWorkspace.orderApplied"));
 }
 
+/** 当日出发 → 途经 → 到达城市，供资源弹窗置顶切换。 */
+function dayCities(day: ItineraryDayRecord) {
+  return [...new Set([day.departure, ...day.viaDestinations, day.destination].filter(Boolean))];
+}
 function locateReorderIssue(issue: DayOrderIssue) {
   if (issue.dayId) void workspaceLayout.value?.scrollToDay(issue.dayId);
   else openSectionDialog("vehicle");
@@ -865,6 +896,12 @@ function setDayCard(id: string, card: unknown) {
   else dayCards.delete(id);
 }
 async function locateIssue(target: string) {
+  if (!target) return;
+  if (target === "itinerary-basics") {
+    isQuoteDrawerVisible.value = false;
+    await openEditDialog();
+    return;
+  }
   if (target.startsWith("day-")) {
     isQuoteDrawerVisible.value = false;
     await nextTick();

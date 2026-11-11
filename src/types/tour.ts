@@ -12,7 +12,16 @@ export interface TourFlightSnapshot {
   arrivalAirport: { code: string; name: string; englishName: string };
 }
 
-/** 服务段时间均为 Asia/Shanghai 无时区墙钟 `YYYY-MM-DD HH:mm`。 */
+/** 已确认排期冲突的服务端记录；确认人为真实操作者。 */
+export interface TourGuideConflictConfirmation {
+  token: string;
+  confirmedBy: string;
+  confirmedByName: string;
+  confirmedAt: string;
+  reasons: TourGuideUnavailableReason[];
+}
+
+/** 服务段按 Asia/Shanghai 自然日 `YYYY-MM-DD` 管理，首尾两端均包含。 */
 export interface TourGuideService {
   id: string;
   tourId: string;
@@ -20,12 +29,14 @@ export interface TourGuideService {
   guideName: string;
   guideCode: string;
   language: string;
-  serviceStartAt: string;
-  serviceEndAt: string;
+  serviceStartDate: string;
+  serviceEndDate: string;
   remark: string;
   timeSource: "legacy" | "manual";
   invalidDuration: boolean;
   outsideTourWindow: boolean;
+  /** 无确认或历史段为 null，不能推断为已人工同意。 */
+  conflictConfirmation: TourGuideConflictConfirmation | null;
   createdAt: string;
   createdBy: string | null;
   updatedAt: string;
@@ -37,10 +48,12 @@ export interface TourGuideServiceInput {
   id?: string;
   guideId: string;
   language: string;
-  serviceStartAt: string;
-  serviceEndAt: string;
+  serviceStartDate: string;
+  serviceEndDate: string;
   remark?: string;
   confirmTime?: boolean;
+  /** 仅排期冲突经“确认使用”后携带的查询令牌。 */
+  scheduleConflictToken?: string;
 }
 
 export interface TourRecord {
@@ -48,6 +61,8 @@ export interface TourRecord {
   tourNo: string;
   sourceModule: TourSourceModule;
   businessUnit: TourBusinessUnit;
+  /** 来源为盛旭系列询盘。 */
+  isSeriesSource: boolean;
   inquiryId: string | null;
   quoteId: string | null;
   itineraryId: string | null;
@@ -126,7 +141,13 @@ export type TourInput = {
 
 export type TourCreateRequest = TourInput &
   (
-    | { sourceModule: TourLinkedSourceModule; inquiryId: string; quoteId: string }
+    | {
+      sourceModule: TourLinkedSourceModule;
+      inquiryId: string;
+      quoteId: string;
+      /** 仅系列询盘来源必填，作为本团实际出发日。 */
+      seriesStartDate?: string;
+    }
     | { sourceModule: "manual"; manualSource: TourManualSource }
   );
 
@@ -134,22 +155,26 @@ export type TourUpdateRequest = TourInput & {
   version: number;
   /** 仅手工团；省略保留原资料。 */
   manualSource?: TourManualSource;
+  /** 仅系列来源团；只修改本团日期。 */
+  seriesStartDate?: string;
 };
 
 /** 兄弟段只带这 3 个字段。 */
 export interface TourGuideSiblingService {
   guideId: string;
-  serviceStartAt: string;
-  serviceEndAt: string;
+  serviceStartDate: string;
+  serviceEndDate: string;
 }
 
 export interface TourGuideQuery {
-  /** 导游姓名，去首尾空白后 1–150 字。 */
-  keyword: string;
+  /** 导游姓名，去首尾空白后最多 150 字；省略时只返回可用导游。 */
+  keyword?: string;
   businessUnit: TourBusinessUnit;
   language: string;
-  serviceStartAt: string;
-  serviceEndAt: string;
+  serviceStartDate: string;
+  serviceEndDate: string;
+  page: number;
+  pageSize: number;
   excludeTourId?: string;
   otherServices?: TourGuideSiblingService[];
 }
@@ -165,6 +190,7 @@ export interface TourSource {
   countryName: string;
   quoteId: string;
   quoteCode: string;
+  isSeries: boolean;
   itineraryCode: string | null;
   startDate: string | null;
   days: number | null;
@@ -209,15 +235,19 @@ export interface TourGuideUnavailableReason {
   tours?: Array<{
     tourNo: string;
     businessUnit: TourBusinessUnit;
-    serviceStartAt: string;
-    serviceEndAt: string;
+    serviceStartDate: string;
+    serviceEndDate: string;
   }>;
   /** otherServiceIndex 为请求 otherServices 的零基下标，不是完整表单下标。 */
-  services?: Array<{ otherServiceIndex: number; serviceStartAt: string; serviceEndAt: string }>;
+  services?: Array<{ otherServiceIndex: number; serviceStartDate: string; serviceEndDate: string }>;
 }
 
 export interface TourGuideUnavailable extends TourGuideOption {
   reasons: TourGuideUnavailableReason[];
+  /** 仅全部原因为排期冲突时为 true，服务端决定，前端不按原因文字推断。 */
+  canOverride: boolean;
+  /** canOverride=true 时的 64 位确认令牌。 */
+  scheduleConflictToken?: string;
 }
 
 /** 导游姓名可用性预览；message 为业务提示，区别于响应外层 message。 */
@@ -225,6 +255,10 @@ export interface TourGuideAvailability {
   status: "available" | "not_found" | "unavailable";
   message: string;
   matchedCount: number;
+  /** 分页前候选总数，list 与 unavailable 共用一页。 */
+  total: number;
+  page: number;
+  pageSize: number;
   list: TourGuideOption[];
   unavailable: TourGuideUnavailable[];
 }

@@ -32,6 +32,9 @@
             </el-button>
           </div>
         </el-form-item>
+        <el-form-item v-if="english" :label="$t('itinerary.english.customRestaurantName')">
+          <el-input v-model="customNameEn" :maxlength="500" class="w-300px!" />
+        </el-form-item>
         <el-form-item :label="$t('itinerary.customMealUnit')">
           <el-select v-model="customUnit" autocomplete="new-password" class="w-300px!">
             <el-option value="personMeal" :label="$t('itinerary.customMealPerPerson')" />
@@ -59,8 +62,16 @@
             :placeholder="$t('itinerary.allCities')"
             class="w-full"
           >
+            <el-option-group v-if="dayCities?.length" :label="$t('itinerary.dayCities')">
+              <el-option
+                v-for="option in dayCities"
+                :key="`day-${option}`"
+                :label="option"
+                :value="option"
+              />
+            </el-option-group>
             <el-option
-              v-for="option in cityOptions"
+              v-for="option in otherCityOptions"
               :key="option"
               :label="option"
               :value="option"
@@ -145,6 +156,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import AppDialog from "@/components/AppDialog/index.vue";
 import RemoteSelect from "@/components/RemoteSelect/index.vue";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
@@ -163,6 +175,10 @@ const props = defineProps<{
   /** 当前操作的日序，例如 D3 */
   dayLabel: string;
   destination?: string;
+  /** 当日出发、途经与到达城市，置顶便于切换；仍沿用 selections 的 city 参数。 */
+  dayCities?: string[];
+  /** 盛旭行程显示对客英文字段。 */
+  english?: boolean;
   guestCount: number;
   mealSlot: MealSlot | null;
   currentItem?: ItineraryResourceItem;
@@ -174,6 +190,9 @@ const emit = defineEmits<{
 }>();
 const { t, locale } = useI18n();
 const cityOptions = useCityOptions();
+const otherCityOptions = computed(() =>
+  cityOptions.value.filter((option) => !props.dayCities?.includes(option)),
+);
 const {
   actualPrice,
   referencePrice,
@@ -187,6 +206,7 @@ const {
   duplicate,
   source,
   customName,
+  customNameEn,
   customPrice,
   customUnit,
   dinerCount,

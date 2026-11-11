@@ -29,7 +29,14 @@
         :label="$t('inquiry.agencyName')"
         min-width="190"
         show-overflow-tooltip
-      />
+      >
+        <template #default="{ row }">
+          <el-tag v-if="row.isSeries" type="warning" size="small">
+            {{ $t("inquiry.series.tag") }}
+          </el-tag>
+          <span v-else>{{ row.agencyName }}</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="contactName" :label="$t('common.contact')" width="120" />
       <el-table-column
         prop="countryOrRegion"
@@ -45,7 +52,11 @@
         align="center"
       >
         <template #default="scope">
-          {{ $t("itinerary.duration", plannedDuration(scope.row.plannedDays)) }}
+          {{
+            scope.row.plannedDays == null
+              ? "-"
+              : $t("itinerary.durationDays", { days: scope.row.plannedDays })
+          }}
         </template>
       </el-table-column>
       <el-table-column :label="$t('inquiry.nextFollowUpAt')" width="210">
@@ -78,7 +89,7 @@
       </el-table-column>
       <el-table-column
         :label="$t('common.actions')"
-        :width="locale === 'en' ? 500 : 340"
+        :width="locale === 'en' ? 600 : 420"
         fixed="right"
         :show-overflow-tooltip="false"
       >
@@ -96,7 +107,7 @@
               {{ $t("inquiry.itineraryManagement") }}
             </el-button>
             <el-button
-              v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus, scope.row.hasActiveTour)"
+              v-if="!isInquiryReadOnly(scope.row.status as InquiryStatus, scope.row.hasActiveTour, scope.row.isSeries)"
               v-hasPerm="'inquiry:update'"
               type="primary"
               link
@@ -105,12 +116,21 @@
             >
               {{ $t("common.edit") }}
             </el-button>
+            <el-button type="primary" link @click="emit('follow-ups', scope.row as InquiryRecord)">
+              {{ $t("inquiry.followUp.title") }}
+            </el-button>
             <InquiryTransferButton
               v-if="!scope.row.hasActiveTour"
               :inquiry="scope.row as InquiryRecord"
               @transferred="emit('refresh')"
             />
             <template #more>
+              <el-dropdown-item
+                v-if="scope.row.isSeries && hasPerm('tour:list')"
+                @click="emit('view-tours', scope.row as InquiryRecord)"
+              >
+                {{ $t("tour.relatedTours") }}
+              </el-dropdown-item>
               <el-dropdown-item @click="emit('view-logs', scope.row as InquiryRecord)">
                 {{ $t("inquiry.log.title") }}
               </el-dropdown-item>
@@ -160,7 +180,6 @@ import { useUserStore } from "@/stores/user";
 import InquiryTransferButton from "./InquiryTransferButton.vue";
 import { formatDateTime } from "@/utils";
 import { hasPerm } from "@/utils/auth";
-import { plannedDuration } from "@/views/inquiries/itineraries/duration";
 import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";
 import { INQUIRY_STATUS_TAG_TYPES } from "../options";
 import { isInquiryReadOnly } from "../inquiry-workflow";
@@ -191,6 +210,8 @@ const emit = defineEmits<{
   delete: [record: InquiryRecord];
   "manage-itineraries": [record: InquiryRecord];
   "view-logs": [record: InquiryRecord];
+  "follow-ups": [record: InquiryRecord];
+  "view-tours": [record: InquiryRecord];
   "update:pageNum": [value: number];
   "update:pageSize": [value: number];
 }>();

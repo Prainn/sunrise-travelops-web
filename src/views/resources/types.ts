@@ -18,6 +18,8 @@ export interface ResourceFormField extends ResourceColumn {
   min?: number;
   max?: number;
   precision?: number;
+  /** 文本字段最大长度。 */
+  maxlength?: number;
   /** 必须与该字段同时填写或同时清空 */
   pairedWith?: string;
   type?: "text" | "number" | "textarea" | "select";

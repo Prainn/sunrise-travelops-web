@@ -54,7 +54,9 @@ import {
   guideAssignmentRequest,
   guideServiceErrors,
   guideServiceRowFromRecord,
+  guideServiceServerErrors,
   type GuideServiceRow,
+  type GuideServiceServerError,
 } from "../tour-form";
 import GuideServicesEditor from "./GuideServicesEditor.vue";
 
@@ -68,7 +70,7 @@ const visible = computed({
 const rows = ref<GuideServiceRow[]>([]);
 const saving = ref(false);
 const editorRef = ref<InstanceType<typeof GuideServicesEditor>>();
-const serverErrors = ref<Record<string, string>>({});
+const serverErrors = ref<Record<string, GuideServiceServerError>>({});
 const showIncomplete = ref(false);
 const teamWindow = computed(() =>
   props.tour.pickupAt && props.tour.dropAt ? { from: props.tour.pickupAt, to: props.tour.dropAt } : null,
@@ -100,11 +102,8 @@ async function save() {
     visible.value = false;
     emit("saved");
   } catch (error) {
-    if (isApiError(error)) {
-      const index = error.details?.serviceIndex;
-      const row = typeof index === "number" ? rows.value[index] : undefined;
-      if (row) serverErrors.value = { [row.key]: error.message };
-    }
+    if (isApiError(error))
+      serverErrors.value = guideServiceServerErrors(rows.value, error.message, error.details);
     ElMessage.error(error instanceof Error ? error.message : String(error));
   } finally {
     saving.value = false;

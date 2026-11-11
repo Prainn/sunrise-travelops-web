@@ -204,6 +204,8 @@ export function calculateItem(
           quantity,
         ),
     remark: "",
+    resourceNameEn: "",
+    remarkEn: "",
   };
 }
 

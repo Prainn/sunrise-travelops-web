@@ -29,6 +29,7 @@ import type { VehicleMaintenanceMode } from "./vehicle-plans";
 import { isApiError } from "@/api/request";
 import { ApiErrorCode } from "@/api/error-code";
 import { requestErrorMessage } from "@/utils/version-conflict";
+import { translateIfExists } from "@/lang/utils";
 
 const VERSION_CONFLICT_CODES = new Set<string>([
   ApiErrorCode.ITINERARY_VERSION_CONFLICT,
@@ -120,7 +121,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   );
   const validationIssues = ref<PdfValidationIssue[]>([]);
   const inquiryReadOnly = computed(() =>
-    inquiry.value ? isInquiryReadOnly(inquiry.value.status, inquiry.value.hasActiveTour) : true,
+    inquiry.value ? isInquiryReadOnly(inquiry.value.status, inquiry.value.hasActiveTour, inquiry.value.isSeries) : true,
   );
   const isDraft = computed(() => selectedItinerary.value?.status === "draft");
   const canCreateItinerary = computed(
@@ -424,6 +425,16 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       return;
     }
     const current = selectedItinerary.value;
+    const removedVia = current?.dailyPlans.flatMap((day) =>
+      day.viaDestinations
+        .filter((city) => !record.destinations.includes(city))
+        .map((city) => `D${day.dayNumber} ${city}`),
+    );
+    if (
+      removedVia?.length &&
+      !(await messages.confirm("itinerary.viaDestinationsRemoved", { items: removedVia.join("、") }))
+    )
+      return;
     // 保存失败时回到提交前，避免人数档同步后的车价等改动残留在未保存记录中。
     const before = current && (JSON.parse(JSON.stringify(current)) as ItineraryRecord);
     const updated = editor.updateItineraryBasics(record);
@@ -541,13 +552,57 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     if (validation.dayCountMismatch) {
       const confirmed = await messages.confirm("itinerary.dayCountMismatch", {
         planned: validation.plannedDays,
-        plannedNights: Math.max(validation.plannedDays - 1, 0),
         actualNights: itineraryDuration(selectedItinerary.value!.dailyPlans).nights,
         actual: validation.actualDays,
       });
       if (!confirmed) return false;
     }
     return saveItinerary();
+  }
+
+  /** 英文缺失路径定位到对应日程、报价或基础信息；未知路径只展示不定位。 */
+  function englishIssue(path: string): PdfValidationIssue {
+    const plan = selectedItinerary.value;
+    const dayRef = /dailyPlans\[([^\]]+)\]/.exec(path)?.[1];
+    const day = dayRef
+      ? (plan?.dailyPlans.find((record) => record.id === dayRef) ??
+        (/^\d+$/.test(dayRef) ? plan?.dailyPlans[Number(dayRef)] : undefined))
+      : undefined;
+    const field = path.split(".").pop()?.replace(/\[.*$/, "") ?? path;
+    const fieldName = translateIfExists(`itinerary.english.fields.${field}`) ?? path;
+    const target = day
+      ? `day-${day.id}`
+      : path.startsWith("quote")
+        ? "quote"
+        : /^(titleEn|returnArrivalText)/.test(path)
+          ? "itinerary-basics"
+          : "";
+    return {
+      key: "itinerary.english.missing",
+      target,
+      params: { field: day ? `D${day.dayNumber} · ${fieldName}` : fieldName },
+    };
+  }
+  /** 英文导出的 PDF_NOT_READY 需要列出缺失项或提示复制新草稿，其余错误按原方式提示。 */
+  function reportExportError(error: unknown) {
+    if (isApiError(error) && error.code === ApiErrorCode.PDF_NOT_READY) {
+      const reason = error.details?.reason;
+      if (reason === "ENGLISH_SNAPSHOT_UNAVAILABLE") {
+        messages.error("itinerary.english.snapshotUnavailable");
+        return;
+      }
+      const paths = error.details?.issues;
+      if (reason === "ENGLISH_CONTENT_MISSING" && Array.isArray(paths) && paths.length) {
+        const issues = paths.map((path) => englishIssue(String(path)));
+        validationIssues.value = issues;
+        messages.error("itinerary.validation.toast", {
+          count: issues.length,
+          first: messages.translate(issues[0]!.key, issues[0]!.params),
+        });
+        return;
+      }
+    }
+    reportError(error);
   }
 
   async function handleGeneratePdf() {
@@ -559,7 +614,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
         if (!(await pdf.generatePreview())) messages.error("itinerary.previewRegenerate");
       } catch (error) {
         // 接口错误保留具体原因；本地渲染失败才使用通用文案。
-        if (isApiError(error)) reportError(error);
+        if (isApiError(error)) reportExportError(error);
         else messages.error("itinerary.pdfGenerationFailed");
       }
     } finally {
@@ -580,7 +635,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
         messages.success(draft ? "itinerary.wordGenerated" : "itinerary.wordDownloaded");
       } else messages.error("itinerary.previewChanged");
     } catch (error) {
-      reportError(error);
+      reportExportError(error);
     } finally {
       isPreparingPdf.value = false;
     }
@@ -595,7 +650,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       }
       messages.success("itinerary.pdfGenerated");
     } catch (error) {
-      reportError(error);
+      reportExportError(error);
     }
   }
 
@@ -611,6 +666,8 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       return id ? savedPrices.value.get(id) : undefined;
     }),
     showChildPrice: pdf.showChildPrice,
+    exportLanguage: pdf.exportLanguage,
+    canChooseExportLanguage: pdf.canChooseLanguage,
     hasUnsavedChanges,
     isSaving,
     isLoading: selection.isLoading,
@@ -623,7 +680,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       try {
         await pdf.downloadOriginal();
       } catch (error) {
-        reportError(error);
+        reportExportError(error);
       }
     },
     updateGuideType,
@@ -695,6 +752,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     submitItineraryPlan,
     createGuide,
     updateDayField: editor.updateDayField,
+    updateViaDestinations: editor.updateViaDestinations,
     clearHotelPlan: editor.clearHotelPlan,
     updateHotelPlanSelection: selectHotelPlanSelection,
     updateQuoteOption: editor.updateQuoteOption,

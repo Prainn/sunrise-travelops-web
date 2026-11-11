@@ -1,7 +1,7 @@
 <template>
   <SectionCard>
     <template #header>
-      <span class="font-600 text-strong">{{ $t(`itinerary.hotelTiers.${option.hotelTier}`) }} ·
+      <span class="font-600 text-strong">{{ option.hotelTier === null ? $t("itinerary.noAccommodation") : $t(`itinerary.hotelTiers.${option.hotelTier}`) }} ·
         {{ $t(`itinerary.vehicleServiceLevels.${option.vehicleTier}`) }}</span>
     </template>
     <template #actions>

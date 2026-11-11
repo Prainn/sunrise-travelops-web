@@ -38,6 +38,8 @@
       @archive="archiveInquiry"
       @manage-itineraries="openItineraryManagement"
       @view-logs="openInquiryLogs"
+      @follow-ups="openFollowUps"
+      @view-tours="openRelatedTours"
     />
     <InquiryEditorDialog
       v-model="isEditorVisible"
@@ -50,6 +52,17 @@
       @submit="saveInquiry"
     />
     <InquiryDetailDrawer v-model="isDetailVisible" :record="selectedInquiry" />
+    <InquiryFollowUpDialog
+      v-if="followUpInquiry"
+      v-model="isFollowUpVisible"
+      :inquiry="followUpInquiry"
+      @changed="fetchInquiries"
+    />
+    <InquiryToursDialog
+      v-if="toursInquiry"
+      v-model="isToursVisible"
+      :inquiry="toursInquiry"
+    />
   </PageShell>
 </template>
 
@@ -68,6 +81,8 @@ import { useUserStore } from "@/stores/user";
 import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";
 import InquiryDetailDrawer from "./components/InquiryDetailDrawer.vue";
 import InquiryEditorDialog from "./components/InquiryEditorDialog.vue";
+import InquiryFollowUpDialog from "./components/InquiryFollowUpDialog.vue";
+import InquiryToursDialog from "./components/InquiryToursDialog.vue";
 import InquirySearchForm from "./components/InquirySearchForm.vue";
 import InquiryTable from "./components/InquiryTable.vue";
 import { isInquiryReadOnly, staleDeleteReason } from "./inquiry-workflow";
@@ -179,6 +194,7 @@ function createEmptyInquiry(): InquiryRecord {
     id: "",
     version: 0,
     code: "",
+    isSeries: false,
     agencyId: "",
     contactId: "",
     agencyCode: "",
@@ -226,20 +242,23 @@ function openCreateDialog() {
 // 快速点击多行时只采用最后一次打开的记录，过期响应直接丢弃。
 let openVersion = 0;
 async function openEditDialog(record: InquiryRecord) {
-  if (isInquiryReadOnly(record.status, record.hasActiveTour)) return;
+  if (isInquiryReadOnly(record.status, record.hasActiveTour, record.isSeries)) return;
   const version = ++openVersion;
   try {
     const detail = await inquiryService.detail(record.id);
     if (version !== openVersion) return;
-    if (isInquiryReadOnly(detail.status, detail.hasActiveTour)) {
+    if (isInquiryReadOnly(detail.status, detail.hasActiveTour, detail.isSeries)) {
       await fetchInquiries();
       return;
     }
-    const agency = await resourceService.agencyApi.getDetail(detail.agencyId);
-    if (version !== openVersion) return;
-    const index = resourceService.agencies.findIndex((item) => item.id === agency.id);
-    if (index >= 0) resourceService.agencies.splice(index, 1, agency);
-    else resourceService.agencies.push(agency);
+    // 系列询盘没有组团社，不加载组团社详情。
+    if (detail.agencyId) {
+      const agency = await resourceService.agencyApi.getDetail(detail.agencyId);
+      if (version !== openVersion) return;
+      const index = resourceService.agencies.findIndex((item) => item.id === agency.id);
+      if (index >= 0) resourceService.agencies.splice(index, 1, agency);
+      else resourceService.agencies.push(agency);
+    }
     editingId.value = detail.id;
     inquiryForm.value = detail;
     isEditorVisible.value = true;
@@ -263,6 +282,18 @@ function openItineraryManagement(record: InquiryRecord) {
 }
 function openInquiryLogs(record: InquiryRecord) {
   openInNewTab({ name: "InquiryLogs", params: { inquiryId: record.id } });
+}
+const isFollowUpVisible = ref(false);
+const followUpInquiry = ref<InquiryRecord>();
+function openFollowUps(record: InquiryRecord) {
+  followUpInquiry.value = record;
+  isFollowUpVisible.value = true;
+}
+const isToursVisible = ref(false);
+const toursInquiry = ref<InquiryRecord>();
+function openRelatedTours(record: InquiryRecord) {
+  toursInquiry.value = record;
+  isToursVisible.value = true;
 }
 // 保存期间弹窗不可关闭，避免旧请求返回后关掉新打开的弹窗。
 const saving = ref(false);

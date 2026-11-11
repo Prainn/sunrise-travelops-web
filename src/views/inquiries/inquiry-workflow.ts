@@ -22,8 +22,17 @@ const INQUIRY_TRANSITIONS: Record<InquiryStatus, Partial<Record<InquiryAction, I
   archived: {},
 };
 
-export function isInquiryReadOnly(status: InquiryStatus, hasActiveTour = false): boolean {
-  return hasActiveTour || status === "lost" || status === "archived";
+/**
+ * 询盘业务写操作是否只读。系列询盘可多次成团，已有有效团不锁定编辑、报价、跟进和新成团；
+ * 删除/归档仍受有效团限制，调用方不传 isSeries 即按有效团锁定。
+ *
+ * @param status - 询盘状态。
+ * @param hasActiveTour - 是否已有有效团。
+ * @param isSeries - 是否盛旭系列询盘。
+ * @returns 只读时为 true。
+ */
+export function isInquiryReadOnly(status: InquiryStatus, hasActiveTour = false, isSeries = false): boolean {
+  return (hasActiveTour && !isSeries) || status === "lost" || status === "archived";
 }
 
 export function canTransitionInquiry(status: InquiryStatus, action: InquiryAction): boolean {

@@ -23,18 +23,7 @@ import type {
   PaxQuoteCalculation,
 } from "@/types/itinerary";
 import { formatMoney } from "@/utils";
-import { getTransportMethodNames } from "@/utils/transport-method";
-import { getDayBreakfastStatus, HOTEL_PLAN_TIER_LABELS } from "./hotel-plans";
-import {
-  CUSTOMER_EXCLUSIONS,
-  formatScheduleDate,
-  formatScheduleRoute,
-  getCustomerNotes,
-  getCustomerTermRows,
-  getDailyMealCodes,
-  getExtraFeeLines,
-  getVehicleQuoteLabel,
-} from "./pdf";
+import { buildCustomerDocument, type CustomerDocument, type CustomerSnapshot } from "./customer-document";
 
 export interface ItineraryWordDocument {
   blob: Blob;
@@ -44,7 +33,7 @@ export interface QuoteImages {
   header?: Uint8Array;
   footer?: Uint8Array;
 }
-interface WordSnapshot {
+interface WordSnapshot extends CustomerSnapshot {
   calculation: ItineraryQuoteCalculation;
 }
 
@@ -97,39 +86,39 @@ const heading = (value: string) =>
   });
 const spacer = () => new Paragraph({ spacing: { after: 100 }, children: [] });
 
-function scheduleTable(itinerary: ItineraryRecord) {
+function scheduleTable(customer: CustomerDocument) {
   const header = ["D", "DEPART.", "T", "SIGHT-SEEING REGION", "HOTEL", "M"];
   return table([
     new TableRow({
       tableHeader: true,
       children: header.map((label) => cell(label, { bold: true, fill: "F3F4F6" })),
     }),
-    ...itinerary.dailyPlans.map(
-      (day, index) =>
+    ...customer.schedule.map(
+      (day) =>
         new TableRow({
           cantSplit: true,
           children: [
-            cell(formatScheduleDate(day.date)),
-            cell(formatScheduleRoute(day)),
-            cell(getTransportMethodNames(day.transport) || "-"),
-            cell(day.description?.trim() || "-", { align: "left" }),
-            cell(day.overnightDestination || "-"),
-            cell(getDailyMealCodes(day, getDayBreakfastStatus(itinerary, index)) || "-"),
+            cell(day.date),
+            cell(day.route),
+            cell(day.transport),
+            cell(day.description, { align: "left" }),
+            cell(day.hotel),
+            cell(day.meals),
           ],
         }),
     ),
   ]);
 }
 
-function termsTable(itinerary: ItineraryRecord) {
-  const rows = getCustomerTermRows(itinerary);
+function termsTable(customer: CustomerDocument) {
+  const { text: labels, termRows: rows } = customer;
   return table([
     ...rows.map(
       ([label, value], index) =>
         new TableRow({
           children: [
             ...(index === 0
-              ? [cell("团费包含", { bold: true, fill: "F9FAFB", rowSpan: rows.length })]
+              ? [cell(labels.included, { bold: true, fill: "F9FAFB", rowSpan: rows.length })]
               : []),
             cell(label, { bold: true, fill: "F9FAFB" }),
             cell(value, { align: "left" }),
@@ -138,8 +127,8 @@ function termsTable(itinerary: ItineraryRecord) {
     ),
     new TableRow({
       children: [
-        cell("团费不含", { bold: true, fill: "F9FAFB", columnSpan: 2 }),
-        cell(CUSTOMER_EXCLUSIONS.map((line, index) => `${index + 1}] ${line}`).join("\n"), {
+        cell(labels.excluded, { bold: true, fill: "F9FAFB", columnSpan: 2 }),
+        cell(labels.exclusions.map((line, index) => `${index + 1}] ${line}`).join("\n"), {
           align: "left",
         }),
       ],
@@ -147,8 +136,8 @@ function termsTable(itinerary: ItineraryRecord) {
   ]);
 }
 
-function extraFeeRows(itinerary: ItineraryRecord, span: number) {
-  return getExtraFeeLines(itinerary).map(
+function extraFeeRows(customer: CustomerDocument, span: number) {
+  return customer.extraFees.map(
     ([label, value]) =>
       new TableRow({
         children: [cell(label, { bold: true, fill: "F9FAFB" }), cell(value, { columnSpan: span })],
@@ -160,23 +149,25 @@ function paxQuoteTables(
   itinerary: ItineraryRecord,
   quote: PaxQuoteCalculation,
   showChildPrice: boolean,
+  customer: CustomerDocument,
 ) {
+  const { text: labels } = customer;
   return quote.options.flatMap((option) => {
     const hasBedRates = option.paxPrices.some((price) => price.childWithoutBedUnitPrice != null);
     const childLabels = showChildPrice
       ? hasBedRates
-        ? [`儿童占床（${itinerary.childRate}%）`, `儿童不占床（${itinerary.childWithoutBedRate}%）`]
-        : [`儿童团费（${itinerary.childRate}%）`]
+        ? [labels.childWithBed(itinerary.childRate), labels.childWithoutBed(itinerary.childWithoutBedRate)]
+        : [labels.childRate(itinerary.childRate)]
       : [];
-    const labels = ["人数档位", "成人团费", ...childLabels, "单房差"];
-    const title = `${HOTEL_PLAN_TIER_LABELS[option.hotelTier]} · ${getVehicleQuoteLabel(itinerary, option.vehicleTier)}`;
+    const header = [labels.paxTier, labels.adult, ...childLabels, labels.singleSupplement];
+    const title = `${customer.hotelTierLabel(option.hotelTier)} · ${customer.vehicleLabel(option.vehicleTier)}`;
     return [
       table([
         new TableRow({
-          children: [cell(title, { bold: true, fill: "F3F4F6", columnSpan: labels.length })],
+          children: [cell(title, { bold: true, fill: "F3F4F6", columnSpan: header.length })],
         }),
         new TableRow({
-          children: labels.map((label) => cell(label, { bold: true, fill: "F3F4F6" })),
+          children: header.map((label) => cell(label, { bold: true, fill: "F3F4F6" })),
         }),
         ...option.paxPrices.map(
           (price) =>
@@ -196,7 +187,7 @@ function paxQuoteTables(
               ],
             }),
         ),
-        ...extraFeeRows(itinerary, labels.length - 1),
+        ...extraFeeRows(customer, header.length - 1),
       ]),
       spacer(),
     ];
@@ -208,6 +199,7 @@ function legacyQuoteTables(
   itinerary: ItineraryRecord,
   quote: LegacyQuoteCalculation,
   showChildPrice: boolean,
+  customer: CustomerDocument,
 ) {
   const legacy = itinerary as unknown as {
     adults: number;
@@ -234,21 +226,21 @@ function legacyQuoteTables(
           cell("", { fill: "F3F4F6" }),
           ...options.map(({ option }) =>
             cell(
-              `${HOTEL_PLAN_TIER_LABELS[option.hotelTier] ?? option.hotelTier}\n${guests}PAX【${getVehicleQuoteLabel(itinerary, option.vehicleTier)}】`,
+              `${customer.hotelTierLabel(option.hotelTier)}\n${guests}PAX【${customer.vehicleLabel(option.vehicleTier)}】`,
               { bold: true, fill: "F3F4F6" },
             ),
           ),
         ],
       }),
-      row("成人团费", ({ calculation }) => `RMB ${formatMoney(calculation.adultUnitPrice)} PP`),
+      row(customer.text.adult, ({ calculation }) => `RMB ${formatMoney(calculation.adultUnitPrice)} PP`),
       ...(showChildPrice && legacy.childrenCount
         ? [
-          row("儿童团费", ({ calculation }) => `RMB ${formatMoney(calculation.childUnitPrice)} PP`),
+          row(customer.text.child, ({ calculation }) => `RMB ${formatMoney(calculation.childUnitPrice)} PP`),
         ]
         : []),
-      ...extraFeeRows(itinerary, options.length),
+      ...extraFeeRows(customer, options.length),
       row(
-        "单房差",
+        customer.text.singleSupplement,
         ({ calculation }) => `RMB ${formatMoney(calculation.singleSupplementUnitCost)}`,
       ),
     ]),
@@ -276,7 +268,8 @@ export async function generateItineraryWordDocument(
   images: QuoteImages = {},
 ): Promise<ItineraryWordDocument> {
   const quote = snapshot.calculation;
-  const notes = getCustomerNotes(itinerary);
+  const customer = buildCustomerDocument(itinerary, snapshot);
+  const { notes } = customer;
   const document = new Document({
     styles: { default: { document: { run: { font: FONT, size: 21 } } } },
     sections: [
@@ -293,23 +286,19 @@ export async function generateItineraryWordDocument(
           new Paragraph({
             alignment: AlignmentType.CENTER,
             spacing: { after: 120 },
-            children: [text(itinerary.title, { bold: true, size: 32 })],
+            children: [text(customer.title, { bold: true, size: 32 })],
           }),
-          heading("一、行程安排"),
-          scheduleTable(itinerary),
-          heading("二、团队标准"),
-          termsTable(itinerary),
-          heading(
-            "pricingVersion" in quote
-              ? "三、团队报价【人民币／人；机票、动车票及额外自费另付】"
-              : "三、团队报价【团费不含任何段的机票、动车票、额外自费及司陪费】",
-          ),
+          heading(customer.text.scheduleHeading),
+          scheduleTable(customer),
+          heading(customer.text.termsHeading),
+          termsTable(customer),
+          heading("pricingVersion" in quote ? customer.text.quoteHeading : customer.text.legacyQuoteHeading),
           ...("pricingVersion" in quote
-            ? paxQuoteTables(itinerary, quote, showChildPrice)
-            : legacyQuoteTables(itinerary, quote, showChildPrice)),
+            ? paxQuoteTables(itinerary, quote, showChildPrice, customer)
+            : legacyQuoteTables(itinerary, quote, showChildPrice, customer)),
           ...(notes.length
             ? [
-              heading("四、备注"),
+              heading(customer.text.notesHeading),
               ...notes.flatMap((note) =>
                 note
                   .split("\n")
@@ -324,7 +313,7 @@ export async function generateItineraryWordDocument(
   const safe = (value: string) => value.replace(/[\\/:*?"<>|]/g, "-");
   return {
     blob: await Packer.toBlob(document),
-    fileName: `${safe(itinerary.code)}-${safe(itinerary.title)}.docx`,
+    fileName: `${safe(itinerary.code)}-${safe(customer.title)}.docx`,
   };
 }
 

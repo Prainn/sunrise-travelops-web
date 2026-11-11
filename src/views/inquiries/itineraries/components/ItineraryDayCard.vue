@@ -20,7 +20,9 @@
       :day="day"
       :destinations="destinations"
       :editable="contentEditable"
+      :english="english"
       @update-field="updateField"
+      @update-via="emit('update-via', $event)"
     />
 
     <!-- 新增一天只展示基础信息；有资源或已勾选午/晚餐后再显示当日资源区 -->
@@ -141,7 +143,12 @@
 import { computed, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { Bowl, Coffee, OfficeBuilding, Location, User, Van } from "@element-plus/icons-vue";
-import type { ItineraryDayRecord, ItineraryResourceItem, MealSlot } from "@/types/itinerary";
+import type {
+  ItineraryDayRecord,
+  ItineraryEditableDayField,
+  ItineraryResourceItem,
+  MealSlot,
+} from "@/types/itinerary";
 import { formatMoney, sumMoney } from "@/utils";
 import DataTable from "@/components/DataTable/index.vue";
 import FeedbackState from "@/components/FeedbackState/index.vue";
@@ -149,8 +156,7 @@ import ItineraryDayCardFrame from "./ItineraryDayCardFrame.vue";
 import ItineraryDayForm from "./ItineraryDayForm.vue";
 import ItineraryDayResourceBar, { type DayResourceAction } from "./ItineraryDayResourceBar.vue";
 
-type EditableDayField =
-  "departure" | "destination" | "overnightDestination" | "transport" | "description";
+type EditableDayField = ItineraryEditableDayField;
 const props = defineProps<{
   day: ItineraryDayRecord;
   breakfastStatus: "included" | "excluded" | "pending";
@@ -158,11 +164,14 @@ const props = defineProps<{
   contentEditable: boolean;
   isLast: boolean;
   plannedDays: number;
+  /** 盛旭行程显示对客英文字段。 */
+  english: boolean;
   /** 当天可见的整程/按城市方案摘要，空字符串表示未配置 */
   plans: { hotel: string; vehicle: string; guide: string };
 }>();
 const emit = defineEmits<{
   "update-field": [field: EditableDayField, value: string | null];
+  "update-via": [cities: string[]];
   "update-meal": [slot: MealSlot, included: boolean];
   "select-meal": [slot: MealSlot];
   "add-item": [];

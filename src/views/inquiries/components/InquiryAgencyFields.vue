@@ -4,7 +4,7 @@
       <ResourceSelect
         kind="agencies"
         :filters="record.businessUnit ? { businessUnit: record.businessUnit } : {}"
-        :model-value="record.agencyId"
+        :model-value="record.agencyId ?? ''"
         :selected-label="record.agencyName"
         :placeholder="$t('common.selectPlaceholder')"
         @update:model-value="emit('select-agency', $event)"

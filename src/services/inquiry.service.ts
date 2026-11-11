@@ -1,8 +1,16 @@
 import { parseMoney } from "@/utils/format";
 import { LONG_REQUEST_TIMEOUT_MS, request } from "@/api/request";
 import type { PageResult } from "@/types/common";
-import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";
 import type {
+  FollowUpDelivery,
+  InquiryFollowUpInput,
+  InquiryFollowUpPage,
+  InquiryRecord,
+  InquiryStatus,
+} from "@/types/inquiry";
+import type {
+  CustomerExportLanguage,
+  CustomerPresentation,
   PriceAdjustment,
   ItineraryRecord,
   ItineraryQuoteCalculation,
@@ -31,6 +39,9 @@ export interface PdfData {
   quoteCode: string;
   quoteVersion: number;
   calculation: ItineraryQuoteCalculation;
+  /** 盛旭新预览/冻结的中英文客户内容；旧冻结与其他业务没有。 */
+  customerPresentation?: CustomerPresentation | null;
+  exportLanguage?: CustomerExportLanguage;
 }
 const MONEY_FIELDS = new Set([
   "hotelUnitCost",
@@ -85,6 +96,19 @@ export function normalizeInquiryMoney<T>(value: unknown, field = ""): T {
   return value as T;
 }
 function inquiryInput(record: InquiryRecord) {
+  // 系列询盘只提交国家/地区与原始消息，不提交隐藏的客户资料、来源或计划天数。
+  if (record.isSeries)
+    return {
+      isSeries: true,
+      businessUnit: record.businessUnit,
+      countryItemId: record.countryItemId,
+      ownerId: record.ownerId || undefined,
+      originalMessage: record.originalMessage,
+      internalRemark: record.internalRemark,
+      nextFollowUpAt: record.nextFollowUpAt ? new Date(record.nextFollowUpAt).toISOString() : null,
+      status: record.status,
+      lostReason: record.lostReason,
+    };
   return {
     businessUnit: record.businessUnit,
     agencyId: record.agencyId,
@@ -122,6 +146,10 @@ export function itineraryInput(
   record: Pick<
     ItineraryRecord,
     | "title"
+    | "titleEn"
+    | "customerDisplayMode"
+    | "returnArrivalText"
+    | "returnArrivalTextEn"
     | "startDate"
     | "paxTiers"
     | "childRate"
@@ -137,6 +165,10 @@ export function itineraryInput(
 ) {
   return {
     title: record.title,
+    titleEn: record.titleEn,
+    customerDisplayMode: record.customerDisplayMode,
+    returnArrivalText: record.returnArrivalText,
+    returnArrivalTextEn: record.returnArrivalTextEn,
     startDate: record.startDate,
     paxTiers: record.paxTiers,
     childRate: record.childRate,
@@ -194,6 +226,18 @@ export const inquiryService = {
   delete(record: InquiryRecord) {
     return request.delete<void>(`/inquiries/${encodeURIComponent(record.id)}`, { body: { version: record.version } });
   },
+  followUps(inquiryId: string, query: { page: number; pageSize: number }) {
+    return request.get<InquiryFollowUpPage>(
+      `/inquiries/${encodeURIComponent(inquiryId)}/follow-ups`,
+      { params: query },
+    );
+  },
+  addFollowUp(inquiryId: string, input: InquiryFollowUpInput) {
+    return request.post<{ id: string; inquiryVersion: number; delivery: FollowUpDelivery }>(
+      `/inquiries/${encodeURIComponent(inquiryId)}/follow-ups`,
+      input,
+    );
+  },
   archive(record: InquiryRecord) {
     return request.post<InquiryRecord>(`/inquiries/${record.id}/archive`, {
       version: record.version,
@@ -240,8 +284,11 @@ export const inquiryService = {
       await request.post(`/itineraries/${record.id}/copy`, { version: record.version, title }),
     );
   },
-  async pdfData(id: string) {
-    return normalizeInquiryMoney<PdfData>(await request.get(`/itineraries/${id}/pdf-data`));
+  /** 导出语言独立于界面语言，默认 zh；en 仅盛旭支持。 */
+  async pdfData(id: string, language: CustomerExportLanguage = "zh") {
+    return normalizeInquiryMoney<PdfData>(
+      await request.get(`/itineraries/${id}/pdf-data`, { params: { language } }),
+    );
   },
   async recordDownload(id: string) {
     await request.post(`/itineraries/${encodeURIComponent(id)}/download-click`);
@@ -251,6 +298,7 @@ export const inquiryService = {
       await request.post(`/itineraries/${data.itinerary.id}/confirm-pdf`, {
         version: data.itinerary.version,
         inquiryVersion: data.inquiryVersion,
+        language: data.exportLanguage ?? "zh",
       }),
     );
   },

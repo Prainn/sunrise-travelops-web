@@ -23,6 +23,25 @@
             <el-input v-model="form.code" disabled />
           </el-form-item>
         </el-col>
+        <el-col v-if="form.isSeries" :span="12">
+          <el-form-item :label="$t('inquiry.series.label')">
+            <el-tag type="warning">
+              {{ $t("inquiry.series.tag") }}
+            </el-tag>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row v-else-if="form.businessUnit === 'shengxu'" :gutter="16">
+        <el-col :span="24">
+          <el-form-item :label="$t('inquiry.series.label')">
+            <el-checkbox v-model="form.isSeries" @change="formRef?.clearValidate()">
+              {{ $t("inquiry.series.option") }}
+            </el-checkbox>
+            <span v-if="form.isSeries" class="ml-3 text-[12px] text-muted">
+              {{ $t("inquiry.series.hint") }}
+            </span>
+          </el-form-item>
+        </el-col>
       </el-row>
 
       <el-row :gutter="16">
@@ -44,7 +63,47 @@
           </el-form-item>
         </el-col>
       </el-row>
-      <el-row :gutter="16">
+      <el-row v-if="form.isSeries" :gutter="16">
+        <el-col :span="12">
+          <el-form-item :label="$t('common.countryOrRegion')" prop="countryItemId">
+            <BusinessItemSelect
+              v-model="form.countryItemId"
+              type-code="country-region"
+              :selected-label="form.countryOrRegion"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item :label="$t('inquiry.owner')" prop="ownerId">
+            <el-select
+              v-if="canAssignOwner && !isEditing"
+              v-model="form.ownerId"
+              autocomplete="new-password"
+              filterable
+              :loading="loadingOwners"
+              :placeholder="$t('inquiry.series.ownerPlaceholder')"
+            >
+              <el-option
+                v-for="option in scopedOwners"
+                :key="option.id"
+                :label="option.name"
+                :value="option.id"
+              />
+            </el-select>
+            <el-input v-else :model-value="isEditing ? form.owner : $t('inquiry.series.ownerSelf')" disabled />
+          </el-form-item>
+        </el-col>
+        <el-col :span="24">
+          <el-form-item :label="$t('inquiry.originalMessage')">
+            <InquiryMessageInput
+              v-if="modelValue"
+              v-model="form.originalMessage"
+              @parsing="isParsingDocument = $event"
+            />
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row v-else :gutter="16">
         <InquiryAgencyFields
           :record="form"
           :agency-options="agencyOptions"
@@ -91,7 +150,7 @@
               controls-position="right"
             />
             <span class="ml-4 text-[var(--el-text-color-secondary)]">{{
-              $t("itinerary.duration", plannedDuration(form.plannedDays))
+              $t("itinerary.durationDays", { days: form.plannedDays ?? 0 })
             }}</span>
           </el-form-item>
         </el-col>
@@ -113,7 +172,8 @@
             </el-select>
           </el-form-item>
         </el-col>
-
+      </el-row>
+      <el-row v-if="!form.isSeries || isEditing" :gutter="16">
         <el-col :span="24">
           <el-collapse v-model="expandedDetails" class="inquiry-followup">
             <el-collapse-item name="followup" :title="$t('inquiry.followupDetails')">
@@ -124,14 +184,24 @@
                       v-model="form.nextFollowUpAt"
                       type="datetime"
                       value-format="YYYY-MM-DDTHH:mm:ssZ"
+                      :disabled="isEditing"
                       :placeholder="$t('inquiry.nextFollowUpPlaceholder')"
                     />
                   </el-form-item>
                 </el-col>
                 <el-col :span="24">
                   <el-form-item :label="$t('inquiry.internalRemark')">
-                    <el-input v-model.trim="form.internalRemark" type="textarea" :rows="2" />
+                    <el-input
+                      v-model.trim="form.internalRemark"
+                      type="textarea"
+                      :rows="2"
+                      :disabled="isEditing"
+                    />
                   </el-form-item>
+                  <!-- 编辑时不随询盘 PUT 修改，避免与跟进记录接口各追加一条历史。 -->
+                  <p v-if="isEditing" class="m-0 text-[12px] text-muted">
+                    {{ $t("inquiry.followUp.editHint") }}
+                  </p>
                 </el-col>
               </el-row>
             </el-collapse-item>
@@ -157,10 +227,11 @@
 
 <script setup lang="ts">
 import AppDialog from "@/components/AppDialog/index.vue";
+import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
+import { ROLE_ROOT } from "@/constants";
 import { useUserStore } from "@/stores/user";
 import { inquiryService } from "@/services/inquiry.service";
 import { resourceService } from "@/services/resource.service";
-import { plannedDuration } from "@/views/inquiries/itineraries/duration";
 import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -201,13 +272,29 @@ const form = reactive<InquiryRecord>({ ...props.record });
 const selectedAgency = computed(() =>
   props.agencyOptions.find((agency) => agency.id === form.agencyId),
 );
+// 系列询盘：计调创建时自动负责；ROOT/业务负责人代建须指定本业务计调，最终由服务端授权。
+const canAssignOwner = computed(() =>
+  userStore.userInfo.roles.some((role) => role === ROLE_ROOT || role === "BUSINESS_MANAGER"),
+);
 const editableStatusOptions = computed(() => {
   if (!props.isEditing) return INQUIRY_STATUS_OPTIONS.filter((item) => item.value === "new");
   const allowedStatuses =
     props.record.status === "quoted" ? ["quoted", "lost"] : [props.record.status, "lost"];
   return INQUIRY_STATUS_OPTIONS.filter((item) => allowedStatuses.includes(item.value));
 });
-const rules = computed<FormRules>(() => ({
+const rules = computed<FormRules>(() => form.isSeries ? {
+  countryItemId: [{ required: true, message: t("common.selectPlaceholder"), trigger: "change" }],
+  ownerId: [
+    {
+      required: !props.isEditing && canAssignOwner.value,
+      message: t("inquiry.series.ownerRequired"),
+      trigger: "change",
+    },
+  ],
+  lostReason: [
+    { required: form.status === "lost", message: t("inquiry.lostReasonRequired"), trigger: "blur" },
+  ],
+} : {
   ownerId: [
     {
       required: !props.isEditing,
@@ -228,7 +315,7 @@ const rules = computed<FormRules>(() => ({
   lostReason: [
     { required: form.status === "lost", message: t("inquiry.lostReasonRequired"), trigger: "blur" },
   ],
-}));
+});
 
 function resetForm() {
   ++agencySelectionVersion;
@@ -371,6 +458,15 @@ async function submitForm() {
     if (!(await formRef.value?.validate().catch(() => false))) return;
   } finally {
     validating.value = false;
+  }
+  if (form.isSeries) {
+    emit("submit", {
+      ...form,
+      // 非代建身份不提交负责人，由服务端按创建计调自动负责。
+      ownerId: !props.isEditing && canAssignOwner.value ? form.ownerId : "",
+      lostReason: form.status === "lost" ? form.lostReason : "",
+    });
+    return;
   }
   if (!form.contactId) {
     const agency = selectedAgency.value;
