@@ -4,7 +4,7 @@
       <SectionCard
         fill
         padding="compact"
-        :title="$t('common.roles')"
+        :title="$t('menuPermission.targets')"
         body-class="overflow-y-auto"
       >
         <div class="flex flex-col gap-2">
@@ -33,7 +33,7 @@
         </el-button>
       </TableToolbar>
       <el-alert
-        :title="$t('menuPermission.loginNotice')"
+        :title="$t(selected?.code === 'SUNRISE' ? 'menuPermission.sunriseNotice' : 'menuPermission.loginNotice')"
         type="info"
         :closable="false"
       />
@@ -195,7 +195,7 @@ async function save() {
     roles.value = roles.value.map((role) => role.code === saved.code ? saved : role);
     selected.value = saved;
     cancel();
-    ElMessage.success(t("menuPermission.saved"));
+    ElMessage.success(t(saved.code === "SUNRISE" ? "menuPermission.sunriseSaved" : "menuPermission.saved"));
   } catch (cause) { ElMessage.error(cause instanceof Error ? cause.message : String(cause)); }
   finally { saving.value = false; }
 }

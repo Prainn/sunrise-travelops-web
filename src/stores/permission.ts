@@ -1,34 +1,12 @@
 import type { RouteRecordRaw } from "vue-router";
 import { constantRoutes } from "@/router";
 import { filterRoutesByAccess } from "@/router/access";
-import i18n from "@/lang";
+import { mapNavigation } from "@/router/navigation";
 import { menuPermissionsService } from "@/services/menu-permissions.service";
-import type { MenuGroup } from "@/types/menu-permissions";
 import { store } from "./store";
 import { useUserStoreHook } from "@/stores/user";
 
 const fixedRoutes = constantRoutes.filter((route) => route.path === "/" || route.meta?.hidden);
-
-function mapNavigation(groups: MenuGroup[]): RouteRecordRaw[] {
-  return groups.map((group) => {
-    const local = constantRoutes.find((route) => route.name === group.routeName && !route.meta?.hidden && route.path !== "/");
-    if (!local) {
-      throw new Error(i18n.global.t("menuPermission.navigationConfigurationError", { route: group.routeName }));
-    }
-    const children = group.children.map((item) => {
-      const child = local.children?.find((route) => route.name === item.routeName);
-      if (!child || child.meta?.hidden || child.meta?.menuKey !== item.menuKey) {
-        throw new Error(i18n.global.t("menuPermission.navigationConfigurationError", { route: `${group.routeName}/${item.routeName}` }));
-      }
-      return { ...child, meta: { ...child.meta, title: item.title } };
-    });
-    return {
-      ...local,
-      meta: { ...local.meta, title: group.title },
-      children: [...children, ...(local.children?.filter((child) => child.meta?.hidden) ?? [])],
-    } as RouteRecordRaw;
-  });
-}
 
 export const usePermissionStore = defineStore("permission", () => {
   const routes = ref<RouteRecordRaw[]>([...fixedRoutes]);
@@ -51,7 +29,9 @@ export const usePermissionStore = defineStore("permission", () => {
       try {
         const result = await menuPermissionsService.navigation();
         if (!isCurrent()) return null;
-        routes.value = filterRoutesByAccess([...fixedRoutes, ...mapNavigation(result.groups)], context);
+        const mapped = mapNavigation(result.groups, constantRoutes);
+        if (mapped.hasUnknownRoutes) window.dispatchEvent(new Event("app-version-check"));
+        routes.value = filterRoutesByAccess([...fixedRoutes, ...mapped.routes], context);
         isRouteGenerated.value = true;
         return routes.value;
       } catch (error) {

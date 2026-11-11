@@ -85,12 +85,14 @@ onMounted(() => {
   void checkForNewVersion();
   checkTimer = setInterval(checkForNewVersion, CHECK_INTERVAL_MS);
   window.addEventListener("focus", checkForNewVersion);
+  window.addEventListener("app-version-check", checkForNewVersion);
   document.addEventListener("visibilitychange", checkWhenVisible);
 });
 
 onBeforeUnmount(() => {
   if (checkTimer) clearInterval(checkTimer);
   window.removeEventListener("focus", checkForNewVersion);
+  window.removeEventListener("app-version-check", checkForNewVersion);
   document.removeEventListener("visibilitychange", checkWhenVisible);
   notification?.close();
 });

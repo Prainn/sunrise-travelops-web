@@ -11,7 +11,7 @@
         type="primary"
         :icon="Refresh"
         :loading="loading"
-        @click="retry"
+        @click="retry(false)"
       >
         {{ $t("common.reload") }}
       </el-button>
@@ -20,6 +20,7 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, onBeforeUnmount } from "vue";
 import { Refresh } from "@element-plus/icons-vue";
 import { usePermissionStore } from "@/stores/permission";
 import { useUserStore } from "@/stores/user";
@@ -34,23 +35,37 @@ const { t } = useI18n();
 const loading = ref(false);
 
 /** 重新探测后端：用户资料与导航目录成功后才离开本页，失败则提示仍不可用。 */
-async function retry() {
+let isActive = true;
+let timer: ReturnType<typeof setInterval> | undefined;
+
+async function retry(automatic = false) {
+  if (automatic && document.visibilityState !== "visible") return;
   if (loading.value) return;
   loading.value = true;
   try {
     await useUserStore().getUserInfo();
     const routes = await usePermissionStore().generateRoutes();
-    if (!routes) return;
+    if (!routes || !isActive) return;
     const redirect = route.query.redirect;
     const target =
-      typeof redirect === "string" && redirect.startsWith("/") && !redirect.startsWith("//")
+      typeof redirect === "string" && redirect.startsWith("/") && !redirect.startsWith("//") && redirect.split("?")[0] !== "/unavailable"
         ? redirect
         : "/";
     await router.replace(target);
   } catch (error) {
-    ElMessage.error(isApiError(error) ? error.message : t("error.unavailable.stillDown"));
+    if (!automatic && isActive) ElMessage.error(isApiError(error) ? error.message : t("error.unavailable.stillDown"));
   } finally {
     loading.value = false;
   }
 }
+function retryWhenVisible() { void retry(true); }
+onMounted(() => {
+  timer = setInterval(retryWhenVisible, 5000);
+  window.addEventListener("focus", retryWhenVisible);
+});
+onBeforeUnmount(() => {
+  isActive = false;
+  if (timer) clearInterval(timer);
+  window.removeEventListener("focus", retryWhenVisible);
+});
 </script>

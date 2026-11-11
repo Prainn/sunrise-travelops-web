@@ -2039,6 +2039,9 @@
     "relatedTours": "Related tours"
   },
   "menuPermission": {
+    "targets": "Roles and accounts",
+    "sunriseNotice": "Only mango can manage Sunrise menus and feature permissions. Changes take effect immediately.",
+    "sunriseSaved": "Sunrise permissions updated and effective immediately.",
     "navigationConfigurationError": "Menu configuration does not match local route: {route}",
     "expand": "Expand all",
     "collapse": "Collapse all",
@@ -2049,6 +2052,7 @@
     "discard": "Discard unsaved menu changes?",
     "saved": "Saved. Applies on next login.",
     "roles": {
+      "SUNRISE": "Sunrise",
       "ROOT": "Super admin",
       "ADMIN": "System admin",
       "EXECUTIVE": "Executive office",
