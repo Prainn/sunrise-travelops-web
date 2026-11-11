@@ -53,7 +53,7 @@
                 v-for="item in sources"
                 :key="item.inquiryId"
                 :value="item.inquiryId"
-                :label="`${item.inquiryCode} · ${item.agencyName}`"
+                :label="`${item.inquiryCode} · ${item.isSeries ? $t('inquiry.series.tag') : item.agencyName}`"
               />
             </el-select>
           </el-form-item>
@@ -72,7 +72,7 @@
           <el-descriptions-item :label="$t('tour.itineraryCode')">
             {{ source.itineraryCode ?? "-" }}
           </el-descriptions-item>
-          <el-descriptions-item :label="$t('common.startDate')">
+          <el-descriptions-item v-if="!source.isSeries" :label="$t('common.startDate')">
             {{ source.startDate ?? "-" }}
           </el-descriptions-item>
           <el-descriptions-item :label="$t('tour.days')">
@@ -93,7 +93,7 @@
           class="mb-3!"
         />
         <el-alert
-          v-if="!source.startDate"
+          v-if="!source.startDate && !source.isSeries"
           type="warning"
           :closable="false"
           :title="$t('tour.noStartDate')"
@@ -107,6 +107,21 @@
           class="mb-3!"
         />
       </template>
+      <el-form-item
+        v-if="isSeriesSource"
+        :label="$t('tour.seriesStartDate')"
+        prop="startDate"
+      >
+        <el-date-picker
+          v-model="form.startDate"
+          type="date"
+          value-format="YYYY-MM-DD"
+          class="w-full!"
+        />
+        <p class="m-0 text-[12px] text-muted">
+          {{ $t("tour.seriesStartDateHint") }}
+        </p>
+      </el-form-item>
 
       <template v-if="isManual">
         <el-alert
@@ -478,6 +493,10 @@ const source = computed(() =>
     ? sources.value.find((item) => item.inquiryId === form.inquiryId)
     : undefined,
 );
+/** 系列询盘来源：每次成团单独填写本团出发日，天数继承冻结报价。 */
+const isSeriesSource = computed(() =>
+  props.tour ? props.tour.isSeriesSource : Boolean(source.value?.isSeries),
+);
 const unit = computed<TourBusinessUnit | null>(() => {
   if (props.tour) return props.tour.businessUnit;
   if (isManual.value) return form.businessUnit || null;
@@ -784,6 +803,7 @@ async function save() {
             sourceModule: sourceModule.value,
             inquiryId: source.value.inquiryId,
             quoteId: source.value.quoteId,
+            ...(source.value.isSeries ? { seriesStartDate: form.startDate } : {}),
           })
           : null;
     if (!current && !body) return;

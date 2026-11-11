@@ -62,7 +62,7 @@
                       {{ selectedItinerary.title }}
                     </h2>
                     <p class="m-0 flex flex-wrap items-center gap-[6px] text-[14px] text-muted">
-                      <span>{{ selectedItinerary.startDate }} — {{ selectedItinerary.endDate }}</span>
+                      <span v-if="!inquiry.isSeries">{{ selectedItinerary.startDate }} — {{ selectedItinerary.endDate }}</span>
                       <el-tag
                         v-for="pax in selectedItinerary.paxTiers"
                         :key="pax"
@@ -102,7 +102,7 @@
                   }}</small>{{ inquiry.contactName }}</span>
                   <span class="min-w-0 flex gap-[6px]"><small class="shrink-0 text-[var(--el-text-color-secondary)]">{{
                     $t("inquiry.plannedDays")
-                  }}</small>{{ $t("itinerary.duration", plannedDuration(inquiry.plannedDays)) }}</span>
+                  }}</small>{{ inquiry.plannedDays === null ? "-" : $t("itinerary.durationDays", { days: inquiry.plannedDays }) }}</span>
                 </div>
               </div>
             </el-collapse-transition>
@@ -167,13 +167,16 @@
             v-if="selectedItinerary?.dailyPlans[index]"
             :ref="(card) => setDayCard(selectedItinerary!.dailyPlans[index]!.id, card)"
             :day="selectedItinerary.dailyPlans[index]"
+            :pax-tiers="selectedItinerary.paxTiers"
+            :hide-date="inquiry.isSeries"
             :breakfast-status="getDayBreakfastStatus(selectedItinerary, index)"
             :destinations="selectedItinerary.destinations"
             :content-editable="contentEditable"
-            :planned-days="selectedItinerary?.dailyPlans.length || inquiry.plannedDays"
+            :planned-days="selectedItinerary?.dailyPlans.length || inquiry.plannedDays || 0"
             :is-last="index === selectedItinerary.dailyPlans.length - 1"
             :plans="dayPlanSummaries[index] ?? EMPTY_DAY_PLANS"
             @update-field="(field, value) => updateDayField(index, field, value)"
+            @update-via="updateViaDestinations(index, $event)"
             @add-item="openResourceDialog(selectedItinerary!.dailyPlans[index]!.id)"
             @edit-item="(item) => openResourceDialog(selectedItinerary!.dailyPlans[index]!.id, item.mealSlot ?? null, item.id)"
             @update-meal="(slot, included) => updateMeal(index, slot, included)"
@@ -196,7 +199,7 @@
         <template #footer>
           <ItineraryWorkspaceFooter v-if="selectedItinerary">
             <template #summary>
-              {{ $t("itinerary.duration", itineraryDuration(selectedItinerary.dailyPlans)) }} ·
+              {{ serviceDisplayText }} ·
               {{ $t("itinerary.resourceItemCount", { count: itemCount }) }}
             </template>
             <el-button :disabled="!canSaveItinerary" class="ml-0!" @click="saveItinerary">
@@ -221,6 +224,7 @@
         :days="reorderBoardDays"
         :deleted-days="deletedBoardDays"
         :start-date="selectedItinerary.startDate"
+        :hide-dates="inquiry.isSeries"
         :readonly="!contentEditable"
         :validate="(change) => reorderItineraryDays(selectedItinerary!, change).issues"
         @apply="applyReorder"
@@ -228,23 +232,26 @@
       <ItineraryPlanDialog
         v-model="isPlanDialogVisible"
         :record="itineraryForm"
-        :planned-days="isEditingPlan ? (selectedItinerary?.dailyPlans.length || inquiry.plannedDays) : inquiry.plannedDays"
+        :planned-days="isEditingPlan ? (selectedItinerary?.dailyPlans.length ?? null) : inquiry.plannedDays"
+        :english="inquiry.businessUnit === 'shengxu'"
         :destination-options="destinationOptions"
         :is-editing="isEditingPlan"
+        :is-series="inquiry.isSeries"
         @submit="submitItineraryPlan"
       />
       <ItineraryVehiclePlansDialog
-        v-if="selectedItinerary"
+        v-if="selectedItinerary && vehicleDraft"
         :model-value="isVehiclePlansDialogVisible"
-        :plans="selectedItinerary.vehiclePlans"
+        :plans="vehicleDraft"
         :saved-plans="savedItinerary?.vehiclePlans ?? []"
         :start-date="selectedItinerary.startDate"
-        :planned-days="selectedItinerary?.dailyPlans.length || inquiry.plannedDays"
-        :passenger-count="passengerCount"
+        :is-series="inquiry.isSeries"
+        :planned-days="selectedItinerary?.dailyPlans.length || inquiry.plannedDays || 0"
+        :pax-tiers="selectedItinerary.paxTiers"
         :editable="contentEditable"
         :saving="isSaving"
         :mode="vehicleMaintenanceMode"
-        @update-plan="updateVehiclePlan"
+        @update-plan="updateVehicleDraftPlan"
         @save="saveSectionDialog('vehicle')"
         @cancel="cancelSectionDialog('vehicle')"
       />
@@ -305,6 +312,8 @@
         :day-label="resourceDay ? `D${resourceDay.dayNumber}` : ''"
         :guest-count="guestCount"
         :destination="resourceDestination"
+        :day-cities="resourceDay ? dayCities(resourceDay) : []"
+        :english="inquiry.businessUnit === 'shengxu'"
         :meal-slot="resourceMealSlot"
         :current-item="resourceCurrentItem"
         :itinerary-items="selectedItinerary?.dailyPlans.flatMap((day) => day.items) ?? []"
@@ -374,15 +383,26 @@
           :item-count="itemCount"
           :duration="itineraryDuration(selectedItinerary.dailyPlans)"
           :editable="priceEditable"
+          :english="inquiry.businessUnit === 'shengxu'"
           @update-quote-option="updateQuoteOption"
           @update-settings="updateQuoteSettings"
         />
         <template #footer>
-          <el-switch
-            v-model="showChildPrice"
-            class="mr-auto"
-            :active-text="$t('itinerary.showChildPriceInPdf')"
-          />
+          <div class="mr-auto flex items-center gap-4">
+            <el-switch
+              v-model="showChildPrice"
+              :active-text="$t('itinerary.showChildPriceInPdf')"
+            />
+            <!-- 客户文件语言独立于界面语言，默认中文；仅盛旭可选英文。 -->
+            <el-radio-group v-if="canChooseExportLanguage" v-model="exportLanguage" size="small">
+              <el-radio-button value="zh">
+                {{ $t("itinerary.exportLanguages.zh") }}
+              </el-radio-button>
+              <el-radio-button value="en">
+                {{ $t("itinerary.exportLanguages.en") }}
+              </el-radio-button>
+            </el-radio-group>
+          </div>
           <el-button
             v-if="canDownloadOriginal || (isDraft && canGeneratePdf)"
             :loading="isGeneratingWord"
@@ -435,7 +455,7 @@
 <script setup lang="ts">
 import { businessUnitName } from "@/constants/identity";
 import { ArrowDown, Bowl, Location, OfficeBuilding, User, Van } from "@element-plus/icons-vue";
-import { plannedDuration, itineraryDuration } from "@/views/inquiries/itineraries/duration";
+import { itineraryDayNumber, itineraryDuration } from "@/views/inquiries/itineraries/duration";
 import { computed, markRaw, nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -463,12 +483,20 @@ import PageShell from "@/components/PageShell/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import { usePageTitle } from "@/composables/usePageTitle";
 import { ITINERARY_STATUS_TAG_TYPES } from "./options";
-import { calculateVehiclePlanAutomaticTotal } from "./vehicle-plans";
+import { getVehicleQuotationMode, needsVehicleModeChangeConfirm } from "./vehicle-plans";
 import type { VehicleMaintenanceMode } from "./vehicle-plans";
 import { useItineraryWorkspace } from "./useItineraryWorkspace";
 
 defineOptions({ name: "InquiryItineraries" });
 const { t } = useI18n();
+/** 地接天数与报价天数；住宿晚数按活动日实际住宿统计，不按天数减一。 */
+const serviceDisplayText = computed(() => {
+  const plan = selectedItinerary.value;
+  if (!plan) return "";
+  const { days, nights } = itineraryDuration(plan.dailyPlans);
+  const displayDays = days + (plan.customerDisplayMode === "returnArrival" ? 1 : 0);
+  return t("itinerary.serviceDisplay", { days, displayDays, nights });
+});
 const EMPTY_DAY_PLANS = { hotel: "", vehicle: "", guide: "" };
 const workspaceLayout = useTemplateRef<InstanceType<typeof ItineraryWorkspaceLayout>>("workspaceLayout");
 const isReorderDialogVisible = ref(false);
@@ -572,15 +600,21 @@ const {
   submitItineraryPlan,
   clearHotelPlan,
   updateDayField,
+  updateViaDestinations,
+  exportLanguage,
+  canChooseExportLanguage,
   updateHotelPlanSelection,
   updateQuoteOption,
-  updateVehiclePlan,
   updateHotelCost,
   updateHotelRate,
   updateGuidePrice,
-  passengerCount,
   resourceDestination,
   sectionDialogSnapshot,
+  vehicleDraft,
+  openVehicleDraft,
+  discardVehicleDraft,
+  updateVehicleDraftPlan,
+  saveVehicleDraft,
   savedItinerary,
   showChildPrice,
 } = useItineraryWorkspace({
@@ -741,7 +775,9 @@ function dayVehicleSummary(day: ItineraryDayRecord) {
       .filter((arrangement) => !day.date || !arrangement.startDate || (arrangement.startDate <= day.date && day.date <= arrangement.endDate))
       .map((arrangement) => {
         const vehicles = arrangement.vehicles.map((item) => `${item.vehicleName}×${item.quantity}`).join("、");
-        const range = arrangement.startDate ? `${arrangement.startDate}~${arrangement.endDate}` : "";
+        const range = inquiry.value?.isSeries
+          ? seriesVehicleRange(plan.startDate, arrangement.startDate, arrangement.endDate)
+          : arrangement.startDate ? `${arrangement.startDate}~${arrangement.endDate}` : "";
         return `${t(`itinerary.vehicleServiceLevels.${vehicle.tier}`)} ${vehicles || range}`.trim();
       }),
   );
@@ -749,8 +785,16 @@ function dayVehicleSummary(day: ItineraryDayRecord) {
   return lines.length > 1 ? t("itineraryWorkspace.alternativePlans", { plans: lines.join(" / ") }) : lines[0]!;
 }
 
-function openDayPlan(section: "hotel" | "vehicle" | "guide") {
-  openSectionDialog(section);
+function seriesVehicleRange(startDate: string, from: string, to: string) {
+  const start = itineraryDayNumber(startDate, from);
+  const end = itineraryDayNumber(startDate, to);
+  if (start === undefined || end === undefined) return "";
+  return start === end ? `D${start}` : `D${start}–D${end}`;
+}
+
+function openDayPlan(section: "hotel" | "vehicle" | "guide", command?: string) {
+  if (section === "vehicle" && command) void openVehiclePlans(command);
+  else openSectionDialog(section);
 }
 
 function applyReorder(change: DayOrderChange) {
@@ -760,6 +804,10 @@ function applyReorder(change: DayOrderChange) {
   ElMessage.success(t("itineraryWorkspace.orderApplied"));
 }
 
+/** 当日出发 → 途经 → 到达城市，供资源弹窗置顶切换。 */
+function dayCities(day: ItineraryDayRecord) {
+  return [...new Set([day.departure, ...day.viaDestinations, day.destination].filter(Boolean))];
+}
 function locateReorderIssue(issue: DayOrderIssue) {
   if (issue.dayId) void workspaceLayout.value?.scrollToDay(issue.dayId);
   else openSectionDialog("vehicle");
@@ -789,46 +837,30 @@ function updateHotelReason(tier: ItineraryHotelTier, destination: string, reason
 function openSectionDialog(section: SectionDialog) {
   const plan = selectedItinerary.value;
   if (!plan) return;
+  if (section === "vehicle") {
+    void openVehiclePlans(getVehicleQuotationMode(plan.vehiclePlans) ?? "itinerary");
+    return;
+  }
   activeSectionDialog.value = section;
   sectionDialogSnapshot.value = cloneItinerary(plan);
-  if (section === "vehicle") {
-    vehicleMaintenanceMode.value = plan.vehiclePlans.some((vehicle) =>
-      vehicle.arrangements.some((arrangement) => arrangement.vehicles.length),
-    )
-      ? "itinerary"
-      : plan.vehiclePlans.some((vehicle) => vehicle.arrangements.length)
-        ? "stage"
-        : "itinerary";
-  }
   setSectionDialogVisible(section, true);
 }
 
-function openVehiclePlans(command: string | number | object) {
+async function openVehiclePlans(command: string | number | object) {
   if (command !== "itinerary" && command !== "stage") return;
-  openSectionDialog("vehicle");
-  vehicleMaintenanceMode.value = command;
-  if (command !== "stage") return;
   const plan = selectedItinerary.value;
   if (!plan) return;
-  // 已是按段形态时只切换模式，不重置已维护的日期段和手填价格。
-  const hasArrangements = plan.vehiclePlans.some((vehicle) => vehicle.arrangements.length);
-  const hasVehicles = plan.vehiclePlans.some((vehicle) =>
-    vehicle.arrangements.some((arrangement) => arrangement.vehicles.length),
-  );
-  if (hasArrangements && !hasVehicles) return;
-  for (const vehicle of plan.vehiclePlans) {
-    const arrangements = vehicle.arrangements.map((arrangement) => ({
-      ...arrangement,
-      vehicles: [],
-    }));
-    const stagePlan = { ...vehicle, arrangements };
-    updateVehiclePlan(vehicle.tier, {
-      ...stagePlan,
-      totalPrice: calculateVehiclePlanAutomaticTotal(stagePlan),
-      pricingMode: "automatic",
-      adjustmentReason: "",
-    });
-  }
+  const current = getVehicleQuotationMode(plan.vehiclePlans);
+  // 只读时始终查看已保存的方式；可编辑时切换已有安排须先确认，取消则不打开弹窗。
+  const mode = contentEditable.value ? command : (current ?? command);
+  const reset = contentEditable.value && needsVehicleModeChangeConfirm(plan.vehiclePlans, mode);
+  if (reset && !(await confirmAction("planning.vehicleModeChangeConfirm"))) return;
+  if (selectedItinerary.value !== plan) return;
+  vehicleMaintenanceMode.value = mode;
+  openVehicleDraft(mode, reset);
+  activeSectionDialog.value = "vehicle";
+  sectionDialogSnapshot.value = undefined;
+  setSectionDialogVisible("vehicle", true);
 }
 
 function cancelSectionDialog(section: SectionDialog) {
@@ -841,6 +873,7 @@ function cancelSectionDialog(section: SectionDialog) {
       guideShopping.value = plan.guidePlans[0]?.shopping ?? false;
     }
   }
+  if (section === "vehicle") discardVehicleDraft();
   activeSectionDialog.value = undefined;
   sectionDialogSnapshot.value = undefined;
   setSectionDialogVisible(section, false);
@@ -851,7 +884,8 @@ function cloneItinerary(plan: ItineraryRecord) {
 }
 
 async function saveSectionDialog(section: SectionDialog) {
-  if (activeSectionDialog.value !== section || !(await saveItinerary())) return;
+  if (activeSectionDialog.value !== section) return;
+  if (!(await (section === "vehicle" ? saveVehicleDraft() : saveItinerary()))) return;
   activeSectionDialog.value = undefined;
   sectionDialogSnapshot.value = undefined;
   setSectionDialogVisible(section, false);
@@ -867,6 +901,7 @@ watch(selectedItineraryId, () => {
   isPriceAdjustmentsDialogVisible.value = false;
   activeSectionDialog.value = undefined;
   sectionDialogSnapshot.value = undefined;
+  discardVehicleDraft();
 });
 const dayCards = new Map<string, { expand: () => void }>();
 function setDayCard(id: string, card: unknown) {
@@ -874,6 +909,12 @@ function setDayCard(id: string, card: unknown) {
   else dayCards.delete(id);
 }
 async function locateIssue(target: string) {
+  if (!target) return;
+  if (target === "itinerary-basics") {
+    isQuoteDrawerVisible.value = false;
+    await openEditDialog();
+    return;
+  }
   if (target.startsWith("day-")) {
     isQuoteDrawerVisible.value = false;
     await nextTick();

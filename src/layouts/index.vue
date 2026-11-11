@@ -5,6 +5,8 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, onUnmounted } from "vue";
+import { useWhatsappNotificationsStore } from "@/stores/whatsapp-notifications";
 import { useRoute } from "vue-router";
 import { useLayout } from "./composables/useLayout";
 import { useLayoutDevice } from "./composables/useLayoutDevice";
@@ -18,6 +20,9 @@ const route = useRoute();
 const { currentLayout, isWorkspaceChromeless, isMobile } = useLayout();
 
 useLayoutDevice();
+const notifications = useWhatsappNotificationsStore();
+onMounted(notifications.start);
+onUnmounted(notifications.stop);
 
 const currentLayoutComponent = computed(() => {
   if (isWorkspaceChromeless.value && !isMobile.value) return LeftLayout;

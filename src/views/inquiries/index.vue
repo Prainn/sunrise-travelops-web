@@ -1,7 +1,6 @@
 <template>
   <PageShell>
     <InquirySearchForm
-      v-model:business-unit="businessUnit"
       v-model:keywords="keywords"
       v-model:status="status"
       v-model:owner="owner"
@@ -39,6 +38,8 @@
       @archive="archiveInquiry"
       @manage-itineraries="openItineraryManagement"
       @view-logs="openInquiryLogs"
+      @follow-ups="openFollowUps"
+      @view-tours="openRelatedTours"
     />
     <InquiryEditorDialog
       v-model="isEditorVisible"
@@ -51,6 +52,17 @@
       @submit="saveInquiry"
     />
     <InquiryDetailDrawer v-model="isDetailVisible" :record="selectedInquiry" />
+    <InquiryFollowUpDialog
+      v-if="followUpInquiry"
+      v-model="isFollowUpVisible"
+      :inquiry="followUpInquiry"
+      @changed="fetchInquiries"
+    />
+    <InquiryToursDialog
+      v-if="toursInquiry"
+      v-model="isToursVisible"
+      :inquiry="toursInquiry"
+    />
   </PageShell>
 </template>
 
@@ -69,9 +81,11 @@ import { useUserStore } from "@/stores/user";
 import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";
 import InquiryDetailDrawer from "./components/InquiryDetailDrawer.vue";
 import InquiryEditorDialog from "./components/InquiryEditorDialog.vue";
+import InquiryFollowUpDialog from "./components/InquiryFollowUpDialog.vue";
+import InquiryToursDialog from "./components/InquiryToursDialog.vue";
 import InquirySearchForm from "./components/InquirySearchForm.vue";
 import InquiryTable from "./components/InquiryTable.vue";
-import { isInquiryReadOnly } from "./inquiry-workflow";
+import { isInquiryReadOnly, staleDeleteReason } from "./inquiry-workflow";
 defineOptions({ name: "InquiryList" });
 const { t } = useI18n();
 const openInNewTab = useOpenInNewTab();
@@ -84,7 +98,6 @@ const total = ref(0);
 const isLoading = ref(false);
 const listError = ref("");
 const keywords = ref("");
-const businessUnit = ref<NonNullable<InquiryRecord["businessUnit"]> | "">("");
 const status = ref<InquiryStatus | "">("");
 const owner = ref("");
 const sourceChannel = ref("");
@@ -108,7 +121,7 @@ async function fetchInquiries() {
   try {
     const result = await inquiryService.list({
       businessUnit:
-        user.userInfo.scope === "headquarters" ? businessUnit.value || undefined : undefined,
+        user.userInfo.scope === "headquarters" ? "shengxu" : undefined,
       page: pageNum.value,
       pageSize: pageSize.value,
       keyword: keywords.value === exactCode.value ? undefined : keywords.value,
@@ -130,7 +143,7 @@ async function fetchInquiries() {
   }
 }
 const hasActiveFilters = computed(() =>
-  Boolean(keywords.value || businessUnit.value || status.value || owner.value || sourceChannel.value),
+  Boolean(keywords.value || status.value || owner.value || sourceChannel.value),
 );
 // 缓存页面切回时同一 code 不再重复应用，保留用户之后调整的筛选和页码。
 let appliedRouteCode: string | undefined;
@@ -139,7 +152,6 @@ function applyRouteCode() {
   const code = typeof route.query.code === "string" ? route.query.code : "";
   if (code === appliedRouteCode) return;
   appliedRouteCode = code;
-  businessUnit.value = "";
   exactCode.value = code;
   keywords.value = code;
   status.value = "";
@@ -158,18 +170,19 @@ async function enterPage() {
   isActive = true;
   await fetchInquiries();
   try {
-    ownerOptions.value = await inquiryService.owners();
+    ownerOptions.value = await inquiryService.owners(user.userInfo.scope === "headquarters" ? "shengxu" : undefined);
   } catch (error) {
     showError(error);
   }
 }
 onMounted(enterPage);
-useRefreshOnActivated(enterPage);
+// 行程/报价在新浏览器标签页编辑会递增询盘 version，切回时按当前筛选和页码刷新。
+useRefreshOnActivated(enterPage, { refreshOnVisible: fetchInquiries });
 const reloadFromFilters = useDebounceFn(() => {
   if (pageNum.value === 1) void fetchInquiries();
   else pageNum.value = 1;
 }, 300);
-watch([keywords, status, owner, sourceChannel, businessUnit], () => {
+watch([keywords, status, owner, sourceChannel], () => {
   if (isActive) void reloadFromFilters();
 });
 watch([pageNum, pageSize], () => {
@@ -181,6 +194,7 @@ function createEmptyInquiry(): InquiryRecord {
     id: "",
     version: 0,
     code: "",
+    isSeries: false,
     agencyId: "",
     contactId: "",
     agencyCode: "",
@@ -211,7 +225,6 @@ function resetQuery() {
     else pageNum.value = 1;
     return;
   }
-  businessUnit.value = "";
   keywords.value = "";
   status.value = "";
   owner.value = "";
@@ -229,20 +242,23 @@ function openCreateDialog() {
 // 快速点击多行时只采用最后一次打开的记录，过期响应直接丢弃。
 let openVersion = 0;
 async function openEditDialog(record: InquiryRecord) {
-  if (isInquiryReadOnly(record.status, record.hasActiveTour)) return;
+  if (isInquiryReadOnly(record.status, record.hasActiveTour, record.isSeries)) return;
   const version = ++openVersion;
   try {
     const detail = await inquiryService.detail(record.id);
     if (version !== openVersion) return;
-    if (isInquiryReadOnly(detail.status, detail.hasActiveTour)) {
+    if (isInquiryReadOnly(detail.status, detail.hasActiveTour, detail.isSeries)) {
       await fetchInquiries();
       return;
     }
-    const agency = await resourceService.agencyApi.getDetail(detail.agencyId);
-    if (version !== openVersion) return;
-    const index = resourceService.agencies.findIndex((item) => item.id === agency.id);
-    if (index >= 0) resourceService.agencies.splice(index, 1, agency);
-    else resourceService.agencies.push(agency);
+    // 系列询盘没有组团社，不加载组团社详情。
+    if (detail.agencyId) {
+      const agency = await resourceService.agencyApi.getDetail(detail.agencyId);
+      if (version !== openVersion) return;
+      const index = resourceService.agencies.findIndex((item) => item.id === agency.id);
+      if (index >= 0) resourceService.agencies.splice(index, 1, agency);
+      else resourceService.agencies.push(agency);
+    }
     editingId.value = detail.id;
     inquiryForm.value = detail;
     isEditorVisible.value = true;
@@ -266,6 +282,18 @@ function openItineraryManagement(record: InquiryRecord) {
 }
 function openInquiryLogs(record: InquiryRecord) {
   openInNewTab({ name: "InquiryLogs", params: { inquiryId: record.id } });
+}
+const isFollowUpVisible = ref(false);
+const followUpInquiry = ref<InquiryRecord>();
+function openFollowUps(record: InquiryRecord) {
+  followUpInquiry.value = record;
+  isFollowUpVisible.value = true;
+}
+const isToursVisible = ref(false);
+const toursInquiry = ref<InquiryRecord>();
+function openRelatedTours(record: InquiryRecord) {
+  toursInquiry.value = record;
+  isToursVisible.value = true;
 }
 // 保存期间弹窗不可关闭，避免旧请求返回后关掉新打开的弹窗。
 const saving = ref(false);
@@ -303,12 +331,20 @@ function deleteInquiry(record: InquiryRecord) {
     try {
       await inquiryService.delete(record);
       ElMessage.success(t("common.deleteSuccess"));
-      if (inquiryStore.value.length === 1 && pageNum.value > 1) pageNum.value -= 1;
-      else await fetchInquiries();
+      await reloadAfterRemoval();
     } catch (error) {
-      showError(error);
+      // 过期行只刷新供用户核对，不用新版本自动重试删除。
+      const stale = staleDeleteReason(error);
+      if (!stale) return showError(error);
+      ElMessage.warning(t(stale === "removed" ? "inquiry.deleteNotFound" : "inquiry.deleteVersionConflict"));
+      await (stale === "removed" ? reloadAfterRemoval() : fetchInquiries());
     }
   });
+}
+/** 当前页最后一行被移除时回到上一页（由页码监听加载），否则刷新当前页。 */
+async function reloadAfterRemoval() {
+  if (inquiryStore.value.length === 1 && pageNum.value > 1) pageNum.value -= 1;
+  else await fetchInquiries();
 }
 function archiveInquiry(record: InquiryRecord) {
   if (isInquiryReadOnly(record.status, record.hasActiveTour)) return;

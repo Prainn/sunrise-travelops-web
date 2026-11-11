@@ -10,7 +10,7 @@ import type {
   RestaurantRecord,
   TransportRecord,
 } from "@/types/resource";
-import { createId, divideMoney, multiplyMoney, roundMoney } from "@/utils";
+import { createId, divideMoney, multiplyMoney, roundMoney, sumMoney } from "@/utils";
 
 export interface ResourcePriceOption {
   id: string;
@@ -126,7 +126,7 @@ export function getResourcePriceOptions(
         details: [
           { labelKey: "resource.code", value: attraction.code },
           { labelKey: "resource.attractionName", value: attraction.name },
-          { labelKey: "attraction.area", value: attraction.area },
+          { labelKey: "common.cityRegion", value: attraction.area },
           {
             labelKey: "attraction.category",
             value: attraction.category ? attractionCategoryLabelKeys[attraction.category] : "",
@@ -204,6 +204,8 @@ export function calculateItem(
           quantity,
         ),
     remark: "",
+    resourceNameEn: "",
+    remarkEn: "",
   };
 }
 
@@ -213,6 +215,10 @@ export function recalculateItem(item: ItineraryResourceItem) {
     return;
   }
   item.unitCost = roundMoney(item.unitCost);
+  if (item.unit === "table" && item.tableCount != null) {
+    item.totalCost = multiplyMoney(item.unitCost, item.tableCount);
+    return;
+  }
   item.totalCost = multiplyMoney(
     item.unit === "table" && item.dinerCount
       ? divideMoney(item.unitCost, item.dinerCount)
@@ -223,4 +229,15 @@ export function recalculateItem(item: ItineraryResourceItem) {
 
 export function getDefaultResourceQuantity() {
   return 1;
+}
+
+/** 桌数餐食保存整团总价，展示时与报价一样逐项分摊并按分舍入。 */
+export function getItemPerPersonCost(item: ItineraryResourceItem, pax: number | undefined): number | null {
+  if (item.totalCost === null) return null;
+  if (item.tableCount == null) return item.totalCost;
+  return pax && pax > 0 ? divideMoney(item.totalCost, pax) : null;
+}
+
+export function getDayResourceCost(items: ItineraryResourceItem[], pax: number | undefined): number {
+  return sumMoney(items.map(item => getItemPerPersonCost(item, pax) ?? 0));
 }

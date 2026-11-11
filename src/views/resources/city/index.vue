@@ -39,6 +39,7 @@ defineOptions({ name: "CityResource" });
 const columns: ResourceColumn[] = [
   { prop: "code", labelKey: "resource.code" },
   { prop: "name", labelKey: "common.cityRegion" },
+  { prop: "englishName", labelKey: "common.englishName" },
   { prop: "province", labelKey: "city.province" },
   { prop: "longitude", labelKey: "city.longitude" },
   { prop: "latitude", labelKey: "city.latitude" },
@@ -53,6 +54,7 @@ const maintenance = useResourceMaintenance<CityRecord>({
     code: "",
     name: "",
     province: "",
+    englishName: "",
     longitude: null,
     latitude: null,
     status: "enabled",
@@ -61,6 +63,7 @@ const maintenance = useResourceMaintenance<CityRecord>({
 const { isLoading, loadError, rows, total, record, isDialogVisible, isEditing, loadRecords } = maintenance;
 const fields = computed<ResourceFormField[]>(() => [
   { prop: "name", labelKey: "common.cityRegion", required: true, disabled: isEditing.value },
+  { prop: "englishName", labelKey: "common.englishName", maxlength: 100 },
   {
     prop: "province",
     labelKey: "city.province",
@@ -69,13 +72,14 @@ const fields = computed<ResourceFormField[]>(() => [
     clearable: true,
     options: provinceOptions.value,
   },
-  // 不设 precision，编辑时保留原有坐标精度。
+  // 坐标为 double precision，允许小数；最多 8 位小数。
   {
     prop: "longitude",
     labelKey: "city.longitude",
     type: "number",
     min: -180,
     max: 180,
+    precision: 8,
     pairedWith: "latitude",
   },
   {
@@ -84,6 +88,7 @@ const fields = computed<ResourceFormField[]>(() => [
     type: "number",
     min: -90,
     max: 90,
+    precision: 8,
     pairedWith: "longitude",
   },
 ]);

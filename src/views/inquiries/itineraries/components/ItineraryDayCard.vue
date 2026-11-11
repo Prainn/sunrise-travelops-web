@@ -5,7 +5,7 @@
     :day-number="day.dayNumber"
     :departure="day.departure || $t('itinerary.departure')"
     :destination="day.destination || $t('itinerary.destination')"
-    :date="day.date"
+    :date="hideDate ? undefined : day.date"
     :body-id="`day-body-${day.id}`"
   >
     <ItineraryDayResourceBar
@@ -21,6 +21,7 @@
       :destinations="destinations"
       :editable="contentEditable"
       @update-field="updateField"
+      @update-via="emit('update-via', $event)"
     />
 
     <!-- 新增一天只展示基础信息；有资源或已勾选午/晚餐后再显示当日资源区 -->
@@ -106,9 +107,26 @@
             ¥{{ formatMoney(scope.row.unitCost) }}
           </template>
         </el-table-column>
+        <el-table-column
+          v-if="day.items.some(item => item.tableCount != null)"
+          :label="$t('itinerary.resourceTotalPrice')"
+          width="180"
+          align="right"
+        >
+          <template #default="{ row }">
+            {{ row.tableCount != null && row.unitCost != null ? '¥' + formatMoney(row.totalCost) : '—' }}
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('itinerary.resourceCostPerPerson')" width="120" align="right">
           <template #default="scope">
-            ¥{{ formatMoney(scope.row.totalCost) }}
+            <el-tooltip placement="top" :disabled="scope.row.tableCount == null || paxTiers.length < 2">
+              <template #content>
+                <div v-for="pax in paxTiers" :key="pax">
+                  {{ pax }} PAX：{{ itemCostLabel(day.items[scope.$index]!, pax) }}
+                </div>
+              </template>
+              <span>{{ itemCostLabel(day.items[scope.$index]!, paxTiers[0]) }}</span>
+            </el-tooltip>
           </template>
         </el-table-column>
         <el-table-column
@@ -129,9 +147,16 @@
       </DataTable>
       <FeedbackState v-else :title="$t('itinerary.noDailyResources')" />
       <div
-        class="day-card__subtotal mt-[12px] flex items-center justify-between text-muted"
+        class="day-card__subtotal mt-[12px] text-[80%] text-muted"
       >
-        <span>{{ $t("itinerary.dayCost") }} ¥{{ formatMoney(dayCost) }}</span>
+        <el-tooltip placement="top" :disabled="!hasTableMeals || paxTiers.length < 2">
+          <template #content>
+            <div v-for="pax in paxTiers" :key="pax">
+              {{ pax }} PAX：¥{{ formatMoney(getDayResourceCost(day.items, pax)) }}
+            </div>
+          </template>
+          <span>{{ $t("itinerary.dayPerPersonCost") }} ¥{{ formatMoney(dayCost) }}</span>
+        </el-tooltip>
       </div>
     </template>
   </ItineraryDayCardFrame>
@@ -140,19 +165,26 @@
 <script setup lang="ts">
 import { computed, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
-import { Bowl, Coffee, OfficeBuilding, Location, User, Van } from "@element-plus/icons-vue";
-import type { ItineraryDayRecord, ItineraryResourceItem, MealSlot } from "@/types/itinerary";
-import { formatMoney, sumMoney } from "@/utils";
+import { Bowl, Coffee, OfficeBuilding, Location, User } from "@element-plus/icons-vue";
+import type {
+  ItineraryDayRecord,
+  ItineraryEditableDayField,
+  ItineraryResourceItem,
+  MealSlot,
+} from "@/types/itinerary";
+import { formatMoney } from "@/utils";
+import { getItemPerPersonCost, getDayResourceCost } from "../pricing";
 import DataTable from "@/components/DataTable/index.vue";
 import FeedbackState from "@/components/FeedbackState/index.vue";
 import ItineraryDayCardFrame from "./ItineraryDayCardFrame.vue";
 import ItineraryDayForm from "./ItineraryDayForm.vue";
 import ItineraryDayResourceBar, { type DayResourceAction } from "./ItineraryDayResourceBar.vue";
 
-type EditableDayField =
-  "departure" | "destination" | "overnightDestination" | "transport" | "description";
+type EditableDayField = ItineraryEditableDayField;
 const props = defineProps<{
   day: ItineraryDayRecord;
+  paxTiers: number[];
+  hideDate?: boolean;
   breakfastStatus: "included" | "excluded" | "pending";
   destinations: string[];
   contentEditable: boolean;
@@ -163,12 +195,13 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   "update-field": [field: EditableDayField, value: string | null];
+  "update-via": [cities: string[]];
   "update-meal": [slot: MealSlot, included: boolean];
   "select-meal": [slot: MealSlot];
   "add-item": [];
   "edit-item": [item: ItineraryResourceItem];
   "remove-item": [index: number];
-  "open-plan": [section: "hotel" | "vehicle" | "guide"];
+  "open-plan": [section: "hotel" | "vehicle" | "guide", command?: string];
 }>();
 const frame = useTemplateRef<InstanceType<typeof ItineraryDayCardFrame>>("frame");
 defineExpose({
@@ -177,7 +210,12 @@ defineExpose({
 const hasDayResources = computed(
   () => props.day.items.length > 0 || props.day.meals.lunch || props.day.meals.dinner,
 );
-const dayCost = computed(() => sumMoney(props.day.items.map((item) => item.totalCost ?? 0)));
+const hasTableMeals = computed(() => props.day.items.some(item => item.tableCount != null));
+const dayCost = computed(() => getDayResourceCost(props.day.items, props.paxTiers[0]));
+function itemCostLabel(item: ItineraryResourceItem, pax: number | undefined) {
+  const value = getItemPerPersonCost(item, pax);
+  return value === null ? "—" : "¥" + formatMoney(value);
+}
 const { t } = useI18n();
 
 function mealLabel(slot: MealSlot) {
@@ -214,14 +252,6 @@ const resourceActions = computed<DayResourceAction[]>(() => {
       active: Boolean(props.plans.hotel),
     },
     {
-      key: "vehicle",
-      label: t("itineraryWorkspace.actions.vehicle"),
-      icon: Van,
-      scope: t("itineraryWorkspace.scopes.byDateRange"),
-      hint: t("itineraryWorkspace.hints.normalVehicle"),
-      active: Boolean(props.plans.vehicle),
-    },
-    {
       key: "guide",
       label: t("itineraryWorkspace.actions.guide"),
       icon: User,
@@ -232,7 +262,7 @@ const resourceActions = computed<DayResourceAction[]>(() => {
   ];
 });
 const planSummaries = computed(() =>
-  (["hotel", "vehicle", "guide"] as const)
+  (["hotel", "guide"] as const)
     .filter((key) => props.plans[key])
     .map((key) => ({ label: t(`itineraryWorkspace.actions.${key}`), value: props.plans[key] })),
 );
@@ -241,10 +271,10 @@ function editItem(index: number) {
   const item = props.day.items[index];
   if (item) emit("edit-item", item);
 }
-function selectResource(key: string) {
+function selectResource(key: string, command?: string) {
   if (key === "attraction") emit("add-item");
   else if (key === "lunch" || key === "dinner") emit("select-meal", key);
-  else if (key === "hotel" || key === "vehicle" || key === "guide") emit("open-plan", key);
+  else if (key === "hotel" || key === "vehicle" || key === "guide") emit("open-plan", key, command);
 }
 function updateField(field: EditableDayField, value: string | null) {
   emit("update-field", field, value);

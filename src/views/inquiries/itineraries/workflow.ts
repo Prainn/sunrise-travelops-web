@@ -1,5 +1,9 @@
 import type { ItineraryRecord } from "@/types/itinerary";
-import { getEnabledHotelPlans, getIncompleteHotelPlanTiers } from "./hotel-plans";
+import {
+  getEnabledHotelPlans,
+  getIncompleteHotelPlanTiers,
+  isNoAccommodationItinerary,
+} from "./hotel-plans";
 import { getEnabledVehiclePlans, getIncompleteVehiclePlanTiers } from "./vehicle-plans";
 export type DayCountMismatch = "shorter" | "longer" | null;
 
@@ -56,7 +60,10 @@ export function getItineraryValidationIssues(plan: ItineraryValidationInput): Pd
       }
     }
   }
-  if (!getEnabledHotelPlans(plan).length) {
+  // 全程明确不住宿时无需酒店方案；有实际住宿时保持完整酒店要求。
+  if (isNoAccommodationItinerary(plan)) {
+    // 无酒店要求
+  } else if (!getEnabledHotelPlans(plan).length) {
     issues.push({ key: "itinerary.pdfHotelPlanRequired", target: "itinerary-hotels" });
   } else if (getIncompleteHotelPlanTiers(plan).length) {
     issues.push({ key: "itinerary.validation.hotels", target: "itinerary-hotels" });

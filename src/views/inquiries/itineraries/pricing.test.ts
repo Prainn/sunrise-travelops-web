@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { calculateItem, recalculateItem, getResourcePriceOptions, type PricingResources } from "./pricing";
+import { calculateItem, recalculateItem, getItemPerPersonCost, getDayResourceCost, getResourcePriceOptions, type PricingResources } from "./pricing";
 
 vi.mock("@/lang/utils", () => ({
   translate: (key: string) => key,
@@ -35,4 +35,30 @@ describe("meal cent rounding", () => {
     expect(item.unitCost).toBe(1.01);
     expect(item.totalCost).toBe(1.01);
   });
+});
+
+it("calculates table meals as a shared group total and preserves an unfilled price", () => {
+  const option = { type: "restaurant", resourceId: "r", resourceName: "餐", priceName: "", unit: "table", unitCost: 650, dinerCount: 10 } as Parameters<typeof calculateItem>[0];
+  const item = { ...calculateItem(option, 1), tableCount: 2 };
+  recalculateItem(item);
+  expect(item.totalCost).toBe(1300);
+  item.unitCost = null;
+  recalculateItem(item);
+  expect(item.totalCost).toBeNull();
+});
+
+it("shows each PAX share and combines table meals with per-person resources without changing saved totals", () => {
+  const option = { type: "restaurant", resourceId: "r", resourceName: "餐", priceName: "", unit: "table", unitCost: 650, dinerCount: 10 } as Parameters<typeof calculateItem>[0];
+  const meal = { ...calculateItem(option, 1), tableCount: 2 };
+  recalculateItem(meal);
+  const attraction = { ...meal, tableCount: undefined, totalCost: 125 };
+  expect([10, 15, 25].map(pax => getItemPerPersonCost(meal, pax))).toEqual([130, 86.67, 52]);
+  expect([10, 15, 25].map(pax => getDayResourceCost([meal, attraction], pax))).toEqual([255, 211.67, 177]);
+  expect(meal.totalCost).toBe(1300);
+  expect(getItemPerPersonCost(calculateItem(option, 1), 15)).toBe(65);
+  expect(getItemPerPersonCost({ ...meal, totalCost: null }, 15)).toBeNull();
+  expect(getItemPerPersonCost({ ...meal, totalCost: 0 }, 15)).toBe(0);
+  expect(getItemPerPersonCost(meal, undefined)).toBeNull();
+  const smallMeal = { ...meal, totalCost: 1 };
+  expect(getDayResourceCost([smallMeal, smallMeal], 3)).toBe(0.66);
 });

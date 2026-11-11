@@ -20,7 +20,7 @@
     >
       <el-table-column prop="nameZh" :label="$t('common.nameZh')" min-width="160" />
       <el-table-column prop="nameEn" :label="$t('common.nameEn')" min-width="180" />
-      <el-table-column :label="$t('websiteConfig.belongsToCity')" min-width="120">
+      <el-table-column :label="$t('common.cityRegion')" min-width="120">
         <template #default="{ row }">
           {{ labels[row.cityId] ?? row.cityId }}
         </template>
@@ -89,7 +89,7 @@
         label-width="auto"
       >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
-          <el-form-item :label="$t('websiteConfig.belongsToCity')" prop="cityId">
+          <el-form-item :label="$t('common.cityRegion')" prop="cityId">
             <WebsiteConfigSelect
               v-model="record.cityId"
               group="cities"

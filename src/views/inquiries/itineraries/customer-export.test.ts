@@ -1,7 +1,8 @@
 import { createRequire } from "node:module";
 import { describe, expect, it, vi } from "vitest";
 import type { InquiryRecord } from "@/types/inquiry";
-import type { ItineraryRecord, PaxQuoteCalculation } from "@/types/itinerary";
+import type { CustomerPresentation, ItineraryRecord, PaxQuoteCalculation } from "@/types/itinerary";
+import { buildCustomerDocument, type CustomerSnapshot } from "./customer-document";
 import { generateItineraryWordDocument } from "./docx";
 import { getDayBreakfastStatus } from "./hotel-plans";
 import { buildPdfHtml } from "./pdf";
@@ -61,14 +62,46 @@ function fixture(tier: number | string = 4) {
   return { itinerary, snapshot: { calculation, quoteCode: "ITI-REGRESSION-V1", quoteVersion: 1 } };
 }
 
-async function exportText(sample: ReturnType<typeof fixture>, children: boolean) {
-  const html = buildPdfHtml(sample.itinerary, {} as InquiryRecord, "2026-10-14", sample.snapshot, children);
-  const word = await generateItineraryWordDocument(sample.itinerary, sample.snapshot, children);
+async function exportText(sample: ReturnType<typeof fixture>, children: boolean, options: CustomerSnapshot = {}) {
+  const snapshot = { ...sample.snapshot, ...options };
+  const html = buildPdfHtml(sample.itinerary, (options.inquiry ?? {}) as InquiryRecord, "2026-10-14", snapshot, children);
+  const word = await generateItineraryWordDocument(sample.itinerary, snapshot, children);
   const archive = await zip.loadAsync(await word.blob.arrayBuffer());
   return [html, await archive.file("word/document.xml").async("string")];
 }
 
 describe("customer quotation exports", () => {
+  it.each([false, true])("shows series day numbers and the return day in both formats (frozen=%s)", async (frozen) => {
+    const sample = fixture();
+    sample.itinerary.customerDisplayMode = "returnArrival";
+    sample.itinerary.returnArrivalText = "返回温馨的家";
+    const content: CustomerPresentation["zh"] = {
+      title: sample.itinerary.title,
+      country: "中国",
+      days: sample.itinerary.dailyPlans.map((day, index) => ({
+        ...day, dayNumber: index + 1, route: [day.departure], description: day.description ?? "",
+        overnightDestination: day.overnightDestination ?? "", items: [],
+      })),
+      returnArrival: { dayNumber: 3, date: "2026-10-16", text: sample.itinerary.returnArrivalText },
+      hotels: [], notes: [], transportFees: [],
+    };
+    const customerPresentation = frozen ? {
+      version: 1 as const, serviceDays: 2, displayDays: 3, accommodationNights: 1,
+      noAccommodation: false, missingEnglish: [], zh: content, en: content,
+    } : undefined;
+    for (const output of await exportText(sample, false, { inquiry: { isSeries: true }, customerPresentation })) {
+      expect(output).toMatch(/>D1</);
+      expect(output).toMatch(/>D2</);
+      expect(output).toMatch(/>D3</);
+      expect(output).toContain("返回温馨的家");
+      expect(output).not.toMatch(/>1[456]\/10</);
+    }
+    for (const output of await exportText(sample, false, { inquiry: { isSeries: false }, customerPresentation })) {
+      expect(output).toMatch(/>14\/10</);
+      expect(output).toMatch(/>16\/10</);
+    }
+  });
+
   it.each([false, true])("omits tips with children=%s without changing frozen values", async (children) => {
     const sample = fixture();
     const before = structuredClone(sample);
@@ -118,4 +151,19 @@ describe("customer quotation exports", () => {
     itinerary.dailyPlans[0]!.overnightDestination = "";
     expect(getDayBreakfastStatus(itinerary, 1)).toBe("excluded");
   });
+});
+
+it("exports missing English as blank in both formats, including snapshots without English", async () => {
+  const sample = fixture();
+  sample.itinerary.customerDisplayMode = "returnArrival";
+  const customer = buildCustomerDocument(sample.itinerary, { exportLanguage: "en" });
+  expect(customer.title).toBe("");
+  expect(customer.schedule).toHaveLength(3);
+  expect(customer.schedule[0]).toMatchObject({ route: "", transport: "", description: "", hotel: "" });
+  expect(customer.schedule[2]!.description).toBe("");
+  for (const output of await exportText(sample, true, { exportLanguage: "en" })) {
+    for (const source of ["杭州两日游", "西湖游览", "上海", "杭州", "不应导出内部调价原因"])
+      expect(output).not.toContain(source);
+    expect(output).toContain("1,000.00");
+  }
 });

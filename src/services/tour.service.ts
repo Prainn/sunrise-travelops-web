@@ -27,6 +27,8 @@ export interface TourListQuery {
   collectCoordinatorId?: string;
   operatorId?: string;
   agencyName?: string;
+  /** 询盘关联团列表（系列询盘可有多个团）。 */
+  inquiryId?: string;
 }
 
 export interface PagedKeywordQuery {

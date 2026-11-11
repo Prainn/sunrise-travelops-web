@@ -1,7 +1,7 @@
 <template>
   <AppDialog
     :model-value="modelValue"
-    :title="$t('planning.vehiclePlans')"
+    :title="`${$t('planning.vehiclePlans')} · ${$t(mode === 'stage' ? 'planning.byStage' : 'planning.byItinerary')}`"
     size="xl"
     destroy-on-close
     :close-on-click-modal="false"
@@ -23,7 +23,7 @@
             </el-button>
           </template>
 
-          <el-form label-position="left">
+          <el-form label-position="left" label-width="auto">
             <div
               v-for="(arrangement, index) in plan.arrangements"
               :key="arrangement.id"
@@ -43,7 +43,47 @@
                 </el-button>
               </div>
 
-              <el-form-item :label="$t('planning.vehicleDateRange')">
+              <el-form-item v-if="isSeries" :label="$t('planning.vehicleDayRange')">
+                <div class="flex w-full items-center gap-2">
+                  <el-select
+                    class="flex-1"
+                    autocomplete="new-password"
+                    :model-value="itineraryDayNumber(startDate, arrangement.startDate)"
+                    :aria-label="$t('planning.vehicleStartDay')"
+                    :placeholder="$t('planning.vehicleStartDay')"
+                    :disabled="!editable"
+                    filterable
+                    @update:model-value="changeStartDay(plan, arrangement, $event)"
+                  >
+                    <el-option
+                      v-for="day in plannedDays"
+                      :key="day"
+                      :value="day"
+                      :label="`D${day}`"
+                    />
+                  </el-select>
+                  <span aria-hidden="true">—</span>
+                  <el-select
+                    class="flex-1"
+                    autocomplete="new-password"
+                    :model-value="itineraryDayNumber(startDate, arrangement.endDate)"
+                    :aria-label="$t('planning.vehicleEndDay')"
+                    :placeholder="$t('planning.vehicleEndDay')"
+                    :disabled="!editable || !arrangement.startDate"
+                    filterable
+                    @update:model-value="changeEndDay(plan, arrangement, $event)"
+                  >
+                    <el-option
+                      v-for="day in plannedDays"
+                      :key="day"
+                      :value="day"
+                      :label="`D${day}`"
+                      :disabled="day < (itineraryDayNumber(startDate, arrangement.startDate) ?? 1)"
+                    />
+                  </el-select>
+                </div>
+              </el-form-item>
+              <el-form-item v-else :label="$t('planning.vehicleDateRange')">
                 <el-date-picker
                   class="!w-full"
                   :model-value="arrangementDateRange(arrangement)"
@@ -88,20 +128,19 @@
                       {{ $t("common.delete") }}
                     </el-button>
                   </div>
-                </template>
 
-                <div
-                  v-if="mode === 'itinerary' && !isAddingNewVehicle"
-                  class="flex items-center justify-center w-full mb-4"
-                >
-                  <el-button @click="isAddingNewVehicle = true">
-                    {{ $t("common.create") }}
-                  </el-button>
-                </div>
-                <template v-else-if="mode === 'itinerary'">
+                  <div
+                    v-if="addingVehicleId !== arrangement.id"
+                    class="flex items-center justify-center w-full mb-4"
+                  >
+                    <el-button :disabled="!editable" @click="addingVehicleId = arrangement.id">
+                      {{ $t("common.create") }}
+                    </el-button>
+                  </div>
                   <el-form-item
+                    v-else
                     :label="$t('planning.arrangementVehicles')"
-                    class="w-full items-center justify-center"
+                    class="w-full [&_.el-form-item__content]:flex-nowrap"
                   >
                     <ResourceSelect
                       :key="`${arrangement.id}-${arrangement.vehicles.length}`"
@@ -113,40 +152,49 @@
                         arrangement.vehicles.map((vehicle) => vehicle.vehicleId)
                       "
                       :placeholder="$t('planning.addVehicle')"
-                      class="w-300px!"
+                      class="min-w-0 flex-1!"
                       @update:model-value="addVehicle(plan.tier, arrangement.id, $event)"
                     />
-                    <el-button class="ml-4" @click="isAddingNewVehicle = false">
+                    <el-button class="ml-4" @click="addingVehicleId = ''">
                       {{ $t("common.cancel") }}
                     </el-button>
                   </el-form-item>
                 </template>
 
                 <el-form-item
+                  v-for="price in arrangement.paxPrices ?? []"
+                  :key="price.pax"
                   :label="
-                    $t(
-                      mode === 'stage' ? 'planning.stageTotal' : 'planning.arrangementVehiclePrice',
-                    )
+                    $t(mode === 'stage' ? 'planning.paxStagePrice' : 'planning.paxSegmentPrice', {
+                      pax: price.pax,
+                    })
                   "
                 >
                   <el-input-number
                     class="!w-full"
-                    :model-value="arrangement.totalPrice"
+                    :model-value="price.totalPrice"
+                    :value-on-clear="null"
                     :min="0"
                     :precision="2"
                     :disabled="!editable"
-                    :placeholder="mode === 'stage' ? $t('planning.stageTotal') : undefined"
+                    :placeholder="$t('planning.priceNotEntered')"
                     controls-position="right"
-                    @change="changeArrangementPrice(plan, arrangement.id, $event ?? null)"
+                    @change="
+                      emit(
+                        'update-plan',
+                        setVehicleSegmentPaxPrice(plan, arrangement.id, price.pax, $event ?? null),
+                      )
+                    "
                   />
                 </el-form-item>
-                <el-text v-if="mode === 'itinerary'" type="info" size="small">
+                <el-text
+                  v-if="mode === 'itinerary'"
+                  :type="arrangementSeats(arrangement) < passengerCount ? 'warning' : 'info'"
+                  size="small"
+                >
                   {{
                     $t("planning.capacityHint", {
-                      seats: arrangement.vehicles.reduce(
-                        (sum, vehicle) => sum + vehicle.seats * vehicle.quantity,
-                        0,
-                      ),
+                      seats: arrangementSeats(arrangement),
                       passengers: passengerCount,
                     })
                   }}
@@ -154,52 +202,93 @@
               </template>
             </div>
 
-            <el-form-item v-if="plan.arrangements.length" :label="$t('planning.totalVehiclePrice')">
-              <el-input-number
-                class="!w-full"
-                :model-value="plan.totalPrice ?? calculateVehiclePlanAutomaticTotal(plan)"
-                :min="0"
-                :precision="2"
-                :disabled="!editable || mode === 'stage'"
-                controls-position="right"
-                @change="changePlanTotal(plan, $event ?? null)"
-              />
-            </el-form-item>
-            <el-form-item
-              v-if="
-                mode === 'itinerary' &&
-                  vehiclePriceNeedsReason(
-                    plan,
-                    savedPlans.find((saved) => saved.tier === plan.tier),
-                  )
-              "
-              :label="$t('identity.reason')"
-            >
-              <el-input
-                :model-value="plan.adjustmentReason ?? ''"
-                :disabled="!editable"
-                :placeholder="$t('identity.reasonPlaceholder')"
-                type="textarea"
-                :rows="2"
-                @update:model-value="
-                  emit('update-plan', plan.tier, { ...plan, adjustmentReason: $event })
+            <template v-if="plan.arrangements.length">
+              <el-alert
+                v-for="difference in legacyStageTotalDifferences(plan, savedPlan(plan))"
+                :key="difference.pax"
+                class="mb-[12px]"
+                type="warning"
+                show-icon
+                :closable="false"
+                :title="
+                  $t('planning.vehicleLegacyStageMismatch', {
+                    pax: difference.pax,
+                    original: formatMoney(difference.original),
+                    total:
+                      difference.total === null
+                        ? $t('planning.priceNotEntered')
+                        : `¥${formatMoney(difference.total)}`,
+                  })
                 "
               />
-            </el-form-item>
-            <el-alert
-              v-if="mode === 'itinerary' && isVehiclePlanTotalOverridden(plan)"
-              type="info"
-              show-icon
-              :closable="false"
-              :title="
-                $t('planning.vehicleTotalOverrideHint', {
-                  total: formatMoney(calculateVehiclePlanAutomaticTotal(plan)),
-                })
-              "
-            />
+              <el-text class="mb-[8px] block" type="info" size="small">
+                {{
+                  $t(mode === "stage" ? "planning.vehicleStageTotalHint" : "planning.vehiclePaxTotalHint")
+                }}
+              </el-text>
+              <div v-for="price in plan.paxPrices ?? []" :key="price.pax" class="mb-[12px]">
+                <el-form-item
+                  :label="$t('planning.paxTotalVehiclePrice', { pax: price.pax })"
+                  class="!mb-[4px]"
+                >
+                  <div class="flex w-full items-center gap-[8px]">
+                    <el-input-number
+                      class="!flex-1"
+                      :model-value="price.totalPrice"
+                      :value-on-clear="null"
+                      :min="0"
+                      :precision="2"
+                      :disabled="!editable || mode === 'stage'"
+                      :placeholder="$t('planning.priceNotEntered')"
+                      controls-position="right"
+                      @change="changePaxTotal(plan, price.pax, $event ?? null)"
+                    />
+                    <el-tag :type="price.pricingMode === 'manual' ? 'warning' : 'info'" disable-transitions>
+                      {{
+                        $t(
+                          price.pricingMode === "manual"
+                            ? "planning.vehiclePricingManual"
+                            : "planning.vehiclePricingAutomatic",
+                        )
+                      }}
+                    </el-tag>
+                  </div>
+                </el-form-item>
+                <el-text
+                  v-if="isVehiclePaxTotalOverridden(plan, price.pax)"
+                  type="info"
+                  size="small"
+                >
+                  {{
+                    $t("planning.vehiclePaxOverrideHint", {
+                      pax: price.pax,
+                      total: formatMoney(vehicleSegmentPaxTotal(plan, price.pax)),
+                    })
+                  }}
+                </el-text>
+                <el-form-item
+                  v-if="vehiclePaxPriceNeedsReason(plan, price.pax, savedPlan(plan))"
+                  :label="$t('planning.vehiclePaxReason', { pax: price.pax })"
+                  required
+                  class="!mt-[8px]"
+                >
+                  <el-input
+                    :model-value="price.adjustmentReason ?? ''"
+                    :disabled="!editable"
+                    :placeholder="$t('identity.reasonPlaceholder')"
+                    type="textarea"
+                    :rows="2"
+                    @update:model-value="changeReason(plan, price.pax, $event)"
+                  />
+                </el-form-item>
+              </div>
+            </template>
           </el-form>
         </SectionCard>
       </div>
+      <el-text v-if="seatShortage" class="mt-[12px] block" type="warning">
+        {{ $t("planning.vehicleSeatShortage", { passengers: passengerCount }) }}
+      </el-text>
     </section>
     <template #footer>
       <el-button @click="emit('cancel')">
@@ -209,7 +298,7 @@
         v-if="editable"
         type="primary"
         :loading="saving"
-        :disabled="!canSave"
+        :disabled="seatShortage"
         @click="emit('save')"
       >
         {{ $t("common.save") }}
@@ -219,9 +308,8 @@
 </template>
 
 <script setup lang="ts">
-import { vehiclePriceNeedsReason } from "../price-adjustments";
 import { ElMessage } from "element-plus";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
@@ -232,59 +320,73 @@ import type {
   ItineraryVehiclePlan,
   ItineraryVehicleTier,
 } from "@/types/itinerary";
-import { addDays, createId, formatDate, formatMoney } from "@/utils";
+import { addDays, createId, formatDate, formatMoney, roundMoney } from "@/utils";
+import { itineraryDayNumber } from "../duration";
+import { savedVehiclePaxTotal, vehiclePaxPriceNeedsReason } from "../price-adjustments";
 import {
-  calculateVehiclePlanAutomaticTotal,
-  getIncompleteVehiclePlanTiers,
-  isVehiclePlanTotalOverridden,
-  withVehiclePlanArrangements,
+  arrangementSeats,
+  hasVehicleSeatShortage,
+  isVehiclePaxTotalOverridden,
+  legacyStageTotalDifferences,
+  setVehiclePaxTotal,
+  setVehicleSegmentPaxPrice,
+  vehicleSegmentPaxTotal,
+  withVehicleArrangements,
 } from "../vehicle-plans";
 import type { VehicleMaintenanceMode } from "../vehicle-plans";
 
 const props = defineProps<{
+  /** Deep-copied draft owned by the workspace; never the saved record. */
   plans: ItineraryVehiclePlan[];
   savedPlans: ItineraryVehiclePlan[];
   startDate: string;
+  isSeries?: boolean;
   plannedDays: number;
-  passengerCount: number;
+  paxTiers: number[];
   editable: boolean;
   modelValue: boolean;
   saving: boolean;
   mode: VehicleMaintenanceMode;
 }>();
 const emit = defineEmits<{
-  "update-plan": [tier: ItineraryVehicleTier, plan: ItineraryVehiclePlan];
+  "update-plan": [plan: ItineraryVehiclePlan];
   save: [];
   cancel: [];
 }>();
 const { t } = useI18n();
 const tripEndDate = computed(() => addDays(props.startDate, props.plannedDays - 1));
-const canSave = computed(
-  () =>
-    !getIncompleteVehiclePlanTiers({
-      paxTiers: [props.passengerCount],
-      vehiclePlans: props.plans,
-    }).length &&
-    (props.mode === "stage" ||
-      props.plans.every((plan) =>
-        plan.arrangements.every((arrangement) => arrangement.vehicles.length),
-      )),
-);
-const isAddingNewVehicle = ref(false);
+const passengerCount = computed(() => Math.max(0, ...props.paxTiers));
+// Unfinished prices stay saveable as Draft; dated itinerary ranges still need enough seats.
+const seatShortage = computed(() => hasVehicleSeatShortage(props.plans, passengerCount.value));
+const addingVehicleId = ref("");
 
-function updateArrangements(
-  plan: ItineraryVehiclePlan,
-  arrangements: ItineraryVehiclePlan["arrangements"],
-) {
-  if (props.mode === "stage") {
-    const nextPlan = { ...plan, arrangements, pricingMode: "automatic" as const };
-    emit("update-plan", plan.tier, {
-      ...nextPlan,
-      totalPrice: calculateVehiclePlanAutomaticTotal(nextPlan),
-    });
-    return;
-  }
-  emit("update-plan", plan.tier, withVehiclePlanArrangements(plan, arrangements));
+function savedPlan(plan: ItineraryVehiclePlan) {
+  return props.savedPlans.find((saved) => saved.tier === plan.tier);
+}
+
+function updateArrangements(plan: ItineraryVehiclePlan, arrangements: ItineraryVehicleArrangement[]) {
+  emit("update-plan", withVehicleArrangements(plan, arrangements));
+}
+
+function changePaxTotal(plan: ItineraryVehiclePlan, pax: number, totalPrice: number | null) {
+  const saved = savedPlan(plan);
+  const savedTotal = savedVehiclePaxTotal(saved, pax);
+  // 回到已保存金额时沿用原因；其余改价须填写本次原因。
+  const unchanged =
+    totalPrice !== null && savedTotal !== null && roundMoney(savedTotal) === roundMoney(totalPrice);
+  const savedReason = saved?.quotationMode
+    ? (saved.paxPrices?.find((price) => price.pax === pax)?.adjustmentReason ?? "")
+    : "";
+  emit("update-plan", setVehiclePaxTotal(plan, pax, totalPrice, unchanged ? savedReason : ""));
+}
+
+function changeReason(plan: ItineraryVehiclePlan, pax: number, reason: string) {
+  emit("update-plan", {
+    ...plan,
+    paxPrices: plan.paxPrices?.map((price) =>
+      price.pax === pax ? { ...price, adjustmentReason: reason } : price,
+    ),
+  });
 }
 
 function addArrangement(plan: ItineraryVehiclePlan) {
@@ -307,6 +409,7 @@ function addArrangement(plan: ItineraryVehiclePlan) {
       endDate: defaultDate,
       vehicles: [],
       totalPrice: null,
+      paxPrices: props.paxTiers.map((pax) => ({ pax, totalPrice: null })),
     },
   ]);
 }
@@ -341,6 +444,16 @@ function disabledDateFor(plan: ItineraryVehiclePlan, arrangementId: string) {
   return (date: Date) => isDateDisabled(plan, arrangementId, date);
 }
 
+function changeStartDay(plan: ItineraryVehiclePlan, arrangement: ItineraryVehicleArrangement, day: number) {
+  const startDate = addDays(props.startDate, day - 1);
+  const endDate = arrangement.endDate >= startDate ? arrangement.endDate : startDate;
+  changeDateRange(plan, arrangement.id, [startDate, endDate]);
+}
+
+function changeEndDay(plan: ItineraryVehiclePlan, arrangement: ItineraryVehicleArrangement, day: number) {
+  changeDateRange(plan, arrangement.id, [arrangement.startDate, addDays(props.startDate, day - 1)]);
+}
+
 function changeDateRange(plan: ItineraryVehiclePlan, id: string, value: unknown) {
   if (!Array.isArray(value) || value.length !== 2) {
     updateArrangements(
@@ -353,8 +466,8 @@ function changeDateRange(plan: ItineraryVehiclePlan, id: string, value: unknown)
   }
   const [startDate, endDate] = value.map(String);
   if (startDate === undefined || endDate === undefined) return;
-  if (startDate < props.startDate || endDate > tripEndDate.value) {
-    ElMessage.warning(t("planning.vehicleDateOutOfRange"));
+  if (startDate < props.startDate || endDate > tripEndDate.value || startDate > endDate) {
+    ElMessage.warning(t(props.isSeries ? "planning.vehicleDayOutOfRange" : "planning.vehicleDateOutOfRange"));
     return;
   }
   const overlaps = plan.arrangements.some(
@@ -366,7 +479,7 @@ function changeDateRange(plan: ItineraryVehiclePlan, id: string, value: unknown)
       endDate >= arrangement.startDate,
   );
   if (overlaps) {
-    ElMessage.warning(t("planning.vehicleDateOverlap"));
+    ElMessage.warning(t(props.isSeries ? "planning.vehicleDayOverlap" : "planning.vehicleDateOverlap"));
     return;
   }
   updateArrangements(
@@ -375,22 +488,6 @@ function changeDateRange(plan: ItineraryVehiclePlan, id: string, value: unknown)
       arrangement.id === id ? { ...arrangement, startDate, endDate } : arrangement,
     ),
   );
-}
-
-function changeArrangementPrice(plan: ItineraryVehiclePlan, id: string, totalPrice: number | null) {
-  updateArrangements(
-    plan,
-    plan.arrangements.map((arrangement) =>
-      arrangement.id === id ? { ...arrangement, totalPrice } : arrangement,
-    ),
-  );
-}
-
-function changePlanTotal(plan: ItineraryVehiclePlan, totalPrice: number | null) {
-  emit("update-plan", plan.tier, {
-    ...plan,
-    totalPrice: totalPrice ?? calculateVehiclePlanAutomaticTotal(plan),
-  });
 }
 
 function changeQuantity(
@@ -442,7 +539,7 @@ async function addVehicle(tier: ItineraryVehicleTier, id: string, vehicleId: str
       target.vehicles.some((vehicle) => vehicle.vehicleId === vehicleId)
     )
       return;
-    isAddingNewVehicle.value = false;
+    addingVehicleId.value = "";
     updateArrangements(
       plan,
       plan.arrangements.map((arrangement) =>

@@ -1,4 +1,3 @@
-import { calculateVehiclePlanAutomaticTotal } from "./vehicle-plans";
 import type { GuideRecord } from "@/types/resource";
 import { getDayBreakfastStatus } from "./hotel-plans";
 import type { ComputedRef, Ref } from "vue";
@@ -11,9 +10,9 @@ import type {
   ItineraryRecord,
   ItineraryResourceItem,
   ItineraryVehiclePlan,
-  ItineraryVehicleTier,
   ItineraryQuoteSettings,
   MealSlot,
+  ItineraryEditableDayField,
 } from "@/types/itinerary";
 import type { HotelRecord } from "@/types/resource";
 import { addDays, createId, formatDateTime, roundMoney, sumMoney } from "@/utils";
@@ -23,14 +22,26 @@ import {
   getHotelPlan,
   HOTEL_PLAN_TIERS,
   isHotelEligibleForTier,
+  isNoAccommodationItinerary,
 } from "./hotel-plans";
-import { createDefaultQuoteOption, createDefaultQuoteSettings } from "./quote-pricing";
+import {
+  createDefaultQuoteOption,
+  createDefaultQuoteSettings,
+  DEFAULT_RETURN_ARRIVAL_TEXT,
+  DEFAULT_RETURN_ARRIVAL_TEXT_EN,
+} from "./quote-pricing";
 import { reorderItineraryDays } from "./day-order";
 import type { DayOrderChange, DayOrderIssue } from "./reorder-board";
-import { createDefaultVehiclePlans, getVehiclePlan, VEHICLE_PLAN_TIERS } from "./vehicle-plans";
+import {
+  cloneVehiclePlans,
+  createDefaultVehiclePlans,
+  getVehiclePlan,
+  syncVehiclePaxTiers,
+  VEHICLE_PLAN_TIERS,
+} from "./vehicle-plans";
 
-type EditableDayField =
-  "departure" | "destination" | "overnightDestination" | "transport" | "description";
+type EditableDayField = ItineraryEditableDayField;
+const SERIES_ITINERARY_BASE_DATE = "2000-01-01";
 
 interface ItineraryEditorOptions {
   inquiry: Readonly<Ref<InquiryRecord | undefined>>;
@@ -52,6 +63,10 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       inquiryId: options.inquiryId.value,
       code: "",
       title: "",
+      titleEn: "",
+      customerDisplayMode: "same",
+      returnArrivalText: DEFAULT_RETURN_ARRIVAL_TEXT,
+      returnArrivalTextEn: DEFAULT_RETURN_ARRIVAL_TEXT_EN,
       startDate: "",
       endDate: "",
       days: 0,
@@ -75,7 +90,11 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
 
   function createItinerary(record: ItineraryRecord): ItineraryRecord | null {
     if (!options.canCreate() || !options.inquiry.value) return null;
-    const plannedDays = options.inquiry.value.plannedDays;
+    // 系列询盘没有计划天数，每份行程在新建弹窗中独立填写实际服务天数。
+    const plannedDays = options.inquiry.value.plannedDays ?? record.days;
+    if (!Number.isInteger(plannedDays) || plannedDays < 1 || plannedDays > 365) return null;
+    // 系列行程只按日序展示；内部基准供日期字段、用车分段和重排计算使用。
+    const startDate = options.inquiry.value.isSeries ? SERIES_ITINERARY_BASE_DATE : record.startDate;
     const timestamp = formatDateTime(new Date());
     const created: ItineraryRecord = {
       ...record,
@@ -89,9 +108,10 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       hotelPlans: cloneHotelPlans(record.hotelPlans),
       vehiclePlans: cloneVehiclePlans(record.vehiclePlans),
       quote: cloneQuoteSettings(record.quote),
-      dailyPlans: createDailyPlans(record.startDate, plannedDays),
+      startDate,
+      dailyPlans: createDailyPlans(startDate, plannedDays),
       days: plannedDays,
-      endDate: addDays(record.startDate, plannedDays - 1),
+      endDate: addDays(startDate, plannedDays - 1),
     };
     syncQuoteOptions(created);
     options.itineraryStore.unshift(created);
@@ -120,12 +140,17 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
         )));
     Object.assign(plan, {
       title: record.title,
+      titleEn: record.titleEn,
+      customerDisplayMode: record.customerDisplayMode,
+      returnArrivalText: record.returnArrivalText,
+      returnArrivalTextEn: record.returnArrivalTextEn,
       startDate: record.startDate,
       paxTiers: [...record.paxTiers],
       childRate: record.childRate,
       childWithoutBedRate: record.childWithoutBedRate,
       destinations: [...record.destinations],
     });
+    plan.vehiclePlans = plan.vehiclePlans.map((vehicle) => syncVehiclePaxTiers(vehicle, plan.paxTiers));
     syncPlanDates(plan);
     syncDestinations(plan, destinationsChanged);
     syncBreakfast(plan, breakfastChanged);
@@ -140,10 +165,15 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       date: addDays(startDate, index),
       departure: "",
       destination: "",
+      viaDestinations: [],
       overnightDestination: null,
       meals: { breakfast: index > 0, lunch: false, dinner: false },
       transport: "",
       description: "",
+      departureEn: "",
+      destinationEn: "",
+      transportEn: "",
+      descriptionEn: "",
       items: [],
     }));
   }
@@ -156,20 +186,32 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     const oldOvernight = day.overnightDestination;
     const isLast = index === plan.dailyPlans.length - 1;
     if (field === "overnightDestination") {
-      if (!isLast) return;
       day.overnightDestination = value;
     } else {
       day[field] = value ?? "";
-      if (field === "destination" && !isLast) day.overnightDestination = value || null;
+      if (field === "destination" && !isLast && oldOvernight !== "")
+        day.overnightDestination = value || null;
     }
     const next = plan.dailyPlans[index + 1];
     if (
       next &&
+      day.overnightDestination !== "" &&
       day.overnightDestination !== oldOvernight &&
       (!next.departure || next.departure === oldOvernight)
     )
       next.departure = day.overnightDestination ?? "";
+    if (day.overnightDestination !== oldOvernight) syncQuoteOptions(plan);
     touchSelectedItinerary(day.overnightDestination !== oldOvernight);
+  }
+
+  /** 途经地只能取当前行程目的地，按数组顺序保存，不影响住宿与下一日出发默认。 */
+  function updateViaDestinations(index: number, cities: string[]) {
+    if (!options.canEditContent()) return;
+    const plan = options.selectedItinerary.value;
+    const day = plan?.dailyPlans[index];
+    if (!plan || !day) return;
+    day.viaDestinations = [...new Set(cities)].filter((city) => plan.destinations.includes(city));
+    touchSelectedItinerary();
   }
 
   function addResourceItem(
@@ -194,7 +236,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       // 编辑已有景点：原位替换，只有更换资源时才追加资源描述。
       const previousItem = day.items[editingIndex]!;
       if (previousItem.resourceId !== item.resourceId) appendDescription();
-      day.items[editingIndex] = { ...item, remark: previousItem.remark };
+      day.items[editingIndex] = { ...item, remark: previousItem.remark, remarkEn: previousItem.remarkEn };
       touchSelectedItinerary();
       return true;
     }
@@ -212,6 +254,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
           ...item,
           id: previousItem.id,
           remark: previousItem.remark,
+          remarkEn: previousItem.remarkEn,
         };
         touchSelectedItinerary();
         return true;
@@ -409,17 +452,16 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     touchSelectedItinerary(breakfastChanged);
   }
 
-  function updateVehiclePlan(tier: ItineraryVehicleTier, value: ItineraryVehiclePlan) {
-    if (!options.canEditContent()) return;
-    const plan = options.selectedItinerary.value;
-    const target = plan && getVehiclePlan(plan, tier);
-    if (!plan || !target) return;
-    if (value.totalPrice !== target.totalPrice) value.adjustmentReason = "";
-    value.pricingMode =
-      value.totalPrice === calculateVehiclePlanAutomaticTotal(value) ? "automatic" : "manual";
-    Object.assign(target, cloneVehiclePlans([value])[0]);
-    syncQuoteOptions(plan);
-    touchSelectedItinerary();
+  /** Save candidate for the vehicle dialog draft; the selected itinerary itself stays untouched. */
+  function withVehiclePlans(
+    plan: ItineraryRecord,
+    vehiclePlans: ItineraryVehiclePlan[],
+  ): ItineraryRecord | null {
+    if (!options.canEditContent()) return null;
+    const candidate = JSON.parse(JSON.stringify(plan)) as ItineraryRecord;
+    candidate.vehiclePlans = cloneVehiclePlans(vehiclePlans);
+    syncQuoteOptions(candidate);
+    return candidate;
   }
 
   /**
@@ -435,6 +477,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     plan.dailyPlans = result.dailyPlans;
     plan.deletedDays = result.deletedDays;
     syncPlanDates(plan);
+    syncQuoteOptions(plan);
     touchSelectedItinerary(true);
     return result.issues;
   }
@@ -443,9 +486,11 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     const plan = options.selectedItinerary.value;
     if (!plan || !options.canEditContent() || plan.dailyPlans.length >= 365) return;
     const formerLast = plan.dailyPlans[plan.dailyPlans.length - 1];
-    if (formerLast) formerLast.overnightDestination = formerLast.destination || null;
+    if (formerLast && formerLast.overnightDestination !== "")
+      formerLast.overnightDestination = formerLast.destination || null;
     plan.dailyPlans.push(...createDailyPlans(plan.startDate, 1));
     syncPlanDates(plan);
+    syncQuoteOptions(plan);
     touchSelectedItinerary(true);
   }
 
@@ -484,6 +529,8 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     plan.dailyPlans.forEach((day) => {
       if (day.overnightDestination && !destinationSet.has(day.overnightDestination))
         day.overnightDestination = null;
+      // 途经地只能引用当前目的地；移除前已由用户确认。
+      day.viaDestinations = day.viaDestinations.filter((city) => destinationSet.has(city));
     });
     plan.hotelPlans.forEach((hotelPlan) => {
       hotelPlan.hotels = hotelPlan.hotels.filter((hotel) => destinationSet.has(hotel.destination));
@@ -522,9 +569,12 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       }));
     }
     let optionIndex = 0;
+    // 全程明确不住宿时只按车型生成 hotelTier=null 组合，不虚构酒店档次。
+    const hotelTiers: (ItineraryHotelTier | null)[] = isNoAccommodationItinerary(plan)
+      ? [null]
+      : HOTEL_PLAN_TIERS.filter((hotelTier) => getHotelPlan(plan, hotelTier)?.hotels.length);
     // 只比较启用档位与 PAX；组合未变时不重建选项或各档售价。
-    const optionsUnchanged = HOTEL_PLAN_TIERS.every((hotelTier) => {
-      if (!getHotelPlan(plan, hotelTier)?.hotels.length) return true;
+    const optionsUnchanged = hotelTiers.every((hotelTier) => {
       return VEHICLE_PLAN_TIERS.every((vehicleTier) => {
         if (!getVehiclePlan(plan, vehicleTier)?.arrangements.length) return true;
         const option = plan.quote.options[optionIndex++];
@@ -540,10 +590,8 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     const existing = new Map(
       plan.quote.options.map((option) => [`${option.hotelTier}:${option.vehicleTier}`, option]),
     );
-    plan.quote.options = HOTEL_PLAN_TIERS.flatMap((hotelTier) => {
-      const hotelPlan = getHotelPlan(plan, hotelTier);
-      // 原有逐档退出路径：未启用酒店或车型方案时不生成该组合。
-      if (!hotelPlan?.hotels.length) return [];
+    plan.quote.options = hotelTiers.flatMap((hotelTier) => {
+      // 未启用车型方案时不生成该组合。
       return VEHICLE_PLAN_TIERS.flatMap((vehicleTier) => {
         const vehiclePlan = getVehiclePlan(plan, vehicleTier);
         if (!vehiclePlan?.arrangements.length) return [];
@@ -586,16 +634,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     }));
   }
 
-  function cloneVehiclePlans(vehiclePlans: ItineraryVehiclePlan[]) {
-    return vehiclePlans.map((plan) => ({
-      ...plan,
-      arrangements: plan.arrangements.map((a) => ({
-        ...a,
-        vehicles: a.vehicles.map((v) => ({ ...v })),
-      })),
-    }));
-  }
-
   return {
     applyDayOrder,
     addDay,
@@ -609,10 +647,11 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     createItinerary,
     removeItem,
     updateDayField,
+    updateViaDestinations,
     updateHotelPlanSelection,
     updateItineraryBasics,
     updateQuoteOption,
-    updateVehiclePlan,
+    withVehiclePlans,
     updateMeal,
     updateQuoteSettings,
   };

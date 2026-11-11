@@ -248,6 +248,7 @@ const cityApi = createCrud<CityRecord>("cities", (data) => ({
   code: data.code.trim(),
   name: data.name.trim(),
   province: data.province.trim(),
+  englishName: (data.englishName ?? "").trim(),
   longitude: data.longitude,
   latitude: data.latitude,
   status: data.status,

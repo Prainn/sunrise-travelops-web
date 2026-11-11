@@ -37,7 +37,7 @@
       <DataTable :data="legacyCalculation.options" border>
         <el-table-column :label="$t('itinerary.quoteConfigurations')" min-width="180">
           <template #default="{ row }">
-            {{ $t(`itinerary.hotelTiers.${row.hotelTier}`) }} /
+            {{ row.hotelTier === null ? $t("itinerary.noAccommodation") : $t(`itinerary.hotelTiers.${row.hotelTier}`) }} /
             {{ $t(`itinerary.vehicleServiceLevels.${row.vehicleTier}`) }}
           </template>
         </el-table-column>
@@ -145,6 +145,24 @@
               @update:model-value="updateFee(fee.id, { unitPrice: $event ?? null })"
             />
           </el-form-item>
+          <template v-if="english">
+            <el-form-item :label="$t('itinerary.english.feeDeparture')">
+              <el-input
+                :model-value="fee.departureCityEn"
+                maxlength="100"
+                :placeholder="$t('itinerary.english.cityHint')"
+                @update:model-value="updateFee(fee.id, { departureCityEn: $event })"
+              />
+            </el-form-item>
+            <el-form-item :label="$t('itinerary.english.feeArrival')">
+              <el-input
+                :model-value="fee.arrivalCityEn"
+                maxlength="100"
+                :placeholder="$t('itinerary.english.cityHint')"
+                @update:model-value="updateFee(fee.id, { arrivalCityEn: $event })"
+              />
+            </el-form-item>
+          </template>
           <el-button
             class="mb-[26px]"
             type="danger"
@@ -161,14 +179,25 @@
       <h3 class="m-[20px_0_12px] text-[18px]">
         {{ $t("itinerary.customerTerms") }}
       </h3>
-      <el-form-item v-for="field in noteFields" :key="field" :label="$t(`itinerary.${field}`)">
-        <el-input
-          :model-value="quote[field]"
-          type="textarea"
-          :rows="3"
-          @update:model-value="emit('update-settings', { [field]: $event })"
-        />
-      </el-form-item>
+      <template v-for="field in noteFields" :key="field">
+        <el-form-item :label="$t(`itinerary.${field}`)">
+          <el-input
+            :model-value="quote[field]"
+            type="textarea"
+            :rows="3"
+            @update:model-value="emit('update-settings', { [field]: $event })"
+          />
+        </el-form-item>
+        <el-form-item v-if="english" :label="$t(`itinerary.english.${field}`)">
+          <el-input
+            :model-value="quote[`${field}En`]"
+            type="textarea"
+            :rows="3"
+            :maxlength="field === 'customerNotes' ? 20000 : 10000"
+            @update:model-value="emit('update-settings', { [`${field}En`]: $event })"
+          />
+        </el-form-item>
+      </template>
     </el-form>
     <div class="quote-panel__summary flex flex-wrap gap-[20px] text-[var(--el-text-color-regular)]">
       <span>{{ $t("itinerary.resourceItemCount", { count: itemCount }) }}</span>
@@ -203,6 +232,8 @@ const props = defineProps<{
   itemCount: number;
   duration: { days: number; nights: number };
   editable: boolean;
+  /** 盛旭行程显示对客英文字段。 */
+  english?: boolean;
 }>();
 const emit = defineEmits<{
   "update-quote-option": [optionId: string, changes: Partial<Omit<ItineraryQuoteOption, "id">>];
@@ -237,6 +268,8 @@ function addFee(type: ItineraryTransportFee["type"]) {
         type,
         departureCity: "",
         arrivalCity: "",
+        departureCityEn: "",
+        arrivalCityEn: "",
         cabin: type === "flight" ? "economy" : "second",
         unitPrice: null,
       },

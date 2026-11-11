@@ -7,7 +7,7 @@ import { applyDayChanges, createAdjacencyCheck, orderById, type DayOrderChange, 
  * 按看板结果重排普通询盘日程，返回新的日程副本与需人工核对的事项。
  *
  * 日与资源保持原 ID；景点只在景点占用的位置间交换，午/晚餐绑定和位置不变。
- * 非末日住宿沿用“住宿=到达地”联动；出发地、用车日期段和当日文案不自动改写，只提示核对。
+ * 明确不住宿的选择随日期保留，其余非末日住宿沿用到达地联动；出发地、用车日期段和当日文案只提示核对。
  *
  * @param plan - 当前草稿。
  * @param change - 看板应用结果。
@@ -44,7 +44,7 @@ export function reorderItineraryDays(
 
   const lastIndex = days.length - 1;
   days.forEach((day, index) => {
-    if (index < lastIndex && day.id === previousLastId) {
+    if (index < lastIndex && day.id === previousLastId && day.overnightDestination !== "") {
       day.overnightDestination = day.destination || null;
       issues.push({
         dayId: day.id,

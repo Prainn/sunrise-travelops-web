@@ -111,7 +111,7 @@
               <tr class="price-table__reference">
                 <td />
                 <td v-for="category in PRICE_CATEGORIES" :key="category">
-                  <span v-if="category === 'attraction'" class="whitespace-nowrap">
+                  <span v-if="category === 'attraction' && attractionPriceTotal != null" class="whitespace-nowrap">
                     {{ $t("websiteItineraryUi.attractionPriceReference", { price: formatAttractionPrice(attractionPriceTotal) }) }}
                   </span>
                 </td>

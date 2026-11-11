@@ -7,6 +7,7 @@ import type {
   TourGuideQuery,
   TourGuideService,
   TourGuideServiceInput,
+  TourGuideUnavailableReason,
   TourInput,
   TourLinkedSourceModule,
   TourManualSource,
@@ -24,11 +25,18 @@ export interface GuideServiceRow {
   id?: string;
   guideId: string;
   language: string;
-  serviceStartAt: string;
-  serviceEndAt: string;
+  /** Asia/Shanghai 自然日 `YYYY-MM-DD`，首尾均包含。 */
+  serviceStartDate: string;
+  serviceEndDate: string;
   remark: string;
-  /** 仅用于显式确认未改时间的历史段。 */
+  /** 仅用于显式确认未改日期的历史段。 */
   confirmTime: boolean;
+  /** 本次“确认使用”排期冲突后取得的令牌；条件变化即作废。 */
+  scheduleConflictToken: string;
+  /** 取得令牌时的确认条件（导游、语种、日期、兄弟段），用于判断令牌是否仍有效。 */
+  scheduleConflictKey: string;
+  /** 确认时展示的冲突原因，供“已确认排期冲突”摘要。 */
+  scheduleConflictReasons: TourGuideUnavailableReason[];
   /** 服务端原样快照，供只读提示、变更判断与停用人员展示。 */
   existing: TourGuideService | null;
 }
@@ -39,15 +47,20 @@ function nextRowKey() {
   return `gs-${rowSeed}`;
 }
 
+function emptyConflictConfirmation() {
+  return { scheduleConflictToken: "", scheduleConflictKey: "", scheduleConflictReasons: [] };
+}
+
 export function emptyGuideServiceRow(): GuideServiceRow {
   return {
     key: nextRowKey(),
     guideId: "",
     language: "",
-    serviceStartAt: "",
-    serviceEndAt: "",
+    serviceStartDate: "",
+    serviceEndDate: "",
     remark: "",
     confirmTime: false,
+    ...emptyConflictConfirmation(),
     existing: null,
   };
 }
@@ -58,10 +71,11 @@ export function guideServiceRowFromRecord(service: TourGuideService): GuideServi
     id: service.id,
     guideId: service.guideId,
     language: service.language,
-    serviceStartAt: service.serviceStartAt,
-    serviceEndAt: service.serviceEndAt,
+    serviceStartDate: service.serviceStartDate,
+    serviceEndDate: service.serviceEndDate,
     remark: service.remark,
     confirmTime: false,
+    ...emptyConflictConfirmation(),
     existing: service,
   };
 }
@@ -79,138 +93,195 @@ export function guideServiceChanged(row: GuideServiceRow): boolean {
 
 export function guideServiceTimeChanged(row: GuideServiceRow): boolean {
   const old = row.existing;
-  return !old || old.serviceStartAt !== row.serviceStartAt || old.serviceEndAt !== row.serviceEndAt;
+  return (
+    !old ||
+    old.serviceStartDate !== row.serviceStartDate ||
+    old.serviceEndDate !== row.serviceEndDate
+  );
 }
 
-/** 请求白名单：不回传 timeSource、快照、只读提示和审计字段。 */
+/** 清除本次临时冲突确认；服务端已存确认只在段未变时沿用，不在此改写。 */
+export function clearScheduleConflict(row: GuideServiceRow) {
+  Object.assign(row, emptyConflictConfirmation());
+}
+
+/** 请求白名单：不回传 timeSource、快照、已存确认、只读提示和审计字段。 */
 export function guideServiceInputs(rows: GuideServiceRow[]): TourGuideServiceInput[] {
   return rows.map((row) => ({
     ...(row.id ? { id: row.id } : {}),
     guideId: row.guideId,
     language: row.language.trim(),
-    serviceStartAt: row.serviceStartAt,
-    serviceEndAt: row.serviceEndAt,
+    serviceStartDate: row.serviceStartDate,
+    serviceEndDate: row.serviceEndDate,
     remark: row.remark.trim(),
     ...(row.id && row.confirmTime ? { confirmTime: true } : {}),
+    ...(row.scheduleConflictToken ? { scheduleConflictToken: row.scheduleConflictToken } : {}),
   }));
 }
 
-export type GuideServiceErrorCode = "incomplete" | "order" | "overlap";
+export type GuideServiceErrorCode = "incomplete" | "order";
 
-/** 新增/调整/人工确认的段须开始早于结束；未改历史段（含异常时长）可原样保留。 */
-function needsPositiveDuration(row: GuideServiceRow) {
+/** 新增/调整/人工确认的段须开始不晚于结束；未改历史段（含异常时长）可原样保留。 */
+function needsValidRange(row: GuideServiceRow) {
   return guideServiceTimeChanged(row) || row.confirmTime;
 }
 
-function hasPositiveDuration(row: GuideServiceRow) {
-  return Boolean(row.serviceStartAt && row.serviceEndAt && row.serviceStartAt < row.serviceEndAt);
+function hasValidRange(row: Pick<GuideServiceRow, "serviceStartDate" | "serviceEndDate">) {
+  return Boolean(
+    row.serviceStartDate && row.serviceEndDate && row.serviceStartDate <= row.serviceEndDate,
+  );
 }
 
 /**
- * 逐行前端校验；同导游两端包含，前段结束须严格早于后段开始。
- * 仅在涉及被改动段时校验冲突，未改历史段之间的既有关系交给服务端。
+ * 逐行前端校验；同导游按自然日两端包含，同一天即重叠、相邻日不冲突。
+ * 同导游重叠只提示，可在可用性查询中“仍然使用”后由服务端确认，故不作为本地阻断。
  */
 export function guideServiceErrors(rows: GuideServiceRow[]): Array<GuideServiceErrorCode | null> {
-  const errors = rows.map<GuideServiceErrorCode | null>((row) => {
-    if (
-      !row.guideId ||
-      !row.language.trim() ||
-      !row.serviceStartAt ||
-      !row.serviceEndAt
-    )
+  return rows.map<GuideServiceErrorCode | null>((row) => {
+    if (!row.guideId || !row.language.trim() || !row.serviceStartDate || !row.serviceEndDate)
       return "incomplete";
-    if (needsPositiveDuration(row) && !hasPositiveDuration(row)) return "order";
+    if (needsValidRange(row) && !hasValidRange(row)) return "order";
     return null;
   });
-  rows.forEach((row, index) => {
-    if (errors[index] || !hasPositiveDuration(row)) return;
-    const clash = rows.some((other, otherIndex) => {
-      if (otherIndex === index || other.guideId !== row.guideId || !hasPositiveDuration(other))
-        return false;
-      if (!guideServiceChanged(row) && !guideServiceChanged(other)) return false;
-      return row.serviceStartAt <= other.serviceEndAt && other.serviceStartAt <= row.serviceEndAt;
-    });
-    if (clash) errors[index] = "overlap";
-  });
-  return errors;
 }
 
-/** 超出团队接送范围只提示，不阻止保存。 */
+/** 超出团队接送日期范围只提示，不阻止保存；团队接送保留时分，导游服务只比日期。 */
 export function outsideTeamWindow(
-  row: Pick<GuideServiceRow, "serviceStartAt" | "serviceEndAt">,
+  row: Pick<GuideServiceRow, "serviceStartDate" | "serviceEndDate">,
   window: { from: string; to: string } | null,
 ): boolean {
-  if (!window?.from || !window.to || !row.serviceStartAt || !row.serviceEndAt) return false;
-  return row.serviceStartAt < window.from || row.serviceEndAt > window.to;
+  if (!window?.from || !window.to || !row.serviceStartDate || !row.serviceEndDate) return false;
+  return row.serviceStartDate < window.from.slice(0, 10) || row.serviceEndDate > window.to.slice(0, 10);
 }
 
 export const GUIDE_KEYWORD_MAX_LENGTH = 150;
+export const GUIDE_PAGE_SIZE = 20;
 
 export type GuideAvailabilityRequest =
   /** 语种或当前段起止未就绪。 */
   | { ready: false; missing: "conditions" }
-  /** 姓名为空或超长，不发请求。 */
-  | { ready: false; missing: "keyword" | "keywordTooLong" }
+  /** 姓名超长，不发请求。 */
+  | { ready: false; missing: "keywordTooLong" }
   /** siblingIndexes[i] 为 otherServices[i] 对应的完整表单行下标。 */
   | { ready: true; query: TourGuideQuery; siblingIndexes: number[] };
 
+function siblingServices(rows: GuideServiceRow[], index: number) {
+  const siblingIndexes = rows.flatMap((other, otherIndex) =>
+    otherIndex !== index && other.guideId && hasValidRange(other) ? [otherIndex] : [],
+  );
+  const otherServices = siblingIndexes.map((otherIndex) => ({
+    guideId: rows[otherIndex]!.guideId,
+    serviceStartDate: rows[otherIndex]!.serviceStartDate,
+    serviceEndDate: rows[otherIndex]!.serviceEndDate,
+  }));
+  return { siblingIndexes, otherServices };
+}
+
 /**
- * 某段按姓名选人的可用性查询：当前段须正时长；除该段外所有完整兄弟段（含未保存）仅传 3 个字段。
- * 条件不全或姓名无效时不发请求，由界面提示补齐。
+ * 某段的可用导游查询：语种及起止日期就绪即查询，姓名可空（空时服务端只返回可用导游）；
+ * 除该段外所有完整兄弟段（含未保存）仅传 3 个字段。
  */
 export function guideAvailabilityRequest(
   businessUnit: TourBusinessUnit | null,
   rows: GuideServiceRow[],
   index: number,
   keyword: string,
+  page: number,
   excludeTourId?: string,
 ): GuideAvailabilityRequest {
   const row = rows[index];
-  if (!businessUnit || !row || !row.language.trim() || !hasPositiveDuration(row))
+  if (!businessUnit || !row || !row.language.trim() || !hasValidRange(row))
     return { ready: false, missing: "conditions" };
   const name = keyword.trim();
-  if (!name) return { ready: false, missing: "keyword" };
   if (name.length > GUIDE_KEYWORD_MAX_LENGTH) return { ready: false, missing: "keywordTooLong" };
-  const siblingIndexes = rows.flatMap((other, otherIndex) =>
-    otherIndex !== index &&
-    other.guideId &&
-    other.serviceStartAt &&
-    other.serviceEndAt &&
-    other.serviceStartAt <= other.serviceEndAt
-      ? [otherIndex]
-      : [],
-  );
-  const otherServices = siblingIndexes.map((otherIndex) => ({
-    guideId: rows[otherIndex]!.guideId,
-    serviceStartAt: rows[otherIndex]!.serviceStartAt,
-    serviceEndAt: rows[otherIndex]!.serviceEndAt,
-  }));
+  const { siblingIndexes, otherServices } = siblingServices(rows, index);
   return {
     ready: true,
     siblingIndexes,
     query: {
-      keyword: name,
+      ...(name ? { keyword: name } : {}),
       businessUnit,
       language: row.language.trim(),
-      serviceStartAt: row.serviceStartAt,
-      serviceEndAt: row.serviceEndAt,
+      serviceStartDate: row.serviceStartDate,
+      serviceEndDate: row.serviceEndDate,
+      page,
+      pageSize: GUIDE_PAGE_SIZE,
       ...(excludeTourId ? { excludeTourId } : {}),
       ...(otherServices.length ? { otherServices } : {}),
     },
   };
 }
 
+/** 保存失败定位到某段的信息；排期待确认时附带服务端最新原因与令牌。 */
+export interface GuideServiceServerError {
+  message: string;
+  reasons?: TourGuideUnavailableReason[];
+  canOverride?: boolean;
+  scheduleConflictToken?: string;
+}
+
 /**
- * 仅当本次查询明确把所选人员列为不可用时返回 true；未命中当前姓名搜索不代表不可用，
- * 最终以保存校验为准。人员、语种、起止均未改的历史段允许保留停用/软删档案。
+ * 按 serviceIndex（优先）或 serviceId 定位保存失败的服务段。
+ *
+ * @param rows - 提交时的服务段行。
+ * @param message - 后端错误提示。
+ * @param details - 后端错误 details。
+ * @returns key 为行 key 的错误映射；无法定位时为空对象。
+ */
+export function guideServiceServerErrors(
+  rows: GuideServiceRow[],
+  message: string,
+  details: Record<string, unknown> | undefined,
+): Record<string, GuideServiceServerError> {
+  if (!details) return {};
+  const index = details.serviceIndex;
+  const row =
+    (typeof index === "number" ? rows[index] : undefined) ??
+    (typeof details.serviceId === "string"
+      ? rows.find((item) => item.id === details.serviceId)
+      : undefined);
+  if (!row) return {};
+  if (details.reason !== "GUIDE_SCHEDULE_CONFIRMATION_REQUIRED") return { [row.key]: { message } };
+  // 令牌过时或未确认：清掉旧令牌，按最新原因让用户重新确认，不自动重试。
+  clearScheduleConflict(row);
+  return {
+    [row.key]: {
+      message,
+      reasons: Array.isArray(details.reasons) ? (details.reasons as TourGuideUnavailableReason[]) : [],
+      canOverride: details.canOverride === true,
+      ...(typeof details.scheduleConflictToken === "string"
+        ? { scheduleConflictToken: details.scheduleConflictToken }
+        : {}),
+    },
+  };
+}
+
+/** 冲突确认条件；导游、语种、日期或兄弟段任一改变，临时令牌即作废。 */
+export function scheduleConflictKey(rows: GuideServiceRow[], index: number): string {
+  const row = rows[index];
+  if (!row) return "";
+  return JSON.stringify([
+    row.guideId,
+    row.language.trim(),
+    row.serviceStartDate,
+    row.serviceEndDate,
+    siblingServices(rows, index).otherServices,
+  ]);
+}
+
+/**
+ * 仅当本次查询明确把所选人员列为不可用、且未完成可覆盖冲突的确认时返回 true；
+ * 未命中当前姓名搜索不代表不可用，最终以保存校验为准。未改历史段允许保留停用/软删档案。
  */
 export function isGuideServiceUnavailable(
   row: GuideServiceRow,
-  availability: TourGuideAvailability | null | undefined,
+  availability: Pick<TourGuideAvailability, "list" | "unavailable"> | null | undefined,
 ): boolean {
   if (!row.guideId || !availability || !guideServiceChanged(row)) return false;
   if (availability.list.some((item) => item.id === row.guideId)) return false;
-  return availability.unavailable.some((item) => item.id === row.guideId);
+  const item = availability.unavailable.find((candidate) => candidate.id === row.guideId);
+  if (!item) return false;
+  return !(item.canOverride && row.scheduleConflictToken);
 }
 
 /** 编辑框状态；两种接送模式的输入都保留，提交时只取当前模式字段。 */
@@ -344,7 +415,12 @@ export function createTourRequest(
   form: TourFormState,
   source:
     | { sourceModule: "manual" }
-    | { sourceModule: TourLinkedSourceModule; inquiryId: string; quoteId: string },
+    | {
+      sourceModule: TourLinkedSourceModule;
+      inquiryId: string;
+      quoteId: string;
+      seriesStartDate?: string;
+    },
 ): TourCreateRequest | null {
   if (source.sourceModule !== "manual") {
     // 关联来源只能按航班计算接送。
@@ -356,7 +432,12 @@ export function createTourRequest(
 
 export function updateTourRequest(tour: TourRecord, form: TourFormState): TourUpdateRequest {
   if (tour.sourceModule !== "manual")
-    return { ...tourInput({ ...form, scheduleMode: "flight" }), version: tour.version };
+    return {
+      ...tourInput({ ...form, scheduleMode: "flight" }),
+      version: tour.version,
+      // 系列来源团可改本团出发日，团号与其他团不变。
+      ...(tour.isSeriesSource && form.startDate ? { seriesStartDate: form.startDate } : {}),
+    };
   const manualSource = manualSourceFromForm(form);
   return {
     ...tourInput(form),

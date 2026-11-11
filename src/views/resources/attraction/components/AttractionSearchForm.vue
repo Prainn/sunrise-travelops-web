@@ -7,7 +7,7 @@
         clearable
       />
     </el-form-item>
-    <el-form-item :label="$t('attraction.area')">
+    <el-form-item :label="$t('common.cityRegion')">
       <CitySelect v-model="area" />
     </el-form-item>
     <el-form-item :label="$t('attraction.category')">

@@ -58,6 +58,7 @@
           :disabled="field.disabled"
           :type="field.type === 'textarea' ? 'textarea' : 'text'"
           :rows="3"
+          :maxlength="field.maxlength"
         />
       </el-form-item>
       <el-form-item :label="$t('common.status')">

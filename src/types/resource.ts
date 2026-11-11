@@ -130,6 +130,8 @@ export interface ResourceRecord extends ResourceAuditRecord {
 
 export interface CityRecord extends ResourceRecord {
   province: string;
+  /** 英文客户文件使用的城市英文名，最多 100 字符。 */
+  englishName: string;
   /** WGS84 经度；与纬度同时为空或同时有值，0 为有效值。 */
   longitude: number | null;
   latitude: number | null;
@@ -243,4 +245,4 @@ export interface RestaurantRecord extends ResourceAuditRecord {
 }
 
 /** Enabled shared dropdown entries, without resource audit metadata. */
-export type CityOption = Pick<CityRecord, "id" | "name" | "province" | "status">;
+export type CityOption = Pick<CityRecord, "id" | "name" | "englishName" | "province" | "status">;

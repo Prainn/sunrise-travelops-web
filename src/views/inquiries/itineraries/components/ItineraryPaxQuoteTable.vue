@@ -1,7 +1,7 @@
 <template>
   <SectionCard>
     <template #header>
-      <span class="font-600 text-strong">{{ $t(`itinerary.hotelTiers.${option.hotelTier}`) }} ·
+      <span class="font-600 text-strong">{{ option.hotelTier === null ? $t("itinerary.noAccommodation") : $t(`itinerary.hotelTiers.${option.hotelTier}`) }} ·
         {{ $t(`itinerary.vehicleServiceLevels.${option.vehicleTier}`) }}</span>
     </template>
     <template #actions>
@@ -47,11 +47,13 @@
       />
       <el-table-column :label="$t('itinerary.vehiclePerPerson')" min-width="120">
         <template #default="{ row }">
-          {{ money(row.vehicleUnitCost) }}
+          {{ money(vehicleUnitCost(row)) }}
         </template>
       </el-table-column>
       <el-table-column :label="$t('itinerary.mealCost')" min-width="130">
-        {{ money(mealCost) }}
+        <template #default="{ row }">
+          {{ money(row.mealCost ?? mealCost) }}
+        </template>
       </el-table-column>
       <el-table-column :label="$t('itinerary.attractionCost')" min-width="130">
         {{ money(attractionCost) }}
@@ -70,7 +72,7 @@
         v-for="metric in metrics"
         :key="metric.field"
         :label="$t(metric.label)"
-        min-width="120"
+        :min-width="metric.width"
       >
         <template #default="{ row }">
           {{ money(row[metric.field]) }}
@@ -88,9 +90,9 @@
               <template v-if="calculation">
                 {{ $t("itinerary.hotelPerPerson") }}: {{ formatMoney(calculation.hotelUnitCost)
                 }}<br />
-                {{ $t("itinerary.mealCost") }}: {{ formatMoney(mealCost) }}<br />
+                {{ $t("itinerary.mealCost") }}: {{ formatMoney(row.mealCost ?? mealCost) }}<br />
                 {{ $t("itinerary.attractionCost") }}: {{ formatMoney(attractionCost) }}<br />
-                {{ $t("itinerary.vehiclePerPerson") }}: {{ formatMoney(row.vehicleUnitCost) }}<br />
+                {{ $t("itinerary.vehiclePerPerson") }}: {{ money(vehicleUnitCost(row)) }}<br />
                 {{ $t("itinerary.guideServicePerPerson") }}:
                 {{ formatMoney(row.guideServiceUnitCost) }}<br />
                 {{ $t("itinerary.staffRoomPerPerson") }}: {{ formatMoney(row.staffRoomUnitCost) }}
@@ -178,13 +180,18 @@ const metrics = computed(
         label: props.calculation?.paxPrices.some((row) => row.childWithoutBedUnitPrice != null)
           ? "itinerary.childWithBedPrice"
           : "itinerary.childTourPrice",
+        width: 150,
       },
       ...(props.calculation?.paxPrices.some((row) => row.childWithoutBedUnitPrice != null)
-        ? [{ field: "childWithoutBedUnitPrice", label: "itinerary.childWithoutBedPrice" } as const]
+        ? [{ field: "childWithoutBedUnitPrice", label: "itinerary.childWithoutBedPrice", width: 150 } as const]
         : []),
-      { field: "singleSupplementUnitCost", label: "itinerary.quoteLineTypes.single_supplement" },
+      { field: "singleSupplementUnitCost", label: "itinerary.quoteLineTypes.single_supplement", width: 120 },
     ] as const,
 );
+/** A missing PAX vehicle price stays visible as missing instead of reading as a free ¥0. */
+function vehicleUnitCost(row: Partial<ItineraryPaxCalculation>) {
+  return row.vehicleTotal === null ? null : row.vehicleUnitCost;
+}
 function money(value: number | null | undefined) {
   if (value === null) return "—";
   return `¥${formatMoney(value)}`;

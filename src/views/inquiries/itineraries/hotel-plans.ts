@@ -3,14 +3,13 @@ import type { HotelRecord } from "@/types/resource";
 
 export const HOTEL_PLAN_TIERS: ItineraryHotelTier[] = [3, 4, 5];
 
-// 已冻结报价保留旧档位名称，因此标签表同时覆盖旧值。
-export const HOTEL_PLAN_TIER_LABELS: Record<string, string> = {
-  3: "三钻",
-  4: "四钻",
-  5: "五钻",
-  international_five_star: "国际五星",
-  preferred_non_five_star: "携程优选",
-};
+/** 全部活动日都明确不住宿（overnightDestination 为空字符串）；任一 null 仍是待填写。 */
+export function isNoAccommodationItinerary(itinerary: Pick<ItineraryRecord, "dailyPlans">) {
+  return (
+    itinerary.dailyPlans.length > 0 &&
+    itinerary.dailyPlans.every((day) => day.overnightDestination === "")
+  );
+}
 
 export function createDefaultHotelPlans(): ItineraryHotelPlan[] {
   return HOTEL_PLAN_TIERS.map((tier) => ({ tier, hotels: [] }));

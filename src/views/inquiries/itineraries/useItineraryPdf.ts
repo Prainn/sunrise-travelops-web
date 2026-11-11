@@ -1,6 +1,6 @@
 import { computed, onBeforeUnmount, ref, watch, type ComputedRef, type Ref } from "vue";
 import type { InquiryRecord } from "@/types/inquiry";
-import type { ItineraryRecord } from "@/types/itinerary";
+import type { CustomerExportLanguage, ItineraryRecord } from "@/types/itinerary";
 import { inquiryService, type PdfData } from "@/services/inquiry.service";
 import {
   printItineraryDocument,
@@ -20,6 +20,10 @@ interface ItineraryPdfOptions {
 
 export function useItineraryPdf(options: ItineraryPdfOptions) {
   const showChildPrice = ref(false);
+  /** 客户文件语言，与界面语言无关；仅盛旭可选英文。 */
+  const exportLanguage = ref<CustomerExportLanguage>("zh");
+  const canChooseLanguage = computed(() => options.inquiry.value?.businessUnit === "shengxu");
+  const language = () => (canChooseLanguage.value ? exportLanguage.value : "zh");
   let previewShowChildPrice = false;
   const isPdfPreviewVisible = ref(false);
   const isGeneratingPdf = ref(false);
@@ -38,11 +42,14 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     const inquiry = options.inquiry.value;
     if (!plan || !inquiry || !options.canGenerate()) return null;
     const issues = getItineraryValidationIssues(plan);
+    // 系列询盘没有计划天数，不比较行程天数。
+    const plannedDays = inquiry.plannedDays;
     return {
       issues,
-      dayCountMismatch: getDayCountMismatch(plan.dailyPlans.length, inquiry.plannedDays),
+      dayCountMismatch:
+        plannedDays === null ? null : getDayCountMismatch(plan.dailyPlans.length, plannedDays),
       actualDays: plan.dailyPlans.length,
-      plannedDays: inquiry.plannedDays,
+      plannedDays: plannedDays ?? plan.dailyPlans.length,
     };
   }
 
@@ -55,7 +62,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
       closePdfPreview();
       const source = JSON.stringify(plan);
       previewShowChildPrice = showChildPrice.value;
-      const data = await inquiryService.pdfData(plan.id);
+      const data = await inquiryService.pdfData(plan.id, language());
       if (data.itinerary.version !== plan.version) return false;
       const file = await generateItineraryPrintDocument(
         data.itinerary,
@@ -125,7 +132,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     if (!id || !canDownloadOriginal.value || isGeneratingPdf.value) return;
     isGeneratingPdf.value = true;
     try {
-      const data = await inquiryService.pdfData(id);
+      const data = await inquiryService.pdfData(id, language());
       await inquiryService.recordDownload(id);
       await printItineraryDocument(
         await generateItineraryPrintDocument(
@@ -147,7 +154,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     if (!plan || !inquiry || isGeneratingWord.value) return false;
     isGeneratingWord.value = true;
     try {
-      let data = await inquiryService.pdfData(plan.id);
+      let data = await inquiryService.pdfData(plan.id, language());
       if (plan.status === "draft") {
         if (data.itinerary.version !== plan.version) return false;
         data = await inquiryService.confirmPdf(data);
@@ -181,12 +188,17 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     () => {
       closePdfPreview();
       showChildPrice.value = false;
+      exportLanguage.value = "zh";
     },
   );
+  // 切换语言后旧预览不再对应所选语言，需要重新预览。
+  watch(exportLanguage, closePdfPreview);
   onBeforeUnmount(closePdfPreview);
 
   return {
     showChildPrice,
+    exportLanguage,
+    canChooseLanguage,
     isDownloadingPdf,
     canDownloadOriginal,
     downloadOriginal,

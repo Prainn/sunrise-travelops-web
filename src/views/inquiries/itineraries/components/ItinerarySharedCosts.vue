@@ -1,5 +1,19 @@
 <template>
   <SectionCard :title="$t('itinerary.sharedTripCosts')">
+    <el-select
+      v-if="calculation?.tableMealTotal"
+      v-model="costPax"
+      autocomplete="new-password"
+      class="mb-4"
+      aria-label="PAX"
+    >
+      <el-option
+        v-for="pax in paxTiers"
+        :key="pax"
+        :value="pax"
+        :label="pax + ' PAX'"
+      />
+    </el-select>
     <el-collapse v-model="expanded" class="mb-5">
       <el-collapse-item v-for="section in sections" :key="section.kind" :name="section.kind">
         <template #title>
@@ -23,7 +37,7 @@
             }}</span>
           </div>
         </template>
-        <DataTable :data="calculation?.[section.detailsKey] ?? []" border class="mb-4">
+        <DataTable :data="calculation?.[section.detailsKey] ?? []" border>
           <el-table-column :label="$t('itinerary.costDay')" prop="dayNumber" width="80" />
           <el-table-column :label="$t('itinerary.costItem')" prop="resourceName" min-width="180" />
           <el-table-column :label="$t('itinerary.costUnitPerPerson')" min-width="130">
@@ -38,6 +52,21 @@
             </template>
           </el-table-column>
         </DataTable>
+        <div
+          v-if="calculation?.[section.detailsKey]?.length"
+          class="quote-city-summary flex flex-wrap items-center gap-x-6 gap-y-2 pt-4 mb-4"
+        >
+          <strong>{{ $t("itinerary.costCitySummary") }}</strong>
+          <span v-if="citySummaries[section.kind] === null">
+            {{ $t("itinerary.costCityUnavailable") }}
+          </span>
+          <template v-else>
+            <span v-for="summary in citySummaries[section.kind]" :key="summary.city" class="inline-flex flex-wrap gap-2">
+              <span>{{ summary.city || $t("itinerary.costCityUnspecified") }}</span>
+              <span>{{ summary.totalCost === null ? $t("itinerary.costCityIncomplete") : money(summary.totalCost) }}</span>
+            </span>
+          </template>
+        </div>
       </el-collapse-item>
       <el-collapse-item name="guide">
         <template #title>
@@ -204,13 +233,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import type {
   ItineraryGuidePlan,
   ItineraryQuoteSettings,
   PaxQuoteCalculation,
 } from "@/types/itinerary";
-import { formatMoney } from "@/utils";
+import { formatMoney, divideMoney, sumMoney } from "@/utils";
+import { summarizeResourceCostsByCity } from "../city-cost-summary";
 import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
 import FeedbackState from "@/components/FeedbackState/index.vue";
@@ -227,8 +257,25 @@ const props = defineProps<{
 const emit = defineEmits<{
   "update-settings": [changes: Partial<Omit<ItineraryQuoteSettings, "options">>];
 }>();
+const costPax = ref(props.paxTiers[0] ?? 1);
+watch(() => props.paxTiers, tiers => { if (!tiers.includes(costPax.value)) costPax.value = tiers[0] ?? 1; });
+const calculation = computed(() => {
+  const value = props.calculation;
+  if (!value) return null;
+  return { ...value,
+    mealCost: sumMoney([value.mealCost ?? 0, sumMoney((value.mealDetails ?? []).map(item => divideMoney(item.groupTotal ?? 0, costPax.value)))]),
+    mealDetails: value.mealDetails?.map(item => item.groupTotal === undefined ? item : {
+      ...item, unitCost: item.groupTotal === null ? null : divideMoney(item.groupTotal, costPax.value),
+      quantity: 1, totalCost: item.groupTotal === null ? null : divideMoney(item.groupTotal, costPax.value),
+    }),
+  };
+});
 const expanded = ref<string[]>([]);
 const guidePlan = computed(() => props.guidePlans[0]);
+const citySummaries = computed(() => ({
+  meal: summarizeResourceCostsByCity(calculation.value?.mealDetails ?? []),
+  attraction: summarizeResourceCostsByCity(calculation.value?.attractionDetails ?? []),
+}));
 const sections = [
   {
     kind: "meal",

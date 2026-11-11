@@ -47,7 +47,7 @@
             {{ formatMoney(scope.row.price) }}
           </template>
         </el-table-column>
-        <el-table-column prop="area" :label="$t('attraction.area')" width="100" />
+        <el-table-column prop="area" :label="$t('common.cityRegion')" width="100" />
         <el-table-column
           prop="description"
           :label="$t('resource.description')"

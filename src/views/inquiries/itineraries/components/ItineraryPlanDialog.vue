@@ -19,6 +19,9 @@
       <el-form-item :label="$t('itinerary.title')" prop="title">
         <el-input v-model.trim="form.title" />
       </el-form-item>
+      <el-form-item v-if="english" :label="$t('itinerary.english.title')" prop="titleEn">
+        <el-input v-model.trim="form.titleEn" maxlength="300" />
+      </el-form-item>
       <el-form-item :label="$t('itinerary.paxTiers')" prop="paxTiers">
         <el-select
           autocomplete="new-password"
@@ -71,20 +74,24 @@
         </el-col>
       </el-row>
       <el-row :gutter="16">
-        <el-col :span="8">
-          <el-form-item :label="$t(isEditing ? 'itineraryWorkspace.dayCount' : 'inquiry.plannedDays')">
+        <el-col :span="isSeries ? 12 : 8">
+          <el-form-item
+            :label="$t(isEditing ? 'itineraryWorkspace.dayCount' : 'inquiry.plannedDays')"
+            prop="days"
+          >
+            <!-- 系列询盘没有计划天数，新建时每份行程独立填写 1–365 个实际服务日。 -->
             <el-input-number
-              :model-value="plannedDays"
-              disabled
+              v-model="form.days"
+              :disabled="!daysEditable"
               :min="1"
+              :max="365"
+              :precision="0"
               controls-position="right"
             />
-            <span class="w-full mt-[4px] text-muted">{{
-              $t("itinerary.duration", plannedDuration(plannedDays))
-            }}</span>
+            <span class="w-full mt-[4px] text-muted">{{ durationText }}</span>
           </el-form-item>
         </el-col>
-        <el-col :span="8">
+        <el-col v-if="!isSeries" :span="8">
           <el-form-item :label="$t('common.startDate')" prop="startDate">
             <el-date-picker
               v-model="form.startDate"
@@ -94,7 +101,7 @@
             />
           </el-form-item>
         </el-col>
-        <el-col :span="8">
+        <el-col v-if="!isSeries" :span="8">
           <el-form-item :label="$t('common.endDate')">
             <el-input :model-value="form.endDate" disabled />
           </el-form-item>
@@ -117,6 +124,28 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item :label="$t('itinerary.customerDisplayMode')">
+        <el-radio-group v-model="form.customerDisplayMode">
+          <el-radio value="same">
+            {{ $t("itinerary.customerDisplayModes.same") }}
+          </el-radio>
+          <el-radio value="returnArrival">
+            {{ $t("itinerary.customerDisplayModes.returnArrival") }}
+          </el-radio>
+        </el-radio-group>
+      </el-form-item>
+      <el-row v-if="form.customerDisplayMode === 'returnArrival'" :gutter="16">
+        <el-col :span="english ? 12 : 24">
+          <el-form-item :label="$t('itinerary.returnArrivalText')" prop="returnArrivalText">
+            <el-input v-model="form.returnArrivalText" maxlength="2000" />
+          </el-form-item>
+        </el-col>
+        <el-col v-if="english" :span="12">
+          <el-form-item :label="$t('itinerary.english.returnArrivalText')" prop="returnArrivalTextEn">
+            <el-input v-model="form.returnArrivalTextEn" maxlength="2000" />
+          </el-form-item>
+        </el-col>
+      </el-row>
     </el-form>
     <template #footer>
       <el-button @click="emit('update:modelValue', false)">
@@ -130,7 +159,7 @@
 </template>
 
 <script setup lang="ts">
-import { plannedDuration, plannedEndDate } from "@/views/inquiries/itineraries/duration";
+import { plannedEndDate } from "@/views/inquiries/itineraries/duration";
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -140,9 +169,13 @@ import AppDialog from "@/components/AppDialog/index.vue";
 const props = defineProps<{
   modelValue: boolean;
   record: ItineraryRecord;
-  plannedDays: number;
+  /** null：系列询盘新建，天数由用户填写。 */
+  plannedDays: number | null;
   destinationOptions: string[];
   isEditing?: boolean;
+  isSeries?: boolean;
+  /** 盛旭行程显示对客英文字段。 */
+  english?: boolean;
 }>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
@@ -179,12 +212,34 @@ const form = reactive<ItineraryRecord>({
   },
   dailyPlans: [],
 });
+const daysEditable = computed(() => !props.isEditing && props.plannedDays === null);
+const DAYS_PATTERN = { min: 1, max: 365 };
+/** 晚数取后端按实际住宿统计的 accommodationNights，不再按天数减一推算；新建时尚无住宿只显示天数。 */
+const durationText = computed(() => {
+  const days = form.days || 0;
+  const nights = props.isEditing ? props.record.accommodationNights : undefined;
+  const displayDays = days + (form.customerDisplayMode === "returnArrival" ? 1 : 0);
+  if (nights === undefined)
+    return t("itinerary.serviceDaysOnly", { days, displayDays });
+  return t("itinerary.serviceDisplay", { days, displayDays, nights });
+});
 const paxOptions = computed(() =>
   [...new Set([...DEFAULT_PAX_TIERS, ...form.paxTiers])].sort((left, right) => left - right),
 );
 const rules = computed<FormRules>(() => ({
   title: [{ required: true, message: t("itinerary.titleRequired"), trigger: "blur" }],
-  startDate: [{ required: true, message: t("itinerary.startDateRequired"), trigger: "change" }],
+  days: [
+    {
+      type: "integer",
+      required: true,
+      ...DAYS_PATTERN,
+      message: t("itinerary.serviceDaysRequired"),
+      trigger: "change",
+    },
+  ],
+  startDate: props.isSeries
+    ? []
+    : [{ required: true, message: t("itinerary.startDateRequired"), trigger: "change" }],
   paxTiers: [
     {
       type: "array",
@@ -232,7 +287,7 @@ watch(
     if (!visible) return;
     Object.assign(form, record, {
       paxTiers: [...record.paxTiers],
-      days: props.plannedDays,
+      days: props.plannedDays ?? (record.days || 1),
       destinations: [...record.destinations],
       hotelPlans: record.hotelPlans.map((plan) => ({
         ...plan,
@@ -252,7 +307,7 @@ watch(
   { deep: true },
 );
 
-watch(() => [form.startDate, props.plannedDays], syncEndDate);
+watch(() => [form.startDate, form.days], syncEndDate);
 
 async function submitForm() {
   if (!(await formRef.value?.validate().catch(() => false))) return;
@@ -276,7 +331,7 @@ async function submitForm() {
 }
 
 function syncEndDate() {
-  form.endDate = plannedEndDate(form.startDate, props.plannedDays);
+  form.endDate = plannedEndDate(form.startDate, form.days);
 }
 </script>
 

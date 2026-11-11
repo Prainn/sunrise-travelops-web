@@ -2,6 +2,7 @@ import { missingPriceReasons } from "./price-adjustments";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
 import { itineraryDuration } from "./duration";
 import { computed, ref, toRaw, watch } from "vue";
+import { watchDebounced } from "@vueuse/core";
 import { onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
 import { useAccountSwitchGuard } from "@/composables/useAccountSwitchGuard";
 import { inquiryService, itineraryInput } from "@/services/inquiry.service";
@@ -11,6 +12,7 @@ import type {
   ItineraryDailyItemType,
   ItineraryRecord,
   ItineraryResourceItem,
+  ItineraryVehiclePlan,
   MealSlot,
 } from "@/types/itinerary";
 import type { GuideRecord } from "@/types/resource";
@@ -22,6 +24,8 @@ import { useItineraryEditor } from "./useItineraryEditor";
 import { useItineraryPdf } from "./useItineraryPdf";
 import type { PdfValidationIssue } from "./workflow";
 import { useItinerarySelection } from "./useItinerarySelection";
+import { createVehicleDraft } from "./vehicle-plans";
+import type { VehicleMaintenanceMode } from "./vehicle-plans";
 import { isApiError } from "@/api/request";
 import { ApiErrorCode } from "@/api/error-code";
 import { requestErrorMessage } from "@/utils/version-conflict";
@@ -60,7 +64,13 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     },
     { immediate: true, flush: "post" },
   );
+  // 用车弹窗只编辑深拷贝草稿；确认切换仅属于本次草稿，关闭即丢弃。
+  const vehicleDraft = ref<ItineraryVehiclePlan[]>();
+  const vehicleDraftBaseline = ref("");
+  const vehicleModeChangeConfirmed = ref(false);
   const hasUnsavedChanges = computed(() =>
+    (vehicleDraft.value !== undefined &&
+      JSON.stringify(vehicleDraft.value) !== vehicleDraftBaseline.value) ||
     itineraryStore.some((plan) => {
       const saved = savedPrices.value.get(plan.id);
       return (
@@ -110,7 +120,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   );
   const validationIssues = ref<PdfValidationIssue[]>([]);
   const inquiryReadOnly = computed(() =>
-    inquiry.value ? isInquiryReadOnly(inquiry.value.status, inquiry.value.hasActiveTour) : true,
+    inquiry.value ? isInquiryReadOnly(inquiry.value.status, inquiry.value.hasActiveTour, inquiry.value.isSeries) : true,
   );
   const isDraft = computed(() => selectedItinerary.value?.status === "draft");
   const canCreateItinerary = computed(
@@ -196,6 +206,15 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     canDownload: () => hasUserPermission(userStore.userInfo, "itinerary:download"),
     onRefreshError: (error) => messages.warning("itinerary.confirmedRefreshFailed", { reason: requestErrorMessage(error) }),
   });
+  // 仅在已有导出提示时随编辑防抖复核，补齐后提示自动更新或消失。
+  watchDebounced(
+    () => (validationIssues.value.length ? selectedItinerary.value : null),
+    (plan) => {
+      if (!plan) return;
+      validationIssues.value = pdf.validatePdf()?.issues ?? [];
+    },
+    { debounce: 800, deep: true },
+  );
 
   async function loadDestinationResourceOptions() {
     try {
@@ -404,9 +423,23 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       await createItinerary(record);
       return;
     }
+    const current = selectedItinerary.value;
+    const removedVia = current?.dailyPlans.flatMap((day) =>
+      day.viaDestinations
+        .filter((city) => !record.destinations.includes(city))
+        .map((city) => `D${day.dayNumber} ${city}`),
+    );
+    if (
+      removedVia?.length &&
+      !(await messages.confirm("itinerary.viaDestinationsRemoved", { items: removedVia.join("、") }))
+    )
+      return;
+    // 保存失败时回到提交前，避免人数档同步后的车价等改动残留在未保存记录中。
+    const before = current && (JSON.parse(JSON.stringify(current)) as ItineraryRecord);
     const updated = editor.updateItineraryBasics(record);
     if (!updated) return;
     if (await saveItinerary()) isPlanDialogVisible.value = false;
+    else if (before && selectedItinerary.value === current) Object.assign(current, before);
   }
 
   async function openResourceDialog(dayId: string, mealSlot: MealSlot | null = null, itemId = "") {
@@ -442,16 +475,54 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       isSaving.value = false;
     }
   }
-  async function saveItinerary(): Promise<boolean> {
+  function openVehicleDraft(mode: VehicleMaintenanceMode, reset: boolean) {
     const plan = selectedItinerary.value;
-    if (!plan || !canSaveItinerary.value || isSaving.value) return false;
-    if (missingPriceReasons(plan, savedPrices.value.get(plan.id)).length) {
+    if (!plan) return;
+    vehicleDraft.value = createVehicleDraft(plan.vehiclePlans, plan.paxTiers, mode, reset);
+    vehicleDraftBaseline.value = JSON.stringify(vehicleDraft.value);
+    vehicleModeChangeConfirmed.value = reset;
+  }
+  function discardVehicleDraft() {
+    vehicleDraft.value = undefined;
+    vehicleDraftBaseline.value = "";
+    vehicleModeChangeConfirmed.value = false;
+  }
+  function updateVehicleDraftPlan(plan: ItineraryVehiclePlan) {
+    if (!contentEditable.value || !vehicleDraft.value) return;
+    vehicleDraft.value = vehicleDraft.value.map((record) =>
+      record.tier === plan.tier ? plan : record,
+    );
+  }
+  /** Saved state is replaced only by the server response; failures keep both the record and the draft. */
+  async function saveVehicleDraft(): Promise<boolean> {
+    const plan = selectedItinerary.value;
+    const draft = vehicleDraft.value;
+    if (!plan || !draft || !contentEditable.value) return false;
+    const candidate = editor.withVehiclePlans(plan, draft);
+    if (!candidate) return false;
+    const saved = await persistItinerary(plan, candidate, {
+      confirmVehicleModeChange: vehicleModeChangeConfirmed.value,
+    });
+    if (saved) discardVehicleDraft();
+    return saved;
+  }
+  function saveItinerary(): Promise<boolean> {
+    const plan = selectedItinerary.value;
+    return plan ? persistItinerary(plan, plan) : Promise.resolve(false);
+  }
+  async function persistItinerary(
+    plan: ItineraryRecord,
+    candidate: ItineraryRecord,
+    options: { confirmVehicleModeChange?: boolean } = {},
+  ): Promise<boolean> {
+    if (!canSaveItinerary.value || isSaving.value) return false;
+    if (missingPriceReasons(candidate, savedPrices.value.get(plan.id)).length) {
       messages.error("identity.reasonPlaceholder");
       return false;
     }
     isSaving.value = true;
     try {
-      const saved = await inquiryService.saveItinerary(plan);
+      const saved = await inquiryService.saveItinerary(candidate, options);
       Object.assign(plan, saved);
       messages.success("itinerary.saveSuccess");
       return true;
@@ -480,13 +551,16 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     if (validation.dayCountMismatch) {
       const confirmed = await messages.confirm("itinerary.dayCountMismatch", {
         planned: validation.plannedDays,
-        plannedNights: Math.max(validation.plannedDays - 1, 0),
         actualNights: itineraryDuration(selectedItinerary.value!.dailyPlans).nights,
         actual: validation.actualDays,
       });
       if (!confirmed) return false;
     }
     return saveItinerary();
+  }
+
+  function reportExportError(error: unknown) {
+    reportError(error);
   }
 
   async function handleGeneratePdf() {
@@ -498,7 +572,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
         if (!(await pdf.generatePreview())) messages.error("itinerary.previewRegenerate");
       } catch (error) {
         // 接口错误保留具体原因；本地渲染失败才使用通用文案。
-        if (isApiError(error)) reportError(error);
+        if (isApiError(error)) reportExportError(error);
         else messages.error("itinerary.pdfGenerationFailed");
       }
     } finally {
@@ -519,7 +593,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
         messages.success(draft ? "itinerary.wordGenerated" : "itinerary.wordDownloaded");
       } else messages.error("itinerary.previewChanged");
     } catch (error) {
-      reportError(error);
+      reportExportError(error);
     } finally {
       isPreparingPdf.value = false;
     }
@@ -534,17 +608,24 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       }
       messages.success("itinerary.pdfGenerated");
     } catch (error) {
-      reportError(error);
+      reportExportError(error);
     }
   }
 
   return {
     sectionDialogSnapshot,
+    vehicleDraft,
+    openVehicleDraft,
+    discardVehicleDraft,
+    updateVehicleDraftPlan,
+    saveVehicleDraft,
     savedItinerary: computed(() => {
       const id = selectedItinerary.value?.id;
       return id ? savedPrices.value.get(id) : undefined;
     }),
     showChildPrice: pdf.showChildPrice,
+    exportLanguage: pdf.exportLanguage,
+    canChooseExportLanguage: pdf.canChooseLanguage,
     hasUnsavedChanges,
     isSaving,
     isLoading: selection.isLoading,
@@ -557,7 +638,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
       try {
         await pdf.downloadOriginal();
       } catch (error) {
-        reportError(error);
+        reportExportError(error);
       }
     },
     updateGuideType,
@@ -629,10 +710,10 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     submitItineraryPlan,
     createGuide,
     updateDayField: editor.updateDayField,
+    updateViaDestinations: editor.updateViaDestinations,
     clearHotelPlan: editor.clearHotelPlan,
     updateHotelPlanSelection: selectHotelPlanSelection,
     updateQuoteOption: editor.updateQuoteOption,
-    updateVehiclePlan: editor.updateVehiclePlan,
     updateHotelCost: editor.updateHotelCost,
     updateHotelRate: editor.updateHotelRate,
     updateGuidePrice: editor.updateGuidePrice,

@@ -99,7 +99,7 @@ jobs:
           python3 scripts/test_deploy.py
           release="${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           pnpm install --frozen-lockfile --store-dir /opt/sunrise-ci/pnpm-store
-          NODE_OPTIONS=--max-old-space-size=1200 node node_modules/vue-tsc/bin/vue-tsc.js --noEmit
+          NODE_OPTIONS=--max-old-space-size=1200 node scripts/type-check.mjs
           pnpm exec vite build --mode "server-$DEPLOY_ENV"
           python3 scripts/deploy.py deploy "$release" dist
           python3 scripts/deploy.py status >> "$GITHUB_STEP_SUMMARY"

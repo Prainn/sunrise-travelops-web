@@ -8,7 +8,7 @@
     @close="emit('cancel')"
   >
     <div class="price-adjustments">
-      <el-form v-if="adjustedRows.length || activeVehiclePlans.length" label-position="top">
+      <el-form v-if="adjustedRows.length || vehicleRows.length" label-position="top">
         <div
           v-for="row in adjustedRows"
           :key="row.key"
@@ -46,49 +46,49 @@
           </el-form-item>
         </div>
         <div
-          v-for="vehicle in activeVehiclePlans"
-          :key="vehicle.tier"
+          v-for="row in vehicleRows"
+          :key="row.key"
           class="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-4 mb-4"
         >
           <el-form-item
-            :label="$t(`inquiry.log.tiers.${vehicle.tier}`) + ' · ' + $t('identity.actual')"
+            :label="
+              $t('planning.vehiclePaxItem', {
+                tier: $t(`inquiry.log.tiers.${row.vehicle.tier}`),
+                pax: row.price.pax,
+              }) +
+                ' · ' +
+                $t('identity.actual')
+            "
           >
             <el-input-number
-              :model-value="vehicle.totalPrice"
+              :model-value="row.price.totalPrice"
+              :value-on-clear="null"
               :min="0"
               :precision="2"
               :disabled="!editable"
-              @change="
-                vehicle.totalPrice = $event ?? null;
-                vehicle.pricingMode = 'manual';
-                vehicle.adjustmentReason = '';
-              "
+              @change="changeVehiclePrice(row.vehicle, row.price.pax, $event ?? null)"
             />
           </el-form-item>
           <el-form-item :label="$t('identity.reference')">
             <el-button
-              :disabled="!editable || calculateVehiclePlanAutomaticTotal(vehicle) == null"
-              @click="
-                vehicle.pricingMode = 'automatic';
-                vehicle.totalPrice = calculateVehiclePlanAutomaticTotal(vehicle);
-                vehicle.adjustmentReason = '';
-              "
+              :disabled="!editable || vehicleSegmentPaxTotal(row.vehicle, row.price.pax) == null"
+              @click="changeVehiclePrice(row.vehicle, row.price.pax, null)"
             >
               {{ $t("identity.automatic") }} ·
-              {{ calculateVehiclePlanAutomaticTotal(vehicle) ?? 0 }}
+              {{
+                vehicleSegmentPaxTotal(row.vehicle, row.price.pax) == null
+                  ? $t("planning.priceNotEntered")
+                  : `¥${formatMoney(vehicleSegmentPaxTotal(row.vehicle, row.price.pax))}`
+              }}
             </el-button>
           </el-form-item>
-          <el-form-item :label="$t('identity.reason')" :required="vehicleNeedsReason(vehicle)">
+          <el-form-item :label="$t('identity.reason')" required>
             <el-input
-              v-if="vehicleNeedsReason(vehicle)"
-              :model-value="vehicle.adjustmentReason ?? ''"
+              :model-value="row.price.adjustmentReason ?? ''"
               :disabled="!editable"
               :placeholder="$t('identity.reasonPlaceholder')"
-              @update:model-value="vehicle.adjustmentReason = $event"
+              @update:model-value="row.price.adjustmentReason = $event"
             />
-            <el-text v-else type="info">
-              {{ $t("identity.reasonNotNeeded") }}
-            </el-text>
           </el-form-item>
         </div>
       </el-form>
@@ -137,9 +137,9 @@ import type { ItineraryRecord, ItineraryVehiclePlan, PriceAdjustment } from "@/t
 import {
   itineraryPriceRows,
   resourcePriceNeedsReason,
-  vehiclePriceNeedsReason,
+  vehiclePaxPriceNeedsReason,
 } from "../price-adjustments";
-import { calculateVehiclePlanAutomaticTotal } from "../vehicle-plans";
+import { setVehiclePaxTotal, vehicleSegmentPaxTotal } from "../vehicle-plans";
 import { inquiryService } from "@/services/inquiry.service";
 import { formatMoney, formatDateTime, roundMoney } from "@/utils";
 const props = defineProps<{
@@ -152,9 +152,12 @@ const props = defineProps<{
 const emit = defineEmits<{ save: []; cancel: [] }>();
 const rows = computed(() => itineraryPriceRows(props.plan));
 const adjustedRows = computed(() => rows.value.filter((row) => row.custom || needsReason(row)));
-const activeVehiclePlans = computed(() =>
-  props.plan.vehiclePlans.filter(
-    (vehicle) => vehicle.arrangements.length && vehicleNeedsReason(vehicle),
+// 只列出需要本次原因的车型×人数档；已保存行程的其他档保持不变。
+const vehicleRows = computed(() =>
+  props.plan.vehiclePlans.flatMap((vehicle) =>
+    (vehicle.paxPrices ?? [])
+      .filter((price) => vehiclePaxPriceNeedsReason(vehicle, price.pax, savedVehicle(vehicle)))
+      .map((price) => ({ key: `vehicle:${vehicle.tier}:${price.pax}`, vehicle, price })),
   ),
 );
 const history = ref<PriceAdjustment[]>([]);
@@ -180,11 +183,11 @@ function changePrice(row: ReturnType<typeof itineraryPriceRows>[number], value: 
 function needsReason(row: ReturnType<typeof itineraryPriceRows>[number]) {
   return resourcePriceNeedsReason(row, savedRows.value.get(row.key));
 }
-function vehicleNeedsReason(vehicle: ItineraryVehiclePlan) {
-  return vehiclePriceNeedsReason(
-    vehicle,
-    props.savedPlan?.vehiclePlans.find((saved) => saved.tier === vehicle.tier),
-  );
+function savedVehicle(vehicle: ItineraryVehiclePlan) {
+  return props.savedPlan?.vehiclePlans.find((saved) => saved.tier === vehicle.tier);
+}
+function changeVehiclePrice(vehicle: ItineraryVehiclePlan, pax: number, value: number | null) {
+  Object.assign(vehicle, setVehiclePaxTotal(vehicle, pax, value));
 }
 async function loadHistory() {
   try {

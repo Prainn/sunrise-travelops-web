@@ -136,6 +136,11 @@ describe("vehicle × hotel tier price editing", () => {
     expect(row(view.plan.value, "A")!.priceComponents!.find(item => item.category === "attraction")).toMatchObject({ unitPrice: "2000" });
     expect(row(view.plan.value, "B")).toBeUndefined();
   });
+  it("hides the attraction reference when it is unavailable instead of showing an empty amount", async () => {
+    const view = await mount(null);
+    expect(view.find("tfoot")).toHaveLength(3);
+    expect(view.text()).not.toContain("websiteItineraryUi.attractionPriceReference");
+  });
   it("derives read-only services, blocks invalid input and drops stale combinations only on delete", async () => {
     const view = await mount();
     const [driver, guide] = view.find("ElTag");

@@ -40,6 +40,8 @@ function item(id: string, type: "attraction" | "restaurant", mealSlot?: "lunch" 
     unitCost: 10,
     totalCost: 10,
     remark: "",
+    resourceNameEn: "",
+    remarkEn: "",
     referencePrice: 10,
     referenceBasis: "resource_price",
     adjustmentReason: "",
@@ -53,10 +55,15 @@ function day(id: string, index: number, departure: string, destination: string, 
     date: `2027-01-0${index + 1}`,
     departure,
     destination,
+    viaDestinations: [],
     overnightDestination: overnight,
     meals: { breakfast: index > 0, lunch: false, dinner: false },
     transport: "",
     description: "人工文案",
+    departureEn: "",
+    destinationEn: "",
+    transportEn: "",
+    descriptionEn: "",
     items,
   };
 }
@@ -85,14 +92,12 @@ describe("normal itinerary day reorder", () => {
     expect(plan.dailyPlans[0]!.items.map((record) => record.id)).toEqual(["a1", "m1", "a2"]);
   });
 
-  it("applies the middle-day overnight rule and reports the affected days", () => {
+  it("preserves explicit no-stay when moving the last day into the middle", () => {
     const result = reorderItineraryDays(plan, { dayIds: ["d1", "d3", "d2"], itemIds: {} });
-    expect(result.dailyPlans[1]!.overnightDestination).toBe("丽江");
+    expect(result.dailyPlans[1]!.overnightDestination).toBe("");
     expect(result.issues.map((issue) => [issue.dayId, issue.key.split(".").pop()])).toEqual([
-      ["d3", "formerLastDay"],
       ["d3", "routeBreak"],
       ["d2", "newLastDay"],
-      ["d2", "routeBreak"],
       ["", "vehicleCheck"],
     ]);
   });

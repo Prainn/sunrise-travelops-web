@@ -66,6 +66,54 @@ export const constantRoutes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: "/whatsapp",
+    name: "WhatsappWorkbench",
+    component: Layout,
+    redirect: "/whatsapp/inbox",
+    meta: {
+      title: "whatsappWorkbench",
+      icon: "el-icon-ChatDotRound",
+      alwaysShow: true,
+      scopes: ["headquarters", "website"],
+    },
+    children: [
+      {
+        path: "inbox",
+        name: "WhatsappInbox",
+        component: () => import("@/views/whatsapp/inbox/index.vue"),
+        meta: {
+          menuKey: "whatsapp-inbox",
+          title: "whatsappInbox",
+          icon: "el-icon-Message",
+          scopes: ["headquarters", "website"],
+          perms: ["whatsapp:conversation:list"],
+        },
+      },
+      {
+        path: "quick-replies",
+        name: "WhatsappQuickReplies",
+        component: () => import("@/views/whatsapp/quick-replies/index.vue"),
+        meta: {
+          menuKey: "whatsapp-quick-replies", title: "whatsappQuickReplies", icon: "el-icon-Lightning",
+          scopes: ["headquarters", "website"], perms: ["whatsapp:quick-reply:manage"], keepAlive: true,
+        },
+      },
+      {
+        path: "integration",
+        name: "WhatsappIntegration",
+        component: () => import("@/views/whatsapp/integration/index.vue"),
+        meta: {
+          menuKey: "whatsapp-integration",
+          title: "whatsappIntegration",
+          icon: "el-icon-Link",
+          keepAlive: true,
+          scopes: ["headquarters"],
+          perms: ["whatsapp:integration:manage"],
+        },
+      },
+    ],
+  },
+  {
     path: "/system",
     name: "System",
     component: Layout,

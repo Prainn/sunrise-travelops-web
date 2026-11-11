@@ -92,7 +92,19 @@
           min-width="210"
           fixed="left"
           :show-overflow-tooltip="false"
-        />
+        >
+          <template #default="{ row }">
+            {{ row.tourNo }}
+            <el-tag
+              v-if="row.isSeriesSource"
+              size="small"
+              type="warning"
+              class="ml-1"
+            >
+              {{ $t("tour.seriesSource") }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('common.status')" width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'info'">

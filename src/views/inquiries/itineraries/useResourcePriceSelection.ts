@@ -2,7 +2,7 @@ import { computed, ref, watch, onScopeDispose } from "vue";
 import type { ItineraryDailyItemType, ItineraryResourceItem, MealSlot } from "@/types/itinerary";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import { resourceService } from "@/services/resource.service";
-import { createId, divideMoney, multiplyMoney, roundMoney } from "@/utils";
+import { createId, multiplyMoney, roundMoney } from "@/utils";
 import {
   calculateItem,
   recalculateItem,
@@ -28,6 +28,7 @@ export function useResourcePriceSelection(
   const city = ref("");
   const selectedId = ref("");
   const quantity = ref(1);
+  const tableCount = ref<number>(1);
   const actualPrice = ref<number | null>(0);
   const adjustmentReason = ref("");
   const selectedOption = ref<ResourcePriceOption>();
@@ -38,6 +39,8 @@ export function useResourcePriceSelection(
   );
   const source = ref<"library" | "custom">("library");
   const customName = ref("");
+  /** 自定义餐食英文名称；引用资源的英文名由服务端从资源库读取。 */
+  const customNameEn = ref("");
   const customPrice = ref<number | null>(null);
   const customUnit = ref<"personMeal" | "table">("personMeal");
   const customQuantity = ref(1);
@@ -89,7 +92,7 @@ export function useResourcePriceSelection(
       baseCanSubmit.value &&
       !duplicate.value &&
       ((source.value === "custom" ? customUnit.value : selectedOption.value?.unit) !== "table" ||
-        (dinerCount.value != null && Number.isInteger(dinerCount.value) && dinerCount.value > 0)) &&
+        (Number.isInteger(tableCount.value) && tableCount.value > 0 && tableCount.value <= 10000)) &&
       (!reasonRequired.value || Boolean(adjustmentReason.value.trim())),
   );
   let detailVersion = 0;
@@ -150,11 +153,13 @@ export function useResourcePriceSelection(
         city.value = props.destination ?? "";
         const item = props.currentItem;
         dinerCount.value = item?.dinerCount ?? undefined;
+        tableCount.value = item?.tableCount ?? 1;
         adjustmentReason.value = item?.adjustmentReason ?? "";
         const custom =
           item?.type === "restaurant" && item.resourceId === null;
         source.value = custom ? "custom" : "library";
         customName.value = custom ? item.resourceName : "";
+        customNameEn.value = custom ? item.resourceNameEn : "";
         customPrice.value = custom ? item.unitCost : null;
         customUnit.value = custom && item.unit === "table" ? "table" : "personMeal";
         customQuantity.value = 1;
@@ -215,18 +220,21 @@ export function useResourcePriceSelection(
         priceName: "",
         unit: customUnit.value,
         unitCost: price,
+        tableCount: customUnit.value === "table" ? tableCount.value : null,
         quantity: customQuantity.value,
-        dinerCount: customUnit.value === "table" ? dinerCount.value! : null,
+        dinerCount: customUnit.value === "table" ? (dinerCount.value ?? null) : null,
         totalCost:
           price === null
             ? null
             : multiplyMoney(
               customUnit.value === "table"
-                ? divideMoney(price, dinerCount.value!)
+                ? multiplyMoney(price, tableCount.value)
                 : price,
               customQuantity.value,
             ),
         remark: current?.remark ?? "",
+        resourceNameEn: customNameEn.value.trim(),
+        remarkEn: current?.remarkEn ?? "",
       };
     }
     const option = selectedOption.value;
@@ -237,8 +245,9 @@ export function useResourcePriceSelection(
         ...current,
         unitCost: price,
         adjustmentReason: adjustmentReason.value,
+        tableCount: current.unit === "table" ? tableCount.value : null,
         quantity: quantity.value,
-        dinerCount: current.unit === "table" ? dinerCount.value! : null,
+        dinerCount: current.unit === "table" ? (dinerCount.value ?? null) : null,
       };
       recalculateItem(item);
       return item;
@@ -248,11 +257,14 @@ export function useResourcePriceSelection(
       quantity.value,
       price,
     );
+    item.tableCount = item.unit === "table" ? tableCount.value : null;
+    recalculateItem(item);
     item.adjustmentReason = adjustmentReason.value;
     return {
       ...item,
       id: current?.id ?? item.id,
       remark: current?.remark ?? "",
+      remarkEn: current?.remarkEn ?? "",
       ...(props.mealSlot ? { mealSlot: props.mealSlot } : {}),
     };
   }
@@ -274,10 +286,12 @@ export function useResourcePriceSelection(
     duplicate,
     source,
     customName,
+    customNameEn,
     customPrice,
     customUnit,
     customQuantity,
     dinerCount,
+    tableCount,
     canSubmit: canSubmitWithDiners,
     createItem,
   };

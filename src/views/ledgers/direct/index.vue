@@ -254,6 +254,7 @@
       :ledger="editing"
       :business-unit="businessUnit"
       :readonly="isReadonly"
+      :linked-inquiry="linkedInquiry"
       @saved="handleSaved"
     />
     <TourEditorDialog
@@ -285,6 +286,8 @@ import RowActions from "@/components/RowActions/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { directLedgerService } from "@/services/direct-ledger.service";
+import { websiteErrorMessage, websiteService } from "@/services/website.service";
+import type { WebsiteInquiry } from "@/types/website";
 import { useUserStore } from "@/stores/user";
 import type {
   DirectLedgerBusinessUnit,
@@ -321,6 +324,8 @@ const businessUnit = computed(() => props.businessUnit);
 const creatorId = ref("");
 const operatorId = ref("");
 const route = useRoute();
+const router = useRouter();
+const linkedInquiry = ref<WebsiteInquiry | null>(null);
 const keyword = ref(typeof route.query.keyword === "string" ? route.query.keyword : "");
 const orderStatus = ref<DirectLedgerOrderStatus | "">("");
 const workflowStatus = ref<DirectLedgerWorkflowStatus | "">("");
@@ -435,6 +440,7 @@ function resetQuery() {
   dateRange.value = null;
 }
 function openCreate() {
+  linkedInquiry.value = null;
   editing.value = null;
   isReadonly.value = false;
   dialogVisible.value = true;
@@ -443,6 +449,7 @@ function openCreate() {
 async function handleOpenClick(row: DirectLedgerItem) {
   if (openingId.value || isPending(row.id)) return;
   openingId.value = row.id;
+  linkedInquiry.value = null;
   try {
     const detail = await directLedgerService.detail(row.id);
     editing.value = detail;
@@ -536,6 +543,39 @@ async function handleDelete(row: DirectLedgerItem) {
     t("common.deleteSuccess"),
   );
 }
+
+/**
+ * 从 WhatsApp 会话的“创建台账”进入：读取询盘核对业务与收客计调后打开关联新增，不从参数直接信任关联。
+ *
+ * @param id - 查询参数中的独立站询盘 ID。
+ */
+async function openLinkedCreate(id: string) {
+  void router.replace({ query: { ...route.query, websiteInquiryId: undefined } });
+  if (businessUnit.value !== "website" || !canCreate.value) {
+    ElMessage.warning(t("ledger.direct.linkUnavailable"));
+    return;
+  }
+  try {
+    const inquiry = await websiteService.inquiry(id);
+    const isDelegate = user.userInfo.scope === "headquarters" && user.userInfo.roles.includes("ROOT");
+    if (inquiry.businessUnit !== "website" || (!isDelegate && inquiry.ownerId !== user.userInfo.userId)) {
+      ElMessage.warning(t("ledger.direct.linkOwnerMismatch"));
+      return;
+    }
+    editing.value = null;
+    isReadonly.value = false;
+    linkedInquiry.value = inquiry;
+    dialogVisible.value = true;
+  } catch (error) {
+    ElMessage.error(websiteErrorMessage(error));
+  }
+}
+watch(() => route.query.websiteInquiryId, (id) => {
+  if (typeof id === "string" && id) void openLinkedCreate(id);
+}, { immediate: true });
+watch(dialogVisible, (opened) => {
+  if (!opened) linkedInquiry.value = null;
+});
 
 onMounted(fetchList);
 useRefreshOnActivated(fetchList);

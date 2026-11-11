@@ -16,6 +16,27 @@ export function formatDateTime(input: Date | string | null | undefined): string 
   return `${formatDate(value)} ${hours}:${minutes}`;
 }
 
+const SHANGHAI_DATE_TIME = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Shanghai",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+/** 按 Asia/Shanghai 格式化时刻，精确到分钟；业务提醒与跟进时间统一以上海时间展示。 */
+export function formatShanghaiDateTime(input: Date | string | null | undefined): string {
+  if (!input) return "-";
+  const value = input instanceof Date ? input : new Date(input);
+  if (Number.isNaN(value.getTime())) return "-";
+  const parts = Object.fromEntries(
+    SHANGHAI_DATE_TIME.formatToParts(value).map((part) => [part.type, part.value]),
+  );
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`;
+}
+
 /** 在日期字符串上增加指定天数。 */
 export function addDays(date: string, days: number): string {
   const value = new Date(`${date}T00:00:00`);
