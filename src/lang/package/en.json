@@ -991,6 +991,7 @@
     "tagTypePlaceholder": "Select a tag style"
   },
   "user": {
+    "bossDepartment": "Boss",
     "feishu": "Feishu",
     "feishuConnected": "Connected",
     "feishuNotConnected": "Not connected",
@@ -2039,20 +2040,19 @@
     "relatedTours": "Related tours"
   },
   "menuPermission": {
-    "targets": "Roles and accounts",
-    "sunriseNotice": "Only mango can manage Sunrise menus and feature permissions. Changes take effect immediately.",
-    "sunriseSaved": "Sunrise permissions updated and effective immediately.",
+    "targets": "Roles",
     "navigationConfigurationError": "Menu configuration does not match local route: {route}",
     "expand": "Expand all",
     "collapse": "Collapse all",
     "loginNotice": "Menu changes apply on next login.",
     "scopeNotice": "Shared menus use roles; inquiry menus use login scope: Shengxu → Inquiries, Linxi/Website → Website Inquiries. Home and Profile stay available.",
+    "bossLocked": "Menus and feature permissions for the Boss role are fixed.",
     "rootLocked": "Super admin menus are always available and fixed.",
     "unavailable": "This role cannot access this page",
     "discard": "Discard unsaved menu changes?",
     "saved": "Saved. Applies on next login.",
     "roles": {
-      "SUNRISE": "Sunrise",
+      "BOSS": "Boss",
       "ROOT": "Super admin",
       "ADMIN": "System admin",
       "EXECUTIVE": "Executive office",

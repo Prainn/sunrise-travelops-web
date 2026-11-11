@@ -234,12 +234,12 @@ describe("WhatsApp 工作台菜单", () => {
   });
 });
 
-describe("Sunrise account menu switches", () => {
-  it("enforces menu keys for Sunrise ROOT while preserving mango ROOT", () => {
-    const context = { scope: "headquarters" as const, roles: ["ROOT"], perms: ["whatsapp:conversation:list"], menuKeys: [] };
-    const meta = { menuKey: "whatsapp-inbox", perms: ["whatsapp:conversation:list"] };
-    expect(hasRouteChainAccess([meta], { ...context, username: "sunrise" })).toBe(false);
-    expect(hasRouteChainAccess([meta], { ...context, username: "mango" })).toBe(true);
-    expect(hasRouteChainAccess([meta], { ...context, username: "sunrise", menuKeys: ["whatsapp-inbox"] })).toBe(true);
+describe("老板角色", () => {
+  it("固定禁用 WhatsApp 和操作日志，保留用户管理", () => {
+    const context = { scope: "headquarters" as const, roles: ["BOSS"], perms: ["sys:user:list"], menuKeys: ["users"] };
+    const routes = filterRoutesByAccess(constantRoutes, context);
+    expect(routes.some((route) => route.name === "WhatsappWorkbench")).toBe(false);
+    const system = routes.find((route) => route.name === "System");
+    expect(system?.children?.map((route) => route.name)).toEqual(["User"]);
   });
 });

@@ -418,7 +418,7 @@ import RemoteSelect from "@/components/RemoteSelect/index.vue";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import type { RemoteOptionsQuery } from "@/composables/useRemoteOptions";
 import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
-import { ROLE_ROOT } from "@/constants";
+import { ROLE_BOSS, ROLE_ROOT } from "@/constants";
 import { businessUnitName } from "@/constants/identity";
 import { tourService } from "@/services/tour.service";
 import { useUserStore } from "@/stores/user";
@@ -483,7 +483,7 @@ const dialogTitle = computed(() => {
 const isHeadquarters = computed(() => user.userInfo.scope === "headquarters");
 // 与后端一致：ROOT/业务负责人可指定本业务收客计调，其他计调只能是本人。最终由服务端授权。
 const canAssignCollector = computed(() =>
-  user.userInfo.roles.some((role) => role === ROLE_ROOT || role === "BUSINESS_MANAGER"),
+  user.userInfo.roles.some((role) => role === ROLE_ROOT || role === ROLE_BOSS || role === "BUSINESS_MANAGER"),
 );
 const isManual = computed(() =>
   props.tour ? props.tour.sourceModule === "manual" : createMode.value === "manual",

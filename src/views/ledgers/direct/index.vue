@@ -557,7 +557,7 @@ async function openLinkedCreate(id: string) {
   }
   try {
     const inquiry = await websiteService.inquiry(id);
-    const isDelegate = user.userInfo.scope === "headquarters" && user.userInfo.roles.includes("ROOT");
+    const isDelegate = user.userInfo.scope === "headquarters" && user.userInfo.roles.some((role) => role === "ROOT" || role === "BOSS");
     if (inquiry.businessUnit !== "website" || (!isDelegate && inquiry.ownerId !== user.userInfo.userId)) {
       ElMessage.warning(t("ledger.direct.linkOwnerMismatch"));
       return;

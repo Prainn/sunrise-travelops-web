@@ -32,6 +32,7 @@ function withUserSummary(user: UserItem): UserItem {
 function buildUserParams(query: UserQueryParams) {
   const keyword = query.keyword?.trim();
   return {
+    view: query.view,
     page: query.page,
     pageSize: query.pageSize,
     keyword,

@@ -190,7 +190,7 @@ const dialogTitle = computed(() => {
   return t(props.readonly ? "common.view" : "common.edit");
 });
 const isDelegate = computed(
-  () => !props.ledger && user.userInfo.scope === "headquarters" && user.userInfo.roles.includes("ROOT"),
+  () => !props.ledger && user.userInfo.scope === "headquarters" && user.userInfo.roles.some((role) => role === "ROOT" || role === "BOSS"),
 );
 const agencyCoordinatorName = ref("");
 const creatorName = computed(() => props.ledger?.creatorName
