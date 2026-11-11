@@ -81,7 +81,6 @@ const saving = ref(false);
 
 const rules = computed<FormRules>(() => ({
   ownerId: [{ required: true, message: t("whatsapp.ownerRequired"), trigger: "change" }],
-  reason: [{ required: true, whitespace: true, message: t("whatsapp.assignReasonRequired"), trigger: "blur" }],
 }));
 
 watch(visible, async (opened) => {

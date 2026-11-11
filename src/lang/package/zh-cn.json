@@ -332,6 +332,7 @@
     }
   },
   "itinerary": {
+    "resourceTotalPrice": "总价",
     "tableMealTotal": "按桌餐食总价（整团）",
     "tableCount": "桌数",
     "customerNotes": "@:common.remark",
@@ -581,7 +582,7 @@
     "childWithoutBedRate": "儿童不占床团费比例",
     "childWithBedPrice": "儿童团费（占床）",
     "childWithoutBedPrice": "儿童团费（不占床）",
-    "dayPerPersonCost": "按人计价餐食与景点成本（人均）"
+    "dayPerPersonCost": "当日餐食与景点成本（人均）"
   },
   "businessCategory": {
     "applicableResources": "适用资源",

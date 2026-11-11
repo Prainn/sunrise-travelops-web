@@ -10,7 +10,7 @@ import type {
   RestaurantRecord,
   TransportRecord,
 } from "@/types/resource";
-import { createId, divideMoney, multiplyMoney, roundMoney } from "@/utils";
+import { createId, divideMoney, multiplyMoney, roundMoney, sumMoney } from "@/utils";
 
 export interface ResourcePriceOption {
   id: string;
@@ -229,4 +229,15 @@ export function recalculateItem(item: ItineraryResourceItem) {
 
 export function getDefaultResourceQuantity() {
   return 1;
+}
+
+/** 桌数餐食保存整团总价，展示时与报价一样逐项分摊并按分舍入。 */
+export function getItemPerPersonCost(item: ItineraryResourceItem, pax: number | undefined): number | null {
+  if (item.totalCost === null) return null;
+  if (item.tableCount == null) return item.totalCost;
+  return pax && pax > 0 ? divideMoney(item.totalCost, pax) : null;
+}
+
+export function getDayResourceCost(items: ItineraryResourceItem[], pax: number | undefined): number {
+  return sumMoney(items.map(item => getItemPerPersonCost(item, pax) ?? 0));
 }

@@ -167,6 +167,7 @@
             v-if="selectedItinerary?.dailyPlans[index]"
             :ref="(card) => setDayCard(selectedItinerary!.dailyPlans[index]!.id, card)"
             :day="selectedItinerary.dailyPlans[index]"
+            :pax-tiers="selectedItinerary.paxTiers"
             :hide-date="inquiry.isSeries"
             :breakfast-status="getDayBreakfastStatus(selectedItinerary, index)"
             :destinations="selectedItinerary.destinations"

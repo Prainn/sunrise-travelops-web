@@ -25,9 +25,11 @@
         </el-col>
         <el-col v-if="form.isSeries" :span="12">
           <el-form-item :label="$t('inquiry.series.label')">
-            <el-tag type="warning">
-              {{ $t("inquiry.series.tag") }}
-            </el-tag>
+            <el-checkbox
+              :model-value="form.isSeries"
+              :aria-label="$t('inquiry.series.label')"
+              disabled
+            />
           </el-form-item>
         </el-col>
       </el-row>

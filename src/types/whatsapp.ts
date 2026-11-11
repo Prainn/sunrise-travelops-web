@@ -161,7 +161,7 @@ export interface WhatsappAction {
 export interface WhatsappAssignInput {
   version: number;
   ownerId: string;
-  reason: string;
+  reason?: string;
 }
 
 export interface WhatsappNewConsultationResult {

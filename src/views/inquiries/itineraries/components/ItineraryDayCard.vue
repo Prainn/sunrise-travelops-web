@@ -109,17 +109,24 @@
         </el-table-column>
         <el-table-column
           v-if="day.items.some(item => item.tableCount != null)"
-          :label="$t('itinerary.tableMealTotal')"
+          :label="$t('itinerary.resourceTotalPrice')"
           width="180"
           align="right"
         >
           <template #default="{ row }">
-            {{ row.tableCount != null && row.unitCost != null ? row.tableCount + ' × ¥' + formatMoney(row.unitCost) + ' = ¥' + formatMoney(row.totalCost) : '—' }}
+            {{ row.tableCount != null && row.unitCost != null ? '¥' + formatMoney(row.totalCost) : '—' }}
           </template>
         </el-table-column>
         <el-table-column :label="$t('itinerary.resourceCostPerPerson')" width="120" align="right">
           <template #default="scope">
-            {{ scope.row.tableCount != null ? "—" : "¥" + formatMoney(scope.row.totalCost) }}
+            <el-tooltip placement="top" :disabled="scope.row.tableCount == null || paxTiers.length < 2">
+              <template #content>
+                <div v-for="pax in paxTiers" :key="pax">
+                  {{ pax }} PAX：{{ itemCostLabel(day.items[scope.$index]!, pax) }}
+                </div>
+              </template>
+              <span>{{ itemCostLabel(day.items[scope.$index]!, paxTiers[0]) }}</span>
+            </el-tooltip>
           </template>
         </el-table-column>
         <el-table-column
@@ -140,10 +147,16 @@
       </DataTable>
       <FeedbackState v-else :title="$t('itinerary.noDailyResources')" />
       <div
-        class="day-card__subtotal mt-[12px] flex items-center justify-between text-muted"
+        class="day-card__subtotal mt-[12px] text-[80%] text-muted"
       >
-        <span>{{ $t(hasTableMeals ? "itinerary.dayPerPersonCost" : "itinerary.dayCost") }} ¥{{ formatMoney(dayCost) }}</span>
-        <span v-if="hasTableMeals">{{ $t("itinerary.tableMealTotal") }} ¥{{ formatMoney(tableMealTotal) }}</span>
+        <el-tooltip placement="top" :disabled="!hasTableMeals || paxTiers.length < 2">
+          <template #content>
+            <div v-for="pax in paxTiers" :key="pax">
+              {{ pax }} PAX：¥{{ formatMoney(getDayResourceCost(day.items, pax)) }}
+            </div>
+          </template>
+          <span>{{ $t("itinerary.dayPerPersonCost") }} ¥{{ formatMoney(dayCost) }}</span>
+        </el-tooltip>
       </div>
     </template>
   </ItineraryDayCardFrame>
@@ -159,7 +172,8 @@ import type {
   ItineraryResourceItem,
   MealSlot,
 } from "@/types/itinerary";
-import { formatMoney, sumMoney } from "@/utils";
+import { formatMoney } from "@/utils";
+import { getItemPerPersonCost, getDayResourceCost } from "../pricing";
 import DataTable from "@/components/DataTable/index.vue";
 import FeedbackState from "@/components/FeedbackState/index.vue";
 import ItineraryDayCardFrame from "./ItineraryDayCardFrame.vue";
@@ -169,6 +183,7 @@ import ItineraryDayResourceBar, { type DayResourceAction } from "./ItineraryDayR
 type EditableDayField = ItineraryEditableDayField;
 const props = defineProps<{
   day: ItineraryDayRecord;
+  paxTiers: number[];
   hideDate?: boolean;
   breakfastStatus: "included" | "excluded" | "pending";
   destinations: string[];
@@ -196,8 +211,11 @@ const hasDayResources = computed(
   () => props.day.items.length > 0 || props.day.meals.lunch || props.day.meals.dinner,
 );
 const hasTableMeals = computed(() => props.day.items.some(item => item.tableCount != null));
-const tableMealTotal = computed(() => sumMoney(props.day.items.filter(item => item.tableCount != null).map(item => item.totalCost ?? 0)));
-const dayCost = computed(() => sumMoney(props.day.items.filter(item => item.tableCount == null).map((item) => item.totalCost ?? 0)));
+const dayCost = computed(() => getDayResourceCost(props.day.items, props.paxTiers[0]));
+function itemCostLabel(item: ItineraryResourceItem, pax: number | undefined) {
+  const value = getItemPerPersonCost(item, pax);
+  return value === null ? "—" : "¥" + formatMoney(value);
+}
 const { t } = useI18n();
 
 function mealLabel(slot: MealSlot) {

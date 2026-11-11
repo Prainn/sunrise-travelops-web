@@ -1,49 +1,102 @@
 <template>
   <el-form label-position="top" @submit.prevent>
     <ItineraryDayPanel :columns="3">
-      <el-form-item :label="$t('itinerary.departure')">
-        <el-input
-          v-if="day.dayNumber === 1"
-          :model-value="day.departure"
-          :disabled="!editable"
-          :placeholder="$t('itinerary.departure')"
-          @update:model-value="updateField('departure', $event)"
-        />
-        <el-select
-          v-else
-          autocomplete="new-password"
-          :model-value="day.departure"
-          :disabled="!editable"
-          filterable
-          clearable
-          @update:model-value="updateField('departure', $event)"
-        >
-          <el-option
-            v-for="city in destinations"
-            :key="city"
-            :label="city"
-            :value="city"
+      <div class="col-span-2 grid grid-cols-2 gap-[14px_16px] max-[900px]:col-span-1 max-[900px]:grid-cols-1">
+        <el-form-item :label="$t('itinerary.departure')">
+          <el-input
+            v-if="day.dayNumber === 1"
+            :model-value="day.departure"
+            :disabled="!editable"
+            :placeholder="$t('itinerary.departure')"
+            @update:model-value="updateField('departure', $event)"
           />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="$t('itinerary.destination')">
-        <el-select
-          autocomplete="new-password"
-          :allow-create="allowCustomDestination"
-          :model-value="day.destination"
-          :disabled="!editable"
-          filterable
-          clearable
-          @update:model-value="updateField('destination', $event)"
-        >
-          <el-option
-            v-for="city in destinations"
-            :key="city"
-            :label="city"
-            :value="city"
-          />
-        </el-select>
-      </el-form-item>
+          <el-select
+            v-else
+            autocomplete="new-password"
+            :model-value="day.departure"
+            :disabled="!editable"
+            filterable
+            clearable
+            @update:model-value="updateField('departure', $event)"
+          >
+            <el-option
+              v-for="city in destinations"
+              :key="city"
+              :label="city"
+              :value="city"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label="$t('itinerary.destination')">
+          <el-select
+            autocomplete="new-password"
+            :allow-create="allowCustomDestination"
+            :model-value="day.destination"
+            :disabled="!editable"
+            filterable
+            clearable
+            @update:model-value="updateField('destination', $event)"
+          >
+            <el-option
+              v-for="city in destinations"
+              :key="city"
+              :label="city"
+              :value="city"
+            />
+          </el-select>
+        </el-form-item>
+        <div class="min-w-0 flex items-start gap-3">
+          <el-checkbox v-model="hasVia" :disabled="!editable" @change="toggleVia">
+            {{ $t('itinerary.viaDestinations') }}
+          </el-checkbox>
+          <div v-if="hasVia" class="min-w-0 flex-1">
+            <el-select
+              :aria-label="$t('itinerary.viaDestinations')"
+              autocomplete="new-password"
+              :model-value="day.viaDestinations"
+              :disabled="!editable"
+              multiple
+              filterable
+              :placeholder="$t('itinerary.viaDestinationsPlaceholder')"
+              @update:model-value="emit('update-via', $event)"
+            >
+              <el-option
+                v-for="city in viaOptions"
+                :key="city"
+                :label="city"
+                :value="city"
+              />
+            </el-select>
+            <div v-if="day.viaDestinations.length > 1" class="mt-2 flex flex-wrap items-center gap-1">
+              <el-tag
+                v-for="(city, index) in day.viaDestinations"
+                :key="city"
+                size="small"
+                type="info"
+                class="via-tag"
+              >
+                <el-button
+                  link
+                  size="small"
+                  :icon="ArrowLeft"
+                  :disabled="!editable || index === 0"
+                  :aria-label="$t('itinerary.moveViaEarlier', { city })"
+                  @click="moveVia(index, -1)"
+                />
+                {{ index + 1 }}. {{ city }}
+                <el-button
+                  link
+                  size="small"
+                  :icon="ArrowRight"
+                  :disabled="!editable || index === day.viaDestinations.length - 1"
+                  :aria-label="$t('itinerary.moveViaLater', { city })"
+                  @click="moveVia(index, 1)"
+                />
+              </el-tag>
+            </div>
+          </div>
+        </div>
+      </div>
       <el-form-item :label="$t('itinerary.overnightDestination')">
         <el-select
           autocomplete="new-password"
@@ -87,56 +140,6 @@
             :value="option.value"
           />
         </el-select>
-      </el-form-item>
-      <el-form-item class="self-end">
-        <el-checkbox v-model="hasVia" :disabled="!editable" @change="toggleVia">
-          {{ $t('itinerary.viaDestinations') }}
-        </el-checkbox>
-      </el-form-item>
-      <el-form-item v-if="hasVia" :label="$t('itinerary.viaDestinations')">
-        <el-select
-          autocomplete="new-password"
-          :model-value="day.viaDestinations"
-          :disabled="!editable"
-          multiple
-          filterable
-          :placeholder="$t('itinerary.viaDestinationsPlaceholder')"
-          @update:model-value="emit('update-via', $event)"
-        >
-          <el-option
-            v-for="city in viaOptions"
-            :key="city"
-            :label="city"
-            :value="city"
-          />
-        </el-select>
-        <div v-if="day.viaDestinations.length > 1" class="mt-2 flex flex-wrap items-center gap-1">
-          <el-tag
-            v-for="(city, index) in day.viaDestinations"
-            :key="city"
-            size="small"
-            type="info"
-            class="via-tag"
-          >
-            <el-button
-              link
-              size="small"
-              :icon="ArrowLeft"
-              :disabled="!editable || index === 0"
-              :aria-label="$t('itinerary.moveViaEarlier', { city })"
-              @click="moveVia(index, -1)"
-            />
-            {{ index + 1 }}. {{ city }}
-            <el-button
-              link
-              size="small"
-              :icon="ArrowRight"
-              :disabled="!editable || index === day.viaDestinations.length - 1"
-              :aria-label="$t('itinerary.moveViaLater', { city })"
-              @click="moveVia(index, 1)"
-            />
-          </el-tag>
-        </div>
       </el-form-item>
       <el-form-item
         class="day-form__description [grid-column:1_/_-1]"

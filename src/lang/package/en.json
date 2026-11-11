@@ -332,6 +332,7 @@
     }
   },
   "itinerary": {
+    "resourceTotalPrice": "Total",
     "tableMealTotal": "Table meal total (group)",
     "tableCount": "Tables",
     "customerNotes": "@:common.remark",
@@ -581,7 +582,7 @@
     "childWithoutBedRate": "Child fare % (no bed)",
     "childWithBedPrice": "Child fare (with bed)",
     "childWithoutBedPrice": "Child fare (no bed)",
-    "dayPerPersonCost": "Per-person meals and attractions"
+    "dayPerPersonCost": "Daily meal and attraction cost (per person)"
   },
   "businessCategory": {
     "applicableResources": "Resource Types",
