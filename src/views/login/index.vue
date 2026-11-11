@@ -198,6 +198,7 @@ import { Storage } from "@/utils/storage";
 import router from "@/router";
 import { useUserStore } from "@/stores/user";
 import { AuthStorage } from "@/utils/auth-storage";
+import { safeRedirectTarget } from "@/utils/redirect-target";
 import ThemeSwitch from "@/components/ThemeSwitch/index.vue";
 import sunriseLogo from "@/assets/images/login/sunrise-logo.png";
 import lynxtourLogo from "@/assets/images/login/lynxtour-logo.svg";
@@ -266,16 +267,9 @@ const loginRules = computed(() => ({
     { min: 6, message: t("login.message.password.min"), trigger: "blur" },
   ],
 }));
-/** 只接受站内路径，防止开放重定向。 */
+/** 只接受站内路径，防止开放重定向；目标页权限仍由路由守卫按当前身份判断。 */
 function loginRedirectTarget(): string {
-  const redirect = router.currentRoute.value.query.redirect;
-  return typeof redirect === "string" &&
-    redirect.startsWith("/") &&
-    !redirect.startsWith("//") &&
-    !redirect.startsWith("/\\") &&
-    !/^\/login(?:[/?#]|$)/.test(redirect)
-    ? redirect
-    : "/";
+  return safeRedirectTarget(router.currentRoute.value.query.redirect);
 }
 async function handleLoginSubmit() {
   if (loading.value) return;

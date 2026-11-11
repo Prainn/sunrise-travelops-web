@@ -213,6 +213,20 @@ export const constantRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: "notifications",
+        name: "NotificationManagement",
+        component: () => import("@/views/system/notifications/index.vue"),
+        meta: {
+          menuKey: "notifications",
+          title: "notificationManagement",
+          icon: "el-icon-Bell",
+          keepAlive: true,
+          scopes: ["headquarters"],
+          roles: ["ROOT", "BOSS", "ADMIN"],
+          perms: ["sys:notification:list"],
+        },
+      },
+      {
         path: "operation-logs",
         name: "OperationLogs",
         component: () => import("@/views/system/operation-logs/index.vue"),

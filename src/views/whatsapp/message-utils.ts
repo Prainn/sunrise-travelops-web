@@ -218,3 +218,9 @@ export function threadMessages(messages: WhatsappMessage[]): WhatsappMessage[] {
   return items.filter((message) => !message.presentation?.hidden ||
     !message.presentation.targetMessageId || !byId.has(message.presentation.targetMessageId));
 }
+
+/** 地址中需要定位的会话；同页已选中或非本工作台路由时返回空，避免选中状态回写地址后重复请求。 */
+export function linkedConversationId(isOwnRoute: boolean, queryId: unknown, selectedId: string): string {
+  if (!isOwnRoute || typeof queryId !== "string" || !queryId || queryId === selectedId) return "";
+  return queryId;
+}

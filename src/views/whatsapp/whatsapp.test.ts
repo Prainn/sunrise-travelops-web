@@ -28,7 +28,7 @@ vi.mock("@/stores/user", async () => {
 
 import { useUserStore } from "@/stores/user";
 import { whatsappInquiryInput } from "@/services/whatsapp.service";
-import { canConfirmFailedMessage, canRetryMessage, compareSeq, mergeLatestPage, messageSourceLabel, messageReply, sortMessages, maxSeq, threadAccess, threadMessages } from "./message-utils";
+import { canConfirmFailedMessage, canRetryMessage, compareSeq, linkedConversationId, mergeLatestPage, messageSourceLabel, messageReply, sortMessages, maxSeq, threadAccess, threadMessages } from "./message-utils";
 import { useCustomerNotes } from "./useCustomerNotes";
 import { useWhatsappWorkbench } from "./useWhatsappWorkbench";
 
@@ -482,5 +482,15 @@ describe("useCustomerNotes", () => {
     expect((await state.save())?.kind).toBe("saved");
     expect(state.entry.value).toMatchObject({ version: 2, form: { customerName: "WhatsApp Tom" } });
     expect(state.dirty.value).toBe(false);
+  });
+});
+
+describe("linkedConversationId", () => {
+  it("locates a new Feishu conversation on a mounted or cached workbench only once", () => {
+    expect(linkedConversationId(true, "c-2", "c-1")).toBe("c-2");
+    expect(linkedConversationId(true, "c-2", "c-2")).toBe("");
+    expect(linkedConversationId(false, "c-2", "c-1")).toBe("");
+    expect(linkedConversationId(true, ["c-2"], "c-1")).toBe("");
+    expect(linkedConversationId(true, undefined, "c-1")).toBe("");
   });
 });

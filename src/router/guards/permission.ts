@@ -85,7 +85,7 @@ export function setupPermissionGuard() {
     } catch (error) {
       console.error("Route guard error:", error);
       NProgress.done();
-      if (!useUserStore().isLoggedIn()) return "/login";
+      if (!useUserStore().isLoggedIn()) return `/login?redirect=${encodeURIComponent(to.fullPath)}`;
       return { path: "/unavailable", query: { redirect: to.fullPath }, replace: true };
     }
   });

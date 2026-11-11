@@ -193,7 +193,7 @@
         </div>
       </div>
       <div
-        v-for="item in pending"
+        v-for="item in pendingBubbles"
         :key="item.clientRequestId"
         class="whatsapp-message whatsapp-message--outbound"
       >
@@ -351,7 +351,22 @@ const phoneRegionLabel = computed(() => {
   const names = new Intl.DisplayNames([locale.value], { type: "region", style: "short" });
   return `${names.of(region.regions[0]!)} ${region.callingCode}`;
 });
-const visibleMessages = computed(() => threadMessages(props.messages));
+/** 发送中的表情直接叠加到目标消息上，避免先在右侧出现一条独立的待发送气泡。 */
+const visibleMessages = computed(() => {
+  const items = threadMessages(props.messages);
+  for (const item of props.pending) {
+    if (!item.reaction || item.state !== "sending") continue;
+    const target = items.find((message) => message.id === item.reaction!.targetMessageId)?.presentation;
+    if (!target) continue;
+    target.reactions = target.reactions.filter((reaction) => reaction.direction !== "outbound");
+    if (item.reaction.emoji) target.reactions.push({
+      id: item.clientRequestId, seq: "0", direction: "outbound", emoji: item.reaction.emoji, source: "system", status: "sending",
+    });
+  }
+  return items;
+});
+const pendingBubbles = computed(() => props.pending.filter((item) => !item.reaction || item.state !== "sending" ||
+  !visibleMessages.value.some((message) => message.id === item.reaction!.targetMessageId)));
 const access = computed(() => threadAccess(props.detail));
 const retriedIds = computed(() => new Set(props.messages.map((message) => message.retryOf).filter(Boolean)));
 const replyHint = computed(() => {

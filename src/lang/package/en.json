@@ -97,6 +97,7 @@
     "websiteLedger": "Website Ledger",
     "businessGroups": "Business Groups",
     "accountLinks": "Account Links",
+    "notificationManagement": "Notifications",
     "whatsappWorkbench": "WhatsApp Workbench",
     "whatsappQuickReplies": "Quick replies",
     "whatsappInbox": "Inbox",
@@ -626,6 +627,23 @@
     "optionSearchPlaceholder": "Option name or code",
     "createOptionTitle": "Add Category Option",
     "editOptionTitle": "Edit Category Option"
+  },
+  "notificationSettings": {
+    "hint": "When off, pending alerts of that type are not sent; turning it back on does not resend old alerts. Switches do not affect assignment, reassignment, review or operation, and accounts without Feishu binding are skipped.",
+    "type": "Notification Type",
+    "enabled": "Feishu Alerts",
+    "empty": "No notification types",
+    "conflict": "The setting was changed by someone else. Refresh and try again",
+    "types": {
+      "whatsapp_unassigned": "WhatsApp Unassigned",
+      "whatsapp_message": "WhatsApp New Messages",
+      "whatsapp_assignment": "WhatsApp Assignment & Reassignment",
+      "linxi_ledger_review": "Linxi Ledger Pending Review",
+      "linxi_ledger_operate": "Linxi Ledger Pending Operation",
+      "website_ledger_review": "Website Ledger Pending Review",
+      "website_ledger_operate": "Website Ledger Pending Operation",
+      "inquiry_follow_up": "Inquiry Follow-up Reminders"
+    }
   },
   "common": {
     "export": "Export",
@@ -2145,7 +2163,12 @@
       "tourRequiredHint": "Converted orders need tour details before saving. Cancelling or a failed save keeps neither the ledger nor the tour.",
       "tourActionUnavailable": "A tour cannot be created for this record. The list has been refreshed.",
       "linkUnavailable": "You cannot create a linked record in the website ledger",
-      "linkOwnerMismatch": "The inquiry owner differs from the current collector; a linked ledger cannot be created"
+      "linkOwnerMismatch": "The inquiry owner differs from the current collector; a linked ledger cannot be created",
+      "locateFailed": "The ledger in the notification could not be located. It may be deleted or outside this business",
+      "linkActionHint": {
+        "review": "This ledger awaits review. Check it, then review it manually",
+        "operate": "This ledger awaits operation. Check it, then handle it manually"
+      }
     }
   },
   "itineraryWorkspace": {

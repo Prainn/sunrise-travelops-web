@@ -11,6 +11,7 @@ import { setupRouter } from "@/router";
 import { setupStore } from "@/stores/store";
 import { setupI18n } from "@/lang";
 import {
+  Bell,
   Briefcase,
   Calendar,
   ChatDotRound,
@@ -57,6 +58,7 @@ setupRouter(app);
 setupAccountSwitchSync();
 
 const routeIcons = {
+  Bell,
   Briefcase,
   Calendar,
   ChatDotRound,
