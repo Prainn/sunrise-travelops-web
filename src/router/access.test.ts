@@ -233,3 +233,13 @@ describe("WhatsApp 工作台菜单", () => {
       .toEqual(["WhatsappInbox", "WhatsappIntegration"]);
   });
 });
+
+describe("Sunrise account menu switches", () => {
+  it("enforces menu keys for Sunrise ROOT while preserving mango ROOT", () => {
+    const context = { scope: "headquarters" as const, roles: ["ROOT"], perms: ["whatsapp:conversation:list"], menuKeys: [] };
+    const meta = { menuKey: "whatsapp-inbox", perms: ["whatsapp:conversation:list"] };
+    expect(hasRouteChainAccess([meta], { ...context, username: "sunrise" })).toBe(false);
+    expect(hasRouteChainAccess([meta], { ...context, username: "mango" })).toBe(true);
+    expect(hasRouteChainAccess([meta], { ...context, username: "sunrise", menuKeys: ["whatsapp-inbox"] })).toBe(true);
+  });
+});
