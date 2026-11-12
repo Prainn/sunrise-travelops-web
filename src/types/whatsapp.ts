@@ -102,6 +102,15 @@ export interface WhatsappReply {
   kind: string;
   direction: WhatsappMessageDirection;
   source: WhatsappMessageSource;
+  /** 仅图片引用：目标资源可用时的缩略图，尚不可用为 null；其他引用没有该字段。 */
+  thumbnailUrl?: string | null;
+}
+
+/** 多图发送请求：图片按数组顺序入队，可选文字最后独立入队；引用只挂在第一张图。 */
+export interface WhatsappImageBatchInput {
+  images: { clientRequestId: string; mediaAssetId: string }[];
+  textMessage?: { clientRequestId: string; text: string };
+  replyToMessageId?: string;
 }
 
 export interface WhatsappQuickReply {

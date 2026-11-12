@@ -1,4 +1,4 @@
-import { isWord, parseInline, type InlineNode } from "./message-format";
+import { blocksMarker, parseInline, type InlineNode } from "./message-format";
 
 const FORMATS = [["bold", "*"], ["italic", "_"], ["strike", "~"], ["code", "`"]] as const;
 type Format = typeof FORMATS[number][0];
@@ -19,24 +19,17 @@ function elementStyle(el: HTMLElement, inherited: Style): Style {
   return style;
 }
 
-/** WhatsApp 标记不能出现在单词内部：任一字符带格式时整个单词带格式。 */
-function snapToWords(chars: StyledChar[]) {
-  for (const [format] of FORMATS) {
-    for (let start = 0; start < chars.length;) {
-      if (!isWord(chars[start]!.char)) { start++; continue; }
-      let end = start;
-      while (end < chars.length && isWord(chars[end]!.char)) end++;
-      if (chars.slice(start, end).some((item) => item.style[format])) {
-        for (let index = start; index < end; index++) chars[index]!.style[format] = true;
-      }
-      start = end;
-    }
-  }
+/** 格式在相邻两字之间切换且两侧都是文字时，WhatsApp 不会识别该处标记；只提示，不改动格式范围。 */
+function hasUnseparatedFormat(chars: StyledChar[]) {
+  return chars.some((item, index) => {
+    const prev = chars[index - 1];
+    return !!prev && blocksMarker(prev.char) && blocksMarker(item.char)
+      && FORMATS.some(([format]) => prev.style[format] !== item.style[format]);
+  });
 }
 
 /** 标记也不能紧贴内侧空白：开标记推迟到空白之后，闭标记移到空白之前。 */
 function serializeLine(chars: StyledChar[]) {
-  snapToWords(chars);
   let text = "";
   const open: (typeof FORMATS[number])[] = [];
   const closeFrom = (depth: number) => {
@@ -61,7 +54,7 @@ function serializeLine(chars: StyledChar[]) {
 }
 
 /** Serialize only supported text semantics; no HTML travels to the API. */
-export function composerText(root: Node): string {
+export function composerContent(root: Node): { text: string; unseparated: boolean } {
   const chars: StyledChar[] = [];
   const plain: Style = { bold: false, italic: false, strike: false, code: false };
   const endsWithBreak = () => !chars.length || chars.at(-1)!.char === "\n";
@@ -90,8 +83,13 @@ export function composerText(root: Node): string {
     if (item.char === "\n") lines.push([]);
     else lines.at(-1)!.push(item);
   }
-  return lines.map(serializeLine).join("\n").replace(/\n$/, "");
+  return {
+    text: lines.map(serializeLine).join("\n").replace(/\n$/, ""),
+    unseparated: lines.some(hasUnseparatedFormat),
+  };
 }
+
+export const composerText = (root: Node) => composerContent(root).text;
 
 /** Build a closed set of DOM nodes from native WhatsApp text. */
 export function composerFragment(text: string): DocumentFragment {

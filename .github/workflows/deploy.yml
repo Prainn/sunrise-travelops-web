@@ -31,11 +31,41 @@ jobs:
   ready:
     if: github.repository == 'Prainn/sunrise-travelops-web' && (github.ref == 'refs/heads/dev' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      verified_dev_sha: ${{ steps.verify-dev.outputs.sha }}
     steps:
       - name: Require registered runner and branch protections before cutover
         env:
           READY: ${{ vars.SELF_HOSTED_READY }}
         run: test "$READY" = true || { echo 'Self-hosted cutover not ready; registration and branch protections required'; exit 1; }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        if: github.ref == 'refs/heads/dev' && (inputs.operation || 'deploy') == 'deploy'
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413
+        if: github.ref == 'refs/heads/dev' && (inputs.operation || 'deploy') == 'deploy'
+        with:
+          version: 11.22.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        if: github.ref == 'refs/heads/dev' && (inputs.operation || 'deploy') == 'deploy'
+        with:
+          node-version: '24.22.1'
+          cache: pnpm
+      - name: Type-check exact dev candidate on GitHub
+        if: github.ref == 'refs/heads/dev' && (inputs.operation || 'deploy') == 'deploy'
+        id: verify-dev
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha || '' }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test -z "$EXPECTED_SHA" || test "$EXPECTED_SHA" = "$GITHUB_SHA"
+          pnpm install --frozen-lockfile
+          pnpm type-check
+          printf 'sha=%s\n' "$GITHUB_SHA" >> "$GITHUB_OUTPUT"
   deploy:
     needs: ready
     runs-on: [self-hosted, Linux, X64, sunrise-frontend]
@@ -51,8 +81,13 @@ jobs:
       - name: Supervised frontend dev release
         if: github.ref == 'refs/heads/dev'
         shell: bash
+        env:
+          SUNRISE_HOSTED_DEV_TYPECHECK_SHA: ${{ needs.ready.outputs.verified_dev_sha }}
         run: |
           set -euo pipefail
+          if [[ "$OPERATION" == deploy ]]; then
+            test "$SUNRISE_HOSTED_DEV_TYPECHECK_SHA" = "$GITHUB_SHA" || { echo 'Exact dev candidate has not passed hosted type-check'; exit 1; }
+          fi
           export PATH="/opt/sunrise-ci/node/bin:$PATH"
           python3 /opt/sunrise-ci/frontend-dev-guard/dev_release_guard.py run
       - name: Serialized build, release or rollback

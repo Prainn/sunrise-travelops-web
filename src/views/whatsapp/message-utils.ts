@@ -1,5 +1,6 @@
 import { ApiError } from "@/api/request";
 import { ApiErrorCode } from "@/api/error-code";
+import type { OssResource } from "@/types/oss";
 import type {
   WhatsappConversationDetail,
   WhatsappConversationState,
@@ -13,11 +14,35 @@ export interface PendingMessage {
   clientRequestId: string;
   text: string;
   reaction?: { targetMessageId: string; emoji: string };
+  /**
+   * 多图发送快照：clientRequestId 为第一张图的编号；text 为末尾独立文字，有正文时才带 textRequestId。
+   * 结果未知时原样重提全部编号；本地文件仅用于资源过期后重新上传。
+   */
+  batch?: { images: PendingImage[]; textRequestId?: string };
   replyTo?: WhatsappReply;
   /** sending：请求中；uncertain：结果未知，只能用同一请求编号再次提交；rejected：服务端明确拒绝。 */
   state: "sending" | "uncertain" | "rejected";
   error: string;
+  /** 被拒绝的原因是图片资源已清理（404），重新编辑时需重新上传。 */
+  isExpired?: boolean;
   createdAt: string;
+}
+
+export interface PendingImage {
+  clientRequestId: string;
+  mediaAssetId: string;
+  name: string;
+  mimeType: string | null;
+  /** 仅供待发送气泡展示。 */
+  thumbnailUrl: string | null;
+  file?: File;
+}
+
+/** 本地发送记录对应的全部请求编号；批量整组同一事务入队，任一编号入库即整组已确认。 */
+export function pendingRequestIds(item: PendingMessage): string[] {
+  if (!item.batch) return [item.clientRequestId];
+  const ids = item.batch.images.map((image) => image.clientRequestId);
+  return item.batch.textRequestId ? [...ids, item.batch.textRequestId] : ids;
 }
 
 export function messageReply(message: WhatsappMessage): WhatsappReply | undefined {
@@ -27,7 +52,30 @@ export function messageReply(message: WhatsappMessage): WhatsappReply | undefine
   if (typeof reply.id !== "string" || typeof reply.text !== "string" || typeof reply.kind !== "string" ||
     (reply.direction !== "inbound" && reply.direction !== "outbound") ||
     (reply.source !== "customer" && reply.source !== "mobile" && reply.source !== "system")) return undefined;
-  return { id: reply.id, text: reply.text, kind: reply.kind, direction: reply.direction, source: reply.source };
+  const result: WhatsappReply = { id: reply.id, text: reply.text, kind: reply.kind, direction: reply.direction, source: reply.source };
+  if (reply.kind === "image") result.thumbnailUrl = typeof reply.thumbnailUrl === "string" ? reply.thumbnailUrl : null;
+  return result;
+}
+
+/**
+ * 编辑区引用预览：图片取被引用原消息已归档的缩略图，不使用原图或供应商旧链接。
+ *
+ * @param message - 被引用的原消息。
+ * @returns 引用快照。
+ */
+export function replyFromMessage(message: WhatsappMessage): WhatsappReply {
+  const reply: WhatsappReply = {
+    id: message.id,
+    text: (message.presentation?.text ?? message.text).slice(0, 280),
+    kind: message.kind,
+    direction: message.direction,
+    source: message.source,
+  };
+  if (message.kind === "image") {
+    const media = messageMedia(message);
+    reply.thumbnailUrl = media?.state === "ready" && media.previewable ? media.thumbnailUrl : null;
+  }
+  return reply;
 }
 
 /** 消息序号可能超出 Number 安全范围，统一按 BigInt 比较。 */
@@ -91,7 +139,7 @@ export function mergeMessages(current: WhatsappMessage[], incoming: WhatsappMess
 /** 已有服务端消息对应的本地发送记录可以移除。 */
 export function settlePending(pending: PendingMessage[], messages: WhatsappMessage[]): PendingMessage[] {
   const confirmed = new Set(messages.map((message) => message.clientRequestId).filter(Boolean));
-  return pending.filter((item) => !confirmed.has(item.clientRequestId));
+  return pending.filter((item) => !pendingRequestIds(item).some((id) => confirmed.has(id)));
 }
 
 /**
@@ -185,6 +233,31 @@ export function attachmentSummary(attachment: Record<string, unknown> | null): s
   };
   return [pick("fileName", "filename", "name", "caption"), pick("mimeType", "mime_type", "type"), pick("fileSize", "size")]
     .filter(Boolean);
+}
+
+/** 图片/贴纸消息展示归档媒体；表情回应和 Unicode 表情不属于贴纸。 */
+export function isMediaMessage(message: Pick<WhatsappMessage, "kind" | "presentation">): boolean {
+  return (message.kind === "image" || message.kind === "sticker") && !message.presentation?.interaction;
+}
+
+/**
+ * 读取消息附件中的归档资源；只接受合同字段齐全的记录，不回退到供应商旧签名地址。
+ *
+ * @param message - 消息。
+ * @returns 归档资源；尚未发现记录时为 undefined。
+ */
+export function messageMedia(message: Pick<WhatsappMessage, "attachment">): OssResource | undefined {
+  const value = message.attachment?.media;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const media = value as Partial<OssResource>;
+  if (typeof media.id !== "string" || typeof media.state !== "string" || typeof media.kind !== "string") return undefined;
+  return media as OssResource;
+}
+
+/** 归档仍在进行，完成后需要重取该消息所在页。 */
+export function hasPendingMedia(message: WhatsappMessage): boolean {
+  const state = messageMedia(message)?.state;
+  return isMediaMessage(message) && (state === "pending" || state === "processing");
 }
 
 /** Merge newly loaded interactions into older bubbles without changing sequence cursors. */

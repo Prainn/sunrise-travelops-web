@@ -65,10 +65,18 @@
               <span v-if="message.presentation.emoji">{{ message.presentation.emoji }}</span>
               <span v-else class="text-muted" :title="$t('whatsapp.unknownReaction')">◌</span>
             </div>
-            <MessageText v-else-if="message.presentation?.text ?? message.text" :text="message.presentation?.text ?? message.text ?? ''" />
-            <div v-if="['image', 'audio', 'video', 'document', 'sticker'].includes(message.kind) && attachmentSummary(message.attachment).length" class="text-[12px] text-muted">
-              {{ attachmentSummary(message.attachment).join(" · ") }}
-            </div>
+            <template v-else>
+              <OssMediaPreview
+                v-if="isMediaMessage(message)"
+                :class="{ 'mb-[4px]': message.presentation?.text ?? message.text }"
+                :resource="messageMedia(message)"
+                :kind="message.kind === 'sticker' ? 'sticker' : 'image'"
+              />
+              <MessageText v-if="message.presentation?.text ?? message.text" :text="message.presentation?.text ?? message.text ?? ''" />
+              <div v-if="['audio', 'video', 'document'].includes(message.kind) && attachmentSummary(message.attachment).length" class="text-[12px] text-muted">
+                {{ attachmentSummary(message.attachment).join(" · ") }}
+              </div>
+            </template>
             <div class="flex items-center justify-end flex-wrap gap-[5px] mt-[4px] text-[11px] text-muted">
               <span v-if="message.presentation?.editedAt" :title="formatDateTime(message.presentation.editedAt)">{{ $t("whatsapp.edited") }}</span>
               <time :datetime="message.occurredAt" :title="formatDateTime(message.occurredAt)">{{ formatDateTime(message.occurredAt) }}</time>
@@ -199,7 +207,25 @@
       >
         <div class="whatsapp-message__bubble">
           <ReplyPreview v-if="item.replyTo" class="mb-[6px]" :reply="item.replyTo" />
-          <div v-if="item.reaction" class="text-[24px]" :title="$t(item.text ? 'whatsapp.react' : 'whatsapp.removeReaction')">
+          <template v-if="item.batch">
+            <div class="flex flex-wrap justify-end gap-[4px] max-w-[336px]">
+              <template v-for="image in item.batch.images" :key="image.clientRequestId">
+                <img
+                  v-if="image.thumbnailUrl"
+                  :src="image.thumbnailUrl"
+                  :alt="image.name"
+                  loading="lazy"
+                  referrerpolicy="no-referrer"
+                  class="block w-[80px] h-[80px] rounded-[6px] object-cover bg-[var(--el-fill-color)]"
+                />
+                <span v-else class="grid place-items-center box-border w-[80px] h-[80px] px-[4px] rounded-[6px] bg-[var(--el-fill-color)] text-[11px] text-muted text-center break-all">
+                  {{ image.name }}
+                </span>
+              </template>
+            </div>
+            <MessageText v-if="item.text" class="mt-[6px]" :text="item.text" />
+          </template>
+          <div v-else-if="item.reaction" class="text-[24px]" :title="$t(item.text ? 'whatsapp.react' : 'whatsapp.removeReaction')">
             {{ item.text || '◌' }}
           </div>
           <MessageText v-else :text="item.text" />
@@ -260,12 +286,23 @@
           ref="composerRef"
           v-model="draft"
           :disabled="!access.canCompose"
+          :can-attach-image="access.canCompose"
+          :image-full="imageDraft.isFull.value"
           @send="handleSend"
-        />
+          @images="handleImages"
+        >
+          <template v-if="imageDraft.images.value.length" #attachments>
+            <ImageDraftStrip
+              :images="imageDraft.images.value"
+              @remove="imageDraft.remove"
+              @retry="imageDraft.retry"
+            />
+          </template>
+        </MessageComposer>
         <div class="flex justify-end">
           <el-button
             type="primary"
-            :disabled="!access.canCompose || !draft.trim()"
+            :disabled="!canSubmit"
             @click="handleSend"
           >
             {{ $t("whatsapp.send") }}
@@ -278,8 +315,10 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
 import FeedbackState from "@/components/FeedbackState/index.vue";
+import OssMediaPreview from "@/components/OssMediaPreview/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import type { WhatsappConversationDetail, WhatsappMessage, WhatsappReply } from "@/types/whatsapp";
 import { formatDateTime } from "@/utils";
@@ -289,12 +328,16 @@ import {
   canConfirmFailedMessage,
   canRetryMessage,
   compareSeq,
+  isMediaMessage,
   maxSeq,
+  messageMedia,
   messageSourceLabel,
   messageReply,
+  replyFromMessage,
   replyWindowState,
   threadAccess,
   threadMessages,
+  type PendingImage,
   type PendingMessage,
 } from "../message-utils";
 
@@ -303,6 +346,8 @@ import { phoneRegion } from "../phone-region";
 import MessageText from "./MessageText.vue";
 import ReplyPreview from "./ReplyPreview.vue";
 import MessageComposer from "./MessageComposer.vue";
+import ImageDraftStrip from "./ImageDraftStrip.vue";
+import { MAX_DRAFT_IMAGES, useImageDraft } from "../useImageDraft";
 
 const MAX_TEXT_LENGTH = 4096;
 const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
@@ -318,6 +363,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   send: [text: string, replyTo?: WhatsappReply];
+  "send-images": [images: Omit<PendingImage, "clientRequestId">[], text: string, replyTo?: WhatsappReply];
   react: [message: WhatsappMessage, emoji: string];
   resubmit: [clientRequestId: string];
   discard: [clientRequestId: string];
@@ -336,6 +382,7 @@ const draft = computed({
   set: (text: string) => drafts.set(props.detail.id, text),
 });
 const replyTo = ref<WhatsappReply>();
+const imageDraft = useImageDraft(() => props.detail.id);
 const composerRef = ref<InstanceType<typeof MessageComposer>>();
 const activeReactionMessageId = ref("");
 const scrollRef = ref<HTMLElement>();
@@ -368,6 +415,9 @@ const visibleMessages = computed(() => {
 const pendingBubbles = computed(() => props.pending.filter((item) => !item.reaction || item.state !== "sending" ||
   !visibleMessages.value.some((message) => message.id === item.reaction!.targetMessageId)));
 const access = computed(() => threadAccess(props.detail));
+/** 有图片或正文即可点击；图片未就绪时点击后提示，草稿保留。 */
+const canSubmit = computed(() => access.value.canCompose &&
+  (imageDraft.images.value.length > 0 || !!draft.value.trim()) && draft.value.trim().length <= MAX_TEXT_LENGTH);
 const retriedIds = computed(() => new Set(props.messages.map((message) => message.retryOf).filter(Boolean)));
 const replyHint = computed(() => {
   if (props.detail.state === "archived") return { text: t("whatsapp.archivedHint"), isWarning: true };
@@ -428,13 +478,7 @@ function canReplyTo(message: WhatsappMessage) {
 }
 async function handleReply(message: WhatsappMessage) {
   if (!canReplyTo(message)) return;
-  replyTo.value = {
-    id: message.id,
-    text: (message.presentation?.text ?? message.text).slice(0, 280),
-    kind: message.kind,
-    direction: message.direction,
-    source: message.source,
-  };
+  replyTo.value = replyFromMessage(message);
   await nextTick();
   composerRef.value?.focus();
 }
@@ -448,19 +492,48 @@ function canRetry(message: WhatsappMessage) {
 function canConfirmFailed(message: WhatsappMessage) {
   return canConfirmFailedMessage(message, props.detail.capabilities.canConfirmFailed, now.value);
 }
+function handleImages(files: File[]) {
+  const result = imageDraft.add(files);
+  if (result.invalid.includes("type")) ElMessage.warning(t("whatsapp.imageDraft.invalidType"));
+  if (result.invalid.includes("size")) ElMessage.warning(t("whatsapp.imageDraft.tooLarge"));
+  if (result.overflow) ElMessage.warning(t("whatsapp.imageDraft.tooMany", { max: MAX_DRAFT_IMAGES }));
+}
+/** 有图片时整组按选图顺序发送，正文作为末尾独立文字；图片未全部上传成功时保留草稿并提示。 */
 function handleSend() {
+  if (!canSubmit.value) return;
   const text = draft.value.trim();
-  if (!text || text.length > MAX_TEXT_LENGTH || !access.value.canCompose) return;
-  emit("send", text, replyTo.value);
+  const images = imageDraft.images.value;
+  if (images.length) {
+    if (!imageDraft.isReady.value) {
+      ElMessage.warning(t("whatsapp.imageDraft.notReady"));
+      return;
+    }
+    emit("send-images", images.map((image) => ({
+      mediaAssetId: image.asset!.id,
+      name: image.asset!.name,
+      mimeType: image.asset!.mimeType,
+      thumbnailUrl: image.asset!.previewable ? image.asset!.thumbnailUrl : null,
+      file: image.file,
+    })), text, replyTo.value);
+    imageDraft.clear();
+  } else {
+    emit("send", text, replyTo.value);
+  }
   draft.value = "";
   replyTo.value = undefined;
   // 发送记录由父组件同步加入待发送列表，渲染后滚到最新一条。
   void nextTick(scrollToBottom);
 }
 
+/** 资源已过期时恢复文字和本地图片并要求重新上传；不删除服务端资源，清理由服务端执行。 */
 function editAgain(item: PendingMessage) {
   draft.value = item.text;
   replyTo.value = item.replyTo;
+  if (item.batch) imageDraft.restore(item.batch.images.map((image) => ({
+    file: image.file,
+    expired: !!item.isExpired,
+    asset: { id: image.mediaAssetId, name: image.name, mimeType: image.mimeType, thumbnailUrl: image.thumbnailUrl, previewable: !!image.thumbnailUrl },
+  })));
   emit("discard", item.clientRequestId);
 }
 </script>
