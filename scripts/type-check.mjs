@@ -26,21 +26,30 @@ if (config.references?.length) throw new Error("Project references are not suppo
 const files = config.files.map((file) => resolve(directory, file));
 if (!files.length) throw new Error("Type checking must not succeed with no source files");
 const declarations = files.filter((file) => /\.d\.[cm]?ts$/.test(file));
-const groups = { application: [], tests: [], tooling: [] };
+const groups = { application: [], viewTests: [], sharedTests: [], tooling: [] };
 for (const file of files) {
   if (declarations.includes(file)) continue;
   const path = relative(directory, file).replaceAll("\\", "/");
-  if (/\.(test|spec)\.[cm]?[jt]sx?$/.test(path)) groups.tests.push(file);
+  if (/\.(test|spec)\.[cm]?[jt]sx?$/.test(path)) {
+    (path.startsWith("src/views/") ? groups.viewTests : groups.sharedTests).push(file);
+  }
   else if (path.startsWith("src/")) groups.application.push(file);
   else groups.tooling.push(file);
 }
 
 // Separate processes release the previous TypeScript graph before loading the next.
 // Every root from --showConfig is retained; imports and strict options still resolve normally.
+// View tests and shared tests build separate graphs; large tool configs run one at a time.
+const checks = [
+  ["application", groups.application],
+  ["view-tests", groups.viewTests],
+  ["shared-tests", groups.sharedTests],
+  ...groups.tooling.map((file, index) => [`tooling-${index + 1}`, [file]]),
+];
 const temporary = mkdtempSync(join(directory, ".type-check-"));
 let status = 0;
 try {
-  for (const [name, roots] of Object.entries(groups)) {
+  for (const [name, roots] of checks) {
     if (!roots.length) continue;
     const path = join(temporary, `${name}.json`);
     writeFileSync(path, JSON.stringify({
