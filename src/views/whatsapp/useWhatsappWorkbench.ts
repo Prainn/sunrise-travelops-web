@@ -4,6 +4,7 @@ import { ApiError } from "@/api/request";
 import { websiteErrorMessage } from "@/services/website.service";
 import { whatsappService } from "@/services/whatsapp.service";
 import { useUserStore } from "@/stores/user";
+import { useWhatsappStreamStore } from "@/stores/whatsapp-stream";
 import type {
   WhatsappConversationDetail,
   WhatsappConversationItem,
@@ -11,7 +12,9 @@ import type {
   WhatsappConversationView,
   WhatsappMessage,
   WhatsappReply,
+  WhatsappStreamSignal,
 } from "@/types/whatsapp";
+import { createCoalescedTask } from "@/utils/coalesced-task";
 import {
   compareSeq,
   isUncertainSendError,
@@ -23,8 +26,6 @@ import {
   type PendingMessage,
 } from "./message-utils";
 
-export const POLL_INTERVAL_MS = 2_000;
-const MAX_BACKOFF_MS = 30_000;
 const MESSAGE_PAGE_SIZE = 50;
 /** 新增行超过一页时用 afterSeq 补齐的最大页数，避免单轮请求过多。 */
 const MAX_GAP_PAGES = 5;
@@ -41,12 +42,15 @@ export interface SendFeedback {
 }
 
 /**
- * WhatsApp 工作台状态：会话列表、当前会话、消息、轮询与发送。
+ * WhatsApp 工作台状态：会话列表、当前会话、消息、实时刷新与发送。
  *
+ * 只订阅全局实时流的刷新信号，不自建连接或周期轮询；流断开时由流管理器低频发出校准信号。
+ * 列表与当前会话各自合并刷新，进行中再失效时结束后补跑一次。
  * 身份变化、重置或卸载时丢弃全部缓存与在途响应，防止跨身份或跨会话显示数据。
  */
 export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   const user = useUserStore();
+  const stream = useWhatsappStreamStore();
 
   const keyword = ref("");
   const view = ref<WhatsappConversationView | undefined>(options.defaultView);
@@ -73,11 +77,8 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   let lastListQuery = "";
   let session = 0;
   let threadToken = 0;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  let ticking = false;
-  let rerunRequested = false;
-  let failures = 0;
-  let disposed = false;
+  let disposed = true;
+  let unsubscribe: (() => void) | undefined;
   const lastReadSent = new Map<string, string>();
   const retryRequestIds = new Map<string, string>();
 
@@ -146,11 +147,12 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
    *
    * @param id - 当前会话 ID。
    * @param token - 发起时的会话令牌，失效后丢弃结果。
+   * @returns 达到单批上限仍未追平时为 true，调用方应立即安排下一批。
    */
-  async function syncMessages(id: string, token: number) {
+  async function syncMessages(id: string, token: number): Promise<boolean> {
     const known = syncedSeq;
     const latest = await whatsappService.messages(id, { page: 1, pageSize: MESSAGE_PAGE_SIZE });
-    if (token !== threadToken) return;
+    if (token !== threadToken) return false;
     let merged = messages.value;
     const floor = minSeq(latest.list);
     let reachedLatest = true;
@@ -159,7 +161,7 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
       reachedLatest = false;
       for (let pageNo = 1; pageNo <= MAX_GAP_PAGES; pageNo++) {
         const gap = await whatsappService.messages(id, { page: 1, pageSize: MESSAGE_PAGE_SIZE, afterSeq: cursor! });
-        if (token !== threadToken) return;
+        if (token !== threadToken) return false;
         merged = mergeMessages(merged, gap.list);
         const lastGapSeq = maxSeq(gap.list);
         if (!lastGapSeq || compareSeq(lastGapSeq, cursor!) <= 0) break;
@@ -168,7 +170,7 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
         if (reachedLatest) break;
       }
     }
-    // Advance only through fetched rows; the next poll resumes from this cursor after the cap.
+    // 只推进到已取得的行；达到单批上限后由下一批从该游标继续，不跳过遗漏页。
     if (reachedLatest) {
       merged = mergeLatestPage(merged, latest.list, latest.total <= latest.list.length);
       syncedSeq = maxSeq(latest.list);
@@ -179,13 +181,14 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     messageTotal.value = Math.max(latest.total, merged.length);
     const list = pendingByConversation.value.get(id);
     if (list?.length) setPending(id, settlePending(list, merged));
+    return !reachedLatest;
   }
 
   async function fetchThread(id: string, token = threadToken) {
     const nextDetail = await whatsappService.conversation(id);
     if (token !== threadToken) return;
     detail.value = nextDetail;
-    await syncMessages(id, token);
+    if (await syncMessages(id, token)) threadTask.request();
   }
 
   /** 打开会话：先清空上一会话再读取，读取失败不回显旧数据。 */
@@ -238,66 +241,51 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     }
   }
 
-  async function tick() {
-    if (ticking) {
-      rerunRequested = true;
-      return;
-    }
-    ticking = true;
-    const currentSession = session;
+  /** 原地刷新当前已展示的会话；网络错误交给合并任务退避重试，权限或记录变化时立即清空。 */
+  async function syncSelected() {
+    const id = selectedId.value;
+    const token = threadToken;
+    if (!id || !detail.value) return;
     try {
-      await fetchList(currentSession);
-      const id = selectedId.value;
-      const token = threadToken;
-      if (id && detail.value && currentSession === session) {
-        try {
-          await fetchThread(id, token);
-        } catch (cause) {
-          // 网络抖动保留当前会话；权限或记录变化时立即清空，不显示越权数据。
-          if (token !== threadToken) return;
-          if (cause instanceof ApiError && (cause.status === 403 || cause.status === 404)) threadFailure(cause);
-          else throw cause;
-        }
-      }
-      failures = 0;
-    } catch {
-      failures++;
-    } finally {
-      ticking = false;
-      if (currentSession === session) {
-        if (rerunRequested) {
-          rerunRequested = false;
-          void tick();
-        } else {
-          schedule();
-        }
-      }
+      await fetchThread(id, token);
+    } catch (cause) {
+      if (token !== threadToken) return;
+      if (cause instanceof ApiError && (cause.status === 403 || cause.status === 404)) threadFailure(cause);
+      else throw cause;
     }
   }
 
-  function schedule() {
-    if (timer) clearTimeout(timer);
-    timer = undefined;
-    if (disposed || document.visibilityState === "hidden") return;
-    const delay = failures ? Math.min(MAX_BACKOFF_MS, POLL_INTERVAL_MS * 2 ** failures) : POLL_INTERVAL_MS;
-    timer = setTimeout(() => void tick(), delay);
-  }
+  const listTask = createCoalescedTask(async () => {
+    if (!disposed) await fetchList();
+  });
+  const threadTask = createCoalescedTask(syncSelected);
 
-  /** 用户操作后立即刷新；已有轮询进行中时在其结束后补跑一次。 */
+  /** 用户操作或校准后立即刷新列表与当前会话；进行中的读取结束后补跑一次。 */
   function refreshNow() {
-    if (timer) clearTimeout(timer);
-    timer = undefined;
-    void tick();
+    listTask.request();
+    threadTask.request();
   }
 
-  function handleVisibilityChange() {
-    if (document.visibilityState === "hidden") {
-      if (timer) clearTimeout(timer);
-      timer = undefined;
-    } else if (!ticking) {
-      failures = 0;
-      refreshNow();
+  /** 权限范围变化：旧详情未经重新确认前不再展示，丢弃在途响应后重新读取，403/404 由读取结果清空。 */
+  function revalidateAccess() {
+    listTask.request();
+    const id = selectedId.value;
+    if (id) void selectConversation(id);
+  }
+
+  function handleSignal(signal: WhatsappStreamSignal) {
+    if (disposed) return;
+    if (signal.type === "sync") refreshNow();
+    else if (signal.type === "access") revalidateAccess();
+    else if (signal.type === "conversation") {
+      listTask.request();
+      if (signal.conversationId === selectedId.value) threadTask.request();
     }
+  }
+
+  /** 恢复可见时校准当前会话一次，使后台期间收到的消息重新展示并按可见规则标记已读。 */
+  function handleVisibilityChange() {
+    if (document.visibilityState === "visible") threadTask.request();
   }
 
   /**
@@ -318,6 +306,7 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     lastReadSent.set(id, seq);
     const currentSession = session;
     try {
+      // 共享已读会推送 read 变化；重取后序号未前进时上面的去重阻止再次提交，不形成循环。
       await whatsappService.markRead(id, seq);
       if (currentSession !== session) return;
       const row = conversations.value.find((item) => item.id === id);
@@ -462,10 +451,8 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   /** 丢弃全部缓存、在途响应和定时器；身份切换或卸载时调用。 */
   function reset() {
     session++;
-    if (timer) clearTimeout(timer);
-    timer = undefined;
-    rerunRequested = false;
-    failures = 0;
+    listTask.cancel();
+    threadTask.cancel();
     selectedId.value = "";
     clearThread();
     conversations.value = [];
@@ -478,13 +465,17 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   }
 
   function start() {
+    if (!disposed) return;
     disposed = false;
+    unsubscribe = stream.subscribe(handleSignal);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     refreshNow();
   }
 
   function stop() {
     disposed = true;
+    unsubscribe?.();
+    unsubscribe = undefined;
     document.removeEventListener("visibilitychange", handleVisibilityChange);
     reset();
   }
@@ -499,10 +490,12 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   );
   const reloadFirstPage = () => {
     page.value = 1;
-    refreshNow();
+    listTask.request();
   };
   watch(keyword, useDebounceFn(reloadFirstPage, 300));
   watch([view, state], reloadFirstPage);
+  // 原先翻页依赖下一轮轮询，事件驱动后需显式读取。
+  watch([page, pageSize], () => listTask.request());
   onScopeDispose(stop);
 
   return {

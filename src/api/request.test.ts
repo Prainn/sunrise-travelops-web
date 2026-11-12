@@ -29,7 +29,7 @@ vi.mock("@/lang/utils", () => ({
 }));
 
 import { sessionGate } from "@/utils/session-gate";
-import { ApiError, request } from "./request";
+import { ApiError, refreshAccessToken, request } from "./request";
 import { requestErrorMessage } from "@/utils/version-conflict";
 
 function response(status: number, code: string, data: unknown = null): Response {
@@ -379,6 +379,85 @@ describe("request session recovery", () => {
 
     await expect(pending).resolves.toEqual({ id: "user-1" });
     expect(auth.clearAuth).not.toHaveBeenCalled();
+  });
+});
+
+describe("event stream request", () => {
+  const eventStream = () => new Response("event: ready\ndata: {}\n\n", {
+    status: 200,
+    headers: { "Content-Type": "text/event-stream; charset=utf-8" },
+  });
+
+  beforeEach(() => {
+    auth.accessToken = "old-access";
+    auth.refreshToken = "old-refresh";
+    auth.setTokens.mockReset().mockImplementation((accessToken: string, refreshToken: string) => {
+      auth.accessToken = accessToken;
+      auth.refreshToken = refreshToken;
+    });
+    auth.clearAuth.mockReset();
+    sessionGate.resetForTest();
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("sends the bearer token in a header and returns the unread stream without JSON unwrapping", async () => {
+    const fetch = vi.fn(async () => eventStream());
+    vi.stubGlobal("fetch", fetch);
+
+    const result = await request.stream("/whatsapp/stream");
+
+    const [url, options] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("/api/whatsapp/stream");
+    expect(new Headers(options.headers).get("Authorization")).toBe("Bearer old-access");
+    expect(new Headers(options.headers).get("Accept")).toBe("text/event-stream");
+    expect(await result.text()).toBe("event: ready\ndata: {}\n\n");
+  });
+
+  it("rejects error statuses and non event-stream bodies before reading", async () => {
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce(response(503, "INTERNAL_SERVER_ERROR"))
+      .mockResolvedValueOnce(response(403, "AUTH_FORBIDDEN"))
+      .mockResolvedValueOnce(new Response("<html></html>", { status: 200, headers: { "Content-Type": "text/html" } })));
+
+    await expect(request.stream("/whatsapp/stream")).rejects.toMatchObject({ status: 503 });
+    await expect(request.stream("/whatsapp/stream")).rejects.toMatchObject({ status: 403, code: "AUTH_FORBIDDEN" });
+    await expect(request.stream("/whatsapp/stream")).rejects.toMatchObject({ status: 200, code: "INVALID_API_RESPONSE" });
+  });
+
+  it("shares one refresh between a stream auth.expired and a concurrent REST 401", async () => {
+    const refresh = deferredResponse();
+    const fetch = vi.fn(async (url: string, options?: RequestInit) => {
+      if (url.endsWith("/auth/refresh")) return refresh.promise;
+      if (new Headers(options?.headers).get("Authorization") === "Bearer old-access") {
+        return response(401, "AUTH_TOKEN_EXPIRED");
+      }
+      return response(200, "SUCCESS", { id: "user-1" });
+    });
+    vi.stubGlobal("fetch", fetch);
+
+    const pending = Promise.all([request.get("/auth/me"), refreshAccessToken("old-access")]);
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    refresh.resolve(response(200, "SUCCESS", { accessToken: "new-access", refreshToken: "new-refresh" }));
+
+    await expect(pending).resolves.toEqual([{ id: "user-1" }, undefined]);
+    expect(fetch.mock.calls.filter(([url]) => url.endsWith("/auth/refresh"))).toHaveLength(1);
+    expect(auth.accessToken).toBe("new-access");
+  });
+
+  it("refreshes once on a stream 401 and gives up when the retry is also unauthorized", async () => {
+    const fetch = vi.fn(async (url: string) => {
+      if (url.endsWith("/auth/refresh")) {
+        return response(200, "SUCCESS", { accessToken: "new-access", refreshToken: "new-refresh" });
+      }
+      return response(401, "AUTH_TOKEN_INVALID");
+    });
+    vi.stubGlobal("fetch", fetch);
+
+    await expect(request.stream("/whatsapp/stream")).rejects.toMatchObject({ status: 401 });
+    expect(fetch.mock.calls.filter(([url]) => url.endsWith("/whatsapp/stream"))).toHaveLength(2);
+    expect(fetch.mock.calls.filter(([url]) => url.endsWith("/auth/refresh"))).toHaveLength(1);
+    expect(auth.clearAuth).toHaveBeenCalledOnce();
   });
 });
 

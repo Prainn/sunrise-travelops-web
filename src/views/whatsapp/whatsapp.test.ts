@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { effectScope, nextTick } from "vue";
 import { ApiError } from "@/api/request";
-import type { WhatsappConversationDetail, WhatsappCustomerNotes, WhatsappMessage } from "@/types/whatsapp";
+import type { WhatsappConversationDetail, WhatsappCustomerNotes, WhatsappMessage, WhatsappStreamSignal } from "@/types/whatsapp";
 import type { WebsiteInquiryInput } from "@/types/website";
 
 const service = vi.hoisted(() => ({
@@ -19,6 +19,14 @@ vi.mock("@/services/whatsapp.service", async (importOriginal) => ({
   ...(await importOriginal<object>()),
   whatsappService: service,
 }));
+const stream = vi.hoisted(() => ({
+  listeners: new Set<(signal: unknown) => void>(),
+  subscribe(listener: (signal: unknown) => void) {
+    stream.listeners.add(listener);
+    return () => stream.listeners.delete(listener);
+  },
+}));
+vi.mock("@/stores/whatsapp-stream", () => ({ useWhatsappStreamStore: () => stream }));
 vi.mock("@/lang/utils", () => ({ translate: (key: string) => key, translateIfExists: () => undefined }));
 vi.mock("@/stores/user", async () => {
   const { reactive } = await import("vue");
@@ -50,6 +58,9 @@ const page = <T>(list: T[]) => ({ list, total: list.length, page: 1, pageSize: 5
 const networkError = () => new ApiError("network", { code: "NETWORK_ERROR" });
 const conflict = () => new ApiError("conflict", { code: "CONFLICT", status: 409, serverMessage: "已超出24小时回复窗口" });
 async function flush() { for (let i = 0; i < 6; i++) { await Promise.resolve(); await nextTick(); } }
+async function settle() { for (let i = 0; i < 10; i++) await flush(); }
+const emit = (signal: WhatsappStreamSignal) => stream.listeners.forEach((listener) => listener(signal));
+const callsOf = (fn: { mock: { calls: unknown[] } }) => fn.mock.calls.length;
 
 let scope: ReturnType<typeof effectScope>;
 function setup() {
@@ -75,6 +86,7 @@ beforeEach(() => {
   doc.visibilityState = "visible";
   doc.hasFocus.mockReturnValue(true);
   for (const fn of Object.values(service)) fn.mockReset();
+  stream.listeners.clear();
   service.conversations.mockResolvedValue(page([{ id: "c-1", unreadCount: 2 }]));
   service.conversation.mockImplementation(async (id: string) => detail(id));
   service.messages.mockResolvedValue(page([message({ id: "m-2", seq: BIG_SEQ }), message({ id: "m-1", seq: "1" })]));
@@ -174,20 +186,27 @@ describe("useWhatsappWorkbench", () => {
       const selected = query.afterSeq ? all.filter((row) => BigInt(row.seq) > BigInt(query.afterSeq)) : [...all].reverse();
       return { list: selected.slice(0, 50), total: selected.length, page: 1, pageSize: 50 };
     });
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    service.messages.mockImplementation(async (_id, query) => {
+      if (query.afterSeq === "251") await gate;
+      const selected = query.afterSeq ? all.filter((row) => BigInt(row.seq) > BigInt(query.afterSeq)) : [...all].reverse();
+      return { list: selected.slice(0, 50), total: selected.length, page: 1, pageSize: 50 };
+    });
     await workbench.reloadSelected();
+    await settle();
+    // 达到单批上限后主动发出下一批，不等待新的事件；尚未返回时已读不越过已取得的行。
     expect(maxSeq(workbench.messages.value)).toBe("251");
+    expect(service.messages.mock.calls.some(([, query]) => query.afterSeq === "251")).toBe(true);
     await workbench.markDisplayed("c-1", true);
     expect(service.markRead).toHaveBeenLastCalledWith("c-1", "251");
     // A local successful send can append an outbox row ahead of the incoming backlog.
     workbench.messages.value = [...workbench.messages.value, message({ id: "own-send", seq: "700", direction: "outbound" })];
     await workbench.markDisplayed("c-1", true);
     expect(service.markRead).toHaveBeenCalledTimes(1);
-    await workbench.reloadSelected();
-    expect(service.messages.mock.calls.some(([, query]) => query.afterSeq === "251")).toBe(true);
-    await workbench.markDisplayed("c-1", true);
-    expect(service.markRead).toHaveBeenLastCalledWith("c-1", "501");
-    await workbench.reloadSelected();
-    expect(workbench.messages.value.map((row) => row.seq)).toEqual(all.map((row) => row.seq));
+    release();
+    await settle();
+    expect(workbench.messages.value.filter((row) => row.id !== "own-send").map((row) => row.seq)).toEqual(all.map((row) => row.seq));
     await workbench.markDisplayed("c-1", true);
     expect(service.markRead).toHaveBeenLastCalledWith("c-1", "651");
     expect(service.messages.mock.calls.filter(([, query]) => query.afterSeq).every(([, query]) => query.page === 1)).toBe(true);
@@ -342,6 +361,166 @@ describe("useWhatsappWorkbench", () => {
     expect(workbench.detail.value).toBeNull();
     expect(workbench.messages.value).toEqual([]);
     expect(workbench.threadError.value?.kind).toBe("not-found");
+  });
+});
+
+describe("工作台实时刷新", () => {
+  async function started() {
+    const workbench = setup();
+    workbench.start();
+    await settle();
+    await workbench.selectConversation("c-1");
+    return workbench;
+  }
+
+  it("只订阅全局流，正常连接时不周期轮询；卸载后取消订阅", async () => {
+    const workbench = await started();
+    expect(stream.listeners.size).toBe(1);
+    const list = callsOf(service.conversations);
+    await vi.advanceTimersByTimeAsync(10 * 60_000);
+    expect(callsOf(service.conversations)).toBe(list);
+    expect(service.conversation).toHaveBeenCalledTimes(1);
+    workbench.stop();
+    expect(stream.listeners.size).toBe(0);
+    emit({ type: "sync" });
+    await settle();
+    expect(callsOf(service.conversations)).toBe(list);
+  });
+
+  it("ready/resync 全量校准，同批重复信号合并为每个资源一次请求", async () => {
+    await started();
+    const list = callsOf(service.conversations);
+    emit({ type: "sync" });
+    emit({ type: "sync" });
+    emit({ type: "conversation", conversationId: "c-1", reasons: ["message"] });
+    await settle();
+    expect(callsOf(service.conversations)).toBe(list + 1);
+    expect(service.conversation).toHaveBeenCalledTimes(2);
+    expect(service.markRead).not.toHaveBeenCalled();
+  });
+
+  it("其他会话变化只刷新列表；当前会话重取最新页以更新已有消息状态", async () => {
+    const workbench = await started();
+    emit({ type: "conversation", conversationId: "c-2", reasons: ["message"] });
+    await settle();
+    expect(service.conversation).toHaveBeenCalledTimes(1);
+    service.messages.mockResolvedValue(page([message({ id: "m-2", seq: BIG_SEQ, status: "read" }), message({ id: "m-1", seq: "1" })]));
+    emit({ type: "conversation", conversationId: "c-1", reasons: ["status"] });
+    await settle();
+    expect(service.conversation).toHaveBeenCalledTimes(2);
+    expect(service.messages.mock.calls.at(-1)?.[1]).toEqual({ page: 1, pageSize: 50 });
+    expect(workbench.messages.value.find((row) => row.id === "m-2")?.status).toBe("read");
+  });
+
+  it("进行中的刷新又失效时，结束后补跑一次", async () => {
+    await started();
+    let resolveList!: (value: unknown) => void;
+    service.conversations.mockImplementationOnce(() => new Promise((resolve) => { resolveList = resolve; }));
+    const list = callsOf(service.conversations);
+    emit({ type: "conversation", conversationId: "c-2", reasons: ["message"] });
+    await settle();
+    emit({ type: "conversation", conversationId: "c-3", reasons: ["message"] });
+    emit({ type: "summary" });
+    await settle();
+    expect(callsOf(service.conversations)).toBe(list + 1);
+    resolveList(page([{ id: "c-1", unreadCount: 0 }]));
+    await settle();
+    expect(callsOf(service.conversations)).toBe(list + 2);
+  });
+
+  it("流正常时读取失败保留错误并有限退避重试，不恢复高频轮询", async () => {
+    const workbench = await started();
+    service.conversations.mockRejectedValueOnce(networkError()).mockRejectedValueOnce(networkError());
+    const list = callsOf(service.conversations);
+    emit({ type: "conversation", conversationId: "c-2", reasons: ["message"] });
+    await settle();
+    expect(workbench.listError.value).not.toBe("");
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(callsOf(service.conversations)).toBe(list + 2);
+    await vi.advanceTimersByTimeAsync(4_000);
+    expect(callsOf(service.conversations)).toBe(list + 3);
+    expect(workbench.listError.value).toBe("");
+    await vi.advanceTimersByTimeAsync(10 * 60_000);
+    expect(callsOf(service.conversations)).toBe(list + 3);
+  });
+
+  it("权限范围变化先停止展示旧详情；仍有权限时恢复，403 时清空", async () => {
+    const workbench = await started();
+    let resolveDetail!: (value: unknown) => void;
+    service.conversation.mockImplementationOnce(() => new Promise((resolve) => { resolveDetail = resolve; }));
+    emit({ type: "access" });
+    await flush();
+    expect(workbench.detail.value).toBeNull();
+    expect(workbench.messages.value).toEqual([]);
+    expect(workbench.selectedId.value).toBe("c-1");
+    resolveDetail(detail("c-1"));
+    await settle();
+    expect(workbench.detail.value?.id).toBe("c-1");
+    expect(workbench.messages.value).toHaveLength(2);
+
+    service.conversation.mockRejectedValueOnce(new ApiError("forbidden", { code: "AUTH_FORBIDDEN", status: 403 }));
+    emit({ type: "access" });
+    await settle();
+    expect(workbench.detail.value).toBeNull();
+    expect(workbench.messages.value).toEqual([]);
+    expect(workbench.threadError.value?.kind).toBe("forbidden");
+  });
+
+  it("权限变化前发出的旧详情响应不能覆盖重新确认的结果", async () => {
+    const workbench = await started();
+    let resolveOld!: (value: unknown) => void;
+    service.conversation.mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }));
+    emit({ type: "conversation", conversationId: "c-1", reasons: ["message"] });
+    await settle();
+    service.conversation.mockRejectedValueOnce(new ApiError("not found", { code: "NOT_FOUND", status: 404 }));
+    emit({ type: "access" });
+    await settle();
+    resolveOld(detail("c-1"));
+    await settle();
+    expect(workbench.detail.value).toBeNull();
+    expect(workbench.threadError.value?.kind).toBe("not-found");
+  });
+
+  it("共享已读推送引起的重取在序号未前进时不再次标记已读", async () => {
+    const workbench = await started();
+    await workbench.markDisplayed("c-1", true);
+    expect(service.markRead).toHaveBeenCalledTimes(1);
+    emit({ type: "conversation", conversationId: "c-1", reasons: ["read"] });
+    await settle();
+    await workbench.markDisplayed("c-1", false);
+    expect(service.markRead).toHaveBeenCalledTimes(1);
+  });
+
+  it("翻页与筛选显式读取列表，旧筛选的响应不覆盖新页面", async () => {
+    const workbench = await started();
+    workbench.page.value = 2;
+    await settle();
+    expect(service.conversations.mock.calls.at(-1)?.[0]).toMatchObject({ page: 2 });
+
+    let resolveOld!: (value: unknown) => void;
+    service.conversations.mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }));
+    emit({ type: "sync" });
+    await settle();
+    service.conversations.mockResolvedValue(page([{ id: "c-9", unreadCount: 0 }]));
+    workbench.view.value = "unassigned";
+    await settle();
+    resolveOld(page([{ id: "stale", unreadCount: 0 }]));
+    await settle();
+    expect(service.conversations.mock.calls.at(-1)?.[0]).toMatchObject({ page: 1, view: "unassigned" });
+    expect(workbench.conversations.value.map((row) => row.id)).toEqual(["c-9"]);
+  });
+
+  it("重新可见时校准当前会话一次", async () => {
+    await started();
+    const handler = doc.addEventListener.mock.calls.findLast(([name]) => name === "visibilitychange")?.[1] as () => void;
+    doc.visibilityState = "hidden";
+    handler();
+    await settle();
+    expect(service.conversation).toHaveBeenCalledTimes(1);
+    doc.visibilityState = "visible";
+    handler();
+    await settle();
+    expect(service.conversation).toHaveBeenCalledTimes(2);
   });
 });
 
