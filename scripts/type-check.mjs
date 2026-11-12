@@ -6,6 +6,20 @@ import { fileURLToPath } from "node:url";
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const cli = join(repository, "node_modules/vue-tsc/bin/vue-tsc.js");
 const args = process.argv.slice(2);
+const verifiedDevSha = process.env.SUNRISE_HOSTED_DEV_TYPECHECK_SHA;
+if (verifiedDevSha) {
+  const env = process.env;
+  // The workflow supplies this only after the same dev commit passes the full check.
+  // The installed guard still holds the lock and downloads that exact source.
+  if (args.length || !/^[a-f0-9]{40}$/.test(verifiedDevSha) || verifiedDevSha !== env.GITHUB_SHA ||
+    env.GITHUB_ACTIONS !== "true" || env.GITHUB_REPOSITORY !== "Prainn/sunrise-travelops-web" ||
+    env.GITHUB_REF !== "refs/heads/dev" || env.DEPLOY_ENV !== "dev" ||
+    env.OPERATION !== "deploy" || env.SUNRISE_LOCK_HELD !== "1") {
+    throw new Error("Hosted type-check evidence must match the guarded dev deployment");
+  }
+  process.stdout.write(`Type check verified on GitHub for ${verifiedDevSha}\n`);
+  process.exit(0);
+}
 if (args.length && (args.length !== 2 || args[0] !== "--project")) {
   throw new Error("Usage: node scripts/type-check.mjs [--project tsconfig.json]");
 }

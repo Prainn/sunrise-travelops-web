@@ -7,6 +7,39 @@ import { fileURLToPath } from "node:url";
 
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
+test("accepts hosted evidence only for the exact guarded dev deployment", () => {
+  const sha = "a".repeat(40);
+  const env = {
+    ...process.env,
+    SUNRISE_HOSTED_DEV_TYPECHECK_SHA: sha,
+    GITHUB_SHA: sha,
+    GITHUB_ACTIONS: "true",
+    GITHUB_REPOSITORY: "Prainn/sunrise-travelops-web",
+    GITHUB_REF: "refs/heads/dev",
+    DEPLOY_ENV: "dev",
+    OPERATION: "deploy",
+    SUNRISE_LOCK_HELD: "1",
+  };
+  const run = (change = {}, args = []) => spawnSync(process.execPath, [join(repository, "scripts/type-check.mjs"), ...args], {
+    encoding: "utf8",
+    env: { ...env, ...change },
+  });
+  assert.match(run().stdout, /Type check verified on GitHub/);
+  for (const change of [
+    { GITHUB_SHA: "b".repeat(40) },
+    { GITHUB_ACTIONS: "" },
+    { GITHUB_REPOSITORY: "Prainn/another-repo" },
+    { GITHUB_REF: "refs/heads/main", DEPLOY_ENV: "prod" },
+    { OPERATION: "rollback" },
+    { SUNRISE_LOCK_HELD: "" },
+  ]) {
+    const invalid = run(change);
+    assert.notEqual(invalid.status, 0);
+    assert.match(invalid.stderr, /must match the guarded dev deployment/);
+  }
+  assert.notEqual(run({}, ["--project", "tsconfig.json"]).status, 0);
+});
+
 test("checks Vue, tests and additional config roots without leaving temporary configs", () => {
   const fixture = mkdtempSync(join(repository, ".type-check-fixture-"));
   try {
