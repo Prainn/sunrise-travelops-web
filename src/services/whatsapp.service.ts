@@ -57,6 +57,10 @@ export const whatsappService = {
   summary() {
     return request.get<WhatsappSummary>(`${BASE_URL}/summary`);
   },
+  /** 工作台失效提示流；返回原始 Response，不作 SUCCESS 解包，由流管理器解析。 */
+  stream(signal: AbortSignal) {
+    return request.stream(`${BASE_URL}/stream`, { signal });
+  },
   managedQuickReplies(query: WhatsappQuickReplyQuery) {
     return request.get<PageResult<WhatsappQuickReply>>(`${BASE_URL}/quick-replies/manage`, { params: { ...query } });
   },

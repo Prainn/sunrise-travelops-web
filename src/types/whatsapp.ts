@@ -270,3 +270,19 @@ export interface WhatsappSummary {
   /** null 表示当前身份不可查看未分配计数。 */
   unassignedCount: number | null;
 }
+
+/** conversation.changed 的原因枚举，不含消息、负责人或客户字段。 */
+export type WhatsappChangeReason = "message" | "status" | "state" | "assign" | "notes" | "inquiry" | "read" | "consultation";
+
+/**
+ * 实时流交给工作台与角标的刷新信号：sync 为 ready/resync 或兜底轮询的全量校准；
+ * 其余对应服务端失效事件。连接控制事件由流管理器自行处理。
+ */
+export type WhatsappStreamSignal =
+  | { type: "sync" }
+  | { type: "conversation"; conversationId: string; reasons: WhatsappChangeReason[] }
+  | { type: "summary" }
+  | { type: "access" };
+
+/** disabled 表示当前环境未启用流，只低频轮询；fallback 为断流后的轮询兜底与退避重连。 */
+export type WhatsappStreamStatus = "stopped" | "disabled" | "connecting" | "live" | "fallback" | "limited" | "forbidden";

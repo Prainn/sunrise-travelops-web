@@ -46,7 +46,7 @@
           :error="workbench.listError.value"
           :total="workbench.total.value"
           @select="handleSelect"
-          @refresh="workbench.refreshNow"
+          @refresh="handleManualRefresh"
         />
       </aside>
       <div class="whatsapp-workbench__content">
@@ -142,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -155,6 +155,7 @@ import { websiteErrorMessage, websiteService } from "@/services/website.service"
 import { whatsappService } from "@/services/whatsapp.service";
 import { useUserStore } from "@/stores/user";
 import { useWhatsappNotificationsStore } from "@/stores/whatsapp-notifications";
+import { useWhatsappStreamStore } from "@/stores/whatsapp-stream";
 import type { WebsiteCity, WebsiteInquiryInput } from "@/types/website";
 import type {
   WhatsappAction,
@@ -163,6 +164,7 @@ import type {
   WhatsappIntegrationStatus,
   WhatsappMessage,
   WhatsappReply,
+  WhatsappStreamSignal,
 } from "@/types/whatsapp";
 import WebsiteInquiryEditor from "@/views/website-inquiries/components/WebsiteInquiryEditor.vue";
 import { linkedConversationId } from "../message-utils";
@@ -180,6 +182,7 @@ const route = useRoute();
 const routeName = route.name;
 const user = useUserStore();
 const notifications = useWhatsappNotificationsStore();
+const stream = useWhatsappStreamStore();
 const can = (permission: string) => user.userInfo.perms.includes(permission);
 const isManager = can("whatsapp:conversation:assign");
 const defaultView: WhatsappConversationView | undefined = isManager ? "all" : undefined;
@@ -199,6 +202,10 @@ const inquiryDraft = ref<Partial<WebsiteInquiryInput>>();
 const inquiryVersion = ref(0);
 const cities = ref<WebsiteCity[]>([]);
 let actionsGeneration = 0;
+let actionsConversationId: string | undefined;
+/** 这些原因会改变资料面板或分配记录；消息、状态与已读只需工作台刷新会话。 */
+const PANEL_REASONS = new Set(["notes", "inquiry", "assign", "consultation"]);
+let stopSignals: (() => void) | undefined;
 
 const detail = computed(() => workbench.detail.value);
 const threadErrorTitle = computed(() => {
@@ -234,6 +241,7 @@ watch(() => route.query.conversationId, (queryId) => {
 });
 
 onMounted(() => {
+  stopSignals = stream.subscribe(handlePanelSignal);
   workbench.start();
   const initialId = route.query.conversationId;
   if (typeof initialId === "string" && initialId) void workbench.selectConversation(initialId);
@@ -241,6 +249,22 @@ onMounted(() => {
   void loadCities();
 });
 
+onUnmounted(() => stopSignals?.());
+
+/** 已挂载的客户资料与分配记录随失效提示刷新；资料读取会跳过未保存输入与版本冲突，不覆盖草稿。 */
+function handlePanelSignal(signal: WhatsappStreamSignal) {
+  const id = detail.value?.id;
+  if (!id) return;
+  if (signal.type === "conversation" && (signal.conversationId !== id || !signal.reasons.some((reason) => PANEL_REASONS.has(reason)))) return;
+  if (signal.type === "summary") return;
+  void customerNotes.load(id);
+  void loadActions();
+}
+/** 用户明确刷新：断流或被连接限额替换的标签页再尝试连接一次。 */
+function handleManualRefresh() {
+  stream.retry();
+  workbench.refreshNow();
+}
 async function loadIntegration() {
   if (!can("whatsapp:integration:manage")) return;
   try {
@@ -288,7 +312,9 @@ async function handleRefreshNotes() {
 async function loadActions() {
   const id = detail.value?.id;
   const current = ++actionsGeneration;
-  actions.value = [];
+  // 同一会话的后台刷新保留现有记录，避免失效提示造成闪烁。
+  if (id !== actionsConversationId) actions.value = [];
+  actionsConversationId = id;
   if (!id || !isManager) return;
   try {
     const result = await whatsappService.actions(id, { page: 1, pageSize: 100 });
