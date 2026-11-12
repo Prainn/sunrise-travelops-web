@@ -443,7 +443,71 @@ async function sendBlobRequest(
   }
 }
 
+/**
+ * 打开 text/event-stream：沿用会话闸门、401 单次刷新重试与会话过期处理，但不限时、不解包 JSON。
+ * 状态非 2xx 按普通错误抛出；200 但类型不是事件流（如后端未部署时的网页）抛 INVALID_API_RESPONSE。
+ */
+async function sendStreamRequest(
+  path: string,
+  options: RequestOptions,
+  startEpoch = sessionGate.epoch(),
+): Promise<Response> {
+  if (!options.bypassSessionGate && options.requiresAuth !== false) await sessionGate.waitVerified();
+  assertSessionGate(options);
+  const sentAccessToken = AuthStorage.getAccessToken();
+  const headers = new Headers(options.headers);
+  headers.set("Accept", "text/event-stream");
+  const sent = await sendRequest("GET", path, undefined, { ...options, headers, timeoutMs: 0 });
+  const { response } = sent;
+  assertSameEpoch(startEpoch);
+
+  if (response.status === 401 && canRefreshAfter(options) && AuthStorage.getRefreshToken()) {
+    sent.release();
+    await refreshTokensOnce(sentAccessToken);
+    assertSameEpoch(startEpoch);
+    return sendStreamRequest(path, { ...options, retryAfterRefresh: false }, startEpoch);
+  }
+
+  if (response.status === 401 && shouldExpireAfter(options)) {
+    await expireSession();
+  }
+  if (!response.ok) {
+    try {
+      throw await readBody(sent, parseError);
+    } finally {
+      sent.release();
+    }
+  }
+  const contentType = response.headers.get("Content-Type") ?? "";
+  if (!contentType.toLowerCase().startsWith("text/event-stream") || !response.body) {
+    sent.release();
+    void response.body?.cancel().catch(() => undefined);
+    throw new ApiError(getErrorMessage(ApiErrorCode.INVALID_API_RESPONSE, response.status), {
+      code: ApiErrorCode.INVALID_API_RESPONSE,
+      status: response.status,
+    });
+  }
+  // 保留调用方取消监听：流的生命周期由调用方的 signal 结束。
+  return response;
+}
+
+/**
+ * 访问令牌即将到期的服务端提示（如实时流 auth.expired）复用与普通请求相同的单次刷新；
+ * 其他请求或标签页已刷新时直接返回。刷新令牌失效时按现有规则进入登录处理并抛出错误。
+ *
+ * @param staleAccessToken - 收到提示的连接所使用的访问令牌。
+ */
+export function refreshAccessToken(staleAccessToken: string): Promise<void> {
+  assertSessionGate({});
+  return refreshTokensOnce(staleAccessToken);
+}
+
 export const request = {
+  /** 打开事件流，返回未读取的 Response；调用方通过 signal 关闭。 */
+  stream(path: string, options: RequestOptions = {}): Promise<Response> {
+    return sendStreamRequest(path, options);
+  },
+
   get<T>(path: string, options: RequestOptions = {}): Promise<T> {
     return sendJsonRequest<T>("GET", path, undefined, options);
   },
