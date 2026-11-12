@@ -1015,10 +1015,10 @@
     "feishuNotConnected": "未接入",
     "feishuTest": "测试",
     "feishuTestTitle": "测试飞书提醒",
-    "feishuTestHint": "向 {name} 发送模拟提醒，仅测试消息内容，不会更改台账。",
+    "feishuTestHint": "向 {name} 发送所选类型的模拟提醒，不会更改业务数据。",
     "feishuTestTemplate": "提醒模板",
-    "feishuReviewTemplate": "待审核",
-    "feishuOperateTemplate": "待操作",
+    "feishuUnassignedTemplate": "WhatsApp 待分配（首次入站消息）",
+    "feishuNewMessageTemplate": "WhatsApp 新消息待回复",
     "feishuOpenId": "飞书 Open ID",
     "feishuOpenIdHint": "填写当前应用的 open_id，留空解除接入",
     "feishuOpenIdInvalid": "请填写 ou_ 开头的有效 Open ID",
@@ -2406,7 +2406,6 @@
     "noHotels": "本行程未安排酒店。"
   },
   "whatsapp": {
-    "listRefreshFailed": "刷新失败，暂时显示上次结果",
     "sendBlockedReasons": {
       "not_configured": "WhatsApp接入尚未配置",
       "send_disabled": "WhatsApp发送尚未启用",
