@@ -35,12 +35,20 @@ for (const file of files) {
   else groups.tooling.push(file);
 }
 
+// Tool configs pull in separate, large dependency graphs (Vite, ESLint and UnoCSS).
+// Check each root in its own process to stay within the production heap budget.
+const checks = [
+  ["application", groups.application],
+  ["tests", groups.tests],
+  ...groups.tooling.map((file, index) => [`tooling-${index + 1}`, [file]]),
+];
+
 // Separate processes release the previous TypeScript graph before loading the next.
 // Every root from --showConfig is retained; imports and strict options still resolve normally.
 const temporary = mkdtempSync(join(directory, ".type-check-"));
 let status = 0;
 try {
-  for (const [name, roots] of Object.entries(groups)) {
+  for (const [name, roots] of checks) {
     if (!roots.length) continue;
     const path = join(temporary, `${name}.json`);
     writeFileSync(path, JSON.stringify({
