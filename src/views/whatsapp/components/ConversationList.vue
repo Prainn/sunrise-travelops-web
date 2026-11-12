@@ -47,10 +47,10 @@
         </div>
         <div class="text-[13px] line-clamp-2 break-words">
           <template v-if="drafts.get(item.id).trim()">
-            <span class="text-[var(--el-color-danger)]">{{ $t("whatsapp.draftLabel") }}：</span>{{ drafts.get(item.id) }}
+            <span class="text-[var(--el-color-danger)]">{{ $t("whatsapp.draftLabel") }}：</span>{{ plainMessageText(drafts.get(item.id)) }}
           </template>
           <template v-else>
-            {{ item.lastMessageText || $t("whatsapp.noMessage") }}
+            {{ item.lastMessageText ? plainMessageText(item.lastMessageText) : $t("whatsapp.noMessage") }}
           </template>
         </div>
         <div class="flex items-center justify-between gap-[8px] text-[12px]">
@@ -82,6 +82,7 @@ import SectionCard from "@/components/SectionCard/index.vue";
 import type { WhatsappConversationItem } from "@/types/whatsapp";
 import { formatDate, formatDateTime } from "@/utils";
 import { useWhatsappDrafts } from "../drafts";
+import { plainMessageText } from "../message-format";
 import { STATE_TAG_TYPES } from "../message-utils";
 
 defineProps<{

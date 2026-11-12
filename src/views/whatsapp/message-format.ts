@@ -87,3 +87,13 @@ export function parseMessageText(text: string): MessageBlock[] {
   }
   return blocks;
 }
+
+const inlineText = (nodes: InlineNode[]): string =>
+  nodes.map((node) => typeof node === "string" ? node : inlineText(node.children)).join("");
+
+/** 列表摘要用纯文字：去掉可识别的格式标记，未识别的星号等按原样保留。 */
+export function plainMessageText(text: string): string {
+  return parseMessageText(text)
+    .map((block) => block.kind === "code" ? block.code : block.lines.map(inlineText).join("\n"))
+    .join("\n");
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createSSRApp, h } from "vue";
 import { renderToString } from "vue/server-renderer";
-import { CJK_MARKER_BOUNDARY, parseInline, parseMessageText } from "./message-format";
+import { CJK_MARKER_BOUNDARY, parseInline, parseMessageText, plainMessageText } from "./message-format";
 import MessageText from "./components/MessageText.vue";
 
 describe("WhatsApp文字显示", () => {
@@ -25,6 +25,11 @@ describe("WhatsApp文字显示", () => {
     expect(parseInline("哈哈 *哈哈* _哈哈_，好")).toEqual([
       "哈哈 ", { tag: "strong", children: ["哈哈"] }, " ", { tag: "em", children: ["哈哈"] }, "，好",
     ]);
+  });
+
+  it("会话列表摘要去掉格式标记，保留未识别的星号", () => {
+    expect(plainMessageText("*哈哈哈哈哈哈* _好_ ~删~ `码`")).toBe("哈哈哈哈哈哈 好 删 码");
+    expect(plainMessageText("哈哈*哈哈* 5*3")).toBe("哈哈*哈哈* 5*3");
   });
 
   it("解析历史消息中的星号列表，并保留编号和引用", () => {
