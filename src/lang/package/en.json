@@ -1015,10 +1015,10 @@
     "feishuNotConnected": "Not connected",
     "feishuTest": "Test",
     "feishuTestTitle": "Test Feishu reminder",
-    "feishuTestHint": "Send a simulated reminder to {name}. This tests message content and leaves ledgers unchanged.",
+    "feishuTestHint": "Send the selected sample reminder to {name}. This does not change business records.",
     "feishuTestTemplate": "Reminder template",
-    "feishuReviewTemplate": "Pending review",
-    "feishuOperateTemplate": "Pending operation",
+    "feishuUnassignedTemplate": "WhatsApp unassigned (first incoming message)",
+    "feishuNewMessageTemplate": "WhatsApp new message awaiting reply",
     "feishuOpenId": "Feishu Open ID",
     "feishuOpenIdHint": "Enter this app’s open_id; clear to disconnect",
     "feishuOpenIdInvalid": "Enter a valid Open ID starting with ou_",
@@ -2406,7 +2406,6 @@
     "noHotels": "No hotel arranged."
   },
   "whatsapp": {
-    "listRefreshFailed": "Refresh failed. Showing the last results.",
     "sendBlockedReasons": {
       "not_configured": "WhatsApp is not configured.",
       "send_disabled": "WhatsApp sending is disabled.",

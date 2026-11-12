@@ -498,12 +498,19 @@
       <p class="mb-4">
         {{ $t("user.feishuTestHint", { name: feishuTestUser?.nickname }) }}
       </p>
-      <el-radio-group v-model="feishuTestTemplate" :disabled="!!feishuTestingId" :aria-label="$t('user.feishuTestTemplate')">
-        <el-radio value="review">
-          {{ $t("user.feishuReviewTemplate") }}
-        </el-radio>
-        <el-radio value="operate">
-          {{ $t("user.feishuOperateTemplate") }}
+      <el-radio-group
+        v-model="feishuTestTemplate"
+        class="w-full flex-col !items-start"
+        :disabled="!!feishuTestingId"
+        :aria-label="$t('user.feishuTestTemplate')"
+      >
+        <el-radio
+          v-for="template in FEISHU_NOTIFICATION_TYPES"
+          :key="template"
+          :value="template"
+          class="!mr-0 min-h-8 !h-auto !whitespace-normal"
+        >
+          {{ $t(feishuTestLabel(template)) }}
         </el-radio>
       </el-radio-group>
       <template #footer>
@@ -547,6 +554,7 @@ import type {
   UserItem,
   UserQueryParams,
 } from "@/types/user";
+import { FEISHU_NOTIFICATION_TYPES } from "@/types/notification";
 import { userService } from "@/services";
 import { useAppStore } from "@/stores/app";
 import { useUserStore } from "@/stores/user";
@@ -633,11 +641,16 @@ const dialogState = reactive({
 const feishuTestingId = ref("");
 const feishuTestVisible = ref(false);
 const feishuTestUser = ref<UserItem>();
-const feishuTestTemplate = ref<FeishuTestTemplate>("review");
+const feishuTestTemplate = ref<FeishuTestTemplate>("linxi_ledger_review");
+function feishuTestLabel(template: FeishuTestTemplate): string {
+  if (template === "whatsapp_unassigned") return "user.feishuUnassignedTemplate";
+  if (template === "whatsapp_message") return "user.feishuNewMessageTemplate";
+  return `notificationSettings.types.${template}`;
+}
 function openFeishuTest(row: UserItem): void {
   if (feishuTestingId.value) return;
   feishuTestUser.value = row;
-  feishuTestTemplate.value = "review";
+  feishuTestTemplate.value = "linxi_ledger_review";
   feishuTestVisible.value = true;
 }
 async function sendFeishuTest(): Promise<void> {
