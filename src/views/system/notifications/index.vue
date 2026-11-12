@@ -49,7 +49,7 @@
 import { onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
-import type { NotificationSetting, NotificationType } from "@/types/notification";
+import { FEISHU_NOTIFICATION_TYPES, type NotificationSetting } from "@/types/notification";
 import DataTable from "@/components/DataTable/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
@@ -61,17 +61,6 @@ import { useNotificationSettings } from "./useNotificationSettings";
 
 defineOptions({ name: "NotificationManagement" });
 
-const KNOWN_TYPES: NotificationType[] = [
-  "whatsapp_unassigned",
-  "whatsapp_message",
-  "whatsapp_assignment",
-  "linxi_ledger_review",
-  "linxi_ledger_operate",
-  "website_ledger_review",
-  "website_ledger_operate",
-  "inquiry_follow_up",
-];
-
 const { t } = useI18n();
 const { settings, loading, loadError, isSaving, fetchSettings, saveEnabled } = useNotificationSettings();
 // 保存按当前身份的有效动作权限控制；服务端仍独立校验。
@@ -79,7 +68,7 @@ const canUpdate = hasPerm("sys:notification:update");
 
 /** 已知类型使用本地化名称；后端新增类型时显示服务端名称，不暴露技术编码。 */
 function typeLabel(row: NotificationSetting) {
-  return KNOWN_TYPES.includes(row.type) ? t(`notificationSettings.types.${row.type}`) : row.name;
+  return FEISHU_NOTIFICATION_TYPES.includes(row.type) ? t(`notificationSettings.types.${row.type}`) : row.name;
 }
 async function handleToggle(row: NotificationSetting, enabled: boolean) {
   if (!canUpdate) return;

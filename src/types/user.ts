@@ -1,5 +1,6 @@
 import type { LoginScope } from "./auth";
 import type { BusinessGroupStatus } from "./business-group";
+import type { NotificationType } from "./notification";
 import type { BaseQueryParams } from "@/types/common";
 
 /** 计调分工：reception 仅收客、operation 仅操作、both 两者兼任。 */
@@ -32,7 +33,7 @@ export interface UserQueryParams extends BaseQueryParams {
   businessGroupId?: string;
 }
 
-export type FeishuTestTemplate = "review" | "operate";
+export type FeishuTestTemplate = NotificationType;
 
 export interface UserItem {
   readOnly?: boolean;

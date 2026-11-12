@@ -34,7 +34,6 @@
           v-model="identity.deptId"
           autocomplete="new-password"
           :placeholder="$t('user.departmentPlaceholder')"
-          @change="updateRoles(identity, [])"
         >
           <el-option
             v-for="dept in departments.filter((d) => d.scope === identity.scope)"
@@ -74,12 +73,7 @@
           @update:model-value="updateRoles(identity, $event)"
         >
           <el-option
-            v-for="role in roles.filter(
-              (r) =>
-                r.scopes.includes(identity.scope) &&
-                (identity.scope !== 'headquarters' ||
-                  r.code === (identity.deptId === 1 ? 'ADMIN' : 'EXECUTIVE')),
-            )"
+            v-for="role in roles.filter((item) => item.scopes.includes(identity.scope))"
             :key="role.value"
             :value="role.value"
             :label="userRoleLabel(role.label, role.code)"
