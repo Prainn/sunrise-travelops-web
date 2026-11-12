@@ -227,6 +227,20 @@ export const constantRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: "oss",
+        name: "OssManagement",
+        component: () => import("@/views/system/oss/index.vue"),
+        meta: {
+          menuKey: "oss-management",
+          title: "ossManagement",
+          icon: "el-icon-Picture",
+          keepAlive: true,
+          scopes: ["headquarters"],
+          roles: ["ROOT", "ADMIN"],
+          perms: ["sys:oss:list"],
+        },
+      },
+      {
         path: "operation-logs",
         name: "OperationLogs",
         component: () => import("@/views/system/operation-logs/index.vue"),

@@ -11,6 +11,7 @@ const service = vi.hoisted(() => ({
   markRead: vi.fn(),
   sendText: vi.fn(),
   sendReaction: vi.fn(),
+  sendImageBatch: vi.fn(),
   retryMessage: vi.fn(),
   customerNotes: vi.fn(),
   saveCustomerNotes: vi.fn(),
@@ -313,6 +314,35 @@ describe("useWhatsappWorkbench", () => {
     expect(messageReply(workbench.messages.value.find((item) => item.id === "quoted")!)).toEqual(replyTo);
     expect(workbench.pending.value).toHaveLength(0);
     expect(messageReply(message({ attachment: { replyTo: { text: "broken" } } }))).toBeUndefined();
+  });
+
+  it("多图结果未知时原样重提整组编号，资源过期 404 标记需重新上传", async () => {
+    const workbench = setup();
+    await workbench.selectConversation("c-1");
+    const images = ["m-1", "m-2"].map((mediaAssetId) => ({ mediaAssetId, name: `${mediaAssetId}.jpg`, mimeType: "image/jpeg", thumbnailUrl: null }));
+    const replyTo = { id: "original", text: "客户原文", kind: "text", direction: "inbound" as const, source: "customer" as const };
+    service.sendImageBatch.mockRejectedValueOnce(networkError());
+    await workbench.sendImages(images, "说明", replyTo);
+    const [input] = service.sendImageBatch.mock.calls[0]!.slice(1);
+    expect(input.images.map((image: { mediaAssetId: string }) => image.mediaAssetId)).toEqual(["m-1", "m-2"]);
+    expect(new Set([...input.images.map((image: { clientRequestId: string }) => image.clientRequestId), input.textMessage.clientRequestId]).size).toBe(3);
+    expect(input.textMessage.text).toBe("说明");
+    expect(input.replyToMessageId).toBe("original");
+    expect(workbench.pending.value[0]!.state).toBe("uncertain");
+    service.sendImageBatch.mockResolvedValueOnce({ messages: [
+      message({ id: "i-1", seq: "40", kind: "image", clientRequestId: input.images[0].clientRequestId }),
+      message({ id: "i-2", seq: "41", kind: "image", clientRequestId: input.images[1].clientRequestId }),
+      message({ id: "t-1", seq: "42", clientRequestId: input.textMessage.clientRequestId }),
+    ] });
+    await workbench.resubmitPending(workbench.pending.value[0]!.clientRequestId);
+    expect(service.sendImageBatch.mock.calls[1]).toEqual(service.sendImageBatch.mock.calls[0]);
+    expect(workbench.messages.value.filter((item) => ["i-1", "i-2", "t-1"].includes(item.id))).toHaveLength(3);
+    expect(workbench.pending.value).toHaveLength(0);
+
+    service.sendImageBatch.mockRejectedValueOnce(new ApiError("gone", { code: "NOT_FOUND", status: 404 }));
+    await workbench.sendImages(images, "");
+    expect(service.sendImageBatch.mock.calls[2]![1].textMessage).toBeUndefined();
+    expect(workbench.pending.value[0]).toMatchObject({ state: "rejected", isExpired: true });
   });
 
   it("失败重试生成新编号，结果不明时复用该编号；unknown 不请求重试", async () => {

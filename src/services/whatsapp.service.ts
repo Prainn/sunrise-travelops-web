@@ -1,5 +1,7 @@
-import { request } from "@/api/request";
+import { LONG_REQUEST_TIMEOUT_MS, request } from "@/api/request";
+import { imageFormData } from "@/services/oss.service";
 import type { PageResult } from "@/types/common";
+import type { OssResource } from "@/types/oss";
 import type { WebsiteInquiryInput } from "@/types/website";
 import type {
   WhatsappSummary,
@@ -11,6 +13,7 @@ import type {
   WhatsappCustomerNotes,
   WhatsappCustomerNotesInput,
   WhatsappFailedEvent,
+  WhatsappImageBatchInput,
   WhatsappInquiryInput,
   WhatsappInquiryPrefill,
   WhatsappInquiryResult,
@@ -121,6 +124,14 @@ export const whatsappService = {
   /** clientRequestId 由调用方生成；结果不明时须以同一 ID 重新提交。 */
   sendText(id: string, clientRequestId: string, text: string, replyToMessageId?: string) {
     return request.post<WhatsappMessage>(`${conversationUrl(id)}/messages`, { clientRequestId, text, ...(replyToMessageId ? { replyToMessageId } : {}) });
+  },
+  /** 只上传图片生成草稿资源，不发送；无幂等键，失败由用户手动重试。 */
+  uploadImage(id: string, file: File) {
+    return request.post<OssResource>(`${conversationUrl(id)}/images`, imageFormData(file), { timeoutMs: LONG_REQUEST_TIMEOUT_MS });
+  },
+  /** 整组同一事务入队；结果不明时须原样重用全部编号、顺序、图片、文字和引用重新提交。 */
+  sendImageBatch(id: string, input: WhatsappImageBatchInput) {
+    return request.post<{ messages: WhatsappMessage[] }>(`${conversationUrl(id)}/image-message-batches`, input);
   },
   sendReaction(id: string, messageId: string, clientRequestId: string, emoji: string) {
     return request.post<WhatsappMessage>(`${conversationUrl(id)}/messages/${encodeURIComponent(messageId)}/reactions`, { clientRequestId, emoji });

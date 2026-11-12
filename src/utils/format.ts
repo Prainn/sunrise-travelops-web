@@ -37,6 +37,14 @@ export function formatShanghaiDateTime(input: Date | string | null | undefined):
   return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`;
 }
 
+/** 文件字节数显示为 B / KB / MB，未知显示占位符。 */
+export function formatFileSize(bytes: number | null | undefined): string {
+  if (bytes == null || !Number.isFinite(bytes) || bytes < 0) return "-";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+
 /** 在日期字符串上增加指定天数。 */
 export function addDays(date: string, days: number): string {
   const value = new Date(`${date}T00:00:00`);

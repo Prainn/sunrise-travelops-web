@@ -1,6 +1,7 @@
 import { computed, onScopeDispose, ref, shallowRef, watch } from "vue";
 import { useDebounceFn } from "@vueuse/core";
 import { ApiError } from "@/api/request";
+import { translate } from "@/lang/utils";
 import { websiteErrorMessage } from "@/services/website.service";
 import { whatsappService } from "@/services/whatsapp.service";
 import { useUserStore } from "@/stores/user";
@@ -17,18 +18,22 @@ import type {
 import { createCoalescedTask } from "@/utils/coalesced-task";
 import {
   compareSeq,
+  hasPendingMedia,
   isUncertainSendError,
   maxSeq,
   mergeLatestPage,
   mergeMessages,
   minSeq,
   settlePending,
+  type PendingImage,
   type PendingMessage,
 } from "./message-utils";
 
 const MESSAGE_PAGE_SIZE = 50;
 /** 新增行超过一页时用 afterSeq 补齐的最大页数，避免单轮请求过多。 */
 const MAX_GAP_PAGES = 5;
+/** 最新页以下归档中的媒体每次刷新最多重取的页数。 */
+const MAX_MEDIA_PAGES = 3;
 
 export type ThreadErrorKind = "not-found" | "forbidden" | "failed";
 
@@ -177,11 +182,42 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     } else {
       syncedSeq = cursor;
     }
+    if (reachedLatest) {
+      merged = await refreshOlderMedia(id, token, merged, floor);
+      if (token !== threadToken) return false;
+    }
     messages.value = merged;
     messageTotal.value = Math.max(latest.total, merged.length);
     const list = pendingByConversation.value.get(id);
     if (list?.length) setPending(id, settlePending(list, merged));
     return !reachedLatest;
+  }
+
+  /**
+   * 最新页以下已加载、归档仍在进行的图片/贴纸：重取其所在页更新原消息；
+   * 只随实时失效或校准触发，每次最多 MAX_MEDIA_PAGES 页，不另行轮询。
+   *
+   * @param id - 当前会话 ID。
+   * @param token - 发起时的会话令牌。
+   * @param current - 已与最新页合并的消息。
+   * @param floor - 最新页最小 seq。
+   * @returns 合并了重取结果的消息。
+   */
+  async function refreshOlderMedia(id: string, token: number, current: WhatsappMessage[], floor: string | null) {
+    let merged = current;
+    let ceiling = floor;
+    for (let pageNo = 0; ceiling && pageNo < MAX_MEDIA_PAGES; pageNo++) {
+      const below = ceiling;
+      const target = maxSeq(merged.filter((message) => compareSeq(message.seq, below) < 0 && hasPendingMedia(message)));
+      if (!target) break;
+      const older = await whatsappService.messages(id, {
+        page: 1, pageSize: MESSAGE_PAGE_SIZE, beforeSeq: (BigInt(target) + 1n).toString(),
+      });
+      if (token !== threadToken) return merged;
+      merged = mergeMessages(merged, older.list);
+      ceiling = older.list.length >= MESSAGE_PAGE_SIZE ? minSeq(older.list) : null;
+    }
+    return merged;
   }
 
   async function fetchThread(id: string, token = threadToken) {
@@ -332,16 +368,29 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     setPending(id, list.map((item) => (item.clientRequestId === clientRequestId ? { ...item, ...patch } : item)));
   }
 
+  /** 按记录类型提交；批量快照原样提交，返回的每条消息逐条合并。 */
+  async function postPending(id: string, item: PendingMessage): Promise<WhatsappMessage[]> {
+    if (item.reaction)
+      return [await whatsappService.sendReaction(id, item.reaction.targetMessageId, item.clientRequestId, item.reaction.emoji)];
+    if (item.batch) {
+      const result = await whatsappService.sendImageBatch(id, {
+        images: item.batch.images.map((image) => ({ clientRequestId: image.clientRequestId, mediaAssetId: image.mediaAssetId })),
+        ...(item.batch.textRequestId ? { textMessage: { clientRequestId: item.batch.textRequestId, text: item.text } } : {}),
+        ...(item.replyTo ? { replyToMessageId: item.replyTo.id } : {}),
+      });
+      return result.messages;
+    }
+    return [await whatsappService.sendText(id, item.clientRequestId, item.text, item.replyTo?.id)];
+  }
+
   async function submitPending(id: string, item: PendingMessage): Promise<SendFeedback> {
     const currentSession = session;
-    updatePending(id, item.clientRequestId, { state: "sending", error: "" });
+    updatePending(id, item.clientRequestId, { state: "sending", error: "", isExpired: false });
     try {
-      const saved = item.reaction
-        ? await whatsappService.sendReaction(id, item.reaction.targetMessageId, item.clientRequestId, item.reaction.emoji)
-        : await whatsappService.sendText(id, item.clientRequestId, item.text, item.replyTo?.id);
+      const saved = await postPending(id, item);
       if (currentSession !== session) return { kind: "queued", message: "" };
       setPending(id, (pendingByConversation.value.get(id) ?? []).filter((entry) => entry.clientRequestId !== item.clientRequestId));
-      if (id === selectedId.value) messages.value = mergeMessages(messages.value, [saved]);
+      if (id === selectedId.value) messages.value = mergeMessages(messages.value, saved);
       refreshNow();
       return { kind: "queued", message: "" };
     } catch (cause) {
@@ -351,8 +400,11 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
         updatePending(id, item.clientRequestId, { state: "uncertain", error: message });
         return { kind: "uncertain", message };
       }
-      updatePending(id, item.clientRequestId, { state: "rejected", error: message });
-      return { kind: "rejected", message };
+      // 图片资源已被清理：整组未入队，重新编辑时保留文字和本地图片并要求重新上传。
+      const isExpired = !!item.batch && cause instanceof ApiError && cause.status === 404;
+      const error = isExpired ? translate("whatsapp.imageDraft.batchExpired") : message;
+      updatePending(id, item.clientRequestId, { state: "rejected", error, isExpired });
+      return { kind: "rejected", message: error };
     }
   }
 
@@ -362,6 +414,30 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     const item: PendingMessage = {
       clientRequestId: crypto.randomUUID(),
       text,
+      replyTo,
+      state: "sending",
+      error: "",
+      createdAt: new Date().toISOString(),
+    };
+    setPending(id, [...(pendingByConversation.value.get(id) ?? []), item]);
+    return submitPending(id, item);
+  }
+
+  /**
+   * 用户点击发送后整组发出：每张图和末尾文字各有独立请求编号，同一发送动作只生成一次。
+   *
+   * @param images - 已上传的图片，按选图顺序。
+   * @param text - 去首尾空白后的正文，空串表示不发文字。
+   * @param replyTo - 引用目标，服务端只挂在第一张图。
+   * @returns 发送反馈。
+   */
+  function sendImages(images: Omit<PendingImage, "clientRequestId">[], text: string, replyTo?: WhatsappReply) {
+    const id = selectedId.value;
+    const batchImages = images.map((image) => ({ ...image, clientRequestId: crypto.randomUUID() }));
+    const item: PendingMessage = {
+      clientRequestId: batchImages[0]!.clientRequestId,
+      text,
+      batch: { images: batchImages, ...(text ? { textRequestId: crypto.randomUUID() } : {}) },
       replyTo,
       state: "sending",
       error: "",
@@ -526,6 +602,7 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     loadOlder,
     markDisplayed,
     sendText,
+    sendImages,
     sendReaction,
     resubmitPending,
     discardPending,

@@ -98,6 +98,7 @@
     "businessGroups": "业务组",
     "accountLinks": "账号关联",
     "notificationManagement": "通知管理",
+    "ossManagement": "OSS管理",
     "whatsappWorkbench": "WhatsApp 工作台",
     "whatsappQuickReplies": "快捷回复",
     "whatsappInbox": "会话收件箱",
@@ -643,6 +644,74 @@
       "website_ledger_review": "独立站台账待审核",
       "website_ledger_operate": "独立站台账待操作",
       "inquiry_follow_up": "询盘跟进提醒"
+    }
+  },
+  "oss": {
+    "searchPlaceholder": "名称或备注",
+    "kind": "类型",
+    "source": "来源",
+    "preview": "预览",
+    "name": "名称",
+    "remark": "备注",
+    "size": "大小",
+    "dimensions": "尺寸",
+    "referenceCount": "引用数",
+    "mimeType": "文件类型",
+    "objectKey": "存储路径",
+    "environment": "环境",
+    "detail": "详情",
+    "edit": "编辑资源",
+    "upload": "上传图片",
+    "uploadSuccess": "上传成功",
+    "retry": "重新归档",
+    "retrySuccess": "已重新加入归档",
+    "deleteSuccess": "删除成功",
+    "retryConfirm": "确认重新归档该图片？只会重新保存文件，不会重新给客户发送消息。",
+    "deleteConfirm": "确认删除“{name}”？将删除原图及其缩略图、发送副本。CDN 缓存可能最多保留 300 秒，不能保证立即从所有节点消失。",
+    "deleteReferenced": "已被 {count} 条消息引用，不能删除",
+    "deleteProcessing": "处理中，暂不能删除",
+    "nameRequired": "请输入名称",
+    "conflict": "该资源已被他人修改，请载入最新后再操作，不会覆盖他人修改。",
+    "reloadLatest": "载入最新",
+    "actionConflict": "操作未完成：{message}，请刷新后再操作",
+    "notFound": "资源不存在或不属于当前环境",
+    "environments": {
+      "dev": "开发环境",
+      "prod": "生产环境"
+    },
+    "kinds": {
+      "image": "图片",
+      "sticker": "贴纸"
+    },
+    "sources": {
+      "whatsapp": "WhatsApp",
+      "upload": "会话上传",
+      "management": "管理上传"
+    },
+    "states": {
+      "pending": "待处理",
+      "processing": "处理中",
+      "ready": "可用",
+      "failed": "失败",
+      "deleting": "删除中"
+    },
+    "media": {
+      "processing": "{kind}处理中",
+      "failed": "{kind}归档失败：{reason}",
+      "deleting": "{kind}删除处理中",
+      "unavailable": "{kind}暂不可预览",
+      "viewOriginal": "查看原图"
+    },
+    "errors": {
+      "MEDIA_SOURCE_EXPIRED": "来源链接已过期",
+      "MEDIA_URL_INVALID": "来源地址无效",
+      "MEDIA_TOO_LARGE": "文件过大",
+      "MEDIA_TYPE_INVALID": "文件格式无效",
+      "MEDIA_DOWNLOAD_FAILED": "下载失败",
+      "MEDIA_PROCESS_FAILED": "处理失败",
+      "MEDIA_UPLOAD_FAILED": "保存失败",
+      "MEDIA_INTERRUPTED": "处理中断",
+      "UNKNOWN": "未知原因"
     }
   },
   "common": {
@@ -2509,7 +2578,8 @@
       "label": "文字格式",
       "bold": "加粗",
       "italic": "斜体",
-      "tooLong": "添加格式后不能超过 {max} 个字符"
+      "tooLong": "添加格式后不能超过 {max} 个字符",
+      "needsSeparator": "格式文字与相邻文字之间需要空格或标点，否则 WhatsApp 不会显示该格式"
     },
     "composerPlaceholder": "输入回复内容，Ctrl/⌘ + Enter 发送",
     "send": "发送",
@@ -2524,9 +2594,9 @@
     "sources": {
       "mobile": "手机端发送",
       "customer": "客户",
-      "system": "系统发送"
+      "system": "网页端发送"
     },
-    "systemBy": "系统发送 · {name}",
+    "systemBy": "网页端发送 · {name}",
     "customer": "客户信息",
     "name": "名称",
     "phone": "手机号",
@@ -2610,6 +2680,22 @@
     "replaySuccess": "已重置为待处理",
     "linkedInquiry": "关联询盘",
     "linkedInquiryHint": "收客计调须与询盘负责人一致，创建后不可更改",
-    "notLinked": "未关联询盘"
+    "notLinked": "未关联询盘",
+    "imageDraft": {
+      "add": "图片",
+      "uploading": "上传中…",
+      "reupload": "重新上传",
+      "remove": "移除",
+      "animatedHint": "WebP/GIF 将以静态 JPEG 发送，不保留动画",
+      "invalidType": "仅支持 JPEG、PNG、WebP、GIF 图片",
+      "tooLarge": "单张图片不能超过 5 MB",
+      "waiting": "等待上传",
+      "staticBadge": "静态",
+      "tooMany": "一次最多添加 {max} 张图片，超出的未加入",
+      "notReady": "还有图片在上传或上传失败，请处理后再发送",
+      "expired": "图片已过期，请重新上传",
+      "expiredNoFile": "图片已过期，请移除后重新选择",
+      "batchExpired": "部分图片已过期，请点“重新编辑”后重新上传"
+    }
   }
 }
