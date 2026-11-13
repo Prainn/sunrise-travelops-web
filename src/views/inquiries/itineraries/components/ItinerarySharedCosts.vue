@@ -237,7 +237,7 @@ import { computed, ref, watch } from "vue";
 import type {
   ItineraryGuidePlan,
   ItineraryQuoteSettings,
-  PaxQuoteCalculation,
+  ItineraryQuoteCalculation,
 } from "@/types/itinerary";
 import { formatMoney, divideMoney, sumMoney } from "@/utils";
 import { summarizeResourceCostsByCity } from "../city-cost-summary";
@@ -250,7 +250,7 @@ const props = defineProps<{
   quote: ItineraryQuoteSettings;
   guidePlans: ItineraryGuidePlan[];
   paxTiers: number[];
-  calculation: PaxQuoteCalculation | null;
+  calculation: ItineraryQuoteCalculation | null;
   destinations: string[];
   editable: boolean;
 }>();

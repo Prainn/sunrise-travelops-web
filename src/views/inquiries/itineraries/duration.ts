@@ -1,10 +1,6 @@
 import type { ItineraryDayRecord } from "@/types/itinerary";
 import { addDays } from "@/utils";
 
-export function plannedDuration(days: number) {
-  return { days, nights: Math.max(days - 1, 0) };
-}
-
 export function plannedEndDate(startDate: string, days: number) {
   return startDate && days > 0 ? addDays(startDate, days - 1) : "";
 }

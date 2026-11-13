@@ -75,11 +75,9 @@ export function missingPriceReasons(plan: ItineraryRecord, previous?: ItineraryR
   return missing;
 }
 
-/** Saved total of one vehicle PAX tier; a legacy plan's shared total is the base of its first PAX adjustment. */
+/** Saved total of one vehicle PAX tier. */
 export function savedVehiclePaxTotal(previous: ItineraryVehiclePlan | undefined, pax: number) {
-  if (!previous) return null;
-  if (!previous.quotationMode) return previous.totalPrice ?? null;
-  return previous.paxPrices?.find((price) => price.pax === pax)?.totalPrice ?? null;
+  return previous?.paxPrices?.find((price) => price.pax === pax)?.totalPrice ?? null;
 }
 
 /** Mirrors backend PAX vehicle reasons: only a manual change of a saved total away from the segment sum. */
@@ -89,7 +87,7 @@ export function vehiclePaxPriceNeedsReason(
   previous?: ItineraryVehiclePlan,
 ): boolean {
   const price = vehicle.paxPrices?.find((row) => row.pax === pax);
-  if (!vehicle.quotationMode || price?.pricingMode !== "manual" || price.totalPrice == null)
+  if (price?.pricingMode !== "manual" || price.totalPrice == null)
     return false;
   const before = savedVehiclePaxTotal(previous, pax);
   if (before == null || roundMoney(before) === roundMoney(price.totalPrice)) return false;

@@ -50,6 +50,7 @@ function createPlan({ hotel = true, vehicle = true } = {}): ValidationPlan {
     vehiclePlans: [
       {
         tier: "standard",
+        quotationMode: "itinerary",
         arrangements: vehicle
           ? [
             {
@@ -57,13 +58,14 @@ function createPlan({ hotel = true, vehicle = true } = {}): ValidationPlan {
               startDate: "2026-12-23",
               endDate: "2026-12-23",
               vehicles: [{ vehicleId: "vehicle-1", vehicleName: "巴士", seats: 20, quantity: 1 }],
-              totalPrice: 1000,
+              paxPrices: [{ pax: 10, totalPrice: 1000 }],
             },
           ]
           : [],
-        totalPrice: vehicle ? 1000 : null,
+        totalPrice: null,
+        paxPrices: [{ pax: 10, totalPrice: vehicle ? 1000 : null, pricingMode: "automatic" }],
       },
-      { tier: "vip", arrangements: [], totalPrice: null },
+      { tier: "vip", quotationMode: "itinerary", arrangements: [], totalPrice: null, paxPrices: [{ pax: 10, totalPrice: null, pricingMode: "automatic" }] },
     ],
     paxTiers: [10],
     guidePlans: [],

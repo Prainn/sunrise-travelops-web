@@ -16,12 +16,7 @@ import {
 } from "docx";
 import quoteHeaderUrl from "@/assets/images/quote/header.png";
 import quoteFooterUrl from "@/assets/images/quote/footer.png";
-import type {
-  ItineraryQuoteCalculation,
-  ItineraryRecord,
-  LegacyQuoteCalculation,
-  PaxQuoteCalculation,
-} from "@/types/itinerary";
+import type { ItineraryQuoteCalculation, ItineraryRecord } from "@/types/itinerary";
 import { formatMoney } from "@/utils";
 import { buildCustomerDocument, type CustomerDocument, type CustomerSnapshot } from "./customer-document";
 
@@ -147,7 +142,7 @@ function extraFeeRows(customer: CustomerDocument, span: number) {
 
 function paxQuoteTables(
   itinerary: ItineraryRecord,
-  quote: PaxQuoteCalculation,
+  quote: ItineraryQuoteCalculation,
   showChildPrice: boolean,
   customer: CustomerDocument,
 ) {
@@ -194,60 +189,6 @@ function paxQuoteTables(
   });
 }
 
-// Pre-PAX frozen quotes keep their original per-option layout.
-function legacyQuoteTables(
-  itinerary: ItineraryRecord,
-  quote: LegacyQuoteCalculation,
-  showChildPrice: boolean,
-  customer: CustomerDocument,
-) {
-  const legacy = itinerary as unknown as {
-    adults: number;
-    childrenCount: number;
-    quote: { options: Array<{ id: string; hotelTier: string; vehicleTier: "standard" | "vip" }> };
-  };
-  const guests = legacy.adults + legacy.childrenCount;
-  const options = legacy.quote.options.flatMap((option) => {
-    const calculation = quote.options.find((record) => record.optionId === option.id);
-    return calculation ? [{ option, calculation }] : [];
-  });
-  if (!options.length) return [];
-  const row = (label: string, value: (item: (typeof options)[number]) => string) =>
-    new TableRow({
-      children: [
-        cell(label, { bold: true, fill: "F9FAFB" }),
-        ...options.map((item) => cell(value(item))),
-      ],
-    });
-  return [
-    table([
-      new TableRow({
-        children: [
-          cell("", { fill: "F3F4F6" }),
-          ...options.map(({ option }) =>
-            cell(
-              `${customer.hotelTierLabel(option.hotelTier)}\n${guests}PAX【${customer.vehicleLabel(option.vehicleTier)}】`,
-              { bold: true, fill: "F3F4F6" },
-            ),
-          ),
-        ],
-      }),
-      row(customer.text.adult, ({ calculation }) => `RMB ${formatMoney(calculation.adultUnitPrice)} PP`),
-      ...(showChildPrice && legacy.childrenCount
-        ? [
-          row(customer.text.child, ({ calculation }) => `RMB ${formatMoney(calculation.childUnitPrice)} PP`),
-        ]
-        : []),
-      ...extraFeeRows(customer, options.length),
-      row(
-        customer.text.singleSupplement,
-        ({ calculation }) => `RMB ${formatMoney(calculation.singleSupplementUnitCost)}`,
-      ),
-    ]),
-    spacer(),
-  ];
-}
-
 function image(data: Uint8Array | undefined, height: number) {
   return data
     ? [
@@ -267,7 +208,6 @@ export async function generateItineraryWordDocument(
   showChildPrice = false,
   images: QuoteImages = {},
 ): Promise<ItineraryWordDocument> {
-  const quote = snapshot.calculation;
   const customer = buildCustomerDocument(itinerary, snapshot);
   const { notes } = customer;
   const document = new Document({
@@ -292,10 +232,8 @@ export async function generateItineraryWordDocument(
           scheduleTable(customer),
           heading(customer.text.termsHeading),
           termsTable(customer),
-          heading("pricingVersion" in quote ? customer.text.quoteHeading : customer.text.legacyQuoteHeading),
-          ...("pricingVersion" in quote
-            ? paxQuoteTables(itinerary, quote, showChildPrice, customer)
-            : legacyQuoteTables(itinerary, quote, showChildPrice, customer)),
+          heading(customer.text.quoteHeading),
+          ...paxQuoteTables(itinerary, snapshot.calculation, showChildPrice, customer),
           ...(notes.length
             ? [
               heading(customer.text.notesHeading),

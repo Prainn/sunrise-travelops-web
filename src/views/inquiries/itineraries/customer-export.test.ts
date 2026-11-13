@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 import { describe, expect, it, vi } from "vitest";
 import type { InquiryRecord } from "@/types/inquiry";
-import type { CustomerPresentation, ItineraryRecord, PaxQuoteCalculation } from "@/types/itinerary";
+import type { CustomerPresentation, ItineraryRecord, ItineraryQuoteCalculation } from "@/types/itinerary";
 import { buildCustomerDocument, type CustomerSnapshot } from "./customer-document";
 import { generateItineraryWordDocument } from "./docx";
 import { getDayBreakfastStatus } from "./hotel-plans";
@@ -58,7 +58,7 @@ function fixture(tier: number | string = 4) {
         singleSupplementUnitCost: 150, tipUnitPrice: 123.45, profitPerPerson: 987.65,
       })),
     }],
-  } as PaxQuoteCalculation;
+  } as ItineraryQuoteCalculation;
   return { itinerary, snapshot: { calculation, quoteCode: "ITI-REGRESSION-V1", quoteVersion: 1 } };
 }
 

@@ -1,8 +1,8 @@
-import type { PaxQuoteCalculation } from "@/types/itinerary";
+import type { ItineraryQuoteCalculation } from "@/types/itinerary";
 import { sumMoney } from "@/utils/money";
 
 export function summarizeResourceCostsByCity(
-  details: NonNullable<PaxQuoteCalculation["mealDetails"]>,
+  details: NonNullable<ItineraryQuoteCalculation["mealDetails"]>,
 ) {
   // Older API responses and frozen quotes do not carry resource city information.
   if (details.some((detail) => detail.city === undefined)) return null;

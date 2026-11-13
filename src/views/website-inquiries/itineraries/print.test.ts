@@ -11,7 +11,7 @@ describe("frozen report rendering", () => {
       ...empty,
       itinerary: [{ day: "D1", depart: "Kunming", transportation: "", sightseeing: "", hotel: "Kunming", meal: "" }],
       quotation: [{ vehicle: "7-seat vehicle", hotelTier: null, hotelCategory: language === "en" ? "No hotel arranged" : "未安排酒店", unitPrice: "500.00", totalPrice: "1500.00", pax: 3, price: "RMB 500.00 PP" }],
-    }, language, 6);
+    }, language);
     expect(html).toContain(language === "en" ? "No hotel arranged." : "本行程未安排酒店。");
     expect(html).toContain("RMB 1,500.00");
     expect(html).toContain("Kunming");
@@ -23,7 +23,7 @@ describe("frozen report rendering", () => {
       ...empty,
       title: "<script>alert(1)</script>",
       notes: ["<img src=x onerror=alert(1)>", "Terms & conditions"],
-      quotation: [{ vehicle: "7 seats", plan: "B", services: "Driver < guide", price: "RMB 10.00 PP", pax: 3, totalPrice: "29.99" }],
+      quotation: [{ vehicle: "7 seats", hotelCategory: "5-star", price: "RMB 10.00 PP", unitPrice: "10.00", pax: 3, totalPrice: "29.99" }],
     }, "en");
     expect(html).not.toContain("<script>");
     expect(html).not.toContain("<img src=x");
@@ -31,28 +31,18 @@ describe("frozen report rendering", () => {
     expect(html).toContain("RMB 29.99");
     expect(html).not.toContain("RMB 30.00");
   });
-  it("does not invent A/B, guests, totals or mileage for a schema 1 snapshot", () => {
-    const html = websitePrintHtml({ ...empty, quotation: [{ vehicle: "7 seats", price: "RMB 10.00 PP" }] }, "en");
-    expect(html).toContain("RMB 10.00 PP");
-    expect(html).not.toContain("Total tour fare</th>");
-    expect(html).not.toContain("5. Distance and travel time</h2>");
-    expect(html).not.toContain("Private driver");
-  });
 });
 
 it("renders only the frozen customer breakdown in both languages", () => {
-  const output: WebsiteOutput = { ...empty, quotation: [{ vehicle: "7 seats", plan: "A", services: "Driver", price: "RMB 10000.00 PP", pax: 2, totalPrice: "20000.00", priceComponents: [{ category: "hotel", unitPrice: "2000.00" }, { category: "attraction", unitPrice: "2000.00" }] }] };
+  const output: WebsiteOutput = { ...empty, quotation: [{ vehicle: "7 seats", hotelCategory: "5-star", price: "RMB 10000.00 PP", unitPrice: "10000.00", pax: 2, totalPrice: "20000.00", priceComponents: [{ category: "hotel", unitPrice: "2000.00" }, { category: "attraction", unitPrice: "2000.00" }] }] };
   const zh = websitePrintHtml(output, "zh");
   const en = websitePrintHtml(output, "en");
-  expect(zh).toContain("酒店: RMB 2000.00 ／人");
-  expect(zh).toContain("景点: RMB 2000.00 ／人");
-  expect(en).toContain("Hotel: RMB 2000.00 / person");
-  expect(en).toContain("Attractions: RMB 2000.00 / person");
+  expect(en).toContain("Hotel (per person): RMB 2,000.00");
+  expect(en).toContain("Attractions (per person): RMB 2,000.00");
   for (const html of [zh, en]) {
-    expect(html).toContain("RMB 10000.00 PP");
-    expect(html).toContain("RMB 20000.00");
-    expect(html).not.toContain("Meals:");
-    expect(html).not.toContain("导游:");
+    expect(html).toContain("RMB 10,000.00");
+    expect(html).toContain("RMB 20,000.00");
+    expect(html.match(/class="quote-breakdown"/g)).toHaveLength(2);
   }
 });
 
@@ -89,7 +79,7 @@ it.each(["en", "zh"] as const)("uses identical frozen HTML for %s preview and fo
 
 it("keeps historical frozen notes and labels without deriving a new statement", () => {
   const output: WebsiteOutput = { ...empty, notes: ["Peak season.", "Hotel substitution.", "NO SHOPPING."], quotation: [{ vehicle: "5-seat vehicle", hotelCategory: "Luxury 5-star", unitPrice: "5500.00", price: "RMB 5500.00 PP" }] };
-  const html = websitePrintHtml(output, "en", 5);
+  const html = websitePrintHtml(output, "en");
   expect(html).toContain("3. NO SHOPPING.");
   expect(html).toContain("Luxury 5-star");
   expect(html).not.toContain('<tr class="no-shopping">');
@@ -102,7 +92,7 @@ it("preserves frozen combination totals and visible zero-price components when g
       { vehicle: "Custom <vehicle>", hotelCategory: "5-star", pax: 3, unitPrice: "1000.00", totalPrice: "2999.99", price: "RMB 1000.00 PP", priceComponents: [{ category: "hotel", unitPrice: "0.00" }] },
       { vehicle: "7-seat vehicle", hotelCategory: "4-star", pax: null, unitPrice: "800.00", totalPrice: null, price: "RMB 800.00 PP" },
     ],
-  }, "en", 6);
+  }, "en");
   expect(html).toContain("RMB 2,999.99");
   expect(html).not.toContain("RMB 3,000.00");
   expect(html).toContain("Hotel (per person): RMB 0.00");
@@ -113,11 +103,11 @@ it("preserves frozen combination totals and visible zero-price components when g
 it("labels team standard rows as Driver & Guide and Transportation while quotations keep Vehicle", () => {
   const teamStandard = (["hotel", "meal", "entry", "service", "transport"] as const).map(category => ({ category, included: [] }));
   const output: WebsiteOutput = { ...empty, teamStandard, quotation: [{ vehicle: "7-seat vehicle", hotelCategory: "5-star", unitPrice: "800.00", price: "RMB 800.00 PP" }] };
-  const en = websitePrintHtml(output, "en", 6);
+  const en = websitePrintHtml(output, "en");
   expect(en).toContain("<th>Driver &amp; Guide</th>");
   expect(en).toContain("<th>Transportation</th>");
   expect(en).toContain("<th>Vehicle</th>");
-  const zh = websitePrintHtml(output, "zh", 6);
+  const zh = websitePrintHtml(output, "zh");
   expect(zh).toContain("<th>司机与导游</th>");
   expect(zh).toContain("<th>交通</th>");
 });

@@ -4,7 +4,6 @@
  * @description
  * 包含主题、布局、语言、设备等应用设置的枚举定义
  */
-import type { OptionItem } from "@/types/common";
 
 /**
  * 主题模式枚举
@@ -184,9 +183,3 @@ export const enum PageSwitchingAnimationEnum {
    */
   FADE_SCALE = "fade-scale",
 }
-export const PageSwitchingAnimationOptions: Record<string, OptionItem> = {
-  none: { value: "none", label: "无动画" },
-  fade: { value: "fade", label: "淡入淡出" },
-  "fade-slide": { value: "fade-slide", label: "平滑切换" },
-  "fade-scale": { value: "fade-scale", label: "缩放切换" },
-};

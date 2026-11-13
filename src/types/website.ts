@@ -234,15 +234,6 @@ export interface WebsiteVehiclePrice extends WebsiteVehiclePriceInput {
   includesDriver?: boolean;
   includesGuide?: boolean;
 }
-/** 旧 A/B 方案价格只读参考，不能映射为酒店档次或提交。 */
-export interface WebsitePreviousPlanPrice {
-  vehicleType: VehicleType;
-  plan: "A" | "B";
-  includesDriver: boolean;
-  includesGuide: boolean;
-  unitPrice: string | null;
-  priceComponents: WebsitePriceComponent[];
-}
 export interface WebsiteQuotationOptions {
   vehicleTypes: (string | null)[];
   hotelTiers: (WebsiteHotelTier | null)[];
@@ -278,7 +269,6 @@ export interface WebsiteItinerary extends WebsiteItineraryInput {
   attractionPriceReference?: WebsiteAttractionPriceReference;
   vehiclePrices: WebsiteVehiclePrice[];
   quotationOptions?: WebsiteQuotationOptions;
-  previousPlanPrices?: WebsitePreviousPlanPrice[];
   businessUnit: WebsiteBusinessUnit;
   id: string;
   inquiryId: string;
@@ -318,17 +308,14 @@ export interface WebsiteOutput {
     nights?: number;
     breakfastIncluded?: boolean;
   }>;
-  // Schema 1 frozen outputs only contain vehicle/price; never infer missing facts.
   quotation: Array<{
     vehicle: string;
     price: string;
     vehicleType?: string | null;
     hotelTier?: WebsiteHotelTier | null;
     hotelCategory?: string;
-    plan?: "A" | "B";
     includesDriver?: boolean;
     includesGuide?: boolean;
-    services?: string;
     pax?: number | null;
     unitPrice?: string;
     totalPrice?: string | null;
@@ -341,7 +328,7 @@ export interface WebsiteOutput {
   mileage?: Array<{ route: string; distanceKm: string | null; durationMinutes: number | null; vehicleType?: string | null; transport: string }>;
   quotationServices?: WebsiteQuotationOptions;
   notes: string[];
-  /** Schema 6: separate statement below NOTES; absent in historical snapshots. */
+  /** Separate statement below NOTES. */
   noShopping?: string;
 }
 export interface WebsitePreview {
@@ -349,7 +336,7 @@ export interface WebsitePreview {
   sourceVersion: number;
   inquiryVersion: number;
   configVersion: number;
-  schemaVersion: 1 | 2 | 3 | 4 | 5 | 6;
+  schemaVersion: 6;
   validationVersion: 1 | 2 | 3 | 4 | 5 | 6;
   issues: WebsiteValidation[];
   english: WebsiteOutput;
@@ -362,17 +349,6 @@ export interface WebsiteQuotation extends WebsitePreview {
   confirmedBy: string;
   acknowledgedWarnings: string[];
 }
-export type WebsiteInquiryLogAction =
-  | "inquiry_created"
-  | "inquiry_updated"
-  | "inquiry_transferred"
-  | "inquiry_archived"
-  | "inquiry_lost"
-  | "itinerary_created"
-  | "itinerary_saved"
-  | "itinerary_copied"
-  | "itinerary_generated"
-  | "quotation_confirmed";
 export interface WebsiteInquiryLogChange {
   path: string;
   kind: "added" | "removed" | "changed";

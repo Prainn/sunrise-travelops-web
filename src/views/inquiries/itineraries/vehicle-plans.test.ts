@@ -4,7 +4,6 @@ import { missingPriceReasons, vehiclePaxPriceNeedsReason } from "./price-adjustm
 import {
   createVehicleDraft,
   hasVehicleSeatShortage,
-  legacyStageTotalDifferences,
   needsVehicleModeChangeConfirm,
   setVehiclePaxTotal,
   setVehicleSegmentPaxPrice,
@@ -40,28 +39,6 @@ function stagePlan(prices: Array<number | null>): ItineraryVehiclePlan {
   };
 }
 
-function legacyItineraryPlan(
-  pricingMode: ItineraryVehiclePlan["pricingMode"],
-  totalPrice: number | null,
-): ItineraryVehiclePlan {
-  return {
-    tier: "standard",
-    pricingMode,
-    totalPrice,
-    segmentTotal: 1000,
-    adjustmentReason: "",
-    arrangements: [
-      {
-        id: "legacy-range",
-        startDate: "2026-12-12",
-        endDate: "2026-12-13",
-        vehicles: [{ vehicleId: "bus", vehicleName: "Bus", seats: 30, quantity: 1 }],
-        totalPrice: 1000,
-      },
-    ],
-  };
-}
-
 describe("vehicle PAX drafts", () => {
   it("deep-copies the saved plans so draft edits never reach the record", () => {
     const saved = [stagePlan([13200, 14000, 15500])];
@@ -82,25 +59,6 @@ describe("vehicle PAX drafts", () => {
     expect(draft[0]!.arrangements).toEqual([]);
     expect(draft[0]!.paxPrices!.every((price) => price.totalPrice === null)).toBe(true);
     expect(saved[0]!.arrangements).toHaveLength(1);
-  });
-
-  it("asks for confirmation when any legacy tier was kept in another mode", () => {
-    const legacy = (tier: "standard" | "vip", withVehicles: boolean): ItineraryVehiclePlan => ({
-      tier,
-      totalPrice: 5000,
-      pricingMode: "manual",
-      arrangements: [{
-        id: `${tier}-range`,
-        startDate: "2026-12-12",
-        endDate: "2026-12-22",
-        totalPrice: 5000,
-        vehicles: withVehicles ? [{ vehicleId: "car-1", vehicleName: "考斯特", seats: 22, quantity: 1 }] : [],
-      }],
-    });
-    const saved = [legacy("standard", true), legacy("vip", false)];
-    expect(needsVehicleModeChangeConfirm(saved, "itinerary")).toBe(true);
-    expect(needsVehicleModeChangeConfirm(saved, "stage")).toBe(true);
-    expect(needsVehicleModeChangeConfirm([legacy("standard", true)], "itinerary")).toBe(false);
   });
 
   it("uses the selected mode after all arrangements were removed", () => {
@@ -162,57 +120,6 @@ describe("vehicle PAX drafts", () => {
       arrangements: plan.arrangements.map((arrangement) => ({ ...arrangement, startDate: "", endDate: "" })),
     };
     expect(hasVehicleSeatShortage([undated], 25)).toBe(false);
-  });
-});
-
-describe("legacy vehicle adoption", () => {
-  it("copies shared prices into every PAX tier and keeps manual or unknown totals manual", () => {
-    for (const mode of ["manual", "unknown", null] as const) {
-      const [draft] = createVehicleDraft([legacyItineraryPlan(mode, 1200)], PAX, "itinerary");
-      expect(draft!.quotationMode).toBe("itinerary");
-      expect(draft!.totalPrice).toBeNull();
-      expect(draft!.arrangements[0]!.totalPrice).toBeNull();
-      expect(draft!.arrangements[0]!.paxPrices!.map((price) => price.totalPrice)).toEqual([
-        1000, 1000, 1000,
-      ]);
-      expect(draft!.paxPrices!.map((price) => [price.pricingMode, price.totalPrice])).toEqual(
-        PAX.map(() => ["manual", 1200]),
-      );
-    }
-    const [automatic] = createVehicleDraft([legacyItineraryPlan("automatic", 1000)], PAX, "itinerary");
-    expect(automatic!.paxPrices!.every((price) => price.pricingMode === "automatic")).toBe(true);
-  });
-
-  it("keeps a free 0 segment instead of treating it as missing", () => {
-    const legacy = legacyItineraryPlan("automatic", 0);
-    legacy.arrangements[0]!.totalPrice = 0;
-    const [draft] = createVehicleDraft([legacy], PAX, "itinerary");
-    expect(draft!.paxPrices!.map((price) => price.totalPrice)).toEqual([0, 0, 0]);
-  });
-
-  it("shows a legacy stage total that differs from the segment sum instead of rewriting it", () => {
-    const saved: ItineraryVehiclePlan = {
-      tier: "standard",
-      totalPrice: 1500,
-      pricingMode: "manual",
-      arrangements: [
-        { id: "s1", startDate: "2026-12-12", endDate: "2026-12-12", vehicles: [], totalPrice: 1000 },
-      ],
-    };
-    const [draft] = createVehicleDraft([saved], PAX, "stage");
-    expect(draft!.paxPrices!.every((price) => price.pricingMode === "automatic")).toBe(true);
-    expect(legacyStageTotalDifferences(draft!, saved)).toEqual(
-      PAX.map((pax) => ({ pax, original: 1500, total: 1000 })),
-    );
-  });
-
-  it("compares the first PAX adjustment with the original shared total", () => {
-    const saved = legacyItineraryPlan("manual", 1200);
-    const [draft] = createVehicleDraft([saved], PAX, "itinerary");
-    expect(vehiclePaxPriceNeedsReason(draft!, 15, saved)).toBe(false);
-    const changed = setVehiclePaxTotal(draft!, 20, 1300);
-    expect(vehiclePaxPriceNeedsReason(changed, 20, saved)).toBe(true);
-    expect(vehiclePaxPriceNeedsReason(changed, 15, saved)).toBe(false);
   });
 });
 

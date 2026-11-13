@@ -41,7 +41,7 @@ async function mount(attractionPriceTotal: string | null = "0.00") {
   const plan = ref<WebsiteItinerary>({ ...emptyItinerary(emptyInquiry(), 0, "Test"), businessUnit: "website", id: "plan", inquiryId: "inquiry", code: "WIT-1", status: "draft", version: 1, createdAt: "", updatedAt: "", pax: 2, days: [day()], vehiclePrices: [
     { vehicleType: "7_seat", hotelTier: "A", unitPrice: "10000.00", priceComponents: components(["2000", "1000", "3000", "2000", "2000"]) },
     // 档次 C 已不在当前日程中：保留为待调整组合。
-    { vehicleType: "7_seat", hotelTier: "C", unitPrice: "8000.00", priceComponents: [] },
+    { vehicleType: "7_seat", hotelTier: "C", unitPrice: "8000.00", priceComponents: components(["8000", "0", "0", "0", "0"]) },
   ] });
   const root = node("root");
   const app = renderer.createApp(defineComponent({ setup() { return () => h(WebsiteVehiclePrices, { modelValue: visible.value, "onUpdate:modelValue": (value: boolean) => visible.value = value, plan: plan.value, editable: true, attractionPriceTotal }); } }));
@@ -115,7 +115,7 @@ describe("vehicle × hotel tier price editing", () => {
     expect(row(plan, "A")!.priceComponents!.find(item => item.category === "hotel")).toMatchObject({ unitPrice: "3000", showInPdf: true });
     expect(row(plan, "B")).toMatchObject({ unitPrice: "0.00" });
     expect(row(plan, "B")!.priceComponents!.filter(item => item.unitPrice !== null)).toEqual([{ category: "vehicle", unitPrice: "0", showInPdf: false }]);
-    expect(row(plan, "C")).toEqual({ vehicleType: "7_seat", hotelTier: "C", unitPrice: "8000.00", priceComponents: [] });
+    expect(row(plan, "C")).toMatchObject({ vehicleType: "7_seat", hotelTier: "C", unitPrice: "8000.00" });
     expect(Object.keys(row(plan, "A")!).sort()).toEqual(["hotelTier", "priceComponents", "unitPrice", "vehicleType"]);
   });
   it("shows the attraction reference once per tier table without filling or totaling it", async () => {

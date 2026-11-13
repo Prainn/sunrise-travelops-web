@@ -17,10 +17,8 @@ function escapeHtml(value: string) {
 }
 
 /** Render frozen business content only; configuration and prices are never read or recalculated here. */
-export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", schemaVersion: WebsitePreview["schemaVersion"] = 4): string {
+export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh"): string {
   const en = language === "en";
-  // Schema 5：车型×酒店档次报价；历史 1–4 按其冻结结构原样渲染（保留方案分支）。
-  const v5 = schemaVersion >= 5;
   const text = (key: PrintTextKey, params?: Record<string, string | number>) => printText(language, key, params);
   const headings = ["itineraryHeading", "standardsHeading", "quotationHeading", "hotelHeading", "mileageHeading"] as const;
   const columns = ["dayColumn", "departureColumn", "transportColumn", "sightseeingColumn", "overnightColumn", "mealsColumn"] as const;
@@ -28,10 +26,10 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
   const dayRows = output.itinerary.map((day, dayIndex) => `<tr>${[`D${dayIndex + 1}`, day.depart, day.transportation, day.sightseeing, day.hotel, day.meal]
     .map((value, index) => `<td class="${index === 3 ? "sightseeing" : "center"}">${escapeHtml(value)}</td>`).join("")}</tr>`).join("");
   const included = (category: string) => paragraphs(output.teamStandard?.find(row => row.category === category)?.included ?? []);
-  // v5 司机/导游说明与报价车型由服务端写入 service/transport，前端只换标签不再拼接。
-  const serviceLabel = v5 ? text("transportGuide") : en ? "Srv." : "服务";
-  const transportLabel = v5 ? text("transportation") : en ? "T." : "交通";
-  const standardWidths = v5 ? [11, 11, 34, 10, 34] : [12, 7, 38.5, 6.5, 36];
+  // 司机/导游说明与报价车型由服务端写入 service/transport，前端只换标签不再拼接。
+  const serviceLabel = text("transportGuide");
+  const transportLabel = text("transportation");
+  const standardWidths = [11, 11, 34, 10, 34];
   const standard = output.teamStandard
     ? `<table class="standards"><colgroup>${standardWidths.map(width => `<col style="width:${width}%">`).join("")}</colgroup><tbody>
       <tr><th rowspan="3">${text("includes")}</th><th>${en ? "Hotel" : "酒店"}</th><td>${included("hotel")}</td><th>${text("mealsColumn")}</th><td>${included("meal")}</td></tr>
@@ -40,25 +38,9 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
       <tr><th>${text("excludes")}</th><td colspan="4">${paragraphs(output.exclusions)}</td></tr>
       </tbody></table>`
     : `<table><tbody><tr><th class="label">${text("includes")}</th><td>${paragraphs(output.inclusions)}</td></tr><tr><th>${text("excludes")}</th><td>${paragraphs(output.exclusions)}</td></tr></tbody></table>`;
-  const quoteGroups = new Map<string, WebsiteOutput["quotation"]>();
-  for (const quote of output.quotation) {
-    const rows = quoteGroups.get(quote.vehicle) ?? [];
-    rows.push(quote);
-    quoteGroups.set(quote.vehicle, rows);
-  }
   const componentLabels = en
     ? { hotel: "Hotel", guide: "Guide", vehicle: "Vehicle", attraction: "Attractions", meal: "Meals" }
     : { hotel: "酒店", guide: "导游", vehicle: "用车", attraction: "景点", meal: "餐食" };
-  const quotes = [...quoteGroups].map(([vehicle, rows]) => {
-    const plans = [...rows].sort((a, b) => (a.plan ?? "").localeCompare(b.plan ?? ""));
-    // Historical schema 1 contains no structured plan, guest count or total.
-    if (!plans.every(plan => plan.plan !== undefined)) return `<table class="quotation"><tbody><tr><th class="label">${escapeHtml(vehicle)}</th><td>${paragraphs(plans.map(plan => plan.price))}</td></tr></tbody></table>`;
-    return `<table class="quotation"><colgroup><col style="width:13%">${plans.map(() => "<col>").join("")}</colgroup>
-      <thead><tr><th>${escapeHtml(vehicle)}</th>${plans.map(plan => `<th class="plan">${escapeHtml(`${plan.plan}: ${plan.services}`)}</th>`).join("")}</tr></thead>
-      <tbody><tr><th>${en ? "Quotation" : "报价人数"}</th>${plans.map(plan => `<td class="pax">${plan.pax == null ? (en ? "To be confirmed" : "未确定") : `${plan.pax} ${en ? "pax" : "人"}`}</td>`).join("")}</tr>
-      <tr><th>${en ? "Tour fare / person" : "人均团费"}</th>${plans.map(plan => `<td>${escapeHtml(plan.price)}${(plan.priceComponents ?? []).map(component => `<p>${escapeHtml(componentLabels[component.category])}: RMB ${escapeHtml(component.unitPrice)} ${en ? "/ person" : "／人"}</p>`).join("")}</td>`).join("")}</tr>
-      <tr><th>${en ? "Total tour fare" : "团费总额"}</th>${plans.map(plan => `<td>${plan.totalPrice == null ? (en ? "To be confirmed" : "未确定") : `RMB ${escapeHtml(plan.totalPrice)}`}</td>`).join("")}</tr></tbody></table>`;
-  }).join("");
   const quotationV5 = () => {
     const pax = output.quotation[0]?.pax;
     const meta = `<p class="quote-meta">${escapeHtml(pax == null ? text("guestsPending") : text("guests", { pax }))}</p>`;
@@ -84,12 +66,6 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
     ? `<tr class="no-shopping"><td colspan="2"><strong>${escapeHtml(en ? output.noShopping.replace(/^no shopping([.!]?)$/i, "No shopping$1") : output.noShopping)}</strong></td></tr>`
     : "";
   const notes = `<table class="notes"><tbody><tr><th class="label">${text("notes")}</th><td>${output.notes.map((note, index) => `<p>${index + 1}. ${escapeHtml(note)}</p>`).join("")}</td></tr>${noShopping}</tbody></table>`;
-  const cities = [...new Set(output.hotelOptions.map(row => row.city))];
-  const hotelTables: string[] = [];
-  for (let index = 0; index < cities.length; index += 4) {
-    const group = cities.slice(index, index + 4);
-    hotelTables.push(`<table class="hotels"><thead><tr>${group.map(city => `<th>${escapeHtml(city)}</th>`).join("")}</tr></thead><tbody><tr>${group.map(city => `<td>${output.hotelOptions.filter(hotel => hotel.city === city).map(hotel => `<p><strong>${escapeHtml(hotel.tier)}</strong> · ${escapeHtml(hotel.hotel)}${hotel.roomType ? `<br>${escapeHtml(hotel.roomType)}` : ""}</p>`).join("")}</td>`).join("")}</tr></tbody></table>`);
-  }
   const hotelsV5 = () => {
     // 使用服务端合并后的 hotelOptions，仅按档次、起始日排序，不再去重。
     const sorted = [...output.hotelOptions].sort((a, b) => a.tier.localeCompare(b.tier) || (a.startDay ?? 0) - (b.startDay ?? 0));
@@ -147,15 +123,10 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
       .standards th { overflow-wrap: normal; }
       .quotation { font-family: Arial, "PingFang SC", sans-serif; margin-top: 1.5mm; }
       .quotation th, .quotation td { line-height: 1.5; }
-      .plan { color: #0000ff; }
-      .pax { font-weight: bold; }
       .label { width: 13%; }
       .quotation-notes { break-inside: avoid; }
       .notes { margin-top: 2mm; }
       .notes th { font-size: 9pt; }
-      .hotels { margin-bottom: 2mm; }
-      .hotels th { text-align: left; padding: 2mm 1.8mm; font-size: 9pt; }
-      .hotels td { padding: 1mm 1.8mm 4mm; }
       .quote-meta { margin: 0 1mm 1mm; font: bold 7.5pt/1.5 Arial, "PingFang SC", sans-serif; }
       .quotation-v5 { margin: 0 0 2.5mm; font-size: 8.5pt; }
       .quotation-v5 th, .quotation-v5 td { border-color: #9ca3af; padding: 1.5mm 2mm; vertical-align: middle; }
@@ -192,15 +163,15 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh", s
     </div></header>
     <table class="print-layout"><thead><tr><td></td></tr></thead><tbody><tr><td><main><h2>${text(headings[0])}</h2><table class="itinerary"><colgroup>${[8, 11, 8, 45, 13, 15].map(width => `<col style="width:${width}%">`).join("")}</colgroup><thead><tr>${columns.map(column => `<th>${escapeHtml(text(column))}</th>`).join("")}</tr></thead><tbody>${dayRows}</tbody></table>
     <h2>${text(headings[1])}</h2>${standard}
-    <h2>${text(headings[2])}</h2>${v5 ? quotationV5() : quotes}<div class="quotation-notes">${notes}</div>
-    <h2>${text(headings[3])}</h2>${v5 ? hotelsV5() : hotelTables.join("")}
+    <h2>${text(headings[2])}</h2>${quotationV5()}<div class="quotation-notes">${notes}</div>
+    <h2>${text(headings[3])}</h2>${hotelsV5()}
     ${mileage.length ? `<h2>${text(headings[4])}</h2><table class="mileage"><colgroup>${[15, 8, 10, 17, 15, 8, 10, 17].map(width => `<col style="width:${width}%">`).join("")}</colgroup><thead><tr>${[...mileageHead, ...mileageHead].map(column => `<th>${column}</th>`).join("")}</tr></thead><tbody>${mileages.join("")}</tbody></table><p class="estimate">${en ? "Distances and travel times are estimates." : "里程及行车时间均为预计值。"}</p>` : ""}
     </main></td></tr></tbody><tfoot><tr><td></td></tr></tfoot></table><footer class="brand-footer">昆明霖熹旅行社有限公司<br>Kunming&emsp;Lynxtour Travel Agency Co., Ltd.</footer>
     </body></html>`;
 }
 
 export function websitePrintBlob(preview: WebsitePreview, language: "en" | "zh") {
-  return new Blob([websitePrintHtml(language === "en" ? preview.english : preview.chinese, language, preview.schemaVersion)], { type: "text/html;charset=utf-8" });
+  return new Blob([websitePrintHtml(language === "en" ? preview.english : preview.chinese, language)], { type: "text/html;charset=utf-8" });
 }
 export async function printWebsiteQuotation(quotation: WebsiteQuotation, language: "en" | "zh") {
   await printItineraryDocument({ blob: websitePrintBlob(quotation, language), fileName: `${quotation.code}-${language}.pdf`, generatedAt: quotation.confirmedAt });
