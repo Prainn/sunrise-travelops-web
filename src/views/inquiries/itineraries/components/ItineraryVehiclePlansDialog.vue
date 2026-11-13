@@ -203,24 +203,6 @@
             </div>
 
             <template v-if="plan.arrangements.length">
-              <el-alert
-                v-for="difference in legacyStageTotalDifferences(plan, savedPlan(plan))"
-                :key="difference.pax"
-                class="mb-[12px]"
-                type="warning"
-                show-icon
-                :closable="false"
-                :title="
-                  $t('planning.vehicleLegacyStageMismatch', {
-                    pax: difference.pax,
-                    original: formatMoney(difference.original),
-                    total:
-                      difference.total === null
-                        ? $t('planning.priceNotEntered')
-                        : `¥${formatMoney(difference.total)}`,
-                  })
-                "
-              />
               <el-text class="mb-[8px] block" type="info" size="small">
                 {{
                   $t(mode === "stage" ? "planning.vehicleStageTotalHint" : "planning.vehiclePaxTotalHint")
@@ -327,7 +309,6 @@ import {
   arrangementSeats,
   hasVehicleSeatShortage,
   isVehiclePaxTotalOverridden,
-  legacyStageTotalDifferences,
   setVehiclePaxTotal,
   setVehicleSegmentPaxPrice,
   vehicleSegmentPaxTotal,
@@ -374,9 +355,7 @@ function changePaxTotal(plan: ItineraryVehiclePlan, pax: number, totalPrice: num
   // 回到已保存金额时沿用原因；其余改价须填写本次原因。
   const unchanged =
     totalPrice !== null && savedTotal !== null && roundMoney(savedTotal) === roundMoney(totalPrice);
-  const savedReason = saved?.quotationMode
-    ? (saved.paxPrices?.find((price) => price.pax === pax)?.adjustmentReason ?? "")
-    : "";
+  const savedReason = saved?.paxPrices?.find((price) => price.pax === pax)?.adjustmentReason ?? "";
   emit("update-plan", setVehiclePaxTotal(plan, pax, totalPrice, unchanged ? savedReason : ""));
 }
 

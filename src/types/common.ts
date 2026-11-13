@@ -1,8 +1,6 @@
 export interface BaseQueryParams {
   page: number;
   pageSize: number;
-  sortBy?: string;
-  order?: string;
 }
 
 export interface PageResult<T> {

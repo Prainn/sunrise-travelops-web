@@ -16,10 +16,6 @@ export type ResourcePermissionSet = {
   delete: string;
 };
 
-export const ALL_RESOURCE_PERMISSIONS = Object.values(RESOURCE_PERMISSIONS).flatMap((permissions) =>
-  Object.values(permissions),
-);
-
 function createResourcePermissions(resource: string): ResourcePermissionSet {
   return {
     list: `resource:${resource}:list`,

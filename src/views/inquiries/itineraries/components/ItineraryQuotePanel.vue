@@ -1,61 +1,37 @@
 <template>
   <div class="quote-panel grid gap-[20px] text-[14px]">
-    <template v-if="!legacyCalculation">
-      <el-alert
-        v-if="paxCalculation?.pricingComplete === false"
-        type="warning"
-        :closable="false"
-        :title="$t('itinerary.pricingIncomplete', { count: paxCalculation.missingPrices?.length ?? 0 })"
-      />
-      <ItinerarySharedCosts
-        :quote="quote"
-        :guide-plans="guidePlans"
-        :pax-tiers="paxTiers"
-        :calculation="paxCalculation"
-        :destinations="destinations"
-        :editable="editable"
-        @update-settings="emit('update-settings', $event)"
-      />
-      <FeedbackState
-        v-if="!displayOptions.length"
-        :title="$t('itinerary.noQuoteOptions')"
-      />
-      <ItineraryPaxQuoteTable
-        v-for="item in displayOptions"
-        :key="item.option.id"
-        :option="item.option"
-        :calculation="item.calculation"
-        :meal-cost="paxCalculation?.mealCost"
-        :attraction-cost="paxCalculation?.attractionCost"
-        :tip-unit-price="tipUnitPrice"
-        :editable="editable"
-        @update-option="emit('update-quote-option', item.option.id, $event)"
-      />
-    </template>
-    <template v-else-if="legacyCalculation">
-      <el-alert :title="$t('itinerary.legacyQuote')" type="info" :closable="false" />
-      <DataTable :data="legacyCalculation.options" border>
-        <el-table-column :label="$t('itinerary.quoteConfigurations')" min-width="180">
-          <template #default="{ row }">
-            {{ row.hotelTier === null ? $t("itinerary.noAccommodation") : $t(`itinerary.hotelTiers.${row.hotelTier}`) }} /
-            {{ $t(`itinerary.vehicleServiceLevels.${row.vehicleTier}`) }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('itinerary.adultTourPricePerPerson')">
-          <template #default="{ row }">
-            {{ formatMoney(row.adultUnitPrice) }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('itinerary.childTourPrice')">
-          <template #default="{ row }">
-            {{ formatMoney(row.childUnitPrice) }}
-          </template>
-        </el-table-column>
-      </DataTable>
-    </template>
+    <el-alert
+      v-if="calculation?.pricingComplete === false"
+      type="warning"
+      :closable="false"
+      :title="$t('itinerary.pricingIncomplete', { count: calculation.missingPrices?.length ?? 0 })"
+    />
+    <ItinerarySharedCosts
+      :quote="quote"
+      :guide-plans="guidePlans"
+      :pax-tiers="paxTiers"
+      :calculation="calculation"
+      :destinations="destinations"
+      :editable="editable"
+      @update-settings="emit('update-settings', $event)"
+    />
+    <FeedbackState
+      v-if="!displayOptions.length"
+      :title="$t('itinerary.noQuoteOptions')"
+    />
+    <ItineraryPaxQuoteTable
+      v-for="item in displayOptions"
+      :key="item.option.id"
+      :option="item.option"
+      :calculation="item.calculation"
+      :meal-cost="calculation?.mealCost"
+      :attraction-cost="calculation?.attractionCost"
+      :tip-unit-price="tipUnitPrice"
+      :editable="editable"
+      @update-option="emit('update-quote-option', item.option.id, $event)"
+    />
 
     <el-form
-      v-if="!legacyCalculation"
       class="quote-panel__settings [border-top:1px_solid_var(--divider-color)] [container-type:inline-size]"
       label-position="top"
       :disabled="!editable"
@@ -210,7 +186,6 @@
 import ItinerarySharedCosts from "./ItinerarySharedCosts.vue";
 import ItineraryPaxQuoteTable from "./ItineraryPaxQuoteTable.vue";
 import CitySelect from "@/components/CitySelect.vue";
-import DataTable from "@/components/DataTable/index.vue";
 import FeedbackState from "@/components/FeedbackState/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import { computed } from "vue";
@@ -221,7 +196,7 @@ import type {
   ItineraryQuoteSettings,
   ItineraryTransportFee,
 } from "@/types/itinerary";
-import { createId, formatMoney } from "@/utils";
+import { createId } from "@/utils";
 
 const props = defineProps<{
   quote: ItineraryQuoteSettings;
@@ -239,16 +214,10 @@ const emit = defineEmits<{
   "update-quote-option": [optionId: string, changes: Partial<Omit<ItineraryQuoteOption, "id">>];
   "update-settings": [changes: Partial<Omit<ItineraryQuoteSettings, "options">>];
 }>();
-const paxCalculation = computed(() =>
-  props.calculation && "pricingVersion" in props.calculation ? props.calculation : null,
-);
-const legacyCalculation = computed(() =>
-  props.calculation && !("pricingVersion" in props.calculation) ? props.calculation : null,
-);
 const tipUnitPrice = computed(() => props.quote.chineseTip ?? props.quote.englishTip ?? 0);
 const displayOptions = computed(() =>
   props.quote.options.flatMap((option) => {
-    const calculation = paxCalculation.value?.options.find(
+    const calculation = props.calculation?.options.find(
       (record) => record.optionId === option.id,
     );
     return [{ option, calculation }];

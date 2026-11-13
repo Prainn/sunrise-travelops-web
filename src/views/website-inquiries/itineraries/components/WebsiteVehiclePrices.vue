@@ -131,36 +131,6 @@
       {{ $t("websiteItineraryUi.finalPriceHint") }}
     </p>
 
-    <section v-if="plan.previousPlanPrices?.length" class="mt-4">
-      <h4 class="m-0 mb-1 text-[14px] text-strong">
-        {{ $t("websiteItineraryUi.previousPlanPrices") }}
-      </h4>
-      <p class="m-0 mb-2 text-xs text-muted">
-        {{ $t("websiteItineraryUi.previousPlanPricesHint") }}
-      </p>
-      <table class="price-table">
-        <thead>
-          <tr>
-            <th>{{ $t("websiteReport.vehicleType") }}</th>
-            <th>{{ $t("websiteItineraryUi.previousPlan") }}</th>
-            <th>{{ $t("websiteItineraryUi.previousServices") }}</th>
-            <th>{{ $t("websiteItineraryUi.componentTotal") }}</th>
-            <th>{{ $t("websiteItineraryUi.priceItemUnit") }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="price in plan.previousPlanPrices" :key="`${price.vehicleType}-${price.plan}`">
-            <td>{{ vehicleLabel(price.vehicleType) }}</td>
-            <td>{{ $t("websiteReport.plan", { plan: price.plan }) }}</td>
-            <td>{{ servicesText(price.includesDriver, price.includesGuide) }}</td>
-            <td>{{ price.unitPrice ?? $t("websiteReport.undetermined") }}</td>
-            <td class="text-xs text-muted">
-              {{ componentsText(price.priceComponents) }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
     <template #footer>
       <el-button @click="visible = false">
         {{ $t(editable ? "common.cancel" : "common.close") }}
@@ -204,8 +174,6 @@ interface PriceRow {
   vehicleType: string | null;
   hotelTier: WebsiteHotelTier | null;
   prices: Record<WebsitePriceCategory, string | null>;
-  /** 历史仅有总价、无分项的行；录入分项前保留原价。 */
-  legacyUnitPrice: string | null;
 }
 /**
  * 每个车型×酒店档次组合独立填写五类人均分项（整数分求和）；总价 = 人均 × 行程人数。
@@ -231,7 +199,7 @@ const services = computed(() => (!props.dirty && plan.value.quotationOptions) ||
 const currentKeys = computed(() => new Set(candidateKeys.value.map(item => item.key)));
 const rows = computed<PriceRow[]>(() => [
   ...candidateKeys.value.map(item => entries.get(item.key)).filter((row): row is PriceRow => Boolean(row)),
-  ...[...entries.values()].filter(row => isStale(row) && hasPrice(row)),
+  ...[...entries.values()].filter(row => isStale(row) && hasComponents(row)),
 ]);
 const groups = computed(() => {
   const tiers = [...new Set(rows.value.map(row => row.hotelTier))]
@@ -245,7 +213,7 @@ const groups = computed(() => {
 const staleCount = computed(() => rows.value.filter(isStale).length);
 const tooMany = computed(() => rows.value.length > MAX_PRICE_COMBINATIONS);
 const hasInvalidPrice = computed(() => rows.value.some(row => PRICE_CATEGORIES.some(category => isInvalidValue(row.prices[category])) || isInvalidTotal(row)));
-const hasAnyPrice = computed(() => rows.value.some(hasPrice));
+const hasAnyPrice = computed(() => rows.value.some(hasComponents));
 /** 司机/导游是否包含及其来源：由各日专车段、导游语种派生，页面只读展示。 */
 const serviceRows = computed(() => {
   const value = services.value;
@@ -277,7 +245,6 @@ watch(visible, (value) => {
       row.prices[component.category] = component.unitPrice;
       if (component.unitPrice !== null && component.showInPdf) pdfCategories[component.category] = true;
     }
-    if (!price.priceComponents?.length) row.legacyUnitPrice = price.unitPrice;
     entries.set(row.key, row);
   }
 });
@@ -290,7 +257,7 @@ watch([visible, candidateKeys], () => {
 
 function emptyRow(vehicleType: string | null, hotelTier: WebsiteHotelTier | null): PriceRow {
   const nulls = Object.fromEntries(PRICE_CATEGORIES.map(category => [category, null])) as PriceRow["prices"];
-  return { key: priceKey(vehicleType, hotelTier), vehicleType, hotelTier, prices: nulls, legacyUnitPrice: null };
+  return { key: priceKey(vehicleType, hotelTier), vehicleType, hotelTier, prices: nulls };
 }
 function emptyPdfCategories() {
   return Object.fromEntries(PRICE_CATEGORIES.map(category => [category, false])) as Record<WebsitePriceCategory, boolean>;
@@ -313,11 +280,8 @@ function isStale(row: PriceRow) {
 function hasComponents(row: PriceRow) {
   return PRICE_CATEGORIES.some(category => row.prices[category] !== null);
 }
-function hasPrice(row: PriceRow) {
-  return hasComponents(row) || row.legacyUnitPrice !== null;
-}
 function unitPrice(row: PriceRow) {
-  if (!hasComponents(row)) return row.legacyUnitPrice;
+  if (!hasComponents(row)) return null;
   if (PRICE_CATEGORIES.some(category => isInvalidValue(row.prices[category]))) return null;
   return componentUnitPrice(components(row));
 }
@@ -342,20 +306,12 @@ function vehicleLabel(vehicleType: string | null) {
   const option = VEHICLE_OPTIONS.find(item => item.value === vehicleType);
   return option ? t(option.labelKey) : vehicleType;
 }
-function servicesText(driver: boolean, guide: boolean) {
-  return [driver && t("websiteReport.driver"), guide && t("websiteReport.guide")].filter(Boolean).join(" + ") || "-";
-}
-function componentsText(items: WebsitePriceComponent[]) {
-  return items.filter(item => item.unitPrice !== null)
-    .map(item => `${t(`websiteItineraryUi.priceCategories.${item.category}`)} ${item.unitPrice}`)
-    .join("；") || "-";
-}
 function apply() {
   if (!props.editable || hasInvalidPrice.value || tooMany.value) return;
   // 只保存有价格的组合；待调整组合保留原金额，直至操作人删除。
-  plan.value.vehiclePrices = rows.value.filter(hasPrice).map((row): WebsiteVehiclePriceInput => hasComponents(row)
-    ? { vehicleType: row.vehicleType, hotelTier: row.hotelTier, unitPrice: unitPrice(row), priceComponents: components(row) }
-    : { vehicleType: row.vehicleType, hotelTier: row.hotelTier, unitPrice: row.legacyUnitPrice, priceComponents: [] });
+  plan.value.vehiclePrices = rows.value.filter(hasComponents).map((row): WebsiteVehiclePriceInput => (
+    { vehicleType: row.vehicleType, hotelTier: row.hotelTier, unitPrice: unitPrice(row), priceComponents: components(row) }
+  ));
   visible.value = false;
   emit("applied");
 }

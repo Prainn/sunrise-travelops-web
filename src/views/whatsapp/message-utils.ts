@@ -5,7 +5,6 @@ import type {
   WhatsappConversationDetail,
   WhatsappConversationState,
   WhatsappMessage,
-  WhatsappMessageStatus,
   WhatsappReply,
 } from "@/types/whatsapp";
 
@@ -161,18 +160,6 @@ export function replyWindowState(expiresAt: string | null, now = Date.now()): Re
   const remainingMs = new Date(expiresAt).getTime() - now;
   return remainingMs > 0 ? { kind: "open", remainingMs } : { kind: "expired" };
 }
-
-export const MESSAGE_STATUS_TAG_TYPES: Record<WhatsappMessageStatus, "info" | "primary" | "success" | "warning" | "danger"> = {
-  received: "info",
-  queued: "info",
-  sending: "info",
-  accepted: "primary",
-  sent: "primary",
-  delivered: "success",
-  read: "success",
-  failed: "danger",
-  unknown: "warning",
-};
 
 export const STATE_TAG_TYPES: Record<WhatsappConversationState, "success" | "info" | "warning"> = {
   open: "success",

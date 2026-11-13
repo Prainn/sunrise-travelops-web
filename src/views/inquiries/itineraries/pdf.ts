@@ -3,41 +3,10 @@ import quoteFooterUrl from "@/assets/images/quote/footer.png";
 import type { InquiryRecord } from "@/types/inquiry";
 import type {
   ItineraryQuoteCalculation,
-  ItineraryQuoteOption,
-  LegacyQuoteOptionCalculation,
-  LegacyQuoteCalculation,
-  PaxQuoteCalculation,
-  ItineraryQuoteSettings,
   ItineraryRecord,
 } from "@/types/itinerary";
 import { formatDateTime, formatMoney } from "@/utils";
 import { buildCustomerDocument, type CustomerDocument, type CustomerSnapshot } from "./customer-document";
-
-const MAX_QUOTE_OPTIONS_PER_TABLE = 4;
-
-interface LegacyQuoteOption {
-  id: string;
-  hotelTier: ItineraryQuoteOption["hotelTier"];
-  vehicleTier: ItineraryQuoteOption["vehicleTier"];
-  adultUnitPrice: number | null;
-  leaderFocEnabled: boolean;
-}
-type LegacyItineraryRecord = Omit<
-  ItineraryRecord,
-  "paxTiers" | "childRate" | "childWithoutBedRate" | "quote"
-> & {
-  adults: number;
-  childrenCount: number;
-  leaderCount: number;
-  quote: Omit<ItineraryQuoteSettings, "options"> & {
-    options: LegacyQuoteOption[];
-    otherExpenses: number | null;
-  };
-};
-interface QuoteDisplayOption {
-  option: LegacyQuoteOption;
-  calculation: LegacyQuoteOptionCalculation;
-}
 
 interface PdfSnapshot extends CustomerSnapshot {
   calculation: ItineraryQuoteCalculation;
@@ -154,20 +123,19 @@ export function buildPdfHtml(
   showChildPrice = false,
   customer = buildCustomerDocument(itinerary, snapshot, inquiry.isSeries),
 ) {
-  const quote = snapshot.calculation;
   return `
     <header data-pdf-block style="box-sizing:border-box;text-align:center;">
       <h1 style="margin:0;font-size:20px;line-height:1.4;">${escapeHtml(customer.title)}</h1>
     </header>
     ${buildScheduleSections(customer)}
     ${buildCustomerTerms(customer)}
-    ${"pricingVersion" in quote ? buildPaxQuoteSections(itinerary, quote, showChildPrice, customer) : buildQuoteSections(itinerary as unknown as LegacyItineraryRecord, quote, showChildPrice, customer)}
+    ${buildPaxQuoteSections(itinerary, snapshot.calculation, showChildPrice, customer)}
     ${buildCustomerNotes(customer)}`;
 }
 
 function buildPaxQuoteSections(
   itinerary: ItineraryRecord,
-  quote: PaxQuoteCalculation,
+  quote: ItineraryQuoteCalculation,
   showChildPrice: boolean,
   customer: CustomerDocument,
 ) {
@@ -203,96 +171,6 @@ function buildPaxQuoteSections(
     })
     .join("");
   return `<section data-pdf-block data-pdf-keep-with-next><h2 style="margin:0;font-size:13px;">${escapeHtml(labels.quoteHeading)}</h2></section>${tables}`;
-}
-
-function buildQuoteSections(
-  itinerary: LegacyItineraryRecord,
-  quote: LegacyQuoteCalculation,
-  showChildPrice: boolean,
-  customer: CustomerDocument,
-) {
-  const guestCount = itinerary.adults + itinerary.childrenCount;
-  const options = itinerary.quote.options.flatMap((option) => {
-    const calculation = quote.options.find((record) => record.optionId === option.id);
-    return calculation ? [{ option, calculation }] : [];
-  });
-  const optionGroups = chunkQuoteOptions(options);
-
-  return `
-    <section data-pdf-block data-pdf-keep-with-next style="box-sizing:border-box;">
-      <h2 style="margin:0;font-size:13px;">${escapeHtml(customer.text.legacyQuoteHeading)}</h2>
-    </section>
-    ${optionGroups.map((group) => buildQuoteTable(group, itinerary, guestCount, showChildPrice, customer)).join("")}`;
-}
-
-function buildQuoteTable(
-  options: QuoteDisplayOption[],
-  itinerary: LegacyItineraryRecord,
-  guestCount: number,
-  showChildPrice: boolean,
-  customer: CustomerDocument,
-) {
-  const labels = customer.text;
-  const childRow =
-    showChildPrice && itinerary.childrenCount
-      ? buildQuoteRow(
-        labels.child,
-        options,
-        ({ calculation }) => `RMB ${formatMoney(calculation.childUnitPrice)} PP`,
-      )
-      : "";
-
-  return `
-    <table data-pdf-block data-pdf-gap-mm="0" style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;box-sizing:border-box;">
-      <thead>
-        <tr style="background:#f3f4f6;">
-          <th style="${quoteHeaderStyle()};width:18%;"></th>
-          ${options
-            .map(
-              ({ option }) => `
-            <th style="${quoteHeaderStyle()}">
-              ${new Set(itinerary.quote.options.map((option) => option.hotelTier)).size > 1 ? `<div>${escapeHtml(customer.hotelTierLabel(option.hotelTier))}</div>` : ""}
-              <div style="margin-top:3px;">${guestCount}PAX【${escapeHtml(customer.vehicleLabel(option.vehicleTier))}】</div>
-            </th>`,
-            )
-            .join("")}
-        </tr>
-      </thead>
-      <tbody>
-        ${buildQuoteRow(
-          labels.adult,
-          options,
-          ({ option, calculation }) => `
-          <strong>RMB ${formatMoney(calculation.adultUnitPrice)} PP</strong>
-          <div style="display:inline;margin-left:4px;color:${option.leaderFocEnabled && itinerary.leaderCount > 0 ? "#15803d" : "#606266"};font-size:10px;">
-            ${option.leaderFocEnabled && itinerary.leaderCount > 0 ? `${guestCount}+${itinerary.leaderCount} FOC` : "NO FOC"}
-          </div>`,
-        )}
-        ${childRow}
-        ${buildExtraFeeRows(customer, options.length)}
-        ${buildQuoteRow(labels.singleSupplement, options, ({ calculation }) => `RMB ${formatMoney(calculation.singleSupplementUnitCost)}`)}
-        ${(itinerary.quote.otherExpenses ?? 0) > 0 ? `<tr><th style="${quoteLabelStyle()}">${escapeHtml(labels.otherExpenses)}</th><td colspan="${options.length}" style="${quoteCellStyle()}">RMB ${formatMoney(itinerary.quote.otherExpenses)}${escapeHtml(labels.wholeGroup)}</td></tr>` : ""}
-      </tbody>
-    </table>`;
-}
-
-function buildQuoteRow(
-  label: string,
-  options: QuoteDisplayOption[],
-  renderValue: (option: QuoteDisplayOption) => string,
-) {
-  return `<tr>
-    <th style="${quoteLabelStyle()}">${escapeHtml(label)}</th>
-    ${options.map((option) => `<td style="${quoteCellStyle()}">${renderValue(option)}</td>`).join("")}
-  </tr>`;
-}
-
-function chunkQuoteOptions(options: QuoteDisplayOption[]) {
-  return Array.from(
-    { length: Math.ceil(options.length / MAX_QUOTE_OPTIONS_PER_TABLE) },
-    (_, index) =>
-      options.slice(index * MAX_QUOTE_OPTIONS_PER_TABLE, (index + 1) * MAX_QUOTE_OPTIONS_PER_TABLE),
-  );
 }
 
 function quoteHeaderStyle() {

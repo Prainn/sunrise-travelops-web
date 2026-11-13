@@ -81,7 +81,7 @@ function wordTable(source: HTMLTableElement): Table {
 
 export async function generateWebsiteWordDocument(quotation: WebsiteQuotation, language: "en" | "zh") {
   const output = language === "en" ? quotation.english : quotation.chinese;
-  const html = new DOMParser().parseFromString(websitePrintHtml(output, language, quotation.schemaVersion), "text/html");
+  const html = new DOMParser().parseFromString(websitePrintHtml(output, language), "text/html");
   const logo = html.querySelector<HTMLImageElement>(".brand-header img")!;
   const response = await fetch(logo.src);
   if (!response.ok) throw new Error(`Logo: ${response.status}`);

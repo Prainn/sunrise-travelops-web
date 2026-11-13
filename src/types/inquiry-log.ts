@@ -37,5 +37,3 @@ export interface InquiryLogRecord {
   summary?: string;
   metadata?: Record<string, unknown>;
 }
-
-export type InquiryLogCreate = Omit<InquiryLogRecord, "id" | "occurredAt">;

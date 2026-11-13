@@ -10,7 +10,13 @@ import { roundMoney, sumMoney } from "@/utils";
 export const VEHICLE_PLAN_TIERS: ItineraryVehicleTier[] = ["standard", "vip"];
 export type VehicleMaintenanceMode = ItineraryVehicleQuotationMode;
 export function createDefaultVehiclePlans(): ItineraryVehiclePlan[] {
-  return VEHICLE_PLAN_TIERS.map((tier) => ({ tier, arrangements: [], totalPrice: null }));
+  return VEHICLE_PLAN_TIERS.map((tier) => ({
+    tier,
+    quotationMode: "itinerary",
+    arrangements: [],
+    totalPrice: null,
+    paxPrices: [],
+  }));
 }
 export function getVehiclePlan(
   itinerary: Pick<ItineraryRecord, "vehiclePlans">,
@@ -34,15 +40,11 @@ export function cloneVehiclePlans(plans: ItineraryVehiclePlan[]): ItineraryVehic
   }));
 }
 
-/** Explicit mode of PAX records; legacy records are only inferred from vehicle details for the switch prompt. */
+/** Mode of the arranged plans; plans without arrangements have nothing to keep. */
 export function getVehicleQuotationMode(
   plans: ItineraryVehiclePlan[],
 ): VehicleMaintenanceMode | null {
-  const explicit = plans.find((plan) => plan.quotationMode)?.quotationMode;
-  if (explicit) return explicit;
-  if (plans.some((plan) => plan.arrangements.some((arrangement) => arrangement.vehicles.length)))
-    return "itinerary";
-  return plans.some((plan) => plan.arrangements.length) ? "stage" : null;
+  return plans.find((plan) => plan.arrangements.length)?.quotationMode ?? null;
 }
 
 /** Mirrors backend validateVehicleModeChange: each tier with arrangements is judged on its own. */
@@ -51,11 +53,7 @@ export function needsVehicleModeChangeConfirm(
   mode: VehicleMaintenanceMode,
 ) {
   return plans.some((plan) => {
-    if (!plan.arrangements.length) return false;
-    const planMode =
-      plan.quotationMode ??
-      (plan.arrangements.some((arrangement) => arrangement.vehicles.length) ? "itinerary" : "stage");
-    return planMode !== mode;
+    return plan.arrangements.length > 0 && plan.quotationMode !== mode;
   });
 }
 
@@ -68,7 +66,6 @@ export function syncVehiclePaxTiers(
   plan: ItineraryVehiclePlan,
   paxTiers: number[],
 ): ItineraryVehiclePlan {
-  if (!plan.quotationMode) return plan;
   return {
     ...plan,
     paxPrices: paxTiers.map(
@@ -106,33 +103,6 @@ function createEmptyPaxPlan(
   };
 }
 
-/** Copies a legacy shared plan into every PAX tier; 0 and null stay as they are. */
-function adoptLegacyPlan(
-  plan: ItineraryVehiclePlan,
-  mode: VehicleMaintenanceMode,
-  paxTiers: number[],
-): ItineraryVehiclePlan {
-  // 阶段方式只能自动合计；行程方式仅已知 automatic 跟随合计，manual/unknown 保留原人工价。
-  const pricingMode =
-    mode === "stage" || !plan.arrangements.length || plan.pricingMode === "automatic"
-      ? "automatic"
-      : "manual";
-  return {
-    ...createEmptyPaxPlan(plan.tier, mode, paxTiers),
-    arrangements: plan.arrangements.map((arrangement) => ({
-      ...arrangement,
-      vehicles: mode === "stage" ? [] : arrangement.vehicles.map((vehicle) => ({ ...vehicle })),
-      totalPrice: null,
-      paxPrices: paxTiers.map((pax) => ({ pax, totalPrice: arrangement.totalPrice ?? null })),
-    })),
-    paxPrices: paxTiers.map((pax) => ({
-      pax,
-      pricingMode,
-      totalPrice: plan.arrangements.length ? plan.totalPrice : null,
-    })),
-  };
-}
-
 /**
  * Builds the dialog draft as a deep copy; the saved record changes only after a successful save.
  * `reset` starts a blank draft for a confirmed mode change.
@@ -146,7 +116,6 @@ export function createVehicleDraft(
   return VEHICLE_PLAN_TIERS.map((tier) => {
     const plan = plans.find((record) => record.tier === tier);
     if (!plan || reset || !plan.arrangements.length) return createEmptyPaxPlan(tier, mode, paxTiers);
-    if (!plan.quotationMode) return refreshAutomaticVehicleTotals(adoptLegacyPlan(plan, mode, paxTiers));
     return refreshAutomaticVehicleTotals(syncVehiclePaxTiers(cloneVehiclePlans([plan])[0]!, paxTiers));
   });
 }
@@ -161,7 +130,6 @@ export function vehicleSegmentPaxTotal(plan: ItineraryVehiclePlan, pax: number) 
 
 /** Display only: the backend recomputes automatic totals on save and preview. */
 export function refreshAutomaticVehicleTotals(plan: ItineraryVehiclePlan): ItineraryVehiclePlan {
-  if (!plan.quotationMode) return plan;
   return {
     ...plan,
     paxPrices: plan.paxPrices?.map((price) =>
@@ -248,39 +216,20 @@ export function hasVehicleSeatShortage(plans: ItineraryVehiclePlan[], passengers
   );
 }
 
-/** PAX tiers whose saved legacy stage total differs from the segment sum the stage mode now uses. */
-export function legacyStageTotalDifferences(
-  plan: ItineraryVehiclePlan,
-  saved: ItineraryVehiclePlan | undefined,
-) {
-  if (plan.quotationMode !== "stage" || !saved || saved.quotationMode || saved.totalPrice == null)
-    return [];
-  const original = roundMoney(saved.totalPrice);
-  return (plan.paxPrices ?? []).flatMap((price) => {
-    const total = vehicleSegmentPaxTotal(plan, price.pax);
-    return total === original ? [] : [{ pax: price.pax, original, total }];
-  });
-}
-
 export function getIncompleteVehiclePlanTiers(
   itinerary: Pick<ItineraryRecord, "paxTiers" | "vehiclePlans">,
 ) {
   const passengers = Math.max(0, ...itinerary.paxTiers);
   return getEnabledVehiclePlans(itinerary)
     .filter((plan) => {
-      const paxFormat = Boolean(plan.quotationMode);
       if (
-        (paxFormat
-          ? plan.paxPrices?.length !== itinerary.paxTiers.length ||
-            plan.paxPrices.some((price) => price.totalPrice == null)
-          : plan.totalPrice === null) ||
+        plan.paxPrices?.length !== itinerary.paxTiers.length ||
+        plan.paxPrices.some((price) => price.totalPrice == null) ||
         plan.arrangements.some(
           (arrangement) =>
             !arrangement.startDate ||
             !arrangement.endDate ||
-            (paxFormat
-              ? plan.quotationMode === "itinerary" && !arrangement.vehicles.length
-              : !arrangement.vehicles.length && arrangement.totalPrice == null),
+            (plan.quotationMode === "itinerary" && !arrangement.vehicles.length),
         )
       )
         return true;
@@ -293,7 +242,7 @@ export function getIncompleteVehiclePlanTiers(
         return true;
       return plan.arrangements.some(
         (arrangement) =>
-          (paxFormat ? plan.quotationMode === "itinerary" : arrangement.vehicles.length > 0) &&
+          plan.quotationMode === "itinerary" &&
           arrangementSeats(arrangement) < passengers,
       );
     })
