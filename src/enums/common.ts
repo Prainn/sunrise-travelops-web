@@ -32,15 +32,3 @@ export enum CommonStatus {
   /** 启用 */
   ENABLED = 1,
 }
-
-/**
- * 审核状态枚举
- */
-export enum AuditStatus {
-  /** 待审核 */
-  PENDING = 0,
-  /** 已通过 */
-  APPROVED = 1,
-  /** 已拒绝 */
-  REJECTED = 2,
-}

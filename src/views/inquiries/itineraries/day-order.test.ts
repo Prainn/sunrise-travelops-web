@@ -71,7 +71,7 @@ function day(id: string, index: number, departure: string, destination: string, 
 describe("normal itinerary day reorder", () => {
   const plan = {
     startDate: "2027-01-01",
-    vehiclePlans: [{ tier: "standard" as const, arrangements: [{ id: "a", startDate: "2027-01-01", endDate: "2027-01-03", vehicles: [] }], totalPrice: null }],
+    vehiclePlans: [{ tier: "standard" as const, quotationMode: "stage" as const, arrangements: [{ id: "a", startDate: "2027-01-01", endDate: "2027-01-03", vehicles: [] }], totalPrice: null }],
     dailyPlans: [
       day("d1", 0, "吉隆坡", "昆明", "昆明", [item("a1", "attraction"), item("m1", "restaurant", "lunch"), item("a2", "attraction")]),
       day("d2", 1, "昆明", "大理", "大理"),

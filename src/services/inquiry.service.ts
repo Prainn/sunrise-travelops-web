@@ -128,7 +128,6 @@ function inquiryInput(record: InquiryRecord) {
 }
 /** PAX-format plans never send shared prices or the backend-derived segmentTotal. */
 function vehiclePlanInput(plan: ItineraryRecord["vehiclePlans"][number]) {
-  if (!plan.quotationMode) return plan;
   return {
     ...plan,
     totalPrice: null,

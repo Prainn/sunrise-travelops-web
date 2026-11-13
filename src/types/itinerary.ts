@@ -53,8 +53,7 @@ export interface ItineraryVehicleArrangement {
   paxPrices?: ItineraryVehicleSegmentPaxPrice[];
 }
 export interface ItineraryVehiclePlan {
-  /** Absent on legacy records that still share one price across PAX tiers. */
-  quotationMode?: ItineraryVehicleQuotationMode | null;
+  quotationMode: ItineraryVehicleQuotationMode;
   paxPrices?: ItineraryVehiclePaxPrice[];
   pricingMode?: "automatic" | "manual" | "unknown" | null;
   segmentTotal?: number | null;
@@ -130,41 +129,6 @@ export interface ItineraryMeals {
   dinner: boolean;
 }
 
-export type ItineraryQuoteLineType = "adult" | "child";
-
-export interface ItineraryQuoteLine {
-  type: ItineraryQuoteLineType;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-}
-
-export interface LegacyQuoteOptionCalculation {
-  optionId: string;
-  hotelTier: ItineraryHotelTier;
-  vehicleTier: ItineraryVehicleTier;
-  hotelCost: number;
-  vehicleCost: number;
-  commonGroupCost: number;
-  baseGroupCost: number;
-  baseCostPerPerson: number;
-  singleSupplementUnitCost: number;
-  adultUnitPrice: number;
-  childUnitPrice: number;
-  totalPrice: number;
-  profit: number;
-  actualMarginRate: number;
-  lines: ItineraryQuoteLine[];
-}
-
-export interface LegacyQuoteCalculation {
-  hotelGuestCount: number;
-  hotelRoomCount: number;
-  dailyResourceCost: number;
-  guideCost: number;
-  options: LegacyQuoteOptionCalculation[];
-}
-
 export interface ItineraryPaxCalculation {
   pax: number;
   /** Whole-group vehicle price of this PAX tier; null when missing. Older snapshots omit it. */
@@ -201,7 +165,7 @@ export interface ItineraryQuoteOptionCalculation {
   paxPrices: ItineraryPaxCalculation[];
 }
 
-export interface PaxQuoteCalculation {
+export interface ItineraryQuoteCalculation {
   pricingVersion: 2;
   tableMealTotal?: number;
   /** Only the three Draft actual-price fields; historical snapshots may omit these. */
@@ -230,8 +194,6 @@ export interface PaxQuoteCalculation {
   guideCost: number;
   options: ItineraryQuoteOptionCalculation[];
 }
-
-export type ItineraryQuoteCalculation = PaxQuoteCalculation | LegacyQuoteCalculation;
 
 export interface ItineraryResourceItem extends PriceReference {
   id: string;

@@ -35,10 +35,6 @@ export function isInquiryReadOnly(status: InquiryStatus, hasActiveTour = false, 
   return (hasActiveTour && !isSeries) || status === "lost" || status === "archived";
 }
 
-export function canTransitionInquiry(status: InquiryStatus, action: InquiryAction): boolean {
-  return Boolean(INQUIRY_TRANSITIONS[status][action]);
-}
-
 export function transitionInquiry(status: InquiryStatus, action: InquiryAction): InquiryStatus {
   const nextStatus = INQUIRY_TRANSITIONS[status][action];
   if (!nextStatus) throw new Error(`Invalid inquiry transition: ${status} -> ${action}`);

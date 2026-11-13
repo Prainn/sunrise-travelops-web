@@ -1,6 +1,6 @@
 <template>
   <WebsiteItineraryWorkspace v-if="isWebsiteModule && canAccessWorkspace" />
-  <LegacyItineraryWorkspace v-else-if="!isWebsiteModule && canAccessWorkspace" />
+  <StandardItineraryWorkspace v-else-if="!isWebsiteModule && canAccessWorkspace" />
   <Page401 v-else />
 </template>
 
@@ -16,7 +16,7 @@ defineOptions({ name: "InquiryItinerariesEntry" });
 const WebsiteItineraryWorkspace = defineAsyncComponent(
   () => import("@/views/website-inquiries/itineraries/index.vue"),
 );
-const LegacyItineraryWorkspace = defineAsyncComponent(() => import("./index.vue"));
+const StandardItineraryWorkspace = defineAsyncComponent(() => import("./index.vue"));
 const route = useRoute();
 const userStore = useUserStore();
 const isWebsiteModule = computed(() => route.query.module === "website");

@@ -29,14 +29,6 @@ export function getHotelPlan(
   return itinerary.hotelPlans.find((plan) => plan.tier === tier);
 }
 
-export function getHotelPlanSelection(
-  itinerary: Pick<ItineraryRecord, "hotelPlans">,
-  tier: ItineraryHotelTier,
-  destination: string,
-) {
-  return getHotelPlan(itinerary, tier)?.hotels.find((hotel) => hotel.destination === destination);
-}
-
 export function getEnabledHotelPlans(itinerary: Pick<ItineraryRecord, "hotelPlans">) {
   return HOTEL_PLAN_TIERS.flatMap((tier) => {
     const plan = getHotelPlan(itinerary, tier);
