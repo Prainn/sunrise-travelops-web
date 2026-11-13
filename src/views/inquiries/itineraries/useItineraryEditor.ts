@@ -106,7 +106,9 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       destinations: [...record.destinations],
       guidePlans: record.guidePlans.map((plan) => ({ ...plan })),
       hotelPlans: cloneHotelPlans(record.hotelPlans),
-      vehiclePlans: cloneVehiclePlans(record.vehiclePlans),
+      vehiclePlans: cloneVehiclePlans(record.vehiclePlans).map((plan) =>
+        syncVehiclePaxTiers(plan, record.paxTiers),
+      ),
       quote: cloneQuoteSettings(record.quote),
       startDate,
       dailyPlans: createDailyPlans(startDate, plannedDays),

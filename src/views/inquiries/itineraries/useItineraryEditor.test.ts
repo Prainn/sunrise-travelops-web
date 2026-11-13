@@ -42,9 +42,25 @@ describe("new itinerary dates", () => {
 
   it("keeps the selected calendar start and the inquiry day count for ordinary itineraries", () => {
     const editor = editorFor(false);
-    const record = editor.createItinerary({ ...editor.createEmptyItinerary(), startDate: "2026-12-31" })!;
+    const record = editor.createItinerary({
+      ...editor.createEmptyItinerary(),
+      startDate: "2026-12-31",
+      paxTiers: [10, 18],
+    })!;
     const input = itineraryInput(record);
     expect(input.startDate).toBe("2026-12-31");
     expect(input.dailyPlans.map((day) => day.date)).toEqual(["2026-12-31", "2027-01-01"]);
+    expect(input.vehiclePlans.map(({ tier, quotationMode, paxPrices }) => ({
+      tier,
+      quotationMode,
+      paxPrices,
+    }))).toEqual(["standard", "vip"].map((tier) => ({
+      tier,
+      quotationMode: "itinerary",
+      paxPrices: [
+        { pax: 10, totalPrice: null, pricingMode: "automatic", adjustmentReason: "" },
+        { pax: 18, totalPrice: null, pricingMode: "automatic", adjustmentReason: "" },
+      ],
+    })));
   });
 });
