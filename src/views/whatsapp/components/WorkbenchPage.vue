@@ -77,6 +77,7 @@
             :retrying-ids="workbench.retryingIds.value"
             :confirming-ids="confirmingIds"
             @send="handleSend"
+            @send-images="handleSendImages"
             @react="handleReact"
             @resubmit="handleResubmit"
             @discard="workbench.discardPending"
@@ -167,7 +168,7 @@ import type {
   WhatsappStreamSignal,
 } from "@/types/whatsapp";
 import WebsiteInquiryEditor from "@/views/website-inquiries/components/WebsiteInquiryEditor.vue";
-import { linkedConversationId } from "../message-utils";
+import { linkedConversationId, type PendingImage } from "../message-utils";
 import { useCustomerNotes } from "../useCustomerNotes";
 import { useWhatsappWorkbench, type SendFeedback } from "../useWhatsappWorkbench";
 import AssignDialog from "./AssignDialog.vue";
@@ -350,6 +351,9 @@ function notifySend(feedback: SendFeedback | undefined) {
 }
 async function handleSend(text: string, replyTo?: WhatsappReply) {
   notifySend(await workbench.sendText(text, replyTo));
+}
+async function handleSendImages(images: Omit<PendingImage, "clientRequestId">[], text: string, replyTo?: WhatsappReply) {
+  notifySend(await workbench.sendImages(images, text, replyTo));
 }
 async function handleReact(message: WhatsappMessage, emoji: string) {
   notifySend(await workbench.sendReaction(message, emoji));

@@ -6,6 +6,20 @@ import { fileURLToPath } from "node:url";
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const cli = join(repository, "node_modules/vue-tsc/bin/vue-tsc.js");
 const args = process.argv.slice(2);
+const verifiedDevSha = process.env.SUNRISE_HOSTED_DEV_TYPECHECK_SHA;
+if (verifiedDevSha) {
+  const env = process.env;
+  // The workflow supplies this only after the same dev commit passes the full check.
+  // The installed guard still holds the lock and downloads that exact source.
+  if (args.length || !/^[a-f0-9]{40}$/.test(verifiedDevSha) || verifiedDevSha !== env.GITHUB_SHA ||
+    env.GITHUB_ACTIONS !== "true" || env.GITHUB_REPOSITORY !== "Prainn/sunrise-travelops-web" ||
+    env.GITHUB_REF !== "refs/heads/dev" || env.DEPLOY_ENV !== "dev" ||
+    env.OPERATION !== "deploy" || env.SUNRISE_LOCK_HELD !== "1") {
+    throw new Error("Hosted type-check evidence must match the guarded dev deployment");
+  }
+  process.stdout.write(`Type check verified on GitHub for ${verifiedDevSha}\n`);
+  process.exit(0);
+}
 if (args.length && (args.length !== 2 || args[0] !== "--project")) {
   throw new Error("Usage: node scripts/type-check.mjs [--project tsconfig.json]");
 }
@@ -26,25 +40,26 @@ if (config.references?.length) throw new Error("Project references are not suppo
 const files = config.files.map((file) => resolve(directory, file));
 if (!files.length) throw new Error("Type checking must not succeed with no source files");
 const declarations = files.filter((file) => /\.d\.[cm]?ts$/.test(file));
-const groups = { application: [], tests: [], tooling: [] };
+const groups = { application: [], viewTests: [], sharedTests: [], tooling: [] };
 for (const file of files) {
   if (declarations.includes(file)) continue;
   const path = relative(directory, file).replaceAll("\\", "/");
-  if (/\.(test|spec)\.[cm]?[jt]sx?$/.test(path)) groups.tests.push(file);
+  if (/\.(test|spec)\.[cm]?[jt]sx?$/.test(path)) {
+    (path.startsWith("src/views/") ? groups.viewTests : groups.sharedTests).push(file);
+  }
   else if (path.startsWith("src/")) groups.application.push(file);
   else groups.tooling.push(file);
 }
 
-// Tool configs pull in separate, large dependency graphs (Vite, ESLint and UnoCSS).
-// Check each root in its own process to stay within the production heap budget.
-const checks = [
-  ["application", groups.application],
-  ["tests", groups.tests],
-  ...groups.tooling.map((file, index) => [`tooling-${index + 1}`, [file]]),
-];
-
 // Separate processes release the previous TypeScript graph before loading the next.
 // Every root from --showConfig is retained; imports and strict options still resolve normally.
+// View tests and shared tests build separate graphs; large tool configs run one at a time.
+const checks = [
+  ["application", groups.application],
+  ["view-tests", groups.viewTests],
+  ["shared-tests", groups.sharedTests],
+  ...groups.tooling.map((file, index) => [`tooling-${index + 1}`, [file]]),
+];
 const temporary = mkdtempSync(join(directory, ".type-check-"));
 let status = 0;
 try {

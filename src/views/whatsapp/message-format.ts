@@ -14,6 +14,15 @@ const INLINE_MARKERS = [
   { marker: "~", tag: "s" },
 ] as const;
 export const isWord = (char: string) => /[\p{L}\p{N}]/u.test(char);
+export const isCjk = (char: string) => /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(char);
+/**
+ * WhatsApp 是否识别紧贴汉字等 CJK 文字的格式标记（如“哈哈*哈哈*”）。
+ * 以手机端实测为准：false 时按普通字母处理，标记两侧须有空格或标点。
+ * 2026-11-12 测试会话实测：手机端将“哈哈*哈哈*”显示为原样星号，不识别。
+ */
+export const CJK_MARKER_BOUNDARY = false;
+/** 与该字符相邻的标记不会被 WhatsApp 识别为格式。 */
+export const blocksMarker = (char: string) => isWord(char) && !(CJK_MARKER_BOUNDARY && isCjk(char));
 
 /** Parse WhatsApp's text markers into a closed set of nodes, never HTML. */
 export function parseInline(text: string, used: string[] = []): InlineNode[] {
@@ -24,13 +33,13 @@ export function parseInline(text: string, used: string[] = []): InlineNode[] {
     for (const { marker, tag } of INLINE_MARKERS) {
       if (used.includes(marker) || !text.startsWith(marker, index)) continue;
       const before = text[index - 1] ?? "";
-      if (isWord(before) || (marker.length === 1 && (before === marker || text[index + 1] === marker))) continue;
+      if (blocksMarker(before) || (marker.length === 1 && (before === marker || text[index + 1] === marker))) continue;
       const start = index + marker.length;
       const end = text.indexOf(marker, start);
       if (end <= start) continue;
       const content = text.slice(start, end);
       const after = text[end + marker.length] ?? "";
-      if (tag !== "code" && (/^\s|\s$/.test(content) || isWord(after) || after === marker)) continue;
+      if (tag !== "code" && (/^\s|\s$/.test(content) || blocksMarker(after) || after === marker)) continue;
       if (plain) { nodes.push(plain); plain = ""; }
       nodes.push({ tag, children: tag === "code" ? [content] : parseInline(content, [...used, marker]) });
       index = end + marker.length;
@@ -77,4 +86,14 @@ export function parseMessageText(text: string): MessageBlock[] {
     });
   }
   return blocks;
+}
+
+const inlineText = (nodes: InlineNode[]): string =>
+  nodes.map((node) => typeof node === "string" ? node : inlineText(node.children)).join("");
+
+/** 列表摘要用纯文字：去掉可识别的格式标记，未识别的星号等按原样保留。 */
+export function plainMessageText(text: string): string {
+  return parseMessageText(text)
+    .map((block) => block.kind === "code" ? block.code : block.lines.map(inlineText).join("\n"))
+    .join("\n");
 }

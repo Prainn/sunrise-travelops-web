@@ -47,53 +47,59 @@
     </h4>
     <el-descriptions :column="1" size="small" border>
       <el-descriptions-item :label="$t('whatsapp.inquiry')">
-        <el-button
-          v-if="detail.inquiryId && canViewInquiry"
-          link
-          type="primary"
-          @click="emit('view-inquiry', detail.inquiryId)"
-        >
-          {{ $t("whatsapp.viewInquiry") }}
-        </el-button>
-        <span v-else-if="detail.inquiryId">{{ $t("whatsapp.inquiryLinked") }}</span>
-        <template v-else>
-          <span>{{ $t("whatsapp.noInquiry") }}</span>
+        <div class="flex flex-wrap items-center gap-x-[8px]">
           <el-button
-            v-if="detail.capabilities.canCreateInquiry"
+            v-if="detail.inquiryId && canViewInquiry"
             link
+            size="small"
             type="primary"
-            class="ml-[8px]"
-            :loading="busy"
-            @click="emit('create-inquiry')"
+            @click="emit('view-inquiry', detail.inquiryId)"
           >
-            {{ $t("whatsapp.createInquiry") }}
+            {{ $t("whatsapp.viewInquiry") }}
           </el-button>
-          <div v-else-if="!detail.ownerId && detail.state !== 'archived'" class="text-[12px] text-[var(--el-color-warning)]">
-            {{ $t("whatsapp.assignBeforeInquiry") }}
-          </div>
-        </template>
+          <span v-else-if="detail.inquiryId">{{ $t("whatsapp.inquiryLinked") }}</span>
+          <template v-else>
+            <span>{{ $t("whatsapp.noInquiry") }}</span>
+            <el-button
+              link
+              size="small"
+              type="primary"
+              :disabled="!detail.capabilities.canCreateInquiry"
+              :loading="busy"
+              @click="emit('create-inquiry')"
+            >
+              {{ $t("whatsapp.createInquiry") }}
+            </el-button>
+            <div v-if="!detail.ownerId && detail.state !== 'archived'" class="w-full text-[var(--el-color-warning)]">
+              {{ $t("whatsapp.assignBeforeInquiry") }}
+            </div>
+          </template>
+        </div>
       </el-descriptions-item>
       <el-descriptions-item :label="$t('whatsapp.ledger')">
-        <el-button
-          v-if="detail.ledger"
-          link
-          type="primary"
-          @click="emit('view-ledger', detail.ledger.orderNo)"
-        >
-          {{ detail.ledger.orderNo }}
-        </el-button>
-        <template v-else>
-          <span>{{ $t("whatsapp.noLedger") }}</span>
+        <div class="flex flex-wrap items-center gap-x-[8px]">
           <el-button
-            v-if="detail.inquiryId && canCreateLedger && detail.state !== 'archived'"
+            v-if="detail.ledger"
             link
+            size="small"
             type="primary"
-            class="ml-[8px]"
-            @click="emit('create-ledger', detail.inquiryId)"
+            @click="emit('view-ledger', detail.ledger.orderNo)"
           >
-            {{ $t("whatsapp.createLedger") }}
+            {{ detail.ledger.orderNo }}
           </el-button>
-        </template>
+          <template v-else>
+            <span>{{ $t("whatsapp.noLedger") }}</span>
+            <el-button
+              link
+              size="small"
+              type="primary"
+              :disabled="!detail.inquiryId || !canCreateLedger || detail.state === 'archived'"
+              @click="detail.inquiryId && emit('create-ledger', detail.inquiryId)"
+            >
+              {{ $t("whatsapp.createLedger") }}
+            </el-button>
+          </template>
+        </div>
       </el-descriptions-item>
     </el-descriptions>
 

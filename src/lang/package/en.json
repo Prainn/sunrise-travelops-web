@@ -98,6 +98,7 @@
     "businessGroups": "Business Groups",
     "accountLinks": "Account Links",
     "notificationManagement": "Notifications",
+    "ossManagement": "OSS Files",
     "whatsappWorkbench": "WhatsApp Workbench",
     "whatsappQuickReplies": "Quick replies",
     "whatsappInbox": "Inbox",
@@ -643,6 +644,74 @@
       "website_ledger_review": "Website Ledger Pending Review",
       "website_ledger_operate": "Website Ledger Pending Operation",
       "inquiry_follow_up": "Inquiry Follow-up Reminders"
+    }
+  },
+  "oss": {
+    "searchPlaceholder": "Name or remark",
+    "kind": "Type",
+    "source": "Source",
+    "preview": "Preview",
+    "name": "Name",
+    "remark": "Remark",
+    "size": "Size",
+    "dimensions": "Dimensions",
+    "referenceCount": "References",
+    "mimeType": "File type",
+    "objectKey": "Storage path",
+    "environment": "Environment",
+    "detail": "Details",
+    "edit": "Edit file",
+    "upload": "Upload image",
+    "uploadSuccess": "Uploaded",
+    "retry": "Archive again",
+    "retrySuccess": "Queued for archiving",
+    "deleteSuccess": "Deleted",
+    "retryConfirm": "Archive this image again? Only the file is saved again; no message is resent to the customer.",
+    "deleteConfirm": "Delete \"{name}\"? The original, thumbnail and send copy will be deleted. CDN caches may keep it for up to 300 seconds, so it may not disappear from every node immediately.",
+    "deleteReferenced": "Used by {count} messages; cannot delete",
+    "deleteProcessing": "Processing; cannot delete yet",
+    "nameRequired": "Enter a name",
+    "conflict": "Someone else changed this file. Load the latest before trying again; their changes are not overwritten.",
+    "reloadLatest": "Load latest",
+    "actionConflict": "Not completed: {message}. Refresh and try again",
+    "notFound": "File not found or not in this environment",
+    "environments": {
+      "dev": "Development",
+      "prod": "Production"
+    },
+    "kinds": {
+      "image": "Image",
+      "sticker": "Sticker"
+    },
+    "sources": {
+      "whatsapp": "WhatsApp",
+      "upload": "Chat upload",
+      "management": "Admin upload"
+    },
+    "states": {
+      "pending": "Pending",
+      "processing": "Processing",
+      "ready": "Ready",
+      "failed": "Failed",
+      "deleting": "Deleting"
+    },
+    "media": {
+      "processing": "{kind} processing",
+      "failed": "{kind} archive failed: {reason}",
+      "deleting": "{kind} deletion in progress",
+      "unavailable": "{kind} preview unavailable",
+      "viewOriginal": "View original"
+    },
+    "errors": {
+      "MEDIA_SOURCE_EXPIRED": "Source link expired",
+      "MEDIA_URL_INVALID": "Invalid source URL",
+      "MEDIA_TOO_LARGE": "File too large",
+      "MEDIA_TYPE_INVALID": "Invalid file format",
+      "MEDIA_DOWNLOAD_FAILED": "Download failed",
+      "MEDIA_PROCESS_FAILED": "Processing failed",
+      "MEDIA_UPLOAD_FAILED": "Saving failed",
+      "MEDIA_INTERRUPTED": "Processing interrupted",
+      "UNKNOWN": "Unknown reason"
     }
   },
   "common": {
@@ -2509,7 +2578,8 @@
       "label": "Text formatting",
       "bold": "Bold",
       "italic": "Italic",
-      "tooLong": "Formatted text cannot exceed {max} characters"
+      "tooLong": "Formatted text cannot exceed {max} characters",
+      "needsSeparator": "Add a space or punctuation between formatted and adjacent text, or WhatsApp will not show the formatting"
     },
     "composerPlaceholder": "Type a reply, Ctrl/⌘ + Enter to send",
     "send": "Send",
@@ -2524,9 +2594,9 @@
     "sources": {
       "mobile": "Sent from phone",
       "customer": "Customer",
-      "system": "Sent from system"
+      "system": "Sent from web"
     },
-    "systemBy": "Sent from system · {name}",
+    "systemBy": "Sent from web · {name}",
     "customer": "Customer",
     "name": "Name",
     "phone": "Phone",
@@ -2610,6 +2680,22 @@
     "replaySuccess": "Reset to pending",
     "linkedInquiry": "Linked inquiry",
     "linkedInquiryHint": "The collector must match the inquiry owner; cannot be changed after creation",
-    "notLinked": "No linked inquiry"
+    "notLinked": "No linked inquiry",
+    "imageDraft": {
+      "add": "Image",
+      "uploading": "Uploading…",
+      "reupload": "Upload again",
+      "remove": "Remove",
+      "animatedHint": "WebP/GIF will be sent as a static JPEG without animation",
+      "invalidType": "Only JPEG, PNG, WebP and GIF images are supported",
+      "tooLarge": "Each image must be 5 MB or smaller",
+      "waiting": "Waiting",
+      "staticBadge": "Static",
+      "tooMany": "Up to {max} images at a time; extra images were not added",
+      "notReady": "Some images are still uploading or failed. Fix them before sending",
+      "expired": "Image expired. Upload it again",
+      "expiredNoFile": "Image expired. Remove it and choose it again",
+      "batchExpired": "Some images expired. Click Edit again and upload them again"
+    }
   }
 }
