@@ -84,6 +84,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: {
           menuKey: "whatsapp-inbox",
           title: "whatsappInbox",
+          // 切换会话会改写 conversationId，需保留工作台实例。
+          reuseOnQueryChange: true,
           icon: "el-icon-Message",
           scopes: ["headquarters", "website"],
           perms: ["whatsapp:conversation:list"],

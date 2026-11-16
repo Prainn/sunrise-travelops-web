@@ -11,6 +11,7 @@ import type {
   WhatsappConversationItem,
   WhatsappConversationState,
   WhatsappConversationView,
+  WhatsappDocumentUpload,
   WhatsappMessage,
   WhatsappReply,
   WhatsappStreamSignal,
@@ -372,6 +373,14 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   async function postPending(id: string, item: PendingMessage): Promise<WhatsappMessage[]> {
     if (item.reaction)
       return [await whatsappService.sendReaction(id, item.reaction.targetMessageId, item.clientRequestId, item.reaction.emoji)];
+    if (item.document) {
+      const result = await whatsappService.sendDocument(id, {
+        documentId: item.document.upload.id,
+        clientRequestId: item.clientRequestId,
+        ...(item.document.textRequestId ? { textMessage: { clientRequestId: item.document.textRequestId, text: item.text } } : {}),
+      });
+      return result.messages;
+    }
     if (item.batch) {
       const result = await whatsappService.sendImageBatch(id, {
         images: item.batch.images.map((image) => ({ clientRequestId: image.clientRequestId, mediaAssetId: image.mediaAssetId })),
@@ -400,9 +409,10 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
         updatePending(id, item.clientRequestId, { state: "uncertain", error: message });
         return { kind: "uncertain", message };
       }
-      // 图片资源已被清理：整组未入队，重新编辑时保留文字和本地图片并要求重新上传。
-      const isExpired = !!item.batch && cause instanceof ApiError && cause.status === 404;
-      const error = isExpired ? translate("whatsapp.imageDraft.batchExpired") : message;
+      // 图片或文档已被清理：整组未入队，重新编辑时保留文字并要求重新上传。
+      const isExpired = (!!item.batch || !!item.document) && cause instanceof ApiError && cause.status === 404;
+      const error = !isExpired ? message
+        : translate(item.document ? "whatsapp.documentDraft.expired" : "whatsapp.imageDraft.batchExpired");
       updatePending(id, item.clientRequestId, { state: "rejected", error, isExpired });
       return { kind: "rejected", message: error };
     }
@@ -439,6 +449,27 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
       text,
       batch: { images: batchImages, ...(text ? { textRequestId: crypto.randomUUID() } : {}) },
       replyTo,
+      state: "sending",
+      error: "",
+      createdAt: new Date().toISOString(),
+    };
+    setPending(id, [...(pendingByConversation.value.get(id) ?? []), item]);
+    return submitPending(id, item);
+  }
+
+  /**
+   * 用户点击发送后提交文档及可选文字：两者各一个请求编号，同一发送动作只生成一次；文档不支持引用。
+   *
+   * @param upload - 已上传且未到期的文档草稿。
+   * @param text - 去首尾空白后的正文，空串表示不发文字。
+   * @returns 发送反馈。
+   */
+  function sendDocument(upload: WhatsappDocumentUpload, text: string) {
+    const id = selectedId.value;
+    const item: PendingMessage = {
+      clientRequestId: crypto.randomUUID(),
+      text,
+      document: { upload, ...(text ? { textRequestId: crypto.randomUUID() } : {}) },
       state: "sending",
       error: "",
       createdAt: new Date().toISOString(),
@@ -603,6 +634,7 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     markDisplayed,
     sendText,
     sendImages,
+    sendDocument,
     sendReaction,
     resubmitPending,
     discardPending,

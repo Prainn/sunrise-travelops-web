@@ -2,6 +2,27 @@
   <PageShell>
     <SectionCard :title="$t('whatsapp.integrationStatus')">
       <template #actions>
+        <div class="flex flex-wrap items-center justify-end gap-x-[16px] gap-y-[6px]">
+          <span v-if="switches.runtime.value" class="text-[13px] text-muted">
+            {{ $t("whatsapp.runtime.environment") }}：<strong class="text-strong">{{ switches.runtime.value.environment }}</strong>
+          </span>
+          <label
+            v-for="field in runtimeFields"
+            :key="field"
+            class="inline-flex items-center gap-[6px] text-[13px]"
+            :title="switchReason(field)"
+          >
+            <span>{{ $t(`whatsapp.runtime.${field}`) }}</span>
+            <el-switch
+              :model-value="switchValue(field)"
+              :disabled="!switches.isAvailable(field) || !!switches.saving.value"
+              :loading="switches.saving.value === field"
+              :aria-label="$t(`whatsapp.runtime.${field}`)"
+              @change="handleToggle(field, $event as boolean)"
+            />
+            <span class="text-muted">{{ switchText(field) }}</span>
+          </label>
+        </div>
         <IconButton
           :label="$t('common.refresh')"
           :icon="Refresh"
@@ -9,6 +30,10 @@
           @click="loadStatus"
         />
       </template>
+      <p class="mt-0 mb-[12px] text-muted text-[12px]">
+        {{ $t("whatsapp.runtime.help") }}
+        <span v-if="runtimeReason" class="block mt-[4px] text-[var(--el-color-warning)]" role="status">{{ runtimeReason }}</span>
+      </p>
       <FeedbackState
         v-if="statusError"
         type="error"
@@ -120,7 +145,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Refresh } from "@element-plus/icons-vue";
 import { useI18n } from "vue-i18n";
@@ -136,6 +161,7 @@ import { websiteErrorMessage } from "@/services/website.service";
 import { whatsappService } from "@/services/whatsapp.service";
 import type { WhatsappFailedEvent, WhatsappIntegrationStatus, WhatsappWorkerStatus } from "@/types/whatsapp";
 import { formatDateTime } from "@/utils";
+import { useRuntimeSwitches, type RuntimeSwitch } from "./useRuntimeSwitches";
 
 defineOptions({ name: "WhatsappIntegration" });
 
@@ -158,6 +184,8 @@ const page = ref(1);
 const pageSize = ref(20);
 const total = ref(0);
 const retrying = ref(new Set<string>());
+const runtimeFields = ["inbound", "outbound"] as const;
+const switches = useRuntimeSwitches(loadStatus);
 
 onMounted(refresh);
 useRefreshOnActivated(refresh);
@@ -175,8 +203,37 @@ async function loadStatus() {
     status.value = null;
     statusError.value = websiteErrorMessage(cause);
   } finally {
+    switches.sync(status.value?.runtime);
     statusLoading.value = false;
   }
+}
+
+/** 不可用时不显示为“关”，避免把暂不可切换误认为默认关闭。 */
+function switchValue(field: RuntimeSwitch) {
+  const runtime = switches.runtime.value;
+  if (!runtime || !switches.isAvailable(field)) return false;
+  return field === "inbound" ? runtime.inboundEnabled : runtime.outboundEnabled;
+}
+function switchText(field: RuntimeSwitch) {
+  if (!switches.isAvailable(field)) return t("whatsapp.runtime.unavailable");
+  return t(switchValue(field) ? "whatsapp.runtime.on" : "whatsapp.runtime.off");
+}
+function switchReason(field: RuntimeSwitch) {
+  if (statusError.value) return t("whatsapp.runtime.loadFailedHint");
+  if (!switches.runtime.value) return status.value ? t("whatsapp.runtime.missingHint") : "";
+  return switches.isAvailable(field) ? "" : t("whatsapp.runtime.unavailableHint");
+}
+const runtimeReason = computed(() => {
+  const reasons = runtimeFields.map((field) => switchReason(field) && `${t(`whatsapp.runtime.${field}`)}：${switchReason(field)}`).filter(Boolean);
+  return switches.runtime.value ? reasons.join("；") : switchReason("inbound");
+});
+async function handleToggle(field: RuntimeSwitch, enabled: boolean) {
+  const result = await switches.toggle(field, enabled);
+  if (result.kind === "saved") {
+    ElMessage.success(t("whatsapp.runtime.saved"));
+    void loadStatus();
+  } else if (result.kind === "conflict") ElMessage.warning(t("whatsapp.runtime.conflict"));
+  else if (result.kind === "failed") ElMessage.error(result.message);
 }
 async function loadEvents() {
   eventsLoading.value = true;

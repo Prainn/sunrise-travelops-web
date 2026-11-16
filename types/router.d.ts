@@ -23,5 +23,7 @@ declare module "vue-router" {
     scopes?: LoginScope[];
     menuKey?: string;
     inquiryWorkspace?: boolean;
+    /** 仅 query 变化时复用页面实例，不重建页面也不播放切换动画。 */
+    reuseOnQueryChange?: boolean;
   }
 }
