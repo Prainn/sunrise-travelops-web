@@ -322,7 +322,7 @@ export interface WebsiteOutput {
     priceComponents?: Array<{ category: WebsitePriceCategory; unitPrice: string }>;
   }>;
   teamStandard?: Array<{
-    category: "hotel" | "meal" | "entry" | "service" | "transport";
+    category: "hotel" | "meal" | "entry" | "service" | "driver" | "transport";
     included: string[];
   }>;
   mileage?: Array<{ route: string; distanceKm: string | null; durationMinutes: number | null; vehicleType?: string | null; transport: string }>;
