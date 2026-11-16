@@ -54,7 +54,7 @@
           min-width="180"
           show-overflow-tooltip
         />
-        <el-table-column :label="$t('websiteVisits.beijingTime')" width="180">
+        <el-table-column :label="$t('common.createdAt')" width="180">
           <template #default="{ row }">
             {{ beijingTime(row.created_at_utc) }}
           </template>

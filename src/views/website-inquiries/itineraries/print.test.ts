@@ -63,7 +63,7 @@ it.each(["en", "zh"] as const)("uses identical frozen HTML for %s preview and fo
   expect(await printDocument.blob.text()).toBe(previewHtml);
   expect(printDocument.fileName).toBe(`WQT-TEST-${language}.pdf`);
   const statement = language === "en" ? "No shopping." : "无购物。";
-  const notes = previewHtml.indexOf('<table class="notes">');
+  const notes = previewHtml.indexOf('<tr class="quote-notes">');
   const shopping = previewHtml.indexOf('<tr class="no-shopping">');
   const hotels = previewHtml.indexOf('<table class="hotels-v5">');
   expect(notes).toBeLessThan(shopping);
@@ -100,14 +100,44 @@ it("preserves frozen combination totals and visible zero-price components when g
   expect(html).toContain("Custom &lt;vehicle&gt;");
 });
 
-it("labels team standard rows as Driver & Guide and Transportation while quotations keep Vehicle", () => {
-  const teamStandard = (["hotel", "meal", "entry", "service", "transport"] as const).map(category => ({ category, included: [] }));
+it("labels team standard rows as Driver, Guide and Transportation while quotations keep Vehicle", () => {
+  const teamStandard = (["hotel", "meal", "entry", "service", "driver", "transport"] as const).map(category => ({ category, included: [] }));
   const output: WebsiteOutput = { ...empty, teamStandard, quotation: [{ vehicle: "7-seat vehicle", hotelCategory: "5-star", unitPrice: "800.00", price: "RMB 800.00 PP" }] };
   const en = websitePrintHtml(output, "en");
-  expect(en).toContain("<th>Driver &amp; Guide</th>");
+  expect(en).toContain("<th>Driver</th>");
+  expect(en).toContain("<th>Guide</th>");
   expect(en).toContain("<th>Transportation</th>");
-  expect(en).toContain("<th>Vehicle</th>");
+  expect(en).toContain('<th colspan="2">Vehicle</th>');
   const zh = websitePrintHtml(output, "zh");
-  expect(zh).toContain("<th>司机与导游</th>");
+  expect(zh).toContain("<th>司机</th>");
+  expect(zh).toContain("<th>导游</th>");
   expect(zh).toContain("<th>交通</th>");
+});
+
+it("lays out driver and guide as separate 2x2 service-standard cells", () => {
+  const html = websitePrintHtml({
+    ...empty,
+    teamStandard: [
+      { category: "entry", included: ["Ticket A included."] },
+      { category: "driver", included: ["Private driver included on D1."] },
+      { category: "transport", included: ["Vehicle options: 7-seat vehicle."] },
+      { category: "service", included: ["D1: Tour guide (English) included."] },
+    ],
+  }, "en");
+  expect(html).toContain("<th>Tickets</th><td><p>Ticket A included.</p></td><th>Driver</th><td><p>Private driver included on D1.</p></td>");
+  expect(html).toContain("<th>Transportation</th><td><p>Vehicle options: 7-seat vehicle.</p></td><th>Guide</th><td><p>D1: Tour guide (English) included.</p></td>");
+  expect(html).not.toContain("Driver &amp; Guide");
+});
+
+it("closes the last quotation table with notes and no-shopping rows without fills", () => {
+  const quote = { vehicle: "7-seat vehicle", unitPrice: "800.00", price: "RMB 800.00 PP" };
+  const html = websitePrintHtml({ ...empty, notes: ["Peak season."], noShopping: "No shopping", quotation: [{ ...quote, hotelCategory: "5-star" }, { ...quote, hotelCategory: "4-star" }] }, "en");
+  const tables = html.match(/<table class="quotation quotation-v5">[\s\S]*?<\/table>/g)!;
+  expect(tables).toHaveLength(2);
+  expect(tables[0]).not.toContain("quote-notes");
+  expect(tables[1]).toContain('<tr class="quote-notes"><th class="label">Notes</th><td colspan="3"><p>1. Peak season.</p></td></tr><tr class="no-shopping"><td colspan="4">');
+  expect(html).not.toContain('<table class="notes">');
+  expect(html).not.toMatch(/background: #f[39]f[4a]f[6b]|#9ca3af/);
+  const standalone = websitePrintHtml({ ...empty, notes: ["Peak season."] }, "en");
+  expect(standalone).toContain('<table class="notes"><tbody><tr class="quote-notes"><th class="label">Notes</th><td colspan="1">');
 });

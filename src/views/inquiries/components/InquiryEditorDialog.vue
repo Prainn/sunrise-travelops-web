@@ -369,8 +369,6 @@ function syncAgencyDetails() {
     email: agency.email,
     contactId: contact?.id ?? form.contactId,
     phone: contact?.phone ?? form.phone,
-    countryItemId: agency.countryItemId ?? form.countryItemId,
-    countryOrRegion: agency.countryOrRegion,
   });
 }
 
