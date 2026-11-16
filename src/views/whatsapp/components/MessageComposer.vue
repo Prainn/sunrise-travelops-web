@@ -93,6 +93,26 @@
           rx="2"
         /><circle cx="9" cy="10" r="1.6" /><path d="m4 18 5-5 4 4 3-3 4 4" /></svg>
       </button>
+      <button
+        type="button"
+        class="whatsapp-composer__tool"
+        :disabled="!canAttachDocument || documentBusy"
+        :aria-label="$t('whatsapp.documentDraft.add')"
+        :aria-busy="documentBusy"
+        :title="$t('whatsapp.documentDraft.addHint')"
+        @click="pickDocument"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        ><path d="M14 3H6v18h12V7l-4-4Z" /><path d="M14 3v4h4M9 12h6M9 16h6" /></svg>
+      </button>
       <input
         ref="fileInput"
         type="file"
@@ -100,6 +120,13 @@
         :accept="IMAGE_ACCEPT"
         multiple
         @change="handleFileChange"
+      />
+      <input
+        ref="documentInput"
+        type="file"
+        class="hidden"
+        :accept="DOCUMENT_ACCEPT"
+        @change="handleDocumentChange"
       />
     </div>
     <div class="whatsapp-composer__box" :class="{ 'is-disabled': disabled }">
@@ -146,6 +173,7 @@ import { COMMON_EMOJIS } from "../emoji";
 import { composerContent, composerFragment } from "../composer-dom";
 import { IMAGE_ACCEPT, namedClipboardImage } from "@/utils/image-file";
 import { isCjk, isWord } from "../message-format";
+import { DOCUMENT_ACCEPT } from "../document-draft";
 import QuickReplyDialog from "./QuickReplyDialog.vue";
 
 const props = withDefaults(defineProps<{
@@ -155,12 +183,17 @@ const props = withDefaults(defineProps<{
   canAttachImage?: boolean;
   /** 草稿图片已达上限，不再打开选择框。 */
   imageFull?: boolean;
-}>(), { canAttachImage: false, imageFull: false });
-const emit = defineEmits<{ "update:modelValue": [text: string]; send: []; images: [files: File[]] }>();
+  /** 可选一个 PDF/Word 文档生成草稿；由会话 canSendDocuments 决定。 */
+  canAttachDocument?: boolean;
+  /** 文档上传中，暂不允许再次选择。 */
+  documentBusy?: boolean;
+}>(), { canAttachImage: false, imageFull: false, canAttachDocument: false, documentBusy: false });
+const emit = defineEmits<{ "update:modelValue": [text: string]; send: []; images: [files: File[]]; document: [file: File] }>();
 const maxLength = 4096;
 const { t } = useI18n();
 const editor = ref<HTMLElement>();
 const fileInput = ref<HTMLInputElement>();
+const documentInput = ref<HTMLInputElement>();
 const formats = reactive({ bold: false, italic: false });
 const emojiOpen = ref(false);
 const quickReplyOpen = ref(false);
@@ -261,6 +294,15 @@ onMounted(() => {
 onBeforeUnmount(() => document.removeEventListener("selectionchange", rememberSelection));
 function pickImage() {
   if (props.canAttachImage && !props.imageFull) fileInput.value?.click();
+}
+function pickDocument() {
+  if (props.canAttachDocument && !props.documentBusy) documentInput.value?.click();
+}
+function handleDocumentChange(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = "";
+  if (file && props.canAttachDocument) emit("document", file);
 }
 defineExpose({ focus, pickImage });
 </script>

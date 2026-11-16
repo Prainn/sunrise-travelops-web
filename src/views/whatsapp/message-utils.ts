@@ -4,6 +4,8 @@ import type { OssResource } from "@/types/oss";
 import type {
   WhatsappConversationDetail,
   WhatsappConversationState,
+  WhatsappDocumentMeta,
+  WhatsappDocumentUpload,
   WhatsappMessage,
   WhatsappReply,
 } from "@/types/whatsapp";
@@ -18,11 +20,16 @@ export interface PendingMessage {
    * 结果未知时原样重提全部编号；本地文件仅用于资源过期后重新上传。
    */
   batch?: { images: PendingImage[]; textRequestId?: string };
+  /**
+   * 文档发送快照：clientRequestId 为文档请求编号；text 为随后独立入队的文字，有正文时才带 textRequestId。
+   * 结果未知时原样重提两个编号；upload 用于服务端文件仍有效时重新编辑。
+   */
+  document?: { upload: WhatsappDocumentUpload; textRequestId?: string };
   replyTo?: WhatsappReply;
   /** sending：请求中；uncertain：结果未知，只能用同一请求编号再次提交；rejected：服务端明确拒绝。 */
   state: "sending" | "uncertain" | "rejected";
   error: string;
-  /** 被拒绝的原因是图片资源已清理（404），重新编辑时需重新上传。 */
+  /** 被拒绝的原因是图片或文档已清理（404），重新编辑时需重新上传。 */
   isExpired?: boolean;
   createdAt: string;
 }
@@ -39,6 +46,7 @@ export interface PendingImage {
 
 /** 本地发送记录对应的全部请求编号；批量整组同一事务入队，任一编号入库即整组已确认。 */
 export function pendingRequestIds(item: PendingMessage): string[] {
+  if (item.document) return item.document.textRequestId ? [item.clientRequestId, item.document.textRequestId] : [item.clientRequestId];
   if (!item.batch) return [item.clientRequestId];
   const ids = item.batch.images.map((image) => image.clientRequestId);
   return item.batch.textRequestId ? [...ids, item.batch.textRequestId] : ids;
@@ -239,6 +247,26 @@ export function messageMedia(message: Pick<WhatsappMessage, "attachment">): OssR
   const media = value as Partial<OssResource>;
   if (typeof media.id !== "string" || typeof media.state !== "string" || typeof media.kind !== "string") return undefined;
   return media as OssResource;
+}
+
+/**
+ * 工作台出站文档的文件元数据；入站、手机端或缺少元数据的旧文档返回 undefined，沿用原附件摘要展示。
+ *
+ * @param message - 消息。
+ * @returns 文件元数据。
+ */
+export function messageDocument(message: Pick<WhatsappMessage, "kind" | "direction" | "attachment">): WhatsappDocumentMeta | undefined {
+  if (message.kind !== "document" || message.direction !== "outbound") return undefined;
+  const value = message.attachment?.document;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const document = value as Partial<WhatsappDocumentMeta>;
+  if (typeof document.id !== "string" || typeof document.fileName !== "string") return undefined;
+  return {
+    id: document.id,
+    fileName: document.fileName,
+    mimeType: typeof document.mimeType === "string" ? document.mimeType : "",
+    sizeBytes: typeof document.sizeBytes === "number" ? document.sizeBytes : Number.NaN,
+  };
 }
 
 /** 归档仍在进行，完成后需要重取该消息所在页。 */

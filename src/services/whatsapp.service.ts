@@ -12,6 +12,8 @@ import type {
   WhatsappConversationQueryParams,
   WhatsappCustomerNotes,
   WhatsappCustomerNotesInput,
+  WhatsappDocumentMessageInput,
+  WhatsappDocumentUpload,
   WhatsappFailedEvent,
   WhatsappImageBatchInput,
   WhatsappInquiryInput,
@@ -21,6 +23,8 @@ import type {
   WhatsappMessage,
   WhatsappMessageQueryParams,
   WhatsappNewConsultationResult,
+  WhatsappRuntime,
+  WhatsappRuntimeInput,
   WhatsappQuickReply, WhatsappQuickReplyInput, WhatsappQuickReplyQuery,
 } from "@/types/whatsapp";
 import type { WebsiteOwnerOption } from "@/services/website.service";
@@ -133,6 +137,20 @@ export const whatsappService = {
   sendImageBatch(id: string, input: WhatsappImageBatchInput) {
     return request.post<{ messages: WhatsappMessage[] }>(`${conversationUrl(id)}/image-message-batches`, input);
   },
+  /** 只上传文档草稿，不发送；FormData 仅含 file，由浏览器生成 multipart 边界。 */
+  uploadDocument(id: string, file: File) {
+    const form = new FormData();
+    form.append("file", file, file.name);
+    return request.post<WhatsappDocumentUpload>(`${conversationUrl(id)}/documents`, form, { timeoutMs: LONG_REQUEST_TIMEOUT_MS });
+  },
+  /** 文档与可选文字同事务入队；结果不明时须原样重用两个编号重新提交。 */
+  sendDocument(id: string, input: WhatsappDocumentMessageInput) {
+    return request.post<{ messages: WhatsappMessage[] }>(`${conversationUrl(id)}/document-messages`, input);
+  },
+  /** 60 秒有效的下载地址；每次点击重新获取，不缓存或展示。 */
+  documentDownload(id: string, messageId: string) {
+    return request.get<{ url: string }>(`${conversationUrl(id)}/messages/${encodeURIComponent(messageId)}/document-download`);
+  },
   sendReaction(id: string, messageId: string, clientRequestId: string, emoji: string) {
     return request.post<WhatsappMessage>(`${conversationUrl(id)}/messages/${encodeURIComponent(messageId)}/reactions`, { clientRequestId, emoji });
   },
@@ -150,6 +168,10 @@ export const whatsappService = {
   },
   integration() {
     return request.get<WhatsappIntegrationStatus>(`${BASE_URL}/integration`);
+  },
+  /** 只更新指定开关；版本过期返回 409。 */
+  updateRuntime(input: WhatsappRuntimeInput) {
+    return request.put<WhatsappRuntime>(`${BASE_URL}/integration/runtime`, input);
   },
   failedEvents(query: { page: number; pageSize: number }) {
     return request.get<PageResult<WhatsappFailedEvent>>(`${BASE_URL}/integration/failed-events`, { params: { ...query } });

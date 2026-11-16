@@ -2568,7 +2568,7 @@
     "closedHint": "会话已关闭，请先重新打开再回复",
     "window": {
       "none": "客户尚无入站消息，暂不能回复",
-      "expired": "已超出 24 小时回复窗口，请等待客户新消息；本期不支持模板消息",
+      "expired": "已超出 24 小时回复窗口，请等待客户新消息",
       "duration": "{hours} 小时 {minutes} 分钟",
       "open": "24 小时回复窗口剩余 {time}"
     },
@@ -2681,6 +2681,33 @@
       "expired": "图片已过期，请重新上传",
       "expiredNoFile": "图片已过期，请移除后重新选择",
       "batchExpired": "部分图片已过期，请点“重新编辑”后重新上传"
+    },
+    "documentDraft": {
+      "add": "发送文件",
+      "addHint": "发送文件（PDF / Word，最大 20 MB）",
+      "uploading": "文件上传中…",
+      "remove": "移除文件",
+      "invalidType": "仅支持 PDF、DOC、DOCX 文件",
+      "tooLarge": "文件不能超过 20 MB",
+      "expired": "文件已过期，请移除后重新上传",
+      "notReady": "文件上传失败，请移除后重新选择",
+      "mixed": "文件和图片不能一起发送，请先移除或发送已有草稿",
+      "noReply": "文件暂不支持引用回复，请先取消引用再发送",
+      "download": "下载 {name}"
+    },
+    "runtime": {
+      "environment": "当前环境",
+      "inbound": "入站处理",
+      "outbound": "出站发送",
+      "on": "开",
+      "off": "关",
+      "unavailable": "不可用",
+      "unavailableHint": "基础配置未启用，暂不能切换",
+      "loadFailedHint": "开关状态读取失败，请刷新后重试",
+      "missingHint": "服务端未返回开关状态，暂不能切换",
+      "help": "关闭入站：回调仍保存，暂停写入会话，恢复后处理积压。关闭出站：不接收新的发送、不领取新任务，现有队列保留，已开始的发送可能完成。两个开关都不影响回执；与下方当前实例的处理状态分开。",
+      "saved": "开关已更新",
+      "conflict": "开关状态已被更新，已重新读取最新状态"
     }
   }
 }

@@ -6,7 +6,7 @@
           <keep-alive :include="cachedViews">
             <component
               :is="currentComponent(Component, route)"
-              :key="route.fullPath"
+              :key="viewKey(route)"
             />
           </keep-alive>
         </transition>
@@ -29,10 +29,11 @@ const { cachedViews } = toRefs(useTagsViewStore());
 const settingsStore = useSettingsStore();
 const { currentLayout, isWorkspaceChromeless, isWorkspaceNavbarHidden } = useLayout();
 const wrapperMap = new Map<string, Component>();
+const viewKey = (route: RouteLocationNormalized) => (route.meta.reuseOnQueryChange ? route.path : route.fullPath);
 const currentComponent = (component: Component, route: RouteLocationNormalized) => {
   if (!component) return;
 
-  const { fullPath: componentName } = route;
+  const componentName = viewKey(route);
   let wrapper = wrapperMap.get(componentName);
 
   if (!wrapper) {

@@ -69,6 +69,8 @@ export interface WhatsappConversationCapabilities {
   canUpdateCustomer: boolean;
   /** 主管或特权 ROOT 可将结果待核实的系统消息人工确认为未送达。 */
   canConfirmFailed: boolean;
+  /** 文档存储启用且可普通回复时为 true；旧服务端缺少该字段按不可用处理。 */
+  canSendDocuments?: boolean;
 }
 
 export interface WhatsappConversationDetail extends WhatsappConversationItem {
@@ -111,6 +113,25 @@ export interface WhatsappImageBatchInput {
   images: { clientRequestId: string; mediaAssetId: string }[];
   textMessage?: { clientRequestId: string; text: string };
   replyToMessageId?: string;
+}
+
+/** 已上传未发送的文档草稿；未被消息认领满 24 小时由服务端清理。 */
+export interface WhatsappDocumentUpload {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  expiresAt: string;
+}
+
+/** 工作台出站文档消息附件中的文件元数据，不含下载地址。 */
+export type WhatsappDocumentMeta = Pick<WhatsappDocumentUpload, "id" | "fileName" | "mimeType" | "sizeBytes">;
+
+/** 文档发送请求：先入队文档，有正文时再入队独立文字；两条请求编号必须不同。 */
+export interface WhatsappDocumentMessageInput {
+  documentId: string;
+  clientRequestId: string;
+  textMessage?: { clientRequestId: string; text: string };
 }
 
 export interface WhatsappQuickReply {
@@ -264,7 +285,24 @@ export interface WhatsappIntegrationStatus {
   lastProcessedAt: string | null;
   pending: number;
   failed: number;
+  /** 当前 API 对应环境的入站/出站开关；旧服务端可能缺失。 */
+  runtime?: WhatsappRuntime;
 }
+
+/** 环境由服务端决定；available 为 false 表示基础配置不允许切换。 */
+export interface WhatsappRuntime {
+  environment: "dev" | "prod" | "local";
+  version: number;
+  inboundAvailable: boolean;
+  outboundAvailable: boolean;
+  inboundEnabled: boolean;
+  outboundEnabled: boolean;
+}
+
+/** 每次只改一个开关，不传环境，也不用旧状态覆写另一个开关。 */
+export type WhatsappRuntimeInput =
+  | { version: number; inboundEnabled: boolean }
+  | { version: number; outboundEnabled: boolean };
 
 export interface WhatsappFailedEvent {
   id: string;
