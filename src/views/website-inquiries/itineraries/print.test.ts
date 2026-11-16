@@ -9,12 +9,14 @@ describe("frozen report rendering", () => {
   it.each(["en", "zh"] as const)("renders a hotel-free quotation with overnight cities in %s", (language) => {
     const html = websitePrintHtml({
       ...empty,
-      itinerary: [{ day: "D1", depart: "Kunming", transportation: "", sightseeing: "", hotel: "Kunming", meal: "" }],
+      itinerary: ["D1", "D2"].map(day => ({ day, depart: "Kunming", transportation: "", sightseeing: "", hotel: "Kunming", meal: "" })),
       quotation: [{ vehicle: "7-seat vehicle", hotelTier: null, hotelCategory: language === "en" ? "No hotel arranged" : "未安排酒店", unitPrice: "500.00", totalPrice: "1500.00", pax: 3, price: "RMB 500.00 PP" }],
     }, language);
     expect(html).toContain(language === "en" ? "No hotel arranged." : "本行程未安排酒店。");
     expect(html).toContain("RMB 1,500.00");
     expect(html).toContain("Kunming");
+    expect(html).toContain('<td class="center">D1</td>');
+    expect(html).toContain('<td class="center">D2</td>');
     expect(html).not.toContain('<table class="hotels-v5">');
   });
 
@@ -49,7 +51,7 @@ it("renders only the frozen customer breakdown in both languages", () => {
 it.each(["en", "zh"] as const)("uses identical frozen HTML for %s preview and formal printing", async (language) => {
   const output: WebsiteOutput = {
     ...empty,
-    itinerary: [{ day: "2026-10-30", depart: "Kunming", transportation: "Private vehicle", sightseeing: "Visit Green Lake Park.", hotel: "Kunming", meal: "B" }],
+    itinerary: ["2026-10-31", "2026-11-01"].map(day => ({ day, depart: "Kunming", transportation: "Private vehicle", sightseeing: "Visit Green Lake Park.", hotel: "Kunming", meal: "B" })),
     quotation: [{ vehicle: "5-seat vehicle", hotelTier: "A", hotelCategory: "5-star", pax: 2, unitPrice: "5500.00", totalPrice: "11000.00", price: "RMB 5500.00 PP" }],
     hotelOptions: [{ tier: "A", tierLabel: "5-star", city: "Kunming", hotel: "JEN", roomType: "Twin", startDay: 1, endDay: 1, nights: 1, breakfastIncluded: true }],
     notes: ["Reconfirm peak-season arrangements.", "Same-category hotel substitution."],
@@ -72,9 +74,8 @@ it.each(["en", "zh"] as const)("uses identical frozen HTML for %s preview and fo
   expect(previewHtml).not.toContain(`3. ${statement}`);
   expect(previewHtml).not.toMatch(/Luxury|Comfort|Economy/);
   expect(previewHtml).toContain('class="tier">5-star</th>');
-  // 天数列按顺序输出 D{n}，不输出冻结日期。
-  expect(previewHtml).toContain('<td class="center">D1</td>');
-  expect(previewHtml).not.toContain("2026-10-30");
+  expect(previewHtml).toContain('<td class="center">2026-10-31</td>');
+  expect(previewHtml).toContain('<td class="center">2026-11-01</td>');
 });
 
 it("keeps historical frozen notes and labels without deriving a new statement", () => {
