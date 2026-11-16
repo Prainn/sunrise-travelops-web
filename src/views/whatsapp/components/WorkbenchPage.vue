@@ -36,18 +36,30 @@
       </el-form-item>
     </FilterBar>
     <div class="whatsapp-workbench__split">
-      <aside class="whatsapp-workbench__list">
-        <ConversationList
-          v-model:page="workbench.page.value"
-          v-model:page-size="workbench.pageSize.value"
-          :items="workbench.conversations.value"
-          :selected-id="workbench.selectedId.value"
-          :loading="workbench.listLoading.value"
-          :error="workbench.listError.value"
-          :total="workbench.total.value"
-          @select="handleSelect"
-          @refresh="handleManualRefresh"
-        />
+      <aside class="whatsapp-workbench__list" :class="{ 'is-collapsed': !listOpen }">
+        <div class="whatsapp-workbench__panel">
+          <ConversationList
+            v-model:page="workbench.page.value"
+            v-model:page-size="workbench.pageSize.value"
+            class="w-[320px]"
+            :items="workbench.conversations.value"
+            :selected-id="workbench.selectedId.value"
+            :loading="workbench.listLoading.value"
+            :error="workbench.listError.value"
+            :total="workbench.total.value"
+            @select="handleSelect"
+            @refresh="handleManualRefresh"
+          />
+        </div>
+        <button
+          type="button"
+          class="whatsapp-workbench__toggle whatsapp-workbench__toggle--list"
+          :aria-label="$t(listOpen ? 'whatsapp.collapseConversations' : 'whatsapp.expandConversations')"
+          :title="$t(listOpen ? 'whatsapp.collapseConversations' : 'whatsapp.expandConversations')"
+          @click="listOpen = !listOpen"
+        >
+          <el-icon><ArrowLeft v-if="listOpen" /><ArrowRight v-else /></el-icon>
+        </button>
       </aside>
       <div class="whatsapp-workbench__content">
         <el-alert
@@ -87,34 +99,47 @@
             @open-conversation="handleSelect"
             @displayed="workbench.markDisplayed"
           />
-          <ConversationInfo
-            class="whatsapp-workbench__info"
-            :detail="detail"
-            :can-update-state="can('whatsapp:conversation:update')"
-            :can-view-inquiry="can('website:inquiry:list')"
-            :can-create-ledger="can('ledger:direct:create')"
-            :busy="actionBusy"
-            :show-actions="isManager"
-            :actions="actions"
-            @assign="assignVisible = true"
-            @set-state="handleSetState"
-            @start-consultation="handleStartConsultation"
-            @create-inquiry="handleCreateInquiry"
-            @view-inquiry="(id) => router.push({ name: 'WebsiteInquiryList', query: { inquiryId: id } })"
-            @create-ledger="(id) => router.push({ name: 'WebsiteLedger', query: { websiteInquiryId: id } })"
-            @view-ledger="(orderNo) => router.push({ name: 'WebsiteLedger', query: { keyword: orderNo } })"
-            @open-conversation="handleSelect"
-          >
-            <template #notes>
-              <CustomerNotesPanel
-                :notes="customerNotes"
-                :cities="cities"
-                :editable="detail.state !== 'archived' && Boolean(detail.capabilities.canUpdateCustomer)"
-                @save="handleSaveNotes"
-                @refresh="handleRefreshNotes"
-              />
-            </template>
-          </ConversationInfo>
+          <aside class="whatsapp-workbench__info" :class="{ 'is-collapsed': !infoOpen }">
+            <button
+              type="button"
+              class="whatsapp-workbench__toggle whatsapp-workbench__toggle--info"
+              :aria-label="$t(infoOpen ? 'whatsapp.collapseCustomer' : 'whatsapp.expandCustomer')"
+              :title="$t(infoOpen ? 'whatsapp.collapseCustomer' : 'whatsapp.expandCustomer')"
+              @click="infoOpen = !infoOpen"
+            >
+              <el-icon><ArrowRight v-if="infoOpen" /><ArrowLeft v-else /></el-icon>
+            </button>
+            <div class="whatsapp-workbench__panel">
+              <ConversationInfo
+                class="w-[320px] h-full"
+                :detail="detail"
+                :can-update-state="can('whatsapp:conversation:update')"
+                :can-view-inquiry="can('website:inquiry:list')"
+                :can-create-ledger="can('ledger:direct:create')"
+                :busy="actionBusy"
+                :show-actions="isManager"
+                :actions="actions"
+                @assign="assignVisible = true"
+                @set-state="handleSetState"
+                @start-consultation="handleStartConsultation"
+                @create-inquiry="handleCreateInquiry"
+                @view-inquiry="(id) => router.push({ name: 'WebsiteInquiryList', query: { inquiryId: id } })"
+                @create-ledger="(id) => router.push({ name: 'WebsiteLedger', query: { websiteInquiryId: id } })"
+                @view-ledger="(orderNo) => router.push({ name: 'WebsiteLedger', query: { keyword: orderNo } })"
+                @open-conversation="handleSelect"
+              >
+                <template #notes>
+                  <CustomerNotesPanel
+                    :notes="customerNotes"
+                    :cities="cities"
+                    :editable="detail.state !== 'archived' && Boolean(detail.capabilities.canUpdateCustomer)"
+                    @save="handleSaveNotes"
+                    @refresh="handleRefreshNotes"
+                  />
+                </template>
+              </ConversationInfo>
+            </div>
+          </aside>
         </div>
       </div>
     </div>
@@ -145,6 +170,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { ArrowLeft, ArrowRight } from "@element-plus/icons-vue";
+import { useWindowSize } from "@vueuse/core";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { ApiError } from "@/api/request";
@@ -202,6 +229,9 @@ const inquirySaving = ref(false);
 const inquiryDraft = ref<Partial<WebsiteInquiryInput>>();
 const inquiryVersion = ref(0);
 const cities = ref<WebsiteCity[]>([]);
+const { width: windowWidth } = useWindowSize();
+const listOpen = ref(true);
+const infoOpen = ref(true);
 let actionsGeneration = 0;
 let actionsConversationId: string | undefined;
 /** 这些原因会改变资料面板或分配记录；消息、状态与已读只需工作台刷新会话。 */
@@ -209,12 +239,23 @@ const PANEL_REASONS = new Set(["notes", "inquiry", "assign", "consultation"]);
 let stopSignals: (() => void) | undefined;
 
 const detail = computed(() => workbench.detail.value);
+/** 宽屏两侧面板都展开；中屏先收起客户信息；小屏都收起，把宽度留给对话。 */
+const panelLayout = computed(() => {
+  if (windowWidth.value >= 1400) return "wide";
+  return windowWidth.value >= 1024 ? "medium" : "narrow";
+});
 const threadErrorTitle = computed(() => {
   const kind = workbench.threadError.value?.kind;
   if (kind === "not-found") return t("whatsapp.notFound");
   if (kind === "forbidden") return t("whatsapp.forbidden");
   return t("common.loadFailed");
 });
+
+// 窗口跨过断点时按新宽度重置面板，同一断点内保留用户手动展开或收起的状态。
+watch(panelLayout, (layout) => {
+  listOpen.value = layout !== "narrow";
+  infoOpen.value = layout === "wide";
+}, { immediate: true });
 
 watch(() => detail.value?.id, () => {
   // 切换会话时关闭基于旧会话的弹窗，避免把操作提交到错误的咨询。
@@ -512,12 +553,66 @@ async function handleInquirySave(input: WebsiteInquiryInput) {
   min-height: 0;
 }
 
-.whatsapp-workbench__list {
+.whatsapp-workbench__list,
+.whatsapp-workbench__info {
+  position: relative;
   display: flex;
   flex: 0 0 320px;
-  flex-direction: column;
-  width: 320px;
+  min-width: 0;
   min-height: 0;
+  transition: flex-basis 0.25s ease;
+
+  &.is-collapsed {
+    flex-basis: 0;
+  }
+}
+
+.whatsapp-workbench__panel {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  transition: opacity 0.25s ease;
+
+  .is-collapsed > & {
+    pointer-events: none;
+    opacity: 0;
+  }
+}
+
+.whatsapp-workbench__toggle {
+  position: absolute;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 48px;
+  padding: 0;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  cursor: pointer;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 6px;
+  transition: color 0.2s, border-color 0.2s;
+
+  &:hover {
+    color: var(--el-color-primary);
+    border-color: var(--el-color-primary-light-5);
+  }
+
+  &--list {
+    right: calc(var(--page-gap) / -2);
+    transform: translate(50%, -50%);
+  }
+
+  &--info {
+    left: calc(var(--page-gap) / -2);
+    transform: translate(-50%, -50%);
+  }
 }
 
 .whatsapp-workbench__content {
@@ -536,31 +631,11 @@ async function handleInquirySave(input: WebsiteInquiryInput) {
   min-height: 0;
 }
 
-.whatsapp-workbench__info {
-  flex: 0 0 320px;
-  width: 320px;
-}
-
-@media (width <= 900px) {
-  .whatsapp-workbench__split {
-    flex-direction: column;
-  }
-
-  .whatsapp-workbench__list {
-    flex-basis: auto;
-    width: 100%;
-    max-height: 50vh;
-  }
-}
-
-@media (width <= 1200px) {
-  .whatsapp-workbench__body {
-    flex-direction: column;
-  }
-
-  .whatsapp-workbench__info {
-    flex-basis: auto;
-    width: 100%;
+@media (prefers-reduced-motion: reduce) {
+  .whatsapp-workbench__list,
+  .whatsapp-workbench__info,
+  .whatsapp-workbench__panel {
+    transition: none;
   }
 }
 </style>
