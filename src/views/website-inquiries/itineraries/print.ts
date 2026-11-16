@@ -23,8 +23,11 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh"): 
   const headings = ["itineraryHeading", "standardsHeading", "quotationHeading", "hotelHeading", "mileageHeading"] as const;
   const columns = ["dayColumn", "departureColumn", "transportColumn", "sightseeingColumn", "overnightColumn", "mealsColumn"] as const;
   const paragraphs = (values: string[]) => values.map(value => `<p>${escapeHtml(value)}</p>`).join("");
-  const dayRows = output.itinerary.map((day, dayIndex) => `<tr>${[`D${dayIndex + 1}`, day.depart, day.transportation, day.sightseeing, day.hotel, day.meal]
-    .map((value, index) => `<td class="${index === 3 ? "sightseeing" : "center"}">${escapeHtml(value)}</td>`).join("")}</tr>`).join("");
+  const dayRows = output.itinerary.map((day, dayIndex) => {
+    const dayLabel = /^\d{4}-\d{2}-\d{2}$/.test(day.day) ? day.day : `D${dayIndex + 1}`;
+    return `<tr>${[dayLabel, day.depart, day.transportation, day.sightseeing, day.hotel, day.meal]
+      .map((value, index) => `<td class="${index === 3 ? "sightseeing" : "center"}">${escapeHtml(value)}</td>`).join("")}</tr>`;
+  }).join("");
   const included = (category: string) => paragraphs(output.teamStandard?.find(row => row.category === category)?.included ?? []);
   // 司机说明、导游及其他服务、报价车型由服务端分别写入 driver/service/transport，前端只换标签不再拼接。
   const transportLabel = text("transportation");
@@ -164,7 +167,7 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh"): 
       <p><strong>地址 /</strong> 中国 · 云南省 · 昆明市 · 北京路 1079#· 欣都龙城购物中心</p>
       <p><strong>Address: </strong>Xindu Longcheng VC Park, No. 1079 Beijing Rd., Kunming, Yunnan</p>
     </div></header>
-    <table class="print-layout"><thead><tr><td></td></tr></thead><tbody><tr><td><main><h2>${text(headings[0])}</h2><table class="itinerary"><colgroup>${[8, 11, 8, 52, 13, 8].map(width => `<col style="width:${width}%">`).join("")}</colgroup><thead><tr>${columns.map(column => `<th>${escapeHtml(text(column))}</th>`).join("")}</tr></thead><tbody>${dayRows}</tbody></table>
+    <table class="print-layout"><thead><tr><td></td></tr></thead><tbody><tr><td><main><h2>${text(headings[0])}</h2><table class="itinerary"><colgroup>${[10, 11, 8, 50, 13, 8].map(width => `<col style="width:${width}%">`).join("")}</colgroup><thead><tr>${columns.map(column => `<th>${escapeHtml(text(column))}</th>`).join("")}</tr></thead><tbody>${dayRows}</tbody></table>
     <h2>${text(headings[1])}</h2>${standard}
     <h2>${text(headings[2])}</h2>${quotationV5()}
     <h2>${text(headings[3])}</h2>${hotelsV5()}
