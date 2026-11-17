@@ -32,7 +32,7 @@
                 <component :is="action.icon" />
               </el-icon>
               {{ action.label }}
-              <small v-if="action.scope" class="ml-1 text-[12px] opacity-75">· {{ action.scope }}</small>
+              <small v-if="action.scope" class="ml-1 text-[12px] opacity-75">{{ action.scope }}</small>
               <el-icon class="ml-1">
                 <ArrowDown />
               </el-icon>
@@ -62,12 +62,12 @@
               <component :is="action.icon" />
             </el-icon>
             {{ action.label }}
-            <small v-if="action.scope" class="ml-1 text-[12px] opacity-75">· {{ action.scope }}</small>
+            <small v-if="action.scope" class="ml-1 text-[12px] opacity-75">{{ action.scope }}</small>
           </el-button>
         </span>
       </el-tooltip>
     </div>
-    <dl v-if="summaries.length" class="m-0 grid gap-x-3 gap-y-1 [grid-template-columns:max-content_minmax(0,1fr)] text-[13px]">
+    <dl v-if="summaries.length" class="m-0 grid gap-x-3 gap-y-1 [grid-template-columns:max-content_minmax(0,1fr)] text-[14px]">
       <template v-for="summary in summaries" :key="summary.label">
         <dt class="text-muted">
           {{ summary.label }}

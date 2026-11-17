@@ -141,7 +141,7 @@ const issueGroups = computed(() => {
   ].filter((group) => group.issues.length);
 });
 function issueText(issue: WebsiteValidation) {
-  return `${issue.code}${issue.dayNumber ? ` · D${issue.dayNumber}` : ""}：${issue.message}`;
+  return `${issue.code}${issue.dayNumber ? ` D${issue.dayNumber}` : ""}：${issue.message}`;
 }
 const hasErrors = computed(
   () => props.preview?.issues.some((issue) => issue.severity === "ERROR") ?? true,

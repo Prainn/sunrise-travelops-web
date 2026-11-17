@@ -45,7 +45,7 @@
             <el-badge v-if="item.unreadCount" :value="item.unreadCount" :max="99" />
           </span>
         </div>
-        <div class="text-[13px] line-clamp-2 break-words">
+        <div class="text-[14px] line-clamp-2 break-words">
           <template v-if="drafts.get(item.id).trim()">
             <span class="text-[var(--el-color-danger)]">{{ $t("whatsapp.draftLabel") }}：</span>{{ plainMessageText(drafts.get(item.id)) }}
           </template>

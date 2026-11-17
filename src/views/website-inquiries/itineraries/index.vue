@@ -41,7 +41,7 @@
                       v-for="record in plans"
                       :key="record.id"
                       :value="record.id"
-                      :label="`${record.title} · ${$t(record.status === 'draft' ? 'websiteWorkspace.draft' : 'websiteWorkspace.confirmed')}`"
+                      :label="`${record.title} (${$t(record.status === 'draft' ? 'websiteWorkspace.draft' : 'websiteWorkspace.confirmed')})`"
                     />
                   </el-select>
                 </div>
@@ -59,7 +59,7 @@
                   class="flex flex-wrap items-center justify-between gap-3 mt-3 py-3 [border-top:1px_solid_var(--divider-color)] [border-bottom:1px_solid_var(--divider-color)]"
                 >
                   <div class="min-w-0 flex flex-wrap items-center gap-2">
-                    <h2 class="m-0 text-[18px] text-strong break-words">
+                    <h2 class="m-0 text-[16px] font-600 text-strong break-words">
                       {{ plan.title }}
                     </h2>
                     <span v-if="plan.startDate" class="text-sm text-muted">
@@ -483,7 +483,7 @@ function transportBoardItem(leg: WebsiteLeg): ReorderBoardItem {
   return {
     id: leg.id,
     label: `${cityName(leg.fromCityId)} → ${cityName(leg.toCityId)}`,
-    detail: [transportLabel(leg.mode), localName(leg)].filter(Boolean).join(" · "),
+    detail: [transportLabel(leg.mode), localName(leg)].filter(Boolean).join(" / "),
     icon: BOARD_ICONS.legs,
     transportLeg: leg,
   };
@@ -525,7 +525,7 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
         items: [
           ...day.hotels.map((hotel) => ({
             id: hotel.id,
-            label: `${hotel.tier} · ${localName(hotel) || "-"}`,
+            label: `${hotel.tier} / ${localName(hotel) || "-"}`,
             detail: cityName(hotel.cityId),
             slot: `hotel-${hotel.tier}`,
             hotelCityId: hotel.cityId,
@@ -539,7 +539,7 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
         transferable: true,
         items: day.meals.map((meal) => ({
           id: meal.id,
-          label: `${t(`itinerary.meals.${meal.slot}`)} · ${t(`websiteInquiry.feeStates.${meal.feeState}`)}`,
+          label: `${t(`itinerary.meals.${meal.slot}`)} (${t(`websiteInquiry.feeStates.${meal.feeState}`)})`,
           detail: (locale.value === "en" ? meal.restaurantEn : meal.restaurantZh) || meal.restaurantZh || undefined,
           slot: `meal-${meal.slot}`,
           placeholder: !isMealArranged(meal),
@@ -554,7 +554,7 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
           ...(day.guideLanguage
             ? [{
               id: websiteGuideBoardId(day.id),
-              label: `${t("itineraryWorkspace.actions.guide")} · ${day.guideLanguage}`,
+              label: `${t("itineraryWorkspace.actions.guide")} (${day.guideLanguage})`,
               slot: "guide",
               icon: BOARD_ICONS.guide,
             }]

@@ -156,7 +156,7 @@
       v-model="otherCostVisible"
       append-to-body
       size="lg"
-      :title="activeSection ? `${$t(activeSection.titleKey)} · ${$t('itinerary.otherCosts')}` : ''"
+      :title="activeSection ? `${$t(activeSection.titleKey)} / ${$t('itinerary.otherCosts')}` : ''"
     >
       <el-form label-position="top" :disabled="!editable" @submit.prevent="applyOtherCost">
         <template v-if="isPaxOtherSection">

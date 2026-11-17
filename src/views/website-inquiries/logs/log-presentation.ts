@@ -96,7 +96,7 @@ export function changeLabel(change: WebsiteInquiryLogChange, context: LogDisplay
       : ctx?.vehicleType,
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join(" / ");
   const segments = change.path.replace(/\[[^\]]+\]/g, "").split(".").filter(Boolean);
   const label = segments
     // 集合段（days/items…）在带 context 时已由前缀表达，其余保留层级。
@@ -104,7 +104,7 @@ export function changeLabel(change: WebsiteInquiryLogChange, context: LogDisplay
     .map((segment) => segmentLabel(segment, segments[segments.indexOf(segment) - 1], context))
     .join(" / ");
   const text = label || t("websiteInquiry.log.record");
-  return prefix ? `${prefix} · ${text}` : text;
+  return prefix ? `${prefix} / ${text}` : text;
 }
 
 /** 按字段翻译枚举/布尔/日期；管理员录入文本和名称原样显示。 */

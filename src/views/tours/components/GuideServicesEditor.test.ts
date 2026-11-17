@@ -145,17 +145,17 @@ describe("guide name search", () => {
     expect(mocks.availableGuides).toHaveBeenLastCalledWith({ ...base, keyword: "张" });
     // 同名人员按 ID 区分并带编号，仅 list 中的人可选。
     expect(options()).toEqual(expect.arrayContaining([
-      { value: "guide-1", label: "张三 (G001) · 英文", disabled: false },
-      { value: "guide-2", label: "张三 (G002) · 法语", disabled: true },
+      { value: "guide-1", label: "张三 (G001) / 英文", disabled: false },
+      { value: "guide-2", label: "张三 (G002) / 法语", disabled: true },
     ]));
     const text = textOf(root);
     expect(text).toContain("已找到可用导游");
     expect(text).toContain("tour.guideService.reasons.GUIDE_DISABLED");
     expect(text).toContain('tour.guideService.reasons.LANGUAGE_MISMATCH{"expected":"英文","actual":"法语"}');
     expect(text).toContain("2026-11-15 ~ 2026-11-16");
-    expect(text).toContain("LX-001 · 霖熹 · 2026-11-16 ~ 2026-11-16");
+    expect(text).toContain("LX-001 / 霖熹 / 2026-11-16 ~ 2026-11-16");
     // otherServices[0] 是完整表单第 3 段（第 1 段不完整未提交）。
-    expect(text).toContain('tour.guideService.segment{"n":3} · 2026-11-17 ~ 2026-11-17');
+    expect(text).toContain('tour.guideService.segment{"n":3} / 2026-11-17 ~ 2026-11-17');
   });
 
   it("distinguishes not found from a failed request", async () => {
@@ -225,7 +225,7 @@ describe("guide name search", () => {
     mocks.availableGuides.mockResolvedValueOnce(result({ status: "not_found", message: "未找到该姓名的导游" }));
     await search(0, "王");
     expect(rows.value[0]!.guideId).toBe("guide-1");
-    expect(options()).toContainEqual({ value: "guide-1", label: "张三 (G001) · 英文", disabled: false });
+    expect(options()).toContainEqual({ value: "guide-1", label: "张三 (G001) / 英文", disabled: false });
     expect(editor.hasUnavailable()).toBe(false);
     expect(textOf(root)).not.toContain("tour.guideUnavailable");
 

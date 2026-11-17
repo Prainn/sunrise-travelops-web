@@ -58,7 +58,7 @@
                   class="itinerary-page__plan-bar flex flex-wrap items-center justify-between gap-3 mt-[12px] p-[12px_0] [border-top:1px_solid_var(--divider-color)] [border-bottom:1px_solid_var(--divider-color)]"
                 >
                   <div class="itinerary-page__plan-summary min-w-0 flex flex-wrap items-center gap-2">
-                    <h2 class="m-0 text-[18px] text-strong break-words">
+                    <h2 class="m-0 text-[16px] font-600 text-strong break-words">
                       {{ selectedItinerary.title }}
                     </h2>
                     <p class="m-0 flex flex-wrap items-center gap-[6px] text-[14px] text-muted">
@@ -110,7 +110,7 @@
               v-if="selectedItinerary"
               class="itinerary-page__section-actions flex flex-wrap items-center gap-[10px] mt-[12px]"
             >
-              <span class="text-[13px] text-muted">{{ $t("itineraryWorkspace.wholeTripPlans") }}</span>
+              <span class="text-[12px] text-muted">{{ $t("itineraryWorkspace.wholeTripPlans") }}</span>
               <el-dropdown trigger="click" @command="openVehiclePlans">
                 <el-button :type="hasVehiclePlans ? 'primary' : ''">
                   {{ $t("planning.vehiclePlans") }}
@@ -199,8 +199,8 @@
         <template #footer>
           <ItineraryWorkspaceFooter v-if="selectedItinerary">
             <template #summary>
-              {{ serviceDisplayText }} ·
-              {{ $t("itinerary.resourceItemCount", { count: itemCount }) }}
+              {{ serviceDisplayText }}
+              <span class="ml-4">{{ $t("itinerary.resourceItemCount", { count: itemCount }) }}</span>
             </template>
             <el-button :disabled="!canSaveItinerary" class="ml-0!" @click="saveItinerary">
               {{ $t("common.save") }}
@@ -336,7 +336,7 @@
           class="itinerary-page__validation p-[12px_16px] mb-[16px] [background:var(--el-color-danger-light-9)] rounded-[8px]"
           role="alert"
         >
-          <h3 class="m-0 text-[18px]">
+          <h3 class="m-0 text-[16px]">
             {{ $t("itinerary.validation.title") }}
           </h3>
           <ul>
@@ -672,7 +672,7 @@ const dayPlanSummaries = computed(() =>
 );
 const guideSummary = computed(() => {
   const guide = selectedItinerary.value?.guidePlans[0];
-  return guide ? `${guide.guideName} · ${t("itineraryWorkspace.scopes.wholeTrip")}` : "";
+  return guide ? `${guide.guideName} (${t("itineraryWorkspace.scopes.wholeTrip")})` : "";
 });
 /** 顺序看板分组图标，与日卡资源按钮一致 */
 const BOARD_ICONS = {

@@ -73,7 +73,7 @@ const emit = defineEmits<{ refresh: [] }>();
 
   &__title {
     margin: 0 4px 0 0;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
     line-height: 22px;
     color: var(--el-text-color-primary);

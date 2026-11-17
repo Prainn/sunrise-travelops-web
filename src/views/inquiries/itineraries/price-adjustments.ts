@@ -17,7 +17,7 @@ export function itineraryPriceRows(plan: ItineraryRecord) {
       d.items.map((i) =>
         row(
           `item:${i.id}`,
-          `D${d.dayNumber} · ${i.resourceName}`,
+          `D${d.dayNumber} ${i.resourceName}`,
           i,
           () => i.unitCost,
           (v) => {

@@ -86,10 +86,10 @@
               </button>
               <MessageText v-if="message.presentation?.text ?? message.text" :text="message.presentation?.text ?? message.text ?? ''" />
               <div v-if="!messageDocument(message) && ['audio', 'video', 'document'].includes(message.kind) && attachmentSummary(message.attachment).length" class="text-[12px] text-muted">
-                {{ attachmentSummary(message.attachment).join(" · ") }}
+                {{ attachmentSummary(message.attachment).join(" / ") }}
               </div>
             </template>
-            <div class="flex items-center justify-end flex-wrap gap-[5px] mt-[4px] text-[11px] text-muted">
+            <div class="flex items-center justify-end flex-wrap gap-[5px] mt-[4px] text-[12px] text-muted">
               <span v-if="message.presentation?.editedAt" :title="formatDateTime(message.presentation.editedAt)">{{ $t("whatsapp.edited") }}</span>
               <time :datetime="message.occurredAt" :title="formatDateTime(message.occurredAt)">{{ formatDateTime(message.occurredAt) }}</time>
               <span v-if="message.direction === 'outbound'" :class="message.status === 'read' ? 'text-[var(--el-color-primary)]' : message.status === 'failed' ? 'text-[var(--el-color-danger)]' : ''">
@@ -108,7 +108,7 @@
                 @click="handleReact(message, '')"
               >
                 {{ reaction.emoji || '◌' }}
-                <span v-if="['queued', 'sending'].includes(reaction.status)" class="absolute right-[-4px] bottom-[-4px] rounded-full bg-[var(--el-bg-color)] text-[10px]" :aria-label="$t('whatsapp.reactionPending')">◷</span>
+                <span v-if="['queued', 'sending'].includes(reaction.status)" class="absolute right-[-4px] bottom-[-4px] rounded-full bg-[var(--el-bg-color)] text-[12px]" :aria-label="$t('whatsapp.reactionPending')">◷</span>
               </button>
             </div>
           </div>
@@ -230,7 +230,7 @@
                   referrerpolicy="no-referrer"
                   class="block w-[80px] h-[80px] rounded-[6px] object-cover bg-[var(--el-fill-color)]"
                 />
-                <span v-else class="grid place-items-center box-border w-[80px] h-[80px] px-[4px] rounded-[6px] bg-[var(--el-fill-color)] text-[11px] text-muted text-center break-all">
+                <span v-else class="grid place-items-center box-border w-[80px] h-[80px] px-[4px] rounded-[6px] bg-[var(--el-fill-color)] text-[12px] text-muted text-center break-all">
                   {{ image.name }}
                 </span>
               </template>

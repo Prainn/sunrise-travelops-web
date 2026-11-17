@@ -7,7 +7,7 @@
     destroy-on-close
   >
     <div class="flex flex-col gap-4">
-      <div class="surface-muted flex flex-wrap items-center gap-x-8 gap-y-1 px-4 py-3 text-[13px]">
+      <div class="surface-muted flex flex-wrap items-center gap-x-8 gap-y-1 px-4 py-3 text-[14px]">
         <span>
           <span class="text-muted">{{ $t("tour.tourNo") }}</span>
           <span class="ml-2 font-medium text-strong">{{ tour.tourNo }}</span>

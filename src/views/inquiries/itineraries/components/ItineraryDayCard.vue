@@ -221,7 +221,7 @@ const { t } = useI18n();
 function mealLabel(slot: MealSlot) {
   const item = props.day.items.find((item) => item.type === "restaurant" && item.mealSlot === slot);
   return item
-    ? `${item.resourceName} ${item.priceName ? `· ${item.priceName}` : ""}`
+    ? `${item.resourceName}${item.priceName ? ` (${item.priceName})` : ""}`
     : t("itinerary.selectMealResource");
 }
 const resourceActions = computed<DayResourceAction[]>(() => {

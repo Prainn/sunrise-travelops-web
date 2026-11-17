@@ -40,7 +40,7 @@ describe("独立站询盘汇总展示", () => {
         },
         context,
       ),
-    ).toBe("第 2 天 · 故宫 · 中文名称");
+    ).toBe("第 2 天 / 故宫 / 中文名称");
     expect(
       changeLabel(
         { path: "vehiclePrices.7_seat.unitPrice", kind: "changed", before: "1.00", after: "2.00" },

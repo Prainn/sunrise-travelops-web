@@ -81,7 +81,7 @@
                     :filters="{ city: row.destination, rating: activeTier }"
                     :disabled="!editable"
                     :placeholder="$t('itinerary.selectDestinationHotel')"
-                    :aria-label="`${row.destination} · ${$t('resource.hotelName')}`"
+                    :aria-label="`${row.destination} ${$t('resource.hotelName')}`"
                     popper-class="itinerary-hotel-plans__options"
                     :fit-input-width="true"
                     @update:model-value="emit('update-selection', activeTier, row.destination, $event)"
@@ -97,7 +97,7 @@
                     class="w-full"
                     :disabled="!editable || !hotelResource(activeTier, row.destination)"
                     :model-value="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === row.destination)?.referenceBasis"
-                    :aria-label="`${row.destination} · ${$t('identity.reference')}`"
+                    :aria-label="`${row.destination} ${$t('identity.reference')}`"
                     popper-class="itinerary-hotel-plans__options"
                     :fit-input-width="true"
                     @update:model-value="emit('update-rate', activeTier, row.destination, $event)"
@@ -125,7 +125,7 @@
                       :precision="2"
                       :disabled="!editable"
                       :controls="false"
-                      :aria-label="`${row.destination} · ${$t('planning.hotelPrice')}`"
+                      :aria-label="`${row.destination} ${$t('planning.hotelPrice')}`"
                       @update:model-value="emit('update-cost', activeTier, row.destination, $event ?? null)"
                     />
                   </el-form-item>
@@ -143,7 +143,7 @@
                   <el-input
                     :model-value="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === row.destination)?.adjustmentReason ?? ''"
                     :disabled="!editable"
-                    :aria-label="`${row.destination} · ${$t('identity.reason')}`"
+                    :aria-label="`${row.destination} ${$t('identity.reason')}`"
                     :placeholder="$t('identity.reasonPlaceholder')"
                     @update:model-value="emit('update-reason', activeTier, row.destination, $event)"
                   />

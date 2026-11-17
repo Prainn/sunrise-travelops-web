@@ -284,11 +284,11 @@ function scheduleMidnight() {
 }
 
 .ops-map__title {
-  @apply m-0 text-[20px] font-semibold leading-[1.3] tracking-[0.02em] text-[var(--el-text-color-primary)];
+  @apply m-0 text-[16px] font-semibold leading-[1.3] tracking-[0.02em] text-[var(--el-text-color-primary)];
 }
 
 .ops-map__subtitle {
-  @apply m-0 text-[13px] text-[var(--el-text-color-secondary)];
+  @apply m-0 text-[12px] text-[var(--el-text-color-secondary)];
 }
 
 .ops-map__switch {
@@ -352,7 +352,7 @@ function scheduleMidnight() {
 }
 
 :deep(.ops-map__stat-value) {
-  @apply text-[22px] font-semibold leading-[1.2] text-[var(--el-text-color-primary)] tabular-nums;
+  @apply text-[24px] font-semibold leading-[1.2] text-[var(--el-text-color-primary)] tabular-nums;
 }
 
 :deep(.ops-map__stage) {

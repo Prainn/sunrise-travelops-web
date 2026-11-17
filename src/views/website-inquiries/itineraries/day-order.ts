@@ -262,7 +262,7 @@ function checkWebsiteDay(
     } else add("restaurantCityMismatch", meal.id, { name, city });
   }
   for (const hotel of day.hotels) {
-    const name = `${hotel.tier} · ${hotel.nameZh || hotel.nameEn}`;
+    const name = `${hotel.tier} / ${hotel.nameZh || hotel.nameEn}`;
     if (!day.overnightCityId) add("hotelNoOvernight", hotel.id, { name });
     else if (hotel.cityId !== day.overnightCityId) add("hotelCityMismatch", hotel.id, { name, city: cityLabel(day.overnightCityId) });
   }

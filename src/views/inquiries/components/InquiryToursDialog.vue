@@ -1,7 +1,7 @@
 <template>
   <AppDialog
     :model-value="modelValue"
-    :title="`${$t('tour.relatedTours')} · ${inquiry.code}`"
+    :title="`${$t('tour.relatedTours')} ${inquiry.code}`"
     size="lg"
     destroy-on-close
     @update:model-value="emit('update:modelValue', $event)"

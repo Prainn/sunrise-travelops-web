@@ -28,7 +28,7 @@
     </div>
 
     <dl
-      class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-[6px] m-0 text-[13px] leading-[1.5]"
+      class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-[6px] m-0 text-[14px] leading-[1.5]"
     >
       <dt class="text-muted">
         {{ $t("dashboard.tourMap.totals.people") }}
@@ -83,13 +83,13 @@
         {{ $t("tour.pickupAt") }}
       </dt>
       <dd class="m-0 text-[var(--el-text-color-regular)]">
-        {{ tour.pickupAt }} · {{ flightText("pickup") }}
+        {{ tour.pickupAt }}<span class="ml-2">{{ flightText("pickup") }}</span>
       </dd>
       <dt class="text-muted">
         {{ $t("tour.dropAt") }}
       </dt>
       <dd class="m-0 text-[var(--el-text-color-regular)]">
-        {{ tour.dropAt }} · {{ flightText("drop") }}
+        {{ tour.dropAt }}<span class="ml-2">{{ flightText("drop") }}</span>
       </dd>
       <dt class="text-muted">
         {{ $t("tour.days") }}

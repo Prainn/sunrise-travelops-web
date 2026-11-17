@@ -79,7 +79,7 @@ export function getItineraryValidationIssues(plan: ItineraryValidationInput): Pd
   for (const day of days)
     for (const item of day.items)
       if (item.unitCost === null)
-        missing.push({ name: `D${day.dayNumber} · ${item.resourceName}`, target: `day-${day.id}` });
+        missing.push({ name: `D${day.dayNumber} ${item.resourceName}`, target: `day-${day.id}` });
   for (const hotelPlan of plan.hotelPlans)
     for (const hotel of hotelPlan.hotels)
       if (hotel.unitCost === null)

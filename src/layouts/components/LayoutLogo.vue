@@ -1,24 +1,21 @@
 <template>
   <div v-if="userStore.userInfo.scope !== 'headquarters'" class="layout-logo">
-    <transition enter-active-class="animate__animated animate__fadeInLeft">
-      <router-link
-        :key="+collapse"
-        class="wh-full flex-center gap-[10px] px-[8px]"
-        to="/"
-        :aria-label="brandTitle"
-        :title="brandTitle"
-      >
-        <img
-          :src="brandLogo"
-          class="h-[38px] shrink-0 object-contain"
-          :class="!collapse && isLynxtour ? 'w-[72px]' : 'w-[38px]'"
-          :alt="brandTitle"
-        />
-        <span v-if="!collapse" class="layout-logo__title min-w-0 truncate text-[14px] font-bold">
-          {{ brandTitle }}
-        </span>
-      </router-link>
-    </transition>
+    <router-link
+      class="wh-full flex-center gap-[10px] px-[8px]"
+      to="/"
+      :aria-label="brandTitle"
+      :title="brandTitle"
+    >
+      <img
+        :src="brandLogo"
+        class="h-[38px] shrink-0 object-contain"
+        :class="!collapse && isLynxtour ? 'w-[72px]' : 'w-[38px]'"
+        :alt="brandTitle"
+      />
+      <span v-if="!collapse" class="layout-logo__title min-w-0 truncate text-[14px] font-bold">
+        {{ brandTitle }}
+      </span>
+    </router-link>
   </div>
 </template>
 

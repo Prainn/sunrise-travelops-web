@@ -14,7 +14,7 @@
         </el-button>
       </div>
     </template>
-    <p class="m-0 mb-3 text-[13px] text-muted">
+    <p class="m-0 mb-3 text-[12px] text-muted">
       {{ $t(recovery ? "itineraryWorkspace.deletedHint" : readonly ? "itineraryWorkspace.reorderReadonly" : transfer ? "itineraryWorkspace.transfer.hint" : "itineraryWorkspace.reorderHint") }}
     </p>
     <div class="itinerary-reorder__board flex gap-3 overflow-x-auto pb-3" role="list" :inert="busy">
@@ -40,7 +40,7 @@
               D{{ recovery ? day.dayNumber : dayIndex + 1 }}
               <span v-if="!hideDates && (recovery ? day.date : startDate)" class="ml-1 font-400 text-muted">{{ recovery ? day.date : addDays(startDate!, dayIndex) }}</span>
             </h4>
-            <p class="m-0 mt-1 text-[13px] [overflow-wrap:anywhere]">
+            <p class="m-0 mt-1 text-[14px] [overflow-wrap:anywhere]">
               {{ day.title }}
             </p>
           </div>
@@ -98,7 +98,7 @@
               <component :is="group.icon" />
             </el-icon>
             {{ group.label }}
-            <span v-if="group.scope">· {{ group.scope }}</span>
+            <span v-if="group.scope" class="ml-1 font-normal text-muted">{{ group.scope }}</span>
           </h5>
           <p v-if="!groupItems(day.id, group).length" class="m-0 text-[12px] text-muted">
             {{ $t("itineraryWorkspace.notArranged") }}
@@ -106,7 +106,7 @@
           <div
             v-for="(item, itemIndex) in groupItems(day.id, group)"
             :key="item.id"
-            class="itinerary-reorder__item flex flex-col gap-1 px-2 py-[6px] rounded-[6px] bg-surface [border:1px_solid_var(--divider-color)] text-[13px]"
+            class="itinerary-reorder__item flex flex-col gap-1 px-2 py-[6px] rounded-[6px] bg-surface [border:1px_solid_var(--divider-color)] text-[14px]"
             :class="{
               'cursor-grab': canSort(group) || canMove(group, item),
               'is-drop-target': dropItemId === item.id,
