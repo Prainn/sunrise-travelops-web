@@ -72,8 +72,20 @@
                 :resource="messageMedia(message)"
                 :kind="message.kind === 'sticker' ? 'sticker' : 'image'"
               />
+              <button
+                v-if="messageDocument(message)"
+                type="button"
+                class="whatsapp-message__document"
+                :aria-label="$t('whatsapp.documentDraft.download', { name: messageDocument(message)!.fileName })"
+                :title="$t('whatsapp.documentDraft.download', { name: messageDocument(message)!.fileName })"
+                :aria-busy="downloadingIds.has(message.id)"
+                :disabled="downloadingIds.has(message.id)"
+                @click="handleDownload(message)"
+              >
+                <DocumentCard :file-name="messageDocument(message)!.fileName" :size-bytes="messageDocument(message)!.sizeBytes" />
+              </button>
               <MessageText v-if="message.presentation?.text ?? message.text" :text="message.presentation?.text ?? message.text ?? ''" />
-              <div v-if="['audio', 'video', 'document'].includes(message.kind) && attachmentSummary(message.attachment).length" class="text-[12px] text-muted">
+              <div v-if="!messageDocument(message) && ['audio', 'video', 'document'].includes(message.kind) && attachmentSummary(message.attachment).length" class="text-[12px] text-muted">
                 {{ attachmentSummary(message.attachment).join(" · ") }}
               </div>
             </template>
@@ -225,6 +237,10 @@
             </div>
             <MessageText v-if="item.text" class="mt-[6px]" :text="item.text" />
           </template>
+          <template v-else-if="item.document">
+            <DocumentCard :file-name="item.document.upload.fileName" :size-bytes="item.document.upload.sizeBytes" />
+            <MessageText v-if="item.text" class="mt-[6px]" :text="item.text" />
+          </template>
           <div v-else-if="item.reaction" class="text-[24px]" :title="$t(item.text ? 'whatsapp.react' : 'whatsapp.removeReaction')">
             {{ item.text || '◌' }}
           </div>
@@ -288,15 +304,42 @@
           :disabled="!access.canCompose"
           :can-attach-image="access.canCompose"
           :image-full="imageDraft.isFull.value"
+          :can-attach-document="canAttachDocument"
+          :document-busy="documentDraft?.state === 'uploading'"
           @send="handleSend"
           @images="handleImages"
+          @document="handleDocument"
         >
-          <template v-if="imageDraft.images.value.length" #attachments>
+          <template v-if="imageDraft.images.value.length || documentDraft" #attachments>
             <ImageDraftStrip
+              v-if="imageDraft.images.value.length"
               :images="imageDraft.images.value"
               @remove="imageDraft.remove"
               @retry="imageDraft.retry"
             />
+            <div
+              v-if="documentDraft"
+              class="inline-flex flex-col gap-[4px] max-w-full px-[10px] py-[8px] rounded-[8px] surface-muted"
+              :aria-busy="documentDraft.state === 'uploading'"
+            >
+              <DocumentCard :file-name="documentDraft.fileName" :size-bytes="documentDraft.sizeBytes">
+                <span v-if="documentDraft.state === 'uploading'" class="text-[12px] text-muted" role="status">
+                  {{ $t("whatsapp.documentDraft.uploading") }}
+                </span>
+                <el-button
+                  text
+                  size="small"
+                  :aria-label="$t('whatsapp.documentDraft.remove')"
+                  :title="$t('whatsapp.documentDraft.remove')"
+                  @click="documentDrafts.remove(detail.id)"
+                >
+                  ×
+                </el-button>
+              </DocumentCard>
+              <span v-if="documentDraft.error" class="text-[12px] text-[var(--el-color-danger)]" role="alert">
+                {{ documentDraft.error }}
+              </span>
+            </div>
           </template>
         </MessageComposer>
         <div class="flex justify-end">
@@ -320,7 +363,9 @@ import { useI18n } from "vue-i18n";
 import FeedbackState from "@/components/FeedbackState/index.vue";
 import OssMediaPreview from "@/components/OssMediaPreview/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
-import type { WhatsappConversationDetail, WhatsappMessage, WhatsappReply } from "@/types/whatsapp";
+import { websiteErrorMessage } from "@/services/website.service";
+import { whatsappService } from "@/services/whatsapp.service";
+import type { WhatsappConversationDetail, WhatsappDocumentUpload, WhatsappMessage, WhatsappReply } from "@/types/whatsapp";
 import { formatDateTime } from "@/utils";
 import {
   STATE_TAG_TYPES,
@@ -330,6 +375,7 @@ import {
   compareSeq,
   isMediaMessage,
   maxSeq,
+  messageDocument,
   messageMedia,
   messageSourceLabel,
   messageReply,
@@ -347,7 +393,10 @@ import MessageText from "./MessageText.vue";
 import ReplyPreview from "./ReplyPreview.vue";
 import MessageComposer from "./MessageComposer.vue";
 import ImageDraftStrip from "./ImageDraftStrip.vue";
+import DocumentCard from "./DocumentCard.vue";
 import { MAX_DRAFT_IMAGES, useImageDraft } from "../useImageDraft";
+import { isDocumentDraftExpired, validateDocumentFile } from "../document-draft";
+import { useDocumentDrafts } from "../useDocumentDrafts";
 
 const MAX_TEXT_LENGTH = 4096;
 const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
@@ -364,6 +413,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   send: [text: string, replyTo?: WhatsappReply];
   "send-images": [images: Omit<PendingImage, "clientRequestId">[], text: string, replyTo?: WhatsappReply];
+  "send-document": [upload: WhatsappDocumentUpload, text: string];
   react: [message: WhatsappMessage, emoji: string];
   resubmit: [clientRequestId: string];
   discard: [clientRequestId: string];
@@ -383,6 +433,9 @@ const draft = computed({
 });
 const replyTo = ref<WhatsappReply>();
 const imageDraft = useImageDraft(() => props.detail.id);
+const documentDrafts = useDocumentDrafts();
+const documentDraft = computed(() => documentDrafts.get(props.detail.id));
+const downloadingIds = ref(new Set<string>());
 const composerRef = ref<InstanceType<typeof MessageComposer>>();
 const activeReactionMessageId = ref("");
 const scrollRef = ref<HTMLElement>();
@@ -415,9 +468,11 @@ const visibleMessages = computed(() => {
 const pendingBubbles = computed(() => props.pending.filter((item) => !item.reaction || item.state !== "sending" ||
   !visibleMessages.value.some((message) => message.id === item.reaction!.targetMessageId)));
 const access = computed(() => threadAccess(props.detail));
-/** 有图片或正文即可点击；图片未就绪时点击后提示，草稿保留。 */
+/** 字段缺失按不可用处理；会话与 24 小时窗口仍由 canReply 约束。 */
+const canAttachDocument = computed(() => access.value.canCompose && props.detail.capabilities.canSendDocuments === true);
+/** 有图片、文档或正文即可点击；附件未就绪时点击后提示，草稿保留。 */
 const canSubmit = computed(() => access.value.canCompose &&
-  (imageDraft.images.value.length > 0 || !!draft.value.trim()) && draft.value.trim().length <= MAX_TEXT_LENGTH);
+  (imageDraft.images.value.length > 0 || !!documentDraft.value || !!draft.value.trim()) && draft.value.trim().length <= MAX_TEXT_LENGTH);
 const retriedIds = computed(() => new Set(props.messages.map((message) => message.retryOf).filter(Boolean)));
 const replyHint = computed(() => {
   if (props.detail.state === "archived") return { text: t("whatsapp.archivedHint"), isWarning: true };
@@ -493,17 +548,62 @@ function canConfirmFailed(message: WhatsappMessage) {
   return canConfirmFailedMessage(message, props.detail.capabilities.canConfirmFailed, now.value);
 }
 function handleImages(files: File[]) {
+  // 文件与图片不能混在一次发送中，先保留已有草稿。
+  if (documentDraft.value) {
+    ElMessage.warning(t("whatsapp.documentDraft.mixed"));
+    return;
+  }
   const result = imageDraft.add(files);
   if (result.invalid.includes("type")) ElMessage.warning(t("whatsapp.imageDraft.invalidType"));
   if (result.invalid.includes("size")) ElMessage.warning(t("whatsapp.imageDraft.tooLarge"));
   if (result.overflow) ElMessage.warning(t("whatsapp.imageDraft.tooMany", { max: MAX_DRAFT_IMAGES }));
+}
+/** 选择单个文档后立即上传，不自动发送；已有图片草稿时提示先处理。 */
+function handleDocument(file: File) {
+  if (!canAttachDocument.value) return;
+  if (imageDraft.images.value.length) {
+    ElMessage.warning(t("whatsapp.documentDraft.mixed"));
+    return;
+  }
+  const error = validateDocumentFile(file);
+  if (error) {
+    ElMessage.warning(t(error === "type" ? "whatsapp.documentDraft.invalidType" : "whatsapp.documentDraft.tooLarge"));
+    return;
+  }
+  void documentDrafts.upload(props.detail.id, file);
+}
+/**
+ * 文档草稿与可选正文一起提交；文档不支持原生引用。
+ *
+ * @returns 是否已提交。未就绪、已到期或带引用时保留草稿和正文并提示。
+ */
+function sendDocumentDraft(text: string): boolean {
+  const document = documentDraft.value!;
+  if (replyTo.value) {
+    ElMessage.warning(t("whatsapp.documentDraft.noReply"));
+    return false;
+  }
+  if (document.state === "expired" || (document.upload && isDocumentDraftExpired(document.upload))) {
+    documentDrafts.expire(props.detail.id, document.fileName, document.sizeBytes);
+    ElMessage.warning(t("whatsapp.documentDraft.expired"));
+    return false;
+  }
+  if (document.state !== "ready" || !document.upload) {
+    ElMessage.warning(t(document.state === "uploading" ? "whatsapp.documentDraft.uploading" : "whatsapp.documentDraft.notReady"));
+    return false;
+  }
+  emit("send-document", document.upload, text);
+  documentDrafts.remove(props.detail.id);
+  return true;
 }
 /** 有图片时整组按选图顺序发送，正文作为末尾独立文字；图片未全部上传成功时保留草稿并提示。 */
 function handleSend() {
   if (!canSubmit.value) return;
   const text = draft.value.trim();
   const images = imageDraft.images.value;
-  if (images.length) {
+  if (documentDraft.value) {
+    if (!sendDocumentDraft(text)) return;
+  } else if (images.length) {
     if (!imageDraft.isReady.value) {
       ElMessage.warning(t("whatsapp.imageDraft.notReady"));
       return;
@@ -534,7 +634,32 @@ function editAgain(item: PendingMessage) {
     expired: !!item.isExpired,
     asset: { id: image.mediaAssetId, name: image.name, mimeType: image.mimeType, thumbnailUrl: image.thumbnailUrl, previewable: !!image.thumbnailUrl },
   })));
+  if (item.document) {
+    const { upload } = item.document;
+    // 服务端文件已清理或本地到期时只保留文件名，提示重新上传，不再提交旧文件。
+    if (item.isExpired || isDocumentDraftExpired(upload)) documentDrafts.expire(props.detail.id, upload.fileName, upload.sizeBytes);
+    else documentDrafts.restore(props.detail.id, upload);
+  }
   emit("discard", item.clientRequestId);
+}
+
+/** 每次点击重新获取 60 秒下载地址并立即触发下载；地址不缓存、不展示。 */
+async function handleDownload(message: WhatsappMessage) {
+  if (downloadingIds.value.has(message.id)) return;
+  downloadingIds.value = new Set(downloadingIds.value).add(message.id);
+  try {
+    const { url } = await whatsappService.documentDownload(message.conversationId, message.id);
+    const link = document.createElement("a");
+    link.href = url;
+    link.rel = "noopener noreferrer";
+    link.click();
+  } catch (cause) {
+    ElMessage.error(websiteErrorMessage(cause));
+  } finally {
+    const next = new Set(downloadingIds.value);
+    next.delete(message.id);
+    downloadingIds.value = next;
+  }
 }
 </script>
 
@@ -599,6 +724,12 @@ function editAgain(item: PendingMessage) {
 
   &--outbound &__bubble {
     background: var(--el-color-primary-light-9);
+  }
+
+  &__document {
+    @apply block max-w-full p-0 border-0 bg-transparent text-left cursor-pointer rounded-[6px] focus-visible:outline-2 focus-visible:outline-[var(--el-color-primary)];
+
+    &:disabled { cursor: progress; opacity: .7; }
   }
 }
 </style>

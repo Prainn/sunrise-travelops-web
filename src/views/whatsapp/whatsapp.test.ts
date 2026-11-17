@@ -12,6 +12,9 @@ const service = vi.hoisted(() => ({
   sendText: vi.fn(),
   sendReaction: vi.fn(),
   sendImageBatch: vi.fn(),
+  uploadDocument: vi.fn(),
+  sendDocument: vi.fn(),
+  updateRuntime: vi.fn(),
   retryMessage: vi.fn(),
   customerNotes: vi.fn(),
   saveCustomerNotes: vi.fn(),
@@ -40,6 +43,9 @@ import { whatsappInquiryInput } from "@/services/whatsapp.service";
 import { canConfirmFailedMessage, canRetryMessage, compareSeq, linkedConversationId, mergeLatestPage, messageSourceLabel, messageReply, sortMessages, maxSeq, threadAccess, threadMessages } from "./message-utils";
 import { useCustomerNotes } from "./useCustomerNotes";
 import { useWhatsappWorkbench } from "./useWhatsappWorkbench";
+import { MAX_DOCUMENT_BYTES, clearDocumentDrafts, validateDocumentFile } from "./document-draft";
+import { useDocumentDrafts } from "./useDocumentDrafts";
+import { useRuntimeSwitches } from "./integration/useRuntimeSwitches";
 
 const BIG_SEQ = "9007199254740993";
 const doc = { visibilityState: "visible", hasFocus: vi.fn(() => true), addEventListener: vi.fn(), removeEventListener: vi.fn() };
@@ -701,5 +707,111 @@ describe("linkedConversationId", () => {
     expect(linkedConversationId(false, "c-2", "c-1")).toBe("");
     expect(linkedConversationId(true, ["c-2"], "c-1")).toBe("");
     expect(linkedConversationId(true, undefined, "c-1")).toBe("");
+  });
+});
+
+describe("文档发送", () => {
+  const upload = (patch: Record<string, unknown> = {}) => ({
+    id: "doc-1", fileName: "行程.pdf", mimeType: "application/pdf", sizeBytes: 1024, expiresAt: "2099-01-01T00:00:00Z", ...patch,
+  });
+
+  it("只接受单个 PDF/DOC/DOCX，扩展名不区分大小写，上限 20 MiB", () => {
+    expect(validateDocumentFile({ name: "Quote.PDF", size: MAX_DOCUMENT_BYTES })).toBeNull();
+    expect(validateDocumentFile({ name: "a.Docx", size: 1 })).toBeNull();
+    expect(validateDocumentFile({ name: "a.doc", size: MAX_DOCUMENT_BYTES + 1 })).toBe("size");
+    expect(validateDocumentFile({ name: "a.pdf.txt", size: 1 })).toBe("type");
+  });
+
+  it("草稿按会话隔离，上传结果写回发起会话；移除或切换身份后丢弃迟到结果", async () => {
+    clearDocumentDrafts();
+    const drafts = useDocumentDrafts();
+    let resolveFirst!: (value: unknown) => void;
+    service.uploadDocument
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve; }))
+      .mockResolvedValueOnce(upload({ id: "doc-2", fileName: "b.docx" }));
+    const first = drafts.upload("c-1", new File(["x"], "a.pdf"));
+    expect(drafts.get("c-1")?.state).toBe("uploading");
+    await drafts.upload("c-2", new File(["y"], "b.docx"));
+    resolveFirst(upload());
+    await first;
+    expect(drafts.get("c-1")).toMatchObject({ state: "ready", upload: { id: "doc-1" } });
+    expect(drafts.get("c-2")).toMatchObject({ state: "ready", upload: { id: "doc-2" } });
+
+    service.uploadDocument.mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve; }));
+    const late = drafts.upload("c-1", new File(["z"], "c.pdf"));
+    drafts.remove("c-1");
+    resolveFirst(upload({ id: "doc-3" }));
+    await late;
+    expect(drafts.get("c-1")).toBeUndefined();
+
+    useUserStore().userInfo.identityId = "identity-2";
+    expect(drafts.get("c-2")).toBeUndefined();
+    useUserStore().userInfo.identityId = "identity-1";
+  });
+
+  it("文档先于文字入队且编号不同；结果未知原样重提，过期 404 标记需重新上传", async () => {
+    const workbench = setup();
+    await workbench.selectConversation("c-1");
+    service.sendDocument.mockRejectedValueOnce(networkError());
+    await workbench.sendDocument(upload(), "请查收");
+    const [id, input] = service.sendDocument.mock.calls[0]!;
+    expect(id).toBe("c-1");
+    expect(Object.keys(input)).toEqual(["documentId", "clientRequestId", "textMessage"]);
+    expect(input.documentId).toBe("doc-1");
+    expect(input.textMessage).toMatchObject({ text: "请查收" });
+    expect(input.textMessage.clientRequestId).not.toBe(input.clientRequestId);
+    expect(workbench.pending.value[0]!.state).toBe("uncertain");
+
+    service.sendDocument.mockResolvedValueOnce({ messages: [
+      message({ id: "d-1", seq: "50", direction: "outbound", source: "system", kind: "document", text: "", status: "queued", clientRequestId: input.clientRequestId }),
+      message({ id: "t-1", seq: "51", direction: "outbound", source: "system", status: "queued", clientRequestId: input.textMessage.clientRequestId }),
+    ] });
+    await workbench.resubmitPending(workbench.pending.value[0]!.clientRequestId);
+    expect(service.sendDocument.mock.calls[1]).toEqual(service.sendDocument.mock.calls[0]);
+    expect(workbench.pending.value).toHaveLength(0);
+    expect(workbench.messages.value.filter((item) => ["d-1", "t-1"].includes(item.id))).toHaveLength(2);
+
+    service.sendDocument.mockRejectedValueOnce(new ApiError("gone", { code: "NOT_FOUND", status: 404 }));
+    await workbench.sendDocument(upload(), "");
+    expect(service.sendDocument.mock.calls[2]![1].textMessage).toBeUndefined();
+    expect(workbench.pending.value[0]).toMatchObject({ state: "rejected", isExpired: true });
+  });
+});
+
+describe("接入状态运行开关", () => {
+  const runtime = { environment: "dev" as const, version: 3, inboundAvailable: true, outboundAvailable: true, inboundEnabled: true, outboundEnabled: false };
+
+  it("只提交被修改的开关和版本，以返回值回填，保存中拒绝并发操作", async () => {
+    const switches = useRuntimeSwitches(vi.fn());
+    switches.sync(runtime);
+    let resolve!: (value: unknown) => void;
+    service.updateRuntime.mockImplementationOnce(() => new Promise((done) => { resolve = done; }));
+    const saving = switches.toggle("outbound", true);
+    expect((await switches.toggle("inbound", false)).kind).toBe("skipped");
+    resolve({ ...runtime, version: 4, outboundEnabled: true });
+    expect((await saving).kind).toBe("saved");
+    expect(service.updateRuntime).toHaveBeenCalledTimes(1);
+    expect(service.updateRuntime.mock.calls[0]![0]).toEqual({ version: 3, outboundEnabled: true });
+    expect(switches.runtime.value).toMatchObject({ version: 4, outboundEnabled: true, inboundEnabled: true });
+  });
+
+  it("409 重新读取最新状态；其他失败保留上次已知状态；不可用或缺失时不提交", async () => {
+    const reload = vi.fn(async () => switches.sync({ ...runtime, version: 5, inboundEnabled: false }));
+    const switches = useRuntimeSwitches(reload);
+    switches.sync(runtime);
+    service.updateRuntime.mockRejectedValueOnce(conflict());
+    expect((await switches.toggle("inbound", false)).kind).toBe("conflict");
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(switches.runtime.value?.version).toBe(5);
+
+    service.updateRuntime.mockRejectedValueOnce(new ApiError("forbidden", { code: "AUTH_FORBIDDEN", status: 403 }));
+    expect((await switches.toggle("inbound", true)).kind).toBe("failed");
+    expect(switches.runtime.value).toMatchObject({ version: 5, inboundEnabled: false });
+
+    switches.sync({ ...runtime, outboundAvailable: false });
+    expect((await switches.toggle("outbound", true)).kind).toBe("skipped");
+    switches.sync(undefined);
+    expect((await switches.toggle("inbound", true)).kind).toBe("skipped");
+    expect(service.updateRuntime).toHaveBeenCalledTimes(2);
   });
 });

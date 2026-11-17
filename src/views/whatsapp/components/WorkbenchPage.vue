@@ -90,6 +90,7 @@
             :confirming-ids="confirmingIds"
             @send="handleSend"
             @send-images="handleSendImages"
+            @send-document="handleSendDocument"
             @react="handleReact"
             @resubmit="handleResubmit"
             @discard="workbench.discardPending"
@@ -189,6 +190,7 @@ import type {
   WhatsappAction,
   WhatsappConversationState,
   WhatsappConversationView,
+  WhatsappDocumentUpload,
   WhatsappIntegrationStatus,
   WhatsappMessage,
   WhatsappReply,
@@ -395,6 +397,9 @@ async function handleSend(text: string, replyTo?: WhatsappReply) {
 }
 async function handleSendImages(images: Omit<PendingImage, "clientRequestId">[], text: string, replyTo?: WhatsappReply) {
   notifySend(await workbench.sendImages(images, text, replyTo));
+}
+async function handleSendDocument(upload: WhatsappDocumentUpload, text: string) {
+  notifySend(await workbench.sendDocument(upload, text));
 }
 async function handleReact(message: WhatsappMessage, emoji: string) {
   notifySend(await workbench.sendReaction(message, emoji));

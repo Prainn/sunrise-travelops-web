@@ -2568,7 +2568,7 @@
     "closedHint": "Conversation closed. Reopen it before replying",
     "window": {
       "none": "No customer message yet; cannot reply",
-      "expired": "24-hour reply window expired. Wait for a new customer message; templates are not supported yet",
+      "expired": "24-hour reply window expired. Wait for a new customer message",
       "duration": "{hours} h {minutes} min",
       "open": "24-hour reply window: {time} left"
     },
@@ -2681,6 +2681,33 @@
       "expired": "Image expired. Upload it again",
       "expiredNoFile": "Image expired. Remove it and choose it again",
       "batchExpired": "Some images expired. Click Edit again and upload them again"
+    },
+    "documentDraft": {
+      "add": "Send file",
+      "addHint": "Send file (PDF / Word, up to 20 MB)",
+      "uploading": "Uploading file…",
+      "remove": "Remove file",
+      "invalidType": "Only PDF, DOC and DOCX files are supported",
+      "tooLarge": "File cannot exceed 20 MB",
+      "expired": "File expired. Remove it and upload again",
+      "notReady": "File upload failed. Remove it and choose again",
+      "mixed": "Files and images cannot be sent together. Remove or send the existing draft first",
+      "noReply": "Files cannot be sent as a reply. Cancel the reply first",
+      "download": "Download {name}"
+    },
+    "runtime": {
+      "environment": "Environment",
+      "inbound": "Inbound processing",
+      "outbound": "Outbound sending",
+      "on": "On",
+      "off": "Off",
+      "unavailable": "Unavailable",
+      "unavailableHint": "Not enabled in base configuration; cannot be switched",
+      "loadFailedHint": "Failed to load switch status. Refresh and try again",
+      "missingHint": "The server did not return switch status; cannot be switched",
+      "help": "Inbound off: callbacks are still stored but not written to conversations; the backlog is processed when turned back on. Outbound off: no new sends are accepted or picked up, the existing queue is kept, and sends already started may complete. Neither switch affects receipts; shown separately from this instance's processing status below.",
+      "saved": "Switch updated",
+      "conflict": "Switch status changed elsewhere; reloaded the latest status"
     }
   }
 }
