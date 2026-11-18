@@ -39,7 +39,7 @@
 - 优先调整现有相关测试，不新增只复述实现的断言；只运行本次相关检查。
 - 命令：`pnpm type-check`；`pnpm exec eslint <受影响文件>`；`pnpm test <测试文件>`。`pnpm lint` / `pnpm test` 是全量入口；`pnpm build` 包含类型检查和构建，`build-only` 不含类型检查。
 - 本地联调用 `pnpm dev:local`（localhost:4000）；`pnpm dev` 默认代理远程开发 API，勿把远程结果当成本地后端验证。
-- PR 的 [ci.yml](.github/workflows/ci.yml) 在 GitHub-hosted 运行类型检查、构建和发布恢复定向检查；[deploy.yml](.github/workflows/deploy.yml) 在 ECS runner 串行构建发布。dev push 发布 dev，main 仅经 PR 更新后手动发布 prod；根命令只发布 dev。步骤与验收见 [前端自动部署](../docs/deployment/前端自动部署.md)。
+- GitHub Actions 触发新机隔离 PR 检查及前端构建。dev 在新机发布，main 通过受保护 PR 后手动构建，生产静态包走私网到旧机激活或预验。见 [前端自动部署](../docs/deployment/前端自动部署.md)。
 - 生产发布按 `deploy-production` Skill 和[需求维护规范](../docs/agent-guides/requirements.md)的 CRF 规则执行：发布前核对本次新旧需求变更，发布核验后回填实际交付条目的上线时间。小 UI 调整和按原需求修复的 bug 不登记 CRF。
 - 修改权限或任何生产发布前，按[共享门禁](../docs/agent-guides/workflow.md#权限与生产门禁)运行根角色权限检查；生产还须[后端业务隔离门禁](../sunrise-travel-ops-backend/AGENTS.md#不可绕过的门禁)。
 - 验证前读取[共享验证边界](../docs/agent-guides/workflow.md#validation)；提交/发布只启用适用 Skill，普通开发不预读部署资料。
