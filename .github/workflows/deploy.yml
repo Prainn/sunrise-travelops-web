@@ -82,6 +82,7 @@ jobs:
         if: github.ref == 'refs/heads/dev'
         shell: bash
         env:
+          SUNRISE_DEV_REMOTE: '1'
           SUNRISE_HOSTED_DEV_TYPECHECK_SHA: ${{ needs.ready.outputs.verified_dev_sha }}
         run: |
           set -euo pipefail

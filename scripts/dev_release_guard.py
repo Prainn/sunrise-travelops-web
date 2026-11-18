@@ -258,8 +258,13 @@ def pipeline(job, identity, release):
                    PATH='/opt/sunrise-ci/node/bin:' + os.environ.get('PATH', ''),
                    NODE_OPTIONS='--max-old-space-size=1400', PYTHONDONTWRITEBYTECODE='1')
         if operation == 'deploy':
-            state_file = BASE / 'last-deployment.json'
-            record = json.loads(state_file.read_text()) if state_file.exists() else {}
+            if env.get('SUNRISE_DEV_REMOTE') == '1':
+                current = subprocess.check_output(['/usr/local/libexec/sunrise-dev-release/client.py',
+                                                   'frontend', 'status'], timeout=40, text=True)
+                record = {'release': json.loads(current)['current']}
+            else:
+                state_file = BASE / 'last-deployment.json'
+                record = json.loads(state_file.read_text()) if state_file.exists() else {}
             if record.get('release', '').startswith(identity['GITHUB_SHA'] + '-'):
                 print('This commit is already deployed', flush=True)
                 return
