@@ -164,9 +164,13 @@ def publish(release_id, source_directory):
 def main():
     os.umask(0o022)
     args = sys.argv[1:]
-    if ENVIRONMENT == 'dev' and os.environ.get('SUNRISE_DEV_REMOTE') == '1':
-        client = '/usr/local/libexec/sunrise-dev-release/client.py'
-        os.execv(client, [client, 'frontend', *args])
+    if args == ['verify-current'] and ENVIRONMENT == 'dev':
+        current = (BASE / 'current').resolve(strict=True)
+        if current.parent != (BASE / 'releases').resolve():
+            raise ValueError('Invalid active release directory')
+        verify(current)
+        print(json.dumps({'release': current.name, 'verified': True}))
+        return
     if args == ['status']:
         print(json.dumps({'current': os.readlink(BASE / 'current')}))
         return

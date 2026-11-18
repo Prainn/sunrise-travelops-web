@@ -258,14 +258,14 @@ def pipeline(job, identity, release):
                    PATH='/opt/sunrise-ci/node/bin:' + os.environ.get('PATH', ''),
                    NODE_OPTIONS='--max-old-space-size=1400', PYTHONDONTWRITEBYTECODE='1')
         if operation == 'deploy':
-            if env.get('SUNRISE_DEV_REMOTE') == '1':
-                current = subprocess.check_output(['/usr/local/libexec/sunrise-dev-release/client.py',
-                                                   'frontend', 'status'], timeout=40, text=True)
-                record = {'release': json.loads(current)['current']}
-            else:
-                state_file = BASE / 'last-deployment.json'
-                record = json.loads(state_file.read_text()) if state_file.exists() else {}
+            state_file = BASE / 'last-deployment.json'
+            record = json.loads(state_file.read_text()) if state_file.exists() else {}
             if record.get('release', '').startswith(identity['GITHUB_SHA'] + '-'):
+                if env.get('SUNRISE_ACTIVATION_SCOPE') == 'live':
+                    release_dir = (BASE / 'current').resolve(strict=True)
+                    if release_dir.name != record['release'] or record.get('verified') is not True:
+                        raise ValueError('Frontend dev release state differs from the active release')
+                    job.stage('verify-active-release', ['python3', 'scripts/deploy.py', 'verify-current'], 45, work, env)
                 print('This commit is already deployed', flush=True)
                 return
             job.stage('release-safety-tests (fixture version IDs)', ['python3', 'scripts/test_deploy.py'], 60, work, env)

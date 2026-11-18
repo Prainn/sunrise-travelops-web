@@ -68,10 +68,11 @@ jobs:
           printf 'sha=%s\n' "$GITHUB_SHA" >> "$GITHUB_OUTPUT"
   deploy:
     needs: ready
-    runs-on: [self-hosted, Linux, X64, sunrise-frontend]
+    runs-on: ${{ fromJSON(github.ref_name == 'dev' && '["sunrise-dev-frontend"]' || '["self-hosted","Linux","X64","sunrise-frontend"]') }}
     timeout-minutes: ${{ github.ref_name == 'dev' && 35 || 60 }}
     env:
       DEPLOY_ENV: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+      SUNRISE_ACTIVATION_SCOPE: ${{ github.ref_name == 'dev' && 'live' || '' }}
       OPERATION: ${{ inputs.operation || 'deploy' }}
       ROLLBACK_RELEASE: ${{ inputs.release || 'previous' }}
       EXPECTED_SHA: ${{ inputs.expected_sha || '' }}
@@ -82,7 +83,6 @@ jobs:
         if: github.ref == 'refs/heads/dev'
         shell: bash
         env:
-          SUNRISE_DEV_REMOTE: '1'
           SUNRISE_HOSTED_DEV_TYPECHECK_SHA: ${{ needs.ready.outputs.verified_dev_sha }}
         run: |
           set -euo pipefail
@@ -90,6 +90,7 @@ jobs:
             test "$SUNRISE_HOSTED_DEV_TYPECHECK_SHA" = "$GITHUB_SHA" || { echo 'Exact dev candidate has not passed hosted type-check'; exit 1; }
           fi
           export PATH="/opt/sunrise-ci/node/bin:$PATH"
+          test "$(hostname)" = iZbp1j5n14ce3c01o1539cZ || { echo 'Incorrect dev build host'; exit 1; }
           python3 /opt/sunrise-ci/frontend-dev-guard/dev_release_guard.py run
       - name: Serialized build, release or rollback
         if: github.ref != 'refs/heads/dev'
