@@ -742,7 +742,7 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() => {
           icon: BOARD_ICONS[key],
           scope: t(
             key === "hotel"
-              ? "itineraryWorkspace.scopes.byCity"
+              ? "itineraryWorkspace.scopes.byNight"
               : key === "vehicle"
                 ? "itineraryWorkspace.scopes.byDateRange"
                 : "itineraryWorkspace.scopes.wholeTrip",

@@ -190,7 +190,7 @@ const props = defineProps<{
   contentEditable: boolean;
   isLast: boolean;
   plannedDays: number;
-  /** 当天可见的整程/按城市方案摘要，空字符串表示未配置 */
+  /** 当天的住宿、用车与导游安排，空字符串表示未配置 */
   plans: { hotel: string; vehicle: string; guide: string };
 }>();
 const emit = defineEmits<{
@@ -247,7 +247,7 @@ const resourceActions = computed<DayResourceAction[]>(() => {
       key: "hotel",
       label: t("itineraryWorkspace.actions.hotel"),
       icon: OfficeBuilding,
-      scope: t("itineraryWorkspace.scopes.byCity"),
+      scope: t("itineraryWorkspace.scopes.byNight"),
       hint: t("itineraryWorkspace.hints.normalHotel"),
       active: Boolean(props.plans.hotel),
     },

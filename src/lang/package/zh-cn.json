@@ -2254,14 +2254,14 @@
       "service": "服务"
     },
     "scopes": {
-      "byCity": "按住宿城市",
+      "byNight": "按住宿日",
       "byDateRange": "按日期段",
       "wholeTrip": "整程",
       "thisDay": "当天",
       "alternatives": "备选方案"
     },
     "hints": {
-      "normalHotel": "按档次与住宿城市搭配酒店，同城多晚共用方案",
+      "normalHotel": "按档次逐晚选择酒店，同城多晚可以入住不同酒店",
       "normalGuide": "导游按整程安排，覆盖全部行程日",
       "websiteHotelNeedsCity": "未设住宿城市（不住宿），无需酒店"
     },

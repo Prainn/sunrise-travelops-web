@@ -2254,14 +2254,14 @@
       "service": "Services"
     },
     "scopes": {
-      "byCity": "By overnight city",
+      "byNight": "By night",
       "byDateRange": "By date range",
       "wholeTrip": "Full trip",
       "thisDay": "This day",
       "alternatives": "Alternatives"
     },
     "hints": {
-      "normalHotel": "Hotels use tiers and overnight cities; nights in the same city share a plan",
+      "normalHotel": "Choose a hotel for each night and tier. Nights in the same city can have different hotels.",
       "normalGuide": "Guide plan covers every day of the trip",
       "websiteHotelNeedsCity": "No overnight city (no stay); no hotel needed"
     },
