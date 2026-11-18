@@ -149,6 +149,7 @@
                   <el-button
                     v-if="issue.dayId"
                     link
+                    class="align-baseline!"
                     type="primary"
                     @click="workspaceLayout?.scrollToDay(issue.dayId)"
                   >

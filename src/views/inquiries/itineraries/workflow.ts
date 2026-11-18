@@ -82,8 +82,13 @@ export function getItineraryValidationIssues(plan: ItineraryValidationInput): Pd
         missing.push({ name: `D${day.dayNumber} ${item.resourceName}`, target: `day-${day.id}` });
   for (const hotelPlan of plan.hotelPlans)
     for (const hotel of hotelPlan.hotels)
-      if (hotel.unitCost === null)
-        missing.push({ name: hotel.hotelName, target: "itinerary-hotels" });
+      if (hotel.unitCost === null) {
+        const dayNumber = days.find((day) => day.id === hotel.dayId)?.dayNumber;
+        missing.push({
+          name: dayNumber ? `D${dayNumber} ${hotel.hotelName}` : hotel.hotelName,
+          target: "itinerary-hotels",
+        });
+      }
   for (const guide of plan.guidePlans)
     if (guide.dailyPrice === null)
       missing.push({ name: guide.guideName, target: "itinerary-guides" });

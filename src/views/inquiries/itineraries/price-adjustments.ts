@@ -32,8 +32,8 @@ export function itineraryPriceRows(plan: ItineraryRecord) {
     ...plan.hotelPlans.flatMap((p) =>
       p.hotels.map((h) =>
         row(
-          `hotel:${p.tier}:${h.destination}`,
-          h.hotelName,
+          `hotel:${p.tier}:${h.dayId ?? h.destination}`,
+          `D${plan.dailyPlans.find((d) => d.id === h.dayId)?.dayNumber ?? "-"} ${h.hotelName}`,
           h,
           () => h.unitCost,
           (v) => {

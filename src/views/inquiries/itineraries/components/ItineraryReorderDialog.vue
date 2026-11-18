@@ -211,6 +211,7 @@
           <el-button
             v-if="issue.retry"
             link
+            class="align-baseline!"
             type="primary"
             @click="issue.retry()"
           >

@@ -135,7 +135,7 @@ class Job:
     def cancel(self, *_):
         self.cancelled = True
 
-    def lock(self, seconds=600):
+    def lock(self, seconds=2700):
         self.fd = os.open(LOCK, os.O_RDWR | os.O_CREAT, 0o660)
         self.state.update(phase='wait-lock', deadline=time.monotonic() + seconds)
         self.flush()
@@ -261,15 +261,20 @@ def pipeline(job, identity, release):
             state_file = BASE / 'last-deployment.json'
             record = json.loads(state_file.read_text()) if state_file.exists() else {}
             if record.get('release', '').startswith(identity['GITHUB_SHA'] + '-'):
+                if env.get('SUNRISE_ACTIVATION_SCOPE') == 'live':
+                    release_dir = (BASE / 'current').resolve(strict=True)
+                    if release_dir.name != record['release'] or record.get('verified') is not True:
+                        raise ValueError('Frontend dev release state differs from the active release')
+                    job.stage('verify-active-release', ['python3', 'scripts/deploy.py', 'verify-current'], 45, work, env)
                 print('This commit is already deployed', flush=True)
                 return
             job.stage('release-safety-tests (fixture version IDs)', ['python3', 'scripts/test_deploy.py'], 60, work, env)
             job.stage('install', ['pnpm', 'install', '--frozen-lockfile', '--store-dir', '/opt/sunrise-ci/pnpm-store'], 300, work, env)
             # Leave room for native allocations and runner overhead below memory.high.
-            type_check_env = dict(env, NODE_OPTIONS='--max-old-space-size=1200')
+            type_check_env = dict(env, NODE_OPTIONS='--max-old-space-size=1900')
             # Run the sequential checker directly without a resident pnpm launcher.
             job.stage('type-check', ['node', 'scripts/type-check.mjs'],
-                      300, work, type_check_env)
+                      720, work, type_check_env)
             job.stage('vite-build', ['pnpm', 'exec', 'vite', 'build', '--mode', 'server-dev'], 300, work, env)
             args = ['deploy', release, 'dist']
         else:

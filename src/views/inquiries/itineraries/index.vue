@@ -154,7 +154,12 @@
             <ul class="m-0 pl-4">
               <li v-for="(issue, index) in reorderIssues" :key="index">
                 {{ $t(issue.key, issue.params ?? {}) }}
-                <el-button link type="primary" @click="locateReorderIssue(issue)">
+                <el-button
+                  link
+                  type="primary"
+                  class="align-baseline!"
+                  @click="locateReorderIssue(issue)"
+                >
                   {{ $t("itineraryWorkspace.locate") }}
                 </el-button>
               </li>
@@ -341,7 +346,12 @@
           </h3>
           <ul>
             <li v-for="(issue, index) in validationIssues" :key="index">
-              <el-button link type="danger" @click="locateIssue(issue.target)">
+              <el-button
+                link
+                type="danger"
+                class="align-baseline!"
+                @click="locateIssue(issue.target)"
+              >
                 {{ $t(issue.key, issue.params ?? {}) }}
               </el-button>
             </li>
@@ -460,7 +470,7 @@ import { computed, markRaw, nextTick, onMounted, ref, useTemplateRef, watch } fr
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { ItineraryDayRecord, ItineraryHotelTier, ItineraryRecord } from "@/types/itinerary";
-import { getDayBreakfastStatus, getEnabledHotelPlans } from "./hotel-plans";
+import { getDayBreakfastStatus, getEnabledHotelPlans, hotelForDay } from "./hotel-plans";
 import { reorderItineraryDays } from "./day-order";
 import type { DayOrderChange, DayOrderIssue, ReorderBoardDay } from "./reorder-board";
 import ItineraryWorkspaceFooter from "./components/ItineraryWorkspaceFooter.vue";
@@ -752,13 +762,13 @@ function dayRoute(day: ItineraryDayRecord) {
   return day.items.map((item) => item.resourceName).join("、");
 }
 
-/** 酒店按住宿城市搭配；多个档次是备选方案，不是同晚连住多家。 */
+/** 酒店按住宿日搭配；多个档次是备选方案，不是同晚连住多家。 */
 function dayHotelSummary(day: ItineraryDayRecord) {
   const plan = selectedItinerary.value;
   const city = day.overnightDestination;
   if (!plan || !city) return "";
   const hotels = getEnabledHotelPlans(plan).flatMap((hotelPlan) => {
-    const hotel = hotelPlan.hotels.find((item) => item.destination === city);
+    const hotel = hotelForDay(hotelPlan.hotels, day);
     return hotel ? [`${t(`itinerary.hotelTiers.${hotelPlan.tier}`)} ${hotel.hotelName}`] : [];
   });
   if (!hotels.length) return "";
@@ -826,11 +836,11 @@ function updateGuideReason(reason: string) {
   if (guide) guide.adjustmentReason = reason;
 }
 
-function updateHotelReason(tier: ItineraryHotelTier, destination: string, reason: string) {
+function updateHotelReason(tier: ItineraryHotelTier, dayId: string, reason: string) {
   if (!contentEditable.value) return;
   const hotel = selectedItinerary.value?.hotelPlans
     .find((plan) => plan.tier === tier)
-    ?.hotels.find((item) => item.destination === destination);
+    ?.hotels.find((item) => item.dayId === dayId);
   if (hotel) hotel.adjustmentReason = reason;
 }
 
