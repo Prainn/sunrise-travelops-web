@@ -135,7 +135,7 @@ class Job:
     def cancel(self, *_):
         self.cancelled = True
 
-    def lock(self, seconds=600):
+    def lock(self, seconds=2700):
         self.fd = os.open(LOCK, os.O_RDWR | os.O_CREAT, 0o660)
         self.state.update(phase='wait-lock', deadline=time.monotonic() + seconds)
         self.flush()

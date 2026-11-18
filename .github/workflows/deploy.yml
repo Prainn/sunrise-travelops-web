@@ -46,7 +46,7 @@ jobs:
     needs: ready
     if: github.ref == 'refs/heads/dev'
     runs-on: [sunrise-dev-frontend]
-    timeout-minutes: ${{ github.ref_name == 'dev' && 35 || 60 }}
+    timeout-minutes: 70
     env:
       DEPLOY_ENV: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
       SUNRISE_ACTIVATION_SCOPE: ${{ github.ref_name == 'dev' && 'live' || '' }}
