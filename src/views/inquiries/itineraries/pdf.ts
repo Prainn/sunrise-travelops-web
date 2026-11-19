@@ -6,7 +6,13 @@ import type {
   ItineraryRecord,
 } from "@/types/itinerary";
 import { formatDateTime, formatMoney } from "@/utils";
-import { buildCustomerDocument, type CustomerDocument, type CustomerSnapshot } from "./customer-document";
+import {
+  buildCustomerDocument,
+  customerSingleSupplement,
+  SCHEDULE_COLUMN_PERCENTS,
+  type CustomerDocument,
+  type CustomerSnapshot,
+} from "./customer-document";
 
 interface PdfSnapshot extends CustomerSnapshot {
   calculation: ItineraryQuoteCalculation;
@@ -150,7 +156,7 @@ function buildPaxQuoteSections(
           return `<tr><th style="${quoteLabelStyle()}">${price.pax} PAX</th>
         <td style="${quoteCellStyle()}">RMB ${formatMoney(price.adultUnitPrice)}</td>
         ${showChildPrice ? `<td style="${quoteCellStyle()}">RMB ${formatMoney(price.childUnitPrice)}</td>${hasBedRates ? `<td style="${quoteCellStyle()}">RMB ${formatMoney(price.childWithoutBedUnitPrice)}</td>` : ""}` : ""}
-        <td style="${quoteCellStyle()}">RMB ${formatMoney(price.singleSupplementUnitCost)}</td></tr>`;
+        <td style="${quoteCellStyle()}">RMB ${formatMoney(customerSingleSupplement(price))}</td></tr>`;
         })
         .join("");
       const header = [
@@ -194,7 +200,7 @@ function buildScheduleSections(customer: CustomerDocument) {
           <td style="${scheduleCellStyle("center")}">${escapeHtml(day.route)}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(day.transport)}</td>
           <td style="${scheduleCellStyle("left")};white-space:pre-wrap;line-height:1.35;">${escapeHtml(day.description)}</td>
-          <td style="${scheduleCellStyle("center")}">${escapeHtml(day.hotel)}</td>
+          <td style="${scheduleCellStyle("center")};white-space:pre-wrap;line-height:1.35;">${escapeHtml(day.hotel)}</td>
           <td style="${scheduleCellStyle("center")}">${escapeHtml(day.meals)}</td>
       </tr>`;
     })
@@ -224,8 +230,7 @@ function scheduleTableStyle() {
 
 function scheduleColgroup() {
   return `<colgroup>
-    <col style="width:8%;"><col style="width:17%;"><col style="width:8%;">
-    <col style="width:49%;"><col style="width:12%;"><col style="width:6%;">
+    ${SCHEDULE_COLUMN_PERCENTS.map((width) => `<col style="width:${width}%;">`).join("")}
   </colgroup>`;
 }
 

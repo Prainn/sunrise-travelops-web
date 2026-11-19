@@ -443,7 +443,7 @@ function handleActionError(cause: unknown) {
     ElMessage.warning(t("whatsapp.versionConflict", { message: websiteErrorMessage(cause) }));
     void refreshSelected();
   } else if (cause instanceof ApiError && cause.status === 404) {
-    ElMessage.error(t("whatsapp.notFound"));
+    ElMessage.error(websiteErrorMessage(cause));
     void refreshSelected();
   } else {
     ElMessage.error(websiteErrorMessage(cause));

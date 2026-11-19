@@ -99,7 +99,8 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
     });
   }
 
-  async function saveRecord(value: T) {
+  /** 失败时只提示一次并返回错误，供编辑弹窗保留输入并定位字段。 */
+  async function saveRecord(value: T): Promise<unknown> {
     try {
       const current = rows.find((item) => item.id === editingId.value);
       const saved = editingId.value
@@ -114,8 +115,10 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
       await loadRecords();
       isDialogVisible.value = false;
       ElMessage.success(t(editingId.value ? "common.updateSuccess" : "common.createSuccess"));
+      return undefined;
     } catch (error) {
       ElMessage.error(requestErrorMessage(error));
+      return error;
     }
   }
 

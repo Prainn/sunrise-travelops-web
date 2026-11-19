@@ -121,7 +121,7 @@ const props = defineProps<{
   modelValue: boolean;
   record: RestaurantRecord;
   isEditing: boolean;
-  submit: (record: RestaurantRecord) => Promise<void>;
+  submit: (record: RestaurantRecord) => Promise<unknown>;
 }>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];

@@ -167,3 +167,98 @@ it("exports missing English as blank in both formats, including snapshots withou
     expect(output).toContain("1,000.00");
   }
 });
+
+describe("customer hotel column and single supplement", () => {
+  function kunmingPresentation() {
+    const day = (index: number, name: string, nameEn: string) => ({
+      id: `day-${index}`, dayNumber: index + 1, date: `2026-10-${14 + index}`, route: ["昆明"],
+      transport: "", description: "游览", overnightDestination: "昆明",
+      hotels: [{ tier: 4, name }, { tier: 5, name: nameEn }],
+      meals: { breakfast: index > 0, lunch: false, dinner: false }, items: [],
+    });
+    const zh: CustomerPresentation["zh"] = {
+      title: "昆明", country: "中国", hotels: [], notes: [], transportFees: [], returnArrival: null,
+      days: [day(0, "春城酒店", "滇池酒店"), day(1, "翠湖酒店", "")],
+    };
+    const en: CustomerPresentation["en"] = {
+      ...zh,
+      days: [day(0, "Spring Hotel", "Lake Hotel"), day(1, "Green Lake Hotel", "")]
+        .map((night) => ({ ...night, overnightDestination: "Kunming" })),
+    };
+    return {
+      version: 1 as const, serviceDays: 2, displayDays: 2, accommodationNights: 2,
+      noAccommodation: false, missingEnglish: [], zh, en,
+    } satisfies CustomerPresentation;
+  }
+
+  it("lists that night's hotel per tier for the same city on different nights", async () => {
+    const sample = fixture();
+    const customerPresentation = kunmingPresentation();
+    const zh = buildCustomerDocument(sample.itinerary, { customerPresentation });
+    expect(zh.schedule.map((row) => row.hotel)).toEqual([
+      "昆明\n四钻：春城酒店\n五钻：滇池酒店",
+      "昆明\n四钻：翠湖酒店",
+    ]);
+    const en = buildCustomerDocument(sample.itinerary, { customerPresentation, exportLanguage: "en" });
+    expect(en.schedule[1]!.hotel).toBe("Kunming\n4-Diamond: Green Lake Hotel");
+    const [html = "", word = ""] = await exportText(sample, false, { customerPresentation });
+    expect(html).toContain("昆明\n四钻：春城酒店\n五钻：滇池酒店");
+    expect(word).toMatch(/>四钻：翠湖酒店</);
+  });
+
+  it("keeps a known English hotel when the city translation is missing", () => {
+    const sample = fixture();
+    const customerPresentation = kunmingPresentation();
+    customerPresentation.en.days[0]!.overnightDestination = "";
+    const en = buildCustomerDocument(sample.itinerary, { customerPresentation, exportLanguage: "en" });
+    expect(en.schedule[0]!.hotel).toBe("4-Diamond: Spring Hotel\n5-Diamond: Lake Hotel");
+  });
+
+  it("matches a city-based frozen selection by its original city in an English document", () => {
+    const { itinerary } = fixture();
+    const presentation: CustomerPresentation = kunmingPresentation();
+    delete presentation.en.days[0]!.hotels;
+    presentation.en.days[0]!.overnightDestination = "Hangzhou";
+    presentation.en.hotels = [{ hotelId: "old-hotel", name: "West Lake Hotel", destination: "Hangzhou" }];
+    const en = buildCustomerDocument(itinerary, { customerPresentation: presentation, exportLanguage: "en" });
+    expect(en.schedule[0]!.hotel).toBe("Hangzhou\n4-Diamond: West Lake Hotel");
+  });
+
+  it("falls back to the frozen hotel only when the night's hotel is unique", () => {
+    const sample = fixture();
+    sample.itinerary.dailyPlans[1]!.overnightDestination = "杭州";
+    sample.itinerary.hotelPlans = [
+      { tier: 4, hotels: [{ destination: "杭州", hotelId: "h1", hotelName: "西湖酒店" }] },
+      { tier: 5, hotels: [
+        { destination: "杭州", hotelId: "h2", hotelName: "湖滨酒店" },
+        { destination: "杭州", hotelId: "h3", hotelName: "灵隐酒店" },
+      ] },
+    ] as unknown as ItineraryRecord["hotelPlans"];
+    const rows = buildCustomerDocument(sample.itinerary).schedule;
+    expect(rows.map((row) => row.hotel)).toEqual(["杭州\n四钻：西湖酒店", "杭州\n四钻：西湖酒店"]);
+    // 已按住宿日保存的酒店优先于城市匹配。
+    sample.itinerary.hotelPlans[1]!.hotels[0]!.dayId = "day-1";
+    expect(buildCustomerDocument(sample.itinerary).schedule[1]!.hotel).toBe("杭州\n四钻：西湖酒店\n五钻：湖滨酒店");
+  });
+
+  it("keeps the sight-seeing and hotel columns equally wide in both formats", async () => {
+    const [html = "", word = ""] = await exportText(fixture(), false);
+    expect(html.match(/<col style="width:31%;">/g)).toHaveLength(2);
+    expect(word).toContain('<w:tblLayout w:type="fixed"/>');
+    expect(word.match(/<w:gridCol w:w="3339"\/>/g)).toHaveLength(2);
+  });
+
+  it.each([
+    [1685, "1,685.00"],
+    [0, "0.00"],
+    [null, "150.00"],
+  ])("exports single supplement quote %s as %s without changing other prices", async (quote, shown) => {
+    const sample = fixture();
+    sample.snapshot.calculation.options[0]!.paxPrices.forEach((price) => { price.singleSupplementQuote = quote; });
+    for (const output of await exportText(sample, false)) {
+      expect(output).toContain(`RMB ${shown}`);
+      expect(output).toContain("RMB 1,000.00");
+      if (quote !== null) expect(output).not.toContain("RMB 150.00");
+    }
+  });
+});

@@ -37,10 +37,27 @@ export interface PdfValidationIssue {
 type ItineraryValidationInput = Pick<
   ItineraryRecord,
   "dailyPlans" | "hotelPlans" | "vehiclePlans" | "paxTiers" | "guidePlans" | "quote"
->;
+> &
+  Partial<Pick<ItineraryRecord, "startDate">>;
 
-export function getItineraryValidationIssues(plan: ItineraryValidationInput): PdfValidationIssue[] {
+export const START_DATE_ISSUE: PdfValidationIssue = {
+  key: "itinerary.validation.startDate",
+  target: "itinerary-basics",
+};
+
+/** 后端 PDF_NOT_READY 的 details.issues 为字段路径；开始日期问题映射为可定位提示。 */
+export function serverStartDateIssue(details: unknown): PdfValidationIssue | null {
+  const issues = (details as { issues?: unknown } | null | undefined)?.issues;
+  return Array.isArray(issues) && issues.includes("startDate") ? START_DATE_ISSUE : null;
+}
+
+export function getItineraryValidationIssues(
+  plan: ItineraryValidationInput,
+  { requireStartDate = false } = {},
+): PdfValidationIssue[] {
   const issues: PdfValidationIssue[] = [];
+  // 普通行程草稿可无开始日期；正式客户文件需要具体日期（系列团使用相对日序）。
+  if (requireStartDate && !plan.startDate) issues.push(START_DATE_ISSUE);
   const days = plan.dailyPlans;
   if (!days.length) issues.push({ key: "itinerary.validation.noDays", target: "itinerary-daily" });
   for (const day of days) {

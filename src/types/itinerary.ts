@@ -69,6 +69,8 @@ export interface ItineraryVehiclePlan {
 export interface ItineraryPaxPrice {
   pax: number;
   adultUnitPrice: number | null;
+  /** Customer single supplement; null follows the calculated cost, 0 is an explicit zero quote. */
+  singleSupplementQuote?: number | null;
 }
 
 export interface ItineraryStaffRoomCost {
@@ -94,6 +96,12 @@ export interface ItineraryQuoteOption {
 }
 
 export interface ItineraryQuoteSettings {
+  /** Whole-group totals split per PAX tier; null counts as 0. */
+  leaderRoomTotal?: number | null;
+  driverTipTotal?: number | null;
+  guideLeaderTransportTotal?: number | null;
+  /** Per-person ground handling cost; null counts as 0. */
+  groundHandlingUnitCost?: number | null;
   mealOtherCost: number | null;
   mealOtherReason: string;
   attractionOtherCost: number | null;
@@ -148,7 +156,14 @@ export interface ItineraryPaxCalculation {
   childUnitPrice: number;
   childWithoutBedUnitPrice?: number;
   leaderUnitPrice: number;
+  /** Per-person shares of the shared quote costs; older snapshots omit them. */
+  leaderRoomUnitCost?: number;
+  driverTipUnitCost?: number;
+  guideLeaderTransportUnitCost?: number;
+  groundHandlingUnitCost?: number;
   singleSupplementUnitCost: number;
+  /** Final customer single supplement (override or cost); older snapshots omit it. */
+  singleSupplementQuote?: number | null;
   tipUnitPrice: number;
   profitPerPerson: number;
   actualMarginRate: number | null;
@@ -285,6 +300,8 @@ export interface CustomerContent {
     transport: string;
     description: string;
     overnightDestination: string;
+    /** That night's hotel per tier; empty without accommodation, absent in older snapshots. */
+    hotels?: Array<{ tier: number; name: string }>;
     meals: ItineraryMeals;
     items: Array<{ id: string; name: string; description: string; remark: string; unit: string }>;
   }>;

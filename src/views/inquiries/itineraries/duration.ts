@@ -5,6 +5,11 @@ export function plannedEndDate(startDate: string, days: number) {
   return startDate && days > 0 ? addDays(startDate, days - 1) : "";
 }
 
+/** 普通行程可暂不定日期；未定时逐日日期为空字符串，日序仍从 D1 起。 */
+export function itineraryDayDate(startDate: string | null | undefined, index: number) {
+  return startDate ? addDays(startDate, index) : "";
+}
+
 /** ISO 日期按 UTC 比较，日序不受夏令时影响。 */
 export function itineraryDayNumber(startDate: string, date: string): number | undefined {
   if (!startDate || !date) return undefined;

@@ -214,7 +214,7 @@ describe("request session recovery", () => {
     });
   });
 
-  it.each([undefined, null, "", "  ", 42, ["invalid"]])("falls back when the message is invalid: %j", async (message) => {
+  it.each([undefined, null, "", "  ", "VALIDATION_ERROR", "INVALID_FIELD", 42, ["invalid"]])("falls back when the message is invalid: %j", async (message) => {
     translations.messages = { "apiErrors.VALIDATION_ERROR": "输入有误，请检查后重试" };
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
       code: "VALIDATION_ERROR", message,
@@ -252,6 +252,41 @@ describe("request session recovery", () => {
   it("uses the generic fallback when neither the code nor HTTP status has a translation", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status: 400 })));
     await expect(request.get("/example")).rejects.toMatchObject({ message: "apiErrors.REQUEST_FAILED" });
+  });
+
+  it("shows the duplicate city reason from the server and keeps its field details", async () => {
+    translations.messages = { "apiErrors.CITY_NAME_EXISTS": "该城市已存在" };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      code: "CITY_NAME_EXISTS", message: "城市「昆明」已存在，请在城市库中搜索并编辑已有记录。",
+    }), { status: 409 })));
+    const error = await request.post("/resources/cities", { name: "昆明" }).catch((caught: unknown) => caught);
+    expect(error).toMatchObject({ code: "CITY_NAME_EXISTS", status: 409 });
+    expect(requestErrorMessage(error)).toBe("城市「昆明」已存在，请在城市库中搜索并编辑已有记录。");
+  });
+
+  it.each([
+    ["PAYLOAD_TOO_LARGE", 413, { maxBytes: 2_097_152 }, "apiErrors.PAYLOAD_TOO_LARGE_LIMIT"],
+    ["BAD_REQUEST", 400, { reason: "INVALID_RECORD_ID" }, "apiErrors.INVALID_RECORD_ID"],
+  ])("uses the %s details for the fallback when the message is empty", async (code, status, details, message) => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ code, message: "", details }), { status })));
+    await expect(request.post("/upload", new FormData())).rejects.toMatchObject({ code, message, details });
+  });
+
+  it("falls back to the 413 text when a gateway rejects the upload without JSON", async () => {
+    translations.messages = { "apiErrors.HTTP_413": "上传内容超过大小限制" };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("<html>413</html>", { status: 413 })));
+    await expect(request.post("/upload", new FormData())).rejects.toMatchObject({ message: "上传内容超过大小限制" });
+  });
+
+  it("does not describe an unknown constraint violation as a duplicate name", async () => {
+    translations.messages = {
+      "apiErrors.DATABASE_CONSTRAINT_VIOLATION": "数据与已有记录或关联数据冲突，请检查填写内容或刷新后重试",
+    };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      code: "DATABASE_CONSTRAINT_VIOLATION", message: null,
+    }), { status: 409 })));
+    const error = await request.post("/example", {}).catch((caught: unknown) => caught);
+    expect(requestErrorMessage(error)).toBe("数据与已有记录或关联数据冲突，请检查填写内容或刷新后重试");
   });
 
   it("keeps an explicit conflict reason ahead of the version fallback", () => {
