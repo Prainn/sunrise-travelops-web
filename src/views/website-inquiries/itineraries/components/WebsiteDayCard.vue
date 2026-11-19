@@ -41,7 +41,7 @@
         <el-form-item :label="$t('websiteItineraryUi.departureCity')" required>
           <el-select v-model="day.departCityId" autocomplete="new-password" filterable>
             <el-option
-              v-for="city in config.cities"
+              v-for="city in cityOptions(day.departCityId)"
               :key="city.id"
               :value="city.id"
               :label="locale === 'en' ? city.nameEn : city.nameZh"
@@ -51,7 +51,7 @@
         <el-form-item :label="$t('websiteItineraryUi.endCity')" required>
           <el-select v-model="day.endCityId" autocomplete="new-password" filterable>
             <el-option
-              v-for="city in config.cities"
+              v-for="city in cityOptions(day.endCityId)"
               :key="city.id"
               :value="city.id"
               :label="locale === 'en' ? city.nameEn : city.nameZh"
@@ -71,7 +71,7 @@
             @update:model-value="setOvernight"
           >
             <el-option
-              v-for="city in config.cities"
+              v-for="city in cityOptions(day.overnightCityId, day.endCityId)"
               :key="city.id"
               :value="city.id"
               :label="locale === 'en' ? city.nameEn : city.nameZh"
@@ -107,6 +107,7 @@
             v-model:day="day"
             :leg-id="event.id"
             :config="config"
+            :selectable-city-ids="selectableCityIds"
             :editable="editable && !saving"
             @remove="(id, name) => emit('remove-item', id, name)"
           />
@@ -160,6 +161,7 @@ import ItineraryDayCardFrame from "@/views/inquiries/itineraries/components/Itin
 import ItineraryDayPanel from "@/views/inquiries/itineraries/components/ItineraryDayPanel.vue";
 import WebsiteDayAttractions from "./WebsiteDayAttractions.vue";
 import WebsiteDayTransport from "./WebsiteDayTransport.vue";
+import { websiteCityOptions } from "../city-options";
 import WebsiteDayHotels from "./WebsiteDayHotels.vue";
 import WebsiteDayMealsServices from "./WebsiteDayMealsServices.vue";
 import { isMealArranged } from "../../options";
@@ -172,6 +174,7 @@ const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{
   sequence?: { id: string; label: string }[];
   config: WebsiteConfig;
+  selectableCityIds: ReadonlySet<string>;
   editable: boolean;
   saving?: boolean;
   startDate: string | null;
@@ -261,6 +264,9 @@ function insertResource(key: string, afterId: string) {
 function cityName(id: string) {
   const city = props.config.cities.find((item) => item.id === id);
   return city ? (locale.value === "en" ? city.nameEn : city.nameZh) : "";
+}
+function cityOptions(...retainedIds: (string | null)[]) {
+  return websiteCityOptions(props.config.cities, props.selectableCityIds, ...retainedIds);
 }
 function selectResource(key: string) {
   if (key === "attraction" || key === "transport") emit("open-resource", key);

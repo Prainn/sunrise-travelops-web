@@ -57,7 +57,7 @@
         <el-form-item :label="$t('websiteItineraryUi.departureCity')">
           <el-select v-model="draft.fromCityId" autocomplete="new-password" filterable>
             <el-option
-              v-for="city in config.cities"
+              v-for="city in cityOptions"
               :key="city.id"
               :value="city.id"
               :label="locale === 'en' ? city.nameEn : city.nameZh"
@@ -67,7 +67,7 @@
         <el-form-item :label="$t('websiteItineraryUi.arrivalCity')">
           <el-select v-model="draft.toCityId" autocomplete="new-password" filterable>
             <el-option
-              v-for="city in config.cities"
+              v-for="city in cityOptions"
               :key="city.id"
               :value="city.id"
               :label="locale === 'en' ? city.nameEn : city.nameZh"
@@ -116,12 +116,23 @@ import WebsiteTransportFields from "./WebsiteTransportFields.vue";
 import { transportRules } from "@/views/resources/website/useWebsiteConfigRules";
 import { TRANSPORT_OPTIONS, VEHICLE_OPTIONS } from "../../options";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
+import { websiteCityOptions, websiteDayRouteCityIds } from "../city-options";
 const day = defineModel<WebsiteDay>("day", { required: true });
-const props = defineProps<{ config: WebsiteConfig; editable: boolean; legId?: string }>();
+const props = defineProps<{
+  config: WebsiteConfig;
+  selectableCityIds: ReadonlySet<string>;
+  editable: boolean;
+  legId?: string;
+}>();
 const emit = defineEmits<{ add: []; remove: [id: string, name: string] }>();
 const { t, locale } = useI18n();
 const draft = ref<WebsiteLeg | null>(null);
 const formRef = ref<FormInstance>();
+const cityOptions = computed(() => websiteCityOptions(
+  props.config.cities,
+  props.selectableCityIds,
+  ...websiteDayRouteCityIds(day.value),
+));
 const vehicleOptions = computed(() => {
   if (draft.value?.routeId) return props.config.routes.find(route => route.id === draft.value?.routeId)?.vehicleOptions ?? [];
   return props.config.routes.filter(route => route.status === "enabled" && route.mode === "private_vehicle"

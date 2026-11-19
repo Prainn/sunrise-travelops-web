@@ -27,7 +27,7 @@
               :placeholder="$t('itinerary.allCities')"
             >
               <el-option
-                v-for="city in config.cities"
+                v-for="city in cityOptions"
                 :key="city.id"
                 :value="city.id"
                 :label="localName(city)"
@@ -157,6 +157,7 @@ import DataTable from "@/components/DataTable/index.vue";
 import type { WebsiteAttraction, WebsiteConfig, WebsiteDay, WebsiteItem } from "@/types/website";
 import { hasAttractionCopy } from "@/views/website-inquiries/options";
 import { attractionReferencePrice, formatAttractionPrice } from "../attraction-price";
+import { websiteCityOptions, websiteDayRouteCityIds } from "../city-options";
 
 interface AttractionRow {
   attraction: WebsiteAttraction;
@@ -172,6 +173,7 @@ const props = defineProps<{
   day?: WebsiteDay;
   days: WebsiteDay[];
   config: WebsiteConfig;
+  selectableCityIds: ReadonlySet<string>;
 }>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
@@ -185,10 +187,16 @@ const selectedId = ref("");
 const manualNameZh = ref("");
 const manualNameEn = ref("");
 
+const cityOptions = computed(() => websiteCityOptions(
+  props.config.cities,
+  props.selectableCityIds,
+  ...websiteDayRouteCityIds(props.day),
+));
+const cityOptionIds = computed(() => new Set(cityOptions.value.map((city) => city.id)));
 const rows = computed<AttractionRow[]>(() => {
   const query = keyword.value.trim().toLowerCase();
   const enabled = props.config.attractions.filter(
-    (item) => item.status === "enabled" && (!cityId.value || item.cityId === cityId.value),
+    (item) => item.status === "enabled" && cityOptionIds.value.has(item.cityId) && (!cityId.value || item.cityId === cityId.value),
   );
   const matches = (item: WebsiteAttraction) =>
     !query || item.nameZh.toLowerCase().includes(query) || item.nameEn.toLowerCase().includes(query);
@@ -214,7 +222,9 @@ const rows = computed<AttractionRow[]>(() => {
   }
   return result;
 });
-const selected = computed(() => props.config.attractions.find((item) => item.id === selectedId.value));
+const selected = computed(() => props.config.attractions.find((item) =>
+  item.id === selectedId.value && cityOptionIds.value.has(item.cityId),
+));
 const hasCopy = computed(() => Boolean(selected.value && hasAttractionCopy(selected.value)));
 const canSubmit = computed(() =>
   source.value === "manual"
