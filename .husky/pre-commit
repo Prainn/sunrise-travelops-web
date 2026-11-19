@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 set -eu
-npm run lint:lint-staged
+pnpm_config_verify_deps_before_run=false pnpm run lint:lint-staged
 
 # Check the index after lint-staged fixes it. Unstaged edits must not mask errors.
 snapshot=$(mktemp -d "${TMPDIR:-/tmp}/sunrise-web-index.XXXXXXXX")
