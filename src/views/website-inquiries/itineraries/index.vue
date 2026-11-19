@@ -169,7 +169,7 @@
                   class="w-[min(300px,75vw)]!"
                 >
                   <el-option
-                    v-for="skeleton in config.skeletons.filter((item) => item.status === 'enabled')"
+                    v-for="skeleton in availableSkeletons"
                     :key="skeleton.id"
                     :value="skeleton.id"
                     :label="
@@ -181,7 +181,7 @@
                   />
                 </el-select>
                 <el-button
-                  :disabled="!skeletonId || dirty || plan.configVersion !== currentConfig?.version"
+                  :disabled="!availableSkeletons.some(skeleton => skeleton.id === skeletonId) || dirty || plan.configVersion !== currentConfig?.version"
                   @click="generate"
                 >
                   {{ $t("websiteWorkspace.generateDraft") }}
@@ -201,6 +201,7 @@
             :day="plan.days[index]"
             :sequence="boardDay(plan.days[index]).groups[0]?.items.filter(item => !item.placeholder)"
             :config="config"
+            :selectable-city-ids="selectableCityIds"
             :editable="editable"
             :saving="saving"
             :start-date="plan.startDate"
@@ -271,6 +272,7 @@
           :day="resourceDay"
           :days="plan.days"
           :config="config"
+          :selectable-city-ids="selectableCityIds"
           @update:model-value="closeResource"
           @submit="submitAttraction"
         />
@@ -279,6 +281,7 @@
           :day-label="resourceDayLabel"
           :day="resourceDay"
           :config="config"
+          :selectable-city-ids="selectableCityIds"
           @update:model-value="closeResource"
           @submit="submitTransport"
         />
@@ -287,6 +290,7 @@
           :day-label="resourceDayLabel"
           :day="resourceDay"
           :config="config"
+          :selectable-city-ids="selectableCityIds"
           :hotel="resourceHotel"
           @update:model-value="closeResource"
           @submit="submitHotel"
@@ -304,6 +308,7 @@
           :model-value="Boolean(boardTransport)"
           :day-label="$t('itineraryWorkspace.transfer.copyTag')"
           :config="config"
+          :selectable-city-ids="selectableCityIds"
           :leg="boardTransport"
           @update:model-value="(visible) => !visible && closeBoardTransport()"
           @submit="finishBoardTransport"
@@ -374,6 +379,7 @@ import type { DayOrderChange, DayOrderIssue, ReorderBoardDay, ReorderBoardItem }
 import { emptyDay, isMealArranged, TRANSPORT_OPTIONS } from "../options";
 import { reorderWebsiteDays, WEBSITE_BOARD_GROUPS, websiteGuideBoardId } from "./day-order";
 import { insertWebsiteEvent, updateWebsiteMeal } from "./event-order";
+import { selectableWebsiteCityIds } from "./city-options";
 import { useWebsiteWorkspace } from "./useWebsiteWorkspace";
 import WebsiteDayCard, { type WebsiteResourceDialogKind } from "./components/WebsiteDayCard.vue";
 import WebsiteItineraryBasics from "./components/WebsiteItineraryBasics.vue";
@@ -447,6 +453,13 @@ usePageTitle(() =>
   inquiry.value ? t("itineraryWorkspace.pageTitles.website", { name: inquiry.value.customerName }) : "",
 );
 
+const selectableCityIds = computed(() => selectableWebsiteCityIds(
+  config.value?.cities ?? [],
+  inquiry.value?.destinations ?? [],
+));
+const availableSkeletons = computed(() => config.value?.skeletons.filter((skeleton) =>
+  skeleton.status === "enabled" && skeleton.days.every((day) => selectableCityIds.value.has(day.cityId)),
+) ?? []);
 const dayEntries = computed(() =>
   (plan.value?.days ?? []).map((day) => ({
     id: day.id,
