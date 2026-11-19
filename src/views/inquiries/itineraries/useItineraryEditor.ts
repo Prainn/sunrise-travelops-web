@@ -15,7 +15,8 @@ import type {
   ItineraryEditableDayField,
 } from "@/types/itinerary";
 import type { HotelRecord } from "@/types/resource";
-import { addDays, createId, divideMoney, formatDateTime, roundMoney, sumMoney } from "@/utils";
+import { createId, divideMoney, formatDateTime, roundMoney, sumMoney } from "@/utils";
+import { itineraryDayDate, plannedEndDate } from "./duration";
 import { transitionInquiry } from "../inquiry-workflow";
 import {
   createDefaultHotelPlans,
@@ -113,7 +114,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       startDate,
       dailyPlans: createDailyPlans(startDate, plannedDays),
       days: plannedDays,
-      endDate: addDays(startDate, plannedDays - 1),
+      endDate: plannedEndDate(startDate, plannedDays),
     };
     syncQuoteOptions(created);
     options.itineraryStore.unshift(created);
@@ -164,7 +165,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     return Array.from({ length: dayCount }, (_, index) => ({
       id: createId("day"),
       dayNumber: index + 1,
-      date: addDays(startDate, index),
+      date: itineraryDayDate(startDate, index),
       departure: "",
       destination: "",
       viaDestinations: [],
@@ -499,12 +500,12 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   function syncPlanDates(plan: ItineraryRecord) {
     plan.dailyPlans.forEach((day, index) => {
       day.dayNumber = index + 1;
-      day.date = addDays(plan.startDate, index);
+      day.date = itineraryDayDate(plan.startDate, index);
     });
     // 日期始终按日序校正并更新时间；早餐在目的地清理后按需同步，避免重复执行。
     plan.days = plan.dailyPlans.length;
     if (plan.guidePlans[0]) plan.guidePlans[0].serviceDays = plan.days;
-    plan.endDate = plan.days ? addDays(plan.startDate, plan.days - 1) : plan.startDate;
+    plan.endDate = plannedEndDate(plan.startDate, plan.days);
     plan.updatedAt = formatDateTime(new Date());
   }
 
@@ -603,11 +604,14 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
         const option =
           existing.get(key) ??
           createDefaultQuoteOption(hotelTier, vehicleTier, createId("quote-option"));
-        option.paxPrices = plan.paxTiers.map((pax) => ({
-          pax,
-          adultUnitPrice:
-            option.paxPrices.find((price) => price.pax === pax)?.adultUnitPrice ?? null,
-        }));
+        option.paxPrices = plan.paxTiers.map((pax) => {
+          const current = option.paxPrices.find((price) => price.pax === pax);
+          return {
+            pax,
+            adultUnitPrice: current?.adultUnitPrice ?? null,
+            singleSupplementQuote: current?.singleSupplementQuote ?? null,
+          };
+        });
         return [option];
       });
     });

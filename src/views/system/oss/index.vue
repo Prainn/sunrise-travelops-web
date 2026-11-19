@@ -422,7 +422,7 @@ function notifyActionError(cause: unknown) {
     ElMessage.warning(t("oss.actionConflict", { message: websiteErrorMessage(cause) }));
     void fetchList();
   } else if (cause instanceof ApiError && cause.status === 404) {
-    ElMessage.error(t("oss.notFound"));
+    ElMessage.error(websiteErrorMessage(cause));
     void fetchList();
   } else {
     ElMessage.error(websiteErrorMessage(cause));
@@ -448,8 +448,7 @@ async function handleFileChange(event: Event) {
     ElMessage.success(t("oss.uploadSuccess"));
     search();
   } catch (cause) {
-    if (cause instanceof ApiError && cause.status === 413) ElMessage.error(t("whatsapp.imageDraft.tooLarge"));
-    else ElMessage.error(websiteErrorMessage(cause));
+    ElMessage.error(websiteErrorMessage(cause));
   } finally {
     uploading.value = false;
   }

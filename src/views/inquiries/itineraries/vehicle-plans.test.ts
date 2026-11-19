@@ -3,6 +3,7 @@ import type { ItineraryVehiclePlan } from "@/types/itinerary";
 import { missingPriceReasons, vehiclePaxPriceNeedsReason } from "./price-adjustments";
 import {
   createVehicleDraft,
+  hasDatedVehicleArrangements,
   hasVehicleSeatShortage,
   needsVehicleModeChangeConfirm,
   setVehiclePaxTotal,
@@ -145,5 +146,17 @@ describe("vehicle PAX reasons", () => {
     Object.assign(record, { dailyPlans: [], hotelPlans: [], guidePlans: [] });
     Object.assign(previous!, { dailyPlans: [], hotelPlans: [], guidePlans: [] });
     expect(missingPriceReasons(record, previous)).toEqual(["standard:20"]);
+  });
+});
+
+describe("vehicle arrangements without an itinerary start date", () => {
+  it("only blocks clearing the start date while an arrangement keeps concrete dates", () => {
+    const plan = (startDate: string) => ({
+      tier: "standard", quotationMode: "itinerary", paxPrices: [],
+      arrangements: [{ id: "a", startDate, endDate: startDate, vehicles: [], totalPrice: null, paxPrices: [] }],
+    }) as unknown as ItineraryVehiclePlan;
+    expect(hasDatedVehicleArrangements([plan("2026-12-01")])).toBe(true);
+    expect(hasDatedVehicleArrangements([plan("")])).toBe(false);
+    expect(hasDatedVehicleArrangements([])).toBe(false);
   });
 });

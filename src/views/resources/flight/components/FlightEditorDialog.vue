@@ -91,7 +91,7 @@ const props = defineProps<{
   modelValue: boolean;
   record: FlightRecord;
   isEditing: boolean;
-  submit: (record: FlightRecord) => Promise<void>;
+  submit: (record: FlightRecord) => Promise<unknown>;
 }>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean] }>();
 const { t } = useI18n();

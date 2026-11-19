@@ -30,6 +30,7 @@ const CUSTOMER_TEXT = {
     childWithoutBed: (rate: number) => `儿童不占床（${rate}%）`,
     singleSupplement: "单房差",
     termHotel: "酒店",
+    hotelSeparator: "：",
     termMeals: "餐食",
     termTickets: "门票",
     termGuide: "导游",
@@ -75,6 +76,7 @@ const CUSTOMER_TEXT = {
     childWithoutBed: (rate: number) => `Child without Bed (${rate}%)`,
     singleSupplement: "Single Supplement",
     termHotel: "Hotel",
+    hotelSeparator: ": ",
     termMeals: "Meals",
     termTickets: "Admission",
     termGuide: "Guide",
@@ -161,7 +163,10 @@ export function buildCustomerDocument(
     days: itinerary.dailyPlans.map(day => ({ ...day, route: [], transport: "", description: "", overnightDestination: "", items: [] })),
   } : undefined);
   const noAccommodation = presentation?.noAccommodation ?? isNoAccommodationItinerary(itinerary);
-  const schedule = content ? presentationSchedule(content, text) : itinerarySchedule(itinerary, text);
+  const hotelText = (tier: number | string) => text.hotelTiers[String(tier)] ?? String(tier);
+  const schedule = content
+    ? presentationSchedule(itinerary, content, text, hotelText)
+    : itinerarySchedule(itinerary, text, hotelText);
   if (isSeries) schedule.forEach((row, index) => { row.dayLabel = `D${index + 1}`; });
   return {
     language,
@@ -177,28 +182,94 @@ export function buildCustomerDocument(
   };
 }
 
-function presentationSchedule(content: CustomerContent, text: CustomerText): CustomerScheduleRow[] {
+/** 行程表 D / DEPART. / T / SIGHT-SEEING REGION / HOTEL / M 列宽（%），行程与酒店两列等宽。 */
+export const SCHEDULE_COLUMN_PERCENTS = [8, 16, 8, 31, 31, 6] as const;
+
+/** 客户单房差：对客报价优先（显式 0 保留），旧冻结缺失或 null 时回退单房差成本。 */
+export function customerSingleSupplement(price: {
+  singleSupplementQuote?: number | null;
+  singleSupplementUnitCost?: number | null;
+}) {
+  return price.singleSupplementQuote ?? price.singleSupplementUnitCost ?? null;
+}
+
+type NightHotel = { tier: number | string; name: string };
+
+/**
+ * 旧冻结没有逐晚酒店：按冻结酒店方案的 dayId（历史无 dayId 时按住宿城市）唯一确定当晚酒店，
+ * 名称取所选语言的冻结映射；同城多家无法确定时只展示已知住宿城市。
+ */
+function frozenNightHotels(
+  itinerary: Pick<ItineraryRecord, "hotelPlans">,
+  day: { id: string; overnightDestination: string | null },
+  hotelName: (hotel: ItineraryRecord["hotelPlans"][number]["hotels"][number]) => string,
+): NightHotel[] {
+  return itinerary.hotelPlans.flatMap((plan) => {
+    const byDay = plan.hotels.filter((hotel) => hotel.dayId === day.id);
+    const candidates = byDay.length
+      ? byDay
+      : plan.hotels.filter((hotel) => !hotel.dayId && hotel.destination === day.overnightDestination);
+    const hotelIds = new Set(candidates.map((hotel) => hotel.hotelId));
+    return hotelIds.size === 1 && candidates[0] ? [{ tier: plan.tier, name: hotelName(candidates[0]) }] : [];
+  });
+}
+
+/** HOTEL 列：住宿城市 + 每档一行当晚酒店；无住宿日保持原展示，缺失的英文名留空。 */
+function hotelCell(
+  city: string | null,
+  hotels: NightHotel[],
+  text: CustomerText,
+  hotelText: (tier: number | string) => string,
+) {
+  const lines = hotels
+    .filter((hotel) => hotel.name.trim())
+    .map((hotel) => `${hotelText(hotel.tier)}${text.hotelSeparator}${hotel.name.trim()}`);
+  return [city, ...lines].filter(Boolean).join("\n");
+}
+
+function presentationSchedule(
+  itinerary: ItineraryRecord,
+  content: CustomerContent,
+  text: CustomerText,
+  hotelText: (tier: number | string) => string,
+): CustomerScheduleRow[] {
+  const names = new Map(content.hotels.map((hotel) => [hotel.hotelId, hotel.name]));
+  const frozenDays = new Map(itinerary.dailyPlans.map((day) => [day.id, day]));
   const rows = content.days.map((day) => ({
     key: day.id,
     dayLabel: formatScheduleDate(day.date),
     route: day.route.join(" / "),
     transport: day.transport,
     description: day.description.trim(),
-    hotel: day.overnightDestination ?? "",
+    hotel: hotelCell(
+      day.overnightDestination,
+      day.hotels ?? frozenNightHotels(itinerary, frozenDays.get(day.id) ?? day, (hotel) => names.get(hotel.hotelId) ?? ""),
+      text,
+      hotelText,
+    ),
     meals: mealCodes(day.meals, day.meals.breakfast ? "included" : "excluded", text) || "-",
   }));
   if (content.returnArrival) rows.push(returnArrivalRow(content.returnArrival.date, content.returnArrival.text));
   return rows;
 }
 
-function itinerarySchedule(itinerary: ItineraryRecord, text: CustomerText): CustomerScheduleRow[] {
+function itinerarySchedule(
+  itinerary: ItineraryRecord,
+  text: CustomerText,
+  hotelText: (tier: number | string) => string,
+): CustomerScheduleRow[] {
   const rows = itinerary.dailyPlans.map((day, index) => ({
     key: day.id,
     dayLabel: formatScheduleDate(day.date),
     route: formatScheduleRoute(day),
     transport: getTransportMethodNames(day.transport) || "-",
     description: day.description?.trim() || "-",
-    hotel: day.overnightDestination ?? "",
+    hotel: hotelCell(
+      day.overnightDestination,
+      frozenNightHotels(itinerary, day, (hotel) => hotel.hotelName ?? ""),
+      text,
+      hotelText,
+    ),
     meals: mealCodes(day.meals, getDayBreakfastStatus(itinerary, index), text) || "-",
   }));
   const last = itinerary.dailyPlans[itinerary.dailyPlans.length - 1];

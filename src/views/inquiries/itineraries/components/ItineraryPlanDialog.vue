@@ -160,6 +160,7 @@
 
 <script setup lang="ts">
 import { plannedEndDate } from "@/views/inquiries/itineraries/duration";
+import { hasDatedVehicleArrangements } from "@/views/inquiries/itineraries/vehicle-plans";
 import { computed, reactive, ref, watch } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -237,9 +238,18 @@ const rules = computed<FormRules>(() => ({
       trigger: "change",
     },
   ],
+  // 普通行程开始日期可暂不填写；已有具体日期的用车段仍须保留开始日期。
   startDate: props.isSeries
     ? []
-    : [{ required: true, message: t("itinerary.startDateRequired"), trigger: "change" }],
+    : [
+      {
+        validator: (_rule: unknown, value: string | null, callback: (error?: Error) => void) =>
+          !value && hasDatedVehicleArrangements(form.vehiclePlans)
+            ? callback(new Error(t("itinerary.startDateRequiredForVehicles")))
+            : callback(),
+        trigger: "change",
+      },
+    ],
   paxTiers: [
     {
       type: "array",
@@ -313,6 +323,8 @@ async function submitForm() {
   if (!(await formRef.value?.validate().catch(() => false))) return;
   emit("submit", {
     ...form,
+    // 清空日期选择器得到 null；统一以空字符串表示未定日期。
+    startDate: form.startDate || "",
     paxTiers: [...form.paxTiers],
     destinations: [...form.destinations],
     hotelPlans: form.hotelPlans.map((plan) => ({

@@ -112,7 +112,7 @@ const props = defineProps<{
   modelValue: boolean;
   record: GuidePersonRecord;
   isEditing: boolean;
-  submit: (record: GuidePersonRecord) => Promise<void>;
+  submit: (record: GuidePersonRecord) => Promise<unknown>;
 }>();
 const emit = defineEmits<{ "update:modelValue": [boolean] }>();
 const { t } = useI18n();
