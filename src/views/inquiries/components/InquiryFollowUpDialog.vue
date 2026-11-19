@@ -303,16 +303,6 @@ function deliveryReasonText(reason: FollowUpDelivery["reason"]) {
   return t("inquiry.followUp.deliveryUnavailable");
 }
 
-/** 浏览器非安全上下文没有 randomUUID，用 getRandomValues 生成 v4 UUID。 */
-function createRequestId(): string {
-  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  bytes[6] = (bytes[6]! & 0x0f) | 0x40;
-  bytes[8] = (bytes[8]! & 0x3f) | 0x80;
-  const hex = [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
-
 function buildInput(version: number): InquiryFollowUpInput {
   const content = {
     remark: form.remark,
@@ -321,7 +311,7 @@ function buildInput(version: number): InquiryFollowUpInput {
   };
   const signature = JSON.stringify([version, content]);
   if (pendingSubmission?.signature !== signature)
-    pendingSubmission = { signature, requestId: createRequestId() };
+    pendingSubmission = { signature, requestId: crypto.randomUUID() };
   return { version, requestId: pendingSubmission.requestId, ...content };
 }
 

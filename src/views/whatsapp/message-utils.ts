@@ -4,6 +4,7 @@ import type { OssResource } from "@/types/oss";
 import type {
   WhatsappConversationDetail,
   WhatsappConversationState,
+  WhatsappDocumentArchiveState,
   WhatsappDocumentMeta,
   WhatsappDocumentUpload,
   WhatsappMessage,
@@ -250,13 +251,14 @@ export function messageMedia(message: Pick<WhatsappMessage, "attachment">): OssR
 }
 
 /**
- * 工作台出站文档的文件元数据；入站、手机端或缺少元数据的旧文档返回 undefined，沿用原附件摘要展示。
+ * 已存入私有 OSS 的文档元数据：工作台出站文档或归档完成的客户入站文档；
+ * 手机端发出、未归档或缺少元数据的旧文档返回 undefined，沿用原附件摘要展示。
  *
  * @param message - 消息。
  * @returns 文件元数据。
  */
-export function messageDocument(message: Pick<WhatsappMessage, "kind" | "direction" | "attachment">): WhatsappDocumentMeta | undefined {
-  if (message.kind !== "document" || message.direction !== "outbound") return undefined;
+export function messageDocument(message: Pick<WhatsappMessage, "kind" | "attachment">): WhatsappDocumentMeta | undefined {
+  if (message.kind !== "document") return undefined;
   const value = message.attachment?.document;
   if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
   const document = value as Partial<WhatsappDocumentMeta>;
@@ -269,10 +271,41 @@ export function messageDocument(message: Pick<WhatsappMessage, "kind" | "directi
   };
 }
 
+/**
+ * 客户入站文档的归档状态；出站文档或旧记录没有该字段时返回 undefined。
+ *
+ * @param message - 消息。
+ * @returns 归档状态。
+ */
+export function messageDocumentArchive(message: Pick<WhatsappMessage, "kind" | "direction" | "attachment">): WhatsappDocumentArchiveState | undefined {
+  if (message.kind !== "document" || message.direction !== "inbound") return undefined;
+  const value = message.attachment?.documentArchive;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const state = (value as { state?: unknown }).state;
+  return ["pending", "processing", "available", "failed", "skipped"].includes(state as string) ? state as WhatsappDocumentArchiveState : undefined;
+}
+
+const DOCX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+/**
+ * 弹窗可预览的文档类型；Word 97–2003（.doc）及其他格式返回 undefined，只提示下载。
+ *
+ * @param document - 文件元数据，mimeType 优先，缺失时按扩展名判断。
+ * @returns 预览类型。
+ */
+export function documentPreviewType(document: Pick<WhatsappDocumentMeta, "fileName" | "mimeType">): "pdf" | "docx" | undefined {
+  const mimeType = document.mimeType.toLowerCase();
+  if (mimeType === "application/pdf") return "pdf";
+  if (mimeType === DOCX_MIME_TYPE) return "docx";
+  if (mimeType) return undefined;
+  const extension = document.fileName.toLowerCase().split(".").pop();
+  return extension === "pdf" || extension === "docx" ? extension : undefined;
+}
+
 /** 归档仍在进行，完成后需要重取该消息所在页。 */
 export function hasPendingMedia(message: WhatsappMessage): boolean {
-  const state = messageMedia(message)?.state;
-  return isMediaMessage(message) && (state === "pending" || state === "processing");
+  const state = isMediaMessage(message) ? messageMedia(message)?.state : messageDocumentArchive(message);
+  return state === "pending" || state === "processing";
 }
 
 /** Merge newly loaded interactions into older bubbles without changing sequence cursors. */

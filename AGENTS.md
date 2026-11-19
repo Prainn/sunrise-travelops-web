@@ -2,6 +2,17 @@
 
 遵守[根导航](../AGENTS.md)；已有内容不重复读。前端实现或审查使用[前端 Skill](.agents/skills/sunrise-travelops-frontend/SKILL.md)，只加载本次命中的 reference 章节。
 
+## Modern Web Guidance
+
+[modern-web-guidance Skill](.agents/skills/modern-web-guidance/SKILL.md)（来源 [GoogleChrome/modern-web-guidance-src](https://github.com/GoogleChrome/modern-web-guidance-src)）用于查询 Web 平台的现行做法，按该 Skill 的流程执行。
+
+- **触发**：新增或修改涉及浏览器原生能力的 UI/CSS/客户端 JS，例如弹窗/浮层、表单校验与自动填充、可访问性、表格与滚动、深色模式、动画、性能（LCP/INP/CLS、图片、懒加载）、HTML 清洗与文件预览安全、日期时区。动手写代码或新增依赖之前先查询。
+- **不触发**：纯文案/i18n、业务规则与金额计算、service/type 对接、测试、Vite/ESLint/tsconfig 等工具配置，以及后端、部署任务。
+- **用法**：`pnpx modern-web-guidance@latest search "<2–5 个英文词>"`，再用 `retrieve "<id>"` 读取命中的指南；只查本次涉及的能力，不做全量浏览，不运行 `legacy-scan`（用户明确要求现代化扫描时除外）。命令需要外网；失败时继续按项目规范实现，并在交付说明中写明未能查询。
+- **优先级**：项目 Skill、共享组件和 Element Plus 优先。指南只决定这些组件内部及原生 DOM/CSS 的写法，不能成为替换组件的理由（例如弹窗仍用 `AppDialog`，不改成原生 `<dialog>`）。指南建议的 polyfill 或新依赖仍须按项目规范说明理由并经确认。
+- **浏览器支持**：只支持最近 3 年发布的主流浏览器（Chrome、Edge、Firefox、Safari），按滚动的 `Baseline <当前年份−3>` 判断（2026 年即 Baseline 2023）。指南中 “Baseline since” 不晚于该年份的特性直接使用，不写回退代码或 polyfill，也不保留为旧浏览器准备的兼容写法；更新的特性只在确有需要时使用，先做特性检测，不支持时简单降级，不引入 polyfill。
+- **披露**：用到指南时，在交付说明末尾按 Skill 要求附 `### Modern Web Guidance` 小节；只写本次实际采用的指南。
+
 ## Stack
 
 以 [package.json](package.json) 和 lockfile 为准：Vue 3、TypeScript 6、Vite 8、Vue Router 5、Pinia 4、Element Plus 2、UnoCSS/SCSS、VueUse、vue-i18n；请求使用原生 fetch 封装。客户 PDF 使用 HTML + 浏览器打印，普通询盘 Word 使用 docx 生成可编辑文件。

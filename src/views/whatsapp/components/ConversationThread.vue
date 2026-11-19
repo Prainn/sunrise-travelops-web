@@ -76,17 +76,18 @@
                 v-if="messageDocument(message)"
                 type="button"
                 class="whatsapp-message__document"
-                :aria-label="$t('whatsapp.documentDraft.download', { name: messageDocument(message)!.fileName })"
-                :title="$t('whatsapp.documentDraft.download', { name: messageDocument(message)!.fileName })"
-                :aria-busy="downloadingIds.has(message.id)"
-                :disabled="downloadingIds.has(message.id)"
-                @click="handleDownload(message)"
+                :aria-label="$t('whatsapp.documentPreview.open', { name: messageDocument(message)!.fileName })"
+                :title="$t('whatsapp.documentPreview.open', { name: messageDocument(message)!.fileName })"
+                @click="openPreview(message)"
               >
                 <DocumentCard :file-name="messageDocument(message)!.fileName" :size-bytes="messageDocument(message)!.sizeBytes" />
               </button>
               <MessageText v-if="message.presentation?.text ?? message.text" :text="message.presentation?.text ?? message.text ?? ''" />
               <div v-if="!messageDocument(message) && ['audio', 'video', 'document'].includes(message.kind) && attachmentSummary(message.attachment).length" class="text-[12px] text-muted">
                 {{ attachmentSummary(message.attachment).join(" / ") }}
+              </div>
+              <div v-if="!messageDocument(message) && documentArchiveHint(message)" class="text-[12px] text-muted">
+                {{ documentArchiveHint(message) }}
               </div>
             </template>
             <div class="flex items-center justify-end flex-wrap gap-[5px] mt-[4px] text-[12px] text-muted">
@@ -353,6 +354,15 @@
         </div>
       </template>
     </div>
+    <DocumentPreviewDialog
+      v-if="previewMessage"
+      v-model="previewOpen"
+      :conversation-id="previewMessage.conversationId"
+      :message-id="previewMessage.id"
+      :document="messageDocument(previewMessage)"
+      :downloading="downloadingIds.has(previewMessage.id)"
+      @download="handleDownload(previewMessage)"
+    />
   </SectionCard>
 </template>
 
@@ -376,6 +386,7 @@ import {
   isMediaMessage,
   maxSeq,
   messageDocument,
+  messageDocumentArchive,
   messageMedia,
   messageSourceLabel,
   messageReply,
@@ -394,6 +405,7 @@ import ReplyPreview from "./ReplyPreview.vue";
 import MessageComposer from "./MessageComposer.vue";
 import ImageDraftStrip from "./ImageDraftStrip.vue";
 import DocumentCard from "./DocumentCard.vue";
+import DocumentPreviewDialog from "./DocumentPreviewDialog.vue";
 import { MAX_DRAFT_IMAGES, useImageDraft } from "../useImageDraft";
 import { isDocumentDraftExpired, validateDocumentFile } from "../document-draft";
 import { useDocumentDrafts } from "../useDocumentDrafts";
@@ -436,6 +448,9 @@ const imageDraft = useImageDraft(() => props.detail.id);
 const documentDrafts = useDocumentDrafts();
 const documentDraft = computed(() => documentDrafts.get(props.detail.id));
 const downloadingIds = ref(new Set<string>());
+/** 关闭后保留到下次打开，避免关闭动画中标题消失。 */
+const previewMessage = ref<WhatsappMessage>();
+const previewOpen = ref(false);
 const composerRef = ref<InstanceType<typeof MessageComposer>>();
 const activeReactionMessageId = ref("");
 const scrollRef = ref<HTMLElement>();
@@ -641,6 +656,19 @@ function editAgain(item: PendingMessage) {
     else documentDrafts.restore(props.detail.id, upload);
   }
   emit("discard", item.clientRequestId);
+}
+
+function openPreview(message: WhatsappMessage) {
+  previewMessage.value = message;
+  previewOpen.value = true;
+}
+
+/** 客户入站文档尚未归档或无法归档时的说明；归档成功或无状态时不显示。 */
+function documentArchiveHint(message: WhatsappMessage): string {
+  const state = messageDocumentArchive(message);
+  if (state === "pending" || state === "processing") return t("whatsapp.documentPreview.archiving");
+  if (state === "failed") return t("whatsapp.documentPreview.archiveFailed");
+  return "";
 }
 
 /** 每次点击重新获取 60 秒下载地址并立即触发下载；地址不缓存、不展示。 */

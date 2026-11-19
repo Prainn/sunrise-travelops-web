@@ -2699,6 +2699,16 @@
       "expiredNoFile": "图片已过期，请移除后重新选择",
       "batchExpired": "部分图片已过期，请点“重新编辑”后重新上传"
     },
+    "documentPreview": {
+      "open": "预览 {name}",
+      "loading": "文件加载中…",
+      "download": "下载",
+      "unsupportedTitle": "无法在线预览",
+      "unsupported": "该文件格式（如 Word 97–2003 .doc）不支持预览，请下载后查看",
+      "invalid": "文件内容与格式不符，无法预览，请下载后查看",
+      "archiving": "文件保存中，稍后可预览",
+      "archiveFailed": "文件已无法获取，请在手机 WhatsApp 中查看"
+    },
     "documentDraft": {
       "add": "发送文件",
       "addHint": "发送文件（PDF / Word，最大 20 MB）",
