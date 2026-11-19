@@ -30,13 +30,20 @@ small {
   font-size: 14px;
 }
 
+// 标准滚动条属性；滑块与背景对比度需达到 3:1，暗色主题下同样可见。
+// 支持标准属性的浏览器会忽略下方 ::-webkit-scrollbar，后者仅作为旧版 Safari 回退。
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--el-text-color-secondary) transparent;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: rgb(0 0 0 / 12%);
+  background-color: var(--el-text-color-secondary);
   border-radius: 3px;
 }
 

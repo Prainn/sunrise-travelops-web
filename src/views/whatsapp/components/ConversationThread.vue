@@ -649,10 +649,14 @@ async function handleDownload(message: WhatsappMessage) {
   downloadingIds.value = new Set(downloadingIds.value).add(message.id);
   try {
     const { url } = await whatsappService.documentDownload(message.conversationId, message.id);
-    const link = document.createElement("a");
-    link.href = url;
-    link.rel = "noopener noreferrer";
-    link.click();
+    // 签名地址强制 attachment；在隐藏 iframe 中打开，避免整页导航触发离开确认。
+    const frame = document.createElement("iframe");
+    frame.hidden = true;
+    frame.referrerPolicy = "no-referrer";
+    frame.src = url;
+    document.body.append(frame);
+    // 过早移除会中断下载，保留到签名地址失效。
+    setTimeout(() => frame.remove(), 60_000);
   } catch (cause) {
     ElMessage.error(websiteErrorMessage(cause));
   } finally {

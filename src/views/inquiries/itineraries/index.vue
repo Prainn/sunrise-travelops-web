@@ -496,6 +496,7 @@ import { ITINERARY_STATUS_TAG_TYPES } from "./options";
 import { getVehicleQuotationMode, needsVehicleModeChangeConfirm } from "./vehicle-plans";
 import type { VehicleMaintenanceMode } from "./vehicle-plans";
 import { useItineraryWorkspace } from "./useItineraryWorkspace";
+import { clonePlainData } from "@/utils";
 
 defineOptions({ name: "InquiryItineraries" });
 const { t } = useI18n();
@@ -890,7 +891,7 @@ function cancelSectionDialog(section: SectionDialog) {
 }
 
 function cloneItinerary(plan: ItineraryRecord) {
-  return JSON.parse(JSON.stringify(plan)) as ItineraryRecord;
+  return clonePlainData(plan);
 }
 
 async function saveSectionDialog(section: SectionDialog) {

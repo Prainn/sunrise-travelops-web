@@ -62,7 +62,7 @@
           v-model.trim="inquiryCode"
           clearable
           maxlength="50"
-          @keyup.enter="search"
+          @keydown.enter="runOnEnter($event, search)"
           @clear="search"
         />
       </el-form-item>
@@ -253,7 +253,7 @@ import { inquiryLogService, type LogReport } from "@/services/inquiry-log.servic
 import type { InquiryLogAction, InquiryLogRecord } from "@/types/inquiry-log";
 import type { InquiryRecord } from "@/types/inquiry";
 import type { ItineraryDayRecord } from "@/types/itinerary";
-import { formatDateTime } from "@/utils";
+import { formatDateTime, runOnEnter } from "@/utils";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
 import { canExpandLog, changeTone, displayLogChanges, formatLogValue } from "./log-presentation";
 defineOptions({ name: "InquiryLogs" });

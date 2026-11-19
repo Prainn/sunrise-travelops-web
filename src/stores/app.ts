@@ -21,6 +21,11 @@ export const useAppStore = defineStore("app", () => {
    */
   const language = useStorage(STORAGE_KEYS.LANGUAGE, defaults.language);
 
+  // 页面语言跟随界面语言，读屏、浏览器翻译和中文字形选择都依赖它
+  watch(language, (value) => {
+    document.documentElement.lang = value;
+  }, { immediate: true });
+
   /**
    * 侧边栏持久化状态
    */

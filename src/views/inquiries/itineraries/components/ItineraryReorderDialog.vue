@@ -270,7 +270,7 @@ import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { WebsiteReorderDraft, WebsiteLeg } from "@/types/website";
 import AppDialog from "@/components/AppDialog/index.vue";
-import { addDays } from "@/utils";
+import { addDays, clonePlainData } from "@/utils";
 import {
   boardPlacements,
   boardTransferIssues,
@@ -703,7 +703,7 @@ async function apply() {
   if (!props.transfer) {
     if (!isChanged.value || blockingIssues.value.length) return;
     // 排布嵌套在响应式状态中，按纯数据复制后交给页面，避免页面写回时与看板状态共享引用。
-    emit("apply", JSON.parse(JSON.stringify(change.value)) as DayOrderChange);
+    emit("apply", clonePlainData(change.value));
     emit("update:modelValue", false);
     return;
   }

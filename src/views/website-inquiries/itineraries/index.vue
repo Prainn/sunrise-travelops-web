@@ -390,6 +390,7 @@ import WebsiteTransportDialog from "./components/WebsiteTransportDialog.vue";
 import WebsiteHotelDialog from "./components/WebsiteHotelDialog.vue";
 import WebsiteMealDialog from "./components/WebsiteMealDialog.vue";
 import WebsiteGuideDialog from "./components/WebsiteGuideDialog.vue";
+import { clonePlainData } from "@/utils";
 defineOptions({ name: "WebsiteItineraryWorkspace" });
 /** 霖熹 Lynxtour 品牌色：酒红（取自 logo #811e21，色相略偏梅红以区别危险红）作主色，金色仅作装饰条。 */
 const LYNXTOUR_ACCENT = "#862742";
@@ -701,7 +702,7 @@ async function stashReorder(change: DayOrderChange) {
   if (!plan.value || !editable.value) return false;
   const previous = plan.value.reorderDraft;
   // 看板状态继续变化，暂存按纯数据复制；保存失败则撤回，避免残留未保存的暂存。
-  plan.value.reorderDraft = change.draft ? JSON.parse(JSON.stringify(change.draft)) : null;
+  plan.value.reorderDraft = change.draft ? clonePlainData(change.draft) : null;
   const saved = await save();
   if (!saved && plan.value) plan.value.reorderDraft = previous;
   return saved;
