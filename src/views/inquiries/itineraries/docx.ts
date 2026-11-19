@@ -9,6 +9,7 @@ import {
   ShadingType,
   Table,
   TableCell,
+  TableLayoutType,
   TableRow,
   TextRun,
   VerticalAlign,
@@ -18,7 +19,13 @@ import quoteHeaderUrl from "@/assets/images/quote/header.png";
 import quoteFooterUrl from "@/assets/images/quote/footer.png";
 import type { ItineraryQuoteCalculation, ItineraryRecord } from "@/types/itinerary";
 import { formatMoney } from "@/utils";
-import { buildCustomerDocument, type CustomerDocument, type CustomerSnapshot } from "./customer-document";
+import {
+  buildCustomerDocument,
+  customerSingleSupplement,
+  SCHEDULE_COLUMN_PERCENTS,
+  type CustomerDocument,
+  type CustomerSnapshot,
+} from "./customer-document";
 
 export interface ItineraryWordDocument {
   blob: Blob;
@@ -36,6 +43,8 @@ const FONT = "Microsoft YaHei";
 const BORDER = { style: "single" as const, size: 4, color: "9CA3AF" };
 // 190 mm content width at 96 dpi, matching the PDF header and footer images.
 const IMAGE_WIDTH = 718;
+// A4 210 mm minus 10 mm margins on each side = 190 mm.
+const CONTENT_WIDTH_TWIPS = Math.round((190 / 25.4) * 1440);
 
 const text = (value: string, options: { bold?: boolean; size?: number } = {}) =>
   new TextRun({ text: value, bold: options.bold, size: options.size ?? 21, font: FONT });
@@ -83,26 +92,34 @@ const spacer = () => new Paragraph({ spacing: { after: 100 }, children: [] });
 
 function scheduleTable(customer: CustomerDocument) {
   const header = ["D", "DEPART.", "T", "SIGHT-SEEING REGION", "HOTEL", "M"];
-  return table([
-    new TableRow({
-      tableHeader: true,
-      children: header.map((label) => cell(label, { bold: true, fill: "F3F4F6" })),
-    }),
-    ...customer.schedule.map(
-      (day) =>
-        new TableRow({
-          cantSplit: true,
-          children: [
-            cell(day.dayLabel),
-            cell(day.route),
-            cell(day.transport),
-            cell(day.description, { align: "left" }),
-            cell(day.hotel),
-            cell(day.meals),
-          ],
-        }),
+  // 原生表格固定列宽，行程与酒店两列等宽并自动换行。
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    layout: TableLayoutType.FIXED,
+    columnWidths: SCHEDULE_COLUMN_PERCENTS.map((percent) =>
+      Math.round((CONTENT_WIDTH_TWIPS * percent) / 100),
     ),
-  ]);
+    rows: [
+      new TableRow({
+        tableHeader: true,
+        children: header.map((label) => cell(label, { bold: true, fill: "F3F4F6" })),
+      }),
+      ...customer.schedule.map(
+        (day) =>
+          new TableRow({
+            cantSplit: true,
+            children: [
+              cell(day.dayLabel),
+              cell(day.route),
+              cell(day.transport),
+              cell(day.description, { align: "left" }),
+              cell(day.hotel),
+              cell(day.meals),
+            ],
+          }),
+      ),
+    ],
+  });
 }
 
 function termsTable(customer: CustomerDocument) {
@@ -178,7 +195,7 @@ function paxQuoteTables(
                       : []),
                   ]
                   : []),
-                cell(`RMB ${formatMoney(price.singleSupplementUnitCost)}`),
+                cell(`RMB ${formatMoney(customerSingleSupplement(price))}`),
               ],
             }),
         ),

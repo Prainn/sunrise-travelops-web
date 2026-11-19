@@ -19,6 +19,10 @@ export function createDefaultQuoteOption(
 }
 export function createDefaultQuoteSettings(): ItineraryQuoteSettings {
   return {
+    leaderRoomTotal: null,
+    driverTipTotal: null,
+    guideLeaderTransportTotal: null,
+    groundHandlingUnitCost: null,
     mealOtherCost: null,
     mealOtherReason: "",
     attractionOtherCost: null,

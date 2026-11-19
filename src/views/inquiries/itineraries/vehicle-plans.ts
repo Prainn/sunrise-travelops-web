@@ -202,6 +202,13 @@ export function arrangementSeats(arrangement: ItineraryVehicleArrangement) {
   return arrangement.vehicles.reduce((sum, vehicle) => sum + vehicle.seats * vehicle.quantity, 0);
 }
 
+/** 后端不允许未定行程日期时保存具体起止日期的用车段。 */
+export function hasDatedVehicleArrangements(plans: ItineraryVehiclePlan[]) {
+  return plans.some((plan) =>
+    plan.arrangements.some((arrangement) => arrangement.startDate || arrangement.endDate),
+  );
+}
+
 /** Itinerary mode ranges with dates must seat the largest PAX tier, even in an unfinished Draft. */
 export function hasVehicleSeatShortage(plans: ItineraryVehiclePlan[], passengers: number) {
   return plans.some(

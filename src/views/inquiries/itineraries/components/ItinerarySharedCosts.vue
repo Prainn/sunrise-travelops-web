@@ -1,19 +1,21 @@
 <template>
   <SectionCard :title="$t('itinerary.sharedTripCosts')">
-    <el-select
-      v-if="calculation?.tableMealTotal || quote.mealOtherCost || quote.attractionOtherCost"
-      v-model="costPax"
-      autocomplete="new-password"
-      class="mb-4"
-      aria-label="PAX"
-    >
-      <el-option
-        v-for="pax in paxTiers"
-        :key="pax"
-        :value="pax"
-        :label="pax + ' PAX'"
-      />
-    </el-select>
+    <div class="mb-4 flex items-center gap-2">
+      <span>{{ $t("itinerary.sharedCostDisplayPax") }}：</span>
+      <el-select
+        v-model="costPax"
+        autocomplete="new-password"
+        class="!w-[140px]"
+        :aria-label="$t('itinerary.sharedCostDisplayPax')"
+      >
+        <el-option
+          v-for="pax in paxTiers"
+          :key="pax"
+          :value="pax"
+          :label="pax + ' PAX'"
+        />
+      </el-select>
+    </div>
     <el-collapse v-model="expanded" class="mb-5">
       <el-collapse-item v-for="section in sections" :key="section.kind" :name="section.kind">
         <template #title>
@@ -108,7 +110,7 @@
             {{ $t(guidePlan.shopping ? "common.yes" : "common.no") }}
           </el-descriptions-item>
           <el-descriptions-item :label="$t('planning.dailyPrice')">
-            ¥{{ formatMoney(guidePlan.dailyPrice) }}
+            {{ money(guidePlan.dailyPrice) }}
           </el-descriptions-item>
           <el-descriptions-item :label="$t('planning.serviceDays')">
             {{ guidePlan.serviceDays }}
@@ -120,7 +122,7 @@
         <template #title>
           <div class="flex flex-wrap items-center gap-4 w-full pr-3">
             <strong>{{ $t("itinerary.staffRoomSection") }}</strong>
-            <span>{{ money(calculation?.options[0]?.staffRoomTotal) }}</span>
+            <span>{{ money(staffRoomTotal) }}</span>
             <el-button
               size="small"
               type="primary"
@@ -152,6 +154,22 @@
         </el-form>
       </el-collapse-item>
     </el-collapse>
+    <el-form
+      class="shared-quote-costs"
+      label-position="top"
+      :disabled="!editable"
+    >
+      <el-form-item v-for="field in sharedQuoteCostFields" :key="field" :label="$t(`itinerary.${field}`)">
+        <el-input-number
+          :model-value="quote[field] ?? undefined"
+          :min="0"
+          :max="1e9"
+          :precision="2"
+          :controls="false"
+          @update:model-value="emit('update-settings', { [field]: $event ?? null })"
+        />
+      </el-form-item>
+    </el-form>
     <AppDialog
       v-model="otherCostVisible"
       append-to-body
@@ -284,6 +302,16 @@ const calculation = computed(() => {
   };
 });
 const expanded = ref<string[]>([]);
+/** Shared by every hotel × vehicle option; the first three are group totals, the last is per person. */
+const sharedQuoteCostFields = [
+  "leaderRoomTotal",
+  "driverTipTotal",
+  "guideLeaderTransportTotal",
+  "groundHandlingUnitCost",
+] as const;
+const staffRoomTotal = computed(() =>
+  sumMoney(props.quote.staffRoomCosts.map((cost) => cost.total ?? 0)),
+);
 const guidePlan = computed(() => props.guidePlans[0]);
 const citySummaries = computed(() => ({
   meal: summarizeResourceCostsByCity(calculation.value?.mealDetails ?? []),
@@ -402,9 +430,9 @@ function applyOtherCost() {
 function perPaxText(total: number, tiers: number[]) {
   return tiers.map((pax) => `PAX ${pax} ¥${formatMoney(divideMoney(total, pax))}`).join(" / ");
 }
+/** Missing amounts read as ¥0.00; unpriced resources are flagged by the pricing warning. */
 function money(value: number | null | undefined) {
-  if (value === null) return "—";
-  return `¥${formatMoney(value)}`;
+  return `¥${formatMoney(value ?? 0)}`;
 }
 function staffRoomTotalFor(destination: string) {
   return props.quote.staffRoomCosts.find((cost) => cost.destination === destination)?.total ?? null;
@@ -427,6 +455,14 @@ function updateStaffRoomTotal(destination: string, value: number | undefined) {
   :deep(.el-descriptions__label),
   :deep(.el-descriptions__content) {
     width: 35%;
+  }
+}
+.shared-quote-costs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0 16px;
+  :deep(.el-input-number) {
+    width: 100%;
   }
 }
 .pax-other-cost + .pax-other-cost {

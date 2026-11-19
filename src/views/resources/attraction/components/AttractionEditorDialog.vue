@@ -110,7 +110,7 @@ import { useResourceFormSubmit } from "../../useResourceFormSubmit";
 const props = defineProps<{
   modelValue: boolean;
   record: AttractionRecord;
-  submit: (record: AttractionRecord) => Promise<void>;
+  submit: (record: AttractionRecord) => Promise<unknown>;
   isEditing: boolean;
 }>();
 

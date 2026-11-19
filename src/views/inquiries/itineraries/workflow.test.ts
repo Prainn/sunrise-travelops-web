@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ItineraryRecord } from "@/types/itinerary";
-import { getItineraryValidationIssues } from "./workflow";
+import { getItineraryValidationIssues, serverStartDateIssue, START_DATE_ISSUE } from "./workflow";
 
 type ValidationPlan = Pick<
   ItineraryRecord,
@@ -122,5 +122,24 @@ describe("getItineraryValidationIssues", () => {
       (issue) => issue.key === "itinerary.validation.actualPrice",
     );
     expect(issues.map((issue) => issue.params?.name)).toEqual(["测试酒店", "导游"]);
+  });
+});
+
+describe("ordinary itinerary start date", () => {
+  it("is optional for drafts but required before customer files, locating the basics", () => {
+    const plan = { ...createPlan(), startDate: "" };
+    expect(getItineraryValidationIssues(plan)).not.toContainEqual(START_DATE_ISSUE);
+    expect(getItineraryValidationIssues(plan, { requireStartDate: true })[0]).toEqual({
+      key: "itinerary.validation.startDate",
+      target: "itinerary-basics",
+    });
+    expect(getItineraryValidationIssues({ ...plan, startDate: "2026-12-23" }, { requireStartDate: true }))
+      .not.toContainEqual(START_DATE_ISSUE);
+  });
+
+  it("maps a server PDF_NOT_READY startDate issue to the same locator", () => {
+    expect(serverStartDateIssue({ issues: ["dailyPlans[0].items[0].unitCost", "startDate"] })).toEqual(START_DATE_ISSUE);
+    expect(serverStartDateIssue({ issues: ["hotelPlans[0].hotels[0].unitCost"] })).toBeNull();
+    expect(serverStartDateIssue(undefined)).toBeNull();
   });
 });

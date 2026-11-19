@@ -1,5 +1,4 @@
 import { computed, onScopeDispose, shallowRef, watch } from "vue";
-import { ApiError } from "@/api/request";
 import { translate } from "@/lang/utils";
 import { websiteErrorMessage } from "@/services/website.service";
 import { whatsappService } from "@/services/whatsapp.service";
@@ -161,7 +160,5 @@ export function useImageDraft(conversationId: () => string) {
   return { images, isFull, isReady, add, restore, retry, remove, clear };
 }
 
-function uploadErrorMessage(cause: unknown) {
-  if (cause instanceof ApiError && cause.status === 413) return translate("whatsapp.imageDraft.tooLarge");
-  return websiteErrorMessage(cause);
-}
+// 413 优先显示后端原因（含 details.maxBytes 兜底），不再固定替换。
+const uploadErrorMessage = websiteErrorMessage;

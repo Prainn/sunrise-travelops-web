@@ -62,7 +62,7 @@
                       {{ selectedItinerary.title }}
                     </h2>
                     <p class="m-0 flex flex-wrap items-center gap-[6px] text-[14px] text-muted">
-                      <span v-if="!inquiry.isSeries">{{ selectedItinerary.startDate }} — {{ selectedItinerary.endDate }}</span>
+                      <span v-if="!inquiry.isSeries && selectedItinerary.startDate">{{ selectedItinerary.startDate }} — {{ selectedItinerary.endDate }}</span>
                       <el-tag
                         v-for="pax in selectedItinerary.paxTiers"
                         :key="pax"

@@ -57,7 +57,7 @@
       />
       <el-table-column :label="$t('itinerary.vehiclePerPerson')" min-width="120">
         <template #default="{ row }">
-          {{ money(vehicleUnitCost(row)) }}
+          {{ money(row.vehicleUnitCost) }}
         </template>
       </el-table-column>
       <el-table-column :label="$t('itinerary.mealCost')" min-width="130">
@@ -91,6 +91,35 @@
         </template>
       </el-table-column>
       <el-table-column
+        :label="$t('itinerary.quoteLineTypes.single_supplement')"
+        min-width="120"
+        fixed="right"
+        :show-overflow-tooltip="false"
+      >
+        <template #default="{ row }">
+          {{ money(row.singleSupplementUnitCost) }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        :label="$t('itinerary.singleSupplementQuote')"
+        min-width="160"
+        fixed="right"
+        :show-overflow-tooltip="false"
+      >
+        <template #default="{ row }">
+          <el-input-number
+            :model-value="singleSupplementQuote(row) ?? undefined"
+            :min="0"
+            :max="1e9"
+            :precision="2"
+            :controls="false"
+            :disabled="!editable"
+            :aria-label="$t('itinerary.singleSupplementQuote')"
+            @update:model-value="updateSingleSupplementQuote(row.pax, $event)"
+          />
+        </template>
+      </el-table-column>
+      <el-table-column
         :label="$t('itinerary.tourCostPerPerson')"
         min-width="130"
         fixed="right"
@@ -100,14 +129,17 @@
           <el-tooltip :disabled="!calculation" placement="top">
             <template #content>
               <template v-if="calculation">
-                {{ $t("itinerary.hotelPerPerson") }}: {{ formatMoney(calculation.hotelUnitCost)
-                }}<br />
-                {{ $t("itinerary.mealCost") }}: {{ formatMoney(row.mealCost ?? mealCost) }}<br />
-                {{ $t("itinerary.attractionCost") }}: {{ formatMoney(row.attractionCost ?? attractionCost) }}<br />
-                {{ $t("itinerary.vehiclePerPerson") }}: {{ money(vehicleUnitCost(row)) }}<br />
-                {{ $t("itinerary.guideServicePerPerson") }}:
-                {{ formatMoney(row.guideServiceUnitCost) }}<br />
-                {{ $t("itinerary.staffRoomPerPerson") }}: {{ formatMoney(row.staffRoomUnitCost) }}
+                {{ $t("itinerary.hotelPerPerson") }}: {{ money(calculation.hotelUnitCost) }}<br />
+                {{ $t("itinerary.mealCost") }}: {{ money(row.mealCost ?? mealCost) }}<br />
+                {{ $t("itinerary.attractionCost") }}: {{ money(row.attractionCost ?? attractionCost) }}<br />
+                {{ $t("itinerary.vehiclePerPerson") }}: {{ money(row.vehicleUnitCost) }}<br />
+                {{ $t("itinerary.guideServicePerPerson") }}: {{ money(row.guideServiceUnitCost) }}<br />
+                {{ $t("itinerary.staffRoomPerPerson") }}: {{ money(row.staffRoomUnitCost) }}
+                <template v-for="field in sharedCostFields" :key="field.field">
+                  <template v-if="row[field.field] !== undefined">
+                    <br />{{ $t(field.label) }}: {{ money(row[field.field]) }}
+                  </template>
+                </template>
               </template>
             </template>
             <span>{{ money(row.baseCostPerPerson) }}</span>
@@ -160,6 +192,7 @@
 import { computed } from "vue";
 import type {
   ItineraryPaxCalculation,
+  ItineraryPaxPrice,
   ItineraryQuoteOption,
   ItineraryQuoteOptionCalculation,
 } from "@/types/itinerary";
@@ -197,16 +230,28 @@ const metrics = computed(
       ...(props.calculation?.paxPrices.some((row) => row.childWithoutBedUnitPrice != null)
         ? [{ field: "childWithoutBedUnitPrice", label: "itinerary.childWithoutBedPrice", width: 150 } as const]
         : []),
-      { field: "singleSupplementUnitCost", label: "itinerary.quoteLineTypes.single_supplement", width: 120 },
     ] as const,
 );
-/** A missing PAX vehicle price stays visible as missing instead of reading as a free ¥0. */
-function vehicleUnitCost(row: Partial<ItineraryPaxCalculation>) {
-  return row.vehicleTotal === null ? null : row.vehicleUnitCost;
-}
+/** Older snapshots omit these per-person shares; they are part of the base cost when present. */
+const sharedCostFields = [
+  { field: "leaderRoomUnitCost", label: "itinerary.leaderRoomPerPerson" },
+  { field: "driverTipUnitCost", label: "itinerary.driverTipPerPerson" },
+  { field: "guideLeaderTransportUnitCost", label: "itinerary.guideLeaderTransportPerPerson" },
+  { field: "groundHandlingUnitCost", label: "itinerary.groundHandlingPerPerson" },
+] as const;
+/** Missing amounts read as ¥0.00; unpriced resources are flagged by the pricing warning. */
 function money(value: number | null | undefined) {
-  if (value === null) return "—";
-  return `¥${formatMoney(value)}`;
+  return `¥${formatMoney(value ?? 0)}`;
+}
+/**
+ * Draft overrides win; without one the field shows the cost while the saved value stays null.
+ * Read-only quotes show the server's final value, keeping an explicit 0.
+ */
+function singleSupplementQuote(row: Partial<ItineraryPaxCalculation>) {
+  const override = row.pax === undefined ? null : paxPriceFor(row.pax)?.singleSupplementQuote;
+  if (override != null) return override;
+  if (!props.editable && row.singleSupplementQuote != null) return row.singleSupplementQuote;
+  return row.singleSupplementUnitCost ?? null;
 }
 function adultPrice(pax: number, calculatedPrice?: number) {
   return priceFor(pax) ?? calculatedPrice ?? 0;
@@ -219,15 +264,22 @@ function marginRate(pax: number, calculatedPrice?: number, baseCost?: number) {
   const profit = profitPerPerson(pax, calculatedPrice, baseCost);
   return revenue === 0 ? "0%" : `${formatMoney((profit / revenue) * 100)}%`;
 }
-function priceFor(pax: number) {
-  return props.option.paxPrices.find((price) => price.pax === pax)?.adultUnitPrice;
+function paxPriceFor(pax: number) {
+  return props.option.paxPrices.find((price) => price.pax === pax);
 }
-function updatePrice(pax: number, value: number | undefined) {
+function priceFor(pax: number) {
+  return paxPriceFor(pax)?.adultUnitPrice;
+}
+function updatePaxPrice(pax: number, changes: Partial<Omit<ItineraryPaxPrice, "pax">>) {
   emit("update-option", {
-    paxPrices: props.option.paxPrices.map((row) => ({
-      pax: row.pax,
-      adultUnitPrice: row.pax === pax ? (value ?? null) : (priceFor(row.pax) ?? null),
-    })),
+    paxPrices: props.option.paxPrices.map((row) => (row.pax === pax ? { ...row, ...changes } : { ...row })),
   });
+}
+function updatePrice(pax: number, value: number | null | undefined) {
+  updatePaxPrice(pax, { adultUnitPrice: value ?? null });
+}
+/** Clearing restores the follow-cost null; an explicit 0 stays a zero quote. */
+function updateSingleSupplementQuote(pax: number, value: number | null | undefined) {
+  updatePaxPrice(pax, { singleSupplementQuote: value ?? null });
 }
 </script>

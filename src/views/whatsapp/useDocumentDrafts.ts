@@ -1,4 +1,3 @@
-import { ApiError } from "@/api/request";
 import { translate } from "@/lang/utils";
 import { websiteErrorMessage } from "@/services/website.service";
 import { whatsappService } from "@/services/whatsapp.service";
@@ -75,8 +74,5 @@ export function useDocumentDrafts() {
   return { get, remove, restore, expire, upload };
 }
 
-function uploadErrorMessage(cause: unknown) {
-  // 413 可能由网关直接返回，不一定是统一错误格式。
-  if (cause instanceof ApiError && cause.status === 413) return translate("whatsapp.documentDraft.tooLarge");
-  return websiteErrorMessage(cause);
-}
+// 413 优先显示后端原因；网关直接返回时按 PAYLOAD_TOO_LARGE / HTTP_413 本地化兜底。
+const uploadErrorMessage = websiteErrorMessage;

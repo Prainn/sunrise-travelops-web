@@ -97,11 +97,13 @@ import type { FormInstance, FormItemRule, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { ResourceFormField, ResourceRow } from "../types";
 import { useResourceFormSubmit } from "../useResourceFormSubmit";
+import { locateValidationError } from "@/utils/validation-error";
 
 const props = defineProps<{
   modelValue: boolean;
   record: ResourceRow;
-  submit: (record: ResourceRow) => Promise<void>;
+  /** Resolves with the request error when saving failed (already shown to the user). */
+  submit: (record: ResourceRow) => Promise<unknown>;
   fields: ResourceFormField[];
   titleKey: string;
   isEditing: boolean;
@@ -172,6 +174,9 @@ function resetForm() {
 }
 
 async function handleSubmit() {
-  await submitForm(() => props.submit({ ...form }));
+  await submitForm(async () => {
+    const failure = await props.submit({ ...form });
+    locateValidationError(formRef.value, failure, props.fields.map((field) => field.prop));
+  });
 }
 </script>

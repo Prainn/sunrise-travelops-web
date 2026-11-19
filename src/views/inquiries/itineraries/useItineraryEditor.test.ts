@@ -65,6 +65,37 @@ describe("new itinerary dates", () => {
   });
 });
 
+describe("optional ordinary start date", () => {
+  it("creates D1–Dn without dates, fills dates later and clears them explicitly", () => {
+    const editor = editorFor(false);
+    const plan = editor.createItinerary({ ...editor.createEmptyItinerary(), paxTiers: [10] })!;
+    expect(plan.dailyPlans.map((day) => [day.dayNumber, day.date])).toEqual([[1, ""], [2, ""]]);
+    expect(plan.endDate).toBe("");
+    expect(itineraryInput(plan).startDate).toBe("");
+
+    const store = [plan];
+    const selected = useItineraryEditor({
+      inquiry: ref({ isSeries: false, plannedDays: 2, status: "planning" } as InquiryRecord),
+      inquiryId: computed(() => "inquiry-id"),
+      itineraryStore: store,
+      selectedItinerary: computed(() => plan),
+      selectedItineraryId: ref(plan.id),
+      canCreate: () => true,
+      canEditContent: () => true,
+      canEditPrice: () => true,
+      getCreator: () => "coordinator",
+      findHotel: () => undefined,
+    });
+    selected.updateItineraryBasics({ ...plan, startDate: "2026-12-31" });
+    expect(plan.dailyPlans.map((day) => day.date)).toEqual(["2026-12-31", "2027-01-01"]);
+    expect(plan.endDate).toBe("2027-01-01");
+    selected.updateItineraryBasics({ ...plan, startDate: "" });
+    expect(plan.dailyPlans.map((day) => day.date)).toEqual(["", ""]);
+    // 清除须显式提交空值，后端据此清空原日期。
+    expect(itineraryInput(plan)).toHaveProperty("startDate", "");
+  });
+});
+
 describe("per-day hotels and other-cost totals", () => {
   function editorWith(plan: ItineraryRecord) {
     const findHotel = (id: string) =>
@@ -107,6 +138,29 @@ describe("per-day hotels and other-cost totals", () => {
     ]);
     editor.updateDayField(1, "overnightDestination", "");
     expect(hotels().map((h) => h.dayId)).toEqual([first!.id]);
+  });
+
+  it("keeps single supplement quotes per PAX when tiers change and sends the shared quote costs", () => {
+    const plan = planWithDays();
+    const editor = editorWith(plan);
+    plan.vehiclePlans.find((vehicle) => vehicle.tier === "standard")!.arrangements = [
+      { id: "v", startDate: "2026-12-01", endDate: "2026-12-02", vehicles: [], totalPrice: null, paxPrices: [] },
+    ];
+    editor.updateHotelPlanSelection(4, plan.dailyPlans[0]!.id, "a");
+    expect(plan.quote.options.map((option) => [option.hotelTier, option.vehicleTier])).toEqual([[4, "standard"]]);
+    plan.quote.options[0]!.paxPrices = [
+      { pax: 2, adultUnitPrice: 100, singleSupplementQuote: 1685 },
+      { pax: 4, adultUnitPrice: 90, singleSupplementQuote: 0 },
+    ];
+    Object.assign(plan.quote, { leaderRoomTotal: 600, driverTipTotal: 300, guideLeaderTransportTotal: 150, groundHandlingUnitCost: 20 });
+    editor.updateItineraryBasics({ ...plan, paxTiers: [4, 6] });
+    expect(plan.quote.options[0]!.paxPrices).toEqual([
+      { pax: 4, adultUnitPrice: 90, singleSupplementQuote: 0 },
+      { pax: 6, adultUnitPrice: null, singleSupplementQuote: null },
+    ]);
+    expect(itineraryInput(plan).quote).toMatchObject({
+      leaderRoomTotal: 600, driverTipTotal: 300, guideLeaderTransportTotal: 150, groundHandlingUnitCost: 20,
+    });
   });
 
   it("shifts each PAX price by the per-person change of an other-cost total", () => {

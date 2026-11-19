@@ -41,7 +41,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     const plan = options.selectedItinerary.value;
     const inquiry = options.inquiry.value;
     if (!plan || !inquiry || !options.canGenerate()) return null;
-    const issues = getItineraryValidationIssues(plan);
+    const issues = getItineraryValidationIssues(plan, { requireStartDate: !inquiry.isSeries });
     // 系列询盘没有计划天数，不比较行程天数。
     const plannedDays = inquiry.plannedDays;
     return {

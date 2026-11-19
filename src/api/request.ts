@@ -3,6 +3,7 @@ import { AuthStorage } from "@/utils/auth-storage";
 import { reloadPageWithoutConfirmation } from "@/utils/page-lifecycle";
 import { sessionGate } from "@/utils/session-gate";
 import { translate, translateIfExists } from "@/lang/utils";
+import { formatFileSize } from "@/utils/format";
 import { ApiErrorCode } from "./error-code";
 
 export interface ApiResponse<T> {
@@ -65,7 +66,13 @@ const LOCALIZED_ERROR_CODES = new Set<string>([
   ApiErrorCode.AUTH_REFRESH_TOKEN_INVALID,
 ]);
 
-function getErrorMessage(code: string, status?: number): string {
+function getErrorMessage(code: string, status?: number, details?: Record<string, unknown>): string {
+  // details 只用于选择更具体的本地化兜底，不解析后端 message。
+  const maxBytes = details?.maxBytes;
+  if ((code === ApiErrorCode.PAYLOAD_TOO_LARGE || status === 413) && typeof maxBytes === "number")
+    return translate("apiErrors.PAYLOAD_TOO_LARGE_LIMIT", { size: formatFileSize(maxBytes) });
+  if (code === ApiErrorCode.BAD_REQUEST && details?.reason === "INVALID_RECORD_ID")
+    return translate("apiErrors.INVALID_RECORD_ID");
   return (
     translateIfExists(`apiErrors.${code}`) ??
     (status ? translateIfExists(`apiErrors.HTTP_${status}`) : undefined) ??
@@ -82,9 +89,10 @@ export class ApiError extends Error {
   readonly requestId?: string;
 
   constructor(message: string, options: ApiErrorOptions) {
-    const serverMessage = LOCALIZED_ERROR_CODES.has(options.code)
-      ? undefined
-      : options.serverMessage?.trim() || undefined;
+    const detail = options.serverMessage?.trim();
+    const serverMessage = detail && detail !== options.code
+      && !/^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$/.test(detail)
+      && !LOCALIZED_ERROR_CODES.has(options.code) ? detail : undefined;
     super(serverMessage ?? message, { cause: options.cause });
     this.name = "ApiError";
     this.code = options.code;
@@ -145,12 +153,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 async function parseError(response: Response): Promise<ApiError> {
   const body = (await response.json().catch(() => null)) as Partial<ApiErrorResponse> | null;
   const code = typeof body?.code === "string" ? body.code : `HTTP_${response.status}`;
+  const details = isRecord(body?.details) ? body.details : undefined;
 
-  return new ApiError(getErrorMessage(code, response.status), {
+  return new ApiError(getErrorMessage(code, response.status, details), {
     code,
     serverMessage: typeof body?.message === "string" ? body.message : undefined,
     status: response.status,
-    details: isRecord(body?.details) ? body.details : undefined,
+    details,
     path: typeof body?.path === "string" ? body.path : undefined,
     requestId: typeof body?.requestId === "string" ? body.requestId : undefined,
   });

@@ -22,7 +22,7 @@ import { canPerformItineraryOperation } from "./itinerary-workflow";
 import { useItineraryQuote } from "./useItineraryQuote";
 import { useItineraryEditor } from "./useItineraryEditor";
 import { useItineraryPdf } from "./useItineraryPdf";
-import type { PdfValidationIssue } from "./workflow";
+import { serverStartDateIssue, type PdfValidationIssue } from "./workflow";
 import { useItinerarySelection } from "./useItinerarySelection";
 import { createVehicleDraft } from "./vehicle-plans";
 import type { VehicleMaintenanceMode } from "./vehicle-plans";
@@ -561,6 +561,13 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
 
   function reportExportError(error: unknown) {
     reportError(error);
+    // 服务端判定缺开始日期时同样列入顶部提示，可直接定位到基础信息。
+    const startDateIssue =
+      isApiError(error) && error.code === ApiErrorCode.PDF_NOT_READY
+        ? serverStartDateIssue(error.details)
+        : null;
+    if (startDateIssue && !validationIssues.value.some((issue) => issue.key === startDateIssue.key))
+      validationIssues.value = [startDateIssue, ...validationIssues.value];
   }
 
   async function handleGeneratePdf() {
