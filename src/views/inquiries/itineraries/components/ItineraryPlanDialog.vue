@@ -166,6 +166,7 @@ import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { ItineraryRecord } from "@/types/itinerary";
 import AppDialog from "@/components/AppDialog/index.vue";
+import { clonePlainData } from "@/utils";
 
 const props = defineProps<{
   modelValue: boolean;
@@ -205,7 +206,7 @@ const form = reactive<ItineraryRecord>({
     hotels: plan.hotels.map((hotel) => ({ ...hotel })),
   })),
   guidePlans: props.record.guidePlans.map((plan) => ({ ...plan })),
-  vehiclePlans: JSON.parse(JSON.stringify(props.record.vehiclePlans)),
+  vehiclePlans: clonePlainData(props.record.vehiclePlans),
   quote: {
     ...props.record.quote,
     transportFees: props.record.quote.transportFees.map((fee) => ({ ...fee })),
@@ -304,7 +305,7 @@ watch(
         hotels: plan.hotels.map((hotel) => ({ ...hotel })),
       })),
       guidePlans: record.guidePlans.map((plan) => ({ ...plan })),
-      vehiclePlans: JSON.parse(JSON.stringify(record.vehiclePlans)),
+      vehiclePlans: clonePlainData(record.vehiclePlans),
       quote: {
         ...record.quote,
         transportFees: record.quote.transportFees.map((fee) => ({ ...fee })),
@@ -332,7 +333,7 @@ async function submitForm() {
       hotels: plan.hotels.map((hotel) => ({ ...hotel })),
     })),
     guidePlans: form.guidePlans.map((plan) => ({ ...plan })),
-    vehiclePlans: JSON.parse(JSON.stringify(form.vehiclePlans)),
+    vehiclePlans: clonePlainData(form.vehiclePlans),
     quote: {
       ...form.quote,
       transportFees: form.quote.transportFees.map((fee) => ({ ...fee })),

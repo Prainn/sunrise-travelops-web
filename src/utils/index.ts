@@ -11,6 +11,8 @@ export { divideMoney, fromCents, multiplyMoney, roundMoney, sumMoney, toCents } 
 export { createId } from "./create-id";
 export { hasUserPermission } from "./permission";
 export { readFileAsDataUrl } from "./file";
+export { clonePlainData } from "./clone";
+export { runOnEnter } from "./keyboard";
 
 // 本地存储
 export { Storage } from "./storage";

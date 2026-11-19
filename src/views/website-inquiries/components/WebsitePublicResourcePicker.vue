@@ -16,7 +16,7 @@
           v-model="keyword"
           clearable
           :placeholder="$t('websiteItineraryUi.publicKeywordPlaceholder')"
-          @keyup.enter="fetchFirstPage"
+          @keydown.enter="runOnEnter($event, fetchFirstPage)"
           @clear="fetchFirstPage"
         >
           <template #append>
@@ -70,6 +70,7 @@ import { computed, onMounted, ref } from "vue";
 import { Search } from "@element-plus/icons-vue";
 import DataTable from "@/components/DataTable/index.vue";
 import Pagination from "@/components/Pagination/index.vue";
+import { runOnEnter } from "@/utils";
 import {
   websiteErrorMessage,
   websiteService,

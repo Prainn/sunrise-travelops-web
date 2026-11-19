@@ -151,6 +151,10 @@ export const whatsappService = {
   documentDownload(id: string, messageId: string) {
     return request.get<{ url: string }>(`${conversationUrl(id)}/messages/${encodeURIComponent(messageId)}/document-download`);
   },
+  /** 预览用文件内容（仅 PDF/DOCX），由后端从私有 OSS 读取后直接返回；关闭预览时通过 signal 取消。 */
+  documentPreview(id: string, messageId: string, signal?: AbortSignal) {
+    return request.getBlob(`${conversationUrl(id)}/messages/${encodeURIComponent(messageId)}/document-preview`, { timeoutMs: LONG_REQUEST_TIMEOUT_MS, signal });
+  },
   sendReaction(id: string, messageId: string, clientRequestId: string, emoji: string) {
     return request.post<WhatsappMessage>(`${conversationUrl(id)}/messages/${encodeURIComponent(messageId)}/reactions`, { clientRequestId, emoji });
   },

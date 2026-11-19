@@ -56,7 +56,7 @@
           clearable
           maxlength="100"
           :placeholder="$t('websiteInquiry.log.codePlaceholder')"
-          @keyup.enter="search"
+          @keydown.enter="runOnEnter($event, search)"
           @clear="search"
         />
       </el-form-item>
@@ -261,7 +261,7 @@ import type {
   WebsiteInquiryLogOperator,
   WebsiteInquiryLogReport,
 } from "@/types/website";
-import { formatDateTime } from "@/utils";
+import { formatDateTime, runOnEnter } from "@/utils";
 import {
   WEBSITE_LOG_ACTIONS,
   actionLabel,

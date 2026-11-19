@@ -40,7 +40,7 @@ vi.mock("@/stores/user", async () => {
 
 import { useUserStore } from "@/stores/user";
 import { whatsappInquiryInput } from "@/services/whatsapp.service";
-import { canConfirmFailedMessage, canRetryMessage, compareSeq, linkedConversationId, mergeLatestPage, messageSourceLabel, messageReply, sortMessages, maxSeq, threadAccess, threadMessages } from "./message-utils";
+import { canConfirmFailedMessage, canRetryMessage, compareSeq, documentPreviewType, hasPendingMedia, linkedConversationId, mergeLatestPage, messageDocument, messageSourceLabel, messageReply, sortMessages, maxSeq, threadAccess, threadMessages } from "./message-utils";
 import { useCustomerNotes } from "./useCustomerNotes";
 import { useWhatsappWorkbench } from "./useWhatsappWorkbench";
 import { MAX_DOCUMENT_BYTES, clearDocumentDrafts, validateDocumentFile } from "./document-draft";
@@ -123,6 +123,26 @@ describe("消息序号与合并", () => {
     const merged = mergeLatestPage(current, latest, false);
     expect(merged.map((item) => item.id)).toEqual(["old", "m-4", "m-6"]);
     expect(merged.at(-1)?.status).toBe("read");
+  });
+});
+
+describe("文档预览", () => {
+  const meta = { id: "d-1", fileName: "行程.pdf", mimeType: "application/pdf", sizeBytes: 10 };
+
+  it("PDF/DOCX 可预览，DOC 只提示下载", () => {
+    expect(documentPreviewType(meta)).toBe("pdf");
+    expect(documentPreviewType({ fileName: "a.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" })).toBe("docx");
+    expect(documentPreviewType({ fileName: "a.doc", mimeType: "application/msword" })).toBeUndefined();
+    expect(documentPreviewType({ fileName: "旧.DOCX", mimeType: "" })).toBe("docx");
+  });
+
+  it("已归档的入站文档可打开，归档中需要重取", () => {
+    const archived = message({ kind: "document", attachment: { document: meta, documentArchive: { state: "available" } } });
+    const archiving = message({ kind: "document", attachment: { fileName: "a.pdf", documentArchive: { state: "processing" } } });
+    expect(messageDocument(archived)).toEqual(meta);
+    expect(messageDocument(archiving)).toBeUndefined();
+    expect(hasPendingMedia(archiving)).toBe(true);
+    expect(hasPendingMedia(archived)).toBe(false);
   });
 });
 

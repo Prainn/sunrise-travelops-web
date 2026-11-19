@@ -25,7 +25,7 @@
       >
         <ol
           class="itinerary-workspace__directory m-0 p-1 list-none flex flex-col gap-[2px] overflow-y-auto rounded-[var(--card-radius)] bg-[var(--content-bg)] [border:1px_solid_var(--card-border)] max-[900px]:flex-row max-[900px]:min-w-0 max-[900px]:flex-1 max-[900px]:overflow-x-auto max-[900px]:overflow-y-hidden"
-          :style="{ maxHeight: isNarrow ? undefined : `calc(100vh - ${headerHeight + footerHeight + 120}px)` }"
+          :style="{ maxHeight: isNarrow ? undefined : `calc(100dvh - ${headerHeight + footerHeight + 120}px)` }"
         >
           <li v-for="day in days" :key="day.id" class="max-[900px]:shrink-0">
             <button
