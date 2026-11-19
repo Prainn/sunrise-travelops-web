@@ -3,6 +3,7 @@ import { inquiryService, itineraryInput } from "@/services/inquiry.service";
 import { isApiError } from "@/api/request";
 import { ApiErrorCode } from "@/api/error-code";
 import type { ItineraryQuoteCalculation, ItineraryRecord } from "@/types/itinerary";
+import { clonePlainData } from "@/utils";
 
 const MAX_RETRIES = 3;
 
@@ -114,7 +115,7 @@ export function useItineraryQuote(
       if (!request) return;
       const input =
         request.preview && plan
-          ? (JSON.parse(JSON.stringify(previewInput(plan))) as ReturnType<typeof previewInput>)
+          ? clonePlainData(previewInput(plan))
           : undefined;
       let cancelled = false;
       const timer = setTimeout(

@@ -6,7 +6,7 @@
           v-model="keyword"
           clearable
           :placeholder="$t('whatsapp.quickReplies.search')"
-          @keydown.enter="search"
+          @keydown.enter="runOnEnter($event, search)"
         />
       </el-form-item>
       <el-form-item :label="$t('common.status')">
@@ -212,6 +212,7 @@ import type { BusinessCategoryOptionRecord } from "@/types/resource";
 import type { WhatsappQuickReply } from "@/types/whatsapp";
 import { useQuickReplyEditor } from "./useQuickReplyEditor";
 import { useRefreshOnActivated } from "@/composables";
+import { runOnEnter } from "@/utils";
 defineOptions({ name: "WhatsappQuickReplies" });
 const { t } = useI18n();
 const rows = ref<WhatsappQuickReply[]>([]), total = ref(0), page = ref(1), pageSize = ref(20);

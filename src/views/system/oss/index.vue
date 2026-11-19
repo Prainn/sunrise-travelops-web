@@ -8,7 +8,7 @@
           clearable
           maxlength="200"
           :placeholder="$t('oss.searchPlaceholder')"
-          @keydown.enter="search"
+          @keydown.enter="runOnEnter($event, search)"
         />
       </el-form-item>
       <el-form-item :label="$t('oss.kind')">
@@ -315,7 +315,7 @@ import { useRefreshOnActivated } from "@/composables";
 import { ossService } from "@/services/oss.service";
 import { websiteErrorMessage } from "@/services/website.service";
 import { ossErrorKey, type OssResource, type OssResourceKind, type OssResourceState } from "@/types/oss";
-import { formatDateTime, formatFileSize } from "@/utils";
+import { formatDateTime, formatFileSize, runOnEnter } from "@/utils";
 import { hasPerm } from "@/utils/auth";
 import { IMAGE_ACCEPT, validateImageFile } from "@/utils/image-file";
 

@@ -5,13 +5,13 @@
 @use "variables" as *;
 
 @mixin app-main-height {
-  height: calc(100vh - $navbar-height);
+  height: calc(100dvh - $navbar-height);
 }
 
 @mixin sidebar-scroll-height-with-logo {
-  height: calc(100vh - $navbar-height);
+  height: calc(100dvh - $navbar-height);
 }
 
 @mixin sidebar-scroll-height-with-toggle {
-  height: calc(100vh - $navbar-height - $sidebar-toggle-height);
+  height: calc(100dvh - $navbar-height - $sidebar-toggle-height);
 }

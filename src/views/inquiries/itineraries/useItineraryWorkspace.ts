@@ -16,7 +16,7 @@ import type {
   MealSlot,
 } from "@/types/itinerary";
 import type { GuideRecord } from "@/types/resource";
-import { hasUserPermission } from "@/utils";
+import { clonePlainData, hasUserPermission } from "@/utils";
 import { isInquiryReadOnly } from "../inquiry-workflow";
 import { canPerformItineraryOperation } from "./itinerary-workflow";
 import { useItineraryQuote } from "./useItineraryQuote";
@@ -435,7 +435,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     )
       return;
     // 保存失败时回到提交前，避免人数档同步后的车价等改动残留在未保存记录中。
-    const before = current && (JSON.parse(JSON.stringify(current)) as ItineraryRecord);
+    const before = current && clonePlainData(current);
     const updated = editor.updateItineraryBasics(record);
     if (!updated) return;
     if (await saveItinerary()) isPlanDialogVisible.value = false;

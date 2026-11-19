@@ -6,7 +6,7 @@
           v-model="params.keyword"
           :placeholder="$t('dictionary.optionSearchPlaceholder')"
           clearable
-          @keyup.enter="handleQuery"
+          @keydown.enter="runOnEnter($event, handleQuery)"
         />
       </el-form-item>
       <template #actions>
@@ -207,6 +207,7 @@ import { CommonStatus } from "@/enums";
 import { dictionaryService } from "@/services";
 import { useDictStore } from "@/stores/dict";
 import type { DictItem, DictItemForm, DictItemQueryParams } from "@/types/dictionary";
+import { runOnEnter } from "@/utils";
 import { useResourceFormSubmit } from "@/views/resources/useResourceFormSubmit";
 
 defineOptions({

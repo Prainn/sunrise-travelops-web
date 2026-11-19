@@ -2699,6 +2699,16 @@
       "expiredNoFile": "Image expired. Remove it and choose it again",
       "batchExpired": "Some images expired. Click Edit again and upload them again"
     },
+    "documentPreview": {
+      "open": "Preview {name}",
+      "loading": "Loading file…",
+      "download": "Download",
+      "unsupportedTitle": "Preview unavailable",
+      "unsupported": "This file format (such as Word 97–2003 .doc) cannot be previewed. Download it to view",
+      "invalid": "The file content does not match its format and cannot be previewed. Download it to view",
+      "archiving": "Saving file. Preview will be available shortly",
+      "archiveFailed": "File is no longer available. View it in WhatsApp on the phone"
+    },
     "documentDraft": {
       "add": "Send file",
       "addHint": "Send file (PDF / Word, up to 20 MB)",

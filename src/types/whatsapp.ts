@@ -124,8 +124,11 @@ export interface WhatsappDocumentUpload {
   expiresAt: string;
 }
 
-/** 工作台出站文档消息附件中的文件元数据，不含下载地址。 */
+/** 文档消息附件中的文件元数据（工作台出站或已归档的客户入站），不含下载地址。 */
 export type WhatsappDocumentMeta = Pick<WhatsappDocumentUpload, "id" | "fileName" | "mimeType" | "sizeBytes">;
+
+/** 客户入站文档的私有 OSS 归档状态；available 时附件同时含 document，skipped 为不归档的非 PDF/Word 文件。 */
+export type WhatsappDocumentArchiveState = "pending" | "processing" | "available" | "failed" | "skipped";
 
 /** 文档发送请求：先入队文档，有正文时再入队独立文字；两条请求编号必须不同。 */
 export interface WhatsappDocumentMessageInput {

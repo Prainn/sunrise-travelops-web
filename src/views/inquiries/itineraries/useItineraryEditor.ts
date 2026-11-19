@@ -15,7 +15,7 @@ import type {
   ItineraryEditableDayField,
 } from "@/types/itinerary";
 import type { HotelRecord } from "@/types/resource";
-import { createId, divideMoney, formatDateTime, roundMoney, sumMoney } from "@/utils";
+import { clonePlainData, createId, divideMoney, formatDateTime, roundMoney, sumMoney } from "@/utils";
 import { itineraryDayDate, plannedEndDate } from "./duration";
 import { transitionInquiry } from "../inquiry-workflow";
 import {
@@ -461,7 +461,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     vehiclePlans: ItineraryVehiclePlan[],
   ): ItineraryRecord | null {
     if (!options.canEditContent()) return null;
-    const candidate = JSON.parse(JSON.stringify(plan)) as ItineraryRecord;
+    const candidate = clonePlainData(plan);
     candidate.vehiclePlans = cloneVehiclePlans(vehiclePlans);
     syncQuoteOptions(candidate);
     return candidate;

@@ -66,13 +66,13 @@ const appMainHeight = computed(() => {
     // 顶部/混合布局的顶栏承载菜单，移动端顶栏承载菜单入口，均需保留。
     const isMenuHeader = currentLayout.value === LayoutMode.TOP || currentLayout.value === LayoutMode.MIX;
     return isWorkspaceNavbarHidden.value && !isMenuHeader
-      ? "100vh"
-      : `calc(100vh - ${variables["navbar-height"]})`;
+      ? "100dvh"
+      : `calc(100dvh - ${variables["navbar-height"]})`;
   }
   if (settingsStore.showTagsView) {
-    return `calc(100vh - ${variables["navbar-height"]} - ${variables["tags-view-height"]})`;
+    return `calc(100dvh - ${variables["navbar-height"]} - ${variables["tags-view-height"]})`;
   } else {
-    return `calc(100vh - ${variables["navbar-height"]})`;
+    return `calc(100dvh - ${variables["navbar-height"]})`;
   }
 });
 

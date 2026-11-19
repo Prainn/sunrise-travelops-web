@@ -44,6 +44,7 @@ declare module 'vue' {
     DictSelect: typeof import('./../src/components/DictSelect/index.vue')['default']
     DirectLedgerDialog: typeof import('./../src/views/ledgers/direct/components/DirectLedgerDialog.vue')['default']
     DocumentCard: typeof import('./../src/views/whatsapp/components/DocumentCard.vue')['default']
+    DocumentPreviewDialog: typeof import('./../src/views/whatsapp/components/DocumentPreviewDialog.vue')['default']
     ECharts: typeof import('./../src/components/ECharts/index.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
