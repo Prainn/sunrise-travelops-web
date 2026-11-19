@@ -4,7 +4,7 @@
       v-if="!rows.length"
       class="flex flex-col items-center gap-3 rounded-[var(--custom-radius)] border border-dashed border-[var(--card-border)] px-4 py-8"
     >
-      <span class="text-[13px] text-muted">{{ $t("tour.guideService.empty") }}</span>
+      <span class="text-[12px] text-muted">{{ $t("tour.guideService.empty") }}</span>
       <el-button
         type="primary"
         plain
@@ -22,7 +22,7 @@
     >
       <header class="flex-x-between gap-2 bg-[var(--surface-muted)] px-4 py-2">
         <div class="flex flex-wrap items-center gap-2">
-          <span class="text-[13px] font-medium text-strong">
+          <span class="text-[14px] font-medium text-strong">
             {{ $t("tour.guideService.segment", { n: index + 1 }) }}
           </span>
           <el-tag
@@ -161,12 +161,12 @@
           :title="$t('tour.guideService.searchFailed')"
           :description="candidates[row.key]?.error"
         />
-        <p v-else-if="keywordTooLong(index)" class="mb-3 text-[13px] text-[var(--el-color-warning)]">
+        <p v-else-if="keywordTooLong(index)" class="mb-3 text-[14px] text-[var(--el-color-warning)]">
           {{ $t("tour.guideService.keywordTooLong") }}
         </p>
         <div
           v-else-if="candidates[row.key]?.status"
-          class="mb-3 flex flex-col gap-2 rounded-[var(--custom-radius)] bg-[var(--surface-muted)] px-3 py-2 text-[13px]"
+          class="mb-3 flex flex-col gap-2 rounded-[var(--custom-radius)] bg-[var(--surface-muted)] px-3 py-2 text-[14px]"
         >
           <span :class="candidates[row.key]!.status === 'available' ? 'text-strong' : 'text-[var(--el-color-warning)]'">
             {{ candidates[row.key]!.message }}
@@ -203,7 +203,7 @@
         </div>
         <div
           v-if="confirmation(row)"
-          class="mb-3 flex flex-col gap-1 rounded-[var(--custom-radius)] border border-solid border-[var(--el-color-danger-light-5)] bg-[var(--el-color-danger-light-9)] px-3 py-2 text-[13px]"
+          class="mb-3 flex flex-col gap-1 rounded-[var(--custom-radius)] border border-solid border-[var(--el-color-danger-light-5)] bg-[var(--el-color-danger-light-9)] px-3 py-2 text-[14px]"
         >
           <span class="font-medium text-[var(--el-color-danger)]">
             {{ $t("tour.guideService.conflictConfirmed") }}
@@ -547,7 +547,7 @@ function keywordTooLong(index: number) {
 }
 function guideLabel(item: TourGuideOption) {
   const base = item.code ? `${item.name} (${item.code})` : item.name;
-  return item.language ? `${base} · ${item.language}` : base;
+  return item.language ? `${base} / ${item.language}` : base;
 }
 function currentLabel(row: GuideServiceRow) {
   const old = row.existing;
@@ -592,12 +592,12 @@ function reasonDetails(reason: TourGuideUnavailableReason, siblingKeys?: string[
   if (reason.code === "SCHEDULE_CONFLICT")
     return (reason.tours ?? []).map(
       (tour) =>
-        `${tour.tourNo} · ${businessUnitName(tour.businessUnit)} · ${tour.serviceStartDate} ~ ${tour.serviceEndDate}`,
+        `${tour.tourNo} / ${businessUnitName(tour.businessUnit)} / ${tour.serviceStartDate} ~ ${tour.serviceEndDate}`,
     );
   if (reason.code === "FORM_CONFLICT")
     return (reason.services ?? []).map(
       (service) =>
-        `${siblingLabel(siblingKeys, service.otherServiceIndex)} · ${service.serviceStartDate} ~ ${service.serviceEndDate}`,
+        `${siblingLabel(siblingKeys, service.otherServiceIndex)} / ${service.serviceStartDate} ~ ${service.serviceEndDate}`,
     );
   return [];
 }
@@ -662,14 +662,14 @@ async function useAnyway(
   siblingKeys?: string[],
 ) {
   const lines = guide.reasons.flatMap((reason) => [
-    reasonTitle(reason),
-    ...reasonDetails(reason, siblingKeys).map((line) => `· ${line}`),
+    { text: reasonTitle(reason), detail: false },
+    ...reasonDetails(reason, siblingKeys).map((text) => ({ text, detail: true })),
   ]);
   try {
     await ElMessageBox.confirm(
       h("div", { class: "flex flex-col gap-1" }, [
         h("p", { class: "m-0" }, t("tour.guideService.conflictConfirmMessage", { guide: guide.label })),
-        ...lines.map((line) => h("p", { class: "m-0 text-muted" }, line)),
+        ...lines.map((line) => h("p", { class: line.detail ? "m-0 pl-3 text-muted" : "m-0 text-muted" }, line.text)),
       ]),
       t("tour.guideService.conflictConfirmTitle"),
       {

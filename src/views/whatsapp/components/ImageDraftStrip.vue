@@ -15,7 +15,7 @@
         referrerpolicy="no-referrer"
         class="block w-full h-full object-cover"
       />
-      <span v-else class="grid place-items-center w-full h-full px-[4px] text-[11px] text-muted text-center break-all">
+      <span v-else class="grid place-items-center w-full h-full px-[4px] text-[12px] text-muted text-center break-all">
         {{ image.file?.name ?? image.asset?.name }}
       </span>
       <span v-if="image.state === 'waiting' || image.state === 'uploading'" class="image-draft__overlay">
@@ -74,7 +74,7 @@ function previewUrl(image: DraftImage) {
   }
 
   &__overlay {
-    @apply absolute inset-0 flex flex-col items-center justify-center gap-[2px] px-[6px] bg-[rgba(0,0,0,0.45)] text-[11px] leading-[14px] text-white text-center;
+    @apply absolute inset-0 flex flex-col items-center justify-center gap-[2px] px-[6px] bg-[rgba(0,0,0,0.45)] text-[12px] leading-[14px] text-white text-center;
 
     &.is-failed {
       background: rgba(0, 0, 0, 0.62);
@@ -82,11 +82,11 @@ function previewUrl(image: DraftImage) {
   }
 
   &__retry {
-    @apply p-0 border-0 bg-transparent text-[11px] text-white underline cursor-pointer;
+    @apply p-0 border-0 bg-transparent text-[12px] text-white underline cursor-pointer;
   }
 
   &__badge {
-    @apply absolute left-[4px] bottom-[4px] px-[4px] rounded-[3px] bg-[var(--el-color-warning)] text-[10px] leading-[16px] text-white;
+    @apply absolute left-[4px] bottom-[4px] px-[4px] rounded-[3px] bg-[var(--el-color-warning)] text-[12px] leading-[16px] text-white;
   }
 
   &__remove {

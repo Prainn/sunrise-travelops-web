@@ -1,7 +1,7 @@
 <template>
   <SectionCard :title="$t('itinerary.sharedTripCosts')">
     <el-select
-      v-if="calculation?.tableMealTotal"
+      v-if="calculation?.tableMealTotal || quote.mealOtherCost || quote.attractionOtherCost"
       v-model="costPax"
       autocomplete="new-password"
       class="mb-4"
@@ -156,7 +156,7 @@
       v-model="otherCostVisible"
       append-to-body
       size="lg"
-      :title="activeSection ? `${$t(activeSection.titleKey)} · ${$t('itinerary.otherCosts')}` : ''"
+      :title="activeSection ? `${$t(activeSection.titleKey)} / ${$t('itinerary.otherCosts')}` : ''"
     >
       <el-form label-position="top" :disabled="!editable" @submit.prevent="applyOtherCost">
         <template v-if="isPaxOtherSection">
@@ -171,6 +171,9 @@
                   :precision="2"
                   :controls="false"
                 />
+                <div v-if="draft.amount" class="text-[12px] text-muted">
+                  {{ $t("itinerary.otherCostPerPaxHint", { list: perPaxText(draft.amount, [draft.pax]) }) }}
+                </div>
               </el-form-item>
               <el-form-item
                 :label="$t('itinerary.otherCostReason')"
@@ -187,6 +190,9 @@
           </div>
         </template>
         <template v-else>
+          <p class="mt-0 text-[12px] text-muted">
+            {{ $t("itinerary.otherCostSharedHint") }}
+          </p>
           <el-form-item :label="activeSection ? $t(activeSection.amountLabelKey) : ''">
             <el-input-number
               v-model="otherAmount"
@@ -195,6 +201,9 @@
               :precision="2"
               :controls="false"
             />
+            <div v-if="otherAmount" class="w-full text-[12px] text-muted">
+              {{ $t("itinerary.otherCostPerPaxHint", { list: perPaxText(otherAmount, paxTiers) }) }}
+            </div>
           </el-form-item>
           <el-form-item
             :label="$t('itinerary.otherCostReason')"
@@ -262,8 +271,12 @@ watch(() => props.paxTiers, tiers => { if (!tiers.includes(costPax.value)) costP
 const calculation = computed(() => {
   const value = props.calculation;
   if (!value) return null;
+  // 新口径由后端按 PAX 给出人均餐食/景点（含按总价分摊的其他费用）；旧冻结快照无 attractionCost。
+  const paxCost = value.options[0]?.paxPrices.find((price) => price.pax === costPax.value);
+  const perPax = paxCost?.attractionCost !== undefined ? paxCost : undefined;
   return { ...value,
-    mealCost: sumMoney([value.mealCost ?? 0, sumMoney((value.mealDetails ?? []).map(item => divideMoney(item.groupTotal ?? 0, costPax.value)))]),
+    mealCost: perPax?.mealCost ?? sumMoney([value.mealCost ?? 0, sumMoney((value.mealDetails ?? []).map(item => divideMoney(item.groupTotal ?? 0, costPax.value)))]),
+    attractionCost: perPax?.attractionCost ?? value.attractionCost,
     mealDetails: value.mealDetails?.map(item => item.groupTotal === undefined ? item : {
       ...item, unitCost: item.groupTotal === null ? null : divideMoney(item.groupTotal, costPax.value),
       quantity: 1, totalCost: item.groupTotal === null ? null : divideMoney(item.groupTotal, costPax.value),
@@ -280,7 +293,7 @@ const sections = [
   {
     kind: "meal",
     titleKey: "itinerary.mealCost",
-    amountLabelKey: "itinerary.otherCostPerPerson",
+    amountLabelKey: "itinerary.otherCostTotal",
     totalKey: "mealCost",
     detailsKey: "mealDetails",
     amountKey: "mealOtherCost",
@@ -289,7 +302,7 @@ const sections = [
   {
     kind: "attraction",
     titleKey: "itinerary.attractionCost",
-    amountLabelKey: "itinerary.otherCostPerPerson",
+    amountLabelKey: "itinerary.otherCostTotal",
     totalKey: "attractionCost",
     detailsKey: "attractionDetails",
     amountKey: "attractionOtherCost",
@@ -300,12 +313,12 @@ type CostSection = (typeof sections)[number];
 const guideOtherSection = {
   kind: "guide",
   titleKey: "itinerary.guideServiceSection",
-  amountLabelKey: "itinerary.otherCostPerPerson",
+  amountLabelKey: "itinerary.otherCostTotal",
 } as const;
 const staffRoomOtherSection = {
   kind: "staffRooms",
   titleKey: "itinerary.staffRoomSection",
-  amountLabelKey: "itinerary.otherCostPerPerson",
+  amountLabelKey: "itinerary.otherCostTotal",
 } as const;
 type OtherCostSection = CostSection | typeof guideOtherSection | typeof staffRoomOtherSection;
 const activeSection = ref<OtherCostSection>();
@@ -386,6 +399,9 @@ function applyOtherCost() {
   otherCostVisible.value = false;
 }
 
+function perPaxText(total: number, tiers: number[]) {
+  return tiers.map((pax) => `PAX ${pax} ¥${formatMoney(divideMoney(total, pax))}`).join(" / ");
+}
 function money(value: number | null | undefined) {
   if (value === null) return "—";
   return `¥${formatMoney(value)}`;

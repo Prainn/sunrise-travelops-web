@@ -1,4 +1,10 @@
-import type { ItineraryHotelPlan, ItineraryHotelTier, ItineraryRecord } from "@/types/itinerary";
+import type {
+  ItineraryDayRecord,
+  ItineraryHotelPlan,
+  ItineraryHotelSelection,
+  ItineraryHotelTier,
+  ItineraryRecord,
+} from "@/types/itinerary";
 import type { HotelRecord } from "@/types/resource";
 
 export const HOTEL_PLAN_TIERS: ItineraryHotelTier[] = [3, 4, 5];
@@ -36,22 +42,52 @@ export function getEnabledHotelPlans(itinerary: Pick<ItineraryRecord, "hotelPlan
   });
 }
 
-export function isHotelPlanComplete(plan: ItineraryHotelPlan, destinations: string[]) {
-  return (
-    destinations.length > 0 &&
-    destinations.every((destination) =>
-      plan.hotels.some((hotel) => hotel.destination === destination && hotel.hotelId),
-    )
+/** 酒店按档次、按住宿日选择；旧冻结快照没有 dayId，按住宿城市匹配。 */
+export function hotelForDay<T extends Pick<ItineraryHotelSelection, "destination" | "dayId">>(
+  hotels: T[],
+  day: Pick<ItineraryDayRecord, "id" | "overnightDestination">,
+): T | undefined {
+  if (!day.overnightDestination) return undefined;
+  return hotels.find((hotel) =>
+    hotel.dayId ? hotel.dayId === day.id : hotel.destination === day.overnightDestination,
   );
+}
+
+/** 有住宿城市的活动日。 */
+export function getOvernightDays(itinerary: Pick<ItineraryRecord, "dailyPlans">) {
+  return itinerary.dailyPlans.filter((day) => day.overnightDestination);
+}
+
+export function isHotelPlanComplete(
+  plan: ItineraryHotelPlan,
+  dailyPlans: ItineraryRecord["dailyPlans"],
+) {
+  const days = getOvernightDays({ dailyPlans });
+  return days.length > 0 && days.every((day) => hotelForDay(plan.hotels, day)?.hotelId);
+}
+
+/** 删除不再属于活动住宿日或城市已变化的酒店。 */
+export function pruneDayHotels(itinerary: Pick<ItineraryRecord, "dailyPlans" | "hotelPlans">) {
+  let changed = false;
+  for (const plan of itinerary.hotelPlans) {
+    const hotels = plan.hotels.filter((hotel) =>
+      itinerary.dailyPlans.some(
+        (day) => day.id === hotel.dayId && day.overnightDestination === hotel.destination,
+      ),
+    );
+    if (hotels.length !== plan.hotels.length) {
+      plan.hotels = hotels;
+      changed = true;
+    }
+  }
+  return changed;
 }
 
 export function getIncompleteHotelPlanTiers(
   itinerary: Pick<ItineraryRecord, "dailyPlans" | "hotelPlans">,
 ) {
   return getEnabledHotelPlans(itinerary)
-    .filter(
-      (plan) => !isHotelPlanComplete(plan, Object.keys(calculateDestinationNights(itinerary))),
-    )
+    .filter((plan) => !isHotelPlanComplete(plan, itinerary.dailyPlans))
     .map((plan) => plan.tier);
 }
 
@@ -75,9 +111,7 @@ export function getDayBreakfastStatus(
   const plans = itinerary.hotelPlans.filter((plan) => plan.hotels.length);
   if (
     !plans.length ||
-    plans.some(
-      (plan) => !plan.hotels.some((hotel) => hotel.destination === previous.overnightDestination),
-    )
+    plans.some((plan) => !hotelForDay(plan.hotels, previous))
   )
     return "pending";
   return "included";

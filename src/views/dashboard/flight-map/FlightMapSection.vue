@@ -46,7 +46,6 @@
           <span class="flex items-center gap-2">
             <i class="ops-map__legend-line is-drop"></i>{{ $t("dashboard.flightMap.legKinds.drop") }}
           </span>
-          <span class="text-muted">{{ $t("dashboard.flightMap.demoNote") }}</span>
         </div>
       </div>
 
@@ -95,20 +94,19 @@
                   {{ $t("dashboard.flightMap.tourPeople", { tours: group.legs.length, people: group.people }) }}
                 </span>
               </div>
-              <div class="text-[13px] text-strong">
+              <div class="text-[14px] text-strong">
                 {{ airportText(group.departureAirport) }} → {{ airportText(group.arrivalAirport) }}
               </div>
               <div class="text-[12px] text-muted">
                 {{ group.departureTime ?? "--:--" }} → {{ group.arrivalTime ?? "--:--" }}
-                <template v-if="group.legs[0]">
-                  ·
+                <span v-if="group.legs[0]" class="ml-2">
                   {{
                     $t("dashboard.flightMap.reference", {
                       event: $t(`dashboard.flightMap.referenceEvents.${group.legs[0].referenceEvent}`),
                       time: group.legs[0].scheduledAt,
                     })
                   }}
-                </template>
+                </span>
               </div>
               <div class="flex flex-wrap gap-x-3 gap-y-1">
                 <router-link
@@ -118,7 +116,7 @@
                   class="ops-map__tour-link"
                   @click.stop
                 >
-                  {{ leg.tour.tourNo }} · {{ $t("dashboard.tourMap.peopleCount", { count: leg.tour.totalPeople }) }}
+                  {{ leg.tour.tourNo }}<span class="ml-1">{{ $t("dashboard.tourMap.peopleCount", { count: leg.tour.totalPeople }) }}</span>
                 </router-link>
               </div>
             </div>
@@ -141,7 +139,7 @@
                 </span>
                 <span class="shrink-0 text-[12px] text-muted">{{ leg.scheduledAt }}</span>
               </div>
-              <div class="text-[13px] text-strong">
+              <div class="text-[14px] text-strong">
                 {{ airportText(leg.departureAirport) }} → {{ airportText(leg.arrivalAirport) }}
               </div>
               <div class="flex flex-wrap items-center gap-1">
@@ -154,7 +152,7 @@
                   {{ $t(flightIssueLabelKey(issue)) }}
                 </el-tag>
                 <router-link :to="tourLink(leg.tour.tourNo)" class="ops-map__tour-link ml-1">
-                  {{ leg.tour.tourNo }} · {{ $t("dashboard.tourMap.peopleCount", { count: leg.tour.totalPeople }) }}
+                  {{ leg.tour.tourNo }}<span class="ml-1">{{ $t("dashboard.tourMap.peopleCount", { count: leg.tour.totalPeople }) }}</span>
                 </router-link>
               </div>
             </div>
@@ -175,8 +173,8 @@
                   {{ tour.tourNo }}
                 </router-link>
                 <span class="shrink-0 text-[12px] text-muted">
-                  {{ $t(`accountLink.businessOptions.${tour.businessUnit}`) }} ·
-                  {{ $t("dashboard.tourMap.peopleCount", { count: tour.totalPeople }) }}
+                  {{ $t(`accountLink.businessOptions.${tour.businessUnit}`) }}
+                  <span class="ml-2">{{ $t("dashboard.tourMap.peopleCount", { count: tour.totalPeople }) }}</span>
                 </span>
               </div>
             </div>
@@ -313,7 +311,7 @@ const tabOptions = computed(() => [
 ]);
 const selectionLabel = computed(() => {
   const route = selectedRouteKey.value ? routeByKey.value.get(selectedRouteKey.value) : undefined;
-  if (route) return `${route.from.code} → ${route.to.code} · ${t(`dashboard.flightMap.legKinds.${route.kind}`)}`;
+  if (route) return `${route.from.code} → ${route.to.code} (${t(`dashboard.flightMap.legKinds.${route.kind}`)})`;
   const airport = network.value.airports.find((item) => item.code === selectedAirport.value);
   return airport ? `${airport.code} ${airportName(airport, locale.value)}` : "";
 });

@@ -40,19 +40,19 @@ try:
  if sys.argv[3]=='owner':
   print('owner-ready',flush=True);time.sleep(120)
  elif sys.argv[3]=='orphan':
-  j.stage('type-check',[sys.executable,'-c',sys.argv[5]],120)
+  j.stage('vite-build',[sys.executable,'-c',sys.argv[5]],120)
  elif sys.argv[3]=='background':
-  j.stage('type-check',[sys.executable,'-c','import subprocess,sys;subprocess.Popen([sys.executable,"-c","import time;time.sleep(120)"])'],10)
+  j.stage('vite-build',[sys.executable,'-c','import subprocess,sys;subprocess.Popen([sys.executable,"-c","import time;time.sleep(120)"])'],10)
  else:
-  j.stage('activate-and-verify' if sys.argv[3]=='critical' else 'type-check',[sys.executable,'-c',sys.argv[5]],float(sys.argv[4]),critical=sys.argv[3]=='critical')
+  j.stage('activate-and-verify' if sys.argv[3]=='critical' else 'vite-build',[sys.executable,'-c',sys.argv[5]],float(sys.argv[4]),critical=sys.argv[3]=='critical')
 except Exception as e: error=e
 finally: j.finish(error)
 sys.exit(1 if error else 0)
 """
 
 
-class TypeCheckPipelineTests(unittest.TestCase):
-    def test_failed_type_check_prevents_build_and_activation(self):
+class BuildPipelineTests(unittest.TestCase):
+    def test_dev_builds_without_a_second_type_check_and_rejects_failed_bundles(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             phases = []
@@ -63,17 +63,18 @@ class TypeCheckPipelineTests(unittest.TestCase):
                     Path(command[-1]).write_text(json.dumps({'sha': IDENTITY['GITHUB_SHA']}))
                 elif name == 'download-source':
                     Path(command[-1]).touch()
-                elif name == 'type-check':
-                    raise RuntimeError('Type error')
+                elif name == 'vite-build':
+                    self.assertEqual(command, ['pnpm', 'exec', 'vite', 'build', '--mode', 'server-dev'])
+                    raise RuntimeError('Build failed')
 
             job = Mock()
             job.stage.side_effect = stage
             with patch.object(guard, 'JOBS', root), patch.object(guard, 'BASE', root), \
                  patch.dict(os.environ, {'GH_TOKEN': 'fixture', 'OPERATION': 'deploy'}):
-                with self.assertRaisesRegex(RuntimeError, 'Type error'):
+                with self.assertRaisesRegex(RuntimeError, 'Build failed'):
                     guard.pipeline(job, IDENTITY, 'fixture-release')
-            self.assertIn('type-check', phases)
-            self.assertNotIn('vite-build', phases)
+            self.assertNotIn('type-check', phases)
+            self.assertIn('vite-build', phases)
             self.assertNotIn('activate-and-verify', phases)
             self.assertEqual(phases[-1], 'remove-source')
 

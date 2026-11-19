@@ -16,7 +16,7 @@
           </el-icon>
         </div>
         <div class="flex flex-col gap-[3px] min-w-0">
-          <h1 class="m-0 text-[18px] font-medium leading-[1.3] text-strong">
+          <h1 class="m-0 text-[16px] font-semibold leading-[1.3] text-strong">
             {{ greetings }}
           </h1>
           <p class="m-0 text-[14px] text-muted">

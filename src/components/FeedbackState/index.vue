@@ -77,7 +77,7 @@ const defaultTitle = computed(() => {
   &__description {
     max-width: 480px;
     margin: 0;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--el-text-color-secondary);
     overflow-wrap: anywhere;
   }

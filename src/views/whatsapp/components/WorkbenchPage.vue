@@ -565,7 +565,7 @@ async function handleInquirySave(input: WebsiteInquiryInput) {
   flex: 0 0 320px;
   min-width: 0;
   min-height: 0;
-  transition: flex-basis 0.25s ease;
+  transition: flex-basis 0.25s ease-out;
 
   &.is-collapsed {
     flex-basis: 0;
@@ -579,7 +579,7 @@ async function handleInquirySave(input: WebsiteInquiryInput) {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.25s ease-out;
 
   .is-collapsed > & {
     pointer-events: none;
@@ -602,7 +602,7 @@ async function handleInquirySave(input: WebsiteInquiryInput) {
   background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-light);
   border-radius: 6px;
-  transition: color 0.2s, border-color 0.2s;
+  transition: color 0.16s, border-color 0.16s;
 
   &:hover {
     color: var(--el-color-primary);

@@ -3,7 +3,7 @@
     <SectionCard>
       <el-page-header v-if="inquiryId" class="mb-[16px]" @back="router.push({ name: 'WebsiteInquiryList' })">
         <template #content>
-          {{ inquiry ? `${inquiry.code} · ${inquiry.customerName}` : $t("inquiry.log.title") }}
+          {{ inquiry ? `${inquiry.code} ${inquiry.customerName}` : $t("inquiry.log.title") }}
         </template>
       </el-page-header>
       <div class="flex flex-wrap gap-[16px]">
@@ -24,7 +24,7 @@
           <strong class="ml-[8px] text-[14px]">{{ report.changedFields }}</strong>
         </span>
       </div>
-      <p v-if="report.logsWithoutChanges > 0" class="mt-[8px] text-[13px] text-[var(--el-text-color-secondary)]">
+      <p v-if="report.logsWithoutChanges > 0" class="mt-[8px] text-[12px] text-[var(--el-text-color-secondary)]">
         {{ $t("websiteInquiry.log.withoutChangesNote", { count: report.logsWithoutChanges }) }}
       </p>
       <div class="mt-[12px] flex flex-wrap gap-[16px]">

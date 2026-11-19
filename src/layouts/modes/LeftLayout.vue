@@ -73,14 +73,14 @@ onBeforeUnmount(restoreSidebar);
   @apply 'fixed top-0 bottom-0 left-0 z-[999]';
   width: $sidebar-width;
   background-color: $menu-background;
-  @apply '[transition:width_0.28s]';
+  @apply '[transition:width_0.25s_ease-out]';
 
   &.is-collapsed {
     width: $sidebar-width-collapsed;
   }
 
   &__inner {
-    @apply 'relative h-full bg-[var(--menu-background)] [border-right:1px_solid_var(--menu-border)] [transition:width_0.28s]';
+    @apply 'relative h-full bg-[var(--menu-background)] [border-right:1px_solid_var(--menu-border)] [transition:width_0.25s_ease-out]';
 
     &.has-logo {
       .el-scrollbar {
@@ -97,7 +97,7 @@ onBeforeUnmount(restoreSidebar);
 .layout-main {
   @apply 'relative h-full';
   margin-left: $sidebar-width;
-  @apply 'overflow-y-auto [transition:margin-left_0.28s]';
+  @apply 'overflow-y-auto [transition:margin-left_0.25s_ease-out]';
 
   &.is-collapsed {
     margin-left: $sidebar-width-collapsed;
@@ -111,7 +111,7 @@ onBeforeUnmount(restoreSidebar);
 .is-mobile {
   .layout-sidebar {
     width: $sidebar-width !important;
-    @apply '[transition:transform_0.28s,_width_0s]';
+    @apply '[transition:transform_0.25s_ease-out,_width_0s]';
   }
 
   &.is-sidebar-collapsed {

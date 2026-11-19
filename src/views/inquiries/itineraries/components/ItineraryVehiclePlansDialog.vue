@@ -1,7 +1,7 @@
 <template>
   <AppDialog
     :model-value="modelValue"
-    :title="`${$t('planning.vehiclePlans')} · ${$t(mode === 'stage' ? 'planning.byStage' : 'planning.byItinerary')}`"
+    :title="`${$t('planning.vehiclePlans')} (${$t(mode === 'stage' ? 'planning.byStage' : 'planning.byItinerary')})`"
     size="xl"
     destroy-on-close
     :close-on-click-modal="false"
@@ -105,8 +105,8 @@
                     :key="vehicle.vehicleId"
                     class="mb-[8px] flex items-center gap-[8px]"
                   >
-                    <span class="flex-1">{{ vehicle.vehicleName }} · {{ vehicle.seats }}
-                      {{ $t("planning.seats") }}</span>
+                    <span class="flex-1">{{ vehicle.vehicleName }} ({{ vehicle.seats }}
+                      {{ $t("planning.seats") }})</span>
                     <el-input-number
                       :model-value="vehicle.quantity"
                       :min="1"

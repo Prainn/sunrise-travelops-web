@@ -18,6 +18,9 @@ if ENVIRONMENT not in ('dev', 'prod'):
 BASE = Path('/opt/sunrise-travelops-' + ENVIRONMENT + '/frontend')
 SITE = 'http://127.0.0.1:8089'
 HOST = 'ops-dev.sunrisevacation.cn' if ENVIRONMENT == 'dev' else 'ops.sunrisevacation.cn'
+if ENVIRONMENT == 'dev' and os.environ.get('SUNRISE_ACTIVATION_SCOPE') == 'rehearsal':
+    BASE = Path('/opt/sunrise-dev-release-rehearsal/frontend')
+    SITE = 'http://127.0.0.1:18089'
 SHARED_DIRS = ('js', 'css', 'img', 'fonts', 'media', 'assets')
 RELEASE_ID = re.compile(r'(?:[0-9a-f]{40}-[0-9]+-[0-9]+|bootstrap-[0-9]{14})')
 
@@ -161,6 +164,13 @@ def publish(release_id, source_directory):
 def main():
     os.umask(0o022)
     args = sys.argv[1:]
+    if args == ['verify-current'] and ENVIRONMENT == 'dev':
+        current = (BASE / 'current').resolve(strict=True)
+        if current.parent != (BASE / 'releases').resolve():
+            raise ValueError('Invalid active release directory')
+        verify(current)
+        print(json.dumps({'release': current.name, 'verified': True}))
+        return
     if args == ['status']:
         print(json.dumps({'current': os.readlink(BASE / 'current')}))
         return

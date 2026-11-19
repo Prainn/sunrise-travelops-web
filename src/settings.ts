@@ -48,6 +48,6 @@ export const defaults = {
   tagsViewStyle: TagsViewStyle.CARD,
   showAppLogo: true,
   showWatermark: false,
-  pageSwitchingAnimation: "fade-slide",
+  pageSwitchingAnimation: "fade",
   watermarkContent: pkg.name,
 } as const;

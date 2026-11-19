@@ -3,13 +3,13 @@
     <SectionCard :title="$t('whatsapp.integrationStatus')">
       <template #actions>
         <div class="flex flex-wrap items-center justify-end gap-x-[16px] gap-y-[6px]">
-          <span v-if="switches.runtime.value" class="text-[13px] text-muted">
+          <span v-if="switches.runtime.value" class="text-[12px] text-muted">
             {{ $t("whatsapp.runtime.environment") }}：<strong class="text-strong">{{ switches.runtime.value.environment }}</strong>
           </span>
           <label
             v-for="field in runtimeFields"
             :key="field"
-            class="inline-flex items-center gap-[6px] text-[13px]"
+            class="inline-flex items-center gap-[6px] text-[14px]"
             :title="switchReason(field)"
           >
             <span>{{ $t(`whatsapp.runtime.${field}`) }}</span>

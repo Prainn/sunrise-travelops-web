@@ -19,11 +19,11 @@
       class="p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)]"
     >
       <div class="flex items-start gap-3">
-        <div class="min-w-0 flex-1 flex flex-col gap-1 text-[13px] [overflow-wrap:anywhere]">
+        <div class="min-w-0 flex-1 flex flex-col gap-1 text-[14px] [overflow-wrap:anywhere]">
           <strong class="text-strong">{{ cityName(leg.fromCityId) }} → {{ cityName(leg.toCityId) }}</strong>
-          <span class="text-muted">{{ $t(TRANSPORT_OPTIONS.find(option => option.value === leg.mode)!.labelKey) }} · {{ $t(`websiteInquiry.feeStates.${leg.feeState}`) }}</span>
+          <span class="text-muted">{{ $t(TRANSPORT_OPTIONS.find(option => option.value === leg.mode)!.labelKey) }}<span class="ml-2">{{ $t(`websiteInquiry.feeStates.${leg.feeState}`) }}</span></span>
           <span v-if="leg.vehicleType">{{ vehicleLabel(leg.vehicleType) }}</span>
-          <span v-if="leg.distanceKm != null || leg.durationMinutes != null">{{ leg.distanceKm == null ? $t('websiteReport.notSpecified') : `${leg.distanceKm} km` }} · {{ leg.durationMinutes == null ? $t('websiteReport.notSpecified') : $t('websiteReport.minutesValue', { value: leg.durationMinutes }) }}</span>
+          <span v-if="leg.distanceKm != null || leg.durationMinutes != null">{{ leg.distanceKm == null ? $t('websiteReport.notSpecified') : `${leg.distanceKm} km` }}<span class="ml-2">{{ leg.durationMinutes == null ? $t('websiteReport.notSpecified') : $t('websiteReport.minutesValue', { value: leg.durationMinutes }) }}</span></span>
           <span v-if="leg.nameZh || leg.nameEn">{{ (locale === 'en' ? leg.nameEn : leg.nameZh) || leg.nameZh || leg.nameEn }}</span>
         </div>
         <div v-if="editable" class="flex shrink-0 self-start">

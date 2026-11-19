@@ -1,0 +1,2 @@
+#!/usr/bin/env sh
+exec sh -e .husky/pre-commit

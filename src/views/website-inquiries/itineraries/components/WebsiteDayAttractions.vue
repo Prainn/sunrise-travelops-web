@@ -46,7 +46,7 @@
       <p class="m-0 mt-1 text-[12px] text-muted">
         {{ $t("websiteItineraryUi.attractionPriceLine", { price: priceText(item.attractionId) }) }}
       </p>
-      <p v-if="item.descriptionZh || item.descriptionEn" class="m-0 mt-2 text-[13px] text-muted whitespace-pre-wrap [overflow-wrap:anywhere]">
+      <p v-if="item.descriptionZh || item.descriptionEn" class="m-0 mt-2 text-[12px] text-muted whitespace-pre-wrap [overflow-wrap:anywhere]">
         {{ (locale === 'en' ? item.descriptionEn : item.descriptionZh) || item.descriptionZh || item.descriptionEn }}
       </p>
     </div>

@@ -4,7 +4,7 @@
       <el-button v-if="editable" type="primary" @click="openEditor()">
         {{ $t("common.create") }}
       </el-button>
-      <span class="text-muted text-[13px]">
+      <span class="text-muted text-[12px]">
         {{ $t("websiteConfig.hotels.help") }}
       </span>
     </TableToolbar>

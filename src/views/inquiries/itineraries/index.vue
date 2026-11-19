@@ -58,7 +58,7 @@
                   class="itinerary-page__plan-bar flex flex-wrap items-center justify-between gap-3 mt-[12px] p-[12px_0] [border-top:1px_solid_var(--divider-color)] [border-bottom:1px_solid_var(--divider-color)]"
                 >
                   <div class="itinerary-page__plan-summary min-w-0 flex flex-wrap items-center gap-2">
-                    <h2 class="m-0 text-[18px] text-strong break-words">
+                    <h2 class="m-0 text-[16px] font-600 text-strong break-words">
                       {{ selectedItinerary.title }}
                     </h2>
                     <p class="m-0 flex flex-wrap items-center gap-[6px] text-[14px] text-muted">
@@ -110,7 +110,7 @@
               v-if="selectedItinerary"
               class="itinerary-page__section-actions flex flex-wrap items-center gap-[10px] mt-[12px]"
             >
-              <span class="text-[13px] text-muted">{{ $t("itineraryWorkspace.wholeTripPlans") }}</span>
+              <span class="text-[12px] text-muted">{{ $t("itineraryWorkspace.wholeTripPlans") }}</span>
               <el-dropdown trigger="click" @command="openVehiclePlans">
                 <el-button :type="hasVehiclePlans ? 'primary' : ''">
                   {{ $t("planning.vehiclePlans") }}
@@ -154,7 +154,12 @@
             <ul class="m-0 pl-4">
               <li v-for="(issue, index) in reorderIssues" :key="index">
                 {{ $t(issue.key, issue.params ?? {}) }}
-                <el-button link type="primary" @click="locateReorderIssue(issue)">
+                <el-button
+                  link
+                  type="primary"
+                  class="align-baseline!"
+                  @click="locateReorderIssue(issue)"
+                >
                   {{ $t("itineraryWorkspace.locate") }}
                 </el-button>
               </li>
@@ -199,8 +204,8 @@
         <template #footer>
           <ItineraryWorkspaceFooter v-if="selectedItinerary">
             <template #summary>
-              {{ serviceDisplayText }} ·
-              {{ $t("itinerary.resourceItemCount", { count: itemCount }) }}
+              {{ serviceDisplayText }}
+              <span class="ml-4">{{ $t("itinerary.resourceItemCount", { count: itemCount }) }}</span>
             </template>
             <el-button :disabled="!canSaveItinerary" class="ml-0!" @click="saveItinerary">
               {{ $t("common.save") }}
@@ -336,12 +341,17 @@
           class="itinerary-page__validation p-[12px_16px] mb-[16px] [background:var(--el-color-danger-light-9)] rounded-[8px]"
           role="alert"
         >
-          <h3 class="m-0 text-[18px]">
+          <h3 class="m-0 text-[16px]">
             {{ $t("itinerary.validation.title") }}
           </h3>
           <ul>
             <li v-for="(issue, index) in validationIssues" :key="index">
-              <el-button link type="danger" @click="locateIssue(issue.target)">
+              <el-button
+                link
+                type="danger"
+                class="align-baseline!"
+                @click="locateIssue(issue.target)"
+              >
                 {{ $t(issue.key, issue.params ?? {}) }}
               </el-button>
             </li>
@@ -460,7 +470,7 @@ import { computed, markRaw, nextTick, onMounted, ref, useTemplateRef, watch } fr
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { ItineraryDayRecord, ItineraryHotelTier, ItineraryRecord } from "@/types/itinerary";
-import { getDayBreakfastStatus, getEnabledHotelPlans } from "./hotel-plans";
+import { getDayBreakfastStatus, getEnabledHotelPlans, hotelForDay } from "./hotel-plans";
 import { reorderItineraryDays } from "./day-order";
 import type { DayOrderChange, DayOrderIssue, ReorderBoardDay } from "./reorder-board";
 import ItineraryWorkspaceFooter from "./components/ItineraryWorkspaceFooter.vue";
@@ -672,7 +682,7 @@ const dayPlanSummaries = computed(() =>
 );
 const guideSummary = computed(() => {
   const guide = selectedItinerary.value?.guidePlans[0];
-  return guide ? `${guide.guideName} · ${t("itineraryWorkspace.scopes.wholeTrip")}` : "";
+  return guide ? `${guide.guideName} (${t("itineraryWorkspace.scopes.wholeTrip")})` : "";
 });
 /** 顺序看板分组图标，与日卡资源按钮一致 */
 const BOARD_ICONS = {
@@ -732,7 +742,7 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() => {
           icon: BOARD_ICONS[key],
           scope: t(
             key === "hotel"
-              ? "itineraryWorkspace.scopes.byCity"
+              ? "itineraryWorkspace.scopes.byNight"
               : key === "vehicle"
                 ? "itineraryWorkspace.scopes.byDateRange"
                 : "itineraryWorkspace.scopes.wholeTrip",
@@ -752,13 +762,13 @@ function dayRoute(day: ItineraryDayRecord) {
   return day.items.map((item) => item.resourceName).join("、");
 }
 
-/** 酒店按住宿城市搭配；多个档次是备选方案，不是同晚连住多家。 */
+/** 酒店按住宿日搭配；多个档次是备选方案，不是同晚连住多家。 */
 function dayHotelSummary(day: ItineraryDayRecord) {
   const plan = selectedItinerary.value;
   const city = day.overnightDestination;
   if (!plan || !city) return "";
   const hotels = getEnabledHotelPlans(plan).flatMap((hotelPlan) => {
-    const hotel = hotelPlan.hotels.find((item) => item.destination === city);
+    const hotel = hotelForDay(hotelPlan.hotels, day);
     return hotel ? [`${t(`itinerary.hotelTiers.${hotelPlan.tier}`)} ${hotel.hotelName}`] : [];
   });
   if (!hotels.length) return "";
@@ -826,11 +836,11 @@ function updateGuideReason(reason: string) {
   if (guide) guide.adjustmentReason = reason;
 }
 
-function updateHotelReason(tier: ItineraryHotelTier, destination: string, reason: string) {
+function updateHotelReason(tier: ItineraryHotelTier, dayId: string, reason: string) {
   if (!contentEditable.value) return;
   const hotel = selectedItinerary.value?.hotelPlans
     .find((plan) => plan.tier === tier)
-    ?.hotels.find((item) => item.destination === destination);
+    ?.hotels.find((item) => item.dayId === dayId);
   if (hotel) hotel.adjustmentReason = reason;
 }
 

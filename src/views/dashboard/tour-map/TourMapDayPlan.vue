@@ -3,15 +3,15 @@
     <div class="flex items-center justify-between gap-2">
       <span class="text-[14px] font-medium text-strong">{{ title }}</span>
       <span v-if="day" class="text-[12px] text-muted">
-        {{ $t("dashboard.tourMap.dayLabel", { day: day.dayNumber }) }} · {{ day.date }}
+        {{ $t("dashboard.tourMap.dayLabel", { day: day.dayNumber }) }}<span class="ml-2">{{ day.date }}</span>
       </span>
     </div>
-    <p v-if="!day" class="m-0 text-[13px] text-muted">
+    <p v-if="!day" class="m-0 text-[12px] text-muted">
       {{ emptyText }}
     </p>
     <dl
       v-else
-      class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-[6px] m-0 text-[13px] leading-[1.5]"
+      class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-[6px] m-0 text-[14px] leading-[1.5]"
     >
       <dt class="text-muted">
         {{ $t("dashboard.tourMap.plannedStops") }}
@@ -23,7 +23,7 @@
           <span :class="stop.issue ? 'text-[var(--el-color-warning)]' : ''">
             {{ stop.name || "-" }}
             <span class="text-muted">({{ $t(`dashboard.tourMap.roles.${stop.role}`) }})</span>
-            <template v-if="stop.issue">· {{ $t(issueLabelKey(stop.issue)) }}</template>
+            <span v-if="stop.issue" class="ml-1 text-[var(--el-color-warning)]">{{ $t(issueLabelKey(stop.issue)) }}</span>
           </span>
         </template>
       </dd>

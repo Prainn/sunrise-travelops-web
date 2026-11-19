@@ -13,10 +13,10 @@
       aria-hidden="true"
     ><path d="M14 3H6v18h12V7l-4-4Z" /><path d="M14 3v4h4M9 12h6M9 16h6" /></svg>
     <div class="flex-1 min-w-0">
-      <div class="text-[13px] text-strong truncate" :title="fileName">
+      <div class="text-[14px] text-strong truncate" :title="fileName">
         {{ fileName }}
       </div>
-      <div class="text-[11px] text-muted">
+      <div class="text-[12px] text-muted">
         {{ formatFileSize(sizeBytes) }}
       </div>
     </div>

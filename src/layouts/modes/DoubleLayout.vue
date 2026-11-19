@@ -98,7 +98,7 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
 .layout-double {
   @apply 'fixed top-0 bottom-0 left-0 z-[999] flex';
   width: $double-sidebar-width;
-  @apply 'overflow-hidden bg-[var(--menu-background)] [border-right:1px_solid_var(--menu-border)] [transition:width_0.28s]';
+  @apply 'overflow-hidden bg-[var(--menu-background)] [border-right:1px_solid_var(--menu-border)] [transition:width_0.25s_ease-out]';
 
   &.is-collapsed {
     width: $sidebar-width-collapsed + $sidebar-secondary-width;
@@ -148,7 +148,7 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
         var(--menu-background)
       ),
       var(--menu-background);
-    @apply '[border-right:1px_solid_var(--menu-border)] [transition:flex-basis_0.28s,_width_0.28s]';
+    @apply '[border-right:1px_solid_var(--menu-border)] [transition:flex-basis_0.25s_ease-out,_width_0.25s_ease-out]';
 
     :deep(.layout-logo) {
       height: $navbar-height;
@@ -201,13 +201,13 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
   }
 
   &__primary-toggle-icon {
-    @apply 'w-[18px] h-[18px] text-[18px] [transition:transform_0.28s]';
+    @apply 'w-[18px] h-[18px] text-[18px] [transition:transform_0.25s_ease-out]';
   }
 
   &__secondary {
     @apply 'flex [flex:0_0_auto] flex-col';
     width: $sidebar-secondary-width;
-    @apply 'min-w-0 overflow-hidden bg-[var(--menu-background)] [transition:width_0.28s]';
+    @apply 'min-w-0 overflow-hidden bg-[var(--menu-background)] [transition:width_0.25s_ease-out]';
 
     :deep(.el-menu) {
       border: none;
@@ -257,7 +257,7 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
 .layout-main {
   @apply 'relative h-full';
   margin-left: $double-sidebar-width;
-  @apply 'overflow-y-auto [transition:margin-left_0.28s]';
+  @apply 'overflow-y-auto [transition:margin-left_0.25s_ease-out]';
 
   &.is-collapsed {
     margin-left: $sidebar-width-collapsed + $sidebar-secondary-width;
@@ -279,7 +279,7 @@ $double-sidebar-width: $sidebar-primary-width + $sidebar-secondary-width;
 .is-mobile {
   .layout-double {
     width: $double-sidebar-width;
-    @apply '[transition:transform_0.28s,_width_0s]';
+    @apply '[transition:transform_0.25s_ease-out,_width_0s]';
   }
 
   &.is-sidebar-collapsed {

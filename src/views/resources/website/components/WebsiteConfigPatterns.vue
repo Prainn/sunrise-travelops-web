@@ -8,9 +8,6 @@
       >
         {{ $t("common.create") }}
       </el-button>
-      <span class="text-muted text-[13px]">
-        {{ $t("websiteConfig.patterns.help") }}
-      </span>
     </TableToolbar>
     <DataTable
       fill

@@ -53,7 +53,7 @@
                 v-for="item in sources"
                 :key="item.inquiryId"
                 :value="item.inquiryId"
-                :label="`${item.inquiryCode} · ${item.isSeries ? $t('inquiry.series.tag') : item.agencyName}`"
+                :label="`${item.inquiryCode} ${item.isSeries ? $t('inquiry.series.tag') : item.agencyName}`"
               />
             </el-select>
           </el-form-item>

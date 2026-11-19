@@ -25,7 +25,7 @@ const appStore = useAppStore();
 const settingsStore = useSettingsStore();
 const route = useRoute();
 
-// 网页标题：页面业务标题优先（如行程页的“独立站行程 · 客户”），否则用当前菜单路由名称；随语言切换更新，无标题路由回退应用名。
+// 网页标题：页面业务标题优先（如行程页的“独立站行程：客户”），否则用当前菜单路由名称；随语言切换更新，无标题路由回退应用名。
 watchEffect(() => {
   void appStore.locale;
   const title = route.meta.title;

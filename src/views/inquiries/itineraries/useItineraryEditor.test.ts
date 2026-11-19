@@ -64,3 +64,73 @@ describe("new itinerary dates", () => {
     })));
   });
 });
+
+describe("per-day hotels and other-cost totals", () => {
+  function editorWith(plan: ItineraryRecord) {
+    const findHotel = (id: string) =>
+      ({ id, name: `酒店${id}`, city: "昆明", rating: 4, status: "enabled", individualPrice: 200, groupPrice: null, breakfast: "", unit: "roomNight" }) as never;
+    return useItineraryEditor({
+      inquiry: ref({ isSeries: false, plannedDays: 3, status: "new" } as InquiryRecord),
+      inquiryId: computed(() => "inquiry-id"),
+      itineraryStore: [],
+      selectedItinerary: computed(() => plan),
+      selectedItineraryId: ref(plan.id),
+      canCreate: () => true,
+      canEditContent: () => true,
+      canEditPrice: () => true,
+      getCreator: () => "coordinator",
+      findHotel,
+    });
+  }
+  function planWithDays() {
+    const editor = editorFor(false);
+    const plan = editor.createItinerary({
+      ...editor.createEmptyItinerary(),
+      startDate: "2026-12-01",
+      destinations: ["昆明"],
+      paxTiers: [2, 4],
+    })!;
+    plan.dailyPlans.forEach((day) => (day.overnightDestination = "昆明"));
+    return plan;
+  }
+
+  it("selects a different hotel for each night in one city and drops a night's hotel when its stay changes", () => {
+    const plan = planWithDays();
+    const editor = editorWith(plan);
+    const [first, second] = plan.dailyPlans;
+    editor.updateHotelPlanSelection(4, first!.id, "a");
+    editor.updateHotelPlanSelection(4, second!.id, "b");
+    const hotels = () => plan.hotelPlans.find((p) => p.tier === 4)!.hotels;
+    expect(hotels().map((h) => [h.dayId, h.hotelId])).toEqual([
+      [first!.id, "a"],
+      [second!.id, "b"],
+    ]);
+    editor.updateDayField(1, "overnightDestination", "");
+    expect(hotels().map((h) => h.dayId)).toEqual([first!.id]);
+  });
+
+  it("shifts each PAX price by the per-person change of an other-cost total", () => {
+    const plan = planWithDays();
+    plan.quote.options = [
+      {
+        id: "o",
+        hotelTier: 4,
+        vehicleTier: "standard",
+        paxPrices: [
+          { pax: 2, adultUnitPrice: 100 },
+          { pax: 4, adultUnitPrice: 100 },
+        ],
+      },
+    ];
+    const editor = editorWith(plan);
+    editor.updateQuoteSettings({ mealOtherCost: 40, mealOtherReason: "包车餐" });
+    expect(plan.quote.options[0]!.paxPrices.map((p) => p.adultUnitPrice)).toEqual([120, 110]);
+    editor.updateQuoteSettings({
+      paxOtherCosts: [
+        { pax: 2, guideOtherCost: 0, guideOtherReason: "", staffRoomOtherCost: 0, staffRoomOtherReason: "" },
+        { pax: 4, guideOtherCost: 8, guideOtherReason: "门票", staffRoomOtherCost: null, staffRoomOtherReason: "" },
+      ],
+    });
+    expect(plan.quote.options[0]!.paxPrices.map((p) => p.adultUnitPrice)).toEqual([120, 112]);
+  });
+});

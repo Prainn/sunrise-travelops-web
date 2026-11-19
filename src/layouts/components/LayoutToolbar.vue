@@ -30,8 +30,7 @@
           <div class="layout-user__avatar">
             <img :src="userStore.businessAvatar" class="layout-user__avatar-img" />
           </div>
-          <span class="layout-user__name">{{ userStore.userInfo.nickname }} ·
-            {{ userStore.userInfo.deptName || $t("identity.superuser") }}</span>
+          <span class="layout-user__name">{{ userStore.userInfo.nickname }}<span class="ml-[6px] text-[var(--el-text-color-secondary)]">{{ userStore.userInfo.deptName || $t("identity.superuser") }}</span></span>
         </div>
         <template #dropdown>
           <el-dropdown-menu>
@@ -242,7 +241,7 @@ async function logout() {
   }
 
   &__name {
-    @apply 'ml-[8px] text-[14px] text-[currentColor] whitespace-nowrap [transition:color_0.3s]';
+    @apply 'ml-[8px] text-[14px] text-[currentColor] whitespace-nowrap [transition:color_0.16s]';
   }
 }
 
