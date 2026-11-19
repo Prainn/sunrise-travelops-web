@@ -1,7 +1,7 @@
 <template>
   <SectionCard>
     <template #header>
-      <span class="font-600 text-strong">{{ option.hotelTier === null ? $t("itinerary.noAccommodation") : $t(`itinerary.hotelTiers.${option.hotelTier}`) }} ·
+      <span class="font-600 text-strong">{{ option.hotelTier === null ? $t("itinerary.noAccommodation") : $t(`itinerary.hotelTiers.${option.hotelTier}`) }} /
         {{ $t(`itinerary.vehicleServiceLevels.${option.vehicleTier}`) }}</span>
     </template>
     <template #actions>
@@ -15,12 +15,22 @@
           {{ $t("itinerary.hotelCostDetails") }}
         </h4>
         <DataTable :data="calculation?.hotelCityCosts ?? []" border>
+          <!-- 按住宿日逐晚列出；旧冻结快照无日序，仍按城市和晚数展示 -->
+          <el-table-column :label="$t('itinerary.costDay')" width="70">
+            <template #default="{ row }">
+              {{ row.dayNumber ? `D${row.dayNumber}` : $t("itinerary.nightCount", { count: row.nights }) }}
+            </template>
+          </el-table-column>
           <el-table-column
             prop="destination"
             :label="$t('itinerary.hotelCostCity')"
-            min-width="100"
+            min-width="80"
           />
-          <el-table-column prop="nights" :label="$t('itinerary.hotelCostNights')" width="65" />
+          <el-table-column :label="$t('resource.hotelName')" min-width="140">
+            <template #default="{ row }">
+              {{ row.hotelName ?? "—" }}
+            </template>
+          </el-table-column>
           <el-table-column :label="$t('itinerary.hotelRoomNightPrice')" min-width="125">
             <template #default="{ row }">
               {{ money(row.unitCost) }}
@@ -56,7 +66,9 @@
         </template>
       </el-table-column>
       <el-table-column :label="$t('itinerary.attractionCost')" min-width="130">
-        {{ money(attractionCost) }}
+        <template #default="{ row }">
+          {{ money(row.attractionCost ?? attractionCost) }}
+        </template>
       </el-table-column>
       <el-table-column :label="$t('itinerary.guideServicePerPerson')" min-width="130">
         <template #default="{ row }">
@@ -91,7 +103,7 @@
                 {{ $t("itinerary.hotelPerPerson") }}: {{ formatMoney(calculation.hotelUnitCost)
                 }}<br />
                 {{ $t("itinerary.mealCost") }}: {{ formatMoney(row.mealCost ?? mealCost) }}<br />
-                {{ $t("itinerary.attractionCost") }}: {{ formatMoney(attractionCost) }}<br />
+                {{ $t("itinerary.attractionCost") }}: {{ formatMoney(row.attractionCost ?? attractionCost) }}<br />
                 {{ $t("itinerary.vehiclePerPerson") }}: {{ money(vehicleUnitCost(row)) }}<br />
                 {{ $t("itinerary.guideServicePerPerson") }}:
                 {{ formatMoney(row.guideServiceUnitCost) }}<br />

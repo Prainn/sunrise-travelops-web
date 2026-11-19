@@ -84,7 +84,7 @@
         </el-table-column>
         <el-table-column :label="$t('websiteReport.vehicleType')" min-width="110">
           <template #default="{ row }">
-            {{ row.mode === 'private_vehicle' && row.vehicleOptions?.length ? row.vehicleOptions.map((option: WebsiteRouteVehicleOption) => `${vehicleLabel(option.vehicleType)} · ${option.durationMinutes == null ? $t('websiteReport.notSpecified') : $t('websiteReport.minutesValue', { value: option.durationMinutes })}`).join(' / ') : $t('websiteReport.notSpecified') }}
+            {{ row.mode === 'private_vehicle' && row.vehicleOptions?.length ? row.vehicleOptions.map((option: WebsiteRouteVehicleOption) => `${vehicleLabel(option.vehicleType)} (${option.durationMinutes == null ? $t('websiteReport.notSpecified') : $t('websiteReport.minutesValue', { value: option.durationMinutes })})`).join(' / ') : $t('websiteReport.notSpecified') }}
           </template>
         </el-table-column>
         <el-table-column prop="distanceKm" :label="$t('websiteReport.distanceKm')" min-width="110" />

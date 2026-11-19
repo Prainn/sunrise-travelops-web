@@ -11,7 +11,7 @@
 
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-[10px]">
-              <h2 class="m-0 text-[22px] font-bold leading-[30px] text-strong">
+              <h2 class="m-0 text-[24px] font-bold leading-[32px] text-strong">
                 {{ displayName }}
               </h2>
               <el-tag type="primary" effect="light" round>

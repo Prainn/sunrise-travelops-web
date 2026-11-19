@@ -18,13 +18,13 @@
         :actions="editable ? resourceActions : []"
         @select="selectResource"
       />
-      <div v-if="day.guideLanguage" class="flex flex-wrap items-center gap-3 text-[13px]">
-        <span class="min-w-0 flex-1 text-strong [overflow-wrap:anywhere]">{{ $t("itineraryWorkspace.actions.guide") }} · {{ day.guideLanguage }}</span>
+      <div v-if="day.guideLanguage" class="flex flex-wrap items-center gap-3 text-[14px]">
+        <span class="min-w-0 flex-1 text-strong [overflow-wrap:anywhere]">{{ $t("itineraryWorkspace.actions.guide") }} ({{ day.guideLanguage }})</span>
         <div v-if="editable && !saving" class="flex shrink-0">
           <el-button link type="primary" @click="emit('open-resource', 'guide')">
             {{ $t("common.edit") }}
           </el-button>
-          <el-button link type="danger" @click="emit('remove-item', websiteGuideBoardId(day.id), $t('itineraryWorkspace.actions.guide') + ' · ' + day.guideLanguage)">
+          <el-button link type="danger" @click="emit('remove-item', websiteGuideBoardId(day.id), `${$t('itineraryWorkspace.actions.guide')} (${day.guideLanguage})`)">
             {{ $t("common.delete") }}
           </el-button>
         </div>

@@ -1,14 +1,14 @@
 <template>
   <div
-    class="login-page relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-[var(--login-sky)] text-[var(--login-ink)] transition-colors duration-500"
+    class="login-page relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-[var(--login-sky)] text-[var(--login-ink)] transition-colors duration-250 ease-out"
     :class="{ 'login-page--lynxtour': activeBrand.scope !== 'shengxu', 'login-page--website': activeBrand.scope === 'website' }"
   >
     <div class="pointer-events-none absolute inset-0 z-[-1] overflow-hidden" aria-hidden="true">
-      <div class="login-sun absolute right-[-70px] top-[120px] h-[340px] w-[340px] rounded-full transition-all duration-500" />
+      <div class="login-sun absolute right-[-70px] top-[120px] h-[340px] w-[340px] rounded-full transition-colors duration-250 ease-out" />
       <div class="login-orbit absolute right-[-230px] top-[80px] h-[650px] w-[650px] rounded-full rotate-[-25deg] scale-x-75" />
       <div class="login-orbit absolute right-[-145px] top-[85px] h-[650px] w-[650px] rounded-full rotate-[28deg] scale-x-[0.63]" />
-      <div class="login-ridge absolute bottom-0 left-[-5%] right-[-5%] top-[36%] bg-[var(--login-land)] opacity-12 transition-transform duration-500" />
-      <div class="login-ridge login-ridge--near absolute bottom-0 left-[-5%] right-[-5%] top-[53%] scale-x-[-1] bg-[var(--login-land)] opacity-20 transition-transform duration-500" />
+      <div class="login-ridge absolute bottom-0 left-[-5%] right-[-5%] top-[36%] bg-[var(--login-land)] opacity-12" />
+      <div class="login-ridge login-ridge--near absolute bottom-0 left-[-5%] right-[-5%] top-[53%] scale-x-[-1] bg-[var(--login-land)] opacity-20" />
       <div class="login-mist absolute inset-x-0 bottom-0 h-[30%]" />
     </div>
 
@@ -22,7 +22,7 @@
         />
         <div class="hidden border-l border-l-[var(--login-line)] border-l-solid pl-[16px] text-[14px] tracking-[2px] sm:block">
           {{ activeBrand.name }}
-          <span class="mt-[7px] block text-[10px] tracking-[2.5px] text-[var(--login-muted)]">
+          <span class="mt-[7px] block text-[12px] tracking-[2.5px] text-[var(--login-muted)]">
             {{ activeBrand.scope === "website" ? $t("login.brandDesign.websiteDomain") : $t("login.brandDesign.product") }}
           </span>
         </div>
@@ -59,7 +59,7 @@
           :aria-hidden="activeBrand.scope !== brand.scope"
           :aria-label="brand.name"
         >
-          <div class="flex items-center justify-center gap-[12px] text-[11px] font-semibold leading-[1.7] tracking-[2px] text-[var(--login-accent)] lg:justify-start">
+          <div class="flex items-center justify-center gap-[12px] text-[12px] font-semibold leading-[1.7] tracking-[2px] text-[var(--login-accent)] lg:justify-start">
             <span class="h-px w-[26px] shrink-0 bg-[var(--login-accent)]" aria-hidden="true" />
             <span>{{ brand.englishName }}</span>
           </div>
@@ -92,11 +92,11 @@
       </div>
 
       <section class="login-card mx-auto w-full max-w-[380px] rounded-[22px] bg-[var(--login-paper)] px-[26px] pb-[28px] pt-[30px] sm:px-[34px]" :aria-label="$t('login.login')">
-        <div class="mb-[14px] flex items-center gap-[8px] text-[11px] font-semibold tracking-[1.5px] text-[var(--login-accent)]" aria-live="polite">
+        <div class="mb-[14px] flex items-center gap-[8px] text-[12px] font-semibold tracking-[1.5px] text-[var(--login-accent)]" aria-live="polite">
           <span class="h-[5px] w-[5px] shrink-0 rounded-full bg-[var(--login-accent)]" aria-hidden="true" />
           {{ $t("login.brandDesign.workspace", { name: selectedScopeName }) }}
         </div>
-        <h2 class="m-0 text-[28px] font-semibold leading-[1.4] tracking-[1px]">
+        <h2 class="m-0 text-[24px] font-semibold leading-[1.4] tracking-[1px]">
           {{ $t("login.welcomeBack") }}
         </h2>
         <p class="mb-[24px] mt-[8px] text-[12px] leading-[1.7] text-[var(--login-muted)]">
@@ -152,12 +152,12 @@
             </el-icon>
           </el-button>
         </el-form>
-        <div class="mt-[22px] text-center text-[10px] leading-[1.6] tracking-[1.8px] text-[var(--login-muted)]">
+        <div class="mt-[22px] text-center text-[12px] leading-[1.6] tracking-[1.8px] text-[var(--login-muted)]">
           {{ activeBrand.workspaceLabel }}
         </div>
       </section>
 
-      <div class="hidden justify-self-end text-[10px] tracking-[5px] text-[var(--login-muted)] [writing-mode:vertical-rl] lg:block" aria-hidden="true">
+      <div class="hidden justify-self-end text-[12px] tracking-[5px] text-[var(--login-muted)] [writing-mode:vertical-rl] lg:block" aria-hidden="true">
         {{ $t("login.brandDesign.journey") }}
       </div>
     </main>
@@ -167,22 +167,22 @@
         v-for="(brand, index) in brands"
         :key="brand.scope"
         type="button"
-        class="login-brand-option flex min-h-[80px] w-full cursor-pointer items-center gap-[15px] rounded-[11px] border border-[var(--login-line)] border-solid bg-[var(--login-paper)] px-[20px] py-[16px] text-left text-[var(--login-ink)] transition-transform duration-200 enabled:hover:translate-y-[-2px] disabled:cursor-wait"
+        class="login-brand-option flex min-h-[80px] w-full cursor-pointer items-center gap-[15px] rounded-[11px] border border-[var(--login-line)] border-solid bg-[var(--login-paper)] px-[20px] py-[16px] text-left text-[var(--login-ink)] transition-colors duration-200 ease-out disabled:cursor-wait"
         :aria-pressed="loginFormData.scope === brand.scope"
         :disabled="loading"
         @click="loginFormData.scope = brand.scope"
       >
-        <span class="login-brand-number shrink-0 text-[23px] italic text-[var(--login-muted)]" aria-hidden="true">{{ String(index + 1).padStart(2, "0") }}</span>
+        <span class="login-brand-number shrink-0 text-[24px] italic text-[var(--login-muted)]" aria-hidden="true">{{ String(index + 1).padStart(2, "0") }}</span>
         <span class="min-w-0">
-          <span class="block text-[13px] font-medium leading-[1.6]">{{ brand.optionLabel }}</span>
-          <span class="mt-[5px] block text-[10px] leading-[1.7] tracking-[1px] text-[var(--login-muted)]">{{ brand.englishName }}</span>
+          <span class="block text-[14px] font-medium leading-[1.6]">{{ brand.optionLabel }}</span>
+          <span class="mt-[5px] block text-[12px] leading-[1.7] tracking-[1px] text-[var(--login-muted)]">{{ brand.englishName }}</span>
         </span>
         <el-icon class="ml-auto shrink-0 text-[var(--login-muted)]" aria-hidden="true">
           <TopRight />
         </el-icon>
       </button>
     </nav>
-    <footer class="mx-auto flex w-full max-w-[1536px] flex-wrap items-center justify-between gap-[12px] px-[20px] py-[24px] text-[10px] leading-[1.6] tracking-[1px] text-[var(--login-muted)] sm:px-[38px]">
+    <footer class="mx-auto flex w-full max-w-[1536px] flex-wrap items-center justify-between gap-[12px] px-[20px] py-[24px] text-[12px] leading-[1.6] tracking-[1px] text-[var(--login-muted)] sm:px-[38px]">
       <span>{{ $t("login.brandDesign.platform") }}</span>
       <span>{{ activeBrand.englishName }}</span>
     </footer>

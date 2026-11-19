@@ -88,35 +88,25 @@ const transitionName = computed(() => {
   /* fade */
   .fade-enter-active,
   .fade-leave-active {
-    @apply '[transition:opacity_0.3s_ease-in-out]';
+    @apply '[transition:opacity_0.25s_ease-out]';
   }
   .fade-enter-from,
   .fade-leave-to {
     @apply 'opacity-0';
   }
 
-  /* fade-slide */
+  /* fade-slide / fade-scale：已存偏好统一为淡入淡出，不做位移或缩放。 */
   .fade-slide-leave-active,
-  .fade-slide-enter-active {
-    @apply '[transition:all_0.3s]';
-  }
-  .fade-slide-enter-from {
-    @apply 'opacity-0 [transform:translateX(-30px)]';
-  }
-  .fade-slide-leave-to {
-    @apply 'opacity-0 [transform:translateX(30px)]';
-  }
-
-  /* fade-scale */
+  .fade-slide-enter-active,
   .fade-scale-leave-active,
   .fade-scale-enter-active {
-    @apply '[transition:all_0.28s]';
+    @apply '[transition:opacity_0.25s_ease-out]';
   }
-  .fade-scale-enter-from {
-    @apply 'opacity-0 [transform:scale(1.2)]';
-  }
+  .fade-slide-enter-from,
+  .fade-slide-leave-to,
+  .fade-scale-enter-from,
   .fade-scale-leave-to {
-    @apply 'opacity-0 [transform:scale(0.8)]';
+    @apply 'opacity-0';
   }
 }
 </style>

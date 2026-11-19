@@ -80,7 +80,7 @@ export function formatLogValue(value: unknown, path: string, context: DisplayCon
     return value
       .map((id) => {
         const day = days?.[String(id)];
-        return day ? `${t("inquiry.log.day", { day: day.dayNumber })} · ${day.date}` : String(id);
+        return day ? `${t("inquiry.log.day", { day: day.dayNumber })} (${day.date})` : String(id);
       })
       .join("\n");
   }

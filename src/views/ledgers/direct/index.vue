@@ -674,7 +674,7 @@ onDeactivated(() => {
 
 <style lang="scss" scoped>
 :deep(.ledger-row--highlighted > td.el-table__cell) {
-  animation: ledger-row-flash 1.5s ease-in-out 2;
+  animation: ledger-row-flash 1.5s ease-out;
 }
 
 @keyframes ledger-row-flash {

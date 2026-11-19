@@ -1,5 +1,5 @@
 import type { GuideRecord } from "@/types/resource";
-import { getDayBreakfastStatus } from "./hotel-plans";
+import { getDayBreakfastStatus, pruneDayHotels } from "./hotel-plans";
 import type { ComputedRef, Ref } from "vue";
 import type { InquiryRecord } from "@/types/inquiry";
 import type {
@@ -15,7 +15,7 @@ import type {
   ItineraryEditableDayField,
 } from "@/types/itinerary";
 import type { HotelRecord } from "@/types/resource";
-import { addDays, createId, formatDateTime, roundMoney, sumMoney } from "@/utils";
+import { addDays, createId, divideMoney, formatDateTime, roundMoney, sumMoney } from "@/utils";
 import { transitionInquiry } from "../inquiry-workflow";
 import {
   createDefaultHotelPlans,
@@ -283,6 +283,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   function updateQuoteSettings(changes: Partial<Omit<ItineraryQuoteSettings, "options">>) {
     if (!options.canEditPrice() || !options.selectedItinerary.value) return;
     const quote = options.selectedItinerary.value.quote;
+    // 其他费用为总价，售价按各 PAX 的人均差额同步调整。
     const sharedDelta = sumMoney(
       (["mealOtherCost", "attractionOtherCost"] as const).map((key) =>
         key in changes ? roundMoney((changes[key] ?? 0) - (quote[key] ?? 0)) : 0,
@@ -302,8 +303,8 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
             : 0;
           const nextPrice = sumMoney([
             unclampedPrices.get(price) ?? price.adultUnitPrice,
-            sharedDelta,
-            paxDelta,
+            divideMoney(sharedDelta, price.pax),
+            divideMoney(paxDelta, price.pax),
           ]);
           if (nextPrice < 0) unclampedPrices.set(price, nextPrice);
           else unclampedPrices.delete(price);
@@ -366,11 +367,11 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       touchSelectedItinerary();
     }
   }
-  function updateHotelCost(tier: ItineraryHotelTier, destination: string, price: number | null) {
+  function updateHotelCost(tier: ItineraryHotelTier, dayId: string, price: number | null) {
     if (!options.canEditContent()) return;
     const hotel = options.selectedItinerary.value?.hotelPlans
       .find((p) => p.tier === tier)
-      ?.hotels.find((h) => h.destination === destination);
+      ?.hotels.find((h) => h.dayId === dayId);
     if (hotel) {
       hotel.unitCost = price === null ? null : normalizeQuoteValue(price);
       hotel.adjustmentReason = "";
@@ -378,16 +379,14 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     }
   }
 
-  function updateHotelPlanSelection(
-    tier: ItineraryHotelTier,
-    destination: string,
-    hotelId: string,
-  ) {
+  /** 酒店按档次和住宿日选择，同城多晚可住不同酒店。 */
+  function updateHotelPlanSelection(tier: ItineraryHotelTier, dayId: string, hotelId: string) {
     if (!options.canEditContent()) return;
     const plan = options.selectedItinerary.value;
     const hotelPlan = plan ? getHotelPlan(plan, tier) : undefined;
-    if (!plan || !hotelPlan || !plan.destinations.includes(destination)) return;
-    const selectionIndex = hotelPlan.hotels.findIndex((hotel) => hotel.destination === destination);
+    const destination = plan?.dailyPlans.find((day) => day.id === dayId)?.overnightDestination;
+    if (!plan || !hotelPlan || !destination || !plan.destinations.includes(destination)) return;
+    const selectionIndex = hotelPlan.hotels.findIndex((hotel) => hotel.dayId === dayId);
     if (!hotelId) {
       if (selectionIndex >= 0) hotelPlan.hotels.splice(selectionIndex, 1);
       syncQuoteOptions(plan);
@@ -404,6 +403,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     )
       return;
     const selection = {
+      dayId,
       destination,
       hotelId: hotel.id,
       hotelName: hotel.name,
@@ -423,13 +423,13 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
 
   function updateHotelRate(
     tier: ItineraryHotelTier,
-    destination: string,
+    dayId: string,
     basis: "hotel_group" | "hotel_individual",
   ) {
     if (!options.canEditContent()) return;
     const hotel = options.selectedItinerary.value?.hotelPlans
       .find((plan) => plan.tier === tier)
-      ?.hotels.find((item) => item.destination === destination);
+      ?.hotels.find((item) => item.dayId === dayId);
     const resource = hotel && options.findHotel(hotel.hotelId);
     if (!hotel || !resource) return;
     const price = basis === "hotel_group" ? resource.groupPrice : resource.individualPrice;
@@ -540,6 +540,8 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   }
 
   function syncQuoteOptions(plan: ItineraryRecord) {
+    // 住宿日删除或住宿城市变化后，该日酒店不再有效。
+    pruneDayHotels(plan);
     // PAX 内容和顺序未变时，保留已有费用对象。
     if (
       plan.quote.paxOtherCosts.length !== plan.paxTiers.length ||

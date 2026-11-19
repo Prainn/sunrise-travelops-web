@@ -41,7 +41,7 @@
 
         <div class="ops-map__panel">
           <div class="flex items-center justify-between gap-2 mb-3">
-            <span class="min-w-0 text-[15px] font-medium text-strong truncate">
+            <span class="min-w-0 text-[16px] font-medium text-strong truncate">
               {{ panelTitle }}
             </span>
             <el-button
@@ -89,7 +89,7 @@
                     {{ $t("dashboard.tourMap.uncalibrated") }}
                   </span>
                 </span>
-                <span class="shrink-0 text-[13px] text-muted">
+                <span class="shrink-0 text-[12px] text-muted">
                   {{ pointSummary(item.city.tourCount, item.city.peopleCount) }}
                 </span>
               </button>
@@ -97,7 +97,7 @@
 
             <template v-else>
               <template v-if="panel.kind === 'region'">
-                <p v-if="!regionCities.length" class="m-0 mb-3 text-[13px] text-muted">
+                <p v-if="!regionCities.length" class="m-0 mb-3 text-[12px] text-muted">
                   {{ $t("dashboard.tourMap.regionNoDestinations") }}
                 </p>
                 <div v-else class="flex flex-wrap gap-2 mb-3">
@@ -107,13 +107,13 @@
                     size="small"
                     @click="openCityPanel(city.id)"
                   >
-                    {{ city.name }} · {{ city.tourCount }}
+                    {{ city.name }}<span class="ml-1 tabular-nums">{{ city.tourCount }}</span>
                   </el-button>
                 </div>
               </template>
               <p
                 v-if="panel.kind === 'city' && panelCity && !pointByCityId.has(panelCity.id)"
-                class="m-0 mb-3 text-[13px] text-[var(--el-color-warning)]"
+                class="m-0 mb-3 text-[14px] text-[var(--el-color-warning)]"
               >
                 {{ $t("dashboard.tourMap.uncalibrated") }}
               </p>
@@ -138,8 +138,8 @@
                   </span>
                   <span class="text-[12px] text-muted">
                     {{ todayGuideText(tour.todayGuideServices) }}
-                    <template v-if="panel.kind === 'pickup'"> · {{ tour.pickupAt }}</template>
-                    <template v-if="panel.kind === 'drop'"> · {{ tour.dropAt }}</template>
+                    <span v-if="panel.kind === 'pickup'" class="ml-2">{{ tour.pickupAt }}</span>
+                    <span v-if="panel.kind === 'drop'" class="ml-2">{{ tour.dropAt }}</span>
                   </span>
                   <span v-if="tour.issues.length" class="flex flex-wrap gap-1">
                     <el-tag
@@ -152,7 +152,7 @@
                     </el-tag>
                   </span>
                 </span>
-                <span class="shrink-0 text-[13px] text-muted">
+                <span class="shrink-0 text-[12px] text-muted">
                   {{ $t("dashboard.tourMap.peopleCount", { count: tour.totalPeople }) }}
                 </span>
               </button>

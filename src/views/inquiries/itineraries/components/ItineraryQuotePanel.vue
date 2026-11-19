@@ -36,7 +36,7 @@
       label-position="top"
       :disabled="!editable"
     >
-      <h3 class="m-[20px_0_12px] text-[18px]">
+      <h3 class="m-[20px_0_12px] text-[16px]">
         {{ $t("itinerary.extraFees") }}
       </h3>
       <SectionCard
@@ -152,7 +152,7 @@
           {{ $t(type === "flight" ? "itinerary.addFlightFee" : "itinerary.addTrainFee") }}
         </el-button>
       </SectionCard>
-      <h3 class="m-[20px_0_12px] text-[18px]">
+      <h3 class="m-[20px_0_12px] text-[16px]">
         {{ $t("itinerary.customerTerms") }}
       </h3>
       <template v-for="field in noteFields" :key="field">

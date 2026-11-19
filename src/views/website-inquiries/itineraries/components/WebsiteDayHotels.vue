@@ -23,7 +23,7 @@
       type="info"
       :closable="false"
     />
-    <p v-if="!day.overnightCityId && !day.hotels.length" class="m-0 text-[13px] text-muted">
+    <p v-if="!day.overnightCityId && !day.hotels.length" class="m-0 text-[12px] text-muted">
       {{ $t("itinerary.noOvernightStay") }}
     </p>
     <p v-if="day.hotels.length > 1" class="m-0 text-[12px] text-muted">
@@ -34,7 +34,7 @@
       :key="hotel.id"
       class="flex items-start gap-3 p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)]"
     >
-      <div class="min-w-0 flex-1 flex flex-col gap-1 text-[13px]">
+      <div class="min-w-0 flex-1 flex flex-col gap-1 text-[14px]">
         <div class="flex flex-wrap items-center gap-2">
           <el-tag size="small">
             {{ $t(`websiteItineraryUi.hotelTier${hotel.tier}`) }}
@@ -48,8 +48,8 @@
         </div>
         <span class="text-muted">
           {{ cityName(hotel.cityId) }}
-          <template v-if="hotel.roomType"> · {{ hotel.roomType }}</template>
-          · {{ $t(hotel.breakfastIncluded ? "websiteItineraryUi.breakfastIncludedShort" : "websiteItineraryUi.breakfastExcludedShort") }}
+          <span v-if="hotel.roomType" class="ml-2">{{ hotel.roomType }}</span>
+          <span class="ml-2">{{ $t(hotel.breakfastIncluded ? "websiteItineraryUi.breakfastIncludedShort" : "websiteItineraryUi.breakfastExcludedShort") }}</span>
         </span>
         <span v-if="configHotel(hotel)" class="text-muted">
           {{ $t("websiteItineraryUi.configHotelPrice", { price: formatMoney(configHotel(hotel)?.price) }) }}

@@ -3,7 +3,7 @@
     <SectionCard>
       <el-page-header @back="router.push({ name: 'InquiryList' })">
         <template #content>
-          {{ inquiry ? `${inquiry.code} · ${inquiry.agencyName}` : $t("inquiry.log.report") }}
+          {{ inquiry ? `${inquiry.code} ${inquiry.agencyName}` : $t("inquiry.log.report") }}
         </template>
       </el-page-header>
       <div class="log-totals mt-[16px] flex flex-wrap gap-[16px]">
@@ -391,10 +391,10 @@ function fieldLabel(change: InquiryLogRecord["changes"][number]) {
     context?.vehicleTier ? t(`inquiry.log.tiers.${context.vehicleTier}`) : "",
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join(" / ");
   const path = change.path.replace(/\[[^\]]+\]/g, "");
   const label = path ? path.split(".").map(fieldName).join(" / ") : t("inquiry.log.record");
-  return prefix ? `${prefix} · ${label}` : label;
+  return prefix ? `${prefix} / ${label}` : label;
 }
 function displayValue(
   value: unknown,

@@ -95,7 +95,7 @@ function valueOrDash(value: string) {
   @apply 'flex items-start justify-between mb-[20px]';
 
   h3 {
-    @apply 'm-[0_0_4px] text-[18px]';
+    @apply 'm-[0_0_4px] text-[16px]';
   }
 
   span {

@@ -1,7 +1,7 @@
 <template>
   <AppDialog
     :model-value="modelValue"
-    :title="`${$t('inquiry.followUp.title')} · ${inquiry.code}`"
+    :title="`${$t('inquiry.followUp.title')} ${inquiry.code}`"
     size="lg"
     :busy="submitting"
     destroy-on-close
@@ -66,7 +66,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <p v-if="reminderPreview" class="mt-0 mb-3 text-[13px]" :class="reminderPreview.past ? 'text-[var(--el-color-danger)]' : 'text-strong'">
+        <p v-if="reminderPreview" class="mt-0 mb-3 text-[14px]" :class="reminderPreview.past ? 'text-[var(--el-color-danger)]' : 'text-strong'">
           {{
             $t(reminderPreview.past ? "inquiry.followUp.reminderInPast" : "inquiry.followUp.reminderAt", {
               time: reminderPreview.time,
@@ -102,13 +102,13 @@
         </el-button>
       </el-alert>
       <div v-loading="loading" class="flex min-h-[80px] flex-col gap-3">
-        <p v-if="!loading && !error && !records.length" class="m-0 py-6 text-center text-[13px] text-muted">
+        <p v-if="!loading && !error && !records.length" class="m-0 py-6 text-center text-[12px] text-muted">
           {{ $t("inquiry.followUp.empty") }}
         </p>
         <article
           v-for="record in records"
           :key="record.id"
-          class="flex flex-col gap-1 rounded-[var(--custom-radius)] border border-solid border-[var(--card-border)] px-4 py-3 text-[13px]"
+          class="flex flex-col gap-1 rounded-[var(--custom-radius)] border border-solid border-[var(--card-border)] px-4 py-3 text-[14px]"
         >
           <header class="flex flex-wrap items-center gap-2">
             <template v-if="record.followedAt || record.followedByName">

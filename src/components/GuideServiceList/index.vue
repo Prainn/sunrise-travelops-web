@@ -1,9 +1,9 @@
 <template>
-  <ul class="m-0 flex list-none flex-col gap-2 p-0 text-[13px] leading-[1.5]">
+  <ul class="m-0 flex list-none flex-col gap-2 p-0 text-[14px] leading-[1.5]">
     <li v-for="service in services" :key="service.id" class="flex flex-col gap-[2px]">
       <span class="text-strong">
         {{ guideIdentityText(service) }}
-        <span v-if="service.language" class="text-muted"> · {{ service.language }}</span>
+        <span v-if="service.language" class="ml-2 text-muted">{{ service.language }}</span>
       </span>
       <span>{{ service.serviceStartDate }} ~ {{ service.serviceEndDate }}</span>
       <span v-if="service.remark" class="text-muted">{{ service.remark }}</span>

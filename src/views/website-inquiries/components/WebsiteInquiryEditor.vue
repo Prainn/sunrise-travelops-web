@@ -9,7 +9,7 @@
     <template v-if="record">
       <div class="flex items-start justify-between mb-[20px]">
         <div>
-          <h3 class="m-[0_0_4px] text-[18px]">
+          <h3 class="m-[0_0_4px] text-[16px]">
             {{ record.customerName }}
           </h3>
           <span class="text-[var(--el-text-color-secondary)]">{{ record.code }}</span>

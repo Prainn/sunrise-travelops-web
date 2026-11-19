@@ -42,7 +42,7 @@ function toggleClick() {
   @apply 'flex items-center justify-center w-[48px] h-full p-0 text-[var(--el-text-color-regular)] cursor-pointer';
 
   .hamburger {
-    @apply 'w-[16px] h-[16px] text-[16px] [vertical-align:middle] bg-[currentcolor] [transform:scaleX(-1)] [transition:color_0.16s,_transform_0.3s_ease]';
+    @apply 'w-[16px] h-[16px] text-[16px] [vertical-align:middle] bg-[currentcolor] [transform:scaleX(-1)] [transition:color_0.16s,_transform_0.25s_ease-out]';
     color: currentcolor;
 
     &--white {

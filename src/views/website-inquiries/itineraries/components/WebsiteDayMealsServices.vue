@@ -6,7 +6,7 @@
     <div
       v-for="meal in visibleMeals"
       :key="meal.id"
-      class="flex items-start gap-3 p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)] text-[13px]"
+      class="flex items-start gap-3 p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)] text-[14px]"
     >
       <div class="min-w-0 flex-1 flex flex-wrap items-center gap-2">
         <strong class="text-strong">{{ $t(`itinerary.meals.${meal.slot}`) }}</strong>
@@ -29,7 +29,7 @@
         <el-button link type="primary" @click="emit('edit-meal', meal.slot)">
           {{ $t("common.edit") }}
         </el-button>
-        <el-button link type="danger" @click="emit('remove', meal.id, $t('itinerary.meals.' + meal.slot) + (mealName(meal) ? ' · ' + mealName(meal) : ''))">
+        <el-button link type="danger" @click="emit('remove', meal.id, $t('itinerary.meals.' + meal.slot) + (mealName(meal) ? ` (${mealName(meal)})` : ''))">
           {{ $t("common.delete") }}
         </el-button>
       </div>
@@ -38,7 +38,7 @@
       v-if="!mealId && day.services.length"
       class="flex flex-wrap justify-between items-center gap-3 mt-1"
     >
-      <h5 class="m-0 text-[13px] text-strong font-600">
+      <h5 class="m-0 text-[14px] text-strong font-600">
         {{ $t("websiteItineraryUi.otherServices") }}
       </h5>
       <el-button v-if="editable" @click="openCreate">
@@ -51,7 +51,7 @@
       class="p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)]"
     >
       <div class="flex items-start gap-3">
-        <div class="min-w-0 flex-1 flex flex-wrap items-center gap-2 text-[13px] [overflow-wrap:anywhere]">
+        <div class="min-w-0 flex-1 flex flex-wrap items-center gap-2 text-[14px] [overflow-wrap:anywhere]">
           <strong class="text-strong">{{ (locale === 'en' ? service.nameEn : service.nameZh) || service.nameZh || service.nameEn || $t('websiteItineraryUi.otherServices') }}</strong>
           <el-tag size="small" effect="plain">
             {{ $t(`websiteInquiry.feeStates.${service.feeState}`) }}

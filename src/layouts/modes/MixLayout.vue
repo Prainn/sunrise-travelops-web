@@ -217,7 +217,7 @@ const useMenuColors = computed(
 .layout-sidebar {
   @apply 'relative';
   width: $sidebar-width;
-  @apply 'h-full bg-[var(--menu-background)] [border-right:1px_solid_var(--menu-border)] [transition:width_0.28s]';
+  @apply 'h-full bg-[var(--menu-background)] [border-right:1px_solid_var(--menu-border)] [transition:width_0.25s_ease-out]';
 
   &.is-collapsed {
     width: $sidebar-width-collapsed !important;

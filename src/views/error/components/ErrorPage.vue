@@ -15,7 +15,7 @@
           {{ statusCode }}
         </h1>
         <h2
-          class="error-page__title m-[28px_0_0] text-[26px] font-semibold leading-[1.35] text-strong [letter-spacing:0]"
+          class="error-page__title m-[28px_0_0] text-[24px] font-semibold leading-[1.35] text-strong [letter-spacing:0]"
         >
           {{ title }}
         </h2>
@@ -197,7 +197,7 @@ const visualMeta = computed(() =>
   }
 
   .error-page__title {
-    @apply 'text-[22px]';
+    @apply 'text-[24px]';
   }
 }
 

@@ -33,7 +33,7 @@
       </div>
     </template>
     <section id="itinerary-hotels">
-      <template v-if="overnightDestinations.length">
+      <template v-if="hotelRows.length">
         <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
           <el-tabs v-model="activeTier" class="itinerary-hotel-plans__tabs min-w-0 flex-1">
             <el-tab-pane
@@ -57,17 +57,17 @@
           <DataTable
             :key="activeTier"
             :data="hotelRows"
-            row-key="destination"
+            row-key="dayId"
             :aria-label="$t(`itinerary.hotelTiers.${activeTier}`)"
           >
-            <el-table-column :label="$t('itinerary.hotelCostCity')" min-width="120">
+            <el-table-column :label="$t('itinerary.costDay')" width="80">
               <template #default="{ row }">
-                <span class="font-500">{{ row.destination }}</span>
+                <span class="font-500">D{{ row.dayNumber }}</span>
               </template>
             </el-table-column>
-            <el-table-column :label="$t('itinerary.hotelCostNights')" min-width="90">
+            <el-table-column :label="$t('itinerary.hotelCostCity')" min-width="100">
               <template #default="{ row }">
-                {{ $t("itinerary.nightCount", { count: destinationDuration(dailyPlans, row.destination).nights }) }}
+                {{ row.destination }}
               </template>
             </el-table-column>
             <el-table-column :label="$t('resource.hotelName')" min-width="320">
@@ -76,40 +76,40 @@
                   <ResourceSelect
                     class="w-full"
                     kind="hotels"
-                    :model-value="getHotelSelectionId(activeTier, row.destination)"
-                    :selected-label="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === row.destination)?.hotelName"
+                    :model-value="getHotel(activeTier, row.dayId)?.hotelId ?? ''"
+                    :selected-label="getHotel(activeTier, row.dayId)?.hotelName"
                     :filters="{ city: row.destination, rating: activeTier }"
                     :disabled="!editable"
                     :placeholder="$t('itinerary.selectDestinationHotel')"
-                    :aria-label="`${row.destination} · ${$t('resource.hotelName')}`"
+                    :aria-label="`D${row.dayNumber} ${row.destination} ${$t('resource.hotelName')}`"
                     popper-class="itinerary-hotel-plans__options"
                     :fit-input-width="true"
-                    @update:model-value="emit('update-selection', activeTier, row.destination, $event)"
+                    @update:model-value="emit('update-selection', activeTier, row.dayId, $event)"
                   />
                 </el-form-item>
               </template>
             </el-table-column>
             <el-table-column :label="$t('identity.reference')" min-width="200">
               <template #default="{ row }">
-                <el-form-item v-if="getHotelSelectionId(activeTier, row.destination)">
+                <el-form-item v-if="getHotel(activeTier, row.dayId)">
                   <el-select
                     autocomplete="new-password"
                     class="w-full"
-                    :disabled="!editable || !hotelResource(activeTier, row.destination)"
-                    :model-value="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === row.destination)?.referenceBasis"
-                    :aria-label="`${row.destination} · ${$t('identity.reference')}`"
+                    :disabled="!editable || !hotelResource(activeTier, row.dayId)"
+                    :model-value="getHotel(activeTier, row.dayId)?.referenceBasis"
+                    :aria-label="`D${row.dayNumber} ${$t('identity.reference')}`"
                     popper-class="itinerary-hotel-plans__options"
                     :fit-input-width="true"
-                    @update:model-value="emit('update-rate', activeTier, row.destination, $event)"
+                    @update:model-value="emit('update-rate', activeTier, row.dayId, $event)"
                   >
                     <el-option
                       value="hotel_individual"
-                      :label="`${$t('hotel.individualPrice')} ¥${hotelResource(activeTier, row.destination)?.individualPrice ?? 0}`"
+                      :label="`${$t('hotel.individualPrice')} ¥${hotelResource(activeTier, row.dayId)?.individualPrice ?? 0}`"
                     />
                     <el-option
-                      v-if="hotelResource(activeTier, row.destination)?.groupPrice != null"
+                      v-if="hotelResource(activeTier, row.dayId)?.groupPrice != null"
                       value="hotel_group"
-                      :label="`${$t('hotel.groupPrice')} ¥${hotelResource(activeTier, row.destination)?.groupPrice}`"
+                      :label="`${$t('hotel.groupPrice')} ¥${hotelResource(activeTier, row.dayId)?.groupPrice}`"
                     />
                   </el-select>
                 </el-form-item>
@@ -117,19 +117,17 @@
             </el-table-column>
             <el-table-column :label="$t('itinerary.hotelUnitPrice')" min-width="180">
               <template #default="{ row }">
-                <template v-if="getHotelSelectionId(activeTier, row.destination)">
-                  <el-form-item>
-                    <el-input-number
-                      :model-value="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === row.destination)?.unitCost"
-                      :min="0"
-                      :precision="2"
-                      :disabled="!editable"
-                      :controls="false"
-                      :aria-label="`${row.destination} · ${$t('planning.hotelPrice')}`"
-                      @update:model-value="emit('update-cost', activeTier, row.destination, $event ?? null)"
-                    />
-                  </el-form-item>
-                </template>
+                <el-form-item v-if="getHotel(activeTier, row.dayId)">
+                  <el-input-number
+                    :model-value="getHotel(activeTier, row.dayId)?.unitCost"
+                    :min="0"
+                    :precision="2"
+                    :disabled="!editable"
+                    :controls="false"
+                    :aria-label="`D${row.dayNumber} ${$t('planning.hotelPrice')}`"
+                    @update:model-value="emit('update-cost', activeTier, row.dayId, $event ?? null)"
+                  />
+                </el-form-item>
               </template>
             </el-table-column>
             <!-- 原因单独成列并用单行输入，避免个别行变高导致表格高低不平 -->
@@ -139,13 +137,13 @@
               min-width="200"
             >
               <template #default="{ row }">
-                <el-form-item v-if="hotelNeedsReason(activeTier, row.destination)">
+                <el-form-item v-if="hotelNeedsReason(activeTier, row.dayId)">
                   <el-input
-                    :model-value="getPlan(activeTier)?.hotels.find((hotel) => hotel.destination === row.destination)?.adjustmentReason ?? ''"
+                    :model-value="getHotel(activeTier, row.dayId)?.adjustmentReason ?? ''"
                     :disabled="!editable"
-                    :aria-label="`${row.destination} · ${$t('identity.reason')}`"
+                    :aria-label="`D${row.dayNumber} ${$t('identity.reason')}`"
                     :placeholder="$t('identity.reasonPlaceholder')"
-                    @update:model-value="emit('update-reason', activeTier, row.destination, $event)"
+                    @update:model-value="emit('update-reason', activeTier, row.dayId, $event)"
                   />
                 </el-form-item>
               </template>
@@ -190,9 +188,9 @@ import DataTable from "@/components/DataTable/index.vue";
 import ResourceSelect from "@/components/ResourceSelect/index.vue";
 import type { ItineraryDayRecord, ItineraryHotelPlan, ItineraryHotelTier } from "@/types/itinerary";
 import {
-  calculateDestinationNights,
   getHotelPlan,
   getIncompleteHotelPlanTiers,
+  getOvernightDays,
   HOTEL_PLAN_TIERS,
 } from "../hotel-plans";
 import { destinationDuration, itineraryDuration } from "../duration";
@@ -206,16 +204,17 @@ const props = defineProps<{
   modelValue: boolean;
   saving: boolean;
 }>();
+/** 酒店按档次和住宿日维护；同城多晚可以分别选择不同酒店。 */
 const emit = defineEmits<{
   "clear-plan": [tier: ItineraryHotelTier];
-  "update-selection": [tier: ItineraryHotelTier, destination: string, hotelId: string];
+  "update-selection": [tier: ItineraryHotelTier, dayId: string, hotelId: string];
   "update-rate": [
     tier: ItineraryHotelTier,
-    destination: string,
+    dayId: string,
     basis: "hotel_group" | "hotel_individual",
   ];
-  "update-cost": [tier: ItineraryHotelTier, destination: string, price: number | null];
-  "update-reason": [tier: ItineraryHotelTier, destination: string, reason: string];
+  "update-cost": [tier: ItineraryHotelTier, dayId: string, price: number | null];
+  "update-reason": [tier: ItineraryHotelTier, dayId: string, reason: string];
   save: [];
   cancel: [];
 }>();
@@ -240,21 +239,25 @@ watch(
     );
   },
 );
-function hotelResource(tier: ItineraryHotelTier, destination: string) {
-  const id = getHotelSelectionId(tier, destination);
+function hotelResource(tier: ItineraryHotelTier, dayId: string) {
+  const id = getHotel(tier, dayId)?.hotelId;
   return resourceService.hotels.find((hotel) => hotel.id === id);
 }
 
-const overnightDestinations = computed(() =>
-  Object.keys(calculateDestinationNights({ dailyPlans: props.dailyPlans })).filter((destination) =>
-    props.destinations.includes(destination),
-  ),
-);
 const hotelRows = computed(() =>
-  overnightDestinations.value.map((destination) => ({ destination })),
+  getOvernightDays({ dailyPlans: props.dailyPlans })
+    .filter((day) => props.destinations.includes(day.overnightDestination!))
+    .map((day) => ({
+      dayId: day.id,
+      dayNumber: day.dayNumber,
+      destination: day.overnightDestination!,
+    })),
 );
+const overnightDestinations = computed(() => [
+  ...new Set(hotelRows.value.map((row) => row.destination)),
+]);
 const hasReasonRows = computed(() =>
-  hotelRows.value.some((row) => hotelNeedsReason(activeTier.value, row.destination)),
+  hotelRows.value.some((row) => hotelNeedsReason(activeTier.value, row.dayId)),
 );
 const pendingNights = computed(
   () => props.dailyPlans.filter((day) => day.overnightDestination === null).length,
@@ -267,12 +270,12 @@ const canSave = computed(
     }).length,
 );
 
-function hotelNeedsReason(tier: ItineraryHotelTier, destination: string) {
-  const hotel = getPlan(tier)?.hotels.find((item) => item.destination === destination);
+function hotelNeedsReason(tier: ItineraryHotelTier, dayId: string) {
+  const hotel = getHotel(tier, dayId);
   if (!hotel) return false;
   const saved = props.savedHotelPlans
     .find((plan) => plan.tier === tier)
-    ?.hotels.find((item) => item.destination === destination);
+    ?.hotels.find((item) => item.dayId === dayId);
   const sameSource =
     saved?.hotelId === hotel.hotelId && saved.referenceBasis === hotel.referenceBasis;
   return selectionPriceNeedsReason(hotel.unitCost, hotel, sameSource ? (saved.unitCost ?? undefined) : undefined);
@@ -282,8 +285,8 @@ function getPlan(tier: ItineraryHotelTier) {
   return getHotelPlan({ hotelPlans: props.hotelPlans }, tier);
 }
 
-function getHotelSelectionId(tier: ItineraryHotelTier, destination: string) {
-  return getPlan(tier)?.hotels.find((hotel) => hotel.destination === destination)?.hotelId ?? "";
+function getHotel(tier: ItineraryHotelTier, dayId: string) {
+  return getPlan(tier)?.hotels.find((hotel) => hotel.dayId === dayId);
 }
 </script>
 

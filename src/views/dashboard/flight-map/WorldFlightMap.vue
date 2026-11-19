@@ -367,7 +367,7 @@ function buildSeries(highlight: string[] | null) {
         show: true,
         position: "right",
         distance: 5,
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: 600,
         color: "#d7e8ff",
         textBorderColor: "#0f2140",
@@ -439,7 +439,7 @@ function routeTooltip(routeKey: string) {
     `<b>${escapeText(`${route.from.code} → ${route.to.code}`)}</b>`,
     escapeText(t(`dashboard.flightMap.legKinds.${route.kind}`)),
     escapeText(t("dashboard.flightMap.legCount", { count: route.legCount })),
-  ].join(" · ");
+  ].join(" / ");
   const airports = escapeText(
     `${airportName(route.from, locale.value)} → ${airportName(route.to, locale.value)}`,
   );
@@ -467,7 +467,7 @@ function groupTooltipLine(group: FlightGroup) {
       : "",
     escapeText(t("dashboard.flightMap.tourPeople", { tours: group.legs.length, people: group.people })),
   ].filter(Boolean);
-  return `${parts.join(" · ")}<br/><span style="opacity:.75">${escapeText(tourText)}</span>`;
+  return `${parts.join(" / ")}<br/><span style="opacity:.75">${escapeText(tourText)}</span>`;
 }
 
 function airportTooltip(code: string) {

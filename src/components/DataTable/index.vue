@@ -94,7 +94,7 @@ defineExpose({ table: tableRef });
     --el-table-expanded-cell-bg-color: var(--surface-muted);
 
     width: 100%;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--el-text-color-regular);
 
     // 外框由 .data-table 提供，去掉 ElTable 自带的四周边线，避免双层边框

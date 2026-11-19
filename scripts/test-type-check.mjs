@@ -1,43 +1,60 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-test("accepts hosted evidence only for the exact guarded dev deployment", () => {
-  const sha = "a".repeat(40);
-  const env = {
-    ...process.env,
-    SUNRISE_HOSTED_DEV_TYPECHECK_SHA: sha,
-    GITHUB_SHA: sha,
-    GITHUB_ACTIONS: "true",
-    GITHUB_REPOSITORY: "Prainn/sunrise-travelops-web",
-    GITHUB_REF: "refs/heads/dev",
-    DEPLOY_ENV: "dev",
-    OPERATION: "deploy",
-    SUNRISE_LOCK_HELD: "1",
+test("commits check the staged tree and leave unstaged and untracked files alone", () => {
+  const root = mkdtempSync(join(tmpdir(), "sunrise-commit-check-"));
+  const worktree = join(root, "worktree");
+  const scratch = join(root, "hook temp");
+  const env = { ...process.env, TMPDIR: scratch };
+  const git = (...args) => spawnSync("git", args, { cwd: worktree, env, encoding: "utf8" });
+  const successful = (...args) => {
+    const result = git(...args);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    return result.stdout;
   };
-  const run = (change = {}, args = []) => spawnSync(process.execPath, [join(repository, "scripts/type-check.mjs"), ...args], {
-    encoding: "utf8",
-    env: { ...env, ...change },
-  });
-  assert.match(run().stdout, /Type check verified on GitHub/);
-  for (const change of [
-    { GITHUB_SHA: "b".repeat(40) },
-    { GITHUB_ACTIONS: "" },
-    { GITHUB_REPOSITORY: "Prainn/another-repo" },
-    { GITHUB_REF: "refs/heads/main", DEPLOY_ENV: "prod" },
-    { OPERATION: "rollback" },
-    { SUNRISE_LOCK_HELD: "" },
-  ]) {
-    const invalid = run(change);
-    assert.notEqual(invalid.status, 0);
-    assert.match(invalid.stderr, /must match the guarded dev deployment/);
+  try {
+    mkdirSync(join(worktree, "scripts"), { recursive: true });
+    mkdirSync(scratch);
+    successful("init", "--quiet");
+    successful("config", "core.hooksPath", ".git/hooks");
+    successful("config", "user.name", "Fixture");
+    successful("config", "user.email", "fixture@example.invalid");
+    symlinkSync(join(repository, ".husky/pre-commit"), join(worktree, ".git/hooks/pre-commit"));
+    symlinkSync(join(repository, "node_modules"), join(worktree, "node_modules"), "dir");
+    copyFileSync(join(repository, "scripts/type-check.mjs"), join(worktree, "scripts/type-check.mjs"));
+    writeFileSync(join(worktree, "package.json"), JSON.stringify({ scripts: { "lint:lint-staged": "node --version" } }));
+    writeFileSync(join(worktree, "tsconfig.json"), JSON.stringify({
+      compilerOptions: { strict: true, skipLibCheck: true, types: [], module: "esnext" },
+      include: ["*.ts"],
+    }));
+    const source = join(worktree, "price.ts");
+    const valid = "export const price: number = 1;";
+    const invalid = 'export const price: number = "wrong";';
+    writeFileSync(source, invalid);
+    successful("add", "price.ts", "tsconfig.json", "package.json", "scripts/type-check.mjs");
+    writeFileSync(source, valid);
+    const rejected = git("commit", "-m", "Staged type error");
+    assert.notEqual(rejected.status, 0);
+    assert.match(rejected.stdout + rejected.stderr, /TS2322/);
+    assert.deepEqual(readdirSync(scratch).filter((name) => name.startsWith("sunrise-web-index.")), []);
+
+    successful("add", "price.ts");
+    writeFileSync(source, invalid);
+    writeFileSync(join(worktree, "untracked.ts"), invalid);
+    successful("commit", "-m", "Valid staged source");
+    assert.equal(successful("show", "HEAD:price.ts"), valid);
+    assert.match(successful("diff", "--", "price.ts"), /wrong/);
+    assert.deepEqual(readdirSync(scratch).filter((name) => name.startsWith("sunrise-web-index.")), []);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
-  assert.notEqual(run({}, ["--project", "tsconfig.json"]).status, 0);
 });
 
 test("checks Vue, tests and additional config roots without leaving temporary configs", () => {

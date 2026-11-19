@@ -14,7 +14,7 @@
           :key="row.key"
           class="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-4 mb-4"
         >
-          <el-form-item :label="row.name + ' · ' + $t('identity.actual')">
+          <el-form-item :label="`${row.name} (${$t('identity.actual')})`">
             <el-input-number
               :model-value="row.get()"
               :min="0"
@@ -56,8 +56,7 @@
                 tier: $t(`inquiry.log.tiers.${row.vehicle.tier}`),
                 pax: row.price.pax,
               }) +
-                ' · ' +
-                $t('identity.actual')
+                ` (${$t('identity.actual')})`
             "
           >
             <el-input-number
@@ -74,7 +73,7 @@
               :disabled="!editable || vehicleSegmentPaxTotal(row.vehicle, row.price.pax) == null"
               @click="changeVehiclePrice(row.vehicle, row.price.pax, null)"
             >
-              {{ $t("identity.automatic") }} ·
+              {{ $t("identity.automatic") }}
               {{
                 vehicleSegmentPaxTotal(row.vehicle, row.price.pax) == null
                   ? $t("planning.priceNotEntered")

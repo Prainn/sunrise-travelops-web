@@ -196,8 +196,9 @@
             >
               <div class="flex w-full items-center gap-2">
                 <span class="min-w-0 flex-1 truncate">
-                  {{ account.scopeName }} · {{ account.nickname }}（{{ account.username }}）·
-                  {{ account.tourCode || "-" }}
+                  {{ account.scopeName }}
+                  <span class="ml-2">{{ account.nickname }}（{{ account.username }}）</span>
+                  <span class="ml-2 text-muted">{{ account.tourCode || "-" }}</span>
                 </span>
                 <el-tag v-if="removed.includes(account)" type="warning" size="small">
                   {{ $t("accountLink.removedMember") }}

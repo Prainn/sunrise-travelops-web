@@ -10,7 +10,7 @@
       </el-tag>
     </div>
     <div class="mt-1 truncate text-xs text-[var(--el-text-color-secondary)]">
-      {{ agency.code }} · {{ agency.countryOrRegion || "-" }}
+      {{ agency.code }}<span class="ml-2">{{ agency.countryOrRegion || "-" }}</span>
       <span v-if="agency.coordinatorName" class="ml-2">
         {{ $t("resource.agencyCoordinator") }}：{{ agency.coordinatorName }}
       </span>

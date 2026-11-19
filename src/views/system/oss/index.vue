@@ -216,7 +216,7 @@
           </el-descriptions-item>
           <el-descriptions-item :label="$t('common.status')">
             {{ $t(`oss.states.${detail.state}`) }}
-            <span v-if="detail.state === 'failed'" class="text-[var(--el-color-danger)]">· {{ $t(ossErrorKey(detail.errorCode)) }}</span>
+            <span v-if="detail.state === 'failed'" class="ml-2 text-[var(--el-color-danger)]">{{ $t(ossErrorKey(detail.errorCode)) }}</span>
           </el-descriptions-item>
           <el-descriptions-item :label="$t('oss.mimeType')">
             {{ detail.mimeType || '-' }}
