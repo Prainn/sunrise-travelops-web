@@ -32,7 +32,7 @@
             :placeholder="$t('itinerary.allCities')"
           >
             <el-option
-              v-for="city in config.cities"
+              v-for="city in cityOptions"
               :key="city.id"
               :value="city.id"
               :label="localName(city)"
@@ -48,7 +48,7 @@
             :placeholder="$t('itinerary.allCities')"
           >
             <el-option
-              v-for="city in config.cities"
+              v-for="city in cityOptions"
               :key="city.id"
               :value="city.id"
               :label="localName(city)"
@@ -142,6 +142,7 @@ import type { TransportMode, WebsiteConfig, WebsiteDay, WebsiteLeg, WebsiteRoute
 import WebsiteTransportFields from "./WebsiteTransportFields.vue";
 import { transportRules } from "@/views/resources/website/useWebsiteConfigRules";
 import { TRANSPORT_OPTIONS, VEHICLE_OPTIONS } from "../../options";
+import { websiteCityOptions, websiteDayRouteCityIds } from "../city-options";
 
 /**
  * 独立站交通段：从当前配置的专属路线按出发/抵达城市筛选，或手填；确认后才加入当天。
@@ -151,6 +152,7 @@ const props = defineProps<{
   dayLabel: string;
   day?: WebsiteDay;
   config: WebsiteConfig;
+  selectableCityIds: ReadonlySet<string>;
   /** 编辑看板交通副本；复制时仅预填交通方式，城市保持空白。 */
   leg?: WebsiteLeg;
 }>();
@@ -171,10 +173,20 @@ const details = ref<Pick<WebsiteLeg, "vehicleType" | "distanceKm" | "durationMin
 const rules = computed(() => transportRules(t));
 const effectiveMode = computed(() => source.value === "route" ? selected.value?.mode ?? mode.value : mode.value);
 
+const cityOptions = computed(() => websiteCityOptions(
+  props.config.cities,
+  props.selectableCityIds,
+  ...websiteDayRouteCityIds(props.day),
+  props.leg?.fromCityId,
+  props.leg?.toCityId,
+));
+const cityOptionIds = computed(() => new Set(cityOptions.value.map((city) => city.id)));
 const routes = computed(() =>
   props.config.routes.filter(
     (route) =>
       route.status === "enabled" &&
+      cityOptionIds.value.has(route.fromCityId) &&
+      cityOptionIds.value.has(route.toCityId) &&
       (!fromCityId.value || route.fromCityId === fromCityId.value) &&
       (!toCityId.value || route.toCityId === toCityId.value),
   ),
@@ -189,7 +201,9 @@ watch(selected, (route) => {
 watch(effectiveMode, (value) => { if (value !== "private_vehicle") details.value.vehicleType = null; });
 
 const canSubmit = computed(() =>
-  source.value === "route" ? Boolean(selected.value) : Boolean(fromCityId.value && toCityId.value),
+  source.value === "route"
+    ? Boolean(selected.value)
+    : cityOptionIds.value.has(fromCityId.value) && cityOptionIds.value.has(toCityId.value),
 );
 
 watch(

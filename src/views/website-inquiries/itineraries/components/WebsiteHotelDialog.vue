@@ -24,7 +24,7 @@
         <el-form-item :label="$t('websiteItineraryUi.overnightCity')" required>
           <el-select v-model="draft.cityId" autocomplete="new-password" filterable>
             <el-option
-              v-for="city in config.cities"
+              v-for="city in cityOptions"
               :key="city.id"
               :value="city.id"
               :label="localName(city)"
@@ -132,6 +132,7 @@ import { formatMoney } from "@/utils";
 import type { WebsiteResourceOption } from "@/services/website.service";
 import type { WebsiteConfig, WebsiteConfigHotel, WebsiteDay, WebsiteHotelStay } from "@/types/website";
 import WebsitePublicResourcePicker from "../../components/WebsitePublicResourcePicker.vue";
+import { websiteCityOptions } from "../city-options";
 
 type HotelSource = "config" | "public" | "manual";
 
@@ -145,6 +146,7 @@ const props = defineProps<{
   dayLabel: string;
   day?: WebsiteDay;
   config: WebsiteConfig;
+  selectableCityIds: ReadonlySet<string>;
   /** 编辑的酒店；为空时新增 */
   hotel?: WebsiteHotelStay;
 }>();
@@ -157,6 +159,13 @@ const source = ref<HotelSource>("config");
 const keyword = ref("");
 const draft = ref<WebsiteHotelStay>(emptyHotel());
 
+const cityOptions = computed(() => websiteCityOptions(
+  props.config.cities,
+  props.selectableCityIds,
+  props.hotel?.cityId,
+  props.day?.overnightCityId,
+  props.day?.endCityId,
+));
 const configHotels = computed(() => {
   const query = keyword.value.trim().toLowerCase();
   return props.config.hotels.filter(
