@@ -75,6 +75,8 @@ export interface TourRecord {
   contactName: string;
   days: number;
   startDate: string;
+  /** 独立站自选服务日团的升序日期；其他团为 null。 */
+  serviceDates: string[] | null;
   pickupAt: string;
   dropAt: string;
   occupyFrom: string;
@@ -194,6 +196,8 @@ export interface TourSource {
   itineraryCode: string | null;
   startDate: string | null;
   days: number | null;
+  /** 独立站冻结方案的服务日，连续模式为 null，普通来源不返回该字段。 */
+  serviceDates?: string[] | null;
   downloaded: boolean;
 }
 

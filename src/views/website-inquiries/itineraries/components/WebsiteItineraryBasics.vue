@@ -17,23 +17,37 @@
         <el-form-item :label="$t('websiteItineraryUi.title')" prop="title" class="col-span-full">
           <el-input v-model.trim="form.title" maxlength="150" />
         </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.plannedDays')" prop="duration">
-          <el-input-number
-            v-model="form.duration"
-            :min="1"
-            :max="365"
-            :precision="0"
-            class="w-full!"
-          />
+        <el-form-item
+          v-if="plan.serviceDates"
+          :label="$t('websiteInquiry.serviceDates.label')"
+          class="col-span-full"
+        >
+          <div class="w-full">
+            <el-input :model-value="serviceDatesLabel" readonly />
+            <p class="m-0 text-[12px] leading-[20px] text-muted">
+              {{ $t("websiteItineraryUi.serviceDatesLocked") }}
+            </p>
+          </div>
         </el-form-item>
-        <el-form-item :label="$t('common.startDate')">
-          <el-date-picker
-            v-model="form.startDate"
-            value-format="YYYY-MM-DD"
-            clearable
-            class="w-full!"
-          />
-        </el-form-item>
+        <template v-else>
+          <el-form-item :label="$t('websiteItineraryUi.plannedDays')" prop="duration">
+            <el-input-number
+              v-model="form.duration"
+              :min="1"
+              :max="365"
+              :precision="0"
+              class="w-full!"
+            />
+          </el-form-item>
+          <el-form-item :label="$t('common.startDate')">
+            <el-date-picker
+              v-model="form.startDate"
+              value-format="YYYY-MM-DD"
+              clearable
+              class="w-full!"
+            />
+          </el-form-item>
+        </template>
         <el-form-item :label="$t('websiteItineraryUi.pax')">
           <el-input-number
             v-model="form.pax"
@@ -61,6 +75,7 @@ import AppDialog from "@/components/AppDialog/index.vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { WebsiteItinerary } from "@/types/website";
+import { serviceDateRanges } from "@/utils/service-dates";
 
 type Basics = Pick<WebsiteItinerary, "title" | "duration" | "startDate" | "pax">;
 const props = defineProps<{ modelValue: boolean; plan: WebsiteItinerary }>();
@@ -72,6 +87,9 @@ const { t } = useI18n();
 const formRef = ref<FormInstance>();
 const formSession = ref(0);
 const form = reactive<Basics>(pickBasics());
+const serviceDatesLabel = computed(() =>
+  `${serviceDateRanges(props.plan.serviceDates ?? []).join(t("websiteInquiry.listSeparator"))} · ${t("websiteWorkspace.serviceDatesSummary", { count: props.plan.serviceDates?.length ?? 0 })}`,
+);
 const rules = computed<FormRules>(() => ({
   title: [{ required: true, whitespace: true, message: t("itinerary.titleRequired"), trigger: "blur" }],
   duration: [{ required: true, type: "integer", min: 1, max: 365, message: t("websiteInquiry.plannedDaysRange"), trigger: "change" }],

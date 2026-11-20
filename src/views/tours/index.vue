@@ -155,7 +155,16 @@
           :formatter="sourceCode"
         />
         <el-table-column prop="days" :label="$t('tour.days')" width="80" />
-        <el-table-column prop="startDate" :label="$t('common.startDate')" min-width="110" />
+        <el-table-column
+          prop="startDate"
+          :label="$t('common.startDate')"
+          min-width="110"
+          show-overflow-tooltip
+        >
+          <template #default="{ row }">
+            {{ row.serviceDates?.length ? serviceDateRanges(row.serviceDates).join($t("websiteInquiry.listSeparator")) : row.startDate }}
+          </template>
+        </el-table-column>
         <el-table-column
           prop="agencyName"
           :label="$t('tour.agency')"
@@ -312,6 +321,7 @@ import { tourService } from "@/services/tour.service";
 import { useUserStore } from "@/stores/user";
 import type { TourBusinessUnit, TourRecord } from "@/types/tour";
 import { guideSummaryText } from "@/utils/guide-services";
+import { serviceDateRanges } from "@/utils/service-dates";
 import { hasUserPermission } from "@/utils/permission";
 import { useResourcePagination } from "@/views/resources/useResourcePagination";
 import { CANCEL_REASON_MAX_LENGTH, cancelReasonError } from "./tour-form";

@@ -2,6 +2,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRenderer, defineComponent, h, nextTick, reactive, ref, type Component, type ComponentPublicInstance } from "vue";
 import type { WebsiteConfig, WebsiteDay } from "@/types/website";
+import { ElMessageBox } from "element-plus";
+import ItineraryReorderDialog from "@/views/inquiries/itineraries/components/ItineraryReorderDialog.vue";
 import { emptyDay } from "../../options";
 
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ locale: ref("zh-cn"), t: (key: string) => key }) }));
@@ -9,7 +11,7 @@ vi.mock("@/services/business-dictionary.service", () => ({ businessDictionarySer
 vi.mock("@/components/AppDialog/index.vue", () => ({ default: {
   props: ["modelValue"],
   render(this: ComponentPublicInstance<{ modelValue: boolean }>) {
-    return this.modelValue ? h("dialog", [...(this.$slots.default?.() ?? []), ...(this.$slots.footer?.() ?? [])]) : null;
+    return this.modelValue ? h("dialog", [...(this.$slots.header?.() ?? []), ...(this.$slots.default?.() ?? []), ...(this.$slots.footer?.() ?? [])]) : null;
   },
 } }));
 vi.mock("@/components/FeedbackState/index.vue", () => ({ default: { render: () => null } }));
@@ -36,12 +38,11 @@ const renderer = createRenderer<HostNode, HostNode>({
   },
 });
 let unmount: (() => void) | undefined;
-function mount(component: Component, day: WebsiteDay, editable = true, config = { attractions: [], cities: [], routes: [], hotels: [] } as unknown as WebsiteConfig) {
+function render(component: Component, props: Record<string, unknown>) {
   const root = node("root");
-  const remove = vi.fn();
-  const app = renderer.createApp(component, { day, editable, config, onRemove: remove });
+  const app = renderer.createApp(component, props);
   app.config.globalProperties.$t = (key: string) => key;
-  for (const name of ["ElFormItem", "ElSelect", "ElOption", "ElInput", "ElInputNumber", "ElSwitch", "ElTag", "ElButton"]) {
+  for (const name of ["ElFormItem", "ElSelect", "ElOption", "ElInput", "ElInputNumber", "ElSwitch", "ElTag", "ElButton", "ElAlert", "ElIcon", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Close", "Delete", "Edit", "CopyDocument"]) {
     app.component(name, defineComponent({ inheritAttrs: false, setup(_, { attrs, slots }) { return () => h(name, attrs, slots.default?.()); } }));
   }
   app.component("ElForm", defineComponent({ inheritAttrs: false, setup(_, { attrs, slots, expose }) { expose({ validate: async () => true }); return () => h("ElForm", attrs, slots.default?.()); } }));
@@ -53,7 +54,7 @@ function mount(component: Component, day: WebsiteDay, editable = true, config = 
   function text(node: HostNode): string { return (node.text ?? "") + node.children.map(text).join(""); }
   return {
     find,
-    remove,
+    text,
     async click(label: string) {
       const button = find("ElButton").find(button => text(button) === label)!;
       await (button.props.onClick as () => void | Promise<void>)();
@@ -65,7 +66,40 @@ function mount(component: Component, day: WebsiteDay, editable = true, config = 
     },
   };
 }
+function mount(component: Component, day: WebsiteDay, editable = true, config = { attractions: [], cities: [], routes: [], hotels: [] } as unknown as WebsiteConfig) {
+  const remove = vi.fn();
+  return { ...render(component, { day, editable, config, onRemove: remove }), remove };
+}
 afterEach(() => { unmount?.(); unmount = undefined; });
+
+it("在已排满的自选日历上删除和恢复 D2，其他三天始终留在原服务日", async () => {
+  const dates = ["2026-11-21", "2026-11-23", "2026-11-24", "2026-11-26"];
+  const days = dates.map((date, index) => ({ id: `d${index + 1}`, dayNumber: index + 1, title: date, groups: [] }));
+  const apply = vi.fn();
+  const confirm = vi.spyOn(ElMessageBox, "confirm").mockResolvedValue("confirm" as Awaited<ReturnType<typeof ElMessageBox.confirm>>);
+  try {
+    const board = render(ItineraryReorderDialog, {
+      modelValue: true, startDate: dates[0], serviceDates: dates, maxDays: 4, days, onApply: apply, transfer: true,
+      createDay: (id: string) => ({ id, title: "Blank", groups: [], emptySlot: true }),
+    });
+    const remove = board.find("ElButton").filter(button => button.props["aria-label"] === "itineraryWorkspace.deleteDay")[1]!;
+    await (remove.props.onClick as () => Promise<void>)();
+    await nextTick();
+    expect(board.find("section").map(section => board.find("p", section)[0]?.text)).toEqual([dates[0], "Blank", dates[2], dates[3]]);
+    const recycle = board.find("ElButton").find(button => board.text(button).includes("itineraryWorkspace.deletedDays"))!;
+    await (recycle.props.onClick as () => void)();
+    await nextTick();
+    expect(board.find("ElSelect")[0]?.props.modelValue).toBe(dates[1]);
+    const restore = board.find("ElButton").find(button => board.text(button) === "itineraryWorkspace.restoreDay")!;
+    expect(restore.props.disabled).toBe(false);
+    await board.click("itineraryWorkspace.restoreDay");
+    await board.click("itineraryWorkspace.applyOrder");
+    expect(apply).toHaveBeenCalledWith(expect.objectContaining({
+      dayIds: ["d1", "d2", "d3", "d4"],
+      deletedDays: [], addedDayIds: [],
+    }));
+  } finally { confirm.mockRestore(); }
+});
 
 const cases = [
   { label: "attraction", component: WebsiteDayAttractions, collection: "items" as const, value: { id: "original", attractionId: null, nameZh: "景点", nameEn: "Attraction", descriptionZh: "正文", descriptionEn: "Copy", appears: true, feeState: "SELF_PAY" as const } },

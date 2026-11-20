@@ -193,13 +193,14 @@ describe("会话建询盘请求体", () => {
   it("删除负责人、状态、流失原因和业务，并携带会话版本", () => {
     const input = {
       businessUnit: "website", ownerId: "owner-x", status: "quoted", lostReason: "x", countryItemId: "country-1",
-      customerName: "Tom", plannedDays: 5, requirements: "trip", contactInfo: "bsuid-1", receivedAt: null, contactChannel: "WhatsApp",
-      whatsappSourceId: "", websiteInquiryNo: "", landingPage: "", acquisitionSource: "", startDate: null, pax: null,
+      customerName: "Tom", plannedDays: 4, requirements: "trip", contactInfo: "bsuid-1", receivedAt: null, contactChannel: "WhatsApp",
+      whatsappSourceId: "", websiteInquiryNo: "", landingPage: "", acquisitionSource: "", startDate: "2026-11-21", pax: null,
+      serviceDates: ["2026-11-21", "2026-11-23", "2026-11-24", "2026-11-26"],
       destinations: [], internalRemark: "",
     } as WebsiteInquiryInput;
     const body = whatsappInquiryInput(input, 3);
     for (const key of ["ownerId", "status", "lostReason", "businessUnit"]) expect(body).not.toHaveProperty(key);
-    expect(body).toMatchObject({ version: 3, countryItemId: "country-1", customerName: "Tom" });
+    expect(body).toMatchObject({ version: 3, countryItemId: "country-1", customerName: "Tom", serviceDates: input.serviceDates });
   });
 });
 

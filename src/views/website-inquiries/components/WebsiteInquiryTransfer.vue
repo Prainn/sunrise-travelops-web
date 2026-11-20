@@ -4,6 +4,7 @@
     :title="$t('identity.transfer')"
     size="sm"
     :busy="saving"
+    destroy-on-close
     @update:model-value="emit('update:modelValue', $event)"
   >
     <el-form
@@ -15,7 +16,7 @@
       <el-form-item
         :label="$t('identity.owner')"
         prop="ownerId"
-        :rules="[{ required: true, message: $t('common.selectPlaceholder') }]"
+        :rules="[{ required: true, message: $t('common.selectRequired', { field: $t('identity.owner') }) }]"
       >
         <el-select v-model="form.ownerId" autocomplete="new-password" filterable>
           <el-option

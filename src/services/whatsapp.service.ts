@@ -53,6 +53,7 @@ export function whatsappInquiryInput(input: WebsiteInquiryInput, version: number
     landingPage: input.landingPage,
     acquisitionSource: input.acquisitionSource,
     startDate: input.startDate,
+    serviceDates: input.serviceDates,
     pax: input.pax,
     destinations: [...input.destinations],
     internalRemark: input.internalRemark,

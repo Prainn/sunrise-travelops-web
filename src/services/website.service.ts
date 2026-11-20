@@ -93,6 +93,8 @@ export function websiteInquiryInput(record: WebsiteInquiryInput): WebsiteInquiry
     landingPage: record.landingPage,
     acquisitionSource: record.acquisitionSource,
     startDate: record.startDate,
+    // undefined 不进入请求体：更新时省略即保留原清单；显式 null 切回连续模式。
+    serviceDates: record.serviceDates && [...record.serviceDates],
     pax: record.pax,
     destinations: [...record.destinations],
     internalRemark: record.internalRemark,
@@ -107,6 +109,7 @@ export function websiteItineraryInput(record: WebsiteItineraryInput): WebsiteIti
     reorderDraft: record.reorderDraft ?? null,
     duration: record.duration,
     startDate: record.startDate,
+    serviceDates: record.serviceDates,
     pax: record.pax,
     configVersion: record.configVersion,
     days: record.days,

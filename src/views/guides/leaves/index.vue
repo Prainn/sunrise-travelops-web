@@ -196,7 +196,9 @@ const range = computed({
   },
 });
 const rules = computed<FormRules>(() => ({
-  guidePersonId: [{ required: true, message: t("common.selectPlaceholder"), trigger: "change" }],
+  guidePersonId: [
+    { required: true, message: t("common.selectRequired", { field: t("guideLeave.guide") }), trigger: "change" },
+  ],
   startDate: [{ required: true, message: t("guideLeave.periodRequired"), trigger: "change" }],
 }));
 

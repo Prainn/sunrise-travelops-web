@@ -38,21 +38,37 @@
           <div class="min-w-0">
             <h4 class="m-0 text-[14px] text-strong font-600">
               D{{ recovery ? day.dayNumber : dayIndex + 1 }}
-              <span v-if="!hideDates && (recovery ? day.date : startDate)" class="ml-1 font-400 text-muted">{{ recovery ? day.date : addDays(startDate!, dayIndex) }}</span>
+              <span v-if="!hideDates && (recovery ? day.date : boardDate(dayIndex))" class="ml-1 font-400 text-muted">{{ recovery ? day.date : boardDate(dayIndex) }}</span>
             </h4>
             <p class="m-0 mt-1 text-[14px] [overflow-wrap:anywhere]">
               {{ day.title }}
             </p>
           </div>
-          <el-button
-            v-if="recovery && !readonly"
-            link
-            type="primary"
-            :disabled="restoreDisabled"
-            @click="emit('restore', day.id)"
-          >
-            {{ $t('itineraryWorkspace.restoreDay') }}
-          </el-button>
+          <div v-if="recovery && !readonly" class="flex flex-col items-end gap-1">
+            <el-select
+              v-if="serviceDates"
+              v-model="restoreDates[day.id]"
+              :aria-label="$t('websiteWorkspace.restoreToDate')"
+              :placeholder="$t('websiteWorkspace.restoreToDate')"
+              autocomplete="new-password"
+              class="w-[145px]!"
+            >
+              <el-option
+                v-for="date in serviceDates"
+                :key="date"
+                :value="date"
+                :label="date"
+              />
+            </el-select>
+            <el-button
+              link
+              type="primary"
+              :disabled="restoreDisabled || Boolean(serviceDates && !restoreDates[day.id])"
+              @click="emit('restore', day.id, restoreDates[day.id])"
+            >
+              {{ $t('itineraryWorkspace.restoreDay') }}
+            </el-button>
+          </div>
           <div v-if="!readonly && !recovery" class="flex shrink-0">
             <el-button
               link
@@ -75,7 +91,7 @@
             <el-button
               link
               type="danger"
-              :disabled="orderedDays.length <= 1"
+              :disabled="!serviceDates && orderedDays.length <= 1"
               :aria-label="$t('itineraryWorkspace.deleteDay')"
               :title="$t('itineraryWorkspace.deleteDay')"
               @click="deleteDay(day.id)"
@@ -190,7 +206,7 @@
       </section>
       <el-button
         v-if="createDay && !readonly && !recovery"
-        :disabled="dayIds.length >= 365 || busy"
+        :disabled="dayIds.length >= maxDays || busy"
         class="shrink-0"
         @click="addBoardDay"
       >
@@ -257,8 +273,9 @@
     :days="recycledDays"
     :hide-dates="hideDates"
     :readonly="readonly"
+    :service-dates="serviceDates"
     recovery
-    :restore-disabled="dayIds.length >= 365 || busy"
+    :restore-disabled="(!serviceDates && dayIds.length >= maxDays) || busy"
     @restore="restoreDay"
   />
 </template>
@@ -270,7 +287,8 @@ import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import type { WebsiteReorderDraft, WebsiteLeg } from "@/types/website";
 import AppDialog from "@/components/AppDialog/index.vue";
-import { addDays, clonePlainData } from "@/utils";
+import { clonePlainData } from "@/utils";
+import { serviceDayDate } from "@/utils/service-dates";
 import {
   boardPlacements,
   boardTransferIssues,
@@ -304,6 +322,10 @@ const props = withDefaults(
     restoreDisabled?: boolean;
     readonly?: boolean;
     startDate?: string | null;
+    /** 独立站自选服务日：Dn 取 serviceDates[n - 1]，看板日历顺序固定。 */
+    serviceDates?: string[] | null;
+    /** 活动日上限；自选模式为服务日数量。 */
+    maxDays?: number;
     hideDates?: boolean;
     /** 开启跨天移动与复制 */
     transfer?: boolean;
@@ -315,12 +337,12 @@ const props = withDefaults(
     editTransport?: (leg: WebsiteLeg) => Promise<WebsiteLeg | undefined>;
     transportItem?: (leg: WebsiteLeg) => ReorderBoardItem;
   }>(),
-  { readonly: false, startDate: null, transfer: false, validate: undefined, deletedDays: () => [], recovery: false, restoreDisabled: false },
+  { readonly: false, startDate: null, serviceDates: null, maxDays: 365, transfer: false, validate: undefined, deletedDays: () => [], recovery: false, restoreDisabled: false },
 );
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
   apply: [change: DayOrderChange];
-  restore: [dayId: string];
+  restore: [dayId: string, date?: string];
 }>();
 
 const { t } = useI18n();
@@ -336,6 +358,7 @@ const dropItemId = ref("");
 const dropGroupKey = ref("");
 
 const addedDays = ref<ReorderBoardDay[]>([]);
+const restoreDates = ref<Record<string, string>>({});
 const overnight = ref<Record<string, string>>({});
 const busy = ref(false);
 const issueAnchor = ref<HTMLElement>();
@@ -411,6 +434,9 @@ watch(
     session += 1;
     busy.value = false;
     if (!visible) return;
+    restoreDates.value = Object.fromEntries(props.days.flatMap(day =>
+      day.date && props.serviceDates?.includes(day.date) ? [[day.id, day.date]] : [],
+    ));
     addedDays.value = (props.draft?.addedDayIds ?? []).flatMap(id => props.createDay ? [props.createDay(id)] : []);
     overnight.value = Object.fromEntries((props.draft?.overnight ?? []).map(entry => [entry.dayId, entry.cityId]));
     issues.value = [];
@@ -418,11 +444,22 @@ watch(
     recycledDays.value = props.deletedDays.map((day) => ({ ...day }));
     dayIds.value = props.days.map((day) => day.id);
     board.value = { placements: boardPlacements(allDays.value), copies: {} };
+    // 已保存的未完成草稿可跳过某个日序。补上空位，让已有 D3 仍落在第三个服务日。
+    if (!props.draft && !props.recovery && props.serviceDates && props.createDay) {
+      const byNumber = new Map(props.days.map(day => [day.dayNumber, day.id]));
+      const lastNumber = Math.max(0, ...props.days.map(day => day.dayNumber ?? 0));
+      dayIds.value = Array.from({ length: lastNumber }, (_, index) => byNumber.get(index + 1) ?? newBoardDay());
+    }
     if (props.draft) {
       const activeDays = new Set([...props.days, ...addedDays.value].map(day => day.id));
+      if (props.serviceDates) props.deletedDays.forEach(day => activeDays.add(day.id));
       const recorded = new Set([...props.draft.dayIds, ...props.draft.deletedDays.map(day => day.id)]);
       // 暂存后在主页面删除的天不复活，保留在回收中。
-      dayIds.value = [...props.draft.dayIds.filter(id => activeDays.has(id)), ...props.days.filter(day => !recorded.has(day.id)).map(day => day.id)];
+      const draftIds = props.draft.dayIds;
+      const newDays = props.days.filter(day =>
+        !recorded.has(day.id) && !(props.serviceDates && day.emptySlot && draftIds[(day.dayNumber ?? 0) - 1]),
+      );
+      dayIds.value = [...draftIds.filter(id => activeDays.has(id)), ...newDays.map(day => day.id)];
       recycledDays.value = props.draft.deletedDays.flatMap(entry => {
         const day = allDays.value.find(day => day.id === entry.id);
         return day ? [{ ...day, dayNumber: entry.dayNumber, date: entry.date }] : [];
@@ -437,13 +474,19 @@ watch(
 );
 
 watch(change, () => { issues.value = []; warningsAccepted.value = false; }, { deep: true });
+function boardDate(dayIndex: number) {
+  return serviceDayDate({ startDate: props.startDate, serviceDates: props.serviceDates }, dayIndex + 1);
+}
 function isPendingCopy(id: string) { return Boolean(board.value.copies[id] && !board.value.copies[id].placed); }
 function addBoardDay() {
-  if (!props.createDay || dayIds.value.length >= 365) return;
-  const day = props.createDay(crypto.randomUUID());
+  if (!props.createDay || dayIds.value.length >= props.maxDays) return;
+  dayIds.value.push(newBoardDay());
+}
+function newBoardDay() {
+  const day = props.createDay!(crypto.randomUUID());
   addedDays.value.push(day);
-  dayIds.value.push(day.id);
   board.value = { ...board.value, placements: { ...board.value.placements, ...boardPlacements([day]) } };
+  return day.id;
 }
 async function stashBoard() {
   if (!props.stash || busy.value) return;
@@ -465,7 +508,7 @@ function groupItems(dayId: string, group: ReorderBoardGroup) {
 }
 
 async function deleteDay(id: string) {
-  if (props.readonly || props.recovery || dayIds.value.length <= 1) return;
+  if (props.readonly || props.recovery || (!props.serviceDates && dayIds.value.length <= 1)) return;
   const index = dayIds.value.indexOf(id);
   if (index < 0) return;
   try {
@@ -474,26 +517,55 @@ async function deleteDay(id: string) {
     });
   } catch { return; }
   const day = orderedDays.value[index];
-  if (!day || day.id !== id) return;
+  if (!day || day.id !== id || props.readonly || !props.modelValue) return;
+  recycleDay(day, index);
+  if (props.serviceDates && props.createDay) dayIds.value.splice(index, 1, newBoardDay());
+  else dayIds.value.splice(index, 1);
+}
+function recycleDay(day: ReorderBoardDay, index: number) {
+  const id = day.id;
   // 未安置的临时副本不随整天进入回收；回收展示当前看板排布。
   Object.entries(board.value.copies).forEach(([copyId, copy]) => {
     if (!copy.placed && copy.dayId === id && Object.values(board.value.placements[id] ?? {}).some((ids) => ids.includes(copyId)))
       board.value = removeBoardCopy(board.value, copyId);
   });
   const groups = day.groups.map((group) => ({ ...group, items: groupItems(id, group) }));
-  recycledDays.value.push({ ...day, groups, dayNumber: index + 1, date: props.startDate ? addDays(props.startDate, index) : null });
-  dayIds.value.splice(index, 1);
+  recycledDays.value.push({ ...day, groups, dayNumber: index + 1, date: boardDate(index) });
 }
 
-function restoreDay(id: string) {
-  if (props.readonly || dayIds.value.length >= 365) return;
-  const index = recycledDays.value.findIndex((day) => day.id === id);
-  const day = recycledDays.value[index];
+async function restoreDay(id: string, date?: string) {
+  if (props.readonly || busy.value) return;
+  const day = recycledDays.value.find(item => item.id === id);
   if (!day) return;
-  const dates = dayIds.value.map((_, dayIndex) => props.startDate ? addDays(props.startDate, dayIndex) : null);
-  const target = restoredDayIndex(dates, day.date ?? null, day.dayNumber!);
-  dayIds.value.splice(target, 0, id);
-  recycledDays.value.splice(index, 1);
+  if (props.serviceDates) {
+    const target = date ? props.serviceDates.indexOf(date) : -1;
+    if (target < 0 || !props.createDay) return;
+    const occupant = orderedDays.value[target];
+    const empty = occupant?.emptySlot && !overnight.value[occupant.id] &&
+      occupant.groups.every(group => groupItems(occupant.id, group).every(item => item.placeholder)) &&
+      !Object.values(board.value.copies).some(copy => copy.dayId === occupant.id);
+    if (occupant && empty) {
+      addedDays.value = addedDays.value.filter(item => item.id !== occupant.id);
+      delete board.value.placements[occupant.id];
+    } else if (occupant) {
+      const current = session;
+      try {
+        await ElMessageBox.confirm(t("websiteWorkspace.restoreReplacesDay", { date }), t("itineraryWorkspace.restoreDay"), {
+          type: "warning", confirmButtonText: t("common.confirm"), cancelButtonText: t("common.cancel"),
+        });
+      } catch { return; }
+      if (current !== session || props.readonly || dayIds.value[target] !== occupant.id) return;
+      recycleDay(occupant, target);
+    }
+    while (dayIds.value.length < target) dayIds.value.push(newBoardDay());
+    dayIds.value.splice(target, 1, id);
+  } else {
+    if (dayIds.value.length >= props.maxDays) return;
+    const dates = dayIds.value.map((_, index) => boardDate(index));
+    const target = restoredDayIndex(dates, day.date ?? null, day.dayNumber!);
+    dayIds.value.splice(target, 0, id);
+  }
+  recycledDays.value = recycledDays.value.filter(item => item.id !== id);
   if (!recycledDays.value.length) isRecycleVisible.value = false;
 }
 

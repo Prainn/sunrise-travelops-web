@@ -92,8 +92,9 @@ export function emptyItinerary(
 ): WebsiteItineraryInput {
   return {
     title,
-    duration: inquiry.plannedDays,
-    startDate: inquiry.startDate,
+    duration: inquiry.serviceDates?.length ?? inquiry.plannedDays,
+    startDate: inquiry.serviceDates?.[0] ?? inquiry.startDate,
+    serviceDates: inquiry.serviceDates ?? null,
     pax: inquiry.pax,
     configVersion,
     days: [],

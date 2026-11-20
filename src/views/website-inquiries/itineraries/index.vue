@@ -18,7 +18,7 @@
         :stripe="LYNXTOUR_GOLD"
         :days="plan && config ? dayEntries : []"
         :reset-key="plan?.id"
-        :can-add="editable && !saving"
+        :can-add="editable && !saving && (plan?.days.length ?? 0) < maxDays"
         :reorder-label="$t('websiteItineraryUi.organizeItinerary')"
         @expand="(id) => dayCards.get(id)?.expand()"
         @add="addDay"
@@ -62,7 +62,11 @@
                     <h2 class="m-0 text-[16px] font-600 text-strong break-words">
                       {{ plan.title }}
                     </h2>
-                    <span v-if="plan.startDate" class="text-sm text-muted">
+                    <span v-if="plan.serviceDates" class="text-sm text-muted">
+                      {{ serviceDateRanges(plan.serviceDates).join($t("websiteInquiry.listSeparator")) }}
+                      · {{ $t("websiteWorkspace.serviceDatesSummary", { count: plan.serviceDates.length }) }}
+                    </span>
+                    <span v-else-if="plan.startDate" class="text-sm text-muted">
                       {{ plan.startDate }}
                     </span>
                     <el-tag v-if="plan.pax !== null" size="small" effect="plain">
@@ -117,6 +121,10 @@
                     <small class="shrink-0 text-muted">{{ $t("inquiry.plannedDays") }}</small>
                     {{ $t("websiteInquiry.dayCount", { days: inquiry.plannedDays }) }}
                   </span>
+                  <span v-if="inquiry.serviceDates" class="flex gap-[6px] col-span-full">
+                    <small class="shrink-0 text-muted">{{ $t("websiteInquiry.serviceDates.label") }}</small>
+                    {{ serviceDateRanges(inquiry.serviceDates).join($t("websiteInquiry.listSeparator")) }}
+                  </span>
                 </div>
               </div>
             </el-collapse-transition>
@@ -137,6 +145,21 @@
               type="warning"
               :closable="false"
             />
+            <el-alert
+              v-if="editable && datesMismatch"
+              type="warning"
+              :closable="false"
+              :title="$t('websiteWorkspace.rescheduleNotice')"
+            >
+              <el-button
+                type="primary"
+                size="small"
+                class="mt-2"
+                @click="openReschedule"
+              >
+                {{ $t("websiteWorkspace.reviewReschedule") }}
+              </el-button>
+            </el-alert>
             <el-alert
               v-if="reorderIssues.length"
               type="warning"
@@ -186,9 +209,16 @@
                 >
                   {{ $t("websiteWorkspace.generateDraft") }}
                 </el-button>
-                <el-button :disabled="!config.cities.length" class="ml-0!" @click="addDay">
+                <el-button
+                  :disabled="!config.cities.length || plan.days.length >= maxDays"
+                  class="ml-0!"
+                  @click="addDay"
+                >
                   {{ $t("websiteWorkspace.addDay") }}
                 </el-button>
+                <span v-if="plan.serviceDates && plan.days.length >= maxDays" class="self-center text-sm text-muted">
+                  {{ $t("websiteWorkspace.serviceDatesFull", { days: maxDays }) }}
+                </span>
               </div>
             </div>
           </template>
@@ -204,8 +234,8 @@
             :selectable-city-ids="selectableCityIds"
             :editable="editable"
             :saving="saving"
-            :start-date="plan.startDate"
-            :last="index === plan.days.length - 1"
+            :date="serviceDayDate(plan, plan.days[index]!.dayNumber)"
+            :last="plan.serviceDates ? !isConsecutiveServiceDay(plan.serviceDates, plan.days[index]!.dayNumber + 1) : index === plan.days.length - 1"
             @update:day="plan.days.splice(index, 1, $event)"
             @open-resource="(kind, target) => openResource(index, kind, target)"
             @insert-resource="(kind, afterId) => openInsertResource(index, kind, afterId)"
@@ -334,6 +364,8 @@
           :days="reorderBoardDays"
           :deleted-days="deletedBoardDays"
           :start-date="plan.startDate"
+          :service-dates="plan.serviceDates"
+          :max-days="maxDays"
           :readonly="!editable || saving"
           transfer
           :draft="plan.reorderDraft"
@@ -342,6 +374,16 @@
           :edit-transport="editBoardTransport"
           :transport-item="transportBoardItem"
           @apply="applyReorder"
+        />
+        <WebsiteRescheduleDialog
+          v-if="editable && inquiry"
+          v-model="isRescheduleDialogVisible"
+          :plan="plan"
+          :dates="inquiry.serviceDates ?? null"
+          :start-date="inquiry.startDate"
+          :describe-day="dayRoute"
+          :apply="reschedule"
+          :saving="saving"
         />
       </template>
     </template>
@@ -390,7 +432,9 @@ import WebsiteTransportDialog from "./components/WebsiteTransportDialog.vue";
 import WebsiteHotelDialog from "./components/WebsiteHotelDialog.vue";
 import WebsiteMealDialog from "./components/WebsiteMealDialog.vue";
 import WebsiteGuideDialog from "./components/WebsiteGuideDialog.vue";
+import WebsiteRescheduleDialog from "./components/WebsiteRescheduleDialog.vue";
 import { clonePlainData } from "@/utils";
+import { isConsecutiveServiceDay, serviceDateRanges, serviceDayDate } from "@/utils/service-dates";
 defineOptions({ name: "WebsiteItineraryWorkspace" });
 /** 霖熹 Lynxtour 品牌色：酒红（取自 logo #811e21，色相略偏梅红以区别危险红）作主色，金色仅作装饰条。 */
 const LYNXTOUR_ACCENT = "#862742";
@@ -409,6 +453,7 @@ const { t, locale } = useI18n();
 const isBasicsDialogVisible = ref(false);
 const isReorderDialogVisible = ref(false);
 const isVehiclePricesDialogVisible = ref(false);
+const isRescheduleDialogVisible = ref(false);
 const reorderIssues = ref<DayOrderIssue[]>([]);
 const workspaceLayout = useTemplateRef<InstanceType<typeof ItineraryWorkspaceLayout>>("workspaceLayout");
 /** 资源弹窗目标：按日 ID 定位，避免弹窗期间日序变化写错日 */
@@ -433,6 +478,8 @@ const {
   canCreate,
   canConfirm,
   canDownload,
+  maxDays,
+  datesMismatch,
   preview,
   previewVisible,
   skeletonId,
@@ -449,6 +496,7 @@ const {
   print,
   exportWord,
   addDay,
+  reschedule,
 } = useWebsiteWorkspace();
 usePageTitle(() =>
   inquiry.value ? t("itineraryWorkspace.pageTitles.website", { name: inquiry.value.customerName }) : "",
@@ -459,17 +507,22 @@ const selectableCityIds = computed(() => selectableWebsiteCityIds(
   inquiry.value?.destinations ?? [],
 ));
 const availableSkeletons = computed(() => config.value?.skeletons.filter((skeleton) =>
-  skeleton.status === "enabled" && skeleton.days.every((day) => selectableCityIds.value.has(day.cityId)),
+  skeleton.status === "enabled" && (!plan.value?.serviceDates || skeleton.days.length === plan.value.serviceDates.length) &&
+  skeleton.days.every((day) => selectableCityIds.value.has(day.cityId)),
 ) ?? []);
 const dayEntries = computed(() =>
   (plan.value?.days ?? []).map((day) => ({
     id: day.id,
     label: `D${day.dayNumber}`,
-    summary: dayRoute(day),
+    // 自选服务日存在空档，目录同时标出实际日期。
+    summary: [plan.value?.serviceDates?.[day.dayNumber - 1], dayRoute(day)].filter(Boolean).join(" "),
   })),
 );
 const resourceDay = computed(() => plan.value?.days.find((day) => day.id === resourceDialog.value?.dayId));
-const resourceDayLabel = computed(() => (resourceDay.value ? `D${resourceDay.value.dayNumber}` : ""));
+const resourceDayLabel = computed(() => {
+  const day = resourceDay.value;
+  return day ? [`D${day.dayNumber}`, plan.value?.serviceDates?.[day.dayNumber - 1]].filter(Boolean).join(" ") : "";
+});
 const resourceHotel = computed(() => {
   const target = resourceDialog.value?.target;
   return typeof target === "number" && target >= 0 ? resourceDay.value?.hotels[target] : undefined;
@@ -580,6 +633,7 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
     ],
   };
   const items = result.groups.flatMap(group => group.items.map(item => ({ ...item, icon: item.icon ?? group.icon })));
+  result.emptySlot = !day.departCityId && !day.endCityId && day.overnightCityId === null && items.every(item => item.placeholder);
   const byId = new Map(items.map(item => [item.id, item]));
   const ordered = (day.eventOrder ?? []).flatMap(id => { const item = byId.get(id); byId.delete(id); return item ? [item] : []; });
   result.groups = [{ key: "events", label: t("itineraryWorkspace.eventOrder"), sortable: true, transferable: true, items: [...ordered, ...byId.values()] }];
@@ -592,6 +646,7 @@ watch(plan, () => {
   isBasicsDialogVisible.value = false;
   isVehiclePricesDialogVisible.value = false;
   isReorderDialogVisible.value = false;
+  isRescheduleDialogVisible.value = false;
   closeBoardTransport();
   resourceDialog.value = undefined;
 });
@@ -625,9 +680,18 @@ async function locatePreviewIssue(issue: WebsiteValidation) {
     isReorderDialogVisible.value = true;
   } else if (issue.code === "VAL-E07" || issue.code === "VAL-E09") {
     isVehiclePricesDialogVisible.value = true;
+  } else if (issue.code === "REQUIREMENTS_MISMATCH" && datesMismatch.value) {
+    openReschedule();
   } else {
     isBasicsDialogVisible.value = true;
   }
+}
+function openReschedule() {
+  if (plan.value?.reorderDraft) {
+    ElMessage.warning(t("websiteWorkspace.rescheduleBoardPending"));
+    return;
+  }
+  isRescheduleDialogVisible.value = true;
 }
 function localName(item: { nameZh: string; nameEn: string }) {
   return (locale.value === "en" ? item.nameEn : item.nameZh) || item.nameZh || item.nameEn;
@@ -710,11 +774,11 @@ async function stashReorder(change: DayOrderChange) {
 
 async function applyReorder(change: DayOrderChange) {
   if (!plan.value || !editable.value) return;
-  const result = reorderWebsiteDays(plan.value.days, change, plan.value.deletedDays);
+  const result = reorderWebsiteDays(plan.value.days, change, plan.value.deletedDays, plan.value.serviceDates);
   plan.value.reorderDraft = null;
   plan.value.days = result.days;
   plan.value.deletedDays = result.deletedDays;
-  plan.value.duration = result.days.length;
+  plan.value.duration = plan.value.serviceDates?.length ?? result.days.length;
   reorderIssues.value = result.issues;
   await save();
 }
