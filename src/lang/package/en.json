@@ -1840,6 +1840,8 @@
     "transportMode": "Transport mode",
     "transportNameZh": "Chinese transport leg description",
     "transportNameEn": "English transport leg description",
+    "airportPickup": "Airport pickup",
+    "airportDropoff": "Airport drop-off",
     "pricePlaceholder": "Blank = excluded",
     "priceCategories": {
       "hotel": "Hotel",

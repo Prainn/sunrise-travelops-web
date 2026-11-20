@@ -21,6 +21,10 @@
       <div class="flex items-start gap-3">
         <div class="min-w-0 flex-1 flex flex-col gap-1 text-[14px] [overflow-wrap:anywhere]">
           <strong class="text-strong">{{ cityName(leg.fromCityId) }} → {{ cityName(leg.toCityId) }}</strong>
+          <span v-if="leg.isAirportPickup || leg.isAirportDropoff" class="flex gap-1">
+            <el-tag v-if="leg.isAirportPickup" size="small">{{ $t("websiteItineraryUi.airportPickup") }}</el-tag>
+            <el-tag v-if="leg.isAirportDropoff" size="small">{{ $t("websiteItineraryUi.airportDropoff") }}</el-tag>
+          </span>
           <span class="text-muted">{{ $t(TRANSPORT_OPTIONS.find(option => option.value === leg.mode)!.labelKey) }}<span class="ml-2">{{ $t(`websiteInquiry.feeStates.${leg.feeState}`) }}</span></span>
           <span v-if="leg.vehicleType">{{ vehicleLabel(leg.vehicleType) }}</span>
           <span v-if="leg.distanceKm != null || leg.durationMinutes != null">{{ leg.distanceKm == null ? $t('websiteReport.notSpecified') : `${leg.distanceKm} km` }}<span class="ml-2">{{ leg.durationMinutes == null ? $t('websiteReport.notSpecified') : $t('websiteReport.minutesValue', { value: leg.durationMinutes }) }}</span></span>
@@ -93,7 +97,12 @@
         <el-form-item :label="$t('websiteItineraryUi.feeState')">
           <FeeStateSelect v-model="draft.feeState" />
         </el-form-item>
-        <WebsiteTransportFields v-model="draft" :mode="draft.mode" :vehicle-options="vehicleOptions" />
+        <WebsiteTransportFields
+          v-model="draft"
+          :mode="draft.mode"
+          :vehicle-options="vehicleOptions"
+          :airport-transfers="airportTransfers"
+        />
       </div>
     </el-form>
     <template #footer>
@@ -117,12 +126,14 @@ import { transportRules } from "@/views/resources/website/useWebsiteConfigRules"
 import { TRANSPORT_OPTIONS, VEHICLE_OPTIONS } from "../../options";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
 import { websiteCityOptions, websiteDayRouteCityIds } from "../city-options";
+import { setTransportLeg, type AirportTransferOptions } from "../airport-transfers";
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{
   config: WebsiteConfig;
   selectableCityIds: ReadonlySet<string>;
   editable: boolean;
   legId?: string;
+  airportTransfers?: AirportTransferOptions;
 }>();
 const emit = defineEmits<{ add: []; remove: [id: string, name: string] }>();
 const { t, locale } = useI18n();
@@ -154,9 +165,8 @@ function openEdit(item: WebsiteLeg) {
 }
 async function saveEdit() {
   if (!props.editable || !draft.value || !(await formRef.value?.validate().catch(() => false))) return;
-  const id = draft.value.id;
-  const original = day.value.legs.find(item => item.id === id);
-  if (original) Object.assign(original, draft.value);
+  const selected = draft.value;
+  if (day.value.legs.some(leg => leg.id === selected.id)) setTransportLeg(day.value, selected);
   draft.value = null;
 }
 defineExpose({ openEdit });

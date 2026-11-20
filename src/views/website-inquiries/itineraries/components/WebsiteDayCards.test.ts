@@ -18,6 +18,8 @@ vi.mock("@/components/FeedbackState/index.vue", () => ({ default: { render: () =
 vi.mock("../../components/FeeStateSelect.vue", () => ({ default: { render: () => null } }));
 import WebsiteDayAttractions from "./WebsiteDayAttractions.vue";
 import WebsiteDayTransport from "./WebsiteDayTransport.vue";
+import { airportTransferOptions } from "../airport-transfers";
+import type { WebsiteItinerary } from "@/types/website";
 import WebsiteDayMealsServices from "./WebsiteDayMealsServices.vue";
 import WebsiteDayHotels from "./WebsiteDayHotels.vue";
 
@@ -42,7 +44,7 @@ function render(component: Component, props: Record<string, unknown>) {
   const root = node("root");
   const app = renderer.createApp(component, props);
   app.config.globalProperties.$t = (key: string) => key;
-  for (const name of ["ElFormItem", "ElSelect", "ElOption", "ElInput", "ElInputNumber", "ElSwitch", "ElTag", "ElButton", "ElAlert", "ElIcon", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Close", "Delete", "Edit", "CopyDocument"]) {
+  for (const name of ["ElFormItem", "ElSelect", "ElOption", "ElInput", "ElInputNumber", "ElSwitch", "ElCheckbox", "ElTag", "ElButton", "ElAlert", "ElIcon", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Close", "Delete", "Edit", "CopyDocument"]) {
     app.component(name, defineComponent({ inheritAttrs: false, setup(_, { attrs, slots }) { return () => h(name, attrs, slots.default?.()); } }));
   }
   app.component("ElForm", defineComponent({ inheritAttrs: false, setup(_, { attrs, slots, expose }) { expose({ validate: async () => true }); return () => h("ElForm", attrs, slots.default?.()); } }));
@@ -106,6 +108,31 @@ const cases = [
   { label: "transport", component: WebsiteDayTransport, collection: "legs" as const, value: { id: "original", routeId: "route", fromCityId: "from", toCityId: "to", mode: "hsr" as const, vehicleType: null, nameZh: "交通", nameEn: "Transport", feeState: "SELF_PAY" as const } },
   { label: "service", component: WebsiteDayMealsServices, collection: "services" as const, value: { id: "original", nameZh: "服务", nameEn: "Service", appears: true, feeState: "SELF_PAY" as const } },
 ];
+it("commits an airport pickup switch only on confirmation, retaining the independent drop-off", async () => {
+  const day = reactive(emptyDay(1));
+  const leg = { id: "new", routeId: null, fromCityId: "city", toCityId: "city", mode: "other" as const, nameZh: "", nameEn: "", feeState: "SELF_PAY" as const };
+  day.legs = [leg, { ...leg, id: "previous", isAirportPickup: true, isAirportDropoff: true }];
+  const plan = { businessUnit: "website", days: [day] } as WebsiteItinerary;
+  const view = render(WebsiteDayTransport, { day, legId: leg.id, editable: true, selectableCityIds: new Set(), config: { cities: [], routes: [] }, airportTransfers: airportTransferOptions(plan, day) });
+  const selectPickup = async () => {
+    await view.click("common.edit");
+    const checkbox = view.find("ElCheckbox").find(control => view.text(control) === "websiteItineraryUi.airportPickup")!;
+    (checkbox.props["onUpdate:modelValue"] as (value: boolean) => void)(true);
+    await nextTick();
+  };
+  await selectPickup();
+  await view.click("common.cancel");
+  expect(day.legs.map(item => Boolean(item.isAirportPickup))).toEqual([false, true]);
+  await selectPickup();
+  await view.click("common.confirm");
+  expect(day.legs.map(item => Boolean(item.isAirportPickup))).toEqual([true, false]);
+  expect(day.legs[1]?.isAirportDropoff).toBe(true);
+  const calendar = { ...plan, serviceDates: ["2026-11-17", "2026-11-20", "2026-11-21"] };
+  expect(airportTransferOptions(calendar, day)).toEqual({ pickup: true, dropoff: false });
+  expect(airportTransferOptions(calendar, { ...day, dayNumber: 2 })).toBeUndefined();
+  expect(airportTransferOptions(calendar, { ...day, dayNumber: 3 })).toEqual({ pickup: false, dropoff: true });
+  expect(airportTransferOptions({ ...plan, businessUnit: "linxi" }, day)).toBeUndefined();
+});
 describe.each(cases)("$label card editing", ({ component, collection, value }) => {
   function fixture() {
     const day = reactive(emptyDay(1));

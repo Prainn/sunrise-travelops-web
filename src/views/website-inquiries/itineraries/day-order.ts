@@ -2,6 +2,7 @@ import { toRaw } from "vue";
 import type { WebsiteConfig, WebsiteDay, WebsiteMeal } from "@/types/website";
 import { emptyDay, isMealArranged } from "../options";
 import { isConsecutiveServiceDay } from "@/utils/service-dates";
+import { alignAirportTransfers } from "./airport-transfers";
 import {
   applyDayChanges,
   createAdjacencyCheck,
@@ -63,9 +64,14 @@ function placeWebsiteDays(days: WebsiteDay[], change: DayOrderChange) {
       day.eventOrder = [...events];
     }
     day.items = resolve(pool.items, groups[WEBSITE_BOARD_GROUPS.attractions]);
-    day.legs = resolve(pool.legs, groups[WEBSITE_BOARD_GROUPS.legs]).map(leg =>
-      transportCopies.has(leg.id) ? structuredClone(toRaw(transportCopies.get(leg.id)!)) : leg,
-    );
+    const originalLegs = new Set(day.legs.map(leg => leg.id));
+    day.legs = resolve(pool.legs, groups[WEBSITE_BOARD_GROUPS.legs]).map(leg => {
+      const copy = transportCopies.get(leg.id);
+      const placed = copy ? structuredClone(toRaw(copy)) : leg;
+      if (!originalLegs.has(placed.id) && (placed.isAirportPickup || placed.isAirportDropoff))
+        return { ...placed, isAirportPickup: false, isAirportDropoff: false };
+      return placed;
+    });
     day.hotels = resolve(pool.hotels, groups[WEBSITE_BOARD_GROUPS.hotels]);
     const meals = resolve(pool.meals, groups[WEBSITE_BOARD_GROUPS.meals]);
     day.meals = MEAL_SLOTS.flatMap((slot) => {
@@ -153,7 +159,7 @@ export function reorderWebsiteDays(
     if (moved && day.legs.length)
       issues.push({ dayId: day.id, key: "itineraryWorkspace.issues.legsCheck", params: { day: day.dayNumber } });
   });
-  return { days: ordered, deletedDays: result.deletedDays, issues };
+  return { days: alignAirportTransfers(ordered, serviceDates?.length ?? ordered.length), deletedDays: result.deletedDays, issues };
 }
 
 export type ResourceLookup<T> =

@@ -21,6 +21,7 @@ import { cloneWebsiteDraft, emptyDay, emptyItinerary } from "../options";
 import { sameServiceDates, serviceDayDate } from "@/utils/service-dates";
 import { printWebsiteQuotation } from "./print";
 import { removeWebsiteEvent } from "./event-order";
+import { alignAirportTransfers } from "./airport-transfers";
 import { websiteAttractionPriceReference } from "./attraction-price";
 import { applyReschedule, type RescheduleTargets } from "./reschedule";
 import { downloadWordDocument } from "@/views/inquiries/itineraries/docx";
@@ -451,6 +452,7 @@ export function useWebsiteWorkspace() {
     plan.value?.days.forEach((day, index) => {
       day.dayNumber = index + 1;
     });
+    if (plan.value) plan.value.days = alignAirportTransfers(plan.value.days, plan.value.duration);
   }
   watch(
     () => route.params.inquiryId,

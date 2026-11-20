@@ -118,7 +118,12 @@
         {{ $t("websiteReport.transportDetailsHelp") }}
       </p>
       <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
-        <WebsiteTransportFields v-model="details" :mode="effectiveMode" :vehicle-options="vehicleOptions" />
+        <WebsiteTransportFields
+          v-model="details"
+          :mode="effectiveMode"
+          :vehicle-options="vehicleOptions"
+          :airport-transfers="airportTransfers"
+        />
       </div>
     </el-form>
     <template #footer>
@@ -143,6 +148,7 @@ import WebsiteTransportFields from "./WebsiteTransportFields.vue";
 import { transportRules } from "@/views/resources/website/useWebsiteConfigRules";
 import { TRANSPORT_OPTIONS, VEHICLE_OPTIONS } from "../../options";
 import { websiteCityOptions, websiteDayRouteCityIds } from "../city-options";
+import type { AirportTransferOptions } from "../airport-transfers";
 
 /**
  * 独立站交通段：从当前配置的专属路线按出发/抵达城市筛选，或手填；确认后才加入当天。
@@ -151,6 +157,7 @@ const props = defineProps<{
   modelValue: boolean;
   dayLabel: string;
   day?: WebsiteDay;
+  airportTransfers?: AirportTransferOptions;
   config: WebsiteConfig;
   selectableCityIds: ReadonlySet<string>;
   /** 编辑看板交通副本；复制时仅预填交通方式，城市保持空白。 */
@@ -169,7 +176,7 @@ const mode = ref<TransportMode>("private_vehicle");
 const nameZh = ref("");
 const nameEn = ref("");
 const formRef = ref<FormInstance>();
-const details = ref<Pick<WebsiteLeg, "vehicleType" | "distanceKm" | "durationMinutes" | "showInMileage">>({});
+const details = ref<Pick<WebsiteLeg, "vehicleType" | "distanceKm" | "durationMinutes" | "showInMileage" | "isAirportPickup" | "isAirportDropoff">>({});
 const rules = computed(() => transportRules(t));
 const effectiveMode = computed(() => source.value === "route" ? selected.value?.mode ?? mode.value : mode.value);
 
@@ -196,7 +203,7 @@ const vehicleOptions = computed(() => source.value === "route"
   : routes.value.filter(route => route.mode === "private_vehicle").flatMap(route => route.vehicleOptions ?? []));
 const selected = computed(() => routes.value.find((route) => route.id === selectedId.value));
 watch(selected, (route) => {
-  if (route) details.value = { vehicleType: route.mode === "private_vehicle" && route.vehicleOptions?.length === 1 ? route.vehicleOptions[0]!.vehicleType : null, distanceKm: route.distanceKm ?? null, durationMinutes: route.mode === "private_vehicle" ? (route.vehicleOptions?.length === 1 ? route.vehicleOptions[0]!.durationMinutes : null) : route.durationMinutes ?? null, showInMileage: false };
+  if (route) details.value = { ...details.value, vehicleType: route.mode === "private_vehicle" && route.vehicleOptions?.length === 1 ? route.vehicleOptions[0]!.vehicleType : null, distanceKm: route.distanceKm ?? null, durationMinutes: route.mode === "private_vehicle" ? (route.vehicleOptions?.length === 1 ? route.vehicleOptions[0]!.durationMinutes : null) : route.durationMinutes ?? null, showInMileage: false };
 }, { flush: "sync" });
 watch(effectiveMode, (value) => { if (value !== "private_vehicle") details.value.vehicleType = null; });
 

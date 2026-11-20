@@ -235,6 +235,7 @@
             :editable="editable"
             :saving="saving"
             :date="serviceDayDate(plan, plan.days[index]!.dayNumber)"
+            :airport-transfers="airportTransferOptions(plan, plan.days[index])"
             :last="plan.serviceDates ? !isConsecutiveServiceDay(plan.serviceDates, plan.days[index]!.dayNumber + 1) : index === plan.days.length - 1"
             @update:day="plan.days.splice(index, 1, $event)"
             @open-resource="(kind, target) => openResource(index, kind, target)"
@@ -308,6 +309,7 @@
         />
         <WebsiteTransportDialog
           :model-value="resourceDialog?.kind === 'transport'"
+          :airport-transfers="airportTransferOptions(plan, resourceDay)"
           :day-label="resourceDayLabel"
           :day="resourceDay"
           :config="config"
@@ -429,6 +431,7 @@ import WebsiteVehiclePrices from "./components/WebsiteVehiclePrices.vue";
 import WebsiteQuotationPreview from "./components/WebsiteQuotationPreview.vue";
 import WebsiteAttractionDialog from "./components/WebsiteAttractionDialog.vue";
 import WebsiteTransportDialog from "./components/WebsiteTransportDialog.vue";
+import { airportTransferOptions, setTransportLeg } from "./airport-transfers";
 import WebsiteHotelDialog from "./components/WebsiteHotelDialog.vue";
 import WebsiteMealDialog from "./components/WebsiteMealDialog.vue";
 import WebsiteGuideDialog from "./components/WebsiteGuideDialog.vue";
@@ -738,7 +741,7 @@ function submitAttraction(item: WebsiteItem) {
 function submitTransport(leg: WebsiteLeg) {
   const day = resourceDay.value;
   if (!day) return;
-  day.legs.push(leg);
+  setTransportLeg(day, leg);
   if (resourceDialog.value?.afterId) insertWebsiteEvent(day, leg.id, resourceDialog.value.afterId);
 }
 function submitHotel(hotel: WebsiteHotelStay) {

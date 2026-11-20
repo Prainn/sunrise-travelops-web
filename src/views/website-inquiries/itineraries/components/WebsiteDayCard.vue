@@ -106,6 +106,7 @@
             :ref="(card) => setEventCard(event.id, card)"
             v-model:day="day"
             :leg-id="event.id"
+            :airport-transfers="airportTransfers"
             :config="config"
             :selectable-city-ids="selectableCityIds"
             :editable="editable && !saving"
@@ -160,6 +161,7 @@ import ItineraryDayCardFrame from "@/views/inquiries/itineraries/components/Itin
 import ItineraryDayPanel from "@/views/inquiries/itineraries/components/ItineraryDayPanel.vue";
 import WebsiteDayAttractions from "./WebsiteDayAttractions.vue";
 import WebsiteDayTransport from "./WebsiteDayTransport.vue";
+import type { AirportTransferOptions } from "../airport-transfers";
 import { websiteCityOptions } from "../city-options";
 import WebsiteDayHotels from "./WebsiteDayHotels.vue";
 import WebsiteDayMealsServices from "./WebsiteDayMealsServices.vue";
@@ -179,6 +181,7 @@ const props = defineProps<{
   /** 当天服务日期（自选清单或开始日期顺延）；未定为 null。 */
   date: string | null;
   last: boolean;
+  airportTransfers?: AirportTransferOptions;
 }>();
 const emit = defineEmits<{
   /** hotel 传酒店下标（-1 新增），meal 传餐次 */
