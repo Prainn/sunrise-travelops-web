@@ -15,12 +15,13 @@
     size="sm"
     :busy="saving"
     append-to-body
+    destroy-on-close
   >
     <el-form ref="form" :model="data" label-position="top">
       <el-form-item
         :label="$t('identity.owner')"
         prop="ownerId"
-        :rules="{ required: true, message: $t('common.selectPlaceholder') }"
+        :rules="{ required: true, message: $t('common.selectRequired', { field: $t('identity.owner') }) }"
       >
         <el-select
           v-model="data.ownerId"

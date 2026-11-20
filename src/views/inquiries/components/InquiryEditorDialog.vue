@@ -284,7 +284,7 @@ const editableStatusOptions = computed(() => {
   return INQUIRY_STATUS_OPTIONS.filter((item) => allowedStatuses.includes(item.value));
 });
 const rules = computed<FormRules>(() => form.isSeries ? {
-  countryItemId: [{ required: true, message: t("common.selectPlaceholder"), trigger: "change" }],
+  countryItemId: [{ required: true, message: t("common.selectRequired", { field: t("common.countryOrRegion") }), trigger: "change" }],
   ownerId: [
     {
       required: !props.isEditing && canAssignOwner.value,
@@ -299,12 +299,12 @@ const rules = computed<FormRules>(() => form.isSeries ? {
   ownerId: [
     {
       required: !props.isEditing,
-      message: t("common.selectPlaceholder"),
+      message: t("common.selectRequired", { field: t("inquiry.owner") }),
       trigger: "change",
     },
   ],
   agencyId: [{ required: true, message: t("inquiry.agencyRequired"), trigger: "change" }],
-  countryItemId: [{ required: true, message: t("common.selectPlaceholder"), trigger: "change" }],
+  countryItemId: [{ required: true, message: t("common.selectRequired", { field: t("common.countryOrRegion") }), trigger: "change" }],
   contactName: [{ required: true, message: t("inquiry.contactNameRequired"), trigger: "change" }],
   sourceChannel: [
     { required: true, message: t("inquiry.sourceChannelRequired"), trigger: "change" },

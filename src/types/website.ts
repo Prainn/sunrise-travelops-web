@@ -131,6 +131,8 @@ export interface WebsiteInquiryInput {
   landingPage: string;
   acquisitionSource: string;
   startDate: string | null;
+  /** 仅独立站：升序自选服务日；null 为连续模式，更新省略则保留原清单。 */
+  serviceDates?: string[] | null;
   pax: number | null;
   destinations: string[];
   internalRemark: string;
@@ -247,6 +249,8 @@ export interface WebsiteItineraryInput {
   title: string;
   duration: number;
   startDate: string | null;
+  /** Dn 对应 serviceDates[n - 1]；null 为连续模式。 */
+  serviceDates?: string[] | null;
   pax: number | null;
   configVersion: number;
   days: WebsiteDay[];
@@ -305,6 +309,9 @@ export interface WebsiteOutput {
     tierLabel?: string;
     startDay?: number;
     endDay?: number;
+    /** 自选服务日的实际首末入住日期。 */
+    startDate?: string;
+    endDate?: string;
     nights?: number;
     breakfastIncluded?: boolean;
   }>;
@@ -337,7 +344,10 @@ export interface WebsitePreview {
   inquiryVersion: number;
   configVersion: number;
   schemaVersion: 6;
-  validationVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  /** 连续 7、自选 8，历史冻结可为 1–6。 */
+  validationVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+  /** 仅自选模式：冻结时的服务日期。 */
+  serviceDates?: string[];
   issues: WebsiteValidation[];
   english: WebsiteOutput;
   chinese: WebsiteOutput;

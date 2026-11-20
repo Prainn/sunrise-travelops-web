@@ -28,7 +28,10 @@
         <el-descriptions-item :label="$t('inquiry.plannedDays')">
           {{ $t("websiteInquiry.dayCount", { days: record.plannedDays }, record.plannedDays) }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('common.startDate')">
+        <el-descriptions-item v-if="record.serviceDates" :label="$t('websiteInquiry.serviceDates.label')">
+          {{ serviceDateRanges(record.serviceDates).join($t("websiteInquiry.listSeparator")) }}
+        </el-descriptions-item>
+        <el-descriptions-item v-else :label="$t('common.startDate')">
           {{ record.startDate || $t("websiteInquiry.unconfirmed") }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('websiteInquiry.pax')">
@@ -96,6 +99,7 @@
     :title="$t(record ? 'common.edit' : 'common.create')"
     size="lg"
     :busy="saving"
+    destroy-on-close
     @update:model-value="emit('update:modelValue', $event)"
   >
     <el-form
@@ -160,17 +164,6 @@
             <el-input v-model="form.customerName" maxlength="100" />
           </el-form-item>
         </el-col>
-        <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('inquiry.plannedDays')" prop="plannedDays">
-            <el-input-number
-              v-model="form.plannedDays"
-              :min="1"
-              :max="365"
-              :precision="0"
-              controls-position="right"
-            />
-          </el-form-item>
-        </el-col>
         <el-col v-if="record" :xs="24" :sm="12">
           <el-form-item :label="$t('inquiry.owner')">
             <el-input :model-value="record.owner" disabled />
@@ -189,21 +182,74 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('common.startDate')">
-            <el-date-picker
-              v-model="form.startDate"
-              value-format="YYYY-MM-DD"
-              clearable
-              class="w-full"
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.pax')" prop="pax">
             <el-input-number
               v-model="form.pax"
               :min="1"
               :max="10000"
+              :precision="0"
+              controls-position="right"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item
+            v-if="selectingDates"
+            :label="$t('websiteInquiry.serviceDates.label')"
+            :for="dateInputId"
+            prop="serviceDates"
+          >
+            <div class="flex w-full items-center gap-3">
+              <el-date-picker
+                :id="dateInputId"
+                :model-value="form.serviceDates ?? []"
+                type="dates"
+                value-format="YYYY-MM-DD"
+                clearable
+                class="min-w-0 flex-1 w-auto!"
+                @update:model-value="setServiceDates(form, $event)"
+              />
+              <el-checkbox :model-value="true" @change="toggleServiceDates">
+                {{ $t("websiteInquiry.serviceDates.toggle") }}
+              </el-checkbox>
+            </div>
+          </el-form-item>
+          <el-form-item v-else :label="$t('common.startDate')" :for="dateInputId">
+            <div class="w-full">
+              <div class="flex w-full items-center gap-3">
+                <el-date-picker
+                  :id="dateInputId"
+                  v-model="form.startDate"
+                  value-format="YYYY-MM-DD"
+                  clearable
+                  class="min-w-0 flex-1 w-auto!"
+                />
+                <el-checkbox v-if="isWebsite" :model-value="false" @change="toggleServiceDates">
+                  {{ $t("websiteInquiry.serviceDates.toggle") }}
+                </el-checkbox>
+              </div>
+              <p v-if="consecutiveRange" class="m-0 text-[12px] leading-[20px] text-muted">
+                {{ $t("websiteInquiry.serviceDates.consecutiveRange", consecutiveRange) }}
+              </p>
+            </div>
+          </el-form-item>
+        </el-col>
+        <el-col :xs="24" :sm="12">
+          <el-form-item v-if="selectingDates" :label="$t('inquiry.plannedDays')" required>
+            <el-input-number
+              :model-value="selectedDayCount"
+              :min="Math.min(1, selectedDayCount)"
+              :max="Math.max(365, selectedDayCount)"
+              :precision="0"
+              controls-position="right"
+              readonly
+            />
+          </el-form-item>
+          <el-form-item v-else :label="$t('inquiry.plannedDays')" prop="plannedDays">
+            <el-input-number
+              v-model="form.plannedDays"
+              :min="1"
+              :max="365"
               :precision="0"
               controls-position="right"
             />
@@ -308,7 +354,7 @@
   </AppDialog>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { FormInstance, FormRules } from "element-plus";
 import AppDrawer from "@/components/AppDrawer/index.vue";
@@ -317,8 +363,15 @@ import BusinessItemSelect from "@/components/BusinessItemSelect/index.vue";
 import { websiteInquiryInput, type WebsiteOwnerOption } from "@/services/website.service";
 import type { WebsiteBusinessUnit, WebsiteCity, WebsiteInquiry, WebsiteInquiryInput } from "@/types/website";
 import { cloneWebsiteDraft, emptyInquiry } from "../options";
+import {
+  inquiryDatesInput,
+  selectServiceDates,
+  setServiceDates,
+  switchToConsecutiveDates,
+} from "../inquiry-dates";
 import { INQUIRY_STATUS_OPTIONS, INQUIRY_STATUS_TAG_TYPES } from "@/views/inquiries/options";
-import { formatDateTime } from "@/utils";
+import { addDays, formatDateTime } from "@/utils";
+import { serviceDateRanges } from "@/utils/service-dates";
 const props = defineProps<{
   modelValue: boolean;
   businessUnit?: WebsiteBusinessUnit;
@@ -338,16 +391,40 @@ const emit = defineEmits<{
   "business-change": [businessUnit?: WebsiteBusinessUnit];
 }>();
 const { t } = useI18n();
+const dateInputId = useId();
 const formRef = ref<FormInstance>();
 const form = ref<WebsiteInquiryInput>(emptyInquiry());
+/** 本次编辑从自选切回连续：展示将要保存的起止范围供计调核对。 */
+const switchedToConsecutive = ref(false);
+/** 编辑按目标询盘业务，新建（含总部代建）按当前选择的业务。 */
+const isWebsite = computed(
+  () => (props.record?.businessUnit ?? form.value.businessUnit ?? props.businessUnit) === "website",
+);
+const selectingDates = computed(() => isWebsite.value && Array.isArray(form.value.serviceDates));
+const selectedDayCount = computed(() => form.value.serviceDates?.length ?? 0);
+const consecutiveRange = computed(() => {
+  const { startDate, plannedDays } = form.value;
+  if (!switchedToConsecutive.value || selectingDates.value || !startDate || !plannedDays) return null;
+  return { start: startDate, end: addDays(startDate, plannedDays - 1), days: plannedDays };
+});
 const editableStatusOptions = computed(() => {
   const allowedStatuses = props.record ? [props.record.status, "lost"] : ["new"];
   return INQUIRY_STATUS_OPTIONS.filter((option) => allowedStatuses.includes(option.value));
 });
 const rules = computed<FormRules>(() => ({
-  businessUnit: [{ required: props.showBusiness, message: t("common.selectPlaceholder"), trigger: "change" }],
+  businessUnit: [
+    {
+      required: props.showBusiness,
+      message: t("common.selectRequired", { field: t("websiteInquiry.businessUnit") }),
+      trigger: "change",
+    },
+  ],
   countryItemId: [
-    { required: true, message: t("common.selectPlaceholder"), trigger: "change" },
+    {
+      required: true,
+      message: t("common.selectRequired", { field: t("common.countryOrRegion") }),
+      trigger: "change",
+    },
   ],
   customerName: [
     {
@@ -364,6 +441,16 @@ const rules = computed<FormRules>(() => ({
       min: 1,
       max: 365,
       message: t("websiteInquiry.plannedDaysRange"),
+      trigger: "change",
+    },
+  ],
+  serviceDates: [
+    {
+      required: true,
+      type: "array",
+      min: 1,
+      max: 365,
+      message: t("websiteInquiry.serviceDates.range"),
       trigger: "change",
     },
   ],
@@ -408,6 +495,7 @@ watch(
       form.value = props.record
         ? cloneWebsiteDraft(websiteInquiryInput(props.record))
         : { ...emptyInquiry(), ...props.initialValues, businessUnit: props.businessUnit };
+      switchedToConsecutive.value = false;
       formRef.value?.clearValidate();
     }
   },
@@ -415,7 +503,18 @@ watch(
 function changeBusiness() {
   form.value.ownerId = undefined;
   form.value.destinations = [];
+  // 霖熹与独立站共用表单：离开独立站时丢弃未保存的自选日期，开始日期与天数保持勾选前的值。
+  if (form.value.businessUnit !== "website") form.value.serviceDates = null;
+  switchedToConsecutive.value = false;
   emit("business-change", form.value.businessUnit);
+}
+function toggleServiceDates(selected: unknown) {
+  if (selected) selectServiceDates(form.value);
+  else {
+    switchToConsecutiveDates(form.value);
+    switchedToConsecutive.value = true;
+  }
+  formRef.value?.clearValidate(["serviceDates", "plannedDays"]);
 }
 function cityName(id: string) {
   return props.cities.find((city) => city.id === id)?.nameZh ?? id;
@@ -424,6 +523,7 @@ async function submit() {
   if (await formRef.value?.validate().catch(() => false))
     emit("save", {
       ...cloneWebsiteDraft(form.value),
+      ...inquiryDatesInput(form.value, isWebsite.value),
       lostReason: form.value.status === "lost" ? form.value.lostReason : "",
     });
 }

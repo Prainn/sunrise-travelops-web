@@ -19,6 +19,7 @@ import {
   outsideTeamWindow,
   type GuideServiceRow,
   manualScheduleError,
+  selectedDatesDropAt,
   syncLedgerDropDate,
   syncManualPickupDate,
   tourFormFromRecord,
@@ -65,6 +66,7 @@ function manualTour(patch: Partial<TourRecord> = {}): TourRecord {
     contactName: "",
     days: 10,
     startDate: "2026-08-01",
+    serviceDates: null,
     pickupAt: "2026-08-01 15:20",
     dropAt: "2026-08-10 12:00",
     occupyFrom: "2026-08-01",
@@ -149,6 +151,29 @@ describe("tour create requests", () => {
     expect(body).toMatchObject({ sourceModule: "standard", inquiryId: "inquiry-1", scheduleMode: "flight" });
     expect(body).not.toHaveProperty("manualSource");
     expect(body).not.toHaveProperty("pickupAt");
+  });
+
+  it("submits actual pickup and drop-off times for a linked selected-date quote", () => {
+    const dates = ["2026-11-21", "2026-11-23", "2026-11-24", "2026-11-26"];
+    const source = { sourceModule: "website", inquiryId: "inquiry", quoteId: "frozen" } as const;
+    const form = manualForm({ startDate: dates[0], pickupAt: "2026-11-21 08:00", dropAt: "2026-11-26 22:30" });
+    const created = createTourRequest(form, source, dates);
+    const edited = updateTourRequest(manualTour({ sourceModule: "website", businessUnit: "website", serviceDates: dates }), form);
+    expect(created).toMatchObject(source);
+    for (const request of [created, edited]) {
+      expect(request).toMatchObject({ scheduleMode: "manual", pickupAt: form.pickupAt, dropAt: form.dropAt });
+      for (const field of ["manualSource", "pickupFlightId", "dropFlightId", "serviceDates"]) expect(request).not.toHaveProperty(field);
+    }
+    expect(createTourRequest(form, source, null)).toMatchObject({ scheduleMode: "flight", dropFlightId: "flight-b" });
+    expect(createTourRequest({ ...form, scheduleMode: "flight" }, source, dates)).not.toHaveProperty("dropAt");
+  });
+
+  it.each([
+    ["2026-11-26", "09:05", "2026-11-27 06:05"],
+    ["2026-11-26", "02:35", "2026-11-26 23:35"],
+    ["2026-12-31", "03:00", "2027-01-01 00:00"],
+  ])("calculates drop-off from the last service date %s and departure time %s", (date, time, expected) => {
+    expect(selectedDatesDropAt(date, time)).toBe(expected);
   });
 });
 

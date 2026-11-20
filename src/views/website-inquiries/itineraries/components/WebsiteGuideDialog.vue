@@ -2,6 +2,7 @@
   <AppDialog
     :model-value="modelValue"
     size="md"
+    destroy-on-close
     :title="$t('itineraryWorkspace.resourceDialogTitle', { day: dayLabel, type: $t('planning.guideService') })"
     @close="close"
   >

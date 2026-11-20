@@ -81,7 +81,10 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh"): 
     return tiers.map((tier) => {
       const rows = sorted.filter(hotel => hotel.tier === tier);
       const body = rows.map((hotel) => {
-        const days = hotel.startDay === undefined ? "" : hotel.endDay !== undefined && hotel.endDay !== hotel.startDay ? `D${hotel.startDay}–D${hotel.endDay}` : `D${hotel.startDay}`;
+        // 自选服务日快照带实际入住日期（空档两侧分段），连续模式及历史冻结沿用 D 序号。
+        const days = hotel.startDate
+          ? hotel.endDate && hotel.endDate !== hotel.startDate ? `${hotel.startDate}–${hotel.endDate}` : hotel.startDate
+          : hotel.startDay === undefined ? "" : hotel.endDay !== undefined && hotel.endDay !== hotel.startDay ? `D${hotel.startDay}–D${hotel.endDay}` : `D${hotel.startDay}`;
         const nights = hotel.nights === undefined ? "" : text(hotel.nights === 1 ? "night" : "nights", { count: hotel.nights });
         const stay = [days, hotel.city, nights].filter(Boolean).join(" · ");
         const breakfast = hotel.breakfastIncluded === undefined ? "-" : text(hotel.breakfastIncluded ? "breakfastIncluded" : "breakfastExcluded");

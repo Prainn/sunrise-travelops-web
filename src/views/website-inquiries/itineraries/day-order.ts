@@ -1,6 +1,7 @@
 import { toRaw } from "vue";
 import type { WebsiteConfig, WebsiteDay, WebsiteMeal } from "@/types/website";
 import { emptyDay, isMealArranged } from "../options";
+import { isConsecutiveServiceDay } from "@/utils/service-dates";
 import {
   applyDayChanges,
   createAdjacencyCheck,
@@ -95,15 +96,20 @@ function emptyMeal(slot: WebsiteMeal["slot"]): WebsiteMeal {
  *
  * @param days - 当前草稿逐日内容。
  * @param change - 看板应用结果。
+ * @param serviceDates - 自选服务日；只在相邻自然日之间提示城市衔接。
  * @returns 重排后的逐日内容与核对事项。
  */
 export function reorderWebsiteDays(
   days: WebsiteDay[],
   change: DayOrderChange,
   deletedDays: { day: WebsiteDay; originalDate: string | null }[] = [],
+  serviceDates: string[] | null = null,
 ): { days: WebsiteDay[]; deletedDays: { day: WebsiteDay; originalDate: string | null }[]; issues: DayOrderIssue[] } {
   const previousIds = days.map((day) => day.id);
-  const previousLastId = previousIds[previousIds.length - 1];
+  const segmentEnd = (number: number, length: number) => serviceDates
+    ? !isConsecutiveServiceDay(serviceDates, number + 1)
+    : number === length;
+  const previousEnds = new Set(days.filter(day => segmentEnd(day.dayNumber, days.length)).map(day => day.id));
   const isNewAdjacency = createAdjacencyCheck(previousIds);
   const activeDays = days.map((day) => structuredClone(toRaw(day)));
   for (const id of change.addedDayIds ?? []) {
@@ -118,22 +124,23 @@ export function reorderWebsiteDays(
     if (itemIds) day.items = orderById(day.items, itemIds);
   });
   const issues: DayOrderIssue[] = [];
-  const lastIndex = ordered.length - 1;
 
   ordered.forEach((day, index) => {
     const moved = day.id !== previousIds[index];
     day.dayNumber = index + 1;
     const itemIds = change.itemIds[day.id];
     if (itemIds) day.items = orderById(day.items, itemIds);
-    if (index < lastIndex && day.id === previousLastId && day.overnightCityId === null)
+    const last = segmentEnd(day.dayNumber, ordered.length);
+    if (!last && previousEnds.has(day.id) && day.overnightCityId === null)
       issues.push({ dayId: day.id, key: "itineraryWorkspace.issues.middleNoOvernight", params: { day: day.dayNumber } });
-    if (index === lastIndex && day.id !== previousLastId)
+    if (last && !previousEnds.has(day.id))
       issues.push({ dayId: day.id, key: "itineraryWorkspace.issues.newLastDay", params: { day: day.dayNumber } });
     const previous = ordered[index - 1];
     const previousCity = previous ? (previous.overnightCityId ?? previous.endCityId) : "";
     if (
       previous &&
       isNewAdjacency(previous.id, day.id) &&
+      isConsecutiveServiceDay(serviceDates, index + 1) &&
       previousCity &&
       day.departCityId &&
       day.departCityId !== previousCity

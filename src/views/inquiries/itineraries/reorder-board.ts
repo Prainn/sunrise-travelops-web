@@ -31,6 +31,8 @@ export interface ReorderBoardGroup {
 
 export interface ReorderBoardDay {
   noOvernight?: boolean;
+  /** 自选服务日尚无城市或服务安排，可以直接接收回收日。 */
+  emptySlot?: boolean;
   id: string;
   title: string;
   groups: ReorderBoardGroup[];

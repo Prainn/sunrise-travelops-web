@@ -5,6 +5,24 @@ import { printItineraryDocument } from "@/views/inquiries/itineraries/pdf";
 import { printWebsiteQuotation, websitePrintBlob, websitePrintHtml } from "./print";
 
 const empty: WebsiteOutput = { title: "Fixture", itinerary: [], inclusions: [], exclusions: [], hotelOptions: [], quotation: [], notes: [] };
+it.each(["zh", "en"] as const)("uses the four frozen service dates and distinct hotel stays in %s", (language) => {
+  const dates = ["2026-11-21", "2026-11-23", "2026-11-24", "2026-11-26"];
+  const hotel = { tier: "A" as const, city: "Kunming", hotel: "Hotel", roomType: "Twin" };
+  const guide = language === "zh" ? "2026-11-26：包含英语导游服务。" : "2026-11-26: Tour guide (English) included.";
+  const html = websitePrintHtml({
+    ...empty,
+    itinerary: dates.map(day => ({ day, depart: "KM", sightseeing: "", transportation: "", hotel: "", meal: "" })),
+    teamStandard: [{ category: "service", included: [guide] }],
+    hotelOptions: [
+      { ...hotel, startDay: 1, endDay: 1, startDate: dates[0], endDate: dates[0], nights: 1 },
+      { ...hotel, startDay: 2, endDay: 3, startDate: dates[1], endDate: dates[2], nights: 2 },
+    ],
+  }, language);
+  for (const date of dates) expect(html).toContain(`<td class="center">${date}</td>`);
+  expect(html).toContain("2026-11-23–2026-11-24");
+  expect(html).toContain(guide);
+  expect(html).not.toMatch(/2026-11-(22|25)/);
+});
 describe("frozen report rendering", () => {
   it.each(["en", "zh"] as const)("renders a hotel-free quotation with overnight cities in %s", (language) => {
     const html = websitePrintHtml({

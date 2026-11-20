@@ -76,7 +76,7 @@
             {{ source.startDate ?? "-" }}
           </el-descriptions-item>
           <el-descriptions-item :label="$t('tour.days')">
-            {{ source.days ?? "-" }}
+            {{ serviceDates?.length ?? source.days ?? "-" }}
           </el-descriptions-item>
           <el-descriptions-item :label="$t('common.countryOrRegion')">
             {{ source.countryName || "-" }}
@@ -107,6 +107,9 @@
           class="mb-3!"
         />
       </template>
+      <el-form-item v-if="serviceDates?.length" :label="$t('tour.serviceDates')">
+        {{ serviceDateRanges(serviceDates).join($t("websiteInquiry.listSeparator")) }}
+      </el-form-item>
       <el-form-item
         v-if="isSeriesSource"
         :label="$t('tour.seriesStartDate')"
@@ -316,7 +319,7 @@
           </el-form-item>
         </el-col>
       </el-row>
-      <el-form-item v-if="isManual" :label="$t('tour.scheduleModeLabel')">
+      <el-form-item v-if="isManual || serviceDates?.length" :label="$t('tour.scheduleModeLabel')">
         <el-radio-group v-model="form.scheduleMode" @change="handleScheduleDateChange">
           <el-radio-button value="flight">
             {{ $t("tour.scheduleMode.flight") }}
@@ -355,6 +358,10 @@
             class="w-full"
           />
         </el-form-item>
+        <p v-if="lastServiceDate" class="mb-3 text-sm text-muted">
+          {{ $t("tour.selectedDatesFlightHint", { date: lastServiceDate }) }}
+          <span v-if="estimatedDropAt">{{ $t("tour.estimatedDropAt", { time: estimatedDropAt }) }}</span>
+        </p>
       </template>
       <el-row v-else :gutter="12">
         <el-col :xs="24" :sm="12">
@@ -422,6 +429,7 @@ import { ROLE_BOSS, ROLE_ROOT } from "@/constants";
 import { businessUnitName } from "@/constants/identity";
 import { tourService } from "@/services/tour.service";
 import { useUserStore } from "@/stores/user";
+import { serviceDateRanges } from "@/utils/service-dates";
 import type {
   TourBusinessUnit,
   TourFlightOption,
@@ -436,6 +444,7 @@ import {
   ITINERARY_SUMMARY_MAX_LENGTH,
   ledgerTourInput,
   manualScheduleError,
+  selectedDatesDropAt,
   syncLedgerDropDate,
   syncManualPickupDate,
   tourFormFromLedgerDraft,
@@ -493,6 +502,15 @@ const source = computed(() =>
     ? sources.value.find((item) => item.inquiryId === form.inquiryId)
     : undefined,
 );
+const serviceDates = computed(() => {
+  const selected = props.tour ?? source.value;
+  return selected?.businessUnit === "website" ? selected.serviceDates ?? null : null;
+});
+const lastServiceDate = computed(() => serviceDates.value?.at(-1));
+const estimatedDropAt = computed(() => {
+  const flight = selectedFlight("drop");
+  return lastServiceDate.value && flight ? selectedDatesDropAt(lastServiceDate.value, flight.departureTime) : "";
+});
 /** 系列询盘来源：每次成团单独填写本团出发日，天数继承冻结报价。 */
 const isSeriesSource = computed(() =>
   props.tour ? props.tour.isSeriesSource : Boolean(source.value?.isSeries),
@@ -528,11 +546,9 @@ const pickerDefault = computed(() =>
   form.startDate ? new Date(`${form.startDate}T00:00:00`) : undefined,
 );
 
-const selectRule = computed(() => ({
-  required: true,
-  message: t("common.selectPlaceholder"),
-  trigger: "change",
-}));
+function selectRule(labelKey: string) {
+  return { required: true, message: t("common.selectRequired", { field: t(labelKey) }), trigger: "change" };
+}
 const inputRule = computed(() => ({
   required: true,
   whitespace: true,
@@ -551,11 +567,11 @@ const rules = computed<FormRules>(() => ({
   adults: [headcountRule.value],
   children: [headcountRule.value],
   leaders: [headcountRule.value],
-  inquiryId: [selectRule.value],
-  businessUnit: [selectRule.value],
-  countryItemId: [selectRule.value],
-  collectCoordinatorId: [selectRule.value],
-  agencyId: unit.value === "shengxu" && (!props.tour || props.tour.agencyId) ? [selectRule.value] : [],
+  inquiryId: [selectRule("tour.inquiry")],
+  businessUnit: [selectRule("identity.businessUnit")],
+  countryItemId: [selectRule("common.countryOrRegion")],
+  collectCoordinatorId: [selectRule("tour.collectCoordinator")],
+  agencyId: unit.value === "shengxu" && (!props.tour || props.tour.agencyId) ? [selectRule("tour.agency")] : [],
   itinerarySummary: [
     inputRule.value,
     {
@@ -566,7 +582,7 @@ const rules = computed<FormRules>(() => ({
       trigger: "blur",
     },
   ],
-  startDate: [selectRule.value],
+  startDate: [selectRule(isSeriesSource.value ? "tour.seriesStartDate" : "common.startDate")],
   days: [
     {
       validator: (_rule: unknown, value: unknown, callback: (error?: Error) => void) =>
@@ -576,11 +592,11 @@ const rules = computed<FormRules>(() => ({
       trigger: "change",
     },
   ],
-  operatorId: [selectRule.value],
-  pickupFlightId: [selectRule.value],
-  dropFlightId: [selectRule.value],
+  operatorId: [selectRule("tour.operator")],
+  pickupFlightId: [selectRule("tour.pickupFlight")],
+  dropFlightId: [selectRule("tour.dropFlight")],
   pickupAt: [
-    selectRule.value,
+    selectRule("tour.pickupAt"),
     {
       validator: (_rule: unknown, value: string, callback: (error?: Error) => void) =>
         manualScheduleError(form.startDate, value, "") === "pickupDate"
@@ -590,7 +606,7 @@ const rules = computed<FormRules>(() => ({
     },
   ],
   dropAt: [
-    selectRule.value,
+    selectRule("tour.dropAt"),
     {
       validator: (_rule: unknown, _value: unknown, callback: (error?: Error) => void) =>
         form.pickupAt && form.dropAt && form.dropAt < form.pickupAt
@@ -602,7 +618,7 @@ const rules = computed<FormRules>(() => ({
 }));
 
 async function handleScheduleDateChange() {
-  if (!isManual.value || form.scheduleMode !== "manual") return;
+  if (form.scheduleMode !== "manual") return;
   syncManualPickupDate(form);
   if (props.ledgerDraft && !props.tour) syncLedgerDropDate(form);
   await nextTick();
@@ -640,10 +656,14 @@ function originalFlight(kind: "pickup" | "drop"): TourFlightOption | undefined {
   };
 }
 
-function selectedFlightLabel(kind: "pickup" | "drop") {
+function selectedFlight(kind: "pickup" | "drop") {
   const id = form[`${kind}FlightId`];
   const original = originalFlight(kind);
-  const selected = original?.id === id ? original : flightOptions[kind].get(id);
+  return original?.id === id ? original : flightOptions[kind].get(id);
+}
+
+function selectedFlightLabel(kind: "pickup" | "drop") {
+  const selected = selectedFlight(kind);
   return selected ? flightLabel(selected) : "";
 }
 
@@ -759,6 +779,17 @@ function onOpen() {
   resetCreateForm();
 }
 
+watch(source, (current, previous) => {
+  if (props.tour || isManual.value || current?.quoteId === previous?.quoteId) return;
+  if (!current?.serviceDates?.length && !previous?.serviceDates?.length) return;
+  form.startDate = current?.isSeries ? "" : current?.startDate ?? "";
+  form.scheduleMode = "flight";
+  form.pickupFlightId = "";
+  form.dropFlightId = "";
+  form.pickupAt = "";
+  form.dropAt = "";
+});
+
 // 新建时业务随来源或手选业务确定；业务变化后计调、航班和导游都需重新选择。
 watch(unit, (value, previous) => {
   flightOptions.pickup.clear();
@@ -804,7 +835,7 @@ async function save() {
             inquiryId: source.value.inquiryId,
             quoteId: source.value.quoteId,
             ...(source.value.isSeries ? { seriesStartDate: form.startDate } : {}),
-          })
+          }, serviceDates.value)
           : null;
     if (!current && !body) return;
     requesting.value = true;
