@@ -16,6 +16,7 @@ import type {
   WebsiteItinerary,
   WebsitePreview,
   WebsiteQuotation,
+  WebsiteValidation,
 } from "@/types/website";
 import { cloneWebsiteDraft, emptyDay, emptyItinerary } from "../options";
 import { sameServiceDates, serviceDayDate } from "@/utils/service-dates";
@@ -288,6 +289,18 @@ export function useWebsiteWorkspace() {
       saving.value = false;
     }
   }
+  function previewIssueLocation(issue: WebsiteValidation) {
+    if (!plan.value || !config.value || saving.value) return;
+    if (issue.dayNumber !== undefined) {
+      const day = plan.value.days.find(day => day.dayNumber === issue.dayNumber);
+      return day ? { kind: "day" as const, id: day.id, target: issue.target } : undefined;
+    }
+    const kind = issue.target?.kind;
+    if (kind === "prices" || kind === "reorder") return { kind };
+    if (!editable.value) return;
+    if (kind === "basics") return { kind };
+    if (kind === "reschedule" && datesMismatch.value && !plan.value.reorderDraft) return { kind };
+  }
   async function openPreview() {
     if (!plan.value || saving.value) return;
     if (dirty.value) {
@@ -494,6 +507,7 @@ export function useWebsiteWorkspace() {
     useCurrentConfig,
     generate,
     openPreview,
+    previewIssueLocation,
     confirm,
     print,
     exportWord,

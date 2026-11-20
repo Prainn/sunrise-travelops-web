@@ -15,7 +15,12 @@ vi.mock("@/components/AppDialog/index.vue", () => ({ default: {
   },
 } }));
 vi.mock("@/components/FeedbackState/index.vue", () => ({ default: { render: () => null } }));
+vi.mock("@/views/inquiries/itineraries/components/ItineraryDayCardFrame.vue", () => ({ default: {
+  render(this: ComponentPublicInstance) { return h("section", this.$slots.default?.()); },
+} }));
+vi.mock("@/views/inquiries/itineraries/components/ItineraryDayResourceBar.vue", () => ({ default: { render: () => null } }));
 vi.mock("../../components/FeeStateSelect.vue", () => ({ default: { render: () => null } }));
+import WebsiteDayCard from "./WebsiteDayCard.vue";
 import WebsiteDayAttractions from "./WebsiteDayAttractions.vue";
 import WebsiteDayTransport from "./WebsiteDayTransport.vue";
 import { airportTransferOptions } from "../airport-transfers";
@@ -48,13 +53,14 @@ function render(component: Component, props: Record<string, unknown>) {
     app.component(name, defineComponent({ inheritAttrs: false, setup(_, { attrs, slots }) { return () => h(name, attrs, slots.default?.()); } }));
   }
   app.component("ElForm", defineComponent({ inheritAttrs: false, setup(_, { attrs, slots, expose }) { expose({ validate: async () => true }); return () => h("ElForm", attrs, slots.default?.()); } }));
-  app.mount(root);
+  const instance = app.mount(root);
   unmount = () => app.unmount();
   function find(type: string, current = root): HostNode[] {
     return [...(current.type === type ? [current] : []), ...current.children.flatMap(child => find(type, child))];
   }
   function text(node: HostNode): string { return (node.text ?? "") + node.children.map(text).join(""); }
   return {
+    instance,
     find,
     text,
     async click(label: string) {
@@ -108,6 +114,31 @@ const cases = [
   { label: "transport", component: WebsiteDayTransport, collection: "legs" as const, value: { id: "original", routeId: "route", fromCityId: "from", toCityId: "to", mode: "hsr" as const, vehicleType: null, nameZh: "交通", nameEn: "Transport", feeState: "SELF_PAY" as const } },
   { label: "service", component: WebsiteDayMealsServices, collection: "services" as const, value: { id: "original", nameZh: "服务", nameEn: "Service", appears: true, feeState: "SELF_PAY" as const } },
 ];
+it("opens the reported leg, keeps day-wide issues on the day and requests the quoted hotel tier", async () => {
+  const day = reactive(emptyDay(1));
+  day.departCityId = "from";
+  day.endCityId = "to";
+  day.overnightCityId = "to";
+  const leg = { id: "first", routeId: null, fromCityId: "from", toCityId: "to", mode: "private_vehicle" as const, vehicleType: "23_seat", nameZh: "第一段", nameEn: "First", feeState: "INCLUDED" as const };
+  day.legs = [leg, { ...leg, id: "second", vehicleType: null, nameZh: "缺车型的第二段" }];
+  const openResource = vi.fn();
+  const view = render(WebsiteDayCard, {
+    day, editable: true, config: { cities: [], routes: [] }, selectableCityIds: new Set(), date: null,
+    last: true, onOpenResource: openResource,
+  });
+  const card = view.instance as InstanceType<typeof WebsiteDayCard>;
+  card.openValidationIssue({ kind: "event", id: "second" });
+  await nextTick();
+  expect(view.find("ElInput")[0]?.props.modelValue).toBe("缺车型的第二段");
+  await view.click("common.cancel");
+  day.legs = [];
+  card.openValidationIssue(undefined);
+  expect(openResource).not.toHaveBeenCalled();
+  card.openValidationIssue({ kind: "hotel", tier: "C" });
+  expect(openResource).toHaveBeenCalledWith({ kind: "hotel", tier: "C" });
+  card.openValidationIssue({ kind: "addTransport" });
+  expect(openResource).toHaveBeenLastCalledWith({ kind: "transport" });
+});
 it("commits an airport pickup switch only on confirmation, retaining the independent drop-off", async () => {
   const day = reactive(emptyDay(1));
   const leg = { id: "new", routeId: null, fromCityId: "city", toCityId: "city", mode: "other" as const, nameZh: "", nameEn: "", feeState: "SELF_PAY" as const };

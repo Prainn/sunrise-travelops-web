@@ -149,6 +149,7 @@ const props = defineProps<{
   selectableCityIds: ReadonlySet<string>;
   /** 编辑的酒店；为空时新增 */
   hotel?: WebsiteHotelStay;
+  initialTier?: WebsiteHotelStay["tier"];
 }>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
@@ -212,7 +213,7 @@ watch(
 function emptyHotel(): WebsiteHotelStay {
   return {
     id: crypto.randomUUID(),
-    tier: HOTEL_TIERS.find((tier) => !props.day?.hotels.some((hotel) => hotel.tier === tier)) ?? "A",
+    tier: props.initialTier ?? HOTEL_TIERS.find((tier) => !props.day?.hotels.some((hotel) => hotel.tier === tier)) ?? "A",
     cityId: props.day?.overnightCityId ?? props.day?.endCityId ?? "",
     configHotelId: null,
     resourceId: null,

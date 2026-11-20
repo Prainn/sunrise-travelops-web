@@ -238,7 +238,7 @@
             :airport-transfers="airportTransferOptions(plan, plan.days[index])"
             :last="plan.serviceDates ? !isConsecutiveServiceDay(plan.serviceDates, plan.days[index]!.dayNumber + 1) : index === plan.days.length - 1"
             @update:day="plan.days.splice(index, 1, $event)"
-            @open-resource="(kind, target) => openResource(index, kind, target)"
+            @open-resource="selection => openResource(index, selection)"
             @insert-resource="(kind, afterId) => openInsertResource(index, kind, afterId)"
             @remove-item="(id, name) => removeItem(plan!.days[index]!.id, id, name)"
           />
@@ -324,6 +324,7 @@
           :config="config"
           :selectable-city-ids="selectableCityIds"
           :hotel="resourceHotel"
+          :initial-tier="resourceDialog?.kind === 'hotel' ? resourceDialog.tier : undefined"
           @update:model-value="closeResource"
           @submit="submitHotel"
         />
@@ -332,7 +333,7 @@
           :day-label="resourceDayLabel"
           :day="resourceDay"
           :config="config"
-          :initial-slot="resourceMealSlot"
+          :initial-slot="resourceDialog?.kind === 'meal' ? resourceDialog.slot : 'lunch'"
           @update:model-value="closeResource"
           @submit="submitMeal"
         />
@@ -396,7 +397,7 @@
       :can-confirm="canConfirm"
       :can-download="canDownload"
       :loading="saving"
-      :can-locate-issue="canLocatePreviewIssue"
+      :can-locate-issue="issue => Boolean(previewIssueLocation(issue))"
       @confirm="confirm"
       @print="print"
       @export-word="exportWord"
@@ -425,7 +426,7 @@ import { reorderWebsiteDays, WEBSITE_BOARD_GROUPS, websiteGuideBoardId } from ".
 import { insertWebsiteEvent, updateWebsiteMeal } from "./event-order";
 import { selectableWebsiteCityIds } from "./city-options";
 import { useWebsiteWorkspace } from "./useWebsiteWorkspace";
-import WebsiteDayCard, { type WebsiteResourceDialogKind } from "./components/WebsiteDayCard.vue";
+import WebsiteDayCard, { type WebsiteResourceSelection } from "./components/WebsiteDayCard.vue";
 import WebsiteItineraryBasics from "./components/WebsiteItineraryBasics.vue";
 import WebsiteVehiclePrices from "./components/WebsiteVehiclePrices.vue";
 import WebsiteQuotationPreview from "./components/WebsiteQuotationPreview.vue";
@@ -460,10 +461,8 @@ const isRescheduleDialogVisible = ref(false);
 const reorderIssues = ref<DayOrderIssue[]>([]);
 const workspaceLayout = useTemplateRef<InstanceType<typeof ItineraryWorkspaceLayout>>("workspaceLayout");
 /** 资源弹窗目标：按日 ID 定位，避免弹窗期间日序变化写错日 */
-const resourceDialog = ref<{
-  kind: WebsiteResourceDialogKind;
+const resourceDialog = ref<WebsiteResourceSelection & {
   dayId: string;
-  target?: number | WebsiteMeal["slot"];
   afterId?: string;
 }>();
 const {
@@ -495,6 +494,7 @@ const {
   useCurrentConfig,
   generate,
   openPreview,
+  previewIssueLocation,
   confirm,
   print,
   exportWord,
@@ -527,12 +527,8 @@ const resourceDayLabel = computed(() => {
   return day ? [`D${day.dayNumber}`, plan.value?.serviceDates?.[day.dayNumber - 1]].filter(Boolean).join(" ") : "";
 });
 const resourceHotel = computed(() => {
-  const target = resourceDialog.value?.target;
-  return typeof target === "number" && target >= 0 ? resourceDay.value?.hotels[target] : undefined;
-});
-const resourceMealSlot = computed<WebsiteMeal["slot"]>(() => {
-  const target = resourceDialog.value?.target;
-  return typeof target === "string" ? target : "lunch";
+  const selection = resourceDialog.value;
+  return selection?.kind === "hotel" ? resourceDay.value?.hotels.find(hotel => hotel.tier === selection.tier) : undefined;
 });
 const boardTransport = ref<WebsiteLeg>();
 let resolveBoardTransport: ((leg: WebsiteLeg | undefined) => void) | undefined;
@@ -665,29 +661,16 @@ function setDayCard(id: string, card: unknown) {
   if (card) dayCards.set(id, card as InstanceType<typeof WebsiteDayCard>);
   else dayCards.delete(id);
 }
-function canLocatePreviewIssue(issue: WebsiteValidation) {
-  if (!plan.value) return false;
-  if (issue.dayNumber !== undefined)
-    return plan.value.days.some(day => day.dayNumber === issue.dayNumber);
-  if (issue.code === "REORDER_PENDING" || issue.code === "VAL-E01") return true;
-  if (issue.code === "VAL-E09") return true;
-  return editable.value && (issue.code === "VAL-E07" || issue.code === "VAL-E08" || issue.code === "ITINERARY_INVALID" || issue.code === "REQUIREMENTS_MISMATCH");
-}
 async function locatePreviewIssue(issue: WebsiteValidation) {
-  if (saving.value || !canLocatePreviewIssue(issue)) return;
-  const day = plan.value?.days.find(day => day.dayNumber === issue.dayNumber);
-  if (day) {
-    await workspaceLayout.value?.scrollToDay(day.id);
-    dayCards.get(day.id)?.openValidationIssue(issue.code);
-  } else if (issue.code === "REORDER_PENDING" || issue.code === "VAL-E01") {
-    isReorderDialogVisible.value = true;
-  } else if (issue.code === "VAL-E07" || issue.code === "VAL-E09") {
-    isVehiclePricesDialogVisible.value = true;
-  } else if (issue.code === "REQUIREMENTS_MISMATCH" && datesMismatch.value) {
-    openReschedule();
-  } else {
-    isBasicsDialogVisible.value = true;
-  }
+  const location = previewIssueLocation(issue);
+  if (!location) return;
+  if (location.kind === "day") {
+    await workspaceLayout.value?.scrollToDay(location.id);
+    dayCards.get(location.id)?.openValidationIssue(location.target);
+  } else if (location.kind === "prices") isVehiclePricesDialogVisible.value = true;
+  else if (location.kind === "reorder") isReorderDialogVisible.value = true;
+  else if (location.kind === "basics") isBasicsDialogVisible.value = true;
+  else if (location.kind === "reschedule") openReschedule();
 }
 function openReschedule() {
   if (plan.value?.reorderDraft) {
@@ -716,21 +699,19 @@ function attractionKindLabel(attractionId: string | null) {
   const kind = config.value?.attractions.find((item) => item.id === attractionId)?.kind;
   return kind ? t(`websiteItineraryUi.attractionKinds.${kind}`) : t("websiteItineraryUi.sourceManual");
 }
-function openResource(index: number, kind: WebsiteResourceDialogKind, target?: number | WebsiteMeal["slot"]) {
+function openResource(index: number, selection: WebsiteResourceSelection, afterId?: string) {
   const day = plan.value?.days[index];
   if (!day || !editable.value) return;
-  resourceDialog.value = { kind, dayId: day.id, target };
+  resourceDialog.value = { ...selection, dayId: day.id, afterId };
 }
 function closeResource(visible: boolean) {
   if (!visible) resourceDialog.value = undefined;
 }
 function openInsertResource(index: number, kind: "attraction" | "transport" | "meal", afterId: string) {
-  openResource(index, kind);
-  if (!resourceDialog.value) return;
-  resourceDialog.value.afterId = afterId;
   if (kind === "meal") {
-    resourceDialog.value.target = resourceDay.value?.meals.find(meal => !isMealArranged(meal))?.slot ?? "lunch";
-  }
+    const slot = plan.value?.days[index]?.meals.find(meal => !isMealArranged(meal))?.slot ?? "lunch";
+    openResource(index, { kind, slot }, afterId);
+  } else openResource(index, { kind }, afterId);
 }
 function submitAttraction(item: WebsiteItem) {
   const day = resourceDay.value;
