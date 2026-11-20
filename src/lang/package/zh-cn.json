@@ -1812,6 +1812,7 @@
     "guideLanguageTooLong": "导游语言不能超过 100 个字符",
     "guideLanguagePlaceholder": "例如 English",
     "transportLegs": "交通段",
+    "numberedTransportLeg": "第 {number} 段交通",
     "hotelPlans": "酒店方案",
     "hotelRequiredHint": "安排酒店时，每个已报价档次须覆盖所有住宿日，每档每天最多一家。",
     "hotelTier": "酒店档次",

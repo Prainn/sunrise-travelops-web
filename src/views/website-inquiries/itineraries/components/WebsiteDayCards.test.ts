@@ -120,17 +120,25 @@ it("opens the reported leg, keeps day-wide issues on the day and requests the qu
   day.endCityId = "to";
   day.overnightCityId = "to";
   const leg = { id: "first", routeId: null, fromCityId: "from", toCityId: "to", mode: "private_vehicle" as const, vehicleType: "23_seat", nameZh: "第一段", nameEn: "First", feeState: "INCLUDED" as const };
-  day.legs = [leg, { ...leg, id: "second", vehicleType: null, nameZh: "缺车型的第二段" }];
+  day.legs = [
+    leg,
+    { ...leg, id: "second", vehicleType: null, nameZh: "酒店接客" },
+    { ...leg, id: "third", vehicleType: null, nameZh: "机场送客" },
+  ];
+  day.eventOrder = ["third", "first", "second"];
   const openResource = vi.fn();
   const view = render(WebsiteDayCard, {
     day, editable: true, config: { cities: [], routes: [] }, selectableCityIds: new Set(), date: null,
     last: true, onOpenResource: openResource,
   });
   const card = view.instance as InstanceType<typeof WebsiteDayCard>;
-  card.openValidationIssue({ kind: "event", id: "second" });
-  await nextTick();
-  expect(view.find("ElInput")[0]?.props.modelValue).toBe("缺车型的第二段");
-  await view.click("common.cancel");
+  for (const [id, name] of [["second", "酒店接客"], ["third", "机场送客"]] as const) {
+    card.openValidationIssue({ kind: "event", id });
+    await nextTick();
+    expect(view.find("dialog")).toHaveLength(1);
+    expect(view.find("ElInput")[0]?.props.modelValue).toBe(name);
+    await view.click("common.cancel");
+  }
   day.legs = [];
   card.openValidationIssue(undefined);
   expect(openResource).not.toHaveBeenCalled();
@@ -138,6 +146,21 @@ it("opens the reported leg, keeps day-wide issues on the day and requests the qu
   expect(openResource).toHaveBeenCalledWith({ kind: "hotel", tier: "C" });
   card.openValidationIssue({ kind: "addTransport" });
   expect(openResource).toHaveBeenLastCalledWith({ kind: "transport" });
+});
+it("keeps the transport editor closed for read-only and saving day cards", async () => {
+  const day = reactive(emptyDay(1));
+  day.legs = [{ id: "leg", fromCityId: "from", toCityId: "to", routeId: null, mode: "private_vehicle", vehicleType: null, nameZh: "", nameEn: "", feeState: "INCLUDED" }];
+  for (const editable of [false, true]) {
+    const view = render(WebsiteDayCard, {
+      day, editable, saving: editable, config: { cities: [], routes: [] }, selectableCityIds: new Set(), date: null, last: true,
+    });
+    const card = view.instance as InstanceType<typeof WebsiteDayCard>;
+    card.openValidationIssue({ kind: "event", id: "leg" });
+    await nextTick();
+    expect(view.find("dialog")).toHaveLength(0);
+    unmount?.();
+    unmount = undefined;
+  }
 });
 it("commits an airport pickup switch only on confirmation, retaining the independent drop-off", async () => {
   const day = reactive(emptyDay(1));

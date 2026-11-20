@@ -17,7 +17,7 @@
         class="mb-3!"
       >
         <ul class="m-0 pl-4">
-          <li v-for="issue in group.issues" :key="`${issue.code}-${issue.dayNumber ?? 0}-${issue.message}`">
+          <li v-for="issue in group.issues" :key="JSON.stringify([issue.code, issue.dayNumber, issue.message, issue.target])">
             <button
               v-if="canLocateIssue(issue)"
               type="button"
@@ -97,12 +97,15 @@
 </template>
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
-import type { WebsitePreview, WebsiteValidation } from "@/types/website";
+import type { WebsiteDay, WebsitePreview, WebsiteValidation } from "@/types/website";
+import { orderById } from "@/views/inquiries/itineraries/reorder-board";
 import { websitePrintBlob } from "../print";
 const props = defineProps<{
   modelValue: boolean;
   preview?: WebsitePreview;
+  days: WebsiteDay[];
   confirmed: boolean;
   canConfirm: boolean;
   canDownload: boolean;
@@ -117,6 +120,10 @@ const emit = defineEmits<{
   "locate-issue": [issue: WebsiteValidation];
 }>();
 const language = ref<"en" | "zh">("en");
+const { t } = useI18n();
+const legNumbers = computed(() => new Map(props.days.flatMap(day =>
+  orderById(day.legs, day.eventOrder ?? []).map((leg, index) => [leg.id, index + 1] as const),
+)));
 const acknowledged = ref<string[]>([]);
 const previewUrl = ref("");
 let pendingIssue: WebsiteValidation | undefined;
@@ -141,7 +148,9 @@ const issueGroups = computed(() => {
   ].filter((group) => group.issues.length);
 });
 function issueText(issue: WebsiteValidation) {
-  return `${issue.code}${issue.dayNumber ? ` D${issue.dayNumber}` : ""}：${issue.message}`;
+  const legNumber = issue.target?.kind === "event" ? legNumbers.value.get(issue.target.id) : undefined;
+  const legLabel = legNumber ? ` · ${t("websiteItineraryUi.numberedTransportLeg", { number: legNumber })}` : "";
+  return `${issue.code}${issue.dayNumber ? ` D${issue.dayNumber}` : ""}${legLabel}：${issue.message}`;
 }
 const hasErrors = computed(
   () => props.preview?.issues.some((issue) => issue.severity === "ERROR") ?? true,

@@ -1812,6 +1812,7 @@
     "guideLanguageTooLong": "Guide language must be at most 100 characters",
     "guideLanguagePlaceholder": "e.g. English",
     "transportLegs": "Transport legs",
+    "numberedTransportLeg": "Transport leg {number}",
     "hotelPlans": "Hotel options",
     "hotelRequiredHint": "If hotels are arranged, each priced tier must cover every overnight day, with one hotel per tier per day.",
     "hotelTier": "Hotel tier",

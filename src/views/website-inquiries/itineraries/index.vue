@@ -393,6 +393,7 @@
     <WebsiteQuotationPreview
       v-model="previewVisible"
       :preview="preview"
+      :days="plan?.days ?? []"
       :confirmed="plan?.status === 'quoted'"
       :can-confirm="canConfirm"
       :can-download="canDownload"
