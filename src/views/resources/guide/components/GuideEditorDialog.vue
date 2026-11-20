@@ -4,6 +4,7 @@
     :title="$t(isEditing ? 'guide.editPrice' : 'guide.createPrice')"
     size="sm"
     :busy="isSubmitting"
+    destroy-on-close
     @close="emit('update:modelValue', false)"
   >
     <el-form

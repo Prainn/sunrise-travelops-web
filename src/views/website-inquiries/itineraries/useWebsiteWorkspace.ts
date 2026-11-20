@@ -18,10 +18,11 @@ import type {
   WebsiteQuotation,
 } from "@/types/website";
 import { cloneWebsiteDraft, emptyDay, emptyItinerary } from "../options";
-import { addDays } from "@/utils";
+import { sameServiceDates, serviceDayDate } from "@/utils/service-dates";
 import { printWebsiteQuotation } from "./print";
 import { removeWebsiteEvent } from "./event-order";
 import { websiteAttractionPriceReference } from "./attraction-price";
+import { applyReschedule, type RescheduleTargets } from "./reschedule";
 import { downloadWordDocument } from "@/views/inquiries/itineraries/docx";
 
 export function useWebsiteWorkspace() {
@@ -54,6 +55,14 @@ export function useWebsiteWorkspace() {
     () => plan.value?.status === "draft" && !ended.value && can("website:itinerary:confirm"),
   );
   const canDownload = computed(() => can("website:itinerary:download"));
+  /** 自选模式的行程日不能超过服务日数量。 */
+  const maxDays = computed(() => plan.value?.serviceDates?.length ?? 365);
+  /** 询盘改期后草稿仍按原日期编排，须由计调核对并应用。 */
+  const datesMismatch = computed(() => {
+    const dates = plan.value?.serviceDates ?? null;
+    const target = inquiry.value?.serviceDates ?? null;
+    return Boolean(plan.value && inquiry.value && (dates || target) && !sameServiceDates(dates, target));
+  });
   const dirty = computed(() =>
     Boolean(plan.value && JSON.stringify(websiteItineraryInput(plan.value)) !== baseline.value),
   );
@@ -150,12 +159,15 @@ export function useWebsiteWorkspace() {
     if (refreshInquiry && inquiry.value)
       inquiry.value = await websiteService.inquiry(inquiry.value.id);
   }
-  async function save() {
-    if (!plan.value || !editable.value || saving.value) return false;
+  function save() {
+    return persistDraft(plan.value);
+  }
+  async function persistDraft(candidate: WebsiteItinerary | undefined) {
+    if (!candidate || !editable.value || saving.value) return false;
     saving.value = true;
     let saved: WebsiteItinerary;
     try {
-      saved = await websiteService.saveItinerary(plan.value);
+      saved = await websiteService.saveItinerary(candidate);
     } catch (cause) {
       showError(cause);
       saving.value = false;
@@ -388,25 +400,45 @@ export function useWebsiteWorkspace() {
     removeWebsiteEvent(day, itemId);
     preview.value = undefined;
   }
+  /** 应用询盘的服务日期：相同日期沿用原行程日，移除日按计调选择改排或回收，随后保存草稿。 */
+  async function reschedule(targets: RescheduleTargets) {
+    const record = plan.value;
+    if (!record || !inquiry.value || record.reorderDraft || !datesMismatch.value) return false;
+    const calendar = applyReschedule(record, inquiry.value.serviceDates ?? null, targets, inquiry.value);
+    return persistDraft({ ...record, ...calendar });
+  }
   function addDay() {
-    if (plan.value && editable.value && plan.value.days.length < 365) {
-      plan.value.days.push(emptyDay(plan.value.days.length + 1));
+    const record = plan.value;
+    if (!record || !editable.value || saving.value || record.days.length >= maxDays.value) return;
+    if (record.serviceDates) {
+      const used = new Set(record.days.map(day => day.dayNumber));
+      const index = record.serviceDates.findIndex((_, i) => !used.has(i + 1));
+      if (index >= 0) {
+        record.days.push(emptyDay(index + 1));
+        record.days.sort((a, b) => a.dayNumber - b.dayNumber);
+      }
+    } else {
+      record.days.push(emptyDay(record.days.length + 1));
       renumber();
     }
   }
   async function removeDay(index: number) {
     const record = plan.value;
     const day = record?.days[index];
-    if (!record || !day || !editable.value || record.days.length <= 1) return;
+    if (!record || !day || !editable.value || saving.value || (!record.serviceDates && record.days.length <= 1)) return;
     try {
       await ElMessageBox.confirm(t("itineraryWorkspace.deleteDayConfirm", { day: index + 1 }), t("itineraryWorkspace.deleteDay"), {
         type: "warning", confirmButtonText: t("common.confirm"), cancelButtonText: t("common.cancel"),
       });
     } catch { return; }
-    if (plan.value !== record || !editable.value) return;
-    (record.deletedDays ??= []).push({ day: structuredClone(toRaw(day)), originalDate: record.startDate ? addDays(record.startDate, index) : null });
-    record.days.splice(index, 1);
-    renumber();
+    if (plan.value !== record || !editable.value || saving.value || record.days[index]?.id !== day.id) return;
+    (record.deletedDays ??= []).push({ day: structuredClone(toRaw(day)), originalDate: serviceDayDate(record, day.dayNumber) });
+    // 自选日历固定：删除日原位补空白日，其他行程日仍在原服务日。
+    if (record.serviceDates) record.days.splice(index, 1, emptyDay(day.dayNumber));
+    else {
+      record.days.splice(index, 1);
+      renumber();
+    }
   }
   function moveDay(index: number, direction: number) {
     const item = plan.value?.days.splice(index, 1)[0];
@@ -414,7 +446,8 @@ export function useWebsiteWorkspace() {
     renumber();
   }
   function renumber() {
-    if (plan.value?.days.length) plan.value.duration = plan.value.days.length;
+    if (plan.value?.serviceDates) plan.value.duration = plan.value.serviceDates.length;
+    else if (plan.value?.days.length) plan.value.duration = plan.value.days.length;
     plan.value?.days.forEach((day, index) => {
       day.dayNumber = index + 1;
     });
@@ -445,6 +478,8 @@ export function useWebsiteWorkspace() {
     canCreate,
     canConfirm,
     canDownload,
+    maxDays,
+    datesMismatch,
     preview,
     previewVisible,
     quotation,
@@ -461,6 +496,7 @@ export function useWebsiteWorkspace() {
     print,
     exportWord,
     addDay,
+    reschedule,
     removeItem,
     removeDay,
     moveDay,

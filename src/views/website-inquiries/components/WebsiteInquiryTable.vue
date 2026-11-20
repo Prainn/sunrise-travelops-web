@@ -32,9 +32,14 @@
           {{ $t("websiteInquiry.dayCount", { days: row.plannedDays }, row.plannedDays) }}
         </template>
       </el-table-column>
-      <el-table-column :label="$t('common.startDate')" min-width="120">
+      <el-table-column :label="$t('common.startDate')" min-width="120" show-overflow-tooltip>
         <template #default="{ row }">
-          {{ row.startDate || $t("websiteInquiry.unconfirmed") }}
+          <template v-if="row.serviceDates">
+            {{ serviceDateRanges(row.serviceDates).join($t("websiteInquiry.listSeparator")) }}
+          </template>
+          <template v-else>
+            {{ row.startDate || $t("websiteInquiry.unconfirmed") }}
+          </template>
         </template>
       </el-table-column>
       <el-table-column :label="$t('websiteInquiry.pax')" min-width="100" align="center">
@@ -139,6 +144,7 @@ import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import Pagination from "@/components/Pagination/index.vue";
 import { formatDateTime } from "@/utils";
+import { serviceDateRanges } from "@/utils/service-dates";
 import type { WebsiteInquiry } from "@/types/website";
 import { INQUIRY_STATUS_TAG_TYPES } from "@/views/inquiries/options";
 // 常用操作需在一行内展示，英文按钮文案更长

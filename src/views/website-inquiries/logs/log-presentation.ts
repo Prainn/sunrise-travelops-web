@@ -110,6 +110,8 @@ export function changeLabel(change: WebsiteInquiryLogChange, context: LogDisplay
 /** 按字段翻译枚举/布尔/日期；管理员录入文本和名称原样显示。 */
 export function formatLogValue(value: unknown, path: string, context: LogDisplayContext): string {
   const { t, te } = context;
+  // serviceDates 为 null 表示连续服务日，不是未填写。
+  if (value === null && path.endsWith("serviceDates")) return t("websiteInquiry.log.consecutiveDates");
   if (value == null || value === "") return t("websiteInquiry.log.empty");
   if (typeof value === "boolean") return t(value ? "common.yes" : "common.no");
   if (Array.isArray(value)) {

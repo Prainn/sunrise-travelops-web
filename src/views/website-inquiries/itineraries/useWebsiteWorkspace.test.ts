@@ -9,6 +9,7 @@ import { generateWebsiteWordDocument } from "./docx";
 import { downloadWordDocument } from "@/views/inquiries/itineraries/docx";
 import { emptyDay } from "../options";
 import { quotationCandidates } from "./vehicle-price";
+import { applyReschedule, defaultRescheduleTargets, rescheduleDiff } from "./reschedule";
 
 vi.mock("vue-router", () => ({
   useRoute: () => ({ params: { inquiryId: "inquiry" }, query: {} }),
@@ -115,6 +116,47 @@ describe("main-page item deletion", () => {
     expect(ElMessage.warning).toHaveBeenCalledWith("websiteItineraryUi.applyBoardBeforeDelete");
     expect(workspace.plan.value!.days[0]!.services).toHaveLength(1);
     expect(workspace.plan.value!.reorderDraft.copies).toHaveLength(1);
+  });
+});
+
+describe("自选服务日改期", () => {
+  it("按已保存的日序识别未排满的草稿，并可把移除日整天改排到新日期", () => {
+    const dates = ["2026-11-21", "2026-11-23", "2026-11-24", "2026-11-26"];
+    const target = ["2026-11-21", "2026-11-23", "2026-11-25", "2026-11-26"];
+    const third = { ...emptyDay(3), guideLanguage: "English" };
+    const fourth = { ...emptyDay(4), endCityId: "kunming" };
+    const draft = { ...plan, duration: 4, serviceDates: dates, startDate: dates[0]!, days: [third, fourth] };
+    const diff = rescheduleDiff(draft, target);
+    expect(diff.kept).toEqual([{ day: fourth, date: "2026-11-26" }]);
+    expect(diff.removed).toEqual([{ day: third, date: "2026-11-24" }]);
+    const destinations = defaultRescheduleTargets(diff);
+    expect(destinations).toEqual({ [third.id]: "2026-11-25" });
+    const result = applyReschedule(draft, target, destinations, { startDate: target[0]!, plannedDays: 4 });
+    expect(result.days.slice(2)).toEqual([third, fourth]);
+    expect(result.deletedDays).toEqual([]);
+    const consecutive = applyReschedule(result, null, {}, { startDate: "2026-12-31", plannedDays: 4 });
+    expect(consecutive).toMatchObject({ serviceDates: null, startDate: "2026-12-31", duration: 4, days: result.days });
+  });
+  it("保存失败可按原明细重试；成功后替换日期并保留重合日、回收历史及版本", async () => {
+    const dates = ["2026-11-21", "2026-11-23", "2026-11-24", "2026-11-26"];
+    const target = [dates[0]!, dates[1]!, "2026-11-25", dates[3]!];
+    const days = dates.map((_, index) => ({ ...emptyDay(index + 1), id: `d${index + 1}`, guideLanguage: `guide-${index}` }));
+    vi.mocked(websiteService.inquiry).mockResolvedValue({ ...inquiry, serviceDates: target, plannedDays: 4, startDate: dates[0]! });
+    vi.mocked(websiteService.itineraries).mockResolvedValue([{ ...plan, days, duration: 4, startDate: dates[0]!, serviceDates: dates }]);
+    const save = vi.spyOn(websiteService, "saveItinerary").mockRejectedValueOnce(new Error("network"));
+    save.mockImplementationOnce(async record => ({ ...record, version: record.version + 1 }));
+    const workspace = await setup();
+    expect(workspace.datesMismatch.value).toBe(true);
+    expect(await workspace.reschedule({ d3: null })).toBe(false);
+    expect(workspace.plan.value?.serviceDates).toEqual(dates);
+    expect(workspace.plan.value?.days).toEqual(days);
+    expect(await workspace.reschedule({ d3: null })).toBe(true);
+    const saved = workspace.plan.value!;
+    expect(saved).toMatchObject({ version: 4, duration: 4, serviceDates: target, deletedDays: [{ day: days[2], originalDate: "2026-11-24" }] });
+    expect(saved.days.filter(day => day.dayNumber !== 3)).toEqual([days[0], days[1], days[3]]);
+    expect(saved.days[2]?.guideLanguage).toBe("");
+    expect(websiteItineraryInput(save.mock.calls[1]![0]).serviceDates).toEqual(target);
+    expect(workspace.datesMismatch.value).toBe(false);
   });
 });
 

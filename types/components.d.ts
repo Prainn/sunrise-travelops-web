@@ -205,6 +205,7 @@ declare module 'vue' {
     WebsiteMealDialog: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteMealDialog.vue')['default']
     WebsitePublicResourcePicker: typeof import('./../src/views/website-inquiries/components/WebsitePublicResourcePicker.vue')['default']
     WebsiteQuotationPreview: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteQuotationPreview.vue')['default']
+    WebsiteRescheduleDialog: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteRescheduleDialog.vue')['default']
     WebsiteResourceSelect: typeof import('./../src/views/website-inquiries/components/WebsiteResourceSelect.vue')['default']
     WebsiteTransportDialog: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteTransportDialog.vue')['default']
     WebsiteTransportFields: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteTransportFields.vue')['default']

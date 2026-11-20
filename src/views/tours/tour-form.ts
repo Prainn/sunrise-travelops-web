@@ -421,10 +421,11 @@ export function createTourRequest(
       quoteId: string;
       seriesStartDate?: string;
     },
+  serviceDates?: readonly string[] | null,
 ): TourCreateRequest | null {
   if (source.sourceModule !== "manual") {
-    // 关联来源只能按航班计算接送。
-    return { ...tourInput({ ...form, scheduleMode: "flight" }), ...source };
+    const scheduleMode = source.sourceModule === "website" && serviceDates?.length ? form.scheduleMode : "flight";
+    return { ...tourInput({ ...form, scheduleMode }), ...source };
   }
   const manualSource = manualSourceFromForm(form);
   return manualSource ? { ...tourInput(form), sourceModule: "manual", manualSource } : null;
@@ -433,7 +434,7 @@ export function createTourRequest(
 export function updateTourRequest(tour: TourRecord, form: TourFormState): TourUpdateRequest {
   if (tour.sourceModule !== "manual")
     return {
-      ...tourInput({ ...form, scheduleMode: "flight" }),
+      ...tourInput({ ...form, scheduleMode: tour.sourceModule === "website" && tour.serviceDates?.length ? form.scheduleMode : "flight" }),
       version: tour.version,
       // 系列来源团可改本团出发日，团号与其他团不变。
       ...(tour.isSeriesSource && form.startDate ? { seriesStartDate: form.startDate } : {}),
@@ -524,6 +525,14 @@ export function syncManualPickupDate(form: TourFormState): void {
   if (form.scheduleMode !== "manual" || !form.startDate) return;
   const time = form.pickupAt ? form.pickupAt.slice(11) : "00:00";
   form.pickupAt = `${form.startDate} ${time}`;
+}
+
+/** 离境航班在末次服务日的次日，提前三小时送团。按航班墙钟时刻计算，凌晨航班可能在末次服务日送团。 */
+export function selectedDatesDropAt(lastServiceDate: string, departureTime: string): string {
+  const hour = Number(departureTime.slice(0, 2));
+  const date = hour < 3 ? lastServiceDate : addDays(lastServiceDate, 1);
+  const dropHour = String((hour + 21) % 24).padStart(2, "0");
+  return `${date} ${dropHour}:${departureTime.slice(3, 5)}`;
 }
 
 /**

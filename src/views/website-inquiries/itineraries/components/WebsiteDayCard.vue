@@ -4,7 +4,7 @@
     :day-number="day.dayNumber"
     :departure="departureName || $t('websiteItineraryUi.departureCity')"
     :destination="destinationName || $t('websiteItineraryUi.endCity')"
-    :date="date"
+    :date="date ?? ''"
     :body-id="`website-day-body-${day.id}`"
   >
     <el-form
@@ -153,7 +153,6 @@ import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { Bowl, Location, OfficeBuilding, Service, User, Van } from "@element-plus/icons-vue";
 import type { WebsiteConfig, WebsiteDay, WebsiteMeal } from "@/types/website";
-import { addDays } from "@/utils/format";
 import ItineraryDayResourceBar, {
   type DayResourceAction,
 } from "@/views/inquiries/itineraries/components/ItineraryDayResourceBar.vue";
@@ -177,7 +176,8 @@ const props = defineProps<{
   selectableCityIds: ReadonlySet<string>;
   editable: boolean;
   saving?: boolean;
-  startDate: string | null;
+  /** 当天服务日期（自选清单或开始日期顺延）；未定为 null。 */
+  date: string | null;
   last: boolean;
 }>();
 const emit = defineEmits<{
@@ -196,9 +196,6 @@ function setEventCard(id: string, card: unknown) {
 }
 const departureName = computed(() => cityName(day.value.departCityId));
 const destinationName = computed(() => cityName(day.value.endCityId));
-const date = computed(() =>
-  props.startDate ? addDays(props.startDate, day.value.dayNumber - 1) : "",
-);
 const events = computed(() => {
   const kinds = new Map<string, "attraction" | "transport" | "meal">([
     ...day.value.items.map(item => [item.id, "attraction"] as const),

@@ -4,6 +4,7 @@
     :title="$t('whatsapp.assignTitle')"
     size="md"
     :busy="saving"
+    destroy-on-close
   >
     <el-form
       ref="formRef"
