@@ -19,7 +19,7 @@
     </p>
     <div class="itinerary-reorder__board flex gap-3 overflow-x-auto pb-3" role="list" :inert="busy">
       <section
-        v-for="(day, dayIndex) in orderedDays"
+        v-for="(day, dayIndex) in displayedDays"
         :key="day.id"
         role="listitem"
         class="itinerary-reorder__day w-[240px] shrink-0 flex flex-col gap-2 p-3 rounded-[var(--card-radius)] surface-muted [border:1px_solid_var(--divider-color)]"
@@ -116,11 +116,11 @@
             {{ group.label }}
             <span v-if="group.scope" class="ml-1 font-normal text-muted">{{ group.scope }}</span>
           </h5>
-          <p v-if="!groupItems(day.id, group).length" class="m-0 text-[12px] text-muted">
+          <p v-if="!group.items.length" class="m-0 text-[12px] text-muted">
             {{ $t("itineraryWorkspace.notArranged") }}
           </p>
           <div
-            v-for="(item, itemIndex) in groupItems(day.id, group)"
+            v-for="(item, itemIndex) in group.items"
             :key="item.id"
             class="itinerary-reorder__item flex flex-col gap-1 px-2 py-[6px] rounded-[6px] bg-surface [border:1px_solid_var(--divider-color)] text-[14px]"
             :class="{
@@ -132,7 +132,7 @@
             @dragstart.stop="startItemDrag($event, day.id, item.id, group.key)"
             @dragend.stop="endDrag"
             @dragover="allowItemDrop($event, day.id, item.id, group)"
-            @drop="dropItem($event, day.id, group, itemIndex)"
+            @drop="dropItem($event, day.id, group, item.id)"
           >
             <div class="flex items-start gap-1">
               <el-icon v-if="item.icon" class="shrink-0 mt-[3px] text-muted" aria-hidden="true">
@@ -176,16 +176,16 @@
                   :disabled="itemIndex === 0"
                   :aria-label="$t('common.moveUp')"
                   :title="$t('common.moveUp')"
-                  @click="moveItem(day.id, group, itemIndex, -1)"
+                  @click="moveItem(day.id, group, item.id, group.items[itemIndex - 1]?.id)"
                 >
                   <el-icon><ArrowUp /></el-icon>
                 </el-button>
                 <el-button
                   link
-                  :disabled="itemIndex === groupItems(day.id, group).length - 1"
+                  :disabled="itemIndex === group.items.length - 1"
                   :aria-label="$t('common.moveDown')"
                   :title="$t('common.moveDown')"
-                  @click="moveItem(day.id, group, itemIndex, 1)"
+                  @click="moveItem(day.id, group, item.id, group.items[itemIndex + 1]?.id)"
                 >
                   <el-icon><ArrowDown /></el-icon>
                 </el-button>
@@ -381,6 +381,21 @@ const boardItems = computed(() => {
   return items;
 });
 const boardItem = (id: string) => boardItems.value.get(id);
+// 展示时隐藏重复的早餐占位，暂存和应用仍使用完整排布。
+const displayedDays = computed(() => orderedDays.value.map(day => {
+  const cityId = overnight.value[day.id] ?? day.overnightCityId;
+  const groups = day.groups.map(group => {
+    const items = groupItems(day.id, group);
+    const hasHotelBreakfast = cityId && items.some(item =>
+      item.hotelCityId === cityId && item.breakfastIncluded && !isPendingCopy(item.id),
+    );
+    return {
+      ...group,
+      items: hasHotelBreakfast ? items.filter(item => item.slot !== "meal-breakfast" || !item.placeholder) : items,
+    };
+  });
+  return { ...day, groups };
+}));
 const change = computed<DayOrderChange>(() => ({
   removedItemIds: board.value.removedItemIds,
   transportCopies: board.value.transportCopies,
@@ -530,7 +545,13 @@ function recycleDay(day: ReorderBoardDay, index: number) {
       board.value = removeBoardCopy(board.value, copyId);
   });
   const groups = day.groups.map((group) => ({ ...group, items: groupItems(id, group) }));
-  recycledDays.value.push({ ...day, groups, dayNumber: index + 1, date: boardDate(index) });
+  recycledDays.value.push({
+    ...day,
+    groups,
+    overnightCityId: overnight.value[id] ?? day.overnightCityId,
+    dayNumber: index + 1,
+    date: boardDate(index),
+  });
 }
 
 async function restoreDay(id: string, date?: string) {
@@ -577,11 +598,13 @@ function moveDay(index: number, direction: number) {
   dayIds.value = next;
 }
 
-function moveItem(dayId: string, group: ReorderBoardGroup, index: number, direction: number) {
+function moveItem(dayId: string, group: ReorderBoardGroup, itemId: string, targetId?: string) {
   const next = groupItems(dayId, group).map((item) => item.id);
-  const [id] = next.splice(index, 1);
-  if (!id) return;
-  next.splice(index + direction, 0, id);
+  const index = next.indexOf(itemId);
+  const targetIndex = next.findIndex(id => id === targetId);
+  if (index < 0 || targetIndex < 0 || index === targetIndex) return;
+  next.splice(index, 1);
+  next.splice(targetIndex, 0, itemId);
   board.value = {
     ...board.value,
     placements: { ...board.value.placements, [dayId]: { ...board.value.placements[dayId], [group.key]: next } },
@@ -747,19 +770,19 @@ function dropDay(event: DragEvent, targetIndex: number) {
   endDrag();
 }
 
-function dropItem(event: DragEvent, dayId: string, group: ReorderBoardGroup, targetIndex: number) {
+function dropItem(event: DragEvent, dayId: string, group: ReorderBoardGroup, targetId: string) {
   const source = dragging.value;
   if (isTransferTarget(dayId, group)) {
     event.preventDefault();
     event.stopPropagation();
+    const targetIndex = board.value.placements[dayId]?.[group.key]?.indexOf(targetId);
     void transferItem(dayId, group, targetIndex);
     return;
   }
   if (!source?.itemId || source.dayId !== dayId || source.groupKey !== group.key || !canSort(group)) return;
   event.preventDefault();
   event.stopPropagation();
-  const index = groupItems(dayId, group).findIndex((item) => item.id === source.itemId);
-  if (index >= 0 && index !== targetIndex) moveItem(dayId, group, index, targetIndex - index);
+  moveItem(dayId, group, source.itemId, targetId);
   endDrag();
 }
 

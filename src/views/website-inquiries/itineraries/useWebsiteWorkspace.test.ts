@@ -30,6 +30,26 @@ const plan = { id: "plan", status: "draft", version: 3, configVersion: 1, title:
 const preview = { itineraryId: "plan", sourceVersion: 3, issues: [] } as unknown as WebsitePreview;
 const quotation = { ...preview, id: "quote", code: "Q1" } as WebsiteQuotation;
 
+it("locates actionable preview issues without guessing from a shared error code", async () => {
+  const workspace = await setup();
+  const locate = workspace.previewIssueLocation;
+  const generic = { code: "ITINERARY_INVALID", severity: "ERROR" as const, message: "Test" };
+  const prices = { ...generic, code: "VAL-E09", target: { kind: "prices" as const } };
+  const basics = { ...generic, target: { kind: "basics" as const } };
+  const dates = { ...generic, code: "REQUIREMENTS_MISMATCH", target: { kind: "reschedule" as const } };
+  expect(locate(prices)?.kind).toBe("prices");
+  expect(locate(basics)?.kind).toBe("basics");
+  expect(locate(generic)).toBeUndefined();
+  expect(locate({ ...prices, dayNumber: 99 })).toBeUndefined();
+  expect(locate(dates)).toBeUndefined();
+  workspace.inquiry.value!.serviceDates = ["2026-11-20"];
+  expect(locate(dates)?.kind).toBe("reschedule");
+  workspace.plan.value!.status = "quoted";
+  expect(locate(basics)).toBeUndefined();
+  expect(locate(dates)).toBeUndefined();
+  expect(locate(prices)?.kind).toBe("prices");
+});
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(ElMessageBox.confirm).mockResolvedValue("confirm" as Awaited<ReturnType<typeof ElMessageBox.confirm>>);

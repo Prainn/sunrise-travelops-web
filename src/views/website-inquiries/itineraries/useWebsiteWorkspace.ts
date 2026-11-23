@@ -16,11 +16,13 @@ import type {
   WebsiteItinerary,
   WebsitePreview,
   WebsiteQuotation,
+  WebsiteValidation,
 } from "@/types/website";
 import { cloneWebsiteDraft, emptyDay, emptyItinerary } from "../options";
 import { sameServiceDates, serviceDayDate } from "@/utils/service-dates";
 import { printWebsiteQuotation } from "./print";
 import { removeWebsiteEvent } from "./event-order";
+import { alignAirportTransfers } from "./airport-transfers";
 import { websiteAttractionPriceReference } from "./attraction-price";
 import { applyReschedule, type RescheduleTargets } from "./reschedule";
 import { downloadWordDocument } from "@/views/inquiries/itineraries/docx";
@@ -287,6 +289,18 @@ export function useWebsiteWorkspace() {
       saving.value = false;
     }
   }
+  function previewIssueLocation(issue: WebsiteValidation) {
+    if (!plan.value || !config.value || saving.value) return;
+    if (issue.dayNumber !== undefined) {
+      const day = plan.value.days.find(day => day.dayNumber === issue.dayNumber);
+      return day ? { kind: "day" as const, id: day.id, target: issue.target } : undefined;
+    }
+    const kind = issue.target?.kind;
+    if (kind === "prices" || kind === "reorder") return { kind };
+    if (!editable.value) return;
+    if (kind === "basics") return { kind };
+    if (kind === "reschedule" && datesMismatch.value && !plan.value.reorderDraft) return { kind };
+  }
   async function openPreview() {
     if (!plan.value || saving.value) return;
     if (dirty.value) {
@@ -451,6 +465,7 @@ export function useWebsiteWorkspace() {
     plan.value?.days.forEach((day, index) => {
       day.dayNumber = index + 1;
     });
+    if (plan.value) plan.value.days = alignAirportTransfers(plan.value.days, plan.value.duration);
   }
   watch(
     () => route.params.inquiryId,
@@ -492,6 +507,7 @@ export function useWebsiteWorkspace() {
     useCurrentConfig,
     generate,
     openPreview,
+    previewIssueLocation,
     confirm,
     print,
     exportWord,

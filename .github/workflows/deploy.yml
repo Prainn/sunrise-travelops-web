@@ -57,13 +57,38 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Supervised frontend dev release
+        id: release
         if: github.ref == 'refs/heads/dev'
         shell: bash
         run: |
           set -euo pipefail
           export PATH="/opt/sunrise-ci/node/bin:$PATH"
           test "$(hostname)" = iZbp1j5n14ce3c01o1539cZ || { echo 'Incorrect dev build host'; exit 1; }
+          current=/opt/sunrise-travelops-dev/frontend/current
+          expected="releases/${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          previous=$(readlink "$current" || true)
+          start_ms=$(date +%s%3N)
           python3 /opt/sunrise-ci/frontend-dev-guard/dev_release_guard.py run
+          if [[ "$OPERATION" == deploy && "$previous" != "$expected" && "$(readlink "$current")" == "$expected" ]]; then
+            echo "backfill_start=$start_ms" >> "$GITHUB_OUTPUT"
+            echo "backfill_end=$(date +%s%3N)" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Reconcile WhatsApp inbound after activation
+        if: steps.release.outputs.backfill_start != ''
+        shell: bash
+        env:
+          START_MS: ${{ steps.release.outputs.backfill_start }}
+          END_MS: ${{ steps.release.outputs.backfill_end }}
+        run: |
+          set -euo pipefail
+          key="frontend-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          # The verified API image supplies the utility. Only the host has the dev ECS role.
+          if receipt=$(docker exec sunrise-travelops-dev-api-1 cat /app/dist/whatsapp-backfill.cjs |
+              timeout 120 /opt/sunrise-ci/node/bin/node - --dev "$key" "$START_MS" "$END_MS"); then
+            echo "WhatsApp backfill receipt $receipt" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::WhatsApp backfill incomplete; retry $key $START_MS $END_MS" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
 
   production:
     if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'

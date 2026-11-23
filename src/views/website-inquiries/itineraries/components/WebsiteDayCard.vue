@@ -21,7 +21,7 @@
       <div v-if="day.guideLanguage" class="flex flex-wrap items-center gap-3 text-[14px]">
         <span class="min-w-0 flex-1 text-strong [overflow-wrap:anywhere]">{{ $t("itineraryWorkspace.actions.guide") }} ({{ day.guideLanguage }})</span>
         <div v-if="editable && !saving" class="flex shrink-0">
-          <el-button link type="primary" @click="emit('open-resource', 'guide')">
+          <el-button link type="primary" @click="emit('open-resource', { kind: 'guide' })">
             {{ $t("common.edit") }}
           </el-button>
           <el-button link type="danger" @click="emit('remove-item', websiteGuideBoardId(day.id), `${$t('itineraryWorkspace.actions.guide')} (${day.guideLanguage})`)">
@@ -106,6 +106,7 @@
             :ref="(card) => setEventCard(event.id, card)"
             v-model:day="day"
             :leg-id="event.id"
+            :airport-transfers="airportTransfers"
             :config="config"
             :selectable-city-ids="selectableCityIds"
             :editable="editable && !saving"
@@ -117,7 +118,7 @@
             :meal-id="event.id"
             :editable="editable && !saving"
             @remove="(id, name) => emit('remove-item', id, name)"
-            @edit-meal="(slot) => emit('open-resource', 'meal', slot)"
+            @edit-meal="(slot) => emit('open-resource', { kind: 'meal', slot })"
           />
           <div v-if="editable" class="flex items-center gap-3 py-1">
             <span class="h-px flex-1 bg-[var(--divider-color)]" />
@@ -135,7 +136,7 @@
         :config="config"
         :editable="editable && !saving"
         @remove="(id, name) => emit('remove-item', id, name)"
-        @edit="(hotelIndex) => emit('open-resource', 'hotel', hotelIndex)"
+        @edit="(index) => emit('open-resource', { kind: 'hotel', tier: day.hotels[index]?.tier })"
       />
       <WebsiteDayMealsServices
         ref="servicesCard"
@@ -152,7 +153,7 @@ import { computed, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { Bowl, Location, OfficeBuilding, Service, User, Van } from "@element-plus/icons-vue";
-import type { WebsiteConfig, WebsiteDay, WebsiteMeal } from "@/types/website";
+import type { WebsiteConfig, WebsiteDay, WebsiteHotelTier, WebsiteMeal, WebsiteValidation } from "@/types/website";
 import ItineraryDayResourceBar, {
   type DayResourceAction,
 } from "@/views/inquiries/itineraries/components/ItineraryDayResourceBar.vue";
@@ -160,6 +161,7 @@ import ItineraryDayCardFrame from "@/views/inquiries/itineraries/components/Itin
 import ItineraryDayPanel from "@/views/inquiries/itineraries/components/ItineraryDayPanel.vue";
 import WebsiteDayAttractions from "./WebsiteDayAttractions.vue";
 import WebsiteDayTransport from "./WebsiteDayTransport.vue";
+import type { AirportTransferOptions } from "../airport-transfers";
 import { websiteCityOptions } from "../city-options";
 import WebsiteDayHotels from "./WebsiteDayHotels.vue";
 import WebsiteDayMealsServices from "./WebsiteDayMealsServices.vue";
@@ -167,7 +169,10 @@ import { isMealArranged } from "../../options";
 import { websiteDayEventIds } from "../event-order";
 import { websiteGuideBoardId } from "../day-order";
 
-export type WebsiteResourceDialogKind = "attraction" | "transport" | "hotel" | "meal" | "guide";
+export type WebsiteResourceSelection =
+  | { kind: "attraction" | "transport" | "guide" }
+  | { kind: "hotel"; tier?: WebsiteHotelTier }
+  | { kind: "meal"; slot: WebsiteMeal["slot"] };
 
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{
@@ -179,10 +184,10 @@ const props = defineProps<{
   /** 当天服务日期（自选清单或开始日期顺延）；未定为 null。 */
   date: string | null;
   last: boolean;
+  airportTransfers?: AirportTransferOptions;
 }>();
 const emit = defineEmits<{
-  /** hotel 传酒店下标（-1 新增），meal 传餐次 */
-  "open-resource": [kind: WebsiteResourceDialogKind, target?: number | WebsiteMeal["slot"]];
+  "open-resource": [selection: WebsiteResourceSelection];
   "insert-resource": [kind: "attraction" | "transport" | "meal", afterId: string];
   "remove-item": [id: string, name: string];
 }>();
@@ -266,10 +271,8 @@ function cityOptions(...retainedIds: (string | null)[]) {
   return websiteCityOptions(props.config.cities, props.selectableCityIds, ...retainedIds);
 }
 function selectResource(key: string) {
-  if (key === "attraction" || key === "transport") emit("open-resource", key);
-  else if (key === "hotel") emit("open-resource", "hotel", -1);
-  else if (key === "meal") emit("open-resource", "meal", "lunch");
-  else if (key === "guide") emit("open-resource", "guide");
+  if (key === "attraction" || key === "transport" || key === "hotel" || key === "guide") emit("open-resource", { kind: key });
+  else if (key === "meal") emit("open-resource", { kind: "meal", slot: "lunch" });
   else if (key === "service") servicesCard.value?.openCreate();
 }
 
@@ -301,31 +304,29 @@ function toggleNoStay(checked: string | number | boolean) {
   else day.value.overnightCityId = day.value.endCityId || null;
 }
 
-function openValidationIssue(code: string) {
-  if (!props.editable || props.saving) return;
-  if (code === "VAL-E06" || code === "VAL-E09") {
-    // E09：已报价档次缺当天酒店时打开新增（index -1）；缺双语名时编辑该酒店。
-    const index = day.value.hotels.findIndex(hotel => !hotel.nameZh.trim() || !hotel.nameEn.trim());
-    if (index >= 0 || day.value.hotels.length < 4) emit("open-resource", "hotel", index);
-  } else if (code === "VAL-E03" && !day.value.legs.length && day.value.departCityId !== day.value.endCityId) {
-    emit("open-resource", "transport");
-  } else if (code === "VAL-E04") {
-    const item = day.value.items.find(item => item.feeState === "UNKNOWN");
+function openValidationIssue(target: WebsiteValidation["target"]) {
+  if (!props.editable || props.saving || !target) return;
+  if (target.kind === "hotel") {
+    if (day.value.overnightCityId) emit("open-resource", target);
+  } else if (target.kind === "addTransport") {
+    emit("open-resource", { kind: "transport" });
+  } else if (target.kind === "event") {
+    const item = day.value.items.find(item => item.id === target.id);
     if (item) {
       (eventCards.get(item.id) as InstanceType<typeof WebsiteDayAttractions> | undefined)?.openEdit(item);
       return;
     }
-    const leg = day.value.legs.find(leg => leg.feeState === "UNKNOWN");
+    const leg = day.value.legs.find(leg => leg.id === target.id);
     if (leg) {
       (eventCards.get(leg.id) as InstanceType<typeof WebsiteDayTransport> | undefined)?.openEdit(leg);
       return;
     }
-    const meal = day.value.meals.find(meal => meal.feeState === "UNKNOWN");
+    const meal = day.value.meals.find(meal => meal.id === target.id);
     if (meal) {
-      emit("open-resource", "meal", meal.slot);
+      emit("open-resource", { kind: "meal", slot: meal.slot });
       return;
     }
-    const service = day.value.services.find(service => service.feeState === "UNKNOWN");
+    const service = day.value.services.find(service => service.id === target.id);
     if (service) servicesCard.value?.openEdit(service);
   }
 }
