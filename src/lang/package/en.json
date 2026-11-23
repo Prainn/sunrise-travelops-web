@@ -1891,7 +1891,7 @@
       "component": "Component"
     },
     "parentAttraction": "Part of: {name}",
-    "selectedAttractions": "Selected: {names}",
+    "selectedAttractions": "{count} selected",
     "dayAttractionLimit": "You can add up to {max} attractions or components per day.",
     "attractionPrice": "Attraction price",
     "attractionPriceValue": "{price} CNY",

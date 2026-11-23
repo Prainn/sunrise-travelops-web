@@ -1891,7 +1891,7 @@
       "component": "组件"
     },
     "parentAttraction": "所属景点：{name}",
-    "selectedAttractions": "已选 {names}",
+    "selectedAttractions": "已选 {count} 项",
     "dayAttractionLimit": "一天最多安排 {max} 个景点或组件。",
     "attractionPrice": "景点价格",
     "attractionPriceValue": "{price} 元",
