@@ -15,7 +15,6 @@
       @select="selectResource"
     />
     <ItineraryDayForm
-      :allow-custom-destination="isLast && day.dayNumber >= plannedDays"
       :is-last="isLast"
       :day="day"
       :destinations="destinations"
@@ -189,7 +188,6 @@ const props = defineProps<{
   destinations: string[];
   contentEditable: boolean;
   isLast: boolean;
-  plannedDays: number;
   /** 当天的住宿、用车与导游安排，空字符串表示未配置 */
   plans: { hotel: string; vehicle: string; guide: string };
 }>();

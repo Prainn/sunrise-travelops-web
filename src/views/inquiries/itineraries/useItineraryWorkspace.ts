@@ -17,7 +17,7 @@ import type {
 } from "@/types/itinerary";
 import type { GuideRecord } from "@/types/resource";
 import { clonePlainData, hasUserPermission } from "@/utils";
-import { isInquiryReadOnly } from "../inquiry-workflow";
+import { isInquiryReadOnly, transitionInquiry } from "../inquiry-workflow";
 import { canPerformItineraryOperation } from "./itinerary-workflow";
 import { useItineraryQuote } from "./useItineraryQuote";
 import { useItineraryEditor } from "./useItineraryEditor";
@@ -51,6 +51,15 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const isSaving = ref(false);
   const selection = useItinerarySelection();
   const { inquiry, inquiryId, itineraryStore, selectedItinerary, selectedItineraryId } = selection;
+  const initialPlan = ref<ItineraryRecord>();
+  watch(inquiryId, () => { initialPlan.value = undefined; });
+  const completedInitialDays = computed(() => {
+    const plan = initialPlan.value;
+    if (!plan) return 0;
+    return plan.dailyPlans.filter(day => day.departure.trim() && day.destination.trim() &&
+      (day.overnightDestination === "" || plan.destinations.includes(day.overnightDestination ?? "")),
+    ).length;
+  });
   const sectionDialogSnapshot = ref<ItineraryRecord>();
   const savedPrices = ref(new Map<string, ItineraryRecord>());
   watch(
@@ -69,6 +78,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const vehicleDraftBaseline = ref("");
   const vehicleModeChangeConfirmed = ref(false);
   const hasUnsavedChanges = computed(() =>
+    Boolean(initialPlan.value) ||
     (vehicleDraft.value !== undefined &&
       JSON.stringify(vehicleDraft.value) !== vehicleDraftBaseline.value) ||
     itineraryStore.some((plan) => {
@@ -187,9 +197,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   const editor = useItineraryEditor({
     inquiry,
     inquiryId,
-    itineraryStore,
     selectedItinerary,
-    selectedItineraryId,
     canCreate: () => canCreateItinerary.value,
     canEditContent: () => contentEditable.value,
     canEditPrice: () => priceEditable.value,
@@ -367,25 +375,37 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
   }
 
   async function createItinerary(record: ItineraryRecord) {
-    if (isSaving.value) return;
-    const previousId = selectedItineraryId.value;
-    const previousStatus = inquiry.value?.status;
+    if (isSaving.value || initialPlan.value) return;
     const created = editor.createItinerary(record);
     if (!created) return;
+    if (inquiry.value?.isSeries) {
+      await persistNewItinerary(created);
+      return;
+    }
+    initialPlan.value = created;
+    isPlanDialogVisible.value = false;
+  }
+
+  async function saveInitialPlan() {
+    const plan = initialPlan.value;
+    if (!plan || completedInitialDays.value !== plan.dailyPlans.length) return;
+    await persistNewItinerary(plan);
+  }
+
+  async function persistNewItinerary(plan: ItineraryRecord) {
+    if (isSaving.value || !canCreateItinerary.value) return;
     isSaving.value = true;
     try {
-      const saved = await inquiryService.createItinerary(created);
-      const index = itineraryStore.findIndex((p) => p.id === created.id);
-      if (index >= 0) itineraryStore.splice(index, 1, saved);
+      const saved = await inquiryService.createItinerary(plan);
+      if (!inquiry.value || inquiryId.value !== plan.inquiryId) return;
+      itineraryStore.unshift(saved);
       selectedItineraryId.value = saved.id;
+      inquiry.value.status = transitionInquiry(inquiry.value.status, "itinerary_created");
+      initialPlan.value = undefined;
       isPlanDialogVisible.value = false;
       await refreshInquiry();
       messages.success("common.createSuccess");
     } catch (error) {
-      const index = itineraryStore.findIndex((p) => p.id === created.id);
-      if (index >= 0) itineraryStore.splice(index, 1);
-      selectedItineraryId.value = previousId;
-      if (inquiry.value && previousStatus) inquiry.value.status = previousStatus;
       reportError(error);
     } finally {
       isSaving.value = false;
@@ -662,6 +682,12 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     contentEditable: contentFormVisible,
     copyItinerary,
     createItinerary,
+    initialPlan,
+    completedInitialDays,
+    saveInitialPlan,
+    moveInitialDay: editor.moveInitialDay,
+    updatePlanDayField: editor.updatePlanDayField,
+    updatePlanViaDestinations: editor.updatePlanViaDestinations,
     destinationOptions,
     guestCount,
     passengerCount: computed(() => guestCount.value),

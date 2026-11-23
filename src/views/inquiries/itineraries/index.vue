@@ -177,7 +177,6 @@
             :breakfast-status="getDayBreakfastStatus(selectedItinerary, index)"
             :destinations="selectedItinerary.destinations"
             :content-editable="contentEditable"
-            :planned-days="selectedItinerary?.dailyPlans.length || inquiry.plannedDays || 0"
             :is-last="index === selectedItinerary.dailyPlans.length - 1"
             :plans="dayPlanSummaries[index] ?? EMPTY_DAY_PLANS"
             @update-field="(field, value) => updateDayField(index, field, value)"
@@ -223,6 +222,17 @@
         :text="inquiry.originalMessage"
       />
 
+      <ItineraryInitialPlanDialog
+        v-if="initialPlan"
+        :days="initialPlan.dailyPlans"
+        :destinations="initialPlan.destinations"
+        :completed-days="completedInitialDays"
+        :saving="isSaving"
+        @move-day="(from, to) => moveInitialDay(initialPlan!, from, to)"
+        @update-field="(index, field, value) => updatePlanDayField(initialPlan!, index, field, value)"
+        @update-via="(index, cities) => updatePlanViaDestinations(initialPlan!, index, cities)"
+        @save="saveInitialPlan"
+      />
       <ItineraryReorderDialog
         v-if="selectedItinerary"
         v-model="isReorderDialogVisible"
@@ -479,6 +489,7 @@ import ItineraryReorderDialog from "./components/ItineraryReorderDialog.vue";
 import InquiryMessagePreview from "./components/InquiryMessagePreview.vue";
 import ItineraryGuidePlansDialog from "./components/ItineraryGuidePlansDialog.vue";
 import GuideEditorDialog from "@/views/resources/guide/components/GuideEditorDialog.vue";
+import ItineraryInitialPlanDialog from "./components/ItineraryInitialPlanDialog.vue";
 import ItineraryDayCard from "./components/ItineraryDayCard.vue";
 import ItineraryHotelPlansDialog from "./components/ItineraryHotelPlansDialog.vue";
 import ItineraryVehiclePlansDialog from "./components/ItineraryVehiclePlansDialog.vue";
@@ -609,6 +620,12 @@ const {
   canDownloadOriginal,
   downloadOriginal,
   submitItineraryPlan,
+  initialPlan,
+  completedInitialDays,
+  saveInitialPlan,
+  moveInitialDay,
+  updatePlanDayField,
+  updatePlanViaDestinations,
   clearHotelPlan,
   updateDayField,
   updateViaDestinations,
