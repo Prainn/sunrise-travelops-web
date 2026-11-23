@@ -71,9 +71,10 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   const selectedId = ref("");
   const detail = shallowRef<WhatsappConversationDetail | null>(null);
   const messages = shallowRef<WhatsappMessage[]>([]);
-  const messageTotal = ref(0);
+  const hasOlder = ref(false);
   const threadLoading = ref(false);
-  const olderLoading = ref(false);
+  const olderRequest = shallowRef<Promise<boolean>>();
+  const olderLoading = computed(() => !!olderRequest.value);
   const threadError = ref<{ kind: ThreadErrorKind; message: string } | null>(null);
   /** 按会话保存本地发送记录，切换会话后结果未知的请求仍可用原编号核实。 */
   const pendingByConversation = ref(new Map<string, PendingMessage[]>());
@@ -89,7 +90,6 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   const retryRequestIds = new Map<string, string>();
 
   const pending = computed(() => pendingByConversation.value.get(selectedId.value) ?? []);
-  const hasOlder = computed(() => messages.value.length < messageTotal.value);
 
   function listQuery() {
     return {
@@ -135,10 +135,10 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     syncedSeq = null;
     detail.value = null;
     messages.value = [];
-    messageTotal.value = 0;
+    hasOlder.value = false;
     threadError.value = null;
     threadLoading.value = false;
-    olderLoading.value = false;
+    olderRequest.value = undefined;
   }
 
   function threadFailure(cause: unknown) {
@@ -159,7 +159,8 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     const known = syncedSeq;
     const latest = await whatsappService.messages(id, { page: 1, pageSize: MESSAGE_PAGE_SIZE });
     if (token !== threadToken) return false;
-    let merged = messages.value;
+    const cached = messages.value;
+    let merged = cached;
     const floor = minSeq(latest.list);
     let reachedLatest = true;
     let cursor = known;
@@ -176,19 +177,24 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
         if (reachedLatest) break;
       }
     }
-    // 只推进到已取得的行；达到单批上限后由下一批从该游标继续，不跳过遗漏页。
+    const isComplete = latest.total <= latest.list.length;
     if (reachedLatest) {
-      merged = mergeLatestPage(merged, latest.list, latest.total <= latest.list.length);
-      syncedSeq = maxSeq(latest.list);
-    } else {
-      syncedSeq = cursor;
-    }
-    if (reachedLatest) {
+      merged = mergeLatestPage(merged, latest.list, isComplete);
       merged = await refreshOlderMedia(id, token, merged, floor);
       if (token !== threadToken) return false;
     }
+    if (messages.value !== cached && !isComplete) {
+      // 实时补页与向上查找可同时进行，保留快照之后载入的历史页。
+      const cachedFloor = minSeq(cached);
+      if (cachedFloor) {
+        const addedHistory = messages.value.filter((message) => compareSeq(message.seq, cachedFloor) < 0);
+        merged = mergeMessages(addedHistory, merged);
+      }
+    }
+    // 只推进到已取得的行；达到单批上限后由下一批从该游标继续，不跳过遗漏页。
+    syncedSeq = reachedLatest ? maxSeq(latest.list) : cursor;
+    if (!known || isComplete) hasOlder.value = !isComplete;
     messages.value = merged;
-    messageTotal.value = Math.max(latest.total, merged.length);
     const list = pendingByConversation.value.get(id);
     if (list?.length) setPending(id, settlePending(list, merged));
     return !reachedLatest;
@@ -261,21 +267,31 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   }
 
   async function loadOlder() {
+    if (olderRequest.value) return olderRequest.value;
     const id = selectedId.value;
     const floor = minSeq(messages.value);
-    if (!id || !floor || olderLoading.value) return;
+    if (!id || !floor || !hasOlder.value) return false;
     const token = threadToken;
-    olderLoading.value = true;
-    try {
-      const older = await whatsappService.messages(id, { page: 1, pageSize: MESSAGE_PAGE_SIZE, beforeSeq: floor });
-      if (token !== threadToken) return;
-      messages.value = mergeMessages(messages.value, older.list);
-      if (older.list.length < MESSAGE_PAGE_SIZE) messageTotal.value = messages.value.length;
-    } catch (cause) {
-      if (token === threadToken) throw cause;
-    } finally {
-      if (token === threadToken) olderLoading.value = false;
-    }
+    olderRequest.value = whatsappService.messages(id, { page: 1, pageSize: MESSAGE_PAGE_SIZE, beforeSeq: floor })
+      .then((older) => {
+        if (token !== threadToken) return false;
+        hasOlder.value = older.total > older.list.length;
+        if (!older.list.length) return false;
+        messages.value = mergeMessages(messages.value, older.list);
+        return true;
+      })
+      .catch((cause: unknown) => {
+        if (token !== threadToken) return false;
+        if (cause instanceof ApiError && (cause.status === 403 || cause.status === 404)) {
+          threadFailure(cause);
+          return false;
+        }
+        throw cause;
+      })
+      .finally(() => {
+        if (token === threadToken) olderRequest.value = undefined;
+      });
+    return olderRequest.value;
   }
 
   /** 原地刷新当前已展示的会话；网络错误交给合并任务退避重试，权限或记录变化时立即清空。 */
@@ -326,10 +342,10 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   }
 
   /**
-   * 消息实际渲染后由视图调用；仅可见页面提交本会话已展示的最大序号，后台刷新不标记。
+   * 最新消息实际展示后由视图调用；查看历史或后台刷新时不推进阅读位置。
    *
    * @param id - 渲染消息所属会话。
-   * @param isUserOpened - 用户刚打开会话时为 true；轮询更新还要求窗口聚焦。
+   * @param isUserOpened - 用户刚打开会话时为 true；随后的展示还要求窗口聚焦。
    */
   async function markDisplayed(id: string, isUserOpened: boolean) {
     if (id !== selectedId.value || detail.value?.id !== id) return;
@@ -345,12 +361,9 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     try {
       // 共享已读会推送 read 变化；重取后序号未前进时上面的去重阻止再次提交，不形成循环。
       await whatsappService.markRead(id, seq);
-      if (currentSession !== session) return;
-      const row = conversations.value.find((item) => item.id === id);
-      if (row) row.unreadCount = 0;
     } catch {
       // 失败时允许下次展示再提交；不影响阅读本身。
-      if (lastReadSent.get(id) === seq) {
+      if (currentSession === session && lastReadSent.get(id) === seq) {
         if (sent) lastReadSent.set(id, sent);
         else lastReadSent.delete(id);
       }

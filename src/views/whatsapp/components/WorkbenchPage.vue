@@ -80,12 +80,14 @@
         </SectionCard>
         <div v-else class="whatsapp-workbench__body">
           <ConversationThread
+            :key="detail.id"
             class="flex-1 min-w-0"
             :detail="detail"
             :messages="workbench.messages.value"
             :pending="workbench.pending.value"
             :has-older="workbench.hasOlder.value"
             :older-loading="workbench.olderLoading.value"
+            :load-older="workbench.loadOlder"
             :retrying-ids="workbench.retryingIds.value"
             :confirming-ids="confirmingIds"
             @send="handleSend"
@@ -96,7 +98,6 @@
             @discard="workbench.discardPending"
             @retry="handleRetry"
             @confirm-failed="handleConfirmFailed"
-            @load-older="handleLoadOlder"
             @open-conversation="handleSelect"
             @displayed="workbench.markDisplayed"
           />
@@ -379,13 +380,6 @@ async function refreshSelected() {
   await workbench.reloadSelected();
   workbench.refreshNow();
   void loadActions();
-}
-async function handleLoadOlder() {
-  try {
-    await workbench.loadOlder();
-  } catch (cause) {
-    ElMessage.error(websiteErrorMessage(cause));
-  }
 }
 function notifySend(feedback: SendFeedback | undefined) {
   if (!feedback || feedback.kind === "queued") return;

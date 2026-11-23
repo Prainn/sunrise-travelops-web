@@ -44,7 +44,7 @@ export interface WhatsappConversationItem {
   phone: string | null;
   bsuid: string | null;
   lastInboundAt: string | null;
-  /** 当前员工未读的客户入站消息数，与客户端已读回执无关。 */
+  /** 按会话共享阅读位置统计的客户入站未读数。 */
   unreadCount?: number;
   lastMessageText?: string | null;
   /** 最新消息的 occurredAt，无消息时为空。 */
@@ -74,6 +74,7 @@ export interface WhatsappConversationCapabilities {
 }
 
 export interface WhatsappConversationDetail extends WhatsappConversationItem {
+  unreadCount: number;
   tours: WhatsappConversationTour[];
   currentConversationId: string | null;
   ledger: { id: string; orderNo: string } | null;
