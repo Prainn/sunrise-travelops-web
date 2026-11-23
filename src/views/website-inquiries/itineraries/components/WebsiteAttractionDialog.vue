@@ -82,39 +82,54 @@
             </template>
           </el-table-column>
         </DataTable>
-        <p v-if="selectedAttractions.length > 1" class="mb-0 mt-3 break-words text-sm">
-          {{ $t("websiteItineraryUi.selectedAttractions", { names: selectedAttractions.map(localName).join(" · ") }) }}
-        </p>
-        <template v-if="selected">
-          <el-descriptions
-            class="mt-3"
-            :column="2"
-            :label-width="76"
-            border
-            size="small"
+        <section v-if="selectedAttractions.length" class="mt-3" :aria-labelledby="selectionHeadingId">
+          <h3 :id="selectionHeadingId" class="m-0 mb-2 text-sm text-strong font-600">
+            {{ $t("websiteItineraryUi.selectedAttractions", { count: selectedAttractions.length }) }}
+          </h3>
+          <el-collapse
+            v-model="expandedAttractionIds"
+            class="website-attraction-preview overflow-hidden border-x border-solid border-[var(--divider-color)] rounded-lg"
+            expand-icon-position="left"
           >
-            <el-descriptions-item :label="$t('common.nameZh')" width="20%">
-              {{ selected.nameZh }}
-            </el-descriptions-item>
-            <el-descriptions-item :label="$t('common.nameEn')">
-              {{ selected.nameEn }}
-            </el-descriptions-item>
-            <el-descriptions-item :label="$t('websiteItineraryUi.chargeable')">
-              {{ $t(selected.chargeable ? "websiteItineraryUi.chargeableYes" : "websiteItineraryUi.chargeableNo") }}
-            </el-descriptions-item>
-            <el-descriptions-item :label="$t('websiteItineraryUi.attractionPrice')">
-              {{ selected.chargeable ? $t("websiteItineraryUi.attractionPriceValue", { price: formatAttractionPrice(attractionReferencePrice(config, selected.id)) }) : "-" }}
-            </el-descriptions-item>
-            <el-descriptions-item :label="$t('websiteItineraryUi.recommendedMonths')">
-              {{ selected.recommendedMonths.join(", ") || "-" }}
-            </el-descriptions-item>
-            <el-descriptions-item :label="$t('websiteItineraryUi.coreCopyZh')" :span="2">
-              <span class="line-clamp-3 whitespace-pre-wrap">{{ selected.descriptionZh || "-" }}</span>
-            </el-descriptions-item>
-            <el-descriptions-item :label="$t('websiteItineraryUi.coreCopyEn')" :span="2">
-              <span class="line-clamp-3 whitespace-pre-wrap">{{ selected.descriptionEn || "-" }}</span>
-            </el-descriptions-item>
-          </el-descriptions>
+            <el-collapse-item v-for="attraction in selectedAttractions" :key="attraction.id" :name="attraction.id">
+              <template #title>
+                <span class="flex min-w-0 items-center gap-2">
+                  <el-tag
+                    size="small"
+                    class="shrink-0"
+                    :type="attraction.kind === 'component' ? 'info' : 'primary'"
+                    effect="plain"
+                  >
+                    {{ $t(`websiteItineraryUi.attractionKinds.${attraction.kind}`) }}
+                  </el-tag>
+                  <span class="min-w-0 flex-1 font-600 [overflow-wrap:anywhere]">{{ localName(attraction) }}</span>
+                  <span class="shrink-0 whitespace-nowrap text-xs text-muted">{{ attractionPriceLabel(attraction) }}</span>
+                </span>
+              </template>
+              <el-descriptions
+                :column="2"
+                :label-width="76"
+                border
+                size="small"
+              >
+                <el-descriptions-item :label="$t('common.nameZh')" width="20%">
+                  {{ attraction.nameZh }}
+                </el-descriptions-item>
+                <el-descriptions-item :label="$t('common.nameEn')">
+                  {{ attraction.nameEn }}
+                </el-descriptions-item>
+                <el-descriptions-item :label="$t('websiteItineraryUi.recommendedMonths')" :span="2">
+                  {{ attraction.recommendedMonths.join(", ") || "-" }}
+                </el-descriptions-item>
+                <el-descriptions-item :label="$t('websiteItineraryUi.coreCopyZh')" :span="2">
+                  <span class="whitespace-pre-wrap">{{ attraction.descriptionZh || "-" }}</span>
+                </el-descriptions-item>
+                <el-descriptions-item :label="$t('websiteItineraryUi.coreCopyEn')" :span="2">
+                  <span class="whitespace-pre-wrap">{{ attraction.descriptionEn || "-" }}</span>
+                </el-descriptions-item>
+              </el-descriptions>
+            </el-collapse-item>
+          </el-collapse>
           <el-alert
             v-if="missingCopy.length"
             class="mt-3!"
@@ -132,7 +147,7 @@
             :title="$t('websiteItineraryUi.duplicateAttraction', { days: used })"
             :description="selectedAttractions.length > 1 ? localName(attraction) : undefined"
           />
-        </template>
+        </section>
       </template>
       <div v-else class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
         <el-form-item :label="$t('common.nameZh')">
@@ -165,7 +180,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
@@ -196,11 +211,13 @@ const emit = defineEmits<{
   "update:modelValue": [value: boolean];
   submit: [items: WebsiteItem[]];
 }>();
-const { locale } = useI18n();
+const { locale, t } = useI18n();
+const selectionHeadingId = useId();
 const source = ref<"config" | "manual">("config");
 const cityId = ref("");
 const keyword = ref("");
 const selectedIds = ref<string[]>([]);
+const expandedAttractionIds = ref<string[]>([]);
 const manualNameZh = ref("");
 const manualNameEn = ref("");
 
@@ -245,8 +262,10 @@ const selectedAttractions = computed(() => selectedIds.value.flatMap((id) => {
   const attraction = selectableById.value.get(id);
   return attraction ? [attraction] : [];
 }));
-const selected = computed(() => selectedAttractions.value.at(-1));
-const selectedGroupId = computed(() => selected.value ? attractionGroupId(selected.value) : undefined);
+const selectedGroupId = computed(() => {
+  const attraction = selectedAttractions.value[0];
+  return attraction && attractionGroupId(attraction);
+});
 const remainingSlots = computed(() => MAX_DAY_ATTRACTIONS - (props.day?.items.length ?? 0));
 const missingCopy = computed(() => selectedAttractions.value.filter((attraction) => !hasAttractionCopy(attraction)));
 const duplicateSelections = computed(() => selectedAttractions.value.flatMap((attraction) => {
@@ -277,6 +296,16 @@ watch(
 watch(selectableById, (options) => {
   selectedIds.value = selectedIds.value.filter((id) => options.has(id));
 });
+watch(selectedIds, (ids, previousIds) => {
+  if (ids.length === 1 && (previousIds.length !== 1 || ids[0] !== previousIds[0])) {
+    expandedAttractionIds.value = [...ids];
+    return;
+  }
+  const isEnteringMultiSelect = ids.length > 1 && previousIds.length === 1;
+  expandedAttractionIds.value = isEnteringMultiSelect
+    ? []
+    : expandedAttractionIds.value.filter((id) => ids.includes(id));
+});
 
 function attractionGroupId(attraction: WebsiteAttraction) {
   return attraction.kind === "component" ? (attraction.parentId ?? attraction.id) : attraction.id;
@@ -296,6 +325,11 @@ function toggleAttraction(attraction: WebsiteAttraction) {
 }
 function localName(item: { nameZh: string; nameEn: string }) {
   return (locale.value === "en" ? item.nameEn : item.nameZh) || item.nameZh || item.nameEn;
+}
+function attractionPriceLabel(attraction: WebsiteAttraction) {
+  if (!attraction.chargeable) return t("websiteItineraryUi.chargeableNo");
+  const price = formatAttractionPrice(attractionReferencePrice(props.config, attraction.id));
+  return t("websiteItineraryUi.attractionPriceValue", { price });
 }
 function cityName(id: string) {
   const city = props.config.cities.find((item) => item.id === id);
@@ -339,3 +373,33 @@ function submit() {
   close();
 }
 </script>
+
+<style scoped lang="scss">
+.website-attraction-preview {
+  --el-collapse-border-color: var(--divider-color);
+  --el-collapse-header-height: 44px;
+
+  :deep(.el-collapse-item__header) {
+    padding: 8px 12px;
+    line-height: 1.4;
+
+    &:hover {
+      background: var(--surface-hover);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--el-color-primary);
+      outline-offset: -2px;
+    }
+  }
+
+  :deep(.el-collapse-item__title) {
+    min-width: 0;
+  }
+
+  :deep(.el-collapse-item__content) {
+    padding: 0 12px 12px;
+    overflow-wrap: anywhere;
+  }
+}
+</style>
