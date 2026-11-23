@@ -13,6 +13,7 @@ export interface ReorderBoardItem {
   /** 未安排的占位（如默认自理的餐次），不可拖动或复制，同位安排放入时直接让位 */
   placeholder?: boolean;
   hotelCityId?: string;
+  breakfastIncluded?: boolean;
   transportLeg?: WebsiteLeg;
 }
 
@@ -31,6 +32,7 @@ export interface ReorderBoardGroup {
 
 export interface ReorderBoardDay {
   noOvernight?: boolean;
+  overnightCityId?: string | null;
   /** 自选服务日尚无城市或服务安排，可以直接接收回收日。 */
   emptySlot?: boolean;
   id: string;

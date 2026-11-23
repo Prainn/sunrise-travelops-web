@@ -1,13 +1,25 @@
 /* eslint vue/one-component-per-file: off -- The renderer uses explicit UI stubs. */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRenderer, defineComponent, h, nextTick, reactive, ref, type Component, type ComponentPublicInstance } from "vue";
-import type { WebsiteConfig, WebsiteDay } from "@/types/website";
+import type { WebsiteConfig, WebsiteDay, WebsiteRoute } from "@/types/website";
+import BusinessDictionarySelect from "@/components/BusinessDictionarySelect/index.vue";
+import type { ReorderBoardItem } from "@/views/inquiries/itineraries/reorder-board";
 import { ElMessageBox } from "element-plus";
 import ItineraryReorderDialog from "@/views/inquiries/itineraries/components/ItineraryReorderDialog.vue";
 import { emptyDay } from "../../options";
 
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ locale: ref("zh-cn"), t: (key: string) => key }) }));
-vi.mock("@/services/business-dictionary.service", () => ({ businessDictionaryService: { getItems: async () => [{ id: "seat9", code: "seat9", name: "9座", englishName: "9-seat vehicle", status: "enabled" }] } }));
+vi.mock("@/services/business-dictionary.service", () => ({
+  businessDictionaryService: {
+    getItems: async () => [49, 19, 9, 5].map(seats => ({
+      id: `seat${seats}`,
+      code: `seat${seats}`,
+      name: `${seats}座`,
+      englishName: `${seats}-seat vehicle`,
+      status: "enabled",
+    })),
+  },
+}));
 vi.mock("@/components/AppDialog/index.vue", () => ({ default: {
   props: ["modelValue"],
   render(this: ComponentPublicInstance<{ modelValue: boolean }>) {
@@ -15,6 +27,14 @@ vi.mock("@/components/AppDialog/index.vue", () => ({ default: {
   },
 } }));
 vi.mock("@/components/FeedbackState/index.vue", () => ({ default: { render: () => null } }));
+vi.mock("@/components/DataTable/index.vue", () => ({ default: {
+  inheritAttrs: false,
+  props: ["data"],
+  render(this: ComponentPublicInstance<{ data: unknown[] }>) {
+    return h("data-table", { ...this.$attrs, data: this.data });
+  },
+} }));
+vi.mock("../../components/WebsitePublicResourcePicker.vue", () => ({ default: { render: () => null } }));
 vi.mock("@/views/inquiries/itineraries/components/ItineraryDayCardFrame.vue", () => ({ default: {
   render(this: ComponentPublicInstance) { return h("section", this.$slots.default?.()); },
 } }));
@@ -23,10 +43,12 @@ vi.mock("../../components/FeeStateSelect.vue", () => ({ default: { render: () =>
 import WebsiteDayCard from "./WebsiteDayCard.vue";
 import WebsiteDayAttractions from "./WebsiteDayAttractions.vue";
 import WebsiteDayTransport from "./WebsiteDayTransport.vue";
+import WebsiteTransportDialog from "./WebsiteTransportDialog.vue";
 import { airportTransferOptions } from "../airport-transfers";
 import type { WebsiteItinerary } from "@/types/website";
 import WebsiteDayMealsServices from "./WebsiteDayMealsServices.vue";
 import WebsiteDayHotels from "./WebsiteDayHotels.vue";
+import WebsiteHotelDialog from "./WebsiteHotelDialog.vue";
 
 type HostNode = { type: string; props: Record<string, unknown>; children: HostNode[]; parent?: HostNode; text?: string };
 const node = (type: string): HostNode => ({ type, props: {}, children: [] });
@@ -49,7 +71,7 @@ function render(component: Component, props: Record<string, unknown>) {
   const root = node("root");
   const app = renderer.createApp(component, props);
   app.config.globalProperties.$t = (key: string) => key;
-  for (const name of ["ElFormItem", "ElSelect", "ElOption", "ElInput", "ElInputNumber", "ElSwitch", "ElCheckbox", "ElTag", "ElButton", "ElAlert", "ElIcon", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Close", "Delete", "Edit", "CopyDocument"]) {
+  for (const name of ["ElFormItem", "ElSelect", "ElOption", "ElInput", "ElInputNumber", "ElSwitch", "ElCheckbox", "ElTag", "ElButton", "ElAlert", "ElRadio", "ElRadioGroup", "ElRadioButton", "ElTableColumn", "ElIcon", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Close", "Delete", "Edit", "CopyDocument"]) {
     app.component(name, defineComponent({ inheritAttrs: false, setup(_, { attrs, slots }) { return () => h(name, attrs, slots.default?.()); } }));
   }
   app.component("ElForm", defineComponent({ inheritAttrs: false, setup(_, { attrs, slots, expose }) { expose({ validate: async () => true }); return () => h("ElForm", attrs, slots.default?.()); } }));
@@ -76,7 +98,7 @@ function render(component: Component, props: Record<string, unknown>) {
 }
 function mount(component: Component, day: WebsiteDay, editable = true, config = { attractions: [], cities: [], routes: [], hotels: [] } as unknown as WebsiteConfig) {
   const remove = vi.fn();
-  return { ...render(component, { day, editable, config, onRemove: remove }), remove };
+  return { ...render(component, { day, editable, config, selectableCityIds: new Set(), onRemove: remove }), remove };
 }
 afterEach(() => { unmount?.(); unmount = undefined; });
 
@@ -107,6 +129,75 @@ it("在已排满的自选日历上删除和恢复 D2，其他三天始终留在�
       deletedDays: [], addedDayIds: [],
     }));
   } finally { confirm.mockRestore(); }
+});
+
+it("updates breakfast placeholders when a hotel moves and keeps hidden slots in the applied arrangement", async () => {
+  const hotel = { id: "hotel", label: "好酒店", slot: "hotel-A", hotelCityId: "city", breakfastIncluded: true };
+  const breakfast = (id: string) => ({ id, label: "早餐（自理）", slot: "meal-breakfast", placeholder: true });
+  const boardDay = (id: string, items: ReorderBoardItem[]) => ({
+    id, title: id, overnightCityId: "city",
+    groups: [{ key: "events", label: "当日行程", sortable: true, transferable: true, items }],
+  });
+  const apply = vi.fn();
+  const view = render(ItineraryReorderDialog, {
+    modelValue: true, transfer: true, onApply: apply,
+    days: [
+      boardDay("d1", [hotel, breakfast("b1")]),
+      boardDay("d2", [{ id: "lunch", label: "午餐" }, breakfast("b2"), { id: "dinner", label: "晚餐" }]),
+      boardDay("d3", [{ ...hotel, id: "other-hotel" }, { ...breakfast("b3"), label: "已安排的早餐", placeholder: false }]),
+    ],
+  });
+  const day = (index: number) => view.find("section")[index]!;
+  const card = (index: number, label: string) =>
+    view.find("div", day(index)).find(node => node.props.onDragstart && view.text(node).includes(label))!;
+
+  expect(view.text(day(0))).not.toContain("早餐（自理）");
+  expect(view.text(day(1))).toContain("早餐（自理）");
+  expect(view.text(day(2))).toContain("已安排的早餐");
+
+  const dragEvent = { preventDefault: vi.fn(), stopPropagation: vi.fn() };
+  (card(0, "好酒店").props.onDragstart as (event: typeof dragEvent) => void)(dragEvent);
+  (card(1, "晚餐").props.onDrop as (event: typeof dragEvent) => void)(dragEvent);
+  await nextTick();
+  expect(view.text(day(0))).toContain("早餐（自理）");
+  expect(view.text(day(1))).not.toContain("早餐（自理）");
+
+  const moveUp = view.find("ElButton", card(1, "好酒店"))
+    .find(button => button.props["aria-label"] === "common.moveUp")!;
+  (moveUp.props.onClick as () => void)();
+  await nextTick();
+  await view.click("itineraryWorkspace.applyOrder");
+  expect(apply).toHaveBeenCalledWith(expect.objectContaining({
+    placements: { d1: { events: ["b1"] }, d2: { events: ["hotel", "lunch", "b2", "dinner"] }, d3: { events: ["other-hotel", "b3"] } },
+    removedItemIds: [],
+  }));
+});
+
+it("warns about an arranged breakfast when turning on hotel breakfast and allows saving", async () => {
+  const day = reactive(emptyDay(1));
+  day.overnightCityId = "city";
+  const hotel = { id: "hotel", tier: "A", cityId: "city", configHotelId: null, resourceId: null, nameZh: "好酒店", nameEn: "Good Hotel", roomType: "", breakfastIncluded: false };
+  const submit = vi.fn();
+  const view = render(WebsiteHotelDialog, {
+    modelValue: true, day, dayLabel: "D1", hotel, config: { cities: [], hotels: [] },
+    selectableCityIds: new Set(["city"]), onSubmit: submit,
+  });
+  const setBreakfast = async (included: boolean) => {
+    (view.find("ElSwitch")[0]!.props["onUpdate:modelValue"] as (value: boolean) => void)(included);
+    await nextTick();
+  };
+  await setBreakfast(true);
+  expect(view.find("ElAlert")).toHaveLength(0);
+
+  await setBreakfast(false);
+  day.meals[0]!.restaurantZh = "已安排的早餐";
+  await nextTick();
+  expect(view.find("ElAlert")).toHaveLength(0);
+  await setBreakfast(true);
+  expect(view.find("ElAlert").map(alert => alert.props.title)).toEqual(["websiteItineraryUi.breakfastArrangementNotice"]);
+  await view.click("common.confirm");
+  expect(submit).toHaveBeenCalledExactlyOnceWith({ ...hotel, breakfastIncluded: true });
+  expect(hotel.breakfastIncluded).toBe(false);
 });
 
 const cases = [
@@ -246,19 +337,117 @@ describe.each([
   });
 });
 
-it("selects a dictionary vehicle using the route value and retains its configured duration", async () => {
+it("shows transport fields when a route is selected and uses its vehicles or the full dictionary", async () => {
+  const day = emptyDay(1);
+  day.departCityId = day.endCityId = "city";
+  const route: WebsiteRoute = {
+    id: "route", status: "enabled", fromCityId: "city", toCityId: "city", mode: "private_vehicle",
+    nameZh: "昆明包车", nameEn: "Private vehicle", feeState: "INCLUDED", distanceKm: "50",
+    vehicleOptions: [{ vehicleType: "49座", durationMinutes: null }, { vehicleType: "9座", durationMinutes: 120 }],
+  };
+  const emptyRoute = { ...route, id: "empty", vehicleOptions: [] };
+  const config = {
+    cities: [{ id: "city", nameZh: "昆明", nameEn: "Kunming", status: "enabled" }],
+    routes: [route, emptyRoute],
+  };
+  const view = render(WebsiteTransportDialog, {
+    modelValue: true, day, dayLabel: "D1", config, selectableCityIds: new Set(["city"]),
+  });
+  const hasDetails = () => view.find("p").some(p => view.text(p) === "websiteReport.transportDetailsHelp");
+  const vehicleSelect = () => view.find("ElSelect").find(select => select.props.onVisibleChange);
+  const choices = () => view.find("ElOption", vehicleSelect()!).map(option => option.props.value);
+  const selectRoute = async (value: WebsiteRoute) => {
+    (view.find("data-table")[0]!.props.onRowClick as (record: WebsiteRoute) => void)(value);
+    await nextTick();
+  };
+  const setSource = async (source: "route" | "manual") => {
+    (view.find("ElRadioGroup")[0]!.props["onUpdate:modelValue"] as (value: string) => void)(source);
+    await nextTick();
+    await nextTick();
+  };
+
+  expect(hasDetails()).toBe(false);
+  expect(vehicleSelect()).toBeUndefined();
+  expect(view.find("ElInputNumber")).toHaveLength(0);
+  expect(view.find("ElSwitch")).toHaveLength(0);
+  await selectRoute(route);
+  expect(hasDetails()).toBe(true);
+  expect(choices()).toEqual(["9座", "49座"]);
+  expect(vehicleSelect()?.props["allow-create"]).toBe(false);
+  (vehicleSelect()!.props["onUpdate:modelValue"] as (value: string) => void)("9座");
+  await nextTick();
+  expect(view.find("ElInputNumber")[0]?.props["model-value"]).toBe(120);
+
+  await setSource("manual");
+  (vehicleSelect()!.props["onUpdate:modelValue"] as (value: string) => void)("19座");
+  await nextTick();
+  expect(vehicleSelect()?.props["model-value"]).toBe("19座");
+  await setSource("route");
+  expect(choices()).toEqual(["9座", "49座"]);
+  expect(vehicleSelect()?.props["model-value"]).toBeNull();
+
+  await selectRoute(emptyRoute);
+  expect(choices()).toEqual(["5座", "9座", "19座", "49座"]);
+  expect(vehicleSelect()?.props["allow-create"]).toBe(true);
+
+  const fromCity = view.find("ElSelect")[0]!;
+  (fromCity.props["onUpdate:modelValue"] as (value: string) => void)("different-city");
+  await nextTick();
+  expect(hasDetails()).toBe(false);
+  expect(vehicleSelect()).toBeUndefined();
+
+  await setSource("manual");
+  expect(hasDetails()).toBe(true);
+  expect(choices()).toEqual(["5座", "9座", "19座", "49座"]);
+  expect(vehicleSelect()?.props["allow-create"]).toBe(true);
+});
+
+it("disables vehicles used by other rows, including dictionary aliases and hand-entered values", async () => {
+  const update = vi.fn();
+  const view = render(BusinessDictionarySelect, {
+    modelValue: "5座", typeCode: "vehicle-type", disabledValues: ["9_seat", "49座", "商务车"], "onUpdate:modelValue": update,
+  });
+  await nextTick();
+  await nextTick();
+  expect(view.find("ElOption").filter(option => option.props.disabled).map(option => option.props.label))
+    .toEqual(["49座", "9座", "商务车"]);
+  expect(view.find("ElOption").find(option => option.props.value === "5座")?.props.disabled).toBe(false);
+  const select = view.find("ElSelect")[0]!.props["onUpdate:modelValue"] as (value: string) => void;
+  select("9-seat vehicle");
+  select("商务车 ");
+  expect(update).not.toHaveBeenCalled();
+  select("19座");
+  expect(update).toHaveBeenCalledExactlyOnceWith("19座");
+});
+
+it("keeps the saved vehicle while limiting new choices to the resource and applying its duration", async () => {
   const day = reactive(emptyDay(1));
-  const leg = { id: "leg", routeId: "route", fromCityId: "from", toCityId: "to", mode: "private_vehicle" as const, vehicleType: null, nameZh: "专车", nameEn: "Private vehicle", feeState: "INCLUDED" as const };
+  const leg = { id: "leg", routeId: "route", fromCityId: "from", toCityId: "to", mode: "private_vehicle" as const, vehicleType: "5座", durationMinutes: 75, nameZh: "专车", nameEn: "Private vehicle", feeState: "INCLUDED" as const };
   day.legs = [leg];
-  const config = { attractions: [], cities: [], routes: [{ id: "route", vehicleOptions: [{ vehicleType: "9_seat", durationMinutes: 180 }] }] } as unknown as WebsiteConfig;
+  const vehicleOptions = [
+    { vehicleType: "商务车", durationMinutes: null },
+    { vehicleType: "小巴 14座", durationMinutes: 160 },
+    { vehicleType: "9_seat", durationMinutes: 180 },
+  ];
+  const config = { attractions: [], cities: [], routes: [{ id: "route", vehicleOptions }] } as unknown as WebsiteConfig;
   const view = mount(WebsiteDayTransport as Component, day, true, config);
   await view.click("common.edit");
   await nextTick();
-  const choices = view.find("ElOption").filter(option => option.props.label === "9座");
-  expect(choices).toHaveLength(1);
-  expect(choices[0]!.props.value).toBe("9_seat");
   const selector = view.find("ElSelect").find(select => select.props.onVisibleChange)!;
-  (selector.props["onUpdate:modelValue"] as (value: string) => void)("9_seat");
+  const choices = view.find("ElOption", selector).map(option => [option.props.label, option.props.value]);
+  expect(choices).toEqual([
+    ["9座", "9_seat"],
+    ["小巴 14座", "小巴 14座"],
+    ["商务车", "商务车"],
+  ]);
+  expect(selector.props["model-value"]).toBe("5座");
+  expect(view.find("ElInputNumber")[0]?.props["model-value"]).toBe(75);
+  expect(vehicleOptions.map(option => option.vehicleType)).toEqual(["商务车", "小巴 14座", "9_seat"]);
+  const select = selector.props["onUpdate:modelValue"] as (value: string) => void;
+  select("19座");
+  await nextTick();
+  expect(selector.props["model-value"]).toBe("5座");
+  select("9_seat");
   await nextTick();
   await view.click("common.confirm");
   expect(day.legs[0]).toMatchObject({ vehicleType: "9_seat", durationMinutes: 180 });

@@ -41,11 +41,11 @@ const panel = ref<HTMLElement>();
 const handle = ref<HTMLElement>();
 const isExpanded = ref(false);
 const { width: viewportWidth, height: viewportHeight } = useWindowSize();
-const width = computed(() => Math.min(isExpanded.value ? 520 : 210, viewportWidth.value - 16));
+const width = computed(() => Math.min(isExpanded.value ? 520 : 268, viewportWidth.value - 16));
 const height = computed(() => Math.min(isExpanded.value ? 600 : 42, viewportHeight.value - 32));
 const { x, y } = useDraggable(panel, {
   handle,
-  initialValue: { x: Math.max(8, window.innerWidth - 234), y: 160 },
+  initialValue: { x: Math.max(8, window.innerWidth - width.value - 24), y: 160 },
   preventDefault: true,
   onStart(_position, event) {
     if ((event.target as HTMLElement).closest("button")) return false;

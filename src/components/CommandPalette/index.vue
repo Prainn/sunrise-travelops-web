@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      class="command-palette-trigger flex gap-[8px] items-center justify-between w-[200px] h-[28px] p-[0_8px_0_10px] [user-select:none] [background:var(--el-fill-color-extra-light)] [border:1px_solid_var(--el-border-color-light)] rounded-[6px] [transition:background-color_0.16s,_border-color_0.16s]"
+      class="command-palette-trigger flex gap-[8px] items-center justify-between w-[clamp(220px,24vw,232px)] h-[28px] p-[0_8px_0_10px] [user-select:none] [background:var(--el-fill-color-extra-light)] [border:1px_solid_var(--el-border-color-light)] rounded-[6px] [transition:background-color_0.16s,_border-color_0.16s]"
       role="button"
       tabindex="0"
       :aria-label="$t('commandPalette.open')"

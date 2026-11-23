@@ -101,6 +101,7 @@
           v-model="draft"
           :mode="draft.mode"
           :vehicle-options="vehicleOptions"
+          :configured-vehicles-only="Boolean(draft.routeId)"
           :airport-transfers="airportTransfers"
         />
       </div>

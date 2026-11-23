@@ -114,17 +114,20 @@
           <el-input v-model="nameEn" maxlength="150" />
         </el-form-item>
       </div>
-      <p class="text-muted my-3">
-        {{ $t("websiteReport.transportDetailsHelp") }}
-      </p>
-      <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
-        <WebsiteTransportFields
-          v-model="details"
-          :mode="effectiveMode"
-          :vehicle-options="vehicleOptions"
-          :airport-transfers="airportTransfers"
-        />
-      </div>
+      <template v-if="source === 'manual' || selected">
+        <p class="text-muted my-3">
+          {{ $t("websiteReport.transportDetailsHelp") }}
+        </p>
+        <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
+          <WebsiteTransportFields
+            v-model="details"
+            :mode="effectiveMode"
+            :vehicle-options="vehicleOptions"
+            :configured-vehicles-only="source === 'route'"
+            :airport-transfers="airportTransfers"
+          />
+        </div>
+      </template>
     </el-form>
     <template #footer>
       <el-button @click="close">
@@ -201,7 +204,7 @@ const routes = computed(() =>
 const vehicleOptions = computed(() => source.value === "route"
   ? selected.value?.vehicleOptions ?? []
   : routes.value.filter(route => route.mode === "private_vehicle").flatMap(route => route.vehicleOptions ?? []));
-const selected = computed(() => routes.value.find((route) => route.id === selectedId.value));
+const selected = computed(() => source.value === "route" ? routes.value.find(route => route.id === selectedId.value) : undefined);
 watch(selected, (route) => {
   if (route) details.value = { ...details.value, vehicleType: route.mode === "private_vehicle" && route.vehicleOptions?.length === 1 ? route.vehicleOptions[0]!.vehicleType : null, distanceKm: route.distanceKm ?? null, durationMinutes: route.mode === "private_vehicle" ? (route.vehicleOptions?.length === 1 ? route.vehicleOptions[0]!.durationMinutes : null) : route.durationMinutes ?? null, showInMileage: false };
 }, { flush: "sync" });

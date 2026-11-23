@@ -110,6 +110,12 @@
           <el-switch v-model="draft.breakfastIncluded" />
         </el-form-item>
       </div>
+      <el-alert
+        v-if="draft.breakfastIncluded && hasBreakfastArrangement"
+        type="warning"
+        :closable="false"
+        :title="$t('websiteItineraryUi.breakfastArrangementNotice')"
+      />
     </el-form>
     <template #footer>
       <el-button @click="close">
@@ -132,6 +138,7 @@ import { formatMoney } from "@/utils";
 import type { WebsiteResourceOption } from "@/services/website.service";
 import type { WebsiteConfig, WebsiteConfigHotel, WebsiteDay, WebsiteHotelStay } from "@/types/website";
 import WebsitePublicResourcePicker from "../../components/WebsitePublicResourcePicker.vue";
+import { isMealArranged } from "../../options";
 import { websiteCityOptions } from "../city-options";
 
 type HotelSource = "config" | "public" | "manual";
@@ -184,6 +191,9 @@ const usedTiers = computed(() => new Set(
   (props.day?.hotels ?? []).filter((hotel) => hotel.id !== draft.value.id).map((hotel) => hotel.tier),
 ));
 const tierTaken = computed(() => usedTiers.value.has(draft.value.tier));
+const hasBreakfastArrangement = computed(() =>
+  props.day?.meals.some(meal => meal.slot === "breakfast" && isMealArranged(meal)),
+);
 const canSubmit = computed(() =>
   Boolean(draft.value.cityId && (draft.value.nameZh.trim() || draft.value.nameEn.trim())) && !tierTaken.value,
 );

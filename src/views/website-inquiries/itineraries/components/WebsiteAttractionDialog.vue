@@ -40,20 +40,21 @@
         </div>
         <DataTable
           :data="rows"
-          row-key="id"
+          row-key="attraction.id"
           size="small"
           :height="280"
           :filtered="Boolean(cityId || keyword.trim())"
-          highlight-current-row
-          :current-row-key="selectedId || undefined"
-          @row-click="(row: AttractionRow) => (selectedId = row.attraction.id)"
+          :row-class-name="({ row }: { row: AttractionRow }) => isAttractionDisabled(row.attraction) ? 'cursor-not-allowed text-muted' : 'cursor-pointer'"
+          @row-click="(row: AttractionRow) => toggleAttraction(row.attraction)"
         >
           <el-table-column width="48" align="center">
             <template #default="{ row }">
-              <el-radio
-                v-model="selectedId"
-                :value="row.attraction.id"
+              <el-checkbox
+                :model-value="selectedIds.includes(row.attraction.id)"
+                :disabled="isAttractionDisabled(row.attraction)"
                 :aria-label="localName(row.attraction)"
+                @click.stop
+                @update:model-value="toggleAttraction(row.attraction)"
               />
             </template>
           </el-table-column>
@@ -81,14 +82,18 @@
             </template>
           </el-table-column>
         </DataTable>
+        <p v-if="selectedAttractions.length > 1" class="mb-0 mt-3 break-words text-sm">
+          {{ $t("websiteItineraryUi.selectedAttractions", { names: selectedAttractions.map(localName).join(" · ") }) }}
+        </p>
         <template v-if="selected">
           <el-descriptions
             class="mt-3"
             :column="2"
+            :label-width="76"
             border
             size="small"
           >
-            <el-descriptions-item :label="$t('common.nameZh')">
+            <el-descriptions-item :label="$t('common.nameZh')" width="20%">
               {{ selected.nameZh }}
             </el-descriptions-item>
             <el-descriptions-item :label="$t('common.nameEn')">
@@ -111,18 +116,21 @@
             </el-descriptions-item>
           </el-descriptions>
           <el-alert
-            v-if="!hasCopy"
+            v-if="missingCopy.length"
             class="mt-3!"
             type="error"
             :closable="false"
             :title="$t('websiteItineraryUi.attractionCopyMissing')"
+            :description="missingCopy.map(localName).join(' · ')"
           />
           <el-alert
-            v-if="usedDays(selected.id)"
+            v-for="{ attraction, days: used } in duplicateSelections"
+            :key="attraction.id"
             class="mt-3!"
             type="warning"
             :closable="false"
-            :title="$t('websiteItineraryUi.duplicateAttraction', { days: usedDays(selected.id) })"
+            :title="$t('websiteItineraryUi.duplicateAttraction', { days: used })"
+            :description="selectedAttractions.length > 1 ? localName(attraction) : undefined"
           />
         </template>
       </template>
@@ -137,6 +145,13 @@
           {{ $t("websiteItineraryUi.manualAttractionHint") }}
         </p>
       </div>
+      <el-alert
+        v-if="remainingSlots <= 0 || (source === 'config' && selectedAttractions.length >= remainingSlots)"
+        class="mt-3!"
+        type="info"
+        :closable="false"
+        :title="$t('websiteItineraryUi.dayAttractionLimit', { max: MAX_DAY_ATTRACTIONS })"
+      />
     </el-form>
     <template #footer>
       <el-button @click="close">
@@ -164,6 +179,8 @@ interface AttractionRow {
   parentName: string;
 }
 
+const MAX_DAY_ATTRACTIONS = 200;
+
 /**
  * 独立站景点选择：数据来自行程绑定 configVersion 的专属景点与组件，按配置城市筛选，不替换为公共景点。
  */
@@ -177,13 +194,13 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
-  submit: [item: WebsiteItem];
+  submit: [items: WebsiteItem[]];
 }>();
 const { locale } = useI18n();
 const source = ref<"config" | "manual">("config");
 const cityId = ref("");
 const keyword = ref("");
-const selectedId = ref("");
+const selectedIds = ref<string[]>([]);
 const manualNameZh = ref("");
 const manualNameEn = ref("");
 
@@ -193,11 +210,13 @@ const cityOptions = computed(() => websiteCityOptions(
   ...websiteDayRouteCityIds(props.day),
 ));
 const cityOptionIds = computed(() => new Set(cityOptions.value.map((city) => city.id)));
+const selectableAttractions = computed(() => props.config.attractions.filter(
+  (item) => item.status === "enabled" && cityOptionIds.value.has(item.cityId) && (!cityId.value || item.cityId === cityId.value),
+));
+const selectableById = computed(() => new Map(selectableAttractions.value.map((item) => [item.id, item])));
 const rows = computed<AttractionRow[]>(() => {
   const query = keyword.value.trim().toLowerCase();
-  const enabled = props.config.attractions.filter(
-    (item) => item.status === "enabled" && cityOptionIds.value.has(item.cityId) && (!cityId.value || item.cityId === cityId.value),
-  );
+  const enabled = selectableAttractions.value;
   const matches = (item: WebsiteAttraction) =>
     !query || item.nameZh.toLowerCase().includes(query) || item.nameEn.toLowerCase().includes(query);
   const parents = enabled.filter((item) => item.kind === "attraction" || !item.parentId);
@@ -222,15 +241,24 @@ const rows = computed<AttractionRow[]>(() => {
   }
   return result;
 });
-const selected = computed(() => props.config.attractions.find((item) =>
-  item.id === selectedId.value && cityOptionIds.value.has(item.cityId),
-));
-const hasCopy = computed(() => Boolean(selected.value && hasAttractionCopy(selected.value)));
-const canSubmit = computed(() =>
-  source.value === "manual"
-    ? Boolean(manualNameZh.value.trim() || manualNameEn.value.trim())
-    : Boolean(selected.value && hasCopy.value),
-);
+const selectedAttractions = computed(() => selectedIds.value.flatMap((id) => {
+  const attraction = selectableById.value.get(id);
+  return attraction ? [attraction] : [];
+}));
+const selected = computed(() => selectedAttractions.value.at(-1));
+const selectedGroupId = computed(() => selected.value ? attractionGroupId(selected.value) : undefined);
+const remainingSlots = computed(() => MAX_DAY_ATTRACTIONS - (props.day?.items.length ?? 0));
+const missingCopy = computed(() => selectedAttractions.value.filter((attraction) => !hasAttractionCopy(attraction)));
+const duplicateSelections = computed(() => selectedAttractions.value.flatMap((attraction) => {
+  const days = usedDays(attraction.id);
+  return days ? [{ attraction, days }] : [];
+}));
+const canSubmit = computed(() => {
+  if (remainingSlots.value <= 0) return false;
+  if (source.value === "manual") return Boolean(manualNameZh.value.trim() || manualNameEn.value.trim());
+  const count = selectedAttractions.value.length;
+  return count > 0 && count <= remainingSlots.value && missingCopy.value.length === 0;
+});
 
 watch(
   () => props.modelValue,
@@ -239,17 +267,33 @@ watch(
     source.value = "config";
     cityId.value = props.day?.endCityId || props.day?.departCityId || "";
     keyword.value = "";
-    selectedId.value = "";
+    selectedIds.value = [];
     manualNameZh.value = "";
     manualNameEn.value = "";
   },
   { immediate: true },
 );
-// 切换城市后清除不再匹配的待确认景点。
-watch(cityId, (id) => {
-  if (id && selected.value && selected.value.cityId !== id) selectedId.value = "";
+// 关键词只过滤显示，城市范围变化才移除不可选项。
+watch(selectableById, (options) => {
+  selectedIds.value = selectedIds.value.filter((id) => options.has(id));
 });
 
+function attractionGroupId(attraction: WebsiteAttraction) {
+  return attraction.kind === "component" ? (attraction.parentId ?? attraction.id) : attraction.id;
+}
+function isAttractionDisabled(attraction: WebsiteAttraction) {
+  if (selectedIds.value.includes(attraction.id)) return false;
+  if (selectedAttractions.value.length >= remainingSlots.value) return true;
+  return selectedGroupId.value !== undefined && attractionGroupId(attraction) !== selectedGroupId.value;
+}
+function toggleAttraction(attraction: WebsiteAttraction) {
+  if (isAttractionDisabled(attraction)) return;
+  if (selectedIds.value.includes(attraction.id)) {
+    selectedIds.value = selectedIds.value.filter((id) => id !== attraction.id);
+  } else {
+    selectedIds.value = [...selectedIds.value, attraction.id];
+  }
+}
 function localName(item: { nameZh: string; nameEn: string }) {
   return (locale.value === "en" ? item.nameEn : item.nameZh) || item.nameZh || item.nameEn;
 }
@@ -269,7 +313,7 @@ function close() {
 function submit() {
   if (!canSubmit.value) return;
   if (source.value === "manual") {
-    emit("submit", {
+    emit("submit", [{
       id: crypto.randomUUID(),
       attractionId: null,
       nameZh: manualNameZh.value.trim(),
@@ -278,10 +322,9 @@ function submit() {
       descriptionEn: "",
       appears: true,
       feeState: "UNKNOWN",
-    });
+    }]);
   } else {
-    const attraction = selected.value!;
-    emit("submit", {
+    const items = selectedAttractions.value.map((attraction): WebsiteItem => ({
       id: crypto.randomUUID(),
       attractionId: attraction.id,
       nameZh: attraction.nameZh,
@@ -290,7 +333,8 @@ function submit() {
       descriptionEn: attraction.descriptionEn,
       appears: true,
       feeState: attraction.kind === "attraction" && attraction.chargeable ? "INCLUDED" : "UNKNOWN",
-    });
+    }));
+    emit("submit", items);
   }
   close();
 }

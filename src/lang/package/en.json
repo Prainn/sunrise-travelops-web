@@ -1822,13 +1822,14 @@
     "hotelTierD": "D 2-star and below",
     "configHotelPrice": "Website price (internal reference): {price} CNY/room/night",
     "hotelBreakfastIncluded": "Breakfast included in this option",
+    "hotelBreakfastNotice": "Breakfast is included at {hotels}",
+    "breakfastArrangementNotice": "Breakfast is already arranged for this day",
     "hotelNameZh": "Chinese hotel name",
     "hotelNameEn": "English hotel name",
     "roomType": "Room type",
     "roomTypePlaceholder": "e.g. Twin Room",
     "mealsAndServices": "Meals and services",
     "mealFees": {
-      "breakfast": "Daily breakfast fee",
       "lunch": "Lunch fee",
       "dinner": "Dinner fee"
     },
@@ -1890,6 +1891,8 @@
       "component": "Component"
     },
     "parentAttraction": "Part of: {name}",
+    "selectedAttractions": "Selected: {names}",
+    "dayAttractionLimit": "You can add up to {max} attractions or components per day.",
     "attractionPrice": "Attraction price",
     "attractionPriceValue": "{price} CNY",
     "attractionPriceLine": "Attraction price: {price}",

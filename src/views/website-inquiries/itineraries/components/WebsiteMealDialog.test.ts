@@ -1,12 +1,12 @@
 /* eslint vue/one-component-per-file: off -- The renderer uses explicit UI stubs. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createRenderer, defineComponent, h, nextTick, onMounted, type Component, type ComponentPublicInstance } from "vue";
+import { createRenderer, defineComponent, h, nextTick, onMounted, ref, type Component, type ComponentPublicInstance } from "vue";
 import type { WebsiteConfig, WebsiteDay, WebsiteMeal } from "@/types/website";
 import { emptyDay } from "../../options";
 
 const mocks = vi.hoisted(() => ({ confirm: vi.fn(), pickerMount: vi.fn() }));
 vi.mock("element-plus", () => ({ ElMessageBox: { confirm: mocks.confirm } }));
-vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
+vi.mock("vue-i18n", () => ({ useI18n: () => ({ locale: ref("zh-cn"), t: (key: string) => key }) }));
 vi.mock("@/components/AppDialog/index.vue", () => ({ default: {
   render(this: ComponentPublicInstance) { return h("dialog", [...(this.$slots.default?.() ?? []), ...(this.$slots.footer?.() ?? [])]); },
 } }));
@@ -36,16 +36,17 @@ const renderer = createRenderer<HostNode, HostNode>({
   },
 });
 let unmount: (() => void) | undefined;
-function mount(day: WebsiteDay) {
+function mount(day: WebsiteDay, initialSlot: WebsiteMeal["slot"] = "breakfast") {
   const submitted = vi.fn();
   const closed = vi.fn();
   const root = node("root");
   const app = renderer.createApp(WebsiteMealDialog as Component, {
     modelValue: true, day, dayLabel: "D1", config: { cities: [] } as unknown as WebsiteConfig,
-    initialSlot: "breakfast", onSubmit: submitted, "onUpdate:modelValue": closed,
+    initialSlot, onSubmit: submitted, "onUpdate:modelValue": closed,
   });
-  app.config.globalProperties.$t = (key: string) => key;
-  for (const name of ["ElForm", "ElFormItem", "ElSelect", "ElOption", "ElRadioGroup", "ElRadioButton", "ElInput", "ElButton"]) {
+  app.config.globalProperties.$t = (key: string, params?: unknown) =>
+    params && typeof params === "object" && "hotels" in params ? `${key} ${params.hotels}` : key;
+  for (const name of ["ElForm", "ElFormItem", "ElSelect", "ElOption", "ElRadioGroup", "ElRadioButton", "ElInput", "ElButton", "ElAlert"]) {
     app.component(name, defineComponent({ inheritAttrs: false, setup(_, { attrs, slots }) { return () => h(name, attrs, slots.default?.()); } }));
   }
   app.mount(root);
@@ -74,6 +75,29 @@ beforeEach(() => { vi.clearAllMocks(); mocks.confirm.mockResolvedValue(undefined
 afterEach(() => { unmount?.(); unmount = undefined; });
 
 describe("meal slot editing", () => {
+  it("labels breakfast and mentions the hotels that include it without blocking confirmation", async () => {
+    const day = emptyDay(1);
+    day.overnightCityId = "city";
+    const hotel = { id: "hotel", tier: "A" as const, cityId: "city", configHotelId: null, resourceId: null, nameZh: "好酒店", nameEn: "Good Hotel", roomType: "", breakfastIncluded: true };
+    day.hotels = [
+      hotel,
+      { ...hotel, id: "other-city", tier: "B", cityId: "other", nameZh: "异地酒店" },
+      { ...hotel, id: "no-breakfast", tier: "C", nameZh: "不含早酒店", breakfastIncluded: false },
+      { ...hotel, id: "unselected", tier: "D", nameZh: "", nameEn: "" },
+    ];
+    const view = mount(day, "lunch");
+    expect(view.find("ElAlert")).toHaveLength(0);
+    await view.changeSlot("breakfast");
+    expect(view.find("ElFormItem")[1]?.props.label).toBe("itinerary.meals.breakfast");
+    expect(view.find("ElAlert").map(alert => alert.props.title)).toEqual(["websiteItineraryUi.hotelBreakfastNotice 好酒店"]);
+    await view.changeSlot("dinner");
+    expect(view.find("ElAlert")).toHaveLength(0);
+    await view.changeSlot("breakfast");
+    await view.confirm();
+    expect(mocks.confirm).not.toHaveBeenCalled();
+    expect(view.submitted).toHaveBeenCalledExactlyOnceWith({ ...day.meals[1], slot: "breakfast" });
+  });
+
   it("keeps the resource picker, current resource and names when changing slots", async () => {
     const day = breakfastDay();
     const before = JSON.stringify(day);

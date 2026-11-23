@@ -305,7 +305,7 @@
           :config="config"
           :selectable-city-ids="selectableCityIds"
           @update:model-value="closeResource"
-          @submit="submitAttraction"
+          @submit="submitAttractions"
         />
         <WebsiteTransportDialog
           :model-value="resourceDialog?.kind === 'transport'"
@@ -422,7 +422,7 @@ import ItineraryWorkspaceLayout from "@/views/inquiries/itineraries/components/I
 import ItineraryWorkspaceFooter from "@/views/inquiries/itineraries/components/ItineraryWorkspaceFooter.vue";
 import ItineraryReorderDialog from "@/views/inquiries/itineraries/components/ItineraryReorderDialog.vue";
 import type { DayOrderChange, DayOrderIssue, ReorderBoardDay, ReorderBoardItem } from "@/views/inquiries/itineraries/reorder-board";
-import { emptyDay, isMealArranged, TRANSPORT_OPTIONS } from "../options";
+import { emptyDay, isHotelBreakfastArranged, isMealArranged, TRANSPORT_OPTIONS } from "../options";
 import { reorderWebsiteDays, WEBSITE_BOARD_GROUPS, websiteGuideBoardId } from "./day-order";
 import { insertWebsiteEvent, updateWebsiteMeal } from "./event-order";
 import { selectableWebsiteCityIds } from "./city-options";
@@ -562,6 +562,7 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
     title: dayRoute(day) || t("itineraryWorkspace.notArranged"),
     dayNumber: day.dayNumber,
     noOvernight: day.overnightCityId === null,
+    overnightCityId: day.overnightCityId,
     date: plan.value?.deletedDays?.find((entry) => entry.day.id === day.id)?.originalDate ?? null,
     groups: [
       {
@@ -597,6 +598,7 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
             detail: cityName(hotel.cityId),
             slot: `hotel-${hotel.tier}`,
             hotelCityId: hotel.cityId,
+            breakfastIncluded: isHotelBreakfastArranged(hotel),
           })),
         ],
       },
@@ -714,11 +716,16 @@ function openInsertResource(index: number, kind: "attraction" | "transport" | "m
     openResource(index, { kind, slot }, afterId);
   } else openResource(index, { kind }, afterId);
 }
-function submitAttraction(item: WebsiteItem) {
+function submitAttractions(items: WebsiteItem[]) {
   const day = resourceDay.value;
   if (!day) return;
-  day.items.push(item);
-  if (resourceDialog.value?.afterId) insertWebsiteEvent(day, item.id, resourceDialog.value.afterId);
+  day.items.push(...items);
+  let anchorId = resourceDialog.value?.afterId;
+  if (!anchorId) return;
+  for (const item of items) {
+    insertWebsiteEvent(day, item.id, anchorId);
+    anchorId = item.id;
+  }
 }
 function submitTransport(leg: WebsiteLeg) {
   const day = resourceDay.value;

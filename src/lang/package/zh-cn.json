@@ -1822,13 +1822,14 @@
     "hotelTierD": "D 二星及以下",
     "configHotelPrice": "独立站价格（内部参考）：{price} 元/间/晚",
     "hotelBreakfastIncluded": "此方案含早",
+    "hotelBreakfastNotice": "{hotels}已包含早餐",
+    "breakfastArrangementNotice": "当日已有早餐安排",
     "hotelNameZh": "酒店中文名称",
     "hotelNameEn": "酒店英文名称",
     "roomType": "房型",
     "roomTypePlaceholder": "例如 Twin Room",
     "mealsAndServices": "餐食与服务",
     "mealFees": {
-      "breakfast": "当天早餐费用",
       "lunch": "午餐费用",
       "dinner": "晚餐费用"
     },
@@ -1890,6 +1891,8 @@
       "component": "组件"
     },
     "parentAttraction": "所属景点：{name}",
+    "selectedAttractions": "已选 {names}",
+    "dayAttractionLimit": "一天最多安排 {max} 个景点或组件。",
     "attractionPrice": "景点价格",
     "attractionPriceValue": "{price} 元",
     "attractionPriceLine": "景点价格：{price}",

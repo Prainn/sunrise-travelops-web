@@ -3,8 +3,10 @@
     <BusinessDictionarySelect
       :model-value="modelValue.vehicleType"
       type-code="vehicle-type"
+      sort-by-seat-count
+      :limit-to-extra-options="restrictVehicles"
       :extra-options="uniqueVehicleOptions.map(option => ({ value: option.vehicleType, label: vehicleLabel(option.vehicleType) }))"
-      :placeholder="$t('websiteReport.vehicleSelectOrEnter')"
+      :placeholder="$t(restrictVehicles ? 'common.selectPlaceholder' : 'websiteReport.vehicleSelectOrEnter')"
       @update:model-value="selectVehicle"
     />
   </el-form-item>
@@ -42,11 +44,21 @@ import type { TransportMode, WebsiteLeg, WebsiteRouteVehicleOption } from "@/typ
 import type { AirportTransferOptions } from "../airport-transfers";
 import { VEHICLE_OPTIONS } from "../../options";
 
-const props = withDefaults(defineProps<{ modelValue: T; mode: TransportMode; airportTransfers?: AirportTransferOptions; vehicleOptions?: WebsiteRouteVehicleOption[]; showVehicle?: boolean; showMileage?: boolean; showDuration?: boolean }>(), { vehicleOptions: () => [], showVehicle: true, showMileage: true, showDuration: true });
+const props = withDefaults(defineProps<{
+  modelValue: T;
+  mode: TransportMode;
+  airportTransfers?: AirportTransferOptions;
+  vehicleOptions?: WebsiteRouteVehicleOption[];
+  configuredVehiclesOnly?: boolean;
+  showVehicle?: boolean;
+  showMileage?: boolean;
+  showDuration?: boolean;
+}>(), { vehicleOptions: () => [], showVehicle: true, showMileage: true, showDuration: true });
 const emit = defineEmits<{ "update:modelValue": [value: T] }>();
 const { t } = useI18n();
 
 const uniqueVehicleOptions = computed(() => [...new Map(props.vehicleOptions.map(option => [option.vehicleType, option])).values()]);
+const restrictVehicles = computed(() => props.configuredVehiclesOnly && uniqueVehicleOptions.value.length > 0);
 function selectVehicle(value: string | undefined) {
   const vehicleType = value?.trim() || null;
   if (vehicleType === props.modelValue.vehicleType) return;

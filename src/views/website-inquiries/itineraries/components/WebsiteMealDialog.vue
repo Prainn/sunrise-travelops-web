@@ -18,10 +18,17 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$t(`websiteItineraryUi.mealFees.${slot}`)">
+        <el-form-item :label="$t(slot === 'breakfast' ? 'itinerary.meals.breakfast' : `websiteItineraryUi.mealFees.${slot}`)">
           <FeeStateSelect v-model="feeState" />
         </el-form-item>
       </div>
+      <el-alert
+        v-if="breakfastHotelNames"
+        type="warning"
+        class="mb-3!"
+        :closable="false"
+        :title="$t('websiteItineraryUi.hotelBreakfastNotice', { hotels: breakfastHotelNames })"
+      />
       <el-form-item :label="$t('websiteItineraryUi.resourceSource')">
         <el-radio-group :model-value="source" @update:model-value="changeSource">
           <el-radio-button value="public">
@@ -72,7 +79,7 @@ import AppDialog from "@/components/AppDialog/index.vue";
 import type { FeeState, WebsiteConfig, WebsiteDay, WebsiteMeal } from "@/types/website";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
 import WebsitePublicResourcePicker from "../../components/WebsitePublicResourcePicker.vue";
-import { isMealArranged } from "../../options";
+import { isHotelBreakfastArranged, isMealArranged } from "../../options";
 
 const MEAL_SLOTS = ["breakfast", "lunch", "dinner"] as const;
 
@@ -90,7 +97,7 @@ const emit = defineEmits<{
   "update:modelValue": [value: boolean];
   submit: [meal: WebsiteMeal];
 }>();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const mealId = ref("");
 const busy = ref(false);
 const slot = ref<WebsiteMeal["slot"]>("lunch");
@@ -103,6 +110,17 @@ const feeState = ref<FeeState>("SELF_PAY");
 const linkedCityId = computed(() => {
   const cityId = props.day?.endCityId;
   return props.config.cities.find((city) => city.id === cityId)?.resourceId ?? null;
+});
+const breakfastHotelNames = computed(() => {
+  const day = props.day;
+  if (slot.value !== "breakfast" || !day?.overnightCityId) return "";
+  const names = day.hotels
+    .filter(hotel => hotel.cityId === day.overnightCityId && isHotelBreakfastArranged(hotel))
+    .map(hotel => {
+      const preferredName = locale.value === "en" ? hotel.nameEn : hotel.nameZh;
+      return preferredName.trim() || hotel.nameZh.trim() || hotel.nameEn.trim();
+    });
+  return new Intl.ListFormat(locale.value).format(new Set(names));
 });
 
 watch(
