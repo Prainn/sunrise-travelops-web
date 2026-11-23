@@ -180,7 +180,12 @@ export interface WebsiteLeg {
   nameEn: string;
   feeState: FeeState;
 }
+export type WebsiteHotelPricingMode = "tiered" | "nightly";
 export interface WebsiteHotelStay {
+  nightlyOnly?: boolean;
+  nightlySelected?: boolean;
+  nightlyRooms?: number | null;
+  nightlyRate?: string | null;
   id: string;
   tier: WebsiteHotelTier;
   cityId: string;
@@ -247,6 +252,9 @@ export interface WebsiteQuotationOptions {
   guideServices: { dayNumber: number; language: string }[];
 }
 export interface WebsiteItineraryInput {
+  hotelPricingMode?: WebsiteHotelPricingMode;
+  nightlyShowHotelPrice?: boolean;
+  nightlyVehiclePrices?: WebsiteVehiclePriceInput[];
   reorderDraft?: WebsiteReorderDraft | null;
   title: string;
   duration: number;
@@ -292,7 +300,7 @@ export interface WebsiteValidation {
   target?:
     | { kind: "basics" | "prices" | "reorder" | "reschedule" | "addTransport" }
     | { kind: "event"; id: string }
-    | { kind: "hotel"; tier?: WebsiteHotelTier };
+    | { kind: "hotel"; tier?: WebsiteHotelTier; id?: string };
 }
 export interface WebsiteOutputDay {
   day: string;
@@ -303,6 +311,8 @@ export interface WebsiteOutputDay {
   meal: string;
 }
 export interface WebsiteOutput {
+  hotelPricingMode?: WebsiteHotelPricingMode;
+  nightlyHotelTotal?: string;
   title: string;
   itinerary: WebsiteOutputDay[];
   inclusions: string[];
@@ -312,6 +322,10 @@ export interface WebsiteOutput {
     city: string;
     hotel: string;
     roomType: string;
+    roomCount?: number;
+    nightlyRate?: string;
+    subtotal?: string;
+    checkoutDate?: string;
     tierLabel?: string;
     startDay?: number;
     endDay?: number;
@@ -351,7 +365,7 @@ export interface WebsitePreview {
   configVersion: number;
   schemaVersion: 6;
   /** 连续 7、自选 8，历史冻结可为 1–6。 */
-  validationVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+  validationVersion: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   /** 仅自选模式：冻结时的服务日期。 */
   serviceDates?: string[];
   issues: WebsiteValidation[];

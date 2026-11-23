@@ -291,12 +291,14 @@ export function useWebsiteWorkspace() {
   }
   function previewIssueLocation(issue: WebsiteValidation) {
     if (!plan.value || !config.value || saving.value) return;
+    const kind = issue.target?.kind;
     if (issue.dayNumber !== undefined) {
       const day = plan.value.days.find(day => day.dayNumber === issue.dayNumber);
-      return day ? { kind: "day" as const, id: day.id, target: issue.target } : undefined;
+      if (!day) return;
+      return kind === "prices" ? { kind } : { kind: "day" as const, id: day.id, target: issue.target };
     }
-    const kind = issue.target?.kind;
-    if (kind === "prices" || kind === "reorder") return { kind };
+    if (kind === "prices") return { kind };
+    if (kind === "reorder") return { kind };
     if (!editable.value) return;
     if (kind === "basics") return { kind };
     if (kind === "reschedule" && datesMismatch.value && !plan.value.reorderDraft) return { kind };

@@ -24,6 +24,18 @@ it.each(["zh", "en"] as const)("uses the four frozen service dates and distinct 
   expect(html).not.toMatch(/2026-11-(22|25)/);
 });
 describe("frozen report rendering", () => {
+  it.each(["zh", "en"] as const)("renders nightly checkout, rooms and prices in stay order in %s", language => {
+    const output: WebsiteOutput = { ...empty, hotelPricingMode: "nightly", nightlyHotelTotal: "1360.00", hotelOptions: [
+      { tier: "C", hotel: "Hangzhou", roomType: "Twin", city: "HZ", startDate: "2026-09-08", checkoutDate: "2026-09-10", nights: 2, roomCount: 1, nightlyRate: "264.00", subtotal: "528.00" },
+      { tier: "A", hotel: "Suzhou", roomType: "Double", city: "SZ", startDay: 3, endDay: 6, nights: 4, roomCount: 1, nightlyRate: "208.00", subtotal: "832.00" },
+    ] };
+    const html = websitePrintHtml(output, language);
+    expect(html.indexOf("Hangzhou")).toBeLessThan(html.indexOf("Suzhou"));
+    for (const value of ["2026-09-08 → 2026-09-10", "D3 → D7", "264.00 / 528.00", "1360.00"]) expect(html).toContain(value);
+    const hidden = websitePrintHtml({ ...output, nightlyHotelTotal: undefined, hotelOptions: output.hotelOptions.map(h => ({ ...h, nightlyRate: undefined, subtotal: undefined })) },language);
+    expect(hidden).not.toContain("528.00");
+    expect(hidden).toContain("Hangzhou");
+  });
   it.each(["en", "zh"] as const)("renders a hotel-free quotation with overnight cities in %s", (language) => {
     const html = websitePrintHtml({
       ...empty,

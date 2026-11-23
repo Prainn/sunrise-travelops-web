@@ -136,7 +136,7 @@
             type="error"
             :closable="false"
             :title="$t('websiteItineraryUi.attractionCopyMissing')"
-            :description="missingCopy.map(localName).join(' · ')"
+            :description="missingCopy.map(localName).join($t('websiteInquiry.listSeparator'))"
           />
           <el-alert
             v-for="{ attraction, days: used } in duplicateSelections"

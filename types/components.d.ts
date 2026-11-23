@@ -205,6 +205,7 @@ declare module 'vue' {
     WebsiteInquiryTransfer: typeof import('./../src/views/website-inquiries/components/WebsiteInquiryTransfer.vue')['default']
     WebsiteItineraryBasics: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteItineraryBasics.vue')['default']
     WebsiteMealDialog: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteMealDialog.vue')['default']
+    WebsiteNightlyStays: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteNightlyStays.vue')['default']
     WebsitePublicResourcePicker: typeof import('./../src/views/website-inquiries/components/WebsitePublicResourcePicker.vue')['default']
     WebsiteQuotationPreview: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteQuotationPreview.vue')['default']
     WebsiteRescheduleDialog: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteRescheduleDialog.vue')['default']

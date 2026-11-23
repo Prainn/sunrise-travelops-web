@@ -115,15 +115,22 @@ export function websiteItineraryInput(record: WebsiteItineraryInput): WebsiteIti
     days: record.days,
     deletedDays: record.deletedDays ?? [],
     // 白名单映射：不回传 plan、includesDriver/includesGuide 等只读字段。
-    vehiclePrices: record.vehiclePrices.map((price) => ({
-      vehicleType: price.vehicleType,
-      hotelTier: price.hotelTier,
-      unitPrice: price.unitPrice,
-      priceComponents: (price.priceComponents ?? []).map((component) => ({
-        category: component.category,
-        unitPrice: component.unitPrice,
-        showInPdf: component.showInPdf,
-      })),
+    hotelPricingMode: record.hotelPricingMode ?? "tiered",
+    nightlyShowHotelPrice: record.nightlyShowHotelPrice ?? false,
+    nightlyVehiclePrices: (record.nightlyVehiclePrices ?? []).map(priceInput),
+    vehiclePrices: record.vehiclePrices.map(priceInput),
+  };
+}
+
+function priceInput(price: WebsiteItineraryInput["vehiclePrices"][number]) {
+  return {
+    vehicleType: price.vehicleType,
+    hotelTier: price.hotelTier,
+    unitPrice: price.unitPrice,
+    priceComponents: (price.priceComponents ?? []).map((component) => ({
+      category: component.category,
+      unitPrice: component.unitPrice,
+      showInPdf: component.showInPdf,
     })),
   };
 }

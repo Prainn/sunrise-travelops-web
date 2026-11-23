@@ -40,6 +40,8 @@ it("locates actionable preview issues without guessing from a shared error code"
   expect(locate(prices)?.kind).toBe("prices");
   expect(locate(basics)?.kind).toBe("basics");
   expect(locate(generic)).toBeUndefined();
+  workspace.plan.value!.days = [emptyDay(1)];
+  expect(locate({ ...prices, code: "VAL-E06", dayNumber: 1 })?.kind).toBe("prices");
   expect(locate({ ...prices, dayNumber: 99 })).toBeUndefined();
   expect(locate(dates)).toBeUndefined();
   workspace.inquiry.value!.serviceDates = ["2026-11-20"];

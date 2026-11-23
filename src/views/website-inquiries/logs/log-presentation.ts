@@ -136,6 +136,7 @@ export function formatLogValue(value: unknown, path: string, context: LogDisplay
   const keys: Record<string, string> = {
     feeState: `websiteInquiry.feeStates.${text}`,
     mode: `websiteInquiry.transportModes.${text}`,
+    hotelPricingMode: `websiteItineraryUi.${text}Mode`,
     slot: `itinerary.meals.${text}`,
     mealSlot: `itinerary.meals.${text}`,
     tier: `websiteInquiry.log.hotelTier`,

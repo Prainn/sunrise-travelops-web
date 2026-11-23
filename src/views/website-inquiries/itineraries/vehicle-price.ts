@@ -45,7 +45,7 @@ export function quotationCandidates(days: WebsiteDay[]) {
     .filter(leg => leg.mode === "private_vehicle" && leg.vehicleType?.trim())
     .map(leg => leg.vehicleType!)))]
     .sort((a, b) => a.localeCompare(b, "en", { numeric: true }));
-  const used = new Set(days.filter(day => day.overnightCityId).flatMap(day => day.hotels.map(hotel => hotel.tier)));
+  const used = new Set(days.filter(day => day.overnightCityId).flatMap(day => day.hotels.filter(hotel => !hotel.nightlyOnly).map(hotel => hotel.tier)));
   const tiers = HOTEL_TIERS.filter(tier => used.has(tier));
   return {
     vehicleTypes: vehicles.length ? vehicles : [null],

@@ -63,8 +63,10 @@
                       {{ plan.title }}
                     </h2>
                     <span v-if="plan.serviceDates" class="text-sm text-muted">
-                      {{ serviceDateRanges(plan.serviceDates).join($t("websiteInquiry.listSeparator")) }}
-                      · {{ $t("websiteWorkspace.serviceDatesSummary", { count: plan.serviceDates.length }) }}
+                      {{ $t("websiteWorkspace.serviceDatesWithCount", {
+                        dates: serviceDateRanges(plan.serviceDates).join($t("websiteInquiry.listSeparator")),
+                        count: plan.serviceDates.length,
+                      }) }}
                     </span>
                     <span v-else-if="plan.startDate" class="text-sm text-muted">
                       {{ plan.startDate }}
@@ -228,6 +230,7 @@
           <WebsiteDayCard
             v-if="plan && config && plan.days[index]"
             :ref="(card) => setDayCard(plan!.days[index]!.id, card)"
+            :nightly="plan.hotelPricingMode === 'nightly'"
             :day="plan.days[index]"
             :sequence="boardDay(plan.days[index]).groups[0]?.items.filter(item => !item.placeholder)"
             :config="config"
@@ -324,6 +327,7 @@
           :config="config"
           :selectable-city-ids="selectableCityIds"
           :hotel="resourceHotel"
+          :nightly="plan.hotelPricingMode === 'nightly' && (!resourceHotel || resourceHotel.nightlyOnly)"
           :initial-tier="resourceDialog?.kind === 'hotel' ? resourceDialog.tier : undefined"
           @update:model-value="closeResource"
           @submit="submitHotel"
@@ -352,6 +356,7 @@
           :editable="editable"
           :dirty="dirty"
           :attraction-price-total="attractionPriceReference?.total ?? null"
+          :config="config"
           @applied="save"
         />
         <WebsiteGuideDialog
@@ -529,7 +534,7 @@ const resourceDayLabel = computed(() => {
 });
 const resourceHotel = computed(() => {
   const selection = resourceDialog.value;
-  return selection?.kind === "hotel" ? resourceDay.value?.hotels.find(hotel => hotel.tier === selection.tier) : undefined;
+  return selection?.kind === "hotel" ? resourceDay.value?.hotels.find(hotel => selection.id ? hotel.id === selection.id : !hotel.nightlyOnly && hotel.tier === selection.tier) : undefined;
 });
 const boardTransport = ref<WebsiteLeg>();
 let resolveBoardTransport: ((leg: WebsiteLeg | undefined) => void) | undefined;
@@ -596,7 +601,7 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
             id: hotel.id,
             label: `${hotel.tier} / ${localName(hotel) || "-"}`,
             detail: cityName(hotel.cityId),
-            slot: `hotel-${hotel.tier}`,
+            slot: hotel.nightlyOnly ? `hotel-${hotel.id}` : `hotel-${hotel.tier}`,
             hotelCityId: hotel.cityId,
             breakfastIncluded: isHotelBreakfastArranged(hotel),
           })),
@@ -736,12 +741,20 @@ function submitTransport(leg: WebsiteLeg) {
 function submitHotel(hotel: WebsiteHotelStay) {
   const day = resourceDay.value;
   if (!day) return;
-  // 提交前复核同日档次唯一；后端约束仍保留。
-  if (day.hotels.some((item) => item.id !== hotel.id && item.tier === hotel.tier)) {
+  const previous = day.hotels.find(item => item.id === hotel.id);
+  const duplicateTier = day.hotels.some(item => !item.nightlyOnly && item.id !== hotel.id && item.tier === hotel.tier);
+  if (!previous && plan.value?.hotelPricingMode === "nightly" && duplicateTier) hotel.nightlyOnly = true;
+  if (!hotel.nightlyOnly && duplicateTier) {
     ElMessage.error(t("websiteItineraryUi.hotelTierTaken"));
     return;
   }
   const index = day.hotels.findIndex((item) => item.id === hotel.id);
+  if (previous && (previous.configHotelId !== hotel.configHotelId || previous.resourceId !== hotel.resourceId ||
+    (!hotel.configHotelId && !hotel.resourceId && previous.nameZh !== hotel.nameZh))) {
+    delete hotel.nightlySelected;
+    delete hotel.nightlyRate;
+    delete hotel.nightlyRooms;
+  }
   if (index >= 0) day.hotels.splice(index, 1, hotel);
   else day.hotels.push(hotel);
 }
