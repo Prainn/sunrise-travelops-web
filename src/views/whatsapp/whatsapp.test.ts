@@ -59,7 +59,7 @@ function message(patch: Partial<WhatsappMessage>): WhatsappMessage {
   };
 }
 const detail = (id = "c-1") => ({
-  id, state: "open", version: 1, tours: [], capabilities: { canReply: true, canAssign: false, canCreateInquiry: false, canStartConsultation: false },
+  id, state: "open", version: 1, unreadCount: 0, tours: [], capabilities: { canReply: true, canAssign: false, canCreateInquiry: false, canStartConsultation: false },
 }) as unknown as WhatsappConversationDetail;
 const page = <T>(list: T[]) => ({ list, total: list.length, page: 1, pageSize: 50 });
 const networkError = () => new ApiError("network", { code: "NETWORK_ERROR" });
@@ -205,6 +205,62 @@ describe("会话建询盘请求体", () => {
 });
 
 describe("useWhatsappWorkbench", () => {
+  it("历史翻页复用在途请求，并与实时补页的结果一起保留", async () => {
+    const workbench = setup();
+    const all = Array.from({ length: 251 }, (_, index) => message({ id: `m-${index + 1}`, seq: String(index + 1) }));
+    const current = all.slice(0, 150);
+    service.messages.mockResolvedValueOnce({ ...page(current.slice(-50).reverse()), total: current.length });
+    await workbench.selectConversation("c-1");
+
+    let release!: () => void;
+    const gap = new Promise<void>((resolve) => { release = resolve; });
+    service.messages.mockImplementation(async (_id, query) => {
+      if (query.beforeSeq) {
+        const older = current.filter((item) => compareSeq(item.seq, query.beforeSeq) < 0).reverse();
+        return { ...page(older.slice(0, 50)), total: older.length };
+      }
+      if (query.afterSeq) {
+        await gap;
+        const newer = all.filter((item) => compareSeq(item.seq, query.afterSeq) > 0);
+        return { ...page(newer.slice(0, 50)), total: newer.length };
+      }
+      return { ...page(all.slice(-50).reverse()), total: all.length };
+    });
+    const refresh = workbench.reloadSelected();
+    await flush();
+    expect(service.messages).toHaveBeenCalledWith("c-1", expect.objectContaining({ afterSeq: "150" }));
+    expect(await Promise.all([workbench.loadOlder(), workbench.loadOlder()])).toEqual([true, true]);
+    expect(service.messages.mock.calls.filter(([, query]) => query.beforeSeq === "101")).toHaveLength(1);
+    expect(workbench.hasOlder.value).toBe(true);
+    release();
+    await refresh;
+
+    expect(workbench.messages.value).toEqual(all.slice(50));
+    expect(await workbench.loadOlder()).toBe(true);
+    expect(workbench.messages.value).toEqual(all);
+    expect(workbench.hasOlder.value).toBe(false);
+  });
+
+  it("切换会话后丢弃旧会话的在途历史页", async () => {
+    const workbench = setup();
+    service.messages.mockResolvedValueOnce({ ...page([message({ seq: "2" })]), total: 2 });
+    await workbench.selectConversation("c-1");
+    let release!: () => void;
+    service.messages.mockImplementationOnce(async () => {
+      await new Promise<void>((resolve) => { release = resolve; });
+      return page([message({ id: "old", seq: "1" })]);
+    });
+    const history = workbench.loadOlder();
+    const next = message({ id: "new", seq: "3", conversationId: "c-2" });
+    service.messages.mockResolvedValueOnce(page([next]));
+    await workbench.selectConversation("c-2");
+    release();
+
+    expect(await history).toBe(false);
+    expect(workbench.messages.value).toEqual([next]);
+    expect(workbench.olderLoading.value).toBe(false);
+  });
+
   it("积压超过5页分轮续取，已读不越过尚未补齐的消息", async () => {
     const workbench = setup();
     service.messages.mockResolvedValueOnce(page([message({ id: "m-1", seq: "1" })]));

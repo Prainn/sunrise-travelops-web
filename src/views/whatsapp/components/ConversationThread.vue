@@ -37,13 +37,18 @@
         {{ $t("whatsapp.viewCurrent") }}
       </el-button>
     </el-alert>
-    <div ref="scrollRef" class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-[20px] px-[4px] pt-[4px] pb-[12px]">
+    <div
+      ref="scrollRef"
+      class="flex-1 min-h-0 overflow-y-auto flex flex-col gap-[20px] px-[4px] pt-[4px] pb-[12px]"
+      tabindex="-1"
+      @scroll.passive="handleScroll"
+    >
       <div v-if="hasOlder" class="text-center">
         <el-button
           link
           type="primary"
           :loading="olderLoading"
-          @click="emit('load-older')"
+          @click="handleLoadOlder"
         >
           {{ $t("whatsapp.loadOlder") }}
         </el-button>
@@ -54,13 +59,22 @@
         :key="message.id"
         class="whatsapp-message"
         :class="message.direction === 'inbound' ? 'whatsapp-message--inbound' : 'whatsapp-message--outbound'"
+        :data-message-id="message.id"
+        tabindex="-1"
       >
         <div v-if="message.direction === 'outbound'" class="text-[12px] text-muted">
           {{ sourceLabel(message) }}
         </div>
         <div class="flex items-center gap-[6px] min-w-0" :class="message.direction === 'outbound' ? 'flex-row-reverse' : ''">
           <div class="whatsapp-message__bubble min-w-0" :class="{ 'is-reaction': message.presentation?.interaction === 'reaction', 'has-reactions': message.presentation?.reactions.length }">
-            <ReplyPreview v-if="messageReply(message)" class="mb-[6px]" :reply="messageReply(message)!" />
+            <ReplyPreview
+              v-if="messageReply(message)"
+              class="mb-[6px]"
+              :reply="messageReply(message)!"
+              jumpable
+              :is-locating="quoteJump?.messageId === messageReply(message)?.id"
+              @jump="handleJumpToReply"
+            />
             <div v-if="message.presentation?.interaction === 'reaction'" class="text-[24px]" :title="$t('whatsapp.unlinkedReaction')">
               <span v-if="message.presentation.emoji">{{ message.presentation.emoji }}</span>
               <span v-else class="text-muted" :title="$t('whatsapp.unknownReaction')">◌</span>
@@ -219,7 +233,14 @@
         class="whatsapp-message whatsapp-message--outbound"
       >
         <div class="whatsapp-message__bubble">
-          <ReplyPreview v-if="item.replyTo" class="mb-[6px]" :reply="item.replyTo" />
+          <ReplyPreview
+            v-if="item.replyTo"
+            class="mb-[6px]"
+            :reply="item.replyTo"
+            jumpable
+            :is-locating="quoteJump?.messageId === item.replyTo.id"
+            @jump="handleJumpToReply"
+          />
           <template v-if="item.batch">
             <div class="flex flex-wrap justify-end gap-[4px] max-w-[336px]">
               <template v-for="image in item.batch.images" :key="image.clientRequestId">
@@ -277,6 +298,15 @@
           </template>
         </div>
       </div>
+    </div>
+    <div v-if="!isAtLatest" class="flex shrink-0 justify-center">
+      <el-button round :title="$t('whatsapp.jumpToLatest')" @click="handleJumpToLatest">
+        <el-icon aria-hidden="true">
+          <ArrowDown />
+        </el-icon>
+        <span class="sr-only">{{ $t('whatsapp.jumpToLatest') }}</span>
+        <span v-if="detail.unreadCount > 0" class="ml-[6px]">{{ $t('whatsapp.threadUnread', detail.unreadCount) }}</span>
+      </el-button>
     </div>
     <div class="flex flex-col gap-[6px]">
       <div class="text-[12px]" :class="replyHint.isWarning ? 'text-[var(--el-color-warning)]' : 'text-muted'">
@@ -367,7 +397,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
+import { ArrowDown } from "@element-plus/icons-vue";
+import { useResizeObserver } from "@vueuse/core";
 import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
 import FeedbackState from "@/components/FeedbackState/index.vue";
@@ -382,9 +414,7 @@ import {
   attachmentSummary,
   canConfirmFailedMessage,
   canRetryMessage,
-  compareSeq,
   isMediaMessage,
-  maxSeq,
   messageDocument,
   messageDocumentArchive,
   messageMedia,
@@ -419,6 +449,7 @@ const props = defineProps<{
   pending: PendingMessage[];
   hasOlder: boolean;
   olderLoading: boolean;
+  loadOlder: () => Promise<boolean>;
   retryingIds: Set<string>;
   confirmingIds: Set<string>;
 }>();
@@ -431,9 +462,8 @@ const emit = defineEmits<{
   discard: [clientRequestId: string];
   retry: [message: WhatsappMessage];
   "confirm-failed": [message: WhatsappMessage];
-  "load-older": [];
   "open-conversation": [id: string];
-  /** 消息已渲染；isUserOpened 表示用户刚打开该会话。 */
+  /** 已到达最新位置；isUserOpened 表示本次打开后的首次消息展示。 */
   displayed: [conversationId: string, isUserOpened: boolean];
 }>();
 
@@ -454,9 +484,11 @@ const previewOpen = ref(false);
 const composerRef = ref<InstanceType<typeof MessageComposer>>();
 const activeReactionMessageId = ref("");
 const scrollRef = ref<HTMLElement>();
+const isAtLatest = ref(true);
+const quoteJump = shallowRef<{ messageId: string }>();
 const now = ref(Date.now());
 let clock: ReturnType<typeof setInterval> | undefined;
-let renderedConversationId = "";
+let hasDisplayedMessages = false;
 
 const phoneRegionLabel = computed(() => {
   const region = phoneRegion(props.detail.phone);
@@ -503,37 +535,93 @@ const replyHint = computed(() => {
 });
 
 watch(
-  () => [props.detail.id, props.messages] as const,
-  async ([id], previous) => {
-    // 详情先于消息到达；首次真正渲染出消息时才视为用户打开后的展示。
-    const isUserOpened = id !== renderedConversationId;
-    const hasNewMessage = previous?.[0] === id &&
-      compareSeq(maxSeq(props.messages) ?? "0", maxSeq(previous[1]) ?? "0") > 0;
-    const shouldScroll = isUserOpened || hasNewMessage || isNearBottom();
-    if (previous && previous[0] !== id) {
-      replyTo.value = undefined;
-      activeReactionMessageId.value = "";
-    }
+  [() => props.messages, () => props.pending],
+  async () => {
+    const shouldFollow = isScrolledToBottom();
     await nextTick();
-    if (shouldScroll) scrollToBottom();
-    if (!props.messages.length) return;
-    renderedConversationId = id;
-    emit("displayed", id, isUserOpened);
+    if (shouldFollow && !quoteJump.value) scrollToBottom();
+    else handleScroll();
   },
-  { immediate: true, flush: "post" },
+  { immediate: true },
 );
+
+useResizeObserver(scrollRef, () => {
+  if (isAtLatest.value && !quoteJump.value) scrollToBottom();
+  else handleScroll();
+});
 
 onMounted(() => {
   clock = setInterval(() => (now.value = Date.now()), 30_000);
 });
 onBeforeUnmount(() => clearInterval(clock));
 
-function scrollToBottom() {
-  if (scrollRef.value) scrollRef.value.scrollTop = scrollRef.value.scrollHeight;
-}
-function isNearBottom() {
+function isScrolledToBottom() {
   const el = scrollRef.value;
-  return !el || el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  return !el || el.scrollHeight - el.scrollTop - el.clientHeight <= 2;
+}
+function reportLatestDisplayed() {
+  if (!props.messages.length) return;
+  emit("displayed", props.detail.id, !hasDisplayedMessages);
+  hasDisplayedMessages = true;
+}
+function handleScroll() {
+  if (!scrollRef.value) return;
+  const wasAtLatest = isAtLatest.value;
+  isAtLatest.value = isScrolledToBottom();
+  if (!wasAtLatest && isAtLatest.value && !quoteJump.value) reportLatestDisplayed();
+}
+function scrollToBottom() {
+  const el = scrollRef.value;
+  if (!el) return;
+  el.scrollTop = el.scrollHeight;
+  isAtLatest.value = true;
+  reportLatestDisplayed();
+}
+function handleJumpToLatest() {
+  quoteJump.value = undefined;
+  scrollToBottom();
+  scrollRef.value?.focus({ preventScroll: true });
+}
+function findMessageElement(id: string) {
+  return scrollRef.value?.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(id)}"]`);
+}
+async function handleJumpToReply(messageId: string) {
+  const jump = { messageId };
+  quoteJump.value = jump;
+  try {
+    let target = findMessageElement(messageId);
+    while (!target && props.hasOlder) {
+      const loaded = await props.loadOlder();
+      await nextTick();
+      if (quoteJump.value !== jump || !scrollRef.value) return;
+      target = findMessageElement(messageId);
+      if (!loaded) break;
+    }
+    const scroller = scrollRef.value;
+    if (!scroller) return;
+    if (!target) {
+      ElMessage.warning(t("whatsapp.quotedMessageUnavailable"));
+      return;
+    }
+    const targetRect = target.getBoundingClientRect();
+    const targetTop = scroller.scrollTop + targetRect.top - scroller.getBoundingClientRect().top;
+    scroller.scrollTop = targetTop - Math.max(0, (scroller.clientHeight - targetRect.height) / 2);
+    target.focus({ preventScroll: true });
+  } catch (cause) {
+    if (quoteJump.value === jump && scrollRef.value) ElMessage.error(websiteErrorMessage(cause));
+  } finally {
+    if (quoteJump.value === jump) {
+      quoteJump.value = undefined;
+      handleScroll();
+    }
+  }
+}
+async function handleLoadOlder() {
+  try {
+    await props.loadOlder();
+  } catch (cause) {
+    if (scrollRef.value) ElMessage.error(websiteErrorMessage(cause));
+  }
 }
 function sourceLabel(message: WhatsappMessage) {
   return messageSourceLabel(message, t);
@@ -636,6 +724,7 @@ function handleSend() {
   }
   draft.value = "";
   replyTo.value = undefined;
+  quoteJump.value = undefined;
   // 发送记录由父组件同步加入待发送列表，渲染后滚到最新一条。
   void nextTick(scrollToBottom);
 }
@@ -701,6 +790,10 @@ async function handleDownload(message: WhatsappMessage) {
   flex-direction: column;
   gap: 4px;
   max-width: 78%;
+
+  &:focus {
+    @apply rounded-[14px] outline-2 outline-offset-2 outline-[var(--el-color-primary)];
+  }
 
   &--inbound {
     align-self: flex-start;
