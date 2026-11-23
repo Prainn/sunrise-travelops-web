@@ -4,6 +4,7 @@ import type {
   WebsiteAttraction,
   VehicleType,
   WebsiteDay,
+  WebsiteHotelStay,
   WebsiteInquiryInput,
   WebsiteItineraryInput,
   WebsiteMeal,
@@ -85,6 +86,11 @@ export function emptyDay(dayNumber: number): WebsiteDay {
 export function isMealArranged(meal: WebsiteMeal) {
   return Boolean(meal.resourceId || meal.restaurantZh || meal.restaurantEn) || meal.feeState !== "SELF_PAY";
 }
+
+export function isHotelBreakfastArranged(hotel: WebsiteHotelStay) {
+  return hotel.breakfastIncluded && Boolean(hotel.nameZh.trim() || hotel.nameEn.trim());
+}
+
 export function emptyItinerary(
   inquiry: WebsiteInquiryInput,
   configVersion: number,

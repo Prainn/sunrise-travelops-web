@@ -1812,6 +1812,7 @@
     "guideLanguageTooLong": "Guide language must be at most 100 characters",
     "guideLanguagePlaceholder": "e.g. English",
     "transportLegs": "Transport legs",
+    "numberedTransportLeg": "Transport leg {number}",
     "hotelPlans": "Hotel options",
     "hotelRequiredHint": "If hotels are arranged, each priced tier must cover every overnight day, with one hotel per tier per day.",
     "hotelTier": "Hotel tier",
@@ -1821,13 +1822,14 @@
     "hotelTierD": "D 2-star and below",
     "configHotelPrice": "Website price (internal reference): {price} CNY/room/night",
     "hotelBreakfastIncluded": "Breakfast included in this option",
+    "hotelBreakfastNotice": "Breakfast is included at {hotels}",
+    "breakfastArrangementNotice": "Breakfast is already arranged for this day",
     "hotelNameZh": "Chinese hotel name",
     "hotelNameEn": "English hotel name",
     "roomType": "Room type",
     "roomTypePlaceholder": "e.g. Twin Room",
     "mealsAndServices": "Meals and services",
     "mealFees": {
-      "breakfast": "Daily breakfast fee",
       "lunch": "Lunch fee",
       "dinner": "Dinner fee"
     },
@@ -1840,6 +1842,8 @@
     "transportMode": "Transport mode",
     "transportNameZh": "Chinese transport leg description",
     "transportNameEn": "English transport leg description",
+    "airportPickup": "Airport pickup",
+    "airportDropoff": "Airport drop-off",
     "pricePlaceholder": "Blank = excluded",
     "priceCategories": {
       "hotel": "Hotel",
@@ -1887,6 +1891,8 @@
       "component": "Component"
     },
     "parentAttraction": "Part of: {name}",
+    "selectedAttractions": "Selected: {names}",
+    "dayAttractionLimit": "You can add up to {max} attractions or components per day.",
     "attractionPrice": "Attraction price",
     "attractionPriceValue": "{price} CNY",
     "attractionPriceLine": "Attraction price: {price}",

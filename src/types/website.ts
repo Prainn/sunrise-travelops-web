@@ -165,6 +165,8 @@ export interface WebsiteItem {
   feeState: FeeState;
 }
 export interface WebsiteLeg {
+  isAirportPickup?: boolean;
+  isAirportDropoff?: boolean;
   vehicleType?: string | null;
   distanceKm?: string | null;
   durationMinutes?: number | null;
@@ -287,6 +289,10 @@ export interface WebsiteValidation {
   severity: "ERROR" | "WARNING";
   message: string;
   dayNumber?: number;
+  target?:
+    | { kind: "basics" | "prices" | "reorder" | "reschedule" | "addTransport" }
+    | { kind: "event"; id: string }
+    | { kind: "hotel"; tier?: WebsiteHotelTier };
 }
 export interface WebsiteOutputDay {
   day: string;

@@ -82,8 +82,7 @@ import type { WebsiteDay, WebsiteItinerary } from "@/types/website";
 import { serviceDateRanges, serviceDayDate } from "@/utils/service-dates";
 import { defaultRescheduleTargets, rescheduleDiff, type RescheduleTargets } from "../reschedule";
 
-/** el-select 选项值不能为 null，回收站以空字符串表示。 */
-const RECYCLE = "";
+const RECYCLE = "recycle";
 const props = defineProps<{
   modelValue: boolean;
   plan: WebsiteItinerary;
@@ -125,7 +124,7 @@ function addedSource(date: string) {
 }
 async function submit() {
   if (props.saving) return;
-  const selected = Object.fromEntries(Object.entries(targets.value).map(([id, date]) => [id, date || null]));
+  const selected = Object.fromEntries(Object.entries(targets.value).map(([id, value]) => [id, value === RECYCLE ? null : value]));
   if (await props.apply(selected)) emit("update:modelValue", false);
 }
 watch(() => props.modelValue, (opened) => {

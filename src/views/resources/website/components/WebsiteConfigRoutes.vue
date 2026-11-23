@@ -157,10 +157,11 @@
               <div class="flex w-full min-w-0 flex-col gap-[12px]">
                 <DataTable :data="record.vehicleOptions" :empty-text="$t('websiteReport.notSpecified')">
                   <el-table-column :label="$t('websiteReport.vehicleType')" min-width="180">
-                    <template #default="{ row }">
+                    <template #default="{ row, $index }">
                       <BusinessDictionarySelect
                         v-model="row.vehicleType"
                         type-code="vehicle-type"
+                        :disabled-values="vehicleTypesInOtherRows($index)"
                         :placeholder="$t('websiteReport.vehicleSelectOrEnter')"
                         :aria-label="$t('websiteReport.vehicleType')"
                         @update:model-value="formRef?.validateField('vehicleOptions').catch(() => undefined)"
@@ -290,6 +291,13 @@ const { t } = useI18n();
 function getOptionLabel(options: Array<{ value: string; labelKey: string }>, value: string) {
   const labelKey = options.find((option) => option.value === value)?.labelKey;
   return labelKey ? t(labelKey) : value;
+}
+
+function vehicleTypesInOtherRows(rowIndex: number) {
+  return (record.value?.vehicleOptions ?? [])
+    .filter((_, index) => index !== rowIndex)
+    .map(option => option.vehicleType.trim())
+    .filter(Boolean);
 }
 
 function openEditor(route?: WebsiteRoute, onlyDuration = false) {

@@ -1,6 +1,7 @@
 import type { WebsiteDay, WebsiteItineraryInput } from "@/types/website";
 import { serviceDayDate } from "@/utils/service-dates";
 import { emptyDay } from "../options";
+import { alignAirportTransfers } from "./airport-transfers";
 
 type Calendar = Pick<WebsiteItineraryInput, "days" | "deletedDays" | "startDate" | "serviceDates" | "duration">;
 export interface ScheduledDay {
@@ -50,7 +51,7 @@ export function applyReschedule(
 ): Calendar {
   if (!dates) {
     return {
-      days: plan.days.map((day, index) => ({ ...day, dayNumber: index + 1 })),
+      days: alignAirportTransfers(plan.days.map((day, index) => ({ ...day, dayNumber: index + 1 })), plan.days.length),
       deletedDays: plan.deletedDays ?? [],
       serviceDates: null,
       startDate: inquiry.startDate,
@@ -66,7 +67,7 @@ export function applyReschedule(
     else recycled.push({ day, originalDate: date });
   }
   return {
-    days: dates.map((date, index) => ({ ...(byDate.get(date) ?? emptyDay(index + 1)), dayNumber: index + 1 })),
+    days: alignAirportTransfers(dates.map((date, index) => ({ ...(byDate.get(date) ?? emptyDay(index + 1)), dayNumber: index + 1 })), dates.length),
     deletedDays: [...(plan.deletedDays ?? []), ...recycled],
     serviceDates: [...dates],
     startDate: dates[0] ?? null,
