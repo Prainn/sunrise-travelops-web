@@ -1,10 +1,11 @@
 /* eslint vue/one-component-per-file: off -- Explicit renderer stubs exercise dialog state. */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRenderer, defineComponent, h, nextTick, ref, type ComponentPublicInstance } from "vue";
-import type { WebsiteDay, WebsiteItinerary } from "@/types/website";
+import type { WebsiteConfig, WebsiteDay, WebsiteItinerary } from "@/types/website";
 import { emptyDay, emptyInquiry, emptyItinerary } from "../../options";
 import { PRICE_CATEGORIES } from "../vehicle-price";
-vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
+vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key, locale: ref("zh-cn") }) }));
+vi.mock("./WebsiteHotelDialog.vue", () => ({ default: { template: "<div />" } }));
 vi.mock("@/components/AppDialog/index.vue", () => ({ default: {
   render(this: ComponentPublicInstance) { return h("dialog", [...(this.$slots.default?.() ?? []), ...(this.$slots.footer?.() ?? [])]); },
 } }));
@@ -36,7 +37,7 @@ function day(): WebsiteDay {
   value.hotels = (["A", "B"] as const).map(tier => ({ id: tier, tier, cityId: "city", configHotelId: null, resourceId: null, nameZh: tier, nameEn: tier, roomType: "", breakfastIncluded: true }));
   return value;
 }
-async function mount(attractionPriceTotal: string | null = "0.00") {
+async function mount(attractionPriceTotal: string | null = "0.00", config?: WebsiteConfig) {
   const visible = ref(false);
   const plan = ref<WebsiteItinerary>({ ...emptyItinerary(emptyInquiry(), 0, "Test"), businessUnit: "website", id: "plan", inquiryId: "inquiry", code: "WIT-1", status: "draft", version: 1, createdAt: "", updatedAt: "", pax: 2, days: [day()], vehiclePrices: [
     { vehicleType: "7_seat", hotelTier: "A", unitPrice: "10000.00", priceComponents: components(["2000", "1000", "3000", "2000", "2000"]) },
@@ -44,9 +45,9 @@ async function mount(attractionPriceTotal: string | null = "0.00") {
     { vehicleType: "7_seat", hotelTier: "C", unitPrice: "8000.00", priceComponents: components(["8000", "0", "0", "0", "0"]) },
   ] });
   const root = node("root");
-  const app = renderer.createApp(defineComponent({ setup() { return () => h(WebsiteVehiclePrices, { modelValue: visible.value, "onUpdate:modelValue": (value: boolean) => visible.value = value, plan: plan.value, editable: true, attractionPriceTotal }); } }));
+  const app = renderer.createApp(defineComponent({ setup() { return () => h(WebsiteVehiclePrices, { modelValue: visible.value, "onUpdate:modelValue": (value: boolean) => visible.value = value, plan: plan.value, editable: true, attractionPriceTotal, config }); } }));
   app.config.globalProperties.$t = ((key: string, values?: unknown) => values ? `${key}:${JSON.stringify(values)}` : key) as typeof app.config.globalProperties.$t;
-  for (const name of ["ElForm", "ElFormItem", "ElCheckbox", "ElInput", "ElButton", "ElAlert", "ElTag"]) app.component(name, defineComponent({ inheritAttrs: false, setup(_, { attrs, slots }) { return () => h(name, attrs, slots.default?.()); } }));
+  for (const name of ["ElForm", "ElFormItem", "ElCheckbox", "ElInput", "ElButton", "ElAlert", "ElTag", "ElRadioGroup", "ElRadioButton", "ElInputNumber"]) app.component(name, defineComponent({ inheritAttrs: false, setup(_, { attrs, slots }) { return () => h(name, attrs, slots.default?.()); } }));
   app.mount(root);
   unmount = () => app.unmount();
   function find(type: string, current = root): HostNode[] { return [...(current.type === type ? [current] : []), ...current.children.flatMap(child => find(type, child))]; }
@@ -61,6 +62,51 @@ async function mount(attractionPriceTotal: string | null = "0.00") {
 const row = (plan: WebsiteItinerary, hotelTier: "A" | "B" | "C") => plan.vehiclePrices.find(price => price.vehicleType === "7_seat" && price.hotelTier === hotelTier);
 
 describe("vehicle × hotel tier price editing", () => {
+  it("seeds a consecutive stay from its bound reference and can split a single night", async () => {
+    const config: WebsiteConfig = { version: 2, cities: [], attractions: [], routes: [], skeletons: [], patterns: [], templates: [],
+      hotels: [{ id: "reference", status: "enabled", cityId: "city", nameZh: "酒店", nameEn: "Hotel", resourceId: null, price: "615.00" }] };
+    const view = await mount(null, config);
+    await view.press("common.cancel");
+    view.plan.value.days = [1, 2, 3, 4].map(dayNumber => {
+      const item = day();
+      return { ...item, dayNumber, id: `day-${dayNumber}`, hotels: [{ ...item.hotels[0]!, id: `hotel-${dayNumber}`, configHotelId: "reference" }] };
+    });
+    await view.open();
+    await view.change(view.find("ElRadioGroup")[0]!, "nightly");
+    const quantities = () => view.find("ElInputNumber");
+    expect(quantities()).toHaveLength(1);
+    expect(view.inputs()[0]!.props["model-value"]).toBe("615.00");
+    await view.change(quantities()[0]!, 1);
+    expect(view.text()).toContain("2460.00");
+    await view.press("websiteItineraryUi.editIndividualNights");
+    expect(quantities()).toHaveLength(4);
+    await view.change(view.inputs()[2]!, "0");
+    await view.press("common.confirm");
+    expect(view.plan.value.days.map(item => item.hotels[0]!.nightlyRate)).toEqual(["615.00","615.00","0","615.00"]);
+  });
+  it("keeps nightly edits and tiered amounts independent through switch, cancel and reopen", async () => {
+    const view = await mount();
+    const oldPrices = view.plan.value.vehiclePrices.map(price => ({ ...price, priceComponents: price.priceComponents?.map(item => ({ ...item })) }));
+    const switchTo = async (mode: string) => view.change(view.find("ElRadioGroup")[0]!, mode);
+    await switchTo("nightly");
+    const hotelControls = () => view.find("fieldset").at(-1)!;
+    await view.change(view.find("ElCheckbox", hotelControls())[0]!, true);
+    await view.change(view.find("ElInputNumber", hotelControls())[0]!, 2);
+    await view.change(view.find("ElInput", hotelControls())[0]!, "615");
+    await switchTo("tiered");
+    expect(view.inputs()[0]!.props["model-value"]).toBe("2000");
+    await switchTo("nightly");
+    expect(view.text()).toContain("1230.00");
+    await view.press("common.confirm");
+    expect(view.plan.value.days[0]!.hotels[0]).toMatchObject({ nightlyRooms: 2, nightlyRate: "615" });
+    expect(view.plan.value.hotelPricingMode).toBe("nightly");
+    expect(view.plan.value.vehiclePrices).toEqual(oldPrices);
+    await view.open();
+    await view.change(view.find("ElInput", hotelControls())[0]!, "100");
+    await view.press("common.cancel");
+    await view.open();
+    expect(view.find("ElInput", hotelControls())[0]!.props["model-value"]).toBe("615");
+  });
   it("saves a price with a null hotel tier when overnight cities have no hotels", async () => {
     const view = await mount();
     await view.press("common.cancel");

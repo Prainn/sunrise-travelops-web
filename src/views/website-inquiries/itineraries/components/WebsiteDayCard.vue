@@ -135,8 +135,9 @@
         v-model:day="day"
         :config="config"
         :editable="editable && !saving"
+        :nightly="nightly"
         @remove="(id, name) => emit('remove-item', id, name)"
-        @edit="(index) => emit('open-resource', { kind: 'hotel', tier: day.hotels[index]?.tier })"
+        @edit="(index) => emit('open-resource', { kind: 'hotel', id: day.hotels[index]?.id, tier: day.hotels[index]?.tier })"
       />
       <WebsiteDayMealsServices
         ref="servicesCard"
@@ -171,11 +172,12 @@ import { websiteGuideBoardId } from "../day-order";
 
 export type WebsiteResourceSelection =
   | { kind: "attraction" | "transport" | "guide" }
-  | { kind: "hotel"; tier?: WebsiteHotelTier }
+  | { kind: "hotel"; id?: string; tier?: WebsiteHotelTier }
   | { kind: "meal"; slot: WebsiteMeal["slot"] };
 
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{
+  nightly?: boolean;
   sequence?: { id: string; label: string }[];
   config: WebsiteConfig;
   selectableCityIds: ReadonlySet<string>;

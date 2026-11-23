@@ -149,7 +149,7 @@ const issueGroups = computed(() => {
 });
 function issueText(issue: WebsiteValidation) {
   const legNumber = issue.target?.kind === "event" ? legNumbers.value.get(issue.target.id) : undefined;
-  const legLabel = legNumber ? ` · ${t("websiteItineraryUi.numberedTransportLeg", { number: legNumber })}` : "";
+  const legLabel = legNumber ? ` (${t("websiteItineraryUi.numberedTransportLeg", { number: legNumber })})` : "";
   return `${issue.code}${issue.dayNumber ? ` D${issue.dayNumber}` : ""}${legLabel}：${issue.message}`;
 }
 const hasErrors = computed(

@@ -17,7 +17,6 @@ import type {
 import type { HotelRecord } from "@/types/resource";
 import { clonePlainData, createId, divideMoney, formatDateTime, roundMoney, sumMoney } from "@/utils";
 import { itineraryDayDate, plannedEndDate } from "./duration";
-import { transitionInquiry } from "../inquiry-workflow";
 import {
   createDefaultHotelPlans,
   getHotelPlan,
@@ -47,9 +46,7 @@ const SERIES_ITINERARY_BASE_DATE = "2000-01-01";
 interface ItineraryEditorOptions {
   inquiry: Readonly<Ref<InquiryRecord | undefined>>;
   inquiryId: ComputedRef<string>;
-  itineraryStore: ItineraryRecord[];
   selectedItinerary: ComputedRef<ItineraryRecord | undefined>;
-  selectedItineraryId: Ref<string>;
   canCreate: () => boolean;
   canEditContent: () => boolean;
   canEditPrice: () => boolean;
@@ -117,12 +114,6 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       endDate: plannedEndDate(startDate, plannedDays),
     };
     syncQuoteOptions(created);
-    options.itineraryStore.unshift(created);
-    options.inquiry.value.status = transitionInquiry(
-      options.inquiry.value.status,
-      "itinerary_created",
-    );
-    options.selectedItineraryId.value = created.id;
     return created;
   }
 
@@ -182,18 +173,28 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
   }
 
   function updateDayField(index: number, field: EditableDayField, value: string | null) {
-    if (!options.canEditContent()) return;
     const plan = options.selectedItinerary.value;
-    const day = plan?.dailyPlans[index];
-    if (!plan || !day) return;
+    if (plan && options.canEditContent()) updatePlanDayField(plan, index, field, value);
+  }
+
+  function setRouteEndpoint(day: ItineraryDayRecord, field: "departure" | "destination", city: string) {
+    day[field] = city;
+    if (day.viaDestinations.includes(city)) day.viaDestinations = day.viaDestinations.filter(via => via !== city);
+  }
+
+  function updatePlanDayField(plan: ItineraryRecord, index: number, field: EditableDayField, value: string | null) {
+    const day = plan.dailyPlans[index];
+    if (!day) return;
     const oldOvernight = day.overnightDestination;
     const isLast = index === plan.dailyPlans.length - 1;
     if (field === "overnightDestination") {
       day.overnightDestination = value;
-    } else {
-      day[field] = value ?? "";
+    } else if (field === "departure" || field === "destination") {
+      setRouteEndpoint(day, field, value ?? "");
       if (field === "destination" && !isLast && oldOvernight !== "")
         day.overnightDestination = value || null;
+    } else {
+      day[field] = value ?? "";
     }
     const next = plan.dailyPlans[index + 1];
     if (
@@ -202,19 +203,36 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
       day.overnightDestination !== oldOvernight &&
       (!next.departure || next.departure === oldOvernight)
     )
-      next.departure = day.overnightDestination ?? "";
-    if (day.overnightDestination !== oldOvernight) syncQuoteOptions(plan);
-    touchSelectedItinerary(day.overnightDestination !== oldOvernight);
+      setRouteEndpoint(next, "departure", day.overnightDestination ?? "");
+    if (day.overnightDestination !== oldOvernight) {
+      syncQuoteOptions(plan);
+      syncBreakfast(plan, true);
+    }
+    plan.updatedAt = formatDateTime(new Date());
   }
 
-  /** 途经地只能取当前行程目的地，按数组顺序保存，不影响住宿与下一日出发默认。 */
+  /** 首次编排按卡片移动整天，已选的城市和明确不住宿均随卡保留。 */
+  function moveInitialDay(plan: ItineraryRecord, from: number, to: number) {
+    const day = plan.dailyPlans[from];
+    if (!day || !plan.dailyPlans[to] || from === to) return;
+    plan.dailyPlans.splice(from, 1);
+    plan.dailyPlans.splice(to, 0, day);
+    syncPlanDates(plan);
+    syncBreakfast(plan, true);
+  }
+
   function updateViaDestinations(index: number, cities: string[]) {
-    if (!options.canEditContent()) return;
     const plan = options.selectedItinerary.value;
-    const day = plan?.dailyPlans[index];
-    if (!plan || !day) return;
-    day.viaDestinations = [...new Set(cities)].filter((city) => plan.destinations.includes(city));
-    touchSelectedItinerary();
+    if (plan && options.canEditContent()) updatePlanViaDestinations(plan, index, cities);
+  }
+
+  function updatePlanViaDestinations(plan: ItineraryRecord, index: number, cities: string[]) {
+    const day = plan.dailyPlans[index];
+    if (!day) return;
+    day.viaDestinations = [...new Set(cities)].filter(
+      city => plan.destinations.includes(city) && city !== day.departure && city !== day.destination,
+    );
+    plan.updatedAt = formatDateTime(new Date());
   }
 
   function addResourceItem(
@@ -653,6 +671,9 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
     clearHotelPlan,
     createEmptyItinerary,
     createItinerary,
+    moveInitialDay,
+    updatePlanDayField,
+    updatePlanViaDestinations,
     removeItem,
     updateDayField,
     updateViaDestinations,

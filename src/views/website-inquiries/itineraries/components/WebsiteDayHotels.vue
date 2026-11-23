@@ -14,23 +14,23 @@
         {{ $t("common.create") }}
       </el-button>
     </div>
-    <p v-if="editable && day.overnightCityId && tiersFull" class="m-0 text-[12px] text-muted">
+    <p v-if="editable && day.overnightCityId && !nightly && tiersFull" class="m-0 text-[12px] text-muted">
       {{ $t("websiteItineraryUi.hotelTiersFull") }}
     </p>
     <el-alert
-      v-if="day.overnightCityId && !day.hotels.length"
+      v-if="day.overnightCityId && !displayedHotels.length"
       :title="$t('websiteItineraryUi.hotelRequiredHint')"
       type="info"
       :closable="false"
     />
-    <p v-if="!day.overnightCityId && !day.hotels.length" class="m-0 text-[12px] text-muted">
+    <p v-if="!day.overnightCityId && !displayedHotels.length" class="m-0 text-[12px] text-muted">
       {{ $t("itinerary.noOvernightStay") }}
     </p>
-    <p v-if="day.hotels.length > 1" class="m-0 text-[12px] text-muted">
+    <p v-if="!nightly && displayedHotels.length > 1" class="m-0 text-[12px] text-muted">
       {{ $t("websiteItineraryUi.hotelAlternativesHint") }}
     </p>
     <div
-      v-for="(hotel, index) in day.hotels"
+      v-for="hotel in displayedHotels"
       :key="hotel.id"
       class="flex items-start gap-3 p-3 rounded-[var(--custom-radius)] bg-surface border border-solid border-[var(--divider-color)]"
     >
@@ -56,7 +56,7 @@
         </span>
       </div>
       <div v-if="editable" class="flex shrink-0 self-start">
-        <el-button link type="primary" @click="emit('edit', index)">
+        <el-button link type="primary" @click="emit('edit', day.hotels.indexOf(hotel))">
           {{ $t("common.edit") }}
         </el-button>
         <el-button link type="danger" @click="emit('remove', hotel.id, hotelName(hotel) || $t('websiteItineraryUi.hotelNameMissing'))">
@@ -73,12 +73,13 @@ import { HOTEL_TIERS } from "../vehicle-price";
 import { formatMoney } from "@/utils";
 import type { WebsiteConfig, WebsiteDay, WebsiteHotelStay } from "@/types/website";
 const day = defineModel<WebsiteDay>("day", { required: true });
-const props = defineProps<{ config: WebsiteConfig; editable: boolean }>();
+const props = defineProps<{ config: WebsiteConfig; editable: boolean; nightly?: boolean }>();
 /** index 为 -1 表示新增 */
 const emit = defineEmits<{ edit: [index: number]; remove: [id: string, name: string] }>();
 const { locale } = useI18n();
 /** 同日每档最多一家酒店，四档用完后不可新增。 */
-const tiersFull = computed(() => HOTEL_TIERS.every((tier) => day.value.hotels.some((hotel) => hotel.tier === tier)));
+const displayedHotels = computed(() => day.value.hotels.filter(h => props.nightly || !h.nightlyOnly));
+const tiersFull = computed(() => props.nightly ? day.value.hotels.length >= 100 : HOTEL_TIERS.every(tier => displayedHotels.value.some(h => h.tier === tier)));
 function hotelName(hotel: WebsiteHotelStay) {
   return (locale.value === "en" ? hotel.nameEn : hotel.nameZh) || hotel.nameZh || hotel.nameEn;
 }

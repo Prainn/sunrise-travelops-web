@@ -14,9 +14,7 @@ function editorFor(isSeries: boolean) {
   const editor = useItineraryEditor({
     inquiry,
     inquiryId: computed(() => "inquiry-id"),
-    itineraryStore: [],
     selectedItinerary: computed<ItineraryRecord | undefined>(() => undefined),
-    selectedItineraryId: ref(""),
     canCreate: () => true,
     canEditContent: () => true,
     canEditPrice: () => true,
@@ -65,6 +63,67 @@ describe("new itinerary dates", () => {
   });
 });
 
+describe("initial route planning", () => {
+  it("saves ordered optional stops with their day and leaves the overnight city and next departure alone", () => {
+    const editor = editorFor(false);
+    const plan = editor.createItinerary({
+      ...editor.createEmptyItinerary(), destinations: ["昆明", "大理", "丽江", "楚雄", "保山"],
+    })!;
+    editor.updatePlanDayField(plan, 0, "departure", "昆明");
+    editor.updatePlanDayField(plan, 0, "destination", "大理");
+    editor.updatePlanDayField(plan, 0, "overnightDestination", "保山");
+    editor.updatePlanViaDestinations(plan, 0, ["楚雄", "大理", "丽江", "上海", "昆明", "楚雄"]);
+    expect(plan.dailyPlans[0]!.viaDestinations).toEqual(["楚雄", "丽江"]);
+    editor.updatePlanViaDestinations(plan, 0, ["丽江", "楚雄"]);
+    expect(plan.dailyPlans[0]!.overnightDestination).toBe("保山");
+    expect(plan.dailyPlans[1]!.departure).toBe("保山");
+
+    const dayId = plan.dailyPlans[0]!.id;
+    editor.moveInitialDay(plan, 0, 1);
+    const days = itineraryInput(plan).dailyPlans;
+    expect(days[0]!.viaDestinations).toEqual([]);
+    expect(days[1]).toMatchObject({ id: dayId, viaDestinations: ["丽江", "楚雄"], overnightDestination: "保山" });
+    editor.updatePlanViaDestinations(plan, 1, []);
+    expect(itineraryInput(plan).dailyPlans[1]!.viaDestinations).toEqual([]);
+  });
+
+  it("removes a stop when it becomes an endpoint, including an inherited next-day departure", () => {
+    const editor = editorFor(false);
+    const plan = editor.createItinerary({ ...editor.createEmptyItinerary(), destinations: ["昆明", "大理", "丽江"] })!;
+    editor.updatePlanViaDestinations(plan, 0, ["大理", "丽江"]);
+    editor.updatePlanViaDestinations(plan, 1, ["昆明", "大理"]);
+    editor.updatePlanDayField(plan, 0, "destination", "大理");
+    expect(plan.dailyPlans[0]!.viaDestinations).toEqual(["丽江"]);
+    expect(plan.dailyPlans[1]).toMatchObject({ departure: "大理", viaDestinations: ["昆明"] });
+    editor.updatePlanDayField(plan, 0, "departure", "丽江");
+    expect(plan.dailyPlans[0]!.viaDestinations).toEqual([]);
+  });
+
+  it("keeps explicit stays and route edits with the day while dates follow the new order", () => {
+    const editor = editorFor(false);
+    const plan = editor.createItinerary({
+      ...editor.createEmptyItinerary(), startDate: "2026-12-31", destinations: ["昆明", "大理", "丽江"],
+    })!;
+    editor.updatePlanDayField(plan, 0, "departure", "昆明");
+    editor.updatePlanDayField(plan, 0, "destination", "大理");
+    expect(plan.dailyPlans[1]!.departure).toBe("大理");
+    editor.updatePlanDayField(plan, 1, "departure", "丽江");
+    editor.updatePlanDayField(plan, 0, "overnightDestination", "");
+    editor.updatePlanDayField(plan, 0, "destination", "昆明");
+    editor.updatePlanDayField(plan, 1, "destination", "返程机场");
+    editor.updatePlanDayField(plan, 1, "overnightDestination", "大理");
+    const ids = plan.dailyPlans.map(day => day.id);
+    editor.moveInitialDay(plan, 1, 0);
+
+    expect(itineraryInput(plan).dailyPlans.map(day => [
+      day.id, day.dayNumber, day.date, day.departure, day.destination, day.overnightDestination,
+    ])).toEqual([
+      [ids[1], 1, "2026-12-31", "丽江", "返程机场", "大理"],
+      [ids[0], 2, "2027-01-01", "昆明", "昆明", ""],
+    ]);
+  });
+});
+
 describe("optional ordinary start date", () => {
   it("creates D1–Dn without dates, fills dates later and clears them explicitly", () => {
     const editor = editorFor(false);
@@ -73,13 +132,10 @@ describe("optional ordinary start date", () => {
     expect(plan.endDate).toBe("");
     expect(itineraryInput(plan).startDate).toBe("");
 
-    const store = [plan];
     const selected = useItineraryEditor({
       inquiry: ref({ isSeries: false, plannedDays: 2, status: "planning" } as InquiryRecord),
       inquiryId: computed(() => "inquiry-id"),
-      itineraryStore: store,
       selectedItinerary: computed(() => plan),
-      selectedItineraryId: ref(plan.id),
       canCreate: () => true,
       canEditContent: () => true,
       canEditPrice: () => true,
@@ -103,9 +159,7 @@ describe("per-day hotels and other-cost totals", () => {
     return useItineraryEditor({
       inquiry: ref({ isSeries: false, plannedDays: 3, status: "new" } as InquiryRecord),
       inquiryId: computed(() => "inquiry-id"),
-      itineraryStore: [],
       selectedItinerary: computed(() => plan),
-      selectedItineraryId: ref(plan.id),
       canCreate: () => true,
       canEditContent: () => true,
       canEditPrice: () => true,

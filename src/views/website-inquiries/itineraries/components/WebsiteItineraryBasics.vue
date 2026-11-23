@@ -88,7 +88,10 @@ const formRef = ref<FormInstance>();
 const formSession = ref(0);
 const form = reactive<Basics>(pickBasics());
 const serviceDatesLabel = computed(() =>
-  `${serviceDateRanges(props.plan.serviceDates ?? []).join(t("websiteInquiry.listSeparator"))} · ${t("websiteWorkspace.serviceDatesSummary", { count: props.plan.serviceDates?.length ?? 0 })}`,
+  t("websiteWorkspace.serviceDatesWithCount", {
+    dates: serviceDateRanges(props.plan.serviceDates ?? []).join(t("websiteInquiry.listSeparator")),
+    count: props.plan.serviceDates?.length ?? 0,
+  }),
 );
 const rules = computed<FormRules>(() => ({
   title: [{ required: true, whitespace: true, message: t("itinerary.titleRequired"), trigger: "blur" }],

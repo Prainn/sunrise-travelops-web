@@ -73,6 +73,22 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh"): 
     return `${meta}${tables || `<p class="empty">${escapeHtml(text("noQuotation"))}</p><table class="notes"><tbody>${notesRows(1)}</tbody></table>`}`;
   };
   const hotelsV5 = () => {
+    if (output.hotelPricingMode === "nightly" && output.hotelOptions.length) {
+      const showMoney = output.nightlyHotelTotal !== undefined || output.hotelOptions.some(h => h.nightlyRate !== undefined);
+      const headers = [text("stay"), text("hotel"), text("roomType"), text("nightlyRoomCount"), ...(showMoney ? [text("nightlyCharge")] : [])];
+      const widths = showMoney ? [27, 26, 19, 9, 19] : [31, 32, 24, 13];
+      const rows = output.hotelOptions.map(hotel => {
+        const stay = hotel.startDate && hotel.checkoutDate ? `${hotel.startDate} → ${hotel.checkoutDate}` : `D${hotel.startDay} → D${(hotel.endDay ?? 0) + 1}`;
+        const nights = text(hotel.nights === 1 ? "night" : "nights", { count: hotel.nights ?? 1 });
+        const breakfast = text(hotel.breakfastIncluded ? "breakfastIncluded" : "breakfastExcluded");
+        const cells = [[stay, hotel.city, nights].join(" · "), [hotel.hotel, hotel.tierLabel].filter(Boolean).join(" · "),
+          [hotel.roomType, breakfast].filter(Boolean).join(" · "), String(hotel.roomCount ?? "—"),
+          ...(showMoney ? [[hotel.nightlyRate ?? "—", hotel.subtotal ?? "—"].join(" / ")] : [])];
+        return `<tr>${cells.map(value => `<td>${escapeHtml(value)}</td>`).join("")}</tr>`;
+      }).join("");
+      const total = output.nightlyHotelTotal === undefined ? "" : `<tr><th colspan="4">${text("hotelGroupTotal")}</th><td>${escapeHtml(output.nightlyHotelTotal)}</td></tr>`;
+      return `<table class="hotels-v5"><colgroup>${widths.map(width => `<col style="width:${width}%">`).join("")}</colgroup><thead><tr>${headers.map(label => `<th>${escapeHtml(label)}</th>`).join("")}</tr></thead><tbody>${rows}${total}</tbody></table>`;
+    }
     // 使用服务端合并后的 hotelOptions，仅按档次、起始日排序，不再去重。
     const sorted = [...output.hotelOptions].sort((a, b) => a.tier.localeCompare(b.tier) || (a.startDay ?? 0) - (b.startDay ?? 0));
     if (!sorted.length) return `<p class="empty">${escapeHtml(text("noHotels"))}</p>`;
