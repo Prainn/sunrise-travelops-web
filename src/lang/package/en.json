@@ -1843,6 +1843,8 @@
     "transportNameEn": "English transport leg description",
     "airportPickup": "Airport pickup",
     "airportDropoff": "Airport drop-off",
+    "airportPickupDescription": "Airport pickup timed to your flight.",
+    "airportDropoffDescription": "Airport drop-off timed to your flight.",
     "pricePlaceholder": "Blank = excluded",
     "priceCategories": {
       "hotel": "Hotel",

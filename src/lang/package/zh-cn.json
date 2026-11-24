@@ -1843,6 +1843,8 @@
     "transportNameEn": "交通段英文说明",
     "airportPickup": "接机",
     "airportDropoff": "送机",
+    "airportPickupDescription": "根据航班时间接机。",
+    "airportDropoffDescription": "根据航班时间送机。",
     "pricePlaceholder": "留空不计",
     "priceCategories": {
       "hotel": "酒店",

@@ -457,6 +457,10 @@ function apply() {
     white-space: nowrap;
   }
 
+  tbody td {
+    vertical-align: middle;
+  }
+
   td :deep(.el-input) {
     min-width: 88px;
   }
