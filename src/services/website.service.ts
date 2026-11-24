@@ -106,18 +106,22 @@ export function websiteInquiryInput(record: WebsiteInquiryInput): WebsiteInquiry
 export function websiteItineraryInput(record: WebsiteItineraryInput): WebsiteItineraryInput {
   return {
     title: record.title,
-    reorderDraft: record.reorderDraft ?? null,
+    ...(record.reorderDraft !== undefined ? { reorderDraft: record.reorderDraft } : {}),
     duration: record.duration,
     startDate: record.startDate,
-    serviceDates: record.serviceDates,
+    ...(record.serviceDates !== undefined ? { serviceDates: record.serviceDates } : {}),
     pax: record.pax,
     configVersion: record.configVersion,
     days: record.days,
-    deletedDays: record.deletedDays ?? [],
-    // 白名单映射：不回传 plan、includesDriver/includesGuide 等只读字段。
-    hotelPricingMode: record.hotelPricingMode ?? "tiered",
-    nightlyShowHotelPrice: record.nightlyShowHotelPrice ?? false,
-    nightlyVehiclePrices: (record.nightlyVehiclePrices ?? []).map(priceInput),
+    ...(record.deletedDays !== undefined ? { deletedDays: record.deletedDays } : {}),
+    // 白名单映射：不回传 plan、includesDriver/includesGuide 等只读字段；缺失可选字段不补默认值。
+    ...(record.hotelPricingMode !== undefined ? { hotelPricingMode: record.hotelPricingMode } : {}),
+    ...(record.nightlyShowHotelPrice !== undefined
+      ? { nightlyShowHotelPrice: record.nightlyShowHotelPrice }
+      : {}),
+    ...(record.nightlyVehiclePrices !== undefined
+      ? { nightlyVehiclePrices: record.nightlyVehiclePrices.map(priceInput) }
+      : {}),
     vehiclePrices: record.vehiclePrices.map(priceInput),
   };
 }
@@ -203,7 +207,17 @@ export const websiteService = {
   createItinerary(inquiryId: string, input: WebsiteItineraryInput & { inquiryVersion: number }) {
     return request.post<WebsiteItinerary>(
       `/website/inquiries/${encodeURIComponent(inquiryId)}/itineraries`,
-      { ...websiteItineraryInput(input), inquiryVersion: input.inquiryVersion },
+      {
+        ...websiteItineraryInput({
+          ...input,
+          reorderDraft: input.reorderDraft ?? null,
+          deletedDays: input.deletedDays ?? [],
+          hotelPricingMode: input.hotelPricingMode ?? "tiered",
+          nightlyShowHotelPrice: input.nightlyShowHotelPrice ?? false,
+          nightlyVehiclePrices: input.nightlyVehiclePrices ?? [],
+        }),
+        inquiryVersion: input.inquiryVersion,
+      },
     );
   },
   saveItinerary(record: WebsiteItinerary) {
