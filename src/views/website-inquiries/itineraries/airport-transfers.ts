@@ -1,3 +1,4 @@
+import type { Composer } from "vue-i18n";
 import type { WebsiteDay, WebsiteItinerary, WebsiteLeg } from "@/types/website";
 
 export interface AirportTransferOptions {
@@ -10,6 +11,17 @@ export function airportTransferOptions(plan: WebsiteItinerary, day?: WebsiteDay)
   const pickup = day.dayNumber === 1;
   const dropoff = day.dayNumber === (plan.serviceDates?.length ?? plan.days.length);
   if (pickup || dropoff) return { pickup, dropoff };
+}
+
+export function airportTransferPlaceholder(
+  leg: Pick<WebsiteLeg, "isAirportPickup" | "isAirportDropoff">,
+  locale: "zh-cn" | "en",
+  t: Composer["t"],
+): string {
+  const descriptions: string[] = [];
+  if (leg.isAirportPickup) descriptions.push(t("websiteItineraryUi.airportPickupDescription", {}, { locale }));
+  if (leg.isAirportDropoff) descriptions.push(t("websiteItineraryUi.airportDropoffDescription", {}, { locale }));
+  return descriptions.join(locale === "en" ? " " : "");
 }
 
 export function setTransportLeg(day: WebsiteDay, selected: WebsiteLeg) {

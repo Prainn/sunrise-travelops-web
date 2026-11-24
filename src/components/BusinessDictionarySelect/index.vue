@@ -11,6 +11,9 @@
     @visible-change="value => { if (value) loadItems(); }"
     @update:model-value="select"
   >
+    <template #label="{ label }">
+      {{ selectedLabel ?? label }}
+    </template>
     <el-option
       v-for="item in options"
       :key="item.value"
@@ -38,28 +41,38 @@ const props = withDefaults(defineProps<{
   disabledValues?: string[];
   sortBySeatCount?: boolean;
 }>(), { extraOptions: () => [], disabledValues: () => [] });
-const emit = defineEmits<{ "update:modelValue": [value: string] }>();
+const emit = defineEmits<{ "update:modelValue": [value: string, aliases?: string[]] }>();
 const { locale, t } = useI18n();
 const items = ref<BusinessCategoryOptionRecord[]>([]);
 const loading = ref(false);
-function matches(item: BusinessCategoryOptionRecord, value: string) {
-  if ([item.code, item.name, item.englishName].includes(value)) return true;
-  const fixedSeats = props.typeCode === "vehicle-type" ? /^(5|7|9|14|18)_seat$/.exec(value)?.[1] : undefined;
-  return Boolean(fixedSeats && item.code === `seat${fixedSeats}`);
+function standardVehicleCode(item?: BusinessCategoryOptionRecord) {
+  if (props.typeCode !== "vehicle-type" || !item) return undefined;
+  const seats = /^seat(5|7|9|14|18)$/.exec(item.code)?.[1];
+  return seats ? `${seats}_seat` : undefined;
 }
+function matches(item: BusinessCategoryOptionRecord, value: string) {
+  return [item.code, item.name, item.englishName, standardVehicleCode(item)].includes(value);
+}
+function optionValue(value: string) {
+  if (props.limitToExtraOptions || props.typeCode !== "vehicle-type") return value;
+  return standardVehicleCode(items.value.find(item => matches(item, value))) ?? value;
+}
+const selectedOptionValue = computed(() => props.modelValue ? optionValue(props.modelValue) : props.modelValue);
 const options = computed(() => {
-  const current = props.modelValue;
+  const current = selectedOptionValue.value;
   const result: SelectOption[] = items.value.flatMap(item => {
     // Route option values bind each vehicle to its configured duration.
     const routeOption = props.extraOptions.find(option => matches(item, option.value));
     if (props.limitToExtraOptions && !routeOption) return [];
-    const value = routeOption?.value ?? (current && matches(item, current) ? current : item.name);
+    const code = props.limitToExtraOptions ? undefined : standardVehicleCode(item);
+    const value = code ?? routeOption?.value ?? (current && matches(item, current) ? current : item.name);
     const label = locale.value.toLowerCase().startsWith("en") ? item.englishName : item.name;
     return [{ value, label, code: item.code, disabled: isDisabled(value, item) }];
   });
   for (const item of props.extraOptions) {
-    if (!result.some(option => option.value === item.value)) {
-      result.push({ ...item, disabled: isDisabled(item.value) });
+    const value = optionValue(item.value);
+    if (!result.some(option => option.value === value)) {
+      result.push({ label: item.label, value, disabled: isDisabled(value) });
     }
   }
   if (!props.limitToExtraOptions) {
@@ -81,6 +94,10 @@ const options = computed(() => {
   }
   return result;
 });
+// Keep the saved value bound so explicitly reselecting the canonical option emits an update.
+const selectedLabel = computed(() => selectedOptionValue.value !== props.modelValue
+  ? options.value.find(option => option.value === selectedOptionValue.value)?.label
+  : undefined);
 function isDisabled(value: string, item?: BusinessCategoryOptionRecord) {
   if (!props.disabledValues.length) return false;
   const entry = item ?? items.value.find(option => matches(option, value));
@@ -89,6 +106,12 @@ function isDisabled(value: string, item?: BusinessCategoryOptionRecord) {
 function select(value: string | undefined) {
   if (value && props.limitToExtraOptions && !props.extraOptions.some(option => option.value === value)) return;
   if (value && isDisabled(value.trim())) return;
+  const item = value && !props.limitToExtraOptions ? items.value.find(item => matches(item, value)) : undefined;
+  const code = standardVehicleCode(item);
+  if (item && code) {
+    emit("update:modelValue", code, [item.code, item.name, item.englishName]);
+    return;
+  }
   emit("update:modelValue", value || "");
 }
 function getSeatCount(option: SelectOption) {
