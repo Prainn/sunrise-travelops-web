@@ -108,10 +108,10 @@
         </el-form-item>
         <span />
         <el-form-item :label="$t('websiteItineraryUi.transportNameZh')">
-          <el-input v-model="nameZh" maxlength="150" />
+          <el-input v-model="nameZh" :placeholder="airportTransferPlaceholder(details, 'zh-cn', t)" maxlength="150" />
         </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.transportNameEn')">
-          <el-input v-model="nameEn" maxlength="150" />
+          <el-input v-model="nameEn" :placeholder="airportTransferPlaceholder(details, 'en', t)" maxlength="150" />
         </el-form-item>
       </div>
       <template v-if="source === 'manual' || selected">
@@ -151,7 +151,7 @@ import WebsiteTransportFields from "./WebsiteTransportFields.vue";
 import { transportRules } from "@/views/resources/website/useWebsiteConfigRules";
 import { TRANSPORT_OPTIONS, VEHICLE_OPTIONS } from "../../options";
 import { websiteCityOptions, websiteDayRouteCityIds } from "../city-options";
-import type { AirportTransferOptions } from "../airport-transfers";
+import { airportTransferPlaceholder, type AirportTransferOptions } from "../airport-transfers";
 
 /**
  * 独立站交通段：从当前配置的专属路线按出发/抵达城市筛选，或手填；确认后才加入当天。

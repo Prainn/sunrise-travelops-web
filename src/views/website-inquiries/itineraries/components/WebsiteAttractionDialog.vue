@@ -167,6 +167,11 @@
         :closable="false"
         :title="$t('websiteItineraryUi.dayAttractionLimit', { max: MAX_DAY_ATTRACTIONS })"
       />
+      <div class="mt-3 grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
+        <el-form-item :label="$t('websiteItineraryUi.feeState')">
+          <FeeStateSelect v-model="feeState" />
+        </el-form-item>
+      </div>
     </el-form>
     <template #footer>
       <el-button @click="close">
@@ -184,8 +189,9 @@ import { computed, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
-import type { WebsiteAttraction, WebsiteConfig, WebsiteDay, WebsiteItem } from "@/types/website";
+import type { FeeState, WebsiteAttraction, WebsiteConfig, WebsiteDay, WebsiteItem } from "@/types/website";
 import { hasAttractionCopy } from "@/views/website-inquiries/options";
+import FeeStateSelect from "../../components/FeeStateSelect.vue";
 import { attractionReferencePrice, formatAttractionPrice } from "../attraction-price";
 import { websiteAttractionRows } from "../attraction-search";
 import { websiteCityOptions, websiteDayRouteCityIds } from "../city-options";
@@ -221,6 +227,7 @@ const selectedIds = ref<string[]>([]);
 const expandedAttractionIds = ref<string[]>([]);
 const manualNameZh = ref("");
 const manualNameEn = ref("");
+const feeState = ref<FeeState>("INCLUDED");
 
 const cityOptions = computed(() => websiteCityOptions(
   props.config.cities,
@@ -270,6 +277,7 @@ watch(
     selectedIds.value = [];
     manualNameZh.value = "";
     manualNameEn.value = "";
+    feeState.value = "INCLUDED";
   },
   { immediate: true },
 );
@@ -336,7 +344,7 @@ function submit() {
       descriptionZh: "",
       descriptionEn: "",
       appears: true,
-      feeState: "UNKNOWN",
+      feeState: feeState.value,
     }]);
   } else {
     const items = selectedAttractions.value.map((attraction): WebsiteItem => ({
@@ -347,7 +355,7 @@ function submit() {
       descriptionZh: attraction.descriptionZh,
       descriptionEn: attraction.descriptionEn,
       appears: true,
-      feeState: attraction.kind === "attraction" && attraction.chargeable ? "INCLUDED" : "UNKNOWN",
+      feeState: feeState.value,
     }));
     emit("submit", items);
   }

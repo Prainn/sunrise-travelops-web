@@ -89,10 +89,10 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.transportNameZh')">
-          <el-input v-model="draft.nameZh" maxlength="150" />
+          <el-input v-model="draft.nameZh" :placeholder="airportTransferPlaceholder(draft, 'zh-cn', t)" maxlength="150" />
         </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.transportNameEn')">
-          <el-input v-model="draft.nameEn" maxlength="150" />
+          <el-input v-model="draft.nameEn" :placeholder="airportTransferPlaceholder(draft, 'en', t)" maxlength="150" />
         </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.feeState')">
           <FeeStateSelect v-model="draft.feeState" />
@@ -127,7 +127,7 @@ import { transportRules } from "@/views/resources/website/useWebsiteConfigRules"
 import { TRANSPORT_OPTIONS, VEHICLE_OPTIONS } from "../../options";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
 import { websiteCityOptions, websiteDayRouteCityIds } from "../city-options";
-import { setTransportLeg, type AirportTransferOptions } from "../airport-transfers";
+import { airportTransferPlaceholder, setTransportLeg, type AirportTransferOptions } from "../airport-transfers";
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{
   config: WebsiteConfig;
