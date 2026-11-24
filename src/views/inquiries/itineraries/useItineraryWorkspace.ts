@@ -386,6 +386,10 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     isPlanDialogVisible.value = false;
   }
 
+  function cancelInitialPlan() {
+    if (!isSaving.value) initialPlan.value = undefined;
+  }
+
   async function saveInitialPlan() {
     const plan = initialPlan.value;
     if (!plan || completedInitialDays.value !== plan.dailyPlans.length) return;
@@ -684,6 +688,7 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     createItinerary,
     initialPlan,
     completedInitialDays,
+    cancelInitialPlan,
     saveInitialPlan,
     moveInitialDay: editor.moveInitialDay,
     updatePlanDayField: editor.updatePlanDayField,

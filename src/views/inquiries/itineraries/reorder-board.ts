@@ -37,6 +37,9 @@ export interface ReorderBoardDay {
   emptySlot?: boolean;
   id: string;
   title: string;
+  viaDestinations?: string[];
+  /** 独立站逐日内部备注，空值不展示；只用于内部看板。 */
+  remark?: string;
   groups: ReorderBoardGroup[];
   dayNumber?: number;
   date?: string | null;

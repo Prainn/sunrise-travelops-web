@@ -3,10 +3,10 @@
     :model-value="true"
     :title="$t('itineraryWorkspace.initialPlanningTitle')"
     size="full"
-    :show-close="false"
     :close-on-press-escape="false"
     :close-on-click-modal="false"
     :busy="saving"
+    @close="emit('cancel')"
   >
     <p class="m-0 mb-3 text-[12px] text-muted">
       {{ $t("itineraryWorkspace.initialPlanningHint") }}
@@ -104,6 +104,7 @@ const emit = defineEmits<{
   "move-day": [from: number, to: number];
   "update-field": [index: number, field: ItineraryEditableDayField, value: string | null];
   "update-via": [index: number, cities: string[]];
+  cancel: [];
   save: [];
 }>();
 const draggedDayId = ref("");

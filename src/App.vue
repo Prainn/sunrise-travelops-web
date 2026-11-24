@@ -16,20 +16,29 @@
 import AppVersionNotifier from "@/components/AppVersionNotifier.vue";
 import { useAppStore } from "@/stores/app";
 import { useSettingsStore } from "@/stores/settings";
+import { useWhatsappNotificationsStore } from "@/stores/whatsapp-notifications";
 import { appConfig } from "@/settings";
 import { ThemeMode, ComponentSize } from "@/enums";
-import { translateRouteTitle } from "@/lang/utils";
+import { translate, translateRouteTitle } from "@/lang/utils";
 import { pageTitle } from "@/composables/usePageTitle";
 
 const appStore = useAppStore();
 const settingsStore = useSettingsStore();
+const notifications = useWhatsappNotificationsStore();
 const route = useRoute();
 
-// 网页标题：页面业务标题优先（如行程页的“独立站行程：客户”），否则用当前菜单路由名称；随语言切换更新，无标题路由回退应用名。
+// 单条询盘的行程、日志和从汇总打开的详情，加载期间也保留自己的标题。
+const isInquiryTab = computed(() =>
+  route.meta.menuKey === "inquiries" &&
+  Boolean(route.params.inquiryId || route.query.inquiryId || route.query.code),
+);
+
 watchEffect(() => {
   void appStore.locale;
-  const title = route.meta.title;
-  document.title = pageTitle.value || (title ? translateRouteTitle(title) : appConfig.title);
+  const routeTitle = route.meta.title;
+  const title = pageTitle.value || (routeTitle ? translateRouteTitle(routeTitle) : appConfig.title);
+  const count = isInquiryTab.value || !notifications.canView ? 0 : (notifications.counts?.unreadCount ?? 0);
+  document.title = count > 0 ? translate("whatsapp.notifications.unreadPageTitle", { count, title }) : title;
 });
 
 const locale = computed(() => appStore.locale);

@@ -37,6 +37,11 @@
             >
               <strong class="text-[14px]">{{ day.label }}</strong>
               <span
+                v-if="day.remark"
+                class="w-full overflow-hidden whitespace-nowrap text-ellipsis text-[12px] text-[var(--el-text-color-regular)]"
+                :title="day.remark"
+              >{{ day.remark }}</span>
+              <span
                 v-if="day.summary"
                 class="w-full overflow-hidden whitespace-nowrap text-ellipsis text-[12px] text-muted"
                 :title="day.summary"
@@ -88,6 +93,8 @@ export interface WorkspaceDayEntry {
   id: string;
   label: string;
   summary: string;
+  /** 可选：每日内部备注（仅独立站使用，空值不占位） */
+  remark?: string;
 }
 
 /**

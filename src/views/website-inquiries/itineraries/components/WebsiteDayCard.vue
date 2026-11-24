@@ -3,10 +3,29 @@
     ref="frame"
     :day-number="day.dayNumber"
     :departure="departureName || $t('websiteItineraryUi.departureCity')"
-    :destination="destinationName || $t('websiteItineraryUi.endCity')"
+    :destination="[...viaCityNames, destinationName || $t('websiteItineraryUi.endCity')].join(' → ')"
     :date="date ?? ''"
     :body-id="`website-day-body-${day.id}`"
   >
+    <template v-if="businessUnit === 'website'" #title-extra>
+      <el-input
+        v-if="editable"
+        v-model="day.internalRemark"
+        class="website-day-card__remark"
+        :disabled="saving"
+        clearable
+        maxlength="200"
+        :placeholder="$t('websiteItineraryUi.dayInternalRemark')"
+        :aria-label="$t('websiteItineraryUi.dayInternalRemark')"
+      />
+      <p
+        v-else-if="day.internalRemark?.trim()"
+        class="m-0 min-w-0 flex gap-[6px] text-sm [overflow-wrap:anywhere]"
+      >
+        <span class="shrink-0 text-muted">{{ $t("websiteItineraryUi.dayInternalRemark") }}</span>
+        <span>{{ day.internalRemark }}</span>
+      </p>
+    </template>
     <el-form
       label-position="top"
       :disabled="!editable || saving"
@@ -39,7 +58,12 @@
       </div>
       <ItineraryDayPanel :columns="3">
         <el-form-item :label="$t('websiteItineraryUi.departureCity')" required>
-          <el-select v-model="day.departCityId" autocomplete="new-password" filterable>
+          <el-select
+            :model-value="day.departCityId"
+            autocomplete="new-password"
+            filterable
+            @update:model-value="setRouteCity('departCityId', $event)"
+          >
             <el-option
               v-for="city in cityOptions(day.departCityId)"
               :key="city.id"
@@ -49,7 +73,12 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('websiteItineraryUi.endCity')" required>
-          <el-select v-model="day.endCityId" autocomplete="new-password" filterable>
+          <el-select
+            :model-value="day.endCityId"
+            autocomplete="new-password"
+            filterable
+            @update:model-value="setRouteCity('endCityId', $event)"
+          >
             <el-option
               v-for="city in cityOptions(day.endCityId)"
               :key="city.id"
@@ -86,6 +115,14 @@
             {{ $t("itinerary.noOvernightStay") }}
           </el-checkbox>
         </el-form-item>
+        <ItineraryViaCities
+          v-if="businessUnit === 'website'"
+          :key="day.id"
+          :model-value="day.viaCityIds ?? []"
+          :options="viaCityOptions"
+          :disabled="!editable || !!saving"
+          @update:model-value="day.viaCityIds = $event"
+        />
       </ItineraryDayPanel>
       <section v-if="events.length" class="surface-muted p-4 flex flex-col gap-3">
         <h4 class="m-0 text-[14px] text-strong font-600">
@@ -154,12 +191,13 @@ import { computed, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessageBox } from "element-plus";
 import { Bowl, Location, OfficeBuilding, Service, User, Van } from "@element-plus/icons-vue";
-import type { WebsiteConfig, WebsiteDay, WebsiteHotelTier, WebsiteMeal, WebsiteValidation } from "@/types/website";
+import type { WebsiteBusinessUnit, WebsiteConfig, WebsiteDay, WebsiteHotelTier, WebsiteMeal, WebsiteValidation } from "@/types/website";
 import ItineraryDayResourceBar, {
   type DayResourceAction,
 } from "@/views/inquiries/itineraries/components/ItineraryDayResourceBar.vue";
 import ItineraryDayCardFrame from "@/views/inquiries/itineraries/components/ItineraryDayCardFrame.vue";
 import ItineraryDayPanel from "@/views/inquiries/itineraries/components/ItineraryDayPanel.vue";
+import ItineraryViaCities from "@/views/inquiries/itineraries/components/ItineraryViaCities.vue";
 import WebsiteDayAttractions from "./WebsiteDayAttractions.vue";
 import WebsiteDayTransport from "./WebsiteDayTransport.vue";
 import type { AirportTransferOptions } from "../airport-transfers";
@@ -187,6 +225,7 @@ const props = defineProps<{
   date: string | null;
   last: boolean;
   airportTransfers?: AirportTransferOptions;
+  businessUnit: WebsiteBusinessUnit;
 }>();
 const emit = defineEmits<{
   "open-resource": [selection: WebsiteResourceSelection];
@@ -203,6 +242,10 @@ function setEventCard(id: string, card: unknown) {
 }
 const departureName = computed(() => cityName(day.value.departCityId));
 const destinationName = computed(() => cityName(day.value.endCityId));
+const viaCityNames = computed(() => (day.value.viaCityIds ?? []).map(cityName));
+const viaCityOptions = computed(() => cityOptions(...(day.value.viaCityIds ?? []))
+  .filter(city => city.id !== day.value.departCityId && city.id !== day.value.endCityId)
+  .map(city => ({ value: city.id, label: locale.value === "en" ? city.nameEn : city.nameZh })));
 const events = computed(() => {
   const kinds = new Map<string, "attraction" | "transport" | "meal">([
     ...day.value.items.map(item => [item.id, "attraction"] as const),
@@ -272,6 +315,11 @@ function cityName(id: string) {
 function cityOptions(...retainedIds: (string | null)[]) {
   return websiteCityOptions(props.config.cities, props.selectableCityIds, ...retainedIds);
 }
+function setRouteCity(field: "departCityId" | "endCityId", cityId: string) {
+  day.value[field] = cityId;
+  if (day.value.viaCityIds?.includes(cityId))
+    day.value.viaCityIds = day.value.viaCityIds.filter(id => id !== cityId);
+}
 function selectResource(key: string) {
   if (key === "attraction" || key === "transport" || key === "hotel" || key === "guide") emit("open-resource", { kind: key });
   else if (key === "meal") emit("open-resource", { kind: "meal", slot: "lunch" });
@@ -338,3 +386,10 @@ defineExpose({
   openValidationIssue,
 });
 </script>
+
+<style scoped lang="scss">
+.website-day-card__remark {
+  flex: 0 1 280px;
+  min-width: 140px;
+}
+</style>

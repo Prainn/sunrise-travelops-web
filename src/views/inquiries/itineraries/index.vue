@@ -18,6 +18,7 @@
         :days="dayEntries"
         :can-add="contentEditable && !isSaving"
         :reset-key="selectedItinerary?.id"
+        :reorder-label="$t('itineraryWorkspace.reorderTitle')"
         @add="addDay"
         @expand="(id) => dayCards.get(id)?.expand()"
         @reorder="isReorderDialogVisible = true"
@@ -231,6 +232,7 @@
         @move-day="(from, to) => moveInitialDay(initialPlan!, from, to)"
         @update-field="(index, field, value) => updatePlanDayField(initialPlan!, index, field, value)"
         @update-via="(index, cities) => updatePlanViaDestinations(initialPlan!, index, cities)"
+        @cancel="cancelInitialPlan"
         @save="saveInitialPlan"
       />
       <ItineraryReorderDialog
@@ -241,6 +243,7 @@
         :start-date="selectedItinerary.startDate"
         :hide-dates="inquiry.isSeries"
         :readonly="!contentEditable"
+        compact
         :validate="(change) => reorderItineraryDays(selectedItinerary!, change).issues"
         @apply="applyReorder"
       />
@@ -622,6 +625,7 @@ const {
   submitItineraryPlan,
   initialPlan,
   completedInitialDays,
+  cancelInitialPlan,
   saveInitialPlan,
   moveInitialDay,
   updatePlanDayField,
@@ -719,6 +723,7 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() => {
     return {
       id: day.id,
       title: dayRoute(day) || t("itineraryWorkspace.notArranged"),
+      viaDestinations: day.viaDestinations,
       dayNumber: day.dayNumber,
       date: plan.deletedDays?.find((entry) => entry.day.id === day.id)?.originalDate ?? day.date,
       groups: [

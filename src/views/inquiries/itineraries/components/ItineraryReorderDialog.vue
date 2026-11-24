@@ -7,211 +7,271 @@
     @close="emit('update:modelValue', false)"
   >
     <template #header>
-      <div class="flex items-center gap-4 flex-wrap">
+      <div class="flex w-full items-center gap-4 flex-wrap">
         <strong>{{ dialogTitle }}</strong>
         <el-button v-if="!recovery" :disabled="!recycledDays.length || busy" @click="isRecycleVisible = true">
           {{ $t('itineraryWorkspace.deletedDays') }} ({{ recycledDays.length }})
         </el-button>
+        <div
+          v-if="compact"
+          class="itinerary-reorder__zoom ml-auto flex items-center gap-2"
+          role="group"
+          :aria-label="$t('itineraryWorkspace.boardZoom')"
+        >
+          <el-button size="small" :disabled="zoomPercent <= ZOOM_MIN" @click="zoomBy(-ZOOM_STEP)">
+            {{ $t('itineraryWorkspace.zoomOut') }}
+          </el-button>
+          <output class="min-w-[44px] text-center text-[14px] tabular-nums" aria-live="polite">{{ zoomPercent }}%</output>
+          <el-button
+            size="small"
+            class="ml-0!"
+            :disabled="zoomPercent >= ZOOM_MAX"
+            @click="zoomBy(ZOOM_STEP)"
+          >
+            {{ $t('itineraryWorkspace.zoomIn') }}
+          </el-button>
+        </div>
       </div>
     </template>
     <p class="m-0 mb-3 text-[12px] text-muted">
       {{ $t(recovery ? "itineraryWorkspace.deletedHint" : readonly ? "itineraryWorkspace.reorderReadonly" : transfer ? "itineraryWorkspace.transfer.hint" : "itineraryWorkspace.reorderHint") }}
     </p>
-    <div class="itinerary-reorder__board flex gap-3 overflow-x-auto pb-3" role="list" :inert="busy">
-      <section
-        v-for="(day, dayIndex) in displayedDays"
-        :key="day.id"
-        role="listitem"
-        class="itinerary-reorder__day w-[240px] shrink-0 flex flex-col gap-2 p-3 rounded-[var(--card-radius)] surface-muted [border:1px_solid_var(--divider-color)]"
-        :class="{ 'is-drop-target': dropDayId === day.id }"
-        @dragover="allowDayDrop($event, day.id)"
-        @dragleave="dropDayId = ''"
-        @drop="dropDay($event, dayIndex)"
-      >
-        <header
-          class="flex items-start justify-between gap-2"
-          :draggable="!readonly && !recovery"
-          :class="{ 'cursor-grab': !readonly && !recovery }"
-          @dragstart="startDayDrag($event, day.id)"
-          @dragend="endDrag"
-        >
-          <div class="min-w-0">
-            <h4 class="m-0 text-[14px] text-strong font-600">
-              D{{ recovery ? day.dayNumber : dayIndex + 1 }}
-              <span v-if="!hideDates && (recovery ? day.date : boardDate(dayIndex))" class="ml-1 font-400 text-muted">{{ recovery ? day.date : boardDate(dayIndex) }}</span>
-            </h4>
-            <p class="m-0 mt-1 text-[14px] [overflow-wrap:anywhere]">
-              {{ day.title }}
-            </p>
-          </div>
-          <div v-if="recovery && !readonly" class="flex flex-col items-end gap-1">
-            <el-select
-              v-if="serviceDates"
-              v-model="restoreDates[day.id]"
-              :aria-label="$t('websiteWorkspace.restoreToDate')"
-              :placeholder="$t('websiteWorkspace.restoreToDate')"
-              autocomplete="new-password"
-              class="w-[145px]!"
-            >
-              <el-option
-                v-for="date in serviceDates"
-                :key="date"
-                :value="date"
-                :label="date"
-              />
-            </el-select>
-            <el-button
-              link
-              type="primary"
-              :disabled="restoreDisabled || Boolean(serviceDates && !restoreDates[day.id])"
-              @click="emit('restore', day.id, restoreDates[day.id])"
-            >
-              {{ $t('itineraryWorkspace.restoreDay') }}
-            </el-button>
-          </div>
-          <div v-if="!readonly && !recovery" class="flex shrink-0">
-            <el-button
-              link
-              :disabled="dayIndex === 0"
-              :aria-label="$t('itineraryWorkspace.moveEarlier')"
-              :title="$t('itineraryWorkspace.moveEarlier')"
-              @click="moveDay(dayIndex, -1)"
-            >
-              <el-icon><ArrowLeft /></el-icon>
-            </el-button>
-            <el-button
-              link
-              :disabled="dayIndex === orderedDays.length - 1"
-              :aria-label="$t('itineraryWorkspace.moveLater')"
-              :title="$t('itineraryWorkspace.moveLater')"
-              @click="moveDay(dayIndex, 1)"
-            >
-              <el-icon><ArrowRight /></el-icon>
-            </el-button>
-            <el-button
-              link
-              type="danger"
-              :disabled="!serviceDates && orderedDays.length <= 1"
-              :aria-label="$t('itineraryWorkspace.deleteDay')"
-              :title="$t('itineraryWorkspace.deleteDay')"
-              @click="deleteDay(day.id)"
-            >
-              <el-icon><Close /></el-icon>
-            </el-button>
-          </div>
-        </header>
+    <!-- 缩放只作用于画布：外层按缩放后尺寸占位，保证滚动范围与拖放命中区域一致。 -->
+    <div ref="boardViewport" class="itinerary-reorder__board overflow-x-auto pb-3" :inert="busy">
+      <div :style="zoomFrameStyle">
         <div
-          v-for="group in day.groups"
-          :key="group.key"
-          class="itinerary-reorder__group flex flex-col gap-1 rounded-[6px]"
-          :class="{ 'is-drop-target': dropGroupKey === `${day.id}:${group.key}` }"
-          @dragover="allowGroupDrop($event, day.id, group)"
-          @dragleave="dropGroupKey = ''"
-          @drop="dropGroup($event, day.id, group)"
+          ref="boardCanvas"
+          class="flex w-max gap-3"
+          role="list"
+          :style="zoomCanvasStyle"
         >
-          <h5 class="m-0 flex items-center gap-1 text-[12px] text-muted font-500">
-            <el-icon v-if="group.icon">
-              <component :is="group.icon" />
-            </el-icon>
-            {{ group.label }}
-            <span v-if="group.scope" class="ml-1 font-normal text-muted">{{ group.scope }}</span>
-          </h5>
-          <p v-if="!group.items.length" class="m-0 text-[12px] text-muted">
-            {{ $t("itineraryWorkspace.notArranged") }}
-          </p>
-          <div
-            v-for="(item, itemIndex) in group.items"
-            :key="item.id"
-            class="itinerary-reorder__item flex flex-col gap-1 px-2 py-[6px] rounded-[6px] bg-surface [border:1px_solid_var(--divider-color)] text-[14px]"
-            :class="{
-              'cursor-grab': canSort(group) || canMove(group, item),
-              'is-drop-target': dropItemId === item.id,
-              'is-invalid': invalidItemIds.has(item.id),
-            }"
-            :draggable="canSort(group) || canMove(group, item)"
-            @dragstart.stop="startItemDrag($event, day.id, item.id, group.key)"
-            @dragend.stop="endDrag"
-            @dragover="allowItemDrop($event, day.id, item.id, group)"
-            @drop="dropItem($event, day.id, group, item.id)"
+          <section
+            v-for="(day, dayIndex) in displayedDays"
+            :key="day.id"
+            role="listitem"
+            class="itinerary-reorder__day shrink-0 flex flex-col gap-2 p-3 rounded-[var(--card-radius)] surface-muted [border:1px_solid_var(--divider-color)]"
+            :class="[compact ? 'w-[184px]' : 'w-[240px]', { 'is-drop-target': dropDayId === day.id }]"
+            @dragover="allowDayDrop($event, day.id)"
+            @dragleave="dropDayId = ''"
+            @drop="dropDay($event, dayIndex)"
           >
-            <div class="flex items-start gap-1">
-              <el-icon v-if="item.icon" class="shrink-0 mt-[3px] text-muted" aria-hidden="true">
-                <component :is="item.icon" />
-              </el-icon>
-              <span class="min-w-0 flex-1 [overflow-wrap:anywhere]">
-                <el-tag
-                  v-if="isPendingCopy(item.id)"
-                  size="small"
-                  type="warning"
-                  class="mr-1"
+            <header
+              class="flex flex-col gap-1"
+              :draggable="!readonly && !recovery"
+              :class="{ 'cursor-grab': !readonly && !recovery }"
+              @dragstart="startDayDrag($event, day.id)"
+              @dragend="endDrag"
+            >
+              <div class="flex items-start justify-between gap-1">
+                <h4 class="m-0 min-w-0 text-[14px] text-strong font-600">
+                  D{{ recovery ? day.dayNumber : dayIndex + 1 }}
+                  <span
+                    v-if="!hideDates && (recovery ? day.date : boardDate(dayIndex))"
+                    class="ml-1 whitespace-nowrap font-400 text-muted"
+                    :class="{ 'text-[12px]': compact }"
+                  >{{ recovery ? day.date : boardDate(dayIndex) }}</span>
+                </h4>
+                <div v-if="!readonly && !recovery" class="itinerary-reorder__actions flex shrink-0 items-center gap-1">
+                  <el-button
+                    link
+                    :disabled="dayIndex === 0"
+                    :aria-label="$t('itineraryWorkspace.moveEarlier')"
+                    :title="$t('itineraryWorkspace.moveEarlier')"
+                    @click="moveDay(dayIndex, -1)"
+                  >
+                    <el-icon><ArrowLeft /></el-icon>
+                  </el-button>
+                  <el-button
+                    link
+                    :disabled="dayIndex === orderedDays.length - 1"
+                    :aria-label="$t('itineraryWorkspace.moveLater')"
+                    :title="$t('itineraryWorkspace.moveLater')"
+                    @click="moveDay(dayIndex, 1)"
+                  >
+                    <el-icon><ArrowRight /></el-icon>
+                  </el-button>
+                  <el-button
+                    link
+                    type="danger"
+                    :disabled="!serviceDates && orderedDays.length <= 1"
+                    :aria-label="$t('itineraryWorkspace.deleteDay')"
+                    :title="$t('itineraryWorkspace.deleteDay')"
+                    @click="deleteDay(day.id)"
+                  >
+                    <el-icon><Close /></el-icon>
+                  </el-button>
+                </div>
+              </div>
+              <div v-if="recovery && !readonly" class="flex flex-col items-end gap-1">
+                <el-select
+                  v-if="serviceDates"
+                  v-model="restoreDates[day.id]"
+                  :aria-label="$t('websiteWorkspace.restoreToDate')"
+                  :placeholder="$t('websiteWorkspace.restoreToDate')"
+                  autocomplete="new-password"
+                  class="w-full!"
                 >
-                  {{ $t("itineraryWorkspace.transfer.copyTag") }}
-                </el-tag>
-                {{ item.label }}
-                <small v-if="item.detail" class="block text-muted">{{ item.detail }}</small>
-              </span>
-            </div>
-            <div class="itinerary-reorder__actions flex items-center justify-end gap-1 empty:hidden">
-              <el-button
-                v-if="!isPendingCopy(item.id) && canMove(group, item)"
-                link
-                :aria-label="$t('itineraryWorkspace.transfer.copy')"
-                :title="$t('itineraryWorkspace.transfer.copy')"
-                @click="copyItem(day.id, group.key, item.id)"
-              >
-                <el-icon><CopyDocument /></el-icon>
-              </el-button>
-              <el-button
-                v-if="canMove(group, item) && item.transportLeg && board.copies[item.id] && editTransport"
-                link
-                :aria-label="$t('common.edit')"
-                :title="$t('common.edit')"
-                @click="editTransportCopy(item.id)"
-              >
-                <el-icon><Edit /></el-icon>
-              </el-button>
-              <template v-if="canSort(group)">
+                  <el-option
+                    v-for="date in serviceDates"
+                    :key="date"
+                    :value="date"
+                    :label="date"
+                  />
+                </el-select>
                 <el-button
                   link
-                  :disabled="itemIndex === 0"
-                  :aria-label="$t('common.moveUp')"
-                  :title="$t('common.moveUp')"
-                  @click="moveItem(day.id, group, item.id, group.items[itemIndex - 1]?.id)"
+                  type="primary"
+                  :disabled="restoreDisabled || Boolean(serviceDates && !restoreDates[day.id])"
+                  @click="emit('restore', day.id, restoreDates[day.id])"
                 >
-                  <el-icon><ArrowUp /></el-icon>
+                  {{ $t('itineraryWorkspace.restoreDay') }}
                 </el-button>
-                <el-button
-                  link
-                  :disabled="itemIndex === group.items.length - 1"
-                  :aria-label="$t('common.moveDown')"
-                  :title="$t('common.moveDown')"
-                  @click="moveItem(day.id, group, item.id, group.items[itemIndex + 1]?.id)"
-                >
-                  <el-icon><ArrowDown /></el-icon>
-                </el-button>
-              </template>
-              <el-button
-                v-if="canTransfer && group.transferable"
-                link
-                type="danger"
-                :aria-label="$t('common.remove')"
-                :title="$t('common.remove')"
-                @click="removeItem(item.id)"
+              </div>
+              <p
+                v-if="day.remark"
+                class="itinerary-reorder__remark m-0 text-[12px] text-muted [overflow-wrap:anywhere]"
+                :class="{ 'line-clamp-2': compact }"
+                :title="compact ? day.remark : undefined"
               >
-                <el-icon><Delete /></el-icon>
-              </el-button>
+                {{ day.remark }}
+              </p>
+              <p
+                class="m-0 text-[14px] [overflow-wrap:anywhere]"
+                :class="{ 'line-clamp-2': compact }"
+                :title="compact ? day.title : undefined"
+              >
+                {{ day.title }}
+              </p>
+              <p v-if="day.viaDestinations?.length" class="m-0 flex items-baseline gap-1 text-[12px] text-muted">
+                <span class="shrink-0">{{ $t("itinerary.viaDestinations") }}</span>
+                <span
+                  class="min-w-0 [overflow-wrap:anywhere]"
+                  :class="{ 'line-clamp-2': compact }"
+                  :title="compact ? day.viaDestinations.join(' → ') : undefined"
+                >{{ day.viaDestinations.join(" → ") }}</span>
+              </p>
+            </header>
+            <div
+              v-for="group in day.groups"
+              :key="group.key"
+              class="itinerary-reorder__group flex flex-col gap-1 rounded-[6px]"
+              :class="{ 'is-drop-target': dropGroupKey === `${day.id}:${group.key}` }"
+              @dragover="allowGroupDrop($event, day.id, group)"
+              @dragleave="dropGroupKey = ''"
+              @drop="dropGroup($event, day.id, group)"
+            >
+              <h5 class="m-0 flex items-center gap-1 text-[12px] text-muted font-500">
+                <el-icon v-if="group.icon">
+                  <component :is="group.icon" />
+                </el-icon>
+                {{ group.label }}
+                <span v-if="group.scope" class="ml-1 font-normal text-muted">{{ group.scope }}</span>
+              </h5>
+              <p v-if="!group.items.length" class="m-0 text-[12px] text-muted">
+                {{ $t("itineraryWorkspace.notArranged") }}
+              </p>
+              <div
+                v-for="(item, itemIndex) in group.items"
+                :key="item.id"
+                class="itinerary-reorder__item flex flex-col gap-1 px-2 py-[6px] rounded-[6px] bg-surface [border:1px_solid_var(--divider-color)] text-[14px]"
+                :class="{
+                  'cursor-grab': canSort(group) || canMove(group, item),
+                  'is-drop-target': dropItemId === item.id,
+                  'is-invalid': invalidItemIds.has(item.id),
+                }"
+                :draggable="canSort(group) || canMove(group, item)"
+                @dragstart.stop="startItemDrag($event, day.id, item.id, group.key)"
+                @dragend.stop="endDrag"
+                @dragover="allowItemDrop($event, day.id, item.id, group)"
+                @drop="dropItem($event, day.id, group, item.id)"
+              >
+                <div class="flex items-start gap-1">
+                  <el-icon v-if="item.icon" class="shrink-0 mt-[3px] text-muted" aria-hidden="true">
+                    <component :is="item.icon" />
+                  </el-icon>
+                  <span class="min-w-0 flex-1 [overflow-wrap:anywhere]">
+                    <span :class="{ 'line-clamp-2': compact }" :title="compact ? item.label : undefined">
+                      <el-tag
+                        v-if="isPendingCopy(item.id)"
+                        size="small"
+                        type="warning"
+                        class="mr-1"
+                      >
+                        {{ $t("itineraryWorkspace.transfer.copyTag") }}
+                      </el-tag>
+                      {{ item.label }}
+                    </span>
+                    <small
+                      v-if="item.detail"
+                      class="text-[12px] text-muted"
+                      :class="compact ? 'line-clamp-2' : 'block'"
+                      :title="compact ? item.detail : undefined"
+                    >{{ item.detail }}</small>
+                  </span>
+                </div>
+                <div class="itinerary-reorder__actions flex items-center justify-end gap-1 empty:hidden">
+                  <el-button
+                    v-if="!isPendingCopy(item.id) && canMove(group, item)"
+                    link
+                    :aria-label="$t('itineraryWorkspace.transfer.copy')"
+                    :title="$t('itineraryWorkspace.transfer.copy')"
+                    @click="copyItem(day.id, group.key, item.id)"
+                  >
+                    <el-icon><CopyDocument /></el-icon>
+                  </el-button>
+                  <el-button
+                    v-if="canMove(group, item) && item.transportLeg && board.copies[item.id] && editTransport"
+                    link
+                    :aria-label="$t('common.edit')"
+                    :title="$t('common.edit')"
+                    @click="editTransportCopy(item.id)"
+                  >
+                    <el-icon><Edit /></el-icon>
+                  </el-button>
+                  <template v-if="canSort(group)">
+                    <el-button
+                      link
+                      :disabled="itemIndex === 0"
+                      :aria-label="$t('common.moveUp')"
+                      :title="$t('common.moveUp')"
+                      @click="moveItem(day.id, group, item.id, group.items[itemIndex - 1]?.id)"
+                    >
+                      <el-icon><ArrowUp /></el-icon>
+                    </el-button>
+                    <el-button
+                      link
+                      :disabled="itemIndex === group.items.length - 1"
+                      :aria-label="$t('common.moveDown')"
+                      :title="$t('common.moveDown')"
+                      @click="moveItem(day.id, group, item.id, group.items[itemIndex + 1]?.id)"
+                    >
+                      <el-icon><ArrowDown /></el-icon>
+                    </el-button>
+                  </template>
+                  <el-button
+                    v-if="canTransfer && group.transferable"
+                    link
+                    type="danger"
+                    :aria-label="$t('common.remove')"
+                    :title="$t('common.remove')"
+                    @click="removeItem(item.id)"
+                  >
+                    <el-icon><Delete /></el-icon>
+                  </el-button>
+                </div>
+              </div>
             </div>
-          </div>
+          </section>
+          <el-button
+            v-if="createDay && !readonly && !recovery"
+            :disabled="dayIds.length >= maxDays || busy"
+            class="shrink-0"
+            @click="addBoardDay"
+          >
+            {{ $t('websiteWorkspace.addDay') }}
+          </el-button>
         </div>
-      </section>
-      <el-button
-        v-if="createDay && !readonly && !recovery"
-        :disabled="dayIds.length >= maxDays || busy"
-        class="shrink-0"
-        @click="addBoardDay"
-      >
-        {{ $t('websiteWorkspace.addDay') }}
-      </el-button>
+      </div>
     </div>
     <div ref="issueAnchor" />
     <el-alert
@@ -274,6 +334,7 @@
     :hide-dates="hideDates"
     :readonly="readonly"
     :service-dates="serviceDates"
+    :compact="compact"
     recovery
     :restore-disabled="(!serviceDates && dayIds.length >= maxDays) || busy"
     @restore="restoreDay"
@@ -281,7 +342,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, ref, useTemplateRef, watch } from "vue";
+import { useResizeObserver } from "@vueuse/core";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Close, CopyDocument, Delete, Edit } from "@element-plus/icons-vue";
 import { ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
@@ -315,7 +377,6 @@ import {
 const props = withDefaults(
   defineProps<{
     modelValue: boolean;
-    title?: string;
     days: ReorderBoardDay[];
     deletedDays?: ReorderBoardDay[];
     recovery?: boolean;
@@ -336,8 +397,10 @@ const props = withDefaults(
     stash?: (change: DayOrderChange) => Promise<boolean>;
     editTransport?: (leg: WebsiteLeg) => Promise<WebsiteLeg | undefined>;
     transportItem?: (leg: WebsiteLeg) => ReorderBoardItem;
+    /** 紧凑编排使用窄日列、两行省略和日卡区域缩放。 */
+    compact?: boolean;
   }>(),
-  { readonly: false, startDate: null, serviceDates: null, maxDays: 365, transfer: false, validate: undefined, deletedDays: () => [], recovery: false, restoreDisabled: false },
+  { compact: false, readonly: false, startDate: null, serviceDates: null, maxDays: 365, transfer: false, validate: undefined, deletedDays: () => [], recovery: false, restoreDisabled: false },
 );
 const emit = defineEmits<{
   "update:modelValue": [value: boolean];
@@ -346,7 +409,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const dialogTitle = computed(() => props.recovery ? t("itineraryWorkspace.deletedDays") : props.title || t("itineraryWorkspace.reorderTitle"));
+const dialogTitle = computed(() => t(props.recovery ? "itineraryWorkspace.deletedDays" : "itineraryWorkspace.reorderTitle"));
 const isRecycleVisible = ref(false);
 const recycledDays = ref<ReorderBoardDay[]>([]);
 const dayIds = ref<string[]>([]);
@@ -366,6 +429,30 @@ const issueAnchor = ref<HTMLElement>();
 const issues = ref<DayOrderIssue[]>([]);
 let session = 0;
 const warningsAccepted = ref(false);
+const ZOOM_MIN = 50;
+const ZOOM_MAX = 150;
+const ZOOM_STEP = 10;
+/** 看板画布缩放百分比；每次打开恢复 100%。 */
+const zoomPercent = ref(100);
+const boardViewport = useTemplateRef<HTMLElement>("boardViewport");
+const boardCanvas = useTemplateRef<HTMLElement>("boardCanvas");
+/** 画布未缩放的布局尺寸（offset 尺寸不受 transform 影响） */
+const canvasSize = ref({ width: 0, height: 0 });
+useResizeObserver(boardCanvas, () => {
+  const canvas = boardCanvas.value;
+  if (canvas) canvasSize.value = { width: canvas.offsetWidth, height: canvas.offsetHeight };
+});
+const isZoomed = computed(() => props.compact && zoomPercent.value !== 100);
+const zoomFrameStyle = computed(() => isZoomed.value && canvasSize.value.width > 0
+  ? {
+    width: `${canvasSize.value.width * zoomPercent.value / 100}px`,
+    height: `${canvasSize.value.height * zoomPercent.value / 100}px`,
+    overflow: "hidden",
+  }
+  : undefined);
+const zoomCanvasStyle = computed(() => isZoomed.value
+  ? { transform: `scale(${zoomPercent.value / 100})`, transformOrigin: "top left" }
+  : undefined);
 const allDays = computed(() => [...props.days, ...props.deletedDays, ...addedDays.value]);
 const orderedDays = computed(() => dayIds.value.map((id) => allDays.value.find((day) => day.id === id)!).filter(Boolean));
 const canTransfer = computed(() => props.transfer && !props.readonly && !props.recovery);
@@ -445,6 +532,7 @@ watch(
   () => props.modelValue,
   (visible) => {
     isRecycleVisible.value = false;
+    zoomPercent.value = 100;
     // 重开即新会话：丢弃上一次仍在途的校验或暂存结果。
     session += 1;
     busy.value = false;
@@ -489,6 +577,19 @@ watch(
 );
 
 watch(change, () => { issues.value = []; warningsAccepted.value = false; }, { deep: true });
+/** 按步长缩放画布，并按比例保持当前横向滚动位置。 */
+function zoomBy(step: number) {
+  const previous = zoomPercent.value;
+  const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, previous + step));
+  if (next === previous) return;
+  const canvas = boardCanvas.value;
+  if (canvas && canvas.offsetWidth > 0) {
+    canvasSize.value = { width: canvas.offsetWidth, height: canvas.offsetHeight };
+  }
+  zoomPercent.value = next;
+  const viewport = boardViewport.value;
+  if (viewport && typeof viewport.scrollLeft === "number") viewport.scrollLeft = viewport.scrollLeft * next / previous;
+}
 function boardDate(dayIndex: number) {
   return serviceDayDate({ startDate: props.startDate, serviceDates: props.serviceDates }, dayIndex + 1);
 }

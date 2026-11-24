@@ -217,6 +217,8 @@ export interface WebsiteDay {
   dayNumber: number;
   departCityId: string;
   endCityId: string;
+  /** 独立站按到访顺序保存的配置城市 ID。 */
+  viaCityIds?: string[];
   overnightCityId: string | null;
   items: WebsiteItem[];
   legs: WebsiteLeg[];
@@ -224,6 +226,11 @@ export interface WebsiteDay {
   meals: WebsiteMeal[];
   guideLanguage: string;
   services: WebsiteService[];
+  /**
+   * 仅独立站：逐日内部备注，最多 200 字，只在内部界面展示。
+   * 响应按日返回字符串；保存时 "" 清空，省略则按日 ID 保留原值；霖熹只能为空。
+   */
+  internalRemark?: string;
 }
 export type WebsitePriceCategory = "hotel" | "guide" | "vehicle" | "attraction" | "meal";
 export interface WebsitePriceComponent {
