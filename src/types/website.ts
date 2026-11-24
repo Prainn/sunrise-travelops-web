@@ -386,6 +386,34 @@ export interface WebsiteQuotation extends WebsitePreview {
   confirmedBy: string;
   acknowledgedWarnings: string[];
 }
+export type WebsiteLogReferenceKind =
+  | "day"
+  | "event"
+  | "item"
+  | "leg"
+  | "hotel"
+  | "meal"
+  | "service"
+  | "guide"
+  | "city"
+  | "attraction"
+  | "route"
+  | "configHotel"
+  | "sharedHotel"
+  | "restaurant"
+  | "owner"
+  | "country";
+export interface WebsiteLogReference {
+  ref: WebsiteLogReferenceKind;
+  nameZh?: string;
+  nameEn?: string;
+  dayNumber?: number;
+  hotelTier?: string;
+  mealSlot?: string;
+  mode?: string;
+  code?: string;
+  source?: "entry";
+}
 export interface WebsiteInquiryLogChange {
   path: string;
   kind: "added" | "removed" | "changed";
@@ -399,6 +427,13 @@ export interface WebsiteInquiryLogChange {
     mealSlot?: string;
     vehicleType?: string;
   };
+}
+export interface WebsiteInquiryLogDisplayChange {
+  fields: string[];
+  kind: "added" | "removed" | "changed";
+  before: unknown;
+  after: unknown;
+  context?: WebsiteInquiryLogChange["context"];
 }
 export interface WebsiteInquiryLog {
   id: string;
@@ -426,6 +461,8 @@ export interface WebsiteInquiryLog {
   };
   /** null 表示历史日志未记录字段差异，[] 表示确无字段差异 */
   changes: WebsiteInquiryLogChange[] | null;
+  /** null 表示历史日志未记录字段差异，[] 表示无独立展示的字段变化；版本错开时可能缺失 */
+  displayChanges?: WebsiteInquiryLogDisplayChange[] | null;
 }
 export interface WebsiteInquiryLogReport {
   totalOperations: number;

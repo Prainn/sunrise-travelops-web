@@ -730,3 +730,51 @@ it("zooms the compact website board, disables at bounds, displays day remarks, a
     }),
   }));
 });
+
+it("pins guide cards at the top of a website day and blocks dragging or moving items above them", async () => {
+  const makeDay = (id: string, items: ReorderBoardItem[]) => ({
+    id, title: id,
+    groups: [{ key: "events", label: "当日行程", sortable: true, transferable: true, items }],
+  });
+  const apply = vi.fn();
+  const view = render(ItineraryReorderDialog, {
+    modelValue: true,
+    transfer: true,
+    onApply: apply,
+    days: [
+      makeDay("d1", [
+        { id: "a1", label: "石林" },
+        { id: "d1-guide", label: "导游 (韩语)", slot: "guide", pinned: true },
+        { id: "a2", label: "滇池" },
+      ]),
+      makeDay("d2", [{ id: "a3", label: "洱海" }]),
+    ],
+  });
+  const sections = () => view.find("section");
+  const itemCards = (dayIndex: number) =>
+    view.find("div", sections()[dayIndex]!).filter(node => node.props.onDragstart);
+
+  // 导游固定排在最顶部，不可拖动且不显示复制与上下移动按钮。
+  expect(itemCards(0).map(node => view.text(node).trim())).toEqual(["导游 (韩语)", "石林", "滇池"]);
+  const guideCard = itemCards(0)[0]!;
+  expect(guideCard.props.draggable).toBe(false);
+  expect(view.find("ElButton", guideCard).map(button => button.props["aria-label"])).toEqual(["common.remove"]);
+
+  // 导游下方第一张普通卡片禁用上移按钮。
+  const firstSortableCard = itemCards(0)[1]!;
+  const moveUp = view.find("ElButton", firstSortableCard).find(button => button.props["aria-label"] === "common.moveUp")!;
+  expect(moveUp.props.disabled).toBe(true);
+
+  // 尝试把导游拖到 D2 不会生效，跨天拖入的卡片落在导游之后。
+  const dragEvent = { preventDefault: vi.fn(), stopPropagation: vi.fn() };
+  (guideCard.props.onDragstart as (event: typeof dragEvent) => void)(dragEvent);
+  (sections()[1]!.props.onDrop as (event: typeof dragEvent) => void)(dragEvent);
+  await nextTick();
+  expect(itemCards(0).map(node => view.text(node).trim())[0]).toBe("导游 (韩语)");
+
+  const d2Card = itemCards(1)[0]!;
+  (d2Card.props.onDragstart as (event: typeof dragEvent) => void)(dragEvent);
+  (guideCard.props.onDrop as (event: typeof dragEvent) => void)(dragEvent);
+  await nextTick();
+  expect(itemCards(0).map(node => view.text(node).trim())).toEqual(["导游 (韩语)", "石林", "滇池", "洱海"]);
+});

@@ -728,6 +728,13 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() => {
       date: plan.deletedDays?.find((entry) => entry.day.id === day.id)?.originalDate ?? day.date,
       groups: [
         {
+          key: "guide",
+          label: t("itineraryWorkspace.actions.guide"),
+          icon: BOARD_ICONS.guide,
+          scope: t("itineraryWorkspace.scopes.wholeTrip"),
+          items: summaries.guide ? [{ id: `${day.id}-guide`, label: summaries.guide }] : [],
+        },
+        {
           key: "attractions",
           label: t("itineraryWorkspace.actions.attraction"),
           icon: BOARD_ICONS.attractions,
@@ -759,16 +766,14 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() => {
               })),
           ],
         },
-        ...(["hotel", "vehicle", "guide"] as const).map((key) => ({
+        ...(["hotel", "vehicle"] as const).map((key) => ({
           key,
           label: t(`itineraryWorkspace.actions.${key}`),
           icon: BOARD_ICONS[key],
           scope: t(
             key === "hotel"
               ? "itineraryWorkspace.scopes.byNight"
-              : key === "vehicle"
-                ? "itineraryWorkspace.scopes.byDateRange"
-                : "itineraryWorkspace.scopes.wholeTrip",
+              : "itineraryWorkspace.scopes.byDateRange",
           ),
           items: summaries[key] ? [{ id: `${day.id}-${key}`, label: summaries[key] }] : [],
         })),
