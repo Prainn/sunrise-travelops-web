@@ -635,6 +635,7 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
               label: `${t("itineraryWorkspace.actions.guide")} (${day.guideLanguage})`,
               slot: "guide",
               icon: BOARD_ICONS.guide,
+              pinned: true,
             }]
             : []),
           ...day.services.map((service) => ({ id: service.id, label: localName(service) || "-" })),
@@ -647,7 +648,14 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
   result.emptySlot = !day.departCityId && !day.endCityId && !day.viaCityIds?.length && day.overnightCityId === null && !result.remark && items.every(item => item.placeholder);
   const byId = new Map(items.map(item => [item.id, item]));
   const ordered = (day.eventOrder ?? []).flatMap(id => { const item = byId.get(id); byId.delete(id); return item ? [item] : []; });
-  result.groups = [{ key: "events", label: t("itineraryWorkspace.eventOrder"), sortable: true, transferable: true, items: [...ordered, ...byId.values()] }];
+  const merged = [...ordered, ...byId.values()];
+  result.groups = [{
+    key: "events",
+    label: t("itineraryWorkspace.eventOrder"),
+    sortable: true,
+    transferable: true,
+    items: [...merged.filter(item => item.pinned), ...merged.filter(item => !item.pinned)],
+  }];
   return result;
 }
 const allReorderBoardDays = computed(() => [...(plan.value?.days ?? []), ...(plan.value?.deletedDays ?? []).map(entry => entry.day)].map(boardDay));

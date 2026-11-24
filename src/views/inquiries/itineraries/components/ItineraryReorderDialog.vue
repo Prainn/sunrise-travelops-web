@@ -175,12 +175,12 @@
                 :key="item.id"
                 class="itinerary-reorder__item flex flex-col gap-1 px-2 py-[6px] rounded-[6px] bg-surface [border:1px_solid_var(--divider-color)] text-[14px]"
                 :class="{
-                  'cursor-grab': canSort(group) || canMove(group, item),
+                  'cursor-grab': canSortItem(group, item) || canMove(group, item),
                   'is-drop-target': dropItemId === item.id,
                   'is-invalid': invalidItemIds.has(item.id),
                 }"
-                :draggable="canSort(group) || canMove(group, item)"
-                @dragstart.stop="startItemDrag($event, day.id, item.id, group.key)"
+                :draggable="canSortItem(group, item) || canMove(group, item)"
+                @dragstart.stop="startItemDrag($event, day.id, item, group)"
                 @dragend.stop="endDrag"
                 @dragover="allowItemDrop($event, day.id, item.id, group)"
                 @drop="dropItem($event, day.id, group, item.id)"
@@ -228,10 +228,10 @@
                   >
                     <el-icon><Edit /></el-icon>
                   </el-button>
-                  <template v-if="canSort(group)">
+                  <template v-if="canSortItem(group, item)">
                     <el-button
                       link
-                      :disabled="itemIndex === 0"
+                      :disabled="itemIndex === 0 || Boolean(group.items[itemIndex - 1]?.pinned)"
                       :aria-label="$t('common.moveUp')"
                       :title="$t('common.moveUp')"
                       @click="moveItem(day.id, group, item.id, group.items[itemIndex - 1]?.id)"
@@ -615,12 +615,17 @@ function canSort(group: ReorderBoardGroup) {
   return Boolean(group.sortable && !props.readonly && !props.recovery);
 }
 
+function canSortItem(group: ReorderBoardGroup, item: ReorderBoardItem) {
+  return canSort(group) && !item.pinned;
+}
+
 function canMove(group: ReorderBoardGroup, item: ReorderBoardItem) {
-  return Boolean(canTransfer.value && group.transferable && !item.placeholder);
+  return Boolean(canTransfer.value && group.transferable && !item.placeholder && !item.pinned);
 }
 
 function groupItems(dayId: string, group: ReorderBoardGroup) {
-  return (board.value.placements[dayId]?.[group.key] ?? []).flatMap((id) => boardItem(id) ?? []);
+  const items = (board.value.placements[dayId]?.[group.key] ?? []).flatMap((id) => boardItem(id) ?? []);
+  return [...items.filter((item) => item.pinned), ...items.filter((item) => !item.pinned)];
 }
 
 async function deleteDay(id: string) {
@@ -700,6 +705,7 @@ function moveDay(index: number, direction: number) {
 }
 
 function moveItem(dayId: string, group: ReorderBoardGroup, itemId: string, targetId?: string) {
+  if (boardItem(itemId)?.pinned || (targetId && boardItem(targetId)?.pinned)) return;
   const next = groupItems(dayId, group).map((item) => item.id);
   const index = next.indexOf(itemId);
   const targetIndex = next.findIndex(id => id === targetId);
@@ -799,9 +805,13 @@ function startDayDrag(event: DragEvent, dayId: string) {
   event.dataTransfer?.setData("text/plain", dayId);
 }
 
-function startItemDrag(event: DragEvent, dayId: string, itemId: string, groupKey: string) {
-  dragging.value = { dayId, itemId, groupKey };
-  event.dataTransfer?.setData("text/plain", itemId);
+function startItemDrag(event: DragEvent, dayId: string, item: ReorderBoardItem, group: ReorderBoardGroup) {
+  if (!canSortItem(group, item) && !canMove(group, item)) {
+    event.preventDefault();
+    return;
+  }
+  dragging.value = { dayId, itemId: item.id, groupKey: group.key };
+  event.dataTransfer?.setData("text/plain", item.id);
 }
 
 /** 跨天拖动时卡片可放到目标日任意位置，自动进入该日的同类分组。 */
@@ -831,6 +841,7 @@ function isTransferTarget(dayId: string, group: ReorderBoardGroup) {
 
 function allowItemDrop(event: DragEvent, dayId: string, itemId: string, group: ReorderBoardGroup) {
   // 当天只调整可排序分组；跨天仅在开启 transfer 的同类分组间进行。
+  if (boardItem(itemId)?.pinned) return;
   const source = dragging.value;
   const sameDay = source?.itemId && source.dayId === dayId && source.groupKey === group.key && canSort(group);
   // 不能放在此卡片时交给所在日处理（跨天时自动进入同类分组）。
@@ -880,7 +891,7 @@ function dropItem(event: DragEvent, dayId: string, group: ReorderBoardGroup, tar
     void transferItem(dayId, group, targetIndex);
     return;
   }
-  if (!source?.itemId || source.dayId !== dayId || source.groupKey !== group.key || !canSort(group)) return;
+  if (!source?.itemId || source.dayId !== dayId || source.groupKey !== group.key || !canSort(group) || boardItem(targetId)?.pinned) return;
   event.preventDefault();
   event.stopPropagation();
   moveItem(dayId, group, source.itemId, targetId);

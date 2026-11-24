@@ -12,6 +12,8 @@ export interface ReorderBoardItem {
   slot?: string;
   /** 未安排的占位（如默认自理的餐次），不可拖动或复制，同位安排放入时直接让位 */
   placeholder?: boolean;
+  /** 固定置顶且不可拖动/排序/跨天移动（如独立站导游） */
+  pinned?: boolean;
   hotelCityId?: string;
   breakfastIncluded?: boolean;
   transportLeg?: WebsiteLeg;
@@ -125,7 +127,7 @@ export function planBoardTransfer(
   const moving = item(source.itemId);
   const targetIds = state.placements[target.dayId]?.[group.key];
   const sourceIds = state.placements[source.dayId]?.[group.key];
-  if (!group.transferable || !moving || moving.placeholder || source.dayId === target.dayId || !targetIds || !sourceIds?.includes(source.itemId))
+  if (!group.transferable || !moving || moving.placeholder || moving.pinned || source.dayId === target.dayId || !targetIds || !sourceIds?.includes(source.itemId))
     return null;
   if (Object.entries(state.copies).some(([id, copy]) =>
     !copy.placed && (copy.parentId ?? copy.sourceId) === source.itemId && copy.dayId === source.dayId && sourceIds.includes(id))) return null;
@@ -133,7 +135,9 @@ export function planBoardTransfer(
   const replaced = targetIds.filter((id) => sameSlot(id) && !item(id)?.placeholder);
   const anchor = target.index === undefined ? undefined : targetIds[target.index];
   const kept = targetIds.filter((id) => !sameSlot(id));
-  const index = anchor && kept.includes(anchor) ? kept.indexOf(anchor) : kept.length;
+  const keptPinned = kept.filter((id) => item(id)?.pinned);
+  const keptNormal = kept.filter((id) => !item(id)?.pinned);
+  const index = anchor && keptNormal.includes(anchor) ? keptNormal.indexOf(anchor) : keptNormal.length;
   const placements = withGroup(state, source.dayId, group.key, sourceIds.filter((id) => id !== source.itemId));
   const copies = { ...state.copies };
   replaced.forEach((id) => delete copies[id]);
@@ -144,7 +148,7 @@ export function planBoardTransfer(
       ...state,
       placements: {
         ...placements,
-        [target.dayId]: { ...placements[target.dayId], [group.key]: [...kept.slice(0, index), source.itemId, ...kept.slice(index)] },
+        [target.dayId]: { ...placements[target.dayId], [group.key]: [...keptPinned, ...keptNormal.slice(0, index), source.itemId, ...keptNormal.slice(index)] },
       },
       copies,
       removedItemIds: [...new Set([...(state.removedItemIds ?? []), ...targetIds.filter(id => sameSlot(id) && !state.copies[id])])],

@@ -6,16 +6,21 @@
     @close="close"
   >
     <el-form label-position="top" @submit.prevent>
-      <el-form-item :label="$t('websiteItineraryUi.resourceSource')">
-        <el-radio-group v-model="source">
-          <el-radio-button value="config">
-            {{ $t("websiteItineraryUi.sourceConfig") }}
-          </el-radio-button>
-          <el-radio-button value="manual">
-            {{ $t("websiteItineraryUi.sourceManual") }}
-          </el-radio-button>
-        </el-radio-group>
-      </el-form-item>
+      <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
+        <el-form-item :label="$t('websiteItineraryUi.resourceSource')">
+          <el-radio-group v-model="source">
+            <el-radio-button value="config">
+              {{ $t("websiteItineraryUi.sourceConfig") }}
+            </el-radio-button>
+            <el-radio-button value="manual">
+              {{ $t("websiteItineraryUi.sourceManual") }}
+            </el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item :label="$t('websiteItineraryUi.feeState')">
+          <FeeStateSelect v-model="feeState" />
+        </el-form-item>
+      </div>
       <template v-if="source === 'config'">
         <div class="grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
           <el-form-item :label="$t('websiteItineraryUi.configCity')">
@@ -167,11 +172,6 @@
         :closable="false"
         :title="$t('websiteItineraryUi.dayAttractionLimit', { max: MAX_DAY_ATTRACTIONS })"
       />
-      <div class="mt-3 grid grid-cols-2 gap-x-4 max-[650px]:grid-cols-1">
-        <el-form-item :label="$t('websiteItineraryUi.feeState')">
-          <FeeStateSelect v-model="feeState" />
-        </el-form-item>
-      </div>
     </el-form>
     <template #footer>
       <el-button @click="close">
