@@ -187,6 +187,7 @@ import DataTable from "@/components/DataTable/index.vue";
 import type { WebsiteAttraction, WebsiteConfig, WebsiteDay, WebsiteItem } from "@/types/website";
 import { hasAttractionCopy } from "@/views/website-inquiries/options";
 import { attractionReferencePrice, formatAttractionPrice } from "../attraction-price";
+import { websiteAttractionRows } from "../attraction-search";
 import { websiteCityOptions, websiteDayRouteCityIds } from "../city-options";
 
 interface AttractionRow {
@@ -225,39 +226,19 @@ const cityOptions = computed(() => websiteCityOptions(
   props.config.cities,
   props.selectableCityIds,
   ...websiteDayRouteCityIds(props.day),
+  ...(props.day?.viaCityIds ?? []),
 ));
 const cityOptionIds = computed(() => new Set(cityOptions.value.map((city) => city.id)));
 const selectableAttractions = computed(() => props.config.attractions.filter(
   (item) => item.status === "enabled" && cityOptionIds.value.has(item.cityId) && (!cityId.value || item.cityId === cityId.value),
 ));
 const selectableById = computed(() => new Map(selectableAttractions.value.map((item) => [item.id, item])));
-const rows = computed<AttractionRow[]>(() => {
-  const query = keyword.value.trim().toLowerCase();
-  const enabled = selectableAttractions.value;
-  const matches = (item: WebsiteAttraction) =>
-    !query || item.nameZh.toLowerCase().includes(query) || item.nameEn.toLowerCase().includes(query);
-  const parents = enabled.filter((item) => item.kind === "attraction" || !item.parentId);
-  const childrenOf = (id: string) => enabled.filter((item) => item.parentId === id && item.kind === "component");
-  const listed = new Set<string>();
-  const result: AttractionRow[] = [];
-  // 父景点后紧跟其组件，便于辨认组件归属；组件命中关键词时也带出父景点。
-  for (const parent of parents) {
-    const children = childrenOf(parent.id).filter(matches);
-    if (!matches(parent) && !children.length) continue;
-    result.push({ attraction: parent, parentName: "" });
-    listed.add(parent.id);
-    for (const child of children) {
-      result.push({ attraction: child, parentName: localName(parent) });
-      listed.add(child.id);
-    }
-  }
-  for (const item of enabled) {
-    if (listed.has(item.id) || !matches(item)) continue;
-    const parent = props.config.attractions.find((record) => record.id === item.parentId);
-    result.push({ attraction: item, parentName: parent ? localName(parent) : "" });
-  }
-  return result;
-});
+const rows = computed<AttractionRow[]>(() =>
+  websiteAttractionRows(selectableAttractions.value, keyword.value, props.config.attractions).map(({ attraction, parent }) => ({
+    attraction,
+    parentName: parent ? localName(parent) : "",
+  })),
+);
 const selectedAttractions = computed(() => selectedIds.value.flatMap((id) => {
   const attraction = selectableById.value.get(id);
   return attraction ? [attraction] : [];
@@ -284,7 +265,7 @@ watch(
   (visible) => {
     if (!visible) return;
     source.value = "config";
-    cityId.value = props.day?.endCityId || props.day?.departCityId || "";
+    cityId.value = props.day?.viaCityIds?.[0] || props.day?.endCityId || props.day?.departCityId || "";
     keyword.value = "";
     selectedIds.value = [];
     manualNameZh.value = "";

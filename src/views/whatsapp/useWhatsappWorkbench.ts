@@ -5,6 +5,7 @@ import { translate } from "@/lang/utils";
 import { websiteErrorMessage } from "@/services/website.service";
 import { whatsappService } from "@/services/whatsapp.service";
 import { useUserStore } from "@/stores/user";
+import { useWhatsappNotificationsStore } from "@/stores/whatsapp-notifications";
 import { useWhatsappStreamStore } from "@/stores/whatsapp-stream";
 import type {
   WhatsappConversationDetail,
@@ -56,6 +57,7 @@ export interface SendFeedback {
  */
 export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   const user = useUserStore();
+  const notifications = useWhatsappNotificationsStore();
   const stream = useWhatsappStreamStore();
 
   const keyword = ref("");
@@ -361,6 +363,8 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     try {
       // 共享已读会推送 read 变化；重取后序号未前进时上面的去重阻止再次提交，不形成循环。
       await whatsappService.markRead(id, seq);
+      // 断流时本标签页已经确认阅读成功，可立即更新全局未读数。
+      if (currentSession === session && !stream.isLive) notifications.refresh();
     } catch {
       // 失败时允许下次展示再提交；不影响阅读本身。
       if (currentSession === session && lastReadSent.get(id) === seq) {

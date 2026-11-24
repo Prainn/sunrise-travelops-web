@@ -239,6 +239,7 @@
             :saving="saving"
             :date="serviceDayDate(plan, plan.days[index]!.dayNumber)"
             :airport-transfers="airportTransferOptions(plan, plan.days[index])"
+            :business-unit="plan.businessUnit"
             :last="plan.serviceDates ? !isConsecutiveServiceDay(plan.serviceDates, plan.days[index]!.dayNumber + 1) : index === plan.days.length - 1"
             @update:day="plan.days.splice(index, 1, $event)"
             @open-resource="selection => openResource(index, selection)"
@@ -368,7 +369,6 @@
         />
         <ItineraryReorderDialog
           v-model="isReorderDialogVisible"
-          :title="$t('websiteItineraryUi.organizeTitle')"
           :days="reorderBoardDays"
           :deleted-days="deletedBoardDays"
           :start-date="plan.startDate"
@@ -376,6 +376,7 @@
           :max-days="maxDays"
           :readonly="!editable || saving"
           transfer
+          :compact="plan.businessUnit === 'website'"
           :draft="plan.reorderDraft"
           :create-day="createBoardDay"
           :stash="stashReorder"
@@ -525,6 +526,7 @@ const dayEntries = computed(() =>
     label: `D${day.dayNumber}`,
     // 自选服务日存在空档，目录同时标出实际日期。
     summary: [plan.value?.serviceDates?.[day.dayNumber - 1], dayRoute(day)].filter(Boolean).join(" "),
+    remark: plan.value?.businessUnit === "website" ? (day.internalRemark?.trim() || undefined) : undefined,
   })),
 );
 const resourceDay = computed(() => plan.value?.days.find((day) => day.id === resourceDialog.value?.dayId));
@@ -565,6 +567,7 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
   const result: ReorderBoardDay = {
     id: day.id,
     title: dayRoute(day) || t("itineraryWorkspace.notArranged"),
+    remark: plan.value?.businessUnit === "website" ? (day.internalRemark?.trim() || undefined) : undefined,
     dayNumber: day.dayNumber,
     noOvernight: day.overnightCityId === null,
     overnightCityId: day.overnightCityId,
@@ -640,7 +643,8 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
     ],
   };
   const items = result.groups.flatMap(group => group.items.map(item => ({ ...item, icon: item.icon ?? group.icon })));
-  result.emptySlot = !day.departCityId && !day.endCityId && day.overnightCityId === null && items.every(item => item.placeholder);
+  // 只有备注的日也算已有内容，回收恢复时不能当作空白日直接替换。
+  result.emptySlot = !day.departCityId && !day.endCityId && !day.viaCityIds?.length && day.overnightCityId === null && !result.remark && items.every(item => item.placeholder);
   const byId = new Map(items.map(item => [item.id, item]));
   const ordered = (day.eventOrder ?? []).flatMap(id => { const item = byId.get(id); byId.delete(id); return item ? [item] : []; });
   result.groups = [{ key: "events", label: t("itineraryWorkspace.eventOrder"), sortable: true, transferable: true, items: [...ordered, ...byId.values()] }];
@@ -697,7 +701,8 @@ function cityName(id: string | null) {
 function dayRoute(day: WebsiteDay) {
   const from = cityName(day.departCityId);
   const to = cityName(day.endCityId);
-  return from || to ? `${from || "-"} → ${to || "-"}` : "";
+  const via = (day.viaCityIds ?? []).map(cityName);
+  return from || to || via.length ? [from || "-", ...via, to || "-"].join(" → ") : "";
 }
 function transportLabel(mode: string) {
   const option = TRANSPORT_OPTIONS.find((item) => item.value === mode);

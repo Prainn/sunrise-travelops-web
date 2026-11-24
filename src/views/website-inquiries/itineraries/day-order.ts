@@ -3,6 +3,7 @@ import type { WebsiteConfig, WebsiteDay, WebsiteMeal } from "@/types/website";
 import { emptyDay, isMealArranged } from "../options";
 import { isConsecutiveServiceDay } from "@/utils/service-dates";
 import { alignAirportTransfers } from "./airport-transfers";
+import { websiteDayRouteCityIds } from "./city-options";
 import {
   applyDayChanges,
   createAdjacencyCheck,
@@ -188,7 +189,7 @@ interface TransferCheck extends DayOrderIssue {
  * 校验调整后的全部活动日。
  *
  * 包括未修改日期已有的问题；
- * 景点/组件与餐厅城市须在当天出发、结束及交通段起终点城市内，酒店城市须等于住宿城市，
+ * 景点/组件可在当天出发、结束、交通段起终点或途经城市，餐厅沿用交通路线范围。酒店城市须等于住宿城市，
  * 需要住宿的日须有酒店，交通段须从出发城市连续到结束城市。手填或缺少城市信息只提示人工核对。
  *
  * @param days - 当前草稿活动日。
@@ -223,13 +224,14 @@ function checkWebsiteDay(
     const city = config.cities.find((record) => record.id === id);
     return city ? city.nameZh || city.nameEn : "";
   };
-  const allowed = new Set([day.departCityId, day.endCityId, ...day.legs.flatMap((leg) => [leg.fromCityId, leg.toCityId])].filter(Boolean));
+  const allowed = new Set(websiteDayRouteCityIds(day).filter(Boolean));
+  const attractionCities = new Set([...allowed, ...(day.viaCityIds ?? [])]);
   for (const item of day.items) {
     const name = item.nameZh || item.nameEn;
     const cityId = config.attractions.find((record) => record.id === item.attractionId)?.cityId;
     if (!cityId) {
       if (isMoved(item.id)) add("manualCheck", item.id, { name }, false);
-    } else if (!allowed.has(cityId)) add("cityMismatch", item.id, { name, city: cityLabel(cityId) });
+    } else if (!attractionCities.has(cityId)) add("cityMismatch", item.id, { name, city: cityLabel(cityId) });
   }
   for (const meal of day.meals.filter((value) => isMealArranged(value) && includeMeal(value))) {
     const name = meal.restaurantZh || meal.restaurantEn;

@@ -79,7 +79,6 @@
     "restaurants": "Restaurants",
     "attractions": "Attractions",
     "vehicleModels": "Vehicle Models",
-    "guides": "Guides",
     "cities": "Cities",
     "inquiryLogReport": "Inquiry Summary",
     "flights": "Flights",
@@ -333,7 +332,6 @@
   },
   "itinerary": {
     "resourceTotalPrice": "Total",
-    "tableMealTotal": "Table meal total (group)",
     "tableCount": "Tables",
     "customerNotes": "@:common.remark",
     "resourceCostPerPerson": "Cost per person",
@@ -367,10 +365,8 @@
     "actualMarginRate": "Margin % / person",
     "collapseDay": "Collapse",
     "expandDay": "Expand",
-    "adults": "Adults",
     "allCities": "All cities",
     "tourCostPerPerson": "Tour cost / person",
-    "children": "Children",
     "code": "Itinerary No.",
     "createTitle": "Add Itinerary",
     "createAndManage": "Create & manage",
@@ -424,11 +420,9 @@
     "attractionCost": "Attraction cost / person",
     "editItinerary": "Edit Info",
     "editTitle": "Edit Itinerary",
-    "hotelCost": "Hotel cost",
     "clearCurrentHotelTier": "Clear tier",
     "hotelUnitPrice": "Unit price (CNY/room/night)",
     "hotelPlans": "Hotel selection",
-    "vehiclePlans": "Vehicle Plans",
     "adultTourPricePerPerson": "Adult tour price",
     "showChildPriceInPdf": "Show child price in PDF",
     "childTourPrice": "Child tour price",
@@ -450,7 +444,6 @@
     "unsavedLeaveConfirm": "Unsaved itinerary changes will be lost. Leave?",
     "saveSuccess": "Itinerary saved",
     "priceUnit": "Pricing Unit",
-    "profit": "Estimated Profit",
     "quoteSettings": "Quote Options",
     "viewQuote": "View Quote",
     "resource": "Meal / Attraction",
@@ -484,7 +477,6 @@
       "restaurant": "Meal",
       "vehicle": "Vehicle"
     },
-    "startDateRequired": "Select a start date",
     "startDateRequiredForVehicles": "Keep the start date while vehicle arrangements have specific dates",
     "statuses": {
       "draft": "Draft",
@@ -680,7 +672,6 @@
     "conflict": "Someone else changed this file. Load the latest before trying again; their changes are not overwritten.",
     "reloadLatest": "Load latest",
     "actionConflict": "Not completed: {message}. Refresh and try again",
-    "notFound": "File not found or not in this environment",
     "environments": {
       "dev": "Development",
       "prod": "Production"
@@ -1585,6 +1576,7 @@
         "day": "Day",
         "dayNumber": "Day number",
         "departCityId": "Departure city",
+        "viaCityIds": "Stops en route",
         "endCityId": "Arrival city",
         "overnightCityId": "Overnight city",
         "guideLanguage": "Guide language",
@@ -1798,8 +1790,8 @@
   },
   "websiteItineraryUi": {
     "organizeItinerary": "Organize itinerary",
-    "organizeTitle": "Itinerary organization",
-    "deleteItemConfirm": "Delete \"{name}\" from this itinerary? Resource records are kept. Save the itinerary to apply this removal.",
+    "dayInternalRemark": "Internal note",
+    "deleteItemConfirm": "Delete \"{name}\"? Save the itinerary to apply this change.",
     "applyBoardBeforeDelete": "This item has a copy in the saved arrangement. Apply the arrangement before deleting it.",
     "attractions": "Attractions and components",
     "noAttractions": "No attractions scheduled",
@@ -1905,8 +1897,6 @@
     "attractionPriceLine": "Attraction price: {price}",
     "attractionPriceReference": "Reference attraction price: {price} CNY",
     "usedDays": "Used on",
-    "chargeable": "Fee",
-    "chargeableYes": "Chargeable",
     "chargeableNo": "Free",
     "recommendedMonths": "Recommended months",
     "duplicateAttraction": "Already used on {days}. You can add it again; check for duplicates.",
@@ -2312,7 +2302,7 @@
     "restoreDay": "Restore",
     "deleteDayConfirm": "Delete D{day}? Restore from Deleted days. Save the itinerary after applying changes.",
     "deletedHint": "Restores to the original date, before that day if occupied. Save after applying.",
-    "reorderTitle": "Reorder itinerary",
+    "reorderTitle": "Itinerary organization",
     "initialPlanningTitle": "Plan the itinerary",
     "initialPlanningHint": "Set the departure, arrival and overnight stay for each day. Drag a day header or use the arrows to change the order.",
     "dayRouteForm": "Route for day {day}",
@@ -2323,6 +2313,9 @@
     "reorderReadonly": "Read-only itinerary; view full schedule only.",
     "moveEarlier": "Move one day earlier",
     "moveLater": "Move one day later",
+    "boardZoom": "Board zoom",
+    "zoomOut": "Zoom out",
+    "zoomIn": "Zoom in",
     "notArranged": "Not arranged",
     "issuesTitle": "Check after reordering",
     "applyOrder": "Apply order",
@@ -2565,6 +2558,7 @@
     "workerScopeHint": "Processing status covers this service instance only. No progress for over 60 seconds is flagged.",
     "notifications": {
       "unread": "{count} unread messages",
+      "unreadPageTitle": "[{count} unread message] {title} | [{count} unread messages] {title}",
       "unassigned": "{count} unassigned conversations",
       "unavailable": "Message counts unavailable. Retrying.",
       "hint": "Open inbox; red: unread messages, orange: unassigned conversations"
@@ -2790,8 +2784,7 @@
       "expired": "File expired. Remove it and upload again",
       "notReady": "File upload failed. Remove it and choose again",
       "mixed": "Files and images cannot be sent together. Remove or send the existing draft first",
-      "noReply": "Files cannot be sent as a reply. Cancel the reply first",
-      "download": "Download {name}"
+      "noReply": "Files cannot be sent as a reply. Cancel the reply first"
     },
     "runtime": {
       "environment": "Environment",
