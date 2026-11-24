@@ -1,14 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { effectScope } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { request } from "@/api/request";
 import { websiteItineraryInput, websiteService } from "@/services/website.service";
-import type { WebsiteConfig, WebsiteInquiry, WebsiteItinerary, WebsitePreview, WebsiteQuotation } from "@/types/website";
+import type { WebsiteConfig, WebsiteInquiry, WebsiteItinerary, WebsitePreview, WebsiteQuotation, WebsiteVehiclePrice } from "@/types/website";
 import { useWebsiteWorkspace } from "./useWebsiteWorkspace";
 import { printWebsiteQuotation } from "./print";
 import { generateWebsiteWordDocument } from "./docx";
 import { downloadWordDocument } from "@/views/inquiries/itineraries/docx";
 import { emptyDay } from "../options";
-import { quotationCandidates } from "./vehicle-price";
+import { PRICE_CATEGORIES, quotationCandidates } from "./vehicle-price";
 import { applyReschedule, defaultRescheduleTargets, rescheduleDiff } from "./reschedule";
 
 vi.mock("vue-router", () => ({
@@ -19,7 +20,7 @@ vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
 vi.mock("element-plus", () => ({ ElMessage: { error: vi.fn(), warning: vi.fn(), success: vi.fn() }, ElMessageBox: { confirm: vi.fn() } }));
 vi.mock("@/stores/user", () => ({ useUserStore: () => ({ userInfo: {} }) }));
 vi.mock("@/utils/permission", () => ({ hasUserPermission: () => true }));
-vi.mock("@/api/request", () => ({ ApiError: class extends Error {}, request: {} }));
+vi.mock("@/api/request", () => ({ ApiError: class extends Error {}, request: { post: vi.fn(), put: vi.fn() } }));
 vi.mock("./print", () => ({ printWebsiteQuotation: vi.fn() }));
 vi.mock("./docx", () => ({ generateWebsiteWordDocument: vi.fn() }));
 vi.mock("@/views/inquiries/itineraries/docx", () => ({ downloadWordDocument: vi.fn() }));
@@ -294,5 +295,251 @@ describe("attraction price reference for drafts", () => {
     expect(workspace.attractionPriceReference.value).toMatchObject({ configVersion: 2, total: "1.00" });
     // 只读投影不进入保存白名单。
     expect(websiteItineraryInput(workspace.plan.value!)).not.toHaveProperty("attractionPriceReference");
+  });
+});
+
+describe("website itinerary request payloads and dirty tracking", () => {
+  const nightlyPrice: WebsiteVehiclePrice = {
+    vehicleType: "7_seat",
+    hotelTier: null,
+    unitPrice: "600.00",
+    includesDriver: true,
+    includesGuide: false,
+    priceComponents: PRICE_CATEGORIES.map((category, index) => ({
+      category,
+      unitPrice: index === 2 ? "600.00" : null,
+      showInPdf: index === 2,
+    })),
+  };
+  const sentBody = (fn: typeof request.post | typeof request.put) => {
+    const raw = vi.mocked(fn).mock.lastCall?.[1];
+    return { raw, json: JSON.parse(JSON.stringify(raw)) as Record<string, unknown> };
+  };
+
+  it("applies itinerary defaults in createItinerary while preserving caller-provided values", async () => {
+    vi.mocked(request.post).mockResolvedValue({ ...plan });
+    await websiteService.createItinerary("inquiry", {
+      title: "New Trip",
+      duration: 3,
+      startDate: "2026-12-01",
+      pax: 2,
+      configVersion: 1,
+      days: [],
+      vehiclePrices: [],
+      inquiryVersion: 2,
+    });
+    const { json: defaulted } = sentBody(request.post);
+    expect(request.post).toHaveBeenCalledWith("/website/inquiries/inquiry/itineraries", expect.any(Object));
+    expect(defaulted).toMatchObject({
+      title: "New Trip",
+      inquiryVersion: 2,
+      reorderDraft: null,
+      deletedDays: [],
+      hotelPricingMode: "tiered",
+      nightlyShowHotelPrice: false,
+      nightlyVehiclePrices: [],
+    });
+
+    const explicitReorder = {
+      dayIds: ["d1"],
+      addedDayIds: [],
+      deletedDays: [],
+      placements: [],
+      copies: [],
+      overnight: [],
+    };
+    const deletedDay = { day: emptyDay(1), originalDate: "2026-12-01" };
+    await websiteService.createItinerary("inquiry", {
+      title: "Explicit Nightly Trip",
+      duration: 3,
+      startDate: "2026-12-01",
+      pax: 2,
+      configVersion: 1,
+      days: [],
+      vehiclePrices: [],
+      reorderDraft: explicitReorder,
+      deletedDays: [deletedDay],
+      hotelPricingMode: "nightly",
+      nightlyShowHotelPrice: true,
+      nightlyVehiclePrices: [{ ...nightlyPrice }],
+      inquiryVersion: 2,
+    });
+    const { json: explicit } = sentBody(request.post);
+    expect(explicit).toMatchObject({
+      title: "Explicit Nightly Trip",
+      inquiryVersion: 2,
+      reorderDraft: explicitReorder,
+      deletedDays: [deletedDay],
+      hotelPricingMode: "nightly",
+      nightlyShowHotelPrice: true,
+      nightlyVehiclePrices: [
+        {
+          vehicleType: "7_seat",
+          hotelTier: null,
+          unitPrice: "600.00",
+          priceComponents: nightlyPrice.priceComponents,
+        },
+      ],
+    });
+  });
+
+  it.each(["hotelPricingMode", "nightlyShowHotelPrice", "nightlyVehiclePrices"] as const)(
+    "omits a single missing %s field in saveItinerary and validateItinerary while whitelist-mapping prices",
+    async (missingField) => {
+      vi.mocked(request.put).mockResolvedValue({ ...plan });
+      vi.mocked(request.post).mockResolvedValue(preview);
+      const record: WebsiteItinerary = {
+        ...plan,
+        businessUnit: "website",
+        hotelPricingMode: "nightly",
+        nightlyShowHotelPrice: true,
+        nightlyVehiclePrices: [{ ...nightlyPrice }],
+        vehiclePrices: [],
+      };
+      delete record[missingField];
+
+      await websiteService.saveItinerary(record);
+      const saved = sentBody(request.put);
+      expect(saved.raw).not.toHaveProperty(missingField);
+      expect(saved.json).not.toHaveProperty(missingField);
+
+      await websiteService.validateItinerary(record);
+      const validated = sentBody(request.post);
+      expect(validated.raw).not.toHaveProperty(missingField);
+      expect(validated.json).not.toHaveProperty(missingField);
+
+      for (const body of [saved.json, validated.json]) {
+        expect(body.version).toBe(3);
+        if (missingField !== "hotelPricingMode") expect(body.hotelPricingMode).toBe("nightly");
+        if (missingField !== "nightlyShowHotelPrice") expect(body.nightlyShowHotelPrice).toBe(true);
+        if (missingField !== "nightlyVehiclePrices") {
+          expect(body.nightlyVehiclePrices).toEqual([
+            {
+              vehicleType: "7_seat",
+              hotelTier: null,
+              unitPrice: "600.00",
+              priceComponents: nightlyPrice.priceComponents,
+            },
+          ]);
+        }
+      }
+    },
+  );
+
+  it("distinguishes omitted optional fields from explicit false, empty arrays, tiered mode, and cleared reorderDraft", async () => {
+    vi.mocked(request.put).mockResolvedValue({ ...plan });
+    vi.mocked(request.post).mockResolvedValue(preview);
+
+    const omitted: WebsiteItinerary = { ...plan, businessUnit: "website" };
+    await websiteService.saveItinerary(omitted);
+    await websiteService.validateItinerary(omitted);
+    for (const fn of [request.put, request.post] as const) {
+      const { json } = sentBody(fn);
+      expect(json).not.toHaveProperty("hotelPricingMode");
+      expect(json).not.toHaveProperty("nightlyShowHotelPrice");
+      expect(json).not.toHaveProperty("nightlyVehiclePrices");
+      expect(json).not.toHaveProperty("deletedDays");
+      expect(json).not.toHaveProperty("reorderDraft");
+    }
+
+    const explicit: WebsiteItinerary = {
+      ...plan,
+      businessUnit: "website",
+      hotelPricingMode: "tiered",
+      nightlyShowHotelPrice: false,
+      nightlyVehiclePrices: [],
+      deletedDays: [],
+      reorderDraft: {
+        dayIds: ["d1"],
+        addedDayIds: [],
+        deletedDays: [],
+        placements: [],
+        copies: [],
+        overnight: [],
+      },
+    };
+    explicit.reorderDraft = null;
+
+    await websiteService.saveItinerary(explicit);
+    await websiteService.validateItinerary(explicit);
+    for (const fn of [request.put, request.post] as const) {
+      expect(sentBody(fn).json).toMatchObject({
+        hotelPricingMode: "tiered",
+        nightlyShowHotelPrice: false,
+        nightlyVehiclePrices: [],
+        deletedDays: [],
+        reorderDraft: null,
+      });
+    }
+  });
+
+  it("keeps dirty false on open, omits missing pricing fields on title-only edits, and saves explicit mode or clear changes", async () => {
+    const workspace = await setup();
+    expect(workspace.dirty.value).toBe(false);
+
+    workspace.plan.value!.title = "Renamed Trip";
+    expect(workspace.dirty.value).toBe(true);
+    vi.mocked(request.put).mockImplementationOnce(async (_, body) => ({
+      ...(body as WebsiteItinerary),
+      id: "plan",
+      businessUnit: "website",
+      inquiryId: "inquiry",
+      code: "WIT-1",
+      status: "draft",
+      version: 4,
+      createdAt: "",
+      updatedAt: "",
+    }));
+    expect(await workspace.save()).toBe(true);
+    const titleEditJson = sentBody(request.put).json;
+    expect(titleEditJson.title).toBe("Renamed Trip");
+    expect(titleEditJson).not.toHaveProperty("hotelPricingMode");
+    expect(titleEditJson).not.toHaveProperty("nightlyShowHotelPrice");
+    expect(titleEditJson).not.toHaveProperty("nightlyVehiclePrices");
+    expect(titleEditJson).not.toHaveProperty("deletedDays");
+    expect(titleEditJson).not.toHaveProperty("reorderDraft");
+    expect(workspace.dirty.value).toBe(false);
+
+    vi.mocked(websiteService.itineraries).mockResolvedValueOnce([
+      {
+        ...plan,
+        businessUnit: "website",
+        hotelPricingMode: "nightly",
+        nightlyShowHotelPrice: true,
+        nightlyVehiclePrices: [{ ...nightlyPrice }],
+        reorderDraft: {
+          dayIds: [],
+          addedDayIds: [],
+          deletedDays: [],
+          placements: [],
+          copies: [],
+          overnight: [],
+        },
+      },
+    ]);
+    scope.stop();
+    scope = effectScope();
+    const loaded = await setup();
+    expect(loaded.dirty.value).toBe(false);
+
+    loaded.plan.value!.hotelPricingMode = "tiered";
+    loaded.plan.value!.nightlyShowHotelPrice = false;
+    loaded.plan.value!.nightlyVehiclePrices = [];
+    loaded.plan.value!.reorderDraft = null;
+    expect(loaded.dirty.value).toBe(true);
+
+    vi.mocked(request.put).mockImplementationOnce(async (_, body) => ({
+      ...loaded.plan.value!,
+      ...(body as Partial<WebsiteItinerary>),
+      version: 5,
+    }));
+    expect(await loaded.save()).toBe(true);
+    expect(sentBody(request.put).json).toMatchObject({
+      hotelPricingMode: "tiered",
+      nightlyShowHotelPrice: false,
+      nightlyVehiclePrices: [],
+      reorderDraft: null,
+    });
+    expect(loaded.dirty.value).toBe(false);
   });
 });

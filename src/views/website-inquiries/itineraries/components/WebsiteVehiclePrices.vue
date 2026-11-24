@@ -4,7 +4,12 @@
       <legend class="mb-1 text-sm font-600">
         {{ $t("websiteItineraryUi.hotelPricingMode") }}
       </legend>
-      <el-radio-group v-model="mode" :disabled="!editable" :aria-label="$t('websiteItineraryUi.hotelPricingMode')">
+      <el-radio-group
+        :model-value="mode"
+        :disabled="!editable"
+        :aria-label="$t('websiteItineraryUi.hotelPricingMode')"
+        @update:model-value="setMode"
+      >
         <el-radio-button value="tiered">
           {{ $t("websiteItineraryUi.tieredMode") }}
         </el-radio-button>
@@ -219,7 +224,10 @@ const mode = ref<WebsiteHotelPricingMode>("tiered");
 const nightly = computed(() => mode.value === "nightly");
 const nightlyDays = ref<WebsiteDay[]>([]);
 const nightlyVisited = ref(false);
+const hasModeChanged = ref(false);
 const tierEdited = ref(false);
+const nightlyPricesEdited = ref(false);
+const nightlyShowHotelEdited = ref(false);
 const accommodation = computed(() => nightlyAccommodation(nightlyDays.value));
 const tierEntries = reactive(new Map<string, PriceRow>());
 const nightEntries = reactive(new Map<string, PriceRow>());
@@ -281,7 +289,10 @@ watch(visible, (value) => {
   if (!value) return;
   mode.value = plan.value.hotelPricingMode ?? "tiered";
   nightlyVisited.value = false;
+  hasModeChanged.value = false;
   tierEdited.value = false;
+  nightlyPricesEdited.value = false;
+  nightlyShowHotelEdited.value = false;
   nightlyDays.value = [];
   loadRows(tierEntries, tierPdf, plan.value.vehiclePrices);
   loadRows(nightEntries, nightPdf, plan.value.nightlyVehiclePrices ?? []);
@@ -362,17 +373,30 @@ function isInvalidValue(value: string | null) {
 function isInvalidTotal(row: PriceRow) {
   return hasComponents(row) && storedUnitPrice(row) === null;
 }
+function setMode(value: string | number | boolean | undefined) {
+  if ((value !== "tiered" && value !== "nightly") || value === mode.value) return;
+  mode.value = value;
+  hasModeChanged.value = true;
+}
 function setPrice(row: PriceRow, category: WebsitePriceCategory, value: string) {
   // 空值保持 null（不计入），0 为有效金额。
-  if (!nightly.value) tierEdited.value = true;
+  if (nightly.value) nightlyPricesEdited.value = true;
+  else tierEdited.value = true;
   row.prices[category] = value.trim() || null;
 }
 function setVisibility(category: WebsitePriceCategory, show: boolean) {
-  if (!nightly.value) tierEdited.value = true;
+  if (!nightly.value) {
+    tierEdited.value = true;
+  } else if (category === "hotel") {
+    nightlyShowHotelEdited.value = true;
+  } else if ([...nightEntries.values()].some(row => row.prices[category] !== null)) {
+    nightlyPricesEdited.value = true;
+  }
   pdfCategories.value[category] = show;
 }
 function removeRow(key: string) {
-  if (!nightly.value) tierEdited.value = true;
+  if (nightly.value) nightlyPricesEdited.value = true;
+  else tierEdited.value = true;
   entries.value.delete(key);
 }
 function tierLabel(tier: WebsiteHotelTier | null) {
@@ -392,10 +416,20 @@ function apply() {
     }));
   if (!nightly.value || tierEdited.value) plan.value.vehiclePrices = serialize(tierEntries, tierPdf);
   if (plan.value.businessUnit === "website") {
-    plan.value.hotelPricingMode = mode.value;
-    if (nightlyVisited.value) {
-      plan.value.nightlyVehiclePrices = serialize(nightEntries, nightPdf);
+    if (hasModeChanged.value) {
+      plan.value.hotelPricingMode = mode.value;
+    }
+    if (nightlyPricesEdited.value) {
+      const prices = serialize(nightEntries, nightPdf);
+      // 已加载的报价可主动清空。缺失字段由服务端按原草稿判断是否需要刷新。
+      if (prices.length || plan.value.nightlyVehiclePrices !== undefined) {
+        plan.value.nightlyVehiclePrices = prices;
+      }
+    }
+    if (nightlyShowHotelEdited.value) {
       plan.value.nightlyShowHotelPrice = nightPdf.hotel;
+    }
+    if (nightlyVisited.value) {
       plan.value.days = nightlyDays.value;
     }
   }

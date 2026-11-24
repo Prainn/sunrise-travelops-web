@@ -1,9 +1,12 @@
 /* eslint vue/one-component-per-file: off -- Explicit renderer stubs exercise dialog state. */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRenderer, defineComponent, h, nextTick, ref, type ComponentPublicInstance } from "vue";
-import type { WebsiteConfig, WebsiteDay, WebsiteItinerary } from "@/types/website";
+import { request } from "@/api/request";
+import { websiteService } from "@/services/website.service";
+import type { WebsiteConfig, WebsiteDay, WebsiteItinerary, WebsitePriceCategory } from "@/types/website";
 import { emptyDay, emptyInquiry, emptyItinerary } from "../../options";
 import { PRICE_CATEGORIES } from "../vehicle-price";
+vi.mock("@/api/request", () => ({ ApiError: class extends Error {}, request: { put: vi.fn() } }));
 vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key, locale: ref("zh-cn") }) }));
 vi.mock("./WebsiteHotelDialog.vue", () => ({ default: { template: "<div />" } }));
 vi.mock("@/components/AppDialog/index.vue", () => ({ default: {
@@ -28,7 +31,7 @@ const renderer = createRenderer<HostNode, HostNode>({
 });
 
 let unmount: (() => void) | undefined;
-afterEach(() => { unmount?.(); });
+afterEach(() => { unmount?.(); vi.clearAllMocks(); });
 const components = (values: (string | null)[]) => PRICE_CATEGORIES.map((category, index) => ({ category, unitPrice: values[index] ?? null, showInPdf: index === 0 }));
 function day(): WebsiteDay {
   const value = emptyDay(1);
@@ -39,13 +42,14 @@ function day(): WebsiteDay {
 }
 async function mount(attractionPriceTotal: string | null = "0.00", config?: WebsiteConfig) {
   const visible = ref(false);
+  const onApplied = vi.fn();
   const plan = ref<WebsiteItinerary>({ ...emptyItinerary(emptyInquiry(), 0, "Test"), businessUnit: "website", id: "plan", inquiryId: "inquiry", code: "WIT-1", status: "draft", version: 1, createdAt: "", updatedAt: "", pax: 2, days: [day()], vehiclePrices: [
     { vehicleType: "7_seat", hotelTier: "A", unitPrice: "10000.00", priceComponents: components(["2000", "1000", "3000", "2000", "2000"]) },
     // 档次 C 已不在当前日程中：保留为待调整组合。
     { vehicleType: "7_seat", hotelTier: "C", unitPrice: "8000.00", priceComponents: components(["8000", "0", "0", "0", "0"]) },
   ] });
   const root = node("root");
-  const app = renderer.createApp(defineComponent({ setup() { return () => h(WebsiteVehiclePrices, { modelValue: visible.value, "onUpdate:modelValue": (value: boolean) => visible.value = value, plan: plan.value, editable: true, attractionPriceTotal, config }); } }));
+  const app = renderer.createApp(defineComponent({ setup() { return () => h(WebsiteVehiclePrices, { modelValue: visible.value, "onUpdate:modelValue": (value: boolean) => visible.value = value, plan: plan.value, editable: true, attractionPriceTotal, config, onApplied }); } }));
   app.config.globalProperties.$t = ((key: string, values?: unknown) => values ? `${key}:${JSON.stringify(values)}` : key) as typeof app.config.globalProperties.$t;
   for (const name of ["ElForm", "ElFormItem", "ElCheckbox", "ElInput", "ElButton", "ElAlert", "ElTag", "ElRadioGroup", "ElRadioButton", "ElInputNumber"]) app.component(name, defineComponent({ inheritAttrs: false, setup(_, { attrs, slots }) { return () => h(name, attrs, slots.default?.()); } }));
   app.mount(root);
@@ -53,11 +57,13 @@ async function mount(attractionPriceTotal: string | null = "0.00", config?: Webs
   function find(type: string, current = root): HostNode[] { return [...(current.type === type ? [current] : []), ...current.children.flatMap(child => find(type, child))]; }
   const text = (current: HostNode): string => (current.text ?? "") + current.children.map(text).join("");
   const button = (key: string) => find("ElButton").find(item => text(item).includes(key));
+  const priceCheckbox = (category: WebsitePriceCategory) =>
+    find("ElCheckbox").find(item => text(item).includes(`websiteItineraryUi.priceCategories.${category}`))!;
   async function change(target: HostNode, value: unknown) { (target.props["onUpdate:modelValue"] as (value: unknown) => void)(value); await nextTick(); }
   async function press(key: string) { (button(key)!.props.onClick as () => void)(); await nextTick(); }
   async function open() { visible.value = true; await nextTick(); }
   await open();
-  return { plan, find, text: () => text(root), change, open, button, press, inputs: () => find("ElInput") };
+  return { plan, onApplied, find, text: () => text(root), change, open, button, press, priceCheckbox, inputs: () => find("ElInput") };
 }
 const row = (plan: WebsiteItinerary, hotelTier: "A" | "B" | "C") => plan.vehiclePrices.find(price => price.vehicleType === "7_seat" && price.hotelTier === hotelTier);
 
@@ -201,5 +207,195 @@ describe("vehicle × hotel tier price editing", () => {
     expect(view.inputs()).toHaveLength(10);
     await view.press("common.confirm");
     expect(view.plan.value.vehiclePrices.map(price => price.hotelTier)).toEqual(["A"]);
+  });
+
+  it("does not write default nightly fields onto an existing draft unless the user switches mode, and saves cleared prices", async () => {
+    const view = await mount();
+    await view.press("common.cancel");
+    delete view.plan.value.hotelPricingMode;
+    delete view.plan.value.nightlyShowHotelPrice;
+    delete view.plan.value.nightlyVehiclePrices;
+
+    await view.open();
+    await view.change(view.inputs()[0]!, "2500");
+    await view.press("common.confirm");
+    expect(view.onApplied).toHaveBeenCalledTimes(1);
+    expect(view.plan.value).not.toHaveProperty("hotelPricingMode");
+    expect(view.plan.value).not.toHaveProperty("nightlyShowHotelPrice");
+    expect(view.plan.value).not.toHaveProperty("nightlyVehiclePrices");
+    expect(row(view.plan.value, "A")).toMatchObject({ unitPrice: "10500.00" });
+
+    await view.open();
+    await view.change(view.find("ElRadioGroup")[0]!, "nightly");
+    // 填写逐晚车型分项并开启酒店价格显示。
+    const tableInputs = () => view.find("table").flatMap(table => view.find("ElInput", table));
+    await view.change(tableInputs()[1]!, "800");
+    await view.change(view.find("ElCheckbox")[0]!, true);
+    await view.press("common.confirm");
+    expect(view.plan.value).toMatchObject({
+      hotelPricingMode: "nightly",
+      nightlyShowHotelPrice: true,
+      nightlyVehiclePrices: [expect.objectContaining({ vehicleType: "7_seat", hotelTier: null, unitPrice: "800.00" })],
+    });
+
+    // 主动清空逐晚报价并切回全程分档时保留显式的 false、[] 和 "tiered"。
+    await view.open();
+    await view.change(tableInputs()[1]!, "");
+    await view.change(view.find("ElCheckbox")[0]!, false);
+    await view.change(view.find("ElRadioGroup")[0]!, "tiered");
+    await view.press("common.confirm");
+    expect(view.plan.value).toMatchObject({
+      hotelPricingMode: "tiered",
+      nightlyShowHotelPrice: false,
+      nightlyVehiclePrices: [],
+    });
+  });
+
+  describe("nightly modal saveItinerary serialization", () => {
+    const nightlyComponents = () => PRICE_CATEGORIES.map((category, index) => ({
+      category,
+      unitPrice: index === 2 ? "800.00" : null,
+      showInPdf: index === 2,
+    }));
+    const existingNightlyPrice = () => ({
+      vehicleType: "7_seat",
+      hotelTier: null,
+      unitPrice: "800.00",
+      priceComponents: nightlyComponents(),
+    });
+    async function confirmAndReadRequest(view: Awaited<ReturnType<typeof mount>>) {
+      vi.mocked(request.put).mockResolvedValueOnce(view.plan.value);
+      view.onApplied.mockImplementationOnce(() => websiteService.saveItinerary(view.plan.value));
+      await view.press("common.confirm");
+      expect(request.put).toHaveBeenCalledTimes(1);
+      const raw = vi.mocked(request.put).mock.lastCall?.[1];
+      return JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+    }
+
+    it("omits missing nightlyVehiclePrices when confirming an existing nightly draft without edits", async () => {
+      const view = await mount();
+      await view.press("common.cancel");
+      view.plan.value.hotelPricingMode = "nightly";
+      view.plan.value.nightlyShowHotelPrice = true;
+      delete view.plan.value.nightlyVehiclePrices;
+
+      await view.open();
+      const json = await confirmAndReadRequest(view);
+      expect(json.hotelPricingMode).toBe("nightly");
+      expect(json.nightlyShowHotelPrice).toBe(true);
+      expect(json).not.toHaveProperty("nightlyVehiclePrices");
+    });
+
+    it("omits missing nightlyShowHotelPrice and preserves existing nightlyVehiclePrices on confirm", async () => {
+      const view = await mount();
+      await view.press("common.cancel");
+      view.plan.value.hotelPricingMode = "nightly";
+      delete view.plan.value.nightlyShowHotelPrice;
+      view.plan.value.nightlyVehiclePrices = [existingNightlyPrice()];
+
+      await view.open();
+      const json = await confirmAndReadRequest(view);
+      expect(json.hotelPricingMode).toBe("nightly");
+      expect(json).not.toHaveProperty("nightlyShowHotelPrice");
+      expect(json.nightlyVehiclePrices).toEqual([existingNightlyPrice()]);
+    });
+
+    it("sends nightlyShowHotelPrice=false while keeping missing nightlyVehiclePrices omitted", async () => {
+      const view = await mount();
+      await view.press("common.cancel");
+      view.plan.value.hotelPricingMode = "nightly";
+      view.plan.value.nightlyShowHotelPrice = true;
+      delete view.plan.value.nightlyVehiclePrices;
+
+      await view.open();
+      await view.change(view.priceCheckbox("hotel"), false);
+      const json = await confirmAndReadRequest(view);
+      expect(json.hotelPricingMode).toBe("nightly");
+      expect(json.nightlyShowHotelPrice).toBe(false);
+      expect(json).not.toHaveProperty("nightlyVehiclePrices");
+    });
+
+    it("explicitly sends [] when the user clears existing nightlyVehiclePrices", async () => {
+      const view = await mount();
+      await view.press("common.cancel");
+      view.plan.value.hotelPricingMode = "nightly";
+      view.plan.value.nightlyShowHotelPrice = true;
+      view.plan.value.nightlyVehiclePrices = [existingNightlyPrice()];
+
+      await view.open();
+      const tableInputs = view.find("table").flatMap(table => view.find("ElInput", table));
+      await view.change(tableInputs[1]!, "");
+      const json = await confirmAndReadRequest(view);
+      expect(json.hotelPricingMode).toBe("nightly");
+      expect(json.nightlyShowHotelPrice).toBe(true);
+      expect(json.nightlyVehiclePrices).toEqual([]);
+    });
+
+    it.each(["nightlyVehiclePrices", "nightlyShowHotelPrice"] as const)(
+      "keeps missing %s when switching back to a previously used nightly quote",
+      async (missing) => {
+        const view = await mount();
+        await view.press("common.cancel");
+        const draft = view.plan.value;
+        draft.hotelPricingMode = "tiered";
+        draft.nightlyShowHotelPrice = true;
+        draft.nightlyVehiclePrices = [existingNightlyPrice()];
+        Object.assign(draft.days[0]!.hotels[0]!, { nightlySelected: true, nightlyRooms: 2, nightlyRate: "480.00" });
+        delete draft[missing];
+
+        await view.open();
+        await view.change(view.find("ElRadioGroup")[0]!, "nightly");
+        const json = await confirmAndReadRequest(view);
+        expect(json.hotelPricingMode).toBe("nightly");
+        expect(json).not.toHaveProperty(missing);
+        if (missing === "nightlyVehiclePrices") expect(json.nightlyShowHotelPrice).toBe(true);
+        else expect(json.nightlyVehiclePrices).toEqual([existingNightlyPrice()]);
+      },
+    );
+
+    it("keeps unloaded nightly prices omitted when only vehicle PDF visibility changes", async () => {
+      const view = await mount();
+      await view.press("common.cancel");
+      view.plan.value.hotelPricingMode = "nightly";
+      view.plan.value.nightlyShowHotelPrice = true;
+      delete view.plan.value.nightlyVehiclePrices;
+
+      await view.open();
+      await view.change(view.priceCheckbox("vehicle"), true);
+      const json = await confirmAndReadRequest(view);
+      expect(json).toMatchObject({ hotelPricingMode: "nightly", nightlyShowHotelPrice: true });
+      expect(json).not.toHaveProperty("nightlyVehiclePrices");
+    });
+
+    it("keeps an unloaded price list omitted after a newly entered amount is erased", async () => {
+      const view = await mount();
+      await view.press("common.cancel");
+      view.plan.value.hotelPricingMode = "nightly";
+      view.plan.value.nightlyShowHotelPrice = true;
+      delete view.plan.value.nightlyVehiclePrices;
+      await view.open();
+      const priceInput = view.find("ElInput", view.find("table")[0]!)[1]!;
+      await view.change(priceInput, "800");
+      await view.change(priceInput, "");
+      const json = await confirmAndReadRequest(view);
+      expect(json).not.toHaveProperty("nightlyVehiclePrices");
+    });
+
+    it("updates vehicle PDF visibility for a loaded nightly price and preserves its amount", async () => {
+      const view = await mount();
+      await view.press("common.cancel");
+      const price = existingNightlyPrice();
+      view.plan.value.hotelPricingMode = "nightly";
+      view.plan.value.nightlyVehiclePrices = [price];
+
+      await view.open();
+      await view.change(view.priceCheckbox("vehicle"), false);
+      const json = await confirmAndReadRequest(view);
+      expect(json.nightlyVehiclePrices).toEqual([{
+        ...price,
+        priceComponents: price.priceComponents.map(component => ({ ...component, showInPdf: false })),
+      }]);
+      expect(json).not.toHaveProperty("nightlyShowHotelPrice");
+    });
   });
 });
