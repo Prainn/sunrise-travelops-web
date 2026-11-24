@@ -1,4 +1,5 @@
 /* eslint vue/one-component-per-file: off -- Explicit renderer stubs exercise dialog state. */
+import { ElMessageBox } from "element-plus";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRenderer, defineComponent, h, nextTick, ref, type ComponentPublicInstance } from "vue";
 import { request } from "@/api/request";
@@ -7,7 +8,11 @@ import type { WebsiteConfig, WebsiteDay, WebsiteItinerary, WebsitePriceCategory 
 import { emptyDay, emptyInquiry, emptyItinerary } from "../../options";
 import { PRICE_CATEGORIES } from "../vehicle-price";
 vi.mock("@/api/request", () => ({ ApiError: class extends Error {}, request: { put: vi.fn() } }));
-vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key, locale: ref("zh-cn") }) }));
+vi.mock("element-plus", () => ({ ElMessageBox: { confirm: vi.fn().mockResolvedValue("confirm") } }));
+vi.mock("vue-i18n", () => ({ useI18n: () => ({
+  t: (key: string, values?: unknown) => values ? `${key}:${JSON.stringify(values)}` : key,
+  locale: ref("zh-cn"),
+}) }));
 vi.mock("./WebsiteHotelDialog.vue", () => ({ default: { template: "<div />" } }));
 vi.mock("@/components/AppDialog/index.vue", () => ({ default: {
   render(this: ComponentPublicInstance) { return h("dialog", [...(this.$slots.default?.() ?? []), ...(this.$slots.footer?.() ?? [])]); },
@@ -60,10 +65,10 @@ async function mount(attractionPriceTotal: string | null = "0.00", config?: Webs
   const priceCheckbox = (category: WebsitePriceCategory) =>
     find("ElCheckbox").find(item => text(item).includes(`websiteItineraryUi.priceCategories.${category}`))!;
   async function change(target: HostNode, value: unknown) { (target.props["onUpdate:modelValue"] as (value: unknown) => void)(value); await nextTick(); }
-  async function press(key: string) { (button(key)!.props.onClick as () => void)(); await nextTick(); }
+  async function press(key: string) { await (button(key)!.props.onClick as () => void | Promise<void>)(); await nextTick(); }
   async function open() { visible.value = true; await nextTick(); }
   await open();
-  return { plan, onApplied, find, text: () => text(root), change, open, button, press, priceCheckbox, inputs: () => find("ElInput") };
+  return { plan, visible, onApplied, find, text: () => text(root), change, open, button, press, priceCheckbox, inputs: () => find("ElInput") };
 }
 const row = (plan: WebsiteItinerary, hotelTier: "A" | "B" | "C") => plan.vehiclePrices.find(price => price.vehicleType === "7_seat" && price.hotelTier === hotelTier);
 
@@ -227,6 +232,16 @@ describe("vehicle × hotel tier price editing", () => {
 
     await view.open();
     await view.change(view.find("ElRadioGroup")[0]!, "nightly");
+    // 逐晚模式下各车型套餐报价表不显示酒店列，景点参考价仍对齐景点列。
+    const nightlyTable = view.find("table")[0]!;
+    const nightlyHeaders = view.find("th", nightlyTable).map(cell => (cell.text ?? "") + cell.children.map(child => child.text ?? "").join(""));
+    expect(nightlyHeaders).not.toContain("websiteItineraryUi.priceCategories.hotel");
+    expect(nightlyHeaders).toContain("websiteItineraryUi.priceCategories.guide");
+    const nightlyFooterCells = view.find("td", view.find("tfoot", nightlyTable)[0]!);
+    const nightlyAttractionCol = 1 + PRICE_CATEGORIES.filter(category => category !== "hotel").indexOf("attraction");
+    expect(nightlyFooterCells.map(cell => view.find("span", cell).length)).toEqual(
+      nightlyFooterCells.map((_, index) => Number(index === nightlyAttractionCol)),
+    );
     // 填写逐晚车型分项并开启酒店价格显示。
     const tableInputs = () => view.find("table").flatMap(table => view.find("ElInput", table));
     await view.change(tableInputs()[1]!, "800");
@@ -349,7 +364,10 @@ describe("vehicle × hotel tier price editing", () => {
         expect(json.hotelPricingMode).toBe("nightly");
         expect(json).not.toHaveProperty(missing);
         if (missing === "nightlyVehiclePrices") expect(json.nightlyShowHotelPrice).toBe(true);
-        else expect(json.nightlyVehiclePrices).toEqual([existingNightlyPrice()]);
+        else expect(json.nightlyVehiclePrices).toEqual([{
+          ...existingNightlyPrice(),
+          priceComponents: nightlyComponents().map(component => ({ ...component, showInPdf: false })),
+        }]);
       },
     );
 
@@ -397,5 +415,144 @@ describe("vehicle × hotel tier price editing", () => {
       }]);
       expect(json).not.toHaveProperty("nightlyShowHotelPrice");
     });
+  });
+});
+
+describe("shared PDF categories", () => {
+  it("shares hotel and meal choices across switches and saves each mode's own prices", async () => {
+    const view = await mount();
+    await view.press("common.cancel");
+    const draft = view.plan.value;
+    draft.hotelPricingMode = "nightly";
+    draft.nightlyShowHotelPrice = false;
+    draft.nightlyVehiclePrices = [{
+      vehicleType: "7_seat", hotelTier: null, unitPrice: "125.00",
+      priceComponents: components([null, null, null, null, "125"]).map(component => ({ ...component, showInPdf: false })),
+    }];
+    Object.assign(draft.days[0]!.hotels[0]!, { nightlySelected: true, nightlyRooms: 1, nightlyRate: "500" });
+    const switchTo = (mode: string) => view.change(view.find("ElRadioGroup")[0]!, mode);
+    const checked = (category: WebsitePriceCategory) => view.priceCheckbox(category).props["model-value"];
+
+    await view.open();
+    await view.change(view.priceCheckbox("meal"), true);
+    await switchTo("tiered");
+    expect(checked("meal")).toBe(true);
+    expect(checked("hotel")).toBe(false);
+
+    await view.change(view.priceCheckbox("hotel"), true);
+    await switchTo("nightly");
+    expect(checked("hotel")).toBe(true);
+    expect(checked("meal")).toBe(true);
+    await view.press("common.confirm");
+
+    expect(row(draft, "A")?.priceComponents?.find(component => component.category === "meal")).toEqual({
+      category: "meal", unitPrice: "2000", showInPdf: true,
+    });
+    expect(draft.nightlyVehiclePrices?.[0]?.priceComponents?.find(component => component.category === "meal")).toEqual({
+      category: "meal", unitPrice: "125", showInPdf: true,
+    });
+    expect(draft.nightlyVehiclePrices?.[0]?.priceComponents?.[0]).toEqual({ category: "hotel", unitPrice: null, showInPdf: false });
+    expect(draft.nightlyShowHotelPrice).toBe(true);
+    expect(draft.days[0]?.hotels[0]?.nightlyRate).toBe("500");
+
+    await view.open();
+    await switchTo("tiered");
+    expect(checked("hotel")).toBe(true);
+    expect(checked("meal")).toBe(true);
+    await view.change(view.priceCheckbox("meal"), false);
+    await switchTo("nightly");
+    expect(checked("meal")).toBe(false);
+    await view.press("common.cancel");
+    await view.open();
+    expect(checked("meal")).toBe(true);
+  });
+
+  it("keeps the shared choice when the active mode has no price for that category", async () => {
+    const view = await mount();
+    await view.press("common.cancel");
+    const draft = view.plan.value;
+    draft.hotelPricingMode = "tiered";
+    draft.vehiclePrices = [];
+    draft.nightlyVehiclePrices = [{
+      vehicleType: "7_seat", hotelTier: null, unitPrice: "125.00",
+      priceComponents: components([null, null, null, null, "125"]).map(component => ({
+        ...component, showInPdf: component.category === "meal",
+      })),
+    }];
+    await view.open();
+    expect(view.priceCheckbox("meal").props["model-value"]).toBe(true);
+    await view.change(view.find("ElRadioGroup")[0]!, "nightly");
+    expect(view.priceCheckbox("meal").props["model-value"]).toBe(true);
+  });
+});
+
+describe("PDF price visibility on save", () => {
+  it.each(["tiered", "nightly"] as const)("lists hidden prices in %s mode and lets the user cancel or save", async (mode) => {
+    const view = await mount();
+    await view.press("common.cancel");
+    if (mode === "nightly") {
+      const draft = view.plan.value;
+      draft.hotelPricingMode = "nightly";
+      draft.nightlyShowHotelPrice = true;
+      draft.nightlyVehiclePrices = [{
+        vehicleType: "7_seat", hotelTier: null, unitPrice: "630.00",
+        priceComponents: components([null, "100", "500", "30", "0"]),
+      }];
+      Object.assign(draft.days[0]!.hotels[0]!, { nightlySelected: true, nightlyRooms: 1, nightlyRate: "500" });
+    }
+    await view.open();
+    await view.change(view.priceCheckbox("hotel"), false);
+    const vehicleInput = view.find("ElInput", view.find("table")[0]!)[mode === "nightly" ? 1 : 2]!;
+    await view.change(vehicleInput, "900");
+    const savedDraft = JSON.stringify(view.plan.value);
+
+    vi.mocked(ElMessageBox.confirm).mockRejectedValueOnce("cancel");
+    await view.press("common.confirm");
+
+    expect(ElMessageBox.confirm).toHaveBeenCalledTimes(1);
+    expect(ElMessageBox.confirm).toHaveBeenCalledWith(
+      expect.stringContaining("websiteItineraryUi.hiddenPriceWarning"),
+      "websiteItineraryUi.hiddenPriceTitle",
+      expect.objectContaining({ confirmButtonText: "websiteItineraryUi.forceSavePrices", cancelButtonText: "common.cancel" }),
+    );
+    const message = vi.mocked(ElMessageBox.confirm).mock.calls[0]![0];
+    for (const category of PRICE_CATEGORIES) {
+      expect(message).toContain(`websiteItineraryUi.priceCategories.${category}`);
+    }
+    expect(view.onApplied).not.toHaveBeenCalled();
+    expect(view.visible.value).toBe(true);
+    expect(vehicleInput.props["model-value"]).toBe("900");
+    expect(JSON.stringify(view.plan.value)).toBe(savedDraft);
+
+    await view.press("common.confirm");
+
+    expect(view.onApplied).toHaveBeenCalledTimes(1);
+    expect(view.visible.value).toBe(false);
+    const price = mode === "nightly" ? view.plan.value.nightlyVehiclePrices?.[0] : row(view.plan.value, "A");
+    expect(price?.priceComponents?.find(component => component.category === "vehicle")).toMatchObject({
+      unitPrice: "900", showInPdf: false,
+    });
+    if (mode === "nightly") expect(view.plan.value.nightlyShowHotelPrice).toBe(false);
+    else expect(price?.priceComponents?.[0]).toMatchObject({ unitPrice: "2000", showInPdf: false });
+  });
+
+  it("saves without warning when prices are shown or only belong to unused options", async () => {
+    const view = await mount();
+    await view.press("common.cancel");
+    const draft = view.plan.value;
+    draft.hotelPricingMode = "nightly";
+    draft.nightlyShowHotelPrice = false;
+    draft.nightlyVehiclePrices = [{
+      vehicleType: "7_seat", hotelTier: null, unitPrice: "500.00",
+      priceComponents: components([null, null, "500", null, null]).map(component => ({
+        ...component, showInPdf: component.category === "vehicle",
+      })),
+    }];
+    Object.assign(draft.days[0]!.hotels[0]!, { nightlySelected: false, nightlyRooms: 1, nightlyRate: "500" });
+    await view.open();
+    await view.press("common.confirm");
+
+    expect(ElMessageBox.confirm).not.toHaveBeenCalled();
+    expect(view.onApplied).toHaveBeenCalledTimes(1);
   });
 });

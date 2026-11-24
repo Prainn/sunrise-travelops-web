@@ -1,70 +1,83 @@
 <template>
-  <AppDialog v-model="visible" size="xl" :title="$t('websiteItineraryUi.packagePriceTitle')">
-    <fieldset v-if="plan.businessUnit === 'website'" class="m-0 mb-3 border-0 p-0">
-      <legend class="mb-1 text-sm font-600">
-        {{ $t("websiteItineraryUi.hotelPricingMode") }}
-      </legend>
-      <el-radio-group
-        :model-value="mode"
-        :disabled="!editable"
-        :aria-label="$t('websiteItineraryUi.hotelPricingMode')"
-        @update:model-value="setMode"
-      >
-        <el-radio-button value="tiered">
-          {{ $t("websiteItineraryUi.tieredMode") }}
-        </el-radio-button>
-        <el-radio-button value="nightly">
-          {{ $t("websiteItineraryUi.nightlyMode") }}
-        </el-radio-button>
-      </el-radio-group>
-    </fieldset>
-    <div class="mb-3 flex items-start gap-x-6 text-sm">
-      <dl class="m-0 grid flex-1 grid-cols-[auto_auto_1fr] items-center gap-x-3 gap-y-1">
-        <template v-for="item in serviceRows" :key="item.label">
-          <dt class="text-strong">
-            {{ item.label }}
-          </dt>
-          <dd class="m-0">
-            <el-tag :type="item.included ? 'success' : 'info'" size="small">
-              {{ $t(item.included ? "websiteItineraryUi.serviceIncluded" : "websiteItineraryUi.serviceExcluded") }}
-            </el-tag>
-          </dd>
-          <dd class="m-0 text-muted">
-            {{ item.reason }}
-          </dd>
-        </template>
-      </dl>
-      <span class="whitespace-nowrap">{{ $t("websiteReport.pax") }}: {{ plan.pax ?? $t("websiteReport.undetermined") }}</span>
+  <AppDialog
+    v-model="visible"
+    size="xl"
+    :title="$t('websiteItineraryUi.packagePriceTitle')"
+    body-class="website-vehicle-prices__body"
+  >
+    <div class="shrink-0 px-5 pt-5">
+      <fieldset v-if="plan.businessUnit === 'website'" class="m-0 mb-3 border-0 p-0">
+        <legend class="mb-1 text-sm font-600">
+          {{ $t("websiteItineraryUi.hotelPricingMode") }}
+        </legend>
+        <el-radio-group
+          :model-value="mode"
+          :disabled="!editable"
+          :aria-label="$t('websiteItineraryUi.hotelPricingMode')"
+          @update:model-value="setMode"
+        >
+          <el-radio-button value="tiered">
+            {{ $t("websiteItineraryUi.tieredMode") }}
+          </el-radio-button>
+          <el-radio-button value="nightly">
+            {{ $t("websiteItineraryUi.nightlyMode") }}
+          </el-radio-button>
+        </el-radio-group>
+      </fieldset>
+      <div class="mb-3 flex flex-wrap items-start gap-x-6 gap-y-1 text-sm">
+        <dl class="m-0 min-w-0 grid flex-[1_1_16rem] grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1">
+          <template v-for="item in serviceRows" :key="item.label">
+            <dt class="text-strong">
+              {{ item.label }}
+            </dt>
+            <dd class="m-0">
+              <el-tag :type="item.included ? 'success' : 'info'" size="small">
+                {{ $t(item.included ? "websiteItineraryUi.serviceIncluded" : "websiteItineraryUi.serviceExcluded") }}
+              </el-tag>
+            </dd>
+            <dd class="m-0 break-words text-muted">
+              {{ item.reason }}
+            </dd>
+          </template>
+        </dl>
+        <span class="ml-auto whitespace-nowrap">{{ $t("websiteReport.pax") }}: {{ plan.pax ?? $t("websiteReport.undetermined") }}</span>
+      </div>
+      <div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+        <span class="text-muted">{{ $t("websiteItineraryUi.pdfCategoriesLabel") }}</span>
+        <el-checkbox
+          v-for="category in PRICE_CATEGORIES"
+          :key="category"
+          :model-value="category === 'hotel' && !hasHotels ? false : pdfCategories[category]"
+          :disabled="!editable || (category === 'hotel' && !hasHotels)"
+          @update:model-value="setVisibility(category, Boolean($event))"
+        >
+          {{ $t(`websiteItineraryUi.priceCategories.${category}`) }}
+        </el-checkbox>
+      </div>
     </div>
-    <div class="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-      <span class="text-muted">{{ $t("websiteItineraryUi.pdfCategoriesLabel") }}</span>
-      <el-checkbox
-        v-for="category in PRICE_CATEGORIES"
-        :key="category"
-        :model-value="category === 'hotel' && !hasHotels ? false : pdfCategories[category]"
-        :disabled="!editable || (category === 'hotel' && !hasHotels)"
-        @update:model-value="setVisibility(category, Boolean($event))"
-      >
-        {{ $t(`websiteItineraryUi.priceCategories.${category}`) }}
-      </el-checkbox>
-    </div>
-    <el-alert
-      v-if="tooMany"
-      class="mb-3!"
-      type="error"
-      :closable="false"
-      show-icon
-      :title="$t('websiteItineraryUi.combinationLimit', { count: rows.length, max: MAX_PRICE_COMBINATIONS })"
-    />
-    <el-alert
-      v-if="staleCount"
-      class="mb-3!"
-      type="warning"
-      :closable="false"
-      show-icon
-      :title="$t('websiteItineraryUi.staleCombinationsHint', { count: staleCount })"
-    />
-    <el-form :disabled="!editable" @submit.prevent>
+    <el-form
+      class="min-h-0 flex-1 overflow-auto overscroll-contain px-5 pb-5"
+      :aria-label="$t('websiteItineraryUi.packagePriceTitle')"
+      :disabled="!editable"
+      tabindex="0"
+      @submit.prevent
+    >
+      <el-alert
+        v-if="tooMany"
+        class="mb-3!"
+        type="error"
+        :closable="false"
+        show-icon
+        :title="$t('websiteItineraryUi.combinationLimit', { count: rows.length, max: MAX_PRICE_COMBINATIONS })"
+      />
+      <el-alert
+        v-if="staleCount"
+        class="mb-3!"
+        type="warning"
+        :closable="false"
+        show-icon
+        :title="$t('websiteItineraryUi.staleCombinationsHint', { count: staleCount })"
+      />
       <WebsiteNightlyStays
         v-if="nightly"
         v-model:days="nightlyDays"
@@ -81,7 +94,7 @@
             <thead>
               <tr>
                 <th>{{ $t("websiteReport.vehicleType") }}</th>
-                <th v-for="category in PRICE_CATEGORIES" :key="category">
+                <th v-for="category in tableCategories" :key="category">
                   {{ $t(`websiteItineraryUi.priceCategories.${category}`) }}
                 </th>
                 <th>{{ $t("websiteItineraryUi.componentTotal") }}</th>
@@ -102,10 +115,8 @@
                     {{ $t("websiteItineraryUi.staleCombination") }}
                   </el-tag>
                 </td>
-                <td v-for="category in PRICE_CATEGORIES" :key="category">
-                  <span v-if="nightly && category === 'hotel'">{{ nightlyAmounts(row).hotelPerPerson ?? "—" }}</span>
+                <td v-for="category in tableCategories" :key="category">
                   <el-form-item
-                    v-else
                     class="!mb-0"
                     :show-message="false"
                     :error="isInvalidValue(row.prices[category]) ? 'invalid' : ''"
@@ -141,7 +152,7 @@
             <tfoot>
               <tr class="price-table__reference">
                 <td />
-                <td v-for="category in PRICE_CATEGORIES" :key="category">
+                <td v-for="category in tableCategories" :key="category">
                   <span v-if="category === 'attraction' && attractionPriceTotal != null" class="whitespace-nowrap">
                     {{ $t("websiteItineraryUi.attractionPriceReference", { price: formatAttractionPrice(attractionPriceTotal) }) }}
                   </span>
@@ -154,13 +165,13 @@
           </table>
         </div>
       </section>
+      <p v-if="hasInvalidPrice" class="m-0 mt-2 text-xs text-danger">
+        {{ $t("websiteItineraryUi.componentTotalInvalid") }}
+      </p>
+      <p v-else-if="editable && !hasAnyPrice" class="m-0 mt-2 text-xs text-muted">
+        {{ $t("websiteItineraryUi.finalPriceHint") }}
+      </p>
     </el-form>
-    <p v-if="hasInvalidPrice" class="m-0 mt-2 text-xs text-danger">
-      {{ $t("websiteItineraryUi.componentTotalInvalid") }}
-    </p>
-    <p v-else-if="editable && !hasAnyPrice" class="m-0 mt-2 text-xs text-muted">
-      {{ $t("websiteItineraryUi.finalPriceHint") }}
-    </p>
 
     <template #footer>
       <el-button @click="visible = false">
@@ -169,7 +180,7 @@
       <el-button
         v-if="editable"
         type="primary"
-        :disabled="hasInvalidPrice || tooMany"
+        :disabled="hasInvalidPrice || tooMany || confirmingSave"
         @click="apply"
       >
         {{ $t("common.confirm") }}
@@ -178,6 +189,7 @@
   </AppDialog>
 </template>
 <script setup lang="ts">
+import { ElMessageBox } from "element-plus";
 import { computed, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
@@ -219,26 +231,28 @@ const plan = defineModel<WebsiteItinerary>("plan", { required: true });
 const props = defineProps<{ editable: boolean; dirty?: boolean; config?: WebsiteConfig | null; attractionPriceTotal?: string | null }>();
 /** 确认写入报价后通知父级保存草稿。 */
 const emit = defineEmits<{ applied: [] }>();
-const { t } = useI18n();
+const { locale, t } = useI18n();
+const confirmingSave = ref(false);
 const mode = ref<WebsiteHotelPricingMode>("tiered");
 const nightly = computed(() => mode.value === "nightly");
+const tableCategories = computed(() =>
+  nightly.value ? PRICE_CATEGORIES.filter(category => category !== "hotel") : PRICE_CATEGORIES,
+);
 const nightlyDays = ref<WebsiteDay[]>([]);
 const nightlyVisited = ref(false);
 const hasModeChanged = ref(false);
-const tierEdited = ref(false);
-const nightlyPricesEdited = ref(false);
-const nightlyShowHotelEdited = ref(false);
+const hotelVisibilityEdited = ref(false);
 const accommodation = computed(() => nightlyAccommodation(nightlyDays.value));
 const tierEntries = reactive(new Map<string, PriceRow>());
 const nightEntries = reactive(new Map<string, PriceRow>());
 const entries = computed(() => nightly.value ? nightEntries : tierEntries);
-/** 按类别统一控制 PDF 是否显示该类分项，对所有组合生效；隐藏项仍计入人均总价。 */
-const tierPdf = reactive(emptyPdfCategories());
-const nightPdf = reactive(emptyPdfCategories());
-const pdfCategories = computed(() => nightly.value ? nightPdf : tierPdf);
+/** 两种报价方式共用 PDF 展示选择，录入的金额各自保留。 */
+const pdfCategories = reactive(emptyPdfCategories());
 
 const candidates = computed(() => quotationCandidates(plan.value.days));
-const hasHotels = computed(() => nightly.value ? accommodation.value.hasHotels : candidates.value.hotelTiers.some(tier => tier !== null));
+const hasTieredHotels = computed(() => candidates.value.hotelTiers.some(tier => tier !== null));
+const hasHotels = computed(() => hasTieredHotels.value || (plan.value.businessUnit === "website" &&
+  (nightlyVisited.value ? nightlyDays.value : plan.value.days).some(day => day.overnightCityId && day.hotels.length > 0)));
 const candidateKeys = computed(() => (nightly.value ? [null] : candidates.value.hotelTiers).flatMap(tier =>
   candidates.value.vehicleTypes.map(vehicle => ({ key: priceKey(vehicle, tier), vehicleType: vehicle, hotelTier: tier }))));
 /** 保存前按本地草稿派生；无未保存修改时使用服务端返回。 */
@@ -290,26 +304,34 @@ watch(visible, (value) => {
   mode.value = plan.value.hotelPricingMode ?? "tiered";
   nightlyVisited.value = false;
   hasModeChanged.value = false;
-  tierEdited.value = false;
-  nightlyPricesEdited.value = false;
-  nightlyShowHotelEdited.value = false;
+  hotelVisibilityEdited.value = false;
   nightlyDays.value = [];
-  loadRows(tierEntries, tierPdf, plan.value.vehiclePrices);
-  loadRows(nightEntries, nightPdf, plan.value.nightlyVehiclePrices ?? []);
-  nightPdf.hotel = plan.value.nightlyShowHotelPrice ?? false;
+  const tieredVisibility = loadRows(tierEntries, plan.value.vehiclePrices);
+  const nightlyVisibility = loadRows(nightEntries, plan.value.nightlyVehiclePrices ?? []);
+  nightlyVisibility.hotel = plan.value.nightlyShowHotelPrice;
+  // 旧草稿两套选择冲突时，沿用打开弹窗时已生效的方式。
+  const [preferred, fallback] = nightly.value
+    ? [nightlyVisibility, tieredVisibility]
+    : [tieredVisibility, nightlyVisibility];
+  for (const category of PRICE_CATEGORIES) {
+    pdfCategories[category] = preferred[category] ?? fallback[category] ?? false;
+  }
 });
 
-function loadRows(target: Map<string, PriceRow>, visibility: ReturnType<typeof emptyPdfCategories>, prices: WebsiteVehiclePriceInput[]) {
+function loadRows(target: Map<string, PriceRow>, prices: WebsiteVehiclePriceInput[]) {
   target.clear();
-  Object.assign(visibility, emptyPdfCategories());
+  const visibility: Partial<Record<WebsitePriceCategory, boolean>> = {};
   for (const price of prices) {
     const row = emptyRow(price.vehicleType, price.hotelTier);
     for (const component of price.priceComponents ?? []) {
       row.prices[component.category] = component.unitPrice;
-      if (component.unitPrice !== null && component.showInPdf) visibility[component.category] = true;
+      if (component.unitPrice !== null) {
+        visibility[component.category] = visibility[component.category] || component.showInPdf;
+      }
     }
     target.set(row.key, row);
   }
+  return visibility;
 }
 watch([visible, nightly], () => {
   if (!visible.value || !nightly.value || nightlyVisited.value) return;
@@ -338,11 +360,12 @@ function emptyRow(vehicleType: string | null, hotelTier: WebsiteHotelTier | null
 function emptyPdfCategories() {
   return Object.fromEntries(PRICE_CATEGORIES.map(category => [category, false])) as Record<WebsitePriceCategory, boolean>;
 }
-function components(row: PriceRow, visibility = pdfCategories.value): WebsitePriceComponent[] {
+function components(row: PriceRow, pricingMode = mode.value): WebsitePriceComponent[] {
   return PRICE_CATEGORIES.map(category => ({
     category,
     unitPrice: row.prices[category],
-    showInPdf: row.prices[category] !== null && visibility[category] && (category !== "hotel" || candidates.value.hotelTiers.some(tier => tier !== null)),
+    showInPdf: row.prices[category] !== null && pdfCategories[category] &&
+      (category !== "hotel" || (pricingMode === "tiered" && hasTieredHotels.value)),
   }));
 }
 /** 无酒店档次的组合禁用酒店录价；未选导游时沿用可清空旧金额的规则。 */
@@ -380,23 +403,13 @@ function setMode(value: string | number | boolean | undefined) {
 }
 function setPrice(row: PriceRow, category: WebsitePriceCategory, value: string) {
   // 空值保持 null（不计入），0 为有效金额。
-  if (nightly.value) nightlyPricesEdited.value = true;
-  else tierEdited.value = true;
   row.prices[category] = value.trim() || null;
 }
 function setVisibility(category: WebsitePriceCategory, show: boolean) {
-  if (!nightly.value) {
-    tierEdited.value = true;
-  } else if (category === "hotel") {
-    nightlyShowHotelEdited.value = true;
-  } else if ([...nightEntries.values()].some(row => row.prices[category] !== null)) {
-    nightlyPricesEdited.value = true;
-  }
-  pdfCategories.value[category] = show;
+  if (category === "hotel") hotelVisibilityEdited.value = true;
+  pdfCategories[category] = show;
 }
 function removeRow(key: string) {
-  if (nightly.value) nightlyPricesEdited.value = true;
-  else tierEdited.value = true;
   entries.value.delete(key);
 }
 function tierLabel(tier: WebsiteHotelTier | null) {
@@ -407,30 +420,64 @@ function vehicleLabel(vehicleType: string | null) {
   const option = VEHICLE_OPTIONS.find(item => item.value === vehicleType);
   return option ? t(option.labelKey) : vehicleType;
 }
-function apply() {
-  if (!props.editable || hasInvalidPrice.value || tooMany.value) return;
+function hasCategoryPrice(category: WebsitePriceCategory) {
+  if (category === "hotel") {
+    if (nightly.value) {
+      return nightlyDays.value.some(day => day.overnightCityId &&
+        day.hotels.some(hotel => hotel.nightlySelected && hotel.nightlyRate != null));
+    }
+    if (!hasTieredHotels.value) return false;
+  }
+  return rows.value.some(row => !isStale(row) && row.prices[category] !== null);
+}
+async function apply() {
+  if (!visible.value || !props.editable || hasInvalidPrice.value || tooMany.value || confirmingSave.value) return;
+  const draft = plan.value;
+  const hiddenCategories = draft.businessUnit === "website"
+    ? PRICE_CATEGORIES.filter(category => !pdfCategories[category] && hasCategoryPrice(category))
+    : [];
+  if (hiddenCategories.length) {
+    const categories = new Intl.ListFormat(locale.value).format(
+      hiddenCategories.map(category => t(`websiteItineraryUi.priceCategories.${category}`)),
+    );
+    confirmingSave.value = true;
+    try {
+      await ElMessageBox.confirm(
+        t("websiteItineraryUi.hiddenPriceWarning", { categories }),
+        t("websiteItineraryUi.hiddenPriceTitle"),
+        {
+          type: "warning",
+          confirmButtonText: t("websiteItineraryUi.forceSavePrices"),
+          cancelButtonText: t("common.cancel"),
+        },
+      );
+    } catch {
+      return;
+    } finally {
+      confirmingSave.value = false;
+    }
+    if (!visible.value || !props.editable || plan.value !== draft) return;
+  }
   // 只保存有价格的组合；待调整组合保留原金额，直至操作人删除。
-  const serialize = (map: Map<string, PriceRow>, visibility: ReturnType<typeof emptyPdfCategories>) =>
+  const serialize = (map: Map<string, PriceRow>, pricingMode: WebsiteHotelPricingMode) =>
     [...map.values()].filter(hasComponents).map((row): WebsiteVehiclePriceInput => ({
-      vehicleType: row.vehicleType, hotelTier: row.hotelTier, unitPrice: storedUnitPrice(row), priceComponents: components(row, visibility),
+      vehicleType: row.vehicleType, hotelTier: row.hotelTier, unitPrice: storedUnitPrice(row), priceComponents: components(row, pricingMode),
     }));
-  if (!nightly.value || tierEdited.value) plan.value.vehiclePrices = serialize(tierEntries, tierPdf);
-  if (plan.value.businessUnit === "website") {
+  draft.vehiclePrices = serialize(tierEntries, "tiered");
+  if (draft.businessUnit === "website") {
     if (hasModeChanged.value) {
-      plan.value.hotelPricingMode = mode.value;
+      draft.hotelPricingMode = mode.value;
     }
-    if (nightlyPricesEdited.value) {
-      const prices = serialize(nightEntries, nightPdf);
-      // 已加载的报价可主动清空。缺失字段由服务端按原草稿判断是否需要刷新。
-      if (prices.length || plan.value.nightlyVehiclePrices !== undefined) {
-        plan.value.nightlyVehiclePrices = prices;
-      }
+    const prices = serialize(nightEntries, "nightly");
+    // 已加载的报价可主动清空。缺失字段由服务端按原草稿判断是否需要刷新。
+    if (prices.length || draft.nightlyVehiclePrices !== undefined) {
+      draft.nightlyVehiclePrices = prices;
     }
-    if (nightlyShowHotelEdited.value) {
-      plan.value.nightlyShowHotelPrice = nightPdf.hotel;
+    if (hotelVisibilityEdited.value || draft.nightlyShowHotelPrice !== undefined) {
+      draft.nightlyShowHotelPrice = pdfCategories.hotel;
     }
     if (nightlyVisited.value) {
-      plan.value.days = nightlyDays.value;
+      draft.days = nightlyDays.value;
     }
   }
   visible.value = false;
@@ -438,6 +485,10 @@ function apply() {
 }
 </script>
 <style scoped lang="scss">
+:global(.el-dialog.app-dialog > .el-dialog__body.website-vehicle-prices__body) {
+  @apply flex flex-col overflow-clip p-0;
+}
+
 .price-table {
   width: 100%;
   border-collapse: collapse;

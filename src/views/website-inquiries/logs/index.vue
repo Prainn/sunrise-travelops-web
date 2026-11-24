@@ -122,55 +122,76 @@
         <el-table-column type="expand">
           <template #default="{ row }">
             <div class="change-details p-[16px]">
-              <p v-if="row.metadata?.creationMode === 'copy' && row.metadata.sourceCode">
-                {{ $t("inquiry.log.copySource") }}：{{ row.metadata.sourceCode }}
+              <p v-if="expansionFor(row).copySourceCode">
+                {{ $t("inquiry.log.copySource") }}：{{ expansionFor(row).copySourceCode }}
               </p>
-              <p v-if="row.metadata?.transferReason">
-                {{ $t("websiteInquiry.log.transferReason") }}：{{ row.metadata.transferReason }}
+              <p v-if="expansionFor(row).transferReason">
+                {{ $t("websiteInquiry.log.transferReason") }}：{{ expansionFor(row).transferReason }}
               </p>
-              <p v-if="row.metadata?.lostReason">
-                {{ $t("inquiry.lostReason") }}：{{ row.metadata.lostReason }}
+              <p v-if="expansionFor(row).lostReason">
+                {{ $t("inquiry.lostReason") }}：{{ expansionFor(row).lostReason }}
               </p>
-              <p v-if="row.metadata?.quotationCode">
-                {{ $t("websiteInquiry.log.quotationCode") }}：{{ row.metadata.quotationCode }}
+              <p v-if="expansionFor(row).quotationCode">
+                {{ $t("websiteInquiry.log.quotationCode") }}：{{ expansionFor(row).quotationCode }}
               </p>
-              <p v-if="row.detail">
-                {{ $t("common.details") }}：{{ row.detail }}
+              <p v-if="expansionFor(row).detail">
+                {{ $t("common.details") }}：{{ expansionFor(row).detail }}
               </p>
-              <p v-if="row.changes === null" class="text-[var(--el-text-color-secondary)]">
+              <p
+                v-if="expansionFor(row).changesState === 'unavailable'"
+                class="text-[var(--el-text-color-secondary)]"
+              >
+                {{ $t("websiteInquiry.log.displayChangesUnavailable") }}
+              </p>
+              <p
+                v-else-if="expansionFor(row).changesState === 'not_recorded'"
+                class="text-[var(--el-text-color-secondary)]"
+              >
                 {{ $t("websiteInquiry.log.changesNotRecorded") }}
               </p>
+              <p
+                v-else-if="expansionFor(row).changesState === 'empty'"
+                class="text-[var(--el-text-color-secondary)]"
+              >
+                {{ $t("websiteInquiry.log.noDisplayChanges") }}
+              </p>
               <DataTable
-                v-else-if="row.changes.length"
-                :data="row.changes"
+                v-else-if="expansionFor(row).changes.length"
+                :data="expansionFor(row).changes"
                 :row-class-name="
-                  ({ row: change }: { row: WebsiteInquiryLogChange }) => `change-${changeTone(change)}`
+                  ({ row: change }: { row: WebsiteInquiryLogDisplayChange }) =>
+                    `change-${changeTone(change)}`
                 "
                 :show-overflow-tooltip="false"
               >
                 <el-table-column :label="$t('inquiry.log.field')" min-width="240">
                   <template #default="scope">
-                    {{ changeLabel(scope.row as WebsiteInquiryLogChange, displayContext) }}
+                    {{ changeLabel(scope.row as WebsiteInquiryLogDisplayChange, displayContext) }}
                   </template>
                 </el-table-column>
                 <el-table-column :label="$t('inquiry.log.before')" min-width="280">
                   <template #default="scope">
                     <pre class="m-0 max-h-[360px] overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere] [font:inherit]">{{
-                      formatLogValue(scope.row.before, scope.row.path, displayContext)
+                      formatLogValue(scope.row.before, scope.row.fields, displayContext, {
+                        kind: scope.row.kind,
+                        side: "before",
+                        targetType: row.targetType,
+                      })
                     }}</pre>
                   </template>
                 </el-table-column>
                 <el-table-column :label="$t('inquiry.log.after')" min-width="280">
                   <template #default="scope">
                     <pre class="m-0 max-h-[360px] overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere] [font:inherit]">{{
-                      formatLogValue(scope.row.after, scope.row.path, displayContext)
+                      formatLogValue(scope.row.after, scope.row.fields, displayContext, {
+                        kind: scope.row.kind,
+                        side: "after",
+                        targetType: row.targetType,
+                      })
                     }}</pre>
                   </template>
                 </el-table-column>
               </DataTable>
-              <p v-else class="text-[var(--el-text-color-secondary)]">
-                {{ $t("websiteInquiry.log.noFieldDifference") }}
-              </p>
             </div>
           </template>
         </el-table-column>
@@ -257,7 +278,7 @@ import type {
   WebsiteBusinessUnit,
   WebsiteInquiry,
   WebsiteInquiryLog,
-  WebsiteInquiryLogChange,
+  WebsiteInquiryLogDisplayChange,
   WebsiteInquiryLogOperator,
   WebsiteInquiryLogReport,
 } from "@/types/website";
@@ -265,11 +286,13 @@ import { formatDateTime, runOnEnter } from "@/utils";
 import {
   WEBSITE_LOG_ACTIONS,
   actionLabel,
+  buildLogExpansionView,
   canExpandLog,
   changeLabel,
   changeTone,
   formatLogValue,
   operatorLabel,
+  type LogExpansionView,
 } from "./log-presentation";
 defineOptions({ name: "WebsiteInquiryLogReport" });
 const { t, te, locale } = useI18n();
@@ -301,6 +324,13 @@ const form = reactive({
   action: "",
 });
 const logs = ref<WebsiteInquiryLog[]>([]);
+const expansionById = computed(
+  () => new Map<string, LogExpansionView>(logs.value.map((item) => [item.id, buildLogExpansionView(item)])),
+);
+function expansionFor(raw: unknown): LogExpansionView {
+  const row = raw as WebsiteInquiryLog;
+  return expansionById.value.get(row.id) ?? buildLogExpansionView(row);
+}
 const report = ref<WebsiteInquiryLogReport>(emptyReport());
 const operators = ref<WebsiteInquiryLogOperator[]>([]);
 const page = ref(1);
