@@ -79,7 +79,6 @@
     "restaurants": "餐厅",
     "attractions": "景点",
     "vehicleModels": "车型",
-    "guides": "导游管理",
     "cities": "城市",
     "inquiryLogReport": "询盘汇总",
     "flights": "航班信息",
@@ -333,7 +332,6 @@
   },
   "itinerary": {
     "resourceTotalPrice": "总价",
-    "tableMealTotal": "按桌餐食总价（整团）",
     "tableCount": "桌数",
     "customerNotes": "@:common.remark",
     "resourceCostPerPerson": "人均成本",
@@ -367,10 +365,8 @@
     "actualMarginRate": "人均毛利率",
     "collapseDay": "收起",
     "expandDay": "展开",
-    "adults": "成人",
     "allCities": "全部城市",
     "tourCostPerPerson": "人均团费成本",
-    "children": "儿童",
     "code": "行程编号",
     "createTitle": "新增行程",
     "createAndManage": "创建并管理",
@@ -424,11 +420,9 @@
     "attractionCost": "景点成本（每人）",
     "editItinerary": "编辑信息",
     "editTitle": "编辑行程",
-    "hotelCost": "酒店成本",
     "clearCurrentHotelTier": "清空当前档次",
     "hotelUnitPrice": "单价（元/间/晚）",
     "hotelPlans": "酒店搭配",
-    "vehiclePlans": "用车方案",
     "adultTourPricePerPerson": "成人团费",
     "showChildPriceInPdf": "PDF 显示儿童团费",
     "childTourPrice": "儿童团费",
@@ -450,7 +444,6 @@
     "unsavedLeaveConfirm": "离开将丢弃未保存的行程修改，继续？",
     "saveSuccess": "行程已保存",
     "priceUnit": "计价单位",
-    "profit": "预计利润",
     "quoteSettings": "报价方案",
     "viewQuote": "查看报价",
     "resource": "餐食/景点",
@@ -484,7 +477,6 @@
       "restaurant": "餐食",
       "vehicle": "车辆"
     },
-    "startDateRequired": "选择开始日期",
     "startDateRequiredForVehicles": "已安排具体日期的用车段，须先保留开始日期",
     "statuses": {
       "draft": "草稿",
@@ -680,7 +672,6 @@
     "conflict": "该资源已被他人修改，请载入最新后再操作，不会覆盖他人修改。",
     "reloadLatest": "载入最新",
     "actionConflict": "操作未完成：{message}，请刷新后再操作",
-    "notFound": "资源不存在或不属于当前环境",
     "environments": {
       "dev": "开发环境",
       "prod": "生产环境"
@@ -1585,6 +1576,7 @@
         "day": "日程",
         "dayNumber": "第几天",
         "departCityId": "出发城市",
+        "viaCityIds": "途经地",
         "endCityId": "到达城市",
         "overnightCityId": "住宿城市",
         "guideLanguage": "导游语种",
@@ -1798,8 +1790,8 @@
   },
   "websiteItineraryUi": {
     "organizeItinerary": "编排行程",
-    "organizeTitle": "行程编排",
-    "deleteItemConfirm": "确认删除“{name}”吗？仅移除当前行程中的此项目，资源库资料保留，保存行程后生效。",
+    "dayInternalRemark": "内部备注",
+    "deleteItemConfirm": "确认删除“{name}”吗？保存行程后生效。",
     "applyBoardBeforeDelete": "此项目在暂存编排中有副本，请先应用暂存的行程编排再删除。",
     "attractions": "景点与组件",
     "noAttractions": "尚未安排景点",
@@ -1905,8 +1897,6 @@
     "attractionPriceLine": "景点价格：{price}",
     "attractionPriceReference": "参考景点价格：{price} 元",
     "usedDays": "已用于",
-    "chargeable": "收费",
-    "chargeableYes": "收费",
     "chargeableNo": "不收费",
     "recommendedMonths": "推荐月份",
     "duplicateAttraction": "已用于 {days}，仍可添加，请核对是否重复",
@@ -2312,7 +2302,7 @@
     "restoreDay": "恢复",
     "deleteDayConfirm": "删除 D{day} 行程？可从“已删除行程”恢复，应用后仍须保存行程。",
     "deletedHint": "恢复到原日期，日期已占用时插到该天之前。应用后仍须保存。",
-    "reorderTitle": "调整行程顺序",
+    "reorderTitle": "行程编排",
     "initialPlanningTitle": "行程总览",
     "initialPlanningHint": "逐日选好出发地、到达地和住宿安排。拖动日卡标题或点击箭头可调整顺序。",
     "dayRouteForm": "第 {day} 天的路线",
@@ -2323,6 +2313,9 @@
     "reorderReadonly": "行程只读，仅可查看全程安排。",
     "moveEarlier": "前移一天",
     "moveLater": "后移一天",
+    "boardZoom": "看板缩放",
+    "zoomOut": "缩小",
+    "zoomIn": "放大",
     "notArranged": "未安排",
     "issuesTitle": "调整顺序后请核对",
     "applyOrder": "应用调整",
@@ -2565,6 +2558,7 @@
     "workerScopeHint": "处理状态仅反映当前服务实例，超过 60 秒无进展视为异常。",
     "notifications": {
       "unread": "{count} 条未读消息",
+      "unreadPageTitle": "【有{count}条未读消息】{title}",
       "unassigned": "{count} 个未分配会话",
       "unavailable": "消息角标暂不可用，正在重试",
       "hint": "打开收件箱；红色为未读消息，橙色为未分配会话"
@@ -2790,8 +2784,7 @@
       "expired": "文件已过期，请移除后重新上传",
       "notReady": "文件上传失败，请移除后重新选择",
       "mixed": "文件和图片不能一起发送，请先移除或发送已有草稿",
-      "noReply": "文件暂不支持引用回复，请先取消引用再发送",
-      "download": "下载 {name}"
+      "noReply": "文件暂不支持引用回复，请先取消引用再发送"
     },
     "runtime": {
       "environment": "当前环境",

@@ -36,12 +36,15 @@ vi.mock("@/components/DataTable/index.vue", () => ({ default: {
 } }));
 vi.mock("../../components/WebsitePublicResourcePicker.vue", () => ({ default: { render: () => null } }));
 vi.mock("@/views/inquiries/itineraries/components/ItineraryDayCardFrame.vue", () => ({ default: {
-  render(this: ComponentPublicInstance) { return h("section", this.$slots.default?.()); },
+  render(this: ComponentPublicInstance) {
+    return h("section", [...(this.$slots["title-extra"]?.() ?? []), ...(this.$slots.default?.() ?? [])]);
+  },
 } }));
 vi.mock("@/views/inquiries/itineraries/components/ItineraryDayResourceBar.vue", () => ({ default: { render: () => null } }));
 vi.mock("../../components/FeeStateSelect.vue", () => ({ default: { render: () => null } }));
 import WebsiteDayCard from "./WebsiteDayCard.vue";
 import WebsiteDayAttractions from "./WebsiteDayAttractions.vue";
+import WebsiteAttractionDialog from "./WebsiteAttractionDialog.vue";
 import WebsiteDayTransport from "./WebsiteDayTransport.vue";
 import WebsiteTransportDialog from "./WebsiteTransportDialog.vue";
 import { airportTransferOptions } from "../airport-transfers";
@@ -219,7 +222,7 @@ it("opens the reported leg, keeps day-wide issues on the day and requests the qu
   day.eventOrder = ["third", "first", "second"];
   const openResource = vi.fn();
   const view = render(WebsiteDayCard, {
-    day, editable: true, config: { cities: [], routes: [] }, selectableCityIds: new Set(), date: null,
+    day, editable: true, config: { cities: [], routes: [] }, selectableCityIds: new Set(), date: null, businessUnit: "website",
     last: true, onOpenResource: openResource,
   });
   const card = view.instance as InstanceType<typeof WebsiteDayCard>;
@@ -227,7 +230,7 @@ it("opens the reported leg, keeps day-wide issues on the day and requests the qu
     card.openValidationIssue({ kind: "event", id });
     await nextTick();
     expect(view.find("dialog")).toHaveLength(1);
-    expect(view.find("ElInput")[0]?.props.modelValue).toBe(name);
+    expect(view.find("ElInput", view.find("dialog")[0]!)[0]?.props.modelValue).toBe(name);
     await view.click("common.cancel");
   }
   day.legs = [];
@@ -243,7 +246,7 @@ it("keeps the transport editor closed for read-only and saving day cards", async
   day.legs = [{ id: "leg", fromCityId: "from", toCityId: "to", routeId: null, mode: "private_vehicle", vehicleType: null, nameZh: "", nameEn: "", feeState: "INCLUDED" }];
   for (const editable of [false, true]) {
     const view = render(WebsiteDayCard, {
-      day, editable, saving: editable, config: { cities: [], routes: [] }, selectableCityIds: new Set(), date: null, last: true,
+      day, editable, saving: editable, config: { cities: [], routes: [] }, selectableCityIds: new Set(), date: null, last: true, businessUnit: "website",
     });
     const card = view.instance as InstanceType<typeof WebsiteDayCard>;
     card.openValidationIssue({ kind: "event", id: "leg" });
@@ -451,4 +454,182 @@ it("keeps the saved vehicle while limiting new choices to the resource and apply
   await nextTick();
   await view.click("common.confirm");
   expect(day.legs[0]).toMatchObject({ vehicleType: "9_seat", durationMinutes: 180 });
+});
+
+it("renders, edits, clears, and hides the day internal remark by business unit and editability", async () => {
+  const day = reactive({ ...emptyDay(1), internalRemark: "先去西山" });
+  const config = { attractions: [], cities: [], routes: [], hotels: [] } as unknown as WebsiteConfig;
+  const props = { day, config, selectableCityIds: new Set<string>(), editable: true, date: null, last: true, businessUnit: "website" };
+
+  const editableView = render(WebsiteDayCard, props);
+  const input = editableView.find("ElInput")[0]!;
+  expect(input.props.modelValue).toBe("先去西山");
+  expect(input.props.maxlength).toBe("200");
+  expect(input.props.clearable).toBe("");
+  (input.props["onUpdate:modelValue"] as (value: string) => void)("");
+  await nextTick();
+  expect(day.internalRemark).toBe("");
+  unmount?.();
+
+  day.internalRemark = "只读展示备注";
+  const readonlyView = render(WebsiteDayCard, { ...props, editable: false });
+  expect(readonlyView.find("ElInput")).toHaveLength(0);
+  expect(readonlyView.text(readonlyView.find("section")[0]!)).toContain("只读展示备注");
+  unmount?.();
+
+  day.internalRemark = "";
+  const emptyReadonlyView = render(WebsiteDayCard, { ...props, editable: false });
+  expect(emptyReadonlyView.find("p")).toHaveLength(0);
+  unmount?.();
+
+  day.internalRemark = "霖熹不显示";
+  const linxiView = render(WebsiteDayCard, { ...props, businessUnit: "linxi" });
+  expect(linxiView.find("ElInput")).toHaveLength(0);
+  expect(linxiView.text(linxiView.find("section")[0]!)).not.toContain("霖熹不显示");
+});
+
+it("selects and orders website stops, adds an attraction from the second stop, and clears only the route", async () => {
+  const day = reactive({ ...emptyDay(1), departCityId: "km", endCityId: "lj", overnightCityId: "lj" });
+  const cities = ["km", "cx", "dl", "lj", "outside"].map(id => ({ id, nameZh: id, nameEn: id, status: "enabled", resourceId: null }));
+  const attractions = ["cx", "dl"].map(cityId => ({
+    id: `at-${cityId}`, cityId, nameZh: cityId, nameEn: cityId, kind: "attraction", parentId: null,
+    descriptionZh: "游览", descriptionEn: "Visit", status: "enabled", recommendedMonths: [], chargeable: false, price: "0",
+  }));
+  const config = { cities, attractions, routes: [], hotels: [] };
+  const props = { day, config, selectableCityIds: new Set(["km", "cx", "dl", "lj"]), businessUnit: "website", editable: true, date: null, last: false };
+  const card = render(WebsiteDayCard, props);
+  const toggle = card.find("ElCheckbox").find(box => card.text(box) === "itinerary.viaDestinations")!;
+  (toggle.props["onUpdate:modelValue"] as (value: boolean) => void)(true);
+  await nextTick();
+  const picker = card.find("ElSelect").find(select => select.props.multiple !== undefined)!;
+  expect(card.find("ElOption", picker).map(option => option.props.value)).toEqual(["cx", "dl"]);
+  (picker.props["onUpdate:modelValue"] as (ids: string[]) => void)(["cx", "dl"]);
+  await nextTick();
+  const later = card.find("ElButton").find(button => button.props["aria-label"] === "itinerary.moveViaLater")!;
+  (later.props.onClick as () => void)();
+  await nextTick();
+  expect(day.viaCityIds).toEqual(["dl", "cx"]);
+  expect(day.items).toHaveLength(0);
+  unmount?.();
+
+  const submit = vi.fn((items: WebsiteDay["items"]) => day.items.push(...items));
+  const dialog = render(WebsiteAttractionDialog, {
+    ...props, days: [day], modelValue: true, dayLabel: "D1", onSubmit: submit,
+    selectableCityIds: new Set(["km", "lj"]),
+  });
+  const filter = dialog.find("ElSelect")[0]!;
+  expect(filter.props.modelValue).toBe("dl");
+  (filter.props["onUpdate:modelValue"] as (value: string) => void)("cx");
+  await nextTick();
+  const table = dialog.find("data-table")[0]!;
+  const rows = table.props.data as { attraction: { id: string } }[];
+  expect(rows.map(row => row.attraction.id)).toEqual(["at-cx"]);
+  (table.props.onRowClick as (row: typeof rows[number]) => void)(rows[0]!);
+  await nextTick();
+  await dialog.click("common.confirm");
+  expect(submit).toHaveBeenCalledOnce();
+  expect(day.items[0]?.attractionId).toBe("at-cx");
+  unmount?.();
+
+  const reopened = render(WebsiteDayCard, props);
+  const end = reopened.find("ElSelect")[1]!;
+  (end.props["onUpdate:modelValue"] as (value: string) => void)("dl");
+  await nextTick();
+  expect(day.viaCityIds).toEqual(["cx"]);
+  const clear = reopened.find("ElCheckbox").find(box => reopened.text(box) === "itinerary.viaDestinations")!;
+  (clear.props["onUpdate:modelValue"] as (value: boolean) => void)(false);
+  expect(day.viaCityIds).toEqual([]);
+  expect(day.items[0]?.attractionId).toBe("at-cx");
+  expect(day.overnightCityId).toBe("lj");
+  expect(day.legs).toHaveLength(0);
+  unmount?.();
+  const linxi = render(WebsiteDayCard, { ...props, businessUnit: "linxi" });
+  expect(linxi.find("ElCheckbox").some(box => linxi.text(box) === "itinerary.viaDestinations")).toBe(false);
+});
+
+it("zooms the compact website board, disables at bounds, displays day remarks, and reorders D1 after D4 and cross-day items while zoomed", async () => {
+  const makeDay = (id: string, title: string, items: ReorderBoardItem[], remark?: string) => ({
+    id, title, remark,
+    groups: [{ key: "events", label: "当日行程", sortable: true, transferable: true, items }],
+  });
+  const apply = vi.fn();
+  const visible = ref(true);
+  const days = [
+    makeDay("d1", "昆明 → 大理", [{ id: "a1", label: "石林", detail: "景点" }], "优先安排早出发"),
+    makeDay("d2", "大理 → 丽江", [{ id: "a2", label: "洱海" }]),
+    makeDay("d3", "丽江", [{ id: "a3", label: "玉龙雪山" }, { id: "a4", label: "蓝月谷" }]),
+    makeDay("d4", "丽江 → 昆明", [{ id: "a5", label: "返程" }]),
+  ];
+  const view = render(defineComponent({
+    setup() {
+      return () => h(ItineraryReorderDialog, {
+        modelValue: visible.value,
+        "onUpdate:modelValue": (value: boolean) => { visible.value = value; },
+        compact: true,
+        transfer: true,
+        days,
+        onApply: apply,
+      });
+    },
+  }), {});
+
+  const zoomOut = () => view.find("ElButton").find(button => view.text(button) === "itineraryWorkspace.zoomOut")!;
+  const zoomIn = () => view.find("ElButton").find(button => view.text(button) === "itineraryWorkspace.zoomIn")!;
+  const zoomText = () => view.text(view.find("output")[0]!);
+  const sections = () => view.find("section");
+
+  // 初始 100%，D1 备注展示在路线之前，空备注不占位置。
+  expect(zoomText()).toBe("100%");
+  expect(view.find("p", sections()[0]!).map(p => view.text(p))).toEqual(["优先安排早出发", "昆明 → 大理"]);
+  expect(view.find("p", sections()[1]!).map(p => view.text(p))).toEqual(["大理 → 丽江"]);
+
+  // 缩放到上下限禁用对应按钮。
+  for (let i = 0; i < 6; i++) await view.click("itineraryWorkspace.zoomOut");
+  expect(zoomText()).toBe("50%");
+  expect(zoomOut().props.disabled).toBe(true);
+  expect(zoomIn().props.disabled).toBe(false);
+  for (let i = 0; i < 12; i++) await view.click("itineraryWorkspace.zoomIn");
+  expect(zoomText()).toBe("150%");
+  expect(zoomIn().props.disabled).toBe(true);
+  expect(zoomOut().props.disabled).toBe(false);
+
+  // 重开弹窗恢复默认 100%。
+  visible.value = false;
+  await nextTick();
+  visible.value = true;
+  await nextTick();
+  expect(zoomText()).toBe("100%");
+
+  // 缩小到 70% 后把 D1 拖到 D4 后，再把 D1 的“石林”跨日放到 D3 的“蓝月谷”位置。
+  for (let i = 0; i < 3; i++) await view.click("itineraryWorkspace.zoomOut");
+  expect(zoomText()).toBe("70%");
+  const canvas = view.find("div").find(div => div.props.role === "list")!;
+  expect(canvas.props.style).toEqual({ transform: "scale(0.7)", transformOrigin: "top left" });
+
+  const dragEvent = { preventDefault: vi.fn(), stopPropagation: vi.fn() };
+  const d1Header = view.find("header", sections()[0]!)[0]!;
+  (d1Header.props.onDragstart as (event: typeof dragEvent) => void)(dragEvent);
+  (sections()[3]!.props.onDrop as (event: typeof dragEvent) => void)(dragEvent);
+  await nextTick();
+  expect(sections().map(section => view.text(section))).toEqual([
+    expect.stringContaining("大理 → 丽江"),
+    expect.stringContaining("丽江"),
+    expect.stringContaining("丽江 → 昆明"),
+    expect.stringContaining("优先安排早出发"),
+  ]);
+
+  const card = (dayIndex: number, label: string) =>
+    view.find("div", sections()[dayIndex]!).find(node => node.props.onDragstart && view.text(node).includes(label))!;
+  (card(3, "石林").props.onDragstart as (event: typeof dragEvent) => void)(dragEvent);
+  (card(1, "蓝月谷").props.onDrop as (event: typeof dragEvent) => void)(dragEvent);
+  await nextTick();
+
+  await view.click("itineraryWorkspace.applyOrder");
+  expect(apply).toHaveBeenCalledWith(expect.objectContaining({
+    dayIds: ["d2", "d3", "d4", "d1"],
+    placements: expect.objectContaining({
+      d1: { events: [] },
+      d3: { events: ["a3", "a1", "a4"] },
+    }),
+  }));
 });

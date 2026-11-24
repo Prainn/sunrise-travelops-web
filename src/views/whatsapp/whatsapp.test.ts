@@ -24,6 +24,7 @@ vi.mock("@/services/whatsapp.service", async (importOriginal) => ({
   whatsappService: service,
 }));
 const stream = vi.hoisted(() => ({
+  isLive: true,
   listeners: new Set<(signal: unknown) => void>(),
   subscribe(listener: (signal: unknown) => void) {
     stream.listeners.add(listener);
@@ -31,6 +32,8 @@ const stream = vi.hoisted(() => ({
   },
 }));
 vi.mock("@/stores/whatsapp-stream", () => ({ useWhatsappStreamStore: () => stream }));
+const notifications = vi.hoisted(() => ({ refresh: vi.fn() }));
+vi.mock("@/stores/whatsapp-notifications", () => ({ useWhatsappNotificationsStore: () => notifications }));
 vi.mock("@/lang/utils", () => ({ translate: (key: string) => key, translateIfExists: () => undefined }));
 vi.mock("@/stores/user", async () => {
   const { reactive } = await import("vue");
@@ -94,6 +97,8 @@ beforeEach(() => {
   doc.hasFocus.mockReturnValue(true);
   for (const fn of Object.values(service)) fn.mockReset();
   stream.listeners.clear();
+  stream.isLive = true;
+  notifications.refresh.mockClear();
   service.conversations.mockResolvedValue(page([{ id: "c-1", unreadCount: 2 }]));
   service.conversation.mockImplementation(async (id: string) => detail(id));
   service.messages.mockResolvedValue(page([message({ id: "m-2", seq: BIG_SEQ }), message({ id: "m-1", seq: "1" })]));
@@ -341,12 +346,26 @@ describe("useWhatsappWorkbench", () => {
 
     await workbench.markDisplayed("c-1", true);
     expect(service.markRead).toHaveBeenCalledExactlyOnceWith("c-1", BIG_SEQ);
+    expect(notifications.refresh).not.toHaveBeenCalled();
     await workbench.markDisplayed("c-1", true);
     expect(service.markRead).toHaveBeenCalledTimes(1);
 
     doc.visibilityState = "hidden";
     await workbench.markDisplayed("c-1", true);
     expect(service.markRead).toHaveBeenCalledTimes(1);
+  });
+
+  it("实时流断开时，已读成功后立即刷新未读总数，失败时允许重试", async () => {
+    stream.isLive = false;
+    const workbench = setup();
+    workbench.start();
+    await workbench.selectConversation("c-1");
+    service.markRead.mockRejectedValueOnce(networkError());
+    await workbench.markDisplayed("c-1", true);
+    expect(notifications.refresh).not.toHaveBeenCalled();
+    await workbench.markDisplayed("c-1", true);
+    await workbench.markDisplayed("c-1", true);
+    expect(notifications.refresh).toHaveBeenCalledTimes(1);
   });
 
   it("结果不明的发送只能用同一请求编号再次提交，明确拒绝不可再提交", async () => {

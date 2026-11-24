@@ -5,7 +5,7 @@
     :padding="expanded ? 'default' : 'none'"
   >
     <template #header>
-      <div class="flex items-center gap-3 min-w-0">
+      <div class="flex flex-1 flex-wrap items-center gap-3 min-w-0">
         <span class="grid w-[44px] h-[44px] shrink-0 place-items-center rounded-[10px] bg-primary text-white font-bold">
           D{{ dayNumber }}
         </span>
@@ -17,6 +17,8 @@
           </h3>
           <span v-if="date" class="text-sm text-muted">{{ date }}</span>
         </div>
+        <!-- 路线标题右侧的业务扩展（如独立站逐日内部备注） -->
+        <slot name="title-extra" />
       </div>
     </template>
     <template #actions>

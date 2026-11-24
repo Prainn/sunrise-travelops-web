@@ -473,6 +473,25 @@ describe("website itinerary request payloads and dirty tracking", () => {
     }
   });
 
+  it("sends explicit day remark clears, keeps remarks on recycled days, and omits a missing remark", async () => {
+    vi.mocked(request.put).mockResolvedValue({ ...plan });
+    const cleared = { ...emptyDay(1), id: "d1", internalRemark: "" };
+    const noted = { ...emptyDay(2), id: "d2", internalRemark: "接机后先去酒店" };
+    const legacy: ReturnType<typeof emptyDay> = { ...emptyDay(3), id: "d3" };
+    delete legacy.internalRemark;
+    const recycled = { ...emptyDay(4), id: "d4", internalRemark: "客人想看日落" };
+    await websiteService.saveItinerary({
+      ...plan,
+      businessUnit: "website",
+      days: [cleared, noted, legacy],
+      deletedDays: [{ day: recycled, originalDate: null }],
+    });
+    const json = sentBody(request.put).json as { days: { internalRemark?: string }[]; deletedDays: { day: { internalRemark?: string } }[] };
+    expect(json.days.map(day => day.internalRemark)).toEqual(["", "接机后先去酒店", undefined]);
+    expect(json.days[2]).not.toHaveProperty("internalRemark");
+    expect(json.deletedDays[0]!.day.internalRemark).toBe("客人想看日落");
+  });
+
   it("keeps dirty false on open, omits missing pricing fields on title-only edits, and saves explicit mode or clear changes", async () => {
     const workspace = await setup();
     expect(workspace.dirty.value).toBe(false);

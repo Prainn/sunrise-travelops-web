@@ -66,6 +66,7 @@ export function emptyDay(dayNumber: number): WebsiteDay {
     dayNumber,
     departCityId: "",
     endCityId: "",
+    viaCityIds: [],
     overnightCityId: null,
     items: [],
     legs: [],
@@ -80,6 +81,7 @@ export function emptyDay(dayNumber: number): WebsiteDay {
     })),
     guideLanguage: "",
     services: [],
+    internalRemark: "",
   };
 }
 /** 餐次已安排：指定了餐厅，或费用状态不再是新增一天时的默认“自理”；未安排的餐次不在日卡中展示。 */

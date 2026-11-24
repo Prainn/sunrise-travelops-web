@@ -153,10 +153,16 @@ describe("day recycle transactions", () => {
   it("restores website days with every detail and stable ID", () => {
     const original = emptyDay(2);
     original.guideLanguage = "English";
+    original.internalRemark = "客人希望上午自由活动";
     const active = emptyDay(1);
+    active.internalRemark = "接机举牌";
     const removed = { day: original, originalDate: null };
-    const restored = reorderWebsiteDays([active], { dayIds: [active.id, original.id], itemIds: {}, deletedDays: [] }, [removed]);
-    expect(restored.days[1]).toEqual(original);
+    const restored = reorderWebsiteDays([active], { dayIds: [original.id, active.id], itemIds: {}, deletedDays: [] }, [removed]);
+    expect(restored.days.map(day => [day.id, day.internalRemark])).toEqual([
+      [original.id, "客人希望上午自由活动"],
+      [active.id, "接机举牌"],
+    ]);
+    expect(restored.days[0]).toEqual({ ...original, dayNumber: 1 });
     expect(restored.deletedDays).toEqual([]);
     expect(removed.day).toEqual(original);
   });
@@ -320,6 +326,10 @@ describe("website cross-day transfer and copy", () => {
   it("blocks attractions outside the day's cities and rechecks when transport legs move", () => {
     const board = setup();
     board.move("attractions", "d2", "i-dl", "d1");
+    expect(board.blocking()).toEqual([["d1", "cityMismatch", "i-dl"]]);
+    board.days[0]!.viaCityIds = ["dl"];
+    expect(board.blocking()).toEqual([]);
+    board.days[0]!.viaCityIds = [];
     expect(board.blocking()).toEqual([["d1", "cityMismatch", "i-dl"]]);
     // 交通段带来大理后城市匹配，但 D1 交通链断开，D2 失去交通段也断链。
     board.move("legs", "d2", "leg", "d1");
