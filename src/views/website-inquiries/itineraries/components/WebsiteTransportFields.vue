@@ -42,7 +42,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { TransportMode, WebsiteLeg, WebsiteRouteVehicleOption } from "@/types/website";
 import type { AirportTransferOptions } from "../airport-transfers";
-import { VEHICLE_OPTIONS } from "../../options";
+import { websiteVehicleLabel } from "@/utils/website-vehicle";
 
 const props = withDefaults(defineProps<{
   modelValue: T;
@@ -69,8 +69,7 @@ function selectVehicle(value: string | undefined, aliases: string[] = []) {
   emit("update:modelValue", { ...props.modelValue, vehicleType, durationMinutes });
 }
 function vehicleLabel(value: string) {
-  const option = VEHICLE_OPTIONS.find(option => option.value === value);
-  return option ? t(option.labelKey) : value;
+  return websiteVehicleLabel(value, t);
 }
 function update<K extends keyof T>(key: K, value: T[K]) {
   emit("update:modelValue", { ...props.modelValue, [key]: value });

@@ -93,7 +93,7 @@
           <table class="price-table">
             <thead>
               <tr>
-                <th>{{ $t("websiteReport.vehicleType") }}</th>
+                <th>{{ $t("resource.vehicleModel") }}</th>
                 <th v-for="category in tableCategories" :key="category">
                   {{ $t(`websiteItineraryUi.priceCategories.${category}`) }}
                 </th>
@@ -214,7 +214,8 @@ import type {
   WebsitePriceComponent,
   WebsiteVehiclePriceInput,
 } from "@/types/website";
-import { VEHICLE_OPTIONS, cloneWebsiteDraft } from "../../options";
+import { cloneWebsiteDraft } from "../../options";
+import { vehicleSeatCount, websiteVehicleLabel } from "@/utils/website-vehicle";
 import type { WebsiteConfig, WebsiteDay, WebsiteHotelPricingMode } from "@/types/website";
 import { nightlyAccommodation, nightlyPackage } from "../nightly-pricing";
 import WebsiteNightlyStays from "./WebsiteNightlyStays.vue";
@@ -276,8 +277,8 @@ const groups = computed(() => {
 });
 const staleCount = computed(() => rows.value.filter(isStale).length);
 const standardVehicleLabels = computed(() => {
-  const types = new Set(rows.value.map(row => row.vehicleType));
-  return new Set(VEHICLE_OPTIONS.filter(option => types.has(option.value)).map(option => t(option.labelKey)));
+  return new Set(rows.value.flatMap(({ vehicleType }) =>
+    vehicleType && vehicleSeatCount(vehicleType) ? [websiteVehicleLabel(vehicleType, t)] : []));
 });
 const tooMany = computed(() => rows.value.length > MAX_PRICE_COMBINATIONS);
 const hasInvalidPrice = computed(() =>
@@ -424,8 +425,7 @@ function tierLabel(tier: WebsiteHotelTier | null) {
 }
 function vehicleLabel(vehicleType: string | null) {
   if (vehicleType === null) return t("websiteItineraryUi.noPrivateVehicle");
-  const option = VEHICLE_OPTIONS.find(item => item.value === vehicleType);
-  return option ? t(option.labelKey) : vehicleType;
+  return websiteVehicleLabel(vehicleType, t);
 }
 function hasCategoryPrice(category: WebsitePriceCategory) {
   if (category === "hotel") {

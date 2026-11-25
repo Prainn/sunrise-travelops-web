@@ -5,6 +5,7 @@ import type {
   WebsiteLogReferenceKind,
 } from "@/types/website";
 import { formatDateTime } from "@/utils/format";
+import { vehicleSeatCount, websiteVehicleLabel } from "@/utils/website-vehicle";
 
 type Translate = (key: string, params?: Record<string, string | number>) => string;
 export interface LogDisplayContext {
@@ -137,9 +138,8 @@ function transportModeLabel(mode: string, { t, te }: LogDisplayContext): string 
   return te(key) ? t(key) : mode;
 }
 
-function vehicleTypeLabel(vehicleType: string, { t, te }: LogDisplayContext): string {
-  const key = `websiteInquiry.vehicleTypes.${vehicleType}`;
-  return te(key) ? t(key) : vehicleType;
+function vehicleTypeLabel(vehicleType: string, { t }: LogDisplayContext): string {
+  return websiteVehicleLabel(vehicleType, t);
 }
 
 function refTypeLabel(kind: WebsiteLogReferenceKind, { t, te }: LogDisplayContext): string {
@@ -226,9 +226,9 @@ function segmentLabel(
   }
   if (
     (previous === "vehiclePrices" || previous === "nightlyVehiclePrices") &&
-    te(`websiteInquiry.vehicleTypes.${segment}`)
+    vehicleSeatCount(segment)
   ) {
-    return t(`websiteInquiry.vehicleTypes.${segment}`);
+    return websiteVehicleLabel(segment, t);
   }
   const key = `websiteInquiry.log.fields.${segment}`;
   return te(key) ? t(key) : segment;

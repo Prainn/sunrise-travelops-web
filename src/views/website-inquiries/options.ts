@@ -2,7 +2,6 @@ import { clonePlainData } from "@/utils";
 import type {
   FeeState,
   WebsiteAttraction,
-  VehicleType,
   WebsiteDay,
   WebsiteHotelStay,
   WebsiteInquiryInput,
@@ -17,13 +16,6 @@ export const FEE_OPTIONS: Array<{ value: FeeState; labelKey: string }> = [
   { value: "RECOMMENDED", labelKey: "websiteInquiry.feeStates.RECOMMENDED" },
   { value: "SELF_PAY", labelKey: "websiteInquiry.feeStates.SELF_PAY" },
   { value: "UNKNOWN", labelKey: "websiteInquiry.feeStates.UNKNOWN" },
-];
-export const VEHICLE_OPTIONS: Array<{ value: VehicleType; labelKey: string; seats: number }> = [
-  { value: "5_seat", labelKey: "websiteInquiry.vehicleTypes.5_seat", seats: 5 },
-  { value: "7_seat", labelKey: "websiteInquiry.vehicleTypes.7_seat", seats: 7 },
-  { value: "9_seat", labelKey: "websiteInquiry.vehicleTypes.9_seat", seats: 9 },
-  { value: "14_seat", labelKey: "websiteInquiry.vehicleTypes.14_seat", seats: 14 },
-  { value: "18_seat", labelKey: "websiteInquiry.vehicleTypes.18_seat", seats: 18 },
 ];
 export const TRANSPORT_OPTIONS = [
   { value: "hsr", labelKey: "websiteInquiry.transportModes.hsr" },

@@ -10,7 +10,7 @@ import { PRICE_CATEGORIES } from "../vehicle-price";
 vi.mock("@/api/request", () => ({ ApiError: class extends Error {}, request: { put: vi.fn() } }));
 vi.mock("element-plus", () => ({ ElMessageBox: { confirm: vi.fn().mockResolvedValue("confirm") } }));
 vi.mock("vue-i18n", () => ({ useI18n: () => ({
-  t: (key: string, values?: unknown) => key === "websiteInquiry.vehicleTypes.7_seat" ? "7座" : values ? `${key}:${JSON.stringify(values)}` : key,
+  t: (key: string, values?: unknown) => key === "websiteInquiry.vehicleSeatLabel" ? `${(values as { seats: string }).seats}座` : values ? `${key}:${JSON.stringify(values)}` : key,
   locale: ref("zh-cn"),
 }) }));
 vi.mock("./WebsiteHotelDialog.vue", () => ({ default: { template: "<div />" } }));

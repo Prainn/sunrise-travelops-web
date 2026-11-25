@@ -30,6 +30,7 @@ import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
 import type { BusinessCategoryOptionRecord } from "@/types/resource";
+import { dictionaryVehicleCode, websiteVehicleLabel } from "@/utils/website-vehicle";
 
 type SelectOption = { value: string; label: string; code?: string; disabled?: boolean };
 
@@ -46,9 +47,7 @@ const { locale, t } = useI18n();
 const items = ref<BusinessCategoryOptionRecord[]>([]);
 const loading = ref(false);
 function standardVehicleCode(item?: BusinessCategoryOptionRecord) {
-  if (props.typeCode !== "vehicle-type" || !item) return undefined;
-  const seats = /^seat(5|7|9|14|18)$/.exec(item.code)?.[1];
-  return seats ? `${seats}_seat` : undefined;
+  return props.typeCode === "vehicle-type" && item ? dictionaryVehicleCode(item.code) : undefined;
 }
 function matches(item: BusinessCategoryOptionRecord, value: string) {
   return [item.code, item.name, item.englishName, standardVehicleCode(item)].includes(value);
@@ -68,7 +67,7 @@ const options = computed(() => {
     const value = (props.limitToExtraOptions ? undefined : code) ?? routeOption?.value ?? (current && matches(item, current) ? current : item.name);
     const label = locale.value.toLowerCase().startsWith("en")
       ? item.englishName
-      : code ? t(`websiteInquiry.vehicleTypes.${code}`) : item.name;
+      : code ? websiteVehicleLabel(code, t) : item.name;
     return [{ value, label, code: item.code, disabled: isDisabled(value, item) }];
   });
   for (const item of props.extraOptions) {
@@ -79,7 +78,8 @@ const options = computed(() => {
   }
   if (!props.limitToExtraOptions) {
     if (current && !result.some(item => item.value === current)) {
-      result.push({ value: current, label: current, disabled: isDisabled(current) });
+      const label = props.typeCode === "vehicle-type" ? websiteVehicleLabel(current, t) : current;
+      result.push({ value: current, label, disabled: isDisabled(current) });
     }
     for (const value of props.disabledValues) {
       if (!items.value.some(item => matches(item, value)) && !result.some(item => item.value === value)) {
@@ -97,9 +97,12 @@ const options = computed(() => {
   return result;
 });
 // Keep the saved value bound so explicitly reselecting the canonical option emits an update.
-const selectedLabel = computed(() => selectedOptionValue.value !== props.modelValue
-  ? options.value.find(option => option.value === selectedOptionValue.value)?.label
-  : undefined);
+const selectedLabel = computed(() => {
+  const value = selectedOptionValue.value;
+  if (!value) return undefined;
+  const option = options.value.find(item => item.value === value);
+  return option?.label ?? (props.typeCode === "vehicle-type" ? websiteVehicleLabel(value, t) : value);
+});
 function isDisabled(value: string, item?: BusinessCategoryOptionRecord) {
   if (!props.disabledValues.length) return false;
   const entry = item ?? items.value.find(option => matches(option, value));
