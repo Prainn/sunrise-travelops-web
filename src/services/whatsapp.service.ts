@@ -63,7 +63,7 @@ export function whatsappInquiryInput(input: WebsiteInquiryInput, version: number
 
 export const whatsappService = {
   summary() {
-    return request.get<WhatsappSummary>(`${BASE_URL}/summary`);
+    return request.get<WhatsappSummary>(`${BASE_URL}/summary`, { cache: "no-store" });
   },
   /** 工作台失效提示流；返回原始 Response，不作 SUCCESS 解包，由流管理器解析。 */
   stream(signal: AbortSignal) {
@@ -86,20 +86,20 @@ export const whatsappService = {
       : request.post<WhatsappQuickReply>(`${BASE_URL}/quick-replies`, input, { userAction: true });
   },
   conversations(query: WhatsappConversationQueryParams) {
-    return request.get<PageResult<WhatsappConversationItem>>(`${BASE_URL}/conversations`, { params: { ...query } });
+    return request.get<PageResult<WhatsappConversationItem>>(`${BASE_URL}/conversations`, { params: { ...query }, cache: "no-store" });
   },
   conversation(id: string) {
-    return request.get<WhatsappConversationDetail>(conversationUrl(id));
+    return request.get<WhatsappConversationDetail>(conversationUrl(id), { cache: "no-store" });
   },
   /** 默认最新页按 seq 倒序；afterSeq 升序，只返回新增行。 */
   messages(id: string, query: WhatsappMessageQueryParams) {
-    return request.get<PageResult<WhatsappMessage>>(`${conversationUrl(id)}/messages`, { params: { ...query } });
+    return request.get<PageResult<WhatsappMessage>>(`${conversationUrl(id)}/messages`, { params: { ...query }, cache: "no-store" });
   },
   actions(id: string, query: { page: number; pageSize: number }) {
-    return request.get<PageResult<WhatsappAction>>(`${conversationUrl(id)}/actions`, { params: { ...query } });
+    return request.get<PageResult<WhatsappAction>>(`${conversationUrl(id)}/actions`, { params: { ...query }, cache: "no-store" });
   },
   customerNotes(id: string) {
-    return request.get<WhatsappCustomerNotes>(`${conversationUrl(id)}/customer-notes`);
+    return request.get<WhatsappCustomerNotes>(`${conversationUrl(id)}/customer-notes`, { cache: "no-store" });
   },
   /** 全量保存；version 过期返回 409，由用户刷新后再决定。 */
   saveCustomerNotes(id: string, input: WhatsappCustomerNotesInput) {

@@ -111,6 +111,12 @@ export function isApiError(error: unknown): error is ApiError {
 }
 
 let refreshPromise: Promise<void> | null = null;
+const GET_REUSE_MS = 1_000;
+const recentGets = new Map<string, { promise: Promise<unknown>; expiresAt: number }>();
+
+export function clearRecentGets(): void {
+  recentGets.clear();
+}
 
 function appendParams(url: string, params?: RequestParams): string {
   if (!params) return url;
@@ -386,6 +392,55 @@ async function sendJsonRequest<T>(
 ): Promise<T> {
   if (!options.bypassSessionGate && options.requiresAuth !== false) await sessionGate.waitVerified();
   assertSessionGate(options);
+  assertSameEpoch(startEpoch);
+  // 取消信号、强制刷新、用户操作和特殊传输选项均保留各自的请求生命周期。
+  if (method === "GET" && Object.keys(options).every(key => key === "params" || key === "headers")) {
+    const headers = createHeaders(options);
+    if (!headers.has("cache-control") && !headers.has("pragma") && !Array.from(headers.keys()).some(key => key.startsWith("if-"))) {
+      return reuseJsonGet<T>(path, options, startEpoch, headers);
+    }
+  }
+  return executeJsonRequest<T>(method, path, body, options, startEpoch);
+}
+
+async function reuseJsonGet<T>(path: string, options: RequestOptions, epoch: number, headers: Headers): Promise<T> {
+  const url = appendParams(path, options.params);
+  const queryStart = url.indexOf("?");
+  const pathname = queryStart < 0 ? url : url.slice(0, queryStart);
+  const query = new URLSearchParams(queryStart < 0 ? "" : url.slice(queryStart + 1));
+  // 同名参数间的顺序有业务含义；sort 只排列参数名。
+  query.sort();
+  const key = JSON.stringify([epoch, pathname, query.toString(), Array.from(headers.entries())]);
+  let entry = recentGets.get(key);
+  if (!entry || entry.expiresAt <= Date.now()) {
+    let keepResult = true;
+    const promise = executeJsonRequest<T>("GET", path, undefined, options, epoch, response => {
+      keepResult = response.ok && !/(?:^|,)\s*(?:no-store|no-cache|max-age\s*=\s*0)\b/i.test(response.headers.get("Cache-Control") ?? "");
+    });
+    const current = { promise, expiresAt: Number.POSITIVE_INFINITY };
+    entry = current;
+    recentGets.set(key, current);
+    const forget = () => { if (recentGets.get(key) === current) recentGets.delete(key); };
+    void promise.then(() => {
+      if (!keepResult) return forget();
+      current.expiresAt = Date.now() + GET_REUSE_MS;
+      setTimeout(forget, GET_REUSE_MS);
+    }, forget);
+  }
+  const data = await entry.promise;
+  assertSameEpoch(epoch);
+  // 各表单可独立编辑自己的结果，不把页面改动带给后续调用者。
+  return structuredClone(data) as T;
+}
+
+async function executeJsonRequest<T>(
+  method: string,
+  path: string,
+  body: unknown,
+  options: RequestOptions,
+  startEpoch: number,
+  onResponse?: (response: Response) => void,
+): Promise<T> {
   const isTrackedWrite =
     method !== "GET" && options.requiresAuth !== false && !options.bypassSessionGate;
   const endWrite = isTrackedWrite ? sessionGate.beginWrite() : undefined;
@@ -396,6 +451,7 @@ async function sendJsonRequest<T>(
     const { response } = sent;
     try {
       assertSameEpoch(startEpoch);
+      onResponse?.(response);
 
       if (response.status === 401 && canRefreshAfter(options) && AuthStorage.getRefreshToken()) {
         sent.release();
@@ -420,6 +476,8 @@ async function sendJsonRequest<T>(
       sent.release();
     }
   } finally {
+    // 也清除写入期间已经开始的 GET，保存后的刷新必须读取新的版本。
+    if (method !== "GET") clearRecentGets();
     endWrite?.();
   }
 }

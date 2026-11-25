@@ -1277,7 +1277,9 @@
     "partTime": "Part-time",
     "contact": "Contact details",
     "contractYes": "Yes",
-    "contractNo": "No"
+    "contractNo": "No",
+    "deleteConfirm": "Delete guide \"{name}\"?",
+    "deletePriceConfirm": "Delete this guide price setting?"
   },
   "restaurant": {
     "createRestaurant": "Add Restaurant",
@@ -2097,7 +2099,10 @@
     "periodRequired": "Select the leave dates",
     "reason": "Reason",
     "createTitle": "Add Leave",
-    "editTitle": "Edit Leave"
+    "editTitle": "Edit Leave",
+    "cancelLeave": "End leave",
+    "cancelLeaveConfirm": "End leave for guide \"{name}\" ({startDate} to {endDate})?",
+    "cancelLeaveSuccess": "Leave ended"
   },
   "guideRating": {
     "searchPlaceholder": "Tour no. or guide",
@@ -2541,7 +2546,6 @@
     "durationMinutes": "Estimated time (minutes)",
     "distanceInvalid": "Enter a non-negative distance with up to 10 integer digits and 2 decimals",
     "durationInvalid": "Enter an integer from 1 to 525600 minutes",
-    "vehicleType": "Vehicle type",
     "vehicleSelectOrEnter": "Select or enter a vehicle type",
     "vehicleInvalid": "Vehicle type must be at most 100 characters",
     "vehicleOptionsInvalid": "Use up to 100 unique vehicle types, 1–100 characters each",

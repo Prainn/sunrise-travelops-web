@@ -80,7 +80,7 @@
       >
         <el-table-column :label="$t('oss.preview')" width="96">
           <template #default="{ row }">
-            <OssMediaPreview :resource="row as OssResource" :max-size="64" />
+            <OssMediaPreview :resource="row as OssResource" :max-size="64" compact />
           </template>
         </el-table-column>
         <el-table-column :label="$t('oss.name')" min-width="200">
@@ -133,48 +133,55 @@
             {{ formatDateTime((row as OssResource).updatedAt) }}
           </template>
         </el-table-column>
-        <el-table-column :label="$t('common.actions')" width="220" fixed="right">
+        <el-table-column
+          :label="$t('common.actions')"
+          width="260"
+          fixed="right"
+          :show-overflow-tooltip="false"
+        >
           <template #default="{ row }">
-            <el-button link type="primary" @click="openDetail(row as OssResource)">
-              {{ $t('oss.detail') }}
-            </el-button>
-            <el-button
-              v-if="canUpdate"
-              link
-              type="primary"
-              :disabled="(row as OssResource).state === 'deleting'"
-              @click="openEditor(row as OssResource)"
-            >
-              {{ $t('common.edit') }}
-            </el-button>
-            <el-button
-              v-if="canUpdate && canRetry(row as OssResource)"
-              link
-              type="primary"
-              :loading="busyId === (row as OssResource).id"
-              @click="handleRetry(row as OssResource)"
-            >
-              {{ $t('oss.retry') }}
-            </el-button>
-            <el-tooltip
-              v-if="canDelete"
-              :content="deleteBlockedReason(row as OssResource)"
-              :disabled="!deleteBlockedReason(row as OssResource)"
-              placement="top"
-            >
-              <!-- 禁用按钮不触发悬停事件，由外层元素承载原因提示 -->
-              <span class="inline-flex ml-[12px]">
-                <el-button
-                  link
-                  type="danger"
-                  :disabled="!!deleteBlockedReason(row as OssResource)"
-                  :loading="busyId === (row as OssResource).id"
-                  @click="handleDelete(row as OssResource)"
-                >
-                  {{ $t('common.delete') }}
-                </el-button>
-              </span>
-            </el-tooltip>
+            <div class="flex items-center">
+              <el-button link type="primary" @click="openDetail(row as OssResource)">
+                {{ $t('oss.detail') }}
+              </el-button>
+              <el-button
+                v-if="canUpdate"
+                link
+                type="primary"
+                :disabled="(row as OssResource).state === 'deleting'"
+                @click="openEditor(row as OssResource)"
+              >
+                {{ $t('common.edit') }}
+              </el-button>
+              <el-button
+                v-if="canUpdate && canRetry(row as OssResource)"
+                link
+                type="primary"
+                :loading="busyId === (row as OssResource).id"
+                @click="handleRetry(row as OssResource)"
+              >
+                {{ $t('oss.retry') }}
+              </el-button>
+              <el-tooltip
+                v-if="canDelete"
+                :content="deleteBlockedReason(row as OssResource)"
+                :disabled="!deleteBlockedReason(row as OssResource)"
+                placement="top"
+              >
+                <!-- 禁用按钮不触发悬停事件，由外层元素承载原因提示 -->
+                <span class="inline-flex ml-[12px]">
+                  <el-button
+                    link
+                    type="danger"
+                    :disabled="!!deleteBlockedReason(row as OssResource)"
+                    :loading="busyId === (row as OssResource).id"
+                    @click="handleDelete(row as OssResource)"
+                  >
+                    {{ $t('common.delete') }}
+                  </el-button>
+                </span>
+              </el-tooltip>
+            </div>
           </template>
         </el-table-column>
       </DataTable>

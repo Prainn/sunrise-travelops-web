@@ -1,4 +1,5 @@
 import { clearResourceOptionsCache } from "@/services/resource-options-cache";
+import { clearRecentGets } from "@/api/request";
 import { store } from "./store";
 
 import type { UserInfo } from "@/types/user";
@@ -103,6 +104,7 @@ export const useUserStore = defineStore("user", () => {
   function resetUserState(): void {
     resetClientOperationIdentity();
     AuthStorage.clearAuth();
+    clearRecentGets();
     clearResourceOptionsCache();
     sessionGate.setKnown(null);
     userInfo.value = { roles: [], perms: [] };

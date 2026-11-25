@@ -82,13 +82,29 @@
             {{ modeLabel(row.mode) }}
           </template>
         </el-table-column>
-        <el-table-column :label="$t('websiteReport.vehicleType')" min-width="110">
+        <el-table-column prop="distanceKm" :label="$t('websiteReport.distanceKm')" min-width="110" />
+        <el-table-column :label="$t('resource.vehicleModel')" min-width="110">
           <template #default="{ row }">
-            {{ row.mode === 'private_vehicle' && row.vehicleOptions?.length ? row.vehicleOptions.map((option: WebsiteRouteVehicleOption) => `${vehicleLabel(option.vehicleType)} (${option.durationMinutes == null ? $t('websiteReport.notSpecified') : $t('websiteReport.minutesValue', { value: option.durationMinutes })})`).join(' / ') : $t('websiteReport.notSpecified') }}
+            <template v-for="(option, index) in (row as WebsiteRoute).vehicleOptions" :key="option.vehicleType">
+              <br v-if="index > 0">
+              {{ vehicleLabel(option.vehicleType) }}
+            </template>
+            <template v-if="!row.vehicleOptions?.length">
+              {{ $t("websiteReport.notSpecified") }}
+            </template>
           </template>
         </el-table-column>
-        <el-table-column prop="distanceKm" :label="$t('websiteReport.distanceKm')" min-width="110" />
-        <el-table-column prop="durationMinutes" :label="$t('websiteReport.durationMinutes')" min-width="130" />
+        <el-table-column :label="$t('websiteReport.durationMinutes')" min-width="130">
+          <template #default="{ row }">
+            <template v-for="(option, index) in (row as WebsiteRoute).vehicleOptions" :key="option.vehicleType">
+              <br v-if="index > 0">
+              {{ option.durationMinutes ?? $t("websiteReport.notSpecified") }}
+            </template>
+            <template v-if="!row.vehicleOptions?.length">
+              {{ row.durationMinutes ?? $t("websiteReport.notSpecified") }}
+            </template>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('websiteItineraryUi.routeCities')" min-width="160">
           <template #default="{ row }">
             {{ cityName(row.fromCityId) }} → {{ cityName(row.toCityId) }}
@@ -146,7 +162,7 @@ import type { FormInstance } from "element-plus";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
-import type { TransportMode, WebsiteConfig, WebsiteDay, WebsiteLeg, WebsiteRoute, WebsiteRouteVehicleOption } from "@/types/website";
+import type { TransportMode, WebsiteConfig, WebsiteDay, WebsiteLeg, WebsiteRoute } from "@/types/website";
 import WebsiteTransportFields from "./WebsiteTransportFields.vue";
 import { transportRules } from "@/views/resources/website/useWebsiteConfigRules";
 import { TRANSPORT_OPTIONS } from "../../options";

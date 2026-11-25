@@ -23,6 +23,7 @@ interface ResourceMaintenanceOptions<T extends ResourceMaintenanceRecord> {
   createRecord?: (record: T, id: string) => T;
   updateRecord?: (current: T, record: T) => void;
   deleteConfirmKey?: string;
+  deleteConfirmMessage?: (row: T) => string;
 }
 
 export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
@@ -126,7 +127,7 @@ export function useResourceMaintenance<T extends ResourceMaintenanceRecord>(
     return run(row.id, async () => {
       try {
         await ElMessageBox.confirm(
-          t(options.deleteConfirmKey ?? "common.deleteConfirm"),
+          options.deleteConfirmMessage?.(row) ?? t(options.deleteConfirmKey ?? "common.deleteConfirm"),
           t("common.tip"),
           { type: "warning" },
         );

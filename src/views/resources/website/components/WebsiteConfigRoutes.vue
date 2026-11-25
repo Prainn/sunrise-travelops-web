@@ -156,14 +156,14 @@
             <el-form-item prop="vehicleOptions" label-width="0" class="col-span-2 max-[650px]:col-span-1">
               <div class="flex w-full min-w-0 flex-col gap-[12px]">
                 <DataTable :data="record.vehicleOptions" :empty-text="$t('websiteReport.notSpecified')">
-                  <el-table-column :label="$t('websiteReport.vehicleType')" min-width="180">
+                  <el-table-column :label="$t('resource.vehicleModel')" min-width="180">
                     <template #default="{ row, $index }">
                       <BusinessDictionarySelect
                         v-model="row.vehicleType"
                         type-code="vehicle-type"
                         :disabled-values="vehicleTypesInOtherRows($index)"
                         :placeholder="$t('websiteReport.vehicleSelectOrEnter')"
-                        :aria-label="$t('websiteReport.vehicleType')"
+                        :aria-label="$t('resource.vehicleModel')"
                         @update:model-value="formRef?.validateField('vehicleOptions').catch(() => undefined)"
                       />
                     </template>

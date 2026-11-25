@@ -1277,7 +1277,9 @@
     "partTime": "兼职",
     "contact": "联系方式",
     "contractYes": "有",
-    "contractNo": "无"
+    "contractNo": "无",
+    "deleteConfirm": "确认删除导游“{name}”吗？",
+    "deletePriceConfirm": "确认删除该导游价格配置吗？"
   },
   "restaurant": {
     "createRestaurant": "新增餐厅",
@@ -2097,7 +2099,10 @@
     "periodRequired": "选择请假日期",
     "reason": "请假原因",
     "createTitle": "新增请假",
-    "editTitle": "编辑请假"
+    "editTitle": "编辑请假",
+    "cancelLeave": "销假",
+    "cancelLeaveConfirm": "确认对导游“{name}”（{startDate} 至 {endDate}）销假吗？",
+    "cancelLeaveSuccess": "销假成功"
   },
   "guideRating": {
     "searchPlaceholder": "团号或导游",
@@ -2541,7 +2546,6 @@
     "durationMinutes": "预计耗时（分钟）",
     "distanceInvalid": "请输入非负里程，最多10位整数及2位小数",
     "durationInvalid": "请输入1–525600之间的整数分钟数",
-    "vehicleType": "专车车型",
     "vehicleSelectOrEnter": "请选择或输入车型",
     "vehicleInvalid": "车型最多100个字符",
     "vehicleOptionsInvalid": "最多100种车型，每种1–100个字符且不可重复",

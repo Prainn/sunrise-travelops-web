@@ -41,7 +41,7 @@
         />
         <el-table-column
           :label="$t('common.actions')"
-          width="140"
+          width="150"
           fixed="right"
           :show-overflow-tooltip="false"
         >
@@ -63,7 +63,7 @@
                 :disabled="isPending(row.id)"
                 @click="remove(row as GuideLeaveRecord)"
               >
-                {{ $t("common.delete") }}
+                {{ $t("guideLeave.cancelLeave") }}
               </el-button>
             </RowActions>
           </template>
@@ -297,18 +297,26 @@ async function save() {
     validating.value = false;
   }
 }
-// 删除从确认前占用到列表刷新结束，避免重复删除同一条请假。
+// 销假（删除请假记录）从确认前占用到列表刷新结束，避免重复提交同一条请假。
 const { isPending, run } = usePendingActions();
 function remove(row: GuideLeaveRecord) {
   return run(row.id, async () => {
     try {
-      await ElMessageBox.confirm(t("common.deleteConfirm"), t("common.tip"), { type: "warning" });
+      await ElMessageBox.confirm(
+        t("guideLeave.cancelLeaveConfirm", {
+          name: row.guideName,
+          startDate: row.startDate,
+          endDate: row.endDate,
+        }),
+        t("common.tip"),
+        { type: "warning" },
+      );
     } catch {
       return;
     }
     try {
       await tourService.deleteLeave(row.id);
-      ElMessage.success(t("common.deleteSuccess"));
+      ElMessage.success(t("guideLeave.cancelLeaveSuccess"));
       await load();
     } catch (error) {
       message(error);

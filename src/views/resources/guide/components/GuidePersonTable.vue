@@ -126,6 +126,7 @@
             <el-button
               v-has-perm="RESOURCE_PERMISSIONS.guide.update"
               link
+              :type="row.status === 'enabled' ? 'warning' : 'success'"
               @click="emit('toggle-status', row as GuidePersonRecord)"
             >
               {{ $t(row.status === "enabled" ? "common.disabled" : "common.enabled") }}
