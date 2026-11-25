@@ -220,7 +220,7 @@
         "childrenCount": "儿童数",
         "destinations": "目的地",
         "dailyPlans": "每日行程",
-        "dayNumber": "第几天",
+        "dayNumber": "@:websitePrint.dayColumn",
         "date": "日期",
         "departure": "出发地",
         "destination": "到达地／城市",
@@ -252,7 +252,7 @@
         "vehicle": "@:resource.vehicleModel",
         "vehicleName": "车型名称",
         "seats": "座位数",
-        "serviceDays": "导游服务天数",
+        "serviceDays": "@:itinerary.guideServiceDays",
         "guidePlans": "导游方案",
         "guideName": "导游服务",
         "dailyPrice": "导游日价",
@@ -415,7 +415,7 @@
     "copySuccess": "已复制为新草稿",
     "copySuffix": "副本",
     "dailyResources": "当日餐食与景点",
-    "dayCountMismatch": "计划服务 {planned}天，当前 {actual}天{actualNights}晚。仍生成 PDF？",
+    "dayCountMismatch": "询盘填写的服务天数为 {planned} 天，当前行程为 {actual} 天 {actualNights} 晚。仍要生成文件吗？",
     "dayDescription": "当日行程说明",
     "dayDescriptionPlaceholder": "输入当天观光、活动等安排",
     "departure": "出发地",
@@ -436,7 +436,6 @@
     "singleSupplementQuote": "单房差报价",
     "expandCostDetails": "展开明细",
     "collapseCostDetails": "收起明细",
-    "costDay": "行程日",
     "costItem": "项目",
     "costUnitPerPerson": "人均单价",
     "costQuantity": "次数",
@@ -599,9 +598,8 @@
       "returnArrival": "显示最后一天返程日"
     },
     "returnArrivalText": "返程展示文案",
-    "serviceDaysOnly": "地接 {days}天 / 报价 {displayDays}天",
-    "serviceDisplay": "地接 {days}天{nights}晚 / 报价 {displayDays}天{nights}晚",
-    "serviceDaysRequired": "输入 1–365 的服务天数",
+    "serviceDaysOnly": "@:inquiry.plannedDays {days}天 / @:itinerary.customerDisplayMode {displayDays}天",
+    "serviceDisplay": "@:inquiry.plannedDays {days}天{nights}晚 / @:itinerary.customerDisplayMode {displayDays}天{nights}晚",
     "exportLanguages": {
       "zh": "中文文件",
       "en": "英文文件"
@@ -621,7 +619,9 @@
     "childWithBedPrice": "儿童团费（占床）",
     "childWithoutBedPrice": "儿童团费（不占床）",
     "dayPerPersonCost": "当日餐食与景点成本（人均）",
-    "plannedDays": "计划天数"
+    "plannedDays": "计划天数",
+    "guideServiceDays": "导游服务天数",
+    "daysRange": "{label}须为 1–365 之间的整数"
   },
   "businessCategory": {
     "applicableResources": "适用资源",
@@ -1544,7 +1544,6 @@
       "consecutiveRange": "将保存为 {start} 至 {end}，共 {days} 天"
     },
     "customerNameRequired": "输入客户称呼",
-    "plannedDaysRange": "服务天数为 1–365",
     "paxRange": "人数为 1–10000 的整数",
     "ownerRequired": "选择已启用的独立站计调",
     "keywordPlaceholder": "系统询盘编号、客户称呼或客户原始消息",
@@ -1630,7 +1629,7 @@
         "days": "每日行程",
         "deletedDays": "@:itineraryWorkspace.deletedDays",
         "day": "日程",
-        "dayNumber": "第几天",
+        "dayNumber": "@:websitePrint.dayColumn",
         "departCityId": "@:websiteItineraryUi.departureCity",
         "viaCityIds": "途经地",
         "endCityId": "@:websiteItineraryUi.endCity",
@@ -1736,7 +1735,7 @@
   "websiteConfig": {
     "searchPlaceholder": "搜索名称或编码",
     "city": "城市",
-    "days": "天数",
+    "days": "城市骨架天数",
     "listSeparator": "、",
     "validation": {
       "selectRequired": "选择{field}",
@@ -1819,9 +1818,8 @@
       "detail": "城市骨架详情",
       "empty": "尚未维护城市骨架",
       "cityOrder": "城市顺序",
-      "noDays": "尚未添加天数",
-      "addDay": "添加一天",
-      "daysEmpty": "添加天数，设置每天的城市与单日行程模板"
+      "noDays": "尚未添加行程日",
+      "daysEmpty": "请添加行程日，再设置每天的城市与单日行程模板"
     },
     "templates": {
       "create": "新增标准文案",
@@ -1862,6 +1860,10 @@
     }
   },
   "websiteItineraryUi": {
+    "viewDay": "查看当天",
+    "noMeals": "尚未安排餐食",
+    "noTransportLegs": "尚未安排交通段",
+    "noOvernightHotelHint": "当晚不住宿，如需安排酒店请先在日卡选择住宿城市。",
     "organizeItinerary": "编排行程",
     "dayInternalRemark": "内部备注",
     "deleteItemConfirm": "确认删除“{name}”吗？保存行程后生效。",
@@ -2022,7 +2024,7 @@
   "websiteWorkspace": {
     "businessLabel": "独立站",
     "selectItinerary": "选择行程",
-    "plannedDaysSummary": "计划 {days} 天",
+    "plannedDaysSummary": "@:itinerary.plannedDays {days} 天",
     "serviceDatesWithCount": "{dates}（{count} 个服务日）",
     "serviceDatesFull": "已安排满 {days} 个服务日；需调整日期请先修改询盘",
     "rescheduleNotice": "询盘服务日期已调整，本草稿仍按原日期编排，核对后应用到草稿。",
@@ -2052,7 +2054,6 @@
     "selectSkeleton": "选择已有城市骨架",
     "skeletonLabel": "{name}（{days} 天）",
     "generateDraft": "生成草稿",
-    "addDay": "添加一天",
     "noDays": "暂无每日行程，可手动添加，或选城市骨架生成草稿。",
     "cancelChanges": "取消修改",
     "saveDraft": "保存草稿",
@@ -2146,7 +2147,6 @@
     "inquiryCode": "询盘编号",
     "quoteCode": "报价编号",
     "itineraryCode": "行程编号",
-    "days": "天数",
     "agency": "组团社/平台",
     "collectCoordinator": "收客计调",
     "operator": "操作计调",
@@ -2173,7 +2173,6 @@
       "cancelled": "已撤销"
     },
     "inputRequired": "填写此项",
-    "daysRequired": "输入 1–365 的整数",
     "createMode": "成团方式",
     "createModes": {
       "manual": "手工成团",
@@ -2241,7 +2240,7 @@
     "cancelReasonRequired": "填写撤销原因",
     "itinerarySummaryTooLong": "行程概要超过 500 字，请人工整理后再保存",
     "seriesStartDate": "本团出发日期",
-    "seriesStartDateHint": "系列询盘每次成团单独填写出发日期，天数沿用所选已确认报价的服务天数。",
+    "seriesStartDateHint": "系列团的出发日期每次单独填写，服务天数取自所选的已确认报价。",
     "seriesSource": "系列团",
     "records": "成团记录"
   },
@@ -2364,7 +2363,7 @@
     },
     "dayDirectory": "日程目录",
     "dayResources": "当天资源",
-    "addDay": "+ 天数",
+    "addDay": "添加行程日",
     "deletedDays": "已移除的行程日",
     "deleteDay": "移除当天",
     "restoreDay": "恢复",
@@ -2377,7 +2376,7 @@
     "routeCityRequired": "请选择或填写城市",
     "planningProgress": "已编排 {complete} / {total} 天",
     "saveAndManage": "保存并进入行程管理",
-    "reorderHint": "拖动日卡标题调整天数顺序，拖动景点调整当天顺序。应用后仍须保存行程。",
+    "reorderHint": "拖动日卡标题调整行程日顺序，拖动景点调整当天顺序。应用后仍须保存行程。",
     "reorderReadonly": "行程只读，仅可查看全程安排。",
     "moveEarlier": "前移一天",
     "moveLater": "后移一天",
@@ -2422,13 +2421,13 @@
       "formerLastDay": "D{day} 从末日移至中间，住宿城市已设为到达地“{city}”，请核对住宿与酒店",
       "newLastDay": "D{day} 现为末日，请确认是否住宿",
       "routeBreak": "D{day} 出发地与 D{previous} 住宿城市不一致，请核对路线",
-      "vehicleCheck": "用车日期段不随天数顺序移动，请核对用车安排",
+      "vehicleCheck": "用车日期段不随行程日顺序移动，请核对用车安排",
       "middleNoOvernight": "D{day} 原为末日且不住宿，现移至中间，请补住宿城市与酒店",
       "cityBreak": "D{day} 出发城市与 D{previous} 住宿/结束城市不一致，请核对",
       "legsCheck": "D{day} 交通段随日移动，请核对衔接、季节及首末日规则"
     },
     "transfer": {
-      "hint": "拖动日卡调整天数顺序，拖动卡片调整当天顺序或跨天移动。应用后仍须保存行程。",
+      "hint": "拖动日卡调整行程日顺序，拖动卡片调整当天顺序或跨天移动。应用后仍须保存行程。",
       "copy": "复制临时副本",
       "copyTag": "副本",
       "replaceTitle": "替换目标安排",

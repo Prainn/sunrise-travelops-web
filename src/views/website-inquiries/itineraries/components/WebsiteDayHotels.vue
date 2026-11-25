@@ -18,13 +18,16 @@
       {{ $t("websiteItineraryUi.hotelTiersFull") }}
     </p>
     <el-alert
-      v-if="day.overnightCityId && !displayedHotels.length"
+      v-if="day.overnightCityId && !nightly && !displayedHotels.length"
       :title="$t('websiteItineraryUi.hotelRequiredHint')"
       type="info"
       :closable="false"
     />
-    <p v-if="!day.overnightCityId && !displayedHotels.length" class="m-0 text-[12px] text-muted">
-      {{ $t("itinerary.noOvernightStay") }}
+    <p v-if="day.overnightCityId && nightly && !displayedHotels.length" class="m-0 text-[12px] text-muted">
+      {{ $t("websiteItineraryUi.noAccommodation") }}
+    </p>
+    <p v-if="!day.overnightCityId" class="m-0 text-[12px] text-muted">
+      {{ $t(editable ? "websiteItineraryUi.noOvernightHotelHint" : "itinerary.noOvernightStay") }}
     </p>
     <p v-if="!nightly && displayedHotels.length > 1" class="m-0 text-[12px] text-muted">
       {{ $t("websiteItineraryUi.hotelAlternativesHint") }}

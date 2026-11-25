@@ -154,7 +154,7 @@
           min-width="150"
           :formatter="sourceCode"
         />
-        <el-table-column prop="days" :label="$t('tour.days')" width="80" />
+        <el-table-column prop="days" :label="$t('inquiry.plannedDays')" min-width="110" />
         <el-table-column
           prop="startDate"
           :label="$t('common.startDate')"

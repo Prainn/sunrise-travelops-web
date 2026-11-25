@@ -232,7 +232,7 @@ const rules = computed<FormRules>(() => ({
       type: "integer",
       required: true,
       ...DAYS_PATTERN,
-      message: t("itinerary.serviceDaysRequired"),
+      message: t("itinerary.daysRange", { label: t("inquiry.plannedDays") }),
       trigger: "change",
     },
   ],

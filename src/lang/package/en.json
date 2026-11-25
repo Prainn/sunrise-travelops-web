@@ -220,7 +220,7 @@
         "childrenCount": "Children",
         "destinations": "Destinations",
         "dailyPlans": "Daily plans",
-        "dayNumber": "Day number",
+        "dayNumber": "@:websitePrint.dayColumn",
         "date": "Date",
         "departure": "Departure",
         "destination": "Destination",
@@ -252,7 +252,7 @@
         "vehicle": "@:resource.vehicleModel",
         "vehicleName": "Vehicle name",
         "seats": "Seats",
-        "serviceDays": "Guide service days",
+        "serviceDays": "@:itinerary.guideServiceDays",
         "guidePlans": "Guide plans",
         "guideName": "Guide service",
         "dailyPrice": "Daily price",
@@ -415,7 +415,7 @@
     "copySuccess": "Copied as a new draft",
     "copySuffix": "Copy",
     "dailyResources": "Daily Meals & Attractions",
-    "dayCountMismatch": "Planned: {planned} service days. Itinerary: {actual} days / {actualNights} nights. Generate PDF anyway?",
+    "dayCountMismatch": "The inquiry specifies {planned} service days. The itinerary has {actual} days and {actualNights} nights. Generate the document anyway?",
     "dayDescription": "Daily itinerary description",
     "dayDescriptionPlaceholder": "Enter the day's sightseeing and activities",
     "departure": "Departure",
@@ -436,7 +436,6 @@
     "singleSupplementQuote": "Single supplement quote",
     "expandCostDetails": "Show details",
     "collapseCostDetails": "Hide details",
-    "costDay": "Day",
     "costItem": "Item",
     "costUnitPerPerson": "Unit cost / person",
     "costQuantity": "Uses",
@@ -599,9 +598,8 @@
       "returnArrival": "Show the final return day"
     },
     "returnArrivalText": "Return-arrival text",
-    "serviceDaysOnly": "Ground: {days} days / Quote: {displayDays} days",
-    "serviceDisplay": "Ground {days} days {nights} nights / Quote {displayDays} days {nights} nights",
-    "serviceDaysRequired": "Enter 1–365 service days",
+    "serviceDaysOnly": "@:inquiry.plannedDays {days} / @:itinerary.customerDisplayMode {displayDays}",
+    "serviceDisplay": "@:inquiry.plannedDays {days} ({nights} nights) / @:itinerary.customerDisplayMode {displayDays} ({nights} nights)",
     "exportLanguages": {
       "zh": "Chinese file",
       "en": "English file"
@@ -621,7 +619,9 @@
     "childWithBedPrice": "Child fare (with bed)",
     "childWithoutBedPrice": "Child fare (no bed)",
     "dayPerPersonCost": "Daily meal and attraction cost (per person)",
-    "plannedDays": "Planned days"
+    "plannedDays": "Planned days",
+    "guideServiceDays": "Guide service days",
+    "daysRange": "{label} must be a whole number between 1 and 365"
   },
   "businessCategory": {
     "applicableResources": "Resource Types",
@@ -1544,7 +1544,6 @@
       "consecutiveRange": "Saves as {start} to {end}, {days} days"
     },
     "customerNameRequired": "Enter the customer's name",
-    "plannedDaysRange": "Service days must be between 1 and 365",
     "paxRange": "Guests: whole number 1–10000",
     "ownerRequired": "Select an active website coordinator",
     "keywordPlaceholder": "System inquiry number, customer name or original customer message",
@@ -1630,7 +1629,7 @@
         "days": "Daily plans",
         "deletedDays": "@:itineraryWorkspace.deletedDays",
         "day": "Day",
-        "dayNumber": "Day number",
+        "dayNumber": "@:websitePrint.dayColumn",
         "departCityId": "@:websiteItineraryUi.departureCity",
         "viaCityIds": "Stops en route",
         "endCityId": "@:websiteItineraryUi.endCity",
@@ -1736,7 +1735,7 @@
   "websiteConfig": {
     "searchPlaceholder": "Search name or code",
     "city": "City",
-    "days": "Days",
+    "days": "Days in skeleton",
     "listSeparator": ", ",
     "validation": {
       "selectRequired": "Select {field}",
@@ -1819,9 +1818,8 @@
       "detail": "City skeleton details",
       "empty": "No city skeletons configured",
       "cityOrder": "City order",
-      "noDays": "No days added",
-      "addDay": "Add day",
-      "daysEmpty": "Add days; set each day's city and day pattern"
+      "noDays": "No itinerary days added",
+      "daysEmpty": "Add an itinerary day, then set its city and day pattern"
     },
     "templates": {
       "create": "Add standard text",
@@ -1862,6 +1860,10 @@
     }
   },
   "websiteItineraryUi": {
+    "viewDay": "View day",
+    "noMeals": "No meals arranged",
+    "noTransportLegs": "No transport legs arranged",
+    "noOvernightHotelHint": "No overnight stay. Select an overnight city on the day card before adding a hotel.",
     "organizeItinerary": "Organize itinerary",
     "dayInternalRemark": "Internal note",
     "deleteItemConfirm": "Delete \"{name}\"? Save the itinerary to apply this change.",
@@ -2022,7 +2024,7 @@
   "websiteWorkspace": {
     "businessLabel": "Website",
     "selectItinerary": "Select an itinerary",
-    "plannedDaysSummary": "Planned: {days} days",
+    "plannedDaysSummary": "@:itinerary.plannedDays {days}",
     "serviceDatesWithCount": "{dates} ({count} service days)",
     "serviceDatesFull": "All {days} service dates have a day; change the inquiry to adjust dates",
     "rescheduleNotice": "The inquiry's service dates changed. This draft still uses the old dates; review and apply them.",
@@ -2052,7 +2054,6 @@
     "selectSkeleton": "Select a saved city skeleton",
     "skeletonLabel": "{name} ({days} days)",
     "generateDraft": "Generate draft",
-    "addDay": "Add day",
     "noDays": "Add a day manually or select cities to generate a draft.",
     "cancelChanges": "Cancel changes",
     "saveDraft": "Save draft",
@@ -2146,7 +2147,6 @@
     "inquiryCode": "Inquiry",
     "quoteCode": "Quote",
     "itineraryCode": "Itinerary",
-    "days": "Days",
     "agency": "Agency / platform",
     "collectCoordinator": "Sales coordinator",
     "operator": "Operations coordinator",
@@ -2173,7 +2173,6 @@
       "cancelled": "Cancelled"
     },
     "inputRequired": "This field is required",
-    "daysRequired": "Enter an integer (1–365)",
     "createMode": "Tour creation method",
     "createModes": {
       "manual": "Create tour manually",
@@ -2241,7 +2240,7 @@
     "cancelReasonRequired": "Enter the cancellation reason",
     "itinerarySummaryTooLong": "Itinerary exceeds 500 characters. Please shorten it before saving.",
     "seriesStartDate": "Tour start date",
-    "seriesStartDateHint": "Each tour from a series inquiry has its own start date; days follow the selected frozen quote.",
+    "seriesStartDateHint": "Enter a start date for each tour from a series inquiry. Service days come from the selected confirmed quote.",
     "seriesSource": "Series",
     "records": "Tour records"
   },
@@ -2364,7 +2363,7 @@
     },
     "dayDirectory": "Days",
     "dayResources": "Day resources",
-    "addDay": "+ Day",
+    "addDay": "Add itinerary day",
     "deletedDays": "Removed itinerary days",
     "deleteDay": "Remove day",
     "restoreDay": "Restore",

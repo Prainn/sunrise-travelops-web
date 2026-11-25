@@ -60,7 +60,7 @@
             row-key="dayId"
             :aria-label="$t(`itinerary.hotelTiers.${activeTier}`)"
           >
-            <el-table-column :label="$t('itinerary.costDay')" width="80">
+            <el-table-column :label="$t('websitePrint.dayColumn')" width="80">
               <template #default="{ row }">
                 <span class="font-500">D{{ row.dayNumber }}</span>
               </template>

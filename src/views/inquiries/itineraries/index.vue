@@ -516,7 +516,7 @@ import { clonePlainData } from "@/utils";
 
 defineOptions({ name: "InquiryItineraries" });
 const { t } = useI18n();
-/** 地接天数与报价天数；住宿晚数按活动日实际住宿统计，不按天数减一。 */
+/** 服务天数与报价天数；住宿晚数按活动日实际住宿统计，不按天数减一。 */
 const serviceDisplayText = computed(() => {
   const plan = selectedItinerary.value;
   if (!plan) return "";

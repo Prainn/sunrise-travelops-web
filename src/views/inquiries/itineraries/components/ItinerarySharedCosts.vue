@@ -40,7 +40,7 @@
           </div>
         </template>
         <DataTable :data="calculation?.[section.detailsKey] ?? []" border>
-          <el-table-column :label="$t('itinerary.costDay')" prop="dayNumber" width="80" />
+          <el-table-column :label="$t('websitePrint.dayColumn')" prop="dayNumber" width="80" />
           <el-table-column :label="$t('itinerary.costItem')" prop="resourceName" min-width="180" />
           <el-table-column :label="$t('itinerary.costUnitPerPerson')" min-width="130">
             <template #default="{ row }">
@@ -112,7 +112,7 @@
           <el-descriptions-item :label="$t('planning.dailyPrice')">
             {{ money(guidePlan.dailyPrice) }}
           </el-descriptions-item>
-          <el-descriptions-item :label="$t('inquiry.plannedDays')">
+          <el-descriptions-item :label="$t('itinerary.guideServiceDays')">
             {{ guidePlan.serviceDays }}
           </el-descriptions-item>
         </el-descriptions>

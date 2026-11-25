@@ -17,7 +17,7 @@
     >
       <el-table-column prop="nameZh" :label="$t('common.nameZh')" min-width="160" />
       <el-table-column prop="nameEn" :label="$t('common.nameEn')" min-width="180" />
-      <el-table-column :label="$t('websiteConfig.days')" width="90" align="center">
+      <el-table-column :label="$t('websiteConfig.days')" min-width="130" align="center">
         <template #default="{ row }">
           {{ row.days.length }}
         </template>
@@ -113,11 +113,11 @@
                 plain
                 @click="record.days.push({ cityId: '', patternId: null })"
               >
-                {{ $t("websiteConfig.skeletons.addDay") }}
+                {{ $t("itineraryWorkspace.addDay") }}
               </el-button>
             </TableToolbar>
             <DataTable :data="record.days" :empty-text="$t('websiteConfig.skeletons.daysEmpty')">
-              <el-table-column :label="$t('websiteConfig.days')" width="70" align="center">
+              <el-table-column :label="$t('websitePrint.dayColumn')" width="80" align="center">
                 <template #default="{ $index }">
                   D{{ $index + 1 }}
                 </template>

@@ -8,11 +8,15 @@
         v-if="editable"
         link
         type="primary"
+        :disabled="day.legs.length >= 100"
         @click="emit('add')"
       >
-        {{ $t("itineraryWorkspace.actions.transport") }}
+        {{ $t("common.create") }}
       </el-button>
     </div>
+    <p v-if="!legId && !visibleLegs.length" class="m-0 text-[12px] text-muted">
+      {{ $t("websiteItineraryUi.noTransportLegs") }}
+    </p>
     <div
       v-for="leg in visibleLegs"
       :key="leg.id"
@@ -200,6 +204,7 @@ import { websiteVehicleLabel } from "@/utils/website-vehicle";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
 import { websiteCityOptions, websiteDayRouteCityIds } from "../city-options";
 import { airportTransferPlaceholder, setTransportLeg, type AirportTransferOptions } from "../airport-transfers";
+import { websiteDayEventIds } from "../event-order";
 import { websiteRouteTransportDetails } from "../transport-route";
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{
@@ -248,7 +253,14 @@ const rules = computed<FormRules<WebsiteLeg>>(() => ({
   fromCityId: [{ required: true, message: t("common.selectCity"), trigger: "change" }],
   toCityId: [{ required: true, message: t("common.selectCity"), trigger: "change" }],
 }));
-const visibleLegs = computed(() => day.value.legs.filter(leg => !props.legId || leg.id === props.legId));
+const visibleLegs = computed(() => {
+  if (props.legId) return day.value.legs.filter(leg => leg.id === props.legId);
+  const byId = new Map(day.value.legs.map(leg => [leg.id, leg]));
+  return websiteDayEventIds(day.value).flatMap(id => {
+    const leg = byId.get(id);
+    return leg ? [leg] : [];
+  });
+});
 watch(source, (value) => {
   if (value === "manual" && draft.value) draft.value.routeId = null;
 });

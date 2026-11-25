@@ -49,7 +49,7 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
       result: issues.length ? "failure" : "success",
       recordId: plan.id,
     });
-    // 系列询盘没有计划天数，不比较行程天数。
+    // 系列询盘没有服务天数，无需与当前行程的实际天数比较。
     const plannedDays = inquiry.plannedDays;
     return {
       issues,

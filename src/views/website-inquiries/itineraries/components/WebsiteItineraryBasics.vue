@@ -95,7 +95,14 @@ const serviceDatesLabel = computed(() =>
 );
 const rules = computed<FormRules>(() => ({
   title: [{ required: true, whitespace: true, message: t("itinerary.titleRequired"), trigger: "blur" }],
-  duration: [{ required: true, type: "integer", min: 1, max: 365, message: t("websiteInquiry.plannedDaysRange"), trigger: "change" }],
+  duration: [{
+    required: true,
+    type: "integer",
+    min: 1,
+    max: 365,
+    message: t("itinerary.daysRange", { label: t("itinerary.plannedDays") }),
+    trigger: "change",
+  }],
 }));
 
 function pickBasics(): Basics {

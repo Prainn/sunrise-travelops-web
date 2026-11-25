@@ -440,7 +440,7 @@ const rules = computed<FormRules>(() => ({
       type: "integer",
       min: 1,
       max: 365,
-      message: t("websiteInquiry.plannedDaysRange"),
+      message: t("itinerary.daysRange", { label: t("inquiry.plannedDays") }),
       trigger: "change",
     },
   ],

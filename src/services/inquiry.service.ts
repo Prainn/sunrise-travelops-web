@@ -106,7 +106,7 @@ export function normalizeInquiryMoney<T>(value: unknown, field = ""): T {
   return value as T;
 }
 function inquiryInput(record: InquiryRecord) {
-  // 系列询盘只提交国家/地区与原始消息，不提交隐藏的客户资料、来源或计划天数。
+  // 系列询盘只提交国家/地区与原始消息，不提交隐藏的客户资料、来源或服务天数。
   if (record.isSeries)
     return {
       isSeries: true,
