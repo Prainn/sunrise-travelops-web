@@ -192,7 +192,9 @@ const {
   reset,
 } = useOperationLogs();
 
-function categoryLabel(value: OperationCategory) {
+function categoryLabel(value: string) {
+  if (value === "system") return t("route.systemManagement");
+  if (value === "dashboard") return t("route.dashboard");
   const option = categories.find((item) => item.value === value);
   return option ? t(option.label) : value;
 }
