@@ -87,7 +87,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.overnightCity')">
+        <el-form-item :label="$t('websitePrint.overnightColumn')">
           <el-select
             :model-value="day.overnightCityId"
             autocomplete="new-password"

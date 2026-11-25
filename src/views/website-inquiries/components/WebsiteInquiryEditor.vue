@@ -19,7 +19,7 @@
         </el-tag>
       </div>
       <el-descriptions :column="1" border>
-        <el-descriptions-item :label="$t('websiteInquiry.businessUnit')">
+        <el-descriptions-item :label="$t('identity.businessUnit')">
           {{ $t(`websiteInquiry.businessUnits.${record.businessUnit}`) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.owner')">
@@ -110,7 +110,7 @@
       label-width="auto"
       :disabled="saving"
     >
-      <el-form-item v-if="showBusiness" :label="$t('websiteInquiry.businessUnit')" prop="businessUnit">
+      <el-form-item v-if="showBusiness" :label="$t('identity.businessUnit')" prop="businessUnit">
         <el-select
           v-model="form.businessUnit"
           autocomplete="new-password"
@@ -146,7 +146,7 @@
       </el-row>
       <el-row :gutter="16">
         <el-col v-if="record" :xs="24" :sm="12">
-          <el-form-item :label="$t('inquiry.code')">
+          <el-form-item :label="$t('websiteInquiry.systemCode')">
             <el-input :model-value="record.code" disabled />
           </el-form-item>
         </el-col>
@@ -415,7 +415,7 @@ const rules = computed<FormRules>(() => ({
   businessUnit: [
     {
       required: props.showBusiness,
-      message: t("common.selectRequired", { field: t("websiteInquiry.businessUnit") }),
+      message: t("common.selectRequired", { field: t("identity.businessUnit") }),
       trigger: "change",
     },
   ],
@@ -440,7 +440,7 @@ const rules = computed<FormRules>(() => ({
       type: "integer",
       min: 1,
       max: 365,
-      message: t("websiteInquiry.plannedDaysRange"),
+      message: t("itinerary.daysRange", { label: t("inquiry.plannedDays") }),
       trigger: "change",
     },
   ],

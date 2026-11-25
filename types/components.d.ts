@@ -194,6 +194,7 @@ declare module 'vue' {
     WebsiteConfigSelect: typeof import('./../src/views/resources/website/components/WebsiteConfigSelect.vue')['default']
     WebsiteConfigSkeletons: typeof import('./../src/views/resources/website/components/WebsiteConfigSkeletons.vue')['default']
     WebsiteConfigTemplates: typeof import('./../src/views/resources/website/components/WebsiteConfigTemplates.vue')['default']
+    WebsiteDayArrangementsDialog: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteDayArrangementsDialog.vue')['default']
     WebsiteDayAttractions: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteDayAttractions.vue')['default']
     WebsiteDayCard: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteDayCard.vue')['default']
     WebsiteDayHotels: typeof import('./../src/views/website-inquiries/itineraries/components/WebsiteDayHotels.vue')['default']

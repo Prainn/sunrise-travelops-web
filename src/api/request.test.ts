@@ -29,7 +29,7 @@ vi.mock("@/lang/utils", () => ({
 }));
 
 import { sessionGate } from "@/utils/session-gate";
-import { ApiError, refreshAccessToken, request } from "./request";
+import { ApiError, clearRecentGets, refreshAccessToken, request } from "./request";
 import { requestErrorMessage } from "@/utils/version-conflict";
 
 function response(status: number, code: string, data: unknown = null): Response {
@@ -46,6 +46,84 @@ function deferredResponse() {
   });
   return { promise, resolve };
 }
+
+beforeEach(clearRecentGets);
+
+describe("short-lived JSON GET reuse", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+  beforeEach(() => {
+    sessionGate.resetForTest();
+    auth.accessToken = "first-account";
+  });
+
+  it("shares one fetch for three selectors and reuses independent results for one second after success", async () => {
+    vi.useFakeTimers();
+    const pending = deferredResponse();
+    const fetcher = vi.fn().mockReturnValueOnce(pending.promise)
+      .mockImplementation(() => Promise.resolve(response(200, "SUCCESS", [{ name: "新名称" }])));
+    vi.stubGlobal("fetch", fetcher);
+    const read = () => request.get<{ name: string }[]>("/system/business-dictionaries/vehicle-type/items", { params: { status: "enabled" } });
+    const loading = Promise.all([read(), read(), read()]);
+    await vi.advanceTimersByTimeAsync(1500);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    pending.resolve(response(200, "SUCCESS", [{ name: "49座" }]));
+    const [first, second] = await loading;
+    first[0]!.name = "本行修改";
+    expect(second[0]!.name).toBe("49座");
+    await vi.advanceTimersByTimeAsync(999);
+    expect(await read()).toEqual([{ name: "49座" }]);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await read()).toEqual([{ name: "新名称" }]);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it("separates identities, headers and repeated value order while normalizing parameter names", async () => {
+    const fetcher = vi.fn(() => Promise.resolve(response(200, "SUCCESS", [])));
+    vi.stubGlobal("fetch", fetcher);
+    await request.get("/lookup", { params: { term: "车", tag: [1, 2] } });
+    await request.get("/lookup", { params: { tag: [1, 2], term: "车" } });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    await request.get("/lookup", { params: { tag: [2, 1], term: "车" } });
+    await request.get("/lookup", { params: { tag: [1, 2], term: "车" }, headers: { "Accept-Language": "en" } });
+    auth.accessToken = "second-account";
+    await request.get("/lookup", { params: { tag: [1, 2], term: "车" } });
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    sessionGate.freeze();
+    await expect(request.get("/lookup", { params: { tag: [1, 2], term: "车" } })).rejects.toMatchObject({ code: "ACCOUNT_SWITCH_IN_PROGRESS" });
+  });
+
+  it("invalidates reads on a write even if the earlier read finishes later", async () => {
+    const old = deferredResponse();
+    const fetcher = vi.fn().mockReturnValueOnce(old.promise)
+      .mockResolvedValueOnce(response(200, "SUCCESS", null))
+      .mockResolvedValueOnce(response(200, "SUCCESS", "new"));
+    vi.stubGlobal("fetch", fetcher);
+    const first = request.get("/items");
+    await vi.waitFor(() => expect(fetcher).toHaveBeenCalledOnce());
+    await request.put("/items/1", { name: "new" });
+    expect(await request.get("/items")).toBe("new");
+    old.resolve(response(200, "SUCCESS", "old"));
+    expect(await first).toBe("old");
+    expect(await request.get("/items")).toBe("new");
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
+
+  it("retries failures and honors caller and server freshness restrictions", async () => {
+    const fresh = () => new Response(JSON.stringify({ code: "SUCCESS", data: true }), { headers: { "Cache-Control": "no-store" } });
+    const fetcher = vi.fn().mockResolvedValueOnce(response(503, "HTTP_503")).mockImplementation(async () => fresh());
+    vi.stubGlobal("fetch", fetcher);
+    await expect(Promise.all([request.get("/recent"), request.get("/recent")])).rejects.toMatchObject({ status: 503 });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    await request.get("/recent");
+    await request.get("/recent");
+    await Promise.all([request.get("/recent", { cache: "no-store" }), request.get("/recent", { cache: "no-store" })]);
+    expect(fetcher).toHaveBeenCalledTimes(5);
+  });
+});
 
 describe("request session recovery", () => {
   beforeEach(() => {
@@ -66,6 +144,16 @@ describe("request session recovery", () => {
   });
 
   afterEach(() => vi.unstubAllGlobals());
+
+  it("marks only explicit human commands, including when the same account makes automatic requests", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => response(200, "SUCCESS"));
+    vi.stubGlobal("fetch", fetcher);
+    await request.get("/whatsapp/summary");
+    await request.post("/whatsapp/conversations/test/read", { lastSeq: "1" });
+    await request.post("/inquiries", {}, { userAction: true });
+    const origins = fetcher.mock.calls.map(([, init]) => new Headers(init?.headers).get("X-Operation-Origin"));
+    expect(origins).toEqual([null, null, "user"]);
+  });
 
   it("keeps tokens when refresh fails during a temporary outage and retries later", async () => {
     const fetch = vi

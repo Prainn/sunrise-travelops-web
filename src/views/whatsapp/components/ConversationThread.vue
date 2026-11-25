@@ -397,6 +397,7 @@
 </template>
 
 <script setup lang="ts">
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
 import { ArrowDown } from "@element-plus/icons-vue";
 import { useResizeObserver } from "@vueuse/core";
@@ -774,7 +775,19 @@ async function handleDownload(message: WhatsappMessage) {
     document.body.append(frame);
     // 过早移除会中断下载，保留到签名地址失效。
     setTimeout(() => frame.remove(), 60_000);
+    recordClientOperation({
+      page: "WhatsappInbox",
+      action: "download",
+      result: "unknown",
+      recordId: message.id,
+    });
   } catch (cause) {
+    recordClientOperation({
+      page: "WhatsappInbox",
+      action: "download",
+      result: "failure",
+      recordId: message.id,
+    });
     ElMessage.error(websiteErrorMessage(cause));
   } finally {
     const next = new Set(downloadingIds.value);

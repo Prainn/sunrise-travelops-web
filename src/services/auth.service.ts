@@ -8,7 +8,7 @@ export const authService = {
     return request.post<LoginResult>(
       "/auth/login",
       { scope, username, password },
-      { requiresAuth: false },
+      { userAction: true, requiresAuth: false },
     );
   },
 
@@ -19,7 +19,7 @@ export const authService = {
 
   /** 注销后端当前会话。 */
   async logout(): Promise<void> {
-    await request.post<void>("/auth/logout");
+    await request.post<void>("/auth/logout", undefined, { userAction: true });
   },
 
   /**
@@ -43,7 +43,7 @@ export const authService = {
     return request.post<LoginResult>(
       "/auth/switch-account",
       { targetUserId },
-      { bypassSessionGate: true, handleUnauthorized: false, signal },
+      { userAction: true, bypassSessionGate: true, handleUnauthorized: false, signal },
     );
   },
 };

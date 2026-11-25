@@ -19,6 +19,7 @@
 <script setup lang="ts">
 import { useAppStore } from "@/stores/app";
 import { LanguageEnum } from "@/enums/settings";
+import { recordClientOperation } from "@/utils/client-operation-log";
 
 defineProps({
   size: {
@@ -42,6 +43,11 @@ const langOptions = computed(() => [
 function handleLanguageChange(lang: string) {
   locale.value = lang;
   appStore.changeLanguage(lang);
+  recordClientOperation({
+    action: "language",
+    result: "success",
+    value: lang === LanguageEnum.EN ? "en" : "zh-cn",
+  });
 
   ElMessage.success(t("langSelect.message.success"));
 }

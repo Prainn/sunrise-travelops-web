@@ -20,13 +20,15 @@
         :reset-key="plan?.id"
         :can-add="editable && !saving && (plan?.days.length ?? 0) < maxDays"
         :reorder-label="$t('websiteItineraryUi.organizeItinerary')"
+        :day-view-label="plan?.businessUnit === 'website' ? $t('websiteItineraryUi.viewDay') : undefined"
         @expand="(id) => dayCards.get(id)?.expand()"
+        @view-day="openDayArrangements"
         @add="addDay"
         @reorder="isReorderDialogVisible = true"
       >
         <template #header="{ collapsed }">
           <SectionCard class="website-itinerary-page__overview">
-            <el-page-header @back="router.push('/website-inquiries')">
+            <el-page-header @back="openUserPage(router, '/website-inquiries')">
               <template #content>
                 <div class="flex flex-wrap items-center gap-3">
                   <el-tag>{{ $t("websiteWorkspace.businessLabel") }}</el-tag>
@@ -41,7 +43,7 @@
                       v-for="record in plans"
                       :key="record.id"
                       :value="record.id"
-                      :label="`${record.title} (${$t(record.status === 'draft' ? 'websiteWorkspace.draft' : 'websiteWorkspace.confirmed')})`"
+                      :label="`${record.title} (${$t(record.status === 'draft' ? 'itinerary.statuses.draft' : 'itinerary.statuses.quoted')})`"
                     />
                   </el-select>
                 </div>
@@ -77,7 +79,7 @@
                   </div>
                   <div class="flex flex-wrap items-center gap-[10px]">
                     <el-tag :type="plan.status === 'draft' ? 'info' : 'success'">
-                      {{ $t(plan.status === "draft" ? "websiteWorkspace.draft" : "websiteWorkspace.quotedLocked") }}
+                      {{ $t(plan.status === "draft" ? "itinerary.statuses.draft" : "itinerary.pdfGenerated") }}
                     </el-tag>
                     <el-button v-if="editable" class="ml-0!" @click="isBasicsDialogVisible = true">
                       {{ $t("itinerary.editItinerary") }}
@@ -107,7 +109,7 @@
                 </div>
                 <div class="grid grid-cols-4 gap-x-[18px] gap-y-2 mt-3 text-sm max-[1100px]:grid-cols-2 max-[650px]:grid-cols-1">
                   <span class="flex flex-wrap items-center gap-[6px]">
-                    <small class="text-muted">{{ $t("inquiry.code") }}</small>
+                    <small class="text-muted">{{ $t("websiteInquiry.systemCode") }}</small>
                     {{ inquiry.code }}
                     <el-tag size="small" effect="plain">{{ $t(`inquiry.statuses.${inquiry.status}`) }}</el-tag>
                   </span>
@@ -216,7 +218,7 @@
                   class="ml-0!"
                   @click="addDay"
                 >
-                  {{ $t("websiteWorkspace.addDay") }}
+                  {{ $t("itineraryWorkspace.addDay") }}
                 </el-button>
                 <span v-if="plan.serviceDates && plan.days.length >= maxDays" class="self-center text-sm text-muted">
                   {{ $t("websiteWorkspace.serviceDatesFull", { days: maxDays }) }}
@@ -301,6 +303,22 @@
         @submit="Object.assign(plan, $event)"
       />
       <template v-if="plan && config">
+        <WebsiteDayArrangementsDialog
+          :model-value="Boolean(arrangementsDay)"
+          :day="arrangementsDay"
+          :date="arrangementsDay ? serviceDayDate(plan, arrangementsDay.dayNumber) : null"
+          :route="arrangementsDay ? dayRoute(arrangementsDay) : ''"
+          :config="config"
+          :selectable-city-ids="selectableCityIds"
+          :airport-transfers="airportTransferOptions(plan, arrangementsDay)"
+          :nightly="plan.hotelPricingMode === 'nightly'"
+          :editable="editable"
+          :saving="saving"
+          @update:model-value="closeDayArrangements"
+          @closed="handleDayArrangementsClosed"
+          @open-resource="(selection) => arrangementsDay && openDayResource(arrangementsDay.id, selection)"
+          @remove-item="(id, name) => arrangementsDay && removeItem(arrangementsDay.id, id, name)"
+        />
         <WebsiteAttractionDialog
           :model-value="resourceDialog?.kind === 'attraction'"
           :day-label="resourceDayLabel"
@@ -413,6 +431,8 @@
   </PageShell>
 </template>
 <script setup lang="ts">
+import { openUserPage } from "@/utils/user-interaction";
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { computed, markRaw, ref, useTemplateRef, watch } from "vue";
 import { Bowl, Location, OfficeBuilding, Service, User, Van } from "@element-plus/icons-vue";
 import { useRouter } from "vue-router";
@@ -434,6 +454,7 @@ import { insertWebsiteEvent, updateWebsiteMeal } from "./event-order";
 import { selectableWebsiteCityIds } from "./city-options";
 import { useWebsiteWorkspace } from "./useWebsiteWorkspace";
 import WebsiteDayCard, { type WebsiteResourceSelection } from "./components/WebsiteDayCard.vue";
+import WebsiteDayArrangementsDialog from "./components/WebsiteDayArrangementsDialog.vue";
 import WebsiteItineraryBasics from "./components/WebsiteItineraryBasics.vue";
 import WebsiteVehiclePrices from "./components/WebsiteVehiclePrices.vue";
 import WebsiteQuotationPreview from "./components/WebsiteQuotationPreview.vue";
@@ -472,6 +493,9 @@ const resourceDialog = ref<WebsiteResourceSelection & {
   dayId: string;
   afterId?: string;
 }>();
+/** 「查看当天」弹窗目标：按稳定 day.id 定位，不改变主页面浏览位置 */
+const arrangementsDayId = ref<string>();
+let focusReturnDayId: string | undefined;
 const {
   inquiry,
   plans,
@@ -528,6 +552,11 @@ const dayEntries = computed(() =>
     summary: [plan.value?.serviceDates?.[day.dayNumber - 1], dayRoute(day)].filter(Boolean).join(" "),
     remark: plan.value?.businessUnit === "website" ? (day.internalRemark?.trim() || undefined) : undefined,
   })),
+);
+const arrangementsDay = computed(() =>
+  plan.value?.businessUnit === "website"
+    ? plan.value.days.find((day) => day.id === arrangementsDayId.value)
+    : undefined,
 );
 const resourceDay = computed(() => plan.value?.days.find((day) => day.id === resourceDialog.value?.dayId));
 const resourceDayLabel = computed(() => {
@@ -587,14 +616,14 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
       },
       {
         key: WEBSITE_BOARD_GROUPS.legs,
-        label: t("websiteItineraryUi.transportLegs"),
+        label: t("websiteConfig.tabs.routes"),
         icon: BOARD_ICONS.legs,
         transferable: true,
         items: day.legs.map(transportBoardItem),
       },
       {
         key: WEBSITE_BOARD_GROUPS.hotels,
-        label: t("websiteItineraryUi.hotelPlans"),
+        label: t("itinerary.hotelPlans"),
         icon: BOARD_ICONS.hotels,
         transferable: true,
         scope: day.hotels.length > 1 ? t("itineraryWorkspace.scopes.alternatives") : undefined,
@@ -668,6 +697,8 @@ watch(plan, () => {
   isRescheduleDialogVisible.value = false;
   closeBoardTransport();
   resourceDialog.value = undefined;
+  arrangementsDayId.value = undefined;
+  focusReturnDayId = undefined;
 });
 watch(
   () => plan.value?.id,
@@ -720,10 +751,30 @@ function attractionKindLabel(attractionId: string | null) {
   const kind = config.value?.attractions.find((item) => item.id === attractionId)?.kind;
   return kind ? t(`websiteItineraryUi.attractionKinds.${kind}`) : t("websiteItineraryUi.sourceManual");
 }
+function openDayArrangements(dayId: string) {
+  if (plan.value?.businessUnit !== "website") return;
+  if (!plan.value.days.some((day) => day.id === dayId)) return;
+  focusReturnDayId = undefined;
+  arrangementsDayId.value = dayId;
+}
+function closeDayArrangements(visible: boolean) {
+  if (visible) return;
+  focusReturnDayId = arrangementsDayId.value;
+  arrangementsDayId.value = undefined;
+}
+function handleDayArrangementsClosed() {
+  const dayId = focusReturnDayId;
+  focusReturnDayId = undefined;
+  if (dayId) workspaceLayout.value?.focusDayView(dayId);
+}
+function openDayResource(dayId: string, selection: WebsiteResourceSelection, afterId?: string) {
+  if (!editable.value || saving.value) return;
+  if (!plan.value?.days.some((day) => day.id === dayId)) return;
+  resourceDialog.value = { ...selection, dayId, afterId };
+}
 function openResource(index: number, selection: WebsiteResourceSelection, afterId?: string) {
   const day = plan.value?.days[index];
-  if (!day || !editable.value) return;
-  resourceDialog.value = { ...selection, dayId: day.id, afterId };
+  if (day) openDayResource(day.id, selection, afterId);
 }
 function closeResource(visible: boolean) {
   if (!visible) resourceDialog.value = undefined;
@@ -798,6 +849,12 @@ async function applyReorder(change: DayOrderChange) {
   plan.value.deletedDays = result.deletedDays;
   plan.value.duration = plan.value.serviceDates?.length ?? result.days.length;
   reorderIssues.value = result.issues;
+  recordClientOperation({
+    page: "InquiryItineraries",
+    action: "reorder",
+    result: "success",
+    recordId: plan.value.id,
+  });
   await save();
 }
 </script>

@@ -57,6 +57,7 @@
 </template>
 
 <script setup lang="ts">
+import { openUserPage } from "@/utils/user-interaction";
 import { ChatDotRound } from "@element-plus/icons-vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
@@ -88,7 +89,7 @@ const isDesktop = computed(() => appStore.device === DeviceEnum.DESKTOP);
  * 打开个人中心页面
  */
 function handleProfileClick() {
-  router.push({ name: "Profile" });
+  openUserPage(router, { name: "Profile" });
 }
 
 const linkedAccounts = ref<LinkedAccount[]>([]);

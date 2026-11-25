@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createI18n } from "vue-i18n";
 import enMessages from "@/lang/package/en.json";
 import zhMessages from "@/lang/package/zh-cn.json";
 import {
@@ -11,28 +12,9 @@ import {
   type LogDisplayContext,
 } from "./log-presentation";
 
-function lookupMessage(root: Record<string, unknown>, key: string): string | undefined {
-  let current: unknown = root;
-  for (const part of key.split(".")) {
-    if (current === null || typeof current !== "object" || !(part in current)) return undefined;
-    current = (current as Record<string, unknown>)[part];
-  }
-  return typeof current === "string" ? current : undefined;
-}
-
 function createContext(locale: "zh-cn" | "en"): LogDisplayContext {
-  const messages = (locale === "zh-cn" ? zhMessages : enMessages) as Record<string, unknown>;
-  return {
-    locale,
-    te: (key) => lookupMessage(messages, key) !== undefined,
-    t: (key, params) => {
-      const template = lookupMessage(messages, key) ?? key;
-      if (!params) return template;
-      return template.replace(/\{(\w+)\}/g, (_, name: string) =>
-        params[name] != null ? String(params[name]) : `{${name}}`,
-      );
-    },
-  };
+  const { global } = createI18n({ legacy: false, locale, messages: { "zh-cn": zhMessages, en: enMessages } });
+  return { locale, te: key => global.te(key), t: (key, params) => params ? global.t(key, params) : global.t(key) };
 }
 
 const zh = createContext("zh-cn");
@@ -143,10 +125,10 @@ describe("独立站询盘汇总展示", () => {
       kind: "removed",
       side: "before",
     });
-    expect(beforeText).toContain("酒店档位: B 舒适四星");
+    expect(beforeText).toContain("酒店档次: B 舒适四星");
     expect(beforeText).toContain("城市: 北京");
-    expect(beforeText).toContain("配置酒店: 旧酒店（配置酒店）");
-    expect(beforeText).toContain("含早餐: 是");
+    expect(beforeText).toContain("独立站酒店: 旧酒店（独立站酒店）");
+    expect(beforeText).toContain("含早: 是");
 
     const afterText = formatLogValue(addedHotel.after, addedHotel.fields, en, {
       kind: "added",
@@ -178,7 +160,7 @@ describe("独立站询盘汇总展示", () => {
     );
     expect(formatLogValue({ ref: "owner", nameZh: "李四" }, ["ownerId"], zh)).toBe("李四");
     expect(formatLogValue({ ref: "owner" }, ["ownerId"], en)).toBe(
-      "Owner (Name not recorded at the time)",
+      "Coordinator (Name not recorded at the time)",
     );
     expect(
       formatLogValue({ ref: "country", nameZh: "马来西亚", code: "MYS" }, ["countryItemId"], zh),
@@ -226,8 +208,8 @@ describe("独立站询盘汇总展示", () => {
       before: { mode: "flight" },
       after: null,
     };
-    expect(changeLabel(recycleLeg, zh)).toBe("第 3 天 / 已删除日程 / 交通段");
-    expect(changeLabel(recycleLeg, en)).toBe("Day 3 / Deleted days / Transport leg");
+    expect(changeLabel(recycleLeg, zh)).toBe("第 3 天 / 已移除的行程日 / 交通段");
+    expect(changeLabel(recycleLeg, en)).toBe("Day 3 / Removed itinerary days / Transport leg");
 
     const draftRow = {
       fields: ["reorderDraft"],

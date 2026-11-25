@@ -14,7 +14,7 @@
       :disabled="saving"
     >
       <el-form-item :label="$t('whatsapp.currentOwner')">
-        <el-input :model-value="currentOwnerName || $t('whatsapp.unassigned')" disabled />
+        <el-input :model-value="currentOwnerName || $t('whatsapp.views.unassigned')" disabled />
       </el-form-item>
       <el-form-item :label="$t('whatsapp.assignOwner')" prop="ownerId">
         <el-select

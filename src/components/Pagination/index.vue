@@ -1,12 +1,14 @@
 <template>
   <div
     v-show="!hidden"
+    ref="container"
     class="app-pagination"
     :class="{ 'app-pagination--compact': isCompact }"
   >
     <el-pagination
       v-model:current-page="currentPage"
       v-model:page-size="pageSize"
+      :popper-class="pageSizePopup"
       :background="background"
       :layout="resolvedLayout"
       :page-sizes="pageSizes"
@@ -20,8 +22,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick } from "vue";
+import { isUserInput } from "@/utils/user-interaction";
+import { computed, nextTick, ref, useId } from "vue";
 import { useMediaQuery } from "@vueuse/core";
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "./config";
 
 interface Props {
@@ -65,7 +69,10 @@ const resolvedLayout = computed(() => {
   return isCompact.value ? "total, prev, pager, next" : "total, sizes, prev, pager, next, jumper";
 });
 
+const container = ref<HTMLElement>();
+const pageSizePopup = `pagination-size-${useId()}`;
 let isChangeQueued = false;
+let userChangedPage = false;
 
 /**
  * 合并同一轮内的页码与条数变化后只通知一次。
@@ -74,10 +81,13 @@ let isChangeQueued = false;
  * 逐个转发会让一次操作发出多次请求。
  */
 function requestChange() {
+  userChangedPage ||= isUserInput(container.value ?? null, pageSizePopup);
   if (isChangeQueued) return;
   isChangeQueued = true;
   void nextTick(() => {
     isChangeQueued = false;
+    if (userChangedPage) recordClientOperation({ action: "paginate", result: "success" });
+    userChangedPage = false;
     emit("pagination", { page: currentPage.value, limit: pageSize.value });
   });
 }

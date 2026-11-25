@@ -153,7 +153,7 @@ export const websiteService = {
     return request.get<WebsiteInquiry>(`/website/inquiries/${encodeURIComponent(id)}`);
   },
   createInquiry(input: WebsiteInquiryInput) {
-    return request.post<WebsiteInquiry>("/website/inquiries", websiteInquiryInput(input));
+    return request.post<WebsiteInquiry>("/website/inquiries", websiteInquiryInput(input), { userAction: true });
   },
   updateInquiry(id: string, input: WebsiteInquiryInput, version: number) {
     return request.put<WebsiteInquiry>(`/website/inquiries/${encodeURIComponent(id)}`, {
@@ -161,7 +161,7 @@ export const websiteService = {
       ownerId: undefined,
       businessUnit: undefined,
       version,
-    });
+    }, { userAction: true });
   },
   owners(businessUnit?: WebsiteBusinessUnit) {
     return request.get<WebsiteOwnerOption[]>("/website/owners", {params: {businessUnit}});
@@ -171,15 +171,15 @@ export const websiteService = {
       version,
       ownerId,
       reason,
-    });
+    }, { userAction: true });
   },
   deleteInquiry(id: string, version: number) {
-    return request.delete<void>(`/website/inquiries/${encodeURIComponent(id)}`, { body: { version } });
+    return request.delete<void>(`/website/inquiries/${encodeURIComponent(id)}`, { userAction: true, body: { version } });
   },
   archive(id: string, version: number) {
     return request.post<WebsiteInquiry>(`/website/inquiries/${encodeURIComponent(id)}/archive`, {
       version,
-    });
+    }, { userAction: true });
   },
   inquiryLogs(query: WebsiteInquiryLogQuery) {
     return request.get<PageResult<WebsiteInquiryLog>>("/website/inquiry-logs", {
@@ -217,24 +217,24 @@ export const websiteService = {
           nightlyVehiclePrices: input.nightlyVehiclePrices ?? [],
         }),
         inquiryVersion: input.inquiryVersion,
-      },
+      }, { userAction: true },
     );
   },
   saveItinerary(record: WebsiteItinerary) {
     return request.put<WebsiteItinerary>(`/website/itineraries/${encodeURIComponent(record.id)}`, {
       ...websiteItineraryInput(record),
       version: record.version,
-    });
+    }, { userAction: true });
   },
   copyItinerary(id: string, version: number) {
     return request.post<WebsiteItinerary>(`/website/itineraries/${encodeURIComponent(id)}/copy`, {
       version,
-    });
+    }, { userAction: true });
   },
   generateItinerary(id: string, version: number, skeletonId: string) {
     return request.post<WebsiteItinerary>(
       `/website/itineraries/${encodeURIComponent(id)}/generate`,
-      { version, skeletonId },
+      { version, skeletonId }, { userAction: true },
     );
   },
   preview(id: string) {
@@ -247,11 +247,11 @@ export const websiteService = {
         version: preview.sourceVersion,
         inquiryVersion: preview.inquiryVersion,
         acknowledgedWarnings,
-      },
+      }, { userAction: true },
     );
   },
   async recordDownload(id: string) {
-    await request.post(`/website/itineraries/${encodeURIComponent(id)}/download-click`);
+    await request.post(`/website/itineraries/${encodeURIComponent(id)}/download-click`, undefined, { userAction: true });
   },
   quotation(id: string) {
     return request.get<WebsiteQuotation>(
@@ -270,13 +270,13 @@ export const websiteService = {
     );
   },
   createConfigRecord(group: WebsiteConfigGroup, version: number, record: WebsiteConfigRecord, businessUnit: WebsiteBusinessUnit) {
-    return request.post<{ version: number }>(`/website/config/${group}`, { version, record }, { params: { businessUnit } });
+    return request.post<{ version: number }>(`/website/config/${group}`, { version, record }, { userAction: true, params: { businessUnit } });
   },
   updateConfigRecord(group: WebsiteConfigGroup, version: number, record: WebsiteConfigRecord, businessUnit: WebsiteBusinessUnit) {
-    return request.put<{ version: number }>(`/website/config/${group}/${encodeURIComponent(record.id)}`, { version, record }, { params: { businessUnit } });
+    return request.put<{ version: number }>(`/website/config/${group}/${encodeURIComponent(record.id)}`, { version, record }, { userAction: true, params: { businessUnit } });
   },
   deleteConfigRecord(group: WebsiteConfigGroup, id: string, version: number, businessUnit: WebsiteBusinessUnit) {
-    return request.delete<{ version: number }>(`/website/config/${group}/${encodeURIComponent(id)}`, { body: { version }, params: { businessUnit } });
+    return request.delete<{ version: number }>(`/website/config/${group}/${encodeURIComponent(id)}`, { userAction: true, body: { version }, params: { businessUnit } });
   },
   resource(kind: WebsiteResourceKind, id: string) {
     return request.get<WebsiteResourceDetail>(`/website/resources/${kind}/${encodeURIComponent(id)}`);

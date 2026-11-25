@@ -18,6 +18,7 @@
 </template>
 
 <script setup lang="ts">
+import { openUserPage } from "@/utils/user-interaction";
 import { House, Refresh } from "@element-plus/icons-vue";
 import ErrorPage from "./components/ErrorPage.vue";
 
@@ -29,7 +30,7 @@ const router = useRouter();
  * 回到首页，重新进入权限路由匹配
  */
 function goHome() {
-  router.push("/");
+  openUserPage(router, "/");
 }
 
 /**

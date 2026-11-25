@@ -101,7 +101,7 @@
         <el-table-column prop="operatorName" :label="$t('ledger.direct.operator')" min-width="200" />
         <el-table-column
           prop="countryName"
-          :label="$t('ledger.direct.countryOrRegion')"
+          :label="$t('common.countryOrRegion')"
           min-width="120"
           :formatter="textOrDash"
         />

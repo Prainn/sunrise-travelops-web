@@ -54,6 +54,7 @@ import FeedbackState from "@/components/FeedbackState/index.vue";
 import { websiteErrorMessage } from "@/services/website.service";
 import { whatsappService } from "@/services/whatsapp.service";
 import type { WhatsappDocumentMeta } from "@/types/whatsapp";
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { documentPreviewType } from "../message-utils";
 
 type PreviewState = "idle" | "loading" | "ready" | "unsupported" | "error";
@@ -76,7 +77,9 @@ let controller: AbortController | undefined;
 
 watch(open, (value) => {
   if (value) void load();
-  else controller?.abort();
+  else {
+    controller?.abort();
+  }
 }, { immediate: true });
 onBeforeUnmount(clear);
 
@@ -130,6 +133,13 @@ async function load() {
     if (!(await hasSignature(blob, type))) {
       errorMessage.value = t("whatsapp.documentPreview.invalid");
       state.value = "error";
+      recordClientOperation({
+        page: "WhatsappInbox",
+        action: "preview",
+        result: "failure",
+        recordId: props.messageId,
+        value: type === "pdf" ? "pdf" : "word",
+      });
       return;
     }
     if (type === "pdf") {
@@ -141,11 +151,27 @@ async function load() {
       if (current.signal.aborted || !docxRef.value) return;
       await renderDocx(blob, docxRef.value);
     }
-    if (!current.signal.aborted) state.value = "ready";
+    if (!current.signal.aborted) {
+      state.value = "ready";
+      recordClientOperation({
+        page: "WhatsappInbox",
+        action: "preview",
+        result: "success",
+        recordId: props.messageId,
+        value: type === "pdf" ? "pdf" : "word",
+      });
+    }
   } catch (cause) {
     if (current.signal.aborted) return;
     errorMessage.value = websiteErrorMessage(cause);
     state.value = "error";
+    recordClientOperation({
+      page: "WhatsappInbox",
+      action: "preview",
+      result: "failure",
+      recordId: props.messageId,
+      value: type === "pdf" ? "pdf" : "word",
+    });
   }
 }
 

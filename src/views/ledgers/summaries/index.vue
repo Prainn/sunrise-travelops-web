@@ -89,7 +89,7 @@ let generation = 0;
 const isAgency = computed(() => props.report === "shengxu-agency-summary");
 const isShengxu = computed(() => props.report.startsWith("shengxu-"));
 const isPlatform = computed(() => props.report.endsWith("-platform-summary"));
-const nameKey = computed(() => isAgency.value ? "ledger.shengxu.agency" : isPlatform.value ? "ledgerSummary.platformAccount" : "ledger.direct.creator");
+const nameKey = computed(() => isAgency.value ? "ledger.shengxu.agency" : isPlatform.value ? "ledger.direct.receivingAccount" : "ledger.direct.creator");
 const searchKey = computed(() => isAgency.value ? "ledgerSummary.agencySearch" : isPlatform.value ? "ledgerSummary.platformSearch" : "ledgerSummary.coordinatorSearch");
 const titleKey = computed(() => `route.${{
   "shengxu-agency-summary": "shengxuAgencySummary",

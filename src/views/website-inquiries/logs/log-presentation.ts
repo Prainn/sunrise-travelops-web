@@ -238,8 +238,10 @@ function segmentLabel(
 export function changeLabel(
   change: Pick<WebsiteInquiryLogDisplayChange, "fields" | "context">,
   context: LogDisplayContext,
+  targetType?: WebsiteInquiryLog["targetType"],
 ): string {
   const { t, te, locale } = context;
+  if (targetType === "itinerary" && change.fields.length === 1 && change.fields[0] === "pax") return t("websiteReport.pax");
   const ctx = change.context;
   const hasDay = ctx?.dayNumber != null;
   const itemName = localName(ctx?.nameZh, ctx?.nameEn, locale);

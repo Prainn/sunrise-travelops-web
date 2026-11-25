@@ -2,7 +2,7 @@
   <AppDialog
     :model-value="modelValue"
     size="lg"
-    :title="$t('itineraryWorkspace.resourceDialogTitle', { day: dayLabel, type: $t('websiteItineraryUi.hotelPlans') })"
+    :title="$t('itineraryWorkspace.resourceDialogTitle', { day: dayLabel, type: $t('itinerary.hotelPlans') })"
     @close="close"
   >
     <el-form label-position="top" @submit.prevent>
@@ -21,7 +21,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.overnightCity')" required>
+        <el-form-item :label="$t('websitePrint.overnightColumn')" required>
           <el-select v-model="draft.cityId" autocomplete="new-password" filterable>
             <el-option
               v-for="city in cityOptions"
@@ -35,10 +35,10 @@
       <el-form-item :label="$t('websiteItineraryUi.resourceSource')">
         <el-radio-group :model-value="source" @update:model-value="changeSource">
           <el-radio-button value="config">
-            {{ $t("websiteItineraryUi.sourceConfigHotel") }}
+            {{ $t("websiteItineraryUi.hotelSources.config") }}
           </el-radio-button>
           <el-radio-button value="public">
-            {{ $t("websiteItineraryUi.sourcePublic") }}
+            {{ $t("websiteItineraryUi.hotelSources.public") }}
           </el-radio-button>
           <el-radio-button value="manual">
             {{ $t("websiteItineraryUi.sourceManual") }}
@@ -46,7 +46,7 @@
         </el-radio-group>
       </el-form-item>
       <template v-if="source === 'config'">
-        <el-form-item :label="$t('common.keywords')">
+        <el-form-item :label="$t('websiteItineraryUi.selectLibraryHotel')">
           <el-input v-model="keyword" clearable :placeholder="$t('websiteItineraryUi.bilingualKeywordPlaceholder')" />
         </el-form-item>
         <DataTable

@@ -5,6 +5,8 @@ import { whatsappService } from "@/services/whatsapp.service";
 import { useUserStore } from "@/stores/user";
 import type { WhatsappCustomerNotes, WhatsappCustomerNotesForm } from "@/types/whatsapp";
 import { pruneNotesDrafts, readNotesDraft, removeNotesDraft, writeNotesDraft } from "./notes-drafts";
+import { useDebounceFn } from "@vueuse/core";
+import { recordClientOperation } from "@/utils/client-operation-log";
 
 interface NotesEntry {
   version: number;
@@ -160,12 +162,25 @@ export function useCustomerNotes() {
     latestLoad.clear();
   }
 
+  const reportDraftSaved = useDebounceFn((id: string) => {
+    recordClientOperation({
+      page: "WhatsappInbox",
+      action: "draft",
+      result: "success",
+      recordId: id,
+    });
+  }, 1000);
+
   /** 有未保存修改时写入缓存，否则清除；尚未读取的会话不动缓存。 */
   function persist(id: string) {
     const current = entries.get(id);
     if (!current) return;
-    if (isDirty(current)) writeNotesDraft(draftOwner(), id, { version: current.version, base: current.base, form: current.form });
-    else removeNotesDraft(draftOwner(), id);
+    if (isDirty(current)) {
+      writeNotesDraft(draftOwner(), id, { version: current.version, base: current.base, form: current.form });
+      reportDraftSaved(id);
+    } else {
+      removeNotesDraft(draftOwner(), id);
+    }
   }
 
   pruneNotesDrafts();

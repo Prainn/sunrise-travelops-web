@@ -1,5 +1,5 @@
 <template>
-  <el-form-item v-if="showVehicle && mode === 'private_vehicle'" :label="$t('websiteReport.vehicleType')" prop="vehicleType">
+  <el-form-item v-if="showVehicle && mode === 'private_vehicle'" :label="$t('resource.vehicleModel')" prop="vehicleType">
     <BusinessDictionarySelect
       :model-value="modelValue.vehicleType"
       type-code="vehicle-type"

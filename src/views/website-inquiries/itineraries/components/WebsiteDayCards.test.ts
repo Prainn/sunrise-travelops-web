@@ -1,10 +1,10 @@
-import zhMessages from "@/lang/package/zh-cn.json";
 /* eslint vue/one-component-per-file: off -- The renderer uses explicit UI stubs. */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRenderer, defineComponent, h, nextTick, reactive, ref, type Component, type ComponentPublicInstance } from "vue";
 import type { FeeState, WebsiteAttraction, WebsiteConfig, WebsiteDay, WebsiteLeg, WebsiteRoute } from "@/types/website";
 import BusinessDictionarySelect from "@/components/BusinessDictionarySelect/index.vue";
 import { businessDictionaryService } from "@/services/business-dictionary.service";
+import zhMessages from "@/lang/package/zh-cn.json";
 import type { ReorderBoardItem } from "@/views/inquiries/itineraries/reorder-board";
 import { ElMessageBox } from "element-plus";
 import ItineraryReorderDialog from "@/views/inquiries/itineraries/components/ItineraryReorderDialog.vue";
@@ -29,7 +29,11 @@ vi.mock("@/services/business-dictionary.service", () => ({
 vi.mock("@/components/AppDialog/index.vue", () => ({ default: {
   props: ["modelValue"],
   render(this: ComponentPublicInstance<{ modelValue: boolean }>) {
-    return this.modelValue ? h("dialog", [...(this.$slots.header?.() ?? []), ...(this.$slots.default?.() ?? []), ...(this.$slots.footer?.() ?? [])]) : null;
+    return this.modelValue ? h("dialog", [
+      ...(this.$slots.header?.({ titleId: "dialog-title", titleClass: "el-dialog__title" }) ?? []),
+      ...(this.$slots.default?.() ?? []),
+      ...(this.$slots.footer?.() ?? []),
+    ]) : null;
   },
 } }));
 vi.mock("@/components/FeedbackState/index.vue", () => ({ default: { render: () => null } }));
@@ -502,7 +506,11 @@ it("keeps the saved vehicle while limiting new choices to the resource and apply
     { vehicleType: "小巴 14座", durationMinutes: 160 },
     { vehicleType: "9_seat", durationMinutes: 180 },
   ];
-  const config = { attractions: [], cities: [], routes: [{ id: "route", vehicleOptions }] } as unknown as WebsiteConfig;
+  const route: WebsiteRoute = {
+    id: "route", fromCityId: "from", toCityId: "to", status: "enabled",
+    mode: "private_vehicle", nameZh: "专车", nameEn: "Private vehicle", feeState: "INCLUDED", vehicleOptions,
+  };
+  const config = { attractions: [], cities: [], routes: [route] } as unknown as WebsiteConfig;
   const view = mount(WebsiteDayTransport as Component, day, true, config);
   await view.click("common.edit");
   await nextTick();
@@ -524,6 +532,62 @@ it("keeps the saved vehicle while limiting new choices to the resource and apply
   await nextTick();
   await view.click("common.confirm");
   expect(day.legs[0]).toMatchObject({ vehicleType: "9_seat", durationMinutes: 180 });
+});
+
+it("repairs a stale route association in place and lets the same leg become manual", async () => {
+  const route: WebsiteRoute = {
+    id: "rail", fromCityId: "kunming", toCityId: "dali", status: "enabled", mode: "hsr",
+    nameZh: "昆明 → 大理", nameEn: "Kunming → Dali", feeState: "INCLUDED", distanceKm: "330", durationMinutes: 120,
+  };
+  const staleRoute: WebsiteRoute = {
+    id: "old", fromCityId: "dali", toCityId: "lijiang", status: "enabled", mode: "private_vehicle",
+    nameZh: "大理 → 丽江", nameEn: "Dali → Lijiang", feeState: "INCLUDED", vehicleOptions: [],
+  };
+  const cities = ["kunming", "dali", "lijiang"].map(id => ({ id, nameZh: id, nameEn: id, status: "enabled" }));
+  const leg: WebsiteLeg = {
+    id: "leg", routeId: staleRoute.id, fromCityId: "kunming", toCityId: "dali", mode: "hsr",
+    nameZh: "原说明", nameEn: "Saved note", feeState: "SELF_PAY", durationMinutes: 180,
+    showInMileage: true, isAirportDropoff: true,
+  };
+  const day = reactive({ ...emptyDay(3), legs: [leg], eventOrder: [leg.id] });
+  const view = render(WebsiteDayTransport, {
+    day, editable: true, config: { cities, routes: [staleRoute, route] },
+    selectableCityIds: new Set(cities.map(city => city.id)),
+  });
+  const cardHeading = view.find("strong")[0]!.parent!;
+  expect(view.find("ElTag", cardHeading).map(view.text)).toEqual([
+    "websiteConfig.tabs.routes", "websiteItineraryUi.airportDropoff",
+  ]);
+  await view.click("common.edit");
+  const dialog = view.find("dialog")[0]!;
+  const heading = view.find("h2", dialog)[0]!;
+  expect(view.find("ElTag", heading.parent!).map(view.text)).toEqual(["websiteConfig.tabs.routes"]);
+  const [routeInput, departInput, arriveInput] = view.find("ElSelect", dialog);
+  expect(routeInput?.props["model-value"]).toBeUndefined();
+  expect(departInput?.props.disabled).toBe(true);
+  expect(arriveInput?.props.disabled).toBe(true);
+  (routeInput!.props["onUpdate:modelValue"] as (value: string) => void)(route.id);
+  await nextTick();
+  expect(day.legs[0]?.routeId).toBe(staleRoute.id);
+  await view.click("common.confirm");
+  expect(day.legs[0]).toMatchObject({
+    id: leg.id, routeId: route.id, fromCityId: "kunming", toCityId: "dali", mode: "hsr",
+    nameZh: route.nameZh, feeState: "INCLUDED", distanceKm: "330", durationMinutes: 120,
+    showInMileage: true, isAirportDropoff: true,
+  });
+  expect(day.eventOrder).toEqual([leg.id]);
+
+  await view.click("common.edit");
+  (view.find("ElRadioGroup")[0]!.props["onUpdate:modelValue"] as (value: string) => void)("manual");
+  await nextTick();
+  const manualDialog = view.find("dialog")[0]!;
+  expect(view.find("ElTag", manualDialog)).toHaveLength(0);
+  const manualArrival = view.find("ElSelect", manualDialog)[1]!;
+  expect(manualArrival.props.disabled).toBe(false);
+  (manualArrival.props["onUpdate:modelValue"] as (value: string) => void)("lijiang");
+  await view.click("common.confirm");
+  expect(day.legs[0]).toMatchObject({ id: leg.id, routeId: null, toCityId: "lijiang" });
+  expect(view.find("ElTag", cardHeading).map(view.text)).toEqual(["websiteItineraryUi.airportDropoff"]);
 });
 
 it("renders, edits, clears, and hides the day internal remark by business unit and editability", async () => {

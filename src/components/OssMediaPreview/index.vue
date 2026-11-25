@@ -9,7 +9,7 @@
         :style="frameStyle"
         :aria-label="$t('oss.media.viewOriginal')"
         :title="$t('oss.media.viewOriginal')"
-        @click="viewerOpen = true"
+        @click="openViewer"
       >
         <img
           :key="displayUrl"
@@ -38,25 +38,33 @@
     <span
       v-else
       class="oss-media__placeholder"
-      :class="{ 'is-failed': status === 'failed' }"
+      :class="{ 'is-failed': status === 'failed', 'is-compact': compact }"
       :style="placeholderStyle"
+      :title="compact && status === 'failed' ? placeholderText : undefined"
+      :aria-label="compact && status === 'failed' ? placeholderText : undefined"
+      :role="compact && status === 'failed' ? 'img' : undefined"
     >
-      {{ placeholderText }}
+      <el-icon v-if="compact && status === 'failed'" :size="20" aria-hidden="true">
+        <CircleCloseFilled />
+      </el-icon>
+      <template v-else>{{ placeholderText }}</template>
     </span>
     <el-image-viewer
       v-if="viewerOpen && resource?.originalUrl"
       :url-list="[resource.originalUrl]"
       teleported
       hide-on-click-modal
-      @close="viewerOpen = false"
+      @close="closeViewer"
     />
   </span>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import { CircleCloseFilled } from "@element-plus/icons-vue";
 import { useI18n } from "vue-i18n";
 import { ossErrorKey, type OssResource, type OssResourceKind } from "@/types/oss";
+import { recordClientOperation } from "@/utils/client-operation-log";
 
 const props = withDefaults(defineProps<{
   /** 尚未发现归档记录时为空，按处理中显示。 */
@@ -65,7 +73,9 @@ const props = withDefaults(defineProps<{
   kind?: OssResourceKind;
   /** 最长边显示上限（px）。 */
   maxSize?: number;
-}>(), { resource: undefined, kind: "image", maxSize: 240 });
+  /** 紧凑模式（如表格缩略图列）：失败占位仅显示错误图标，完整原因通过 title 提示。 */
+  compact?: boolean;
+}>(), { resource: undefined, kind: "image", maxSize: 240, compact: false });
 
 const { t } = useI18n();
 const failedUrl = ref<string>();
@@ -97,7 +107,11 @@ const frameStyle = computed(() => {
   const scale = Math.min(1, limit / Math.max(width, height));
   return { width: `${Math.max(24, Math.round(width * scale))}px`, aspectRatio: `${width} / ${height}` };
 });
-const placeholderStyle = computed(() => ({ minWidth: `${Math.min(props.maxSize, 140)}px` }));
+const placeholderStyle = computed(() => (
+  props.compact && status.value === "failed"
+    ? { width: `${props.maxSize}px`, height: `${props.maxSize}px` }
+    : { minWidth: `${Math.min(props.maxSize, 140)}px` }
+));
 const placeholderText = computed(() => {
   const kind = t(`oss.kinds.${mediaKind.value}`);
   if (status.value === "processing") return t("oss.media.processing", { kind });
@@ -109,6 +123,24 @@ const placeholderText = computed(() => {
 watch(() => props.resource?.id, () => {
   viewerOpen.value = false;
 });
+
+function openViewer() {
+  viewerOpen.value = true;
+  recordClientOperation({
+    action: "preview",
+    result: "success",
+    recordId: props.resource?.id,
+  });
+}
+
+function closeViewer() {
+  viewerOpen.value = false;
+  recordClientOperation({
+    action: "close",
+    result: "success",
+    recordId: props.resource?.id,
+  });
+}
 </script>
 
 <style scoped lang="scss">
@@ -132,10 +164,14 @@ watch(() => props.resource?.id, () => {
   }
 
   &__placeholder {
-    @apply box-border inline-flex items-center justify-center min-h-[64px] px-[10px] py-[8px] rounded-[8px] border-dashed border-[1px] border-[var(--el-border-color)] text-[12px] text-muted text-center;
+    @apply box-border inline-flex items-center justify-center max-w-full min-h-[64px] px-[10px] py-[8px] rounded-[8px] border-dashed border-[1px] border-[var(--el-border-color)] text-[12px] text-muted text-center;
 
     &.is-failed {
       color: var(--el-color-danger);
+    }
+
+    &.is-compact.is-failed {
+      @apply p-0;
     }
   }
 }

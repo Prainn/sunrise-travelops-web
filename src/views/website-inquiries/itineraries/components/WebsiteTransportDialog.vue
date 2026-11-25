@@ -2,7 +2,7 @@
   <AppDialog
     :model-value="modelValue"
     size="lg"
-    :title="$t('itineraryWorkspace.resourceDialogTitle', { day: dayLabel, type: $t('websiteItineraryUi.transportLegs') })"
+    :title="$t('itineraryWorkspace.resourceDialogTitle', { day: dayLabel, type: $t('websiteConfig.tabs.routes') })"
     @close="close"
   >
     <el-form
@@ -15,7 +15,7 @@
       <el-form-item :label="$t('websiteItineraryUi.resourceSource')">
         <el-radio-group v-model="source">
           <el-radio-button value="route">
-            {{ $t("websiteItineraryUi.sourceRoute") }}
+            {{ $t("websiteItineraryUi.selectTransportRoute") }}
           </el-radio-button>
           <el-radio-button value="manual">
             {{ $t("websiteItineraryUi.sourceManual") }}
@@ -82,13 +82,29 @@
             {{ modeLabel(row.mode) }}
           </template>
         </el-table-column>
-        <el-table-column :label="$t('websiteReport.vehicleType')" min-width="110">
+        <el-table-column prop="distanceKm" :label="$t('websiteReport.distanceKm')" min-width="110" />
+        <el-table-column :label="$t('resource.vehicleModel')" min-width="110">
           <template #default="{ row }">
-            {{ row.mode === 'private_vehicle' && row.vehicleOptions?.length ? row.vehicleOptions.map((option: WebsiteRouteVehicleOption) => `${vehicleLabel(option.vehicleType)} (${option.durationMinutes == null ? $t('websiteReport.notSpecified') : $t('websiteReport.minutesValue', { value: option.durationMinutes })})`).join(' / ') : $t('websiteReport.notSpecified') }}
+            <template v-for="(option, index) in (row as WebsiteRoute).vehicleOptions" :key="option.vehicleType">
+              <br v-if="index > 0">
+              {{ vehicleLabel(option.vehicleType) }}
+            </template>
+            <template v-if="!row.vehicleOptions?.length">
+              {{ $t("websiteReport.notSpecified") }}
+            </template>
           </template>
         </el-table-column>
-        <el-table-column prop="distanceKm" :label="$t('websiteReport.distanceKm')" min-width="110" />
-        <el-table-column prop="durationMinutes" :label="$t('websiteReport.durationMinutes')" min-width="130" />
+        <el-table-column :label="$t('websiteReport.durationMinutes')" min-width="130">
+          <template #default="{ row }">
+            <template v-for="(option, index) in (row as WebsiteRoute).vehicleOptions" :key="option.vehicleType">
+              <br v-if="index > 0">
+              {{ option.durationMinutes ?? $t("websiteReport.notSpecified") }}
+            </template>
+            <template v-if="!row.vehicleOptions?.length">
+              {{ row.durationMinutes ?? $t("websiteReport.notSpecified") }}
+            </template>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('websiteItineraryUi.routeCities')" min-width="160">
           <template #default="{ row }">
             {{ cityName(row.fromCityId) }} → {{ cityName(row.toCityId) }}
@@ -146,13 +162,14 @@ import type { FormInstance } from "element-plus";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
-import type { TransportMode, WebsiteConfig, WebsiteDay, WebsiteLeg, WebsiteRoute, WebsiteRouteVehicleOption } from "@/types/website";
+import type { TransportMode, WebsiteConfig, WebsiteDay, WebsiteLeg, WebsiteRoute } from "@/types/website";
 import WebsiteTransportFields from "./WebsiteTransportFields.vue";
 import { transportRules } from "@/views/resources/website/useWebsiteConfigRules";
 import { TRANSPORT_OPTIONS } from "../../options";
 import { websiteVehicleLabel } from "@/utils/website-vehicle";
 import { websiteCityOptions, websiteDayRouteCityIds } from "../city-options";
 import { airportTransferPlaceholder, type AirportTransferOptions } from "../airport-transfers";
+import { websiteRouteTransportDetails } from "../transport-route";
 
 /**
  * 独立站交通段：从当前配置的专属路线按出发/抵达城市筛选，或手填；确认后才加入当天。
@@ -207,7 +224,7 @@ const vehicleOptions = computed(() => source.value === "route"
   : routes.value.filter(route => route.mode === "private_vehicle").flatMap(route => route.vehicleOptions ?? []));
 const selected = computed(() => source.value === "route" ? routes.value.find(route => route.id === selectedId.value) : undefined);
 watch(selected, (route) => {
-  if (route) details.value = { ...details.value, vehicleType: route.mode === "private_vehicle" && route.vehicleOptions?.length === 1 ? route.vehicleOptions[0]!.vehicleType : null, distanceKm: route.distanceKm ?? null, durationMinutes: route.mode === "private_vehicle" ? (route.vehicleOptions?.length === 1 ? route.vehicleOptions[0]!.durationMinutes : null) : route.durationMinutes ?? null, showInMileage: false };
+  if (route) details.value = { ...details.value, ...websiteRouteTransportDetails(route), showInMileage: false };
 }, { flush: "sync" });
 watch(effectiveMode, (value) => { if (value !== "private_vehicle") details.value.vehicleType = null; });
 

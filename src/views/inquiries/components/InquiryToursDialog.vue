@@ -1,7 +1,7 @@
 <template>
   <AppDialog
     :model-value="modelValue"
-    :title="`${$t('tour.relatedTours')} ${inquiry.code}`"
+    :title="`${$t('tour.records')} ${inquiry.code}`"
     size="lg"
     destroy-on-close
     @update:model-value="emit('update:modelValue', $event)"
@@ -17,8 +17,8 @@
       <el-table-column prop="startDate" :label="$t('common.startDate')" width="120" />
       <el-table-column
         prop="days"
-        :label="$t('tour.days')"
-        width="80"
+        :label="$t('inquiry.plannedDays')"
+        min-width="110"
         align="center"
       />
       <el-table-column

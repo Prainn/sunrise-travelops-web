@@ -129,7 +129,7 @@
                 v-if="scope.row.isSeries && hasPerm('tour:list')"
                 @click="emit('view-tours', scope.row as InquiryRecord)"
               >
-                {{ $t("tour.relatedTours") }}
+                {{ $t("tour.records") }}
               </el-dropdown-item>
               <el-dropdown-item @click="emit('view-logs', scope.row as InquiryRecord)">
                 {{ $t("inquiry.log.title") }}

@@ -9,7 +9,7 @@
           clearable
         />
       </el-form-item>
-      <el-form-item :label="$t('websiteVisits.dateRange')" class="filter-bar__wide">
+      <el-form-item :label="$t('common.dateRange')" class="filter-bar__wide">
         <el-date-picker
           v-model="dateRange"
           type="daterange"
@@ -65,7 +65,7 @@
           min-width="220"
           show-overflow-tooltip
         />
-        <el-table-column :label="$t('websiteVisits.source')" min-width="200" show-overflow-tooltip>
+        <el-table-column :label="$t('websiteInquiry.acquisitionSource')" min-width="200" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.utm_source || row.external_referrer || '' }}
           </template>
@@ -113,7 +113,7 @@
                 :disabled="saving"
                 @click="generateInquiry(row as WebsiteVisit)"
               >
-                {{ $t('websiteVisits.generate') }}
+                {{ $t('websiteInquiry.log.actions.inquiry_created') }}
               </el-button>
             </RowActions>
           </template>
@@ -162,6 +162,7 @@ import { websiteService, websiteErrorMessage, type WebsiteOwnerOption } from "@/
 import type { WebsiteVisit } from "@/types/website-visit";
 import type { WebsiteInquiry, WebsiteInquiryInput, WebsiteCity } from "@/types/website";
 import { useUserStore } from "@/stores/user";
+import { recordClientOperation } from "@/utils/client-operation-log";
 defineOptions({ name: "WebsiteVisits" });
 const { t } = useI18n();
 const user = useUserStore();
@@ -334,7 +335,19 @@ async function exportRecords() {
     link.download = `lynxtour-visits_${start}_${end}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+    recordClientOperation({
+      page: "WebsiteVisits",
+      action: "download",
+      result: "unknown",
+      value: "csv",
+    });
   } catch (cause) {
+    recordClientOperation({
+      page: "WebsiteVisits",
+      action: "download",
+      result: "failure",
+      value: "csv",
+    });
     ElMessage.error(websiteErrorMessage(cause));
   } finally {
     exporting.value = false;

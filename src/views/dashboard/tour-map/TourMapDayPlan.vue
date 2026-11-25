@@ -45,7 +45,7 @@
       </template>
       <template v-if="day.description">
         <dt class="text-muted">
-          {{ $t("dashboard.tourMap.dayDescription") }}
+          {{ $t("itinerary.dayDescription") }}
         </dt>
         <dd class="m-0 text-[var(--el-text-color-regular)] whitespace-pre-line break-words">
           {{ day.description }}
@@ -61,7 +61,7 @@
       </template>
       <template v-if="day.meals.length">
         <dt class="text-muted">
-          {{ $t("dashboard.tourMap.meals") }}
+          {{ $t("websitePrint.mealsColumn") }}
         </dt>
         <dd class="m-0 text-[var(--el-text-color-regular)]">
           <div v-for="(meal, index) in day.meals" :key="index">

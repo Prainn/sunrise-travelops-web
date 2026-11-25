@@ -86,6 +86,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { ElMessage } from "element-plus";
+import { useI18n } from "vue-i18n";
 import AppDrawer from "@/components/AppDrawer/index.vue";
 import { resourceService } from "@/services/resource.service";
 import type { GuidePersonRecord, GuideRecord } from "@/types/resource";
@@ -96,6 +97,8 @@ import GuidePersonTable from "./components/GuidePersonTable.vue";
 import GuideTable from "./components/GuideTable.vue";
 
 defineOptions({ name: "Guide" });
+
+const { t } = useI18n();
 
 function createEmptyPerson(): GuidePersonRecord {
   return {
@@ -144,6 +147,7 @@ const {
   api: resourceService.guidePersonApi,
   loadRecords: (query) => resourceService.loadGuidePeople(query),
   createEmpty: createEmptyPerson,
+  deleteConfirmMessage: (row) => t("guide.deleteConfirm", { name: row.name }),
 });
 
 const isPersonDetailVisible = ref(false);
@@ -176,5 +180,6 @@ const {
   api: resourceService.guideApi,
   loadRecords: (query) => resourceService.loadGuides(query),
   createEmpty: createEmptyPrice,
+  deleteConfirmKey: "guide.deletePriceConfirm",
 });
 </script>

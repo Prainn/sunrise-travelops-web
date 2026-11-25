@@ -75,7 +75,7 @@ function createCrud<T extends { id: string; code?: string }>(
           ...(["guides", "guide-people", "flights"].includes(resourceName)
             ? {}
             : { code: data.code?.trim() || undefined }),
-        })
+        }, { userAction: true })
         .then((result) => {
           clearResourceOptionsCache();
           return fromResponse(result);
@@ -87,14 +87,14 @@ function createCrud<T extends { id: string; code?: string }>(
           ...toInput(data),
           id,
           version: (data as T & { version?: number }).version,
-        })
+        }, { userAction: true })
         .then((result) => {
           clearResourceOptionsCache();
           return fromResponse(result);
         });
     },
     async deleteByIds(ids) {
-      await request.delete<void>(baseUrl, { params: { ids } });
+      await request.delete<void>(baseUrl, { userAction: true, params: { ids } });
       clearResourceOptionsCache();
     },
   };
@@ -371,18 +371,18 @@ export const resourceService = {
     createContact(agencyId: string, data: AgencyContactRecord) {
       return request.post<AgencyContactRecord>(
         `${RESOURCE_BASE_URL}/agencies/${encodeURIComponent(agencyId)}/contacts`,
-        contactInput(data),
+        contactInput(data), { userAction: true },
       );
     },
     updateContact(agencyId: string, contactId: string, data: AgencyContactRecord) {
       return request.put<AgencyContactRecord>(
         `${RESOURCE_BASE_URL}/agencies/${encodeURIComponent(agencyId)}/contacts/${encodeURIComponent(contactId)}`,
-        { ...contactInput(data), id: contactId, version: data.version },
+        { ...contactInput(data), id: contactId, version: data.version }, { userAction: true },
       );
     },
     async deleteContacts(agencyId: string, ids: string) {
       const baseUrl = `${RESOURCE_BASE_URL}/agencies/${encodeURIComponent(agencyId)}/contacts`;
-      await request.delete<void>(baseUrl, { params: { ids } });
+      await request.delete<void>(baseUrl, { userAction: true, params: { ids } });
       clearResourceOptionsCache();
     },
   },

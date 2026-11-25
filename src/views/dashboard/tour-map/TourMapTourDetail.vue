@@ -92,7 +92,7 @@
         {{ tour.dropAt }}<span class="ml-2">{{ flightText("drop") }}</span>
       </dd>
       <dt class="text-muted">
-        {{ $t("tour.days") }}
+        {{ $t("inquiry.plannedDays") }}
       </dt>
       <dd class="m-0 text-[var(--el-text-color-regular)]">
         {{

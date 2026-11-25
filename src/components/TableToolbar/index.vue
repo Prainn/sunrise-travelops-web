@@ -13,13 +13,14 @@
         :label="$t('common.refresh')"
         :icon="Refresh"
         :loading="refreshing"
-        @click="emit('refresh')"
+        @click="handleRefresh"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { Refresh } from "@element-plus/icons-vue";
 import IconButton from "@/components/IconButton/index.vue";
 
@@ -37,6 +38,11 @@ withDefaults(
   { title: undefined, refreshable: true, refreshing: false },
 );
 const emit = defineEmits<{ refresh: [] }>();
+
+function handleRefresh() {
+  recordClientOperation({ action: "refresh", result: "success" });
+  emit("refresh");
+}
 </script>
 
 <style lang="scss">

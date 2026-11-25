@@ -75,11 +75,8 @@
       </el-row>
       <el-row :gutter="16">
         <el-col :span="isSeries ? 12 : 8">
-          <el-form-item
-            :label="$t(isEditing ? 'itineraryWorkspace.dayCount' : 'inquiry.plannedDays')"
-            prop="days"
-          >
-            <!-- 系列询盘没有计划天数，新建时每份行程独立填写 1–365 个实际服务日。 -->
+          <el-form-item :label="$t('inquiry.plannedDays')" prop="days">
+            <!-- 系列询盘在新建行程时单独填写服务天数。 -->
             <el-input-number
               v-model="form.days"
               :disabled="!daysEditable"
@@ -235,7 +232,7 @@ const rules = computed<FormRules>(() => ({
       type: "integer",
       required: true,
       ...DAYS_PATTERN,
-      message: t("itinerary.serviceDaysRequired"),
+      message: t("itinerary.daysRange", { label: t("inquiry.plannedDays") }),
       trigger: "change",
     },
   ],

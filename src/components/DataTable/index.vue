@@ -1,5 +1,5 @@
 <template>
-  <div class="data-table" :class="{ 'data-table--fill': fill }">
+  <div ref="container" class="data-table" :class="{ 'data-table--fill': fill }">
     <el-table
       ref="tableRef"
       v-loading="loading"
@@ -7,6 +7,10 @@
       :border="border"
       :height="fill ? '100%' : height"
       v-bind="$attrs"
+      @sort-change="handleSortChange"
+      @expand-change="handleExpandChange"
+      @select="handleSelect"
+      @select-all="handleSelect"
     >
       <template v-for="(_, name) in $slots" #[name]="scope">
         <slot :name="name" v-bind="scope ?? {}" />
@@ -17,7 +21,7 @@
           :title="error ? undefined : emptyText"
           :description="error || undefined"
           :retryable="Boolean(error)"
-          @retry="emit('retry')"
+          @retry="handleRetry"
         />
       </template>
     </el-table>
@@ -25,9 +29,11 @@
 </template>
 
 <script setup lang="ts">
+import { isUserInput } from "@/utils/user-interaction";
 import { ref } from "vue";
 import type { TableInstance } from "element-plus";
 import FeedbackState from "@/components/FeedbackState/index.vue";
+import { recordClientOperation } from "@/utils/client-operation-log";
 
 /**
  * 通用表格：在 ElTable 上统一外框、表头、单元格换行、加载与空态反馈。
@@ -62,9 +68,27 @@ withDefaults(
     error: "",
   },
 );
+const container = ref<HTMLElement>();
 const emit = defineEmits<{ retry: [] }>();
 
 const tableRef = ref<TableInstance>();
+
+function handleSortChange() {
+  if (isUserInput(container.value ?? null)) recordClientOperation({ action: "sort", result: "success" });
+}
+
+function handleExpandChange() {
+  if (isUserInput(container.value ?? null)) recordClientOperation({ action: "expand", result: "success" });
+}
+
+function handleSelect() {
+  if (isUserInput(container.value ?? null)) recordClientOperation({ action: "select", result: "success" });
+}
+
+function handleRetry() {
+  if (isUserInput(container.value ?? null)) recordClientOperation({ action: "retry", result: "success" });
+  emit("retry");
+}
 
 defineExpose({ table: tableRef });
 </script>

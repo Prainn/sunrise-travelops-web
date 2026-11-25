@@ -162,8 +162,8 @@ export function useWebsiteRouteRules() {
     ...transportRules(t),
     nameZh: requiredText(t, "websiteConfig.routes.nameZh"),
     nameEn: requiredText(t, "websiteConfig.routes.nameEn"),
-    fromCityId: cityRules(t, "websiteConfig.routes.fromCity"),
-    toCityId: cityRules(t, "websiteConfig.routes.toCity"),
+    fromCityId: cityRules(t, "websiteItineraryUi.departureCity"),
+    toCityId: cityRules(t, "websiteItineraryUi.arrivalCity"),
   }));
 }
 

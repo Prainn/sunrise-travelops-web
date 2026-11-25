@@ -31,7 +31,7 @@
             <span class="inline-flex flex-wrap items-center gap-x-2 gap-y-1 whitespace-normal">
               <span class="[overflow-wrap:anywhere]">{{ localName(hotel) || $t("websiteItineraryUi.hotelNameMissing") }}</span>
               <el-tag size="small" effect="plain" :type="hotel.breakfastIncluded ? 'success' : 'info'">
-                {{ $t(hotel.breakfastIncluded ? "websiteItineraryUi.breakfastIncludedShort" : "websiteItineraryUi.breakfastExcludedShort") }}
+                {{ $t(hotel.breakfastIncluded ? "websitePrint.breakfastIncluded" : "websitePrint.breakfastExcluded") }}
               </el-tag>
               <span>{{ $t(`websiteItineraryUi.hotelTier${hotel.tier}`) }}</span>
             </span>

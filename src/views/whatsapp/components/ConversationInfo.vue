@@ -15,7 +15,7 @@
       </el-descriptions-item>
       <el-descriptions-item :label="$t('whatsapp.owner')">
         <span :class="{ 'text-[var(--el-color-warning)]': !detail.ownerId }">
-          {{ detail.ownerName || $t("whatsapp.unassigned") }}
+          {{ detail.ownerName || $t("whatsapp.views.unassigned") }}
         </span>
       </el-descriptions-item>
       <el-descriptions-item v-if="detail.assignmentLockedAt" :label="$t('whatsapp.assignmentLock')">
@@ -68,7 +68,7 @@
               :loading="busy"
               @click="emit('create-inquiry')"
             >
-              {{ $t("whatsapp.createInquiry") }}
+              {{ $t("websiteInquiry.log.actions.inquiry_created") }}
             </el-button>
             <div v-if="!detail.ownerId && detail.state !== 'archived'" class="w-full text-[var(--el-color-warning)]">
               {{ $t("whatsapp.assignBeforeInquiry") }}
@@ -105,7 +105,7 @@
 
     <template v-if="detail.tours.length || detail.previousId || detail.capabilities.canStartConsultation">
       <h4 class="mt-[16px] mb-[8px] text-[14px] text-strong font-600">
-        {{ $t("whatsapp.tours") }}
+        {{ $t("tour.records") }}
       </h4>
       <el-alert
         v-if="detail.hasFormedTours && detail.state !== 'archived'"

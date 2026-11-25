@@ -2,17 +2,21 @@
   <section class="flex flex-col gap-3" :class="{ 'surface-muted p-4': !legId }">
     <div v-if="!legId" class="flex flex-wrap justify-between items-center gap-3">
       <h4 class="m-0 text-[14px] text-strong font-600">
-        {{ $t("websiteItineraryUi.transportLegs") }}
+        {{ $t("websiteConfig.tabs.routes") }}
       </h4>
       <el-button
         v-if="editable"
         link
         type="primary"
+        :disabled="day.legs.length >= 100"
         @click="emit('add')"
       >
-        {{ $t("itineraryWorkspace.actions.transport") }}
+        {{ $t("common.create") }}
       </el-button>
     </div>
+    <p v-if="!legId && !visibleLegs.length" class="m-0 text-[12px] text-muted">
+      {{ $t("websiteItineraryUi.noTransportLegs") }}
+    </p>
     <div
       v-for="leg in visibleLegs"
       :key="leg.id"
@@ -20,11 +24,23 @@
     >
       <div class="flex items-start gap-3">
         <div class="min-w-0 flex-1 flex flex-col gap-1 text-[14px] [overflow-wrap:anywhere]">
-          <strong class="text-strong">{{ cityName(leg.fromCityId) }} → {{ cityName(leg.toCityId) }}</strong>
-          <span v-if="leg.isAirportPickup || leg.isAirportDropoff" class="flex gap-1">
-            <el-tag v-if="leg.isAirportPickup" size="small">{{ $t("websiteItineraryUi.airportPickup") }}</el-tag>
-            <el-tag v-if="leg.isAirportDropoff" size="small">{{ $t("websiteItineraryUi.airportDropoff") }}</el-tag>
-          </span>
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <strong class="text-strong">{{ cityName(leg.fromCityId) }} → {{ cityName(leg.toCityId) }}</strong>
+            <el-tag
+              v-if="leg.routeId"
+              size="small"
+              type="info"
+              effect="plain"
+            >
+              {{ $t("websiteConfig.tabs.routes") }}
+            </el-tag>
+            <el-tag v-if="leg.isAirportPickup" size="small">
+              {{ $t("websiteItineraryUi.airportPickup") }}
+            </el-tag>
+            <el-tag v-if="leg.isAirportDropoff" size="small">
+              {{ $t("websiteItineraryUi.airportDropoff") }}
+            </el-tag>
+          </div>
           <span class="text-muted">{{ $t(TRANSPORT_OPTIONS.find(option => option.value === leg.mode)!.labelKey) }}<span class="ml-2">{{ $t(`websiteInquiry.feeStates.${leg.feeState}`) }}</span></span>
           <span v-if="leg.vehicleType">{{ vehicleLabel(leg.vehicleType) }}</span>
           <span v-if="leg.distanceKm != null || leg.durationMinutes != null">{{ leg.distanceKm == null ? $t('websiteReport.notSpecified') : `${leg.distanceKm} km` }}<span class="ml-2">{{ leg.durationMinutes == null ? $t('websiteReport.notSpecified') : $t('websiteReport.minutesValue', { value: leg.durationMinutes }) }}</span></span>
@@ -43,23 +59,77 @@
   </section>
   <AppDialog
     :model-value="Boolean(draft)"
-    :title="$t('websiteItineraryUi.transportLegs')"
+    :title="$t('websiteConfig.tabs.routes')"
     size="lg"
     append-to-body
     @close="draft = null"
   >
+    <template #header="{ titleId, titleClass }">
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <h2 :id="titleId" :class="titleClass" class="m-0">
+          {{ $t("websiteConfig.tabs.routes") }}
+        </h2>
+        <el-tag
+          v-if="draft?.routeId"
+          size="small"
+          type="info"
+          effect="plain"
+        >
+          {{ $t("websiteConfig.tabs.routes") }}
+        </el-tag>
+      </div>
+    </template>
     <el-form
       v-if="draft"
       ref="formRef"
       :model="draft"
       :rules="rules"
       label-position="top"
+      scroll-to-error
       :disabled="!editable"
       @submit.prevent
     >
       <div class="grid grid-cols-3 gap-x-4 max-[650px]:grid-cols-1">
-        <el-form-item :label="$t('websiteItineraryUi.departureCity')">
-          <el-select v-model="draft.fromCityId" autocomplete="new-password" filterable>
+        <el-form-item :label="$t('websiteItineraryUi.resourceSource')">
+          <el-radio-group v-model="source">
+            <el-radio-button value="route">
+              {{ $t("websiteItineraryUi.selectTransportRoute") }}
+            </el-radio-button>
+            <el-radio-button value="manual">
+              {{ $t("websiteItineraryUi.sourceManual") }}
+            </el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item
+          v-if="source === 'route'"
+          class="col-span-2 max-[650px]:col-span-1"
+          :label="$t('websiteConfig.tabs.routes')"
+          prop="routeId"
+        >
+          <el-select
+            :model-value="selectedRoute?.id"
+            autocomplete="new-password"
+            filterable
+            @update:model-value="selectRoute"
+          >
+            <el-option
+              v-for="route in routeOptions"
+              :key="route.id"
+              :value="route.id"
+              :label="routeLabel(route)"
+              :disabled="route.status !== 'enabled'"
+            />
+          </el-select>
+        </el-form-item>
+      </div>
+      <div class="grid grid-cols-3 gap-x-4 max-[650px]:grid-cols-1">
+        <el-form-item :label="$t('websiteItineraryUi.departureCity')" :prop="source === 'manual' ? 'fromCityId' : undefined">
+          <el-select
+            v-model="draft.fromCityId"
+            :disabled="source === 'route'"
+            autocomplete="new-password"
+            filterable
+          >
             <el-option
               v-for="city in cityOptions"
               :key="city.id"
@@ -68,8 +138,13 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$t('websiteItineraryUi.arrivalCity')">
-          <el-select v-model="draft.toCityId" autocomplete="new-password" filterable>
+        <el-form-item :label="$t('websiteItineraryUi.arrivalCity')" :prop="source === 'manual' ? 'toCityId' : undefined">
+          <el-select
+            v-model="draft.toCityId"
+            :disabled="source === 'route'"
+            autocomplete="new-password"
+            filterable
+          >
             <el-option
               v-for="city in cityOptions"
               :key="city.id"
@@ -101,7 +176,7 @@
           v-model="draft"
           :mode="draft.mode"
           :vehicle-options="vehicleOptions"
-          :configured-vehicles-only="Boolean(draft.routeId)"
+          :configured-vehicles-only="source === 'route'"
           :airport-transfers="airportTransfers"
         />
       </div>
@@ -110,7 +185,7 @@
       <el-button @click="draft = null">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button type="primary" :disabled="!editable" @click="saveEdit">
+      <el-button type="primary" :disabled="!editable" @click="handleSaveEdit">
         {{ $t("common.confirm") }}
       </el-button>
     </template>
@@ -120,8 +195,8 @@
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
-import type { WebsiteConfig, WebsiteDay, WebsiteLeg } from "@/types/website";
-import type { FormInstance } from "element-plus";
+import type { WebsiteConfig, WebsiteDay, WebsiteLeg, WebsiteRoute } from "@/types/website";
+import type { FormInstance, FormRules } from "element-plus";
 import WebsiteTransportFields from "./WebsiteTransportFields.vue";
 import { transportRules } from "@/views/resources/website/useWebsiteConfigRules";
 import { TRANSPORT_OPTIONS } from "../../options";
@@ -129,6 +204,8 @@ import { websiteVehicleLabel } from "@/utils/website-vehicle";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
 import { websiteCityOptions, websiteDayRouteCityIds } from "../city-options";
 import { airportTransferPlaceholder, setTransportLeg, type AirportTransferOptions } from "../airport-transfers";
+import { websiteDayEventIds } from "../event-order";
+import { websiteRouteTransportDetails } from "../transport-route";
 const day = defineModel<WebsiteDay>("day", { required: true });
 const props = defineProps<{
   config: WebsiteConfig;
@@ -140,31 +217,88 @@ const props = defineProps<{
 const emit = defineEmits<{ add: []; remove: [id: string, name: string] }>();
 const { t, locale } = useI18n();
 const draft = ref<WebsiteLeg | null>(null);
+const source = ref<"route" | "manual">("manual");
 const formRef = ref<FormInstance>();
 const cityOptions = computed(() => websiteCityOptions(
   props.config.cities,
   props.selectableCityIds,
   ...websiteDayRouteCityIds(day.value),
 ));
+const selectedRoute = computed(() => {
+  const leg = draft.value;
+  if (!leg?.routeId) return;
+  return props.config.routes.find(route =>
+    route.id === leg.routeId && route.fromCityId === leg.fromCityId && route.toCityId === leg.toCityId,
+  );
+});
+const routeOptions = computed(() => {
+  const cityIds = new Set(cityOptions.value.map(city => city.id));
+  return props.config.routes.filter(route => route.id === selectedRoute.value?.id ||
+    (route.status === "enabled" && cityIds.has(route.fromCityId) && cityIds.has(route.toCityId)));
+});
 const vehicleOptions = computed(() => {
-  if (draft.value?.routeId) return props.config.routes.find(route => route.id === draft.value?.routeId)?.vehicleOptions ?? [];
+  if (source.value === "route") return selectedRoute.value?.vehicleOptions ?? [];
   return props.config.routes.filter(route => route.status === "enabled" && route.mode === "private_vehicle"
     && route.fromCityId === draft.value?.fromCityId && route.toCityId === draft.value?.toCityId).flatMap(route => route.vehicleOptions ?? []);
 });
+const rules = computed<FormRules<WebsiteLeg>>(() => ({
+  ...transportRules(t),
+  routeId: [{
+    required: true,
+    validator: (_rule, _value, callback) => {
+      callback(selectedRoute.value ? undefined : new Error(t("websiteItineraryUi.selectTransportRoute")));
+    },
+    trigger: "change",
+  }],
+  fromCityId: [{ required: true, message: t("common.selectCity"), trigger: "change" }],
+  toCityId: [{ required: true, message: t("common.selectCity"), trigger: "change" }],
+}));
+const visibleLegs = computed(() => {
+  if (props.legId) return day.value.legs.filter(leg => leg.id === props.legId);
+  const byId = new Map(day.value.legs.map(leg => [leg.id, leg]));
+  return websiteDayEventIds(day.value).flatMap(id => {
+    const leg = byId.get(id);
+    return leg ? [leg] : [];
+  });
+});
+watch(source, (value) => {
+  if (value === "manual" && draft.value) draft.value.routeId = null;
+});
+watch(() => draft.value?.mode, mode => { if (draft.value && mode !== "private_vehicle") draft.value.vehicleType = null; });
+
 function vehicleLabel(value: string) {
   return websiteVehicleLabel(value, t);
 }
-const rules = computed(() => transportRules(t));
-watch(() => draft.value?.mode, mode => { if (draft.value && mode !== "private_vehicle") draft.value.vehicleType = null; });
-const visibleLegs = computed(() => day.value.legs.filter(leg => !props.legId || leg.id === props.legId));
+function routeLabel(route: WebsiteRoute) {
+  const name = locale.value === "en" ? route.nameEn : route.nameZh;
+  const mode = TRANSPORT_OPTIONS.find(option => option.value === route.mode);
+  return mode ? `${name} (${t(mode.labelKey)})` : name;
+}
 function cityName(id: string) {
   const city = props.config.cities.find(item => item.id === id);
   return city ? (locale.value === "en" ? city.nameEn : city.nameZh) : "-";
 }
 function openEdit(item: WebsiteLeg) {
-  if (props.editable) draft.value = { ...item };
+  if (!props.editable) return;
+  draft.value = { ...item };
+  source.value = item.routeId ? "route" : "manual";
 }
-async function saveEdit() {
+function selectRoute(id: string) {
+  const route = routeOptions.value.find(option => option.id === id && option.status === "enabled");
+  if (!draft.value || !route) return;
+  draft.value = {
+    ...draft.value,
+    routeId: route.id,
+    fromCityId: route.fromCityId,
+    toCityId: route.toCityId,
+    mode: route.mode,
+    nameZh: route.nameZh,
+    nameEn: route.nameEn,
+    feeState: route.feeState,
+    ...websiteRouteTransportDetails(route),
+  };
+}
+async function handleSaveEdit() {
   if (!props.editable || !draft.value || !(await formRef.value?.validate().catch(() => false))) return;
   const selected = draft.value;
   if (day.value.legs.some(leg => leg.id === selected.id)) setTransportLeg(day.value, selected);

@@ -531,6 +531,7 @@
 </template>
 
 <script setup lang="ts">
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { COORDINATOR_DUTIES, isCoordinatorIdentity } from "@/constants/coordinator-duty";
 import { loginScopeName } from "@/constants/identity";
 import { formatDateTime } from "@/utils";
@@ -644,7 +645,7 @@ const feishuTestUser = ref<UserItem>();
 const feishuTestTemplate = ref<FeishuTestTemplate>("linxi_ledger_review");
 function feishuTestLabel(template: FeishuTestTemplate): string {
   if (template === "whatsapp_unassigned") return "user.feishuUnassignedTemplate";
-  if (template === "whatsapp_message") return "user.feishuNewMessageTemplate";
+  if (template === "whatsapp_message") return "notificationSettings.types.whatsapp_message";
   return `notificationSettings.types.${template}`;
 }
 function openFeishuTest(row: UserItem): void {
@@ -808,8 +809,10 @@ async function showTemporaryPassword(password: string): Promise<void> {
             onClick: async () => {
               try {
                 await navigator.clipboard.writeText(password);
+                recordClientOperation({ page: "User", action: "copy", result: "success" });
                 ElMessage.success(t("user.passwordCopied"));
               } catch {
+                recordClientOperation({ page: "User", action: "copy", result: "failure" });
                 ElMessage.error(t("user.passwordCopyFailed"));
               }
             },
