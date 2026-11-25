@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRenderer, defineComponent, h, nextTick, reactive, ref, type Component, type ComponentPublicInstance } from "vue";
 import type { FeeState, WebsiteAttraction, WebsiteConfig, WebsiteDay, WebsiteLeg, WebsiteRoute } from "@/types/website";
 import BusinessDictionarySelect from "@/components/BusinessDictionarySelect/index.vue";
+import { businessDictionaryService } from "@/services/business-dictionary.service";
 import type { ReorderBoardItem } from "@/views/inquiries/itineraries/reorder-board";
 import { ElMessageBox } from "element-plus";
 import ItineraryReorderDialog from "@/views/inquiries/itineraries/components/ItineraryReorderDialog.vue";
@@ -399,7 +400,7 @@ it("shows transport fields when a route is selected and uses its vehicles or the
   expect(vehicleSelect()?.props["model-value"]).toBeNull();
 
   await selectRoute(emptyRoute);
-  expect(choices()).toEqual(["5_seat", "9_seat", "19_seat", "49_seat"]);
+  expect(choices()).toEqual(["seat5", "9_seat", "19_seat", "49_seat"]);
   expect(vehicleSelect()?.props["allow-create"]).toBe(true);
 
   const fromCity = view.find("ElSelect")[0]!;
@@ -410,7 +411,7 @@ it("shows transport fields when a route is selected and uses its vehicles or the
 
   await setSource("manual");
   expect(hasDetails()).toBe(true);
-  expect(choices()).toEqual(["5_seat", "9_seat", "19_seat", "49_seat"]);
+  expect(choices()).toEqual(["seat5", "9_seat", "19_seat", "49_seat"]);
   expect(vehicleSelect()?.props["allow-create"]).toBe(true);
 });
 
@@ -422,7 +423,7 @@ it.each([
   const route: WebsiteRoute = {
     id: "route", status: "enabled", fromCityId: "city", toCityId: "city", mode: "private_vehicle",
     nameZh: "昆明包车", nameEn: "Private vehicle", feeState: "INCLUDED",
-    vehicleOptions: source === "route" ? [] : [{ vehicleType: "5座", durationMinutes: 45 }],
+    vehicleOptions: source === "route" ? [] : [{ vehicleType: "seat5", durationMinutes: 45 }],
   };
   const config = { cities: [{ id: "city", nameZh: "昆明", nameEn: "Kunming", status: "enabled" }], routes: [route] };
   const submit = vi.fn<(leg: WebsiteLeg) => void>();
@@ -438,38 +439,58 @@ it.each([
   await nextTick();
   const selector = view.find("ElSelect").find(select => select.props.onVisibleChange)!;
   const options = view.find("ElOption", selector).filter(option => option.props.label === "5座");
-  expect(options.map(option => option.props.value)).toEqual(["5_seat"]);
+  expect(options.map(option => option.props.value)).toEqual(["seat5"]);
   (selector.props["onUpdate:modelValue"] as (value: unknown) => void)(options[0]!.props.value);
   await nextTick();
   await view.click("common.confirm");
   expect(submit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
-    routeId: source === "route" ? route.id : null, vehicleType: "5_seat", durationMinutes,
+    routeId: source === "route" ? route.id : null, vehicleType: "seat5", durationMinutes,
   }));
   const [leg] = submit.mock.calls[0]!;
-  const configuredLeg = { ...leg, id: "configured-leg", routeId: "configured-route", vehicleType: "5_seat" };
-  expect(quotationCandidates([{ ...day, legs: [configuredLeg, leg] }]).vehicleTypes).toEqual(["5_seat"]);
+  const configuredLeg = { ...leg, id: "configured-leg", routeId: "configured-route", vehicleType: "seat5" };
+  expect(quotationCandidates([{ ...day, legs: [configuredLeg, leg] }]).vehicleTypes).toEqual(["seat5"]);
 });
 
-it("disables vehicles used by other rows, including dictionary aliases and hand-entered values", async () => {
+it("disables exactly the values used by other rows and preserves hand-entered names", async () => {
   const update = vi.fn();
   const view = render(BusinessDictionarySelect, {
-    modelValue: "5座", typeCode: "vehicle-type", disabledValues: ["9_seat", "49座", "商务车"], "onUpdate:modelValue": update,
+    modelValue: "5座", typeCode: "vehicle-type", disabledValues: ["9_seat", "49_seat", "商务车"], "onUpdate:modelValue": update,
   });
   await nextTick();
   await nextTick();
   expect(view.find("ElOption").filter(option => option.props.disabled).map(option => option.props.label))
     .toEqual(["49座", "9座", "商务车"]);
-  expect(view.find("ElOption").find(option => option.props.value === "5_seat")?.props.disabled).toBe(false);
+  expect(view.find("ElOption").find(option => option.props.value === "seat5")?.props.disabled).toBe(false);
   const selector = view.find("ElSelect")[0]!;
   expect(selector.props["model-value"]).toBe("5座");
   const select = selector.props["onUpdate:modelValue"] as (value: string) => void;
-  select("9-seat vehicle");
+  select("9_seat");
   select("商务车 ");
   expect(update).not.toHaveBeenCalled();
-  select("5_seat");
+  select("seat5");
   select("19座");
   select("定制越野车");
-  expect(update.mock.calls.map(([value]) => value)).toEqual(["5_seat", "19_seat", "定制越野车"]);
+  expect(update.mock.calls.map(([value]) => value)).toEqual(["seat5", "19座", "定制越野车"]);
+});
+
+it("keeps same-name vehicle codes separately selectable", async () => {
+  vi.spyOn(businessDictionaryService, "getItems").mockResolvedValueOnce(
+    ["seat13", "13_seat"].map(code => ({ id: code, code, name: "13座", englishName: "coach", status: "enabled", remark: "" })),
+  );
+  const update = vi.fn();
+  const view = render(BusinessDictionarySelect, {
+    modelValue: "seat13", typeCode: "vehicle-type", disabledValues: ["seat13"], "onUpdate:modelValue": update,
+  });
+  await nextTick();
+  await nextTick();
+  const options = view.find("ElOption");
+  expect(options.map(option => [option.props.label, option.props.value, option.props.disabled])).toEqual([
+    ["13座", "seat13", true], ["13座", "13_seat", false],
+  ]);
+  const select = view.find("ElSelect")[0]!.props["onUpdate:modelValue"] as (value: string) => void;
+  select("seat13");
+  select("13_seat");
+  expect(update.mock.calls).toEqual([["13_seat"]]);
 });
 
 it("keeps the saved vehicle while limiting new choices to the resource and applying its duration", async () => {
