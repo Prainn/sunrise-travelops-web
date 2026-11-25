@@ -124,7 +124,8 @@ import type { WebsiteConfig, WebsiteDay, WebsiteLeg } from "@/types/website";
 import type { FormInstance } from "element-plus";
 import WebsiteTransportFields from "./WebsiteTransportFields.vue";
 import { transportRules } from "@/views/resources/website/useWebsiteConfigRules";
-import { TRANSPORT_OPTIONS, VEHICLE_OPTIONS } from "../../options";
+import { TRANSPORT_OPTIONS } from "../../options";
+import { websiteVehicleLabel } from "@/utils/website-vehicle";
 import FeeStateSelect from "../../components/FeeStateSelect.vue";
 import { websiteCityOptions, websiteDayRouteCityIds } from "../city-options";
 import { airportTransferPlaceholder, setTransportLeg, type AirportTransferOptions } from "../airport-transfers";
@@ -151,8 +152,7 @@ const vehicleOptions = computed(() => {
     && route.fromCityId === draft.value?.fromCityId && route.toCityId === draft.value?.toCityId).flatMap(route => route.vehicleOptions ?? []);
 });
 function vehicleLabel(value: string) {
-  const option = VEHICLE_OPTIONS.find(option => option.value === value);
-  return option ? t(option.labelKey) : value;
+  return websiteVehicleLabel(value, t);
 }
 const rules = computed(() => transportRules(t));
 watch(() => draft.value?.mode, mode => { if (draft.value && mode !== "private_vehicle") draft.value.vehicleType = null; });

@@ -622,6 +622,7 @@
     "optionCode": "选项编码",
     "optionNameRequired": "输入选项名称",
     "optionCodeRequired": "输入选项编码",
+    "vehicleCodeFormat": "请输入座位数加 _seat，例如 38_seat",
     "optionCodeDuplicate": "选项编码已存在",
     "optionSearchPlaceholder": "选项名称或编码",
     "createOptionTitle": "新增分类选项",
@@ -1526,13 +1527,7 @@
       "SELF_PAY": "自理",
       "UNKNOWN": "待确认"
     },
-    "vehicleTypes": {
-      "5_seat": "5座",
-      "7_seat": "7座",
-      "9_seat": "9座",
-      "14_seat": "14座",
-      "18_seat": "18座"
-    },
+    "vehicleSeatLabel": "{seats}座",
     "transportModes": {
       "hsr": "高铁",
       "private_vehicle": "专车",

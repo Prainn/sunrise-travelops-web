@@ -93,7 +93,7 @@
           <table class="price-table">
             <thead>
               <tr>
-                <th>{{ $t("websiteReport.vehicleType") }}</th>
+                <th>{{ $t("resource.vehicleModel") }}</th>
                 <th v-for="category in tableCategories" :key="category">
                   {{ $t(`websiteItineraryUi.priceCategories.${category}`) }}
                 </th>
@@ -211,7 +211,8 @@ import type {
   WebsitePriceComponent,
   WebsiteVehiclePriceInput,
 } from "@/types/website";
-import { VEHICLE_OPTIONS, cloneWebsiteDraft } from "../../options";
+import { cloneWebsiteDraft } from "../../options";
+import { websiteVehicleLabel } from "@/utils/website-vehicle";
 import type { WebsiteConfig, WebsiteDay, WebsiteHotelPricingMode } from "@/types/website";
 import { nightlyAccommodation, nightlyPackage } from "../nightly-pricing";
 import WebsiteNightlyStays from "./WebsiteNightlyStays.vue";
@@ -417,8 +418,7 @@ function tierLabel(tier: WebsiteHotelTier | null) {
 }
 function vehicleLabel(vehicleType: string | null) {
   if (vehicleType === null) return t("websiteItineraryUi.noPrivateVehicle");
-  const option = VEHICLE_OPTIONS.find(item => item.value === vehicleType);
-  return option ? t(option.labelKey) : vehicleType;
+  return websiteVehicleLabel(vehicleType, t);
 }
 function hasCategoryPrice(category: WebsitePriceCategory) {
   if (category === "hotel") {

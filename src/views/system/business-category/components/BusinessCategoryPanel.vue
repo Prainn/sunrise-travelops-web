@@ -267,6 +267,11 @@ const rules = computed<FormRules<CategoryItem>>(() => ({
       ),
       trigger: "blur",
     },
+    ...(props.category.code === "vehicle-type" && !editingId.value ? [{
+      pattern: /^[1-9]\d*_seat$/,
+      message: t("businessCategory.vehicleCodeFormat"),
+      trigger: "blur",
+    }] : []),
   ],
   resourceTypes: [
     {

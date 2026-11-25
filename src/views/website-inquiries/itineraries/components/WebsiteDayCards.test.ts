@@ -1,3 +1,4 @@
+import zhMessages from "@/lang/package/zh-cn.json";
 /* eslint vue/one-component-per-file: off -- The renderer uses explicit UI stubs. */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRenderer, defineComponent, h, nextTick, reactive, ref, type Component, type ComponentPublicInstance } from "vue";
@@ -8,12 +9,16 @@ import { ElMessageBox } from "element-plus";
 import ItineraryReorderDialog from "@/views/inquiries/itineraries/components/ItineraryReorderDialog.vue";
 import { emptyDay } from "../../options";
 
-vi.mock("vue-i18n", () => ({ useI18n: () => ({ locale: ref("zh-cn"), t: (key: string) => key }) }));
+vi.mock("vue-i18n", () => ({ useI18n: () => ({
+  locale: ref("zh-cn"),
+  t: (key: string, params?: { seats: string }) => key === "websiteInquiry.vehicleSeatLabel" && params
+    ? zhMessages.websiteInquiry.vehicleSeatLabel.replace("{seats}", params.seats) : key,
+}) }));
 vi.mock("@/services/business-dictionary.service", () => ({
   businessDictionaryService: {
     getItems: async () => [49, 19, 9, 5].map(seats => ({
       id: `seat${seats}`,
-      code: `seat${seats}`,
+      code: seats === 5 ? "seat5" : `${seats}_seat`,
       name: `${seats}座`,
       englishName: `${seats}-seat vehicle`,
       status: "enabled",
@@ -350,7 +355,7 @@ it("shows transport fields when a route is selected and uses its vehicles or the
   const route: WebsiteRoute = {
     id: "route", status: "enabled", fromCityId: "city", toCityId: "city", mode: "private_vehicle",
     nameZh: "昆明包车", nameEn: "Private vehicle", feeState: "INCLUDED", distanceKm: "50",
-    vehicleOptions: [{ vehicleType: "49座", durationMinutes: null }, { vehicleType: "9座", durationMinutes: 120 }],
+    vehicleOptions: [{ vehicleType: "49_seat", durationMinutes: null }, { vehicleType: "9_seat", durationMinutes: 120 }],
   };
   const emptyRoute = { ...route, id: "empty", vehicleOptions: [] };
   const config = {
@@ -379,22 +384,22 @@ it("shows transport fields when a route is selected and uses its vehicles or the
   expect(view.find("ElSwitch")).toHaveLength(0);
   await selectRoute(route);
   expect(hasDetails()).toBe(true);
-  expect(choices()).toEqual(["9座", "49座"]);
+  expect(choices()).toEqual(["9_seat", "49_seat"]);
   expect(vehicleSelect()?.props["allow-create"]).toBe(false);
-  (vehicleSelect()!.props["onUpdate:modelValue"] as (value: string) => void)("9座");
+  (vehicleSelect()!.props["onUpdate:modelValue"] as (value: string) => void)("9_seat");
   await nextTick();
   expect(view.find("ElInputNumber")[0]?.props["model-value"]).toBe(120);
 
   await setSource("manual");
-  (vehicleSelect()!.props["onUpdate:modelValue"] as (value: string) => void)("19座");
+  (vehicleSelect()!.props["onUpdate:modelValue"] as (value: string) => void)("19_seat");
   await nextTick();
-  expect(vehicleSelect()?.props["model-value"]).toBe("19座");
+  expect(vehicleSelect()?.props["model-value"]).toBe("19_seat");
   await setSource("route");
-  expect(choices()).toEqual(["9座", "49座"]);
+  expect(choices()).toEqual(["9_seat", "49_seat"]);
   expect(vehicleSelect()?.props["model-value"]).toBeNull();
 
   await selectRoute(emptyRoute);
-  expect(choices()).toEqual(["5_seat", "9_seat", "19座", "49座"]);
+  expect(choices()).toEqual(["5_seat", "9_seat", "19_seat", "49_seat"]);
   expect(vehicleSelect()?.props["allow-create"]).toBe(true);
 
   const fromCity = view.find("ElSelect")[0]!;
@@ -405,7 +410,7 @@ it("shows transport fields when a route is selected and uses its vehicles or the
 
   await setSource("manual");
   expect(hasDetails()).toBe(true);
-  expect(choices()).toEqual(["5_seat", "9_seat", "19座", "49座"]);
+  expect(choices()).toEqual(["5_seat", "9_seat", "19_seat", "49_seat"]);
   expect(vehicleSelect()?.props["allow-create"]).toBe(true);
 });
 
@@ -464,7 +469,7 @@ it("disables vehicles used by other rows, including dictionary aliases and hand-
   select("5_seat");
   select("19座");
   select("定制越野车");
-  expect(update.mock.calls.map(([value]) => value)).toEqual(["5_seat", "19座", "定制越野车"]);
+  expect(update.mock.calls.map(([value]) => value)).toEqual(["5_seat", "19_seat", "定制越野车"]);
 });
 
 it("keeps the saved vehicle while limiting new choices to the resource and applying its duration", async () => {
