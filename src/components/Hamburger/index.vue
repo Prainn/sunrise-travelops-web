@@ -7,6 +7,7 @@
 <script setup lang="ts">
 import { useSettingsStore } from "@/stores/settings";
 import { ThemeMode, SidebarColor, LayoutMode } from "@/enums/settings";
+import { recordClientOperation } from "@/utils/client-operation-log";
 
 defineProps({
   isActive: { type: Boolean, required: true },
@@ -33,6 +34,7 @@ const hamburgerClass = computed(() => {
 });
 
 function toggleClick() {
+  recordClientOperation({ action: "layout", result: "success" });
   emit("toggleClick");
 }
 </script>

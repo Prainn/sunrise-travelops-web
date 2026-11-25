@@ -55,7 +55,7 @@
         </div>
         <div class="flex items-center justify-between gap-[8px] text-[12px]">
           <span :class="item.ownerId ? 'text-muted' : 'text-[var(--el-color-warning)]'">
-            {{ item.ownerName || (item.state === "open" ? $t("whatsapp.unassigned") : "") }}
+            {{ item.ownerName || (item.state === "open" ? $t("whatsapp.views.unassigned") : "") }}
           </span>
           <el-tag size="small" :type="STATE_TAG_TYPES[item.state]">
             {{ $t(`whatsapp.states.${item.state}`) }}

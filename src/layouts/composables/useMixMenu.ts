@@ -1,3 +1,4 @@
+import { openUserPage } from "@/utils/user-interaction";
 import type { LocationQueryRaw, RouteRecordRaw } from "vue-router";
 import { useLayout } from "./useLayout";
 import { useAppStore } from "@/stores/app";
@@ -88,7 +89,7 @@ export function useMixMenu() {
     if (first.children?.length) {
       navigateToFirstMenu(first.children as RouteRecordRaw[]);
     } else if (first.name) {
-      router.push({
+      openUserPage(router, {
         name: first.name,
         query:
           typeof first.meta?.params === "object"

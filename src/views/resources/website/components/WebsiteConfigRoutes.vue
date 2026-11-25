@@ -17,12 +17,12 @@
     >
       <el-table-column prop="nameZh" :label="$t('websiteConfig.routes.nameZh')" min-width="160" />
       <el-table-column prop="nameEn" :label="$t('websiteConfig.routes.nameEn')" min-width="180" />
-      <el-table-column :label="$t('websiteConfig.routes.fromCity')" min-width="120">
+      <el-table-column :label="$t('websiteItineraryUi.departureCity')" min-width="120">
         <template #default="{ row }">
           {{ labels[row.fromCityId] ?? row.fromCityId }}
         </template>
       </el-table-column>
-      <el-table-column :label="$t('websiteConfig.routes.toCity')" min-width="120">
+      <el-table-column :label="$t('websiteItineraryUi.arrivalCity')" min-width="120">
         <template #default="{ row }">
           {{ labels[row.toCityId] ?? row.toCityId }}
         </template>
@@ -33,7 +33,7 @@
         </template>
       </el-table-column>
       <!-- @vue-generic {WebsiteRoute} -->
-      <el-table-column :label="$t('websiteConfig.routes.duration')" min-width="120" :show-overflow-tooltip="false">
+      <el-table-column :label="$t('websiteReport.durationMinutes')" min-width="120" :show-overflow-tooltip="false">
         <template #default="{ row }">
           <el-button
             v-if="row.mode === 'private_vehicle'"
@@ -58,7 +58,7 @@
       <el-table-column :label="$t('common.status')" width="100" align="center">
         <template #default="{ row }">
           <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
-            {{ row.status === "enabled" ? $t("common.enabled") : $t("websiteConfig.disabled") }}
+            {{ row.status === "enabled" ? $t("common.enabled") : $t("common.disabled") }}
           </el-tag>
         </template>
       </el-table-column>
@@ -112,7 +112,7 @@
       >
         <div class="grid grid-cols-2 gap-x-[20px] max-[650px]:grid-cols-1">
           <template v-if="!durationOnly">
-            <el-form-item :label="$t('websiteConfig.routes.fromCity')" prop="fromCityId">
+            <el-form-item :label="$t('websiteItineraryUi.departureCity')" prop="fromCityId">
               <WebsiteConfigSelect
                 v-model="record.fromCityId"
                 group="cities"
@@ -122,7 +122,7 @@
                 @labels="Object.assign(labels, $event)"
               />
             </el-form-item>
-            <el-form-item :label="$t('websiteConfig.routes.toCity')" prop="toCityId">
+            <el-form-item :label="$t('websiteItineraryUi.arrivalCity')" prop="toCityId">
               <WebsiteConfigSelect
                 v-model="record.toCityId"
                 group="cities"
@@ -156,14 +156,14 @@
             <el-form-item prop="vehicleOptions" label-width="0" class="col-span-2 max-[650px]:col-span-1">
               <div class="flex w-full min-w-0 flex-col gap-[12px]">
                 <DataTable :data="record.vehicleOptions" :empty-text="$t('websiteReport.notSpecified')">
-                  <el-table-column :label="$t('websiteReport.vehicleType')" min-width="180">
+                  <el-table-column :label="$t('resource.vehicleModel')" min-width="180">
                     <template #default="{ row, $index }">
                       <BusinessDictionarySelect
                         v-model="row.vehicleType"
                         type-code="vehicle-type"
                         :disabled-values="vehicleTypesInOtherRows($index)"
                         :placeholder="$t('websiteReport.vehicleSelectOrEnter')"
-                        :aria-label="$t('websiteReport.vehicleType')"
+                        :aria-label="$t('resource.vehicleModel')"
                         @update:model-value="formRef?.validateField('vehicleOptions').catch(() => undefined)"
                       />
                     </template>
@@ -220,7 +220,7 @@
                 {{ $t("common.enabled") }}
               </el-radio>
               <el-radio value="disabled">
-                {{ $t("websiteConfig.disabled") }}
+                {{ $t("common.disabled") }}
               </el-radio>
             </el-radio-group>
           </el-form-item>

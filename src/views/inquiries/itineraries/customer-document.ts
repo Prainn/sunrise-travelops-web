@@ -8,6 +8,8 @@ import type {
   ItineraryRecord,
 } from "@/types/itinerary";
 import type { InquiryRecord } from "@/types/inquiry";
+import enLocale from "@/lang/package/en.json";
+import zhLocale from "@/lang/package/zh-cn.json";
 import { addDays, formatMoney } from "@/utils";
 import { getTransportMethodNames } from "@/utils/transport-method";
 import { getDayBreakfastStatus, isNoAccommodationItinerary } from "./hotel-plans";
@@ -50,7 +52,7 @@ const CUSTOMER_TEXT = {
     cabins: { economy: "经济舱", business: "商务舱", first: "一等座", second: "二等座" },
     breakfastPending: "早餐待确认",
     vehicleLevel: { standard: "普通", vip: "VIP" },
-    vehicle: (level: string) => `${level}用车`,
+    vehicleNames: zhLocale.resource.vehicleServiceLevels,
     coach: (seats: string, level: string) => `${seats}座${level}巴士`,
     hotelTiers: {
       3: "三钻",
@@ -100,7 +102,7 @@ const CUSTOMER_TEXT = {
     cabins: { economy: "Economy", business: "Business", first: "First Class", second: "Second Class" },
     breakfastPending: "Breakfast TBC",
     vehicleLevel: { standard: "Standard", vip: "VIP" },
-    vehicle: (level: string) => `${level} Vehicle`,
+    vehicleNames: enLocale.resource.vehicleServiceLevels,
     coach: (seats: string, level: string) => `${seats}-Seat ${level} Coach`,
     hotelTiers: {
       3: "3-Diamond",
@@ -374,6 +376,6 @@ function vehicleLabel(
   const seats = [
     ...new Set(plan?.arrangements.flatMap((arrangement) => arrangement.vehicles.map((v) => v.seats)) ?? []),
   ];
-  const level = text.vehicleLevel[tier === "vip" ? "vip" : "standard"];
-  return seats.length ? text.coach(seats.join("/"), level) : text.vehicle(level);
+  const serviceLevel = tier === "vip" ? "vip" : "standard";
+  return seats.length ? text.coach(seats.join("/"), text.vehicleLevel[serviceLevel]) : text.vehicleNames[serviceLevel];
 }

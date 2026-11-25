@@ -30,7 +30,7 @@ type Item = Awaited<ReturnType<typeof resourceService.getSelectionOptions>>["lis
 function label(item: Item) {
   if (props.kind === "agencies") return `${item.name} (${item.code})`;
   if (props.kind === "transports") return `${item.name}｜${t("resource.seatsCount", { count: item.seats })}`;
-  const extra = props.kind === "hotels" ? t("itinerary.breakfastIncluded") : "";
+  const extra = props.kind === "hotels" ? t("websitePrint.breakfastIncluded") : "";
   return `${item.name}${extra ? `｜${extra}` : ""}｜¥${formatMoney(item.unitCost)}`;
 }
 async function loadOptions(query: RemoteOptionsQuery) {

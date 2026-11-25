@@ -2,7 +2,7 @@
   <section class="surface-muted p-4 flex flex-col gap-3">
     <div class="flex flex-wrap justify-between items-center gap-3">
       <h4 class="m-0 text-[14px] text-strong font-600">
-        {{ $t("websiteItineraryUi.hotelPlans") }}
+        {{ $t("itinerary.hotelPlans") }}
       </h4>
       <el-button
         v-if="editable && day.overnightCityId"
@@ -18,13 +18,16 @@
       {{ $t("websiteItineraryUi.hotelTiersFull") }}
     </p>
     <el-alert
-      v-if="day.overnightCityId && !displayedHotels.length"
+      v-if="day.overnightCityId && !nightly && !displayedHotels.length"
       :title="$t('websiteItineraryUi.hotelRequiredHint')"
       type="info"
       :closable="false"
     />
-    <p v-if="!day.overnightCityId && !displayedHotels.length" class="m-0 text-[12px] text-muted">
-      {{ $t("itinerary.noOvernightStay") }}
+    <p v-if="day.overnightCityId && nightly && !displayedHotels.length" class="m-0 text-[12px] text-muted">
+      {{ $t("websiteItineraryUi.noAccommodation") }}
+    </p>
+    <p v-if="!day.overnightCityId" class="m-0 text-[12px] text-muted">
+      {{ $t(editable ? "websiteItineraryUi.noOvernightHotelHint" : "itinerary.noOvernightStay") }}
     </p>
     <p v-if="!nightly && displayedHotels.length > 1" class="m-0 text-[12px] text-muted">
       {{ $t("websiteItineraryUi.hotelAlternativesHint") }}
@@ -49,7 +52,7 @@
         <span class="text-muted">
           {{ cityName(hotel.cityId) }}
           <span v-if="hotel.roomType" class="ml-2">{{ hotel.roomType }}</span>
-          <span class="ml-2">{{ $t(hotel.breakfastIncluded ? "websiteItineraryUi.breakfastIncludedShort" : "websiteItineraryUi.breakfastExcludedShort") }}</span>
+          <span class="ml-2">{{ $t(hotel.breakfastIncluded ? "websitePrint.breakfastIncluded" : "websitePrint.breakfastExcluded") }}</span>
         </span>
         <span v-if="configHotel(hotel)" class="text-muted">
           {{ $t("websiteItineraryUi.configHotelPrice", { price: formatMoney(configHotel(hotel)?.price) }) }}

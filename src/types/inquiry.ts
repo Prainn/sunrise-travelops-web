@@ -7,7 +7,7 @@ export interface InquiryRecord {
   version: number;
   id: string;
   code: string;
-  /** 盛旭系列询盘；创建后不可切换。系列询盘组团社、联系人与计划天数为 null。 */
+  /** 盛旭系列询盘；创建后不可切换。系列询盘组团社、联系人与服务天数为 null。 */
   isSeries: boolean;
   agencyId: string | null;
   agencyCode: string;

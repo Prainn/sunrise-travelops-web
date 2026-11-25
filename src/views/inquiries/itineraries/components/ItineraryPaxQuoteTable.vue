@@ -16,7 +16,7 @@
         </h4>
         <DataTable :data="calculation?.hotelCityCosts ?? []" border>
           <!-- 按住宿日逐晚列出；旧冻结快照无日序，仍按城市和晚数展示 -->
-          <el-table-column :label="$t('itinerary.costDay')" width="70">
+          <el-table-column :label="$t('websitePrint.dayColumn')" width="70">
             <template #default="{ row }">
               {{ row.dayNumber ? `D${row.dayNumber}` : $t("itinerary.nightCount", { count: row.nights }) }}
             </template>

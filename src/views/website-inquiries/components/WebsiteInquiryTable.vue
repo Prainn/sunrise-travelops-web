@@ -14,12 +14,12 @@
       row-key="id"
       @retry="emit('refresh')"
     >
-      <el-table-column v-if="showBusiness" :label="$t('websiteInquiry.businessUnit')" min-width="100">
+      <el-table-column v-if="showBusiness" :label="$t('identity.businessUnit')" min-width="100">
         <template #default="{ row }">
           {{ $t(`websiteInquiry.businessUnits.${row.businessUnit}`) }}
         </template>
       </el-table-column>
-      <el-table-column prop="code" :label="$t('inquiry.code')" min-width="150" />
+      <el-table-column prop="code" :label="$t('websiteInquiry.systemCode')" min-width="150" />
       <el-table-column
         prop="customerName"
         :label="$t('websiteInquiry.customer')"

@@ -268,7 +268,7 @@
             class="shrink-0"
             @click="addBoardDay"
           >
-            {{ $t('websiteWorkspace.addDay') }}
+            {{ $t('itineraryWorkspace.addDay') }}
           </el-button>
         </div>
       </div>

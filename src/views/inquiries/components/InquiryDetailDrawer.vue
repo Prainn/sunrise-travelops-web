@@ -34,7 +34,7 @@
         <el-descriptions-item :label="$t('common.email')">
           {{ valueOrDash(record.email) }}
         </el-descriptions-item>
-        <el-descriptions-item :label="$t('inquiry.phone')">
+        <el-descriptions-item :label="$t('resource.phone')">
           {{ valueOrDash(record.phone) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('common.countryOrRegion')">

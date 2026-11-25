@@ -106,6 +106,9 @@
               <tr v-for="row in group.rows" :key="row.key" :class="{ 'price-table__stale': isStale(row) }">
                 <td class="whitespace-nowrap">
                   {{ vehicleLabel(row.vehicleType) }}
+                  <el-tag v-if="row.vehicleType && standardVehicleLabels.has(row.vehicleType)" size="small">
+                    {{ $t("websiteItineraryUi.sourceManual") }}
+                  </el-tag>
                   <el-tag
                     v-if="isStale(row)"
                     class="ml-1"
@@ -212,7 +215,7 @@ import type {
   WebsiteVehiclePriceInput,
 } from "@/types/website";
 import { cloneWebsiteDraft } from "../../options";
-import { websiteVehicleLabel } from "@/utils/website-vehicle";
+import { vehicleSeatCount, websiteVehicleLabel } from "@/utils/website-vehicle";
 import type { WebsiteConfig, WebsiteDay, WebsiteHotelPricingMode } from "@/types/website";
 import { nightlyAccommodation, nightlyPackage } from "../nightly-pricing";
 import WebsiteNightlyStays from "./WebsiteNightlyStays.vue";
@@ -273,6 +276,10 @@ const groups = computed(() => {
   }));
 });
 const staleCount = computed(() => rows.value.filter(isStale).length);
+const standardVehicleLabels = computed(() => {
+  return new Set(rows.value.flatMap(({ vehicleType }) =>
+    vehicleType && vehicleSeatCount(vehicleType) ? [websiteVehicleLabel(vehicleType, t)] : []));
+});
 const tooMany = computed(() => rows.value.length > MAX_PRICE_COMBINATIONS);
 const hasInvalidPrice = computed(() =>
   (nightlyVisited.value && nightlyDays.value.some(day => day.hotels.some(h => h.nightlyRate != null && !isValidVehiclePrice(h.nightlyRate)))) ||

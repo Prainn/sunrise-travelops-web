@@ -61,18 +61,18 @@ export const dictionaryService = {
   },
 
   async create(data: DictTypeForm): Promise<void> {
-    await request.post<DictTypeItem>(DICTIONARY_BASE_URL, toDictionaryTypeInput(data));
+    await request.post<DictTypeItem>(DICTIONARY_BASE_URL, toDictionaryTypeInput(data), { userAction: true });
   },
 
   async update(id: string, data: DictTypeForm): Promise<void> {
     await request.put<DictTypeItem>(
       `${DICTIONARY_BASE_URL}/${encodeURIComponent(id)}`,
-      toDictionaryTypeInput(data),
+      toDictionaryTypeInput(data), { userAction: true },
     );
   },
 
   async deleteByIds(ids: string): Promise<void> {
-    await request.delete<void>(DICTIONARY_BASE_URL, { params: { ids } });
+    await request.delete<void>(DICTIONARY_BASE_URL, { userAction: true, params: { ids } });
   },
 
   async getDictItemPage(
@@ -91,7 +91,7 @@ export const dictionaryService = {
   async createDictItem(dictCode: string, data: DictItemForm): Promise<void> {
     await request.post<DictItem>(
       getDictionaryItemBaseUrl(dictCode),
-      toDictionaryItemInput(data),
+      toDictionaryItemInput(data), { userAction: true },
     );
   },
 
@@ -102,11 +102,11 @@ export const dictionaryService = {
   async updateDictItem(dictCode: string, id: string, data: DictItemForm): Promise<void> {
     await request.put<DictItem>(
       `${getDictionaryItemBaseUrl(dictCode)}/${encodeURIComponent(id)}`,
-      toDictionaryItemInput(data),
+      toDictionaryItemInput(data), { userAction: true },
     );
   },
 
   async deleteDictItems(dictCode: string, ids: string): Promise<void> {
-    await request.delete<void>(getDictionaryItemBaseUrl(dictCode), { params: { ids } });
+    await request.delete<void>(getDictionaryItemBaseUrl(dictCode), { userAction: true, params: { ids } });
   },
 };

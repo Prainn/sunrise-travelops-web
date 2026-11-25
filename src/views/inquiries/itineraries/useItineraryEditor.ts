@@ -88,7 +88,7 @@ export function useItineraryEditor(options: ItineraryEditorOptions) {
 
   function createItinerary(record: ItineraryRecord): ItineraryRecord | null {
     if (!options.canCreate() || !options.inquiry.value) return null;
-    // 系列询盘没有计划天数，每份行程在新建弹窗中独立填写实际服务天数。
+    // 系列询盘没有服务天数，每份行程在新建弹窗中独立填写实际服务天数。
     const plannedDays = options.inquiry.value.plannedDays ?? record.days;
     if (!Number.isInteger(plannedDays) || plannedDays < 1 || plannedDays > 365) return null;
     // 系列行程只按日序展示；内部基准供日期字段、用车分段和重排计算使用。

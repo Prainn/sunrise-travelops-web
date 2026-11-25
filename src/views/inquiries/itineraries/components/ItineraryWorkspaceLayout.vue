@@ -27,11 +27,15 @@
           class="itinerary-workspace__directory m-0 p-1 list-none flex flex-col gap-[2px] overflow-y-auto rounded-[var(--card-radius)] bg-[var(--content-bg)] [border:1px_solid_var(--card-border)] max-[900px]:flex-row max-[900px]:min-w-0 max-[900px]:flex-1 max-[900px]:overflow-x-auto max-[900px]:overflow-y-hidden"
           :style="{ maxHeight: isNarrow ? undefined : `calc(100dvh - ${headerHeight + footerHeight + 120}px)` }"
         >
-          <li v-for="day in days" :key="day.id" class="max-[900px]:shrink-0">
+          <li
+            v-for="day in days"
+            :key="day.id"
+            class="itinerary-workspace__item relative max-[900px]:shrink-0"
+          >
             <button
               type="button"
               class="itinerary-workspace__entry w-full flex flex-col items-start gap-[2px] px-3 py-2 text-left rounded-[6px] border-0 bg-transparent cursor-pointer text-[var(--el-text-color-regular)] hover:bg-[var(--el-fill-color-light)] max-[900px]:w-auto max-[900px]:max-w-[180px]"
-              :class="{ 'is-active': day.id === activeId }"
+              :class="{ 'is-active': day.id === activeId, 'pr-9': Boolean(dayViewLabel) }"
               :aria-current="day.id === activeId ? 'step' : undefined"
               @click="scrollToDay(day.id)"
             >
@@ -47,6 +51,24 @@
                 :title="day.summary"
               >{{ day.summary }}</span>
             </button>
+            <el-tooltip
+              v-if="dayViewLabel"
+              :content="dayViewLabel"
+              placement="top"
+              :trigger="['hover', 'focus']"
+            >
+              <button
+                :ref="(el) => setDayViewButton(day.id, el)"
+                type="button"
+                class="itinerary-workspace__view-day absolute top-1 right-1 inline-flex items-center justify-center w-6 h-6 p-0 border-0 rounded-[4px] bg-transparent cursor-pointer text-muted hover:text-primary hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-[var(--el-color-primary)]"
+                :aria-label="dayViewLabel"
+                @click="emit('viewDay', day.id)"
+              >
+                <el-icon :size="14" aria-hidden="true">
+                  <View />
+                </el-icon>
+              </button>
+            </el-tooltip>
           </li>
           <li v-if="canAdd" class="p-1 max-[900px]:shrink-0">
             <el-button class="w-full" :disabled="days.length >= 365" @click="emit('add')">
@@ -86,7 +108,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onActivated, onMounted, ref, watch } from "vue";
 import { useElementSize, useEventListener, useMediaQuery } from "@vueuse/core";
-import { Sort } from "@element-plus/icons-vue";
+import { Sort, View } from "@element-plus/icons-vue";
 import { useWorkspaceAccent } from "../useWorkspaceAccent";
 
 export interface WorkspaceDayEntry {
@@ -113,12 +135,16 @@ const props = defineProps<{
   accent?: string;
   /** 顶部信息区的品牌装饰条颜色 */
   stripe?: string;
+  /** 可选：每日目录卡右上角快捷查看操作文案（独立站「查看当天」），不传则不显示 */
+  dayViewLabel?: string;
 }>();
 const emit = defineEmits<{
   reorder: [];
   add: [];
   /** 跳转前通知页面展开目标日 */
   expand: [dayId: string];
+  /** 点击每日目录卡右上角查看图标，不改变主页面浏览位置 */
+  viewDay: [dayId: string];
 }>();
 
 useWorkspaceAccent(() => props.accent);
@@ -148,7 +174,9 @@ function dayElementId(id: string) {
 }
 
 function attachScrollContainer() {
-  scrollContainer.value = root.value?.closest<HTMLElement>(".layout-content") ?? undefined;
+  scrollContainer.value = typeof root.value?.closest === "function"
+    ? (root.value.closest<HTMLElement>(".layout-content") ?? undefined)
+    : undefined;
   isOverviewCollapsed.value = false;
   resetScrollTracking();
   syncActiveDay();
@@ -248,10 +276,27 @@ watch(
   },
   { immediate: true },
 );
+interface FocusableElement {
+  focus: () => void;
+  isConnected?: boolean;
+}
+const dayViewButtons = new Map<string, FocusableElement>();
+function setDayViewButton(id: string, element: unknown) {
+  if (element && typeof (element as Partial<FocusableElement>).focus === "function") {
+    dayViewButtons.set(id, element as FocusableElement);
+  } else {
+    dayViewButtons.delete(id);
+  }
+}
+function focusDayView(id: string) {
+  const button = dayViewButtons.get(id);
+  if (button && button.isConnected !== false) button.focus();
+}
+
 onMounted(attachScrollContainer);
 onActivated(attachScrollContainer);
 
-defineExpose({ scrollToDay });
+defineExpose({ scrollToDay, focusDayView });
 </script>
 
 <style scoped>

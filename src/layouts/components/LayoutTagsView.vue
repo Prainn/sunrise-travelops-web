@@ -148,6 +148,7 @@
 </template>
 
 <script setup lang="ts">
+import { openUserPage } from "@/utils/user-interaction";
 import { useRoute, useRouter, type RouteRecordRaw } from "vue-router";
 import { resolve } from "path-browserify";
 import { TagsViewStyle } from "@/enums";
@@ -331,7 +332,7 @@ const openTag = (tag: TagView) => {
     return;
   }
 
-  router.push({
+  openUserPage(router, {
     path: tag.fullPath,
     query: tag.query,
   });

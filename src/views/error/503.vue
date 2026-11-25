@@ -25,6 +25,7 @@ import { Refresh } from "@element-plus/icons-vue";
 import { usePermissionStore } from "@/stores/permission";
 import { useUserStore } from "@/stores/user";
 import { isApiError } from "@/api/request";
+import { recordClientOperation } from "@/utils/client-operation-log";
 import ErrorPage from "./components/ErrorPage.vue";
 
 defineOptions({ name: "Page503" });
@@ -51,9 +52,23 @@ async function retry(automatic = false) {
       typeof redirect === "string" && redirect.startsWith("/") && !redirect.startsWith("//") && redirect.split("?")[0] !== "/unavailable"
         ? redirect
         : "/";
+    if (!automatic) {
+      recordClientOperation({
+        page: "Unavailable",
+        action: "retry",
+        result: "success",
+      });
+    }
     await router.replace(target);
   } catch (error) {
-    if (!automatic && isActive) ElMessage.error(isApiError(error) ? error.message : t("error.unavailable.stillDown"));
+    if (!automatic && isActive) {
+      recordClientOperation({
+        page: "Unavailable",
+        action: "retry",
+        result: "failure",
+      });
+      ElMessage.error(isApiError(error) ? error.message : t("error.unavailable.stillDown"));
+    }
   } finally {
     loading.value = false;
   }

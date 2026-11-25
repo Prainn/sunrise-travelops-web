@@ -75,7 +75,7 @@
           <el-descriptions-item v-if="!source.isSeries" :label="$t('common.startDate')">
             {{ source.startDate ?? "-" }}
           </el-descriptions-item>
-          <el-descriptions-item :label="$t('tour.days')">
+          <el-descriptions-item :label="$t('inquiry.plannedDays')">
             {{ serviceDates?.length ?? source.days ?? "-" }}
           </el-descriptions-item>
           <el-descriptions-item :label="$t('common.countryOrRegion')">
@@ -205,7 +205,7 @@
             </el-form-item>
           </el-col>
           <el-col :xs="24" :sm="12">
-            <el-form-item :label="$t('tour.days')" prop="days">
+            <el-form-item :label="$t('inquiry.plannedDays')" prop="days">
               <StrictInputNumber
                 v-model="form.days"
                 :min="1"
@@ -588,7 +588,7 @@ const rules = computed<FormRules>(() => ({
       validator: (_rule: unknown, value: unknown, callback: (error?: Error) => void) =>
         typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 365
           ? callback()
-          : callback(new Error(t("tour.daysRequired"))),
+          : callback(new Error(t("itinerary.daysRange", { label: t("inquiry.plannedDays") }))),
       trigger: "change",
     },
   ],

@@ -13,6 +13,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePreferredReducedMotion } from "@vueuse/core";
 import AppVersionNotifier from "@/components/AppVersionNotifier.vue";
 import { useAppStore } from "@/stores/app";
 import { useSettingsStore } from "@/stores/settings";
@@ -33,12 +34,34 @@ const isInquiryTab = computed(() =>
   Boolean(route.params.inquiryId || route.query.inquiryId || route.query.code),
 );
 
-watchEffect(() => {
+const UNREAD_TITLE_BLINK_MS = 1000;
+const prefersReducedMotion = usePreferredReducedMotion();
+
+watchEffect((onCleanup) => {
   void appStore.locale;
   const routeTitle = route.meta.title;
-  const title = pageTitle.value || (routeTitle ? translateRouteTitle(routeTitle) : appConfig.title);
+  const baseTitle = pageTitle.value || (routeTitle ? translateRouteTitle(routeTitle) : appConfig.title);
   const count = isInquiryTab.value || !notifications.canView ? 0 : (notifications.counts?.unreadCount ?? 0);
-  document.title = count > 0 ? translate("whatsapp.notifications.unreadPageTitle", { count, title }) : title;
+
+  if (count <= 0) {
+    document.title = baseTitle;
+    return;
+  }
+
+  const unreadTitle = translate("whatsapp.notifications.unreadPageTitle", { count, title: baseTitle });
+  document.title = unreadTitle;
+
+  if (prefersReducedMotion.value === "reduce") return;
+
+  let showUnread = true;
+  const timer = window.setInterval(() => {
+    showUnread = !showUnread;
+    document.title = showUnread ? unreadTitle : baseTitle;
+  }, UNREAD_TITLE_BLINK_MS);
+
+  onCleanup(() => {
+    window.clearInterval(timer);
+  });
 });
 
 const locale = computed(() => appStore.locale);

@@ -36,12 +36,12 @@ export const accountLinkService = {
     return request.get<AccountLink>(`${BASE_URL}/${encodeURIComponent(id)}`);
   },
   create(body: AccountLinkSaveInput) {
-    return request.post<AccountLink>(BASE_URL, body);
+    return request.post<AccountLink>(BASE_URL, body, { userAction: true });
   },
   update(id: string, body: AccountLinkSaveInput) {
-    return request.put<AccountLink>(`${BASE_URL}/${encodeURIComponent(id)}`, body);
+    return request.put<AccountLink>(`${BASE_URL}/${encodeURIComponent(id)}`, body, { userAction: true });
   },
   remove(id: string, body: AccountLinkDeleteInput) {
-    return request.delete<void>(`${BASE_URL}/${encodeURIComponent(id)}`, { body });
+    return request.delete<void>(`${BASE_URL}/${encodeURIComponent(id)}`, { userAction: true, body });
   },
 };

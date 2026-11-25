@@ -76,6 +76,7 @@
             </el-button><el-button
               v-has-perm="RESOURCE_PERMISSIONS.guide.update"
               link
+              :type="row.status === 'enabled' ? 'warning' : 'success'"
               @click="emit('toggle-status', row as GuideRecord)"
             >
               {{

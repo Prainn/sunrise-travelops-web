@@ -42,8 +42,8 @@
               breakfastStatus === 'pending'
                 ? 'itinerary.breakfastPending'
                 : breakfastStatus === 'included'
-                  ? 'itinerary.breakfastIncluded'
-                  : 'itinerary.breakfastExcluded',
+                  ? 'websitePrint.breakfastIncluded'
+                  : 'websitePrint.breakfastExcluded',
             )
           "
         >
@@ -52,8 +52,8 @@
               breakfastStatus === "pending"
                 ? "itinerary.breakfastPending"
                 : breakfastStatus === "included"
-                  ? "itinerary.breakfastIncluded"
-                  : "itinerary.breakfastExcluded",
+                  ? "websitePrint.breakfastIncluded"
+                  : "websitePrint.breakfastExcluded",
             )
           }}
         </el-tag>

@@ -44,24 +44,24 @@ export const directLedgerService = {
     });
   },
   create(body: DirectLedgerCreateInput) {
-    return request.post<DirectLedgerItem>(BASE_URL, body);
+    return request.post<DirectLedgerItem>(BASE_URL, body, { userAction: true });
   },
   /** 既有台账成团、补建或重新建团；后端同一事务完成。 */
   convert(id: string, body: DirectLedgerConvertInput) {
-    return request.post<DirectLedgerItem>(`${BASE_URL}/${encodeURIComponent(id)}/convert`, body);
+    return request.post<DirectLedgerItem>(`${BASE_URL}/${encodeURIComponent(id)}/convert`, body, { userAction: true });
   },
   update(id: string, body: DirectLedgerUpdateInput) {
-    return request.put<DirectLedgerItem>(`${BASE_URL}/${encodeURIComponent(id)}`, body);
+    return request.put<DirectLedgerItem>(`${BASE_URL}/${encodeURIComponent(id)}`, body, { userAction: true });
   },
   review(id: string, version: number) {
     return request.post<DirectLedgerItem>(`${BASE_URL}/${encodeURIComponent(id)}/review`, {
       version,
-    });
+    }, { userAction: true });
   },
   updateOperation(id: string, body: DirectLedgerOperationInput) {
-    return request.put<DirectLedgerItem>(`${BASE_URL}/${encodeURIComponent(id)}/operation`, body);
+    return request.put<DirectLedgerItem>(`${BASE_URL}/${encodeURIComponent(id)}/operation`, body, { userAction: true });
   },
   async delete(id: string, version: number) {
-    await request.delete<void>(`${BASE_URL}/${encodeURIComponent(id)}`, { params: { version } });
+    await request.delete<void>(`${BASE_URL}/${encodeURIComponent(id)}`, { userAction: true, params: { version } });
   },
 };

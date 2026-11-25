@@ -52,9 +52,9 @@
       @update:model-value="emit('update-via', $event)"
     />
   </div>
-  <el-form-item :label="$t('itinerary.overnightDestination')" :prop="initialPlanning ? 'overnightDestination' : undefined" :rules="stayRule">
+  <el-form-item :label="$t('websitePrint.overnightColumn')" :prop="initialPlanning ? 'overnightDestination' : undefined" :rules="stayRule">
     <el-select
-      :aria-label="$t('itinerary.overnightDestination')"
+      :aria-label="$t('websitePrint.overnightColumn')"
       autocomplete="new-password"
       :model-value="day.overnightDestination"
       :disabled="!editable || (!initialPlanning && !isLast) || day.overnightDestination === ''"

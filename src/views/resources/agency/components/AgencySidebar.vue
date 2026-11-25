@@ -3,7 +3,7 @@
     v-loading="loading"
     fill
     class="agency-sidebar"
-    :title="$t('resource.agencyList')"
+    :title="$t('route.travelAgencies')"
   >
     <template #actions>
       <el-button v-has-perm="permissions.create" type="primary" @click="emit('create')">

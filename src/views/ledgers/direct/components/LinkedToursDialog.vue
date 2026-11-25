@@ -1,5 +1,5 @@
 <template>
-  <AppDialog v-model="visible" :title="$t('ledger.direct.linkedToursTitle')" size="md">
+  <AppDialog v-model="visible" :title="$t('tour.records')" size="md">
     <DataTable :data="tours" row-key="id">
       <el-table-column :label="$t('tour.tourNo')" min-width="210" :show-overflow-tooltip="false">
         <template #default="{ row }">
@@ -32,6 +32,7 @@
 </template>
 
 <script setup lang="ts">
+import { openUserPage } from "@/utils/user-interaction";
 import { useRouter } from "vue-router";
 import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
@@ -43,6 +44,6 @@ const router = useRouter();
 
 function openTour(tourNo: string) {
   visible.value = false;
-  void router.push({ path: "/tours/list", query: { keyword: tourNo } });
+  void openUserPage(router, { path: "/tours/list", query: { keyword: tourNo } });
 }
 </script>

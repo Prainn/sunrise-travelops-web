@@ -21,6 +21,7 @@ import type {
 import { cloneWebsiteDraft, emptyDay, emptyItinerary } from "../options";
 import { sameServiceDates, serviceDayDate } from "@/utils/service-dates";
 import { printWebsiteQuotation } from "./print";
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { removeWebsiteEvent } from "./event-order";
 import { alignAirportTransfers } from "./airport-transfers";
 import { websiteAttractionPriceReference } from "./attraction-price";
@@ -316,7 +317,9 @@ export function useWebsiteWorkspace() {
         preview.value = quotation.value;
       } else preview.value = await websiteService.preview(plan.value.id);
       previewVisible.value = true;
+      recordClientOperation({ page: "InquiryItineraries", action: "preview", result: "success", recordId: plan.value.id, value: "pdf" });
     } catch (cause) {
+      recordClientOperation({ page: "InquiryItineraries", action: "preview", result: "failure", recordId: plan.value?.id, value: "pdf" });
       showError(cause);
     } finally {
       saving.value = false;
@@ -361,7 +364,21 @@ export function useWebsiteWorkspace() {
     try {
       await websiteService.recordDownload(quotation.value.itineraryId);
       await printWebsiteQuotation(quotation.value, language);
+      recordClientOperation({
+        page: "InquiryItineraries",
+        action: "print",
+        result: "unknown",
+        recordId: quotation.value.itineraryId,
+        value: "pdf",
+      });
     } catch (cause) {
+      recordClientOperation({
+        page: "InquiryItineraries",
+        action: "print",
+        result: "failure",
+        recordId: quotation.value.itineraryId,
+        value: "pdf",
+      });
       showError(cause);
     } finally {
       saving.value = false;
@@ -379,6 +396,12 @@ export function useWebsiteWorkspace() {
           confirmButtonText: t("common.confirm"), cancelButtonText: t("common.cancel"), type: "warning",
         });
       } catch {
+        recordClientOperation({
+          page: "InquiryItineraries",
+          action: "cancel",
+          result: "cancelled",
+          recordId: plan.value.id,
+        });
         return;
       } finally {
         saving.value = false;
@@ -392,7 +415,21 @@ export function useWebsiteWorkspace() {
       const file = await generateWebsiteWordDocument(quotation.value, language);
       await websiteService.recordDownload(quotation.value.itineraryId);
       downloadWordDocument(file);
+      recordClientOperation({
+        page: "InquiryItineraries",
+        action: "download",
+        result: "unknown",
+        recordId: quotation.value.itineraryId,
+        value: "word",
+      });
     } catch (cause) {
+      recordClientOperation({
+        page: "InquiryItineraries",
+        action: "download",
+        result: "failure",
+        recordId: quotation.value.itineraryId,
+        value: "word",
+      });
       showError(cause);
     } finally {
       saving.value = false;
@@ -411,7 +448,15 @@ export function useWebsiteWorkspace() {
       await ElMessageBox.confirm(t("websiteItineraryUi.deleteItemConfirm", { name }), t("common.delete"), {
         type: "warning", confirmButtonText: t("common.delete"), cancelButtonText: t("common.cancel"),
       });
-    } catch { return; }
+    } catch {
+      recordClientOperation({
+        page: "InquiryItineraries",
+        action: "cancel",
+        result: "cancelled",
+        recordId: record.id,
+      });
+      return;
+    }
     if (plan.value !== record || !editable.value || saving.value || !record.days.includes(day) || hasPendingCopy()) return;
     removeWebsiteEvent(day, itemId);
     preview.value = undefined;

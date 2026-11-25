@@ -1,3 +1,5 @@
+import { isUserInput } from "@/utils/user-interaction";
+import { recordClientOperation, resolveClientPage } from "@/utils/client-operation-log";
 import { useRouter, type RouteLocationRaw } from "vue-router";
 
 /**
@@ -9,6 +11,10 @@ export function useOpenInNewTab() {
   const router = useRouter();
 
   return (to: RouteLocationRaw) => {
-    window.open(router.resolve(to).href, "_blank");
+    const target = router.resolve(to);
+    const opened = window.open(target.href, "_blank");
+    if (isUserInput()) recordClientOperation({
+      page: resolveClientPage(target), action: "navigate", result: opened ? "success" : "unknown",
+    });
   };
 }

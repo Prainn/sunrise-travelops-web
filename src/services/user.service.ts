@@ -79,7 +79,7 @@ function toUserInput(
 
 export const userService = {
   testFeishu(userId: string, template: FeishuTestTemplate): Promise<{ messageId: string }> {
-    return request.post(`${USER_BASE_URL}/${encodeURIComponent(userId)}/feishu-test`, { template });
+    return request.post(`${USER_BASE_URL}/${encodeURIComponent(userId)}/feishu-test`, { template }, { userAction: true });
   },
   suggestTourCode(input: TourCodeSuggestionInput): Promise<TourCodeSuggestion> {
     return request.get<TourCodeSuggestion>(`${USER_BASE_URL}/tour-code-suggestion`, {
@@ -104,14 +104,14 @@ export const userService = {
   async create(data: UserForm): Promise<UserCreateResult> {
     return request.post<UserCreateResult>(
       USER_BASE_URL,
-      toUserInput(data, { includeUsername: true, includePassword: true }),
+      toUserInput(data, { includeUsername: true, includePassword: true }), { userAction: true },
     );
   },
 
   async update(userId: string, data: UserForm): Promise<void> {
     await request.put<UserForm>(
       `${USER_BASE_URL}/${encodeURIComponent(userId)}`,
-      toUserInput(data),
+      toUserInput(data), { userAction: true },
     );
   },
 
@@ -122,7 +122,7 @@ export const userService = {
   ): Promise<UserItem> {
     const user = await request.put<UserItem>(
       `${USER_BASE_URL}/${encodeURIComponent(userId)}/coordinator-duty`,
-      body,
+      body, { userAction: true },
     );
     return withUserSummary(user);
   },
@@ -134,19 +134,19 @@ export const userService = {
   ): Promise<UserItem> {
     const user = await request.put<UserItem>(
       `${USER_BASE_URL}/${encodeURIComponent(userId)}/business-group`,
-      body,
+      body, { userAction: true },
     );
     return withUserSummary(user);
   },
 
   async deleteByIds(ids: string): Promise<void> {
-    await request.delete<void>(USER_BASE_URL, { params: { ids } });
+    await request.delete<void>(USER_BASE_URL, { userAction: true, params: { ids } });
   },
 
   async resetPassword(userId: string, password: string): Promise<void> {
     await request.post<void>(`${USER_BASE_URL}/${encodeURIComponent(userId)}/reset-password`, {
       password,
-    });
+    }, { userAction: true });
   },
 
   /** 获取后端当前用户，并映射为页面使用的身份与权限结构。 */
@@ -190,13 +190,13 @@ export const userService = {
       nickname: data.nickname?.trim(),
       avatar: data.avatar,
       gender: data.gender === undefined ? undefined : Number(data.gender),
-    });
+    }, { userAction: true });
   },
 
   async changePassword(data: PasswordChangeForm): Promise<void> {
     await request.post<void>("/auth/me/password", {
       oldPassword: data.oldPassword,
       newPassword: data.newPassword,
-    });
+    }, { userAction: true });
   },
 };

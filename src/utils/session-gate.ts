@@ -11,6 +11,7 @@ let pendingWrites = 0;
 let known: SessionState | null = null;
 let verifying: Promise<void> | null = null;
 const knownListeners = new Set<(state: SessionState | null) => void>();
+const retireListeners = new Set<() => void>();
 
 export const sessionGate = {
   isFrozen: () => frozen,
@@ -31,6 +32,12 @@ export const sessionGate = {
   retire(): void {
     retired = true;
     epoch += 1;
+    retireListeners.forEach((listener) => listener());
+  },
+
+  onRetire(listener: () => void): () => void {
+    retireListeners.add(listener);
+    return () => retireListeners.delete(listener);
   },
 
   getKnown: () => known,
@@ -89,5 +96,6 @@ export const sessionGate = {
     known = null;
     verifying = null;
     knownListeners.clear();
+    retireListeners.clear();
   },
 };

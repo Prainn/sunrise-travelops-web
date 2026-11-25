@@ -43,7 +43,7 @@
       <el-table-column :label="$t('common.status')" width="100" align="center">
         <template #default="{ row }">
           <el-tag :type="row.status === 'enabled' ? 'success' : 'info'">
-            {{ row.status === "enabled" ? $t("common.enabled") : $t("websiteConfig.disabled") }}
+            {{ row.status === "enabled" ? $t("common.enabled") : $t("common.disabled") }}
           </el-tag>
         </template>
       </el-table-column>
@@ -129,7 +129,7 @@
               {{ $t("common.enabled") }}
             </el-radio>
             <el-radio value="disabled">
-              {{ $t("websiteConfig.disabled") }}
+              {{ $t("common.disabled") }}
             </el-radio>
           </el-radio-group>
         </el-form-item>

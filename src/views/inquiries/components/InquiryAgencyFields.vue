@@ -33,7 +33,7 @@
     </el-form-item>
   </el-col>
   <el-col :span="12">
-    <el-form-item :label="$t('inquiry.phone')">
+    <el-form-item :label="$t('resource.phone')">
       <el-input
         :model-value="record.phone"
         :disabled="!record.agencyId || !record.contactName || Boolean(record.contactId)"

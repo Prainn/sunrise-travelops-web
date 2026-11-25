@@ -25,9 +25,9 @@ export const businessGroupService = {
     return request.get<BusinessGroup>(`${BASE_URL}/${encodeURIComponent(id)}`);
   },
   create(body: BusinessGroupCreateInput) {
-    return request.post<BusinessGroup>(BASE_URL, body);
+    return request.post<BusinessGroup>(BASE_URL, body, { userAction: true });
   },
   update(id: string, body: BusinessGroupUpdateInput) {
-    return request.put<BusinessGroup>(`${BASE_URL}/${encodeURIComponent(id)}`, body);
+    return request.put<BusinessGroup>(`${BASE_URL}/${encodeURIComponent(id)}`, body, { userAction: true });
   },
 };

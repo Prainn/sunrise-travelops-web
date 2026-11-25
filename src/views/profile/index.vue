@@ -142,7 +142,7 @@
             size="small"
             effect="light"
           >
-            {{ role.name }}
+            {{ userRoleLabel(role.name, role.code) }}
           </el-tag>
           <span v-if="!roleList.length" class="text-[14px] text-faint">{{ $t("profile.noRoles") }}</span>
         </div>
@@ -227,6 +227,7 @@
 </template>
 
 <script lang="ts" setup>
+import { userRoleLabel } from "@/utils/user-role";
 import type {
   ProfileSecurity,
   UserProfileDetail,

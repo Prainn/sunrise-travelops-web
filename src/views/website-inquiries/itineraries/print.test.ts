@@ -78,10 +78,14 @@ it("renders only the frozen customer breakdown in both languages", () => {
   }
 });
 
-it.each(["en", "zh"] as const)("uses identical frozen HTML for %s preview and formal printing", async (language) => {
+it.each([
+  ["en", "B / L / D", "B / L / D", "The hotel includes breakfast."],
+  ["zh", "早餐 / 午餐 / 晚餐", "早/午/晚", "酒店包含每日早餐。"],
+] as const)("uses identical frozen HTML for %s preview and formal printing", async (language, meal, displayedMeal, mealStandard) => {
   const output: WebsiteOutput = {
     ...empty,
-    itinerary: ["2026-10-31", "2026-11-01"].map(day => ({ day, depart: "Kunming", transportation: "Private vehicle", sightseeing: "Visit Green Lake Park.", hotel: "Kunming", meal: "B" })),
+    itinerary: ["2026-10-31", "2026-11-01"].map((day, index) => ({ day, depart: "Kunming", transportation: "Private vehicle", sightseeing: "Visit Green Lake Park.", hotel: "Kunming", meal: index === 0 ? meal : "" })),
+    teamStandard: [{ category: "meal", included: [mealStandard] }],
     quotation: [{ vehicle: "5-seat vehicle", hotelTier: "A", hotelCategory: "5-star", pax: 2, unitPrice: "5500.00", totalPrice: "11000.00", price: "RMB 5500.00 PP" }],
     hotelOptions: [{ tier: "A", tierLabel: "5-star", city: "Kunming", hotel: "JEN", roomType: "Twin", startDay: 1, endDay: 1, nights: 1, breakfastIncluded: true }],
     notes: ["Reconfirm peak-season arrangements.", "Same-category hotel substitution."],
@@ -106,6 +110,9 @@ it.each(["en", "zh"] as const)("uses identical frozen HTML for %s preview and fo
   expect(previewHtml).toContain('class="tier">5-star</th>');
   expect(previewHtml).toContain('<td class="center">2026-10-31</td>');
   expect(previewHtml).toContain('<td class="center">2026-11-01</td>');
+  expect(previewHtml).toContain(`<td class="center">${displayedMeal}</td></tr>`);
+  expect(previewHtml).toContain('<td class="center">Kunming</td><td class="center"></td></tr>');
+  expect(previewHtml).toContain(`<p>${mealStandard}</p>`);
 });
 
 it("keeps historical frozen notes and labels without deriving a new statement", () => {

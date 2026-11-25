@@ -25,7 +25,7 @@
       >
         <template #header="{ collapsed }">
           <SectionCard class="itinerary-page__header">
-            <el-page-header @back="router.push({ name: 'InquiryList' })">
+            <el-page-header @back="openUserPage(router, { name: 'InquiryList' })">
               <template #content>
                 <div class="flex flex-wrap items-center gap-[10px]">
                   <el-tag>
@@ -467,7 +467,7 @@
       :title="$t('itinerary.inquiryNotFound')"
     >
       <template #extra>
-        <el-button type="primary" @click="router.push({ name: 'InquiryList' })">
+        <el-button type="primary" @click="openUserPage(router, { name: 'InquiryList' })">
           {{ $t("common.goBack") }}
         </el-button>
       </template>
@@ -476,6 +476,8 @@
 </template>
 
 <script setup lang="ts">
+import { openUserPage } from "@/utils/user-interaction";
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { businessUnitName } from "@/constants/identity";
 import { ArrowDown, Bowl, Location, OfficeBuilding, User, Van } from "@element-plus/icons-vue";
 import { itineraryDayNumber, itineraryDuration } from "@/views/inquiries/itineraries/duration";
@@ -514,7 +516,7 @@ import { clonePlainData } from "@/utils";
 
 defineOptions({ name: "InquiryItineraries" });
 const { t } = useI18n();
-/** 地接天数与报价天数；住宿晚数按活动日实际住宿统计，不按天数减一。 */
+/** 服务天数与报价天数；住宿晚数按活动日实际住宿统计，不按天数减一。 */
 const serviceDisplayText = computed(() => {
   const plan = selectedItinerary.value;
   if (!plan) return "";
@@ -754,8 +756,8 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() => {
                 breakfast === "pending"
                   ? "itinerary.breakfastPending"
                   : breakfast === "included"
-                    ? "itinerary.breakfastIncluded"
-                    : "itinerary.breakfastExcluded",
+                    ? "websitePrint.breakfastIncluded"
+                    : "websitePrint.breakfastExcluded",
               ),
             },
             ...day.items
@@ -839,6 +841,12 @@ function applyReorder(change: DayOrderChange) {
   const issues = applyDayOrder(change);
   if (!issues) return;
   reorderIssues.value = issues;
+  recordClientOperation({
+    page: "InquiryItineraries",
+    action: "reorder",
+    result: "success",
+    recordId: selectedItinerary.value?.id,
+  });
   ElMessage.success(t("itineraryWorkspace.orderApplied"));
 }
 

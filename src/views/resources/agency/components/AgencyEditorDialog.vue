@@ -15,7 +15,7 @@
       label-width="auto"
       autocomplete="off"
     >
-      <el-form-item :label="$t('resource.agencyBusinessUnit')" prop="businessUnit">
+      <el-form-item :label="$t('identity.businessUnit')" prop="businessUnit">
         <el-select
           v-model="selectedBusinessUnit"
           autocomplete="new-password"

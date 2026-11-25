@@ -42,7 +42,7 @@
           {{ $t("websiteItineraryUi.acknowledgeWarnings", { code }) }}
         </el-checkbox>
       </el-checkbox-group>
-      <el-radio-group v-model="language" class="mb-3">
+      <el-radio-group v-model="language" class="mb-3" @change="handleLanguageChange">
         <el-radio-button value="en">
           {{ $t("websiteItineraryUi.englishCustomerVersion") }}
         </el-radio-button>
@@ -83,6 +83,9 @@
       >
         {{ $t("websiteItineraryUi.printPdf") }}
       </el-button>
+      <span v-if="!confirmed && canConfirm" class="mr-2 text-sm text-muted">
+        {{ $t("websiteItineraryUi.confirmLockHint") }}
+      </span>
       <el-button
         v-if="!confirmed && canConfirm"
         type="primary"
@@ -90,7 +93,7 @@
         :disabled="hasErrors || acknowledged.length !== warningCodes.length"
         @click="emit('confirm', acknowledged)"
       >
-        {{ $t("websiteItineraryUi.confirmQuotation") }}
+        {{ $t("websiteInquiry.log.actions.quotation_confirmed") }}
       </el-button>
     </template>
   </AppDialog>
@@ -101,6 +104,7 @@ import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
 import type { WebsiteDay, WebsitePreview, WebsiteValidation } from "@/types/website";
 import { orderById } from "@/views/inquiries/itineraries/reorder-board";
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { websitePrintBlob } from "../print";
 const props = defineProps<{
   modelValue: boolean;
@@ -162,16 +166,26 @@ const warningCodes = computed(() => [
       .map((issue) => issue.code) ?? [],
   ),
 ]);
+function handleLanguageChange() {
+  recordClientOperation({
+    page: "InquiryItineraries",
+    action: "tab",
+    result: "success",
+    value: language.value === "en" ? "en" : "zh-cn",
+  });
+}
+
 function clearUrl() {
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
   previewUrl.value = "";
 }
 watch(
   () => [props.modelValue, props.preview, language.value],
-  () => {
+  ([visible, currentPreview]) => {
     clearUrl();
-    if (props.modelValue && props.preview)
-      previewUrl.value = URL.createObjectURL(websitePrintBlob(props.preview, language.value));
+    if (visible && currentPreview) {
+      previewUrl.value = URL.createObjectURL(websitePrintBlob(props.preview!, language.value));
+    }
   },
 );
 watch(
