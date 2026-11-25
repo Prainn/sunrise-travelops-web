@@ -149,7 +149,8 @@ import DataTable from "@/components/DataTable/index.vue";
 import type { TransportMode, WebsiteConfig, WebsiteDay, WebsiteLeg, WebsiteRoute, WebsiteRouteVehicleOption } from "@/types/website";
 import WebsiteTransportFields from "./WebsiteTransportFields.vue";
 import { transportRules } from "@/views/resources/website/useWebsiteConfigRules";
-import { TRANSPORT_OPTIONS, VEHICLE_OPTIONS } from "../../options";
+import { TRANSPORT_OPTIONS } from "../../options";
+import { websiteVehicleLabel } from "@/utils/website-vehicle";
 import { websiteCityOptions, websiteDayRouteCityIds } from "../city-options";
 import { airportTransferPlaceholder, type AirportTransferOptions } from "../airport-transfers";
 
@@ -249,8 +250,7 @@ function modeLabel(value: TransportMode) {
   return option ? t(option.labelKey) : value;
 }
 function vehicleLabel(value: WebsiteLeg["vehicleType"]) {
-  const option = VEHICLE_OPTIONS.find(item => item.value === value);
-  return option ? t(option.labelKey) : value || t("websiteReport.notSpecified");
+  return value ? websiteVehicleLabel(value, t) : t("websiteReport.notSpecified");
 }
 function close() {
   emit("update:modelValue", false);

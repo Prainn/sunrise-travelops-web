@@ -622,6 +622,7 @@
     "optionCode": "Option Code",
     "optionNameRequired": "Enter an option name",
     "optionCodeRequired": "Enter an option code",
+    "vehicleCodeFormat": "Enter the seat count followed by _seat, for example 38_seat",
     "optionCodeDuplicate": "Option code already exists",
     "optionSearchPlaceholder": "Option name or code",
     "createOptionTitle": "Add Category Option",
@@ -1526,13 +1527,7 @@
       "SELF_PAY": "Self-pay",
       "UNKNOWN": "To be confirmed"
     },
-    "vehicleTypes": {
-      "5_seat": "5-seat vehicle",
-      "7_seat": "7-seat vehicle",
-      "9_seat": "9-seat vehicle",
-      "14_seat": "14-seat vehicle",
-      "18_seat": "18-seat vehicle"
-    },
+    "vehicleSeatLabel": "{seats}-seat vehicle",
     "transportModes": {
       "hsr": "High-speed rail",
       "private_vehicle": "Private vehicle",
