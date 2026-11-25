@@ -152,6 +152,7 @@ import { transportRules } from "@/views/resources/website/useWebsiteConfigRules"
 import { TRANSPORT_OPTIONS, VEHICLE_OPTIONS } from "../../options";
 import { websiteCityOptions, websiteDayRouteCityIds } from "../city-options";
 import { airportTransferPlaceholder, type AirportTransferOptions } from "../airport-transfers";
+import { websiteRouteTransportDetails } from "../transport-route";
 
 /**
  * 独立站交通段：从当前配置的专属路线按出发/抵达城市筛选，或手填；确认后才加入当天。
@@ -206,7 +207,7 @@ const vehicleOptions = computed(() => source.value === "route"
   : routes.value.filter(route => route.mode === "private_vehicle").flatMap(route => route.vehicleOptions ?? []));
 const selected = computed(() => source.value === "route" ? routes.value.find(route => route.id === selectedId.value) : undefined);
 watch(selected, (route) => {
-  if (route) details.value = { ...details.value, vehicleType: route.mode === "private_vehicle" && route.vehicleOptions?.length === 1 ? route.vehicleOptions[0]!.vehicleType : null, distanceKm: route.distanceKm ?? null, durationMinutes: route.mode === "private_vehicle" ? (route.vehicleOptions?.length === 1 ? route.vehicleOptions[0]!.durationMinutes : null) : route.durationMinutes ?? null, showInMileage: false };
+  if (route) details.value = { ...details.value, ...websiteRouteTransportDetails(route), showInMileage: false };
 }, { flush: "sync" });
 watch(effectiveMode, (value) => { if (value !== "private_vehicle") details.value.vehicleType = null; });
 
