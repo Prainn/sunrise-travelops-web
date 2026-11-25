@@ -13,6 +13,7 @@ const SCOPE_LABELS: Record<string, string> = {
   shengxu: "ledger.shengxu.businessUnitName",
   linxi: "websiteInquiry.businessUnits.linxi",
   website: "websiteInquiry.businessUnits.website",
+  system: "route.systemManagement",
   unknown: "operationLog.scopeUnknown",
 };
 

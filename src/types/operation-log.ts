@@ -46,7 +46,8 @@ export type OperationScope = LoginScope | "unknown";
 export interface OperationLog {
   id: string;
   time: string;
-  category: OperationCategory;
+  /** 旧记录可能包含已退出筛选器的分类。 */
+  category: string;
   action: string;
   result?: OperationResult | null;
   success: boolean;
