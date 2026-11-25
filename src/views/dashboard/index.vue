@@ -173,7 +173,7 @@ const summaryCards = computed<SummaryCard[]>(() => {
   if (data.guideLeavesToday !== null) {
     cards.push({
       key: "guideLeavesToday",
-      title: t("dashboard.guideLeaves"),
+      title: t("route.guideLeaves"),
       items: [{ label: t("dashboard.guideLeaveRecordsToday"), value: data.guideLeavesToday }],
     });
   }

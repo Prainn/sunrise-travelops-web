@@ -2,6 +2,7 @@ import { translate } from "@/lang/utils";
 import type { IdentityRoleOption } from "@/types/user";
 
 const ROLE_LABEL_KEYS: Record<string, string> = {
+  BUSINESS_MANAGER: "menuPermission.roles.BUSINESS_MANAGER",
   BOSS: "menuPermission.roles.BOSS",
   ADMIN: "user.roles.systemAdministrator",
   COORDINATOR: "user.roles.coordinator",
@@ -12,6 +13,8 @@ const ROLE_NAME_CODES: Record<string, string> = {
   coordinator: "COORDINATOR",
   resourcemanager: "RESOURCE_MANAGER",
   systemadministrator: "ADMIN",
+  业务部门负责人: "BUSINESS_MANAGER",
+  业务部负责人: "BUSINESS_MANAGER",
   老板: "BOSS",
   计调: "COORDINATOR",
   资源管理员: "RESOURCE_MANAGER",

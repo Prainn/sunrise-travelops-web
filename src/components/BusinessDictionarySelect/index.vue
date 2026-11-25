@@ -64,9 +64,11 @@ const options = computed(() => {
     // Route option values bind each vehicle to its configured duration.
     const routeOption = props.extraOptions.find(option => matches(item, option.value));
     if (props.limitToExtraOptions && !routeOption) return [];
-    const code = props.limitToExtraOptions ? undefined : standardVehicleCode(item);
-    const value = code ?? routeOption?.value ?? (current && matches(item, current) ? current : item.name);
-    const label = locale.value.toLowerCase().startsWith("en") ? item.englishName : item.name;
+    const code = standardVehicleCode(item);
+    const value = (props.limitToExtraOptions ? undefined : code) ?? routeOption?.value ?? (current && matches(item, current) ? current : item.name);
+    const label = locale.value.toLowerCase().startsWith("en")
+      ? item.englishName
+      : code ? t(`websiteInquiry.vehicleTypes.${code}`) : item.name;
     return [{ value, label, code: item.code, disabled: isDisabled(value, item) }];
   });
   for (const item of props.extraOptions) {

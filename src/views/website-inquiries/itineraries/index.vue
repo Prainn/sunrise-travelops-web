@@ -41,7 +41,7 @@
                       v-for="record in plans"
                       :key="record.id"
                       :value="record.id"
-                      :label="`${record.title} (${$t(record.status === 'draft' ? 'websiteWorkspace.draft' : 'websiteWorkspace.confirmed')})`"
+                      :label="`${record.title} (${$t(record.status === 'draft' ? 'itinerary.statuses.draft' : 'itinerary.statuses.quoted')})`"
                     />
                   </el-select>
                 </div>
@@ -77,7 +77,7 @@
                   </div>
                   <div class="flex flex-wrap items-center gap-[10px]">
                     <el-tag :type="plan.status === 'draft' ? 'info' : 'success'">
-                      {{ $t(plan.status === "draft" ? "websiteWorkspace.draft" : "websiteWorkspace.quotedLocked") }}
+                      {{ $t(plan.status === "draft" ? "itinerary.statuses.draft" : "itinerary.pdfGenerated") }}
                     </el-tag>
                     <el-button v-if="editable" class="ml-0!" @click="isBasicsDialogVisible = true">
                       {{ $t("itinerary.editItinerary") }}
@@ -107,7 +107,7 @@
                 </div>
                 <div class="grid grid-cols-4 gap-x-[18px] gap-y-2 mt-3 text-sm max-[1100px]:grid-cols-2 max-[650px]:grid-cols-1">
                   <span class="flex flex-wrap items-center gap-[6px]">
-                    <small class="text-muted">{{ $t("inquiry.code") }}</small>
+                    <small class="text-muted">{{ $t("websiteInquiry.systemCode") }}</small>
                     {{ inquiry.code }}
                     <el-tag size="small" effect="plain">{{ $t(`inquiry.statuses.${inquiry.status}`) }}</el-tag>
                   </span>
@@ -589,14 +589,14 @@ function boardDay(day: WebsiteDay): ReorderBoardDay {
       },
       {
         key: WEBSITE_BOARD_GROUPS.legs,
-        label: t("websiteItineraryUi.transportLegs"),
+        label: t("websiteConfig.tabs.routes"),
         icon: BOARD_ICONS.legs,
         transferable: true,
         items: day.legs.map(transportBoardItem),
       },
       {
         key: WEBSITE_BOARD_GROUPS.hotels,
-        label: t("websiteItineraryUi.hotelPlans"),
+        label: t("itinerary.hotelPlans"),
         icon: BOARD_ICONS.hotels,
         transferable: true,
         scope: day.hotels.length > 1 ? t("itineraryWorkspace.scopes.alternatives") : undefined,

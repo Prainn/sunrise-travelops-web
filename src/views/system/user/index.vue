@@ -645,7 +645,7 @@ const feishuTestUser = ref<UserItem>();
 const feishuTestTemplate = ref<FeishuTestTemplate>("linxi_ledger_review");
 function feishuTestLabel(template: FeishuTestTemplate): string {
   if (template === "whatsapp_unassigned") return "user.feishuUnassignedTemplate";
-  if (template === "whatsapp_message") return "user.feishuNewMessageTemplate";
+  if (template === "whatsapp_message") return "notificationSettings.types.whatsapp_message";
   return `notificationSettings.types.${template}`;
 }
 function openFeishuTest(row: UserItem): void {

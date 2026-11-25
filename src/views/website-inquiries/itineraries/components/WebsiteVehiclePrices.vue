@@ -106,6 +106,9 @@
               <tr v-for="row in group.rows" :key="row.key" :class="{ 'price-table__stale': isStale(row) }">
                 <td class="whitespace-nowrap">
                   {{ vehicleLabel(row.vehicleType) }}
+                  <el-tag v-if="row.vehicleType && standardVehicleLabels.has(row.vehicleType)" size="small">
+                    {{ $t("websiteItineraryUi.sourceManual") }}
+                  </el-tag>
                   <el-tag
                     v-if="isStale(row)"
                     class="ml-1"
@@ -272,6 +275,10 @@ const groups = computed(() => {
   }));
 });
 const staleCount = computed(() => rows.value.filter(isStale).length);
+const standardVehicleLabels = computed(() => {
+  const types = new Set(rows.value.map(row => row.vehicleType));
+  return new Set(VEHICLE_OPTIONS.filter(option => types.has(option.value)).map(option => t(option.labelKey)));
+});
 const tooMany = computed(() => rows.value.length > MAX_PRICE_COMBINATIONS);
 const hasInvalidPrice = computed(() =>
   (nightlyVisited.value && nightlyDays.value.some(day => day.hotels.some(h => h.nightlyRate != null && !isValidVehiclePrice(h.nightlyRate)))) ||

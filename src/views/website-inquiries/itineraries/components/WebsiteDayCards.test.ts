@@ -3,12 +3,19 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRenderer, defineComponent, h, nextTick, reactive, ref, type Component, type ComponentPublicInstance } from "vue";
 import type { FeeState, WebsiteAttraction, WebsiteConfig, WebsiteDay, WebsiteLeg, WebsiteRoute } from "@/types/website";
 import BusinessDictionarySelect from "@/components/BusinessDictionarySelect/index.vue";
+import zhMessages from "@/lang/package/zh-cn.json";
 import type { ReorderBoardItem } from "@/views/inquiries/itineraries/reorder-board";
 import { ElMessageBox } from "element-plus";
 import ItineraryReorderDialog from "@/views/inquiries/itineraries/components/ItineraryReorderDialog.vue";
 import { emptyDay } from "../../options";
 
-vi.mock("vue-i18n", () => ({ useI18n: () => ({ locale: ref("zh-cn"), t: (key: string) => key }) }));
+vi.mock("vue-i18n", () => ({ useI18n: () => ({
+  locale: ref("zh-cn"),
+  t: (key: string) => {
+    const labels: Record<string, string> = zhMessages.websiteInquiry.vehicleTypes;
+    return labels[key.replace("websiteInquiry.vehicleTypes.", "")] ?? key;
+  },
+}) }));
 vi.mock("@/services/business-dictionary.service", () => ({
   businessDictionaryService: {
     getItems: async () => [49, 19, 9, 5].map(seats => ({
@@ -530,12 +537,12 @@ it("repairs a stale route association in place and lets the same leg become manu
   });
   const cardHeading = view.find("strong")[0]!.parent!;
   expect(view.find("ElTag", cardHeading).map(view.text)).toEqual([
-    "websiteItineraryUi.sourceRoute", "websiteItineraryUi.airportDropoff",
+    "websiteConfig.tabs.routes", "websiteItineraryUi.airportDropoff",
   ]);
   await view.click("common.edit");
   const dialog = view.find("dialog")[0]!;
   const heading = view.find("h2", dialog)[0]!;
-  expect(view.find("ElTag", heading.parent!).map(view.text)).toEqual(["websiteItineraryUi.sourceRoute"]);
+  expect(view.find("ElTag", heading.parent!).map(view.text)).toEqual(["websiteConfig.tabs.routes"]);
   const [routeInput, departInput, arriveInput] = view.find("ElSelect", dialog);
   expect(routeInput?.props["model-value"]).toBeUndefined();
   expect(departInput?.props.disabled).toBe(true);

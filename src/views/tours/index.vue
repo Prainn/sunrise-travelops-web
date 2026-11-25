@@ -120,7 +120,7 @@
         <el-table-column prop="countryName" :label="$t('common.countryOrRegion')" min-width="120" />
         <el-table-column
           prop="directLedgerOrderNo"
-          :label="$t('tour.directLedgerOrderNo')"
+          :label="$t('ledger.direct.orderNo')"
           min-width="140"
           :formatter="textOrDash"
         />
@@ -171,7 +171,7 @@
           min-width="150"
           show-overflow-tooltip
         />
-        <el-table-column prop="contactName" :label="$t('common.contact')" min-width="110" />
+        <el-table-column prop="contactName" :label="$t('tour.contact')" min-width="150" />
         <el-table-column prop="collectCoordinatorName" :label="$t('tour.collectCoordinator')" min-width="110" />
         <el-table-column prop="operatorName" :label="$t('tour.operator')" min-width="110" />
         <el-table-column prop="adults" :label="$t('tour.adults')" width="80" />

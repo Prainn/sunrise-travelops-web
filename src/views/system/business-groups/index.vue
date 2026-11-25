@@ -93,7 +93,7 @@
                 :disabled="isPending(row.id)"
                 @click="toggleStatus(row as BusinessGroupItem)"
               >
-                {{ $t(row.status === "enabled" ? "businessGroup.disable" : "businessGroup.enable") }}
+                {{ $t(row.status === "enabled" ? "common.disable" : "businessGroup.enable") }}
               </el-button>
             </RowActions>
           </template>

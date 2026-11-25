@@ -112,7 +112,7 @@
           <el-descriptions-item :label="$t('planning.dailyPrice')">
             {{ money(guidePlan.dailyPrice) }}
           </el-descriptions-item>
-          <el-descriptions-item :label="$t('planning.serviceDays')">
+          <el-descriptions-item :label="$t('inquiry.plannedDays')">
             {{ guidePlan.serviceDays }}
           </el-descriptions-item>
         </el-descriptions>

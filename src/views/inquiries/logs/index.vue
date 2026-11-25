@@ -3,7 +3,7 @@
     <SectionCard>
       <el-page-header @back="openUserPage(router, { name: 'InquiryList' })">
         <template #content>
-          {{ inquiry ? `${inquiry.code} ${inquiry.agencyName}` : $t("inquiry.log.report") }}
+          {{ inquiry ? `${inquiry.code} ${inquiry.agencyName}` : $t("route.inquiryLogReport") }}
         </template>
       </el-page-header>
       <div class="log-totals mt-[16px] flex flex-wrap gap-[16px]">
@@ -66,7 +66,7 @@
           @clear="search"
         />
       </el-form-item>
-      <el-form-item :label="$t('inquiry.log.dateRange')" class="filter-bar__wide">
+      <el-form-item :label="$t('common.dateRange')" class="filter-bar__wide">
         <el-date-picker v-model="dates" type="daterange" value-format="YYYY-MM-DD" />
       </el-form-item>
       <el-form-item :label="$t('common.operator')">

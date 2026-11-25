@@ -284,7 +284,7 @@ const stats = computed(() => {
       value: value(totals?.dropLegs),
       tone: "drop",
     },
-    { key: "tours", label: t("dashboard.flightMap.totals.tours"), value: value(totals?.tours) },
+    { key: "tours", label: t("tour.records"), value: value(totals?.tours) },
     { key: "people", label: t("dashboard.flightMap.totals.people"), value: value(totals?.people) },
     {
       key: "unlocated",

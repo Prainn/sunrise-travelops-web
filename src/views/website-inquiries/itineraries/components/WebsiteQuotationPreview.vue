@@ -83,6 +83,9 @@
       >
         {{ $t("websiteItineraryUi.printPdf") }}
       </el-button>
+      <span v-if="!confirmed && canConfirm" class="mr-2 text-sm text-muted">
+        {{ $t("websiteItineraryUi.confirmLockHint") }}
+      </span>
       <el-button
         v-if="!confirmed && canConfirm"
         type="primary"
@@ -90,7 +93,7 @@
         :disabled="hasErrors || acknowledged.length !== warningCodes.length"
         @click="emit('confirm', acknowledged)"
       >
-        {{ $t("websiteItineraryUi.confirmQuotation") }}
+        {{ $t("websiteInquiry.log.actions.quotation_confirmed") }}
       </el-button>
     </template>
   </AppDialog>

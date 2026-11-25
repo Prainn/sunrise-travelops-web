@@ -30,7 +30,7 @@
           </div>
         </el-form-item>
         <template v-else>
-          <el-form-item :label="$t('websiteItineraryUi.plannedDays')" prop="duration">
+          <el-form-item :label="$t('itinerary.plannedDays')" prop="duration">
             <el-input-number
               v-model="form.duration"
               :min="1"
@@ -48,7 +48,7 @@
             />
           </el-form-item>
         </template>
-        <el-form-item :label="$t('websiteItineraryUi.pax')">
+        <el-form-item :label="$t('websiteReport.pax')">
           <el-input-number
             v-model="form.pax"
             :min="1"

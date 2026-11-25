@@ -79,7 +79,7 @@
           <p class="m-0 flex flex-wrap items-center gap-2 text-[12px] text-muted">
             <span>¥{{ formatMoney(plan.dailyPrice) }} × {{ plan.serviceDays }}</span>
             <el-tag type="info" effect="plain" size="small">
-              {{ $t("planning.serviceDays") }}：{{ plan.serviceDays }}
+              {{ $t("inquiry.plannedDays") }}：{{ plan.serviceDays }}
             </el-tag>
           </p>
         </div>

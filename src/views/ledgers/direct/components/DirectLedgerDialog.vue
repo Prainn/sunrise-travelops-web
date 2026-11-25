@@ -124,7 +124,7 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('ledger.direct.countryOrRegion')">
+          <el-form-item :label="$t('common.countryOrRegion')">
             <el-input v-if="readonly" :model-value="ledger?.countryName || '-'" disabled />
             <BusinessItemSelect
               v-else

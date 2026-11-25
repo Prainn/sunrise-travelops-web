@@ -2,7 +2,7 @@
   <section class="surface-muted p-4 flex flex-col gap-3">
     <div class="flex flex-wrap justify-between items-center gap-3">
       <h4 class="m-0 text-[14px] text-strong font-600">
-        {{ $t("websiteItineraryUi.hotelPlans") }}
+        {{ $t("itinerary.hotelPlans") }}
       </h4>
       <el-button
         v-if="editable && day.overnightCityId"
@@ -49,7 +49,7 @@
         <span class="text-muted">
           {{ cityName(hotel.cityId) }}
           <span v-if="hotel.roomType" class="ml-2">{{ hotel.roomType }}</span>
-          <span class="ml-2">{{ $t(hotel.breakfastIncluded ? "websiteItineraryUi.breakfastIncludedShort" : "websiteItineraryUi.breakfastExcludedShort") }}</span>
+          <span class="ml-2">{{ $t(hotel.breakfastIncluded ? "websitePrint.breakfastIncluded" : "websitePrint.breakfastExcluded") }}</span>
         </span>
         <span v-if="configHotel(hotel)" class="text-muted">
           {{ $t("websiteItineraryUi.configHotelPrice", { price: formatMoney(configHotel(hotel)?.price) }) }}

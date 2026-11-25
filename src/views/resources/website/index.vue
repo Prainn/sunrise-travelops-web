@@ -1,7 +1,7 @@
 <template>
   <PageShell v-loading="loading || saving" :inert="saving">
     <FilterBar v-if="user.userInfo.scope === 'headquarters'" :resettable="false">
-      <el-form-item :label="$t('websiteInquiry.businessUnit')">
+      <el-form-item :label="$t('identity.businessUnit')">
         <el-select v-model="businessUnit" autocomplete="new-password" :disabled="saving">
           <el-option
             v-for="unit in ['linxi', 'website']"
@@ -32,7 +32,7 @@
         />
       </el-form-item>
       <template v-if="activeTab === 'routes'">
-        <el-form-item :label="$t('websiteConfig.routes.fromCity')">
+        <el-form-item :label="$t('websiteItineraryUi.departureCity')">
           <WebsiteConfigSelect
             v-model="fromCityId"
             group="cities"
@@ -42,7 +42,7 @@
             @labels="Object.assign(cityLabels, $event)"
           />
         </el-form-item>
-        <el-form-item :label="$t('websiteConfig.routes.toCity')">
+        <el-form-item :label="$t('websiteItineraryUi.arrivalCity')">
           <WebsiteConfigSelect
             v-model="toCityId"
             group="cities"

@@ -756,8 +756,8 @@ const allReorderBoardDays = computed<ReorderBoardDay[]>(() => {
                 breakfast === "pending"
                   ? "itinerary.breakfastPending"
                   : breakfast === "included"
-                    ? "itinerary.breakfastIncluded"
-                    : "itinerary.breakfastExcluded",
+                    ? "websitePrint.breakfastIncluded"
+                    : "websitePrint.breakfastExcluded",
               ),
             },
             ...day.items

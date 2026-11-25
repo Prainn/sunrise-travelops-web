@@ -31,7 +31,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item :label="$t('operationLog.dateRange')" class="filter-bar__wide">
+      <el-form-item :label="$t('common.dateRange')" class="filter-bar__wide">
         <el-date-picker
           v-model="dateRange"
           type="daterange"
@@ -157,10 +157,10 @@ const categories: { value: OperationCategory; label: string }[] = [
   { value: "inquiry", label: "operationLog.inquiry" },
   { value: "itinerary", label: "operationLog.itinerary" },
   { value: "quotation", label: "operationLog.quotation" },
-  { value: "tour", label: "operationLog.tour" },
-  { value: "guide-leave", label: "operationLog.guideLeave" },
+  { value: "tour", label: "tour.records" },
+  { value: "guide-leave", label: "route.guideLeaves" },
   { value: "guide-rating", label: "operationLog.guideRating" },
-  { value: "website-config", label: "operationLog.websiteConfig" },
+  { value: "website-config", label: "route.websiteResources" },
   { value: "ledger", label: "route.dataLedgers" },
   { value: "website-visit", label: "route.websiteVisits" },
   { value: "whatsapp", label: "operationLog.whatsapp" },

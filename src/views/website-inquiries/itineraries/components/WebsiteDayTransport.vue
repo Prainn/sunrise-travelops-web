@@ -2,7 +2,7 @@
   <section class="flex flex-col gap-3" :class="{ 'surface-muted p-4': !legId }">
     <div v-if="!legId" class="flex flex-wrap justify-between items-center gap-3">
       <h4 class="m-0 text-[14px] text-strong font-600">
-        {{ $t("websiteItineraryUi.transportLegs") }}
+        {{ $t("websiteConfig.tabs.routes") }}
       </h4>
       <el-button
         v-if="editable"
@@ -28,7 +28,7 @@
               type="info"
               effect="plain"
             >
-              {{ $t("websiteItineraryUi.sourceRoute") }}
+              {{ $t("websiteConfig.tabs.routes") }}
             </el-tag>
             <el-tag v-if="leg.isAirportPickup" size="small">
               {{ $t("websiteItineraryUi.airportPickup") }}
@@ -55,7 +55,7 @@
   </section>
   <AppDialog
     :model-value="Boolean(draft)"
-    :title="$t('websiteItineraryUi.transportLegs')"
+    :title="$t('websiteConfig.tabs.routes')"
     size="lg"
     append-to-body
     @close="draft = null"
@@ -63,7 +63,7 @@
     <template #header="{ titleId, titleClass }">
       <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
         <h2 :id="titleId" :class="titleClass" class="m-0">
-          {{ $t("websiteItineraryUi.transportLegs") }}
+          {{ $t("websiteConfig.tabs.routes") }}
         </h2>
         <el-tag
           v-if="draft?.routeId"
@@ -71,7 +71,7 @@
           type="info"
           effect="plain"
         >
-          {{ $t("websiteItineraryUi.sourceRoute") }}
+          {{ $t("websiteConfig.tabs.routes") }}
         </el-tag>
       </div>
     </template>
@@ -89,7 +89,7 @@
         <el-form-item :label="$t('websiteItineraryUi.resourceSource')">
           <el-radio-group v-model="source">
             <el-radio-button value="route">
-              {{ $t("websiteItineraryUi.sourceRoute") }}
+              {{ $t("websiteItineraryUi.selectTransportRoute") }}
             </el-radio-button>
             <el-radio-button value="manual">
               {{ $t("websiteItineraryUi.sourceManual") }}
@@ -99,7 +99,7 @@
         <el-form-item
           v-if="source === 'route'"
           class="col-span-2 max-[650px]:col-span-1"
-          :label="$t('websiteItineraryUi.sourceRoute')"
+          :label="$t('websiteConfig.tabs.routes')"
           prop="routeId"
         >
           <el-select

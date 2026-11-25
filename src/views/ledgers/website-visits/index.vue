@@ -9,7 +9,7 @@
           clearable
         />
       </el-form-item>
-      <el-form-item :label="$t('websiteVisits.dateRange')" class="filter-bar__wide">
+      <el-form-item :label="$t('common.dateRange')" class="filter-bar__wide">
         <el-date-picker
           v-model="dateRange"
           type="daterange"
@@ -65,7 +65,7 @@
           min-width="220"
           show-overflow-tooltip
         />
-        <el-table-column :label="$t('websiteVisits.source')" min-width="200" show-overflow-tooltip>
+        <el-table-column :label="$t('websiteInquiry.acquisitionSource')" min-width="200" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.utm_source || row.external_referrer || '' }}
           </template>
@@ -113,7 +113,7 @@
                 :disabled="saving"
                 @click="generateInquiry(row as WebsiteVisit)"
               >
-                {{ $t('websiteVisits.generate') }}
+                {{ $t('websiteInquiry.log.actions.inquiry_created') }}
               </el-button>
             </RowActions>
           </template>

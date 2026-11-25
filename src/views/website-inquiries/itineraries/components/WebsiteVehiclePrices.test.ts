@@ -10,7 +10,7 @@ import { PRICE_CATEGORIES } from "../vehicle-price";
 vi.mock("@/api/request", () => ({ ApiError: class extends Error {}, request: { put: vi.fn() } }));
 vi.mock("element-plus", () => ({ ElMessageBox: { confirm: vi.fn().mockResolvedValue("confirm") } }));
 vi.mock("vue-i18n", () => ({ useI18n: () => ({
-  t: (key: string, values?: unknown) => values ? `${key}:${JSON.stringify(values)}` : key,
+  t: (key: string, values?: unknown) => key === "websiteInquiry.vehicleTypes.7_seat" ? "7座" : values ? `${key}:${JSON.stringify(values)}` : key,
   locale: ref("zh-cn"),
 }) }));
 vi.mock("./WebsiteHotelDialog.vue", () => ({ default: { template: "<div />" } }));
@@ -73,6 +73,21 @@ async function mount(attractionPriceTotal: string | null = "0.00", config?: Webs
 const row = (plan: WebsiteItinerary, hotelTier: "A" | "B" | "C") => plan.vehiclePrices.find(price => price.vehicleType === "7_seat" && price.hotelTier === hotelTier);
 
 describe("vehicle × hotel tier price editing", () => {
+  it("marks a manually named vehicle when its displayed name matches a standard vehicle", async () => {
+    const view = await mount();
+    expect(view.text()).not.toContain("websiteItineraryUi.sourceManual");
+    await view.press("common.cancel");
+    const day = view.plan.value.days[0]!;
+    day.legs.push({ ...day.legs[0]!, id: "manual-leg", vehicleType: "7座" });
+    view.plan.value.vehiclePrices.push({
+      vehicleType: "7座", hotelTier: "A", unitPrice: "600.00", priceComponents: components(["600", null, null, null, null]),
+    });
+    await nextTick();
+    await view.open();
+    expect(view.text()).toMatch(/7座\s*websiteItineraryUi\.sourceManual/);
+    expect(view.plan.value.vehiclePrices[0]).toMatchObject({ vehicleType: "7_seat", unitPrice: "10000.00" });
+    expect(view.plan.value.vehiclePrices.at(-1)).toMatchObject({ vehicleType: "7座", unitPrice: "600.00" });
+  });
   it("seeds a consecutive stay from its bound reference and can split a single night", async () => {
     const config: WebsiteConfig = { version: 2, cities: [], attractions: [], routes: [], skeletons: [], patterns: [], templates: [],
       hotels: [{ id: "reference", status: "enabled", cityId: "city", nameZh: "酒店", nameEn: "Hotel", resourceId: null, price: "615.00" }] };

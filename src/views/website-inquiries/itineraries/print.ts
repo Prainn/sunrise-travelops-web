@@ -25,7 +25,11 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh"): 
   const paragraphs = (values: string[]) => values.map(value => `<p>${escapeHtml(value)}</p>`).join("");
   const dayRows = output.itinerary.map((day, dayIndex) => {
     const dayLabel = /^\d{4}-\d{2}-\d{2}$/.test(day.day) ? day.day : `D${dayIndex + 1}`;
-    return `<tr>${[dayLabel, day.depart, day.transportation, day.sightseeing, day.hotel, day.meal]
+    const meal = en ? day.meal : day.meal
+      .split(/ *\/ */)
+      .map(label => label.replace(/^([早午晚])餐$/, "$1"))
+      .join("/");
+    return `<tr>${[dayLabel, day.depart, day.transportation, day.sightseeing, day.hotel, meal]
       .map((value, index) => `<td class="${index === 3 ? "sightseeing" : "center"}">${escapeHtml(value)}</td>`).join("")}</tr>`;
   }).join("");
   const included = (category: string) => paragraphs(output.teamStandard?.find(row => row.category === category)?.included ?? []);
@@ -34,15 +38,13 @@ export function websitePrintHtml(output: WebsiteOutput, language: "en" | "zh"): 
   const standardWidths = [11, 11, 34, 10, 34];
   const standard = output.teamStandard
     ? `<table class="standards"><colgroup>${standardWidths.map(width => `<col style="width:${width}%">`).join("")}</colgroup><tbody>
-      <tr><th rowspan="3">${text("includes")}</th><th>${en ? "Hotel" : "酒店"}</th><td>${included("hotel")}</td><th>${text("mealsColumn")}</th><td>${included("meal")}</td></tr>
+      <tr><th rowspan="3">${text("includes")}</th><th>${text("hotel")}</th><td>${included("hotel")}</td><th>${text("mealsColumn")}</th><td>${included("meal")}</td></tr>
       <tr><th>${text("admission")}</th><td>${included("entry")}</td><th>${text("driver")}</th><td>${included("driver")}</td></tr>
       <tr><th>${escapeHtml(transportLabel)}</th><td>${included("transport")}</td><th>${text("guide")}</th><td>${included("service")}</td></tr>
       <tr><th>${text("excludes")}</th><td colspan="4">${paragraphs(output.exclusions)}</td></tr>
       </tbody></table>`
     : `<table><tbody><tr><th class="label">${text("includes")}</th><td>${paragraphs(output.inclusions)}</td></tr><tr><th>${text("excludes")}</th><td>${paragraphs(output.exclusions)}</td></tr></tbody></table>`;
-  const componentLabels = en
-    ? { hotel: "Hotel", guide: "Guide", vehicle: "Vehicle", attraction: "Attractions", meal: "Meals" }
-    : { hotel: "酒店", guide: "导游", vehicle: "用车", attraction: "景点", meal: "餐食" };
+  const componentLabels = (en ? enLocale : zhCnLocale).websiteItineraryUi.priceCategories;
   // 说明行并入最后一张报价表底部，与报价成为一个整体；无报价时单独成表。
   const notesRows = (span: number) => {
     const shopping = output.noShopping

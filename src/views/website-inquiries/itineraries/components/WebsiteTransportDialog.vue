@@ -2,7 +2,7 @@
   <AppDialog
     :model-value="modelValue"
     size="lg"
-    :title="$t('itineraryWorkspace.resourceDialogTitle', { day: dayLabel, type: $t('websiteItineraryUi.transportLegs') })"
+    :title="$t('itineraryWorkspace.resourceDialogTitle', { day: dayLabel, type: $t('websiteConfig.tabs.routes') })"
     @close="close"
   >
     <el-form
@@ -15,7 +15,7 @@
       <el-form-item :label="$t('websiteItineraryUi.resourceSource')">
         <el-radio-group v-model="source">
           <el-radio-button value="route">
-            {{ $t("websiteItineraryUi.sourceRoute") }}
+            {{ $t("websiteItineraryUi.selectTransportRoute") }}
           </el-radio-button>
           <el-radio-button value="manual">
             {{ $t("websiteItineraryUi.sourceManual") }}

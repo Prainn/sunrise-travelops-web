@@ -1,5 +1,5 @@
 <template>
-  <AppDialog v-model="visible" :title="$t('ledger.direct.linkedToursTitle')" size="md">
+  <AppDialog v-model="visible" :title="$t('tour.records')" size="md">
     <DataTable :data="tours" row-key="id">
       <el-table-column :label="$t('tour.tourNo')" min-width="210" :show-overflow-tooltip="false">
         <template #default="{ row }">
