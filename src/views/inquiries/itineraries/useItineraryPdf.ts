@@ -2,6 +2,7 @@ import { computed, onBeforeUnmount, ref, watch, type ComputedRef, type Ref } fro
 import type { InquiryRecord } from "@/types/inquiry";
 import type { CustomerExportLanguage, ItineraryRecord } from "@/types/itinerary";
 import { inquiryService, type PdfData } from "@/services/inquiry.service";
+import { recordClientOperation } from "@/utils/client-operation-log";
 import {
   printItineraryDocument,
   generateItineraryPrintDocument,
@@ -42,6 +43,12 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     const inquiry = options.inquiry.value;
     if (!plan || !inquiry || !options.canGenerate()) return null;
     const issues = getItineraryValidationIssues(plan, { requireStartDate: !inquiry.isSeries });
+    recordClientOperation({
+      page: "InquiryItineraries",
+      action: "validate",
+      result: issues.length ? "failure" : "success",
+      recordId: plan.id,
+    });
     // 系列询盘没有计划天数，不比较行程天数。
     const plannedDays = inquiry.plannedDays;
     return {
@@ -76,7 +83,23 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
       pdfPreviewFile.value = file;
       pdfPreviewUrl.value = URL.createObjectURL(pdfPreviewFile.value.blob);
       isPdfPreviewVisible.value = true;
+      recordClientOperation({
+        page: "InquiryItineraries",
+        action: "preview",
+        result: "success",
+        recordId: plan.id,
+        value: "pdf",
+      });
       return true;
+    } catch (error) {
+      recordClientOperation({
+        page: "InquiryItineraries",
+        action: "preview",
+        result: "failure",
+        recordId: plan.id,
+        value: "pdf",
+      });
+      throw error;
     } finally {
       isGeneratingPdf.value = false;
     }
@@ -120,7 +143,25 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
       );
       // 下载点击先于打印落库，打印被取消也算已点击。
       await inquiryService.recordDownload(plan.id);
-      await printItineraryDocument(file);
+      try {
+        await printItineraryDocument(file);
+        recordClientOperation({
+          page: "InquiryItineraries",
+          action: "print",
+          result: "unknown",
+          recordId: plan.id,
+          value: "pdf",
+        });
+      } catch (error) {
+        recordClientOperation({
+          page: "InquiryItineraries",
+          action: "print",
+          result: "failure",
+          recordId: plan.id,
+          value: "pdf",
+        });
+        throw error;
+      }
       closePdfPreview();
       return true;
     } finally {
@@ -134,14 +175,32 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
     try {
       const data = await inquiryService.pdfData(id, language());
       await inquiryService.recordDownload(id);
-      await printItineraryDocument(
-        await generateItineraryPrintDocument(
-          data.itinerary,
-          data.inquiry,
-          data,
-          showChildPrice.value,
-        ),
-      );
+      try {
+        await printItineraryDocument(
+          await generateItineraryPrintDocument(
+            data.itinerary,
+            data.inquiry,
+            data,
+            showChildPrice.value,
+          ),
+        );
+        recordClientOperation({
+          page: "InquiryItineraries",
+          action: "print",
+          result: "unknown",
+          recordId: id,
+          value: "pdf",
+        });
+      } catch (error) {
+        recordClientOperation({
+          page: "InquiryItineraries",
+          action: "print",
+          result: "failure",
+          recordId: id,
+          value: "pdf",
+        });
+        throw error;
+      }
     } finally {
       isGeneratingPdf.value = false;
     }
@@ -168,6 +227,13 @@ export function useItineraryPdf(options: ItineraryPdfOptions) {
       );
       await inquiryService.recordDownload(plan.id);
       downloadWordDocument(file);
+      recordClientOperation({
+        page: "InquiryItineraries",
+        action: "download",
+        result: "unknown",
+        recordId: plan.id,
+        value: "word",
+      });
       return true;
     } finally {
       isGeneratingWord.value = false;

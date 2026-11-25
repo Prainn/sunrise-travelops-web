@@ -34,7 +34,7 @@
           class="login-hq-option flex cursor-pointer items-center gap-[6px] rounded-full border border-[var(--login-line)] border-solid bg-[var(--login-paper)] px-[14px] py-[10px] text-[12px] tracking-[1px] text-[var(--login-muted)] transition-colors duration-200 disabled:cursor-wait"
           :aria-pressed="loginFormData.scope === 'headquarters'"
           :disabled="loading"
-          @click="loginFormData.scope = 'headquarters'"
+          @click="selectScope('headquarters')"
         >
           <el-icon aria-hidden="true">
             <OfficeBuilding />
@@ -170,7 +170,7 @@
         class="login-brand-option flex min-h-[80px] w-full cursor-pointer items-center gap-[15px] rounded-[11px] border border-[var(--login-line)] border-solid bg-[var(--login-paper)] px-[20px] py-[16px] text-left text-[var(--login-ink)] transition-colors duration-200 ease-out disabled:cursor-wait"
         :aria-pressed="loginFormData.scope === brand.scope"
         :disabled="loading"
-        @click="loginFormData.scope = brand.scope"
+        @click="selectScope(brand.scope)"
       >
         <span class="login-brand-number shrink-0 text-[24px] italic text-[var(--login-muted)]" aria-hidden="true">{{ String(index + 1).padStart(2, "0") }}</span>
         <span class="min-w-0">
@@ -198,6 +198,7 @@ import { Storage } from "@/utils/storage";
 import router from "@/router";
 import { useUserStore } from "@/stores/user";
 import { AuthStorage } from "@/utils/auth-storage";
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { safeRedirectTarget } from "@/utils/redirect-target";
 import ThemeSwitch from "@/components/ThemeSwitch/index.vue";
 import sunriseLogo from "@/assets/images/login/sunrise-logo.png";
@@ -271,13 +272,31 @@ const loginRules = computed(() => ({
 function loginRedirectTarget(): string {
   return safeRedirectTarget(router.currentRoute.value.query.redirect);
 }
+function selectScope(scope: LoginScope) {
+  if (loginFormData.value.scope === scope) return;
+  loginFormData.value.scope = scope;
+  recordClientOperation({
+    page: "Login",
+    action: "select",
+    result: "success",
+    value: scope,
+  });
+}
+
 async function handleLoginSubmit() {
   if (loading.value) return;
   const valid = await loginFormRef.value?.validate().then(
     () => true,
     () => false,
   );
-  if (!valid) return;
+  if (!valid) {
+    recordClientOperation({
+      page: "Login",
+      action: "validate",
+      result: "failure",
+    });
+    return;
+  }
 
   loading.value = true;
   let loggedIn = false;

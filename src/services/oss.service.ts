@@ -25,16 +25,16 @@ export const ossService = {
     return request.get<OssResource>(resourceUrl(id));
   },
   upload(file: File) {
-    return request.post<OssResource>(BASE_URL, imageFormData(file), { timeoutMs: LONG_REQUEST_TIMEOUT_MS });
+    return request.post<OssResource>(BASE_URL, imageFormData(file), { userAction: true, timeoutMs: LONG_REQUEST_TIMEOUT_MS });
   },
   update(id: string, form: OssResourceForm) {
-    return request.put<OssResource>(resourceUrl(id), form);
+    return request.put<OssResource>(resourceUrl(id), form, { userAction: true });
   },
   remove(id: string, version: number) {
-    return request.delete<{ id: string; deleted: true }>(resourceUrl(id), { params: { version } });
+    return request.delete<{ id: string; deleted: true }>(resourceUrl(id), { userAction: true, params: { version } });
   },
   /** 只重新归档失败的 WhatsApp 资源，不会重新给客户发送消息。 */
   retry(id: string, version: number) {
-    return request.post<OssResource>(`${resourceUrl(id)}/retry`, { version });
+    return request.post<OssResource>(`${resourceUrl(id)}/retry`, { version }, { userAction: true });
   },
 };

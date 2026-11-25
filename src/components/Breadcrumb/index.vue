@@ -16,6 +16,7 @@
 </template>
 
 <script setup lang="ts">
+import { openUserPage } from "@/utils/user-interaction";
 import type { RouteLocationMatched } from "vue-router";
 import { compile } from "path-to-regexp";
 import router from "@/router";
@@ -61,12 +62,12 @@ function getBreadcrumb() {
 function handleLink(item: BreadcrumbRoute) {
   const { redirect, path } = item;
   if (redirect) {
-    router.push(redirect).catch((err) => {
+    openUserPage(router, redirect).catch((err) => {
       console.warn(err);
     });
     return;
   }
-  router.push(pathCompile(path)).catch((err) => {
+  openUserPage(router, pathCompile(path)).catch((err) => {
     console.warn(err);
   });
 }

@@ -32,6 +32,7 @@
 </template>
 
 <script setup lang="ts">
+import { openUserPage } from "@/utils/user-interaction";
 import { useRouter } from "vue-router";
 import AppDialog from "@/components/AppDialog/index.vue";
 import DataTable from "@/components/DataTable/index.vue";
@@ -43,6 +44,6 @@ const router = useRouter();
 
 function openTour(tourNo: string) {
   visible.value = false;
-  void router.push({ path: "/tours/list", query: { keyword: tourNo } });
+  void openUserPage(router, { path: "/tours/list", query: { keyword: tourNo } });
 }
 </script>

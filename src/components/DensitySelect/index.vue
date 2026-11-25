@@ -22,6 +22,7 @@
 import { ScaleToOriginal } from "@element-plus/icons-vue";
 import { useSettingsStore } from "@/stores/settings";
 import { UiDensity } from "@/enums/settings";
+import { recordClientOperation } from "@/utils/client-operation-log";
 
 /**
  * 界面密度切换：自动按视口尺寸切换紧凑，或固定为标准/紧凑。
@@ -36,5 +37,6 @@ const densityOptions = computed(() => [
 
 function handleDensityChange(value: UiDensity) {
   settingsStore.density = value;
+  recordClientOperation({ action: "layout", result: "success" });
 }
 </script>

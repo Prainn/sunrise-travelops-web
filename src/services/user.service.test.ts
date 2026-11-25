@@ -12,9 +12,9 @@ describe("user tour code payloads", () => {
   };
   it("sends the manually edited code without recomputing it", async () => {
     await userService.create(form);
-    expect(request.post).toHaveBeenCalledWith("/users", expect.objectContaining({ tourCode: "CUSTOM" }));
+    expect(request.post).toHaveBeenCalledWith("/users", expect.objectContaining({ tourCode: "CUSTOM" }), { userAction: true });
     await userService.update("user-id", form);
-    expect(request.put).toHaveBeenCalledWith("/users/user-id", expect.objectContaining({ tourCode: "CUSTOM" }));
+    expect(request.put).toHaveBeenCalledWith("/users/user-id", expect.objectContaining({ tourCode: "CUSTOM" }), { userAction: true });
   });
   it("omits headquarters codes in create and edit, preserving hidden historical values on the server", async () => {
     const hq: UserForm = { ...form, identities: [{ scope: "headquarters", deptId: 1, roleIds: [] }] };

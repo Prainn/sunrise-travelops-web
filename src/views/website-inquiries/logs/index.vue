@@ -1,7 +1,7 @@
 <template>
   <PageShell v-loading="isLoading" class="website-inquiry-log-page">
     <SectionCard>
-      <el-page-header v-if="inquiryId" class="mb-[16px]" @back="router.push({ name: 'WebsiteInquiryList' })">
+      <el-page-header v-if="inquiryId" class="mb-[16px]" @back="openUserPage(router, { name: 'WebsiteInquiryList' })">
         <template #content>
           {{ inquiry ? `${inquiry.code} ${inquiry.customerName}` : $t("inquiry.log.title") }}
         </template>
@@ -259,6 +259,7 @@
   </PageShell>
 </template>
 <script setup lang="ts">
+import { openUserPage } from "@/utils/user-interaction";
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";

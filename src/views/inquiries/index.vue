@@ -67,6 +67,7 @@
 </template>
 
 <script setup lang="ts">
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { computed, nextTick, onDeactivated, onMounted, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useDebounceFn } from "@vueuse/core";
@@ -238,6 +239,7 @@ function openCreateDialog() {
   editingId.value = "";
   inquiryForm.value = createEmptyInquiry();
   isEditorVisible.value = true;
+  recordClientOperation({ page: "InquiryList", action: "open" });
 }
 // 快速点击多行时只采用最后一次打开的记录，过期响应直接丢弃。
 let openVersion = 0;
@@ -262,8 +264,12 @@ async function openEditDialog(record: InquiryRecord) {
     editingId.value = detail.id;
     inquiryForm.value = detail;
     isEditorVisible.value = true;
+    recordClientOperation({ page: "InquiryList", action: "open", recordId: record.id });
   } catch (error) {
-    if (version === openVersion) showError(error);
+    if (version === openVersion) {
+      recordClientOperation({ page: "InquiryList", action: "open", result: "failure", recordId: record.id });
+      showError(error);
+    }
   }
 }
 async function openDetailDrawer(record: InquiryRecord) {
@@ -273,8 +279,12 @@ async function openDetailDrawer(record: InquiryRecord) {
     if (version !== openVersion) return;
     selectedInquiry.value = detail;
     isDetailVisible.value = true;
+    recordClientOperation({ page: "InquiryList", action: "open", recordId: record.id });
   } catch (error) {
-    if (version === openVersion) showError(error);
+    if (version === openVersion) {
+      recordClientOperation({ page: "InquiryList", action: "open", result: "failure", recordId: record.id });
+      showError(error);
+    }
   }
 }
 function openItineraryManagement(record: InquiryRecord) {
@@ -288,12 +298,14 @@ const followUpInquiry = ref<InquiryRecord>();
 function openFollowUps(record: InquiryRecord) {
   followUpInquiry.value = record;
   isFollowUpVisible.value = true;
+  recordClientOperation({ page: "InquiryList", action: "open", recordId: record.id });
 }
 const isToursVisible = ref(false);
 const toursInquiry = ref<InquiryRecord>();
 function openRelatedTours(record: InquiryRecord) {
   toursInquiry.value = record;
   isToursVisible.value = true;
+  recordClientOperation({ page: "InquiryList", action: "open", recordId: record.id });
 }
 // 保存期间弹窗不可关闭，避免旧请求返回后关掉新打开的弹窗。
 const saving = ref(false);

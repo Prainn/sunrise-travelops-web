@@ -125,9 +125,9 @@
                 @set-state="handleSetState"
                 @start-consultation="handleStartConsultation"
                 @create-inquiry="handleCreateInquiry"
-                @view-inquiry="(id) => router.push({ name: 'WebsiteInquiryList', query: { inquiryId: id } })"
-                @create-ledger="(id) => router.push({ name: 'WebsiteLedger', query: { websiteInquiryId: id } })"
-                @view-ledger="(orderNo) => router.push({ name: 'WebsiteLedger', query: { keyword: orderNo } })"
+                @view-inquiry="(id) => openUserPage(router, { name: 'WebsiteInquiryList', query: { inquiryId: id } })"
+                @create-ledger="(id) => openUserPage(router, { name: 'WebsiteLedger', query: { websiteInquiryId: id } })"
+                @view-ledger="(orderNo) => openUserPage(router, { name: 'WebsiteLedger', query: { keyword: orderNo } })"
                 @open-conversation="handleSelect"
               >
                 <template #notes>
@@ -170,6 +170,8 @@
 </template>
 
 <script setup lang="ts">
+import { openUserPage } from "@/utils/user-interaction";
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ArrowLeft, ArrowRight } from "@element-plus/icons-vue";
@@ -348,6 +350,7 @@ async function handleRefreshNotes() {
     try {
       await ElMessageBox.confirm(t("whatsapp.customerNotesRefreshConfirm"), t("common.warning"), { type: "warning" });
     } catch {
+      recordClientOperation({ page: "WhatsappInbox", action: "cancel", result: "cancelled", recordId: id });
       return;
     }
   }
@@ -374,6 +377,7 @@ function resetFilters() {
   workbench.view.value = defaultView;
 }
 function handleSelect(id: string) {
+  recordClientOperation({ page: "WhatsappInbox", action: "select", result: "success", recordId: id });
   void workbench.selectConversation(id);
 }
 async function refreshSelected() {
@@ -405,6 +409,7 @@ async function handleRetry(message: WhatsappMessage) {
   try {
     await ElMessageBox.confirm(t("whatsapp.retryConfirm"), t("common.warning"), { type: "warning" });
   } catch {
+    recordClientOperation({ page: "WhatsappInbox", action: "cancel", result: "cancelled", recordId: message.id });
     return;
   }
   const feedback = await workbench.retryMessage(message);
@@ -416,6 +421,7 @@ async function handleConfirmFailed(message: WhatsappMessage) {
   try {
     await ElMessageBox.confirm(t("whatsapp.confirmFailedConfirm"), t("common.warning"), { type: "warning" });
   } catch {
+    recordClientOperation({ page: "WhatsappInbox", action: "cancel", result: "cancelled", recordId: message.id });
     return;
   }
   confirmingIds.value = new Set(confirmingIds.value).add(message.id);
@@ -464,6 +470,7 @@ async function handleStartConsultation() {
   try {
     await ElMessageBox.confirm(t("whatsapp.startConsultationConfirm"), t("whatsapp.startConsultation"), { type: "warning" });
   } catch {
+    recordClientOperation({ page: "WhatsappInbox", action: "cancel", result: "cancelled", recordId: current.id });
     return;
   }
   actionBusy.value = true;

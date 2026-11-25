@@ -1,7 +1,7 @@
 <template>
   <PageShell v-loading="isLoading" class="inquiry-log-page">
     <SectionCard>
-      <el-page-header @back="router.push({ name: 'InquiryList' })">
+      <el-page-header @back="openUserPage(router, { name: 'InquiryList' })">
         <template #content>
           {{ inquiry ? `${inquiry.code} ${inquiry.agencyName}` : $t("inquiry.log.report") }}
         </template>
@@ -238,6 +238,7 @@
   </PageShell>
 </template>
 <script setup lang="ts">
+import { openUserPage } from "@/utils/user-interaction";
 import DataTable from "@/components/DataTable/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
 import PageShell from "@/components/PageShell/index.vue";

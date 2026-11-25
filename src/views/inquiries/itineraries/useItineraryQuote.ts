@@ -1,3 +1,4 @@
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { getCurrentScope, onScopeDispose, ref, watch, type Ref } from "vue";
 import { inquiryService, itineraryInput } from "@/services/inquiry.service";
 import { isApiError } from "@/api/request";
@@ -163,6 +164,7 @@ export function useItineraryQuote(
     maxRetriesReached,
     retry: () => {
       if (error.value !== "retriable" || pending.value || retryCount.value >= MAX_RETRIES) return;
+      recordClientOperation({ page: "InquiryItineraries", action: "retry", result: "success", recordId: selected.value?.id });
       retryCount.value++;
     },
   };

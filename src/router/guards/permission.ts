@@ -90,7 +90,5 @@ export function setupPermissionGuard() {
     }
   });
 
-  router.afterEach(() => {
-    NProgress.done();
-  });
+  router.afterEach(() => NProgress.done());
 }

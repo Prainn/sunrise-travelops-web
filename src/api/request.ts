@@ -26,6 +26,8 @@ type QueryValue = string | number | boolean | null | undefined;
 type RequestParams = Record<string, QueryValue | readonly QueryValue[]> | URLSearchParams;
 
 interface RequestOptions extends Omit<RequestInit, "body" | "method"> {
+  /** 由操作者明确提交的业务命令。读取、轮询与自动维护使用默认值。 */
+  userAction?: boolean;
   params?: RequestParams;
   requiresAuth?: boolean;
   retryAfterRefresh?: boolean;
@@ -134,6 +136,7 @@ function appendParams(url: string, params?: RequestParams): string {
 
 function createHeaders(options: RequestOptions, body?: unknown): Headers {
   const headers = new Headers(options.headers);
+  if (options.userAction) headers.set("X-Operation-Origin", "user");
   if (body !== undefined && !(body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
