@@ -199,6 +199,7 @@ export const inquiryService = {
     const body = new FormData();
     body.append("file", file);
     return request.post<{ text: string }>("/inquiries/parse-document", body, {
+      userAction: true,
       timeoutMs: LONG_REQUEST_TIMEOUT_MS,
     });
   },
@@ -216,7 +217,7 @@ export const inquiryService = {
       version: record.version,
       ownerId,
       reason,
-    });
+    }, { userAction: true });
   },
   async priceAdjustments(id: string) {
     return normalizeInquiryMoney<PriceAdjustment[]>(
@@ -224,16 +225,16 @@ export const inquiryService = {
     );
   },
   create(record: InquiryRecord) {
-    return request.post<InquiryRecord>("/inquiries", inquiryInput(record));
+    return request.post<InquiryRecord>("/inquiries", inquiryInput(record), { userAction: true });
   },
   update(record: InquiryRecord) {
     return request.put<InquiryRecord>(`/inquiries/${record.id}`, {
       ...inquiryInput(record),
       version: record.version,
-    });
+    }, { userAction: true });
   },
   delete(record: InquiryRecord) {
-    return request.delete<void>(`/inquiries/${encodeURIComponent(record.id)}`, { body: { version: record.version } });
+    return request.delete<void>(`/inquiries/${encodeURIComponent(record.id)}`, { userAction: true, body: { version: record.version } });
   },
   followUps(inquiryId: string, query: { page: number; pageSize: number }) {
     return request.get<InquiryFollowUpPage>(
@@ -244,16 +245,16 @@ export const inquiryService = {
   addFollowUp(inquiryId: string, input: InquiryFollowUpInput) {
     return request.post<{ id: string; inquiryVersion: number; delivery: FollowUpDelivery }>(
       `/inquiries/${encodeURIComponent(inquiryId)}/follow-ups`,
-      input,
+      input, { userAction: true },
     );
   },
   archive(record: InquiryRecord) {
     return request.post<InquiryRecord>(`/inquiries/${record.id}/archive`, {
       version: record.version,
-    });
+    }, { userAction: true });
   },
   createContact(agencyId: string, name: string, phone: string, inquiryId?: string) {
-    return request.post<AgencyContactRecord>(`/inquiries/contacts/${agencyId}`, { name, phone, inquiryId });
+    return request.post<AgencyContactRecord>(`/inquiries/contacts/${agencyId}`, { name, phone, inquiryId }, { userAction: true });
   },
   async listItineraries(inquiryId: string) {
     return normalizeInquiryMoney<ItineraryRecord[]>(
@@ -265,7 +266,7 @@ export const inquiryService = {
   },
   async createItinerary(record: ItineraryRecord) {
     return normalizeInquiryMoney<ItineraryRecord>(
-      await request.post(`/inquiries/${record.inquiryId}/itineraries`, itineraryInput(record)),
+      await request.post(`/inquiries/${record.inquiryId}/itineraries`, itineraryInput(record), { userAction: true }),
     );
   },
   /** `confirmVehicleModeChange` is only sent for the save that applies a confirmed vehicle mode switch. */
@@ -275,7 +276,7 @@ export const inquiryService = {
         ...itineraryInput(record),
         ...(options.confirmVehicleModeChange ? { confirmVehicleModeChange: true } : {}),
         version: record.version,
-      }),
+      }, { userAction: true }),
     );
   },
   async quoteCalculation(id: string) {
@@ -290,7 +291,7 @@ export const inquiryService = {
   },
   async copyItinerary(record: ItineraryRecord, title: string) {
     return normalizeInquiryMoney<ItineraryRecord>(
-      await request.post(`/itineraries/${record.id}/copy`, { version: record.version, title }),
+      await request.post(`/itineraries/${record.id}/copy`, { version: record.version, title }, { userAction: true }),
     );
   },
   /** 导出语言独立于界面语言，默认 zh；en 仅盛旭支持。 */
@@ -300,7 +301,7 @@ export const inquiryService = {
     );
   },
   async recordDownload(id: string) {
-    await request.post(`/itineraries/${encodeURIComponent(id)}/download-click`);
+    await request.post(`/itineraries/${encodeURIComponent(id)}/download-click`, undefined, { userAction: true });
   },
   async confirmPdf(data: PdfData) {
     return normalizeInquiryMoney<PdfData>(
@@ -308,7 +309,7 @@ export const inquiryService = {
         version: data.itinerary.version,
         inquiryVersion: data.inquiryVersion,
         language: data.exportLanguage ?? "zh",
-      }),
+      }, { userAction: true }),
     );
   },
 };

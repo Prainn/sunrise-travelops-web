@@ -67,6 +67,16 @@ describe("request session recovery", () => {
 
   afterEach(() => vi.unstubAllGlobals());
 
+  it("marks only explicit human commands, including when the same account makes automatic requests", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => response(200, "SUCCESS"));
+    vi.stubGlobal("fetch", fetcher);
+    await request.get("/whatsapp/summary");
+    await request.post("/whatsapp/conversations/test/read", { lastSeq: "1" });
+    await request.post("/inquiries", {}, { userAction: true });
+    const origins = fetcher.mock.calls.map(([, init]) => new Headers(init?.headers).get("X-Operation-Origin"));
+    expect(origins).toEqual([null, null, "user"]);
+  });
+
   it("keeps tokens when refresh fails during a temporary outage and retries later", async () => {
     const fetch = vi
       .fn()

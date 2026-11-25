@@ -329,7 +329,7 @@ describe("website itinerary request payloads and dirty tracking", () => {
       inquiryVersion: 2,
     });
     const { json: defaulted } = sentBody(request.post);
-    expect(request.post).toHaveBeenCalledWith("/website/inquiries/inquiry/itineraries", expect.any(Object));
+    expect(request.post).toHaveBeenCalledWith("/website/inquiries/inquiry/itineraries", expect.any(Object), { userAction: true });
     expect(defaulted).toMatchObject({
       title: "New Trip",
       inquiryVersion: 2,

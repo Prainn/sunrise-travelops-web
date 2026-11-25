@@ -531,6 +531,7 @@
 </template>
 
 <script setup lang="ts">
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { COORDINATOR_DUTIES, isCoordinatorIdentity } from "@/constants/coordinator-duty";
 import { loginScopeName } from "@/constants/identity";
 import { formatDateTime } from "@/utils";
@@ -808,8 +809,10 @@ async function showTemporaryPassword(password: string): Promise<void> {
             onClick: async () => {
               try {
                 await navigator.clipboard.writeText(password);
+                recordClientOperation({ page: "User", action: "copy", result: "success" });
                 ElMessage.success(t("user.passwordCopied"));
               } catch {
+                recordClientOperation({ page: "User", action: "copy", result: "failure" });
                 ElMessage.error(t("user.passwordCopyFailed"));
               }
             },

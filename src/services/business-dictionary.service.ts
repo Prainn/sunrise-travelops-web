@@ -120,7 +120,7 @@ export const businessDictionaryService = {
   async createType(data: BusinessDictionaryTypeForm): Promise<BusinessCategoryTypeRecord> {
     return request.post<BusinessCategoryTypeRecord>(
       BUSINESS_DICTIONARY_BASE_URL,
-      toTypeInput(data),
+      toTypeInput(data), { userAction: true },
     );
   },
 
@@ -130,12 +130,12 @@ export const businessDictionaryService = {
   ): Promise<BusinessCategoryTypeRecord> {
     return request.put<BusinessCategoryTypeRecord>(
       `${BUSINESS_DICTIONARY_BASE_URL}/${encodeURIComponent(id)}`,
-      toTypeInput({ ...data, id }),
+      toTypeInput({ ...data, id }), { userAction: true },
     );
   },
 
   async deleteTypes(ids: string): Promise<void> {
-    await request.delete<void>(BUSINESS_DICTIONARY_BASE_URL, { params: { ids } });
+    await request.delete<void>(BUSINESS_DICTIONARY_BASE_URL, { userAction: true, params: { ids } });
   },
 
   async getItems(
@@ -153,7 +153,7 @@ export const businessDictionaryService = {
   ): Promise<BusinessCategoryOptionRecord> {
     return request.post<BusinessCategoryOptionRecord>(
       getItemBaseUrl(typeCode),
-      toItemInput(typeCode, data),
+      toItemInput(typeCode, data), { userAction: true },
     );
   },
 
@@ -164,11 +164,11 @@ export const businessDictionaryService = {
   ): Promise<BusinessCategoryOptionRecord> {
     return request.put<BusinessCategoryOptionRecord>(
       `${getItemBaseUrl(typeCode)}/${encodeURIComponent(id)}`,
-      toItemInput(typeCode, { ...data, id }),
+      toItemInput(typeCode, { ...data, id }), { userAction: true },
     );
   },
 
   async deleteItems(typeCode: string, ids: string): Promise<void> {
-    await request.delete<void>(getItemBaseUrl(typeCode), { params: { ids } });
+    await request.delete<void>(getItemBaseUrl(typeCode), { userAction: true, params: { ids } });
   },
 };

@@ -26,7 +26,7 @@
       >
         <template #header="{ collapsed }">
           <SectionCard class="website-itinerary-page__overview">
-            <el-page-header @back="router.push('/website-inquiries')">
+            <el-page-header @back="openUserPage(router, '/website-inquiries')">
               <template #content>
                 <div class="flex flex-wrap items-center gap-3">
                   <el-tag>{{ $t("websiteWorkspace.businessLabel") }}</el-tag>
@@ -413,6 +413,8 @@
   </PageShell>
 </template>
 <script setup lang="ts">
+import { openUserPage } from "@/utils/user-interaction";
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { computed, markRaw, ref, useTemplateRef, watch } from "vue";
 import { Bowl, Location, OfficeBuilding, Service, User, Van } from "@element-plus/icons-vue";
 import { useRouter } from "vue-router";
@@ -798,6 +800,12 @@ async function applyReorder(change: DayOrderChange) {
   plan.value.deletedDays = result.deletedDays;
   plan.value.duration = plan.value.serviceDates?.length ?? result.days.length;
   reorderIssues.value = result.issues;
+  recordClientOperation({
+    page: "InquiryItineraries",
+    action: "reorder",
+    result: "success",
+    recordId: plan.value.id,
+  });
   await save();
 }
 </script>

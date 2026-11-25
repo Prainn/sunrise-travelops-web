@@ -35,7 +35,7 @@
     <section id="itinerary-hotels">
       <template v-if="hotelRows.length">
         <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
-          <el-tabs v-model="activeTier" class="itinerary-hotel-plans__tabs min-w-0 flex-1">
+          <el-tabs v-model="activeTier" class="itinerary-hotel-plans__tabs min-w-0 flex-1" @tab-click="handleTierTabChange">
             <el-tab-pane
               v-for="tier in HOTEL_PLAN_TIERS"
               :key="tier"
@@ -180,6 +180,11 @@
 </template>
 
 <script setup lang="ts">
+import { recordClientOperation } from "@/utils/client-operation-log";
+
+function handleTierTabChange() {
+  recordClientOperation({ page: "InquiryItineraries", action: "tab", result: "success" });
+}
 import { computed, ref, watch } from "vue";
 import { selectionPriceNeedsReason } from "../price-adjustments";
 import { resourceService } from "@/services/resource.service";

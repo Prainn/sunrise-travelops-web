@@ -67,7 +67,7 @@
               :key="item.path + idx"
               :class="['command-palette-item', { 'is-active': activeIndex === idx }]"
               @mouseenter="activeIndex = idx"
-              @click="onGo(item)"
+              @click="handleSelectItem(item)"
             >
               <div
                 class="command-palette-item__title text-[14px] text-[var(--el-text-color-primary)]"
@@ -130,6 +130,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import AppDialog from "@/components/AppDialog/index.vue";
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { useCommandPalette } from "./useCommandPalette";
 
 const {
@@ -148,6 +149,11 @@ const {
 } = useCommandPalette();
 
 const displayList = computed(() => (results.value.length ? results.value : history.value));
+
+function handleSelectItem(item: (typeof displayList.value)[number]) {
+  recordClientOperation({ action: "select", result: "success" });
+  onGo(item);
+}
 
 const handleInputKeydown: (evt: KeyboardEvent | Event) => void = (evt) => {
   if (!(evt instanceof KeyboardEvent)) return;
@@ -176,6 +182,7 @@ const handleInputKeydown: (evt: KeyboardEvent | Event) => void = (evt) => {
     e.preventDefault();
     if (displayList.value.length === 0) return;
     if (activeIndex.value < 0) activeIndex.value = 0;
+    recordClientOperation({ action: "select", result: "success" });
     onSelect();
   }
 };

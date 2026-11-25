@@ -9,7 +9,7 @@
         :style="frameStyle"
         :aria-label="$t('oss.media.viewOriginal')"
         :title="$t('oss.media.viewOriginal')"
-        @click="viewerOpen = true"
+        @click="openViewer"
       >
         <img
           :key="displayUrl"
@@ -48,7 +48,7 @@
       :url-list="[resource.originalUrl]"
       teleported
       hide-on-click-modal
-      @close="viewerOpen = false"
+      @close="closeViewer"
     />
   </span>
 </template>
@@ -57,6 +57,7 @@
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ossErrorKey, type OssResource, type OssResourceKind } from "@/types/oss";
+import { recordClientOperation } from "@/utils/client-operation-log";
 
 const props = withDefaults(defineProps<{
   /** 尚未发现归档记录时为空，按处理中显示。 */
@@ -109,6 +110,24 @@ const placeholderText = computed(() => {
 watch(() => props.resource?.id, () => {
   viewerOpen.value = false;
 });
+
+function openViewer() {
+  viewerOpen.value = true;
+  recordClientOperation({
+    action: "preview",
+    result: "success",
+    recordId: props.resource?.id,
+  });
+}
+
+function closeViewer() {
+  viewerOpen.value = false;
+  recordClientOperation({
+    action: "close",
+    result: "success",
+    recordId: props.resource?.id,
+  });
+}
 </script>
 
 <style scoped lang="scss">

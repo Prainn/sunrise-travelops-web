@@ -6,6 +6,7 @@ import { authService, userService } from "@/services";
 import type { LoginRequest } from "@/types/auth";
 
 import { AuthStorage } from "@/utils/auth-storage";
+import { resetClientOperationIdentity } from "@/utils/client-operation-log";
 import { reloadPageWithoutConfirmation } from "@/utils/page-lifecycle";
 import { sessionGate } from "@/utils/session-gate";
 import { usePermissionStoreHook } from "@/stores/permission";
@@ -32,6 +33,7 @@ export const useUserStore = defineStore("user", () => {
    */
   async function login(loginRequest: LoginRequest): Promise<void> {
     const { accessToken, refreshToken } = await authService.login(loginRequest);
+    resetClientOperationIdentity();
     rememberMe.value = loginRequest.rememberMe ?? false;
     AuthStorage.setLoginTokens(accessToken, refreshToken, rememberMe.value);
     userInfo.value = { roles: [], perms: [] };
@@ -99,6 +101,7 @@ export const useUserStore = defineStore("user", () => {
    * 仅处理用户模块内的状态
    */
   function resetUserState(): void {
+    resetClientOperationIdentity();
     AuthStorage.clearAuth();
     clearResourceOptionsCache();
     sessionGate.setKnown(null);

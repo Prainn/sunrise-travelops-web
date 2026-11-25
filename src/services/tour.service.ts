@@ -86,16 +86,16 @@ export const tourService = {
     return request.post<TourGuideAvailability>("/tours/available-guides", params);
   },
   create(body: TourCreateRequest) {
-    return request.post<TourRecord>("/tours", body);
+    return request.post<TourRecord>("/tours", body, { userAction: true });
   },
   update(id: string, body: TourUpdateRequest) {
-    return request.put<TourRecord>(`/tours/${encodeURIComponent(id)}`, body);
+    return request.put<TourRecord>(`/tours/${encodeURIComponent(id)}`, body, { userAction: true });
   },
   cancel(id: string, version: number, reason: string) {
     return request.post<TourRecord>(`/tours/${encodeURIComponent(id)}/cancel`, {
       version,
       reason,
-    });
+    }, { userAction: true });
   },
   ratings(query: PagedKeywordQuery) {
     return request.get<PageResult<TourRatingRow>>("/tours/ratings", { params: clean(query) });
@@ -108,7 +108,7 @@ export const tourService = {
   ) {
     return request.put<TourRatingRow>(
       `/tours/${encodeURIComponent(tourId)}/ratings/${encodeURIComponent(guideId)}`,
-      { ...patch, version },
+      { ...patch, version }, { userAction: true },
     );
   },
   leaves(query: PagedKeywordQuery) {
@@ -119,15 +119,15 @@ export const tourService = {
   createLeave(input: GuideLeaveInput) {
     return request.post<GuideLeaveRecord>("/resources/guide-leaves", {
       ...input,
-    });
+    }, { userAction: true });
   },
   updateLeave(id: string, version: number, input: GuideLeaveInput) {
     return request.put<GuideLeaveRecord>(`/resources/guide-leaves/${encodeURIComponent(id)}`, {
       ...input,
       version,
-    });
+    }, { userAction: true });
   },
   async deleteLeave(id: string) {
-    await request.delete<void>("/resources/guide-leaves", { params: { ids: id } });
+    await request.delete<void>("/resources/guide-leaves", { userAction: true, params: { ids: id } });
   },
 };

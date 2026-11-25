@@ -24,6 +24,7 @@
 import { useSettingsStore } from "@/stores/settings";
 import { ThemeMode } from "@/enums";
 import { Moon, Sunny, Monitor } from "@element-plus/icons-vue";
+import { recordClientOperation } from "@/utils/client-operation-log";
 
 const { t } = useI18n();
 const settingsStore = useSettingsStore();
@@ -44,5 +45,10 @@ const currentThemeIcon = computed(() => {
 
 const handleDarkChange = (theme: ThemeMode) => {
   settingsStore.theme = theme;
+  recordClientOperation({
+    action: "theme",
+    result: "success",
+    value: theme === ThemeMode.AUTO ? "system" : theme,
+  });
 };
 </script>

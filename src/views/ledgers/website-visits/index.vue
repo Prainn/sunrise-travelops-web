@@ -162,6 +162,7 @@ import { websiteService, websiteErrorMessage, type WebsiteOwnerOption } from "@/
 import type { WebsiteVisit } from "@/types/website-visit";
 import type { WebsiteInquiry, WebsiteInquiryInput, WebsiteCity } from "@/types/website";
 import { useUserStore } from "@/stores/user";
+import { recordClientOperation } from "@/utils/client-operation-log";
 defineOptions({ name: "WebsiteVisits" });
 const { t } = useI18n();
 const user = useUserStore();
@@ -334,7 +335,19 @@ async function exportRecords() {
     link.download = `lynxtour-visits_${start}_${end}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+    recordClientOperation({
+      page: "WebsiteVisits",
+      action: "download",
+      result: "unknown",
+      value: "csv",
+    });
   } catch (cause) {
+    recordClientOperation({
+      page: "WebsiteVisits",
+      action: "download",
+      result: "failure",
+      value: "csv",
+    });
     ElMessage.error(websiteErrorMessage(cause));
   } finally {
     exporting.value = false;

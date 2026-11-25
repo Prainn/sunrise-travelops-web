@@ -71,7 +71,7 @@
     </FilterBar>
     <SectionCard fill>
       <TableToolbar :refreshing="loading" @refresh="refreshPage">
-        <el-tabs v-model="activeTab" class="website-config-tabs flex-1 min-w-0">
+        <el-tabs v-model="activeTab" class="website-config-tabs flex-1 min-w-0" @tab-click="handleTabChange">
           <el-tab-pane :label="$t('websiteConfig.tabs.cities')" name="cities" :disabled="saving" />
           <el-tab-pane :label="$t('websiteConfig.tabs.attractions')" name="attractions" :disabled="saving" />
           <el-tab-pane :label="$t('websiteConfig.tabs.hotels')" name="hotels" :disabled="saving" />
@@ -86,7 +86,7 @@
         type="error"
         :description="error"
         retryable
-        @retry="refreshPage"
+        @retry="handleRetry"
       />
       <template v-else-if="result">
         <div :key="`${businessUnit}:${activeTab}`" class="flex-1 min-h-0 overflow-hidden">
@@ -151,6 +151,7 @@ import Pagination from "@/components/Pagination/index.vue";
 import { websiteErrorMessage, websiteService } from "@/services/website.service";
 import { useUserStore } from "@/stores/user";
 import { hasUserPermission } from "@/utils/permission";
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { TRANSPORT_OPTIONS } from "@/views/website-inquiries/options";
 import type {
   WebsiteBusinessUnit, WebsiteConfigGroup, WebsiteConfigRecord, WebsiteConfigPage,
@@ -173,6 +174,15 @@ const activeTab = ref<WebsiteConfigGroup>("cities");
 const result = ref<WebsiteConfigPage>();
 const page = ref(1);
 const keyword = ref("");
+
+function handleTabChange() {
+  recordClientOperation({ page: "WebsiteResources", action: "tab", result: "success" });
+}
+
+function handleRetry() {
+  recordClientOperation({ page: "WebsiteResources", action: "retry", result: "success" });
+  void refreshPage();
+}
 const cityId = ref("");
 const fromCityId = ref("");
 const toCityId = ref("");

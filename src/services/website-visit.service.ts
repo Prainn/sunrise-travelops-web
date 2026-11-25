@@ -10,15 +10,15 @@ export const websiteVisitService = {
     return request.get<PageResult<WebsiteVisit>>(base, { params: { ...query } });
   },
   confirm(id: string) {
-    return request.post<{ confirmed: true }>(`${base}/${encodeURIComponent(id)}/confirm`);
+    return request.post<{ confirmed: true }>(`${base}/${encodeURIComponent(id)}/confirm`, undefined, { userAction: true });
   },
   draft(id: string) {
     return request.get<Partial<WebsiteInquiryInput>>(`${base}/${encodeURIComponent(id)}/inquiry-draft`);
   },
   createInquiry(id: string, input: WebsiteInquiryInput) {
-    return request.post<WebsiteInquiry>(`${base}/${encodeURIComponent(id)}/inquiry`, websiteInquiryInput(input));
+    return request.post<WebsiteInquiry>(`${base}/${encodeURIComponent(id)}/inquiry`, websiteInquiryInput(input), { userAction: true });
   },
   export(query: { start: string; end: string; keyword?: string }) {
-    return request.getBlob(`${base}/export`, { params: { ...query }, timeoutMs: LONG_REQUEST_TIMEOUT_MS });
+    return request.getBlob(`${base}/export`, { userAction: true, params: { ...query }, timeoutMs: LONG_REQUEST_TIMEOUT_MS });
   },
 };

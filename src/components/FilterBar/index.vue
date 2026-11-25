@@ -7,13 +7,14 @@
       :aria-label="$t('common.filters')"
       role="search"
       @submit.prevent
+      @change="(event: Event) => event.isTrusted && handleFilterChange()"
     >
       <div class="filter-bar__fields">
         <slot />
       </div>
       <div v-if="$slots.actions || resettable" class="filter-bar__actions">
         <slot name="actions" />
-        <el-button v-if="resettable" @click="emit('reset')">
+        <el-button v-if="resettable" @click="handleReset">
           {{ $t("common.reset") }}
         </el-button>
       </div>
@@ -23,7 +24,9 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { useDebounceFn } from "@vueuse/core";
 import type { FormInstance } from "element-plus";
+import { recordClientOperation } from "@/utils/client-operation-log";
 
 /**
  * 列表筛选栏：统一字段排布、可见标签与查询/重置操作区。
@@ -45,6 +48,15 @@ withDefaults(
 const emit = defineEmits<{ reset: [] }>();
 
 const formRef = ref<FormInstance>();
+
+const handleFilterChange = useDebounceFn(() => {
+  recordClientOperation({ action: "filter", result: "success" });
+}, 300);
+
+function handleReset() {
+  recordClientOperation({ action: "filter", result: "success" });
+  emit("reset");
+}
 
 defineExpose({ form: formRef });
 </script>

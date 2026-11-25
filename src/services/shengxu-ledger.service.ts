@@ -40,12 +40,12 @@ export const shengxuLedgerService = {
     );
   },
   create(body: ShengxuLedgerInput) {
-    return request.post<ShengxuLedgerItem>(BASE_URL, body);
+    return request.post<ShengxuLedgerItem>(BASE_URL, body, { userAction: true });
   },
   update(id: string, body: ShengxuLedgerUpdateInput) {
-    return request.put<ShengxuLedgerItem>(`${BASE_URL}/${encodeURIComponent(id)}`, body);
+    return request.put<ShengxuLedgerItem>(`${BASE_URL}/${encodeURIComponent(id)}`, body, { userAction: true });
   },
   async delete(id: string, version: number) {
-    await request.delete<void>(`${BASE_URL}/${encodeURIComponent(id)}`, { params: { version } });
+    await request.delete<void>(`${BASE_URL}/${encodeURIComponent(id)}`, { userAction: true, params: { version } });
   },
 };

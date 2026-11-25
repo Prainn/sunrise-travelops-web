@@ -1,3 +1,4 @@
+import { openUserPage } from "@/utils/user-interaction";
 import { onBeforeUnmount, onMounted, ref, toRaw } from "vue";
 import type { LocationQueryRaw, RouteRecordRaw } from "vue-router";
 import router from "@/router";
@@ -97,7 +98,7 @@ export function useCommandPalette() {
     if (isExternal(item.path)) {
       window.open(item.path, "_blank");
     } else {
-      router.push({ path: item.path, query: item.params });
+      openUserPage(router, { path: item.path, query: item.params });
     }
   }
 
