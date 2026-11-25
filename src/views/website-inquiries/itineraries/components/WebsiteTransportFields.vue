@@ -59,10 +59,10 @@ const { t } = useI18n();
 
 const uniqueVehicleOptions = computed(() => [...new Map(props.vehicleOptions.map(option => [option.vehicleType, option])).values()]);
 const restrictVehicles = computed(() => props.configuredVehiclesOnly && uniqueVehicleOptions.value.length > 0);
-function selectVehicle(value: string | undefined, aliases: string[] = []) {
+function selectVehicle(value: string | undefined) {
   const vehicleType = value?.trim() || null;
   if (vehicleType === props.modelValue.vehicleType) return;
-  const matches = props.vehicleOptions.filter(option => option.vehicleType === vehicleType || aliases.includes(option.vehicleType));
+  const matches = props.vehicleOptions.filter(option => option.vehicleType === vehicleType);
   // Manual candidates can come from different resources; only use an unambiguous duration.
   const durations = new Set(matches.map(option => option.durationMinutes));
   const durationMinutes = durations.size === 1 ? matches[0]!.durationMinutes : null;

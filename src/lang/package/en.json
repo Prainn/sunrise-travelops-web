@@ -661,7 +661,6 @@
     "optionCode": "Option Code",
     "optionNameRequired": "Enter an option name",
     "optionCodeRequired": "Enter an option code",
-    "vehicleCodeFormat": "Enter the seat count followed by _seat, for example 38_seat",
     "optionCodeDuplicate": "Option code already exists",
     "optionSearchPlaceholder": "Option name or code",
     "createOptionTitle": "Add Category Option",

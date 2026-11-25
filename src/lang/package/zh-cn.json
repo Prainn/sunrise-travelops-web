@@ -661,7 +661,6 @@
     "optionCode": "选项编码",
     "optionNameRequired": "输入选项名称",
     "optionCodeRequired": "输入选项编码",
-    "vehicleCodeFormat": "请输入座位数加 _seat，例如 38_seat",
     "optionCodeDuplicate": "选项编码已存在",
     "optionSearchPlaceholder": "选项名称或编码",
     "createOptionTitle": "新增分类选项",
