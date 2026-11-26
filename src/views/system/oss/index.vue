@@ -1,4 +1,4 @@
-<!-- OSS管理：只管理当前服务器环境已登记的原始图片资源，环境由服务端决定 -->
+<!-- OSS 管理展示当前环境的原始媒体和聊天文档。 -->
 <template>
   <PageShell>
     <FilterBar @reset="resetFilters">
@@ -80,57 +80,65 @@
       >
         <el-table-column :label="$t('oss.preview')" width="96">
           <template #default="{ row }">
-            <OssMediaPreview :resource="row as OssResource" :max-size="64" compact />
+            <el-tag v-if="isOssChatDocument(row as OssCatalogItem)" type="info" effect="plain">
+              {{ row.extension.toUpperCase() }}
+            </el-tag>
+            <OssMediaPreview
+              v-else
+              :resource="row as OssResource"
+              :max-size="64"
+              compact
+            />
           </template>
         </el-table-column>
         <el-table-column :label="$t('oss.name')" min-width="200">
           <template #default="{ row }">
-            <div class="truncate text-strong" :title="(row as OssResource).name">
-              {{ (row as OssResource).name }}
+            <div class="truncate text-strong" :title="row.name">
+              {{ row.name }}
             </div>
-            <div v-if="(row as OssResource).remark" class="truncate text-[12px] text-muted" :title="(row as OssResource).remark">
-              {{ (row as OssResource).remark }}
+            <div v-if="row.remark" class="truncate text-[12px] text-muted" :title="row.remark">
+              {{ row.remark }}
             </div>
           </template>
         </el-table-column>
         <el-table-column :label="$t('oss.kind')" width="90">
           <template #default="{ row }">
-            {{ $t(`oss.kinds.${(row as OssResource).kind}`) }}
+            {{ $t(`oss.kinds.${row.kind}`) }}
           </template>
         </el-table-column>
         <el-table-column :label="$t('oss.source')" width="110">
           <template #default="{ row }">
-            {{ $t(`oss.sources.${(row as OssResource).source}`) }}
+            {{ $t(`oss.sources.${row.source}`) }}
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.status')" min-width="150">
           <template #default="{ row }">
-            <el-tag :type="STATE_TAG_TYPES[(row as OssResource).state]">
-              {{ $t(`oss.states.${(row as OssResource).state}`) }}
+            <el-tag :type="STATE_TAG_TYPES[(row as OssCatalogItem).state]">
+              {{ $t(`oss.states.${row.state}`) }}
             </el-tag>
-            <div v-if="(row as OssResource).state === 'failed'" class="mt-[4px] text-[12px] text-[var(--el-color-danger)]">
-              {{ $t(ossErrorKey((row as OssResource).errorCode)) }}
+            <div v-if="row.state === 'failed'" class="mt-[4px] text-[12px] text-[var(--el-color-danger)]">
+              {{ $t(ossErrorKey(row.errorCode)) }}
             </div>
           </template>
         </el-table-column>
         <el-table-column :label="$t('oss.size')" width="100">
           <template #default="{ row }">
-            {{ formatFileSize((row as OssResource).size) }}
+            {{ formatFileSize(row.size) }}
           </template>
         </el-table-column>
         <el-table-column :label="$t('oss.dimensions')" width="120">
           <template #default="{ row }">
-            {{ dimensions(row as OssResource) }}
+            {{ dimensions(row as OssCatalogItem) }}
           </template>
         </el-table-column>
         <el-table-column :label="$t('oss.referenceCount')" width="90" align="center">
           <template #default="{ row }">
-            {{ (row as OssResource).referenceCount }}
+            {{ row.referenceCount }}
           </template>
         </el-table-column>
         <el-table-column :label="$t('common.updatedAt')" width="160">
           <template #default="{ row }">
-            {{ formatDateTime((row as OssResource).updatedAt) }}
+            {{ formatDateTime(row.updatedAt) }}
           </template>
         </el-table-column>
         <el-table-column
@@ -141,29 +149,38 @@
         >
           <template #default="{ row }">
             <div class="flex items-center">
-              <el-button link type="primary" @click="openDetail(row as OssResource)">
+              <el-button link type="primary" @click="openDetail(row as OssCatalogItem)">
                 {{ $t('oss.detail') }}
               </el-button>
               <el-button
-                v-if="canUpdate"
+                v-if="isOssChatDocument(row as OssCatalogItem) && row.documentMessage"
                 link
                 type="primary"
-                :disabled="(row as OssResource).state === 'deleting'"
+                :aria-label="$t('whatsapp.documentPreview.open', { name: row.name })"
+                @click="openDocument(row as OssChatDocument)"
+              >
+                {{ $t('oss.openDocument') }}
+              </el-button>
+              <el-button
+                v-if="canUpdate && !isOssChatDocument(row as OssCatalogItem)"
+                link
+                type="primary"
+                :disabled="row.state === 'deleting'"
                 @click="openEditor(row as OssResource)"
               >
                 {{ $t('common.edit') }}
               </el-button>
               <el-button
-                v-if="canUpdate && canRetry(row as OssResource)"
+                v-if="canUpdate && canRetry(row as OssCatalogItem)"
                 link
                 type="primary"
-                :loading="busyId === (row as OssResource).id"
+                :loading="busyId === row.id"
                 @click="handleRetry(row as OssResource)"
               >
                 {{ $t('oss.retry') }}
               </el-button>
               <el-tooltip
-                v-if="canDelete"
+                v-if="canDelete && !isOssChatDocument(row as OssCatalogItem)"
                 :content="deleteBlockedReason(row as OssResource)"
                 :disabled="!deleteBlockedReason(row as OssResource)"
                 placement="top"
@@ -174,7 +191,7 @@
                     link
                     type="danger"
                     :disabled="!!deleteBlockedReason(row as OssResource)"
-                    :loading="busyId === (row as OssResource).id"
+                    :loading="busyId === row.id"
                     @click="handleDelete(row as OssResource)"
                   >
                     {{ $t('common.delete') }}
@@ -202,14 +219,22 @@
         @retry="loadDetail"
       />
       <div v-else-if="detail" v-loading="detailLoading" class="flex flex-col gap-3">
-        <div class="flex justify-center">
+        <div v-if="isOssChatDocument(detail)" class="flex justify-center">
+          <el-button v-if="detail.documentMessage" @click="openDocument(detail)">
+            {{ $t('oss.openDocument') }}
+          </el-button>
+          <el-tag v-else type="info" effect="plain">
+            {{ detail.extension.toUpperCase() }}
+          </el-tag>
+        </div>
+        <div v-else class="flex justify-center">
           <OssMediaPreview :resource="detail" :max-size="360" />
         </div>
         <el-descriptions :column="1" border>
           <el-descriptions-item :label="$t('oss.name')">
             {{ detail.name }}
           </el-descriptions-item>
-          <el-descriptions-item :label="$t('oss.remark')">
+          <el-descriptions-item v-if="!isOssChatDocument(detail)" :label="$t('oss.remark')">
             <span class="whitespace-pre-wrap break-words">{{ detail.remark || '-' }}</span>
           </el-descriptions-item>
           <el-descriptions-item :label="$t('oss.environment')">
@@ -231,13 +256,13 @@
           <el-descriptions-item :label="$t('oss.size')">
             {{ formatFileSize(detail.size) }}
           </el-descriptions-item>
-          <el-descriptions-item :label="$t('oss.dimensions')">
+          <el-descriptions-item v-if="!isOssChatDocument(detail)" :label="$t('oss.dimensions')">
             {{ dimensions(detail) }}
           </el-descriptions-item>
           <el-descriptions-item :label="$t('oss.referenceCount')">
             {{ detail.referenceCount }}
           </el-descriptions-item>
-          <el-descriptions-item :label="$t('oss.objectKey')">
+          <el-descriptions-item v-if="!isOssChatDocument(detail)" :label="$t('oss.objectKey')">
             <span class="break-all">{{ detail.objectKey || '-' }}</span>
           </el-descriptions-item>
           <el-descriptions-item :label="$t('common.createdAt')">
@@ -249,6 +274,15 @@
         </el-descriptions>
       </div>
     </AppDialog>
+
+    <DocumentPreviewDialog
+      v-if="selectedDocument?.documentMessage"
+      :key="selectedDocument.id"
+      v-model="documentOpen"
+      :conversation-id="selectedDocument.documentMessage.conversationId"
+      :message-id="selectedDocument.documentMessage.messageId"
+      :document="{ fileName: selectedDocument.name, mimeType: selectedDocument.mimeType }"
+    />
 
     <AppDialog
       v-model="editorVisible"
@@ -321,14 +355,15 @@ import TableToolbar from "@/components/TableToolbar/index.vue";
 import { useRefreshOnActivated } from "@/composables";
 import { ossService } from "@/services/oss.service";
 import { websiteErrorMessage } from "@/services/website.service";
-import { ossErrorKey, type OssResource, type OssResourceKind, type OssResourceState } from "@/types/oss";
+import { isOssChatDocument, ossErrorKey, type OssCatalogItem, type OssChatDocument, type OssResource, type OssResourceState } from "@/types/oss";
+import DocumentPreviewDialog from "@/views/whatsapp/components/DocumentPreviewDialog.vue";
 import { formatDateTime, formatFileSize, runOnEnter } from "@/utils";
 import { hasPerm } from "@/utils/auth";
 import { IMAGE_ACCEPT, validateImageFile } from "@/utils/image-file";
 
 defineOptions({ name: "OssManagement" });
 
-const KINDS: OssResourceKind[] = ["image", "sticker"];
+const KINDS: OssCatalogItem["kind"][] = ["image", "sticker", "pdf", "word"];
 const STATES: OssResourceState[] = ["pending", "processing", "ready", "failed", "deleting"];
 const STATE_TAG_TYPES: Record<OssResourceState, "info" | "primary" | "success" | "warning" | "danger"> = {
   pending: "info",
@@ -345,11 +380,11 @@ const canUpdate = hasPerm("sys:oss:update");
 const canDelete = hasPerm("sys:oss:delete");
 
 const keyword = ref("");
-const kind = ref<OssResourceKind>();
+const kind = ref<OssCatalogItem["kind"]>();
 const state = ref<OssResourceState>();
 const page = ref(1);
 const pageSize = ref(20);
-const rows = ref<OssResource[]>([]);
+const rows = ref<OssCatalogItem[]>([]);
 const total = ref(0);
 const loading = ref(false);
 const loadError = ref("");
@@ -359,9 +394,11 @@ const fileInput = ref<HTMLInputElement>();
 
 const detailVisible = ref(false);
 const detailId = ref("");
-const detail = ref<OssResource>();
+const detail = ref<OssCatalogItem>();
 const detailLoading = ref(false);
 const detailError = ref("");
+const selectedDocument = ref<OssChatDocument>();
+const documentOpen = ref(false);
 
 const editorVisible = ref(false);
 const editingId = ref("");
@@ -410,10 +447,10 @@ function resetFilters() {
   search();
 }
 
-function dimensions(row: OssResource) {
+function dimensions(row: OssCatalogItem) {
   return row.width && row.height ? `${row.width} × ${row.height}` : "-";
 }
-function canRetry(row: OssResource) {
+function canRetry(row: OssCatalogItem) {
   return row.state === "failed" && row.source === "whatsapp";
 }
 /** 被消息引用或仍在处理时禁止删除；服务端仍以 409 兜底。 */
@@ -474,11 +511,16 @@ async function loadDetail() {
     if (id === detailId.value) detailLoading.value = false;
   }
 }
-function openDetail(row: OssResource) {
+function openDetail(row: OssCatalogItem) {
   detailId.value = row.id;
   detail.value = row;
   detailVisible.value = true;
   void loadDetail();
+}
+
+function openDocument(row: OssChatDocument) {
+  selectedDocument.value = row;
+  documentOpen.value = true;
 }
 
 function fillEditor(row: OssResource) {
@@ -495,7 +537,8 @@ function openEditor(row: OssResource) {
 /** 用户明确选择后才载入最新记录，替换当前输入。 */
 async function reloadEditor() {
   try {
-    fillEditor(await ossService.detail(editingId.value));
+    const row = await ossService.detail(editingId.value);
+    if (!isOssChatDocument(row)) fillEditor(row);
   } catch (cause) {
     ElMessage.error(websiteErrorMessage(cause));
   }

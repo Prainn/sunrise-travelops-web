@@ -345,3 +345,8 @@ export function linkedConversationId(isOwnRoute: boolean, queryId: unknown, sele
   if (!isOwnRoute || typeof queryId !== "string" || !queryId || queryId === selectedId) return "";
   return queryId;
 }
+
+/** 发送前检查文本是否包含 `{` 或 `}`，用于提醒计调核对未修改的快捷回复占位内容。 */
+export function hasUnreplacedPlaceholder(text: string): boolean {
+  return /[{}]/.test(text);
+}

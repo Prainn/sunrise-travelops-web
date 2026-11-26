@@ -39,7 +39,7 @@
       <el-button @click="open = false">
         {{ $t("common.cancel") }}
       </el-button>
-      <el-button type="primary" :loading="downloading" @click="emit('download')">
+      <el-button type="primary" :loading="downloadingIds.has(messageId)" @click="handleDownload">
         {{ $t("whatsapp.documentPreview.download") }}
       </el-button>
     </template>
@@ -48,6 +48,7 @@
 
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
 import AppDialog from "@/components/AppDialog/index.vue";
 import FeedbackState from "@/components/FeedbackState/index.vue";
@@ -62,14 +63,13 @@ type PreviewState = "idle" | "loading" | "ready" | "unsupported" | "error";
 const props = defineProps<{
   conversationId: string;
   messageId: string;
-  document?: WhatsappDocumentMeta;
-  downloading: boolean;
+  document?: Pick<WhatsappDocumentMeta, "fileName" | "mimeType">;
 }>();
-const emit = defineEmits<{ download: [] }>();
 const open = defineModel<boolean>({ required: true });
 
 const { t } = useI18n();
 const state = ref<PreviewState>("idle");
+const downloadingIds = ref(new Set<string>());
 const errorMessage = ref("");
 const pdfUrl = ref("");
 const docxRef = ref<HTMLElement>();
@@ -134,7 +134,6 @@ async function load() {
       errorMessage.value = t("whatsapp.documentPreview.invalid");
       state.value = "error";
       recordClientOperation({
-        page: "WhatsappInbox",
         action: "preview",
         result: "failure",
         recordId: props.messageId,
@@ -154,7 +153,6 @@ async function load() {
     if (!current.signal.aborted) {
       state.value = "ready";
       recordClientOperation({
-        page: "WhatsappInbox",
         action: "preview",
         result: "success",
         recordId: props.messageId,
@@ -166,7 +164,6 @@ async function load() {
     errorMessage.value = websiteErrorMessage(cause);
     state.value = "error";
     recordClientOperation({
-      page: "WhatsappInbox",
       action: "preview",
       result: "failure",
       recordId: props.messageId,
@@ -184,6 +181,40 @@ function clear() {
   docxRef.value?.replaceChildren();
   errorMessage.value = "";
   state.value = "idle";
+}
+
+/** 每次点击重新获取 60 秒下载地址并立即触发下载；地址不缓存、不展示。 */
+async function handleDownload() {
+  const { conversationId, messageId } = props;
+  if (downloadingIds.value.has(messageId)) return;
+  downloadingIds.value = new Set(downloadingIds.value).add(messageId);
+  try {
+    const { url } = await whatsappService.documentDownload(conversationId, messageId);
+    // 签名地址强制 attachment；在隐藏 iframe 中打开，避免整页导航触发离开确认。
+    const frame = document.createElement("iframe");
+    frame.hidden = true;
+    frame.referrerPolicy = "no-referrer";
+    frame.src = url;
+    document.body.append(frame);
+    // 过早移除会中断下载，保留到签名地址失效。
+    setTimeout(() => frame.remove(), 60_000);
+    recordClientOperation({
+      action: "download",
+      result: "unknown",
+      recordId: messageId,
+    });
+  } catch (cause) {
+    recordClientOperation({
+      action: "download",
+      result: "failure",
+      recordId: messageId,
+    });
+    ElMessage.error(websiteErrorMessage(cause));
+  } finally {
+    const next = new Set(downloadingIds.value);
+    next.delete(messageId);
+    downloadingIds.value = next;
+  }
 }
 </script>
 

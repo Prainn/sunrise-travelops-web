@@ -41,9 +41,12 @@ vi.mock("@/stores/user", async () => {
   return { useUserStore: () => store };
 });
 
+import { createI18n } from "vue-i18n";
+import en from "@/lang/package/en.json";
+import zhCn from "@/lang/package/zh-cn.json";
 import { useUserStore } from "@/stores/user";
 import { whatsappInquiryInput } from "@/services/whatsapp.service";
-import { canConfirmFailedMessage, canRetryMessage, compareSeq, documentPreviewType, hasPendingMedia, linkedConversationId, mergeLatestPage, messageDocument, messageSourceLabel, messageReply, sortMessages, maxSeq, threadAccess, threadMessages } from "./message-utils";
+import { canConfirmFailedMessage, canRetryMessage, compareSeq, documentPreviewType, hasPendingMedia, hasUnreplacedPlaceholder, linkedConversationId, mergeLatestPage, messageDocument, messageSourceLabel, messageReply, sortMessages, maxSeq, threadAccess, threadMessages } from "./message-utils";
 import { useCustomerNotes } from "./useCustomerNotes";
 import { useWhatsappWorkbench } from "./useWhatsappWorkbench";
 import { MAX_DOCUMENT_BYTES, clearDocumentDrafts, validateDocumentFile } from "./document-draft";
@@ -909,5 +912,22 @@ describe("接入状态运行开关", () => {
     switches.sync(undefined);
     expect((await switches.toggle("inbound", true)).kind).toBe("skipped");
     expect(service.updateRuntime).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("发送前占位内容提醒", () => {
+  it("文本包含 { 或 } 时命中提醒，普通文本不触发", () => {
+    expect(hasUnreplacedPlaceholder("Your quotation includes {inclusions}.")).toBe(true);
+    expect(hasUnreplacedPlaceholder("left brace { only")).toBe(true);
+    expect(hasUnreplacedPlaceholder("right brace } only")).toBe(true);
+    expect(hasUnreplacedPlaceholder("Your quotation includes hotel and guide.")).toBe(false);
+    expect(hasUnreplacedPlaceholder("")).toBe(false);
+  });
+
+  it("中英文提醒文案正确渲染字面量花括号，不被 vue-i18n 当作插值吞掉", () => {
+    const i18n = createI18n({ legacy: false, locale: "zh-cn", messages: { "zh-cn": zhCn, en } });
+    expect(i18n.global.t("whatsapp.placeholderSendConfirm")).toBe("消息内容包含 { 或 }，可能还有未修改的占位内容，确定仍要发送吗？");
+    i18n.global.locale.value = "en";
+    expect(i18n.global.t("whatsapp.placeholderSendConfirm")).toBe("This message contains { or }, which may be an unedited placeholder. Send anyway?");
   });
 });

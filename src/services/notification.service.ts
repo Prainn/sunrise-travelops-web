@@ -6,6 +6,11 @@ export const notificationService = {
     return request.get<NotificationSetting[]>("/system/notifications");
   },
   update(type: NotificationType, form: NotificationSettingForm) {
-    return request.put<NotificationSetting>(`/system/notifications/${encodeURIComponent(type)}`, form, { userAction: true });
+    const payload: NotificationSettingForm = {
+      enabled: form.enabled,
+      version: form.version,
+      ...(form.sendWindow !== undefined ? { sendWindow: form.sendWindow } : {}),
+    };
+    return request.put<NotificationSetting>(`/system/notifications/${encodeURIComponent(type)}`, payload, { userAction: true });
   },
 };

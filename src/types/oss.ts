@@ -54,12 +54,33 @@ export interface OssResource {
 
 export interface OssResourceQueryParams extends BaseQueryParams {
   keyword?: string;
-  kind?: OssResourceKind;
+  kind?: OssCatalogItem["kind"];
   state?: OssResourceState;
 }
 
+/** 已入队或已归档的私有文档。消息入口由服务端根据会话访问权限提供。 */
+export interface OssChatDocument extends Omit<OssResource, "kind" | "version"> {
+  kind: "pdf" | "word";
+  source: "upload" | "whatsapp";
+  state: "ready";
+  version: null;
+  extension: "pdf" | "doc" | "docx";
+  mimeType: string;
+  size: number;
+  originalUrl: null;
+  thumbnailUrl: null;
+  objectKey: null;
+  documentMessage: { conversationId: string; messageId: string } | null;
+}
+
+export type OssCatalogItem = OssResource | OssChatDocument;
+
+export function isOssChatDocument(row: OssCatalogItem): row is OssChatDocument {
+  return row.kind === "pdf" || row.kind === "word";
+}
+
 /** 列表附带服务端决定的当前环境，前端不提供切换。 */
-export interface OssResourcePage extends PageResult<OssResource> {
+export interface OssResourcePage extends PageResult<OssCatalogItem> {
   environment: OssEnvironment;
 }
 
