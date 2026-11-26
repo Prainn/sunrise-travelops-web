@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { effectScope, nextTick } from "vue";
 import { ApiError } from "@/api/request";
-import type { WhatsappConversationDetail, WhatsappCustomerNotes, WhatsappMessage, WhatsappStreamSignal } from "@/types/whatsapp";
-import type { WebsiteInquiryInput } from "@/types/website";
+import type { WhatsappConversationDetail, WhatsappMessage, WhatsappStreamSignal } from "@/types/whatsapp";
+import type { InboxCustomerNotes, WebsiteInquiryInput } from "@/types/website";
 
 const service = vi.hoisted(() => ({
   conversations: vi.fn(),
@@ -65,7 +65,7 @@ function message(patch: Partial<WhatsappMessage>): WhatsappMessage {
   };
 }
 const detail = (id = "c-1") => ({
-  id, state: "open", version: 1, unreadCount: 0, tours: [], capabilities: { canReply: true, canAssign: false, canCreateInquiry: false, canStartConsultation: false },
+  id, state: "open", version: 1, unreadCount: 0, tours: [], capabilities: { canReply: true, canAssign: false, canCreateInquiry: false, canCreateLedger: false, canStartConsultation: false },
 }) as unknown as WhatsappConversationDetail;
 const page = <T>(list: T[]) => ({ list, total: list.length, page: 1, pageSize: 50 });
 const networkError = () => new ApiError("network", { code: "NETWORK_ERROR" });
@@ -183,7 +183,7 @@ describe("来源与重试能力", () => {
 });
 
 describe("历史咨询只读", () => {
-  const capabilities = { canReply: true, canAssign: false, canCreateInquiry: false, canStartConsultation: false, canUpdateCustomer: false, canConfirmFailed: false };
+  const capabilities = { canReply: true, canAssign: false, canCreateInquiry: false, canCreateLedger: false, canStartConsultation: false, canUpdateCustomer: false, canConfirmFailed: false };
 
   it("归档咨询始终只读，即使服务端能力误报可回复，并提供进入新咨询入口", () => {
     expect(threadAccess({ id: "old", state: "archived", currentConversationId: "new", capabilities }))
@@ -676,7 +676,7 @@ describe("消息气泡与交互", () => {
 });
 
 describe("useCustomerNotes", () => {
-  const notes = (patch: Partial<WhatsappCustomerNotes> = {}): WhatsappCustomerNotes => ({
+  const notes = (patch: Partial<InboxCustomerNotes> = {}): InboxCustomerNotes => ({
     conversationId: "c-1", version: 1, customerName: "Tom", countryItemId: null, plannedDays: null, startDate: null, pax: null,
     contactInfo: "bsuid-1", destinations: [], requirements: "hi", internalRemark: "", updatedAt: null, ...patch,
   });
@@ -686,7 +686,7 @@ describe("useCustomerNotes", () => {
   }
 
   it("按会话隔离草稿，切换回来保留未保存输入，晚到的旧响应不覆盖", async () => {
-    let resolveFirst!: (value: WhatsappCustomerNotes) => void;
+    let resolveFirst!: (value: InboxCustomerNotes) => void;
     service.customerNotes.mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve; }));
     service.customerNotes.mockImplementation(async (id: string) => notes({ conversationId: id, customerName: id }));
     const state = setupNotes();

@@ -1,5 +1,7 @@
 {
   "mail": {
+    "content": "邮件内容",
+    "customerEmail": "客户邮箱",
     "account": "邮箱账号",
     "noAccounts": "暂无已接入邮箱",
     "threadList": "邮件列表",
@@ -12,7 +14,6 @@
     "subject": "主题",
     "body": "回复正文",
     "time": "收发时间",
-    "lastAt": "最近往来",
     "noSubject": "无主题",
     "attachments": "附件",
     "archiving": "正在归档",
@@ -27,11 +28,9 @@
     "sent": "邮件已发送",
     "failed": "发送失败，草稿已保留",
     "checkSent": "正在核对已发送邮件。核实结果前请勿重复发送。",
-    "viewInquiry": "查看关联询盘",
     "createInquiry": "从这封来信创建询盘",
     "assignments": "分配记录",
     "searchHint": "搜索主题、发件人或邮箱",
-    "unread": "{count} 封未读",
     "discardChanges": "放弃未保存修改",
     "states": {
       "received": "已收件",

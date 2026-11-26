@@ -115,6 +115,30 @@ export interface WebsiteConfigEditorProps {
   deleteRecord: (id: string) => Promise<boolean>;
 }
 
+/** 客户资料按咨询保存；国家、天数、日期和人数未知时为 null。 */
+export interface InboxCustomerNotes {
+  conversationId: string;
+  /** 当前会话版本。 */
+  version: number;
+  /** 有效称呼：人工称呼优先，清空后使用来源渠道提供的名称。 */
+  customerName: string;
+  countryItemId: string | null;
+  plannedDays: number | null;
+  startDate: string | null;
+  pax: number | null;
+  contactInfo: string;
+  /** 独立站启用城市 ID，有序且不重复。 */
+  destinations: string[];
+  /** 客户原始消息。 */
+  requirements: string;
+  internalRemark: string;
+  /** 资料最后保存时间，未保存为 null。 */
+  updatedAt: string | null;
+}
+export type InboxCustomerNotesForm = Omit<InboxCustomerNotes, "conversationId" | "version" | "updatedAt">;
+/** 全量保存请求体。 */
+export type InboxCustomerNotesInput = InboxCustomerNotesForm & { version: number };
+
 export interface WebsiteInquiryInput {
   businessUnit?: WebsiteBusinessUnit;
   countryItemId: string;

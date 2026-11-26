@@ -4,32 +4,8 @@
       <h2 class="m-0 text-lg font-600 leading-snug">
         {{ detail.subject || $t("mail.noSubject") }}
       </h2>
-      <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
-        <span class="text-muted">{{ detail.mailbox }}</span>
-        <el-tag size="small" type="info">
-          {{ detail.ownerName || $t("whatsapp.views.unassigned") }}
-        </el-tag>
-        <el-button v-if="detail.canAssign" size="small" @click="assignVisible = true">
-          {{ $t("whatsapp.assignTitle") }}
-        </el-button>
-        <router-link v-if="detail.inquiryId" :to="{ name: 'WebsiteInquiryList', query: { inquiryId: detail.inquiryId } }">
-          {{ $t("mail.viewInquiry") }}
-        </router-link>
-        <el-button link @click="emit('refresh')">
-          {{ $t("common.refresh") }}
-        </el-button>
-      </div>
     </header>
     <div class="mail-thread__messages min-h-0 flex-1 overflow-y-auto overscroll-contain">
-      <el-collapse v-if="detail.assignments.length" class="mb-4">
-        <el-collapse-item :title="$t('mail.assignments')">
-          <p v-for="assignment in detail.assignments" :key="assignment.at" class="mb-2">
-            {{ formatShanghaiDateTime(assignment.at) }} {{ assignment.actor }}
-            {{ assignment.previousOwner || $t("whatsapp.views.unassigned") }} → {{ assignment.owner }}
-            {{ assignment.reason }}
-          </p>
-        </el-collapse-item>
-      </el-collapse>
       <article
         v-for="message in detail.messages"
         :id="'mail-' + message.id"
@@ -85,21 +61,16 @@
             <el-button v-if="['draft','failed'].includes(message.state) && detail.canReply" @click="editReply(message)">
               {{ $t("mail.editDraft") }}
             </el-button>
-            <el-button v-if="message.direction === 'inbound' && detail.canCreateInquiry" :disabled="busy" @click="handlePrefill(message)">
+            <el-button
+              v-if="message.direction === 'inbound' && detail.canCreateInquiry"
+              @click="emit('create-inquiry', message.id)"
+            >
               {{ $t("mail.createInquiry") }}
             </el-button>
           </div>
         </SectionCard>
       </article>
     </div>
-    <AssignDialog
-      v-model="assignVisible"
-      channel="mail"
-      :conversation-id="detail.id"
-      :version="detail.version"
-      :current-owner-name="detail.ownerName"
-      @changed="emit('refresh')"
-    />
     <MailReply
       v-if="replyVisible && draft"
       :key="draft.id"
@@ -109,20 +80,6 @@
       :signature="detail.signature"
       @updated="emit('refresh')"
     />
-    <WebsiteInquiryEditor
-      v-model="inquiryVisible"
-      :initial-values="prefill"
-      prefill-source="email"
-      :assigned-owner-name="detail.ownerName"
-      business-unit="website"
-      :show-business="false"
-      :owners="[]"
-      :cities="cities"
-      :allow-assign="false"
-      :saving="busy"
-      :read-only="false"
-      @save="handleInquiry"
-    />
   </div>
 </template>
 <script setup lang="ts">
@@ -130,27 +87,18 @@ import { onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage } from "element-plus";
 import SectionCard from "@/components/SectionCard/index.vue";
-import AssignDialog from "@/views/whatsapp/components/AssignDialog.vue";
-import WebsiteInquiryEditor from "@/views/website-inquiries/components/WebsiteInquiryEditor.vue";
 import { mailService } from "@/services/mail.service";
-import { websiteService, websiteErrorMessage } from "@/services/website.service";
+import { websiteErrorMessage } from "@/services/website.service";
 import type { MailAddress, MailDetail, MailMessage } from "@/types/mail";
-import type { WebsiteCity, WebsiteInquiryInput } from "@/types/website";
 import { formatFileSize, formatShanghaiDateTime } from "@/utils/format";
 import MailReply from "./MailReply.vue";
 
 const props = defineProps<{ detail: MailDetail; selected?: string }>();
-const emit = defineEmits<{ refresh: [] }>();
+const emit = defineEmits<{ refresh: []; "create-inquiry": [source: string] }>();
 const { t } = useI18n();
 const busy = ref(false);
-const assignVisible = ref(false);
 const replyVisible = ref(false);
 const draft = ref<MailMessage>();
-const inquiryVisible = ref(false);
-const cities = ref<WebsiteCity[]>([]);
-const prefill = ref<Partial<WebsiteInquiryInput>>();
-const inquirySource = ref("");
-const inquiryVersion = ref(0);
 function formatAddress(address: MailAddress) {
   return address.name ? `${address.name} <${address.email}>` : address.email;
 }
@@ -180,35 +128,6 @@ async function handleReply(source: string) {
     if (["draft", "failed"].includes(message.state)) editReply(message);
     else { ElMessage.info(t("mail.checkSent")); emit("refresh"); }
   } catch (error) { ElMessage.error(websiteErrorMessage(error)); }
-  finally { busy.value = false; }
-}
-async function handlePrefill(message: MailMessage) {
-  if (busy.value) return;
-  busy.value = true;
-  try {
-    const config = await websiteService.config(undefined, "website");
-    cities.value = config.cities.filter(city => city.status === "enabled");
-    const replyTo = message.replyTo[0] ?? message.sender;
-    prefill.value = {
-      customerName: replyTo.name || message.sender.name || "", contactInfo: replyTo.email,
-      receivedAt: formatShanghaiDateTime(message.occurredAt), requirements: [message.subject, message.body].filter(Boolean).join("\n\n"),
-      contactChannel: "Email", acquisitionSource: "",
-    };
-    inquirySource.value = message.id;
-    inquiryVersion.value = props.detail.version;
-    inquiryVisible.value = true;
-  } catch (error) { ElMessage.error(websiteErrorMessage(error)); }
-  finally { busy.value = false; }
-}
-async function handleInquiry(input: WebsiteInquiryInput) {
-  if (busy.value) return;
-  busy.value = true;
-  try {
-    const result = await mailService.inquiry(props.detail.id, inquirySource.value, input, inquiryVersion.value);
-    ElMessage.success(t(result.created ? "whatsapp.inquiryCreated" : "whatsapp.inquiryExisting"));
-    inquiryVisible.value = false;
-    emit("refresh");
-  } catch (error) { ElMessage.error(websiteErrorMessage(error)); emit("refresh"); }
   finally { busy.value = false; }
 }
 </script>

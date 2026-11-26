@@ -8,7 +8,7 @@
     <el-button
       link
       type="primary"
-      class="ml-[8px]"
+      class="ml-[8px] align-baseline! [font:inherit]!"
       @click="emit('refresh')"
     >
       {{ $t("common.reload") }}
@@ -72,7 +72,7 @@
         />
       </el-form-item>
       <el-form-item :label="$t('websiteInquiry.contactInfo')">
-        <el-input v-model="form.contactInfo" maxlength="500" />
+        <el-input v-model="form.contactInfo" :readonly="contactReadOnly" maxlength="500" />
       </el-form-item>
       <el-form-item :label="$t('websiteInquiry.destinations')">
         <el-select
@@ -117,7 +117,7 @@
       >
         {{ $t("common.save") }}
       </el-button>
-      <el-button :disabled="notes.saving.value" @click="emit('refresh')">
+      <el-button v-if="!refreshOnConflictOnly || notes.entry.value?.conflict" :disabled="notes.saving.value" @click="emit('refresh')">
         {{ $t("common.refresh") }}
       </el-button>
     </div>
@@ -136,6 +136,8 @@ const props = defineProps<{
   /** 独立站配置中的启用城市。 */
   cities: WebsiteCity[];
   editable: boolean;
+  contactReadOnly?: boolean;
+  refreshOnConflictOnly?: boolean;
 }>();
 const emit = defineEmits<{
   save: [];
