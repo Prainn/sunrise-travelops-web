@@ -57,8 +57,8 @@ function createPlan({ hotel = true, vehicle = true } = {}): ValidationPlan {
               id: "arrangement-1",
               startDate: "2026-12-23",
               endDate: "2026-12-23",
-              vehicles: [{ vehicleId: "vehicle-1", vehicleName: "巴士", seats: 20, quantity: 1 }],
-              paxPrices: [{ pax: 10, totalPrice: 1000 }],
+              vehicles: [],
+              paxPrices: [{ pax: 10, totalPrice: 1000, vehicles: [{ vehicleId: "vehicle-1", vehicleName: "巴士", seats: 20, quantity: 1 }] }],
             },
           ]
           : [],

@@ -35,6 +35,8 @@ export type ItineraryVehicleQuotationMode = "itinerary" | "stage";
 export type ItineraryVehiclePaxPricingMode = "automatic" | "manual";
 /** Whole-group price of one arrangement for one PAX tier; null = not entered, 0 = free. */
 export interface ItineraryVehicleSegmentPaxPrice {
+  /** Itinerary mode only. Older frozen quotes store the fleet on the date range. */
+  vehicles?: ItineraryVehicleSelection[];
   pax: number;
   totalPrice: number | null;
 }
@@ -50,6 +52,7 @@ export interface ItineraryVehicleArrangement {
   id: string;
   startDate: string;
   endDate: string;
+  /** Shared fleet on historical snapshots; current requests send an empty array. */
   vehicles: ItineraryVehicleSelection[];
   /** Legacy shared segment price; null in the PAX format. */
   totalPrice?: number | null;

@@ -230,9 +230,9 @@
         <div v-else class="flex justify-center">
           <OssMediaPreview :resource="detail" :max-size="360" />
         </div>
-        <el-descriptions :column="1" border>
+        <el-descriptions :column="1" :label-width="120" border>
           <el-descriptions-item :label="$t('oss.name')">
-            {{ detail.name }}
+            <span class="break-all">{{ detail.name }}</span>
           </el-descriptions-item>
           <el-descriptions-item v-if="!isOssChatDocument(detail)" :label="$t('oss.remark')">
             <span class="whitespace-pre-wrap break-words">{{ detail.remark || '-' }}</span>

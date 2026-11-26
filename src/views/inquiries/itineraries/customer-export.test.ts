@@ -71,6 +71,37 @@ async function exportText(sample: ReturnType<typeof fixture>, children: boolean,
 }
 
 describe("customer quotation exports", () => {
+  it("puts each fleet on its own PAX line in PDF and Word and keeps shared snapshot headings", async () => {
+    const sample = fixture();
+    sample.snapshot.calculation.options[0]!.paxPrices[0]!.pax = 15;
+    const small = { vehicleId: "small", vehicleName: "small", seats: 19, quantity: 1 };
+    const large = { vehicleId: "large", vehicleName: "large", seats: 39, quantity: 2 };
+    const range = {
+      id: "range", startDate: "2026-10-14", endDate: "2026-10-15", vehicles: [],
+      paxPrices: [{ pax: 15, totalPrice: 5000, vehicles: [small] }, { pax: 20, totalPrice: 4000, vehicles: [large] }],
+    };
+    sample.itinerary.vehiclePlans = [{ tier: "standard", quotationMode: "itinerary", arrangements: [range], totalPrice: null }];
+    for (const output of await exportText(sample, false)) {
+      const start = output.indexOf("15 PAX");
+      const end = output.indexOf("20 PAX", start);
+      expect(output.slice(start, end)).toContain("19座普通巴士");
+      expect(output.slice(start, end)).not.toContain("39座");
+      expect(output.slice(end)).toContain("39座普通巴士 × 2");
+    }
+    sample.itinerary.startDate = "2026-10-14";
+    sample.itinerary.vehiclePlans[0]!.arrangements = [
+      { ...range, endDate: "2026-10-14" },
+      { ...range, id: "next", startDate: "2026-10-15", paxPrices: [{ pax: 15, totalPrice: 100, vehicles: [large] }, { pax: 20, totalPrice: 100, vehicles: [large] }] },
+    ];
+    for (const output of await exportText(sample, false, { exportLanguage: "en" })) {
+      const first = output.slice(output.indexOf("15 PAX"), output.indexOf("20 PAX"));
+      expect(first).toContain("D1 19-Seat Standard Coach");
+      expect(first).toContain("D2 39-Seat Standard Coach × 2");
+    }
+    sample.itinerary.vehiclePlans[0]!.arrangements = [{ ...range, vehicles: [small, large], paxPrices: [] }];
+    for (const output of await exportText(sample, false)) expect(output).toContain("19/39座普通巴士");
+  });
+
   it.each([false, true])("shows series day numbers and the return day in both formats (frozen=%s)", async (frozen) => {
     const sample = fixture();
     sample.itinerary.customerDisplayMode = "returnArrival";

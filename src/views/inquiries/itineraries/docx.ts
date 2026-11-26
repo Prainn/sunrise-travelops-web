@@ -185,7 +185,7 @@ function paxQuoteTables(
           (price) =>
             new TableRow({
               children: [
-                cell(`${price.pax} PAX`, { bold: true, fill: "F9FAFB" }),
+                cell(customer.paxLabel(option.vehicleTier, price.pax), { bold: true, fill: "F9FAFB" }),
                 cell(`RMB ${formatMoney(price.adultUnitPrice)}`),
                 ...(showChildPrice
                   ? [

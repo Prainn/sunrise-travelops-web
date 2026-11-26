@@ -7,7 +7,8 @@ import {
   hasVehicleSeatShortage,
   needsVehicleModeChangeConfirm,
   setVehiclePaxTotal,
-  setVehicleSegmentPaxPrice,
+  updateVehicleSegmentPax,
+  getVehicleQuotationMode,
   syncVehiclePaxTiers,
   withVehicleArrangements,
 } from "./vehicle-plans";
@@ -44,7 +45,7 @@ describe("vehicle PAX drafts", () => {
   it("deep-copies the saved plans so draft edits never reach the record", () => {
     const saved = [stagePlan([13200, 14000, 15500])];
     const draft = createVehicleDraft(saved, PAX, "stage");
-    const edited = setVehicleSegmentPaxPrice(draft[0]!, "range-1", 20, 0);
+    const edited = updateVehicleSegmentPax(draft[0]!, "range-1", 20, { totalPrice: 0 });
     expect(saved[0]!.arrangements[0]!.paxPrices![1]!.totalPrice).toBe(14000);
     expect(draft[0]!.arrangements[0]!.paxPrices![1]!.totalPrice).toBe(14000);
     // 0 is an explicit free price; other PAX tiers keep their own totals.
@@ -109,18 +110,46 @@ describe("vehicle PAX drafts", () => {
     ]);
   });
 
+  it("keeps seats, quantity and prices independent when editing and changing PAX tiers", () => {
+    const plan: ItineraryVehiclePlan = { ...stagePlan([5000, 4000, 6000]), quotationMode: "itinerary" };
+    const small = { vehicleId: "small", vehicleName: "19-seat coach", seats: 19, quantity: 1 };
+    const big = { vehicleId: "big", vehicleName: "39-seat coach", seats: 39, quantity: 1 };
+    const range = plan.arrangements[0]!;
+    range.paxPrices!.forEach((row) => { row.vehicles = [{ ...(row.pax === 15 ? small : big) }]; });
+    const draft = createVehicleDraft([plan], PAX, "itinerary")[0]!;
+    expect(hasVehicleSeatShortage([draft], PAX)).toBe(false);
+    draft.arrangements[0]!.paxPrices![0]!.vehicles![0]!.quantity = 2;
+    expect(range.paxPrices![0]!.vehicles![0]!.quantity).toBe(1);
+    const edited = updateVehicleSegmentPax(draft, range.id, 20, { vehicles: [small] });
+    expect(hasVehicleSeatShortage([edited], PAX)).toBe(true);
+    const synced = syncVehiclePaxTiers(edited, [15, 25, 30]);
+    expect(synced.arrangements[0]!.paxPrices!.map((row) =>
+      [row.pax, row.totalPrice, row.vehicles?.map((v) => [v.vehicleId, v.quantity])],
+    )).toEqual([[15, 5000, [["small", 2]]], [25, 6000, [["big", 1]]], [30, null, []]]);
+  });
+
+  it("derives the menu check from saved arrangements, including a VIP-only stage plan", () => {
+    const stage = { ...stagePlan([1, 2, 3]), tier: "vip" as const };
+    const blank = createVehicleDraft([], PAX, "itinerary");
+    expect(getVehicleQuotationMode(blank)).toBeNull();
+    expect(getVehicleQuotationMode([blank[0]!, stage])).toBe("stage");
+    const editing = createVehicleDraft([stage], PAX, "itinerary", true);
+    expect(getVehicleQuotationMode(editing)).toBeNull();
+    expect(getVehicleQuotationMode([stage])).toBe("stage");
+  });
+
   it("checks seats only for dated itinerary ranges", () => {
     const plan: ItineraryVehiclePlan = {
       ...stagePlan([null, null, null]),
       quotationMode: "itinerary",
     };
-    expect(hasVehicleSeatShortage([plan], 25)).toBe(true);
-    expect(hasVehicleSeatShortage([stagePlan([null, null, null])], 25)).toBe(false);
+    expect(hasVehicleSeatShortage([plan], PAX)).toBe(true);
+    expect(hasVehicleSeatShortage([stagePlan([null, null, null])], PAX)).toBe(false);
     const undated = {
       ...plan,
       arrangements: plan.arrangements.map((arrangement) => ({ ...arrangement, startDate: "", endDate: "" })),
     };
-    expect(hasVehicleSeatShortage([undated], 25)).toBe(false);
+    expect(hasVehicleSeatShortage([undated], PAX)).toBe(false);
   });
 });
 
