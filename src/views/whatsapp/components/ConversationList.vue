@@ -33,8 +33,8 @@
         :class="{ 'is-active': item.id === selectedId }"
         @click="emit('select', item.id)"
       >
-        <div class="flex items-center justify-between gap-[8px]">
-          <span class="font-600 truncate">{{ item.name || item.bsuid || item.phone }}</span>
+        <div class="flex items-center justify-between gap-[8px] leading-[20px]">
+          <span class="text-[14px] font-600 truncate">{{ item.name || item.bsuid || item.phone }}</span>
           <span class="flex items-center gap-[6px] shrink-0">
             <time
               v-if="item.lastMessageAt"
@@ -45,7 +45,7 @@
             <el-badge v-if="item.unreadCount" :value="item.unreadCount" :max="99" />
           </span>
         </div>
-        <div class="text-[14px] line-clamp-2 break-words">
+        <div class="text-[13px] leading-[20px] line-clamp-2 break-words">
           <template v-if="drafts.get(item.id).trim()">
             <span class="text-[var(--el-color-danger)]">{{ $t("whatsapp.draftLabel") }}：</span>{{ plainMessageText(drafts.get(item.id)) }}
           </template>
@@ -120,6 +120,7 @@ function formatListTime(value: string) {
   gap: 4px;
   width: 100%;
   padding: 10px 12px;
+  font-family: inherit;
   text-align: left;
   cursor: pointer;
   background: transparent;

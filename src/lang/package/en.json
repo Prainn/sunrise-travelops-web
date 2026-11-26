@@ -673,8 +673,24 @@
     "editOptionTitle": "Edit Category Option"
   },
   "notificationSettings": {
-    "hint": "When off, reminders of this type are not sent and are not resent when turned back on.",
+    "hint": "Notifications are sent only during the configured Beijing Time window. Active reminders outside the window are combined when it next opens; manually turned-off alerts are not resent.",
     "type": "Notification Type",
+    "sendWindow": "Send Window (Beijing Time)",
+    "allDay": "All day",
+    "customWindow": "Custom window",
+    "sendWindowOvernight": "{start}–next day {end}",
+    "editSendWindow": "Set Send Window",
+    "editSendWindowTitle": "Set Send Window: {name}",
+    "editSendWindowAria": "Set send window for {name}",
+    "windowMode": "Schedule",
+    "windowRange": "Beijing Time",
+    "startTime": "Start time",
+    "endTime": "End time",
+    "windowRangeHint": "Includes the start time and excludes the end time. An end time earlier than the start time spans overnight to the next day.",
+    "overnightPreview": "Overnight window: {range}",
+    "windowRequired": "Select both start and end times",
+    "windowSame": "Start and end times cannot be the same",
+    "windowInvalid": "Enter valid Beijing times (HH:mm)",
     "enabled": "Feishu Alerts",
     "empty": "No notification types",
     "conflict": "The setting was changed by someone else. Refresh and try again",
@@ -704,6 +720,7 @@
     "environment": "Environment",
     "detail": "Details",
     "edit": "Edit file",
+    "openDocument": "View file",
     "upload": "Upload image",
     "uploadSuccess": "Uploaded",
     "retry": "Rearchive media file",
@@ -723,7 +740,9 @@
     },
     "kinds": {
       "image": "Image",
-      "sticker": "Sticker"
+      "sticker": "Sticker",
+      "pdf": "PDF",
+      "word": "Word"
     },
     "sources": {
       "whatsapp": "WhatsApp",
@@ -2716,6 +2735,9 @@
     },
     "composerPlaceholder": "Type a reply, Ctrl/⌘ + Enter to send",
     "send": "Send",
+    "placeholderSendConfirm": "This message contains {'{'} or {'}'}, which may be an unedited placeholder. Send anyway?",
+    "sendAnyway": "Send anyway",
+    "backToEdit": "Back to edit",
     "closedHint": "Conversation closed. Reopen it before replying",
     "window": {
       "none": "No customer message yet; cannot reply",
