@@ -60,9 +60,11 @@ import { useI18n } from "vue-i18n";
 import { ApiError } from "@/api/request";
 import AppDialog from "@/components/AppDialog/index.vue";
 import { websiteErrorMessage, type WebsiteOwnerOption } from "@/services/website.service";
+import { mailService } from "@/services/mail.service";
 import { whatsappService } from "@/services/whatsapp.service";
 
 const props = defineProps<{
+  channel?: "mail" | "whatsapp";
   conversationId: string;
   version: number;
   currentOwnerName: string | null;
@@ -74,6 +76,7 @@ const emit = defineEmits<{
 const visible = defineModel<boolean>({ required: true });
 
 const { t } = useI18n();
+const service = computed(() => props.channel === "mail" ? mailService : whatsappService);
 const formRef = ref<FormInstance>();
 const form = reactive({ ownerId: "", reason: "" });
 const owners = ref<WebsiteOwnerOption[]>([]);
@@ -91,7 +94,7 @@ watch(visible, async (opened) => {
   formRef.value?.clearValidate();
   ownersLoading.value = true;
   try {
-    owners.value = await whatsappService.owners();
+    owners.value = await service.value.owners();
   } catch (cause) {
     owners.value = [];
     ElMessage.error(websiteErrorMessage(cause));
@@ -106,7 +109,7 @@ async function handleSubmit() {
   if (!valid) return;
   saving.value = true;
   try {
-    await whatsappService.assign(props.conversationId, {
+    await service.value.assign(props.conversationId, {
       version: props.version,
       ownerId: form.ownerId,
       reason: form.reason.trim(),

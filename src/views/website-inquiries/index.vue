@@ -185,7 +185,10 @@ function reset() {
 async function openEditor(record?: WebsiteInquiry, readOnly = false) {
   // 选项加载失败已提示，不打开下拉为空的弹窗。
   if (!(await loadOptions(record?.businessUnit ?? inquiryBusinessUnit.value))) return;
-  editingRecord.value = record;
+  try {
+    editingRecord.value = record && readOnly && record.businessUnit === "website" && can("mail:thread:list")
+      && !("mailSource" in record) ? await websiteService.inquiry(record.id) : record;
+  } catch (cause) { ElMessage.error(websiteErrorMessage(cause)); return; }
   editorReadOnly.value = readOnly;
   editorVisible.value = true;
 }

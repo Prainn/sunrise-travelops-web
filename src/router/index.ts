@@ -342,6 +342,15 @@ export const constantRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: "mail",
+        name: "MailInbox",
+        component: () => import("@/views/mail-inbox/index.vue"),
+        meta: {
+          menuKey: "mail-inbox", title: "mailInbox", icon: "el-icon-Message",
+          scopes: ["headquarters", "website"], perms: ["mail:thread:list"], reuseOnQueryChange: true,
+        },
+      },
+      {
         path: "logs",
         name: "WebsiteInquiryLogReport",
         component: () => import("@/views/website-inquiries/logs/index.vue"),

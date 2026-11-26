@@ -1,6 +1,24 @@
 <template>
   <div :class="['layout-toolbar', toolbarToneClass]">
     <router-link
+      v-if="mailUnread.canView"
+      :to="{ name: 'MailInbox' }"
+      class="layout-toolbar__item"
+      :title="mailLabel"
+      :aria-label="mailLabel"
+    >
+      <el-icon aria-hidden="true">
+        <Message />
+      </el-icon>
+      <el-badge
+        v-if="mailUnread.count"
+        class="ml-1"
+        :value="mailUnread.count"
+        :max="99"
+        aria-hidden="true"
+      />
+    </router-link>
+    <router-link
       v-if="notifications.canView"
       to="/whatsapp/inbox"
       class="layout-toolbar__item"
@@ -58,7 +76,7 @@
 
 <script setup lang="ts">
 import { openUserPage } from "@/utils/user-interaction";
-import { ChatDotRound } from "@element-plus/icons-vue";
+import { ChatDotRound, Message } from "@element-plus/icons-vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { DeviceEnum, SidebarColor, ThemeMode, LayoutMode } from "@/enums/settings";
@@ -69,6 +87,7 @@ import { authService } from "@/services";
 import type { LinkedAccount } from "@/types/account-link";
 
 import { useWhatsappNotificationsStore } from "@/stores/whatsapp-notifications";
+import { useMailUnreadStore } from "@/stores/mail-unread";
 import WhatsappBadges from "./WhatsappBadges.vue";
 import CommandPalette from "@/components/CommandPalette/index.vue";
 import DensitySelect from "@/components/DensitySelect/index.vue";
@@ -80,6 +99,10 @@ const appStore = useAppStore();
 const settingStore = useSettingsStore();
 const userStore = useUserStore();
 const notifications = useWhatsappNotificationsStore();
+const mailUnread = useMailUnreadStore();
+const mailLabel = computed(() => mailUnread.count == null
+  ? t("route.mailInbox")
+  : t("mail.toolbarUnread", { count: mailUnread.count }));
 
 const router = useRouter();
 

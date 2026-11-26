@@ -51,6 +51,11 @@
               || $t("common.notSet")
           }}
         </el-descriptions-item>
+        <el-descriptions-item v-if="record.mailSource" :label="$t('mail.original')">
+          <router-link :to="{ name: 'MailInbox', query: { thread: record.mailSource.threadId, message: record.mailSource.messageId } }">
+            {{ record.mailSource.mailbox }}
+          </router-link>
+        </el-descriptions-item>
         <el-descriptions-item :label="$t('websiteInquiry.acquisitionSource')">
           {{ record.acquisitionSource || $t("common.notSet") }}
         </el-descriptions-item>
@@ -167,7 +172,7 @@
             <el-input v-model="form.customerName" maxlength="100" />
           </el-form-item>
         </el-col>
-        <el-col v-if="record || prefillSource === 'whatsapp'" :xs="24" :sm="12">
+        <el-col v-if="record || prefillSource === 'whatsapp' || prefillSource === 'email'" :xs="24" :sm="12">
           <el-form-item :label="$t('inquiry.owner')">
             <el-input :model-value="record?.owner ?? assignedOwnerName ?? ''" disabled />
           </el-form-item>
@@ -260,7 +265,7 @@
         </el-col>
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.contactInfo')">
-            <el-input v-model="form.contactInfo" maxlength="500" />
+            <el-input v-model="form.contactInfo" :readonly="prefillSource === 'email'" maxlength="500" />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
@@ -292,7 +297,7 @@
               format="YYYY-MM-DD HH:mm"
               value-format="YYYY-MM-DD HH:mm"
               :value-on-clear="null"
-              :readonly="prefillSource === 'whatsapp'"
+              :readonly="sourceReadOnly"
               clearable
               class="w-full"
             />
@@ -302,7 +307,7 @@
           <el-form-item v-if="showSourceChannelSelect" :label="$t('inquiry.sourceChannel')">
             <InquirySourceChannelSelect
               v-model="form.contactChannel"
-              :disabled="prefillSource === 'whatsapp'"
+              :disabled="sourceReadOnly"
               clearable
             />
           </el-form-item>
@@ -394,7 +399,7 @@ const props = defineProps<{
   showBusiness: boolean;
   record?: WebsiteInquiry;
   initialValues?: Partial<WebsiteInquiryInput>;
-  prefillSource?: "whatsapp" | "website-visit";
+  prefillSource?: "whatsapp" | "email" | "website-visit";
   assignedOwnerName?: string | null;
   owners: WebsiteOwnerOption[];
   cities: WebsiteCity[];
