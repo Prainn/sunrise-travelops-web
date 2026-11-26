@@ -376,7 +376,7 @@
         <div class="flex justify-end">
           <el-button
             type="primary"
-            :disabled="!canSubmit"
+            :disabled="!canSubmit || confirmingSend"
             @click="handleSend"
           >
             {{ $t("whatsapp.send") }}
@@ -390,24 +390,20 @@
       :conversation-id="previewMessage.conversationId"
       :message-id="previewMessage.id"
       :document="messageDocument(previewMessage)"
-      :downloading="downloadingIds.has(previewMessage.id)"
-      @download="handleDownload(previewMessage)"
     />
   </SectionCard>
 </template>
 
 <script setup lang="ts">
-import { recordClientOperation } from "@/utils/client-operation-log";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
 import { ArrowDown } from "@element-plus/icons-vue";
 import { useResizeObserver } from "@vueuse/core";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import FeedbackState from "@/components/FeedbackState/index.vue";
 import OssMediaPreview from "@/components/OssMediaPreview/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import { websiteErrorMessage } from "@/services/website.service";
-import { whatsappService } from "@/services/whatsapp.service";
 import type { WhatsappConversationDetail, WhatsappDocumentUpload, WhatsappMessage, WhatsappReply } from "@/types/whatsapp";
 import { formatDateTime } from "@/utils";
 import {
@@ -415,6 +411,7 @@ import {
   attachmentSummary,
   canConfirmFailedMessage,
   canRetryMessage,
+  hasUnreplacedPlaceholder,
   isMediaMessage,
   messageDocument,
   messageDocumentArchive,
@@ -478,11 +475,11 @@ const replyTo = ref<WhatsappReply>();
 const imageDraft = useImageDraft(() => props.detail.id);
 const documentDrafts = useDocumentDrafts();
 const documentDraft = computed(() => documentDrafts.get(props.detail.id));
-const downloadingIds = ref(new Set<string>());
 /** 关闭后保留到下次打开，避免关闭动画中标题消失。 */
 const previewMessage = ref<WhatsappMessage>();
 const previewOpen = ref(false);
 const composerRef = ref<InstanceType<typeof MessageComposer>>();
+const confirmingSend = ref(false);
 const activeReactionMessageId = ref("");
 const scrollRef = ref<HTMLElement>();
 const isAtLatest = ref(true);
@@ -490,6 +487,7 @@ const quoteJump = shallowRef<{ messageId: string }>();
 const now = ref(Date.now());
 let clock: ReturnType<typeof setInterval> | undefined;
 let hasDisplayedMessages = false;
+let isUnmounted = false;
 
 const phoneRegionLabel = computed(() => {
   const region = phoneRegion(props.detail.phone);
@@ -554,7 +552,10 @@ useResizeObserver(scrollRef, () => {
 onMounted(() => {
   clock = setInterval(() => (now.value = Date.now()), 30_000);
 });
-onBeforeUnmount(() => clearInterval(clock));
+onBeforeUnmount(() => {
+  isUnmounted = true;
+  clearInterval(clock);
+});
 
 function isScrolledToBottom() {
   const el = scrollRef.value;
@@ -677,42 +678,70 @@ function handleDocument(file: File) {
   void documentDrafts.upload(props.detail.id, file);
 }
 /**
- * 文档草稿与可选正文一起提交；文档不支持原生引用。
+ * 校验文档草稿当前能否提交；文档不支持原生引用，未就绪或已到期时保留草稿和正文并提示。
  *
- * @returns 是否已提交。未就绪、已到期或带引用时保留草稿和正文并提示。
+ * @returns 可发送时返回上传记录，否则返回 undefined。
  */
-function sendDocumentDraft(text: string): boolean {
+function readyDocumentUpload(): WhatsappDocumentUpload | undefined {
   const document = documentDraft.value!;
   if (replyTo.value) {
     ElMessage.warning(t("whatsapp.documentDraft.noReply"));
-    return false;
+    return undefined;
   }
   if (document.state === "expired" || (document.upload && isDocumentDraftExpired(document.upload))) {
     documentDrafts.expire(props.detail.id, document.fileName, document.sizeBytes);
     ElMessage.warning(t("whatsapp.documentDraft.expired"));
-    return false;
+    return undefined;
   }
   if (document.state !== "ready" || !document.upload) {
     ElMessage.warning(t(document.state === "uploading" ? "whatsapp.documentDraft.uploading" : "whatsapp.documentDraft.notReady"));
-    return false;
+    return undefined;
   }
-  emit("send-document", document.upload, text);
-  documentDrafts.remove(props.detail.id);
-  return true;
+  return document.upload;
 }
-/** 有图片时整组按选图顺序发送，正文作为末尾独立文字；图片未全部上传成功时保留草稿并提示。 */
-function handleSend() {
-  if (!canSubmit.value) return;
+/** 有图片时整组按选图顺序发送，正文作为末尾独立文字；附件未就绪时保留草稿并提示。 */
+async function handleSend() {
+  if (!canSubmit.value || confirmingSend.value) return;
   const text = draft.value.trim();
-  const images = imageDraft.images.value;
+  if (documentDraft.value && !readyDocumentUpload()) return;
+  if (!documentDraft.value && imageDraft.images.value.length && !imageDraft.isReady.value) {
+    ElMessage.warning(t("whatsapp.imageDraft.notReady"));
+    return;
+  }
+  if (hasUnreplacedPlaceholder(text)) {
+    confirmingSend.value = true;
+    try {
+      await ElMessageBox.confirm(
+        t("whatsapp.placeholderSendConfirm"),
+        t("common.warning"),
+        {
+          type: "warning",
+          confirmButtonText: t("whatsapp.sendAnyway"),
+          cancelButtonText: t("whatsapp.backToEdit"),
+        },
+      );
+    } catch {
+      void nextTick(() => {
+        if (!isUnmounted) composerRef.value?.focus();
+      });
+      return;
+    } finally {
+      confirmingSend.value = false;
+    }
+    // 确认期间会话可能已卸载、正文变化或回复窗口关闭，重检后再发。
+    if (isUnmounted || !canSubmit.value || draft.value.trim() !== text) return;
+  }
   if (documentDraft.value) {
-    if (!sendDocumentDraft(text)) return;
-  } else if (images.length) {
+    const upload = readyDocumentUpload();
+    if (!upload) return;
+    emit("send-document", upload, text);
+    documentDrafts.remove(props.detail.id);
+  } else if (imageDraft.images.value.length) {
     if (!imageDraft.isReady.value) {
       ElMessage.warning(t("whatsapp.imageDraft.notReady"));
       return;
     }
-    emit("send-images", images.map((image) => ({
+    emit("send-images", imageDraft.images.value.map((image) => ({
       mediaAssetId: image.asset!.id,
       name: image.asset!.name,
       mimeType: image.asset!.mimeType,
@@ -759,41 +788,6 @@ function documentArchiveHint(message: WhatsappMessage): string {
   if (state === "pending" || state === "processing") return t("whatsapp.documentPreview.archiving");
   if (state === "failed") return t("whatsapp.documentPreview.archiveFailed");
   return "";
-}
-
-/** 每次点击重新获取 60 秒下载地址并立即触发下载；地址不缓存、不展示。 */
-async function handleDownload(message: WhatsappMessage) {
-  if (downloadingIds.value.has(message.id)) return;
-  downloadingIds.value = new Set(downloadingIds.value).add(message.id);
-  try {
-    const { url } = await whatsappService.documentDownload(message.conversationId, message.id);
-    // 签名地址强制 attachment；在隐藏 iframe 中打开，避免整页导航触发离开确认。
-    const frame = document.createElement("iframe");
-    frame.hidden = true;
-    frame.referrerPolicy = "no-referrer";
-    frame.src = url;
-    document.body.append(frame);
-    // 过早移除会中断下载，保留到签名地址失效。
-    setTimeout(() => frame.remove(), 60_000);
-    recordClientOperation({
-      page: "WhatsappInbox",
-      action: "download",
-      result: "unknown",
-      recordId: message.id,
-    });
-  } catch (cause) {
-    recordClientOperation({
-      page: "WhatsappInbox",
-      action: "download",
-      result: "failure",
-      recordId: message.id,
-    });
-    ElMessage.error(websiteErrorMessage(cause));
-  } finally {
-    const next = new Set(downloadingIds.value);
-    next.delete(message.id);
-    downloadingIds.value = next;
-  }
 }
 </script>
 

@@ -1,5 +1,5 @@
 import { LONG_REQUEST_TIMEOUT_MS, request } from "@/api/request";
-import type { OssResource, OssResourceForm, OssResourcePage, OssResourceQueryParams } from "@/types/oss";
+import type { OssCatalogItem, OssResource, OssResourceForm, OssResourcePage, OssResourceQueryParams } from "@/types/oss";
 
 const BASE_URL = "/system/oss/resources";
 const resourceUrl = (id: string) => `${BASE_URL}/${encodeURIComponent(id)}`;
@@ -22,7 +22,7 @@ export const ossService = {
     return request.get<OssResourcePage>(BASE_URL, { params: { ...query } });
   },
   detail(id: string) {
-    return request.get<OssResource>(resourceUrl(id));
+    return request.get<OssCatalogItem>(resourceUrl(id));
   },
   upload(file: File) {
     return request.post<OssResource>(BASE_URL, imageFormData(file), { userAction: true, timeoutMs: LONG_REQUEST_TIMEOUT_MS });

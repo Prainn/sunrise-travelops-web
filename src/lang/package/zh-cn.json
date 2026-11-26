@@ -667,8 +667,24 @@
     "editOptionTitle": "编辑分类选项"
   },
   "notificationSettings": {
-    "hint": "关闭后不再发送该类提醒，重新开启不补发。",
+    "hint": "通知仅在设置的北京时间内发送。时段外仍有效的提醒将在下次开放时合并发送；手动关闭后不补发。",
     "type": "通知类型",
+    "sendWindow": "通知时段（北京时间）",
+    "allDay": "全天",
+    "customWindow": "指定时段",
+    "sendWindowOvernight": "{start}–次日 {end}",
+    "editSendWindow": "设置通知时段",
+    "editSendWindowTitle": "设置通知时段：{name}",
+    "editSendWindowAria": "设置{name}的通知时段",
+    "windowMode": "发送方式",
+    "windowRange": "北京时间",
+    "startTime": "开始时间",
+    "endTime": "结束时间",
+    "windowRangeHint": "包含开始时刻，不含结束时刻；结束早于开始表示跨午夜至次日。",
+    "overnightPreview": "跨午夜时段：{range}",
+    "windowRequired": "请同时填写开始和结束时间",
+    "windowSame": "开始和结束时间不能相同",
+    "windowInvalid": "请选择有效的北京时间（HH:mm）",
     "enabled": "飞书通知",
     "empty": "暂无通知类型",
     "conflict": "设置已被他人修改，请刷新后再操作",
@@ -698,6 +714,7 @@
     "environment": "环境",
     "detail": "详情",
     "edit": "编辑资源",
+    "openDocument": "查看文件",
     "upload": "上传图片",
     "uploadSuccess": "上传成功",
     "retry": "重新归档媒体文件",
@@ -717,7 +734,9 @@
     },
     "kinds": {
       "image": "图片",
-      "sticker": "贴纸"
+      "sticker": "贴纸",
+      "pdf": "PDF",
+      "word": "Word"
     },
     "sources": {
       "whatsapp": "WhatsApp",
@@ -2710,6 +2729,9 @@
     },
     "composerPlaceholder": "输入回复内容，Ctrl/⌘ + Enter 发送",
     "send": "发送",
+    "placeholderSendConfirm": "消息内容包含 {'{'} 或 {'}'}，可能还有未修改的占位内容，确定仍要发送吗？",
+    "sendAnyway": "仍要发送",
+    "backToEdit": "返回修改",
     "closedHint": "会话已关闭，请先重新打开再回复",
     "window": {
       "none": "客户尚无入站消息，暂不能回复",
