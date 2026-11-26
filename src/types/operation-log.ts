@@ -16,6 +16,7 @@ export const OPERATION_CATEGORIES = [
   "website-config",
   "ledger",
   "website-visit",
+  "mail",
   "whatsapp",
   "client",
 ] as const;
@@ -89,6 +90,7 @@ export const CLIENT_PAGES = [
   "Dashboard",
   "Profile",
   "WhatsappWorkbench",
+  "MailInbox",
   "WhatsappInbox",
   "WhatsappQuickReplies",
   "WhatsappIntegration",

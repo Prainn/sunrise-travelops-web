@@ -163,6 +163,7 @@ const categories: { value: OperationCategory; label: string }[] = [
   { value: "website-config", label: "route.websiteResources" },
   { value: "ledger", label: "route.dataLedgers" },
   { value: "website-visit", label: "route.websiteVisits" },
+  { value: "mail", label: "route.mailInbox" },
   { value: "whatsapp", label: "operationLog.whatsapp" },
   { value: "client", label: "operationLog.client" },
 ];

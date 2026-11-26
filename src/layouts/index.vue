@@ -6,6 +6,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted } from "vue";
+import { useMailUnreadStore } from "@/stores/mail-unread";
 import { useWhatsappNotificationsStore } from "@/stores/whatsapp-notifications";
 import { useRoute } from "vue-router";
 import { useLayout } from "./composables/useLayout";
@@ -21,6 +22,9 @@ const { currentLayout, isWorkspaceChromeless, isMobile } = useLayout();
 
 useLayoutDevice();
 const notifications = useWhatsappNotificationsStore();
+const mailUnread = useMailUnreadStore();
+onMounted(mailUnread.start);
+onUnmounted(mailUnread.stop);
 onMounted(notifications.start);
 onUnmounted(notifications.stop);
 
