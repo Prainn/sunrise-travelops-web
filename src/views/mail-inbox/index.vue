@@ -370,7 +370,6 @@ function refreshThread() {
 }
 .mail-inbox__list :deep(.mail-inbox__toolbar) {
   padding: 10px 12px;
-  border-block-end: 1px solid var(--divider-color);
 }
 .mail-inbox__navigation { display: none; }
 .mail-inbox__account { width: 100%; }
