@@ -28,14 +28,7 @@
       </el-select>
     </el-form-item>
     <el-form-item :label="$t('inquiry.sourceChannel')">
-      <el-select v-model="sourceChannel" autocomplete="new-password" clearable>
-        <el-option
-          v-for="option in sourceOptions"
-          :key="option"
-          :label="option"
-          :value="option"
-        />
-      </el-select>
+      <InquirySourceChannelSelect v-model="sourceChannel" clearable />
     </el-form-item>
   </FilterBar>
 </template>
@@ -45,6 +38,7 @@ import FilterBar from "@/components/FilterBar/index.vue";
 import { computed } from "vue";
 import type { InquiryStatus } from "@/types/inquiry";
 import { INQUIRY_STATUS_OPTIONS } from "../options";
+import InquirySourceChannelSelect from "./InquirySourceChannelSelect.vue";
 
 const props = defineProps<{
   keywords: string;
@@ -52,7 +46,6 @@ const props = defineProps<{
   owner: string;
   sourceChannel: string;
   ownerOptions: import("@/services/inquiry.service").PersonOption[];
-  sourceOptions: string[];
 }>();
 const emit = defineEmits<{
   "update:keywords": [value: string];

@@ -46,7 +46,10 @@
           {{ record.receivedAt || $t("common.notSet") }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('websiteInquiry.contactChannel')">
-          {{ record.contactChannel || $t("common.notSet") }}
+          {{
+            (isWebsite ? inquirySourceChannelLabel(record.contactChannel, t) : record.contactChannel)
+              || $t("common.notSet")
+          }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('websiteInquiry.acquisitionSource')">
           {{ record.acquisitionSource || $t("common.notSet") }}
@@ -164,9 +167,9 @@
             <el-input v-model="form.customerName" maxlength="100" />
           </el-form-item>
         </el-col>
-        <el-col v-if="record" :xs="24" :sm="12">
+        <el-col v-if="record || prefillSource === 'whatsapp'" :xs="24" :sm="12">
           <el-form-item :label="$t('inquiry.owner')">
-            <el-input :model-value="record.owner" disabled />
+            <el-input :model-value="record?.owner ?? assignedOwnerName ?? ''" disabled />
           </el-form-item>
         </el-col>
         <el-col v-else-if="allowAssign" :xs="24" :sm="12">
@@ -281,7 +284,7 @@
       <el-row :gutter="16">
         <el-col :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.receivedAt')">
-            <el-input v-if="sourceReadOnly" :model-value="form.receivedAt ?? ''" readonly />
+            <el-input v-if="prefillSource === 'website-visit'" :model-value="form.receivedAt ?? ''" readonly />
             <el-date-picker
               v-else
               v-model="form.receivedAt"
@@ -289,17 +292,25 @@
               format="YYYY-MM-DD HH:mm"
               value-format="YYYY-MM-DD HH:mm"
               :value-on-clear="null"
+              :readonly="prefillSource === 'whatsapp'"
               clearable
               class="w-full"
             />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12">
-          <el-form-item :label="$t('websiteInquiry.contactChannel')">
+          <el-form-item v-if="showSourceChannelSelect" :label="$t('inquiry.sourceChannel')">
+            <InquirySourceChannelSelect
+              v-model="form.contactChannel"
+              :disabled="prefillSource === 'whatsapp'"
+              clearable
+            />
+          </el-form-item>
+          <el-form-item v-else :label="$t('websiteInquiry.contactChannel')">
             <el-input v-model="form.contactChannel" maxlength="100" :readonly="sourceReadOnly" />
           </el-form-item>
         </el-col>
-        <el-col :xs="24" :sm="12">
+        <el-col v-if="!showSourceChannelSelect" :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.acquisitionSource')">
             <el-input v-model="form.acquisitionSource" maxlength="2048" :readonly="sourceReadOnly" />
           </el-form-item>
@@ -369,7 +380,12 @@ import {
   setServiceDates,
   switchToConsecutiveDates,
 } from "../inquiry-dates";
-import { INQUIRY_STATUS_OPTIONS, INQUIRY_STATUS_TAG_TYPES } from "@/views/inquiries/options";
+import InquirySourceChannelSelect from "@/views/inquiries/components/InquirySourceChannelSelect.vue";
+import {
+  inquirySourceChannelLabel,
+  INQUIRY_STATUS_OPTIONS,
+  INQUIRY_STATUS_TAG_TYPES,
+} from "@/views/inquiries/options";
 import { addDays, formatDateTime } from "@/utils";
 import { serviceDateRanges } from "@/utils/service-dates";
 const props = defineProps<{
@@ -378,7 +394,8 @@ const props = defineProps<{
   showBusiness: boolean;
   record?: WebsiteInquiry;
   initialValues?: Partial<WebsiteInquiryInput>;
-  sourceReadOnly?: boolean;
+  prefillSource?: "whatsapp" | "website-visit";
+  assignedOwnerName?: string | null;
   owners: WebsiteOwnerOption[];
   cities: WebsiteCity[];
   allowAssign: boolean;
@@ -399,6 +416,10 @@ const switchedToConsecutive = ref(false);
 /** 编辑按目标询盘业务，新建（含总部代建）按当前选择的业务。 */
 const isWebsite = computed(
   () => (props.record?.businessUnit ?? form.value.businessUnit ?? props.businessUnit) === "website",
+);
+const sourceReadOnly = computed(() => Boolean(props.prefillSource));
+const showSourceChannelSelect = computed(
+  () => isWebsite.value && !props.record && props.prefillSource !== "website-visit",
 );
 const selectingDates = computed(() => isWebsite.value && Array.isArray(form.value.serviceDates));
 const selectedDayCount = computed(() => form.value.serviceDates?.length ?? 0);
@@ -503,6 +524,10 @@ watch(
 function changeBusiness() {
   form.value.ownerId = undefined;
   form.value.destinations = [];
+  if (showSourceChannelSelect.value && !sourceReadOnly.value) {
+    form.value.contactChannel = "";
+    form.value.acquisitionSource = "";
+  }
   // 霖熹与独立站共用表单：离开独立站时丢弃未保存的自选日期，开始日期与天数保持勾选前的值。
   if (form.value.businessUnit !== "website") form.value.serviceDates = null;
   switchedToConsecutive.value = false;

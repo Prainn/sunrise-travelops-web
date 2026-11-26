@@ -6,7 +6,6 @@
       v-model:owner="owner"
       v-model:source-channel="sourceChannel"
       :owner-options="ownerOptions"
-      :source-options="sourceOptions"
       @reset="resetQuery"
     />
     <el-alert
@@ -47,7 +46,6 @@
       :is-editing="Boolean(editingId)"
       :agency-options="agencyOptions"
       :owner-options="ownerOptions"
-      :source-options="sourceOptions"
       :saving="saving"
       @submit="saveInquiry"
     />
@@ -111,7 +109,6 @@ const selectedInquiry = ref<InquiryRecord>();
 const inquiryForm = ref<InquiryRecord>(createEmptyInquiry());
 const agencyOptions = computed(() => resourceService.agencies);
 const ownerOptions = ref<PersonOption[]>([]);
-const sourceOptions = ["WhatsApp", "Email", "Website", "WeChat", "Referral"];
 let fetchVersion = 0;
 function showError(error: unknown) {
   ElMessage.error(error instanceof Error ? error.message : t("request.failed"));
