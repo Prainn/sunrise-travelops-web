@@ -156,7 +156,8 @@
     <WebsiteInquiryEditor
       v-model="inquiryVisible"
       :initial-values="inquiryDraft"
-      source-read-only
+      prefill-source="whatsapp"
+      :assigned-owner-name="detail?.ownerName"
       business-unit="website"
       :show-business="false"
       :owners="[]"

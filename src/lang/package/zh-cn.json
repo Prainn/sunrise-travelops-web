@@ -321,6 +321,12 @@
     "searchPlaceholder": "询盘编号、组团社、联系人或联系方式",
     "sourceChannel": "来源渠道",
     "sourceChannelRequired": "选择来源渠道",
+    "sourceChannels": {
+      "email": "电子邮件",
+      "website": "网站",
+      "wechat": "微信",
+      "referral": "转介绍"
+    },
     "statuses": {
       "archived": "已归档",
       "lost": "已流失",

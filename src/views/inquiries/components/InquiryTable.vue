@@ -43,7 +43,11 @@
         :label="$t('common.countryOrRegion')"
         width="110"
       />
-      <el-table-column prop="sourceChannel" :label="$t('inquiry.sourceChannel')" width="110" />
+      <el-table-column prop="sourceChannel" :label="$t('inquiry.sourceChannel')" width="110">
+        <template #default="{ row }">
+          {{ inquirySourceChannelLabel(row.sourceChannel, t) }}
+        </template>
+      </el-table-column>
       <el-table-column prop="owner" :label="$t('inquiry.owner')" width="100" />
       <el-table-column
         prop="plannedDays"
@@ -181,12 +185,12 @@ import InquiryTransferButton from "./InquiryTransferButton.vue";
 import { formatDateTime } from "@/utils";
 import { hasPerm } from "@/utils/auth";
 import type { InquiryRecord, InquiryStatus } from "@/types/inquiry";
-import { INQUIRY_STATUS_TAG_TYPES } from "../options";
+import { inquirySourceChannelLabel, INQUIRY_STATUS_TAG_TYPES } from "../options";
 import { isInquiryReadOnly } from "../inquiry-workflow";
 
 const userStore = useUserStore();
 // 常用操作需在一行内展示，英文按钮文案更长
-const { locale } = useI18n();
+const { locale, t } = useI18n();
 
 defineProps<{
   rows: InquiryRecord[];

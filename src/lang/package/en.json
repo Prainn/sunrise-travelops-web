@@ -319,8 +319,14 @@
     "plannedDays": "Service days",
     "plannedDaysRequired": "Enter service days",
     "searchPlaceholder": "Inquiry no., agency, contact or contact details",
-    "sourceChannel": "Source",
+    "sourceChannel": "Source channel",
     "sourceChannelRequired": "Select a source",
+    "sourceChannels": {
+      "email": "Email",
+      "website": "Website",
+      "wechat": "WeChat",
+      "referral": "Referral"
+    },
     "statuses": {
       "archived": "Archived",
       "lost": "Lost",
