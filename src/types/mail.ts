@@ -50,6 +50,9 @@ export interface MailDetail extends MailThread {
   canReply: boolean;
   canAssign: boolean;
   canCreateInquiry: boolean;
+  canUpdateCustomer: boolean;
+  canCreateLedger: boolean;
+  ledger: { id: string; orderNo: string } | null;
   signature: string | null;
 }
 export interface MailDraftInput {

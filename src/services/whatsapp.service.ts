@@ -2,7 +2,7 @@ import { LONG_REQUEST_TIMEOUT_MS, request } from "@/api/request";
 import { imageFormData } from "@/services/oss.service";
 import type { PageResult } from "@/types/common";
 import type { OssResource } from "@/types/oss";
-import type { WebsiteInquiryInput } from "@/types/website";
+import type { InboxCustomerNotes, InboxCustomerNotesInput, WebsiteInquiryInput } from "@/types/website";
 import type {
   WhatsappSummary,
   WhatsappAction,
@@ -10,8 +10,6 @@ import type {
   WhatsappConversationDetail,
   WhatsappConversationItem,
   WhatsappConversationQueryParams,
-  WhatsappCustomerNotes,
-  WhatsappCustomerNotesInput,
   WhatsappDocumentMessageInput,
   WhatsappDocumentUpload,
   WhatsappFailedEvent,
@@ -99,11 +97,11 @@ export const whatsappService = {
     return request.get<PageResult<WhatsappAction>>(`${conversationUrl(id)}/actions`, { params: { ...query }, cache: "no-store" });
   },
   customerNotes(id: string) {
-    return request.get<WhatsappCustomerNotes>(`${conversationUrl(id)}/customer-notes`, { cache: "no-store" });
+    return request.get<InboxCustomerNotes>(`${conversationUrl(id)}/customer-notes`, { cache: "no-store" });
   },
   /** 全量保存；version 过期返回 409，由用户刷新后再决定。 */
-  saveCustomerNotes(id: string, input: WhatsappCustomerNotesInput) {
-    return request.put<WhatsappCustomerNotes>(`${conversationUrl(id)}/customer-notes`, input, { userAction: true });
+  saveCustomerNotes(id: string, input: InboxCustomerNotesInput) {
+    return request.put<InboxCustomerNotes>(`${conversationUrl(id)}/customer-notes`, input, { userAction: true });
   },
   owners() {
     return request.get<WebsiteOwnerOption[]>(`${BASE_URL}/owners`);

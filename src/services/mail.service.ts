@@ -1,7 +1,7 @@
 import { LONG_REQUEST_TIMEOUT_MS, request } from "@/api/request";
 import type { PageResult } from "@/types/common";
 import type { MailboxOptions, MailDetail, MailDraftInput, MailMessage, MailThread, MailView } from "@/types/mail";
-import type { WebsiteInquiryInput } from "@/types/website";
+import type { InboxCustomerNotes, InboxCustomerNotesInput, WebsiteInquiryInput } from "@/types/website";
 import type { WebsiteOwnerOption } from "./website.service";
 import { whatsappInquiryInput } from "./whatsapp.service";
 
@@ -19,6 +19,14 @@ export const mailService = {
   owners() { return request.get<WebsiteOwnerOption[]>("/mail/owners"); },
   assign(id: string, input: { version: number; ownerId: string; reason: string }) {
     return request.post<MailThread>(`${threadUrl(id)}/assign`, input, action);
+  },
+  customerNotes(id: string, source: string) {
+    return request.get<InboxCustomerNotes>(`${threadUrl(id)}/messages/${encodeURIComponent(source)}/customer-notes`, { cache: "no-store" });
+  },
+  saveCustomerNotes(id: string, source: string, notes: InboxCustomerNotesInput) {
+    const { version, customerName, countryItemId, plannedDays, startDate, pax, destinations, requirements, internalRemark } = notes;
+    const input = { version, customerName, countryItemId, plannedDays, startDate, pax, destinations, requirements, internalRemark };
+    return request.put<InboxCustomerNotes>(`${threadUrl(id)}/messages/${encodeURIComponent(source)}/customer-notes`, input, action);
   },
   inquiry(id: string, source: string, input: WebsiteInquiryInput, version: number) {
     return request.post<{ inquiryId: string; created: boolean }>(

@@ -15,9 +15,38 @@
         </el-select>
       </el-form-item>
     </FilterBar>
-    <SectionCard fill padding="none" class="mail-inbox">
-      <div class="mail-inbox__panes" :class="{ 'is-reading': threadId }">
-        <aside class="mail-inbox__list" :aria-label="$t('mail.threadList')">
+    <div class="mail-inbox">
+      <div v-if="threadId" class="mail-inbox__navigation">
+        <el-button
+          class="mail-inbox__back"
+          link
+          type="primary"
+          :icon="ArrowLeft"
+          @click="closeThread"
+        >
+          {{ $t("mail.backToList") }}
+        </el-button>
+        <el-radio-group
+          v-if="detail"
+          v-model="compactPane"
+          size="small"
+          :aria-label="$t('route.mailInbox')"
+        >
+          <el-radio-button value="reader">
+            {{ $t("mail.content") }}
+          </el-radio-button>
+          <el-radio-button value="customer">
+            {{ $t("whatsapp.customer") }}
+          </el-radio-button>
+        </el-radio-group>
+      </div>
+      <div class="mail-inbox__panes" :class="{ 'is-reading': threadId, 'has-detail': detail, 'is-customer': compactPane === 'customer' }">
+        <SectionCard
+          fill
+          padding="none"
+          class="mail-inbox__list"
+          :aria-label="$t('mail.threadList')"
+        >
           <TableToolbar class="mail-inbox__toolbar" :refreshing="accountsLoading || listLoading" @refresh="refreshInbox">
             <el-select
               v-if="accounts?.canSwitch"
@@ -77,24 +106,15 @@
             :total="total"
             @update:page="changePage"
           />
-        </aside>
-        <section class="mail-inbox__reader">
-          <div v-if="threadId" class="mail-inbox__back">
-            <el-button
-              link
-              type="primary"
-              :icon="ArrowLeft"
-              @click="closeThread"
-            >
-              {{ $t("mail.backToList") }}
-            </el-button>
-          </div>
+        </SectionCard>
+        <SectionCard fill padding="none" class="mail-inbox__reader">
           <MailThread
             v-if="detail"
             :key="detail.id"
             :detail="detail"
             :selected="sourceMessage"
             @refresh="refreshThread"
+            @create-inquiry="openInquiryFor"
           />
           <div v-else v-loading="detailLoading" class="grid min-h-0 flex-1 place-items-center">
             <FeedbackState
@@ -102,13 +122,23 @@
               type="error"
               :description="detailError"
               retryable
-              @retry="loadSelected"
+              @retry="loadSelected()"
             />
             <FeedbackState v-else-if="!detailLoading" :title="$t('mail.selectThread')" />
           </div>
-        </section>
+        </SectionCard>
+        <MailCustomerInfo
+          v-if="detail"
+          ref="customerInfo"
+          :key="detail.id"
+          class="mail-inbox__info"
+          :detail="detail"
+          :source-id="selectedSource"
+          @select-source="selectSource"
+          @changed="refreshThread"
+        />
       </div>
-    </SectionCard>
+    </div>
   </PageShell>
 </template>
 
@@ -130,6 +160,8 @@ import { useMailUnreadStore } from "@/stores/mail-unread";
 import { useUserStore } from "@/stores/user";
 import type { MailboxOptions, MailDetail, MailThread as MailThreadItem, MailView } from "@/types/mail";
 import { hasUserPermission } from "@/utils/permission";
+import { ApiError } from "@/api/request";
+import MailCustomerInfo from "./MailCustomerInfo.vue";
 import MailThread from "./MailThread.vue";
 import MailThreadList from "./MailThreadList.vue";
 
@@ -152,6 +184,9 @@ const listLoading = ref(false);
 const listError = ref("");
 const detail = ref<MailDetail>();
 const detailLoading = ref(false);
+const compactPane = ref<"reader" | "customer">("reader");
+const selectedSource = ref("");
+const customerInfo = ref<InstanceType<typeof MailCustomerInfo>>();
 const detailError = ref("");
 const threadId = computed(() => typeof route.query.thread === "string" ? route.query.thread : undefined);
 const sourceMessage = computed(() => typeof route.query.message === "string" ? route.query.message : undefined);
@@ -176,12 +211,31 @@ watch([() => !!accounts.value, activeMailbox, keyword, () => query.view, () => q
   rows.value = [];
   void loadThreads();
 });
-watch(threadId, loadSelected, { immediate: true });
+watch(threadId, () => {
+  compactPane.value = "reader";
+  selectedSource.value = "";
+  void loadSelected();
+}, { immediate: true });
+watch(sourceMessage, id => {
+  if (id && detail.value?.messages.some(message => message.id === id && message.direction === "inbound")) selectedSource.value = id;
+});
+function selectSource(id: string) {
+  selectedSource.value = id;
+  void router.replace({ query: { ...route.query, message: id } });
+}
+
+async function openInquiryFor(id: string) {
+  selectSource(id);
+  await nextTick();
+  await customerInfo.value?.openInquiry();
+}
 
 onMounted(() => {
   void refreshInbox();
   timer = setInterval(() => {
-    if (!document.hidden && !listLoading.value && !accountsLoading.value) void loadThreads();
+    if (document.hidden) return;
+    if (!listLoading.value && !accountsLoading.value) void loadThreads();
+    if (threadId.value && !detailLoading.value) void loadSelected(true);
   }, 30_000);
 });
 onUnmounted(() => {
@@ -247,7 +301,7 @@ function resetQuery() {
   closeThread();
 }
 
-async function loadSelected() {
+async function loadSelected(background = false) {
   const id = threadId.value;
   const current = ++detailRequest;
   if (detail.value?.id !== id) detail.value = undefined;
@@ -258,6 +312,11 @@ async function loadSelected() {
     const value = await mailService.detail(id);
     if (current !== detailRequest) return;
     detail.value = value;
+    const incoming = value.messages.filter(message => message.direction === "inbound");
+    if (!incoming.some(message => message.id === selectedSource.value)) {
+      selectedSource.value = incoming.find(message => message.id === sourceMessage.value)?.id
+        ?? value.sourceMessageId ?? incoming.at(-1)?.id ?? "";
+    }
     if (value.unreadCount && (value.canReply || manager.value)) {
       await nextTick();
       if (current !== detailRequest) return;
@@ -275,6 +334,7 @@ async function loadSelected() {
     }
   } catch (cause) {
     if (current !== detailRequest) return;
+    if (background && detail.value && !(cause instanceof ApiError && [403, 404].includes(cause.status ?? 0))) return;
     detail.value = undefined;
     detailError.value = websiteErrorMessage(cause);
   } finally {
@@ -289,23 +349,29 @@ function refreshThread() {
 </script>
 
 <style scoped lang="scss">
-.mail-inbox { container: inbox / inline-size; }
-
+.mail-inbox {
+  @apply flex min-h-0 flex-1 flex-col;
+  container: inbox / inline-size;
+}
 .mail-inbox__panes {
   display: grid;
   flex: 1;
   min-height: 0;
-  grid-template-columns: clamp(19rem, 28%, 26rem) minmax(0, 1fr);
-}
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: clamp(15rem, 23%, 20rem) minmax(0, 1fr);
+  gap: var(--page-gap);
 
+  &.has-detail {
+    grid-template-columns: clamp(15rem, 23%, 20rem) minmax(0, 1fr) clamp(16rem, 23%, 20rem);
+  }
+}
 .mail-inbox__list, .mail-inbox__reader {
-  @apply flex min-h-0 min-w-0 flex-col;
+  :deep(> .section-card__body) { gap: 0; }
 }
-.mail-inbox__list { border-inline-end: 1px solid var(--divider-color); }
-.mail-inbox__toolbar, .mail-inbox__back {
-  padding: 10px var(--section-padding);
-  border-block-end: 1px solid var(--divider-color);
+.mail-inbox__list :deep(.mail-inbox__toolbar) {
+  padding: 10px 12px;
 }
+.mail-inbox__navigation { display: none; }
 .mail-inbox__account { width: 100%; }
 .mail-inbox__pagination {
   padding: 8px;
@@ -316,10 +382,22 @@ function refreshThread() {
 }
 .mail-inbox__back { display: none; }
 
+@container inbox (max-width: 62rem) {
+  .mail-inbox__navigation {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-block-end: 8px;
+  }
+  .mail-inbox__panes.has-detail { grid-template-columns: clamp(15rem, 30%, 20rem) minmax(0, 1fr); }
+  .mail-inbox__panes:not(.is-customer) .mail-inbox__info,
+  .mail-inbox__panes.has-detail.is-customer .mail-inbox__reader { display: none; }
+}
 @container inbox (max-width: 42rem) {
-  .mail-inbox__panes { grid-template-columns: minmax(0, 1fr); }
-  .mail-inbox__list { border-inline-end: 0; }
-  .mail-inbox__back { display: block; }
+  .mail-inbox__panes, .mail-inbox__panes.has-detail { grid-template-columns: minmax(0, 1fr); }
+  .mail-inbox__back { display: inline-flex; margin-inline-end: auto; }
   .mail-inbox__panes:not(.is-reading) .mail-inbox__reader,
   .mail-inbox__panes.is-reading .mail-inbox__list { display: none; }
 }
