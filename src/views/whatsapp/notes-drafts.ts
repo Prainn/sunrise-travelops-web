@@ -1,6 +1,6 @@
 import { APP_PREFIX } from "@/constants";
 import { Storage } from "@/utils/storage";
-import type { WhatsappCustomerNotesForm } from "@/types/whatsapp";
+import type { InboxCustomerNotesForm } from "@/types/website";
 
 const DRAFT_PREFIX = `${APP_PREFIX}:whatsapp:notes_draft:`;
 /** 草稿含客户资料，超过 7 天未修改即清理。 */
@@ -9,8 +9,8 @@ const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export interface NotesDraft {
   /** 编辑起点的会话版本；与服务端不一致时须由用户刷新后再保存。 */
   version: number;
-  base: WhatsappCustomerNotesForm;
-  form: WhatsappCustomerNotesForm;
+  base: InboxCustomerNotesForm;
+  form: InboxCustomerNotesForm;
   savedAt: number;
 }
 

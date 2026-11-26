@@ -118,6 +118,8 @@ declare module 'vue' {
     HotelTable: typeof import('./../src/views/resources/hotel/components/HotelTable.vue')['default']
     IconButton: typeof import('./../src/components/IconButton/index.vue')['default']
     ImageDraftStrip: typeof import('./../src/views/whatsapp/components/ImageDraftStrip.vue')['default']
+    InboxBusinessLinks: typeof import('./../src/views/website-inquiries/components/InboxBusinessLinks.vue')['default']
+    InboxThreadRow: typeof import('./../src/views/website-inquiries/components/InboxThreadRow.vue')['default']
     InquiryAgencyFields: typeof import('./../src/views/inquiries/components/InquiryAgencyFields.vue')['default']
     InquiryDetailDrawer: typeof import('./../src/views/inquiries/components/InquiryDetailDrawer.vue')['default']
     InquiryEditorDialog: typeof import('./../src/views/inquiries/components/InquiryEditorDialog.vue')['default']

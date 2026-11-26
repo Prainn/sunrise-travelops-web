@@ -3,7 +3,7 @@ import { ApiError } from "@/api/request";
 import { websiteErrorMessage } from "@/services/website.service";
 import { whatsappService } from "@/services/whatsapp.service";
 import { useUserStore } from "@/stores/user";
-import type { WhatsappCustomerNotes, WhatsappCustomerNotesForm } from "@/types/whatsapp";
+import type { InboxCustomerNotes, InboxCustomerNotesForm } from "@/types/website";
 import { pruneNotesDrafts, readNotesDraft, removeNotesDraft, writeNotesDraft } from "./notes-drafts";
 import { useDebounceFn } from "@vueuse/core";
 import { recordClientOperation } from "@/utils/client-operation-log";
@@ -11,17 +11,17 @@ import { recordClientOperation } from "@/utils/client-operation-log";
 interface NotesEntry {
   version: number;
   /** 最近一次读取或保存的服务端资料，用于判断是否有未保存修改。 */
-  base: WhatsappCustomerNotesForm;
-  form: WhatsappCustomerNotesForm;
+  base: InboxCustomerNotesForm;
+  form: InboxCustomerNotesForm;
   /** 保存遇到 409：保留输入，等待用户确认后刷新。 */
   conflict: boolean;
 }
 
 export type SaveNotesResult =
-  | { kind: "saved"; notes: WhatsappCustomerNotes }
+  | { kind: "saved"; notes: InboxCustomerNotes }
   | { kind: "conflict" | "failed"; message: string };
 
-function notesForm(notes: WhatsappCustomerNotes): WhatsappCustomerNotesForm {
+function notesForm(notes: InboxCustomerNotes): InboxCustomerNotesForm {
   return {
     customerName: notes.customerName,
     countryItemId: notes.countryItemId,
@@ -40,13 +40,17 @@ function isDirty(entry: NotesEntry) {
 }
 
 /**
- * WhatsApp 客户需求与备注：按会话 ID 保存草稿和请求结果，切换会话不串用。
+ * 按会话或来源邮件保存草稿和请求结果。
  *
  * 有未保存修改或冲突时不被后台读取覆盖；身份变化时丢弃内存状态和在途响应。
  * 未保存修改同步写入本地缓存，刷新浏览器后首次读取该会话时恢复；保存成功、改回原值、
  * 用户确认刷新、会话不存在或无权访问时清除，主动退出登录及超过 7 天也会清理。
  */
-export function useCustomerNotes() {
+export function useCustomerNotes(options?: {
+  service: Pick<typeof whatsappService, "customerNotes" | "saveCustomerNotes">;
+  page: "MailInbox";
+}) {
+  const service = options?.service ?? whatsappService;
   const user = useUserStore();
   const conversationId = ref("");
   const entries = reactive(new Map<string, NotesEntry>());
@@ -63,10 +67,10 @@ export function useCustomerNotes() {
   const saving = computed(() => savingIds.has(conversationId.value));
   const error = computed(() => errors.get(conversationId.value) ?? "");
   const dirty = computed(() => Boolean(entry.value && isDirty(entry.value)));
-  const draftOwner = () => `${user.userInfo.userId ?? ""}:${user.userInfo.identityId ?? ""}`;
+  const draftOwner = () => `${options ? "mail:" : ""}${user.userInfo.userId ?? ""}:${user.userInfo.identityId ?? ""}`;
 
-  function store(notes: WhatsappCustomerNotes) {
-    entries.set(notes.conversationId, {
+  function store(id: string, notes: InboxCustomerNotes) {
+    entries.set(id, {
       version: notes.version,
       base: notesForm(notes),
       form: notesForm(notes),
@@ -88,7 +92,7 @@ export function useCustomerNotes() {
     latestLoad.set(id, seq);
     loadingIds.add(id);
     try {
-      const notes = await whatsappService.customerNotes(id);
+      const notes = await service.customerNotes(id);
       if (currentSession !== session || latestLoad.get(id) !== seq) return;
       const latest = entries.get(id);
       if (!force && (savingIds.has(id) || (latest && (latest.conflict || isDirty(latest))))) return;
@@ -96,7 +100,7 @@ export function useCustomerNotes() {
       const draft = force || latest ? null : readNotesDraft(draftOwner(), id);
       if (force) removeNotesDraft(draftOwner(), id);
       if (draft) entries.set(id, { version: draft.version, base: draft.base, form: draft.form, conflict: draft.version !== notes.version });
-      else store(notes);
+      else store(id, notes);
       errors.delete(id);
     } catch (cause) {
       if (currentSession !== session || latestLoad.get(id) !== seq) return;
@@ -128,16 +132,17 @@ export function useCustomerNotes() {
     const submitted = JSON.stringify(current.form);
     savingIds.add(id);
     try {
-      const notes = await whatsappService.saveCustomerNotes(id, {
+      const notes = await service.saveCustomerNotes(id, {
         ...current.form,
         destinations: [...current.form.destinations],
         version: current.version,
       });
       if (currentSession !== session) return undefined;
       const latest = entries.get(id);
-      store(notes);
+      store(id, notes);
       // 保存期间继续输入的内容保留为新草稿，版本按保存结果更新。
       if (latest && JSON.stringify(latest.form) !== submitted) entries.get(id)!.form = latest.form;
+      persist(id);
       return { kind: "saved", notes };
     } catch (cause) {
       if (currentSession !== session) return undefined;
@@ -164,7 +169,7 @@ export function useCustomerNotes() {
 
   const reportDraftSaved = useDebounceFn((id: string) => {
     recordClientOperation({
-      page: "WhatsappInbox",
+      page: options?.page ?? "WhatsappInbox",
       action: "draft",
       result: "success",
       recordId: id,

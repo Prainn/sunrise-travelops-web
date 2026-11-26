@@ -117,7 +117,6 @@
                 :detail="detail"
                 :can-update-state="can('whatsapp:conversation:update')"
                 :can-view-inquiry="can('website:inquiry:list')"
-                :can-create-ledger="can('ledger:direct:create')"
                 :busy="actionBusy"
                 :show-actions="isManager"
                 :actions="actions"

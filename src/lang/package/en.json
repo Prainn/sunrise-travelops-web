@@ -1,5 +1,7 @@
 {
   "mail": {
+    "content": "Email content",
+    "customerEmail": "Email address",
     "account": "Mailbox account",
     "noAccounts": "No connected mailboxes",
     "threadList": "Email list",
@@ -12,7 +14,6 @@
     "subject": "Subject",
     "body": "Reply body",
     "time": "Date and time",
-    "lastAt": "Last message",
     "noSubject": "No subject",
     "attachments": "Attachments",
     "archiving": "Archiving",
@@ -27,11 +28,9 @@
     "sent": "Email sent",
     "failed": "Send failed. Your draft has been kept.",
     "checkSent": "Checking Sent Items. Wait for confirmation before sending again.",
-    "viewInquiry": "View linked inquiry",
     "createInquiry": "Create inquiry from this email",
     "assignments": "Assignment history",
     "searchHint": "Search by subject, sender or email address",
-    "unread": "{count} unread",
     "discardChanges": "Discard unsaved changes",
     "states": {
       "received": "Received",

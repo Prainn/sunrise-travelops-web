@@ -42,66 +42,19 @@
       </el-button>
     </div>
 
-    <h4 class="mt-[16px] mb-[8px] text-[14px] text-strong font-600">
-      {{ $t("whatsapp.business") }}
-    </h4>
-    <el-descriptions :column="1" size="small" border>
-      <el-descriptions-item :label="$t('whatsapp.inquiry')">
-        <div class="flex flex-wrap items-center gap-x-[8px]">
-          <el-button
-            v-if="detail.inquiryId && canViewInquiry"
-            link
-            size="small"
-            type="primary"
-            @click="emit('view-inquiry', detail.inquiryId)"
-          >
-            {{ $t("whatsapp.viewInquiry") }}
-          </el-button>
-          <span v-else-if="detail.inquiryId">{{ $t("whatsapp.inquiryLinked") }}</span>
-          <template v-else>
-            <span>{{ $t("whatsapp.noInquiry") }}</span>
-            <el-button
-              link
-              size="small"
-              type="primary"
-              :disabled="!detail.capabilities.canCreateInquiry"
-              :loading="busy"
-              @click="emit('create-inquiry')"
-            >
-              {{ $t("websiteInquiry.log.actions.inquiry_created") }}
-            </el-button>
-            <div v-if="!detail.ownerId && detail.state !== 'archived'" class="w-full text-[var(--el-color-warning)]">
-              {{ $t("whatsapp.assignBeforeInquiry") }}
-            </div>
-          </template>
-        </div>
-      </el-descriptions-item>
-      <el-descriptions-item :label="$t('whatsapp.ledger')">
-        <div class="flex flex-wrap items-center gap-x-[8px]">
-          <el-button
-            v-if="detail.ledger"
-            link
-            size="small"
-            type="primary"
-            @click="emit('view-ledger', detail.ledger.orderNo)"
-          >
-            {{ detail.ledger.orderNo }}
-          </el-button>
-          <template v-else>
-            <span>{{ $t("whatsapp.noLedger") }}</span>
-            <el-button
-              link
-              size="small"
-              type="primary"
-              :disabled="!detail.inquiryId || !canCreateLedger || detail.state === 'archived'"
-              @click="detail.inquiryId && emit('create-ledger', detail.inquiryId)"
-            >
-              {{ $t("whatsapp.createLedger") }}
-            </el-button>
-          </template>
-        </div>
-      </el-descriptions-item>
-    </el-descriptions>
+    <InboxBusinessLinks
+      :inquiry-id="detail.inquiryId"
+      :ledger="detail.ledger"
+      :can-create-inquiry="detail.capabilities.canCreateInquiry"
+      :can-view-inquiry="canViewInquiry"
+      :can-create-ledger="detail.capabilities.canCreateLedger"
+      :needs-owner="!detail.ownerId && detail.state !== 'archived'"
+      :busy="busy"
+      @create-inquiry="emit('create-inquiry')"
+      @view-inquiry="emit('view-inquiry', $event)"
+      @create-ledger="emit('create-ledger', $event)"
+      @view-ledger="emit('view-ledger', $event)"
+    />
 
     <template v-if="detail.tours.length || detail.previousId || detail.capabilities.canStartConsultation">
       <h4 class="mt-[16px] mb-[8px] text-[14px] text-strong font-600">
@@ -172,6 +125,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import InboxBusinessLinks from "@/views/website-inquiries/components/InboxBusinessLinks.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import type { WhatsappAction, WhatsappConversationDetail } from "@/types/whatsapp";
 import { formatDateTime } from "@/utils";
@@ -180,7 +134,6 @@ const props = defineProps<{
   detail: WhatsappConversationDetail;
   canUpdateState: boolean;
   canViewInquiry: boolean;
-  canCreateLedger: boolean;
   busy: boolean;
   /** 有分配权限的主管在收件箱查看分配记录及理由。 */
   showActions: boolean;

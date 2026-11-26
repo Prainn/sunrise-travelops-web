@@ -64,6 +64,7 @@ export interface WhatsappConversationCapabilities {
   canReply: boolean;
   canAssign: boolean;
   canCreateInquiry: boolean;
+  canCreateLedger: boolean;
   canStartConsultation: boolean;
   /** 当前非归档咨询的负责人、主管或特权 ROOT 具备更新权限时可改客户资料。 */
   canUpdateCustomer: boolean;
@@ -206,30 +207,6 @@ export interface WhatsappNewConsultationResult {
   /** 计调创建者无权查看新的未分配咨询。 */
   canView: boolean;
 }
-
-/** 客户资料按咨询保存；国家、天数、日期和人数未知时为 null。 */
-export interface WhatsappCustomerNotes {
-  conversationId: string;
-  /** 当前会话版本。 */
-  version: number;
-  /** 有效称呼：人工称呼优先，清空后为 WhatsApp 原名。 */
-  customerName: string;
-  countryItemId: string | null;
-  plannedDays: number | null;
-  startDate: string | null;
-  pax: number | null;
-  contactInfo: string;
-  /** 独立站启用城市 ID，有序且不重复。 */
-  destinations: string[];
-  /** 客户原始消息。 */
-  requirements: string;
-  internalRemark: string;
-  /** 资料最后保存时间，未保存为 null。 */
-  updatedAt: string | null;
-}
-export type WhatsappCustomerNotesForm = Omit<WhatsappCustomerNotes, "conversationId" | "version" | "updatedAt">;
-/** 全量保存请求体。 */
-export type WhatsappCustomerNotesInput = WhatsappCustomerNotesForm & { version: number };
 
 export type WhatsappInquiryPrefillInput = Pick<
   WebsiteInquiryInput,
