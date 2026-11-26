@@ -5,6 +5,8 @@ import type {
   ItineraryVehiclePlan,
   ItineraryVehicleQuotationMode,
   ItineraryVehicleTier,
+  ItineraryVehicleSegmentPaxPrice,
+  ItineraryVehicleSelection,
 } from "@/types/itinerary";
 import { roundMoney, sumMoney } from "@/utils";
 export const VEHICLE_PLAN_TIERS: ItineraryVehicleTier[] = ["standard", "vip"];
@@ -35,7 +37,10 @@ export function cloneVehiclePlans(plans: ItineraryVehiclePlan[]): ItineraryVehic
     arrangements: plan.arrangements.map((arrangement) => ({
       ...arrangement,
       vehicles: arrangement.vehicles.map((vehicle) => ({ ...vehicle })),
-      paxPrices: arrangement.paxPrices?.map((price) => ({ ...price })),
+      paxPrices: arrangement.paxPrices?.map((price) => ({
+        ...price,
+        ...(price.vehicles && { vehicles: price.vehicles.map((vehicle) => ({ ...vehicle })) }),
+      })),
     })),
   }));
 }
@@ -78,10 +83,17 @@ export function syncVehiclePaxTiers(
     ),
     arrangements: plan.arrangements.map((arrangement) => ({
       ...arrangement,
-      paxPrices: paxTiers.map((pax) => ({
-        pax,
-        totalPrice: arrangement.paxPrices?.find((price) => price.pax === pax)?.totalPrice ?? null,
-      })),
+      vehicles: [],
+      paxPrices: paxTiers.map((pax) => {
+        const previous = arrangement.paxPrices?.find((price) => price.pax === pax);
+        return {
+          pax,
+          totalPrice: previous?.totalPrice ?? null,
+          ...(plan.quotationMode === "itinerary" && {
+            vehicles: previous ? previous.vehicles ?? arrangement.vehicles : [],
+          }),
+        };
+      }),
     })),
   };
 }
@@ -147,11 +159,11 @@ export function withVehicleArrangements(
   return refreshAutomaticVehicleTotals({ ...plan, arrangements });
 }
 
-export function setVehicleSegmentPaxPrice(
+export function updateVehicleSegmentPax(
   plan: ItineraryVehiclePlan,
   arrangementId: string,
   pax: number,
-  totalPrice: number | null,
+  changes: Partial<Pick<ItineraryVehicleSegmentPaxPrice, "totalPrice" | "vehicles">>,
 ) {
   return withVehicleArrangements(
     plan,
@@ -160,7 +172,7 @@ export function setVehicleSegmentPaxPrice(
         ? {
           ...arrangement,
           paxPrices: arrangement.paxPrices?.map((price) =>
-            price.pax === pax ? { ...price, totalPrice } : price,
+            price.pax === pax ? { ...price, ...changes } : price,
           ),
         }
         : arrangement,
@@ -198,8 +210,12 @@ export function isVehiclePaxTotalOverridden(plan: ItineraryVehiclePlan, pax: num
   );
 }
 
-export function arrangementSeats(arrangement: ItineraryVehicleArrangement) {
-  return arrangement.vehicles.reduce((sum, vehicle) => sum + vehicle.seats * vehicle.quantity, 0);
+export function vehiclesForPax(arrangement: ItineraryVehicleArrangement, pax: number) {
+  return arrangement.paxPrices?.find((price) => price.pax === pax)?.vehicles ?? arrangement.vehicles;
+}
+
+export function vehicleSeats(vehicles: ItineraryVehicleSelection[]) {
+  return vehicles.reduce((sum, vehicle) => sum + vehicle.seats * vehicle.quantity, 0);
 }
 
 /** 后端不允许未定行程日期时保存具体起止日期的用车段。 */
@@ -209,8 +225,7 @@ export function hasDatedVehicleArrangements(plans: ItineraryVehiclePlan[]) {
   );
 }
 
-/** Itinerary mode ranges with dates must seat the largest PAX tier, even in an unfinished Draft. */
-export function hasVehicleSeatShortage(plans: ItineraryVehiclePlan[], passengers: number) {
+export function hasVehicleSeatShortage(plans: ItineraryVehiclePlan[], paxTiers: number[]) {
   return plans.some(
     (plan) =>
       plan.quotationMode === "itinerary" &&
@@ -218,7 +233,7 @@ export function hasVehicleSeatShortage(plans: ItineraryVehiclePlan[], passengers
         (arrangement) =>
           arrangement.startDate &&
           arrangement.endDate &&
-          arrangementSeats(arrangement) < passengers,
+          paxTiers.some((pax) => vehicleSeats(vehiclesForPax(arrangement, pax)) < pax),
       ),
   );
 }
@@ -226,7 +241,6 @@ export function hasVehicleSeatShortage(plans: ItineraryVehiclePlan[], passengers
 export function getIncompleteVehiclePlanTiers(
   itinerary: Pick<ItineraryRecord, "paxTiers" | "vehiclePlans">,
 ) {
-  const passengers = Math.max(0, ...itinerary.paxTiers);
   return getEnabledVehiclePlans(itinerary)
     .filter((plan) => {
       if (
@@ -235,8 +249,7 @@ export function getIncompleteVehiclePlanTiers(
         plan.arrangements.some(
           (arrangement) =>
             !arrangement.startDate ||
-            !arrangement.endDate ||
-            (plan.quotationMode === "itinerary" && !arrangement.vehicles.length),
+            !arrangement.endDate,
         )
       )
         return true;
@@ -247,11 +260,7 @@ export function getIncompleteVehiclePlanTiers(
         )
       )
         return true;
-      return plan.arrangements.some(
-        (arrangement) =>
-          plan.quotationMode === "itinerary" &&
-          arrangementSeats(arrangement) < passengers,
-      );
+      return hasVehicleSeatShortage([plan], itinerary.paxTiers);
     })
     .map((plan) => plan.tier);
 }

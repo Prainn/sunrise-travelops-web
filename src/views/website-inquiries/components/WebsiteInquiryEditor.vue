@@ -18,7 +18,7 @@
           {{ $t(`inquiry.statuses.${record.status}`) }}
         </el-tag>
       </div>
-      <el-descriptions :column="1" border>
+      <el-descriptions :column="1" :label-width="168" border>
         <el-descriptions-item :label="$t('identity.businessUnit')">
           {{ $t(`websiteInquiry.businessUnits.${record.businessUnit}`) }}
         </el-descriptions-item>

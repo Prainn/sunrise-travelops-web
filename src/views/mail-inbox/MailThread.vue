@@ -1,89 +1,97 @@
 <template>
-  <AppDrawer
-    :model-value="true"
-    size="lg"
-    :title="detail.subject || $t('mail.noSubject')"
-    @closed="emit('close')"
-    @opened="focusOriginal"
-  >
-    <div class="flex flex-wrap items-center gap-3 mb-4">
-      <span>{{ detail.mailbox }}</span>
-      <el-tag>{{ detail.ownerName || $t("whatsapp.views.unassigned") }}</el-tag>
-      <el-button v-if="detail.canAssign" @click="assignVisible = true">
-        {{ $t("whatsapp.assignTitle") }}
-      </el-button>
-      <router-link v-if="detail.inquiryId" :to="{ name: 'WebsiteInquiryList', query: { inquiryId: detail.inquiryId } }">
-        {{ $t("mail.viewInquiry") }}
-      </router-link>
-      <el-button link @click="emit('refresh')">
-        {{ $t("common.refresh") }}
-      </el-button>
-    </div>
-    <el-collapse v-if="detail.assignments.length" class="mb-4">
-      <el-collapse-item :title="$t('mail.assignments')">
-        <p v-for="assignment in detail.assignments" :key="assignment.at" class="mb-2">
-          {{ formatShanghaiDateTime(assignment.at) }} {{ assignment.actor }}
-          {{ assignment.previousOwner || $t("whatsapp.views.unassigned") }} → {{ assignment.owner }}
-          {{ assignment.reason }}
-        </p>
-      </el-collapse-item>
-    </el-collapse>
-    <article
-      v-for="message in detail.messages"
-      :id="'mail-' + message.id"
-      :key="message.id"
-      class="mb-4"
-    >
-      <SectionCard :title="message.subject || $t('mail.noSubject')" :class="{ 'mail-original': message.id === selected }">
-        <template #actions>
-          <el-tag size="small">
-            {{ $t('mail.states.' + message.state) }}
-          </el-tag>
-        </template>
-        <dl class="mail-headers">
-          <dt>{{ $t("mail.from") }}</dt><dd>{{ formatAddress(message.sender) }}</dd>
-          <dt>{{ $t("mail.to") }}</dt><dd>{{ message.recipients.map(formatAddress).join(", ") }}</dd>
-          <template v-if="message.cc.length">
-            <dt>{{ $t("mail.cc") }}</dt><dd>{{ message.cc.map(formatAddress).join(", ") }}</dd>
+  <div class="mail-thread flex min-h-0 min-w-0 flex-1 flex-col">
+    <header class="mail-thread__header">
+      <h2 class="m-0 text-lg font-600 leading-snug">
+        {{ detail.subject || $t("mail.noSubject") }}
+      </h2>
+      <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+        <span class="text-muted">{{ detail.mailbox }}</span>
+        <el-tag size="small" type="info">
+          {{ detail.ownerName || $t("whatsapp.views.unassigned") }}
+        </el-tag>
+        <el-button v-if="detail.canAssign" size="small" @click="assignVisible = true">
+          {{ $t("whatsapp.assignTitle") }}
+        </el-button>
+        <router-link v-if="detail.inquiryId" :to="{ name: 'WebsiteInquiryList', query: { inquiryId: detail.inquiryId } }">
+          {{ $t("mail.viewInquiry") }}
+        </router-link>
+        <el-button link @click="emit('refresh')">
+          {{ $t("common.refresh") }}
+        </el-button>
+      </div>
+    </header>
+    <div class="mail-thread__messages min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <el-collapse v-if="detail.assignments.length" class="mb-4">
+        <el-collapse-item :title="$t('mail.assignments')">
+          <p v-for="assignment in detail.assignments" :key="assignment.at" class="mb-2">
+            {{ formatShanghaiDateTime(assignment.at) }} {{ assignment.actor }}
+            {{ assignment.previousOwner || $t("whatsapp.views.unassigned") }} → {{ assignment.owner }}
+            {{ assignment.reason }}
+          </p>
+        </el-collapse-item>
+      </el-collapse>
+      <article
+        v-for="message in detail.messages"
+        :id="'mail-' + message.id"
+        :key="message.id"
+        class="mb-4"
+      >
+        <SectionCard :title="formatAddress(message.sender)" :class="{ 'mail-original': message.id === selected }">
+          <template #actions>
+            <time class="text-xs text-muted" :datetime="message.occurredAt">
+              <span class="sr-only">{{ $t("mail.time") }}</span>
+              {{ formatShanghaiDateTime(message.occurredAt) }}
+            </time>
+            <el-tag size="small">
+              {{ $t('mail.states.' + message.state) }}
+            </el-tag>
           </template>
-          <dt>{{ $t("mail.time") }}</dt><dd>{{ formatShanghaiDateTime(message.occurredAt) }}</dd>
-        </dl>
-        <div class="whitespace-pre-wrap break-words my-3">
-          {{ message.body }}
-        </div>
-        <div v-if="message.signature" class="whitespace-pre-line mb-3">
-          {{ message.signature }}
-        </div>
-        <div v-for="file in message.attachments" :key="file.id" class="mb-1">
-          <el-button
-            link
-            type="primary"
-            :disabled="!file.available"
-            @click="handleDownload(file.id)"
-          >
-            {{ file.fileName }} ({{ formatFileSize(file.sizeBytes) }})
-          </el-button>
-          <span v-if="!file.available">{{ $t("mail.archiving") }}</span>
-        </div>
-        <el-alert
-          v-if="message.state === 'unknown'"
-          type="warning"
-          :closable="false"
-          :title="$t('mail.checkSent')"
-        />
-        <div class="flex flex-wrap items-center gap-2 mt-2">
-          <el-button v-if="message.direction === 'inbound' && detail.canReply" :disabled="busy || !message.internetId" @click="handleReply(message.id)">
-            {{ $t("whatsapp.reply") }}
-          </el-button>
-          <el-button v-if="['draft','failed'].includes(message.state) && detail.canReply" @click="editReply(message)">
-            {{ $t("mail.editDraft") }}
-          </el-button>
-          <el-button v-if="message.direction === 'inbound' && detail.canCreateInquiry" :disabled="busy" @click="handlePrefill(message)">
-            {{ $t("mail.createInquiry") }}
-          </el-button>
-        </div>
-      </SectionCard>
-    </article>
+          <dl class="mail-headers">
+            <template v-if="message.subject && message.subject !== detail.subject">
+              <dt>{{ $t("mail.subject") }}</dt><dd>{{ message.subject }}</dd>
+            </template>
+            <dt>{{ $t("mail.to") }}</dt><dd>{{ message.recipients.map(formatAddress).join(", ") }}</dd>
+            <template v-if="message.cc.length">
+              <dt>{{ $t("mail.cc") }}</dt><dd>{{ message.cc.map(formatAddress).join(", ") }}</dd>
+            </template>
+          </dl>
+          <div class="whitespace-pre-wrap break-words my-3">
+            {{ message.body }}
+          </div>
+          <div v-if="message.signature" class="whitespace-pre-line mb-3">
+            {{ message.signature }}
+          </div>
+          <div v-for="file in message.attachments" :key="file.id" class="mb-1">
+            <el-button
+              link
+              type="primary"
+              :disabled="!file.available"
+              @click="handleDownload(file.id)"
+            >
+              {{ file.fileName }} ({{ formatFileSize(file.sizeBytes) }})
+            </el-button>
+            <span v-if="!file.available">{{ $t("mail.archiving") }}</span>
+          </div>
+          <el-alert
+            v-if="message.state === 'unknown'"
+            type="warning"
+            :closable="false"
+            :title="$t('mail.checkSent')"
+          />
+          <div class="flex flex-wrap items-center gap-2 mt-2">
+            <el-button v-if="message.direction === 'inbound' && detail.canReply" :disabled="busy || !message.internetId" @click="handleReply(message.id)">
+              {{ $t("whatsapp.reply") }}
+            </el-button>
+            <el-button v-if="['draft','failed'].includes(message.state) && detail.canReply" @click="editReply(message)">
+              {{ $t("mail.editDraft") }}
+            </el-button>
+            <el-button v-if="message.direction === 'inbound' && detail.canCreateInquiry" :disabled="busy" @click="handlePrefill(message)">
+              {{ $t("mail.createInquiry") }}
+            </el-button>
+          </div>
+        </SectionCard>
+      </article>
+    </div>
     <AssignDialog
       v-model="assignVisible"
       channel="mail"
@@ -115,13 +123,12 @@
       :read-only="false"
       @save="handleInquiry"
     />
-  </AppDrawer>
+  </div>
 </template>
 <script setup lang="ts">
-import { nextTick, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage } from "element-plus";
-import AppDrawer from "@/components/AppDrawer/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import AssignDialog from "@/views/whatsapp/components/AssignDialog.vue";
 import WebsiteInquiryEditor from "@/views/website-inquiries/components/WebsiteInquiryEditor.vue";
@@ -133,7 +140,7 @@ import { formatFileSize, formatShanghaiDateTime } from "@/utils/format";
 import MailReply from "./MailReply.vue";
 
 const props = defineProps<{ detail: MailDetail; selected?: string }>();
-const emit = defineEmits<{ close: []; refresh: [] }>();
+const emit = defineEmits<{ refresh: [] }>();
 const { t } = useI18n();
 const busy = ref(false);
 const assignVisible = ref(false);
@@ -150,7 +157,8 @@ function formatAddress(address: MailAddress) {
 function focusOriginal() {
   if (props.selected) document.getElementById("mail-" + props.selected)?.scrollIntoView({ block: "center" });
 }
-watch(() => props.selected, async () => { await nextTick(); focusOriginal(); });
+onMounted(focusOriginal);
+watch(() => props.selected, focusOriginal, { flush: "post" });
 async function handleDownload(file: string) {
   try {
     const { url } = await mailService.download(props.detail.id, file);
@@ -205,6 +213,12 @@ async function handleInquiry(input: WebsiteInquiryInput) {
 }
 </script>
 <style scoped>
+.mail-thread { overflow-wrap: anywhere; }
+.mail-thread__header {
+  padding: var(--section-padding);
+  border-block-end: 1px solid var(--divider-color);
+}
+.mail-thread__messages { padding: var(--section-padding); }
 .mail-original { outline: 2px solid var(--el-color-primary); }
 .mail-headers { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; }
 .mail-headers dt { color: var(--el-text-color-secondary); }

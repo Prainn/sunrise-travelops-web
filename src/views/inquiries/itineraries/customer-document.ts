@@ -13,6 +13,7 @@ import zhLocale from "@/lang/package/zh-cn.json";
 import { addDays, formatMoney } from "@/utils";
 import { getTransportMethodNames } from "@/utils/transport-method";
 import { getDayBreakfastStatus, isNoAccommodationItinerary } from "./hotel-plans";
+import { itineraryDayNumber } from "./duration";
 import { getEnabledVehiclePlans } from "./vehicle-plans";
 
 /** 客户文件固定文案按导出语言选择，与界面语言无关。 */
@@ -143,6 +144,7 @@ export interface CustomerDocument {
   notes: string[];
   hotelTierLabel: (tier: ItineraryQuoteOption["hotelTier"] | string) => string;
   vehicleLabel: (tier: ItineraryQuoteOption["vehicleTier"]) => string;
+  paxLabel: (tier: ItineraryQuoteOption["vehicleTier"], pax: number) => string;
 }
 
 /**
@@ -181,6 +183,7 @@ export function buildCustomerDocument(
     hotelTierLabel: (tier) =>
       tier === null ? text.noAccommodation : (text.hotelTiers[String(tier)] ?? String(tier)),
     vehicleLabel: (tier) => vehicleLabel(itinerary, tier, text),
+    paxLabel: (tier, pax) => paxLabel(itinerary, tier, pax, text),
   };
 }
 
@@ -365,6 +368,32 @@ function itineraryNotes(quote: ItineraryQuoteSettings) {
   return [quote.holidayRestrictions, quote.hotelReplacementTerms, quote.customerNotes].filter(
     (value) => value.trim(),
   );
+}
+
+function paxLabel(
+  itinerary: ItineraryRecord,
+  tier: ItineraryQuoteOption["vehicleTier"],
+  pax: number,
+  text: CustomerText,
+) {
+  const lines = [`${pax} PAX`];
+  const plan = itinerary.vehiclePlans.find((vehicle) => vehicle.tier === tier);
+  if (plan?.quotationMode !== "itinerary") return lines[0]!;
+  const ranges = [...plan.arrangements].sort((a, b) => a.startDate.localeCompare(b.startDate));
+  for (const range of ranges) {
+    // Shared historical fleets remain in the original table heading.
+    const vehicles = range.paxPrices?.find((price) => price.pax === pax)?.vehicles;
+    if (!vehicles?.length) continue;
+    const fleet = vehicles.map((v) => {
+      const label = text.coach(String(v.seats), text.vehicleLevel[tier]);
+      return v.quantity > 1 ? `${label} × ${v.quantity}` : label;
+    }).join(" + ");
+    const start = itineraryDayNumber(itinerary.startDate, range.startDate);
+    const end = itineraryDayNumber(itinerary.startDate, range.endDate);
+    const days = ranges.length > 1 && start && end ? (start === end ? `D${start} ` : `D${start}–D${end} `) : "";
+    lines.push(days + fleet);
+  }
+  return lines.join("\n");
 }
 
 function vehicleLabel(

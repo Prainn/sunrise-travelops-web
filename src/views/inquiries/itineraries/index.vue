@@ -121,13 +121,14 @@
                 </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item command="itinerary">
-                      {{
-                        $t("planning.byItinerary")
-                      }}
-                    </el-dropdown-item>
-                    <el-dropdown-item command="stage">
-                      {{ $t("planning.byStage") }}
+                    <el-dropdown-item v-for="mode in vehicleModes" :key="mode" :command="mode">
+                      {{ $t(mode === "itinerary" ? "planning.byItinerary" : "planning.byStage") }}
+                      <template v-if="savedVehicleMode === mode">
+                        <el-icon class="ml-2" aria-hidden="true">
+                          <Check />
+                        </el-icon>
+                        <span class="sr-only">{{ $t("planning.savedVehicleMode") }}</span>
+                      </template>
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
@@ -479,7 +480,7 @@
 import { openUserPage } from "@/utils/user-interaction";
 import { recordClientOperation } from "@/utils/client-operation-log";
 import { businessUnitName } from "@/constants/identity";
-import { ArrowDown, Bowl, Location, OfficeBuilding, User, Van } from "@element-plus/icons-vue";
+import { ArrowDown, Bowl, Check, Location, OfficeBuilding, User, Van } from "@element-plus/icons-vue";
 import { itineraryDayNumber, itineraryDuration } from "@/views/inquiries/itineraries/duration";
 import { computed, markRaw, nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -664,9 +665,9 @@ usePageTitle(() => {
   return name ? t("itineraryWorkspace.pageTitles.inquiry", { name }) : "";
 });
 
-const hasVehiclePlans = computed(
-  () => selectedItinerary.value?.vehiclePlans.some((plan) => plan.arrangements.length) ?? false,
-);
+const vehicleModes = ["itinerary", "stage"] as const;
+const savedVehicleMode = computed(() => getVehicleQuotationMode(savedItinerary.value?.vehiclePlans ?? []));
+const hasVehiclePlans = computed(() => savedVehicleMode.value !== null);
 const hasGuidePlans = computed(() => Boolean(selectedItinerary.value?.guidePlans.length));
 const hasHotelPlans = computed(
   () => selectedItinerary.value?.hotelPlans.some((plan) => plan.hotels.length) ?? false,
@@ -814,7 +815,10 @@ function dayVehicleSummary(day: ItineraryDayRecord) {
     vehicle.arrangements
       .filter((arrangement) => !day.date || !arrangement.startDate || (arrangement.startDate <= day.date && day.date <= arrangement.endDate))
       .map((arrangement) => {
-        const vehicles = arrangement.vehicles.map((item) => `${item.vehicleName}×${item.quantity}`).join("、");
+        const vehicles = (arrangement.paxPrices ?? []).filter((price) => price.vehicles?.length).map((price) => {
+          const fleet = price.vehicles!.map((item) => `${item.vehicleName}×${item.quantity}`).join("、");
+          return `${t("planning.vehiclePaxTier", { pax: price.pax })} ${fleet}`;
+        }).join(" / ") || arrangement.vehicles.map((item) => `${item.vehicleName}×${item.quantity}`).join("、");
         const range = inquiry.value?.isSeries
           ? seriesVehicleRange(plan.startDate, arrangement.startDate, arrangement.endDate)
           : arrangement.startDate ? `${arrangement.startDate}~${arrangement.endDate}` : "";

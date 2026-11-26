@@ -1,5 +1,9 @@
 export type MailAddress = { email: string; name?: string };
 export type MailView = "all" | "unassigned" | "mine";
+export interface MailboxOptions {
+  mailboxes: string[];
+  canSwitch: boolean;
+}
 export type MailState = "received" | "draft" | "preparing" | "sending" | "unknown" | "failed" | "sent";
 export interface MailAttachment {
   id: string;

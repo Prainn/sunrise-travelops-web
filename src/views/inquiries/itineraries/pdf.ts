@@ -153,7 +153,7 @@ function buildPaxQuoteSections(
       const childColumns = showChildPrice ? (hasBedRates ? 2 : 1) : 0;
       const rows = option.paxPrices
         .map((price) => {
-          return `<tr><th style="${quoteLabelStyle()}">${price.pax} PAX</th>
+          return `<tr><th style="${quoteLabelStyle()}">${escapeHtml(customer.paxLabel(option.vehicleTier, price.pax)).replaceAll("\n", "<br>")}</th>
         <td style="${quoteCellStyle()}">RMB ${formatMoney(price.adultUnitPrice)}</td>
         ${showChildPrice ? `<td style="${quoteCellStyle()}">RMB ${formatMoney(price.childUnitPrice)}</td>${hasBedRates ? `<td style="${quoteCellStyle()}">RMB ${formatMoney(price.childWithoutBedUnitPrice)}</td>` : ""}` : ""}
         <td style="${quoteCellStyle()}">RMB ${formatMoney(customerSingleSupplement(price))}</td></tr>`;

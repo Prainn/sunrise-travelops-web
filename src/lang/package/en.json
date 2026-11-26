@@ -1,5 +1,10 @@
 {
   "mail": {
+    "account": "Mailbox account",
+    "noAccounts": "No connected mailboxes",
+    "threadList": "Email list",
+    "selectThread": "Select an email to read it",
+    "backToList": "Back to email list",
     "toolbarUnread": "Email inbox, {count} unread",
     "from": "From",
     "to": "To",
@@ -715,7 +720,7 @@
   "notificationSettings": {
     "hint": "Notifications are sent only during the configured Beijing Time window. Active reminders outside the window are combined when it next opens; manually turned-off alerts are not resent.",
     "type": "Notification Type",
-    "sendWindow": "Send Window (Beijing Time)",
+    "sendWindow": "Send Window",
     "allDay": "All day",
     "customWindow": "Custom window",
     "sendWindowOvernight": "{start}–next day {end}",
@@ -763,7 +768,7 @@
     "openDocument": "View file",
     "upload": "Upload image",
     "uploadSuccess": "Uploaded",
-    "retry": "Rearchive media file",
+    "retry": "Rearchive",
     "retrySuccess": "Media file queued for archiving",
     "deleteSuccess": "Deleted",
     "retryConfirm": "Rearchive this media file?",
@@ -1547,7 +1552,10 @@
       "km": "Khmer",
       "lo": "Lao"
     },
-    "paxSegmentPrice": "{pax} PAX segment group price (CNY)",
+    "vehiclePaxTier": "{pax} PAX",
+    "vehicleSegmentGroupPrice": "Segment group price (CNY)",
+    "vehicleQuantity": "Number of vehicles for {name}",
+    "savedVehicleMode": "Saved quotation method",
     "paxStagePrice": "{pax} PAX stage group price (CNY)",
     "paxTotalVehiclePrice": "{pax} PAX full-trip group price (CNY)",
     "vehiclePricingAutomatic": "Auto total",
@@ -1557,7 +1565,7 @@
     "vehiclePaxOverrideHint": "{pax} PAX segments total ¥{total}. Your manual full-trip price is used for costs.",
     "vehiclePaxReason": "{pax} PAX change reason",
     "vehicleModeChangeConfirm": "Changing the quotation method clears the vehicle arrangements and per-PAX prices of the current method. Continue?",
-    "vehicleSeatShortage": "Dated vehicle arrangements must seat the largest PAX tier ({passengers})",
+    "vehicleSeatShortage": "Each group size needs enough seats for its scheduled vehicle segment.",
     "priceNotEntered": "Not entered",
     "vehiclePaxItem": "{tier} ({pax} PAX)"
   },

@@ -440,7 +440,7 @@ describe("NotificationManagement page", () => {
     const columns = findAll(root, "column");
     expect(columns.map((col) => col.props.label)).toEqual([
       "通知类型",
-      "通知时段（北京时间）",
+      "通知时段",
       "飞书通知",
       "更新时间",
     ]);

@@ -1,6 +1,6 @@
 import { LONG_REQUEST_TIMEOUT_MS, request } from "@/api/request";
 import type { PageResult } from "@/types/common";
-import type { MailDetail, MailDraftInput, MailMessage, MailThread, MailView } from "@/types/mail";
+import type { MailboxOptions, MailDetail, MailDraftInput, MailMessage, MailThread, MailView } from "@/types/mail";
 import type { WebsiteInquiryInput } from "@/types/website";
 import type { WebsiteOwnerOption } from "./website.service";
 import { whatsappInquiryInput } from "./whatsapp.service";
@@ -10,7 +10,8 @@ const draftUrl = (id: string, draft: string) => `${threadUrl(id)}/drafts/${encod
 const action = { userAction: true };
 export const mailService = {
   summary() { return request.get<{ unreadCount: number }>("/mail/summary"); },
-  list(query: { page: number; pageSize: number; keyword?: string; view?: MailView }) {
+  mailboxes() { return request.get<MailboxOptions>("/mail/mailboxes"); },
+  list(query: { page: number; pageSize: number; keyword?: string; view?: MailView; mailbox?: string }) {
     return request.get<PageResult<MailThread>>("/mail/threads", { params: query });
   },
   detail(id: string) { return request.get<MailDetail>(threadUrl(id)); },

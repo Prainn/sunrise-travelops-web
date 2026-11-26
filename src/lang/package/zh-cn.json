@@ -1,5 +1,10 @@
 {
   "mail": {
+    "account": "邮箱账号",
+    "noAccounts": "暂无已接入邮箱",
+    "threadList": "邮件列表",
+    "selectThread": "选择一封邮件查看内容",
+    "backToList": "返回邮件列表",
     "toolbarUnread": "邮件收件箱，{count} 封未读",
     "from": "发件人",
     "to": "收件人",
@@ -715,7 +720,7 @@
   "notificationSettings": {
     "hint": "通知仅在设置的北京时间内发送。时段外仍有效的提醒将在下次开放时合并发送；手动关闭后不补发。",
     "type": "通知类型",
-    "sendWindow": "通知时段（北京时间）",
+    "sendWindow": "通知时段",
     "allDay": "全天",
     "customWindow": "指定时段",
     "sendWindowOvernight": "{start}–次日 {end}",
@@ -763,7 +768,7 @@
     "openDocument": "查看文件",
     "upload": "上传图片",
     "uploadSuccess": "上传成功",
-    "retry": "重新归档媒体文件",
+    "retry": "重新归档",
     "retrySuccess": "媒体文件已重新加入归档队列",
     "deleteSuccess": "删除成功",
     "retryConfirm": "重新归档该媒体文件？",
@@ -1547,7 +1552,10 @@
       "km": "高棉语",
       "lo": "老挝语"
     },
-    "paxSegmentPrice": "{pax}人 本段整团价（元）",
+    "vehiclePaxTier": "{pax} 人",
+    "vehicleSegmentGroupPrice": "本段整团价（元）",
+    "vehicleQuantity": "{name}的车辆数量",
+    "savedVehicleMode": "已保存的报价方式",
     "paxStagePrice": "{pax}人 阶段整团价（元）",
     "paxTotalVehiclePrice": "{pax}人 全程整团价（元）",
     "vehiclePricingAutomatic": "自动合计",
@@ -1557,7 +1565,7 @@
     "vehiclePaxOverrideHint": "{pax}人各段合计 ¥{total}，已手动修改全程价，按修改后金额计入成本。",
     "vehiclePaxReason": "{pax}人调价原因",
     "vehicleModeChangeConfirm": "更改报价方式会清空原方式的用车安排和各人数档报价。是否继续？",
-    "vehicleSeatShortage": "已填日期的用车安排座位须容纳最大人数档 {passengers} 人",
+    "vehicleSeatShortage": "请为用车日期内的每个人数档配足座位。",
     "priceNotEntered": "未填写",
     "vehiclePaxItem": "{tier}（{pax}人）"
   },
