@@ -41,7 +41,7 @@
           {{ valueOrDash(record.countryOrRegion) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.sourceChannel')">
-          {{ record.sourceChannel }}
+          {{ inquirySourceChannelLabel(record.sourceChannel, t) }}
         </el-descriptions-item>
         <el-descriptions-item :label="$t('inquiry.nextFollowUpAt')">
           {{ formatDateTime(record.nextFollowUpAt) }}
@@ -79,7 +79,7 @@ import { businessUnitName } from "@/constants/identity";
 import { formatDateTime } from "@/utils";
 import { useI18n } from "vue-i18n";
 import type { InquiryRecord } from "@/types/inquiry";
-import { INQUIRY_STATUS_TAG_TYPES } from "../options";
+import { inquirySourceChannelLabel, INQUIRY_STATUS_TAG_TYPES } from "../options";
 
 defineProps<{ modelValue: boolean; record?: InquiryRecord }>();
 const emit = defineEmits<{ "update:modelValue": [value: boolean] }>();

@@ -125,6 +125,7 @@ declare module 'vue' {
     InquiryMessageInput: typeof import('./../src/views/inquiries/components/InquiryMessageInput.vue')['default']
     InquiryMessagePreview: typeof import('./../src/views/inquiries/itineraries/components/InquiryMessagePreview.vue')['default']
     InquirySearchForm: typeof import('./../src/views/inquiries/components/InquirySearchForm.vue')['default']
+    InquirySourceChannelSelect: typeof import('./../src/views/inquiries/components/InquirySourceChannelSelect.vue')['default']
     InquiryTable: typeof import('./../src/views/inquiries/components/InquiryTable.vue')['default']
     InquiryToursDialog: typeof import('./../src/views/inquiries/components/InquiryToursDialog.vue')['default']
     InquiryTransferButton: typeof import('./../src/views/inquiries/components/InquiryTransferButton.vue')['default']

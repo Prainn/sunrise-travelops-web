@@ -126,19 +126,7 @@
         </el-col>
         <el-col :span="12">
           <el-form-item :label="$t('inquiry.sourceChannel')" prop="sourceChannel">
-            <el-select
-              v-model="form.sourceChannel"
-              autocomplete="new-password"
-              allow-create
-              filterable
-            >
-              <el-option
-                v-for="option in sourceOptions"
-                :key="option"
-                :label="option"
-                :value="option"
-              />
-            </el-select>
+            <InquirySourceChannelSelect v-model="form.sourceChannel" allow-create filterable />
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -237,6 +225,7 @@ import type { InquiryRecord } from "@/types/inquiry";
 import type { AgencyContactRecord, AgencyRecord } from "@/types/resource";
 import InquiryMessageInput from "./InquiryMessageInput.vue";
 import InquiryAgencyFields from "./InquiryAgencyFields.vue";
+import InquirySourceChannelSelect from "./InquirySourceChannelSelect.vue";
 import { INQUIRY_STATUS_OPTIONS } from "../options";
 import { requestErrorMessage } from "@/utils/version-conflict";
 
@@ -246,7 +235,6 @@ const props = defineProps<{
   isEditing: boolean;
   agencyOptions: AgencyRecord[];
   ownerOptions: import("@/services/inquiry.service").PersonOption[];
-  sourceOptions: string[];
   /** 父级保存请求进行中 */
   saving?: boolean;
 }>();

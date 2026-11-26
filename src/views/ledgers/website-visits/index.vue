@@ -131,7 +131,7 @@
       v-model="editorVisible"
       :record="record"
       :initial-values="draft"
-      source-read-only
+      prefill-source="website-visit"
       business-unit="website"
       :show-business="false"
       :owners="owners"
