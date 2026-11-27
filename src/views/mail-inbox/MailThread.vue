@@ -86,7 +86,8 @@
             <div class="mail-message__meta">
               <div class="mail-message__meta-row">
                 <el-button
-                  v-if="isExpanded(message.id) && message.direction === 'inbound' && detail.canReply"
+                  v-if="detail.canReply && (message.state === 'received' || message.state === 'sent')
+                    && (message.id === latestId || isExpanded(message.id))"
                   size="small"
                   type="primary"
                   plain
@@ -236,31 +237,15 @@ const latestId = computed(() => {
   const messages = props.detail.messages;
   return messages.findLast(message => message.state === "received" || message.state === "sent")?.id ?? messages.at(-1)?.id;
 });
-const expandedIds = ref<Set<string>>(createInitialExpanded());
-
-function createInitialExpanded() {
-  const ids = new Set<string>();
-  if (latestId.value) ids.add(latestId.value);
-  if (props.selected && props.detail.messages.some(message => message.id === props.selected)) {
-    ids.add(props.selected);
-  }
-  return ids;
-}
+// Only explicit choices persist when a newly delivered message becomes the latest.
+const expansionOverrides = ref(new Map<string, boolean>());
 
 function isExpanded(id: string) {
-  return expandedIds.value.has(id);
+  return expansionOverrides.value.get(id) ?? (id === latestId.value || id === props.selected);
 }
 
 function toggleMessage(id: string) {
-  const next = new Set(expandedIds.value);
-  if (next.has(id)) next.delete(id);
-  else next.add(id);
-  expandedIds.value = next;
-}
-
-function expandMessage(id?: string) {
-  if (!id || expandedIds.value.has(id)) return;
-  expandedIds.value = new Set(expandedIds.value).add(id);
+  expansionOverrides.value.set(id, !isExpanded(id));
 }
 
 function formatAddress(address: MailAddress) {
@@ -286,10 +271,8 @@ function scrollToMessage(id?: string, showPrevious = false) {
 
 onMounted(() => scrollToMessage(props.selected || latestId.value, !props.selected));
 
-watch(latestId, id => expandMessage(id));
-
 watch(() => props.selected, (id) => {
-  if (id) expandMessage(id);
+  if (id) expansionOverrides.value.delete(id);
   scrollToMessage(id);
 }, { flush: "post" });
 
