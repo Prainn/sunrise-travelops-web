@@ -1,6 +1,6 @@
 <template>
   <SectionCard fill padding="compact" body-class="flex flex-col gap-[8px] min-h-0">
-    <div v-loading="loading" class="flex-1 min-h-0 overflow-y-auto">
+    <div ref="scrollRoot" v-loading="loading" class="flex-1 min-h-0 overflow-y-auto">
       <div
         v-if="error && items.length"
         class="mb-[8px] flex items-center justify-between gap-[8px] px-[8px] text-[12px] text-[var(--el-color-warning)]"
@@ -28,7 +28,7 @@
       <InboxThreadRow
         v-for="item in items"
         :key="item.id"
-        :title="item.name || item.bsuid || item.phone || ''"
+        :title="item.title"
         :time="item.lastMessageAt"
         :unread="item.unreadCount"
         :owner="item.ownerName"
@@ -48,22 +48,22 @@
           </el-tag>
         </template>
       </InboxThreadRow>
+      <InboxListLoadMore
+        :root="scrollRoot"
+        :has-more="hasMore"
+        :busy="busy || !!error"
+        :loading="loadingMore"
+        :error="loadMoreError"
+        @load-more="emit('load-more')"
+      />
     </div>
-    <Pagination
-      :page="page"
-      :limit="pageSize"
-      :total="total"
-      variant="compact"
-      @update:page="emit('update:page', $event)"
-      @update:limit="emit('update:pageSize', $event)"
-      @pagination="emit('refresh')"
-    />
   </SectionCard>
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import FeedbackState from "@/components/FeedbackState/index.vue";
-import Pagination from "@/components/Pagination/index.vue";
+import InboxListLoadMore from "@/components/InboxListLoadMore/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import type { WhatsappConversationItem } from "@/types/whatsapp";
 import InboxThreadRow from "@/views/website-inquiries/components/InboxThreadRow.vue";
@@ -76,16 +76,17 @@ defineProps<{
   selectedId: string;
   loading: boolean;
   error: string;
-  total: number;
-  page: number;
-  pageSize: number;
+  hasMore: boolean;
+  busy: boolean;
+  loadingMore: boolean;
+  loadMoreError: string;
 }>();
 const emit = defineEmits<{
   select: [id: string];
   refresh: [];
-  "update:page": [value: number];
-  "update:pageSize": [value: number];
+  "load-more": [];
 }>();
 const drafts = useWhatsappDrafts();
+const scrollRoot = ref<HTMLElement>();
 
 </script>

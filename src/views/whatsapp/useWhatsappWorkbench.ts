@@ -1,6 +1,7 @@
 import { computed, onScopeDispose, ref, shallowRef, watch } from "vue";
-import { useDebounceFn } from "@vueuse/core";
+import { refDebounced } from "@vueuse/core";
 import { ApiError } from "@/api/request";
+import { useInboxList } from "@/composables/useInboxList";
 import { translate } from "@/lang/utils";
 import { websiteErrorMessage } from "@/services/website.service";
 import { whatsappService } from "@/services/whatsapp.service";
@@ -9,9 +10,9 @@ import { useWhatsappNotificationsStore } from "@/stores/whatsapp-notifications";
 import { useWhatsappStreamStore } from "@/stores/whatsapp-stream";
 import type {
   WhatsappConversationDetail,
-  WhatsappConversationItem,
   WhatsappConversationState,
   WhatsappConversationView,
+  WhatsappCustomerNotes,
   WhatsappDocumentUpload,
   WhatsappMessage,
   WhatsappReply,
@@ -61,14 +62,14 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   const stream = useWhatsappStreamStore();
 
   const keyword = ref("");
+  const search = refDebounced(keyword, 300);
   const view = ref<WhatsappConversationView | undefined>(options.defaultView);
   const state = ref<WhatsappConversationState | undefined>();
-  const page = ref(1);
-  const pageSize = ref(20);
-  const conversations = ref<WhatsappConversationItem[]>([]);
-  const total = ref(0);
-  const listLoading = ref(false);
-  const listError = ref("");
+  const list = useInboxList(() => {
+    const filters = { keyword: search.value.trim() || undefined, view: view.value, state: state.value };
+    return (page, pageSize) => whatsappService.conversations({ ...filters, page, pageSize });
+  }, clearThread);
+  const conversations = list.items;
 
   const selectedId = ref("");
   const detail = shallowRef<WhatsappConversationDetail | null>(null);
@@ -83,7 +84,6 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   const retryingIds = ref(new Set<string>());
 
   let syncedSeq: string | null = null;
-  let lastListQuery = "";
   let session = 0;
   let threadToken = 0;
   let disposed = true;
@@ -92,45 +92,6 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   const retryRequestIds = new Map<string, string>();
 
   const pending = computed(() => pendingByConversation.value.get(selectedId.value) ?? []);
-
-  function listQuery() {
-    return {
-      page: page.value,
-      pageSize: pageSize.value,
-      keyword: keyword.value.trim() || undefined,
-      view: view.value,
-      state: state.value,
-    };
-  }
-
-  async function fetchList(currentSession = session) {
-    const query = listQuery();
-    const queryKey = JSON.stringify(query);
-    if (queryKey !== lastListQuery) {
-      conversations.value = [];
-      total.value = 0;
-      lastListQuery = queryKey;
-    }
-    listLoading.value = conversations.value.length === 0;
-    try {
-      const result = await whatsappService.conversations(query);
-      if (currentSession !== session || queryKey !== JSON.stringify(listQuery())) return;
-      conversations.value = result.list;
-      total.value = result.total;
-      listError.value = "";
-    } catch (cause) {
-      if (currentSession !== session || queryKey !== JSON.stringify(listQuery())) return;
-      if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403 || cause.status === 404)) {
-        conversations.value = [];
-        total.value = 0;
-        clearThread();
-      }
-      listError.value = websiteErrorMessage(cause);
-      throw cause;
-    } finally {
-      if (currentSession === session) listLoading.value = false;
-    }
-  }
 
   function clearThread() {
     threadToken++;
@@ -311,7 +272,7 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   }
 
   const listTask = createCoalescedTask(async () => {
-    if (!disposed) await fetchList();
+    if (!disposed) await list.refresh();
   });
   const threadTask = createCoalescedTask(syncSelected);
 
@@ -556,19 +517,17 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
   }
 
   /**
-   * 客户资料保存后同步当前会话的称呼和版本；同联系人其他列表项由下一轮刷新取得。
-   *
-   * @param id - 会话 ID。
-   * @param name - 服务端返回的有效称呼。
-   * @param version - 保存后的会话版本。
+   * 客户资料保存后同步当前会话的称呼、标题和版本。
+   * 同联系人其他列表项由下一轮刷新取得。
    */
-  function applyCustomerName(id: string, name: string, version: number) {
-    if (detail.value?.id === id && detail.value.version <= version) detail.value = { ...detail.value, name, version };
-    const row = conversations.value.find((item) => item.id === id);
-    if (row && row.version <= version) {
-      row.name = name;
-      row.version = version;
-    }
+  function applyCustomerNotes(
+    { conversationId, customerName, title, version }: Pick<WhatsappCustomerNotes, "conversationId" | "customerName" | "title" | "version">,
+  ) {
+    if (detail.value?.id === conversationId && detail.value.version <= version)
+      detail.value = { ...detail.value, name: customerName, title, version };
+    conversations.value = conversations.value.map((item) => item.id === conversationId && item.version <= version
+      ? { ...item, name: customerName, title, version }
+      : item);
     refreshNow();
   }
 
@@ -579,9 +538,7 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     threadTask.cancel();
     selectedId.value = "";
     clearThread();
-    conversations.value = [];
-    total.value = 0;
-    listError.value = "";
+    list.reset();
     pendingByConversation.value = new Map();
     retryingIds.value = new Set();
     lastReadSent.clear();
@@ -612,26 +569,18 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
       if (!disposed && next[0]) refreshNow();
     },
   );
-  const reloadFirstPage = () => {
-    page.value = 1;
+  watch([search, view, state], () => {
+    list.reset();
     listTask.request();
-  };
-  watch(keyword, useDebounceFn(reloadFirstPage, 300));
-  watch([view, state], reloadFirstPage);
-  // 原先翻页依赖下一轮轮询，事件驱动后需显式读取。
-  watch([page, pageSize], () => listTask.request());
+  });
   onScopeDispose(stop);
 
   return {
     keyword,
     view,
     state,
-    page,
-    pageSize,
     conversations,
-    total,
-    listLoading,
-    listError,
+    list,
     selectedId,
     detail,
     messages,
@@ -656,6 +605,6 @@ export function useWhatsappWorkbench(options: WorkbenchOptions = {}) {
     resubmitPending,
     discardPending,
     retryMessage,
-    applyCustomerName,
+    applyCustomerNotes,
   };
 }

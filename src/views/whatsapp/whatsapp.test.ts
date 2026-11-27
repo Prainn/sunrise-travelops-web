@@ -313,8 +313,8 @@ describe("useWhatsappWorkbench", () => {
     workbench.refreshNow();
     await flush();
     expect(workbench.conversations.value).toHaveLength(1);
-    expect(workbench.total.value).toBe(1);
-    expect(workbench.listError.value).not.toBe("");
+    expect(workbench.list.total.value).toBe(1);
+    expect(workbench.list.error.value).not.toBe("");
     expect(workbench.detail.value?.id).toBe("c-1");
     service.conversations.mockRejectedValueOnce(new ApiError("forbidden", { status: 403, code: "AUTH_FORBIDDEN" }));
     workbench.refreshNow();
@@ -331,7 +331,7 @@ describe("useWhatsappWorkbench", () => {
     workbench.view.value = "unassigned";
     await flush();
     expect(workbench.conversations.value).toEqual([]);
-    expect(workbench.total.value).toBe(0);
+    expect(workbench.list.total.value).toBe(0);
   });
 
   it("只有展示后显式标记已读，后台刷新不标记", async () => {
@@ -569,12 +569,12 @@ describe("工作台实时刷新", () => {
     const list = callsOf(service.conversations);
     emit({ type: "conversation", conversationId: "c-2", reasons: ["message"] });
     await settle();
-    expect(workbench.listError.value).not.toBe("");
+    expect(workbench.list.error.value).not.toBe("");
     await vi.advanceTimersByTimeAsync(2_000);
     expect(callsOf(service.conversations)).toBe(list + 2);
     await vi.advanceTimersByTimeAsync(4_000);
     expect(callsOf(service.conversations)).toBe(list + 3);
-    expect(workbench.listError.value).toBe("");
+    expect(workbench.list.error.value).toBe("");
     await vi.advanceTimersByTimeAsync(10 * 60_000);
     expect(callsOf(service.conversations)).toBe(list + 3);
   });
@@ -626,23 +626,63 @@ describe("工作台实时刷新", () => {
     expect(service.markRead).toHaveBeenCalledTimes(1);
   });
 
-  it("翻页与筛选显式读取列表，旧筛选的响应不覆盖新页面", async () => {
+  it("切换筛选从首批读取，忽略上一筛选尚未返回的追加请求", async () => {
+    service.conversations.mockResolvedValueOnce({ ...page([{ id: "c-1", unreadCount: 2 }]), total: 36, pageSize: 20 });
     const workbench = await started();
-    workbench.page.value = 2;
-    await settle();
-    expect(service.conversations.mock.calls.at(-1)?.[0]).toMatchObject({ page: 2 });
-
     let resolveOld!: (value: unknown) => void;
     service.conversations.mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }));
-    emit({ type: "sync" });
-    await settle();
+    const pending = workbench.list.loadMore();
+    expect(service.conversations).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2, pageSize: 20 }));
     service.conversations.mockResolvedValue(page([{ id: "c-9", unreadCount: 0 }]));
     workbench.view.value = "unassigned";
     await settle();
     resolveOld(page([{ id: "stale", unreadCount: 0 }]));
-    await settle();
-    expect(service.conversations.mock.calls.at(-1)?.[0]).toMatchObject({ page: 1, view: "unassigned" });
+    await pending;
+    expect(service.conversations).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1, pageSize: 20, view: "unassigned" }));
     expect(workbench.conversations.value.map((row) => row.id)).toEqual(["c-9"]);
+  });
+
+  it("滚动每次追加 20 条并去重，实时更新保留已加载范围与打开的会话", async () => {
+    service.conversations.mockResolvedValueOnce({ ...page([{ id: "c-1", unreadCount: 2 }]), total: 36, pageSize: 20 });
+    const workbench = await started();
+    const secondPage = { list: [{ id: "c-1", unreadCount: 2 }, { id: "c-21", unreadCount: 0 }], total: 36, page: 2, pageSize: 20 };
+    let resolveSecondPage!: (result: typeof secondPage) => void;
+    service.conversations.mockImplementationOnce(() => new Promise((resolve) => { resolveSecondPage = resolve; }));
+
+    const pending = workbench.list.loadMore();
+    void workbench.list.loadMore();
+    expect(service.conversations).toHaveBeenCalledTimes(2);
+    expect(service.conversations).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2, pageSize: 20 }));
+    expect(workbench.list.loadingMore.value).toBe(true);
+    expect(workbench.conversations.value.map((row) => row.id)).toEqual(["c-1"]);
+
+    resolveSecondPage(secondPage);
+    await pending;
+    expect(workbench.conversations.value.map((row) => row.id)).toEqual(["c-1", "c-21"]);
+    expect(workbench.list.hasMore.value).toBe(false);
+    expect(workbench.selectedId.value).toBe("c-1");
+
+    service.conversations.mockResolvedValue({ ...secondPage, page: 1, pageSize: 40, total: 35 });
+    emit({ type: "conversation", conversationId: "c-21", reasons: ["message"] });
+    await settle();
+    expect(service.conversations).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1, pageSize: 40 }));
+    expect(workbench.conversations.value.map((row) => row.id)).toEqual(["c-1", "c-21"]);
+    expect(workbench.list.total.value).toBe(35);
+  });
+
+  it("追加失败保留已有会话，重试请求同一批", async () => {
+    service.conversations.mockResolvedValueOnce({ ...page([{ id: "c-1", unreadCount: 2 }]), total: 36, pageSize: 20 });
+    const workbench = await started();
+    service.conversations.mockRejectedValueOnce(networkError());
+    await workbench.list.loadMore();
+    expect(workbench.conversations.value.map((row) => row.id)).toEqual(["c-1"]);
+    expect(workbench.list.loadMoreError.value).not.toBe("");
+
+    service.conversations.mockResolvedValueOnce({ ...page([{ id: "c-21", unreadCount: 0 }]), total: 36, page: 2, pageSize: 20 });
+    await workbench.list.loadMore();
+    expect(service.conversations).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2, pageSize: 20 }));
+    expect(workbench.list.loadMoreError.value).toBe("");
+    expect(workbench.conversations.value.map((row) => row.id)).toEqual(["c-1", "c-21"]);
   });
 
   it("重新可见时校准当前会话一次", async () => {
@@ -656,6 +696,14 @@ describe("工作台实时刷新", () => {
     handler();
     await settle();
     expect(service.conversation).toHaveBeenCalledTimes(2);
+  });
+
+  it("保存客户资料后列表和聊天标题使用服务端返回的标题", async () => {
+    service.conversations.mockResolvedValueOnce(page([{ id: "c-1", version: 1, unreadCount: 2, title: "Previous title" }]));
+    const workbench = await started();
+    workbench.applyCustomerNotes({ conversationId: "c-1", customerName: "Profile name", title: "@customer", version: 2 });
+    expect(workbench.detail.value).toMatchObject({ name: "Profile name", title: "@customer" });
+    expect(workbench.conversations.value.find(row => row.id === "c-1")).toMatchObject({ title: "@customer" });
   });
 });
 
@@ -680,7 +728,7 @@ describe("useCustomerNotes", () => {
     conversationId: "c-1", version: 1, customerName: "Tom", countryItemId: null, plannedDays: null, startDate: null, pax: null,
     contactInfo: "bsuid-1", destinations: [], requirements: "hi", internalRemark: "", updatedAt: null, ...patch,
   });
-  function setupNotes(options?: Parameters<typeof useCustomerNotes>[0]) {
+  function setupNotes(options: Parameters<typeof useCustomerNotes>[0] = { service, page: "WhatsappInbox" }) {
     scope = effectScope();
     return scope.run(() => useCustomerNotes(options))!;
   }

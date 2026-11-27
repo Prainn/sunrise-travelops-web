@@ -1,9 +1,8 @@
 import { computed, reactive, ref, watch } from "vue";
 import { ApiError } from "@/api/request";
 import { websiteErrorMessage } from "@/services/website.service";
-import { whatsappService } from "@/services/whatsapp.service";
 import { useUserStore } from "@/stores/user";
-import type { InboxCustomerNotes, InboxCustomerNotesForm } from "@/types/website";
+import type { InboxCustomerNotes, InboxCustomerNotesForm, InboxCustomerNotesInput } from "@/types/website";
 import { pruneNotesDrafts, readNotesDraft, removeNotesDraft, writeNotesDraft } from "./notes-drafts";
 import { useDebounceFn } from "@vueuse/core";
 import { recordClientOperation } from "@/utils/client-operation-log";
@@ -17,8 +16,8 @@ interface NotesEntry {
   conflict: boolean;
 }
 
-export type SaveNotesResult =
-  | { kind: "saved"; notes: InboxCustomerNotes }
+type SaveNotesResult<T extends InboxCustomerNotes> =
+  | { kind: "saved"; notes: T }
   | { kind: "conflict" | "failed"; message: string };
 
 function notesForm(notes: InboxCustomerNotes): InboxCustomerNotesForm {
@@ -46,11 +45,13 @@ function isDirty(entry: NotesEntry) {
  * 未保存修改同步写入本地缓存，刷新浏览器后首次读取该会话时恢复；保存成功、改回原值、
  * 用户确认刷新、会话不存在或无权访问时清除，主动退出登录及超过 7 天也会清理。
  */
-export function useCustomerNotes(options?: {
-  service: Pick<typeof whatsappService, "customerNotes" | "saveCustomerNotes">;
-  page: "MailInbox";
+export function useCustomerNotes<T extends InboxCustomerNotes>({ service, page }: {
+  service: {
+    customerNotes: (id: string) => Promise<T>;
+    saveCustomerNotes: (id: string, input: InboxCustomerNotesInput) => Promise<T>;
+  };
+  page: "MailInbox" | "WhatsappInbox";
 }) {
-  const service = options?.service ?? whatsappService;
   const user = useUserStore();
   const conversationId = ref("");
   const entries = reactive(new Map<string, NotesEntry>());
@@ -67,7 +68,7 @@ export function useCustomerNotes(options?: {
   const saving = computed(() => savingIds.has(conversationId.value));
   const error = computed(() => errors.get(conversationId.value) ?? "");
   const dirty = computed(() => Boolean(entry.value && isDirty(entry.value)));
-  const draftOwner = () => `${options ? "mail:" : ""}${user.userInfo.userId ?? ""}:${user.userInfo.identityId ?? ""}`;
+  const draftOwner = () => `${page === "MailInbox" ? "mail:" : ""}${user.userInfo.userId ?? ""}:${user.userInfo.identityId ?? ""}`;
 
   function store(id: string, notes: InboxCustomerNotes) {
     entries.set(id, {
@@ -100,7 +101,7 @@ export function useCustomerNotes(options?: {
       const draft = force || latest ? null : readNotesDraft(draftOwner(), id);
       if (force) removeNotesDraft(draftOwner(), id);
       if (draft) {
-        if (options?.page === "MailInbox" && draft.form.requirements === draft.base.requirements) {
+        if (page === "MailInbox" && draft.form.requirements === draft.base.requirements) {
           draft.base.requirements = notes.requirements;
           draft.form.requirements = notes.requirements;
         }
@@ -129,7 +130,7 @@ export function useCustomerNotes(options?: {
   }
 
   /** 全量保存当前会话资料；409 保留输入并标记冲突，不自动重试。 */
-  async function save(): Promise<SaveNotesResult | undefined> {
+  async function save(): Promise<SaveNotesResult<T> | undefined> {
     const id = conversationId.value;
     const current = entries.get(id);
     if (!current || current.conflict || savingIds.has(id)) return undefined;
@@ -149,7 +150,7 @@ export function useCustomerNotes(options?: {
       if (latest && JSON.stringify(latest.form) !== submitted) entries.get(id)!.form = latest.form;
       persist(id);
       // 邮件同会话的多封来信共享会话级资料与 version：其余干净条目清除待重拉，脏条目记为冲突防止误提交旧版本。
-      if (options?.page === "MailInbox") {
+      if (page === "MailInbox") {
         for (const [otherId, other] of entries) {
           if (otherId === id) continue;
           if (isDirty(other)) other.conflict = true;
@@ -182,7 +183,7 @@ export function useCustomerNotes(options?: {
 
   const reportDraftSaved = useDebounceFn((id: string) => {
     recordClientOperation({
-      page: options?.page ?? "WhatsappInbox",
+      page,
       action: "draft",
       result: "success",
       recordId: id,
