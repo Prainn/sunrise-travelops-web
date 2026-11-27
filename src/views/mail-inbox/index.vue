@@ -98,7 +98,6 @@
           :detail="detail"
           :selected="sourceMessage"
           @refresh="refreshThread"
-          @create-inquiry="openInquiryFor"
         />
         <div v-else v-loading="detailLoading" class="grid min-h-0 flex-1 place-items-center">
           <FeedbackState
@@ -114,7 +113,6 @@
       <template #info>
         <MailCustomerInfo
           v-if="detail"
-          ref="customerInfo"
           :key="detail.id"
           class="w-full h-full"
           :detail="detail"
@@ -172,7 +170,6 @@ const detail = ref<MailDetail>();
 const detailLoading = ref(false);
 const selectedSource = ref("");
 const splitLayout = ref<InstanceType<typeof InboxSplitLayout>>();
-const customerInfo = ref<InstanceType<typeof MailCustomerInfo>>();
 const detailError = ref("");
 const threadId = computed(() => typeof route.query.thread === "string" ? route.query.thread : undefined);
 const sourceMessage = computed(() => typeof route.query.message === "string" ? route.query.message : undefined);
@@ -207,12 +204,6 @@ watch(sourceMessage, id => {
 function selectSource(id: string) {
   selectedSource.value = id;
   void router.replace({ query: { ...route.query, message: id } });
-}
-
-async function openInquiryFor(id: string) {
-  selectSource(id);
-  await nextTick();
-  await customerInfo.value?.openInquiry();
 }
 
 onMounted(() => {

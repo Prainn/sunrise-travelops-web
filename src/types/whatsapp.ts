@@ -1,4 +1,5 @@
 import type { BaseQueryParams } from "@/types/common";
+import type { IntegrationActivity, IntegrationRuntime } from "@/types/integration";
 import type { WebsiteInquiryInput } from "@/types/website";
 
 export type WhatsappConversationState = "open" | "closed" | "archived";
@@ -81,7 +82,7 @@ export interface WhatsappConversationDetail extends WhatsappConversationItem {
   ledger: { id: string; orderNo: string } | null;
   hasFormedTours: boolean;
   replyWindowExpiresAt: string | null;
-  sendBlockedReason: "not_configured" | "send_disabled" | "test_recipient" | null;
+  sendBlockedReason: "not_configured" | "send_disabled" | "send_paused" | "test_recipient" | null;
   capabilities: WhatsappConversationCapabilities;
 }
 
@@ -248,17 +249,10 @@ export interface WhatsappInquiryResult {
   created: boolean;
 }
 
-export interface WhatsappWorkerStatus {
-  state: "disabled" | "starting" | "running" | "stalled" | "error" | "stopped";
-  lastStartedAt: string | null;
-  lastCompletedAt: string | null;
-  lastErrorAt: string | null;
-}
-
 export interface WhatsappIntegrationStatus {
   enabled: boolean;
   workerEnabled: boolean;
-  worker: { scope: "current_process"; events: WhatsappWorkerStatus; outbound: WhatsappWorkerStatus };
+  worker: { scope: "current_process"; events: IntegrationActivity; outbound: IntegrationActivity };
   outbound: { queued: number; sending: number; unknown: number; failed: number; oldestPendingAt: string | null };
   receiveMode: "disabled" | "queue" | "http";
   sendEnabled: boolean;
@@ -267,23 +261,8 @@ export interface WhatsappIntegrationStatus {
   pending: number;
   failed: number;
   /** 当前 API 对应环境的入站/出站开关；旧服务端可能缺失。 */
-  runtime?: WhatsappRuntime;
+  runtime?: IntegrationRuntime;
 }
-
-/** 环境由服务端决定；available 为 false 表示基础配置不允许切换。 */
-export interface WhatsappRuntime {
-  environment: "dev" | "prod" | "local";
-  version: number;
-  inboundAvailable: boolean;
-  outboundAvailable: boolean;
-  inboundEnabled: boolean;
-  outboundEnabled: boolean;
-}
-
-/** 每次只改一个开关，不传环境，也不用旧状态覆写另一个开关。 */
-export type WhatsappRuntimeInput =
-  | { version: number; inboundEnabled: boolean }
-  | { version: number; outboundEnabled: boolean };
 
 export interface WhatsappFailedEvent {
   id: string;

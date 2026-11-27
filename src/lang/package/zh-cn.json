@@ -1,5 +1,13 @@
 {
   "mail": {
+    "integration": {
+      "inbound": "入站同步",
+      "mailbox": "接入邮箱",
+      "inbox": "收件文件夹同步",
+      "sent": "已发送文件夹同步",
+      "help": "关闭入站后暂停同步新来信，开启后从原进度补拉。关闭出站后暂停新的发送，仍可保存草稿，已发送文件夹继续同步。",
+      "notConfigured": "邮件接入尚未启用"
+    },
     "customerEmail": "客户邮箱",
     "account": "邮箱账号",
     "noAccounts": "暂无已接入邮箱",
@@ -35,7 +43,6 @@
     "sent": "邮件已发送",
     "failed": "发送失败，草稿已保留",
     "checkSent": "正在核对已发送邮件。核实结果前请勿重复发送。",
-    "createInquiry": "从这封来信创建询盘",
     "assignments": "分配记录",
     "searchHint": "搜索主题、发件人或邮箱",
     "discardChanges": "放弃未保存修改",
@@ -206,6 +213,7 @@
     "whatsappWorkbench": "WhatsApp 工作台",
     "whatsappQuickReplies": "快捷回复",
     "mailInbox": "邮件收件箱",
+    "mailIntegration": "邮件接入状态",
     "whatsappInbox": "会话收件箱",
     "whatsappIntegration": "接入状态"
   },
@@ -759,6 +767,7 @@
     "conflict": "设置已被他人修改，请刷新后再操作",
     "types": {
       "whatsapp_unassigned": "WhatsApp待分配",
+      "mail_unassigned": "邮件待分配",
       "whatsapp_message": "WhatsApp新消息",
       "whatsapp_assignment": "WhatsApp分配与改派",
       "linxi_ledger_review": "霖熹台账待审核",
@@ -781,10 +790,10 @@
     "mimeType": "文件类型",
     "objectKey": "存储路径",
     "environment": "环境",
-    "detail": "详情",
     "edit": "编辑资源",
     "openDocument": "查看文件",
     "upload": "上传图片",
+    "uploadTooLarge": "单张图片不能超过 {size} MiB",
     "uploadSuccess": "上传成功",
     "retry": "重新归档",
     "retrySuccess": "媒体文件已重新加入归档队列",
@@ -792,7 +801,9 @@
     "retryConfirm": "重新归档该媒体文件？",
     "deleteConfirm": "确认删除“{name}”？将删除原图及其缩略图、发送副本。CDN 缓存可能最多保留 300 秒，不能保证立即从所有节点消失。",
     "deleteReferenced": "已被 {count} 条消息引用，不能删除",
+    "deleteMailReferenced": "已被邮件引用，不能删除",
     "deleteProcessing": "处理中，暂不能删除",
+    "deleteUnsupported": "此文件暂不支持在 OSS 管理中删除",
     "nameRequired": "请输入名称",
     "conflict": "该资源已被他人修改，请载入最新后再操作，不会覆盖他人修改。",
     "reloadLatest": "载入最新",
@@ -805,12 +816,14 @@
       "image": "图片",
       "sticker": "贴纸",
       "pdf": "PDF",
-      "word": "Word"
+      "word": "Word",
+      "file": "文件"
     },
     "sources": {
       "whatsapp": "WhatsApp",
-      "upload": "会话上传",
-      "management": "管理上传"
+      "upload": "@:oss.sources.whatsapp",
+      "management": "管理上传",
+      "mail": "邮件附件"
     },
     "states": {
       "pending": "待处理",
@@ -2688,6 +2701,32 @@
     "breakfastExcluded": "不含早",
     "noHotels": "本行程未安排酒店。"
   },
+  "integration": {
+    "runtime": {
+      "environment": "当前环境",
+      "outbound": "出站发送",
+      "on": "开",
+      "off": "关",
+      "unavailable": "不可用",
+      "unavailableHint": "基础配置未启用，暂不能切换",
+      "loadFailedHint": "开关状态读取失败，请刷新后重试",
+      "missingHint": "服务端未返回开关状态，暂不能切换",
+      "saved": "开关已更新",
+      "conflict": "开关状态已被更新，已重新读取最新状态"
+    },
+    "activity": {
+      "disabled": "未启用",
+      "starting": "等待首次运行",
+      "running": "运行中",
+      "stalled": "超过 {seconds} 秒未更新",
+      "error": "最近一次处理失败",
+      "stopped": "已停止",
+      "paused": "已暂停"
+    },
+    "lastSuccess": "最近一次成功检查",
+    "lastError": "最近一次处理错误",
+    "sendPaused": "出站发送已暂停"
+  },
   "whatsapp": {
     "sendBlockedReasons": {
       "not_configured": "WhatsApp接入尚未配置",
@@ -2698,16 +2737,6 @@
       "events": "入站处理（当前实例）",
       "outbound": "出站处理（当前实例）"
     },
-    "workerStates": {
-      "disabled": "未启用",
-      "starting": "等待首次运行",
-      "running": "运行中",
-      "stalled": "超过60秒未更新",
-      "error": "最近一次处理失败",
-      "stopped": "已停止"
-    },
-    "lastWorkerSuccess": "最近一次成功检查",
-    "lastWorkerError": "最近一次处理错误",
     "outboundCount": "出站{state}",
     "oldestOutbound": "最早未完成消息",
     "workerScopeHint": "处理状态仅反映当前服务实例，超过 60 秒无进展视为异常。",
@@ -2942,18 +2971,8 @@
       "noReply": "文件暂不支持引用回复，请先取消引用再发送"
     },
     "runtime": {
-      "environment": "当前环境",
       "inbound": "入站处理",
-      "outbound": "出站发送",
-      "on": "开",
-      "off": "关",
-      "unavailable": "不可用",
-      "unavailableHint": "基础配置未启用，暂不能切换",
-      "loadFailedHint": "开关状态读取失败，请刷新后重试",
-      "missingHint": "服务端未返回开关状态，暂不能切换",
-      "help": "关闭入站后暂停写入会话，开启后处理积压；关闭出站后暂停新的发送，现有队列保留。",
-      "saved": "开关已更新",
-      "conflict": "开关状态已被更新，已重新读取最新状态"
+      "help": "关闭入站后暂停写入会话，开启后处理积压；关闭出站后暂停新的发送，现有队列保留。"
     }
   }
 }

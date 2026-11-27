@@ -99,8 +99,13 @@ export function useCustomerNotes(options?: {
       // 仅首次读取时恢复缓存草稿；版本已变化说明资料可能被他人更新，按冲突处理。
       const draft = force || latest ? null : readNotesDraft(draftOwner(), id);
       if (force) removeNotesDraft(draftOwner(), id);
-      if (draft) entries.set(id, { version: draft.version, base: draft.base, form: draft.form, conflict: draft.version !== notes.version });
-      else store(id, notes);
+      if (draft) {
+        if (options?.page === "MailInbox" && draft.form.requirements === draft.base.requirements) {
+          draft.base.requirements = notes.requirements;
+          draft.form.requirements = notes.requirements;
+        }
+        entries.set(id, { version: draft.version, base: draft.base, form: draft.form, conflict: draft.version !== notes.version });
+      } else store(id, notes);
       errors.delete(id);
     } catch (cause) {
       if (currentSession !== session || latestLoad.get(id) !== seq) return;

@@ -1,14 +1,15 @@
 <!-- OSS 归档图片/贴纸：图片先显示缩略图，点击才加载原图；贴纸直接显示原图（保留透明与动画），不可点击 -->
 <template>
-  <span class="oss-media" :class="{ 'is-sticker': mediaKind === 'sticker' }">
+  <span ref="previewFrame" class="oss-media" :class="{ 'is-sticker': mediaKind === 'sticker' }">
     <template v-if="displayUrl">
       <button
         v-if="canOpen"
         type="button"
         class="oss-media__frame oss-media__open"
         :style="frameStyle"
-        :aria-label="$t('oss.media.viewOriginal')"
-        :title="$t('oss.media.viewOriginal')"
+        :aria-label="viewLabel"
+        :title="viewLabel"
+        :aria-busy="!!viewerRequest"
         @click="openViewer"
       >
         <img
@@ -50,8 +51,8 @@
       <template v-else>{{ placeholderText }}</template>
     </span>
     <el-image-viewer
-      v-if="viewerOpen && resource?.originalUrl"
-      :url-list="[resource.originalUrl]"
+      v-if="viewerUrl"
+      :url-list="[viewerUrl]"
       teleported
       hide-on-click-modal
       @close="closeViewer"
@@ -60,7 +61,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { useIntersectionObserver } from "@vueuse/core";
+import { ElMessage } from "element-plus";
 import { CircleCloseFilled } from "@element-plus/icons-vue";
 import { useI18n } from "vue-i18n";
 import { ossErrorKey, type OssResource, type OssResourceKind } from "@/types/oss";
@@ -68,22 +71,36 @@ import { recordClientOperation } from "@/utils/client-operation-log";
 
 const props = withDefaults(defineProps<{
   /** 尚未发现归档记录时为空，按处理中显示。 */
-  resource?: OssResource;
+  resource?: Pick<OssResource, "id" | "kind" | "name" | "state" | "previewable" | "clickable" | "width" | "height" | "errorCode" | "originalUrl" | "thumbnailUrl">;
+  loadImage?: (size: "thumbnail" | "large", signal: AbortSignal) => Promise<Blob>;
   /** 资源为空时的类型。 */
   kind?: OssResourceKind;
   /** 最长边显示上限（px）。 */
   maxSize?: number;
   /** 紧凑模式（如表格缩略图列）：失败占位仅显示错误图标，完整原因通过 title 提示。 */
   compact?: boolean;
-}>(), { resource: undefined, kind: "image", maxSize: 240, compact: false });
+}>(), { resource: undefined, loadImage: undefined, kind: "image", maxSize: 240, compact: false });
 
 const { t } = useI18n();
 const failedUrl = ref<string>();
-const viewerOpen = ref(false);
+const previewFrame = ref<HTMLElement>();
+const hasEnteredViewport = ref(false);
+const privateThumbnail = ref<string>();
+const loadingThumbnail = ref(false);
+const viewerUrl = ref<string>();
+const viewerRequest = ref<AbortController>();
+
+useIntersectionObserver(
+  () => props.loadImage && !hasEnteredViewport.value ? previewFrame.value : undefined,
+  ([entry]) => {
+    if (entry?.isIntersecting) hasEnteredViewport.value = true;
+  },
+);
 
 const mediaKind = computed(() => props.resource?.kind ?? props.kind);
 const status = computed(() => {
   const state = props.resource?.state;
+  if (props.loadImage && props.resource?.previewable && (!hasEnteredViewport.value || loadingThumbnail.value)) return "processing";
   if (!state || state === "pending" || state === "processing") return "processing";
   if (state === "failed") return "failed";
   if (state === "deleting") return "deleting";
@@ -93,19 +110,26 @@ const status = computed(() => {
 const displayUrl = computed(() => {
   const resource = props.resource;
   if (!resource || resource.state !== "ready" || !resource.previewable) return undefined;
-  const url = resource.kind === "sticker" ? resource.originalUrl : resource.thumbnailUrl;
+  const url = props.loadImage ? privateThumbnail.value : resource.kind === "sticker" ? resource.originalUrl : resource.thumbnailUrl;
   return url && url !== failedUrl.value ? url : undefined;
 });
-const canOpen = computed(() => !!props.resource?.clickable && props.resource.kind === "image" && !!props.resource.originalUrl);
+const canOpen = computed(() => !!props.resource?.clickable && props.resource.kind === "image" && !!(props.loadImage || props.resource.originalUrl));
+const viewLabel = computed(() => t(props.loadImage ? "oss.preview" : "oss.media.viewOriginal"));
 const alt = computed(() => props.resource?.name || t(`oss.kinds.${mediaKind.value}`));
-/** 按原始宽高比例占位，图片加载前后布局不跳动。 */
+/** 按原始宽高比例占位，同时将宽高限制在最小可点击尺寸与 maxSize 之间，避免极端长图撑高行或窄成细线。 */
 const frameStyle = computed(() => {
   const limit = mediaKind.value === "sticker" ? Math.min(props.maxSize, 140) : props.maxSize;
   const width = props.resource?.width;
   const height = props.resource?.height;
   if (!width || !height) return { width: `${limit}px`, height: `${limit}px` };
   const scale = Math.min(1, limit / Math.max(width, height));
-  return { width: `${Math.max(24, Math.round(width * scale))}px`, aspectRatio: `${width} / ${height}` };
+  const clampedWidth = Math.max(24, Math.round(width * scale));
+  const clampedHeight = Math.max(24, Math.round(height * scale));
+  return {
+    width: `${clampedWidth}px`,
+    maxHeight: `${limit}px`,
+    aspectRatio: `${clampedWidth} / ${clampedHeight}`,
+  };
 });
 const placeholderStyle = computed(() => (
   props.compact && status.value === "failed"
@@ -120,12 +144,54 @@ const placeholderText = computed(() => {
   return t("oss.media.unavailable", { kind });
 });
 
-watch(() => props.resource?.id, () => {
-  viewerOpen.value = false;
-});
+watch([hasEnteredViewport, () => props.resource?.id, () => props.resource?.previewable], ([visible, , previewable], _, onCleanup) => {
+  const load = props.loadImage;
+  if (!visible || !previewable || !load) return;
+  const controller = new AbortController();
+  loadingThumbnail.value = true;
+  onCleanup(() => {
+    controller.abort();
+    if (privateThumbnail.value) URL.revokeObjectURL(privateThumbnail.value);
+    privateThumbnail.value = undefined;
+    loadingThumbnail.value = false;
+  });
+  void load("thumbnail", controller.signal).then((image) => {
+    if (!controller.signal.aborted) privateThumbnail.value = URL.createObjectURL(image);
+  }).catch(() => {
+    // The preview cell falls back to its existing unavailable state.
+  }).finally(() => {
+    if (!controller.signal.aborted) loadingThumbnail.value = false;
+  });
+}, { immediate: true });
 
-function openViewer() {
-  viewerOpen.value = true;
+function clearViewer() {
+  viewerRequest.value?.abort();
+  viewerRequest.value = undefined;
+  if (viewerUrl.value?.startsWith("blob:")) URL.revokeObjectURL(viewerUrl.value);
+  viewerUrl.value = undefined;
+}
+
+watch(() => props.resource?.id, clearViewer);
+onBeforeUnmount(clearViewer);
+
+async function openViewer() {
+  if (viewerRequest.value) return;
+  if (props.loadImage) {
+    const controller = new AbortController();
+    viewerRequest.value = controller;
+    try {
+      const image = await props.loadImage("large", controller.signal);
+      if (controller.signal.aborted) return;
+      viewerUrl.value = URL.createObjectURL(image);
+    } catch {
+      if (!controller.signal.aborted) ElMessage.error(t("oss.media.unavailable", { kind: t("oss.kinds.image") }));
+      return;
+    } finally {
+      if (viewerRequest.value === controller) viewerRequest.value = undefined;
+    }
+  } else {
+    viewerUrl.value = props.resource?.originalUrl ?? undefined;
+  }
   recordClientOperation({
     action: "preview",
     result: "success",
@@ -134,7 +200,7 @@ function openViewer() {
 }
 
 function closeViewer() {
-  viewerOpen.value = false;
+  clearViewer();
   recordClientOperation({
     action: "close",
     result: "success",
