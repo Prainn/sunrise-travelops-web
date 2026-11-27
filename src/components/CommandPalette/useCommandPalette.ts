@@ -1,8 +1,9 @@
 import { openUserPage } from "@/utils/user-interaction";
-import { onBeforeUnmount, onMounted, ref, toRaw } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, toRaw } from "vue";
 import type { LocationQueryRaw, RouteRecordRaw } from "vue-router";
 import router from "@/router";
 import { translateRouteTitle } from "@/lang/utils";
+import { useAppStore } from "@/stores/app";
 import { usePermissionStore } from "@/stores/permission";
 import { isExternal } from "@/utils";
 
@@ -20,7 +21,38 @@ const STORAGE_KEY = "menu_search_history";
 const MAX_HISTORY = 5;
 const EXCLUDED_PATHS = ["/redirect", "/login", "/401", "/404"];
 
+export function clearCommandPaletteHistory(): void {
+  if (typeof localStorage !== "undefined") localStorage.removeItem(STORAGE_KEY);
+}
+
+function collectRoutes(routes: RouteRecordRaw[], parentPath = "", output: SearchItem[] = []): SearchItem[] {
+  routes.forEach((route) => {
+    const path = route.path.startsWith("/")
+      ? route.path
+      : `${parentPath}${parentPath.endsWith("/") ? "" : "/"}${route.path}`;
+
+    if (EXCLUDED_PATHS.includes(route.path) || isExternal(route.path)) return;
+
+    if (route.children) {
+      collectRoutes(route.children, path, output);
+    } else if (route.meta?.title) {
+      output.push({
+        title: translateRouteTitle(route.meta.title),
+        path,
+        name: typeof route.name === "string" ? route.name : undefined,
+        icon: route.meta.icon,
+        redirect: typeof route.redirect === "string" ? route.redirect : undefined,
+        params: route.meta.params
+          ? structuredClone(toRaw(route.meta.params))
+          : undefined,
+      });
+    }
+  });
+  return output;
+}
+
 export function useCommandPalette() {
+  const appStore = useAppStore();
   const permissionStore = usePermissionStore();
 
   // 面板状态
@@ -32,10 +64,20 @@ export function useCommandPalette() {
     inputRef.value = el as HTMLInputElement | undefined;
   }
 
-  // 菜单数据
-  const menuItems = ref<SearchItem[]>([]);
+  // 菜单数据：随权限路由和语言切换响应式更新，历史记录只保留当前可访问路径并复用最新译文。
+  const menuItems = computed<SearchItem[]>(() => {
+    void appStore.locale;
+    return collectRoutes(permissionStore.routes);
+  });
+  const menuByPath = computed(() => new Map(menuItems.value.map((item) => [item.path, item])));
   const results = ref<SearchItem[]>([]);
-  const history = ref<SearchItem[]>([]);
+  const historyPaths = ref<string[]>([]);
+  const history = computed<SearchItem[]>(() =>
+    historyPaths.value.flatMap((path) => {
+      const item = menuByPath.value.get(path);
+      return item ? [item] : [];
+    }),
+  );
 
   function open() {
     keyword.value = "";
@@ -105,68 +147,44 @@ export function useCommandPalette() {
   function loadHistory() {
     try {
       const data = localStorage.getItem(STORAGE_KEY);
-      history.value = data ? JSON.parse(data) : [];
+      const parsed = data ? (JSON.parse(data) as unknown) : [];
+      if (!Array.isArray(parsed)) {
+        historyPaths.value = [];
+        return;
+      }
+      historyPaths.value = parsed
+        .map((entry) => (typeof entry === "string" ? entry : (entry as Partial<SearchItem>)?.path ?? ""))
+        .filter((path, index, all) => Boolean(path) && all.indexOf(path) === index)
+        .slice(0, MAX_HISTORY);
     } catch {
-      history.value = [];
+      historyPaths.value = [];
     }
   }
 
   function saveHistory() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(history.value));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(historyPaths.value));
   }
 
   /**
    * 历史记录按最近使用排序，并限制本地缓存数量。
    */
   function addHistory(item: SearchItem) {
-    const index = history.value.findIndex((historyItem) => historyItem.path === item.path);
-    if (index !== -1) history.value.splice(index, 1);
-
-    history.value.unshift(item);
-
-    if (history.value.length > MAX_HISTORY) {
-      history.value = history.value.slice(0, MAX_HISTORY);
-    }
-
+    const next = historyPaths.value.filter((path) => path !== item.path);
+    next.unshift(item.path);
+    historyPaths.value = next.slice(0, MAX_HISTORY);
     saveHistory();
   }
 
   function removeHistory(index: number) {
-    history.value.splice(index, 1);
+    const target = history.value[index];
+    if (!target) return;
+    historyPaths.value = historyPaths.value.filter((path) => path !== target.path);
     saveHistory();
   }
 
   function clearHistory() {
-    history.value = [];
-    localStorage.removeItem(STORAGE_KEY);
-  }
-
-  /**
-   * 将权限路由拍平成命令面板可搜索的菜单项。
-   */
-  function loadRoutes(routes: RouteRecordRaw[], parentPath = "") {
-    routes.forEach((route) => {
-      const path = route.path.startsWith("/")
-        ? route.path
-        : `${parentPath}${parentPath.endsWith("/") ? "" : "/"}${route.path}`;
-
-      if (EXCLUDED_PATHS.includes(route.path) || isExternal(route.path)) return;
-
-      if (route.children) {
-        loadRoutes(route.children, path);
-      } else if (route.meta?.title) {
-        menuItems.value.push({
-          title: translateRouteTitle(route.meta.title),
-          path,
-          name: typeof route.name === "string" ? route.name : undefined,
-          icon: route.meta.icon,
-          redirect: typeof route.redirect === "string" ? route.redirect : undefined,
-          params: route.meta.params
-            ? structuredClone(toRaw(route.meta.params))
-            : undefined,
-        });
-      }
-    });
+    historyPaths.value = [];
+    clearCommandPaletteHistory();
   }
 
   /**
@@ -180,7 +198,6 @@ export function useCommandPalette() {
   }
 
   onMounted(() => {
-    loadRoutes(permissionStore.routes);
     loadHistory();
     document.addEventListener("keydown", handleKeydown);
   });

@@ -67,12 +67,15 @@ withDefaults(
   display: flex;
   flex-direction: column;
   max-height: calc(100dvh - var(--el-dialog-margin-top, 8vh) - 24px);
-  margin-bottom: 24px;
   padding: 0;
   overflow: hidden;
   background: var(--content-bg);
   border: 1px solid var(--card-border);
   box-shadow: var(--overlay-shadow);
+
+  &:not(.is-align-center) {
+    margin-bottom: 24px;
+  }
 
   > .el-dialog__header {
     flex-shrink: 0;

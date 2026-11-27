@@ -8,12 +8,20 @@ function reportPage(router: Router) {
   recordClientOperation({ page: resolveClientPage(router.currentRoute.value), action: "navigate", result: "success" });
 }
 
+const GUARD_FALLBACK_PATHS = new Set(["/login", "/401", "/404", "/unavailable"]);
+
 /** Call from a navigation control after the user chooses a page. */
 export async function openUserPage(router: Router, target: RouteLocationRaw) {
   const destination = router.resolve(target).fullPath;
   const push = originalPush.get(router) ?? router.push.bind(router);
   const failure = await push(target);
-  if (!failure && router.currentRoute.value.fullPath === destination) reportPage(router);
+  if (failure) return failure;
+  const current = router.currentRoute.value;
+  const isBlocked = GUARD_FALLBACK_PATHS.has(current.path);
+  const reachedTarget = current.fullPath === destination
+    || (!isBlocked && destination !== "/" && current.fullPath.startsWith(`${destination}/`))
+    || (!isBlocked && destination === "/" && Boolean(current.path) && current.path !== "/");
+  if (reachedTarget) reportPage(router);
   return failure;
 }
 

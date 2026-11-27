@@ -77,6 +77,27 @@ describe("operation-log-format", () => {
     expect(formatted).toContain(`客户端时间: ${formatBeijingTime("2026-11-25T02:30:00.000Z")}`);
   });
 
+  it("formats notification, menu permission, and parentId details including stringified enabled flags", () => {
+    const detail = JSON.stringify({
+      parentId: "dict-1",
+      notificationType: "whatsapp_inbound",
+      enabled: "false",
+      version: 3,
+      sendWindow: "09:00–18:00",
+      beforeMenuKeys: ["dashboard"],
+      afterMenuKeys: ["dashboard", "mail"],
+    });
+
+    const formatted = formatOperationDetail(detail, t);
+    expect(formatted).toContain("所属记录标识: dict-1");
+    expect(formatted).toContain("通知类型: whatsapp_inbound");
+    expect(formatted).toContain("启用状态: 否");
+    expect(formatted).toContain("版本号: 3");
+    expect(formatted).toContain("发送时段: 09:00–18:00");
+    expect(formatted).toContain("修改前菜单权限: dashboard");
+    expect(formatted).toContain("修改后菜单权限: dashboard, mail");
+  });
+
   it("handles legacy plain-text detail, empty detail, and renders raw text safely", () => {
     expect(formatOperationDetail(null, t)).toBe("历史未记录");
     expect(formatOperationDetail("{}", t)).toBe("历史未记录");

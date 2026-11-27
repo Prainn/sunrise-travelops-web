@@ -7,7 +7,9 @@
       :aria-label="$t('common.filters')"
       role="search"
       @submit.prevent
-      @change="(event: Event) => event.isTrusted && handleFilterChange()"
+      @focusin="hasActiveControl = true"
+      @change="(event: Event) => event.isTrusted && scheduleFilterLog()"
+      @click="handleFormClick"
     >
       <div class="filter-bar__fields">
         <slot />
@@ -23,10 +25,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { useDebounceFn } from "@vueuse/core";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import type { FormInstance } from "element-plus";
-import { recordClientOperation } from "@/utils/client-operation-log";
+import { recordClientOperation, resolveClientPage } from "@/utils/client-operation-log";
+import { isUserInput } from "@/utils/user-interaction";
 
 /**
  * 列表筛选栏：统一字段排布、可见标签与查询/重置操作区。
@@ -34,7 +37,7 @@ import { recordClientOperation } from "@/utils/client-operation-log";
  * 每个筛选字段用带 label 的 el-form-item 放入默认插槽；关键词等长输入给 el-form-item 加 `filter-bar__wide`。
  * 查询时机（防抖、页码重置）由使用方决定，组件只发出 reset。
  */
-withDefaults(
+const props = withDefaults(
   defineProps<{
     /** default：页面顶部独立面板；compact：侧栏或面板内的单行筛选 */
     variant?: "default" | "compact";
@@ -47,16 +50,77 @@ withDefaults(
 );
 const emit = defineEmits<{ reset: [] }>();
 
-const formRef = ref<FormInstance>();
+const POPPER_CONTROL_SELECTOR =
+  ".el-select-dropdown__item, .el-date-table-cell, .el-month-table .cell, .el-year-table .cell, .el-picker-panel__shortcut, .el-picker-panel__footer button";
+const CLEAR_CONTROL_SELECTOR = ".el-input__clear, .el-select__clear, .el-range__close-icon";
 
-const handleFilterChange = useDebounceFn(() => {
-  recordClientOperation({ action: "filter", result: "success" });
-}, 300);
+const route = useRoute();
+const formRef = ref<FormInstance>();
+const hasActiveControl = ref(false);
+let filterTimer: ReturnType<typeof setTimeout> | undefined;
+
+function cancelPendingFilterLog() {
+  if (filterTimer !== undefined) {
+    clearTimeout(filterTimer);
+    filterTimer = undefined;
+  }
+}
+
+function scheduleFilterLog() {
+  const page = resolveClientPage(route);
+  cancelPendingFilterLog();
+  filterTimer = setTimeout(() => {
+    filterTimer = undefined;
+    recordClientOperation({ page, action: "filter", result: "success" });
+  }, 300);
+}
+
+function handleFormClick(event: MouseEvent) {
+  if (!event.isTrusted) return;
+  const target = event.target instanceof Element ? event.target : null;
+  if (target?.closest(CLEAR_CONTROL_SELECTOR)) {
+    scheduleFilterLog();
+  }
+}
+
+function handleDocumentClick(event: MouseEvent) {
+  if (!event.isTrusted) return;
+  const target = event.target instanceof Element ? event.target : null;
+  const formEl = formRef.value?.$el as Element | undefined;
+  if (target && formEl?.contains(target)) {
+    hasActiveControl.value = true;
+    return;
+  }
+  // Element Plus 下拉与日期弹层挂载在 body 上，由本筛选栏激活后点击选项时补记筛选。
+  if (hasActiveControl.value && target?.closest(POPPER_CONTROL_SELECTOR)) {
+    scheduleFilterLog();
+    return;
+  }
+  hasActiveControl.value = false;
+}
+
+watch(
+  () => props.model,
+  () => {
+    if (isUserInput()) scheduleFilterLog();
+  },
+  { deep: true },
+);
 
 function handleReset() {
-  recordClientOperation({ action: "filter", result: "success" });
+  cancelPendingFilterLog();
+  recordClientOperation({ page: resolveClientPage(route), action: "filter", result: "success" });
   emit("reset");
 }
+
+onMounted(() => {
+  document.addEventListener("click", handleDocumentClick, true);
+});
+
+onBeforeUnmount(() => {
+  cancelPendingFilterLog();
+  document.removeEventListener("click", handleDocumentClick, true);
+});
 
 defineExpose({ form: formRef });
 </script>

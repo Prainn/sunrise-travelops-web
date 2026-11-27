@@ -790,7 +790,7 @@ const deletedBoardDays = computed(() => allReorderBoardDays.value.slice(selected
 
 function dayRoute(day: ItineraryDayRecord) {
   if (day.departure || day.destination) return `${day.departure || "-"} → ${day.destination || "-"}`;
-  return day.items.map((item) => item.resourceName).join("、");
+  return day.items.map((item) => item.resourceName).join(t("websiteInquiry.listSeparator"));
 }
 
 /** 酒店按住宿日搭配；多个档次是备选方案，不是同晚连住多家。 */

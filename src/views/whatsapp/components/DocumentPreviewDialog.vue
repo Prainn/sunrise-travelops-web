@@ -56,6 +56,7 @@ import { websiteErrorMessage } from "@/services/website.service";
 import { whatsappService } from "@/services/whatsapp.service";
 import type { WhatsappDocumentMeta } from "@/types/whatsapp";
 import { recordClientOperation } from "@/utils/client-operation-log";
+import { triggerSignedDownload } from "@/utils/signed-download";
 import { documentPreviewType } from "../message-utils";
 
 type PreviewState = "idle" | "loading" | "ready" | "unsupported" | "error";
@@ -190,14 +191,7 @@ async function handleDownload() {
   downloadingIds.value = new Set(downloadingIds.value).add(messageId);
   try {
     const { url } = await whatsappService.documentDownload(conversationId, messageId);
-    // 签名地址强制 attachment；在隐藏 iframe 中打开，避免整页导航触发离开确认。
-    const frame = document.createElement("iframe");
-    frame.hidden = true;
-    frame.referrerPolicy = "no-referrer";
-    frame.src = url;
-    document.body.append(frame);
-    // 过早移除会中断下载，保留到签名地址失效。
-    setTimeout(() => frame.remove(), 60_000);
+    triggerSignedDownload(url);
     recordClientOperation({
       action: "download",
       result: "unknown",

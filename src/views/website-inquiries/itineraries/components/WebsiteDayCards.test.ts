@@ -88,9 +88,15 @@ function render(component: Component, props: Record<string, unknown>) {
   const root = node("root");
   const app = renderer.createApp(component, props);
   app.config.globalProperties.$t = (key: string) => key;
-  for (const name of ["ElFormItem", "ElSelect", "ElOption", "ElInput", "ElInputNumber", "ElSwitch", "ElCheckbox", "ElTag", "ElButton", "ElAlert", "ElRadio", "ElRadioGroup", "ElRadioButton", "ElTableColumn", "ElIcon", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Close", "Delete", "Edit", "CopyDocument"]) {
+  for (const name of ["ElFormItem", "ElSelect", "ElOption", "ElInput", "ElInputNumber", "ElSwitch", "ElCheckbox", "ElTag", "ElButton", "ElAlert", "ElRadio", "ElRadioGroup", "ElRadioButton", "ElTableColumn", "ElIcon", "ElCollapse", "ElDescriptions", "ElDescriptionsItem", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Close", "Delete", "Edit", "CopyDocument"]) {
     app.component(name, defineComponent({ inheritAttrs: false, setup(_, { attrs, slots }) { return () => h(name, attrs, slots.default?.()); } }));
   }
+  app.component("ElCollapseItem", defineComponent({
+    inheritAttrs: false,
+    setup(_, { attrs, slots }) {
+      return () => h("ElCollapseItem", attrs, [...(slots.title?.() ?? []), ...(slots.default?.() ?? [])]);
+    },
+  }));
   app.component("ElForm", defineComponent({ inheritAttrs: false, setup(_, { attrs, slots, expose }) { expose({ validate: async () => true }); return () => h("ElForm", attrs, slots.default?.()); } }));
   const instance = app.mount(root);
   unmount = () => app.unmount();
