@@ -59,11 +59,10 @@ export interface OssResourceQueryParams extends BaseQueryParams {
 }
 
 /** 已入队或已归档的私有文档。消息入口由服务端根据会话访问权限提供。 */
-export interface OssChatDocument extends Omit<OssResource, "kind" | "version"> {
+export interface OssChatDocument extends Omit<OssResource, "kind"> {
   kind: "pdf" | "word";
   source: "upload" | "whatsapp";
   state: "ready";
-  version: null;
   extension: "pdf" | "doc" | "docx";
   mimeType: string;
   size: number;
@@ -73,11 +72,10 @@ export interface OssChatDocument extends Omit<OssResource, "kind" | "version"> {
   documentMessage: { conversationId: string; messageId: string } | null;
 }
 
-export interface OssMailAttachment extends Omit<OssResource, "kind" | "source" | "state" | "version"> {
+export interface OssMailAttachment extends Omit<OssResource, "kind" | "source" | "state"> {
   kind: "image" | "pdf" | "word" | "file";
   source: "mail";
   state: "ready";
-  version: null;
   size: number;
   originalUrl: null;
   thumbnailUrl: null;
@@ -92,7 +90,8 @@ export function isOssChatDocument(row: OssCatalogItem): row is OssChatDocument {
 }
 
 export function isOssMediaResource(row: OssCatalogItem): row is OssResource {
-  return row.version !== null;
+  return (row.source === "whatsapp" || row.source === "upload" || row.source === "management")
+    && (row.kind === "image" || row.kind === "sticker");
 }
 
 /** 列表附带服务端决定的当前环境，前端不提供切换。 */
@@ -102,6 +101,6 @@ export interface OssResourcePage extends PageResult<OssCatalogItem> {
 
 export interface OssResourceForm {
   version: number;
-  name: string;
+  name?: string;
   remark: string;
 }

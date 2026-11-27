@@ -20,9 +20,9 @@ export type ImageFileError = "type" | "size";
  * @param file - 用户选择或粘贴的文件。
  * @returns 不合格原因；合格时为 null。
  */
-export function validateImageFile(file: File): ImageFileError | null {
+export function validateImageFile(file: File, maxBytes = MAX_IMAGE_BYTES): ImageFileError | null {
   if (!(IMAGE_MIME_TYPES as readonly string[]).includes(file.type)) return "type";
-  if (file.size > MAX_IMAGE_BYTES) return "size";
+  if (file.size > maxBytes) return "size";
   return null;
 }
 

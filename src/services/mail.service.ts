@@ -62,4 +62,9 @@ export const mailService = {
   download(id: string, file: string) {
     return request.get<{ url: string }>(`${threadUrl(id)}/attachments/${encodeURIComponent(file)}/download`, action);
   },
+  imagePreview(id: string, file: string, size: "thumbnail" | "large", signal: AbortSignal) {
+    return request.getBlob(`${threadUrl(id)}/attachments/${encodeURIComponent(file)}/image-preview`, {
+      params: { size }, cache: "no-store", timeoutMs: LONG_REQUEST_TIMEOUT_MS, signal, userAction: size === "large",
+    });
+  },
 };

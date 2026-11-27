@@ -83,6 +83,11 @@
             <el-tag v-if="isOssChatDocument(row as OssCatalogItem)" type="info" effect="plain">
               {{ row.extension.toUpperCase() }}
             </el-tag>
+            <MailImagePreview
+              v-else-if="row.source === 'mail' && row.previewable"
+              :attachment="row as OssMailAttachment"
+              compact
+            />
             <el-tag v-else-if="row.source === 'mail'" type="info" effect="plain">
               {{ $t(`oss.kinds.${row.kind}`) }}
             </el-tag>
@@ -153,32 +158,14 @@
           <template #default="{ row }">
             <div class="flex items-center">
               <el-button link type="primary" @click="openDetail(row as OssCatalogItem)">
-                {{ $t('oss.detail') }}
-              </el-button>
-              <el-button
-                v-if="isOssChatDocument(row as OssCatalogItem) && row.documentMessage"
-                link
-                type="primary"
-                :aria-label="$t('whatsapp.documentPreview.open', { name: row.name })"
-                @click="openDocument(row as OssChatDocument)"
-              >
                 {{ $t('oss.openDocument') }}
               </el-button>
               <el-button
-                v-if="row.source === 'mail'"
-                link
-                type="primary"
-                :loading="downloadingId === row.id"
-                @click="handleMailDownload(row as OssMailAttachment)"
-              >
-                {{ $t('whatsapp.documentPreview.download') }}
-              </el-button>
-              <el-button
-                v-if="canUpdate && isOssMediaResource(row as OssCatalogItem)"
+                v-if="canUpdate && canEdit(row as OssCatalogItem)"
                 link
                 type="primary"
                 :disabled="row.state === 'deleting'"
-                @click="openEditor(row as OssResource)"
+                @click="openEditor(row as OssCatalogItem)"
               >
                 {{ $t('common.edit') }}
               </el-button>
@@ -192,9 +179,9 @@
                 {{ $t('oss.retry') }}
               </el-button>
               <el-tooltip
-                v-if="canDelete && isOssMediaResource(row as OssCatalogItem)"
-                :content="deleteBlockedReason(row as OssResource)"
-                :disabled="!deleteBlockedReason(row as OssResource)"
+                v-if="canDelete"
+                :content="deleteBlockedReason(row as OssCatalogItem)"
+                :disabled="!deleteBlockedReason(row as OssCatalogItem)"
                 placement="top"
               >
                 <!-- 禁用按钮不触发悬停事件，由外层元素承载原因提示 -->
@@ -202,9 +189,9 @@
                   <el-button
                     link
                     type="danger"
-                    :disabled="!!deleteBlockedReason(row as OssResource)"
+                    :disabled="!!deleteBlockedReason(row as OssCatalogItem)"
                     :loading="busyId === row.id"
-                    @click="handleDelete(row as OssResource)"
+                    @click="handleDelete(row as OssCatalogItem)"
                   >
                     {{ $t('common.delete') }}
                   </el-button>
@@ -222,7 +209,7 @@
       />
     </SectionCard>
 
-    <AppDialog v-model="detailVisible" :title="$t('oss.detail')">
+    <AppDialog v-model="detailVisible" :title="$t('oss.openDocument')">
       <FeedbackState
         v-if="detailError"
         type="error"
@@ -232,17 +219,12 @@
       />
       <div v-else-if="detail" v-loading="detailLoading" class="flex flex-col gap-3">
         <div v-if="isOssChatDocument(detail)" class="flex justify-center">
-          <el-button v-if="detail.documentMessage" @click="openDocument(detail)">
-            {{ $t('oss.openDocument') }}
-          </el-button>
-          <el-tag v-else type="info" effect="plain">
+          <el-tag type="info" effect="plain">
             {{ detail.extension.toUpperCase() }}
           </el-tag>
         </div>
         <div v-else-if="detail.source === 'mail'" class="flex justify-center">
-          <el-button :loading="downloadingId === detail.id" @click="handleMailDownload(detail)">
-            {{ $t('whatsapp.documentPreview.download') }}
-          </el-button>
+          <MailImagePreview v-if="detail.previewable" :attachment="detail" />
         </div>
         <div v-else class="flex justify-center">
           <OssMediaPreview :resource="detail" :max-size="360" />
@@ -251,7 +233,7 @@
           <el-descriptions-item :label="$t('oss.name')">
             <span class="break-all">{{ detail.name }}</span>
           </el-descriptions-item>
-          <el-descriptions-item v-if="isOssMediaResource(detail)" :label="$t('oss.remark')">
+          <el-descriptions-item :label="$t('oss.remark')">
             <span class="whitespace-pre-wrap break-words">{{ detail.remark || '-' }}</span>
           </el-descriptions-item>
           <el-descriptions-item :label="$t('oss.environment')">
@@ -290,6 +272,18 @@
           </el-descriptions-item>
         </el-descriptions>
       </div>
+      <template v-if="detail && canDownloadDetail" #footer>
+        <el-button v-if="isOssChatDocument(detail) && detail.previewable" @click="openDocument(detail)">
+          {{ $t('oss.preview') }}
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="downloadingId === detail.id"
+          @click="handleFileDownload(detail)"
+        >
+          {{ $t('whatsapp.documentPreview.download') }}
+        </el-button>
+      </template>
     </AppDialog>
 
     <DocumentPreviewDialog
@@ -325,8 +319,14 @@
         :rules="rules"
         label-position="top"
       >
-        <el-form-item prop="name" :label="$t('oss.name')">
-          <el-input v-model="form.name" maxlength="200" show-word-limit />
+        <el-form-item :prop="canRename ? 'name' : undefined" :label="$t('oss.name')">
+          <el-input
+            v-if="canRename"
+            v-model="form.name"
+            maxlength="200"
+            show-word-limit
+          />
+          <span v-else class="break-all">{{ form.name }}</span>
         </el-form-item>
         <el-form-item prop="remark" :label="$t('oss.remark')">
           <el-input
@@ -373,15 +373,19 @@ import { useRefreshOnActivated } from "@/composables";
 import { mailService } from "@/services/mail.service";
 import { ossService } from "@/services/oss.service";
 import { websiteErrorMessage } from "@/services/website.service";
+import { whatsappService } from "@/services/whatsapp.service";
 import { isOssChatDocument, isOssMediaResource, ossErrorKey, type OssCatalogItem, type OssChatDocument, type OssMailAttachment, type OssResource, type OssResourceState } from "@/types/oss";
 import DocumentPreviewDialog from "@/views/whatsapp/components/DocumentPreviewDialog.vue";
 import { formatDateTime, formatFileSize, runOnEnter } from "@/utils";
 import { hasPerm } from "@/utils/auth";
+import { recordClientOperation } from "@/utils/client-operation-log";
 import { IMAGE_ACCEPT, validateImageFile } from "@/utils/image-file";
 import { triggerSignedDownload } from "@/utils/signed-download";
+import MailImagePreview from "./MailImagePreview.vue";
 
 defineOptions({ name: "OssManagement" });
 
+const UPLOAD_LIMIT_MIB = 10;
 const KINDS: OssCatalogItem["kind"][] = ["image", "sticker", "pdf", "word", "file"];
 const STATES: OssResourceState[] = ["pending", "processing", "ready", "failed", "deleting"];
 const STATE_TAG_TYPES: Record<OssResourceState, "info" | "primary" | "success" | "warning" | "danger"> = {
@@ -417,11 +421,16 @@ const detailId = ref("");
 const detail = ref<OssCatalogItem>();
 const detailLoading = ref(false);
 const detailError = ref("");
+const canDownloadDetail = computed(() => {
+  const row = detail.value;
+  return !!row && !detailError.value && (row.source === "mail" || (isOssChatDocument(row) && !!row.documentMessage));
+});
 const selectedDocument = ref<OssChatDocument>();
 const documentOpen = ref(false);
 
 const editorVisible = ref(false);
 const editingId = ref("");
+const canRename = ref(false);
 const form = reactive({ version: 0, name: "", remark: "" });
 const formRef = ref<FormInstance>();
 const saving = ref(false);
@@ -473,10 +482,15 @@ function dimensions(row: OssCatalogItem) {
 function canRetry(row: OssCatalogItem) {
   return row.state === "failed" && row.source === "whatsapp";
 }
-/** 被消息引用或仍在处理时禁止删除；服务端仍以 409 兜底。 */
-function deleteBlockedReason(row: OssResource) {
-  if (row.referenceCount > 0) return t("oss.deleteReferenced", { count: row.referenceCount });
+/** 统一显示删除入口，按引用、状态和删除能力决定是否可用。 */
+function deleteBlockedReason(row: OssCatalogItem) {
+  if (row.referenceCount > 0) {
+    return row.source === "mail"
+      ? t("oss.deleteMailReferenced")
+      : t("oss.deleteReferenced", { count: row.referenceCount });
+  }
   if (row.state === "pending" || row.state === "processing") return t("oss.deleteProcessing");
+  if (!isOssMediaResource(row)) return t("oss.deleteUnsupported");
   return "";
 }
 
@@ -501,9 +515,11 @@ async function handleFileChange(event: Event) {
   const file = input.files?.[0];
   input.value = "";
   if (!file || uploading.value) return;
-  const invalid = validateImageFile(file);
+  const invalid = validateImageFile(file, UPLOAD_LIMIT_MIB * 1024 * 1024);
   if (invalid) {
-    ElMessage.warning(t(invalid === "type" ? "whatsapp.imageDraft.invalidType" : "whatsapp.imageDraft.tooLarge"));
+    ElMessage.warning(invalid === "type"
+      ? t("whatsapp.imageDraft.invalidType")
+      : t("oss.uploadTooLarge", { size: UPLOAD_LIMIT_MIB }));
     return;
   }
   uploading.value = true;
@@ -543,27 +559,38 @@ function openDocument(row: OssChatDocument) {
   documentOpen.value = true;
 }
 
-async function handleMailDownload(row: OssMailAttachment) {
-  if (downloadingId.value) return;
+async function handleFileDownload(row: OssCatalogItem) {
+  const message = isOssChatDocument(row) ? row.documentMessage : null;
+  const download = row.source === "mail"
+    ? () => mailService.download(row.mailThreadId, row.id)
+    : message && (() => whatsappService.documentDownload(message.conversationId, message.messageId));
+  if (!download || downloadingId.value) return;
   downloadingId.value = row.id;
   try {
-    const { url } = await mailService.download(row.mailThreadId, row.id);
+    const { url } = await download();
     triggerSignedDownload(url);
+    if (message) recordClientOperation({ action: "download", result: "unknown", recordId: message.messageId });
   } catch (cause) {
+    if (message) recordClientOperation({ action: "download", result: "failure", recordId: message.messageId });
     ElMessage.error(websiteErrorMessage(cause));
   } finally {
     downloadingId.value = "";
   }
 }
 
-function fillEditor(row: OssResource) {
+function canEdit(row: OssCatalogItem) {
+  return !isOssChatDocument(row) || !!row.documentMessage;
+}
+
+function fillEditor(row: OssCatalogItem) {
   editingId.value = row.id;
+  canRename.value = isOssMediaResource(row);
   form.version = row.version;
   form.name = row.name;
   form.remark = row.remark;
   hasConflict.value = false;
 }
-function openEditor(row: OssResource) {
+function openEditor(row: OssCatalogItem) {
   fillEditor(row);
   editorVisible.value = true;
 }
@@ -571,7 +598,7 @@ function openEditor(row: OssResource) {
 async function reloadEditor() {
   try {
     const row = await ossService.detail(editingId.value);
-    if (isOssMediaResource(row)) fillEditor(row);
+    if (canEdit(row)) fillEditor(row);
   } catch (cause) {
     ElMessage.error(websiteErrorMessage(cause));
   }
@@ -580,7 +607,12 @@ async function handleSave() {
   if (!await formRef.value?.validate().catch(() => false)) return;
   saving.value = true;
   try {
-    await ossService.update(editingId.value, { version: form.version, name: form.name.trim(), remark: form.remark });
+    const updated = await ossService.update(editingId.value, {
+      version: form.version,
+      remark: form.remark,
+      ...(canRename.value ? { name: form.name.trim() } : {}),
+    });
+    if (detail.value?.id === updated.id) detail.value = updated;
     ElMessage.success(t("common.saveSuccess"));
     editorVisible.value = false;
     void fetchList();
@@ -614,7 +646,7 @@ async function handleRetry(row: OssResource) {
   }
 }
 
-async function handleDelete(row: OssResource) {
+async function handleDelete(row: OssCatalogItem) {
   if (deleteBlockedReason(row)) return;
   try {
     await ElMessageBox.confirm(t("oss.deleteConfirm", { name: row.name }), t("common.warning"), { type: "warning" });
