@@ -351,6 +351,15 @@ export const constantRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: "mail-integration",
+        name: "MailIntegration",
+        component: () => import("@/views/mail-inbox/integration/index.vue"),
+        meta: {
+          menuKey: "mail-integration", title: "mailIntegration", icon: "el-icon-Link",
+          scopes: ["headquarters"], perms: ["whatsapp:integration:manage"], keepAlive: true,
+        },
+      },
+      {
         path: "logs",
         name: "WebsiteInquiryLogReport",
         component: () => import("@/views/website-inquiries/logs/index.vue"),

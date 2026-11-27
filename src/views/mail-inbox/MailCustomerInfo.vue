@@ -142,6 +142,9 @@ const router = useRouter();
 const user = useUserStore();
 const incoming = computed(() => props.detail.messages.filter(message => message.direction === "inbound"));
 const source = computed(() => incoming.value.find(message => message.id === props.sourceId));
+const deliveredMessageIds = computed(() => props.detail.messages
+  .filter(message => message.state === "received" || message.state === "sent")
+  .map(message => message.id).join(","));
 const notes = useCustomerNotes({
   page: "MailInbox",
   service: {
@@ -167,9 +170,16 @@ function loadCities() {
   return configRequest;
 }
 onMounted(() => { void loadCities().catch(cause => ElMessage.error(websiteErrorMessage(cause))); });
-watch([() => source.value?.id, () => props.detail.version], ([id, version]) => {
-  notes.select(id ?? "", version);
-}, { immediate: true });
+watch(
+  [() => source.value?.id, () => props.detail.version, deliveredMessageIds],
+  ([id, version, delivered], [previousId, previousVersion, previousDelivered]) => {
+    notes.select(id ?? "", version);
+    if (id && id === previousId && version === previousVersion && delivered !== previousDelivered) {
+      void notes.load(id);
+    }
+  },
+  { immediate: true },
+);
 
 async function saveNotes() {
   const result = await notes.save();
@@ -247,6 +257,4 @@ async function createInquiry(input: WebsiteInquiryInput) {
     } else ElMessage.error(websiteErrorMessage(cause));
   } finally { inquiryBusy.value = false; }
 }
-
-defineExpose({ openInquiry });
 </script>

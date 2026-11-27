@@ -526,6 +526,7 @@ const replyHint = computed(() => {
   const window = replyWindowState(props.detail.replyWindowExpiresAt, now.value);
   if (window.kind === "none") return { text: t("whatsapp.window.none"), isWarning: true };
   if (window.kind === "expired") return { text: t("whatsapp.window.expired"), isWarning: true };
+  if (props.detail.sendBlockedReason === "send_paused") return { text: t("integration.sendPaused"), isWarning: true };
   if (props.detail.sendBlockedReason) return { text: t(`whatsapp.sendBlockedReasons.${props.detail.sendBlockedReason}`), isWarning: true };
   const minutes = Math.floor(window.remainingMs / 60_000);
   const remaining = t("whatsapp.window.duration", { hours: Math.floor(minutes / 60), minutes: minutes % 60 });

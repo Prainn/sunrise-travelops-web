@@ -73,10 +73,26 @@ export interface OssChatDocument extends Omit<OssResource, "kind" | "version"> {
   documentMessage: { conversationId: string; messageId: string } | null;
 }
 
-export type OssCatalogItem = OssResource | OssChatDocument;
+export interface OssMailAttachment extends Omit<OssResource, "kind" | "source" | "state" | "version"> {
+  kind: "image" | "pdf" | "word" | "file";
+  source: "mail";
+  state: "ready";
+  version: null;
+  size: number;
+  originalUrl: null;
+  thumbnailUrl: null;
+  objectKey: null;
+  mailThreadId: string;
+}
+
+export type OssCatalogItem = OssResource | OssChatDocument | OssMailAttachment;
 
 export function isOssChatDocument(row: OssCatalogItem): row is OssChatDocument {
-  return row.kind === "pdf" || row.kind === "word";
+  return row.source !== "mail" && (row.kind === "pdf" || row.kind === "word");
+}
+
+export function isOssMediaResource(row: OssCatalogItem): row is OssResource {
+  return row.version !== null;
 }
 
 /** 列表附带服务端决定的当前环境，前端不提供切换。 */

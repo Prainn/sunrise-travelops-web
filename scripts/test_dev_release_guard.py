@@ -84,6 +84,7 @@ class DevReleaseGuardTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.root = Path(self.directory.name)
+        (self.root / 'dev-release-wait.lock').touch()
         self.processes = []
         self.patch = patch.object(guard, 'JOBS', self.root)
         self.patch.start()
@@ -179,6 +180,25 @@ class DevReleaseGuardTests(unittest.TestCase):
                 with self.assertRaises(BlockingIOError):
                     fcntl.flock(another, fcntl.LOCK_EX | fcntl.LOCK_NB)
 
+    def test_cancelling_a_queued_release_unblocks_ci_admission(self):
+        with (self.root / 'build.lock').open('a') as owner, \
+                (self.root / 'dev-release-wait.lock').open('rb') as admission:
+            fcntl.flock(owner, fcntl.LOCK_EX)
+            child = self.launch('cancel', 30)
+            until = time.monotonic() + 5
+            while time.monotonic() < until:
+                try:
+                    fcntl.flock(admission, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError:
+                    break
+                fcntl.flock(admission, fcntl.LOCK_UN)
+                time.sleep(0.05)
+            else:
+                self.fail('The waiting release never registered its priority')
+            child.send_signal(signal.SIGTERM)
+            self.assertEqual(child.wait(timeout=4), 1)
+            fcntl.flock(admission, fcntl.LOCK_EX | fcntl.LOCK_NB)
+
     def test_activation_deadline_requires_operator_review(self):
         child = self.launch('critical')
         self.wait_group()
@@ -246,6 +266,7 @@ def installed_watchdog_probe():
     state_file = jobs / (name + '.json')
     pgid = None
     with tempfile.TemporaryDirectory(prefix='dev-guard-probe-') as temporary:
+        (Path(temporary) / 'dev-release-wait.lock').touch()
         log = Path(temporary) / 'probe.log'
         with log.open('w') as output:
             child = subprocess.Popen([sys.executable, '-u', '-c', CONTROLLER, str(installed),

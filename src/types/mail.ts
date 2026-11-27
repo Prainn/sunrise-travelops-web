@@ -1,3 +1,5 @@
+import type { IntegrationActivity, IntegrationRuntime } from "./integration";
+
 export type MailAddress = { email: string; name?: string };
 export type MailView = "all" | "unassigned" | "mine";
 export interface MailboxOptions {
@@ -62,12 +64,18 @@ export interface MailDetail extends MailThread {
   messages: MailReadingMessage[];
   assignments: { actor: string; previousOwner: string | null; owner: string; reason: string; at: string }[];
   canReply: boolean;
+  sendBlockedReason: "send_paused" | "not_configured" | null;
   canAssign: boolean;
   canCreateInquiry: boolean;
   canUpdateCustomer: boolean;
   canCreateLedger: boolean;
   ledger: { id: string; orderNo: string } | null;
   signature: string | null;
+}
+export interface MailIntegrationStatus {
+  runtime: IntegrationRuntime;
+  staleAfterSeconds: number;
+  mailboxes: { mailbox: string; inbox: IntegrationActivity; sent: IntegrationActivity }[];
 }
 export interface MailDraftInput {
   version: number;

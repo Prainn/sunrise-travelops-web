@@ -51,7 +51,7 @@ import { useCustomerNotes } from "./useCustomerNotes";
 import { useWhatsappWorkbench } from "./useWhatsappWorkbench";
 import { MAX_DOCUMENT_BYTES, clearDocumentDrafts, validateDocumentFile } from "./document-draft";
 import { useDocumentDrafts } from "./useDocumentDrafts";
-import { useRuntimeSwitches } from "./integration/useRuntimeSwitches";
+import { useRuntimeSwitches } from "@/composables/useRuntimeSwitches";
 
 const BIG_SEQ = "9007199254740993";
 const doc = { visibilityState: "visible", hasFocus: vi.fn(() => true), addEventListener: vi.fn(), removeEventListener: vi.fn() };
@@ -914,7 +914,7 @@ describe("接入状态运行开关", () => {
   const runtime = { environment: "dev" as const, version: 3, inboundAvailable: true, outboundAvailable: true, inboundEnabled: true, outboundEnabled: false };
 
   it("只提交被修改的开关和版本，以返回值回填，保存中拒绝并发操作", async () => {
-    const switches = useRuntimeSwitches(vi.fn());
+    const switches = useRuntimeSwitches(vi.fn(), service.updateRuntime);
     switches.sync(runtime);
     let resolve!: (value: unknown) => void;
     service.updateRuntime.mockImplementationOnce(() => new Promise((done) => { resolve = done; }));
@@ -929,7 +929,7 @@ describe("接入状态运行开关", () => {
 
   it("409 重新读取最新状态；其他失败保留上次已知状态；不可用或缺失时不提交", async () => {
     const reload = vi.fn(async () => switches.sync({ ...runtime, version: 5, inboundEnabled: false }));
-    const switches = useRuntimeSwitches(reload);
+    const switches = useRuntimeSwitches(reload, service.updateRuntime);
     switches.sync(runtime);
     service.updateRuntime.mockRejectedValueOnce(conflict());
     expect((await switches.toggle("inbound", false)).kind).toBe("conflict");

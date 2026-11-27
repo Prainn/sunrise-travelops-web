@@ -1,8 +1,7 @@
 import { ref, shallowRef } from "vue";
 import { ApiError } from "@/api/request";
 import { websiteErrorMessage } from "@/services/website.service";
-import { whatsappService } from "@/services/whatsapp.service";
-import type { WhatsappRuntime } from "@/types/whatsapp";
+import type { IntegrationRuntime, IntegrationRuntimeInput } from "@/types/integration";
 
 export type RuntimeSwitch = "inbound" | "outbound";
 
@@ -16,14 +15,18 @@ export type RuntimeSaveResult =
  * 不做乐观更新，失败时界面保持上次已知状态；409 由调用方重新读取接入状态。
  *
  * @param reload - 重新读取接入状态并回填 runtime。
+ * @param update - 当前渠道保存开关的接口。
  * @returns 开关状态与操作。
  */
-export function useRuntimeSwitches(reload: () => Promise<unknown>) {
-  const runtime = shallowRef<WhatsappRuntime | null>(null);
+export function useRuntimeSwitches(
+  reload: () => Promise<unknown>,
+  update: (input: IntegrationRuntimeInput) => Promise<IntegrationRuntime>,
+) {
+  const runtime = shallowRef<IntegrationRuntime | null>(null);
   const saving = ref<RuntimeSwitch | null>(null);
 
   /** 以服务端最新返回回填；缺少 runtime 或读取失败时为 null，开关全部禁用。 */
-  function sync(next: WhatsappRuntime | null | undefined) {
+  function sync(next: IntegrationRuntime | null | undefined) {
     runtime.value = next ?? null;
   }
 
@@ -41,7 +44,7 @@ export function useRuntimeSwitches(reload: () => Promise<unknown>) {
       const input = field === "inbound"
         ? { version: current.version, inboundEnabled: enabled }
         : { version: current.version, outboundEnabled: enabled };
-      runtime.value = await whatsappService.updateRuntime(input);
+      runtime.value = await update(input);
       return { kind: "saved" };
     } catch (cause) {
       if (cause instanceof ApiError && cause.status === 409) {

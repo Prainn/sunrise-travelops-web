@@ -1,5 +1,13 @@
 {
   "mail": {
+    "integration": {
+      "inbound": "Inbound sync",
+      "mailbox": "Connected mailbox",
+      "inbox": "Inbox sync",
+      "sent": "Sent Items sync",
+      "help": "Pausing inbound sync preserves the current position for catch-up. Pausing outbound sending blocks new sends. Drafts can still be saved and Sent Items still sync.",
+      "notConfigured": "Mail integration is disabled."
+    },
     "customerEmail": "Email address",
     "account": "Mailbox account",
     "noAccounts": "No connected mailboxes",
@@ -35,7 +43,6 @@
     "sent": "Email sent",
     "failed": "Send failed. Your draft has been kept.",
     "checkSent": "Checking Sent Items. Wait for confirmation before sending again.",
-    "createInquiry": "Create inquiry from this email",
     "assignments": "Assignment history",
     "searchHint": "Search by subject, sender or email address",
     "discardChanges": "Discard unsaved changes",
@@ -206,6 +213,7 @@
     "whatsappWorkbench": "WhatsApp Workbench",
     "whatsappQuickReplies": "Quick replies",
     "mailInbox": "Email inbox",
+    "mailIntegration": "Mail integration",
     "whatsappInbox": "Inbox",
     "whatsappIntegration": "Integration"
   },
@@ -759,6 +767,7 @@
     "conflict": "The setting was changed by someone else. Refresh and try again",
     "types": {
       "whatsapp_unassigned": "WhatsApp Unassigned",
+      "mail_unassigned": "Mail Unassigned",
       "whatsapp_message": "WhatsApp New Messages",
       "whatsapp_assignment": "WhatsApp Assignment & Reassignment",
       "linxi_ledger_review": "Linxi Ledger Pending Review",
@@ -805,12 +814,14 @@
       "image": "Image",
       "sticker": "Sticker",
       "pdf": "PDF",
-      "word": "Word"
+      "word": "Word",
+      "file": "File"
     },
     "sources": {
       "whatsapp": "WhatsApp",
-      "upload": "Chat upload",
-      "management": "Admin upload"
+      "upload": "@:oss.sources.whatsapp",
+      "management": "Admin upload",
+      "mail": "Email attachment"
     },
     "states": {
       "pending": "Pending",
@@ -2688,6 +2699,32 @@
     "breakfastExcluded": "Breakfast not included",
     "noHotels": "No hotel arranged."
   },
+  "integration": {
+    "runtime": {
+      "environment": "Environment",
+      "outbound": "Outbound sending",
+      "on": "On",
+      "off": "Off",
+      "unavailable": "Unavailable",
+      "unavailableHint": "Not enabled in base configuration; cannot be switched",
+      "loadFailedHint": "Failed to load switch status. Refresh and try again",
+      "missingHint": "The server did not return switch status; cannot be switched",
+      "saved": "Switch updated",
+      "conflict": "Switch status changed elsewhere; reloaded the latest status"
+    },
+    "activity": {
+      "disabled": "Disabled",
+      "starting": "Awaiting first run",
+      "running": "Running",
+      "stalled": "No update for over {seconds} seconds",
+      "error": "Last processing attempt failed",
+      "stopped": "Stopped",
+      "paused": "Paused"
+    },
+    "lastSuccess": "Last successful check",
+    "lastError": "Last processing error",
+    "sendPaused": "Outbound sending is paused."
+  },
   "whatsapp": {
     "sendBlockedReasons": {
       "not_configured": "WhatsApp is not configured.",
@@ -2698,16 +2735,6 @@
       "events": "Inbound processing (this instance)",
       "outbound": "Outbound processing (this instance)"
     },
-    "workerStates": {
-      "disabled": "Disabled",
-      "starting": "Awaiting first run",
-      "running": "Running",
-      "stalled": "No update for over 60 seconds",
-      "error": "Last processing attempt failed",
-      "stopped": "Stopped"
-    },
-    "lastWorkerSuccess": "Last successful check",
-    "lastWorkerError": "Last processing error",
     "outboundCount": "Outbound {state}",
     "oldestOutbound": "Oldest unfinished message",
     "workerScopeHint": "Processing status covers this service instance only. No progress for over 60 seconds is flagged.",
@@ -2942,18 +2969,8 @@
       "noReply": "Files cannot be sent as a reply. Cancel the reply first"
     },
     "runtime": {
-      "environment": "Environment",
       "inbound": "Inbound processing",
-      "outbound": "Outbound sending",
-      "on": "On",
-      "off": "Off",
-      "unavailable": "Unavailable",
-      "unavailableHint": "Not enabled in base configuration; cannot be switched",
-      "loadFailedHint": "Failed to load switch status. Refresh and try again",
-      "missingHint": "The server did not return switch status; cannot be switched",
-      "help": "Inbound off pauses writing to conversations; the backlog is processed when turned back on. Outbound off pauses new sends and keeps the existing queue.",
-      "saved": "Switch updated",
-      "conflict": "Switch status changed elsewhere; reloaded the latest status"
+      "help": "Inbound off pauses writing to conversations; the backlog is processed when turned back on. Outbound off pauses new sends and keeps the existing queue."
     }
   }
 }

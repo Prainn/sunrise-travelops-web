@@ -83,6 +83,9 @@
             <el-tag v-if="isOssChatDocument(row as OssCatalogItem)" type="info" effect="plain">
               {{ row.extension.toUpperCase() }}
             </el-tag>
+            <el-tag v-else-if="row.source === 'mail'" type="info" effect="plain">
+              {{ $t(`oss.kinds.${row.kind}`) }}
+            </el-tag>
             <OssMediaPreview
               v-else
               :resource="row as OssResource"
@@ -162,7 +165,16 @@
                 {{ $t('oss.openDocument') }}
               </el-button>
               <el-button
-                v-if="canUpdate && !isOssChatDocument(row as OssCatalogItem)"
+                v-if="row.source === 'mail'"
+                link
+                type="primary"
+                :loading="downloadingId === row.id"
+                @click="handleMailDownload(row as OssMailAttachment)"
+              >
+                {{ $t('whatsapp.documentPreview.download') }}
+              </el-button>
+              <el-button
+                v-if="canUpdate && isOssMediaResource(row as OssCatalogItem)"
                 link
                 type="primary"
                 :disabled="row.state === 'deleting'"
@@ -180,7 +192,7 @@
                 {{ $t('oss.retry') }}
               </el-button>
               <el-tooltip
-                v-if="canDelete && !isOssChatDocument(row as OssCatalogItem)"
+                v-if="canDelete && isOssMediaResource(row as OssCatalogItem)"
                 :content="deleteBlockedReason(row as OssResource)"
                 :disabled="!deleteBlockedReason(row as OssResource)"
                 placement="top"
@@ -227,6 +239,11 @@
             {{ detail.extension.toUpperCase() }}
           </el-tag>
         </div>
+        <div v-else-if="detail.source === 'mail'" class="flex justify-center">
+          <el-button :loading="downloadingId === detail.id" @click="handleMailDownload(detail)">
+            {{ $t('whatsapp.documentPreview.download') }}
+          </el-button>
+        </div>
         <div v-else class="flex justify-center">
           <OssMediaPreview :resource="detail" :max-size="360" />
         </div>
@@ -234,7 +251,7 @@
           <el-descriptions-item :label="$t('oss.name')">
             <span class="break-all">{{ detail.name }}</span>
           </el-descriptions-item>
-          <el-descriptions-item v-if="!isOssChatDocument(detail)" :label="$t('oss.remark')">
+          <el-descriptions-item v-if="isOssMediaResource(detail)" :label="$t('oss.remark')">
             <span class="whitespace-pre-wrap break-words">{{ detail.remark || '-' }}</span>
           </el-descriptions-item>
           <el-descriptions-item :label="$t('oss.environment')">
@@ -256,13 +273,13 @@
           <el-descriptions-item :label="$t('oss.size')">
             {{ formatFileSize(detail.size) }}
           </el-descriptions-item>
-          <el-descriptions-item v-if="!isOssChatDocument(detail)" :label="$t('oss.dimensions')">
+          <el-descriptions-item v-if="isOssMediaResource(detail)" :label="$t('oss.dimensions')">
             {{ dimensions(detail) }}
           </el-descriptions-item>
           <el-descriptions-item :label="$t('oss.referenceCount')">
             {{ detail.referenceCount }}
           </el-descriptions-item>
-          <el-descriptions-item v-if="!isOssChatDocument(detail)" :label="$t('oss.objectKey')">
+          <el-descriptions-item v-if="isOssMediaResource(detail)" :label="$t('oss.objectKey')">
             <span class="break-all">{{ detail.objectKey || '-' }}</span>
           </el-descriptions-item>
           <el-descriptions-item :label="$t('common.createdAt')">
@@ -353,17 +370,19 @@ import Pagination from "@/components/Pagination/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
 import { useRefreshOnActivated } from "@/composables";
+import { mailService } from "@/services/mail.service";
 import { ossService } from "@/services/oss.service";
 import { websiteErrorMessage } from "@/services/website.service";
-import { isOssChatDocument, ossErrorKey, type OssCatalogItem, type OssChatDocument, type OssResource, type OssResourceState } from "@/types/oss";
+import { isOssChatDocument, isOssMediaResource, ossErrorKey, type OssCatalogItem, type OssChatDocument, type OssMailAttachment, type OssResource, type OssResourceState } from "@/types/oss";
 import DocumentPreviewDialog from "@/views/whatsapp/components/DocumentPreviewDialog.vue";
 import { formatDateTime, formatFileSize, runOnEnter } from "@/utils";
 import { hasPerm } from "@/utils/auth";
 import { IMAGE_ACCEPT, validateImageFile } from "@/utils/image-file";
+import { triggerSignedDownload } from "@/utils/signed-download";
 
 defineOptions({ name: "OssManagement" });
 
-const KINDS: OssCatalogItem["kind"][] = ["image", "sticker", "pdf", "word"];
+const KINDS: OssCatalogItem["kind"][] = ["image", "sticker", "pdf", "word", "file"];
 const STATES: OssResourceState[] = ["pending", "processing", "ready", "failed", "deleting"];
 const STATE_TAG_TYPES: Record<OssResourceState, "info" | "primary" | "success" | "warning" | "danger"> = {
   pending: "info",
@@ -390,6 +409,7 @@ const loading = ref(false);
 const loadError = ref("");
 const uploading = ref(false);
 const busyId = ref("");
+const downloadingId = ref("");
 const fileInput = ref<HTMLInputElement>();
 
 const detailVisible = ref(false);
@@ -523,6 +543,19 @@ function openDocument(row: OssChatDocument) {
   documentOpen.value = true;
 }
 
+async function handleMailDownload(row: OssMailAttachment) {
+  if (downloadingId.value) return;
+  downloadingId.value = row.id;
+  try {
+    const { url } = await mailService.download(row.mailThreadId, row.id);
+    triggerSignedDownload(url);
+  } catch (cause) {
+    ElMessage.error(websiteErrorMessage(cause));
+  } finally {
+    downloadingId.value = "";
+  }
+}
+
 function fillEditor(row: OssResource) {
   editingId.value = row.id;
   form.version = row.version;
@@ -538,7 +571,7 @@ function openEditor(row: OssResource) {
 async function reloadEditor() {
   try {
     const row = await ossService.detail(editingId.value);
-    if (!isOssChatDocument(row)) fillEditor(row);
+    if (isOssMediaResource(row)) fillEditor(row);
   } catch (cause) {
     ElMessage.error(websiteErrorMessage(cause));
   }

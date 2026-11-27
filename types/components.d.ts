@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AccountLinkEditor: typeof import('./../src/views/system/account-links/components/AccountLinkEditor.vue')['default']
     AccountLinkUnlink: typeof import('./../src/views/system/account-links/components/AccountLinkUnlink.vue')['default']
+    ActivityStatus: typeof import('./../src/components/IntegrationStatus/ActivityStatus.vue')['default']
     AgencyContactDialog: typeof import('./../src/views/resources/agency/components/AgencyContactDialog.vue')['default']
     AgencyContactSelect: typeof import('./../src/views/inquiries/components/AgencyContactSelect.vue')['default']
     AgencyContactsPanel: typeof import('./../src/views/resources/agency/components/AgencyContactsPanel.vue')['default']
@@ -181,6 +182,7 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     RowActions: typeof import('./../src/components/RowActions/index.vue')['default']
+    RuntimeCard: typeof import('./../src/components/IntegrationStatus/RuntimeCard.vue')['default']
     SectionCard: typeof import('./../src/components/SectionCard/index.vue')['default']
     ShengxuLedgerDialog: typeof import('./../src/views/ledgers/shengxu/components/ShengxuLedgerDialog.vue')['default']
     StrictInputNumber: typeof import('./../src/components/StrictInputNumber/index.vue')['default']

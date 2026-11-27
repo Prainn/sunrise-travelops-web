@@ -61,6 +61,9 @@
         />
       </el-form-item>
     </el-form>
+    <p v-if="sendBlockedReason" class="text-[12px] text-[var(--el-color-warning)]" role="status">
+      {{ $t(sendBlockedReason === "send_paused" ? "integration.sendPaused" : "mail.integration.notConfigured") }}
+    </p>
     <template #footer>
       <el-button v-if="dirty()" :disabled="busy" @click="handleDiscard">
         {{ $t("mail.discardChanges") }}
@@ -80,7 +83,7 @@
       <el-button
         type="primary"
         :loading="busy"
-        :disabled="!signature || !parsedTo().length || (!body.trim() && !draft.attachments.length)"
+        :disabled="!!sendBlockedReason || !signature || !parsedTo().length || (!body.trim() && !draft.attachments.length)"
         @click="handleSend"
       >
         {{ $t("common.send") }}
@@ -117,15 +120,21 @@
 import { type ButtonInstance, ElMessage, ElMessageBox } from "element-plus";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { ApiError } from "@/api/request";
 import AppDialog from "@/components/AppDialog/index.vue";
 import { mailService } from "@/services/mail.service";
 import { websiteErrorMessage } from "@/services/website.service";
-import type { MailMessage } from "@/types/mail";
+import type { MailDetail, MailMessage } from "@/types/mail";
 import { formatFileSize } from "@/utils/format";
 import { useAccountSwitchGuard } from "@/composables/useAccountSwitchGuard";
 import { findInvalidMailAddresses, parseMailAddresses } from "./mail-addresses";
 
-const props = defineProps<{ initial: MailMessage; mailbox: string; signature: string | null }>();
+const props = defineProps<{
+  initial: MailMessage;
+  mailbox: string;
+  signature: string | null;
+  sendBlockedReason: MailDetail["sendBlockedReason"];
+}>();
 const emit = defineEmits<{ updated: [] }>();
 const visible = defineModel<boolean>({ required: true });
 const { t } = useI18n();
@@ -169,6 +178,7 @@ async function run(operation: () => Promise<boolean | void>): Promise<boolean> {
   try {
     return (await operation()) !== false;
   } catch (error) {
+    if (error instanceof ApiError && error.details?.reason === "OUTBOUND_PAUSED") emit("updated");
     ElMessage.error(websiteErrorMessage(error));
     return false;
   } finally {

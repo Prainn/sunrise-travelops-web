@@ -21,11 +21,10 @@ import type {
   WhatsappMessage,
   WhatsappMessageQueryParams,
   WhatsappNewConsultationResult,
-  WhatsappRuntime,
-  WhatsappRuntimeInput,
   WhatsappQuickReply, WhatsappQuickReplyInput, WhatsappQuickReplyQuery,
 } from "@/types/whatsapp";
 import type { WebsiteOwnerOption } from "@/services/website.service";
+import type { IntegrationRuntime, IntegrationRuntimeInput } from "@/types/integration";
 
 const BASE_URL = "/whatsapp";
 const conversationUrl = (id: string) => `${BASE_URL}/conversations/${encodeURIComponent(id)}`;
@@ -173,8 +172,8 @@ export const whatsappService = {
     return request.get<WhatsappIntegrationStatus>(`${BASE_URL}/integration`);
   },
   /** 只更新指定开关；版本过期返回 409。 */
-  updateRuntime(input: WhatsappRuntimeInput) {
-    return request.put<WhatsappRuntime>(`${BASE_URL}/integration/runtime`, input, { userAction: true });
+  updateRuntime(input: IntegrationRuntimeInput) {
+    return request.put<IntegrationRuntime>(`${BASE_URL}/integration/runtime`, input, { userAction: true });
   },
   failedEvents(query: { page: number; pageSize: number }) {
     return request.get<PageResult<WhatsappFailedEvent>>(`${BASE_URL}/integration/failed-events`, { params: { ...query } });
