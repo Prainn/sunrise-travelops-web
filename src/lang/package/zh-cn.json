@@ -2747,7 +2747,7 @@
       "unavailable": "消息角标暂不可用，正在重试",
       "hint": "打开收件箱；红色为未读消息，橙色为待分配会话"
     },
-    "keywordPlaceholder": "姓名、手机号或 BSUID",
+    "keywordPlaceholder": "姓名、用户名、手机号或 BSUID",
     "view": "视图",
     "views": {
       "all": "全部",

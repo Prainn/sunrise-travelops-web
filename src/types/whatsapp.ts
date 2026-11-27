@@ -1,6 +1,6 @@
 import type { BaseQueryParams } from "@/types/common";
 import type { IntegrationActivity, IntegrationRuntime } from "@/types/integration";
-import type { WebsiteInquiryInput } from "@/types/website";
+import type { InboxCustomerNotes, WebsiteInquiryInput } from "@/types/website";
 
 export type WhatsappConversationState = "open" | "closed" | "archived";
 export type WhatsappConversationView = "mine" | "unassigned" | "all";
@@ -42,6 +42,7 @@ export interface WhatsappConversationItem {
   archivedAt: string | null;
   updatedAt: string;
   name: string;
+  title: string;
   phone: string | null;
   bsuid: string | null;
   lastInboundAt: string | null;
@@ -58,6 +59,10 @@ export interface WhatsappConversationTour {
   title: string;
   status: string;
   conversationId: string;
+}
+
+export interface WhatsappCustomerNotes extends InboxCustomerNotes {
+  title: string;
 }
 
 /** 服务端展示能力；每次操作仍由后端校验。 */
