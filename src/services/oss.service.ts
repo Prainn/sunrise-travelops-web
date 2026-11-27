@@ -28,7 +28,7 @@ export const ossService = {
     return request.post<OssResource>(BASE_URL, imageFormData(file), { userAction: true, timeoutMs: LONG_REQUEST_TIMEOUT_MS });
   },
   update(id: string, form: OssResourceForm) {
-    return request.put<OssResource>(resourceUrl(id), form, { userAction: true });
+    return request.put<OssCatalogItem>(resourceUrl(id), form, { userAction: true });
   },
   remove(id: string, version: number) {
     return request.delete<{ id: string; deleted: true }>(resourceUrl(id), { userAction: true, params: { version } });

@@ -188,14 +188,6 @@
               :closable="false"
               :title="$t('mail.checkSent')"
             />
-            <div
-              v-if="message.direction === 'inbound' && detail.canCreateInquiry"
-              class="flex flex-wrap items-center gap-2 mt-2"
-            >
-              <el-button @click="emit('create-inquiry', message.id)">
-                {{ $t("mail.createInquiry") }}
-              </el-button>
-            </div>
           </div>
         </SectionCard>
       </article>
@@ -207,6 +199,7 @@
       :initial="draft"
       :mailbox="detail.mailbox"
       :signature="detail.signature"
+      :send-blocked-reason="detail.sendBlockedReason"
       @updated="emit('refresh')"
     />
   </div>
@@ -226,7 +219,7 @@ import { triggerSignedDownload } from "@/utils/signed-download";
 import MailReply from "./MailReply.vue";
 
 const props = defineProps<{ detail: MailDetail; selected?: string }>();
-const emit = defineEmits<{ refresh: []; "create-inquiry": [source: string] }>();
+const emit = defineEmits<{ refresh: [] }>();
 const { t } = useI18n();
 const busy = ref(false);
 const downloadingIds = ref(new Set<string>());

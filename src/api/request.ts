@@ -75,6 +75,8 @@ function getErrorMessage(code: string, status?: number, details?: Record<string,
     return translate("apiErrors.PAYLOAD_TOO_LARGE_LIMIT", { size: formatFileSize(maxBytes) });
   if (code === ApiErrorCode.BAD_REQUEST && details?.reason === "INVALID_RECORD_ID")
     return translate("apiErrors.INVALID_RECORD_ID");
+  if (code === ApiErrorCode.CONFLICT && details?.reason === "OUTBOUND_PAUSED")
+    return translate("integration.sendPaused");
   return (
     translateIfExists(`apiErrors.${code}`) ??
     (status ? translateIfExists(`apiErrors.HTTP_${status}`) : undefined) ??
@@ -94,7 +96,8 @@ export class ApiError extends Error {
     const detail = options.serverMessage?.trim();
     const serverMessage = detail && detail !== options.code
       && !/^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$/.test(detail)
-      && !LOCALIZED_ERROR_CODES.has(options.code) ? detail : undefined;
+      && !LOCALIZED_ERROR_CODES.has(options.code)
+      && !(options.code === ApiErrorCode.CONFLICT && options.details?.reason === "OUTBOUND_PAUSED") ? detail : undefined;
     super(serverMessage ?? message, { cause: options.cause });
     this.name = "ApiError";
     this.code = options.code;

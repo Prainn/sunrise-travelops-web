@@ -1,6 +1,7 @@
 /** 飞书通知业务类型，与后端 feishu_notification_settings 一致。 */
 export const FEISHU_NOTIFICATION_TYPES = [
   "whatsapp_unassigned",
+  "mail_unassigned",
   "whatsapp_message",
   "whatsapp_assignment",
   "linxi_ledger_review",

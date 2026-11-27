@@ -135,18 +135,26 @@ class Job:
     def cancel(self, *_):
         self.cancelled = True
 
-    def lock(self, seconds=2700):
-        self.fd = os.open(LOCK, os.O_RDWR | os.O_CREAT, 0o660)
-        self.state.update(phase='wait-lock', deadline=time.monotonic() + seconds)
-        self.flush()
+    def wait_for_lock(self, fd, mode):
         while True:
             if self.cancelled or time.monotonic() >= self.state['deadline']:
                 raise TimeoutError('Cancelled or timed out waiting for the build lock; owner untouched')
             try:
-                fcntl.flock(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                break
+                fcntl.flock(fd, mode | fcntl.LOCK_NB)
+                return
             except BlockingIOError:
                 time.sleep(0.2)
+
+    def lock(self, seconds=2700):
+        started = time.monotonic()
+        self.fd = os.open(LOCK, os.O_RDWR | os.O_CREAT, 0o660)
+        self.state.update(phase='wait-lock', deadline=started + seconds)
+        self.flush()
+        with LOCK.with_name('dev-release-wait.lock').open('rb') as release_wait:
+            self.wait_for_lock(release_wait, fcntl.LOCK_SH)
+            self.wait_for_lock(self.fd, fcntl.LOCK_EX)
+        self.state['lock_wait_seconds'] = round(time.monotonic() - started, 2)
+        print(f'Shared build lock wait: {self.state["lock_wait_seconds"]}s', flush=True)
         self.total_deadline = time.monotonic() + 900
         # An interrupted activation requires explicit inspection, never an automatic retry.
         for path in JOBS.glob('*.json'):
