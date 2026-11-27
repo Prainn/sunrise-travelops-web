@@ -328,7 +328,7 @@ function usedDays(attractionId: string) {
   return props.days
     .filter((day) => day.items.some((item) => item.attractionId === attractionId))
     .map((day) => `D${day.dayNumber}`)
-    .join("、");
+    .join(t("websiteInquiry.listSeparator"));
 }
 function close() {
   emit("update:modelValue", false);

@@ -39,3 +39,23 @@ it("records an explicit navigation to the inquiry list and ignores polling, redi
   await router.push("/inquiries/list");
   expect(recordClientOperation).toHaveBeenCalledTimes(1);
 });
+
+it("records legitimate group and home redirects while ignoring guard fallbacks", async () => {
+  const currentRoute = { value: { path: "/dashboard", fullPath: "/dashboard" } };
+  const router = {
+    push: vi.fn().mockResolvedValue(undefined),
+    resolve: (path: string) => ({ fullPath: path, href: path }),
+    currentRoute,
+  } as unknown as Router;
+
+  await openUserPage(router, "/");
+  expect(recordClientOperation).toHaveBeenCalledTimes(1);
+
+  currentRoute.value = { path: "/system/user", fullPath: "/system/user" };
+  await openUserPage(router, "/system");
+  expect(recordClientOperation).toHaveBeenCalledTimes(2);
+
+  currentRoute.value = { path: "/401", fullPath: "/401" };
+  await openUserPage(router, "/system");
+  expect(recordClientOperation).toHaveBeenCalledTimes(2);
+});

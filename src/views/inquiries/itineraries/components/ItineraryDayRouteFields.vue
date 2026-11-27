@@ -57,7 +57,7 @@
       :aria-label="$t('websitePrint.overnightColumn')"
       autocomplete="new-password"
       :model-value="day.overnightDestination"
-      :disabled="!editable || (!initialPlanning && !isLast) || day.overnightDestination === ''"
+      :disabled="!editable || day.overnightDestination === ''"
       :placeholder="day.overnightDestination === '' ? $t('itinerary.noOvernightStay') : $t('itinerary.overnightPending')"
       @update:model-value="emit('update-field', 'overnightDestination', $event)"
     >

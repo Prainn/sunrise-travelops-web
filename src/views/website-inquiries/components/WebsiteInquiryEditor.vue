@@ -52,7 +52,7 @@
           }}
         </el-descriptions-item>
         <el-descriptions-item v-if="record.mailSource" :label="$t('mail.original')">
-          <router-link :to="{ name: 'MailInbox', query: { thread: record.mailSource.threadId, message: record.mailSource.messageId } }">
+          <router-link :to="{ name: 'MailInbox', query: { mailbox: record.mailSource.mailbox, thread: record.mailSource.threadId, message: record.mailSource.messageId } }">
             {{ record.mailSource.mailbox }}
           </router-link>
         </el-descriptions-item>
@@ -308,6 +308,8 @@
             <InquirySourceChannelSelect
               v-model="form.contactChannel"
               :disabled="sourceReadOnly"
+              :allow-create="Boolean(record)"
+              :filterable="Boolean(record)"
               clearable
             />
           </el-form-item>
@@ -315,7 +317,7 @@
             <el-input v-model="form.contactChannel" maxlength="100" :readonly="sourceReadOnly" />
           </el-form-item>
         </el-col>
-        <el-col v-if="!showSourceChannelSelect" :xs="24" :sm="12">
+        <el-col v-if="!showSourceChannelSelect || Boolean(record)" :xs="24" :sm="12">
           <el-form-item :label="$t('websiteInquiry.acquisitionSource')">
             <el-input v-model="form.acquisitionSource" maxlength="2048" :readonly="sourceReadOnly" />
           </el-form-item>
@@ -424,7 +426,7 @@ const isWebsite = computed(
 );
 const sourceReadOnly = computed(() => Boolean(props.prefillSource));
 const showSourceChannelSelect = computed(
-  () => isWebsite.value && !props.record && props.prefillSource !== "website-visit",
+  () => isWebsite.value && props.prefillSource !== "website-visit",
 );
 const selectingDates = computed(() => isWebsite.value && Array.isArray(form.value.serviceDates));
 const selectedDayCount = computed(() => form.value.serviceDates?.length ?? 0);
@@ -529,7 +531,7 @@ watch(
 function changeBusiness() {
   form.value.ownerId = undefined;
   form.value.destinations = [];
-  if (showSourceChannelSelect.value && !sourceReadOnly.value) {
+  if (!sourceReadOnly.value) {
     form.value.contactChannel = "";
     form.value.acquisitionSource = "";
   }

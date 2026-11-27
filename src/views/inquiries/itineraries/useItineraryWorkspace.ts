@@ -455,7 +455,9 @@ export function useItineraryWorkspace(messages: WorkspaceMessages) {
     );
     if (
       removedVia?.length &&
-      !(await messages.confirm("itinerary.viaDestinationsRemoved", { items: removedVia.join("、") }))
+      !(await messages.confirm("itinerary.viaDestinationsRemoved", {
+        items: removedVia.join(messages.translate("websiteInquiry.listSeparator")),
+      }))
     )
       return;
     // 保存失败时回到提交前，避免人数档同步后的车价等改动残留在未保存记录中。

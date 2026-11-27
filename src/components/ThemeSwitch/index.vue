@@ -6,7 +6,7 @@
     <template #dropdown>
       <el-dropdown-menu>
         <el-dropdown-item
-          v-for="item in theneList"
+          v-for="item in themeList"
           :key="item.value"
           :command="item.value"
           :disabled="settingsStore.theme === item.value"
@@ -29,11 +29,11 @@ import { recordClientOperation } from "@/utils/client-operation-log";
 const { t } = useI18n();
 const settingsStore = useSettingsStore();
 
-const theneList = [
+const themeList = computed(() => [
   { label: t("login.light"), value: ThemeMode.LIGHT, component: Sunny },
   { label: t("login.dark"), value: ThemeMode.DARK, component: Moon },
   { label: t("login.auto"), value: ThemeMode.AUTO, component: Monitor },
-];
+]);
 
 const currentThemeIcon = computed(() => {
   if (settingsStore.theme === ThemeMode.AUTO) {

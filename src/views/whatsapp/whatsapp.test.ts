@@ -680,9 +680,9 @@ describe("useCustomerNotes", () => {
     conversationId: "c-1", version: 1, customerName: "Tom", countryItemId: null, plannedDays: null, startDate: null, pax: null,
     contactInfo: "bsuid-1", destinations: [], requirements: "hi", internalRemark: "", updatedAt: null, ...patch,
   });
-  function setupNotes() {
+  function setupNotes(options?: Parameters<typeof useCustomerNotes>[0]) {
     scope = effectScope();
-    return scope.run(() => useCustomerNotes())!;
+    return scope.run(() => useCustomerNotes(options))!;
   }
 
   it("按会话隔离草稿，切换回来保留未保存输入，晚到的旧响应不覆盖", async () => {
@@ -796,6 +796,39 @@ describe("useCustomerNotes", () => {
     expect((await state.save())?.kind).toBe("saved");
     expect(state.entry.value).toMatchObject({ version: 2, form: { customerName: "WhatsApp Tom" } });
     expect(state.dirty.value).toBe(false);
+  });
+
+  it("邮件同会话保存一封来信后，清除其余干净来信缓存并将脏来信记为冲突", async () => {
+    service.customerNotes.mockResolvedValue(notes({ version: 1 }));
+    service.saveCustomerNotes.mockResolvedValue(notes({ version: 2, customerName: "Updated" }));
+    const state = setupNotes({
+      page: "MailInbox",
+      service: {
+        customerNotes: (id) => service.customerNotes(id),
+        saveCustomerNotes: (id, input) => service.saveCustomerNotes(id, input),
+      },
+    });
+    state.select("m-clean", 1);
+    await flush();
+    state.select("m-dirty", 1);
+    await flush();
+    state.entry.value!.form.internalRemark = "unsaved";
+    state.select("m-active", 1);
+    await flush();
+    state.entry.value!.form.customerName = "Updated";
+
+    expect((await state.save())?.kind).toBe("saved");
+    service.customerNotes.mockClear();
+    service.customerNotes.mockResolvedValue(notes({ version: 2, customerName: "Updated" }));
+
+    state.select("m-clean", 1);
+    await flush();
+    expect(service.customerNotes).toHaveBeenCalledWith("m-clean");
+    expect(state.entry.value?.version).toBe(2);
+
+    state.select("m-dirty", 1);
+    await flush();
+    expect(state.entry.value?.conflict).toBe(true);
   });
 });
 

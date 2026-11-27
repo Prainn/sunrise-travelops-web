@@ -13,6 +13,7 @@ import { sessionGate } from "@/utils/session-gate";
 import { usePermissionStoreHook } from "@/stores/permission";
 import { useDictStoreHook } from "@/stores/dict";
 import { useTagsViewStore } from "./tags-view";
+import { clearCommandPaletteHistory } from "@/components/CommandPalette/useCommandPalette";
 import { clearNotesDrafts } from "@/views/whatsapp/notes-drafts";
 import { clearDocumentDrafts } from "@/views/whatsapp/document-draft";
 import sunriseAvatar from "@/assets/images/logo-emblem.png";
@@ -92,6 +93,7 @@ export const useUserStore = defineStore("user", () => {
     resetUserState();
 
     // 2. 重置其他模块状态
+    clearCommandPaletteHistory();
     useDictStoreHook().clearDictCache();
     useTagsViewStore().delAllViews();
   }
