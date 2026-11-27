@@ -4,7 +4,7 @@
       <div class="flex items-center justify-between gap-[8px] min-w-0">
         <div class="flex flex-1 items-center flex-wrap gap-[8px] min-w-0">
           <h3 class="m-0 max-w-full text-[16px] truncate">
-            {{ detail.name || detail.bsuid || detail.phone }}
+            {{ detail.title }}
           </h3>
           <el-tag
             v-if="phoneRegionLabel"

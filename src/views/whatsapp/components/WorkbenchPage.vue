@@ -45,16 +45,18 @@
     >
       <template #list>
         <ConversationList
-          v-model:page="workbench.page.value"
-          v-model:page-size="workbench.pageSize.value"
           class="w-full h-full"
           :items="workbench.conversations.value"
           :selected-id="workbench.selectedId.value"
-          :loading="workbench.listLoading.value"
-          :error="workbench.listError.value"
-          :total="workbench.total.value"
+          :loading="workbench.list.loading.value"
+          :error="workbench.list.error.value"
+          :has-more="workbench.list.hasMore.value"
+          :busy="workbench.list.busy.value"
+          :loading-more="workbench.list.loadingMore.value"
+          :load-more-error="workbench.list.loadMoreError.value"
           @select="handleSelect"
           @refresh="handleManualRefresh"
+          @load-more="workbench.list.loadMore"
         />
       </template>
       <template #banner>
@@ -204,7 +206,7 @@ const can = (permission: string) => user.userInfo.perms.includes(permission);
 const isManager = can("whatsapp:conversation:assign");
 const defaultView: WhatsappConversationView | undefined = isManager ? "all" : undefined;
 const workbench = useWhatsappWorkbench({ defaultView });
-const customerNotes = useCustomerNotes();
+const customerNotes = useCustomerNotes({ service: whatsappService, page: "WhatsappInbox" });
 
 const STATE_OPTIONS: WhatsappConversationState[] = ["open", "closed", "archived"];
 const viewOptions: WhatsappConversationView[] = isManager ? ["all", "unassigned", "mine"] : [];
@@ -305,7 +307,7 @@ async function handleSaveNotes() {
   if (!result) return;
   if (result.kind === "saved") {
     ElMessage.success(t("common.saveSuccess"));
-    workbench.applyCustomerName(result.notes.conversationId, result.notes.customerName, result.notes.version);
+    workbench.applyCustomerNotes(result.notes);
     void loadActions();
   } else if (result.kind === "conflict") {
     // 保留用户输入，由用户确认后再刷新，不自动覆盖或重试。

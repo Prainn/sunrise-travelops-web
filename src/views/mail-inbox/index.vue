@@ -30,7 +30,7 @@
           class="mail-inbox__list w-full h-full"
           :aria-label="$t('mail.threadList')"
         >
-          <TableToolbar class="mail-inbox__toolbar" :refreshing="accountsLoading || listLoading" @refresh="refreshInbox">
+          <TableToolbar class="mail-inbox__toolbar" :refreshing="accountsLoading || listBusy" @refresh="refreshInbox">
             <el-select
               v-if="accounts?.canSwitch"
               class="mail-inbox__account"
@@ -58,6 +58,7 @@
             </h2>
           </TableToolbar>
           <div
+            ref="scrollRoot"
             v-loading="(accountsLoading || listLoading) && !rows.length"
             class="min-h-0 flex-1 overflow-y-auto overscroll-contain"
           >
@@ -79,16 +80,16 @@
               v-else-if="!accountsLoading && !listLoading && !accountsError && !listError"
               :type="keyword || query.view !== 'all' ? 'no-match' : 'empty'"
             />
+            <InboxListLoadMore
+              v-if="!accountsError && !listError"
+              :root="scrollRoot"
+              :has-more="hasMore"
+              :busy="listBusy || accountsLoading"
+              :loading="loadingMore"
+              :error="loadMoreError"
+              @load-more="inboxList.loadMore"
+            />
           </div>
-          <Pagination
-            v-model:limit="query.pageSize"
-            :page="query.page"
-            class="mail-inbox__pagination"
-            variant="compact"
-            layout="total, sizes, ->, prev, pager, next"
-            :total="total"
-            @update:page="changePage"
-          />
         </SectionCard>
       </template>
       <SectionCard fill padding="none" class="mail-inbox__reader min-w-0">
@@ -133,15 +134,16 @@ import { ElMessage } from "element-plus";
 import { Message } from "@element-plus/icons-vue";
 import FeedbackState from "@/components/FeedbackState/index.vue";
 import FilterBar from "@/components/FilterBar/index.vue";
+import InboxListLoadMore from "@/components/InboxListLoadMore/index.vue";
 import PageShell from "@/components/PageShell/index.vue";
-import Pagination from "@/components/Pagination/index.vue";
 import SectionCard from "@/components/SectionCard/index.vue";
 import TableToolbar from "@/components/TableToolbar/index.vue";
+import { useInboxList } from "@/composables/useInboxList";
 import { mailService } from "@/services/mail.service";
 import { websiteErrorMessage } from "@/services/website.service";
 import { useMailUnreadStore } from "@/stores/mail-unread";
 import { useUserStore } from "@/stores/user";
-import type { MailboxOptions, MailDetail, MailThread as MailThreadItem, MailView } from "@/types/mail";
+import type { MailboxOptions, MailDetail, MailView } from "@/types/mail";
 import { hasUserPermission } from "@/utils/permission";
 import { ApiError } from "@/api/request";
 import InboxSplitLayout from "@/views/website-inquiries/components/InboxSplitLayout.vue";
@@ -157,15 +159,12 @@ const route = useRoute();
 const router = useRouter();
 const views: MailView[] = ["all", "unassigned", "mine"];
 const manager = computed(() => hasUserPermission(user.userInfo, "mail:thread:assign"));
-const query = reactive({ page: 1, pageSize: 20, keyword: "", view: "all" as MailView });
+const query = reactive({ keyword: "", view: "all" as MailView });
 const keyword = refDebounced(toRef(query, "keyword"), 250);
 const accounts = ref<MailboxOptions>();
 const accountsLoading = ref(false);
 const accountsError = ref("");
-const rows = ref<MailThreadItem[]>([]);
-const total = ref(0);
-const listLoading = ref(false);
-const listError = ref("");
+const scrollRoot = ref<HTMLElement>();
 const detail = ref<MailDetail>();
 const detailLoading = ref(false);
 const selectedSource = ref("");
@@ -180,18 +179,18 @@ const activeMailbox = computed(() => {
   const address = detail.value && detail.value.id === threadId.value ? detail.value.mailbox : route.query.mailbox;
   return typeof address === "string" && mailboxes.includes(address) ? address : mailboxes[0];
 });
+const inboxList = useInboxList(() => {
+  const filters = { keyword: keyword.value, mailbox: activeMailbox.value, view: manager.value ? query.view : undefined };
+  return (page, pageSize) => mailService.list({ ...filters, page, pageSize });
+});
+const { items: rows, busy: listBusy, loading: listLoading, error: listError, hasMore, loadingMore, loadMoreError } = inboxList;
 
-let listRequest = 0;
 let detailRequest = 0;
 let timer: ReturnType<typeof setInterval>;
 
-watch([activeMailbox, keyword, () => query.view], () => {
-  query.page = 1;
-  total.value = 0;
-}, { flush: "sync" });
-watch([keyword, () => query.view, () => query.pageSize], closeThread);
-watch([() => !!accounts.value, activeMailbox, keyword, () => query.view, () => query.page, () => query.pageSize], () => {
-  rows.value = [];
+watch([keyword, () => query.view], closeThread);
+watch([() => !!accounts.value, activeMailbox, keyword, () => query.view, manager], () => {
+  inboxList.reset();
   void loadThreads();
 });
 watch(threadId, () => {
@@ -210,13 +209,13 @@ onMounted(() => {
   void refreshInbox();
   timer = setInterval(() => {
     if (document.hidden) return;
-    if (!listLoading.value && !accountsLoading.value) void loadThreads(true);
+    if (!listBusy.value && !accountsLoading.value) void loadThreads(true);
     if (threadId.value && !detailLoading.value) void loadSelected(true);
   }, 30_000);
 });
 onUnmounted(() => {
   clearInterval(timer);
-  listRequest++;
+  inboxList.reset();
   detailRequest++;
 });
 
@@ -238,29 +237,7 @@ async function refreshInbox() {
 
 async function loadThreads(background = false) {
   if (!accounts.value) return;
-  const current = ++listRequest;
-  listLoading.value = true;
-  listError.value = "";
-  try {
-    const result = await mailService.list({
-      page: query.page, pageSize: query.pageSize, keyword: keyword.value,
-      mailbox: activeMailbox.value, view: manager.value ? query.view : undefined,
-    });
-    if (current !== listRequest) return;
-    rows.value = result.list;
-    total.value = result.total;
-  } catch (cause) {
-    if (current !== listRequest) return;
-    const authRejected = cause instanceof ApiError && [401, 403].includes(cause.status ?? 0);
-    if (background && rows.value.length && !authRejected) return;
-    if (authRejected) {
-      rows.value = [];
-      total.value = 0;
-    }
-    listError.value = websiteErrorMessage(cause);
-  } finally {
-    if (current === listRequest) listLoading.value = false;
-  }
+  await inboxList.refresh(background).catch(() => undefined);
 }
 
 function switchMailbox(address: string) {
@@ -273,15 +250,14 @@ function openThread(id: string) {
 function closeThread() {
   if (threadId.value) void router.replace({ query: { ...route.query, mailbox: activeMailbox.value, thread: undefined, message: undefined } });
 }
-function changePage(page: number) {
-  if (query.page === page) return;
-  query.page = page;
-  closeThread();
-}
 function resetQuery() {
+  const alreadyDefault = !keyword.value && query.view === "all";
   query.keyword = "";
   query.view = "all";
-  query.page = 1;
+  if (alreadyDefault) {
+    inboxList.reset();
+    void loadThreads();
+  }
   closeThread();
 }
 
@@ -341,11 +317,4 @@ function refreshThread() {
   padding: 10px 12px;
 }
 .mail-inbox__account { width: 100%; }
-.mail-inbox__pagination {
-  padding: 8px;
-  border-block-start: 1px solid var(--divider-color);
-
-  :deep(.el-pagination) { flex-wrap: wrap; justify-content: center; row-gap: 4px; }
-  :deep(.el-pagination__rightwrapper) { margin-inline-start: 0; }
-}
 </style>

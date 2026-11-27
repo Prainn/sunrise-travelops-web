@@ -2747,7 +2747,7 @@
       "unavailable": "Message counts unavailable. Retrying.",
       "hint": "Open inbox; red: unread messages, orange: unassigned conversations"
     },
-    "keywordPlaceholder": "Name, phone or BSUID",
+    "keywordPlaceholder": "Name, username, phone or BSUID",
     "view": "View",
     "views": {
       "all": "All",
