@@ -45,16 +45,26 @@ const STAGE_LABELS: Record<string, string> = {
 
 const DETAIL_FIELD_LABELS: Record<string, string> = {
   recordId: "operationLog.detailFields.recordId",
+  parentId: "operationLog.detailFields.parentId",
   inquiryId: "operationLog.detailFields.inquiryId",
   itineraryId: "operationLog.detailFields.itineraryId",
   tourId: "operationLog.detailFields.tourId",
   guideId: "operationLog.detailFields.guideId",
+  guideIds: "operationLog.detailFields.guideIds",
+  removedGuideIds: "operationLog.detailFields.removedGuideIds",
+  serviceIds: "operationLog.detailFields.serviceIds",
+  removedServiceIds: "operationLog.detailFields.removedServiceIds",
   messageId: "operationLog.detailFields.messageId",
   messageIds: "operationLog.detailFields.messageIds",
   eventId: "operationLog.detailFields.eventId",
   visitId: "operationLog.detailFields.visitId",
   sourceVisitId: "operationLog.detailFields.sourceVisitId",
   roleCode: "operationLog.detailFields.roleCode",
+  beforeMenuKeys: "operationLog.detailFields.beforeMenuKeys",
+  afterMenuKeys: "operationLog.detailFields.afterMenuKeys",
+  notificationType: "operationLog.detailFields.notificationType",
+  sendWindow: "operationLog.detailFields.sendWindow",
+  version: "operationLog.detailFields.version",
   group: "operationLog.detailFields.group",
   page: "operationLog.detailFields.page",
   action: "operationLog.detailFields.action",
@@ -85,16 +95,26 @@ const PREFERRED_DETAIL_ORDER = [
   "action",
   "value",
   "recordId",
+  "parentId",
   "inquiryId",
   "itineraryId",
   "tourId",
   "guideId",
+  "guideIds",
+  "removedGuideIds",
+  "serviceIds",
+  "removedServiceIds",
   "messageId",
   "messageIds",
   "visitId",
   "sourceVisitId",
   "eventId",
   "roleCode",
+  "beforeMenuKeys",
+  "afterMenuKeys",
+  "notificationType",
+  "sendWindow",
+  "version",
   "group",
   "stage",
   "states",
@@ -194,6 +214,9 @@ function formatDetailValue(key: string, value: unknown, t: TranslateFn): string 
   }
   if (typeof value === "boolean") {
     return value ? t("common.yes") : t("common.no");
+  }
+  if (key === "enabled" && (value === "true" || value === "false")) {
+    return value === "true" ? t("common.yes") : t("common.no");
   }
   if (typeof value === "string") {
     const trimmed = value.trim();

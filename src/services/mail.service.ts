@@ -8,14 +8,15 @@ import { whatsappInquiryInput } from "./whatsapp.service";
 const threadUrl = (id: string) => `/mail/threads/${encodeURIComponent(id)}`;
 const draftUrl = (id: string, draft: string) => `${threadUrl(id)}/drafts/${encodeURIComponent(draft)}`;
 const action = { userAction: true };
+const noStore = { cache: "no-store" as const };
 export const mailService = {
-  summary() { return request.get<{ unreadCount: number }>("/mail/summary"); },
+  summary() { return request.get<{ unreadCount: number }>("/mail/summary", noStore); },
   mailboxes() { return request.get<MailboxOptions>("/mail/mailboxes"); },
   list(query: { page: number; pageSize: number; keyword?: string; view?: MailView; mailbox?: string }) {
-    return request.get<PageResult<MailThread>>("/mail/threads", { params: query });
+    return request.get<PageResult<MailThread>>("/mail/threads", { params: query, ...noStore });
   },
-  detail(id: string) { return request.get<MailDetail>(threadUrl(id)); },
-  read(id: string, messageIds: string[]) { return request.post(`${threadUrl(id)}/read`, { messageIds }, action); },
+  detail(id: string) { return request.get<MailDetail>(threadUrl(id), noStore); },
+  read(id: string, messageIds: string[]) { return request.post(`${threadUrl(id)}/read`, { messageIds }); },
   owners() { return request.get<WebsiteOwnerOption[]>("/mail/owners"); },
   assign(id: string, input: { version: number; ownerId: string; reason: string }) {
     return request.post<MailThread>(`${threadUrl(id)}/assign`, input, action);
@@ -38,6 +39,9 @@ export const mailService = {
   },
   save(id: string, draft: string, input: MailDraftInput) {
     return request.put<MailMessage>(draftUrl(id, draft), input, action);
+  },
+  deleteDraft(id: string, draft: string, version: number) {
+    return request.delete<{ id: string }>(draftUrl(id, draft), { body: { version }, ...action });
   },
   attach(id: string, draft: string, file: File) {
     const data = new FormData();

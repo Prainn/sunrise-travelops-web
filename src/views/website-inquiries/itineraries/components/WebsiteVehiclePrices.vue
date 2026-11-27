@@ -289,19 +289,20 @@ const hasAnyPrice = computed(() => rows.value.some(row => unitPrice(row) !== nul
 /** 司机/导游是否包含及其来源：由各日专车段、导游语种派生，页面只读展示。 */
 const serviceRows = computed(() => {
   const value = services.value;
+  const separator = t("websiteInquiry.listSeparator");
   return [
     {
       label: t("websiteReport.driver"),
       included: value.includesDriver,
       reason: value.includesDriver
-        ? t("websiteItineraryUi.driverReason", { days: value.driverDays.map(day => `D${day}`).join("、") })
+        ? t("websiteItineraryUi.driverReason", { days: value.driverDays.map(day => `D${day}`).join(separator) })
         : t("websiteItineraryUi.noDriverReason"),
     },
     {
       label: t("websiteReport.guide"),
       included: value.includesGuide,
       reason: value.includesGuide
-        ? t("websiteItineraryUi.guideReason", { items: value.guideServices.map(item => `D${item.dayNumber} ${item.language}`).join("、") })
+        ? t("websiteItineraryUi.guideReason", { items: value.guideServices.map(item => `D${item.dayNumber} ${item.language}`).join(separator) })
         : t("websiteItineraryUi.noGuideReason"),
     },
   ];

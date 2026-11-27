@@ -121,7 +121,7 @@
             {{ formatDateTime(row.receivedAt) }}
           </template>
         </el-table-column>
-        <el-table-column :label="$t('common.actions')" width="120" fixed="right">
+        <el-table-column :label="$t('common.actions')" width="210" fixed="right">
           <template #default="{ row }">
             <el-button
               link

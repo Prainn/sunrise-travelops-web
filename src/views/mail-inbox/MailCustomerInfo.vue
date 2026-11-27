@@ -173,13 +173,14 @@ watch([() => source.value?.id, () => props.detail.version], ([id, version]) => {
 
 async function saveNotes() {
   const result = await notes.save();
-  if (!result) return;
+  if (!result) return result;
   if (result.kind === "saved") {
     ElMessage.success(t("common.saveSuccess"));
     emit("changed");
   } else if (result.kind === "conflict") {
     ElMessage.warning(t("whatsapp.versionConflictKeepInput", { message: result.message }));
   } else ElMessage.error(result.message);
+  return result;
 }
 
 async function refreshNotes() {
@@ -197,6 +198,14 @@ async function refreshNotes() {
 async function openInquiry() {
   const message = source.value;
   if (!message || inquiryBusy.value || notes.saving.value) return;
+  if (notes.entry.value?.conflict) {
+    ElMessage.warning(t("whatsapp.customerNotesConflict"));
+    return;
+  }
+  if (notes.dirty.value && props.detail.canUpdateCustomer) {
+    const savedResult = await saveNotes();
+    if (savedResult?.kind !== "saved" || message.id !== source.value?.id) return;
+  }
   inquiryBusy.value = true;
   try {
     const [saved] = await Promise.all([mailService.customerNotes(props.detail.id, message.id), loadCities()]);

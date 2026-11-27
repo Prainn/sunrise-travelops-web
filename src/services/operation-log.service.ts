@@ -7,7 +7,7 @@ import { sendClientOperationEvent } from "@/utils/client-operation-log";
 
 export const operationLogService = {
   getPage(params: OperationLogQueryParams) {
-    return request.get<OperationLogPageResult>("/system/operation-logs", { params });
+    return request.get<OperationLogPageResult>("/system/operation-logs", { params, cache: "no-store" });
   },
 
   reportClientEvent: sendClientOperationEvent,

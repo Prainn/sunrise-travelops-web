@@ -76,7 +76,8 @@ const options = computed(() => {
     }
     for (const value of props.disabledValues) {
       if (!items.value.some(item => matches(item, value)) && !result.some(item => item.value === value)) {
-        result.push({ value, label: value, disabled: true });
+        const label = props.typeCode === "vehicle-type" ? websiteVehicleLabel(value, t) : value;
+        result.push({ value, label, disabled: true });
       }
     }
   }

@@ -769,7 +769,7 @@ async function transferItem(dayId: string, group: ReorderBoardGroup, index?: num
       await ElMessageBox.confirm(
         t("itineraryWorkspace.transfer.replaceConfirm", {
           day: dayIds.value.indexOf(dayId) + 1,
-          name: plan.replaced.map((id) => boardItem(id)?.label ?? "").join("、"),
+          name: plan.replaced.map((id) => boardItem(id)?.label ?? "").join(t("websiteInquiry.listSeparator")),
           next: boardItem(source.itemId)?.label ?? "",
         }),
         t("itineraryWorkspace.transfer.replaceTitle"),

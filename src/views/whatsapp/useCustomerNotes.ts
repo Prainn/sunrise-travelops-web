@@ -143,6 +143,14 @@ export function useCustomerNotes(options?: {
       // 保存期间继续输入的内容保留为新草稿，版本按保存结果更新。
       if (latest && JSON.stringify(latest.form) !== submitted) entries.get(id)!.form = latest.form;
       persist(id);
+      // 邮件同会话的多封来信共享会话级资料与 version：其余干净条目清除待重拉，脏条目记为冲突防止误提交旧版本。
+      if (options?.page === "MailInbox") {
+        for (const [otherId, other] of entries) {
+          if (otherId === id) continue;
+          if (isDirty(other)) other.conflict = true;
+          else entries.delete(otherId);
+        }
+      }
       return { kind: "saved", notes };
     } catch (cause) {
       if (currentSession !== session) return undefined;

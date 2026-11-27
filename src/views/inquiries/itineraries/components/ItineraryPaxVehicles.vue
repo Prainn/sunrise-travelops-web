@@ -4,6 +4,7 @@
     <el-input-number
       :model-value="vehicle.quantity"
       :aria-label="$t('planning.vehicleQuantity', { name: vehicle.vehicleName })"
+      :value-on-clear="1"
       :min="1"
       :max="10000"
       :precision="0"

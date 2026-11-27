@@ -44,8 +44,22 @@ export interface MailThread {
   sourceMessageId: string | null;
   version: number;
 }
+export interface MailQuotedTurn {
+  sourceMessageId: string;
+  position: number;
+  sender: string;
+  sentAt: string;
+  to: string | null;
+  cc: string | null;
+  subject: string | null;
+  body: string;
+}
+export interface MailReadingMessage extends MailMessage {
+  authoredBody: string | null;
+  quotedHistory: MailQuotedTurn[];
+}
 export interface MailDetail extends MailThread {
-  messages: MailMessage[];
+  messages: MailReadingMessage[];
   assignments: { actor: string; previousOwner: string | null; owner: string; reason: string; at: string }[];
   canReply: boolean;
   canAssign: boolean;
