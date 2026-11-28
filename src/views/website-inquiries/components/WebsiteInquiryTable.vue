@@ -94,7 +94,7 @@
               {{ $t("common.edit") }}
             </el-button>
             <el-button
-              v-if="can('website:inquiry:transfer') && !ended(row)"
+              v-if="can('website:inquiry:transfer') && row.canTransfer && !ended(row)"
               type="primary"
               link
               :disabled="isPending?.(row.id)"

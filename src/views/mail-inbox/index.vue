@@ -4,7 +4,7 @@
       <el-form-item :label="$t('common.keywords')" class="filter-bar__wide">
         <el-input v-model="query.keyword" :placeholder="$t('mail.searchHint')" clearable />
       </el-form-item>
-      <el-form-item v-if="manager" :label="$t('whatsapp.view')">
+      <el-form-item v-if="canViewAll" :label="$t('whatsapp.view')">
         <el-select v-model="query.view" autocomplete="new-password">
           <el-option
             v-for="value in views"
@@ -142,9 +142,7 @@ import { useInboxList } from "@/composables/useInboxList";
 import { mailService } from "@/services/mail.service";
 import { websiteErrorMessage } from "@/services/website.service";
 import { useMailUnreadStore } from "@/stores/mail-unread";
-import { useUserStore } from "@/stores/user";
 import type { MailboxOptions, MailDetail, MailView } from "@/types/mail";
-import { hasUserPermission } from "@/utils/permission";
 import { ApiError } from "@/api/request";
 import InboxSplitLayout from "@/views/website-inquiries/components/InboxSplitLayout.vue";
 import MailCustomerInfo from "./MailCustomerInfo.vue";
@@ -153,15 +151,14 @@ import MailThreadList from "./MailThreadList.vue";
 
 defineOptions({ name: "MailInbox" });
 
-const user = useUserStore();
 const mailUnread = useMailUnreadStore();
 const route = useRoute();
 const router = useRouter();
 const views: MailView[] = ["all", "unassigned", "mine"];
-const manager = computed(() => hasUserPermission(user.userInfo, "mail:thread:assign"));
 const query = reactive({ keyword: "", view: "all" as MailView });
 const keyword = refDebounced(toRef(query, "keyword"), 250);
 const accounts = ref<MailboxOptions>();
+const canViewAll = computed(() => accounts.value?.canSwitch === true);
 const accountsLoading = ref(false);
 const accountsError = ref("");
 const scrollRoot = ref<HTMLElement>();
@@ -180,7 +177,7 @@ const activeMailbox = computed(() => {
   return typeof address === "string" && mailboxes.includes(address) ? address : mailboxes[0];
 });
 const inboxList = useInboxList(() => {
-  const filters = { keyword: keyword.value, mailbox: activeMailbox.value, view: manager.value ? query.view : undefined };
+  const filters = { keyword: keyword.value, mailbox: activeMailbox.value, view: canViewAll.value ? query.view : undefined };
   return (page, pageSize) => mailService.list({ ...filters, page, pageSize });
 });
 const { items: rows, busy: listBusy, loading: listLoading, error: listError, hasMore, loadingMore, loadMoreError } = inboxList;
@@ -189,7 +186,7 @@ let detailRequest = 0;
 let timer: ReturnType<typeof setInterval>;
 
 watch([keyword, () => query.view], closeThread);
-watch([() => !!accounts.value, activeMailbox, keyword, () => query.view, manager], () => {
+watch([() => !!accounts.value, activeMailbox, keyword, () => query.view, canViewAll], () => {
   inboxList.reset();
   void loadThreads();
 });
@@ -277,7 +274,7 @@ async function loadSelected(background = false) {
       selectedSource.value = incoming.find(message => message.id === sourceMessage.value)?.id
         ?? value.sourceMessageId ?? incoming.at(-1)?.id ?? "";
     }
-    if (value.unreadCount && (value.canReply || manager.value)) {
+    if (value.unreadCount && (value.canReply || canViewAll.value)) {
       await nextTick();
       if (current !== detailRequest) return;
       const unread = value.messages.filter(message => message.direction === "inbound" && !message.isRead);
